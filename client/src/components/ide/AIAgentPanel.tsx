@@ -1,8 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Loader2, Send, Bot, User } from 'lucide-react';
@@ -39,8 +38,24 @@ export function AIAgentPanel({ projectId, onFileCreate }: AIAgentPanelProps) {
   const [input, setInput] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  
+  // Auto-resize textarea based on content (max 200px)
+  const resizeTextarea = useCallback(() => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = 'auto';
+      const newHeight = Math.min(textarea.scrollHeight, 200);
+      textarea.style.height = `${newHeight}px`;
+    }
+  }, []);
+  
+  // Resize on input change
+  useEffect(() => {
+    resizeTextarea();
+  }, [input, resizeTextarea]);
   
   // Load conversation history if exists
   const { data: conversation } = useQuery({
@@ -193,21 +208,29 @@ export function AIAgentPanel({ projectId, onFileCreate }: AIAgentPanelProps) {
       
       {/* Input */}
       <div className="p-4 border-t">
-        <form onSubmit={handleSubmit} className="flex gap-2">
-          <Input
+        <form onSubmit={handleSubmit} className="flex gap-2 items-end">
+          <textarea
+            ref={textareaRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Type your message..."
+            placeholder="Type your message... (Shift+Enter for new line)"
             disabled={isStreaming}
             data-testid="input-agent-message"
-            className="flex-1"
+            rows={1}
+            className={cn(
+              "flex-1 resize-none overflow-y-auto rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background",
+              "placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+              "disabled:cursor-not-allowed disabled:opacity-50",
+              "min-h-[40px] max-h-[200px]"
+            )}
           />
           <Button 
             type="submit" 
             disabled={!input.trim() || isStreaming}
             data-testid="button-send-message"
             size="icon"
+            className="shrink-0"
           >
             {isStreaming ? (
               <Loader2 className="h-4 w-4 animate-spin" />
