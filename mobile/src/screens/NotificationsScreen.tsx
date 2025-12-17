@@ -6,12 +6,16 @@ import {
   TouchableOpacity,
   StyleSheet,
   RefreshControl,
-  ActivityIndicator
+  ActivityIndicator,
+  Alert
 } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import { mobileColors, mobileSpacing, mobileTypography, mobileBorderRadius } from '../../../shared/theme/mobile-theme';
 import { getNotifications, markNotificationRead, markAllNotificationsRead, Notification as ApiNotification } from '../services/api';
+import { SwipeableRow } from '../components/SwipeableRow';
+import { haptics } from '../services/haptics';
 
 type NotificationsScreenProps = NativeStackScreenProps<RootStackParamList, 'Notifications'>;
 
@@ -80,6 +84,12 @@ const NotificationsScreen: React.FC<NotificationsScreenProps> = ({ route }) => {
     }
   }, [token]);
 
+  const handleDismissNotification = useCallback((id: string) => {
+    haptics.impact();
+    // Remove from local state immediately for better UX
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  }, []);
+
   const getIconForType = (type: Notification['type']) => {
     switch (type) {
       case 'success':
@@ -125,41 +135,62 @@ const NotificationsScreen: React.FC<NotificationsScreenProps> = ({ route }) => {
 
   const renderNotification = useCallback(
     ({ item }: { item: Notification }) => (
-      <TouchableOpacity
-        style={[styles.notificationItem, !item.read && styles.notificationItemUnread]}
-        onPress={() => handleMarkAsRead(item.id)}
+      <SwipeableRow
+        leftActions={!item.read ? [{
+          text: 'Read',
+          icon: '✓',
+          color: mobileColors.success,
+          onPress: () => handleMarkAsRead(item.id),
+          testId: `swipe-read-${item.id}`,
+        }] : []}
+        rightActions={[{
+          text: 'Dismiss',
+          icon: '✕',
+          color: mobileColors.danger,
+          onPress: () => handleDismissNotification(item.id),
+          testId: `swipe-dismiss-${item.id}`,
+        }]}
       >
-        <View
-          style={[
-            styles.notificationIcon,
-            { backgroundColor: getColorForType(item.type) + '20' }
-          ]}
+        <TouchableOpacity
+          style={[styles.notificationItem, !item.read && styles.notificationItemUnread]}
+          onPress={() => {
+            haptics.light();
+            handleMarkAsRead(item.id);
+          }}
+          data-testid={`notification-item-${item.id}`}
         >
-          <Text style={[styles.notificationIconText, { color: getColorForType(item.type) }]}>
-            {getIconForType(item.type)}
-          </Text>
-        </View>
-        <View style={styles.notificationContent}>
-          <View style={styles.notificationHeader}>
-            <Text style={styles.notificationTitle}>{item.title}</Text>
-            <Text style={styles.notificationTime}>{formatTimestamp(item.timestamp)}</Text>
+          <View
+            style={[
+              styles.notificationIcon,
+              { backgroundColor: getColorForType(item.type) + '20' }
+            ]}
+          >
+            <Text style={[styles.notificationIconText, { color: getColorForType(item.type) }]}>
+              {getIconForType(item.type)}
+            </Text>
           </View>
-          <Text style={styles.notificationMessage}>{item.message}</Text>
-          {!item.read && <View style={styles.unreadDot} />}
-        </View>
-      </TouchableOpacity>
+          <View style={styles.notificationContent}>
+            <View style={styles.notificationHeader}>
+              <Text style={styles.notificationTitle}>{item.title}</Text>
+              <Text style={styles.notificationTime}>{formatTimestamp(item.timestamp)}</Text>
+            </View>
+            <Text style={styles.notificationMessage}>{item.message}</Text>
+            {!item.read && <View style={styles.unreadDot} />}
+          </View>
+        </TouchableOpacity>
+      </SwipeableRow>
     ),
-    [handleMarkAsRead]
+    [handleMarkAsRead, handleDismissNotification]
   );
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
-    <View style={styles.container}>
+    <GestureHandlerRootView style={styles.container}>
       {unreadCount > 0 && (
         <View style={styles.actionBar}>
           <Text style={styles.unreadCount}>{unreadCount} unread</Text>
-          <TouchableOpacity onPress={handleMarkAllAsRead}>
+          <TouchableOpacity onPress={handleMarkAllAsRead} data-testid="button-mark-all-read">
             <Text style={styles.markAllButton}>Mark all as read</Text>
           </TouchableOpacity>
         </View>
@@ -192,7 +223,7 @@ const NotificationsScreen: React.FC<NotificationsScreenProps> = ({ route }) => {
           </Text>
         </View>
       )}
-    </View>
+    </GestureHandlerRootView>
   );
 };
 
