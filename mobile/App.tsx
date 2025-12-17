@@ -1,8 +1,8 @@
 import 'react-native-gesture-handler';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, View, StyleSheet, Alert } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ActivityIndicator, View, StyleSheet, Alert, TouchableOpacity, Text } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, NavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { RootStackParamList } from './src/navigation/types';
@@ -13,6 +13,9 @@ import LoginScreen from './src/screens/LoginScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import AgentScreen from './src/screens/AgentScreen';
 import ProjectScreen from './src/screens/ProjectScreen';
+import { CommandPalette } from './src/components/CommandPalette';
+import { CommandPaletteGestureWrapper } from './src/components/CommandPaletteGestureWrapper';
+import { useCommandPalette } from './src/hooks/useCommandPalette';
 
 /**
  * Validate configuration at app startup
@@ -36,6 +39,69 @@ export default function App() {
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [initializing, setInitializing] = useState(true);
+  const navigationRef = useRef<NavigationContainerRef<RootStackParamList>>(null);
+
+  const handleNavigate = useCallback((screen: string, params?: any) => {
+    if (navigationRef.current) {
+      navigationRef.current.navigate(screen as any, params);
+    }
+  }, []);
+
+  const handleAction = useCallback((actionId: string, params?: any) => {
+    switch (actionId) {
+      case 'newFile':
+        Alert.alert('New File', 'Create new file action triggered');
+        break;
+      case 'openFile':
+        handleNavigate('FileManager', params);
+        break;
+      case 'saveFile':
+        Alert.alert('Save', 'File saved successfully');
+        break;
+      case 'run':
+        Alert.alert('Run', 'Running project...');
+        break;
+      case 'askAgent':
+        handleNavigate('Agent', params);
+        break;
+      case 'explainCode':
+        Alert.alert('AI', 'Explain code feature triggered');
+        break;
+      case 'fixBug':
+        Alert.alert('AI', 'Fix bug feature triggered');
+        break;
+      case 'generateCode':
+        Alert.alert('AI', 'Generate code feature triggered');
+        break;
+      case 'refactor':
+        Alert.alert('AI', 'Refactor feature triggered');
+        break;
+      case 'goToFile':
+        handleNavigate('FileManager', params);
+        break;
+      case 'goToLine':
+        Alert.alert('Navigation', 'Go to line feature triggered');
+        break;
+      default:
+        console.log('Action not implemented:', actionId);
+    }
+  }, [handleNavigate]);
+
+  const {
+    isOpen: commandPaletteOpen,
+    open: openCommandPalette,
+    close: closeCommandPalette,
+    toggle: toggleCommandPalette,
+    searchQuery,
+    setSearchQuery,
+    recentCommands,
+    commandsByCategory,
+    executeCommand,
+  } = useCommandPalette({
+    onNavigate: handleNavigate,
+    onAction: handleAction,
+    enableShakeToOpen: true,
+  });
 
   useEffect(() => {
     const restoreSession = async () => {
@@ -87,9 +153,18 @@ export default function App() {
     () => ({
       headerStyle: { backgroundColor: '#0f172a' },
       headerTintColor: '#f8fafc',
-      contentStyle: { backgroundColor: '#020617' }
+      contentStyle: { backgroundColor: '#020617' },
+      headerRight: () => (
+        <TouchableOpacity
+          onPress={openCommandPalette}
+          style={styles.commandButton}
+          testID="button-open-command-palette"
+        >
+          <Text style={styles.commandButtonText}>⌘</Text>
+        </TouchableOpacity>
+      ),
     }),
-    []
+    [openCommandPalette]
   );
 
   if (initializing) {
@@ -101,58 +176,70 @@ export default function App() {
   }
 
   return (
-    <NavigationContainer>
-      <Stack.Navigator screenOptions={screenOptions}>
-        {token && user ? (
-          <>
-            <Stack.Screen
-              name="Home"
-              options={{ title: 'Projects' }}
-            >
+    <CommandPaletteGestureWrapper onTripleTap={toggleCommandPalette} enabled={!!token}>
+      <NavigationContainer ref={navigationRef}>
+        <Stack.Navigator screenOptions={screenOptions}>
+          {token && user ? (
+            <>
+              <Stack.Screen
+                name="Home"
+                options={{ title: 'Projects' }}
+              >
+                {(props) => (
+                  <HomeScreen
+                    {...props}
+                    token={token}
+                    user={user}
+                    onLogout={handleLogout}
+                  />
+                )}
+              </Stack.Screen>
+              <Stack.Screen
+                name="Agent"
+                options={({ route }) => ({ title: route.params.projectName })}
+              >
+                {(props) => (
+                  <AgentScreen
+                    {...props}
+                    token={token}
+                  />
+                )}
+              </Stack.Screen>
+              <Stack.Screen
+                name="Project"
+                options={({ route }) => ({ title: route.params.projectName })}
+              >
+                {(props) => (
+                  <ProjectScreen
+                    {...props}
+                    token={token}
+                  />
+                )}
+              </Stack.Screen>
+            </>
+          ) : (
+            <Stack.Screen name="Login" options={{ headerShown: false }}>
               {(props) => (
-                <HomeScreen
+                <LoginScreen
                   {...props}
-                  token={token}
-                  user={user}
-                  onLogout={handleLogout}
+                  onLogin={handleLogin}
                 />
               )}
             </Stack.Screen>
-            <Stack.Screen
-              name="Agent"
-              options={({ route }) => ({ title: route.params.projectName })}
-            >
-              {(props) => (
-                <AgentScreen
-                  {...props}
-                  token={token}
-                />
-              )}
-            </Stack.Screen>
-            <Stack.Screen
-              name="Project"
-              options={({ route }) => ({ title: route.params.projectName })}
-            >
-              {(props) => (
-                <ProjectScreen
-                  {...props}
-                  token={token}
-                />
-              )}
-            </Stack.Screen>
-          </>
-        ) : (
-          <Stack.Screen name="Login" options={{ headerShown: false }}>
-            {(props) => (
-              <LoginScreen
-                {...props}
-                onLogin={handleLogin}
-              />
-            )}
-          </Stack.Screen>
-        )}
-      </Stack.Navigator>
-    </NavigationContainer>
+          )}
+        </Stack.Navigator>
+      </NavigationContainer>
+
+      <CommandPalette
+        visible={commandPaletteOpen}
+        onClose={closeCommandPalette}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        recentCommands={recentCommands}
+        commandsByCategory={commandsByCategory}
+        onExecuteCommand={executeCommand}
+      />
+    </CommandPaletteGestureWrapper>
   );
 }
 
@@ -162,5 +249,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#020617'
-  }
+  },
+  commandButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    backgroundColor: '#1e293b',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
+  },
+  commandButtonText: {
+    color: '#94a3b8',
+    fontSize: 18,
+    fontWeight: '600',
+  },
 });
