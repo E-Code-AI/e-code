@@ -332,13 +332,86 @@ class ECodeCLI {
     }
   }
 
-  private getLocalFiles(dir: string): any[] {
-    // Implementation for reading local files
-    return [];
+  private getLocalFiles(dir: string, baseDir: string = dir): Array<{ path: string; content: string }> {
+    const files: Array<{ path: string; content: string }> = [];
+    
+    // Files/directories to ignore
+    const ignorePatterns = [
+      '.git', 'node_modules', '.ecode', '.ecode-ignore',
+      '.DS_Store', 'Thumbs.db', '.env', '.env.local',
+      'dist', 'build', 'coverage', '.cache'
+    ];
+    
+    // Load custom ignore patterns if .ecode-ignore exists
+    const ignoreFile = path.join(baseDir, '.ecode-ignore');
+    if (fs.existsSync(ignoreFile)) {
+      const customIgnores = fs.readFileSync(ignoreFile, 'utf-8')
+        .split('\n')
+        .map(line => line.trim())
+        .filter(line => line && !line.startsWith('#'));
+      ignorePatterns.push(...customIgnores);
+    }
+    
+    try {
+      const entries = fs.readdirSync(dir, { withFileTypes: true });
+      
+      for (const entry of entries) {
+        // Skip ignored files/directories
+        if (ignorePatterns.some(pattern => {
+          if (pattern.includes('*')) {
+            const regex = new RegExp(pattern.replace(/\*/g, '.*'));
+            return regex.test(entry.name);
+          }
+          return entry.name === pattern;
+        })) {
+          continue;
+        }
+        
+        const fullPath = path.join(dir, entry.name);
+        const relativePath = path.relative(baseDir, fullPath);
+        
+        if (entry.isDirectory()) {
+          // Recursively get files from subdirectories
+          files.push(...this.getLocalFiles(fullPath, baseDir));
+        } else if (entry.isFile()) {
+          try {
+            // Skip binary files by checking if content is valid UTF-8
+            const content = fs.readFileSync(fullPath, 'utf-8');
+            files.push({
+              path: relativePath.replace(/\\/g, '/'), // Normalize path separators
+              content,
+            });
+          } catch (readError) {
+            // Skip files that can't be read as UTF-8 (binary files)
+            console.log(chalk.gray(`Skipping binary file: ${relativePath}`));
+          }
+        }
+      }
+    } catch (error) {
+      console.error(chalk.yellow(`Warning: Could not read directory ${dir}`));
+    }
+    
+    return files;
   }
 
-  private saveFilesLocally(files: any[]) {
-    // Implementation for saving files locally
+  private saveFilesLocally(files: Array<{ path: string; content: string }>) {
+    for (const file of files) {
+      try {
+        const filePath = path.join(process.cwd(), file.path);
+        const fileDir = path.dirname(filePath);
+        
+        // Create directory if it doesn't exist
+        if (!fs.existsSync(fileDir)) {
+          fs.mkdirSync(fileDir, { recursive: true });
+        }
+        
+        // Write file content
+        fs.writeFileSync(filePath, file.content, 'utf-8');
+        console.log(chalk.gray(`  ${file.path}`));
+      } catch (error) {
+        console.error(chalk.red(`Failed to save: ${file.path}`));
+      }
+    }
   }
 }
 
