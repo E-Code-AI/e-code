@@ -35,6 +35,72 @@ let mainWindow = null;
 let splashWindow = null;
 let tray = null;
 
+// File watchers and WebSocket connections for cleanup
+let fileWatchers = new Map();
+let wsConnections = [];
+
+// ============================================
+// Multi-Window Manager (Fortune 500-Grade)
+// ============================================
+class WindowManager {
+  constructor() {
+    this.windows = new Map();
+    this.mainWindowId = null;
+  }
+  
+  createWindow(type, options = {}) {
+    const win = new BrowserWindow(options);
+    const id = `${type}-${Date.now()}`;
+    
+    this.windows.set(id, { window: win, type, createdAt: Date.now() });
+    
+    win.on('closed', () => {
+      this.windows.delete(id);
+    });
+    
+    if (type === 'main' && !this.mainWindowId) {
+      this.mainWindowId = id;
+    }
+    
+    return { id, window: win };
+  }
+  
+  getWindow(id) {
+    return this.windows.get(id)?.window || null;
+  }
+  
+  getMainWindow() {
+    return this.mainWindowId ? this.getWindow(this.mainWindowId) : null;
+  }
+  
+  getAllWindows() {
+    return Array.from(this.windows.entries()).map(([id, data]) => ({
+      id,
+      type: data.type,
+      window: data.window
+    }));
+  }
+  
+  closeAll() {
+    for (const [id, data] of this.windows) {
+      if (!data.window.isDestroyed()) {
+        data.window.close();
+      }
+    }
+    this.windows.clear();
+  }
+  
+  broadcastToAll(channel, data) {
+    for (const [id, entry] of this.windows) {
+      if (!entry.window.isDestroyed()) {
+        entry.window.webContents.send(channel, data);
+      }
+    }
+  }
+}
+
+const windowManager = new WindowManager();
+
 // Development mode detection
 const isDev = process.argv.includes('--dev') || 
               process.env.NODE_ENV === 'development' ||
@@ -674,20 +740,45 @@ function createTray() {
   });
 }
 
-// Handle deep link URL
+// Handle deep link URL with proper parsing
 function handleDeepLink(url) {
   console.log('[E-Code Desktop] Deep link received:', url);
   
   // Parse the ecode:// URL
   if (url && url.startsWith('ecode://')) {
-    // Send to renderer process
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send('deep-link', url);
+    try {
+      const parsed = new URL(url);
+      const pathParts = parsed.pathname.split('/').filter(Boolean);
       
-      // Make sure window is visible and focused
-      if (mainWindow.isMinimized()) mainWindow.restore();
-      mainWindow.show();
-      mainWindow.focus();
+      const data = {
+        raw: url,
+        action: pathParts[0] || null,  // 'project', 'file', 'workspace', etc.
+        resourceId: pathParts[1] || null,
+        params: Object.fromEntries(parsed.searchParams),
+        path: parsed.pathname,
+        host: parsed.host,
+      };
+      
+      console.log('[E-Code Desktop] Parsed deep link:', data);
+      
+      // Send structured data to renderer process
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('deep-link', data);
+        
+        // Make sure window is visible and focused
+        if (mainWindow.isMinimized()) mainWindow.restore();
+        mainWindow.show();
+        mainWindow.focus();
+      }
+      
+      // Also broadcast to all windows
+      windowManager.broadcastToAll('deep-link', data);
+    } catch (error) {
+      console.error('[E-Code Desktop] Failed to parse deep link:', error);
+      // Fallback: send raw URL
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('deep-link', { raw: url, error: error.message });
+      }
     }
   }
 }
@@ -742,6 +833,38 @@ autoUpdater.allowDowngrade = false;
 const updateChannel = process.env.UPDATE_CHANNEL || 'latest';
 autoUpdater.channel = updateChannel;
 
+// ============================================
+// Auto-Update Retry Logic (Fortune 500-Grade)
+// ============================================
+let updateRetries = 0;
+const MAX_UPDATE_RETRIES = 3;
+const RETRY_DELAY_BASE = 5000; // 5 seconds base delay
+
+function retryUpdateCheck() {
+  if (updateRetries < MAX_UPDATE_RETRIES) {
+    updateRetries++;
+    const delay = RETRY_DELAY_BASE * updateRetries; // Exponential backoff: 5s, 10s, 15s
+    console.log(`[E-Code Desktop] Retrying update check (${updateRetries}/${MAX_UPDATE_RETRIES}) in ${delay}ms`);
+    
+    setTimeout(() => {
+      autoUpdater.checkForUpdates().catch(err => {
+        console.error('[E-Code Desktop] Retry update check failed:', err.message);
+      });
+    }, delay);
+  } else {
+    console.error('[E-Code Desktop] Max update retries reached');
+    dialog.showErrorBox(
+      'Update Error',
+      'Failed to check for updates after multiple attempts. Please check your internet connection and try again later.'
+    );
+    updateRetries = 0; // Reset for next manual check
+  }
+}
+
+function resetUpdateRetries() {
+  updateRetries = 0;
+}
+
 // Configure custom update server if specified
 if (process.env.UPDATE_SERVER_URL) {
   autoUpdater.setFeedURL({
@@ -775,6 +898,7 @@ autoUpdater.on('checking-for-update', () => {
 
 autoUpdater.on('update-available', (info) => {
   console.log('[E-Code Desktop] Update available:', info.version);
+  resetUpdateRetries(); // Success - reset retry counter
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send('update-available', { 
       version: info.version,
@@ -794,6 +918,7 @@ autoUpdater.on('update-available', (info) => {
 
 autoUpdater.on('update-not-available', () => {
   console.log('[E-Code Desktop] No updates available');
+  resetUpdateRetries(); // Success - reset retry counter
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send('update-status', { status: 'up-to-date' });
   }
@@ -839,9 +964,13 @@ autoUpdater.on('error', (error) => {
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send('update-status', { 
       status: 'error', 
-      error: error.message 
+      error: error.message,
+      retrying: updateRetries < MAX_UPDATE_RETRIES
     });
   }
+  
+  // Retry update check with exponential backoff
+  retryUpdateCheck();
 });
 
 // Periodic update checks (every 4 hours in production)
@@ -1108,40 +1237,219 @@ ipcMain.handle('clear-recent-files', () => {
   return [];
 });
 
-// Update File > Open Recent submenu
+// Update File > Open Recent submenu - rebuilds entire application menu
+// (Electron's Menu API doesn't support dynamic submenu updates)
 function updateRecentFilesMenu(recentFiles) {
-  const menu = Menu.getApplicationMenu();
-  if (!menu) return;
+  // Store recent files for menu rebuilding
+  store.set('recentFiles', recentFiles);
   
-  const fileMenu = menu.items.find(item => item.label === 'File');
-  if (!fileMenu || !fileMenu.submenu) return;
+  // Rebuild entire application menu with updated recent files
+  createMenuWithRecentFiles(recentFiles);
+}
+
+// Build application menu with dynamic recent files
+function createMenuWithRecentFiles(recentFiles = []) {
+  const isMac = process.platform === 'darwin';
   
-  const openRecentItem = fileMenu.submenu.items.find(item => item.label === 'Open Recent');
-  if (!openRecentItem || !openRecentItem.submenu) return;
-  
-  // Rebuild recent files submenu
-  const recentSubmenu = Menu.buildFromTemplate([
-    ...recentFiles.map(file => ({
-      label: file.name,
-      sublabel: file.directory,
-      click: () => {
-        if (mainWindow && !mainWindow.isDestroyed()) {
-          mainWindow.webContents.send('open-recent-file', file.path);
+  // Build recent files submenu items
+  const recentFilesSubmenu = recentFiles.length > 0 
+    ? [
+        ...recentFiles.map(file => ({
+          label: file.name,
+          sublabel: file.directory,
+          toolTip: file.path,
+          click: () => {
+            if (mainWindow && !mainWindow.isDestroyed()) {
+              mainWindow.webContents.send('open-recent-file', file.path);
+            }
+          }
+        })),
+        { type: 'separator' },
+        {
+          label: 'Clear Recent Files',
+          click: () => {
+            store.set('recentFiles', []);
+            createMenuWithRecentFiles([]);
+          }
         }
-      }
-    })),
-    { type: 'separator' },
+      ]
+    : [
+        {
+          label: 'No Recent Files',
+          enabled: false
+        }
+      ];
+
+  const template = [
+    // App menu (macOS only)
+    ...(isMac ? [{
+      label: app.name,
+      submenu: [
+        { role: 'about' },
+        { type: 'separator' },
+        {
+          label: 'Preferences...',
+          accelerator: 'Cmd+,',
+          click: () => mainWindow?.webContents.send('menu-preferences'),
+        },
+        { type: 'separator' },
+        { role: 'services' },
+        { type: 'separator' },
+        { role: 'hide' },
+        { role: 'hideOthers' },
+        { role: 'unhide' },
+        { type: 'separator' },
+        { role: 'quit' },
+      ],
+    }] : []),
+
+    // File menu with dynamic recent files
     {
-      label: 'Clear Recent',
-      click: () => {
-        store.set('recentFiles', []);
-        updateRecentFilesMenu([]);
-      }
-    }
-  ]);
-  
-  // Note: Menu submenu replacement requires menu rebuild
-  // This is a limitation of Electron's Menu API
+      label: 'File',
+      submenu: [
+        {
+          label: 'New Project',
+          accelerator: 'CmdOrCtrl+N',
+          click: () => mainWindow?.webContents.send('menu-new-project'),
+        },
+        {
+          label: 'Open Project...',
+          accelerator: 'CmdOrCtrl+O',
+          click: () => mainWindow?.webContents.send('menu-open-project'),
+        },
+        {
+          label: 'Open Recent',
+          submenu: recentFilesSubmenu
+        },
+        { type: 'separator' },
+        {
+          label: 'Save',
+          accelerator: 'CmdOrCtrl+S',
+          click: () => mainWindow?.webContents.send('menu-save'),
+        },
+        {
+          label: 'Save All',
+          accelerator: 'CmdOrCtrl+Shift+S',
+          click: () => mainWindow?.webContents.send('menu-save-all'),
+        },
+        { type: 'separator' },
+        ...(!isMac ? [
+          {
+            label: 'Preferences',
+            accelerator: 'Ctrl+,',
+            click: () => mainWindow?.webContents.send('menu-preferences'),
+          },
+          { type: 'separator' },
+        ] : []),
+        isMac ? { role: 'close' } : { role: 'quit' },
+      ],
+    },
+
+    // Edit menu
+    {
+      label: 'Edit',
+      submenu: [
+        { role: 'undo' },
+        { role: 'redo' },
+        { type: 'separator' },
+        { role: 'cut' },
+        { role: 'copy' },
+        { role: 'paste' },
+        { role: 'pasteAndMatchStyle' },
+        { role: 'delete' },
+        { role: 'selectAll' },
+        { type: 'separator' },
+        {
+          label: 'Find',
+          accelerator: 'CmdOrCtrl+F',
+          click: () => mainWindow?.webContents.send('menu-find'),
+        },
+        {
+          label: 'Find and Replace',
+          accelerator: 'CmdOrCtrl+H',
+          click: () => mainWindow?.webContents.send('menu-find-replace'),
+        },
+      ],
+    },
+
+    // View menu
+    {
+      label: 'View',
+      submenu: [
+        { role: 'reload' },
+        { role: 'forceReload' },
+        { type: 'separator' },
+        {
+          label: 'Toggle File Explorer',
+          accelerator: 'CmdOrCtrl+B',
+          click: () => mainWindow?.webContents.send('menu-toggle-sidebar'),
+        },
+        {
+          label: 'Toggle Terminal',
+          accelerator: 'CmdOrCtrl+J',
+          click: () => mainWindow?.webContents.send('menu-toggle-terminal'),
+        },
+        {
+          label: 'Toggle AI Assistant',
+          accelerator: 'CmdOrCtrl+Shift+A',
+          click: () => mainWindow?.webContents.send('menu-toggle-ai'),
+        },
+        { type: 'separator' },
+        { role: 'resetZoom' },
+        { role: 'zoomIn' },
+        { role: 'zoomOut' },
+        { type: 'separator' },
+        { role: 'togglefullscreen' },
+        { type: 'separator' },
+        { role: 'toggleDevTools', visible: isDev },
+      ],
+    },
+
+    // Window menu
+    {
+      label: 'Window',
+      submenu: [
+        { role: 'minimize' },
+        { role: 'zoom' },
+        ...(isMac ? [
+          { type: 'separator' },
+          { role: 'front' },
+          { type: 'separator' },
+          { role: 'window' },
+        ] : [
+          { role: 'close' },
+        ]),
+      ],
+    },
+
+    // Help menu
+    {
+      label: 'Help',
+      submenu: [
+        {
+          label: 'Documentation',
+          click: () => shell.openExternal('https://docs.e-code.ai'),
+        },
+        {
+          label: 'Report Issue',
+          click: () => shell.openExternal('https://github.com/e-code/issues'),
+        },
+        { type: 'separator' },
+        {
+          label: 'Check for Updates...',
+          click: () => checkForUpdates(),
+        },
+        { type: 'separator' },
+        {
+          label: 'About E-Code',
+          click: () => showAboutDialog(),
+        },
+      ],
+    },
+  ];
+
+  const menu = Menu.buildFromTemplate(template);
+  Menu.setApplicationMenu(menu);
 }
 
 // ============================================
@@ -1247,9 +1555,67 @@ app.on('window-all-closed', () => {
   }
 });
 
-// Before quit
-app.on('before-quit', () => {
-  // Save any pending state
+// Before quit - comprehensive cleanup (Fortune 500-Grade)
+app.on('before-quit', async () => {
+  console.log('[E-Code Desktop] Before quit - starting cleanup');
+  
+  try {
+    // 1. Close all file watchers
+    for (const [id, watcher] of fileWatchers) {
+      try {
+        watcher?.close?.();
+        console.log(`[E-Code Desktop] Closed file watcher: ${id}`);
+      } catch (e) {
+        console.warn(`[E-Code Desktop] Failed to close watcher ${id}:`, e.message);
+      }
+    }
+    fileWatchers.clear();
+    
+    // 2. Close all WebSocket connections
+    for (const ws of wsConnections) {
+      try {
+        if (ws && ws.readyState === 1) { // OPEN state
+          ws.close(1000, 'Application closing');
+        }
+      } catch (e) {
+        console.warn('[E-Code Desktop] Failed to close WebSocket:', e.message);
+      }
+    }
+    wsConnections.length = 0;
+    
+    // 3. Save window state
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      const bounds = mainWindow.getBounds();
+      const isMaximized = mainWindow.isMaximized();
+      store.set('windowBounds', bounds);
+      store.set('windowMaximized', isMaximized);
+      console.log('[E-Code Desktop] Window state saved:', { bounds, isMaximized });
+    }
+    
+    // 4. Clean up temporary files
+    const tempDir = path.join(app.getPath('temp'), 'e-code');
+    try {
+      if (fs.existsSync(tempDir)) {
+        await fs.promises.rm(tempDir, { recursive: true, force: true });
+        console.log('[E-Code Desktop] Cleaned up temp directory');
+      }
+    } catch (e) {
+      console.warn('[E-Code Desktop] Failed to clean temp dir:', e.message);
+    }
+    
+    // 5. Close all managed windows
+    windowManager.closeAll();
+    
+    // 6. Destroy tray
+    if (tray && !tray.isDestroyed()) {
+      tray.destroy();
+      tray = null;
+    }
+    
+    console.log('[E-Code Desktop] Cleanup completed successfully');
+  } catch (error) {
+    console.error('[E-Code Desktop] Cleanup error:', error);
+  }
 });
 
 // Security: Prevent navigation to unknown URLs

@@ -1,7 +1,7 @@
 # E-Code Platform
 
 ## Overview
-E-Code is an AI-assisted web-based IDE for rapid prototyping, education, and enterprise use. It enables autonomous workspace generation from natural language prompts, offering live previews and streaming progress. The platform supports multi-provider AI model selection, real-time collaboration, and robust security, aiming to streamline coding and enhance learning as an enterprise-grade solution.
+E-Code is an AI-assisted web-based IDE designed for rapid prototyping, education, and enterprise use. Its core purpose is to streamline coding and enhance learning by enabling autonomous workspace generation from natural language prompts, offering live previews, and streaming progress. The platform supports multi-provider AI model selection, real-time collaboration, and robust security, aiming to be an enterprise-grade solution. Key ambitions include market leadership in AI-driven development tools and fostering a new era of accessible and efficient coding.
 
 ## User Preferences
 - **Communication:** Simple, everyday language
@@ -19,88 +19,27 @@ E-Code is an AI-assisted web-based IDE for rapid prototyping, education, and ent
 ## System Architecture
 
 ### UI/UX Decisions
-The frontend utilizes Shadcn/UI with Tailwind CSS and Monaco Editor, adhering to the Replit RUI Design System with E-Code branding. It features a mobile-first responsive design, supporting light/dark modes, and appropriate touch targets (44px minimum). The RUI Design Token System defines colors, typography, spacing, border radius, and shadows. The IDE layout is unified and responsive across all screen sizes, mirroring Replit's Activity Bar, Tab Bar, and Status Bar, with a 5-tab mobile navigation, spring-based animations, loading skeletons, and touch enhancements.
+The frontend uses Shadcn/UI with Tailwind CSS and Monaco Editor, adhering to the Replit RUI Design System with E-Code branding. It features a mobile-first, responsive design supporting light/dark modes and touch targets (44px minimum). The RUI Design Token System defines visual elements. The IDE layout is unified across all screen sizes, mirroring Replit's Activity Bar, Tab Bar, and Status Bar, with a 5-tab mobile navigation, spring-based animations, loading skeletons, and touch enhancements.
 
 ### Technical Implementations
-The frontend is built with React 18, TypeScript, Vite, TanStack Query, and Wouter. The backend is a Node.js/Express.js application in TypeScript, using Drizzle ORM for PostgreSQL and Passport.js for authentication, with a RESTful API and WebSockets for real-time features. Key AI optimizations include a Task Classifier, Circuit Breaker, Priority Queue, Intelligent Caching, and Observability. Environment variables are AES-256-GCM encrypted, and SSE streaming is used for code generation. Anonymous bootstrap authentication provides ephemeral guest users. AI Agent enhancements include structured XML-based system prompts, a repository overview service, a context window manager, a unified AI provider system, and AI-powered inline code actions. A Checkpoints & Rollback System ensures atomic transactions, and a Background Auto-Testing System uses Playwright. Max Autonomy Mode provides extended autonomous sessions with AI task decomposition, auto-execution, ETA estimation, and cost tracking. Process-based code execution leverages native Nix-managed language runtimes without Docker. A centralized Winston-based logging system with correlation IDs and multi-transport support is implemented. An Agent Step Cache system provides database-backed intermediate step caching.
-
-### WebSocket Resilience System (Fortune 500-Grade)
-Enterprise-grade WebSocket connection management for mobile network reliability:
-- **ResilientWebSocket class** (`client/src/lib/websocket-resilience.ts`): Core connection manager with exponential backoff (jitter factor 0.25-0.3), circuit breaker pattern (5-7 failure threshold), and optional JSON heartbeat
-- **React hook** (`client/src/hooks/use-resilient-websocket.ts`): `useResilientWebSocket` hook with state management and retry countdown
-- **UI Components** (`client/src/components/terminal/ConnectionStatusBanner.tsx`): `ConnectionStatusBanner` and `ConnectionIndicator` for reconnection feedback
-- **Protocol-aware heartbeat**: Heartbeat DISABLED for terminal (raw PTY data), ENABLED for agent (JSON protocol) - prevents stream corruption
-- **Mobile resilience**: Auto-reconnect on network online/offline events, visibility change detection for backgrounded apps
-- **Factory functions**: `createTerminalWebSocket()` (15 attempts, 500ms-30s backoff) and `createAgentWebSocket()` (20 attempts, 1s-60s backoff)
-
-### Intersection Observer Animation System (Fortune 500-Grade)
-Scroll-triggered animations using native Intersection Observer for zero main-thread blocking:
-- **useInView hook** (`client/src/lib/motion/useInView.ts`): Returns `{ ref, isInView }`, respects `prefers-reduced-motion`, supports `once` option, proper cleanup on unmount
-- **CSS Animation Components** (`client/src/lib/motion/CSSAnimations.tsx`): `CSSInViewFade`, `CSSInViewSlide`, `CSSInViewScale` - GPU-accelerated animations on compositor thread
-- **Hybrid Fallback** (`client/src/lib/motion/LazyMotionComponents.tsx`): Auto-detects `whileInView` props and routes to CSS fallback when performance drops
-- **Variant Resolution**: Supports both object `whileInView={{ opacity: 1, y: 0 }}` and string `whileInView="animate"` with variants
-- **Variable Slide Distance**: Extracts actual distance from variant values (e.g., `y: 40` → 40px slide)
-- **Stagger Support**: Basic child staggering via CSS animation-delay when `transition.staggerChildren` is present
-
-### Native Motion Library (Fortune 500-Grade)
-Zero-dependency animation system replacing framer-motion hooks for 60fps GPU-accelerated animations:
-- **useNativeMotionValue** (`client/src/lib/native-motion/useNativeMotionValue.ts`): RAF-based motion values with `{ get, set, subscribe, destroy }` API
-- **useDerivedMotionValue**: Derived values from sources with automatic cleanup on unmount
-- **useSpringValue** (`client/src/lib/native-motion/useSpringValue.ts`): Spring physics using Web Animations API with configurable stiffness/damping
-- **usePanGesture** (`client/src/lib/native-motion/usePanGesture.ts`): Pointer Events-based pan gestures with velocity in px/ms (framer-motion compatible)
-- **useAnimationControls** (`client/src/lib/native-motion/useAnimationControls.ts`): Imperative WAAPI controls with composite transform stacking
-- **PanInfo type**: Compatible with framer-motion's `{ point, delta, offset, velocity }` structure
-- **Memory safety**: All hooks properly clean up RAF subscriptions and WAAPI animations on unmount
-- **Import pattern**: `import { useNativeMotionValue, useSpringValue, usePanGesture, createPanHandlers } from '@/lib/native-motion'`
-
-### Deployment Architecture (Single-VM vs Kubernetes)
-The platform supports two deployment modes with graceful fallbacks:
-
-**Configuration (`server/config/deployment-mode.ts`):**
-- `DEPLOYMENT_MODE` env var: `single-vm` (default) | `kubernetes` | `hybrid`
-- `KUBERNETES_ENABLED` env var: `true` | `false` (default)
-- Functions: `isKubernetesEnabled()`, `isSingleVMMode()`, `getDeploymentMode()`
-
-**Single-VM Mode (Default - Replit):**
-- Uses `docker-compose.prod.yml` for orchestration
-- Services: Node.js app, PostgreSQL, Redis, Docker-in-Docker (sandbox)
-- K8s modules skip initialization and return graceful no-ops
-- All health endpoints work regardless of mode
-
-**Kubernetes Mode (Enterprise):**
-- Requires `KUBERNETES_ENABLED=true` and `DEPLOYMENT_MODE=kubernetes`
-- Enables full K8s orchestration via `@kubernetes/client-node`
-- Multi-region failover, auto-scaling, Ingress management
-- **Note**: K8s modules have type mismatches with latest `@kubernetes/client-node` API - requires library update for full K8s support
-
-**Files:**
-- `docker-compose.prod.yml` - Single-VM production deployment
-- `.env.production.example` - Required environment variables
-- `server/config/deployment-mode.ts` - Mode detection and feature flags
-
-### Secure Code Execution (Docker Isolation)
-Enterprise-grade sandboxed code execution for user-submitted code:
-- **DockerExecutor** (`server/docker-executor.ts`): Secure container-based execution replacing insecure simple-executor
-- **Security features**: Ephemeral containers (`--rm`), non-root user (`--user 1000:1000`), read-only root filesystem, network isolation (`--network=none`)
-- **Resource limits**: 256MB memory, 0.5 CPU cores, 100 PIDs max, 30-second timeout with automatic kill
-- **Capability dropping**: `--cap-drop=ALL`, `--security-opt=no-new-privileges:true`
-- **Supported languages**: Node.js (`node:20-alpine`), Python (`python:3.11-alpine`)
-- **DEPRECATED**: `server/simple-executor.ts` - INSECURE, runs code on host without sandboxing. DO NOT USE for untrusted code.
-
-### Memory Bank System (Replit-Identical)
-Auto-initializing context storage in `.ecode/memory-bank/` for each project:
-- **AI-Generated Content**: When a workspace is created, Claude generates 5 contextual markdown files based on the user's prompt
-- **Files**: `projectbrief.md`, `productContext.md`, `systemPatterns.md`, `techContext.md`, `activeContext.md`
-- **Auto-Injection**: Memory Bank content is automatically injected into AI prompts for context persistence
-- **Fallback**: Template-based content when AI generation fails
-- **Service**: `server/services/memory-bank.service.ts` with `initializeWithAI()` method
-- **API**: `/api/memory-bank/:projectId` endpoints for CRUD operations
-
-### Feature Specifications
-Core features include a Monaco Code Editor with enhancements, an interactive xterm.js terminal, file management, real-time collaboration, authentication, TypeScript-based container orchestration, Global Search & Replace, Environment Variables Manager, Logs Viewer, and Debugger UI. Autonomous workspace creation involves a Bootstrap API call, AI plan generation, WebSocket-based real-time progress, autonomous execution, and a live preview. An Agent Activity Dashboard with AG Grid provides real-time metrics and session history. Agent conversation persistence is managed via Zustand and backend synchronization. An Agentic RAG system provides automatic backend RAG context retrieval. Build modes (`design-first`, `full-app`, `continue-planning`) are supported for workspace creation.
+The frontend is built with React 18, TypeScript, Vite, TanStack Query, and Wouter. The backend is a Node.js/Express.js application in TypeScript, using Drizzle ORM for PostgreSQL and Passport.js for authentication, with a RESTful API and WebSockets for real-time features. AI optimizations include a Task Classifier, Circuit Breaker, Priority Queue, Intelligent Caching, and Observability. Environment variables are AES-256-GCM encrypted, and SSE streaming is used for code generation. Anonymous bootstrap authentication provides ephemeral guest users. AI Agent enhancements include structured XML-based system prompts, a repository overview service, a context window manager, a unified AI provider system, and AI-powered inline code actions. A Checkpoints & Rollback System ensures atomic transactions, and a Background Auto-Testing System uses Playwright. Max Autonomy Mode provides extended autonomous sessions with AI task decomposition, auto-execution, ETA estimation, and cost tracking. Process-based code execution leverages native Nix-managed language runtimes without Docker. A centralized Winston-based logging system with correlation IDs and multi-transport support is implemented. An Agent Step Cache system provides database-backed intermediate step caching.
 
 ### System Design Choices
-A PostgreSQL database stores user data, project hierarchies, AI agent sessions, deployment history, and subscription management. Security measures include CSRF protection, input sanitization, tier-based rate limiting, API versioning, session-based authentication, and encrypted environment variables. The AI agent system provides server-sent event streaming, multi-provider AI model selection, database-backed conversation history, circuit breakers, and retry logic. Health monitoring integrates Kubernetes probes and a Provider Health API with Prometheus metrics. A two-tier database API architecture (Admin and Project Data APIs) is used with integrated security. Docker builds are optimized for small image sizes. The Stripe payment integration supports a Replit-style hybrid pricing model. Support for 29 languages is provided via CodeMirror 6 for syntax highlighting and a robust runtime system with PID tracking, tree-kill for process termination, and language-specific timeouts. TanStack Query is the exclusive client-side caching layer for all API data. The platform implements a 3-layer cache architecture for enterprise-grade offline UX using TanStack Query with IndexedDB persistence, a Service Worker cache, and a cache reconciliation layer. Performance optimizations include provider racing, speculative scaffolding, and parallel workflow execution.
+A PostgreSQL database stores user data, project hierarchies, AI agent sessions, deployment history, and subscription management. Security includes CSRF protection, input sanitization, tier-based rate limiting, API versioning, session-based authentication, and encrypted environment variables. The AI agent system provides server-sent event streaming, multi-provider AI model selection, database-backed conversation history, circuit breakers, and retry logic. Health monitoring integrates Kubernetes probes and a Provider Health API with Prometheus metrics. A two-tier database API architecture (Admin and Project Data APIs) is used with integrated security. Docker builds are optimized for small image sizes. Stripe payment integration supports a Replit-style hybrid pricing model. Support for 29 languages is provided via CodeMirror 6 for syntax highlighting and a robust runtime system with PID tracking, tree-kill for process termination, and language-specific timeouts. TanStack Query is the exclusive client-side caching layer for all API data, implementing a 3-layer cache architecture with IndexedDB persistence, a Service Worker cache, and a cache reconciliation layer for enterprise-grade offline UX. Performance optimizations include provider racing, speculative scaffolding, and parallel workflow execution.
+
+### Deployment Architecture
+The platform supports two deployment modes: `single-vm` (default, typically for Replit) and `kubernetes` (for enterprise). The `single-vm` mode uses `docker-compose.prod.yml` orchestrating Node.js app, PostgreSQL, Redis, and Docker-in-Docker (sandbox). The `kubernetes` mode, enabled via environment variables, allows full K8s orchestration via `@kubernetes/client-node` for multi-region failover and auto-scaling.
+
+### Secure Code Execution
+Enterprise-grade sandboxed code execution for user-submitted code is provided by `DockerExecutor`. This system uses ephemeral containers with non-root users, read-only root filesystems, network isolation, resource limits (e.g., 256MB memory, 0.5 CPU, 30s timeout), and capability dropping to ensure security. Supported languages include Node.js and Python.
+
+### Memory Bank System
+An auto-initializing context storage system in `.ecode/memory-bank/` stores AI-generated contextual markdown files (`projectbrief.md`, `productContext.md`, `systemPatterns.md`, `techContext.md`, `activeContext.md`) based on user prompts. This content is automatically injected into AI prompts for context persistence and has template-based fallbacks.
+
+### Core Systems
+- **WebSocket Resilience System:** Enterprise-grade WebSocket connection management (`ResilientWebSocket` class, `useResilientWebSocket` hook) with exponential backoff, circuit breaker, and protocol-aware heartbeats, optimized for mobile network reliability.
+- **Intersection Observer Animation System:** Scroll-triggered animations using native Intersection Observer (`useInView` hook, `CSSInViewFade`, `CSSInViewSlide`, `CSSInViewScale` components) for zero main-thread blocking, with hybrid fallbacks and basic stagger support.
+- **Native Motion Library:** A zero-dependency animation system (`useNativeMotionValue`, `useSpringValue`, `usePanGesture`, `useAnimationControls`) replacing framer-motion hooks for 60fps GPU-accelerated animations with proper memory cleanup.
 
 ## External Dependencies
 
@@ -120,24 +59,6 @@ A PostgreSQL database stores user data, project hierarchies, AI agent sessions, 
 - **Slack:** Production monitoring alerts
 - **Object Storage:** Replit built-in GCS-backed storage (production) / Local filesystem (development)
 
-### Object Storage Configuration
-The platform uses Replit's built-in Object Storage for production-grade file persistence. In production on Replit Reserved VMs, it uses Google Cloud Storage via Replit's sidecar endpoint. In development, it falls back to local filesystem storage.
-
-**Environment Variables:**
-- `PRIVATE_OBJECT_DIR` - Private object storage path (e.g., `/bucket-name/private`)
-- `PUBLIC_OBJECT_SEARCH_PATHS` - Comma-separated paths for public object search
-- `REPLIT_OBJECT_STORAGE_BUCKET` - GCS bucket name (auto-configured on Replit)
-- `REPL_ID` - Replit instance ID (auto-set by Replit runtime)
-- `STORAGE_PATH` - Local storage path for development (default: `./storage`)
-- `NODE_ENV` - Set to `production` to enable Replit GCS storage
-
-**Key Services:**
-- `server/objectStorage.ts` - Core GCS integration with Replit sidecar
-- `server/services/real-object-storage.ts` - High-level storage service with fallback
-- `server/services/agent-testing-orchestrator.service.ts` - Test artifacts storage
-- `server/services/agent-recording.service.ts` - Session recording storage
-- `server/services/screenshot-service.ts` - Screenshot/thumbnail storage
-
 ### Development Tools & Integrations
 - **GitHub:** OAuth integration
 - **Figma:** Design imports
@@ -148,3 +69,9 @@ The platform uses Replit's built-in Object Storage for production-grade file per
 ### Authentication Providers
 - **Replit Auth:** Google, GitHub, Twitter/X, Apple, email/password
 - **Custom Email/Password**
+
+### Desktop Application (Electron)
+A cross-platform desktop application featuring multi-window support (`WindowManager`), deep linking (`ecode://` protocol), auto-update with retry logic, dynamic recent files menu, and comprehensive cleanup on quit. It uses a secure IPC bridge via a preload API for file system operations, dialogs, and update management.
+
+### Mobile Application (React Native + Expo)
+A cross-platform mobile application providing platform-specific haptic feedback (`expo-haptics`), reusable swipe-to-action components (`react-native-gesture-handler`), and platform-specific font rendering. It implements an AsyncStorage-backed offline cache with TTL and stale-while-revalidate strategy.
