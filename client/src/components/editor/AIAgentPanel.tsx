@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Send, Sparkles, User, Bot, Loader2, Settings, History, Zap, Code, MessageSquare, X, ChevronDown, ChevronUp } from 'lucide-react';
+import { Send, Sparkles, User, Bot, Loader2, Settings, History, Zap, Code, MessageSquare, X, ChevronDown, ChevronUp, Bug, TestTube, FileCode } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useToast } from '@/hooks/use-toast';
 import { handleSSEWarning, type SSEWarningData } from '@/lib/sse-warning-handler';
+import { streamCodeAction, createStreamController } from '@/lib/streaming';
 
 interface Message {
   id: string;
@@ -27,12 +28,18 @@ interface Message {
 interface AIAgentPanelProps {
   projectId: string | number;
   onClose?: () => void;
+  selectedCode?: string;
+  currentFilePath?: string;
+  language?: string;
 }
 
-export function AIAgentPanel({ projectId, onClose }: AIAgentPanelProps) {
+export function AIAgentPanel({ projectId, onClose, selectedCode, currentFilePath, language = 'javascript' }: AIAgentPanelProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
+  const [isCodeActionStreaming, setIsCodeActionStreaming] = useState(false);
+  const [codeActionContent, setCodeActionContent] = useState('');
+  const [activeCodeAction, setActiveCodeAction] = useState<string | null>(null);
   const [selectedModel, setSelectedModel] = useState('openai');
   const [extendedThinking, setExtendedThinking] = useState(false);
   const [highPower, setHighPower] = useState(false);
@@ -43,6 +50,7 @@ export function AIAgentPanel({ projectId, onClose }: AIAgentPanelProps) {
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
   const { toast } = useToast();
 
   const scrollToBottom = () => {
@@ -51,7 +59,7 @@ export function AIAgentPanel({ projectId, onClose }: AIAgentPanelProps) {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, currentStreamMessage]);
+  }, [messages, currentStreamMessage, codeActionContent]);
 
   const handleStreamChat = async () => {
     if (!input.trim() || isStreaming) return;
@@ -194,12 +202,108 @@ export function AIAgentPanel({ projectId, onClose }: AIAgentPanelProps) {
   const clearChat = () => {
     setMessages([]);
     setTokenCount(0);
+    setCodeActionContent('');
+    setActiveCodeAction(null);
+  };
+
+  const handleCodeAction = async (action: string) => {
+    const codeToAnalyze = selectedCode || '';
+    
+    if (!codeToAnalyze.trim()) {
+      toast({
+        title: 'No Code Selected',
+        description: 'Please select some code in the editor first.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    if (isCodeActionStreaming) return;
+
+    setCodeActionContent('');
+    setActiveCodeAction(action);
+    setIsCodeActionStreaming(true);
+
+    const userMessage: Message = {
+      id: `msg-${Date.now()}`,
+      role: 'user',
+      content: `${action}: ${codeToAnalyze.length > 100 ? codeToAnalyze.substring(0, 100) + '...' : codeToAnalyze}`,
+      timestamp: new Date()
+    };
+    setMessages(prev => [...prev, userMessage]);
+
+    const assistantMessage: Message = {
+      id: `msg-${Date.now()}-assistant`,
+      role: 'assistant',
+      content: '',
+      timestamp: new Date()
+    };
+    setMessages(prev => [...prev, assistantMessage]);
+
+    try {
+      await streamCodeAction(
+        action,
+        codeToAnalyze,
+        language,
+        {
+          onChunk: (chunk) => {
+            setCodeActionContent(prev => prev + chunk);
+          },
+          onComplete: (provider) => {
+            setMessages(prev => prev.map(msg => 
+              msg.id === assistantMessage.id 
+                ? { ...msg, content: codeActionContent + ` [${provider}]` }
+                : msg
+            ));
+            setIsCodeActionStreaming(false);
+            setActiveCodeAction(null);
+          },
+          onError: (error) => {
+            toast({
+              title: 'Code Action Failed',
+              description: error,
+              variant: 'destructive'
+            });
+            setIsCodeActionStreaming(false);
+            setActiveCodeAction(null);
+          }
+        },
+        String(projectId),
+        currentFilePath,
+        selectedModel
+      );
+
+      setMessages(prev => prev.map(msg => 
+        msg.id === assistantMessage.id 
+          ? { ...msg, content: codeActionContent }
+          : msg
+      ));
+    } catch (error: any) {
+      toast({
+        title: 'Code Action Error',
+        description: error.message || 'Failed to execute code action',
+        variant: 'destructive'
+      });
+      setIsCodeActionStreaming(false);
+      setActiveCodeAction(null);
+    }
+  };
+
+  const stopCodeActionStreaming = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    setIsCodeActionStreaming(false);
+    setActiveCodeAction(null);
   };
 
   const quickActions = [
-    { label: 'Explain Code', icon: Code, prompt: 'Explain the selected code' },
-    { label: 'Fix Error', icon: Zap, prompt: 'Help me fix this error' },
-    { label: 'Generate Test', icon: MessageSquare, prompt: 'Generate tests for this function' },
+    { label: 'Explain', icon: Code, action: 'explain' },
+    { label: 'Debug', icon: Bug, action: 'debug' },
+    { label: 'Test', icon: TestTube, action: 'test' },
+    { label: 'Document', icon: FileCode, action: 'document' },
+    { label: 'Optimize', icon: Zap, action: 'optimize' },
   ];
 
   return (
@@ -269,21 +373,43 @@ export function AIAgentPanel({ projectId, onClose }: AIAgentPanelProps) {
         </CollapsibleContent>
       </Collapsible>
 
-      {/* Quick Actions */}
-      <div className="flex gap-2 p-2 border-b">
-        {quickActions.map((action) => (
+      {/* Quick Actions - Streaming Code Actions */}
+      <div className="flex flex-wrap gap-2 p-2 border-b">
+        {quickActions.map((qa) => (
           <Button
-            key={action.label}
-            variant="outline"
+            key={qa.label}
+            variant={activeCodeAction === qa.action ? 'default' : 'outline'}
             size="sm"
             className="text-xs"
-            onClick={() => setInput(action.prompt)}
-            disabled={isStreaming}
+            onClick={() => handleCodeAction(qa.action)}
+            disabled={isStreaming || isCodeActionStreaming}
+            data-testid={`code-action-${qa.action}`}
           >
-            <action.icon className="h-3 w-3 mr-1" />
-            {action.label}
+            {activeCodeAction === qa.action ? (
+              <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+            ) : (
+              <qa.icon className="h-3 w-3 mr-1" />
+            )}
+            {qa.label}
           </Button>
         ))}
+        {isCodeActionStreaming && (
+          <Button
+            variant="destructive"
+            size="sm"
+            className="text-xs"
+            onClick={stopCodeActionStreaming}
+            data-testid="stop-code-action"
+          >
+            <X className="h-3 w-3 mr-1" />
+            Stop
+          </Button>
+        )}
+        {selectedCode && (
+          <Badge variant="secondary" className="ml-auto text-xs">
+            {selectedCode.length} chars selected
+          </Badge>
+        )}
       </div>
 
       {/* Messages */}
@@ -352,6 +478,25 @@ export function AIAgentPanel({ projectId, onClose }: AIAgentPanelProps) {
               </div>
               <div className="max-w-[80%] rounded-lg px-3 py-2 bg-muted dark:bg-muted">
                 <p className="text-sm whitespace-pre-wrap">{currentStreamMessage}</p>
+              </div>
+            </div>
+          )}
+          
+          {isCodeActionStreaming && codeActionContent && (
+            <div className="flex gap-3 justify-start" data-testid="streaming-code-action">
+              <div className="h-8 w-8 rounded-full bg-status-warning/10 flex items-center justify-center flex-shrink-0">
+                <Loader2 className="h-4 w-4 text-status-warning animate-spin" />
+              </div>
+              <div className="max-w-[80%] rounded-lg px-3 py-2 bg-muted dark:bg-muted">
+                <div className="flex items-center gap-2 mb-2">
+                  <Badge variant="secondary" className="text-xs">
+                    {activeCodeAction}
+                  </Badge>
+                  <span className="text-xs text-muted-foreground animate-pulse">
+                    Streaming...
+                  </span>
+                </div>
+                <p className="text-sm whitespace-pre-wrap font-mono">{codeActionContent}<span className="animate-pulse">▌</span></p>
               </div>
             </div>
           )}
