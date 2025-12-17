@@ -52,7 +52,7 @@ export function ConnectionStatusProvider({ children }: { children: ReactNode }) 
       
       clearTimeout(timeoutId);
       return response.ok;
-    } catch {
+    } catch { /* Health check - expected to fail when offline or during reconnection */
       return false;
     }
   }, []);

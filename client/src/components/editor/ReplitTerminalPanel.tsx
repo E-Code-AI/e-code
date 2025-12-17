@@ -127,7 +127,7 @@ export function ReplitTerminalPanel({ projectId, className }: ReplitTerminalPane
             default:
               xtermRef.current.write(message.data || event.data);
           }
-        } catch {
+        } catch { /* Raw terminal data - expected when message is not JSON */
           xtermRef.current.write(event.data);
         }
       };
