@@ -6,14 +6,19 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
+  Alert
 } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { RootStackParamList } from '../navigation/types';
 import { Project, User } from '../types';
 import { getProjects } from '../services/api';
+import { SwipeableRow, swipeActions } from '../components/SwipeableRow';
+import { haptics } from '../services/haptics';
+import { mobileColors } from '../../../shared/theme/mobile-theme';
 
 type HomeScreenProps = NativeStackScreenProps<RootStackParamList, 'Home'> & {
   token: string;
@@ -90,32 +95,72 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, token, user, onLogo
     }
   }, [fetchProjects]);
 
+  const handleOpenFiles = useCallback((project: Project) => {
+    haptics.light();
+    navigation.navigate('FileManager', { projectId: project.id, token });
+  }, [navigation, token]);
+
+  const handleOpenSettings = useCallback((project: Project) => {
+    haptics.light();
+    Alert.alert(
+      project.name,
+      'Project settings',
+      [
+        { text: 'Open Editor', onPress: () => navigation.navigate('Agent', { projectId: project.id, projectName: project.name }) },
+        { text: 'File Manager', onPress: () => handleOpenFiles(project) },
+        { text: 'Cancel', style: 'cancel' },
+      ]
+    );
+  }, [navigation, handleOpenFiles]);
+
   const renderProject = useCallback(
     ({ item }: { item: Project }) => (
-      <TouchableOpacity
-        style={styles.projectCard}
-        onPress={() => navigation.navigate('Agent', { projectId: item.id, projectName: item.name })}
+      <SwipeableRow
+        leftActions={[{
+          text: 'Files',
+          icon: '📁',
+          color: mobileColors.info,
+          onPress: () => handleOpenFiles(item),
+          testId: `swipe-files-${item.id}`,
+        }]}
+        rightActions={[{
+          text: 'More',
+          icon: '⚙️',
+          color: mobileColors.secondary,
+          textColor: mobileColors.text,
+          onPress: () => handleOpenSettings(item),
+          testId: `swipe-settings-${item.id}`,
+        }]}
       >
-        <View style={styles.cardHeader}>
-          <Text style={styles.projectName}>{item.name}</Text>
-          <View style={styles.languageBadge}>
-            <Text style={styles.languageText}>{(item.language ?? 'Unknown').toUpperCase()}</Text>
+        <TouchableOpacity
+          style={styles.projectCard}
+          onPress={() => {
+            haptics.light();
+            navigation.navigate('Agent', { projectId: item.id, projectName: item.name });
+          }}
+          data-testid={`project-card-${item.id}`}
+        >
+          <View style={styles.cardHeader}>
+            <Text style={styles.projectName}>{item.name}</Text>
+            <View style={styles.languageBadge}>
+              <Text style={styles.languageText}>{(item.language ?? 'Unknown').toUpperCase()}</Text>
+            </View>
           </View>
-        </View>
-        {item.description ? (
-          <Text style={styles.projectDescription}>{item.description}</Text>
-        ) : null}
-        <View style={styles.cardFooter}>
-          <Text style={styles.metaText}>Updated {formatUpdatedAt(item.updatedAt)}</Text>
-          {item.stats ? (
-            <Text style={styles.metaText}>
-              {(item.stats.views ?? 0).toLocaleString()} views · {(item.stats.forks ?? 0)} forks
-            </Text>
+          {item.description ? (
+            <Text style={styles.projectDescription}>{item.description}</Text>
           ) : null}
-        </View>
-      </TouchableOpacity>
+          <View style={styles.cardFooter}>
+            <Text style={styles.metaText}>Updated {formatUpdatedAt(item.updatedAt)}</Text>
+            {item.stats ? (
+              <Text style={styles.metaText}>
+                {(item.stats.views ?? 0).toLocaleString()} views · {(item.stats.forks ?? 0)} forks
+              </Text>
+            ) : null}
+          </View>
+        </TouchableOpacity>
+      </SwipeableRow>
     ),
-    [navigation]
+    [navigation, handleOpenFiles, handleOpenSettings]
   );
 
   const listEmptyComponent = useMemo(() => {
@@ -144,7 +189,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, token, user, onLogo
   }, [error, fetchProjects, loading]);
 
   return (
-    <View style={styles.container}>
+    <GestureHandlerRootView style={styles.container}>
       {loading ? (
         <View style={styles.loader}>
           <ActivityIndicator size="large" color="#38bdf8" />
@@ -158,7 +203,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, token, user, onLogo
         contentContainerStyle={projects.length === 0 ? styles.emptyContainer : styles.listContent}
         ListEmptyComponent={listEmptyComponent}
       />
-    </View>
+    </GestureHandlerRootView>
   );
 };
 
