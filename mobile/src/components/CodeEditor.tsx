@@ -201,6 +201,13 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
   );
 };
 
+// Platform-specific monospace fonts for optimal code readability
+const monoFontFamily = Platform.select({
+  ios: 'Menlo',
+  android: 'monospace',
+  default: 'monospace',
+});
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -230,7 +237,7 @@ const styles = StyleSheet.create({
   settingsButtonText: {
     color: mobileColors.text,
     fontSize: mobileTypography.fontSize.sm,
-    fontFamily: mobileTypography.fontFamily.mono,
+    fontFamily: monoFontFamily,
   },
   settingsSeparator: {
     width: 1,
@@ -241,7 +248,7 @@ const styles = StyleSheet.create({
   languageBadge: {
     color: mobileColors.primary,
     fontSize: mobileTypography.fontSize.xs,
-    fontFamily: mobileTypography.fontFamily.mono,
+    fontFamily: monoFontFamily,
     backgroundColor: mobileColors.primary + '20',
     paddingHorizontal: mobileSpacing.md,
     paddingVertical: mobileSpacing.xs,
@@ -261,7 +268,7 @@ const styles = StyleSheet.create({
   },
   lineNumber: {
     color: mobileColors.textMuted,
-    fontFamily: mobileTypography.fontFamily.mono,
+    fontFamily: monoFontFamily,
     textAlign: 'right',
     lineHeight: 21,
     minWidth: 28,
@@ -272,7 +279,7 @@ const styles = StyleSheet.create({
   codeInput: {
     flex: 1,
     color: mobileColors.text,
-    fontFamily: mobileTypography.fontFamily.mono,
+    fontFamily: monoFontFamily,
     padding: mobileSpacing.md,
     lineHeight: 21,
   },
@@ -289,7 +296,7 @@ const styles = StyleSheet.create({
   statusText: {
     color: mobileColors.textMuted,
     fontSize: mobileTypography.fontSize.xs,
-    fontFamily: mobileTypography.fontFamily.mono,
+    fontFamily: monoFontFamily,
   },
   saveButton: {
     backgroundColor: mobileColors.primary,

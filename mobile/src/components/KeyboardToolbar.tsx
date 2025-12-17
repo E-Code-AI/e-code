@@ -554,7 +554,7 @@ const styles = StyleSheet.create({
   toolbarButtonText: {
     color: mobileColors.text,
     fontSize: mobileTypography.fontSize.sm,
-    fontFamily: mobileTypography.fontFamily.mono,
+    fontFamily: Platform.select({ ios: 'Menlo', android: 'monospace' }),
     fontWeight: mobileTypography.fontWeight.medium,
   },
   toolbarButtonTextDisabled: {

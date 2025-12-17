@@ -658,7 +658,7 @@ const styles = StyleSheet.create({
     minHeight: mobileSpacing['3xl'] * 7.5,
     color: mobileColors.text,
     fontSize: mobileTypography.fontSize.sm,
-    fontFamily: mobileTypography.fontFamily.mono,
+    fontFamily: Platform.select({ ios: 'Menlo', android: 'monospace' }),
     padding: mobileSpacing.lg,
   },
   actions: {
