@@ -1,6 +1,7 @@
 import { KubeConfig, CoreV1Api, AppsV1Api, NetworkingV1Api } from '@kubernetes/client-node';
 import { v4 as uuidv4 } from 'uuid';
 import { createLogger } from '../utils/logger';
+import { isKubernetesEnabled } from '../config/deployment-mode';
 
 const logger = createLogger('kubernetes-orchestrator');
 
@@ -22,7 +23,14 @@ export class KubernetesOrchestrator {
   private networkApi: NetworkingV1Api;
   private kubeConfig: KubeConfig;
 
+  private initialized = false;
+
   constructor() {
+    if (!isKubernetesEnabled()) {
+      logger.info('Kubernetes orchestrator disabled in single-VM mode');
+      return;
+    }
+
     this.kubeConfig = new KubeConfig();
     
     // Load from cluster config when running in GKE
@@ -36,12 +44,18 @@ export class KubernetesOrchestrator {
     this.k8sApi = this.kubeConfig.makeApiClient(CoreV1Api);
     this.appsApi = this.kubeConfig.makeApiClient(AppsV1Api);
     this.networkApi = this.kubeConfig.makeApiClient(NetworkingV1Api);
+    this.initialized = true;
   }
 
   /**
    * Create an isolated environment for a user's project
    */
   async createProjectEnvironment(userId: string, projectId: string): Promise<ProjectEnvironment> {
+    if (!isKubernetesEnabled() || !this.initialized) {
+      logger.warn('K8s project environment requested but K8s is disabled in single-VM mode');
+      throw new Error('Kubernetes orchestration is disabled in single-VM mode');
+    }
+
     const namespace = `project-${userId}-${projectId}`;
     const podName = `app-${projectId}`;
     

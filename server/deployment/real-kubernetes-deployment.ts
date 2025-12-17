@@ -8,6 +8,7 @@ import * as crypto from 'crypto';
 import { createLogger } from '../utils/logger';
 import { containerBuilder } from './container-builder';
 import { storage } from '../storage';
+import { isKubernetesEnabled } from '../config/deployment-mode';
 
 const logger = createLogger('real-kubernetes-deployment');
 
@@ -72,6 +73,10 @@ export class RealKubernetesDeployment {
   }> = new Map();
 
   constructor() {
+    if (!isKubernetesEnabled()) {
+      logger.info('K8s deployment disabled in single-VM mode - skipping client initialization');
+      return;
+    }
     this.initializeKubernetesClients();
   }
 
@@ -107,6 +112,18 @@ export class RealKubernetesDeployment {
   }
 
   async deployToKubernetes(config: K8sDeploymentConfig): Promise<K8sDeploymentResult> {
+    if (!isKubernetesEnabled()) {
+      logger.warn('K8s deployment requested but K8s is disabled in single-VM mode');
+      return {
+        deploymentId: crypto.randomUUID(),
+        status: 'failed',
+        deployments: [],
+        services: [],
+        ingresses: [],
+        error: 'Kubernetes deployment is disabled in single-VM mode'
+      };
+    }
+
     const deploymentId = crypto.randomUUID();
     const result: K8sDeploymentResult = {
       deploymentId,
