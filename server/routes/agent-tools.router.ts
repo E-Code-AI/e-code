@@ -8,7 +8,8 @@ import {
   testingSessionRecordings,
   agentMessages,
   aiConversations,
-  projects
+  projects,
+  webSearchHistory
 } from '@shared/schema';
 import { eq, desc, and, sql } from 'drizzle-orm';
 import crypto from 'crypto';
@@ -40,14 +41,36 @@ export default function createAgentToolsRouter(): Router {
     try {
       const userId = req.user!.id;
       const limit = parseInt(req.query.limit as string) || 20;
+      const conversationId = req.query.conversationId ? parseInt(req.query.conversationId as string) : undefined;
 
-      // Search history is tracked in-memory per session for privacy
-      // Future: Implement persistent search_history table for enterprise users
-      // This endpoint returns empty by design - searches are ephemeral
+      // Récupérer l'historique de recherche réel depuis la base de données
+      let query = db.select({
+        id: webSearchHistory.id,
+        conversationId: webSearchHistory.conversationId,
+        query: webSearchHistory.query,
+        results: webSearchHistory.results,
+        selectedUrls: webSearchHistory.selectedUrls,
+        timestamp: webSearchHistory.timestamp,
+      }).from(webSearchHistory).$dynamic();
+
+      if (conversationId) {
+        query = query.where(eq(webSearchHistory.conversationId, conversationId));
+      }
+
+      const searches = await query
+        .orderBy(desc(webSearchHistory.timestamp))
+        .limit(limit);
+
       res.json({
-        searches: [],
-        count: 0,
-        message: 'Search history is ephemeral by design for user privacy'
+        searches: searches.map(s => ({
+          id: s.id,
+          conversationId: s.conversationId,
+          query: s.query,
+          resultCount: Array.isArray(s.results) ? (s.results as any[]).length : 0,
+          selectedUrls: s.selectedUrls || [],
+          timestamp: s.timestamp,
+        })),
+        count: searches.length,
       });
     } catch (error: any) {
       logger.error('Error fetching search history:', error);
@@ -62,7 +85,7 @@ export default function createAgentToolsRouter(): Router {
   router.post('/tools/web-search', async (req, res) => {
     try {
       const userId = req.user!.id;
-      const { query, maxResults = 10, searchType = 'web' } = req.body;
+      const { query, maxResults = 10, searchType = 'web', conversationId } = req.body;
 
       if (!query || typeof query !== 'string') {
         return res.status(400).json({ error: 'Query is required' });
@@ -74,6 +97,21 @@ export default function createAgentToolsRouter(): Router {
         maxResults,
         searchType
       });
+
+      // Sauvegarder dans l'historique si conversationId fourni
+      if (conversationId && typeof conversationId === 'number') {
+        try {
+          await db.insert(webSearchHistory).values({
+            conversationId,
+            query,
+            results: searchResult.results || [],
+            selectedUrls: [],
+          });
+          logger.info(`Search history saved for conversation ${conversationId}`);
+        } catch (historyError) {
+          logger.warn('Failed to save search history:', historyError);
+        }
+      }
 
       res.json(searchResult);
     } catch (error: any) {
@@ -676,7 +714,7 @@ export default function createAgentToolsRouter(): Router {
       }
       
       const workflows = await query
-        .orderBy(desc(agentWorkflows.createdAt))
+        .orderBy(desc(agentWorkflows.startedAt))
         .limit(parseInt(limit as string));
       
       res.json({
@@ -691,7 +729,6 @@ export default function createAgentToolsRouter(): Router {
           error: w.error,
           sessionId: w.sessionId,
           projectId: w.projectId,
-          createdAt: w.createdAt,
           startedAt: w.startedAt,
           completedAt: w.completedAt,
           metadata: w.metadata
@@ -750,7 +787,6 @@ export default function createAgentToolsRouter(): Router {
           error: workflow.error,
           sessionId: workflow.sessionId,
           projectId: workflow.projectId,
-          createdAt: workflow.createdAt,
           startedAt: workflow.startedAt,
           completedAt: workflow.completedAt,
           duration: workflow.completedAt && workflow.startedAt
