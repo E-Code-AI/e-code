@@ -3,6 +3,7 @@ import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 // Web Speech API - use 'any' since TypeScript doesn't have built-in types for this browser API
 type SpeechRecognitionInstance = any;
 import { useQuery } from '@tanstack/react-query';
+import { devLog } from '@/lib/dev-logger';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -343,8 +344,8 @@ export function ReplitAgentPanelV3({
   isBootstrapping = false,
   bootstrapToken
 }: ReplitAgentPanelV3Props) {
-  // DEBUG: Log component render
-  console.log('[ReplitAgentPanelV3] Component render:', {
+  // DEBUG: Log component render (dev only)
+  devLog('[ReplitAgentPanelV3] Component render:', {
     projectId,
     mode,
     isBootstrapping,
@@ -416,8 +417,8 @@ export function ReplitAgentPanelV3({
     timestamp: new Date()
   }];
   
-  // DEBUG: Log message count for debugging
-  console.log('[ReplitAgentPanelV3] 📊 Messages:', {
+  // DEBUG: Log message count for debugging (dev only)
+  devLog('[ReplitAgentPanelV3] 📊 Messages:', {
     displayConversationId,
     effectiveConversationId,
     conversationId,
@@ -582,7 +583,7 @@ export function ReplitAgentPanelV3({
         
         // Only migrate if we have a valid real conversationId (not null/undefined)
         if (realConversationId && tempConversationId && realConversationId !== tempConversationId) {
-          console.log('[ReplitAgentPanelV3] Migrating messages from temp', tempConversationId, 'to real', realConversationId);
+          devLog('[ReplitAgentPanelV3] Migrating messages from temp', tempConversationId, 'to real', realConversationId);
           migrateMessages(tempConversationId, realConversationId);
         }
 

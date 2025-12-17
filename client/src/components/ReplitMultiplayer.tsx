@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -7,6 +7,7 @@ import {
   Users, MousePointer, Eye, Edit3, Code, 
   Cursor, Activity, Clock, Zap
 } from 'lucide-react';
+import { ResilientWebSocket } from '@/lib/websocket-resilience';
 
 interface UserCursor {
   id: string;
@@ -42,48 +43,10 @@ export function ReplitMultiplayer({ projectId }: ReplitMultiplayerProps) {
   const [users, setUsers] = useState<RealtimeUser[]>([]);
   const [cursors, setCursors] = useState<UserCursor[]>([]);
   const [isConnected, setIsConnected] = useState(false);
-  const wsRef = useRef<WebSocket | null>(null);
+  const [connectionState, setConnectionState] = useState<string>('disconnected');
+  const wsRef = useRef<ResilientWebSocket | null>(null);
 
-  useEffect(() => {
-    // Initialize WebSocket connection for real-time collaboration
-    const connectWebSocket = () => {
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const ws = new WebSocket(`${protocol}//${window.location.host}/ws?projectId=${projectId}`);
-      
-      ws.onopen = () => {
-        setIsConnected(true);
-      };
-
-      ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        handleMultiplayerEvent(data);
-      };
-
-      ws.onclose = () => {
-        setIsConnected(false);
-        // Reconnect after 3 seconds
-        setTimeout(connectWebSocket, 3000);
-      };
-
-      ws.onerror = (error) => {
-        console.error('Multiplayer WebSocket error:', error);
-        setIsConnected(false);
-      };
-
-      wsRef.current = ws;
-    };
-
-    connectWebSocket();
-
-    // Cleanup on unmount
-    return () => {
-      if (wsRef.current) {
-        wsRef.current.close();
-      }
-    };
-  }, [projectId]);
-
-  const handleMultiplayerEvent = (data: any) => {
+  const handleMultiplayerEvent = useCallback((data: any) => {
     switch (data.type) {
       case 'user-joined':
         setUsers(prev => [...prev.filter(u => u.id !== data.user.id), data.user]);
@@ -113,10 +76,49 @@ export function ReplitMultiplayer({ projectId }: ReplitMultiplayerProps) {
         setUsers(data.users);
         break;
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const url = `${protocol}//${window.location.host}/ws?projectId=${projectId}`;
+    
+    const resilientWs = new ResilientWebSocket({
+      url,
+      maxReconnectAttempts: 15,
+      baseDelay: 1000,
+      maxDelay: 30000,
+      jitterFactor: 0.25,
+      enableHeartbeat: true,
+      heartbeatInterval: 30000,
+      heartbeatTimeout: 10000,
+      circuitBreakerThreshold: 5,
+      circuitBreakerResetTime: 45000,
+    });
+
+    resilientWs.onStateChange((event) => {
+      setConnectionState(event.state);
+      setIsConnected(event.state === 'connected');
+    });
+
+    resilientWs.onMessage((event) => {
+      try {
+        const data = JSON.parse(event.data);
+        handleMultiplayerEvent(data);
+      } catch {
+        // Ignore non-JSON messages (e.g., heartbeat responses)
+      }
+    });
+
+    resilientWs.connect();
+    wsRef.current = resilientWs;
+
+    return () => {
+      resilientWs.destroy();
+    };
+  }, [projectId, handleMultiplayerEvent]);
 
   const sendCursorPosition = (x: number, y: number, file?: string, line?: number) => {
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+    if (wsRef.current && wsRef.current.getState() === 'connected') {
       wsRef.current.send(JSON.stringify({
         type: 'cursor-move',
         cursor: { x, y, file, line }
@@ -146,9 +148,18 @@ export function ReplitMultiplayer({ projectId }: ReplitMultiplayerProps) {
     <div className="space-y-4">
       {/* Connection Status */}
       <div className="flex items-center gap-2 p-2 bg-muted rounded-lg">
-        <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
+        <div className={`w-2 h-2 rounded-full ${
+          isConnected ? 'bg-green-500' : 
+          connectionState === 'reconnecting' ? 'bg-yellow-500 animate-pulse' : 
+          connectionState === 'failed' || connectionState === 'circuit_open' ? 'bg-red-500' : 
+          'bg-gray-400'
+        }`} />
         <span className="text-sm">
-          {isConnected ? 'Connected to multiplayer session' : 'Reconnecting...'}
+          {isConnected ? 'Connected to multiplayer session' : 
+           connectionState === 'reconnecting' ? 'Reconnecting...' :
+           connectionState === 'failed' ? 'Connection failed - will retry' :
+           connectionState === 'circuit_open' ? 'Too many failures - paused' :
+           'Connecting...'}
         </span>
         {isConnected && users.length > 0 && (
           <Badge variant="outline" className="ml-auto">

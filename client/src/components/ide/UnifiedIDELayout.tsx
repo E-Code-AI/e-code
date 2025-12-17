@@ -55,6 +55,7 @@ const ReplitMonacoEditor = lazy(() => import('@/components/editor/ReplitMonacoEd
 const ReplitTerminalPanel = lazy(() => import('@/components/editor/ReplitTerminalPanel').then(mod => ({ default: mod.ReplitTerminalPanel })));
 const ReplitDeploymentPanel = lazy(() => import('@/components/ide/ReplitDeploymentPanel').then(mod => ({ default: mod.ReplitDeploymentPanel })));
 const ReplitAgentPanelV3 = lazy(() => import('@/components/ai/ReplitAgentPanelV3').then(mod => ({ default: mod.ReplitAgentPanelV3 })));
+import { AgentPanelErrorBoundary } from '@/components/ai/AgentPanelErrorBoundary';
 const ResponsiveWebPreview = lazy(() => import('@/components/editor/ResponsiveWebPreview').then(mod => ({ default: mod.ResponsiveWebPreview })));
 const AgentActionsPanel = lazy(() => import('@/components/ide/AgentActionsPanel').then(mod => ({ default: mod.AgentActionsPanel })));
 const ToolsPanel = lazy(() => import('@/components/ide/ToolsPanel').then(mod => ({ default: mod.ToolsPanel })));
@@ -367,14 +368,16 @@ function UnifiedIDELayout({
       case 'agent':
         return (
           <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Agent..." /></div>}>
-            <ReplitAgentPanelV3
-              projectId={projectId}
-              mode="mobile"
-              agentToolsSettings={agentToolsSettings}
-              onAgentToolsSettingsChange={setAgentToolsSettings}
-              isBootstrapping={!!bootstrapToken}
-              bootstrapToken={bootstrapToken}
-            />
+            <AgentPanelErrorBoundary>
+              <ReplitAgentPanelV3
+                projectId={projectId}
+                mode="mobile"
+                agentToolsSettings={agentToolsSettings}
+                onAgentToolsSettingsChange={setAgentToolsSettings}
+                isBootstrapping={!!bootstrapToken}
+                bootstrapToken={bootstrapToken}
+              />
+            </AgentPanelErrorBoundary>
           </Suspense>
         );
       case 'deploy':
@@ -417,14 +420,16 @@ function UnifiedIDELayout({
       case 'agent':
         return (
           <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" /></div>}>
-            <ReplitAgentPanelV3
-              projectId={projectId}
-              mode="tablet"
-              agentToolsSettings={agentToolsSettings}
-              onAgentToolsSettingsChange={setAgentToolsSettings}
-              isBootstrapping={!!bootstrapToken}
-              bootstrapToken={bootstrapToken}
-            />
+            <AgentPanelErrorBoundary>
+              <ReplitAgentPanelV3
+                projectId={projectId}
+                mode="tablet"
+                agentToolsSettings={agentToolsSettings}
+                onAgentToolsSettingsChange={setAgentToolsSettings}
+                isBootstrapping={!!bootstrapToken}
+                bootstrapToken={bootstrapToken}
+              />
+            </AgentPanelErrorBoundary>
           </Suspense>
         );
       case 'more':
