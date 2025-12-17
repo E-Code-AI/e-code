@@ -53,6 +53,15 @@ Zero-dependency animation system replacing framer-motion hooks for 60fps GPU-acc
 - **Memory safety**: All hooks properly clean up RAF subscriptions and WAAPI animations on unmount
 - **Import pattern**: `import { useNativeMotionValue, useSpringValue, usePanGesture, createPanHandlers } from '@/lib/native-motion'`
 
+### Secure Code Execution (Docker Isolation)
+Enterprise-grade sandboxed code execution for user-submitted code:
+- **DockerExecutor** (`server/docker-executor.ts`): Secure container-based execution replacing insecure simple-executor
+- **Security features**: Ephemeral containers (`--rm`), non-root user (`--user 1000:1000`), read-only root filesystem, network isolation (`--network=none`)
+- **Resource limits**: 256MB memory, 0.5 CPU cores, 100 PIDs max, 30-second timeout with automatic kill
+- **Capability dropping**: `--cap-drop=ALL`, `--security-opt=no-new-privileges:true`
+- **Supported languages**: Node.js (`node:20-alpine`), Python (`python:3.11-alpine`)
+- **DEPRECATED**: `server/simple-executor.ts` - INSECURE, runs code on host without sandboxing. DO NOT USE for untrusted code.
+
 ### Memory Bank System (Replit-Identical)
 Auto-initializing context storage in `.ecode/memory-bank/` for each project:
 - **AI-Generated Content**: When a workspace is created, Claude generates 5 contextual markdown files based on the user's prompt

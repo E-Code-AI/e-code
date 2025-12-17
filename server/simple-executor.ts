@@ -1,6 +1,22 @@
 /**
- * Simple executor for running projects without Docker
- * This is a lightweight alternative that runs projects directly on the host
+ * @deprecated SECURITY WARNING: This executor is INSECURE and should NOT be used in production.
+ * 
+ * CRITICAL VULNERABILITY: This file runs user code directly on the host via child_process.spawn
+ * without any sandboxing. A malicious user can execute arbitrary commands like:
+ * - fs.unlinkSync('/etc/passwd')
+ * - require('child_process').execSync('rm -rf /')
+ * 
+ * USE INSTEAD: server/docker-executor.ts
+ * The DockerExecutor provides proper container isolation with:
+ * - Ephemeral containers (--rm)
+ * - Non-root user (--user 1000:1000)
+ * - Read-only root filesystem
+ * - Resource limits (256MB memory, 0.5 CPU, 100 PIDs)
+ * - Network isolation (--network=none)
+ * - 30-second timeout with automatic kill
+ * - Capability dropping (--cap-drop=ALL)
+ * 
+ * This file is kept for reference only. DO NOT USE FOR UNTRUSTED USER CODE.
  */
 
 import { spawn, ChildProcess } from 'child_process';
