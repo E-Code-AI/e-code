@@ -1,0 +1,131 @@
+# =============================================================================
+# POSTGRESQL BACKUP CRONJOB
+# =============================================================================
+# Automated daily pg_dump backups to Google Cloud Storage
+# 
+# Prerequisites:
+#   1. Create GCS bucket for backups
+#   2. Create service account with Storage Object Creator role
+#   3. Create K8s secret with service account JSON key
+#
+# Retention: 30 days (configure lifecycle policy on GCS bucket)
+# =============================================================================
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: postgres-backup
+  namespace: e-code-platform
+  labels:
+    app: postgres
+    component: backup
+spec:
+  schedule: "0 2 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 3600
+      template:
+        metadata:
+          labels:
+            app: postgres-backup
+        spec:
+          restartPolicy: OnFailure
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+          containers:
+          - name: backup
+            image: postgres:15-alpine
+            imagePullPolicy: IfNotPresent
+            command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+              BACKUP_FILE="/tmp/e-code-backup-${TIMESTAMP}.sql.gz"
+              
+              echo "Starting PostgreSQL backup at $(date)"
+              
+              # Create backup
+              PGPASSWORD=$POSTGRES_PASSWORD pg_dump \
+                -h postgres-service \
+                -U $POSTGRES_USER \
+                -d $POSTGRES_DB \
+                --format=custom \
+                --compress=9 \
+                --no-owner \
+                --no-privileges \
+                > "${BACKUP_FILE}"
+              
+              echo "Backup created: ${BACKUP_FILE}"
+              
+              # Upload to GCS (requires gcloud auth)
+              # Uncomment when GCS is configured:
+              # gcloud storage cp "${BACKUP_FILE}" "gs://${GCS_BUCKET}/backups/"
+              
+              # Alternative: Copy to mounted PVC
+              cp "${BACKUP_FILE}" /backups/
+              
+              # Cleanup old local backups (keep last 7)
+              ls -t /backups/*.sql.gz 2>/dev/null | tail -n +8 | xargs -r rm
+              
+              echo "Backup completed successfully at $(date)"
+            env:
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: e-code-secrets
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: e-code-secrets
+                  key: POSTGRES_PASSWORD
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: e-code-config
+                  key: POSTGRES_DB
+            - name: GCS_BUCKET
+              value: "e-code-backups"
+            volumeMounts:
+            - name: backup-storage
+              mountPath: /backups
+            resources:
+              requests:
+                memory: "256Mi"
+                cpu: "100m"
+              limits:
+                memory: "512Mi"
+                cpu: "500m"
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: false
+              capabilities:
+                drop:
+                  - ALL
+          volumes:
+          - name: backup-storage
+            persistentVolumeClaim:
+              claimName: postgres-backup-pvc
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-backup-pvc
+  namespace: e-code-platform
+  labels:
+    app: postgres
+    component: backup
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+  storageClassName: standard-rwo

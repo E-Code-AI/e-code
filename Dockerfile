@@ -1,4 +1,7 @@
-# Build stage
+# =============================================================================
+# E-CODE MULTI-STAGE DOCKERFILE
+# =============================================================================
+# Stage 1: Builder - Install ALL dependencies and build
 FROM node:20-alpine AS builder
 WORKDIR /app
 COPY package*.json ./
@@ -6,20 +9,22 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
-# Production stage
+# Stage 2: Production - Install only production dependencies
 FROM node:20-alpine AS production
 WORKDIR /app
 
 # Install PostgreSQL client for health checks and Docker CLI for code execution
 RUN apk add --no-cache postgresql-client docker-cli
 
-# Create non-root user
+# Create non-root user for security
 RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001
 
-# Copy built application
+# Copy package files and install production-only dependencies
+COPY --chown=nodejs:nodejs package*.json ./
+RUN npm ci --omit=dev && npm cache clean --force
+
+# Copy built application from builder stage
 COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
-COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
-COPY --from=builder --chown=nodejs:nodejs /app/package.json ./
 COPY --from=builder --chown=nodejs:nodejs /app/drizzle.config.ts ./
 COPY --from=builder --chown=nodejs:nodejs /app/shared ./shared
 
@@ -29,6 +34,10 @@ RUN chmod +x docker-entrypoint.sh
 
 USER nodejs
 EXPOSE 5000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:5000/api/health || exit 1
 
 # Run migrations then start app
 ENTRYPOINT ["./docker-entrypoint.sh"]
