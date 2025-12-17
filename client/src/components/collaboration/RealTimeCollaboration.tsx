@@ -291,29 +291,88 @@ export function RealTimeCollaboration({
     };
   }, [editor]);
 
-  // Handle chat message sending
-  const sendMessage = () => {
+  // 8.8 FIX: Load persisted chat messages on mount
+  useEffect(() => {
+    const loadPersistedMessages = async () => {
+      try {
+        const response = await fetch(`/api/collaboration/${projectId}/messages?limit=100`, {
+          credentials: 'include',
+        });
+        if (response.ok) {
+          const messages = await response.json();
+          const formattedMessages: ChatMessage[] = messages.map((msg: any) => ({
+            id: msg.id,
+            userId: String(msg.userId),
+            username: msg.username,
+            message: msg.content,
+            timestamp: new Date(msg.createdAt),
+            type: msg.type || 'text',
+          }));
+          setChatMessages(formattedMessages);
+        }
+      } catch (error) {
+        console.warn('[Collaboration] Failed to load chat history:', error);
+      }
+    };
+
+    if (projectId) {
+      loadPersistedMessages();
+    }
+  }, [projectId]);
+
+  // 8.8 FIX: Handle chat message sending with persistence
+  const sendMessage = async () => {
     if (!messageInput.trim()) return;
 
-    const message: ChatMessage = {
-      id: Date.now().toString(),
+    const messageContent = messageInput.trim();
+    setMessageInput(''); // Clear immediately for UX
+
+    const tempMessage: ChatMessage = {
+      id: `temp-${Date.now()}`,
       userId: String(user?.id || 'anonymous'),
       username: user?.username || 'Anonymous',
-      message: messageInput,
+      message: messageContent,
       timestamp: new Date(),
       type: 'text',
     };
 
-    // Send via awareness
-    if (awarenessRef.current) {
-      awarenessRef.current.setLocalStateField('chat', message);
+    // Optimistically add to UI
+    setChatMessages(prev => [...prev, tempMessage]);
+
+    try {
+      // 8.8 FIX: Persist message via API
+      const response = await fetch(`/api/collaboration/${projectId}/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          content: messageContent,
+          type: 'text',
+        }),
+      });
+
+      if (response.ok) {
+        const savedMessage = await response.json();
+        // Update temp message with real ID
+        setChatMessages(prev => prev.map(msg =>
+          msg.id === tempMessage.id
+            ? { ...msg, id: savedMessage.id }
+            : msg
+        ));
+      } else {
+        console.warn('[Collaboration] Failed to persist chat message');
+      }
+    } catch (error) {
+      console.error('[Collaboration] Chat persistence error:', error);
     }
 
-    setChatMessages(prev => [...prev, message]);
-    setMessageInput('');
+    // Also send via awareness for real-time sync (backup)
+    if (awarenessRef.current) {
+      awarenessRef.current.setLocalStateField('chat', tempMessage);
+    }
   };
 
-  // Listen for chat messages
+  // Listen for chat messages (both awareness and WebSocket-delivered)
   useEffect(() => {
     if (!awarenessRef.current) return;
 
@@ -322,7 +381,13 @@ export function RealTimeCollaboration({
       states.forEach(([clientId, state]) => {
         if (state.chat && clientId !== awarenessRef.current.clientID) {
           setChatMessages(prev => {
-            const exists = prev.some(msg => msg.id === state.chat.id);
+            // 8.8 FIX: Deduplicate by ID (handles both temp and real IDs)
+            const exists = prev.some(msg => 
+              msg.id === state.chat.id || 
+              (msg.message === state.chat.message && 
+               msg.userId === state.chat.userId &&
+               Math.abs(new Date(msg.timestamp).getTime() - new Date(state.chat.timestamp).getTime()) < 5000)
+            );
             if (!exists) {
               return [...prev, state.chat];
             }
