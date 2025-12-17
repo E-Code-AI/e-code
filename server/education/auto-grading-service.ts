@@ -6,9 +6,14 @@
 import { db } from '../db';
 import { assignments, submissions, projects } from '@shared/schema';
 import { eq, and } from 'drizzle-orm';
-import { SimpleCodeExecutor } from '../simple-executor';
+import { DockerExecutor } from '../execution/docker-executor';
 import * as path from 'path';
 import * as fs from 'fs';
+
+interface FileItem {
+  name: string;
+  content?: string;
+}
 
 interface TestCase {
   name: string;
@@ -39,10 +44,10 @@ interface TestResult {
 }
 
 export class AutoGradingService {
-  private executor: SimpleCodeExecutor;
+  private executor: DockerExecutor;
 
   constructor() {
-    this.executor = new SimpleCodeExecutor();
+    this.executor = new DockerExecutor();
   }
 
   async createAssignment(
@@ -59,15 +64,12 @@ export class AutoGradingService {
     } = {}
   ): Promise<any> {
     const [assignment] = await db.insert(assignments).values({
-      courseId,
       title,
       description,
+      courseId,
       dueDate: options.dueDate,
-      totalPoints: options.totalPoints || 100,
-      projectTemplateId: options.projectTemplateId,
-      testCases,
+      points: options.totalPoints || 100,
       rubric: options.rubric,
-      autoGradeEnabled: true,
       createdBy,
     }).returning();
 
@@ -139,7 +141,7 @@ export class AutoGradingService {
     const testResults: TestResult[] = [];
     let totalScore = 0;
 
-    const testCases = assignment.testCases as TestCase[];
+    const testCases = (assignment.rubric as { testCases?: TestCase[] })?.testCases || [];
     
     for (const testCase of testCases) {
       const result = await this.runTestCase(
@@ -158,7 +160,7 @@ export class AutoGradingService {
         project,
         assignment.rubric
       );
-      totalScore = Math.min(totalScore + rubricScore, assignment.totalPoints);
+      totalScore = Math.min(totalScore + rubricScore, assignment.points || 100);
     }
 
     // Generate feedback
@@ -171,8 +173,6 @@ export class AutoGradingService {
       .set({
         status: 'graded',
         autoGradeScore: Math.round(totalScore),
-        finalScore: Math.round(totalScore),
-        testResults,
         feedback,
         gradedAt: new Date(),
       })
@@ -181,7 +181,7 @@ export class AutoGradingService {
     return {
       submissionId,
       totalScore,
-      maxScore: assignment.totalPoints,
+      maxScore: assignment.points || 100,
       testResults,
       feedback,
       executionTime,
@@ -264,7 +264,7 @@ export class AutoGradingService {
 
     // Execute test
     const command = this.getTestCommand(language, testFileName);
-    const result = await this.executor.execute(
+    const result = await this.executor.executeCode(
       language,
       testCode,
       '',
@@ -300,9 +300,9 @@ export class AutoGradingService {
     }
 
     // Execute with input
-    const result = await this.executor.execute(
+    const result = await this.executor.executeCode(
       language,
-      mainFile.content,
+      mainFile.content || '',
       input
     );
 
@@ -322,21 +322,21 @@ export class AutoGradingService {
 
   private detectLanguage(project: any): string {
     // Detect language from project files
-    const files = project.files || [];
+    const files: FileItem[] = project.files || [];
     
-    if (files.some(f => f.name.endsWith('.py'))) return 'python';
-    if (files.some(f => f.name.endsWith('.js'))) return 'javascript';
-    if (files.some(f => f.name.endsWith('.java'))) return 'java';
-    if (files.some(f => f.name.endsWith('.cpp'))) return 'cpp';
-    if (files.some(f => f.name.endsWith('.c'))) return 'c';
-    if (files.some(f => f.name.endsWith('.rb'))) return 'ruby';
-    if (files.some(f => f.name.endsWith('.go'))) return 'go';
+    if (files.some((f: FileItem) => f.name.endsWith('.py'))) return 'python';
+    if (files.some((f: FileItem) => f.name.endsWith('.js'))) return 'javascript';
+    if (files.some((f: FileItem) => f.name.endsWith('.java'))) return 'java';
+    if (files.some((f: FileItem) => f.name.endsWith('.cpp'))) return 'cpp';
+    if (files.some((f: FileItem) => f.name.endsWith('.c'))) return 'c';
+    if (files.some((f: FileItem) => f.name.endsWith('.rb'))) return 'ruby';
+    if (files.some((f: FileItem) => f.name.endsWith('.go'))) return 'go';
     
     return 'python'; // Default
   }
 
   private getFileExtension(language: string): string {
-    const extensions = {
+    const extensions: Record<string, string> = {
       python: 'py',
       javascript: 'js',
       java: 'java',
@@ -349,8 +349,8 @@ export class AutoGradingService {
     return extensions[language] || 'txt';
   }
 
-  private getMainFile(project: any, language: string): any {
-    const mainFileNames = {
+  private getMainFile(project: any, language: string): FileItem | undefined {
+    const mainFileNames: Record<string, string[]> = {
       python: ['main.py', 'app.py', 'solution.py'],
       javascript: ['index.js', 'main.js', 'app.js', 'solution.js'],
       java: ['Main.java', 'Solution.java'],
@@ -361,19 +361,19 @@ export class AutoGradingService {
     };
 
     const possibleNames = mainFileNames[language] || [];
-    const files = project.files || [];
+    const files: FileItem[] = project.files || [];
 
     for (const name of possibleNames) {
-      const file = files.find(f => f.name === name);
+      const file = files.find((f: FileItem) => f.name === name);
       if (file) return file;
     }
 
     // Return first file of the language
-    return files.find(f => f.name.endsWith(`.${this.getFileExtension(language)}`));
+    return files.find((f: FileItem) => f.name.endsWith(`.${this.getFileExtension(language)}`));
   }
 
   private getTestCommand(language: string, testFile: string): string {
-    const commands = {
+    const commands: Record<string, string> = {
       python: `python -m pytest ${testFile}`,
       javascript: `node ${testFile}`,
       java: `javac ${testFile} && java ${testFile.replace('.java', '')}`,
@@ -423,7 +423,7 @@ export class AutoGradingService {
         score -= 10; // Unsafe code execution
       }
       
-      if (content.split('\n').some(line => line.length > 120)) {
+      if (content.split('\n').some((line: string) => line.length > 120)) {
         score -= 5; // Long lines
       }
       
@@ -440,7 +440,7 @@ export class AutoGradingService {
     const files = project.files || [];
 
     // Check for README
-    if (files.some(f => f.name.toLowerCase() === 'readme.md')) {
+    if (files.some((f: FileItem) => f.name.toLowerCase() === 'readme.md')) {
       score += 50;
     }
 
@@ -448,7 +448,7 @@ export class AutoGradingService {
     for (const file of files) {
       const content = file.content || '';
       const lines = content.split('\n');
-      const commentLines = lines.filter(line => 
+      const commentLines = lines.filter((line: string) => 
         line.trim().startsWith('#') || 
         line.trim().startsWith('//') ||
         line.includes('"""') ||
@@ -475,11 +475,11 @@ export class AutoGradingService {
       // Check indentation consistency
       const lines = content.split('\n');
       const indentations = lines
-        .filter(line => line.match(/^\s+/))
-        .map(line => line.match(/^\s+/)[0]);
+        .filter((line: string) => line.match(/^\s+/))
+        .map((line: string) => (line.match(/^\s+/) as RegExpMatchArray)[0]);
       
-      const usesSpaces = indentations.some(i => i.includes(' '));
-      const usesTabs = indentations.some(i => i.includes('\t'));
+      const usesSpaces = indentations.some((i: string) => i.includes(' '));
+      const usesTabs = indentations.some((i: string) => i.includes('\t'));
       
       if (usesSpaces && usesTabs) {
         score -= 20; // Mixed indentation
@@ -511,7 +511,7 @@ export class AutoGradingService {
     }
 
     feedback += `\n### Summary:\n`;
-    feedback += `Total Score: ${testResults.reduce((sum, r) => sum + r.score, 0)} / ${assignment.totalPoints}\n`;
+    feedback += `Total Score: ${testResults.reduce((sum, r) => sum + r.score, 0)} / ${assignment.points || 100}\n`;
 
     if (percentage < 50) {
       feedback += `\n💡 **Tip:** Review the failed tests and try again. Make sure your code handles all edge cases.`;
@@ -546,7 +546,6 @@ export class AutoGradingService {
       .set({ 
         status: 'pending',
         autoGradeScore: null,
-        testResults: null,
       })
       .where(eq(submissions.id, submissionId));
 
@@ -575,8 +574,8 @@ export class AutoGradingService {
     await db.update(submissions)
       .set({
         manualGradeScore: manualScore,
-        finalScore,
-        feedback: submission.feedback + '\n\n## Manual Grading Feedback\n' + feedback,
+        grade: finalScore,
+        feedback: (submission.feedback || '') + '\n\n## Manual Grading Feedback\n' + feedback,
         gradedBy,
         gradedAt: new Date(),
         status: 'graded',

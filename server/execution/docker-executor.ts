@@ -12,6 +12,7 @@ import { createLogger } from '../utils/logger';
 import { storage } from '../storage';
 import { Project, File } from '@shared/schema';
 import Docker from 'dockerode';
+// @ts-ignore - tar-stream doesn't have type definitions
 import * as tarStream from 'tar-stream';
 import { Readable } from 'stream';
 
@@ -262,7 +263,7 @@ export class DockerExecutor extends EventEmitter {
         const { name, content } = entries[index];
         // Use buffer form: pack.entry(header, buffer, callback)
         // This synchronously writes buffer and calls callback when done
-        pack.entry({ name, size: content.length }, content, (err) => {
+        pack.entry({ name, size: content.length }, content, (err: Error | null) => {
           if (err) {
             reject(err);
             return;
@@ -461,6 +462,86 @@ export class DockerExecutor extends EventEmitter {
       output,
       exitCode: inspectResult.ExitCode || 0
     };
+  }
+
+  /**
+   * Execute code directly (convenience method for auto-grading)
+   * @param language - Programming language
+   * @param code - Code to execute
+   * @param input - Standard input
+   * @param workDir - Working directory (optional)
+   */
+  async executeCode(
+    language: string,
+    code: string,
+    input?: string,
+    workDir?: string
+  ): Promise<{ output: string; error: string; exitCode: number }> {
+    const mainFiles: Record<string, string> = {
+      'python': 'main.py',
+      'javascript': 'index.js',
+      'nodejs': 'index.js',
+      'java': 'Main.java',
+      'cpp': 'main.cpp',
+      'c': 'main.c',
+      'go': 'main.go',
+      'ruby': 'main.rb',
+      'php': 'index.php',
+      'rust': 'main.rs',
+    };
+
+    const fileName = mainFiles[language] || 'main.txt';
+    const files: File[] = [{
+      id: 0,
+      projectId: 0,
+      name: fileName,
+      path: fileName,
+      content: code,
+      isDirectory: false,
+      parentId: null,
+      type: null,
+      size: code.length,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }];
+
+    try {
+      const result = await this.executeProject({
+        projectId: 0,
+        language,
+        files,
+        timeout: 30,
+        memoryLimit: '256m',
+      });
+
+      // Wait for container to finish or timeout
+      await new Promise<void>((resolve) => {
+        const checkInterval = setInterval(() => {
+          if (result.status === 'stopped' || result.status === 'error') {
+            clearInterval(checkInterval);
+            resolve();
+          }
+        }, 100);
+        
+        // Max wait of 35 seconds
+        setTimeout(() => {
+          clearInterval(checkInterval);
+          resolve();
+        }, 35000);
+      });
+
+      return {
+        output: result.output.join('\n'),
+        error: result.errorOutput.join('\n'),
+        exitCode: result.exitCode ?? 0,
+      };
+    } catch (error) {
+      return {
+        output: '',
+        error: error instanceof Error ? error.message : String(error),
+        exitCode: 1,
+      };
+    }
   }
 }
 
