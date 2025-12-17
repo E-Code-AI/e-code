@@ -198,39 +198,87 @@ export function useKeyboardToolbar(
     return Math.floor(indent);
   }, []);
 
+  /**
+   * Process text changes for auto-completion features
+   * 
+   * IMPORTANT: We calculate cursor position from text diff, NOT from selection state
+   * because selection state updates async AFTER onChangeText fires.
+   * 
+   * Auto-completion features:
+   * - Auto-close brackets: {}, [], (), "", '', ``
+   * - Auto-indent on Enter
+   * - Skip closing bracket if already present (prevents duplicates)
+   */
   const processTextChange = useCallback((newText: string, previousText: string): string => {
-    if (newText.length === previousText.length + 1) {
-      const insertedChar = newText[selection.start];
-      const charAfter = newText[selection.start + 1];
-      
-      if (BRACKET_PAIRS[insertedChar] && !CLOSING_BRACKETS.has(charAfter)) {
-        const closingBracket = BRACKET_PAIRS[insertedChar];
-        const before = newText.slice(0, selection.start + 1);
-        const after = newText.slice(selection.start + 1);
-        return before + closingBracket + after;
-      }
-      
-      if (insertedChar === '\n') {
-        const lines = newText.slice(0, selection.start + 1).split('\n');
-        const currentLine = lines[lines.length - 2] || '';
-        const indentLevel = getIndentLevel(currentLine);
-        
-        const trimmedLine = currentLine.trim();
-        const needsExtraIndent = trimmedLine.endsWith('{') || 
-                                  trimmedLine.endsWith('[') || 
-                                  trimmedLine.endsWith('(') ||
-                                  trimmedLine.endsWith(':');
-        
-        const indent = '\t'.repeat(indentLevel + (needsExtraIndent ? 1 : 0));
-        const before = newText.slice(0, selection.start + 1);
-        const after = newText.slice(selection.start + 1);
-        
-        return before + indent + after;
+    // Only process single character insertions
+    if (newText.length !== previousText.length + 1) {
+      return newText;
+    }
+
+    // Find where the character was inserted by comparing texts
+    let insertPos = -1;
+    for (let i = 0; i < newText.length; i++) {
+      if (i >= previousText.length || newText[i] !== previousText[i]) {
+        insertPos = i;
+        break;
       }
     }
-    
+
+    if (insertPos === -1) {
+      return newText;
+    }
+
+    const insertedChar = newText[insertPos];
+    const charAfter = newText[insertPos + 1];
+
+    // Handle closing bracket - skip if already present (prevents duplicates)
+    if (CLOSING_BRACKETS.has(insertedChar) && insertedChar === charAfter) {
+      // User typed a closing bracket that's already there from auto-complete
+      // Remove the duplicate by returning text without the extra character
+      return newText.slice(0, insertPos + 1) + newText.slice(insertPos + 2);
+    }
+
+    // Auto-close opening brackets (only if next char isn't already the closing bracket)
+    if (BRACKET_PAIRS[insertedChar]) {
+      const closingBracket = BRACKET_PAIRS[insertedChar];
+      
+      // Don't auto-close if:
+      // 1. Next character is already the closing bracket
+      // 2. Next character is alphanumeric (likely typing inside a word)
+      if (charAfter === closingBracket) {
+        return newText; // Already has closing bracket
+      }
+      if (charAfter && /[a-zA-Z0-9]/.test(charAfter)) {
+        return newText; // Don't auto-close in middle of word
+      }
+
+      const before = newText.slice(0, insertPos + 1);
+      const after = newText.slice(insertPos + 1);
+      return before + closingBracket + after;
+    }
+
+    // Auto-indent on Enter
+    if (insertedChar === '\n') {
+      const lines = newText.slice(0, insertPos + 1).split('\n');
+      const currentLine = lines[lines.length - 2] || '';
+      const indentLevel = getIndentLevel(currentLine);
+
+      const trimmedLine = currentLine.trim();
+      const needsExtraIndent = 
+        trimmedLine.endsWith('{') ||
+        trimmedLine.endsWith('[') ||
+        trimmedLine.endsWith('(') ||
+        trimmedLine.endsWith(':');
+
+      const indent = '\t'.repeat(indentLevel + (needsExtraIndent ? 1 : 0));
+      const before = newText.slice(0, insertPos + 1);
+      const after = newText.slice(insertPos + 1);
+
+      return before + indent + after;
+    }
+
     return newText;
-  }, [selection.start, getIndentLevel]);
+  }, [getIndentLevel]);
 
   const handleKeyPress = useCallback((e: NativeSyntheticEvent<TextInputKeyPressEventData>) => {
     const { key } = e.nativeEvent;
