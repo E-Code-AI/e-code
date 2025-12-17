@@ -1,0 +1,68 @@
+# =============================================================================
+# CERT-MANAGER CLUSTER ISSUERS FOR E-CODE
+# =============================================================================
+# Prerequisites:
+#   kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.0/cert-manager.yaml
+#   kubectl wait --for=condition=Available deployment --all -n cert-manager --timeout=300s
+#
+# Then apply this file:
+#   kubectl apply -f kubernetes/cert-manager-issuer.yaml
+# =============================================================================
+
+# Staging issuer for testing (use this first to avoid rate limits)
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-staging
+spec:
+  acme:
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    email: admin@ecode.cloud
+    privateKeySecretRef:
+      name: letsencrypt-staging-key
+    solvers:
+    - http01:
+        ingress:
+          class: nginx
+      selector:
+        dnsZones:
+        - "ecode.cloud"
+
+---
+# Production issuer (use after testing with staging)
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: admin@ecode.cloud
+    privateKeySecretRef:
+      name: letsencrypt-prod-key
+    solvers:
+    - http01:
+        ingress:
+          class: nginx
+      selector:
+        dnsZones:
+        - "ecode.cloud"
+
+---
+# Certificate resource (optional - cert-manager can auto-create from Ingress annotation)
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: e-code-tls
+  namespace: e-code-platform
+spec:
+  secretName: e-code-tls
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  commonName: ecode.cloud
+  dnsNames:
+  - ecode.cloud
+  - "*.ecode.cloud"
+  duration: 2160h
+  renewBefore: 360h
