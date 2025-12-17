@@ -76,13 +76,87 @@ export default function TeamSettings() {
     }
   }, [team]);
 
+  // Validate team form data before submission
+  const validateTeamForm = (): boolean => {
+    // Team name validation
+    if (!teamName.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Team name is required",
+        variant: "destructive"
+      });
+      return false;
+    }
+    if (teamName.length > 50) {
+      toast({
+        title: "Validation Error",
+        description: "Team name is too long (max 50 characters)",
+        variant: "destructive"
+      });
+      return false;
+    }
+    if (teamName.length < 2) {
+      toast({
+        title: "Validation Error",
+        description: "Team name is too short (min 2 characters)",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    // Team slug validation
+    if (!teamSlug.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Team URL slug is required",
+        variant: "destructive"
+      });
+      return false;
+    }
+    if (!/^[a-z0-9-]+$/.test(teamSlug)) {
+      toast({
+        title: "Validation Error",
+        description: "Team URL can only contain lowercase letters, numbers, and hyphens",
+        variant: "destructive"
+      });
+      return false;
+    }
+    if (teamSlug.length > 30) {
+      toast({
+        title: "Validation Error",
+        description: "Team URL is too long (max 30 characters)",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    // Description validation (optional but with max length)
+    if (teamDescription.length > 500) {
+      toast({
+        title: "Validation Error",
+        description: "Description is too long (max 500 characters)",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    return true;
+  };
+
+  // Handle team update with validation
+  const handleUpdateTeam = () => {
+    if (validateTeamForm()) {
+      updateTeamMutation.mutate();
+    }
+  };
+
   // Update team mutation
   const updateTeamMutation = useMutation({
     mutationFn: async () => {
       return apiRequest('PATCH', `/api/teams/${id}`, {
-        name: teamName,
-        slug: teamSlug,
-        description: teamDescription,
+        name: teamName.trim(),
+        slug: teamSlug.trim(),
+        description: teamDescription.trim(),
         visibility: teamVisibility
       });
     },
@@ -213,10 +287,15 @@ export default function TeamSettings() {
                 <Label htmlFor="team-name">Team Name</Label>
                 <Input
                   id="team-name"
+                  data-testid="input-team-name"
                   value={teamName}
                   onChange={(e) => setTeamName(e.target.value)}
                   placeholder="My Awesome Team"
+                  maxLength={50}
                 />
+                <p className="text-xs text-muted-foreground mt-1">
+                  {teamName.length}/50 characters
+                </p>
               </div>
 
               <div>
@@ -225,23 +304,33 @@ export default function TeamSettings() {
                   <span className="text-sm text-muted-foreground">e-code.ai/teams/</span>
                   <Input
                     id="team-slug"
+                    data-testid="input-team-slug"
                     value={teamSlug}
-                    onChange={(e) => setTeamSlug(e.target.value.toLowerCase().replace(/\s+/g, '-'))}
+                    onChange={(e) => setTeamSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))}
                     placeholder="my-team"
                     className="flex-1"
+                    maxLength={30}
                   />
                 </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {teamSlug.length}/30 characters (lowercase letters, numbers, hyphens only)
+                </p>
               </div>
 
               <div>
                 <Label htmlFor="team-description">Description</Label>
                 <Textarea
                   id="team-description"
+                  data-testid="input-team-description"
                   value={teamDescription}
                   onChange={(e) => setTeamDescription(e.target.value)}
                   placeholder="What does your team do?"
                   rows={3}
+                  maxLength={500}
                 />
+                <p className="text-xs text-muted-foreground mt-1">
+                  {teamDescription.length}/500 characters
+                </p>
               </div>
 
               <div>
@@ -268,10 +357,11 @@ export default function TeamSettings() {
               </div>
 
               <Button 
-                onClick={() => updateTeamMutation.mutate()}
+                onClick={handleUpdateTeam}
                 disabled={updateTeamMutation.isPending}
+                data-testid="button-save-team"
               >
-                Save Changes
+                {updateTeamMutation.isPending ? 'Saving...' : 'Save Changes'}
               </Button>
             </CardContent>
           </Card>
