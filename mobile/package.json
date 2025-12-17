@@ -9,7 +9,16 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "test": "jest",
-    "lint": "eslint . --ext .js,.jsx,.ts,.tsx"
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "build:dev": "eas build --profile development --platform all",
+    "build:preview": "eas build --profile preview --platform all",
+    "build:ios": "eas build --profile production --platform ios",
+    "build:android": "eas build --profile production --platform android",
+    "build:all": "eas build --profile production --platform all",
+    "submit:ios": "eas submit --platform ios",
+    "submit:android": "eas submit --platform android",
+    "submit:all": "eas submit --platform all",
+    "update": "eas update --auto"
   },
   "dependencies": {
     "react": "18.2.0",
