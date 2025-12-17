@@ -1,0 +1,180 @@
+(index):367 [WebSocket] Interceptor installed (Development mode: true)
+(index):343 [WebSocket] Connection attempt: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:/?token=FFLH277rLWK2 isEssential: false isViteHMR: true isDev: true
+(index):350 [WebSocket] ✅ Allowing real connection: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:/?token=FFLH277rLWK2
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Telemetry initialized', timestamp: '2025-12-17T06:19:51.891Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev/', …}
+service-worker-registration.ts:14 [SW] Skipping in development mode
+cache-reconciliation.ts:37 [CacheReconciliation] Service initialized
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Performance: CLS = 0.003429064391854464ms', timestamp: '2025-12-17T06:19:51.906Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev/', …}
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Performance: LCP = 608ms', timestamp: '2025-12-17T06:19:51.906Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev/', …}
+query-persister.ts:88 [QueryPersister] No cached data found
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Performance: LCP = 6616ms', timestamp: '2025-12-17T06:19:52.166Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev/', …}
+telemetry.ts:247  GET https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev/api/me 401 (Unauthorized)
+window.fetch @ telemetry.ts:247
+(anonyme) @ queryClient.ts:153
+fetchFn @ chunk-V7DLPMS6.js?v=2376664c:1066
+run @ chunk-V7DLPMS6.js?v=2376664c:776
+start @ chunk-V7DLPMS6.js?v=2376664c:818
+fetch @ chunk-V7DLPMS6.js?v=2376664c:1113
+#executeFetch @ chunk-V7DLPMS6.js?v=2376664c:1432
+onSubscribe @ chunk-V7DLPMS6.js?v=2376664c:1305
+subscribe @ chunk-V7DLPMS6.js?v=2376664c:19
+(anonyme) @ chunk-V7DLPMS6.js?v=2376664c:3245
+subscribeToStore @ chunk-E22KYI7D.js?v=2376664c:12032
+commitHookEffectListMount @ chunk-E22KYI7D.js?v=2376664c:16963
+commitPassiveMountOnFiber @ chunk-E22KYI7D.js?v=2376664c:18206
+commitPassiveMountEffects_complete @ chunk-E22KYI7D.js?v=2376664c:18179
+commitPassiveMountEffects_begin @ chunk-E22KYI7D.js?v=2376664c:18169
+commitPassiveMountEffects @ chunk-E22KYI7D.js?v=2376664c:18159
+flushPassiveEffectsImpl @ chunk-E22KYI7D.js?v=2376664c:19543
+flushPassiveEffects @ chunk-E22KYI7D.js?v=2376664c:19500
+performSyncWorkOnRoot @ chunk-E22KYI7D.js?v=2376664c:18921
+flushSyncCallbacks @ chunk-E22KYI7D.js?v=2376664c:9166
+commitRootImpl @ chunk-E22KYI7D.js?v=2376664c:19485
+commitRoot @ chunk-E22KYI7D.js?v=2376664c:19330
+finishConcurrentRender @ chunk-E22KYI7D.js?v=2376664c:18858
+performConcurrentWorkOnRoot @ chunk-E22KYI7D.js?v=2376664c:18768
+workLoop @ chunk-E22KYI7D.js?v=2376664c:197
+flushWork @ chunk-E22KYI7D.js?v=2376664c:176
+performWorkUntilDeadline @ chunk-E22KYI7D.js?v=2376664c:384
+telemetry.ts:125 [Telemetry] {level: 'error', message: 'Network: GET /api/me 401', timestamp: '2025-12-17T06:19:52.321Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev/', …}
+query-persister.ts:74 [QueryPersister] Cache persisted to IndexedDB
+(index):1 Banner not shown: beforeinstallpromptevent.preventDefault() called. The page must call beforeinstallpromptevent.prompt() to show the banner.
+query-persister.ts:74 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:74 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:74 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:74 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Performance: CLS = 0.3229332498070181ms', timestamp: '2025-12-17T06:19:53.757Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev/', …}
+query-persister.ts:74 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:74 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:74 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:74 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Performance: LCP = 8260ms', timestamp: '2025-12-17T06:19:53.792Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev/', …}
+telemetry.ts:247  GET https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev/api/rag/stats 401 (Unauthorized)
+window.fetch @ telemetry.ts:247
+(anonyme) @ queryClient.ts:153
+fetchFn @ chunk-V7DLPMS6.js?v=2376664c:1066
+run @ chunk-V7DLPMS6.js?v=2376664c:776
+start @ chunk-V7DLPMS6.js?v=2376664c:818
+fetch @ chunk-V7DLPMS6.js?v=2376664c:1113
+#executeFetch @ chunk-V7DLPMS6.js?v=2376664c:1432
+onSubscribe @ chunk-V7DLPMS6.js?v=2376664c:1305
+subscribe @ chunk-V7DLPMS6.js?v=2376664c:19
+(anonyme) @ chunk-V7DLPMS6.js?v=2376664c:3245
+subscribeToStore @ chunk-E22KYI7D.js?v=2376664c:12032
+commitHookEffectListMount @ chunk-E22KYI7D.js?v=2376664c:16963
+commitPassiveMountOnFiber @ chunk-E22KYI7D.js?v=2376664c:18206
+commitPassiveMountEffects_complete @ chunk-E22KYI7D.js?v=2376664c:18179
+commitPassiveMountEffects_begin @ chunk-E22KYI7D.js?v=2376664c:18169
+commitPassiveMountEffects @ chunk-E22KYI7D.js?v=2376664c:18159
+flushPassiveEffectsImpl @ chunk-E22KYI7D.js?v=2376664c:19543
+flushPassiveEffects @ chunk-E22KYI7D.js?v=2376664c:19500
+performSyncWorkOnRoot @ chunk-E22KYI7D.js?v=2376664c:18921
+flushSyncCallbacks @ chunk-E22KYI7D.js?v=2376664c:9166
+commitRootImpl @ chunk-E22KYI7D.js?v=2376664c:19485
+commitRoot @ chunk-E22KYI7D.js?v=2376664c:19330
+finishConcurrentRender @ chunk-E22KYI7D.js?v=2376664c:18836
+performConcurrentWorkOnRoot @ chunk-E22KYI7D.js?v=2376664c:18768
+workLoop @ chunk-E22KYI7D.js?v=2376664c:197
+flushWork @ chunk-E22KYI7D.js?v=2376664c:176
+performWorkUntilDeadline @ chunk-E22KYI7D.js?v=2376664c:384
+telemetry.ts:125 [Telemetry] {level: 'error', message: 'Network: GET /api/rag/stats 401', timestamp: '2025-12-17T06:19:53.873Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev/', …}
+query-persister.ts:74 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/models 200', timestamp: '2025-12-17T06:19:53.892Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev/', …}
+query-persister.ts:74 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] {level: 'info', message: 'Network: GET /api/marketplace/templates 200', timestamp: '2025-12-17T06:19:53.896Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev/', …}
+telemetry.ts:247  GET https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev/api/models/preferred 401 (Unauthorized)
+window.fetch @ telemetry.ts:247
+(anonyme) @ queryClient.ts:153
+fetchFn @ chunk-V7DLPMS6.js?v=2376664c:1066
+run @ chunk-V7DLPMS6.js?v=2376664c:776
+start @ chunk-V7DLPMS6.js?v=2376664c:818
+fetch @ chunk-V7DLPMS6.js?v=2376664c:1113
+#executeFetch @ chunk-V7DLPMS6.js?v=2376664c:1432
+onSubscribe @ chunk-V7DLPMS6.js?v=2376664c:1305
+subscribe @ chunk-V7DLPMS6.js?v=2376664c:19
+(anonyme) @ chunk-V7DLPMS6.js?v=2376664c:3245
+subscribeToStore @ chunk-E22KYI7D.js?v=2376664c:12032
+commitHookEffectListMount @ chunk-E22KYI7D.js?v=2376664c:16963
+commitPassiveMountOnFiber @ chunk-E22KYI7D.js?v=2376664c:18206
+commitPassiveMountEffects_complete @ chunk-E22KYI7D.js?v=2376664c:18179
+commitPassiveMountEffects_begin @ chunk-E22KYI7D.js?v=2376664c:18169
+commitPassiveMountEffects @ chunk-E22KYI7D.js?v=2376664c:18159
+flushPassiveEffectsImpl @ chunk-E22KYI7D.js?v=2376664c:19543
+flushPassiveEffects @ chunk-E22KYI7D.js?v=2376664c:19500
+performSyncWorkOnRoot @ chunk-E22KYI7D.js?v=2376664c:18921
+flushSyncCallbacks @ chunk-E22KYI7D.js?v=2376664c:9166
+commitRootImpl @ chunk-E22KYI7D.js?v=2376664c:19485
+commitRoot @ chunk-E22KYI7D.js?v=2376664c:19330
+finishConcurrentRender @ chunk-E22KYI7D.js?v=2376664c:18836
+performConcurrentWorkOnRoot @ chunk-E22KYI7D.js?v=2376664c:18768
+workLoop @ chunk-E22KYI7D.js?v=2376664c:197
+flushWork @ chunk-E22KYI7D.js?v=2376664c:176
+performWorkUntilDeadline @ chunk-E22KYI7D.js?v=2376664c:384
+telemetry.ts:125 [Telemetry] {level: 'error', message: 'Network: GET /api/models/preferred 401', timestamp: '2025-12-17T06:19:53.905Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev/', …}
+query-persister.ts:74 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:247  POST https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev/api/logs/ingest 401 (Unauthorized)
+window.fetch @ telemetry.ts:247
+flush @ telemetry.ts:302
+log @ telemetry.ts:129
+trackNetwork @ telemetry.ts:169
+window.fetch @ telemetry.ts:251
+await in window.fetch
+(anonyme) @ queryClient.ts:153
+fetchFn @ chunk-V7DLPMS6.js?v=2376664c:1066
+run @ chunk-V7DLPMS6.js?v=2376664c:776
+start @ chunk-V7DLPMS6.js?v=2376664c:818
+fetch @ chunk-V7DLPMS6.js?v=2376664c:1113
+#executeFetch @ chunk-V7DLPMS6.js?v=2376664c:1432
+onSubscribe @ chunk-V7DLPMS6.js?v=2376664c:1305
+subscribe @ chunk-V7DLPMS6.js?v=2376664c:19
+(anonyme) @ chunk-V7DLPMS6.js?v=2376664c:3245
+subscribeToStore @ chunk-E22KYI7D.js?v=2376664c:12032
+commitHookEffectListMount @ chunk-E22KYI7D.js?v=2376664c:16963
+commitPassiveMountOnFiber @ chunk-E22KYI7D.js?v=2376664c:18206
+commitPassiveMountEffects_complete @ chunk-E22KYI7D.js?v=2376664c:18179
+commitPassiveMountEffects_begin @ chunk-E22KYI7D.js?v=2376664c:18169
+commitPassiveMountEffects @ chunk-E22KYI7D.js?v=2376664c:18159
+flushPassiveEffectsImpl @ chunk-E22KYI7D.js?v=2376664c:19543
+flushPassiveEffects @ chunk-E22KYI7D.js?v=2376664c:19500
+performSyncWorkOnRoot @ chunk-E22KYI7D.js?v=2376664c:18921
+flushSyncCallbacks @ chunk-E22KYI7D.js?v=2376664c:9166
+commitRootImpl @ chunk-E22KYI7D.js?v=2376664c:19485
+commitRoot @ chunk-E22KYI7D.js?v=2376664c:19330
+finishConcurrentRender @ chunk-E22KYI7D.js?v=2376664c:18836
+performConcurrentWorkOnRoot @ chunk-E22KYI7D.js?v=2376664c:18768
+workLoop @ chunk-E22KYI7D.js?v=2376664c:197
+flushWork @ chunk-E22KYI7D.js?v=2376664c:176
+performWorkUntilDeadline @ chunk-E22KYI7D.js?v=2376664c:384
+query-persister.ts:74 [QueryPersister] Cache persisted to IndexedDB
+(index):1 The resource https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev/src/main.tsx was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.
+(index):1 The resource https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev/src/index.css was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.
+telemetry.ts:247  POST https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev/api/logs/ingest 401 (Unauthorized)
+window.fetch @ telemetry.ts:247
+flush @ telemetry.ts:302
+(anonyme) @ telemetry.ts:270
+setInterval
+startFlushTimer @ telemetry.ts:269
+init @ telemetry.ts:81
+initTelemetry @ telemetry.ts:337
+(anonyme) @ main.tsx:15
+(index):1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+(index):1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+(index):1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+telemetry.ts:247  POST https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev/api/logs/ingest 401 (Unauthorized)
+window.fetch @ telemetry.ts:247
+flush @ telemetry.ts:302
+(anonyme) @ telemetry.ts:270
+setInterval
+startFlushTimer @ telemetry.ts:269
+init @ telemetry.ts:81
+initTelemetry @ telemetry.ts:337
+(anonyme) @ main.tsx:15
+telemetry.ts:247  POST https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev/api/logs/ingest 401 (Unauthorized)
+window.fetch @ telemetry.ts:247
+flush @ telemetry.ts:302
+(anonyme) @ telemetry.ts:270
+setInterval
+startFlushTimer @ telemetry.ts:269
+init @ telemetry.ts:81
+initTelemetry @ telemetry.ts:337
+(anonyme) @ main.tsx:15

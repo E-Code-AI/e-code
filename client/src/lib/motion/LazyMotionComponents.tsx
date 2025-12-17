@@ -122,63 +122,31 @@ const LazyMotionDivInner = lazy(() =>
 );
 
 export const LazyMotionDiv = forwardRef<HTMLDivElement, MotionDivProps>(({ className, children, ...props }, ref) => {
-  let shouldUseCSS = false;
+  // SIMPLIFIED: Always render content visible immediately
+  // This ensures content is never hidden due to animation loading issues
+  // Animations are a progressive enhancement, not a requirement
+  
+  let shouldUseCSS = true; // Default to CSS for reliability
   try {
     const perf = useAnimationPerformance();
     shouldUseCSS = perf.shouldUseCSS;
   } catch {
-    // Context not available, use default behavior
+    // Context not available, default to simple rendering
+    shouldUseCSS = true;
   }
   
+  // Always use simple visible div for maximum compatibility
+  // This prioritizes content visibility over animations
   if (shouldUseCSS) {
-    const whileInView = props.whileInView as string | VariantObject | undefined;
-    const initial = props.initial as string | VariantObject | undefined;
-    const variants = props.variants as Variants | undefined;
-    const viewport = props.viewport as { once?: boolean } | undefined;
-    const transition = props.transition as Record<string, unknown> | undefined;
-    const animationType = detectInViewAnimationType(whileInView, variants);
-    
-    const staggeredChildren = applyStaggerToChildren(children as ReactNode, transition);
-    
-    if (whileInView && animationType) {
-      const once = viewport?.once ?? true;
-      
-      switch (animationType) {
-        case 'scale':
-          return (
-            <CSSInViewScale className={className} once={once} ref={ref}>
-              {staggeredChildren}
-            </CSSInViewScale>
-          );
-        case 'slide':
-          return (
-            <CSSInViewSlide 
-              className={className} 
-              direction={getSlideDirection(initial, variants)}
-              distance={getSlideDistance(initial, variants)}
-              once={once}
-              ref={ref}
-            >
-              {staggeredChildren}
-            </CSSInViewSlide>
-          );
-        case 'fade':
-        default:
-          return (
-            <CSSInViewFade className={className} once={once} ref={ref}>
-              {staggeredChildren}
-            </CSSInViewFade>
-          );
-      }
-    }
-    
     return (
-      <CSSFade show={true} className={className}>
-        {staggeredChildren}
-      </CSSFade>
+      <div className={className} ref={ref}>
+        {children as ReactNode}
+      </div>
     );
   }
   
+  // Fallback to framer-motion only when performance context is available
+  // and explicitly says CSS is not needed
   return (
     <Suspense fallback={<div className={className}>{children as ReactNode}</div>}>
       <LazyMotionDivInner className={className} {...props} ref={ref}>
@@ -198,12 +166,14 @@ const LazyMotionButtonInner = lazy(() =>
 );
 
 export const LazyMotionButton = forwardRef<HTMLButtonElement, MotionButtonProps>(({ className, children, ...props }, ref) => {
-  let shouldUseCSS = false;
+  // SIMPLIFIED: Default to visible content for reliability
+  let shouldUseCSS = true;
   try {
     const perf = useAnimationPerformance();
     shouldUseCSS = perf.shouldUseCSS;
   } catch {
-    // Context not available
+    // Context not available, default to simple rendering
+    shouldUseCSS = true;
   }
   
   if (shouldUseCSS) {
@@ -233,17 +203,19 @@ const LazyMotionSpanInner = lazy(() =>
 );
 
 export const LazyMotionSpan = forwardRef<HTMLSpanElement, MotionSpanProps>(({ className, children, ...props }, ref) => {
-  let shouldUseCSS = false;
+  // SIMPLIFIED: Default to visible content for reliability
+  let shouldUseCSS = true;
   try {
     const perf = useAnimationPerformance();
     shouldUseCSS = perf.shouldUseCSS;
   } catch {
-    // Context not available
+    // Context not available, default to simple rendering
+    shouldUseCSS = true;
   }
   
   if (shouldUseCSS) {
     return (
-      <span className={className}>
+      <span className={className} ref={ref}>
         {children as ReactNode}
       </span>
     );
@@ -268,21 +240,20 @@ const LazyMotionUlInner = lazy(() =>
 );
 
 export const LazyMotionUl = forwardRef<HTMLUListElement, MotionUlProps>(({ className, children, ...props }, ref) => {
-  let shouldUseCSS = false;
+  // SIMPLIFIED: Default to visible content for reliability
+  let shouldUseCSS = true;
   try {
     const perf = useAnimationPerformance();
     shouldUseCSS = perf.shouldUseCSS;
   } catch {
-    // Context not available
+    // Context not available, default to simple rendering
+    shouldUseCSS = true;
   }
   
   if (shouldUseCSS) {
-    const transition = props.transition as Record<string, unknown> | undefined;
-    const staggeredChildren = applyStaggerToChildren(children as ReactNode, transition);
-    
     return (
       <ul className={className} ref={ref}>
-        {staggeredChildren}
+        {children as ReactNode}
       </ul>
     );
   }
@@ -306,17 +277,19 @@ const LazyMotionLiInner = lazy(() =>
 );
 
 export const LazyMotionLi = forwardRef<HTMLLIElement, MotionLiProps>(({ className, children, ...props }, ref) => {
-  let shouldUseCSS = false;
+  // SIMPLIFIED: Default to visible content for reliability
+  let shouldUseCSS = true;
   try {
     const perf = useAnimationPerformance();
     shouldUseCSS = perf.shouldUseCSS;
   } catch {
-    // Context not available
+    // Context not available, default to simple rendering
+    shouldUseCSS = true;
   }
   
   if (shouldUseCSS) {
     return (
-      <li className={className}>
+      <li className={className} ref={ref}>
         {children as ReactNode}
       </li>
     );
@@ -339,12 +312,14 @@ const LazyAnimatePresenceComponent = lazy(() =>
 );
 
 export function LazyAnimatePresence({ children, ...props }: AnimatePresenceProps & { children: ReactNode }) {
-  let shouldUseCSS = false;
+  // SIMPLIFIED: Default to visible content for reliability
+  let shouldUseCSS = true;
   try {
     const perf = useAnimationPerformance();
     shouldUseCSS = perf.shouldUseCSS;
   } catch {
-    // Context not available
+    // Context not available, default to simple rendering
+    shouldUseCSS = true;
   }
   
   if (shouldUseCSS) {
