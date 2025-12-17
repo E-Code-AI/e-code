@@ -1,14 +1,34 @@
 import { AuthResponse, Project, ProjectFile, RunResult } from '../types';
 import { API_BASE_URL } from './config';
+import { offlineCacheService } from './offline-cache';
 
 type RequestOptions = {
   method?: string;
   body?: unknown;
   token?: string;
+  useCache?: boolean;
+  cacheTtl?: number;
+  cacheKey?: string;
+};
+
+type CachedResponse<T> = {
+  data: T;
+  fromCache: boolean;
+  isStale: boolean;
 };
 
 const jsonHeaders = {
   'Content-Type': 'application/json'
+};
+
+// Default cache TTLs by resource type
+const CACHE_TTL = {
+  projects: 5 * 60 * 1000,      // 5 minutes
+  files: 2 * 60 * 1000,         // 2 minutes
+  notifications: 1 * 60 * 1000, // 1 minute
+  templates: 30 * 60 * 1000,    // 30 minutes
+  collaborators: 5 * 60 * 1000, // 5 minutes
+  deployments: 2 * 60 * 1000,   // 2 minutes
 };
 
 async function parseResponse(response: Response) {
@@ -40,6 +60,9 @@ async function handleResponse<T>(response: Response): Promise<T> {
   return payload as T;
 }
 
+/**
+ * Core request function (no caching)
+ */
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { method = 'GET', body, token } = options;
 
@@ -57,6 +80,75 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   return handleResponse<T>(response);
 }
 
+/**
+ * Request with offline cache support
+ * Automatically caches GET requests and falls back to cache when offline
+ */
+async function requestWithCache<T>(
+  path: string,
+  options: RequestOptions = {}
+): Promise<CachedResponse<T>> {
+  const { 
+    method = 'GET', 
+    body, 
+    token, 
+    useCache = true, 
+    cacheTtl,
+    cacheKey 
+  } = options;
+
+  // Only cache GET requests
+  if (method !== 'GET' || !useCache) {
+    const data = await request<T>(path, options);
+    return { data, fromCache: false, isStale: false };
+  }
+
+  const fetchFn = async () => {
+    const headers: Record<string, string> = { ...jsonHeaders };
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+
+    const response = await fetch(`${API_BASE_URL}${path}`, {
+      method,
+      headers,
+      body: body ? JSON.stringify(body) : undefined
+    });
+
+    return handleResponse<T>(response);
+  };
+
+  return offlineCacheService.fetchWithCache<T>(path, fetchFn, {
+    ttl: cacheTtl,
+    cacheKey: cacheKey || path,
+  });
+}
+
+/**
+ * Check if app is online
+ */
+export function isOnline(): boolean {
+  return offlineCacheService.getOnlineStatus();
+}
+
+/**
+ * Subscribe to online status changes
+ */
+export function onOnlineStatusChange(listener: (online: boolean) => void): () => void {
+  return offlineCacheService.onStatusChange(listener);
+}
+
+/**
+ * Invalidate cache for a resource pattern
+ */
+export async function invalidateCache(pattern: string): Promise<void> {
+  await offlineCacheService.invalidatePattern(pattern);
+}
+
+// ============================================================================
+// Auth API (no caching - always fresh)
+// ============================================================================
+
 export async function login(username: string, password: string): Promise<AuthResponse> {
   return request<AuthResponse>('/mobile/auth/login', {
     method: 'POST',
@@ -64,12 +156,39 @@ export async function login(username: string, password: string): Promise<AuthRes
   });
 }
 
+// ============================================================================
+// Projects API (with offline caching)
+// ============================================================================
+
 export async function getProjects(token: string): Promise<Project[]> {
-  return request<Project[]>('/mobile/projects', { token });
+  const result = await requestWithCache<Project[]>('/mobile/projects', { 
+    token,
+    cacheTtl: CACHE_TTL.projects,
+  });
+  return result.data;
+}
+
+/**
+ * Get projects with cache metadata
+ * Returns whether data is from cache and if it's stale
+ */
+export async function getProjectsWithMeta(token: string): Promise<CachedResponse<Project[]>> {
+  return requestWithCache<Project[]>('/mobile/projects', { 
+    token,
+    cacheTtl: CACHE_TTL.projects,
+  });
 }
 
 export async function getProjectFiles(projectId: number, token: string): Promise<ProjectFile[]> {
-  return request<ProjectFile[]>(`/mobile/projects/${projectId}/files`, { token });
+  const result = await requestWithCache<ProjectFile[]>(
+    `/mobile/projects/${projectId}/files`, 
+    { 
+      token,
+      cacheTtl: CACHE_TTL.files,
+      cacheKey: `projects/${projectId}/files`,
+    }
+  );
+  return result.data;
 }
 
 export async function updateProjectFile(
@@ -78,7 +197,7 @@ export async function updateProjectFile(
   content: string,
   token: string
 ): Promise<{ success: boolean; message: string }> {
-  return request<{ success: boolean; message: string }>(
+  const result = await request<{ success: boolean; message: string }>(
     `/mobile/projects/${projectId}/files/${fileId}`,
     {
       method: 'PUT',
@@ -86,6 +205,11 @@ export async function updateProjectFile(
       body: { content }
     }
   );
+  
+  // Invalidate file cache after update
+  await offlineCacheService.invalidate(`projects/${projectId}/files`);
+  
+  return result;
 }
 
 export async function runProject(
@@ -116,7 +240,10 @@ export async function searchAll(
   return request<SearchResult[]>(`/mobile/search?q=${encodeURIComponent(query)}`, { token });
 }
 
-// Notifications API
+// ============================================================================
+// Notifications API (with caching)
+// ============================================================================
+
 export type Notification = {
   id: string;
   type: 'info' | 'success' | 'warning' | 'error';
@@ -128,24 +255,34 @@ export type Notification = {
 };
 
 export async function getNotifications(token: string): Promise<Notification[]> {
-  return request<Notification[]>('/mobile/notifications', { token });
+  const result = await requestWithCache<Notification[]>('/mobile/notifications', { 
+    token,
+    cacheTtl: CACHE_TTL.notifications,
+  });
+  return result.data;
 }
 
 export async function markNotificationRead(
   notificationId: string,
   token: string
 ): Promise<{ success: boolean }> {
-  return request<{ success: boolean }>(`/mobile/notifications/${notificationId}/read`, {
+  const result = await request<{ success: boolean }>(`/mobile/notifications/${notificationId}/read`, {
     method: 'POST',
     token
   });
+  // Invalidate notifications cache
+  await offlineCacheService.invalidate('/mobile/notifications');
+  return result;
 }
 
 export async function markAllNotificationsRead(token: string): Promise<{ success: boolean }> {
-  return request<{ success: boolean }>('/mobile/notifications/read-all', {
+  const result = await request<{ success: boolean }>('/mobile/notifications/read-all', {
     method: 'POST',
     token
   });
+  // Invalidate notifications cache
+  await offlineCacheService.invalidate('/mobile/notifications');
+  return result;
 }
 
 // Profile API
@@ -277,7 +414,10 @@ export async function removeCollaborator(
   );
 }
 
-// Templates API
+// ============================================================================
+// Templates API (heavily cached - rarely changes)
+// ============================================================================
+
 export type Template = {
   id: string;
   name: string;
@@ -293,7 +433,14 @@ export async function getTemplates(
   token?: string
 ): Promise<Template[]> {
   const params = category && category !== 'all' ? `?category=${category}` : '';
-  return request<Template[]>(`/mobile/templates${params}`, { token });
+  const cacheKey = `templates${category ? `-${category}` : '-all'}`;
+  
+  const result = await requestWithCache<Template[]>(`/mobile/templates${params}`, { 
+    token,
+    cacheTtl: CACHE_TTL.templates,
+    cacheKey,
+  });
+  return result.data;
 }
 
 export async function createProjectFromTemplate(
