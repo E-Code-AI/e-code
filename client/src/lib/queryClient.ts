@@ -29,25 +29,20 @@ async function throwIfResNotOk(res: Response, url?: string): Promise<void> {
 let csrfToken: string | null = null;
 
 // Function to fetch CSRF token from server
-async function fetchCSRFToken(): Promise<string | null> {
-  try {
-    const response = await fetch('/api/csrf-token', {
-      credentials: 'include',
-      method: 'GET'
-    });
-    if (response.ok) {
-      const data = await response.json();
-      return data.csrfToken;
-    }
-    // Also check if token is in header
-    const headerToken = response.headers.get('X-CSRF-Token');
-    if (headerToken) {
-      return headerToken;
-    }
-  } catch (error) {
-    console.error('Failed to fetch CSRF token:', error);
+async function fetchCSRFToken(): Promise<string> {
+  const response = await fetch('/api/csrf-token', {
+    credentials: 'include',
+    method: 'GET'
+  });
+  if (!response.ok) {
+    throw new Error('Failed to fetch CSRF token');
   }
-  return null;
+  const data = await response.json();
+  const token = data.csrfToken || data.token;
+  if (!token) {
+    throw new Error('CSRF token not available');
+  }
+  return token;
 }
 
 /**

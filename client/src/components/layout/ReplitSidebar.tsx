@@ -157,9 +157,10 @@ export function ReplitSidebar({ projectId }: { projectId?: number }) {
                           <Button
                             variant="ghost"
                             size="icon"
+                            aria-label="New File"
                             className="h-6 w-6 text-[var(--ecode-text-secondary)] hover:text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
                           >
-                            <Plus className="h-3 w-3" />
+                            <Plus className="h-3 w-3" aria-hidden="true" />
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent>New File</TooltipContent>
@@ -170,9 +171,10 @@ export function ReplitSidebar({ projectId }: { projectId?: number }) {
                           <Button
                             variant="ghost"
                             size="icon"
+                            aria-label="Search Files"
                             className="h-6 w-6 text-[var(--ecode-text-secondary)] hover:text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
                           >
-                            <Search className="h-3 w-3" />
+                            <Search className="h-3 w-3" aria-hidden="true" />
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent>Search Files</TooltipContent>
@@ -183,9 +185,10 @@ export function ReplitSidebar({ projectId }: { projectId?: number }) {
                           <Button
                             variant="ghost"
                             size="icon"
+                            aria-label="Refresh files"
                             className="h-6 w-6 text-[var(--ecode-text-secondary)] hover:text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
                           >
-                            <RefreshCw className="h-3 w-3" />
+                            <RefreshCw className="h-3 w-3" aria-hidden="true" />
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent>Refresh</TooltipContent>
@@ -410,12 +413,13 @@ export function ReplitSidebar({ projectId }: { projectId?: number }) {
                           <Button
                             variant="ghost"
                             size="icon"
+                            aria-label={project.isRunning ? "Stop project" : "Run project"}
                             className="h-6 w-6 text-[var(--ecode-text-secondary)] hover:text-[var(--ecode-text)]"
                           >
                             {project.isRunning ? (
-                              <Square className="h-3 w-3" />
+                              <Square className="h-3 w-3" aria-hidden="true" />
                             ) : (
-                              <Play className="h-3 w-3" />
+                              <Play className="h-3 w-3" aria-hidden="true" />
                             )}
                           </Button>
                         </div>
@@ -465,9 +469,10 @@ export function ReplitSidebar({ projectId }: { projectId?: number }) {
             <Button
               variant="ghost"
               size="icon"
+              aria-label="Settings"
               className="h-8 w-8 text-[var(--ecode-text-secondary)] hover:text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
             >
-              <Settings className="h-4 w-4" />
+              <Settings className="h-4 w-4" aria-hidden="true" />
             </Button>
 
             {projectId && (
@@ -475,16 +480,18 @@ export function ReplitSidebar({ projectId }: { projectId?: number }) {
                 <Button
                   variant="ghost"
                   size="icon"
+                  aria-label="Run project"
                   className="h-8 w-8 text-[var(--ecode-green)] hover:bg-surface-hover-solid"
                 >
-                  <Play className="h-4 w-4" />
+                  <Play className="h-4 w-4" aria-hidden="true" />
                 </Button>
                 <Button
                   variant="ghost"
                   size="icon"
+                  aria-label="Stop project"
                   className="h-8 w-8 text-[var(--ecode-text-secondary)] hover:text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
                 >
-                  <Square className="h-4 w-4" />
+                  <Square className="h-4 w-4" aria-hidden="true" />
                 </Button>
               </div>
             )}

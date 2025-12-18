@@ -2,8 +2,32 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
+/**
+ * Input component props
+ * 
+ * @remarks
+ * For accessibility, ensure inputs have associated labels via:
+ * - A visible <label> element with htmlFor matching the input's id
+ * - Or an aria-label attribute for screen readers
+ * 
+ * For error states, use aria-invalid and aria-describedby:
+ * @example
+ * ```tsx
+ * <Input 
+ *   id="email" 
+ *   aria-invalid={!!error}
+ *   aria-describedby={error ? "email-error" : undefined}
+ * />
+ * {error && <span id="email-error">{error}</span>}
+ * ```
+ */
 export interface InputProps
-  extends React.InputHTMLAttributes<HTMLInputElement> {}
+  extends React.InputHTMLAttributes<HTMLInputElement> {
+  /** Set to true when input has validation errors */
+  'aria-invalid'?: boolean
+  /** ID of element containing error message */
+  'aria-describedby'?: string
+}
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ({ className, type, ...props }, ref) => {

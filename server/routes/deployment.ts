@@ -8,6 +8,24 @@ import { translateStatusToUI, UIStatusType, DeploymentStatusType } from '../serv
 const router = Router();
 
 // ============================================================
+// Autoscaling Limits Configuration
+// ============================================================
+const SCALING_LIMITS = {
+  maxInstances: 10,
+  maxCostPerDay: 100, // USD
+  cooldownPeriod: 300, // seconds
+};
+
+/**
+ * Validate scaling configuration against limits
+ */
+function validateScalingLimits(desiredCount: number): void {
+  if (desiredCount > SCALING_LIMITS.maxInstances) {
+    throw new Error(`Cannot scale beyond ${SCALING_LIMITS.maxInstances} instances`);
+  }
+}
+
+// ============================================================
 // Zod Schemas for Replit-style Publish Endpoints
 // ============================================================
 
@@ -159,6 +177,11 @@ router.post('/api/projects/:projectId/deploy', async (req, res) => {
       environmentVars: req.body.environmentVars || {},
       healthCheck: req.body.healthCheck
     });
+
+    // Validate autoscaling limits
+    if (config.scaling) {
+      validateScalingLimits(config.scaling.maxInstances);
+    }
 
     // Create deployment using real deploymentManager service
     // CRITICAL: Keep projectId as string - projects use UUIDs, not integers
@@ -532,6 +555,9 @@ router.post('/api/projects/:projectId/publish', ensureAuthenticated, async (req:
       });
     }
 
+    // Validate autoscaling limits for publish
+    validateScalingLimits(10); // Default max instances for publish
+
     // Create production deployment
     const deploymentId = await deploymentManager.createDeployment({
       id: `pub-${projectId}-${Date.now()}`,
@@ -546,7 +572,7 @@ router.post('/api/projects/:projectId/publish', ensureAuthenticated, async (req:
       environmentVars: publishConfig.environmentVars || {},
       scaling: {
         minInstances: 1,
-        maxInstances: 10,
+        maxInstances: SCALING_LIMITS.maxInstances,
         targetCPU: 70,
         targetMemory: 80
       }
@@ -634,6 +660,15 @@ router.post('/api/projects/:projectId/republish', ensureAuthenticated, async (re
     // Get previous deployment config from metadata
     const previousConfig = (activeProductionDeployment.metadata as any) || {};
 
+    // Validate autoscaling limits for republish
+    const scalingConfig = previousConfig.scaling || {
+      minInstances: 1,
+      maxInstances: SCALING_LIMITS.maxInstances,
+      targetCPU: 70,
+      targetMemory: 80
+    };
+    validateScalingLimits(scalingConfig.maxInstances);
+
     // Create new deployment with updated code
     const newDeploymentId = await deploymentManager.createDeployment({
       id: `repub-${projectId}-${Date.now()}`,
@@ -645,12 +680,7 @@ router.post('/api/projects/:projectId/republish', ensureAuthenticated, async (re
       customDomain: activeProductionDeployment.customDomain || undefined,
       buildCommand: republishConfig.forceRebuild ? undefined : previousConfig.buildCommand,
       environmentVars: previousConfig.environmentVars || {},
-      scaling: previousConfig.scaling || {
-        minInstances: 1,
-        maxInstances: 10,
-        targetCPU: 70,
-        targetMemory: 80
-      }
+      scaling: scalingConfig
     });
 
     // Get new deployment status

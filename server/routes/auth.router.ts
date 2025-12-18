@@ -156,7 +156,8 @@ export class AuthRouter {
           expiresAt
         );
 
-        // Send verification email (non-blocking - don't fail registration if email fails)
+        // Send verification email and track success
+        let emailSent = false;
         try {
           await sendVerificationEmail(
             user.id.toString(),
@@ -164,8 +165,10 @@ export class AuthRouter {
             user.displayName || user.username || 'User',
             verificationToken // Send unhashed token to user
           );
+          emailSent = true;
         } catch (emailError: any) {
-          console.error('Failed to send verification email:', emailError.message || emailError);
+          logger.error('Failed to send verification email', { message: emailError.message });
+          emailSent = false;
         }
 
         // Log registration event
@@ -176,35 +179,45 @@ export class AuthRouter {
           resource: user.email || 'unknown',
           result: 'success',
           userAgent: req.headers['user-agent'] || '',
-          metadata: { username: user.username }
+          metadata: { username: user.username, emailSent }
         });
+        
+        const successMessage = emailSent 
+          ? "Registration successful. Please check your email to verify your account."
+          : "Account created but verification email failed - please use the resend verification option.";
         
         // Log the user in automatically if session is available
         if (req.login && typeof req.login === 'function') {
           req.login(user, (err: any) => {
             if (err) {
-              console.error('Login after registration failed:', err);
+              logger.error('Login after registration failed', { message: err.message });
               // Still return success for registration
               return res.json({ 
-                message: "Registration successful. Please check your email to verify your account. Login manually to continue.",
+                success: true,
+                emailSent,
+                message: successMessage + " Login manually to continue.",
                 user: this.sanitizeUser(user)
               });
             }
             
             res.json({ 
-              message: "Registration successful. Please check your email to verify your account.",
+              success: true,
+              emailSent,
+              message: successMessage,
               user: this.sanitizeUser(user)
             });
           });
         } else {
           // No session available (e.g., during testing)
           res.json({ 
-            message: "Registration successful. Please check your email to verify your account.",
+            success: true,
+            emailSent,
+            message: successMessage,
             user: this.sanitizeUser(user)
           });
         }
       } catch (error: any) {
-        console.error("Registration error:", error);
+        logger.error('Registration error', { message: error.message });
         if (error.name === 'ZodError') {
           // Check if error is about password
           const hasPasswordError = error.errors?.some((e: any) => e.path?.includes('password'));
@@ -290,13 +303,13 @@ export class AuthRouter {
       // req.logout() removes user from session; must be called before session is destroyed
       req.logout((logoutErr: any) => {
         if (logoutErr) {
-          console.error('Passport logout warning:', logoutErr);
+          logger.warn('Passport logout warning', { message: logoutErr.message });
         }
         
         // Now destroy the session after Passport logout
         sessionManager.destroySession(req, res, (err: any) => {
           if (err) {
-            console.error('Logout error:', err);
+            logger.error('Logout error', { message: err.message });
             return res.status(500).json({ 
               message: "Logout failed",
               code: "LOGOUT_ERROR"
@@ -382,7 +395,8 @@ export class AuthRouter {
           expiresAt
         );
 
-        // Send verification email (non-blocking - don't fail registration if email fails)
+        // Send verification email and track success
+        let emailSent = false;
         try {
           await sendVerificationEmail(
             user.id.toString(),
@@ -390,8 +404,10 @@ export class AuthRouter {
             user.displayName || user.username || 'User',
             verificationToken // Send unhashed token to user
           );
+          emailSent = true;
         } catch (emailError: any) {
-          console.error('Failed to send verification email:', emailError.message || emailError);
+          logger.error('Failed to send verification email', { message: emailError.message });
+          emailSent = false;
         }
 
         // Log registration event
@@ -402,35 +418,45 @@ export class AuthRouter {
           resource: user.email || 'unknown',
           result: 'success',
           userAgent: req.headers['user-agent'] || '',
-          metadata: { username: user.username }
+          metadata: { username: user.username, emailSent }
         });
+        
+        const successMessage = emailSent 
+          ? "Registration successful. Please check your email to verify your account."
+          : "Account created but verification email failed - please use the resend verification option.";
         
         // Log the user in automatically if session is available
         if (req.login && typeof req.login === 'function') {
           req.login(user, (err: any) => {
             if (err) {
-              console.error('Login after registration failed:', err);
+              logger.error('Login after registration failed', { message: err.message });
               // Still return success for registration
               return res.json({ 
-                message: "Registration successful. Please check your email to verify your account. Login manually to continue.",
+                success: true,
+                emailSent,
+                message: successMessage + " Login manually to continue.",
                 user: this.sanitizeUser(user)
               });
             }
             
             res.json({ 
-              message: "Registration successful. Please check your email to verify your account.",
+              success: true,
+              emailSent,
+              message: successMessage,
               user: this.sanitizeUser(user)
             });
           });
         } else {
           // No session available (e.g., during testing)
           res.json({ 
-            message: "Registration successful. Please check your email to verify your account.",
+            success: true,
+            emailSent,
+            message: successMessage,
             user: this.sanitizeUser(user)
           });
         }
       } catch (error: any) {
-        console.error("Registration error:", error);
+        logger.error('Registration error', { message: error.message });
         if (error.name === 'ZodError') {
           // Check if error is about password
           const hasPasswordError = error.errors?.some((e: any) => e.path?.includes('password'));
@@ -457,7 +483,7 @@ export class AuthRouter {
     this.router.post("/api/auth/login", csrfProtection, (req: Request, res: Response, next: NextFunction) => {
       passport.authenticate('local', (err: any, user: User, info: any) => {
         if (err) {
-          console.error('Login error:', err);
+          logger.error('Login error', { message: err.message });
           return res.status(500).json({ 
             error: "Login failed",
             message: "Login failed",
@@ -475,7 +501,7 @@ export class AuthRouter {
         
         req.login(user, (loginErr: any) => {
           if (loginErr) {
-            console.error('Session creation failed:', loginErr);
+            logger.error('Session creation failed', { message: loginErr.message });
             return res.status(500).json({ 
               message: "Session creation failed",
               code: "SESSION_ERROR"
@@ -496,13 +522,13 @@ export class AuthRouter {
       // req.logout() removes user from session; must be called before session is destroyed
       req.logout((logoutErr: any) => {
         if (logoutErr) {
-          console.error('Passport logout warning:', logoutErr);
+          logger.warn('Passport logout warning', { message: logoutErr.message });
         }
         
         // Now destroy the session after Passport logout
         sessionManager.destroySession(req, res, (err: any) => {
           if (err) {
-            console.error('Logout error:', err);
+            logger.error('Logout error', { message: err.message });
             return res.status(500).json({ 
               message: "Logout failed",
               code: "LOGOUT_ERROR"
@@ -655,7 +681,7 @@ export class AuthRouter {
           code: "EMAIL_VERIFIED"
         });
       } catch (error: any) {
-        console.error("Email verification error:", error);
+        logger.error('Email verification error', { message: error.message });
         if (error.name === 'ZodError') {
           return res.status(400).json({ 
             message: "Invalid request format",
@@ -742,7 +768,7 @@ export class AuthRouter {
           code: "VERIFICATION_RESENT"
         });
       } catch (error: any) {
-        console.error("Resend verification error:", error);
+        logger.error('Resend verification error', { message: error.message });
         res.status(500).json({ 
           message: "Failed to resend verification email",
           code: "RESEND_ERROR"
@@ -814,8 +840,8 @@ export class AuthRouter {
             user.displayName || user.username || 'User',
             resetToken
           );
-        } catch (emailError) {
-          console.error('Failed to send reset email:', emailError);
+        } catch (emailError: any) {
+          logger.error('Failed to send reset email', { message: emailError.message });
         }
 
         // Log reset request
@@ -830,7 +856,7 @@ export class AuthRouter {
 
         res.json(successResponse);
       } catch (error: any) {
-        console.error("Password reset request error:", error);
+        logger.error('Password reset request error', { message: error.message });
         if (error.name === 'ZodError') {
           return res.status(400).json({ 
             message: "Invalid email format",
@@ -911,7 +937,7 @@ export class AuthRouter {
           code: "PASSWORD_RESET"
         });
       } catch (error: any) {
-        console.error("Password reset error:", error);
+        logger.error('Password reset error', { message: error.message });
         if (error.name === 'ZodError') {
           return res.status(400).json({ 
             message: "Invalid request. Password must be at least 8 characters.",

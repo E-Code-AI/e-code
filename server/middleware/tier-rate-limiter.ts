@@ -9,15 +9,53 @@
  * 
  * AI USAGE: Pay-as-you-go model (NO BLOCKING)
  * - See ai-usage-tracker.ts for AI metering
+ * 
+ * REDIS SUPPORT (Production):
+ * - Uses RateLimiterRedis when Redis is available for distributed rate limiting
+ * - Falls back to RateLimiterMemory in development or when Redis is unavailable
  */
 
 import { Request, Response, NextFunction } from 'express';
-import { RateLimiterMemory } from 'rate-limiter-flexible';
+import { RateLimiterRedis, RateLimiterMemory } from 'rate-limiter-flexible';
+import Redis from 'ioredis';
 import { db } from '../db';
 import { rateLimitViolations } from '@shared/schema';
 import { createLogger } from '../utils/logger';
 
 const logger = createLogger('tier-rate-limiter');
+
+// Initialize Redis client for distributed rate limiting in production
+let redisClient: Redis | null = null;
+
+const redisUrl = process.env.REDIS_URL || process.env.REDIS_TLS_URL;
+if (redisUrl) {
+  try {
+    redisClient = new Redis(redisUrl.replace('rediss://', 'redis://'), {
+      maxRetriesPerRequest: 2,
+      enableReadyCheck: true,
+      lazyConnect: true,
+    });
+    
+    redisClient.on('connect', () => {
+      logger.info('Redis connected for tier rate limiting');
+    });
+    
+    redisClient.on('error', (err) => {
+      logger.warn('Redis tier rate limiter connection error - using memory fallback', { error: err.message });
+      redisClient = null;
+    });
+    
+    redisClient.connect().catch((err) => {
+      logger.warn('Redis tier rate limiter connection failed - using memory fallback', { error: err?.message || 'Unknown error' });
+      redisClient = null;
+    });
+  } catch (error: any) {
+    logger.warn('Redis tier rate limiter initialization failed - using memory fallback', { error: error?.message });
+    redisClient = null;
+  }
+} else {
+  logger.info('No Redis URL configured - tier rate limiter using memory storage');
+}
 
 type SubscriptionTier = 'free' | 'core' | 'teams' | 'enterprise';
 type LimitType = 'api' | 'auth'; // Streaming handled separately
@@ -62,20 +100,48 @@ const DEV_MULTIPLIER =
   process.env.NODE_ENV === 'development' ? 1000 : 
   1;
 
-// In-memory rate limiters per tier/type
-const rateLimiters = new Map<string, RateLimiterMemory>();
+// Rate limiters per tier/type (Redis or Memory)
+const rateLimiters = new Map<string, RateLimiterRedis | RateLimiterMemory>();
 
-function getRateLimiter(tier: SubscriptionTier, limitType: LimitType): RateLimiterMemory {
+/**
+ * Creates a rate limiter with Redis support (production) or Memory fallback (development)
+ * @param points - Number of requests allowed
+ * @param duration - Time window in seconds
+ * @param keyPrefix - Prefix for rate limiter keys
+ * @returns RateLimiterRedis if Redis is available, otherwise RateLimiterMemory
+ */
+function createRateLimiter(points: number, duration: number, keyPrefix: string): RateLimiterRedis | RateLimiterMemory {
+  const blockDuration = process.env.NODE_ENV === 'development' ? 1 : duration;
+  
+  // Use Redis in production when available for distributed rate limiting
+  if (redisClient && redisClient.status === 'ready') {
+    logger.debug(`Creating Redis rate limiter: ${keyPrefix}`);
+    return new RateLimiterRedis({
+      storeClient: redisClient,
+      keyPrefix,
+      points: points * DEV_MULTIPLIER,
+      duration,
+      blockDuration,
+      execEvenly: false,
+    });
+  }
+  
+  // Fallback to memory (development or Redis unavailable)
+  logger.debug(`Creating Memory rate limiter: ${keyPrefix}`);
+  return new RateLimiterMemory({
+    keyPrefix,
+    points: points * DEV_MULTIPLIER,
+    duration,
+    blockDuration,
+  });
+}
+
+function getRateLimiter(tier: SubscriptionTier, limitType: LimitType): RateLimiterRedis | RateLimiterMemory {
   const key = `${tier}_${limitType}`;
   
   if (!rateLimiters.has(key)) {
     const limits = TIER_LIMITS[tier][limitType];
-    const limiter = new RateLimiterMemory({
-      keyPrefix: `rl_tier_${key}`,
-      points: limits.points * DEV_MULTIPLIER,
-      duration: limits.duration,
-      blockDuration: process.env.NODE_ENV === 'development' ? 1 : limits.duration,
-    });
+    const limiter = createRateLimiter(limits.points, limits.duration, `rl_tier_${key}`);
     rateLimiters.set(key, limiter);
   }
   
@@ -148,12 +214,8 @@ export function createTierRateLimitMiddleware(limitType: LimitType | 'streaming'
         
         let limiter = rateLimiters.get(key);
         if (!limiter) {
-          limiter = new RateLimiterMemory({
-            keyPrefix: `rl_tier_${key}`,
-            points: limits.points * DEV_MULTIPLIER,
-            duration: limits.duration,
-            blockDuration: process.env.NODE_ENV === 'development' ? 1 : limits.duration,
-          });
+          // Use createRateLimiter for Redis/Memory fallback pattern
+          limiter = createRateLimiter(limits.points, limits.duration, `rl_tier_${key}`);
           rateLimiters.set(key, limiter);
         }
         
