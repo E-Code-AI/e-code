@@ -85,8 +85,52 @@
     <div id="root"></div>
     <div class="initial-loader" id="initial-loader">
       <div class="spinner"></div>
-      <div class="text">Loading E-Code...</div>
+      <div class="text" id="loading-text">Loading E-Code...</div>
     </div>
+    <script>
+      // Fallback: Hide loader after timeout and show error state if React hasn't mounted
+      (function() {
+        var startTime = Date.now();
+        var loadingText = document.getElementById('loading-text');
+        var loader = document.getElementById('initial-loader');
+        
+        // Update loading text with progress dots
+        var dotCount = 0;
+        var progressInterval = setInterval(function() {
+          dotCount = (dotCount + 1) % 4;
+          var dots = '.'.repeat(dotCount || 1);
+          var elapsed = Math.round((Date.now() - startTime) / 1000);
+          if (elapsed > 5) {
+            loadingText.textContent = 'Still loading... (' + elapsed + 's)';
+          } else {
+            loadingText.textContent = 'Loading E-Code' + dots;
+          }
+        }, 1000);
+        
+        // After 60 seconds, show an error message but don't block the app
+        setTimeout(function() {
+          clearInterval(progressInterval);
+          var root = document.getElementById('root');
+          if (!root || !root.hasChildNodes()) {
+            loadingText.textContent = 'Taking longer than expected...';
+            loadingText.style.color = '#f59e0b';
+            
+            // Add refresh button
+            var refreshBtn = document.createElement('button');
+            refreshBtn.textContent = 'Refresh Page';
+            refreshBtn.style.cssText = 'margin-top:16px;padding:8px 16px;background:#F26207;color:white;border:none;border-radius:6px;cursor:pointer;font-family:inherit;';
+            refreshBtn.onclick = function() { window.location.reload(); };
+            loader.appendChild(refreshBtn);
+          }
+        }, 60000);
+        
+        // After 90 seconds, force hide the loader
+        setTimeout(function() {
+          clearInterval(progressInterval);
+          if (loader) loader.classList.add('hidden');
+        }, 90000);
+      })();
+    </script>
     <script>
       // Critical fix for WebSocket issues in development
       // Suppresses connection errors and fixes undefined port issues
