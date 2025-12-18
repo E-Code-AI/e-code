@@ -79,6 +79,7 @@ import mobileSessionsRouter from "./mobile-sessions.router";
 import mobileBuildsRouter from "./mobile-builds.router";
 import rollbackRouter from "./rollback.router";
 import { replitdbRouter } from "./replitdb.router";
+import sendgridWebhooksRouter from './webhooks-sendgrid.router';
 
 export class MainRouter {
   private authRouter: AuthRouter;
@@ -88,7 +89,7 @@ export class MainRouter {
   private healthRouter: HealthRouter;
   private chatgptRouter: ChatGPTRouter;
   private loadTestingRouter: LoadTestingRouter;
-  
+
   constructor(private storage: IStorage) {
     this.authRouter = new AuthRouter(storage);
     this.projectsRouter = new ProjectsRouter(storage);
@@ -105,243 +106,246 @@ export class MainRouter {
   registerRoutes(app: Application): void {
     // Health check routes (no auth required)
     app.use(this.healthRouter.getRouter());
-    
+
     // Prometheus metrics endpoint (no auth required for scraping)
     app.use('/api', prometheusRouter);
-    
+
     // Placeholder image routes (no auth required - used for avatars and product images)
     app.use(placeholderRouter);
-    
+
     // Load testing routes (admin only - Fortune 500 requirement)
     app.use(this.loadTestingRouter.getRouter());
-    
+
     // CSRF token endpoint
     app.get('/api/csrf-token', csrfTokenEndpoint);
-    
+
     // CSRF token endpoint alias (RESTful compatibility)
     app.get('/api/auth/csrf-token', csrfTokenEndpoint);
-    
+
     // Setup auth bypass for development
     setupAuthBypass(app);
-    
+
     // API Versioning (Fortune 500 requirement)
     app.use('/api', apiVersionMiddleware);
     app.use('/api', rejectUnsupportedVersions);
-    
+
     // Authentication routes (already have auth-specific rate limiting)
     app.use(this.authRouter.getRouter());
-    
+
     // OAuth authentication routes (GitHub, Google, etc.)
     app.use('/api/auth', tierRateLimiters.auth, authCompleteRouter);
-    
+
     // Apply tier-based rate limiting to all API routes (Fortune 500 requirement)
     // Free: 100 req/min, Pro: 1000 req/min, Enterprise: 10000 req/min
-    
+
     // User management routes
     app.use(tierRateLimiters.api, this.usersRouter.getRouter());
-    
+
     // Project management routes  
     app.use(tierRateLimiters.api, this.projectsRouter.getRouter());
-    
+
     // File management routes
     app.use(tierRateLimiters.api, this.filesRouter.getRouter());
-    
+
     // ChatGPT admin routes
     app.use(tierRateLimiters.api, this.chatgptRouter.getRouter());
-    
+
     // AI Usage Tracking (Pay-As-You-Go) - Track all AI/Agent requests for billing
     // No blocking - users pay for what they use via Stripe metered billing
     app.use('/api/agent', aiUsageTracker);
     app.use('/api/admin/agent', aiUsageTracker);
-    
+
     // Agent preferences routes (authenticated users) - user-facing preferences
     app.use('/api/agent', tierRateLimiters.api, createAgentPreferencesRouter(this.storage));
-    
+
     // Agent tools routes (web search, testing, extended thinking) - authenticated users
     app.use('/api/agent', tierRateLimiters.api, createAgentToolsRouter());
-    
+
     // Agent routes (admin only)
     app.use('/api/admin/agent', tierRateLimiters.api, agentRouter);
-    
+
     // Agent plan routes (REAL AI-powered plan generation with streaming) - authenticated users
     // ✅ FORTUNE 500 FIX: Use streaming rate limiter for SSE endpoints
     app.use('/api/agent/plan', tierRateLimiters.streaming, createAgentPlanRouter(this.storage));
-    
+
     // Agent build routes (build execution with SSE progress streaming) - authenticated users
     // ✅ FORTUNE 500 FIX: Use streaming rate limiter for SSE endpoints
     app.use('/api/agent/build', tierRateLimiters.streaming, createAgentBuildRouter(this.storage));
-    
+
     // Autonomous agent routes (authenticated users) - single mount point
     app.use('/api/agent', tierRateLimiters.streaming, agentAutonomousRouter);
-    
+
     // Agent workflow routes (feature generation, build selection) - authenticated users
     app.use('/api/agent', tierRateLimiters.api, agentWorkflowRouter);
-    
+
     // Agent step cache routes (caching intermediate agent phases for cost optimization)
     app.use('/api/agent/step-cache', tierRateLimiters.api, agentStepCacheRouter);
-    
+
     // Agent testing routes (browser testing, element selector, recording) - Phase 2 (ADMIN ONLY)
     app.use('/api/admin/agent', tierRateLimiters.api, agentTestingRouter);
-    
+
     // Test agent routes (for testing without auth)
     app.use(tierRateLimiters.api, testAgentRouter);
-    
+
     // Collaboration routes
     app.use('/api/collaboration', tierRateLimiters.api, collaborationRouter);
-    
+
     // Deployment routes
     app.use(tierRateLimiters.api, deploymentRouter);
-    
+
     // Deployment Rollback routes (Admin-only for destructive operations)
     app.use(tierRateLimiters.api, rollbackRouter);
-    
+
     // File upload routes
     app.use('/api/upload', tierRateLimiters.api, fileUploadRouter);
-    
+
     // Notifications routes
     app.use('/api/notifications', tierRateLimiters.api, notificationsRouter);
-    
+
     // Preview routes
     app.use('/api/preview', tierRateLimiters.api, previewRouter);
-    
+
     // Shell routes
     app.use('/api/shell', tierRateLimiters.api, shellRouter);
-    
+
     // Containers routes
     app.use('/api/containers', tierRateLimiters.api, containersRouter);
-    
+
     // Scalability routes
     app.use('/api/scalability', tierRateLimiters.api, scalabilityRouter);
-    
+
     // Marketplace routes
     app.use('/api/marketplace', tierRateLimiters.api, marketplaceRouter);
-    
+
     // Community routes
     app.use('/api/community', tierRateLimiters.api, communityRouter);
-    
+
     // Admin routes
     app.use('/api/admin', tierRateLimiters.api, adminRouter);
-    
+
     // Admin Monitoring routes (Fortune 500 Rate Limit Dashboard)
     app.use('/api/admin/monitoring', tierRateLimiters.api, adminMonitoringRouter);
-    
+
     // Generation Metrics routes (App generation performance monitoring)
     app.use('/api/metrics/generation', tierRateLimiters.api, generationMetricsRouter);
-    
+
     // AI Usage Tracking (Pay-As-You-Go) - Track AI routes for billing
     // CRITICAL: Apply BEFORE mounting routers to ensure all AI endpoints are tracked
     app.use('/api/ai', aiUsageTracker);
     app.use('/api/models', aiUsageTracker);
-    
+
     // AI routes (REST endpoints for chat, completions, etc.)
     app.use('/api', tierRateLimiters.api, aiRouter);
-    
+
     // AI Usage Metering routes (Pay-As-You-Go billing endpoints)
     app.use('/api/usage', tierRateLimiters.api, aiUsageRouter);
     app.use('/api/ai/usage', tierRateLimiters.api, aiUsageRouter);
     app.use('/api/admin/ai-usage', tierRateLimiters.api, aiUsageRouter);
-    
+
     // AI Models Selection routes
     app.use('/api/models', tierRateLimiters.api, aiModelsRouter);
-    
+
     // RAG (Retrieval-Augmented Generation) routes
     app.use('/api/rag', tierRateLimiters.api, ragRouter);
-    
+
     // Memory Bank routes (Kilocode-inspired persistent project context)
     app.use('/api/memory-bank', tierRateLimiters.api, memoryBankRouter);
-    
+
     // Auto Checkpoints routes (Replit-style automatic checkpoint system)
     app.use('/api', tierRateLimiters.api, autoCheckpointsRouter);
-    
+
     // AI Health Check routes (Fortune 500 - validates all 21 models with 60s cache)
     app.use('/api/ai/health', tierRateLimiters.api, aiHealthRouter);
-    
+
     // Code Generation routes (SSE streaming for real-time code generation)
     app.use('/api/code-generation', tierRateLimiters.streaming, codeGenerationRouter);
-    
+
     // Feature Flags routes (runtime toggles for experimental features)
     app.use(tierRateLimiters.api, featureFlagsRouter);
-    
+
     // AI Streaming routes (Agent chat with SSE)
     // ✅ FORTUNE 500 FIX: Use streaming rate limiter instead of API limiter for SSE endpoints
     app.use(tierRateLimiters.streaming, aiStreamingRouter);
-    
+
     // Voice/Video WebRTC routes
     app.use('/api', tierRateLimiters.api, voiceVideoRouter);
-    
+
     // Data Provisioning routes
     app.use('/api', tierRateLimiters.api, dataProvisioningRouter);
-    
+
     // Terminal routes (logs and console output)
     app.use(tierRateLimiters.api, terminalRouter);
-    
+
     // Terminal metrics routes (Fortune 500 scalability monitoring)
     app.use('/api/terminal', tierRateLimiters.api, terminalMetricsRouter);
-    
+
     // Runtime routes (start, stop, execute, logs)
     app.use(tierRateLimiters.api, runtimeRouter);
-    
+
     // Packages routes (AI-driven package automation)
     app.use('/api/packages', tierRateLimiters.api, packagesRouter);
-    
+
     // Workspace routes (LSP, builds, tests, security, resources)
     app.use('/api/workspace', tierRateLimiters.api, createWorkspaceRoutes(this.storage));
-    
+
     // Workspace Bootstrap routes (Fortune 500-grade orchestration)
     app.use('/api/workspace', tierRateLimiters.api, workspaceBootstrapRouter);
-    
+
     // Mobile app routes
     app.use(tierRateLimiters.api, mobileRouter);
-    
+
     // Mobile Sessions routes (session management for mobile apps)
     app.use('/api/mobile', tierRateLimiters.api, mobileSessionsRouter);
-    
+
     // Mobile Builds routes (EAS Build integration for iOS/Android)
     app.use('/api/mobile', tierRateLimiters.api, mobileBuildsRouter);
-    
+
     // Git integration routes
     app.use('/api/git', tierRateLimiters.api, GitRouter);
-    
+
     // Debug routes
     app.use('/api/debug', tierRateLimiters.api, debugRouter);
-    
+
     // Database routes (Admin-Only - System-wide DB inspector)
     app.use('/api/admin/database', tierRateLimiters.api, databaseRouter);
-    
+
     // ReplitDB-compatible Key-Value Database API (for container code)
     app.use('/api/db', replitdbRouter);
-    
+
     // Project Data routes (Project-scoped data for regular users)
     app.use('/api/projects', tierRateLimiters.api, projectDataRouter);
-    
+
     // Global Search routes (Priorité 1 - Core IDE)
     app.use('/api/search', tierRateLimiters.api, globalSearchRouter);
-    
+
     // Logs Viewer routes (Priorité 1 - Core IDE)
     app.use('/api/logs', tierRateLimiters.api, logsViewerRouter);
-    
+
     // Environment Variables routes (Priorité 1 - Core IDE)
     app.use('/api/env-vars', tierRateLimiters.api, envVarsRouter);
 
     // Multi-Device Sync routes (Workspace state, preferences, devices)
     app.use('/api/sync', tierRateLimiters.api, syncRouter);
-    
+
     // Background Testing routes (Replit Agent 3 auto-testing)
     app.use('/api/background-tests', tierRateLimiters.api, backgroundTestsRouter);
-    
+
     // Max Autonomy Mode routes (200+ minute autonomous sessions)
     app.use('/api/autonomy', tierRateLimiters.streaming, maxAutonomyRouter);
-    
+
     // Bounties Marketplace routes (Stripe Connect integration)
     app.use('/api/bounties', tierRateLimiters.api, bountiesRouter);
-    
+
     // Agent Grid routes (Phase 2 - AG Grid Dashboard)
     app.use('/api/agent-grid', tierRateLimiters.api, agentGridRouter);
-    
+
     // Analytics routes (real-time analytics and metrics)
     app.use(tierRateLimiters.api, analyticsRouter);
+
+    // SendGrid webhooks
+    app.use('/api/webhooks', sendgridWebhooksRouter);
   }
-  
+
   /**
    * Get all routers for testing purposes
    */
