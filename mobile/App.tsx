@@ -13,6 +13,8 @@ import { validateConfig, getConfig } from './src/services/config';
 import { notificationService } from './src/services/notifications';
 import { offlineCacheService } from './src/services/offline-cache';
 import { OAuthService, OAuthCallbackParams } from './src/services/oauth';
+import { registerBackgroundSync } from './src/services/background-sync';
+import { otaUpdateService } from './src/services/ota-updates';
 import LoginScreen from './src/screens/LoginScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import AgentScreen from './src/screens/AgentScreen';
@@ -207,6 +209,28 @@ export default function App() {
     return () => {
       offlineCacheService.destroy();
     };
+  }, []);
+
+  // Register background sync task on app startup
+  useEffect(() => {
+    registerBackgroundSync()
+      .then(() => {
+        console.log('[App] Background sync registered');
+      })
+      .catch(err => {
+        console.warn('[App] Background sync registration failed:', err);
+      });
+  }, []);
+
+  // Check for OTA updates on app startup
+  useEffect(() => {
+    otaUpdateService.checkAndApplyUpdate(true)
+      .then(() => {
+        console.log('[App] OTA update check completed');
+      })
+      .catch(err => {
+        console.warn('[App] OTA update check failed:', err);
+      });
   }, []);
 
   useEffect(() => {
