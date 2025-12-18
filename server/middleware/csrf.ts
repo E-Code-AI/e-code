@@ -87,9 +87,27 @@ const ALLOWED_ORIGINS = getAllowedOrigins();
 function isAllowedOrigin(origin: string | undefined): boolean {
   if (!origin) return false;
   
-  // Exact match or prefix match
-  if (ALLOWED_ORIGINS.some(allowed => origin.startsWith(allowed))) {
-    return true;
+  // SECURITY FIX: Use exact URL matching to prevent subdomain bypass attacks
+  // e.g., https://e-code.ai.attacker.com would bypass startsWith check
+  try {
+    const originUrl = new URL(origin);
+    const originHostPort = `${originUrl.protocol}//${originUrl.host}`;
+    
+    // Exact host match only (no prefix matching)
+    if (ALLOWED_ORIGINS.some(allowed => {
+      try {
+        const allowedUrl = new URL(allowed);
+        const allowedHostPort = `${allowedUrl.protocol}//${allowedUrl.host}`;
+        return originHostPort === allowedHostPort;
+      } catch {
+        return origin === allowed;
+      }
+    })) {
+      return true;
+    }
+  } catch {
+    // If origin is not a valid URL, reject it
+    return false;
   }
   
   // In development, allow any Replit domain pattern
