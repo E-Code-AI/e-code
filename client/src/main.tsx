@@ -1,8 +1,24 @@
 import { createRoot } from "react-dom/client";
 import * as Sentry from '@sentry/react';
 import App from "./App";
-import "./index.css";
+import "./critical.css"; // Fast critical CSS only - Tailwind base
 import "./lib/monaco-config";
+
+// Load full CSS after first paint for faster initial load
+// Using requestAnimationFrame to defer after render
+if (typeof window !== 'undefined') {
+  const loadDeferredStyles = () => {
+    // Load extended styles after first paint
+    import('./index.css');
+  };
+  
+  // Use requestIdleCallback if available, otherwise requestAnimationFrame
+  if ('requestIdleCallback' in window) {
+    (window as any).requestIdleCallback(loadDeferredStyles, { timeout: 3000 });
+  } else {
+    requestAnimationFrame(() => setTimeout(loadDeferredStyles, 100));
+  }
+}
 import "./i18n"; // Initialize i18n for internationalization
 import { monitoring } from "./lib/monitoring";
 import { initTelemetry } from "./lib/telemetry";
