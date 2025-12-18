@@ -1,9 +1,16 @@
 import Stripe from 'stripe';
+import crypto from 'crypto';
 import { storage } from '../storage';
 import { getSubscriptionPeriodBoundary } from '../services/stripe-utils';
 import { PLANS, getPlanByTier } from './pricing-constants';
 import { creditsService } from '../services/credits-service';
 import { createLogger } from '../utils/logger';
+
+function generateIdempotencyKey(prefix: string, ...parts: (string | number)[]): string {
+  const timestamp = Date.now();
+  const uniqueId = crypto.randomUUID().slice(0, 8);
+  return `${prefix}_${parts.join('_')}_${timestamp}_${uniqueId}`;
+}
 
 const logger = createLogger('stripe-service');
 
@@ -199,6 +206,8 @@ export class StripePaymentService {
       metadata: {
         userId: String(userId),
       },
+    }, {
+      idempotencyKey: generateIdempotencyKey('cust', userId),
     });
 
     // Save customer ID to user record
@@ -231,12 +240,16 @@ export class StripePaymentService {
     if (paymentMethodId) {
       await stripe.paymentMethods.attach(paymentMethodId, {
         customer: customerId,
+      }, {
+        idempotencyKey: generateIdempotencyKey('pm_attach', userId, paymentMethodId),
       });
 
       await stripe.customers.update(customerId, {
         invoice_settings: {
           default_payment_method: paymentMethodId,
         },
+      }, {
+        idempotencyKey: generateIdempotencyKey('cust_update', userId, paymentMethodId),
       });
     }
 
@@ -258,6 +271,7 @@ export class StripePaymentService {
     // Try creating subscription with all items (base + usage-based)
     // If this fails due to interval mismatch, fall back to base plan only
     let subscription: Stripe.Subscription;
+    const subscriptionIdempotencyKey = generateIdempotencyKey('sub', userId, planId);
     try {
       subscription = await stripe.subscriptions.create({
         customer: customerId,
@@ -273,6 +287,8 @@ export class StripePaymentService {
           userId: String(userId),
           planId,
         },
+      }, {
+        idempotencyKey: subscriptionIdempotencyKey,
       });
       logger.info(`[Stripe] ✅ Created subscription with ${usagePriceIds.length} usage-based items`);
     } catch (error: any) {
@@ -294,6 +310,8 @@ export class StripePaymentService {
             userId: String(userId),
             planId,
           },
+        }, {
+          idempotencyKey: `${subscriptionIdempotencyKey}_fallback`,
         });
       } else {
         throw error; // Re-throw unexpected errors
@@ -324,7 +342,10 @@ export class StripePaymentService {
 
     const subscription = await stripe.subscriptions.update(
       user.stripeSubscriptionId,
-      { cancel_at_period_end: true }
+      { cancel_at_period_end: true },
+      {
+        idempotencyKey: generateIdempotencyKey('sub_cancel', userId, user.stripeSubscriptionId),
+      }
     );
 
     await storage.updateUser(String(userId), {
@@ -361,6 +382,9 @@ export class StripePaymentService {
           price: plan.id,
         }],
         proration_behavior: 'create_prorations',
+      },
+      {
+        idempotencyKey: generateIdempotencyKey('sub_update', userId, newPlanId),
       }
     );
 
@@ -414,6 +438,8 @@ export class StripePaymentService {
       metadata: {
         userId: String(userId),
       },
+    }, {
+      idempotencyKey: generateIdempotencyKey('pi', userId, amountInCents),
     });
 
     return paymentIntent;
@@ -424,6 +450,8 @@ export class StripePaymentService {
       customer: customerId,
       payment_method_types: ['card'],
       usage: 'off_session',
+    }, {
+      idempotencyKey: generateIdempotencyKey('seti', customerId),
     });
 
     return setupIntent;

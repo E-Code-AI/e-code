@@ -18,6 +18,7 @@ import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { ReplitLayout } from "@/components/layout/ReplitLayout";
 import { LazyShellWidgets } from "@/components/LazyShellWidgets";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import { OfflineFallback } from "@/components/OfflineFallback";
 
 import performanceMonitor from "./utils/performance";
 import { registerServiceWorker } from "./utils/service-worker";
@@ -210,26 +211,29 @@ function AppContent() {
 
 function App() {
   return (
-    <ErrorBoundary>
-      <PersistQueryClientProvider 
-        client={queryClient} 
-        persistOptions={{ persister: queryPersister, maxAge: 24 * 60 * 60 * 1000, buster: 'v1' }}
-      >
-        <OptimizedMotionProvider>
-          <AnimationMonitor>
-            <ThemeProvider>
-              <ConnectionStatusProvider>
-                <GlobalErrorChannelProvider>
-                  <AuthProvider>
-                    <AppContent />
-                  </AuthProvider>
-                </GlobalErrorChannelProvider>
-              </ConnectionStatusProvider>
-            </ThemeProvider>
-          </AnimationMonitor>
-        </OptimizedMotionProvider>
-      </PersistQueryClientProvider>
-    </ErrorBoundary>
+    <>
+      <OfflineFallback />
+      <ErrorBoundary>
+        <PersistQueryClientProvider 
+          client={queryClient} 
+          persistOptions={{ persister: queryPersister, maxAge: 24 * 60 * 60 * 1000, buster: 'v1' }}
+        >
+          <OptimizedMotionProvider>
+            <AnimationMonitor>
+              <ThemeProvider>
+                <ConnectionStatusProvider>
+                  <GlobalErrorChannelProvider>
+                    <AuthProvider>
+                      <AppContent />
+                    </AuthProvider>
+                  </GlobalErrorChannelProvider>
+                </ConnectionStatusProvider>
+              </ThemeProvider>
+            </AnimationMonitor>
+          </OptimizedMotionProvider>
+        </PersistQueryClientProvider>
+      </ErrorBoundary>
+    </>
   );
 }
 

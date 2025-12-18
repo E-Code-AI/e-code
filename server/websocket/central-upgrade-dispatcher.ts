@@ -22,6 +22,7 @@ import type { Duplex } from 'stream';
 import type { Server } from 'http';
 import { markSocketAsHandled, isSocketHandled } from './upgrade-guard';
 import { createCentralizedLogger } from '../logging/centralized-logger';
+import { sessionManager } from '../auth/session-manager';
 
 const logger = createCentralizedLogger('central-upgrade-dispatcher');
 
@@ -95,6 +96,33 @@ class CentralUpgradeDispatcher {
   }
   
   /**
+   * Validate WebSocket connection by checking session cookie
+   * Returns user ID if authenticated, or indicates if validation failed
+   */
+  private async validateWebSocketConnection(request: IncomingMessage): Promise<{ isValid: boolean; userId?: number }> {
+    // Extract session cookie from request headers
+    const cookieHeader = request.headers.cookie || '';
+    const sessionMatch = cookieHeader.match(/connect\.sid=([^;]+)/);
+    
+    if (!sessionMatch) {
+      return { isValid: false };
+    }
+    
+    try {
+      const sessionId = decodeURIComponent(sessionMatch[1]);
+      const session = await sessionManager.getSession(sessionId);
+      
+      if (session && session.passport?.user) {
+        return { isValid: true, userId: session.passport.user };
+      }
+      return { isValid: false };
+    } catch (error: any) {
+      logger.error('WebSocket session validation failed', { message: error.message });
+      return { isValid: false };
+    }
+  }
+  
+  /**
    * The single authoritative upgrade handler
    * Routes all WebSocket upgrades to the appropriate service
    * 
@@ -102,7 +130,7 @@ class CentralUpgradeDispatcher {
    * Reason: Replit's edge proxy silently drops WebSocket upgrades on non-root paths (e.g., /ws/agent)
    * Solution: Route by ?channel= query parameter when pathname is '/' or empty
    */
-  private handleUpgrade(request: IncomingMessage, socket: Duplex, head: Buffer): void {
+  private async handleUpgrade(request: IncomingMessage, socket: Duplex, head: Buffer): Promise<void> {
     // Extract pathname and channel safely
     const { pathname, channel } = this.extractPathnameAndChannel(request);
     
@@ -130,6 +158,26 @@ class CentralUpgradeDispatcher {
     
     // Find matching handler using effective path (supports both /ws/agent and /?channel=agent)
     const handler = this.findHandler(effectivePath);
+    
+    // Public paths that don't require auth
+    const PUBLIC_WS_PATHS = ['/', '/health'];
+    
+    // Only validate auth for non-public paths
+    if (handler && !PUBLIC_WS_PATHS.includes(effectivePath)) {
+      const authResult = await this.validateWebSocketConnection(request);
+      if (!authResult.isValid) {
+        logger.warn('[Central Dispatcher] Unauthorized WebSocket connection attempt', {
+          effectivePath,
+          ip: request.socket?.remoteAddress,
+        });
+        this.destroySocketWithError(socket, 401, 'Unauthorized');
+        return;
+      }
+      logger.debug('[Central Dispatcher] WebSocket authentication successful', {
+        userId: authResult.userId,
+        effectivePath,
+      });
+    }
     
     if (handler) {
       // Update connection stats

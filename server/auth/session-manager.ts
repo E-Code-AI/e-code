@@ -13,6 +13,39 @@ export class SessionManager {
   private sessionStore = new Map<string, any>();
 
   /**
+   * Get session by session ID
+   * Used for WebSocket authentication validation
+   */
+  async getSession(sessionId: string): Promise<any | null> {
+    // Check in-memory store first
+    if (this.sessionStore.has(sessionId)) {
+      return this.sessionStore.get(sessionId);
+    }
+    
+    // For signed sessions (connect.sid format), extract the actual session ID
+    // Format is typically: s:sessionId.signature
+    let actualSessionId = sessionId;
+    if (sessionId.startsWith('s:')) {
+      const dotIndex = sessionId.indexOf('.');
+      actualSessionId = dotIndex > 0 ? sessionId.substring(2, dotIndex) : sessionId.substring(2);
+    }
+    
+    // Try with the extracted session ID
+    if (this.sessionStore.has(actualSessionId)) {
+      return this.sessionStore.get(actualSessionId);
+    }
+    
+    return null;
+  }
+  
+  /**
+   * Store session for WebSocket access
+   */
+  storeSession(sessionId: string, session: any): void {
+    this.sessionStore.set(sessionId, session);
+  }
+
+  /**
    * Generate session fingerprint based on client characteristics
    */
   generateFingerprint(req: Request): string {
