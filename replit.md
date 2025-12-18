@@ -42,6 +42,15 @@ An auto-initializing context storage system in `.ecode/memory-bank/` stores AI-g
 - **Intersection Observer Animation System:** Scroll-triggered animations using native Intersection Observer (`useInView` hook, `CSSInViewFade`, `CSSInViewSlide`, `CSSInViewScale` components) for zero main-thread blocking, with hybrid fallbacks and basic stagger support.
 - **Native Motion Library:** A zero-dependency animation system (`useNativeMotionValue`, `useSpringValue`, `usePanGesture`, `useAnimationControls`) replacing framer-motion hooks for 60fps GPU-accelerated animations with proper memory cleanup.
 
+### ReplDB-Compatible Key-Value Database
+A Replit-compatible key-value database accessible from container code via `REPLIT_DB_URL` (also `ECODE_DB_URL`). The system provides:
+- **Environment Injection:** `REPLIT_DB_URL` and `ECODE_DB_URL` are automatically injected into every container at startup
+- **File-based Fallback:** `/tmp/replitdb` file created in container for published app compatibility
+- **HTTP API:** RESTful API at `/api/db/:projectId` supporting GET (list/get), POST (set), DELETE operations
+- **Client Compatibility:** Works with official Replit Python (`replit`) and Node.js (`@replit/database`) client libraries
+- **Direct HTTP:** Can also be accessed via direct HTTP requests (text/plain for single values, JSON for bulk operations)
+- **Limits:** 50 MiB per store, 5,000 keys per store, 1,000 bytes per key, 5 MiB per value (matching Replit limits)
+
 ## External Dependencies
 
 ### AI/ML Services
