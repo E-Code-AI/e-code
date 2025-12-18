@@ -47,9 +47,25 @@ interface RAGSessionConfig {
 
 /**
  * GET /api/rag/stats
- * Get RAG system statistics
+ * Get RAG system statistics (public endpoint - returns defaults for unauthenticated users)
  */
-router.get('/stats', ensureAuthenticated, async (req, res) => {
+router.get('/stats', async (req, res) => {
+  // For unauthenticated users, return minimal stats
+  if (!req.isAuthenticated || !req.isAuthenticated()) {
+    return res.json({
+      embeddingsCount: 0,
+      nodesCount: 0,
+      edgesCount: 0,
+      conversationsCount: 0,
+      lastUpdated: null,
+      isAvailable: !!process.env.OPENAI_API_KEY || !!process.env.ANTHROPIC_API_KEY,
+      providers: {
+        openai: !!process.env.OPENAI_API_KEY,
+        anthropic: !!process.env.ANTHROPIC_API_KEY,
+        gemini: !!process.env.GEMINI_API_KEY,
+      }
+    });
+  }
   try {
     let nodesCount = 0;
     let edgesCount = 0;

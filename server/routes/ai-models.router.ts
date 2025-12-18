@@ -55,10 +55,21 @@ router.get('/', (req, res) => {
 
 /**
  * GET /api/models/preferred
- * Get user's preferred AI model
+ * Get user's preferred AI model (public endpoint - returns default for unauthenticated users)
  */
-router.get('/preferred', ensureAuthenticated, async (req, res) => {
+router.get('/preferred', async (req, res) => {
   try {
+    // For unauthenticated users, return a default model
+    if (!req.isAuthenticated || !req.isAuthenticated()) {
+      const availableModels = aiProviderManager.getAvailableModels();
+      const defaultModel = availableModels.length > 0 ? availableModels[0].id : null;
+      return res.json({
+        success: true,
+        preferredModel: defaultModel,
+        availableModels: availableModels.length
+      });
+    }
+
     const userId = req.user!.id.toString();
     const storage = getStorage();
     
