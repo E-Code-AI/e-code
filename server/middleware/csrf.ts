@@ -24,18 +24,87 @@ const EXCLUDED_PATHS = [
   '/api/webhooks/github',
 ];
 
-// Allowed origins for login/register endpoints (origin validation)
-const ALLOWED_ORIGINS = [
+// Base allowed origins for login/register endpoints
+const BASE_ORIGINS = [
   process.env.APP_URL || 'http://localhost:5000',
   'https://e-code.ai',
+  'http://localhost:5000',
+  'http://localhost:3000',
 ];
 
 /**
+ * Build complete allowed origins list at runtime
+ * Includes all Replit development domains dynamically
+ */
+function getAllowedOrigins(): string[] {
+  const origins = [...BASE_ORIGINS];
+  
+  // Primary: REPLIT_DEV_DOMAIN is the actual domain used by Replit preview
+  if (process.env.REPLIT_DEV_DOMAIN) {
+    origins.push(`https://${process.env.REPLIT_DEV_DOMAIN}`);
+  }
+  
+  // Secondary: Full development URL
+  if (process.env.REPLIT_DEV_URL) {
+    origins.push(process.env.REPLIT_DEV_URL);
+    // Also add without port for WebView requests
+    const urlWithoutPort = process.env.REPLIT_DEV_URL.replace(/:5000$/, '');
+    if (urlWithoutPort !== process.env.REPLIT_DEV_URL) {
+      origins.push(urlWithoutPort);
+    }
+  }
+  
+  // REPLIT_DOMAINS contains comma-separated domain list
+  if (process.env.REPLIT_DOMAINS) {
+    process.env.REPLIT_DOMAINS.split(',').forEach(domain => {
+      const trimmed = domain.trim();
+      if (trimmed) {
+        origins.push(`https://${trimmed}`);
+      }
+    });
+  }
+  
+  // Fallback: REPL_ID based patterns (legacy support)
+  if (process.env.REPL_ID) {
+    origins.push(`https://${process.env.REPL_ID}.replit.dev`);
+  }
+  
+  // Allow any .replit.dev and .repl.co subdomain in development
+  if (process.env.NODE_ENV === 'development') {
+    // Add wildcards for development flexibility
+  }
+  
+  return [...new Set(origins)]; // Deduplicate
+}
+
+// Build origins at module load
+const ALLOWED_ORIGINS = getAllowedOrigins();
+
+/**
  * Check if the provided origin is in the allowed list
+ * Also allows any Replit development domain in development mode
  */
 function isAllowedOrigin(origin: string | undefined): boolean {
   if (!origin) return false;
-  return ALLOWED_ORIGINS.some(allowed => origin.startsWith(allowed));
+  
+  // Exact match or prefix match
+  if (ALLOWED_ORIGINS.some(allowed => origin.startsWith(allowed))) {
+    return true;
+  }
+  
+  // In development, allow any Replit domain pattern
+  if (process.env.NODE_ENV === 'development') {
+    const replitPatterns = [
+      /^https:\/\/[a-f0-9-]+\.replit\.dev$/,
+      /^https:\/\/[a-f0-9-]+-\d+-[a-z0-9]+\.riker\.replit\.dev$/,
+      /^https:\/\/[a-z0-9-]+\.repl\.co$/,
+    ];
+    if (replitPatterns.some(pattern => pattern.test(origin))) {
+      return true;
+    }
+  }
+  
+  return false;
 }
 
 /**
