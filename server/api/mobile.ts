@@ -530,11 +530,17 @@ function formatTimeAgo(date: Date): string {
 
 const MOBILE_OAUTH_REDIRECT = 'ecode://auth/callback';
 
-// Helper to get base URL
+// Helper to get base URL for OAuth callbacks
 function getBaseUrl(): string {
+  // Production: Always use the canonical domain
+  if (process.env.NODE_ENV === 'production') {
+    return process.env.BASE_URL || 'https://e-code.ai';
+  }
+  // Development: Use configured BASE_URL or Replit URL
   if (process.env.BASE_URL) {
     return process.env.BASE_URL;
   }
+  // Fallback for Replit development environment
   if (process.env.REPL_SLUG && process.env.REPL_OWNER) {
     return `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`;
   }
@@ -556,7 +562,7 @@ router.get('/mobile/auth/oauth/github', async (req, res) => {
     
     const params = new URLSearchParams({
       client_id: clientId,
-      redirect_uri: `${getBaseUrl()}/api/mobile/auth/oauth/github/callback`,
+      redirect_uri: `${getBaseUrl()}/mobile/auth/oauth/github/callback`,
       scope: 'user:email',
       state: state,
       allow_signup: 'true'
@@ -680,7 +686,7 @@ router.get('/mobile/auth/oauth/google', async (req, res) => {
     
     const params = new URLSearchParams({
       client_id: clientId,
-      redirect_uri: `${getBaseUrl()}/api/mobile/auth/oauth/google/callback`,
+      redirect_uri: `${getBaseUrl()}/mobile/auth/oauth/google/callback`,
       response_type: 'code',
       scope: 'openid email profile',
       state: state,
@@ -719,7 +725,7 @@ router.get('/mobile/auth/oauth/google/callback', async (req, res) => {
         code: code as string,
         client_id: process.env.GOOGLE_CLIENT_ID!,
         client_secret: process.env.GOOGLE_CLIENT_SECRET!,
-        redirect_uri: `${getBaseUrl()}/api/mobile/auth/oauth/google/callback`,
+        redirect_uri: `${getBaseUrl()}/mobile/auth/oauth/google/callback`,
         grant_type: 'authorization_code'
       }).toString()
     });

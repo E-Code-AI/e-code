@@ -12,10 +12,18 @@ export interface OAuthCallbackParams {
   error?: string;
 }
 
+// Get server base URL (without /api suffix for OAuth routes)
+function getServerBaseUrl(): string {
+  // API_BASE_URL is like 'https://e-code.ai/api' - we need 'https://e-code.ai'
+  return API_BASE_URL.replace(/\/api\/?$/, '');
+}
+
 export class OAuthService {
   static async initiateOAuth(provider: OAuthProvider): Promise<void> {
     try {
-      const response = await fetch(`${API_BASE_URL}/mobile/auth/oauth/${provider}`);
+      // OAuth routes are mounted at /mobile/... (not /api/mobile/...)
+      const serverUrl = getServerBaseUrl();
+      const response = await fetch(`${serverUrl}/mobile/auth/oauth/${provider}`);
       const data = await response.json();
       
       if (!response.ok) {
