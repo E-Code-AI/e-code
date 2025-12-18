@@ -7,7 +7,9 @@ import { spawn, ChildProcess } from 'child_process';
 import { EventEmitter } from 'events';
 import * as path from 'path';
 import * as fs from 'fs/promises';
+import * as fsSync from 'fs';
 import * as crypto from 'crypto';
+import * as os from 'os';
 import { createLogger } from '../utils/logger';
 import { storage } from '../storage';
 import { Project, File } from '@shared/schema';
@@ -18,6 +20,9 @@ import { Readable } from 'stream';
 
 const logger = createLogger('docker-executor');
 const docker = new Docker();
+
+// Base directory for execution workspaces
+const EXECUTION_BASE_DIR = path.join(os.tmpdir(), 'e-code-executions');
 
 export interface ExecutionConfig {
   projectId: number;
@@ -51,11 +56,23 @@ export class DockerExecutor extends EventEmitter {
     container: Docker.Container;
     projectId: number;
     result: ExecutionResult;
+    workDir: string;  // Host directory for file sync
+    originalFiles: Map<string, string>;  // Original file contents for diffing
+    synced: boolean;  // Flag to prevent double sync
   }> = new Map();
 
   constructor() {
     super();
     this.setupCleanup();
+    this.ensureBaseDir();
+  }
+
+  private async ensureBaseDir(): Promise<void> {
+    try {
+      await fs.mkdir(EXECUTION_BASE_DIR, { recursive: true });
+    } catch (error) {
+      logger.error('Failed to create execution base directory:', error);
+    }
   }
 
   private setupCleanup() {
@@ -80,8 +97,8 @@ export class DockerExecutor extends EventEmitter {
       // Create container with appropriate image
       const image = await this.getOrPullImage(config.language);
       
-      // Prepare project files as tar archive
-      const projectTar = await this.createProjectTar(config.files);
+      // Create a writable workspace on the host and populate with project files
+      const { workDir, originalFiles } = await this.setupWorkspace(containerId, config.files);
       
       // Container configuration - use DOCKER_NETWORK for sibling container access
       const networkMode = process.env.DOCKER_NETWORK || 'bridge';
@@ -97,10 +114,17 @@ export class DockerExecutor extends EventEmitter {
           CpuPeriod: 100000,
           NetworkMode: networkMode,
           AutoRemove: false,
+          // Bind mount the workspace directory with read-write access
+          Binds: [`${workDir}:/app:rw`],
+          // Allow writing to /app but keep other areas restricted
+          Tmpfs: { '/tmp': 'rw,nosuid,size=128m' },
           PortBindings: config.port ? {
             [`${config.port}/tcp`]: [{ HostPort: '0' }]
           } : undefined,
-          ExtraHosts: ['host.docker.internal:host-gateway']
+          ExtraHosts: ['host.docker.internal:host-gateway'],
+          // Security: Drop all capabilities, run as non-root
+          CapDrop: ['ALL'],
+          SecurityOpt: ['no-new-privileges:true']
         },
         ExposedPorts: config.port ? {
           [`${config.port}/tcp`]: {}
@@ -110,11 +134,8 @@ export class DockerExecutor extends EventEmitter {
         Tty: false
       };
 
-      // Create and start container
+      // Create container (files are already in workDir via bind mount)
       const container = await docker.createContainer(containerConfig);
-      
-      // Extract files into container
-      await container.putArchive(projectTar, { path: '/app' });
       
       // Set up output streams
       const stream = await container.attach({
@@ -153,11 +174,14 @@ export class DockerExecutor extends EventEmitter {
         }
       }
 
-      // Store container reference
+      // Store container reference with workDir for file sync
       this.activeContainers.set(containerId, {
         container,
         projectId: config.projectId,
-        result
+        result,
+        workDir,
+        originalFiles,
+        synced: false  // Will be set to true after first sync
       });
 
       // Set up monitoring
@@ -238,6 +262,225 @@ export class DockerExecutor extends EventEmitter {
     }
 
     return imageName;
+  }
+
+  /**
+   * Create a writable workspace directory on the host and populate with project files
+   * Returns the workspace path and a map of original file contents for later diffing
+   */
+  private async setupWorkspace(containerId: string, files: File[]): Promise<{
+    workDir: string;
+    originalFiles: Map<string, string>;
+  }> {
+    const workDir = path.join(EXECUTION_BASE_DIR, containerId);
+    const originalFiles = new Map<string, string>();
+    
+    try {
+      // Create workspace directory
+      await fs.mkdir(workDir, { recursive: true });
+      
+      // Write all project files to workspace
+      for (const file of files) {
+        const filePath = path.join(workDir, file.path || file.name);
+        
+        if (file.isDirectory) {
+          await fs.mkdir(filePath, { recursive: true });
+        } else if (file.content !== null && file.content !== undefined) {
+          // Ensure parent directory exists
+          const parentDir = path.dirname(filePath);
+          await fs.mkdir(parentDir, { recursive: true });
+          
+          // Write file content
+          await fs.writeFile(filePath, file.content, 'utf8');
+          
+          // Store original content for later comparison
+          const relativePath = file.path || file.name;
+          originalFiles.set(relativePath, file.content);
+        }
+      }
+      
+      logger.info(`Created workspace for execution ${containerId} with ${files.length} files`);
+      return { workDir, originalFiles };
+      
+    } catch (error) {
+      logger.error(`Failed to setup workspace: ${error}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Sync modified files from workspace back to storage
+   * Compares current files against original content and persists changes
+   * Optimized: fetches existing files ONCE to avoid O(n²) DB calls
+   */
+  private async syncWorkspaceToStorage(
+    projectId: number,
+    workDir: string,
+    originalFiles: Map<string, string>
+  ): Promise<{ created: number; modified: number; deleted: number }> {
+    const stats = { created: 0, modified: 0, deleted: 0 };
+    
+    try {
+      // Walk the workspace and find all files
+      const currentFiles = new Map<string, string>();
+      const currentDirs = new Set<string>();
+      await this.walkDirectory(workDir, '', currentFiles, currentDirs);
+      
+      // Fetch existing files ONCE (avoid O(n²) DB calls)
+      const existingFiles = await storage.getFilesByProjectId(projectId.toString());
+      const existingFileMap = new Map(existingFiles.map(f => [f.path || f.name, f]));
+      const existingDirPaths = new Set(existingFiles.filter(f => f.isDirectory).map(f => f.path || f.name));
+      
+      // Create new directories first (required for nested file creation)
+      for (const dirPath of currentDirs) {
+        if (!existingDirPaths.has(dirPath)) {
+          try {
+            await storage.createFile({
+              projectId,
+              name: path.basename(dirPath),
+              path: dirPath,
+              content: null,
+              isDirectory: true
+            });
+            stats.created++;
+            logger.debug(`Created new directory: ${dirPath}`);
+          } catch (error) {
+            logger.warn(`Failed to create directory ${dirPath}:`, error);
+          }
+        }
+      }
+      
+      // Find modified and new files
+      for (const [relativePath, content] of currentFiles) {
+        const originalContent = originalFiles.get(relativePath);
+        const existingFile = existingFileMap.get(relativePath);
+        
+        // Handle large files: store up to 5MB, warn for larger
+        const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+        if (content.length > MAX_FILE_SIZE) {
+          logger.warn(`Skipping very large file: ${relativePath} (${(content.length / 1024 / 1024).toFixed(2)} MB)`);
+          continue;
+        }
+        
+        if (originalContent === undefined) {
+          // New file created during execution
+          try {
+            await storage.createFile({
+              projectId,
+              name: path.basename(relativePath),
+              path: relativePath,
+              content,
+              isDirectory: false
+            });
+            stats.created++;
+            logger.debug(`Created new file: ${relativePath}`);
+          } catch (error) {
+            logger.warn(`Failed to create file ${relativePath}:`, error);
+          }
+        } else if (originalContent !== content) {
+          // File was modified - use cached lookup
+          if (existingFile) {
+            try {
+              await storage.updateFile(existingFile.id, { content });
+              stats.modified++;
+              logger.debug(`Updated file: ${relativePath}`);
+            } catch (error) {
+              logger.warn(`Failed to update file ${relativePath}:`, error);
+            }
+          }
+        }
+      }
+      
+      // Find deleted files (in original but not in current) - use cached lookup
+      for (const [relativePath] of originalFiles) {
+        if (!currentFiles.has(relativePath)) {
+          const existingFile = existingFileMap.get(relativePath);
+          if (existingFile) {
+            try {
+              await storage.deleteFile(existingFile.id);
+              stats.deleted++;
+              logger.debug(`Deleted file: ${relativePath}`);
+            } catch (error) {
+              logger.warn(`Failed to delete file ${relativePath}:`, error);
+            }
+          }
+        }
+      }
+      
+      logger.info(`Synced workspace for project ${projectId}: ${stats.created} created, ${stats.modified} modified, ${stats.deleted} deleted`);
+      return stats;
+      
+    } catch (error) {
+      logger.error(`Failed to sync workspace to storage:`, error);
+      return stats;
+    }
+  }
+
+  /**
+   * Walk a directory recursively and collect all file contents and directories
+   */
+  private async walkDirectory(
+    baseDir: string,
+    relativePath: string,
+    files: Map<string, string>,
+    directories?: Set<string>
+  ): Promise<void> {
+    const currentDir = path.join(baseDir, relativePath);
+    
+    try {
+      const entries = await fs.readdir(currentDir, { withFileTypes: true });
+      
+      for (const entry of entries) {
+        const entryRelativePath = relativePath ? path.join(relativePath, entry.name) : entry.name;
+        
+        // Skip node_modules and other heavy directories
+        if (entry.name === 'node_modules' || entry.name === '.git' || entry.name === '__pycache__') {
+          continue;
+        }
+        
+        if (entry.isDirectory()) {
+          // Track directory for later creation
+          if (directories) {
+            directories.add(entryRelativePath);
+          }
+          await this.walkDirectory(baseDir, entryRelativePath, files, directories);
+        } else if (entry.isFile()) {
+          try {
+            const content = await fs.readFile(path.join(currentDir, entry.name), 'utf8');
+            files.set(entryRelativePath, content);
+          } catch (readError) {
+            // Try reading as binary and encode as base64 for binary files
+            try {
+              const buffer = await fs.readFile(path.join(currentDir, entry.name));
+              // Store binary files up to 5MB (aligned with syncWorkspaceToStorage limit)
+              const MAX_BINARY_SIZE = 5 * 1024 * 1024; // 5MB
+              if (buffer.length < MAX_BINARY_SIZE) {
+                files.set(entryRelativePath, buffer.toString('base64'));
+                logger.debug(`Stored binary file as base64: ${entryRelativePath} (${(buffer.length / 1024).toFixed(1)} KB)`);
+              } else {
+                logger.warn(`Skipping large binary file: ${entryRelativePath} (${(buffer.length / 1024 / 1024).toFixed(2)} MB)`);
+              }
+            } catch (binaryError) {
+              logger.debug(`Skipping unreadable file: ${entryRelativePath}`);
+            }
+          }
+        }
+      }
+    } catch (error) {
+      logger.warn(`Failed to walk directory ${currentDir}:`, error);
+    }
+  }
+
+  /**
+   * Clean up workspace directory after execution
+   */
+  private async cleanupWorkspace(workDir: string): Promise<void> {
+    try {
+      await fs.rm(workDir, { recursive: true, force: true });
+      logger.debug(`Cleaned up workspace: ${workDir}`);
+    } catch (error) {
+      logger.warn(`Failed to cleanup workspace ${workDir}:`, error);
+    }
   }
 
   private async createProjectTar(files: File[]): Promise<Buffer> {
@@ -374,7 +617,7 @@ export class DockerExecutor extends EventEmitter {
     });
 
     // Monitor container status
-    container.wait((err, data) => {
+    container.wait(async (err, data) => {
       if (err) {
         logger.error(`Container wait error: ${err}`);
         result.status = 'error';
@@ -385,6 +628,29 @@ export class DockerExecutor extends EventEmitter {
       
       // Clean up stats stream
       (statsStream as any).destroy?.();
+      
+      // Get container data before removing from map
+      const containerData = this.activeContainers.get(containerId);
+      
+      if (containerData) {
+        // Sync workspace files back to storage before cleanup
+        // ONLY if not already synced (prevents double-sync when stopContainer is called)
+        if (!containerData.synced) {
+          try {
+            await this.syncWorkspaceToStorage(
+              containerData.projectId,
+              containerData.workDir,
+              containerData.originalFiles
+            );
+            containerData.synced = true;
+          } catch (syncError) {
+            logger.error(`Failed to sync workspace for container ${containerId}:`, syncError);
+          }
+        }
+        
+        // Always clean up workspace directory (even if already synced)
+        await this.cleanupWorkspace(containerData.workDir);
+      }
       
       // Remove from active containers
       this.activeContainers.delete(containerId);
@@ -399,6 +665,21 @@ export class DockerExecutor extends EventEmitter {
       throw new Error(`Container ${containerId} not found`);
     }
 
+    // Sync files BEFORE stopping the container to ensure data is saved
+    if (!containerData.synced) {
+      try {
+        await this.syncWorkspaceToStorage(
+          containerData.projectId,
+          containerData.workDir,
+          containerData.originalFiles
+        );
+        containerData.synced = true;  // Mark as synced to prevent double-sync in wait handler
+        logger.info(`Synced files before stopping container ${containerId}`);
+      } catch (syncError) {
+        logger.error(`Failed to sync files before stopping container ${containerId}:`, syncError);
+      }
+    }
+
     try {
       await containerData.container.stop({ t: 5 });
       logger.info(`Container ${containerId} stopped`);
@@ -407,6 +688,9 @@ export class DockerExecutor extends EventEmitter {
       await containerData.container.kill();
       logger.warn(`Container ${containerId} force killed`);
     }
+    
+    // Note: workspace cleanup is handled by the container.wait handler
+    // to avoid race conditions with the sync process
   }
 
   async getContainerLogs(containerId: string): Promise<string[]> {
@@ -434,6 +718,13 @@ export class DockerExecutor extends EventEmitter {
     
     for (const [containerId, data] of this.activeContainers) {
       try {
+        // Sync files before cleanup (only if not already synced)
+        if (!data.synced) {
+          await this.syncWorkspaceToStorage(data.projectId, data.workDir, data.originalFiles);
+          data.synced = true;  // Mark as synced to prevent double-sync in wait handler
+        }
+        await this.cleanupWorkspace(data.workDir);
+        
         await data.container.stop({ t: 0 });
         await data.container.remove();
       } catch (error) {
@@ -441,6 +732,7 @@ export class DockerExecutor extends EventEmitter {
       }
     }
     
+    // Clear all containers AFTER cleanup to ensure wait handlers see synced=true
     this.activeContainers.clear();
   }
 
