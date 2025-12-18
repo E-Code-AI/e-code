@@ -49,9 +49,9 @@
   "submit": {
     "production": {
       "ios": {
-        "appleId": "${APPLE_ID}",
-        "ascAppId": "${ASC_APP_ID}",
-        "appleTeamId": "${APPLE_TEAM_ID}"
+        "appleId": "CONFIGURE_VIA_EAS_SECRET",
+        "ascAppId": "CONFIGURE_VIA_EAS_SECRET", 
+        "appleTeamId": "CONFIGURE_VIA_EAS_SECRET"
       },
       "android": {
         "serviceAccountKeyPath": "./google-services.json",
