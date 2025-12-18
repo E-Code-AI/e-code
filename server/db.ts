@@ -59,9 +59,14 @@ const baseClient = postgres(DATABASE_URL, {
   },
 });
 
-// FIXED: Bypassing databaseQueryOptimizer to prevent breaking postgres-js methods
-// The optimizer's Proxy breaks .unsafe().values() chain needed by Drizzle
-export const client = baseClient; // databaseQueryOptimizer.instrument(baseClient);
+// Database client with optional query monitoring
+// Note: The full Proxy-based instrumentation is disabled because it breaks
+// postgres-js method chaining (.unsafe().values()) needed by Drizzle ORM.
+// Query monitoring is still available via databaseQueryOptimizer.withCache() for explicit use.
+export const client = baseClient;
+
+// Re-export optimizer for explicit slow query monitoring (doesn't break Drizzle)
+export { databaseQueryOptimizer };
 
 // Create drizzle database instance with our schema
 export const db = drizzle(client, { schema });
