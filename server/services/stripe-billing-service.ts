@@ -237,7 +237,24 @@ export class StripeBillingService {
       const user = await storage.getUser(String(userId));
       if (!user) return false;
       
-      const plan = 'starter'; // Default plan, will be updated from subscription
+      // Get actual plan from subscription instead of hardcoding 'starter'
+      let plan = 'starter';
+      if (user.stripeSubscriptionId) {
+        try {
+          const subscription = await this.stripe.subscriptions.retrieve(user.stripeSubscriptionId, {
+            expand: ['items.data.price']
+          });
+          // Get plan from subscription price lookup_key or product metadata
+          const priceItem = subscription.items?.data?.[0]?.price;
+          if (priceItem?.lookup_key) {
+            plan = priceItem.lookup_key;
+          } else if (priceItem?.nickname) {
+            plan = priceItem.nickname.toLowerCase();
+          }
+        } catch (error) {
+          logger.warn(`Failed to fetch subscription for user ${userId}, using default plan`);
+        }
+      }
       const limits = this.getPlanLimits(plan);
       const usage = await storage.getUserUsage(String(userId));
       

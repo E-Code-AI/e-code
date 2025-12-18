@@ -7,10 +7,21 @@
 #   - Azure Database for PostgreSQL
 #   - Neon Serverless PostgreSQL (used by Replit)
 #
-# For self-managed K8s PostgreSQL with HA, consider:
-#   - CloudNativePG Operator: https://cloudnative-pg.io/
+# ⚠️  HIGH AVAILABILITY WARNING (AUDIT ITEM #18):
+# This StatefulSet runs with replicas: 1 which provides NO HIGH AVAILABILITY.
+# 
+# For production HA, you MUST use one of these approaches:
+#   - CloudNativePG Operator (RECOMMENDED): https://cloudnative-pg.io/
+#     kubectl apply -f https://github.com/cloudnative-pg/cloudnative-pg/releases/download/v1.22.0/cnpg-1.22.0.yaml
+#     Then create a Cluster resource with 3 replicas (1 primary + 2 replicas)
 #   - Zalando Postgres Operator: https://github.com/zalando/postgres-operator
 #   - CrunchyData PGO: https://github.com/CrunchyData/postgres-operator
+#
+# MINIMUM HA CONFIGURATION:
+#   - 3 PostgreSQL instances (1 primary + 2 synchronous replicas)
+#   - Pod anti-affinity to spread across availability zones
+#   - Automatic failover with leader election
+#   - Connection pooling (PgBouncer) for high connection counts
 #
 # BACKUP STRATEGY:
 #   - Use Velero for PV snapshots: https://velero.io/
