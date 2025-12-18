@@ -6,6 +6,7 @@
 import fetch from 'node-fetch';
 import { createLogger } from '../utils/logger';
 import * as cheerio from 'cheerio';
+import { tavilySearchService } from './tavily-search';
 
 const logger = createLogger('real-web-search');
 
@@ -55,6 +56,11 @@ export class RealWebSearchService {
     // Perplexity API
     if (process.env.PERPLEXITY_API_KEY) {
       this.searchEngines.set('perplexity', this.searchPerplexity.bind(this));
+    }
+
+    // Tavily API (preferred for AI agents)
+    if (tavilySearchService.isConfigured()) {
+      this.searchEngines.set('tavily', this.searchTavily.bind(this));
     }
   }
 
@@ -251,6 +257,21 @@ export class RealWebSearchService {
       snippet: item.snippet,
       content: item.text,
       source: item.source
+    }));
+  }
+
+  private async searchTavily(query: string): Promise<SearchResult[]> {
+    const results = await tavilySearchService.search(query, {
+      maxResults: 10,
+      searchDepth: 'basic',
+    });
+
+    return results.map((item) => ({
+      title: item.title,
+      url: item.url,
+      snippet: item.content,
+      content: item.content,
+      source: new URL(item.url).hostname
     }));
   }
 
