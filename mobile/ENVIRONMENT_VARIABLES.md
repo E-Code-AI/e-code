@@ -15,7 +15,7 @@ The base URL for the E-Code API server.
 **Examples**:
 ```bash
 # Production
-EXPO_PUBLIC_API_BASE=https://api.e-code.ai/api
+EXPO_PUBLIC_API_BASE=https://e-code.ai/api
 
 # Staging
 EXPO_PUBLIC_API_BASE=https://staging.e-code.ai/api
@@ -112,14 +112,14 @@ eas build --profile staging
 
 **Example .env.production**:
 ```bash
-EXPO_PUBLIC_API_BASE=https://api.e-code.ai/api
+EXPO_PUBLIC_API_BASE=https://e-code.ai/api
 EXPO_PUBLIC_ENV=production
 EXPO_PUBLIC_RELEASE_CHANNEL=production
 ```
 
 **Build command**:
 ```bash
-EXPO_PUBLIC_API_BASE=https://api.e-code.ai/api \
+EXPO_PUBLIC_API_BASE=https://e-code.ai/api \
 EXPO_PUBLIC_ENV=production \
 eas build --profile production
 ```
@@ -163,7 +163,7 @@ Configure environment-specific builds:
     "production": {
       "env": {
         "EXPO_PUBLIC_ENV": "production",
-        "EXPO_PUBLIC_API_BASE": "https://api.e-code.ai/api",
+        "EXPO_PUBLIC_API_BASE": "https://e-code.ai/api",
         "EXPO_PUBLIC_RELEASE_CHANNEL": "production"
       }
     }
@@ -184,7 +184,7 @@ Configure environment-specific builds:
   Please set EXPO_PUBLIC_API_BASE in your environment.
 
   Example:
-    EXPO_PUBLIC_API_BASE=https://api.e-code.ai/api
+    EXPO_PUBLIC_API_BASE=https://e-code.ai/api
 ```
 
 **Solution**: Set `EXPO_PUBLIC_API_BASE` in your environment or `eas.json`
@@ -305,7 +305,7 @@ EXPO_PUBLIC_API_BASE=https://staging.e-code.ai/api
 EXPO_PUBLIC_ENV=staging
 
 # .env.production
-EXPO_PUBLIC_API_BASE=https://api.e-code.ai/api
+EXPO_PUBLIC_API_BASE=https://e-code.ai/api
 EXPO_PUBLIC_ENV=production
 ```
 

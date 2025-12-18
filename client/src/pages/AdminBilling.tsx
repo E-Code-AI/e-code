@@ -314,7 +314,7 @@ export default function AdminBilling() {
                         id="stripe-webhook"
                         value={billingSettings.stripeWebhookEndpoint}
                         onChange={(e) => billingSettings.stripeWebhookEndpoint = e.target.value}
-                        placeholder="https://api.e-code.ai/webhooks/stripe"
+                        placeholder="https://e-code.ai/webhooks/stripe"
                       />
                     </div>
                     <div>
