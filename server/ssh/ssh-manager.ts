@@ -7,7 +7,7 @@
  * - Authentication and authorization
  */
 
-import { spawn, ChildProcess } from 'child_process';
+import { spawn, exec, ChildProcess } from 'child_process';
 import crypto from 'crypto';
 import { promises as fs } from 'fs';
 import path from 'path';
@@ -279,7 +279,6 @@ export class SSHManager {
     
     try {
       const fs = require('fs').promises;
-      const { spawn } = require('child_process');
       
       // Create project directory if it doesn't exist
       await fs.mkdir(projectPath, { recursive: true });
@@ -476,7 +475,6 @@ export class SSHManager {
     this.updateSessionActivity(sessionId);
 
     // Execute command in project environment
-    const { exec } = require('child_process');
     const { promisify } = require('util');
     const execAsync = promisify(exec);
     

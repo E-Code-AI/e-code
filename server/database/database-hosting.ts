@@ -7,6 +7,8 @@
  * - Database monitoring and metrics
  */
 
+import { exec, execSync } from 'child_process';
+
 export interface DatabaseInstance {
   id: string;
   name: string;
@@ -570,7 +572,6 @@ export class DatabaseHostingService {
 
   private collectInstanceMetrics() {
     const os = require('os');
-    const { execSync } = require('child_process');
     
     const entries = Array.from(this.instances.entries());
     for (const [instanceId, instance] of entries) {
@@ -695,7 +696,6 @@ export class DatabaseHostingService {
     // 4. Set up monitoring and metrics collection
     
     // For now, we simulate initialization by setting up the connection
-    const { exec } = require('child_process');
     const { promisify } = require('util');
     const execAsync = promisify(exec);
     
@@ -713,7 +713,6 @@ export class DatabaseHostingService {
     // 4. Verifying database is healthy
     
     // Perform actual database restart based on type
-    const { exec } = require('child_process');
     const { promisify } = require('util');
     const execAsync = promisify(exec);
     
@@ -747,7 +746,6 @@ export class DatabaseHostingService {
     // 4. Returning backup size
     
     const backupPath = `/backups/${instance.id}/${backupId}.backup`;
-    const { exec } = require('child_process');
     const { promisify } = require('util');
     const execAsync = promisify(exec);
     const fs = require('fs').promises;
@@ -818,7 +816,6 @@ export class DatabaseHostingService {
     // 5. Verifying data integrity
     
     // Perform actual restore operation
-    const { exec } = require('child_process');
     const { promisify } = require('util');
     const execAsync = promisify(exec);
     
@@ -865,7 +862,6 @@ export class DatabaseHostingService {
     // 4. Recording migration in history
     
     // Execute actual migration
-    const { exec } = require('child_process');
     const { promisify } = require('util');
     const execAsync = promisify(exec);
     
@@ -905,7 +901,6 @@ export class DatabaseHostingService {
     // 4. Verifying new configuration is active
     
     // Execute real scaling operation
-    const { exec } = require('child_process');
     const { promisify } = require('util');
     const execAsync = promisify(exec);
     
