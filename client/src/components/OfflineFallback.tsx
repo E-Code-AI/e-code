@@ -18,29 +18,19 @@ export function OfflineFallback() {
     };
   }, []);
 
-  if (isOnline) {
-    return null;
-  }
+  if (isOnline) return null;
 
   return (
-    <div 
-      className="fixed inset-0 bg-background/95 backdrop-blur-sm z-50 flex items-center justify-center"
-      role="alert"
-      aria-live="assertive"
-    >
-      <div className="text-center p-8 max-w-md">
+    <div className="fixed inset-0 bg-background/95 flex items-center justify-center z-50" data-testid="offline-fallback">
+      <div className="text-center p-6 max-w-md">
         <WifiOff className="w-16 h-16 mx-auto mb-4 text-muted-foreground" aria-hidden="true" />
-        <h2 className="text-2xl font-semibold mb-2">You're offline</h2>
-        <p className="text-muted-foreground mb-6">
+        <h2 className="text-xl font-semibold mb-2">You're offline</h2>
+        <p className="text-muted-foreground mb-4">
           Your changes are saved locally and will sync when you're back online.
         </p>
-        <Button 
-          variant="outline" 
-          onClick={() => window.location.reload()}
-          aria-label="Retry connection"
-        >
-          <RefreshCw className="w-4 h-4 mr-2" aria-hidden="true" />
-          Retry
+        <Button onClick={() => window.location.reload()} variant="outline" data-testid="button-retry-connection">
+          <RefreshCw className="w-4 h-4 mr-2" />
+          Retry Connection
         </Button>
       </div>
     </div>

@@ -70,7 +70,7 @@ export function PublicFooter() {
   ];
 
   return (
-    <footer className="relative border-t border-[var(--ecode-border)] bg-[var(--ecode-surface)] text-[var(--ecode-text)] dark:border-border dark:bg-background dark:text-slate-200">
+    <footer aria-label="Site footer" className="relative border-t border-[var(--ecode-border)] bg-[var(--ecode-surface)] text-[var(--ecode-text)] dark:border-border dark:bg-background dark:text-slate-200">
       <div className="absolute inset-0 marketing-gradient opacity-0 dark:opacity-100" aria-hidden />
       <div className="absolute inset-0 marketing-grid opacity-0 dark:opacity-60" aria-hidden />
       <div className="relative container-responsive py-16">
@@ -116,10 +116,10 @@ export function PublicFooter() {
             </div>
           </div>
 
-          <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
+          <nav aria-label="Footer navigation" className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
             <div>
               <h4 className="text-sm font-semibold uppercase tracking-[0.3em] text-[var(--ecode-text-muted)] dark:text-slate-400">Product</h4>
-              <ul className="mt-4 space-y-2 text-sm">
+              <ul role="list" className="mt-4 space-y-2 text-sm">
                 {footerLinks.product.map((link) => (
                   <li key={link.href}>
                     <Link href={link.href} className="text-[var(--ecode-text-secondary)] dark:text-slate-300 transition hover:text-[var(--ecode-accent)] dark:hover:text-white">
@@ -172,7 +172,7 @@ export function PublicFooter() {
                     <p className="text-sm font-semibold text-[var(--ecode-text)] dark:text-white">Compare platforms</p>
                     <p className="text-xs text-[var(--ecode-text-secondary)] dark:text-slate-300">See how E-Code stacks up against other development clouds.</p>
                   </div>
-                  <div className="flex flex-wrap gap-3">
+                  <div className="flex flex-wrap gap-3" role="list" aria-label="Platform comparisons">
                     {footerLinks.compare.map((link) => (
                       <Link
                         key={link.href}
@@ -186,7 +186,7 @@ export function PublicFooter() {
                 </div>
               </div>
             </div>
-          </div>
+          </nav>
         </div>
 
         <div className="mt-16 grid gap-8 border-t border-[var(--ecode-border)] dark:border-border pt-10 sm:grid-cols-2 lg:grid-cols-4">
@@ -209,10 +209,11 @@ export function PublicFooter() {
                 href={social.href}
                 target="_blank"
                 rel="noopener noreferrer"
+                aria-label={`Follow us on ${social.label}`}
                 className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--ecode-border)] dark:border-border bg-[var(--ecode-surface-secondary)] dark:bg-surface-solid text-[var(--ecode-text-secondary)] dark:text-slate-200 transition hover:border-[var(--ecode-accent)] dark:hover:border-surface-hover-solid hover:text-[var(--ecode-accent)] dark:hover:text-white"
                 data-testid={`link-social-${social.label.toLowerCase()}`}
               >
-                <social.icon className="h-5 w-5" />
+                <social.icon className="h-5 w-5" aria-hidden="true" />
               </a>
             ))}
           </div>

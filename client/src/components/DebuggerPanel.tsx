@@ -29,14 +29,7 @@ import {
 } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
 import { useQuery, useMutation } from '@tanstack/react-query';
-
-interface Breakpoint {
-  id: string;
-  file: string;
-  line: number;
-  enabled: boolean;
-  condition?: string;
-}
+import { useBreakpointStore, type Breakpoint } from '@/stores/breakpointStore';
 
 interface StackFrame {
   id: string;
@@ -69,6 +62,14 @@ export function DebuggerPanel({ projectId }: { projectId: string }) {
   const [selectedFrame, setSelectedFrame] = useState<string>('');
   const [expandedVariables, setExpandedVariables] = useState<Set<string>>(new Set());
   const [consoleOutput, setConsoleOutput] = useState<string[]>([]);
+  
+  const { 
+    breakpoints, 
+    addBreakpoint, 
+    removeBreakpoint, 
+    toggleBreakpoint, 
+    updateCondition 
+  } = useBreakpointStore();
 
   // Fetch debug session
   const { data: debugSession, refetch: refetchSession } = useQuery<DebugSession>({
@@ -323,19 +324,18 @@ export function DebuggerPanel({ projectId }: { projectId: string }) {
           <TabsContent value="breakpoints" className="flex-1 m-0">
             <ScrollArea className="h-[calc(100%-60px)]">
               <div className="p-4">
-                {debugSession?.breakpoints.length ? (
+                {breakpoints.length ? (
                   <div className="space-y-2">
-                    {debugSession.breakpoints.map((bp) => (
+                    {breakpoints.map((bp) => (
                       <div
                         key={bp.id}
                         className="flex items-center justify-between p-3 rounded-md bg-muted/50"
+                        data-testid={`breakpoint-item-${bp.id}`}
                       >
                         <div className="flex items-center gap-3">
                           <button
-                            onClick={() => toggleBreakpointMutation.mutate({ 
-                              file: bp.file, 
-                              line: bp.line 
-                            })}
+                            onClick={() => toggleBreakpoint(bp.id)}
+                            data-testid={`toggle-breakpoint-${bp.id}`}
                             className={`h-3 w-3 rounded-full border-2 ${
                               bp.enabled 
                                 ? 'bg-red-500 border-red-500' 
@@ -354,10 +354,8 @@ export function DebuggerPanel({ projectId }: { projectId: string }) {
                         <Button
                           size="icon"
                           variant="ghost"
-                          onClick={() => toggleBreakpointMutation.mutate({ 
-                            file: bp.file, 
-                            line: bp.line 
-                          })}
+                          onClick={() => removeBreakpoint(bp.id)}
+                          data-testid={`remove-breakpoint-${bp.id}`}
                         >
                           <X className="h-4 w-4" />
                         </Button>

@@ -3,7 +3,7 @@ import { storage } from '../storage';
 import path from 'path';
 import fs from 'fs/promises';
 import { ensureAuthenticated } from '../middleware/auth';
-import { createSecureUpload, validateUploadedFile, sanitizeFilename } from '../middleware/upload-validation';
+import { createSecureUpload, validateUpload, sanitizeFilename } from '../middleware/upload-validation';
 
 const router = Router();
 
@@ -22,7 +22,7 @@ const ensureProjectAccess = async (req: any, res: any, next: any) => {
     return res.status(400).json({ message: "Invalid project ID" });
   }
   
-  const project = await storage.getProject(projectId);
+  const project = await storage.getProject(String(projectId));
   if (!project) {
     return res.status(404).json({ message: "Project not found" });
   }
@@ -31,7 +31,7 @@ const ensureProjectAccess = async (req: any, res: any, next: any) => {
     return next();
   }
   
-  const collaborators = await storage.getProjectCollaborators(projectId);
+  const collaborators = await storage.getProjectCollaborators(String(projectId));
   const isCollaborator = collaborators.some((c: any) => c.userId === userId);
   
   if (isCollaborator) {
@@ -56,16 +56,16 @@ router.post('/api/projects/:id/upload',
         return res.status(400).json({ error: 'No file provided' });
       }
       
-      const validation = validateUploadedFile(file.buffer, file.mimetype);
+      const validation = await validateUpload(file.buffer, file.mimetype);
       if (!validation.valid) {
         return res.status(400).json({ error: validation.error });
       }
       
       const newFile = await storage.createFile({
-        projectId,
+        projectId: String(projectId),
         name: sanitizeFilename(file.originalname),
         content: file.buffer.toString('utf-8'),
-        isFolder: false,
+        isDirectory: false,
         parentId: parentId ? parseInt(parentId) : null
       });
       
@@ -93,7 +93,7 @@ router.post('/api/projects/:id/upload-multiple',
       }
       
       for (const file of files) {
-        const validation = validateUploadedFile(file.buffer, file.mimetype);
+        const validation = await validateUpload(file.buffer, file.mimetype);
         if (!validation.valid) {
           return res.status(400).json({ error: `${file.originalname}: ${validation.error}` });
         }
@@ -103,10 +103,10 @@ router.post('/api/projects/:id/upload-multiple',
       
       for (const file of files) {
         const newFile = await storage.createFile({
-          projectId,
+          projectId: String(projectId),
           name: sanitizeFilename(file.originalname),
           content: file.buffer.toString('utf-8'),
-          isFolder: false,
+          isDirectory: false,
           parentId: parentId ? parseInt(parentId) : null
         });
         createdFiles.push(newFile);
@@ -131,9 +131,9 @@ router.get('/api/files/:id/download', ensureAuthenticated, async (req, res) => {
     }
     
     // Check user access
-    const project = await storage.getProject(file.projectId);
+    const project = await storage.getProject(String(file.projectId));
     if (!project || project.ownerId !== req.user!.id) {
-      const collaborators = await storage.getProjectCollaborators(file.projectId);
+      const collaborators = await storage.getProjectCollaborators(String(file.projectId));
       const isCollaborator = collaborators.some((c: any) => c.userId === req.user!.id);
       if (!isCollaborator) {
         return res.status(403).json({ error: 'Access denied' });

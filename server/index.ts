@@ -16,6 +16,13 @@ validateRequiredSecrets();
 import { errorTracking } from './services/error-tracking';
 errorTracking.initialize();
 
+// ✅ Database connection with retry logic for resilient startup
+import { connectWithRetry } from './db';
+connectWithRetry().catch(err => {
+  console.error('[Database] Failed to connect:', err.message);
+  process.exit(1);
+});
+
 // Set environment variables to prevent file watcher crashes (ENOSPC)
 // MUST be set before any imports to prevent crashes
 process.env.CHOKIDAR_USEPOLLING = 'true';
@@ -208,6 +215,17 @@ function getServiceCounts(): { total: number; ready: number; failed: number } {
   };
 }
 
+/**
+ * Get detailed service status for health check responses
+ */
+export function getServiceStatus(): Record<string, boolean> {
+  const services: Record<string, boolean> = {};
+  serviceRegistry.forEach((value, key) => {
+    services[key] = value.ready;
+  });
+  return services;
+}
+
 // Track server readiness state (using dynamic counts)
 const serverState = {
   phase: 'starting' as 'starting' | 'listening' | 'loading' | 'ready',
@@ -238,17 +256,17 @@ app.get('/health/liveness', (_req, res) => {
 
 // Kubernetes-style readiness probe - returns 503 until server is ready (dynamic counts)
 app.get('/health/readiness', (_req, res) => {
-  const { total, ready } = getServiceCounts();
+  const services = getServiceStatus();
+  const allReady = Object.values(services).every(ready => ready);
+  const readyCount = Object.values(services).filter(ready => ready).length;
+  const totalCount = serviceRegistry.size;
   
-  if (serverState.phase === 'ready') {
-    res.status(200).json({ status: 'ready' });
-  } else {
-    res.status(503).json({
-      status: 'not ready',
-      phase: serverState.phase,
-      services: `${ready}/${total}`
-    });
-  }
+  res.json({
+    ready: allReady,
+    services: readyCount,
+    total: totalCount,
+    details: services
+  });
 });
 
 // Helper to track service loading (registers and marks ready)
@@ -315,12 +333,14 @@ app.get('/api/cors-health', async (_req, res) => {
     }
   }
 
+  registerService('terminal');
   try {
     // Setup PTY Terminal WebSocket server for real-time terminal access
     // Uses node-pty for real shell interaction (Replit Cloud Run compatible)
     const { initPTYTerminalService } = await import("./terminal/pty-terminal-service");
     const ptyTerminalService = initPTYTerminalService();
     ptyTerminalService.setup(httpServer);
+    markServiceReady('terminal');
     console.log('[Terminal] PTY Terminal service initialized at /api/terminal/ws');
   } catch (error) {
     console.error('[WORKING SERVER] Failed to setup PTY Terminal WebSocket:', error);
@@ -329,22 +349,28 @@ app.get('/api/cors-health', async (_req, res) => {
     try {
       const { setupTerminalWebsocket } = await import("./terminal");
       setupTerminalWebsocket(httpServer);
+      markServiceReady('terminal');
       console.log('[Terminal] Fallback to simulated terminal');
     } catch (fallbackError) {
       console.error('[WORKING SERVER] Fallback terminal also failed:', fallbackError);
+      markServiceFailed('terminal', 'Both PTY and fallback terminal failed');
     }
   }
 
+  registerService('background-testing');
   try {
     // Setup Background Testing WebSocket server for real-time test notifications
     // Uses central upgrade dispatcher for race-condition-free WebSocket handling
     const { setupBackgroundTestingWebSocket } = await import("./websocket/background-testing-ws");
     setupBackgroundTestingWebSocket(httpServer);
+    markServiceReady('background-testing');
     console.log('[BackgroundTesting] WebSocket service initialized via central dispatcher at /ws/background-tests');
   } catch (error) {
     console.error('[WORKING SERVER] Failed to setup Background Testing WebSocket:', error);
+    markServiceFailed('background-testing', String(error));
   }
 
+  registerService('collaboration');
   try {
     // Setup Collaboration WebSocket server for real-time collaborative editing (Yjs)
     const { CollaborationServer } = await import("./collaboration/collaboration-server");
@@ -352,11 +378,14 @@ app.get('/api/cors-health', async (_req, res) => {
     
     // Make collaboration server available globally
     (global as any).collaborationServer = collaborationServer;
+    markServiceReady('collaboration');
     console.log('[Collaboration] Yjs document sync server initialized at /collaboration');
   } catch (error) {
     console.error('[WORKING SERVER] Failed to setup Collaboration WebSocket:', error);
+    markServiceFailed('collaboration', String(error));
   }
 
+  registerService('unified-collaboration');
   try {
     // Setup Unified Collaboration Service (Socket.io for presence, chat, cursors)
     const { initializeCollaborationService } = await import("./collaboration/unified-collaboration-service");
@@ -364,11 +393,14 @@ app.get('/api/cors-health', async (_req, res) => {
     
     // Make unified collaboration service available globally
     (global as any).unifiedCollaborationService = unifiedCollabService;
+    markServiceReady('unified-collaboration');
     console.log('[Collaboration] Unified collaboration service initialized (presence/chat/cursors)');
   } catch (error) {
     console.error('[WORKING SERVER] Failed to setup Unified Collaboration Service:', error);
+    markServiceFailed('unified-collaboration', String(error));
   }
 
+  registerService('webrtc');
   try {
     // Setup WebRTC Voice/Video service for peer-to-peer communication
     const { setupWebRTCServer } = await import("./webrtc/webrtc-server");
@@ -376,8 +408,10 @@ app.get('/api/cors-health', async (_req, res) => {
     
     // Make WebRTC service available globally
     (global as any).webrtcService = webrtcService;
+    markServiceReady('webrtc');
   } catch (error) {
     console.error('[WORKING SERVER] Failed to setup WebRTC server:', error);
+    markServiceFailed('webrtc', String(error));
   }
 
   try {
@@ -404,28 +438,35 @@ app.get('/api/cors-health', async (_req, res) => {
     }, 8000);
     
     // Setup LSP WebSocket server for real-time diagnostics
+    registerService('lsp');
     try {
       const { setupLSPWebSocket } = await import("./services/LSPService");
       const lspService = setupLSPWebSocket(httpServer, storage);
       
       // Make LSP service available globally for routes
       (global as any).lspService = lspService;
+      markServiceReady('lsp');
     } catch (error) {
       console.error('[WORKING SERVER] Failed to setup LSP WebSocket:', error);
+      markServiceFailed('lsp', String(error));
     }
     
     // Setup Build Logs WebSocket server for real-time log streaming
+    registerService('build-logs');
     try {
       const { setupBuildLogsWebSocket } = await import("./services/BuildLogsService");
       const buildLogsService = setupBuildLogsWebSocket(httpServer, storage);
       
       // Make build logs service available globally for routes
       (global as any).buildLogsService = buildLogsService;
+      markServiceReady('build-logs');
     } catch (error) {
       console.error('[WORKING SERVER] Failed to setup Build Logs WebSocket:', error);
+      markServiceFailed('build-logs', String(error));
     }
     
     // Setup Runtime Logs WebSocket server for real-time execution output streaming
+    registerService('runtime-logs');
     try {
       const { initRuntimeLogsService } = await import("./services/RuntimeLogsService");
       const runtimeLogsService = initRuntimeLogsService(storage);
@@ -433,31 +474,39 @@ app.get('/api/cors-health', async (_req, res) => {
       
       // Make runtime logs service available globally for routes
       (global as any).runtimeLogsService = runtimeLogsService;
+      markServiceReady('runtime-logs');
       console.log('[RuntimeLogs] WebSocket server initialized at /api/runtime/logs/ws');
     } catch (error) {
       console.error('[WORKING SERVER] Failed to setup Runtime Logs WebSocket:', error);
+      markServiceFailed('runtime-logs', String(error));
     }
     
     // Setup Test Runs WebSocket server for real-time test result streaming
+    registerService('test-runs');
     try {
       const { setupTestRunsWebSocket } = await import("./services/TestRunsService");
       const testRunsService = setupTestRunsWebSocket(httpServer, storage);
       
       // Make test runs service available globally for routes
       (global as any).testRunsService = testRunsService;
+      markServiceReady('test-runs');
     } catch (error) {
       console.error('[WORKING SERVER] Failed to setup Test Runs WebSocket:', error);
+      markServiceFailed('test-runs', String(error));
     }
     
     // Setup Security Scanner WebSocket server for real-time scan updates
+    registerService('security-scanner');
     try {
       const { setupSecurityScannerWebSocket } = await import("./services/SecurityScannerService");
       const securityScannerService = setupSecurityScannerWebSocket(httpServer, storage);
       
       // Make security scanner service available globally for routes
       (global as any).securityScannerService = securityScannerService;
+      markServiceReady('security-scanner');
     } catch (error) {
       console.error('[WORKING SERVER] Failed to setup Security Scanner WebSocket:', error);
+      markServiceFailed('security-scanner', String(error));
     }
     
     // Setup Scan Executor service for processing security scans
@@ -469,52 +518,64 @@ app.get('/api/cors-health', async (_req, res) => {
     }
     
     // Setup Resources WebSocket server for real-time resource metrics streaming
+    registerService('resources');
     try {
       const { setupResourcesWebSocket } = await import("./services/ResourcesService");
       const resourcesService = setupResourcesWebSocket(httpServer, storage);
       
       // Make resources service available globally for routes
       (global as any).resourcesService = resourcesService;
+      markServiceReady('resources');
     } catch (error) {
       console.error('[WORKING SERVER] Failed to setup Resources WebSocket:', error);
+      markServiceFailed('resources', String(error));
     }
     
     // Setup Agent WebSocket server for autonomous workspace creation progress
     // ✅ CRITICAL: This MUST be initialized BEFORE Vite to ensure proper WebSocket routing
+    registerService('agent');
     try {
       const { agentWebSocketService } = await import("./services/agent-websocket-service");
       agentWebSocketService.initialize(httpServer);
       
       // Make agent websocket service available globally for routes
       (global as any).agentWebSocketService = agentWebSocketService;
+      markServiceReady('agent');
       console.log('[Agent WebSocket] Service initialized at /ws/agent');
     } catch (error) {
       console.error('[WORKING SERVER] Failed to setup Agent WebSocket:', error);
+      markServiceFailed('agent', String(error));
     }
     
     // Setup Deployment WebSocket server for real-time deployment logs and status updates
     // ✅ CRITICAL: This MUST be initialized BEFORE Vite to ensure proper WebSocket routing
+    registerService('deployment');
     try {
       const { deploymentWebSocketService } = await import("./services/deployment-websocket-service");
       deploymentWebSocketService.initialize(httpServer);
       
       // Make deployment websocket service available globally for routes
       (global as any).deploymentWebSocketService = deploymentWebSocketService;
+      markServiceReady('deployment');
       console.log('[Deployment WebSocket] Service initialized at /ws/deployments');
     } catch (error) {
       console.error('[WORKING SERVER] Failed to setup Deployment WebSocket:', error);
+      markServiceFailed('deployment', String(error));
     }
     
     // Setup Checkpoint WebSocket server for real-time checkpoint notifications (Replit parity)
+    registerService('checkpoint');
     try {
       const { setupCheckpointWebSocket } = await import("./websocket/checkpoint-ws");
       const checkpointWss = setupCheckpointWebSocket(httpServer);
       
       // Make checkpoint websocket service available globally
       (global as any).checkpointWebSocketService = checkpointWss;
+      markServiceReady('checkpoint');
       console.log('[Checkpoint WebSocket] Service initialized at /ws/checkpoints');
     } catch (error) {
       console.error('[WORKING SERVER] Failed to setup Checkpoint WebSocket:', error);
+      markServiceFailed('checkpoint', String(error));
     }
     
     // Make session store available globally for WebSocket authentication

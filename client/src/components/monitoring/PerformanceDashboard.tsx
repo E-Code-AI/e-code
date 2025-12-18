@@ -68,13 +68,16 @@ export function PerformanceDashboard() {
   // Set up SSE for real-time updates
   useEffect(() => {
     let eventSource: EventSource | null = null;
+    let isCancelled = false;
     
-    const start = async () => {
+    const start = () => {
       eventSource = new EventSource('/api/monitoring/stream');
       
       eventSource.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        setRealTimeMetrics(data);
+        if (!isCancelled) {
+          const data = JSON.parse(event.data);
+          setRealTimeMetrics(data);
+        }
       };
 
       eventSource.onerror = () => {
@@ -87,7 +90,11 @@ export function PerformanceDashboard() {
     start();
 
     return () => {
-      eventSource?.close();
+      isCancelled = true;
+      if (eventSource) {
+        eventSource.close();
+        eventSource = null;
+      }
     };
   }, []);
 

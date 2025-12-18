@@ -10,6 +10,7 @@ import * as os from 'os';
 import Docker from 'dockerode';
 import { File } from '@shared/schema';
 import { storage } from './storage';
+import { withTempDir } from './utils/temp-cleanup';
 import { resourceMonitor } from './services/resource-monitor';
 import { createLogger } from './utils/logger';
 
@@ -66,35 +67,31 @@ const docker = new Docker();
  * Execute container with timeout enforcement
  * Kills and removes container if it exceeds the specified timeout
  */
-async function executeWithTimeout(container: Docker.Container, timeout: number): Promise<any> {
-  const timeoutPromise = new Promise((_, reject) => {
+async function executeWithTimeout(container: Docker.Container, timeout: number): Promise<void> {
+  const timeoutPromise = new Promise<never>((_, reject) => {
     setTimeout(async () => {
       try {
         await container.kill();
         await container.remove({ force: true });
       } catch (e) {
-        console.error('Failed to kill container:', e);
+        console.error('Failed to kill timed-out container:', e);
       }
       reject(new Error(`Container execution timeout after ${timeout}ms`));
     }, timeout);
   });
 
-  return Promise.race([
-    container.wait(),
-    timeoutPromise
-  ]);
-}
-
-/**
- * Temp directory wrapper with automatic cleanup
- * Ensures temp directories are always cleaned up, even on errors
- */
-async function withTempDir<T>(fn: (dir: string) => Promise<T>): Promise<T> {
-  const tmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'ecode-'));
   try {
-    return await fn(tmpDir);
+    await Promise.race([
+      container.wait(),
+      timeoutPromise
+    ]);
   } finally {
-    await fs.promises.rm(tmpDir, { recursive: true, force: true }).catch(() => {});
+    // Ensure cleanup
+    try {
+      await container.remove({ force: true });
+    } catch {
+      // Container might already be removed
+    }
   }
 }
 
@@ -691,7 +688,12 @@ export class DockerExecutor {
         ...command,
       ];
 
-      return await new Promise((resolve) => {
+      return await new Promise<{
+        success: boolean;
+        output?: string;
+        error?: string;
+        executionTime?: number;
+      }>((resolve) => {
         const dockerProcess = spawn('docker', dockerArgs, {
           shell: false,
           stdio: ['pipe', 'pipe', 'pipe'],

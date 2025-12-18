@@ -22,8 +22,8 @@ const { autoUpdater } = require('electron-updater');
 // Crash Reporting - Initialize Early
 // ============================================
 crashReporter.start({
-  productName: 'E-Code',
-  companyName: 'E-Code',
+  productName: 'E-Code Desktop',
+  companyName: 'E-Code AI',
   submitURL: process.env.CRASH_REPORT_URL || 'https://e-code.ai/api/crash-reports',
   uploadToServer: process.env.NODE_ENV === 'production',
   compress: true,
@@ -159,9 +159,7 @@ class WindowManager {
 const windowManager = new WindowManager();
 
 // Development mode detection
-const isDev = process.argv.includes('--dev') || 
-              process.env.NODE_ENV === 'development' ||
-              !app.isPackaged;
+const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
 
 // Determine the correct URL/path to load
 function getLoadPath() {
@@ -401,19 +399,27 @@ function createWindow() {
     return { action: 'allow' };
   });
 
-  // Development tools
-  if (isDev || store.get('devTools')) {
+  // Only enable DevTools in development
+  if (isDev) {
     mainWindow.webContents.openDevTools({ mode: 'detach' });
   }
 
-  // Security: Disable DevTools keyboard shortcuts in production
+  // Block DevTools shortcuts in production
   if (!isDev) {
     mainWindow.webContents.on('before-input-event', (event, input) => {
+      // Block F12, Ctrl+Shift+I, Cmd+Option+I
       if (input.key === 'F12' || 
           (input.control && input.shift && input.key === 'I') ||
-          (input.meta && input.alt && input.key === 'I')) {
+          (input.meta && input.alt && input.key === 'I') ||
+          (input.control && input.shift && input.key === 'J') ||
+          (input.meta && input.alt && input.key === 'J')) {
         event.preventDefault();
       }
+    });
+    
+    // Also disable from menu
+    mainWindow.webContents.on('devtools-opened', () => {
+      mainWindow.webContents.closeDevTools();
     });
   }
 
@@ -812,59 +818,44 @@ function createTray() {
   });
 }
 
-// Handle deep link URL with proper parsing
+// Handle deep link URL with validation and sanitization
 function handleDeepLink(url) {
   console.log('[E-Code Desktop] Deep link received:', url);
   
-  // Parse the ecode:// URL
-  if (url && url.startsWith('ecode://')) {
-    try {
-      const parsed = new URL(url);
-      const pathParts = parsed.pathname.split('/').filter(Boolean);
-      
-      const data = {
-        raw: url,
-        action: pathParts[0] || null,  // 'project', 'file', 'workspace', etc.
-        resourceId: pathParts[1] || null,
-        params: Object.fromEntries(parsed.searchParams),
-        path: parsed.pathname,
-        host: parsed.host,
-      };
-      
-      // Security: Validate action against whitelist
-      if (data.action && !ALLOWED_DEEP_LINK_ACTIONS.includes(data.action)) {
-        console.warn('[E-Code Desktop] Unknown deep link action:', data.action);
-        return;
-      }
-      
-      // Security: Sanitize parameters to prevent XSS
-      const sanitizedParams = {};
-      for (const [key, value] of Object.entries(data.params || {})) {
-        sanitizedParams[key] = String(value).replace(/[<>"'&]/g, '');
-      }
-      data.params = sanitizedParams;
-      
-      console.log('[E-Code Desktop] Parsed deep link:', data);
-      
-      // Send structured data to renderer process
-      if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send('deep-link', data);
-        
-        // Make sure window is visible and focused
-        if (mainWindow.isMinimized()) mainWindow.restore();
-        mainWindow.show();
-        mainWindow.focus();
-      }
-      
-      // Also broadcast to all windows
-      windowManager.broadcastToAll('deep-link', data);
-    } catch (error) {
-      console.error('[E-Code Desktop] Failed to parse deep link:', error);
-      // Fallback: send raw URL
-      if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send('deep-link', { raw: url, error: error.message });
-      }
+  try {
+    const parsed = new URL(url);
+    const action = parsed.pathname.replace(/^\/+/, ''); // Remove leading slashes
+    
+    // Validate action is in whitelist
+    if (!ALLOWED_DEEP_LINK_ACTIONS.includes(action)) {
+      console.warn('[E-Code Desktop] Unknown deep link action:', action);
+      return;
     }
+
+    // Sanitize parameters - remove potential XSS characters
+    const sanitizedParams = {};
+    for (const [key, value] of parsed.searchParams) {
+      // Only allow alphanumeric, dash, underscore, dot
+      sanitizedParams[key] = value.replace(/[<>"'&]/g, '');
+    }
+
+    // Send to renderer
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('deep-link', { 
+        action, 
+        params: sanitizedParams 
+      });
+      
+      // Make sure window is visible and focused
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.show();
+      mainWindow.focus();
+    }
+    
+    // Also broadcast to all windows
+    windowManager.broadcastToAll('deep-link', { action, params: sanitizedParams });
+  } catch (error) {
+    console.error('[E-Code Desktop] Invalid deep link URL:', error);
   }
 }
 
@@ -912,7 +903,7 @@ function checkForUpdates() {
 // Auto updater configuration with environment-specific channels
 // Security: Disable auto-download, require user confirmation
 autoUpdater.autoDownload = false;
-autoUpdater.autoInstallOnAppQuit = true;
+autoUpdater.autoInstallOnAppQuit = false;
 autoUpdater.allowDowngrade = false;
 
 // Configure update channel based on environment
@@ -997,13 +988,13 @@ autoUpdater.on('update-available', (info) => {
   dialog.showMessageBox(mainWindow, {
     type: 'info',
     title: 'Update Available',
-    message: `A new version (${info.version}) is available.`,
-    detail: 'Would you like to download and install this update?',
-    buttons: ['Download Now', 'Later'],
+    message: `Version ${info.version} is available. Would you like to download it now?`,
+    detail: `Release notes: ${info.releaseNotes || 'No release notes available'}`,
+    buttons: ['Download', 'Later'],
     defaultId: 0,
     cancelId: 1,
-  }).then((result) => {
-    if (result.response === 0) {
+  }).then(({ response }) => {
+    if (response === 0) {
       autoUpdater.downloadUpdate();
     }
   });
@@ -1041,12 +1032,11 @@ autoUpdater.on('update-downloaded', (info) => {
   dialog.showMessageBox(mainWindow, {
     type: 'info',
     title: 'Update Ready',
-    message: `Version ${info.version} has been downloaded.`,
-    detail: 'The update will be installed when you restart the application.',
-    buttons: ['Restart Now', 'Later'],
-  }).then((result) => {
-    if (result.response === 0) {
-      autoUpdater.quitAndInstall(false, true);
+    message: `Version ${info.version} has been downloaded. Restart now to install?`,
+    buttons: ['Restart', 'Later'],
+  }).then(({ response }) => {
+    if (response === 0) {
+      autoUpdater.quitAndInstall();
     }
   });
 });
@@ -1152,6 +1142,9 @@ ipcMain.handle('write-file', async (event, filePath, content) => {
 });
 
 ipcMain.handle('file-exists', async (event, filePath) => {
+  if (!isPathAllowed(filePath)) {
+    throw new Error('Access denied: path not allowed');
+  }
   try {
     await fs.promises.access(filePath);
     return true;
@@ -1202,6 +1195,9 @@ ipcMain.handle('mkdir', async (event, dirPath) => {
 });
 
 ipcMain.handle('stat', async (event, filePath) => {
+  if (!isPathAllowed(filePath)) {
+    throw new Error('Access denied: path not allowed');
+  }
   try {
     const stats = await fs.promises.stat(filePath);
     return {
@@ -1257,6 +1253,9 @@ const fileWatchers = new Map();
 let watcherId = 0;
 
 ipcMain.handle('watch-file', (event, filePath) => {
+  if (!isPathAllowed(filePath)) {
+    throw new Error('Access denied: path not allowed');
+  }
   try {
     const id = ++watcherId;
     const watcher = fs.watch(filePath, (eventType, filename) => {

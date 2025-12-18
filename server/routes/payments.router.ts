@@ -153,25 +153,29 @@ router.post('/create-payment-intent', ensureAuthenticated, async (req: Request, 
   }
 });
 
-// Stripe webhook handler - P-C1 FIX: Use express.raw() for raw body buffer
+// Stripe webhook handler with signature validation
+// Uses express.raw() for raw body buffer required by Stripe signature verification
 router.post('/webhook', express.raw({ type: 'application/json' }), async (req: Request, res: Response) => {
+  const sig = req.headers['stripe-signature'];
+  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+  if (!sig || !endpointSecret) {
+    logger.warn('Webhook request missing signature or secret', { 
+      hasSignature: !!sig, 
+      hasEndpointSecret: !!endpointSecret 
+    });
+    return res.status(400).send('Missing signature or secret');
+  }
+
   try {
-    const sig = req.headers['stripe-signature'];
-
-    if (!sig) {
-      return res.status(400).json({ error: 'Missing stripe-signature header' });
-    }
-
-    // P-C1 FIX: Pass raw buffer (req.body is now a Buffer due to express.raw())
     await paymentService.handleWebhook(req.body, sig as string);
     res.json({ received: true });
   } catch (error: any) {
     logger.error('Webhook error:', error);
-    // Return 200 on handled errors to prevent Stripe retries for known issues
     if (error.message?.includes('signature verification failed')) {
-      return res.status(400).json({ error: 'Invalid webhook signature' });
+      console.error('Webhook signature verification failed');
+      return res.status(400).send('Webhook Error');
     }
-    // For other handled errors, return 200 to acknowledge receipt
     res.status(200).json({ received: true, warning: error.message || 'Webhook handler encountered an error' });
   }
 });

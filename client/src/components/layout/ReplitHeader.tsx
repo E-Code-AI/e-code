@@ -145,7 +145,7 @@ export function ReplitHeader() {
 
   return (
     <>
-    <header className="replit-header h-14 bg-background dark:bg-[var(--ecode-surface)] border-b border-[var(--ecode-border)] flex items-center justify-between px-4 replit-transition">
+    <header role="banner" aria-label="Site header" className="replit-header h-14 bg-background dark:bg-[var(--ecode-surface)] border-b border-[var(--ecode-border)] flex items-center justify-between px-4 replit-transition">
       <div className="flex items-center gap-4">
         <div className="lg:hidden mr-2">
           <MobileMenu onOpenSpotlight={() => setSpotlightOpen(true)} />
@@ -328,7 +328,7 @@ export function ReplitHeader() {
           </>
         )}
 
-        <nav className="replit-nav">
+        <nav aria-label="Primary navigation" className="replit-nav">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -380,7 +380,7 @@ export function ReplitHeader() {
                     active ? "replit-nav-link--active" : "replit-nav-link--inactive"
                   )}
                 >
-                  {Icon && <Icon className="mr-2 h-4 w-4" />}
+                  {Icon && <Icon className="mr-2 h-4 w-4" aria-hidden="true" />}
                   {item.label}
                   {item.badge && (
                     <span className="absolute -top-1 -right-2 rounded px-1.5 py-0.5 text-[10px] font-medium bg-orange-500 text-white">
@@ -401,8 +401,9 @@ export function ReplitHeader() {
             variant="ghost"
             className="replit-header-search"
             onClick={() => setSpotlightOpen(true)}
+            aria-label="Search or run a command (⌘K)"
           >
-            <Search className="mr-2 h-4 w-4" />
+            <Search className="mr-2 h-4 w-4" aria-hidden="true" />
             <span className="hidden xl:inline">Search or run a command...</span>
             <span className="xl:hidden">Search...</span>
             <kbd className="pointer-events-none ml-auto inline-flex h-5 select-none items-center gap-1 border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">

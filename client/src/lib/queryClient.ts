@@ -79,6 +79,11 @@ export async function apiRequest<T = any>(
     csrfToken = await fetchCSRFToken();
   }
   
+  // Ensure CSRF token was obtained - fail the request if not
+  if (needsCsrf && !csrfToken) {
+    throw new Error('CSRF token is required for this request but could not be obtained');
+  }
+  
   // Detect if body is FormData or other non-JSON type
   const isFormData = body instanceof FormData;
   
