@@ -266,8 +266,8 @@ export default function Contact() {
                   </div>
                   <div>
                     <div className="font-semibold">Email</div>
-                    <a href="mailto:hello@e-code.dev" className="text-muted-foreground hover:text-primary">
-                      hello@e-code.dev
+                    <a href="mailto:hello@e-code.ai" className="text-muted-foreground hover:text-primary">
+                      hello@e-code.ai
                     </a>
                   </div>
                 </Card>

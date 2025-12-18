@@ -165,7 +165,7 @@ export class SlackDiscordService extends EventEmitter {
       } : undefined,
       footer: {
         text: 'E-Code',
-        icon_url: 'https://e-code.dev/favicon.ico'
+        icon_url: 'https://e-code.ai/favicon.ico'
       },
       timestamp: new Date().toISOString()
     };

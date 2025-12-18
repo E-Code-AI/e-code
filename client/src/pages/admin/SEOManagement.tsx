@@ -664,7 +664,7 @@ export default function SEOManagement() {
                                         <Button
                                           variant="ghost"
                                           size="sm"
-                                          onClick={() => copyToClipboard(`https://e-code.dev${page.path}`)}
+                                          onClick={() => copyToClipboard(`https://e-code.ai${page.path}`)}
                                         >
                                           {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
                                         </Button>

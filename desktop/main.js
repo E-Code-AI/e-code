@@ -610,7 +610,7 @@ function createMenu() {
       submenu: [
         {
           label: 'Documentation',
-          click: () => shell.openExternal('https://docs.e-code.dev'),
+          click: () => shell.openExternal('https://docs.e-code.ai'),
         },
         {
           label: 'Keyboard Shortcuts',
@@ -624,7 +624,7 @@ function createMenu() {
         },
         {
           label: 'Community Forum',
-          click: () => shell.openExternal('https://community.e-code.dev'),
+          click: () => shell.openExternal('https://community.e-code.ai'),
         },
         { type: 'separator' },
         {

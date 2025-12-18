@@ -297,7 +297,7 @@ databaseRouter.post('/query', ensureAdmin, async (req: Request, res: Response) =
   return res.status(501).json({ 
     error: 'Custom SQL queries disabled for security',
     message: 'Use GET /api/database/table/:tableName/data for safe data access',
-    documentation: 'https://docs.e-code.dev/api/database'
+    documentation: 'https://docs.e-code.ai/api/database'
   });
 });
 

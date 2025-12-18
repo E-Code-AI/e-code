@@ -268,6 +268,6 @@ config.command('list')
 
 // Global options
 program.option('-v, --verbose', 'Verbose output');
-program.option('--api-url <url>', 'E-Code API URL', 'https://e-code.dev/api');
+program.option('--api-url <url>', 'E-Code API URL', 'https://e-code.ai/api');
 
 program.parse();

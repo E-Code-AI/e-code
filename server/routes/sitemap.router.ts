@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 
 const router = Router();
 
-const BASE_URL = 'https://e-code.dev';
+const BASE_URL = 'https://e-code.ai';
 
 // All public pages with their priorities and change frequencies
 const publicPages = [

@@ -223,7 +223,7 @@ export default function NewsletterComposer() {
                 <Label htmlFor="ctaUrl">CTA URL</Label>
                 <Input
                   id="ctaUrl"
-                  placeholder="https://app.e-code.dev/releases"
+                  placeholder="https://app.e-code.ai/releases"
                   value={draft.ctaUrl}
                   onChange={(event) => handleDraftChange('ctaUrl', event.target.value)}
                 />

@@ -6,7 +6,7 @@ export class ECodeAIService {
     private apiKey?: string;
 
     constructor(private context: vscode.ExtensionContext) {
-        this.apiEndpoint = this.getConfiguration().get('apiEndpoint', 'https://e-code.dev/api');
+        this.apiEndpoint = this.getConfiguration().get('apiEndpoint', 'https://e-code.ai/api');
         this.loadApiKey();
     }
 

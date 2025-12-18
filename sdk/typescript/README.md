@@ -16,7 +16,7 @@ import { ECodeSDK } from '@e-code/sdk';
 // Initialize the SDK
 const sdk = new ECodeSDK({
   apiKey: 'your-api-key',
-  baseURL: 'https://e-code.dev/api' // Optional, defaults to production
+  baseURL: 'https://e-code.ai/api' // Optional, defaults to production
 });
 
 // Create a new project
@@ -319,7 +319,7 @@ const sdk = new ECodeSDK({
 ```typescript
 sdk.updateConfig({
   timeout: 30000,
-  baseURL: 'https://staging.e-code.dev/api'
+  baseURL: 'https://staging.e-code.ai/api'
 });
 ```
 
@@ -380,11 +380,11 @@ Check out the [examples directory](./examples/) for complete working examples:
 
 ## API Reference
 
-For detailed API documentation, visit [https://docs.e-code.dev/sdk](https://docs.e-code.dev/sdk)
+For detailed API documentation, visit [https://docs.e-code.ai/sdk](https://docs.e-code.ai/sdk)
 
 ## Support
 
-- Documentation: [https://docs.e-code.dev](https://docs.e-code.dev)
+- Documentation: [https://docs.e-code.ai](https://docs.e-code.ai)
 - Issues: [https://github.com/e-code/sdk-typescript/issues](https://github.com/e-code/sdk-typescript/issues)
 - Community: [https://discord.gg/e-code](https://discord.gg/e-code)
 

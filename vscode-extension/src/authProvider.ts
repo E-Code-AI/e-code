@@ -48,7 +48,7 @@ export class AuthItem extends vscode.TreeItem {
             this.command = {
                 command: 'vscode.open',
                 title: 'Get Token',
-                arguments: [vscode.Uri.parse('https://e-code.dev/account/tokens')]
+                arguments: [vscode.Uri.parse('https://e-code.ai/account/tokens')]
             };
             this.iconPath = new vscode.ThemeIcon('key');
         }

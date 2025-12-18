@@ -457,7 +457,7 @@ export class AdvancedCapabilitiesService extends EventEmitter {
           permissions: ['code:read', 'code:write'],
           metadata: {
             author: 'E-Code Team',
-            documentation: 'https://docs.e-code.dev/capabilities/code-refactoring'
+            documentation: 'https://docs.e-code.ai/capabilities/code-refactoring'
           },
           createdAt: new Date(),
           updatedAt: new Date()
@@ -476,7 +476,7 @@ export class AdvancedCapabilitiesService extends EventEmitter {
           permissions: ['code:read', 'test:write'],
           metadata: {
             author: 'E-Code Team',
-            documentation: 'https://docs.e-code.dev/capabilities/test-generation'
+            documentation: 'https://docs.e-code.ai/capabilities/test-generation'
           },
           createdAt: new Date(),
           updatedAt: new Date()
@@ -495,7 +495,7 @@ export class AdvancedCapabilitiesService extends EventEmitter {
           permissions: ['code:read', 'docs:write'],
           metadata: {
             author: 'E-Code Team',
-            documentation: 'https://docs.e-code.dev/capabilities/documentation-generator'
+            documentation: 'https://docs.e-code.ai/capabilities/documentation-generator'
           },
           createdAt: new Date(),
           updatedAt: new Date()
@@ -514,7 +514,7 @@ export class AdvancedCapabilitiesService extends EventEmitter {
           permissions: ['code:read', 'security:scan'],
           metadata: {
             author: 'E-Code Team',
-            documentation: 'https://docs.e-code.dev/capabilities/security-scanner'
+            documentation: 'https://docs.e-code.ai/capabilities/security-scanner'
           },
           createdAt: new Date(),
           updatedAt: new Date()

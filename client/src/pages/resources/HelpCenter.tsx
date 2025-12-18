@@ -63,7 +63,7 @@ const categories = [
 const faqs = [
   {
     question: "How do I get started with E-Code?",
-    answer: "Sign up for a free account at e-code.dev/register. You'll be guided through creating your first project. No credit card required."
+    answer: "Sign up for a free account at e-code.ai/register. You'll be guided through creating your first project. No credit card required."
   },
   {
     question: "What programming languages are supported?",

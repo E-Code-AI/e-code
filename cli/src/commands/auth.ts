@@ -13,7 +13,7 @@ export class AuthCommand {
       
       if (!token) {
         console.log(chalk.blue('Please provide your E-Code API token.'));
-        console.log(chalk.gray('You can find your API token at: https://e-code.dev/account/tokens'));
+        console.log(chalk.gray('You can find your API token at: https://e-code.ai/account/tokens'));
         console.log('');
         
         const answers = await inquirer.prompt([
