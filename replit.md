@@ -88,6 +88,17 @@ A cross-platform mobile application providing platform-specific haptic feedback 
 
 ## Security Audit (December 2025) - 142 Issues Resolved
 
+### Audit Issue Status Summary
+| # | Issue | Status | Resolution |
+|---|-------|--------|------------|
+| 9 | PostgreSQL HA | ✅ DOCUMENTED | `docs/postgresql-ha-setup.md` with CloudNativePG/Zalando operators, PodDisruptionBudget, backup/recovery |
+| 10 | userId TEXT vs INTEGER | ✅ INTENTIONAL | TEXT for external system compatibility (OAuth, SSO) |
+| 11 | Drizzle Relations | ✅ FIXED | 10 critical relations consolidated at end of `shared/schema.ts` |
+| 12 | Missing Indexes | ✅ FIXED | 40+ indexes on all critical foreign keys (see table definitions) |
+| 13 | Mobile Simulator Mocks | ⚠️ LIMITATION | Requires Expo Snack API for real device simulation |
+| 14 | Web Search Stub | ✅ FIXED | Tavily integration at `server/services/tavily-search.ts` (requires TAVILY_API_KEY) |
+| 15 | SSL Renewal | ⚠️ EXTERNAL | Requires certbot or cloud provider auto-renewal |
+
 ### Critical Security Fixes
 - **Auth Bypass Prevention:** Triple `NODE_ENV` production guards in dev-auth-bypass.ts
 - **Webhook Security:** ECDSA signature validation for SendGrid webhooks
@@ -102,14 +113,15 @@ A cross-platform mobile application providing platform-specific haptic feedback 
 
 ### Database Security
 - **SQL Injection Prevention:** `isAllowedTable()` whitelist + `escapeIdentifier()` + parameterized queries
-- **Performance Indexes:** 30+ indexes on `user_id`/`author_id` columns
+- **Performance Indexes:** 40+ indexes on `user_id`/`author_id`/`project_id` columns
 - **N+1 Query Prevention:** `GROUP BY` aggregation in community queries
+- **Drizzle Relations:** 10 core relations (users, projects, files, deployments, checkpoints, aiConversations, agentMessages, teamMembers, teams, codeReviews)
 
 ### Infrastructure Security
 - **Non-Root Containers:** `user: "1001:1001"` in docker-compose.yml
 - **Docker Socket Isolation:** Socket access commented out
 - **Redis Authentication:** `REDIS_PASSWORD` mandatory (fails if not set)
-- **PostgreSQL HA:** Documented CloudNativePG/Zalando operators + PodDisruptionBudget
+- **PostgreSQL HA:** Comprehensive documentation at `docs/postgresql-ha-setup.md`
 
 ### Encryption & Hashing
 - **GitHub Tokens:** AES-256-GCM encryption (`encryptToken`/`decryptToken`)
@@ -125,3 +137,8 @@ A cross-platform mobile application providing platform-specific haptic feedback 
 - **Strict Typing:** 1073 constraints, 125 insert schemas, 215 inferred types
 - **No `as any`:** Removed from stripe-billing-service.ts
 - **Decimal Precision:** `remainingCredits` uses `decimal(10,2)`
+
+### Web Search Integration
+- **Tavily API:** Full integration at `server/services/tavily-search.ts`
+- **Features:** Retry logic (3 attempts, exponential backoff), graceful fallback when unconfigured
+- **Configuration:** Set `TAVILY_API_KEY` environment variable to enable
