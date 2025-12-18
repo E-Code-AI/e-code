@@ -150,14 +150,63 @@ EXPO_PUBLIC_API_BASE="https://your-domain.com/api" npm start
 
 ```
 mobile/
-├── app.config.js        # Expo configuration (with API base URL)
-├── App.tsx              # Navigation and session management
+├── app.config.js           # Expo configuration (environment-aware API URLs)
+├── App.tsx                 # Navigation, auth, notifications, command palette
+├── eas.json                # EAS Build profiles (dev/preview/production)
 ├── src/
-│   ├── navigation/      # Navigation types
-│   ├── screens/         # Login, home, and project screens
-│   ├── services/        # API client and configuration helpers
-│   └── types.ts         # Shared TypeScript interfaces
-└── tsconfig.json        # React Native TypeScript configuration
+│   ├── components/         # Reusable UI components
+│   │   ├── CodeEditor.tsx
+│   │   ├── CommandPalette.tsx
+│   │   ├── CommandPaletteGestureWrapper.tsx
+│   │   ├── FileExplorer.tsx
+│   │   ├── KeyboardToolbar.tsx
+│   │   ├── ModelSelector.tsx
+│   │   ├── ProjectCard.tsx
+│   │   ├── StatusBar.tsx
+│   │   ├── SwipeableRow.tsx
+│   │   └── Terminal.tsx
+│   ├── hooks/              # Custom React hooks
+│   │   ├── useCommandPalette.ts
+│   │   ├── useProjectContext.ts
+│   │   └── useStreamingChat.ts
+│   ├── lib/                # Utilities
+│   │   └── agentApiClient.ts
+│   ├── navigation/         # Navigation types
+│   │   ├── AppNavigator.tsx
+│   │   └── types.ts
+│   ├── screens/            # 15 app screens
+│   │   ├── AgentScreen.tsx
+│   │   ├── CollaborationScreen.tsx
+│   │   ├── DeploymentsScreen.tsx
+│   │   ├── EditorScreen.tsx
+│   │   ├── FileManagerScreen.tsx
+│   │   ├── HelpScreen.tsx
+│   │   ├── HomeScreen.tsx
+│   │   ├── LoginScreen.tsx
+│   │   ├── NotificationsScreen.tsx
+│   │   ├── ProfileScreen.tsx
+│   │   ├── ProjectScreen.tsx
+│   │   ├── SearchScreen.tsx
+│   │   ├── SettingsScreen.tsx
+│   │   ├── TemplatesScreen.tsx
+│   │   └── TerminalScreen.tsx
+│   ├── services/           # Business logic services
+│   │   ├── ai-provider.ts      # Multi-provider AI config
+│   │   ├── api.ts              # HTTP client
+│   │   ├── auth.ts             # Authentication helpers
+│   │   ├── background-sync.ts  # Expo background tasks
+│   │   ├── command-registry.ts # Command palette commands
+│   │   ├── config.ts           # Environment-aware configuration
+│   │   ├── haptics.ts          # Platform-specific haptic feedback
+│   │   ├── notifications.ts    # Push notification service
+│   │   ├── oauth.ts            # OAuth deep link handling
+│   │   ├── offline-cache.ts    # AsyncStorage cache with TTL
+│   │   ├── ota-updates.ts      # Expo Updates service
+│   │   ├── project-context.ts  # Project state management
+│   │   ├── storage.ts          # Persistent storage wrapper
+│   │   └── websocket.ts        # Real-time collaboration
+│   └── types.ts            # TypeScript interfaces
+└── tsconfig.json           # React Native TypeScript configuration
 ```
 
 ## Testing the API locally
