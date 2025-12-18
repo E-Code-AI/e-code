@@ -1,6 +1,6 @@
 import 'react-native-gesture-handler';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, View, StyleSheet, Alert, TouchableOpacity, Text, Platform } from 'react-native';
+import { ActivityIndicator, View, StyleSheet, Alert, TouchableOpacity, Text, Platform, Linking } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NavigationContainer, NavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -12,6 +12,7 @@ import { login as loginRequest } from './src/services/api';
 import { validateConfig, getConfig } from './src/services/config';
 import { notificationService } from './src/services/notifications';
 import { offlineCacheService } from './src/services/offline-cache';
+import { OAuthService, OAuthCallbackParams } from './src/services/oauth';
 import LoginScreen from './src/screens/LoginScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import AgentScreen from './src/screens/AgentScreen';
@@ -218,6 +219,64 @@ export default function App() {
       throw error;
     }
   }, []);
+
+  const handleOAuthCallback = useCallback(async (params: OAuthCallbackParams) => {
+    if (params.error) {
+      Alert.alert('Authentication Failed', params.error);
+      return;
+    }
+    
+    if (params.token && params.userId && params.username) {
+      try {
+        await AsyncStorage.setItem(TOKEN_STORAGE_KEY, params.token);
+        if (params.refreshToken) {
+          await AsyncStorage.setItem('ecode.mobile.refreshToken', params.refreshToken);
+        }
+        
+        const oauthUser: User = {
+          id: parseInt(params.userId, 10) || 0,
+          username: params.username,
+          displayName: params.displayName || params.username,
+          email: '',
+          avatarUrl: null
+        };
+        
+        await AsyncStorage.setItem(USER_STORAGE_KEY, JSON.stringify(oauthUser));
+        setToken(params.token);
+        setUser(oauthUser);
+        
+        Alert.alert('Success', `Welcome, ${oauthUser.displayName}!`);
+      } catch (error) {
+        console.error('[OAuth] Failed to store credentials:', error);
+        Alert.alert('Error', 'Failed to complete authentication');
+      }
+    }
+  }, []);
+
+  const handleDeepLink = useCallback((event: { url: string }) => {
+    const url = event.url;
+    console.log('[DeepLink] Received:', url);
+    
+    if (OAuthService.isOAuthCallback(url)) {
+      const params = OAuthService.parseCallbackUrl(url);
+      handleOAuthCallback(params);
+    }
+  }, [handleOAuthCallback]);
+
+  useEffect(() => {
+    Linking.getInitialURL().then((url) => {
+      if (url && OAuthService.isOAuthCallback(url)) {
+        const params = OAuthService.parseCallbackUrl(url);
+        handleOAuthCallback(params);
+      }
+    });
+    
+    const subscription = Linking.addEventListener('url', handleDeepLink);
+    
+    return () => {
+      subscription.remove();
+    };
+  }, [handleDeepLink, handleOAuthCallback]);
 
   const handleLogout = useCallback(async () => {
     try {
