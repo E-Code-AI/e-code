@@ -744,6 +744,16 @@ app.get('/api/cors-health', async (_req, res) => {
     next(err);
   });
 
+  // Serve attached_assets as static files (stock images, user uploads, etc.)
+  const path = await import('path');
+  const attachedAssetsPath = path.resolve(process.cwd(), 'attached_assets');
+  app.use('/attached_assets', express.static(attachedAssetsPath, {
+    maxAge: '1d',
+    etag: true,
+    lastModified: true
+  }));
+  console.log('[Static Assets] Serving attached_assets from', attachedAssetsPath);
+
   // Setup Vite with graceful fallback handling
   // Uses safe loader that isolates Vite failures and provides fallback HTML server
   try {
@@ -849,6 +859,7 @@ app.get('/api/cors-health', async (_req, res) => {
   try {
     const { getStorage } = await import('./storage');
     const MOBILE_SESSION_CLEANUP_INTERVAL = 60 * 60 * 1000; // 1 hour
+    const INITIAL_CLEANUP_DELAY = 30 * 1000; // 30 seconds delay for db connection to stabilize
     
     const runMobileSessionCleanup = async () => {
       try {
@@ -857,16 +868,19 @@ app.get('/api/cors-health', async (_req, res) => {
         if (deletedCount > 0) {
           console.log(`[Cleanup] Removed ${deletedCount} expired mobile sessions`);
         }
-      } catch (error) {
-        console.warn('[Cleanup] Mobile session cleanup failed:', error.message);
+      } catch (error: any) {
+        // Silent fail if table doesn't exist or is being created
+        if (!error.message?.includes('does not exist')) {
+          console.warn('[Cleanup] Mobile session cleanup failed:', error.message);
+        }
       }
     };
     
-    // Run immediately on startup then every hour
-    runMobileSessionCleanup();
+    // Delay initial cleanup to allow db connection to stabilize, then run every hour
+    setTimeout(() => runMobileSessionCleanup(), INITIAL_CLEANUP_DELAY);
     setInterval(runMobileSessionCleanup, MOBILE_SESSION_CLEANUP_INTERVAL);
     console.log('✅ Mobile Session Cleanup Scheduler started - running every hour');
-  } catch (error) {
+  } catch (error: any) {
     console.warn('[WORKING SERVER] Mobile session cleanup initialization failed (non-critical):', error.message);
   }
 
