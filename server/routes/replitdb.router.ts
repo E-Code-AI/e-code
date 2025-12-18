@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import express from 'express';
 import { replitDB } from '../database/replitdb';
 
 const replitdbRouter = Router();
@@ -17,6 +18,9 @@ const replitdbRouter = Router();
  * - POST /api/db/:projectId/:key - Set value for key (body = value)
  * - DELETE /api/db/:projectId/:key - Delete key
  */
+
+// Middleware to parse raw text bodies (Replit clients send plain text)
+replitdbRouter.use(express.text({ type: '*/*' }));
 
 // GET /api/db/:projectId - List all keys (with optional prefix filter)
 replitdbRouter.get('/:projectId', async (req: Request, res: Response) => {
@@ -111,14 +115,25 @@ replitdbRouter.delete('/:projectId/:key', async (req: Request, res: Response) =>
 });
 
 // POST /api/db/:projectId - Bulk set (Replit extension)
-replitdbRouter.post('/:projectId', async (req: Request, res: Response) => {
+// Also accepts JSON body for bulk operations
+replitdbRouter.post('/:projectId', express.json({ type: 'application/json' }), async (req: Request, res: Response) => {
   try {
     const projectId = parseInt(req.params.projectId);
     if (isNaN(projectId)) {
       return res.status(400).send('Invalid project ID');
     }
 
-    const data = req.body;
+    let data = req.body;
+    
+    // Handle text body that might be JSON
+    if (typeof data === 'string') {
+      try {
+        data = JSON.parse(data);
+      } catch {
+        return res.status(400).send('Body must be a JSON object');
+      }
+    }
+    
     if (typeof data !== 'object' || data === null) {
       return res.status(400).send('Body must be a JSON object');
     }

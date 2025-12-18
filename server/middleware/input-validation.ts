@@ -102,26 +102,33 @@ export const sanitizeInput = (req: Request, res: Response, next: NextFunction) =
 function sanitizeObject(obj: any): any {
   if (obj === null || obj === undefined) return obj;
   
-  if (Array.isArray(obj)) {
-    return obj.map(item => sanitizeObject(item));
-  }
-  
-  if (typeof obj === 'object') {
-    const sanitized: any = {};
-    for (const key in obj) {
-      if (obj.hasOwnProperty(key)) {
-        sanitized[key] = sanitizeObject(obj[key]);
-      }
-    }
-    return sanitized;
-  }
-  
+  // Handle primitive strings first (e.g., from express.text() middleware)
   if (typeof obj === 'string') {
     // Sanitize HTML to prevent XSS
     return DOMPurify.sanitize(obj, { 
       ALLOWED_TAGS: [], // Strip all HTML tags
       ALLOWED_ATTR: [] // Strip all attributes
     });
+  }
+  
+  if (Array.isArray(obj)) {
+    return obj.map(item => sanitizeObject(item));
+  }
+  
+  if (typeof obj === 'object') {
+    // Skip objects that don't have own properties (like String objects)
+    if (!Object.keys(obj).length && !(obj.constructor === Object)) {
+      return obj;
+    }
+    
+    const sanitized: any = {};
+    for (const key in obj) {
+      // Use Object.prototype.hasOwnProperty.call for safety
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
+        sanitized[key] = sanitizeObject(obj[key]);
+      }
+    }
+    return sanitized;
   }
   
   return obj;
