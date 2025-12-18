@@ -187,28 +187,45 @@ export class AuthRouter {
           : "Account created but verification email failed - please use the resend verification option.";
         
         // Log the user in automatically if session is available
+        // SECURITY: Regenerate session before login to prevent session fixation
         if (req.login && typeof req.login === 'function') {
-          req.login(user, (err: any) => {
-            if (err) {
-              logger.error('Login after registration failed', { message: err.message });
-              // Still return success for registration
+          req.session.regenerate((regenErr: any) => {
+            if (regenErr) {
+              logger.warn('Session regeneration failed after registration', { message: regenErr.message });
               return res.json({ 
                 success: true,
                 emailSent,
-                message: successMessage + " Login manually to continue.",
+                message: successMessage + " Please login manually.",
                 user: this.sanitizeUser(user)
               });
             }
             
-            res.json({ 
-              success: true,
-              emailSent,
-              message: successMessage,
-              user: this.sanitizeUser(user)
+            req.login(user, (err: any) => {
+              if (err) {
+                logger.error('Login after registration failed', { message: err.message });
+                return res.json({ 
+                  success: true,
+                  emailSent,
+                  message: successMessage + " Login manually to continue.",
+                  user: this.sanitizeUser(user)
+                });
+              }
+              
+              req.session.save((saveErr: any) => {
+                if (saveErr) {
+                  logger.warn('Session save warning after registration', { message: saveErr.message });
+                }
+                
+                res.json({ 
+                  success: true,
+                  emailSent,
+                  message: successMessage,
+                  user: this.sanitizeUser(user)
+                });
+              });
             });
           });
         } else {
-          // No session available (e.g., during testing)
           res.json({ 
             success: true,
             emailSent,
@@ -219,7 +236,6 @@ export class AuthRouter {
       } catch (error: any) {
         logger.error('Registration error', { message: error.message });
         if (error.name === 'ZodError') {
-          // Check if error is about password
           const hasPasswordError = error.errors?.some((e: any) => e.path?.includes('password'));
           const errorMessage = hasPasswordError 
             ? "Invalid password. Password must be at least 8 characters." 
@@ -426,28 +442,45 @@ export class AuthRouter {
           : "Account created but verification email failed - please use the resend verification option.";
         
         // Log the user in automatically if session is available
+        // SECURITY: Regenerate session before login to prevent session fixation
         if (req.login && typeof req.login === 'function') {
-          req.login(user, (err: any) => {
-            if (err) {
-              logger.error('Login after registration failed', { message: err.message });
-              // Still return success for registration
+          req.session.regenerate((regenErr: any) => {
+            if (regenErr) {
+              logger.warn('Session regeneration failed after registration', { message: regenErr.message });
               return res.json({ 
                 success: true,
                 emailSent,
-                message: successMessage + " Login manually to continue.",
+                message: successMessage + " Please login manually.",
                 user: this.sanitizeUser(user)
               });
             }
             
-            res.json({ 
-              success: true,
-              emailSent,
-              message: successMessage,
-              user: this.sanitizeUser(user)
+            req.login(user, (err: any) => {
+              if (err) {
+                logger.error('Login after registration failed', { message: err.message });
+                return res.json({ 
+                  success: true,
+                  emailSent,
+                  message: successMessage + " Login manually to continue.",
+                  user: this.sanitizeUser(user)
+                });
+              }
+              
+              req.session.save((saveErr: any) => {
+                if (saveErr) {
+                  logger.warn('Session save warning after registration', { message: saveErr.message });
+                }
+                
+                res.json({ 
+                  success: true,
+                  emailSent,
+                  message: successMessage,
+                  user: this.sanitizeUser(user)
+                });
+              });
             });
           });
         } else {
-          // No session available (e.g., during testing)
           res.json({ 
             success: true,
             emailSent,
@@ -458,7 +491,6 @@ export class AuthRouter {
       } catch (error: any) {
         logger.error('Registration error', { message: error.message });
         if (error.name === 'ZodError') {
-          // Check if error is about password
           const hasPasswordError = error.errors?.some((e: any) => e.path?.includes('password'));
           const errorMessage = hasPasswordError 
             ? "Invalid password. Password must be at least 8 characters." 
@@ -480,6 +512,7 @@ export class AuthRouter {
     });
 
     // Alias: /api/auth/login -> /api/login
+    // SECURITY: Session regeneration prevents session fixation attacks (Fortune 500)
     this.router.post("/api/auth/login", csrfProtection, (req: Request, res: Response, next: NextFunction) => {
       passport.authenticate('local', (err: any, user: User, info: any) => {
         if (err) {
@@ -499,18 +532,36 @@ export class AuthRouter {
           });
         }
         
-        req.login(user, (loginErr: any) => {
-          if (loginErr) {
-            logger.error('Session creation failed', { message: loginErr.message });
+        // SECURITY: Regenerate session BEFORE login to prevent session fixation
+        req.session.regenerate((regenErr: any) => {
+          if (regenErr) {
+            logger.error('Session regeneration failed:', regenErr.message);
             return res.status(500).json({ 
-              message: "Session creation failed",
+              message: "Session security error",
               code: "SESSION_ERROR"
             });
           }
           
-          res.json({ 
-            message: "Login successful",
-            user: this.sanitizeUser(user)
+          req.login(user, (loginErr: any) => {
+            if (loginErr) {
+              logger.error('Session creation failed', { message: loginErr.message });
+              return res.status(500).json({ 
+                message: "Session creation failed",
+                code: "SESSION_ERROR"
+              });
+            }
+            
+            req.session.save((saveErr: any) => {
+              if (saveErr) {
+                logger.warn('Session save warning:', saveErr.message);
+              }
+              
+              logger.info(`User ${user.id} logged in successfully via /api/auth/login`);
+              res.json({ 
+                message: "Login successful",
+                user: this.sanitizeUser(user)
+              });
+            });
           });
         });
       })(req, res, next);
