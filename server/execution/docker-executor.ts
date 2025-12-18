@@ -557,10 +557,39 @@ export class DockerExecutor extends EventEmitter {
   }
 
   private getCommand(config: ExecutionConfig): string[] | undefined {
+    // Build the base command
+    let baseCommand: string[];
+    
     if (config.command) {
-      return config.command.split(' ');
+      baseCommand = config.command.split(' ');
+    } else {
+      baseCommand = this.getDefaultCommand(config.language);
+      if (!baseCommand) return undefined;
     }
-
+    
+    // Build ReplDB file creation prefix (Replit compatibility)
+    // The Replit Python/Node.js clients check /tmp/replitdb for published apps
+    const baseUrl = process.env.REPLIT_DEV_DOMAIN 
+      ? `https://${process.env.REPLIT_DEV_DOMAIN}`
+      : `http://host.docker.internal:${process.env.PORT || 5000}`;
+    const dbUrl = config.projectId ? `${baseUrl}/api/db/${config.projectId}` : '';
+    const repldbPrefix = `echo '${dbUrl}' > /tmp/replitdb 2>/dev/null || true`;
+    
+    // Check if command is already a shell wrapper ['sh', '-c', '...']
+    if (baseCommand.length === 3 && 
+        (baseCommand[0] === 'sh' || baseCommand[0] === 'bash') && 
+        baseCommand[1] === '-c') {
+      // Extract the inner command and prepend the ReplDB setup
+      const innerCommand = baseCommand[2];
+      return [baseCommand[0], '-c', `${repldbPrefix}; ${innerCommand}`];
+    }
+    
+    // Simple command - wrap it in shell with ReplDB prefix
+    const commandStr = baseCommand.join(' ');
+    return ['sh', '-c', `${repldbPrefix}; ${commandStr}`];
+  }
+  
+  private getDefaultCommand(language: string): string[] | undefined {
     // Production-ready command support matching imageMap tiers
     // Commands verified to work with single-file execution
     const defaultCommands: Record<string, string[]> = {
@@ -606,7 +635,7 @@ export class DockerExecutor extends EventEmitter {
       'scala': ['sh', '-c', 'echo "Scala requires scalac. Use a custom image or sbt project." && exit 1']
     };
 
-    return defaultCommands[config.language];
+    return defaultCommands[language];
   }
 
   private formatEnvironmentVars(vars?: Record<string, string>, projectId?: number): string[] {
