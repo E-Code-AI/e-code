@@ -84,7 +84,7 @@ export default function AdminBilling() {
       apiRequest('PUT', `/api/admin/billing/plans/${plan.id}`, plan),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/billing/plans'] });
-      toast({ title: "Plan updated successfully" });
+      toast({ title: "Plan updated successfully", variant: "success" });
       setShowPlanDialog(false);
       setEditingPlan(null);
     },
@@ -102,7 +102,7 @@ export default function AdminBilling() {
       apiRequest('PUT', `/api/admin/billing/plans/${data.planId}/limits/${data.limit.id}`, data.limit),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/billing/plans'] });
-      toast({ title: "Resource limit updated successfully" });
+      toast({ title: "Resource limit updated successfully", variant: "success" });
       setShowLimitDialog(false);
       setEditingLimit(null);
     },
@@ -120,7 +120,7 @@ export default function AdminBilling() {
       apiRequest('PUT', '/api/admin/billing/settings', settings),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/billing/settings'] });
-      toast({ title: "Billing settings updated successfully" });
+      toast({ title: "Billing settings updated successfully", variant: "success" });
     },
     onError: () => {
       toast({ 
