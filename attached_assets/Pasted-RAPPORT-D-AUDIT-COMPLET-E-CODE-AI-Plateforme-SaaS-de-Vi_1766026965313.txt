@@ -1,0 +1,1175 @@
+RAPPORT D'AUDIT COMPLET - E-CODE.AI
+Plateforme SaaS de Vibe Coding (Clone Replit)
+📊 RÉSUMÉ EXÉCUTIF
+Catégorie	Problèmes Critiques	Problèmes Élevés	Problèmes Moyens	Total
+Backend/Sécurité	8	18	15	41
+Frontend/UI/UX	4	12	10	26
+Mobile/Responsive	3	9	8	20
+Desktop (Electron)	4	6	8	18
+TOTAL	19	45	41	105
+Statut : ❌ NON PRÊT POUR LA PRODUCTION
+
+🔴 SECTION 1 : PROBLÈMES BACKEND CRITIQUES
+1.1 Vulnérabilités de Sécurité Critiques
+PROBLÈME #1 : Authentification WebSocket Absente
+Fichier : /server/websocket/central-upgrade-dispatcher.ts
+Ligne : ~50-80
+Description : Le dispatcher central ne vérifie PAS l'identité de l'utilisateur avant de router les connexions WebSocket.
+Impact : Accès non autorisé aux données en temps réel, sessions privées exposées.
+Solution :
+
+// AJOUTER dans central-upgrade-dispatcher.ts
+async validateWebSocketConnection(request: IncomingMessage): Promise<boolean> {
+  const sessionId = this.extractSessionId(request);
+  if (!sessionId) return false;
+  
+  const session = await this.sessionStore.get(sessionId);
+  return session && session.userId != null;
+}
+
+// Dans la méthode handleUpgrade:
+if (!await this.validateWebSocketConnection(request)) {
+  socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
+  socket.destroy();
+  return;
+}
+
+PROBLÈME #2 : Bypass d'Authentification en Dev Exposé
+Fichier : /server/dev-auth-bypass.ts
+Lignes : 43-61
+Description : Token de bypass sans rate limiting, peut être brute-forcé.
+Impact : Accès non autorisé si mal configuré.
+Solution :
+
+// AJOUTER rate limiting au bypass
+import { RateLimiterMemory } from 'rate-limiter-flexible';
+
+const bypassLimiter = new RateLimiterMemory({
+  points: 5,
+  duration: 60,
+});
+
+// Dans le middleware:
+try {
+  await bypassLimiter.consume(req.ip);
+} catch {
+  return res.status(429).json({ error: 'Too many attempts' });
+}
+
+PROBLÈME #3 : Credential Logging dans les Logs
+Fichier : /server/routes/auth.router.ts
+Lignes : 168, 207, 234, 252, 273
+Description : console.error() peut exposer mots de passe et tokens dans les logs.
+Impact : Fuite de credentials en production.
+Solution :
+
+// REMPLACER tous les console.error(error) par:
+console.error(`[Auth] Operation failed: ${error.message}`);
+// Ne JAMAIS logger l'objet error complet
+
+PROBLÈME #4 : Session Fixation
+Fichier : /server/middleware/passport-setup.ts
+Description : Pas de régénération de session après login.
+Impact : Attaquant peut hijacker la session.
+Solution :
+
+// AJOUTER après authentification réussie:
+req.session.regenerate((err) => {
+  if (err) return next(err);
+  // Restaurer l'utilisateur dans la nouvelle session
+  req.session.passport = { user: user.id };
+  req.session.save(next);
+});
+
+PROBLÈME #5 : CSRF Token Incomplet
+Fichier : /server/middleware/csrf.ts
+Lignes : 194-224
+Description : Protection CSRF contournée pour /api/register et /api/login.
+Impact : Attaques CSRF sur endpoints d'authentification.
+Solution :
+
+// MODIFIER la liste d'exclusion:
+const csrfExcludedPaths = [
+  // Seuls les webhooks devraient être exclus
+  '/api/webhooks/stripe',
+  '/api/webhooks/github',
+];
+
+// AJOUTER validation d'origin pour login/register:
+if (req.path === '/api/login' || req.path === '/api/register') {
+  const origin = req.get('Origin');
+  if (!isAllowedOrigin(origin)) {
+    return res.status(403).json({ error: 'Invalid origin' });
+  }
+}
+
+PROBLÈME #6 : Traversée de Chemin (Path Traversal)
+Fichiers : /server/routes/packages.router.ts, /server/routes/shell.ts
+Description : path.join() sans validation permet ../../../etc/passwd.
+Impact : Accès aux fichiers système sensibles.
+Solution :
+
+// AJOUTER cette fonction utilitaire:
+import path from 'path';
+
+function safePath(basePath: string, userPath: string): string | null {
+  const resolved = path.resolve(basePath, userPath);
+  if (!resolved.startsWith(path.resolve(basePath))) {
+    return null; // Traversal attempt
+  }
+  return resolved;
+}
+
+// Utiliser:
+const filePath = safePath(projectDir, req.params.path);
+if (!filePath) {
+  return res.status(400).json({ error: 'Invalid path' });
+}
+
+PROBLÈME #7 : Pas de Transactions Database
+Fichiers : Tous les fichiers routes
+Description : Opérations multi-étapes non atomiques.
+Impact : État inconsistant en base, données orphelines.
+Solution :
+
+// UTILISER les transactions Drizzle:
+import { db } from '../db/drizzle';
+
+async function createUserWithProfile(userData) {
+  return await db.transaction(async (tx) => {
+    const user = await tx.insert(users).values(userData).returning();
+    await tx.insert(profiles).values({ userId: user[0].id });
+    await tx.insert(securityLogs).values({ event: 'user_created', userId: user[0].id });
+    return user[0];
+  });
+}
+
+PROBLÈME #8 : Rate Limiter en Mémoire en Production
+Fichier : /server/middleware/tier-rate-limiter.ts
+Ligne : 66
+Description : RateLimiterMemory ne fonctionne pas en cluster multi-instance.
+Impact : Bypass du rate limiting avec plusieurs serveurs.
+Solution :
+
+// REMPLACER par Redis:
+import { RateLimiterRedis } from 'rate-limiter-flexible';
+import { redisClient } from '../services/redis-cache.service';
+
+const rateLimiter = new RateLimiterRedis({
+  storeClient: redisClient,
+  points: 100,
+  duration: 60,
+  keyPrefix: 'rl_api',
+});
+
+1.2 Implémentations Backend Incomplètes
+PROBLÈME #9 : Pas de Système de Migration
+Fichier : /server/db/migrations/ (vide)
+Description : Aucun fichier de migration versionné.
+Impact : Impossible de tracker/rollback les changements de schéma.
+Solution :
+
+# Générer les migrations avec Drizzle:
+npx drizzle-kit generate:pg
+
+# Structure à créer:
+/server/db/migrations/
+├── 0001_initial_schema.sql
+├── 0002_add_teams.sql
+└── migration_lock.json
+
+# Script de migration:
+npx drizzle-kit push:pg --config=drizzle.config.ts
+
+PROBLÈME #10 : Payments Stripe Incomplets
+Fichier : /server/routes/payments.router.ts
+Lignes : 75-80
+Description :
+
+Pas de clés d'idempotence
+Setup intent créé mais pas stocké
+Webhooks non validés
+Impact : Charges doubles, abonnements incohérents.
+Solution :
+// AJOUTER idempotency:
+const paymentIntent = await stripe.paymentIntents.create({
+  amount: 1000,
+  currency: 'usd',
+}, {
+  idempotencyKey: `pi_${userId}_${Date.now()}`,
+});
+
+// VALIDER les webhooks:
+const sig = req.headers['stripe-signature'];
+const event = stripe.webhooks.constructEvent(
+  req.body,
+  sig,
+  process.env.STRIPE_WEBHOOK_SECRET
+);
+
+PROBLÈME #11 : Docker Timeout Non Implémenté
+Fichier : /server/docker-executor.ts
+Lignes : 30-31
+Description : Timeout de 30s défini mais jamais appliqué, scheduleContainerKill() manquant.
+Impact : Conteneurs zombies, épuisement des ressources.
+Solution :
+
+// AJOUTER:
+async function executeWithTimeout(container: Docker.Container, timeout: number) {
+  const timeoutPromise = new Promise((_, reject) => {
+    setTimeout(async () => {
+      try {
+        await container.kill();
+        await container.remove();
+      } catch (e) {
+        console.error('Failed to kill container:', e);
+      }
+      reject(new Error('Container execution timeout'));
+    }, timeout);
+  });
+
+  return Promise.race([
+    container.wait(),
+    timeoutPromise
+  ]);
+}
+
+PROBLÈME #12 : Health Checks Incomplets
+Fichier : /server/index.ts
+Lignes : 157-185
+Description : totalServices: 12 hardcodé alors qu'il y a 20+ services WebSocket.
+Impact : Load balancer route vers instances non-ready.
+Solution :
+
+// REMPLACER par une détection dynamique:
+const serviceRegistry = new Map<string, { ready: boolean; lastCheck: Date }>();
+
+function registerService(name: string) {
+  serviceRegistry.set(name, { ready: false, lastCheck: new Date() });
+}
+
+function markServiceReady(name: string) {
+  const service = serviceRegistry.get(name);
+  if (service) {
+    service.ready = true;
+    service.lastCheck = new Date();
+  }
+}
+
+// Dans /health/readiness:
+const allReady = Array.from(serviceRegistry.values()).every(s => s.ready);
+
+PROBLÈME #13 : Email Service Failures Silencieux
+Fichier : /server/routes/auth.router.ts
+Lignes : 160-169
+Description : Échecs d'envoi d'email ignorés, utilisateur croit avoir reçu le mail.
+Impact : Comptes inutilisables sans indication.
+Solution :
+
+// REMPLACER:
+try {
+  await sendVerificationEmail(user.email, token);
+} catch (error) {
+  // NOUVEAU: Informer l'utilisateur
+  return res.status(201).json({
+    success: true,
+    emailSent: false,
+    message: 'Account created. Verification email failed - please use resend option.'
+  });
+}
+
+PROBLÈME #14 : Pas de Retry sur Connection DB
+Fichier : /server/db.ts
+Lignes : 20-39
+Description : Une seule tentative de connexion à la DB.
+Impact : Serveur démarre en état cassé si DB temporairement indisponible.
+Solution :
+
+// AJOUTER retry logic:
+async function connectWithRetry(maxRetries = 5, delay = 2000) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      await db.execute(sql`SELECT 1`);
+      console.log('Database connected successfully');
+      return;
+    } catch (error) {
+      console.error(`DB connection attempt ${attempt}/${maxRetries} failed`);
+      if (attempt === maxRetries) throw error;
+      await new Promise(r => setTimeout(r, delay * attempt));
+    }
+  }
+}
+
+PROBLÈME #15 : Upload Fichiers Sans Scan Antivirus
+Fichier : /server/routes/file-upload.ts
+Description : Fichiers uploadés sans vérification malware.
+Impact : Distribution de malware via la plateforme.
+Solution :
+
+// AJOUTER ClamAV scanning:
+import NodeClam from 'clamscan';
+
+const clamscan = await new NodeClam().init({
+  clamdscan: { socket: '/var/run/clamav/clamd.sock' }
+});
+
+// Dans l'upload handler:
+const { isInfected, file, viruses } = await clamscan.scanFile(uploadedFile.path);
+if (isInfected) {
+  await fs.unlink(uploadedFile.path);
+  return res.status(400).json({ error: 'Malware detected', viruses });
+}
+
+PROBLÈME #16 : Pas de Cleanup Fichiers Temporaires
+Fichier : /server/docker-executor.ts
+Ligne : 169
+Description : Répertoires temp créés mais jamais nettoyés.
+Impact : Espace disque épuisé.
+Solution :
+
+// AJOUTER cleanup garantie:
+async function withTempDir<T>(fn: (dir: string) => Promise<T>): Promise<T> {
+  const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'ecode-'));
+  try {
+    return await fn(tmpDir);
+  } finally {
+    await fs.rm(tmpDir, { recursive: true, force: true });
+  }
+}
+
+PROBLÈME #17 : SSL Custom Domain Non Automatisé
+Fichier : /server/routes/deployment.ts
+Ligne : 150
+Description : renewSSLCertificate() appelé mais pas d'intégration Let's Encrypt.
+Impact : Certificats expirent, sites inaccessibles.
+Solution :
+
+// INTÉGRER ACME/Let's Encrypt:
+import * as acme from 'acme-client';
+
+async function renewSSLCertificate(domain: string) {
+  const client = new acme.Client({
+    directoryUrl: acme.directory.letsencrypt.production,
+    accountKey: await loadAccountKey(),
+  });
+
+  const [key, csr] = await acme.crypto.createCsr({ commonName: domain });
+  const cert = await client.auto({
+    csr,
+    email: 'ssl@e-code.ai',
+    termsOfServiceAgreed: true,
+    challengeCreateFn: async (authz, challenge, keyAuth) => {
+      // Configurer challenge DNS ou HTTP
+    },
+    challengeRemoveFn: async (authz, challenge) => {
+      // Nettoyer challenge
+    },
+  });
+
+  await saveCertificate(domain, key, cert);
+}
+
+PROBLÈME #18 : Autoscaling Sans Garde-fous
+Fichier : /server/routes/deployment.ts
+Lignes : 99-107
+Description : Pas de limite max instances, pas de cap de coût.
+Impact : Facturation incontrôlée.
+Solution :
+
+// AJOUTER limites:
+const SCALING_LIMITS = {
+  maxInstances: 10,
+  maxCostPerDay: 100, // USD
+  cooldownPeriod: 300, // secondes
+};
+
+async function scaleDeployment(deploymentId: string, desiredCount: number) {
+  const deployment = await getDeployment(deploymentId);
+  
+  if (desiredCount > SCALING_LIMITS.maxInstances) {
+    throw new Error(`Cannot scale beyond ${SCALING_LIMITS.maxInstances} instances`);
+  }
+
+  const dailyCost = await calculateDailyCost(deployment.userId);
+  if (dailyCost > SCALING_LIMITS.maxCostPerDay) {
+    throw new Error('Daily cost limit reached');
+  }
+
+  // Procéder au scaling...
+}
+
+🟠 SECTION 2 : PROBLÈMES FRONTEND/UI/UX
+2.1 Problèmes Critiques Frontend
+PROBLÈME #19 : Aucun Test Frontend
+Répertoire : /client/src/
+Description : 0 fichiers de test dans le code frontend principal (814 fichiers source).
+Impact : Régressions non détectées, refactoring risqué.
+Solution :
+
+# CRÉER la structure de tests:
+/client/src/
+├── __tests__/
+│   ├── components/
+│   │   ├── Editor.test.tsx
+│   │   ├── FileExplorer.test.tsx
+│   │   └── Terminal.test.tsx
+│   ├── hooks/
+│   │   └── useAuth.test.ts
+│   └── utils/
+│       └── api.test.ts
+
+# Configurer Jest/Vitest:
+npm install -D @testing-library/react @testing-library/jest-dom vitest
+
+PROBLÈME #20 : 962 Usages de Type any
+Fichiers : Multiples dans /client/src/
+Description : Perte totale de type safety.
+Impact : Erreurs runtime, mauvais support IDE.
+Solution :
+
+// REMPLACER progressivement:
+// AVANT:
+const handleData = (data: any) => { ... }
+
+// APRÈS:
+interface WebSocketMessage {
+  type: 'file_change' | 'cursor_move' | 'chat';
+  payload: unknown;
+}
+const handleData = (data: WebSocketMessage) => { ... }
+
+// AJOUTER à tsconfig.json:
+{
+  "compilerOptions": {
+    "noImplicitAny": true,
+    "strictNullChecks": true
+  }
+}
+
+PROBLÈME #21 : GitPanel - Bug API Response
+Fichier : /client/src/components/GitPanel.tsx
+Lignes : 74-80
+Description :
+
+const res = await apiRequest('GET', `/api/git/repositories/${projectId}`);
+if (!res.ok) {  // ❌ res n'a PAS de propriété .ok !
+  const errorData = await res.json();  // ❌ Ne peut pas appeler .json() !
+}
+
+apiRequest retourne les données parsées, pas un objet Response.
+Impact : Git panel complètement cassé.
+Solution :
+
+// CORRIGER:
+try {
+  const data = await apiRequest('GET', `/api/git/repositories/${projectId}`);
+  setRepositories(data);
+} catch (error) {
+  if (error instanceof ApiError) {
+    setError(error.message);
+  }
+}
+
+PROBLÈME #22 : EventSource Non Fermé
+Fichier : /client/src/components/CodeGenerationPanel.tsx
+Description : EventSource créé pour streaming mais pas garanti fermé sur erreur/unmount.
+Impact : Fuite de connexions, consommation mémoire.
+Solution :
+
+// CORRIGER le useEffect:
+useEffect(() => {
+  let eventSource: EventSource | null = null;
+
+  const startGeneration = async () => {
+    eventSource = new EventSource(`/api/ai/generate?prompt=${encodeURIComponent(prompt)}`);
+    
+    eventSource.onmessage = (event) => {
+      setOutput(prev => prev + event.data);
+    };
+
+    eventSource.onerror = () => {
+      eventSource?.close();
+      eventSource = null;
+    };
+  };
+
+  startGeneration();
+
+  // CLEANUP garanti:
+  return () => {
+    eventSource?.close();
+  };
+}, [prompt]);
+
+PROBLÈME #23 : 494 Console.log en Production
+Fichiers : Multiples
+Description : Console logs de debug laissés dans le code.
+Impact : Performance dégradée, fuite d'info sensible.
+Solution :
+
+// CRÉER un logger conditionnel:
+// /client/src/lib/logger.ts
+const isDev = import.meta.env.DEV;
+
+export const logger = {
+  debug: (...args: unknown[]) => isDev && console.log('[DEBUG]', ...args),
+  info: (...args: unknown[]) => isDev && console.info('[INFO]', ...args),
+  warn: (...args: unknown[]) => console.warn('[WARN]', ...args),
+  error: (...args: unknown[]) => console.error('[ERROR]', ...args),
+};
+
+// REMPLACER tous les console.log par:
+import { logger } from '@/lib/logger';
+logger.debug('Component mounted', props);
+
+PROBLÈME #24 : JSON.parse Sans Try-Catch
+Fichiers :
+
+/client/src/lib/collaboration.ts
+/client/src/lib/streaming.ts
+/client/src/lib/websocket-resilience.ts
+Description : JSON.parse(event.data) peut crash si malformé.
+Impact : Application crash, mauvaise UX.
+Solution :
+// CRÉER un helper:
+function safeJsonParse<T>(json: string, fallback: T): T {
+  try {
+    return JSON.parse(json) as T;
+  } catch {
+    console.error('Failed to parse JSON:', json.substring(0, 100));
+    return fallback;
+  }
+}
+
+// UTILISER:
+const message = safeJsonParse<WebSocketMessage>(event.data, { type: 'unknown', payload: null });
+
+PROBLÈME #25 : CSRF Token Failure Silencieux
+Fichier : /client/src/lib/queryClient.ts
+Lignes : 47-50
+Description : Si fetch CSRF échoue, continue sans token.
+Impact : Protection CSRF contournée.
+Solution :
+
+// CORRIGER:
+async function fetchCsrfToken(): Promise<string> {
+  const response = await fetch('/api/csrf-token', { credentials: 'include' });
+  
+  if (!response.ok) {
+    throw new Error('Failed to fetch CSRF token');
+  }
+  
+  const data = await response.json();
+  return data.token;
+}
+
+// Dans apiRequest:
+const csrfToken = await fetchCsrfToken();
+if (!csrfToken) {
+  throw new Error('CSRF token required but not available');
+}
+
+PROBLÈME #26 : localStorage Sans Error Handling
+Fichiers : /client/src/hooks/useIDEWorkspace.ts, /client/src/hooks/useElectron.ts
+Description : Accès localStorage peut échouer (mode privé, quota dépassé).
+Impact : Crash en navigation privée.
+Solution :
+
+// CRÉER un wrapper:
+export function safeLocalStorage() {
+  const isAvailable = (() => {
+    try {
+      const test = '__storage_test__';
+      localStorage.setItem(test, test);
+      localStorage.removeItem(test);
+      return true;
+    } catch {
+      return false;
+    }
+  })();
+
+  return {
+    getItem: (key: string): string | null => {
+      if (!isAvailable) return null;
+      try {
+        return localStorage.getItem(key);
+      } catch {
+        return null;
+      }
+    },
+    setItem: (key: string, value: string): boolean => {
+      if (!isAvailable) return false;
+      try {
+        localStorage.setItem(key, value);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+  };
+}
+
+PROBLÈME #27 : Accessibilité Insuffisante (10%)
+Description : Seulement 85 attributs ARIA dans 814 fichiers.
+Impact : Non-conforme WCAG, exclusion utilisateurs handicapés.
+Solution :
+
+// AJOUTER à chaque composant interactif:
+
+// Boutons icon-only:
+<Button aria-label="Supprimer le fichier" onClick={handleDelete}>
+  <TrashIcon />
+</Button>
+
+// Régions dynamiques:
+<div aria-live="polite" aria-atomic="true">
+  {statusMessage}
+</div>
+
+// Navigation:
+<nav aria-label="Navigation principale">
+  <ul role="menubar">
+    <li role="menuitem" tabIndex={0}>Fichiers</li>
+  </ul>
+</nav>
+
+// Formulaires:
+<label htmlFor="email">Email</label>
+<input id="email" type="email" aria-describedby="email-error" />
+<span id="email-error" role="alert">{error}</span>
+
+PROBLÈME #28 : Pas de Error Monitoring
+Description : ErrorBoundary existe mais pas de tracking externe.
+Impact : Erreurs production inconnues.
+Solution :
+
+// INSTALLER Sentry:
+npm install @sentry/react
+
+// Configurer dans main.tsx:
+import * as Sentry from '@sentry/react';
+
+Sentry.init({
+  dsn: import.meta.env.VITE_SENTRY_DSN,
+  environment: import.meta.env.MODE,
+  integrations: [
+    Sentry.browserTracingIntegration(),
+    Sentry.replayIntegration(),
+  ],
+  tracesSampleRate: 0.1,
+  replaysSessionSampleRate: 0.1,
+});
+
+// Wrapper ErrorBoundary:
+<Sentry.ErrorBoundary fallback={<ErrorFallback />}>
+  <App />
+</Sentry.ErrorBoundary>
+
+PROBLÈME #29 : Logout Trop Agressif
+Fichier : /client/src/hooks/use-auth.tsx
+Ligne : 97
+Description : queryClient.clear() efface TOUTES les données cachées.
+Impact : Perte de données non-auth, mauvaise UX.
+Solution :
+
+// REMPLACER:
+// AVANT:
+queryClient.clear();
+
+// APRÈS - Invalider seulement les données user:
+queryClient.removeQueries({ queryKey: ['user'] });
+queryClient.removeQueries({ queryKey: ['profile'] });
+queryClient.removeQueries({ queryKey: ['notifications'] });
+// Garder les données publiques (templates, docs, etc.)
+
+2.2 Features Manquantes vs Replit
+PROBLÈME #30 : Curseurs Collaboratifs Basiques
+Description : Implémentation minimale, pas de couleurs par utilisateur.
+Solution :
+
+// AMÉLIORER collaboration.ts:
+interface CollaboratorCursor {
+  id: string;
+  name: string;
+  color: string; // Générer couleur unique par user
+  position: { line: number; column: number };
+  selection?: { start: Position; end: Position };
+}
+
+// Afficher dans l'éditeur:
+const cursorDecorations = collaborators.map(c => ({
+  range: new monaco.Range(c.position.line, c.position.column, ...),
+  options: {
+    className: `cursor-${c.color}`,
+    beforeContentClassName: 'cursor-label',
+    beforeContent: c.name,
+  }
+}));
+
+PROBLÈME #31 : Debugger Non Fonctionnel
+Fichier : /client/src/components/DebuggerPanel.tsx
+Description : UI présente mais expansion variables vide, breakpoints non persistés.
+Solution :
+
+// IMPLÉMENTER expansion des variables:
+interface VariableNode {
+  name: string;
+  value: string;
+  type: string;
+  children?: VariableNode[];
+  expandable: boolean;
+}
+
+async function expandVariable(variableRef: number): Promise<VariableNode[]> {
+  const response = await apiRequest('POST', '/api/debug/variables', {
+    variablesReference: variableRef
+  });
+  return response.variables;
+}
+
+PROBLÈME #32 : Package Auto-Install Absent
+Description : Pas de détection/installation automatique des imports manquants.
+Solution :
+
+// AJOUTER dans l'éditeur:
+async function detectMissingImports(code: string, language: string) {
+  const imports = parseImports(code);
+  const packageJson = await getProjectPackageJson();
+  
+  const missing = imports.filter(imp => 
+    !packageJson.dependencies[imp] && 
+    !packageJson.devDependencies[imp]
+  );
+
+  if (missing.length > 0) {
+    showNotification({
+      title: 'Missing packages detected',
+      message: `Install ${missing.join(', ')}?`,
+      action: () => installPackages(missing)
+    });
+  }
+}
+
+🟡 SECTION 3 : PROBLÈMES MOBILE/RESPONSIVE
+PROBLÈME #33 : Viewport 100vh Cassé sur Mobile
+Fichiers : /client/src/components/mobile/ReplitMobileIDE.tsx et autres
+Description : h-screen (100vh) inclut la barre d'adresse sur mobile.
+Impact : Contenu coupé, inaccessible avec clavier.
+Solution :
+
+/* AJOUTER dans index.css: */
+:root {
+  --vh: 1vh;
+}
+
+/* Dans JavaScript: */
+function setVH() {
+  const vh = window.innerHeight * 0.01;
+  document.documentElement.style.setProperty('--vh', `${vh}px`);
+}
+window.addEventListener('resize', setVH);
+setVH();
+
+/* UTILISER: */
+.mobile-container {
+  height: calc(var(--vh, 1vh) * 100);
+}
+
+PROBLÈME #34 : Zoom Désactivé (Accessibilité)
+Fichier : /client/index.html et /client/src/components/layout/ReplitLayout.tsx
+Description : maximum-scale=1.0 et user-scalable=no violent les guidelines accessibilité.
+Impact : Utilisateurs malvoyants exclus.
+Solution :
+
+<!-- MODIFIER viewport meta: -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<!-- SUPPRIMER user-scalable=no -->
+
+PROBLÈME #35 : Line Numbers sur Mobile
+Fichier : /client/src/lib/cm6/extensions.ts
+Lignes : 131-136
+Description : Gutter de 48px minimum mange 12% de largeur sur écran 375px.
+Impact : Zone d'édition trop étroite.
+Solution :
+
+// CONDITIONNEL selon largeur:
+const getGutterConfig = () => {
+  const isMobile = window.innerWidth < 768;
+  return lineNumbers({
+    formatNumber: isMobile ? () => '' : (n) => String(n), // Masquer sur mobile
+    domEventHandlers: {},
+  });
+};
+
+// Ou simplement désactiver:
+const extensions = isMobile 
+  ? [basicSetup.filter(ext => ext !== lineNumbers())]
+  : [basicSetup];
+
+PROBLÈME #36 : Safe Area Non Gérée
+Fichiers : Plusieurs composants mobile
+Description : Pas de padding pour iPhone notch/home indicator.
+Impact : Contenu masqué sur iPhone X+.
+Solution :
+
+/* AJOUTER à tous les éléments fixed: */
+.bottom-nav {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.top-header {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* Ou avec Tailwind: */
+className="pb-[env(safe-area-inset-bottom)]"
+
+PROBLÈME #37 : Touch Targets Trop Petits
+Description : Boutons < 44x44px (minimum recommandé Apple/Google).
+Impact : Difficile à toucher sur mobile.
+Solution :
+
+// VÉRIFIER et corriger:
+// AVANT:
+<button className="h-8 w-8">
+
+// APRÈS:
+<button className="h-11 w-11 min-h-[44px] min-w-[44px]">
+
+PROBLÈME #38 : Gesture Delay Trop Élevé
+Fichier : /client/src/lib/native-motion/usePanGesture.ts
+Ligne : 69
+Description : delay: 250 ms pour swipe (typique: 100-150ms).
+Impact : Interface perçue comme lente.
+Solution :
+
+// RÉDUIRE le délai:
+const touchSensor = useSensor(TouchSensor, {
+  activationConstraint: {
+    delay: 100, // Au lieu de 250
+    tolerance: 5,
+  },
+});
+
+PROBLÈME #39 : PWA Manifest Incomplet
+Fichier : /client/public/manifest.json
+Description :
+
+Pas d'icône maskable
+Pas d'icônes toutes tailles (96, 152, 180, 384)
+start_url: "/" peut ne pas fonctionner en sous-répertoire
+Solution :
+{
+  "name": "E-Code.ai",
+  "short_name": "E-Code",
+  "start_url": "/?source=pwa",
+  "display": "standalone",
+  "icons": [
+    { "src": "/icons/icon-96.png", "sizes": "96x96", "type": "image/png" },
+    { "src": "/icons/icon-152.png", "sizes": "152x152", "type": "image/png" },
+    { "src": "/icons/icon-180.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-384.png", "sizes": "384x384", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { 
+      "src": "/icons/icon-maskable.png", 
+      "sizes": "512x512", 
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
+
+PROBLÈME #40 : Pas de Support Offline
+Description : Service worker existe mais pas de fallback UI offline.
+Solution :
+
+// CRÉER /client/src/components/OfflineFallback.tsx:
+export function OfflineFallback() {
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  if (!isOnline) {
+    return (
+      <div className="fixed inset-0 bg-background flex items-center justify-center">
+        <div className="text-center">
+          <WifiOff className="w-16 h-16 mx-auto mb-4" />
+          <h2>You're offline</h2>
+          <p>Your changes are saved locally and will sync when you're back online.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+}
+
+PROBLÈME #41 : Split Layout Cassé sur Mobile
+Fichier : /client/src/components/splits/SplitsEditorLayout.tsx
+Description : Panels ne stackent pas verticalement sur mobile.
+Impact : Chevauchement, UI inutilisable.
+Solution :
+
+// AJOUTER mode mobile:
+const SplitsEditorLayout = () => {
+  const isMobile = useMediaQuery('(max-width: 768px)');
+
+  if (isMobile) {
+    return (
+      <div className="flex flex-col h-full">
+        <Tabs defaultValue="editor">
+          <TabsList className="w-full">
+            <TabsTrigger value="editor">Editor</TabsTrigger>
+            <TabsTrigger value="preview">Preview</TabsTrigger>
+            <TabsTrigger value="terminal">Terminal</TabsTrigger>
+          </TabsList>
+          <TabsContent value="editor"><Editor /></TabsContent>
+          <TabsContent value="preview"><Preview /></TabsContent>
+          <TabsContent value="terminal"><Terminal /></TabsContent>
+        </Tabs>
+      </div>
+    );
+  }
+
+  return <DesktopSplitLayout />;
+};
+
+🔵 SECTION 4 : PROBLÈMES DESKTOP (ELECTRON)
+PROBLÈME #42 : Code Signing macOS Désactivé
+Fichier : /desktop/package.json
+Lignes : 62-68
+Description : notarize: false, sign: false - App bloquée par Gatekeeper.
+Impact : Impossible d'installer sur macOS.
+Solution :
+
+{
+  "mac": {
+    "target": ["dmg", "zip"],
+    "category": "public.app-category.developer-tools",
+    "hardenedRuntime": true,
+    "gatekeeperAssess": false,
+    "entitlements": "resources/entitlements.mac.plist",
+    "entitlementsInherit": "resources/entitlements.mac.plist",
+    "notarize": {
+      "teamId": "VOTRE_TEAM_ID"
+    }
+  }
+}
+
+# Variables d'environnement requises:
+export APPLE_ID="votre@email.com"
+export APPLE_APP_SPECIFIC_PASSWORD="xxxx-xxxx-xxxx-xxxx"
+export APPLE_TEAM_ID="XXXXXXXXXX"
+
+PROBLÈME #43 : Code Signing Windows Absent
+Fichier : /desktop/package.json
+Lignes : 88-101
+Description : verifyUpdateCodeSignature: false, pas de certificat configuré.
+Impact : SmartScreen bloque le téléchargement.
+Solution :
+
+{
+  "win": {
+    "target": ["nsis"],
+    "certificateFile": "./certs/windows-cert.pfx",
+    "certificatePassword": "${WIN_CSC_KEY_PASSWORD}",
+    "verifyUpdateCodeSignature": true
+  }
+}
+
+# Obtenir un certificat EV:
+# - DigiCert, Sectigo, GlobalSign
+# Coût: ~$400/an
+
+# Variable d'environnement:
+export WIN_CSC_KEY_PASSWORD="votre_password"
+
+PROBLÈME #44 : GitHub Auto-Update Repository Manquant
+Fichier : /desktop/package.json
+Lignes : 177-183
+Description : Configuré pour github.com/e-code/e-code-desktop qui n'existe peut-être pas.
+Impact : Auto-update silencieusement cassé.
+Solution :
+
+{
+  "publish": {
+    "provider": "github",
+    "owner": "E-Code-AI",
+    "repo": "e-code-desktop",
+    "releaseType": "release"
+  }
+}
+
+# Créer le repo et premier release:
+gh repo create E-Code-AI/e-code-desktop --public
+cd desktop && npm run build
+gh release create v1.0.0 ./dist/*.dmg ./dist/*.exe ./dist/*.AppImage
+
+PROBLÈME #45 : File System IPC Sans Validation
+Fichier : /desktop/main.js
+Lignes : 1028-1117
+Description : Handlers read-file, write-file, delete-file sans validation de chemin.
+Impact : Accès à /etc/passwd, fichiers système.
+Solution :
+
+// AJOUTER validation dans main.js:
+const { app } = require('electron');
+const path = require('path');
+
+const ALLOWED_PATHS = [
+  app.getPath('userData'),
+  app.getPath('documents'),
+  // Chemins de projets autorisés
+];
+
+function isPathAllowed(filePath) {
+  const resolved = path.resolve(filePath);
+  return ALLOWED_PATHS.some(allowed => 
+    resolved.startsWith(path.resolve(allowed))
+  );
+}
+
+ipcMain.handle('read-file', async (event, filePath) => {
+  if (!isPathAllowed(filePath)) {
+    throw new Error('Access denied: path not allowed');
+  }
+  return fs.promises.readFile(filePath, 'utf-8');
+});
+
+PROBLÈME #46 : Deep Link Sans Validation
+Fichier : /desktop/main.js
+Lignes : 748-788
+Description : Protocol ecode:// parse URLs sans sanitization.
+Impact : XSS via liens malicieux.
+Solution :
+
+// AJOUTER whitelist d'actions:
+const ALLOWED_DEEP_LINK_ACTIONS = ['project', 'file', 'workspace', 'settings'];
+
+function handleDeepLink(url) {
+  const parsed = new URL(url);
+  const action = parsed.pathname.slice(1); // Remove leading /
+  
+  if (!ALLOWED_DEEP_LINK_ACTIONS.includes(action)) {
+    console.warn('Unknown deep link action:', action);
+    return;
+  }
+
+  // Sanitize parameters
+  const sanitizedParams = {};
+  for (const [key, value] of parsed.searchParams) {
+    sanitizedParams[key] = value.replace(/[<>\"\']/g, '');
+  }
+
+  mainWindow.webContents.send('deep-link', { action, params: sanitizedParams });
+}
+
+PROBLÈME #47 : DevTools Activable en Production
+Fichier : /desktop/main.js
+Lignes : 348-350, 656
+Description : DevTools peut être activé via store même en prod.
+Impact : Utilisateurs peuvent inspecter/modifier le code.
+Solution :
+
+// SUPPRIMER la possibilité d'activer DevTools en prod:
+if (isDev) {
+  mainWindow.webContents.openDevTools({ mode: 'detach' });
+}
+
+// SUPPRIMER le raccourci en production:
+if (!isDev) {
+  // Disable DevTools shortcuts
+  mainWindow.webContents.on('before-input-event', (event, input) => {
+    if (input.key === 'F12' || 
+        (input.control && input.shift && input.key === 'I')) {
+      event.preventDefault();
+    }
+  });
+}
+
+PROBLÈME #48 : Icône macOS .icns Manquante
+Fichier : /desktop/main.js et package.json
+Description : Configuré pour resources/icon.icns qui n'existe pas.
+Impact : App sans icône dans Dock/Finder.
+Solution :
+
+# Générer .icns depuis PNG 1024x1024:
+mkdir icon.iconset
+sips -z 16 16 icon-1024.png --out icon.iconset/icon_16x16.png
+sips -z 32 32 icon-1024.png --out icon.iconset/icon_16x16@2x.png
+sips -z 32 32 icon-1024.png --out icon.iconset/icon_32x32.png
+sips -z 64 64 icon-1024.png --out icon.iconset/icon_32x32@2x.png
+sips -z 128 128 icon-1024.png --out icon.iconset/icon_128x128.png
+sips -z 256 256 icon-1024.png --out icon.iconset/icon_128x128@2x.png
+sips -z 256 256 icon-1024.png --out icon.iconset/icon_256x256.png
+sips -z 512 512 icon-1024.png --out icon.iconset/icon_256x256@2x.png
+sips -z 512 512 icon-1024.png --out icon.iconset/icon_512x512.png
+sips -z 1024 1024 icon-1024.png --out icon.iconset/icon_512x512@2x.png
+iconutil -c icns icon.iconset -o resources/icon.icns
+
+PROBLÈME #49 : Pas de Crash Reporting Desktop
+Fichier : /desktop/main.js
+Description : Aucun crash reporter configuré.
+Impact : Impossible de diagnostiquer les crashes.
+Solution :
+
+// AJOUTER au début de main.js:
+const { crashReporter } = require('electron');
+
+crashReporter.start({
+  productName: 'E-Code Desktop',
+  companyName: 'E-Code AI',
+  submitURL: 'https://e-code.ai/api/crash-reports',
+  uploadToServer: true,
+  ignoreSystemCrashHandler: false,
+});
+
+// Ou intégrer Sentry:
+const Sentry = require('@sentry/electron');
+Sentry.init({
+  dsn: 'https://xxx@sentry.io/xxx',
+});
+
+PROBLÈME #50 : Auto-Update Sans Vérification Signature
+Fichier : /desktop/main.js
+Lignes : 832-834
+Description :
+
+autoDownload: true sans confirmation
+verifyUpdateCodeSignature: false
+Impact : Téléchargement de malware possible.
+Solution :
+// CONFIGURER correctement:
+autoUpdater.autoDownload = false;
+autoUpdater.autoInstallOnAppQuit = false;
+
+autoUpdater.on('update-available', (info) => {
+  dialog.showMessageBox({
+    type: 'info',
+    title: 'Update Available',
+    message: `Version ${info.version} is available. Download now?`,
+    buttons: ['Download', 'Later']
+  }).then(({ response }) => {
+    if (response === 0) {
+      autoUpdater.downloadUpdate();
+    }
+  });
+});
+
+// S'assurer que le signing est actif:
+// Dans package.json:
+"win": {
+  "verifyUpdateCodeSignature": true
+}
