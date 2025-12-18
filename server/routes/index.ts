@@ -77,6 +77,7 @@ import memoryBankRouter from "./memory-bank.router";
 import autoCheckpointsRouter from "./auto-checkpoints.router";
 import mobileSessionsRouter from "./mobile-sessions.router";
 import mobileBuildsRouter from "./mobile-builds.router";
+import { expoSnackRouter } from "./expo-snack.router";
 import rollbackRouter from "./rollback.router";
 import { replitdbRouter } from "./replitdb.router";
 import sendgridWebhooksRouter from './webhooks-sendgrid.router';
@@ -299,6 +300,9 @@ export class MainRouter {
 
     // Mobile Builds routes (EAS Build integration for iOS/Android)
     app.use('/api/mobile', tierRateLimiters.api, mobileBuildsRouter);
+
+    // Expo Snack integration for real mobile simulation
+    app.use('/api/expo-snack', tierRateLimiters.api, expoSnackRouter);
 
     // Git integration routes
     app.use('/api/git', tierRateLimiters.api, GitRouter);

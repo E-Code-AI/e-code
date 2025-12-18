@@ -208,6 +208,7 @@
     "samlify": "^2.10.1",
     "sharp": "^0.34.5",
     "simple-peer": "^9.11.1",
+    "snack-sdk": "^6.6.0",
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
     "sonner": "^2.0.7",
