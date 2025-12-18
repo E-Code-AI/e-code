@@ -12,8 +12,42 @@
  */
 
 import { Router, Request, Response } from 'express';
+import rateLimit from 'express-rate-limit';
 
 const router = Router();
+
+// SECURITY FIX #22: Add rate limiting to prevent DoS attacks
+const placeholderRateLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute window
+  max: 100, // 100 requests per minute per IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests, please try again later' }
+});
+
+// In-memory SVG cache to prevent regeneration on every request
+const svgCache = new Map<string, { svg: string; timestamp: number }>();
+const CACHE_TTL = 60 * 60 * 1000; // 1 hour cache TTL
+const MAX_CACHE_SIZE = 1000;
+
+function getCachedSvg(key: string): string | null {
+  const cached = svgCache.get(key);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return cached.svg;
+  }
+  if (cached) {
+    svgCache.delete(key);
+  }
+  return null;
+}
+
+function setCachedSvg(key: string, svg: string): void {
+  if (svgCache.size >= MAX_CACHE_SIZE) {
+    const oldestKey = svgCache.keys().next().value;
+    if (oldestKey) svgCache.delete(oldestKey);
+  }
+  svgCache.set(key, { svg, timestamp: Date.now() });
+}
 
 // Color palette for avatars (Replit-inspired)
 const AVATAR_COLORS = [
@@ -119,14 +153,22 @@ function generateProductSVG(width: number, height: number): string {
 }
 
 // Avatar endpoint: /api/avatar/:name or /api/avatar/:name/:size
-router.get('/api/avatar/:name/:size?', (req: Request, res: Response) => {
+// SECURITY FIX #22: Apply rate limiting
+router.get('/api/avatar/:name/:size?', placeholderRateLimiter, (req: Request, res: Response) => {
   const name = decodeURIComponent(req.params.name || 'User');
   const size = parseInt(req.params.size || '100', 10);
   
   // Validate size
   const clampedSize = Math.max(16, Math.min(512, size));
   
-  const svg = generateAvatarSVG(name, clampedSize);
+  // SECURITY FIX #22: Check cache first
+  const cacheKey = `avatar:${name}:${clampedSize}`;
+  let svg = getCachedSvg(cacheKey);
+  
+  if (!svg) {
+    svg = generateAvatarSVG(name, clampedSize);
+    setCachedSvg(cacheKey, svg);
+  }
   
   res.setHeader('Content-Type', 'image/svg+xml');
   res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
@@ -134,7 +176,8 @@ router.get('/api/avatar/:name/:size?', (req: Request, res: Response) => {
 });
 
 // Placeholder endpoint: /api/placeholder/:width/:height
-router.get('/api/placeholder/:width/:height', (req: Request, res: Response) => {
+// SECURITY FIX #22: Apply rate limiting
+router.get('/api/placeholder/:width/:height', placeholderRateLimiter, (req: Request, res: Response) => {
   const width = parseInt(req.params.width, 10) || 200;
   const height = parseInt(req.params.height, 10) || 200;
   const text = req.query.text as string | undefined;
@@ -144,12 +187,17 @@ router.get('/api/placeholder/:width/:height', (req: Request, res: Response) => {
   const clampedWidth = Math.max(16, Math.min(2000, width));
   const clampedHeight = Math.max(16, Math.min(2000, height));
   
-  let svg: string;
+  // SECURITY FIX #22: Check cache first
+  const cacheKey = `placeholder:${clampedWidth}:${clampedHeight}:${type || 'default'}:${text || ''}`;
+  let svg = getCachedSvg(cacheKey);
   
-  if (type === 'product') {
-    svg = generateProductSVG(clampedWidth, clampedHeight);
-  } else {
-    svg = generatePlaceholderSVG(clampedWidth, clampedHeight, text);
+  if (!svg) {
+    if (type === 'product') {
+      svg = generateProductSVG(clampedWidth, clampedHeight);
+    } else {
+      svg = generatePlaceholderSVG(clampedWidth, clampedHeight, text);
+    }
+    setCachedSvg(cacheKey, svg);
   }
   
   res.setHeader('Content-Type', 'image/svg+xml');
@@ -158,7 +206,8 @@ router.get('/api/placeholder/:width/:height', (req: Request, res: Response) => {
 });
 
 // Alternative format: /api/placeholder/:dimensions (e.g., 300x200)
-router.get('/api/placeholder/:dimensions', (req: Request, res: Response) => {
+// SECURITY FIX #22: Apply rate limiting
+router.get('/api/placeholder/:dimensions', placeholderRateLimiter, (req: Request, res: Response) => {
   const dimensions = req.params.dimensions;
   const match = dimensions.match(/^(\d+)x(\d+)$/i);
   
@@ -176,12 +225,17 @@ router.get('/api/placeholder/:dimensions', (req: Request, res: Response) => {
   const clampedWidth = Math.max(16, Math.min(2000, width));
   const clampedHeight = Math.max(16, Math.min(2000, height));
   
-  let svg: string;
+  // SECURITY FIX #22: Check cache first
+  const cacheKey = `placeholder:${clampedWidth}:${clampedHeight}:${type || 'default'}`;
+  let svg = getCachedSvg(cacheKey);
   
-  if (type === 'product') {
-    svg = generateProductSVG(clampedWidth, clampedHeight);
-  } else {
-    svg = generatePlaceholderSVG(clampedWidth, clampedHeight);
+  if (!svg) {
+    if (type === 'product') {
+      svg = generateProductSVG(clampedWidth, clampedHeight);
+    } else {
+      svg = generatePlaceholderSVG(clampedWidth, clampedHeight);
+    }
+    setCachedSvg(cacheKey, svg);
   }
   
   res.setHeader('Content-Type', 'image/svg+xml');

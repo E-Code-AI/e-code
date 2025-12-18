@@ -4,11 +4,60 @@
 version: '3.8'
 
 services:
+  # =============================================================================
+  # NGINX REVERSE PROXY WITH SSL TERMINATION
+  # =============================================================================
+  # Handles all incoming HTTP/HTTPS traffic and terminates SSL before proxying
+  # to the backend application. Uses Let's Encrypt for SSL certificates.
+  # =============================================================================
+  nginx:
+    image: nginx:alpine
+    container_name: ecode-nginx-prod
+    ports:
+      - "80:80"      # HTTP (redirects to HTTPS)
+      - "443:443"    # HTTPS with SSL termination
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+      - ./certbot/conf:/etc/letsencrypt:ro
+      - ./certbot/www:/var/www/certbot:ro
+    depends_on:
+      app:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - ecode-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Certbot for automatic SSL certificate renewal
+  certbot:
+    image: certbot/certbot
+    container_name: ecode-certbot
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+    restart: unless-stopped
+    networks:
+      - ecode-network
+
   app:
     build: .
-    ports:
-      - "80:5000"    # HTTP: External port 80 → Internal port 5000
-      - "443:5000"   # HTTPS: External port 443 → Internal port 5000 (with SSL termination)
+    # Internal port - nginx handles external traffic
+    expose:
+      - "5000"
     environment:
       - NODE_ENV=production
       - PORT=5000

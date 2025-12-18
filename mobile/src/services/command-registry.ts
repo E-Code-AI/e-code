@@ -1,4 +1,5 @@
 import Fuse from 'fuse.js';
+import { StorageService } from './storage';
 
 export type CommandCategory = 'files' | 'actions' | 'navigation' | 'ai';
 
@@ -25,6 +26,7 @@ class CommandRegistry {
   private recentCommandIds: string[] = [];
   private fuse: Fuse<Command> | null = null;
   private options: CommandRegistryOptions = {};
+  private initialized: boolean = false;
 
   constructor() {
     this.loadRecentCommands();
@@ -35,20 +37,22 @@ class CommandRegistry {
     this.registerDefaultCommands();
   }
 
-  private loadRecentCommands() {
+  private async loadRecentCommands() {
     try {
-      const stored = global.localStorage?.getItem(RECENT_COMMANDS_KEY);
-      if (stored) {
-        this.recentCommandIds = JSON.parse(stored);
+      const stored = await StorageService.get<string[]>(RECENT_COMMANDS_KEY);
+      if (stored && Array.isArray(stored)) {
+        this.recentCommandIds = stored;
       }
+      this.initialized = true;
     } catch {
       this.recentCommandIds = [];
+      this.initialized = true;
     }
   }
 
-  private saveRecentCommands() {
+  private async saveRecentCommands() {
     try {
-      global.localStorage?.setItem(RECENT_COMMANDS_KEY, JSON.stringify(this.recentCommandIds));
+      await StorageService.set(RECENT_COMMANDS_KEY, this.recentCommandIds);
     } catch {
       // Ignore storage errors
     }

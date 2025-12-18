@@ -2,9 +2,13 @@ import { Router, Request, Response } from 'express';
 import { TemplateMarketplaceService } from '../services/template-marketplace';
 import { ensureAuthenticated } from '../middleware/auth';
 import { storage } from '../storage';
+import { tierRateLimiters } from '../middleware/tier-rate-limiter';
 
 const router = Router();
 const templateMarketplace = new TemplateMarketplaceService();
+
+// SECURITY FIX #21: Apply rate limiting to all public marketplace routes
+router.use(tierRateLimiters.api);
 
 // GET /api/marketplace/templates - Return templates with search/filters
 router.get('/templates', async (req: Request, res: Response) => {

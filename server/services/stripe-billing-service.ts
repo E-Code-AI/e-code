@@ -316,64 +316,74 @@ export class StripeBillingService {
   }
   
   async generateInvoice(userId: number): Promise<string> {
-    try {
-      const user = await storage.getUser(String(userId));
-      if (!user?.stripeCustomerId) {
-        throw new Error('User has no Stripe customer ID');
-      }
-      
-      // Create an invoice with usage details
-      const invoice = await this.stripe.invoices.create({
-        customer: user.stripeCustomerId,
-        auto_advance: false, // Don't automatically finalize
-        description: 'E-Code Platform Usage',
-      }, {
-        idempotencyKey: generateIdempotencyKey('invoice', userId),
-      });
-      
-      // Add custom line items for detailed breakdown
-      const usage = await storage.getUserUsage(String(userId));
-
-      if (usage && typeof usage === 'object') {
-        for (const [metricType, entry] of Object.entries(
-          usage as Record<string, unknown>
-        )) {
-          if (!isUsageSnapshot(entry)) continue;
-
-          const used = coerceNumber(entry.used);
-          const cost = coerceNumber(entry.cost);
-          const unit = typeof entry.unit === 'string' ? entry.unit : undefined;
-
-          if (used === null || used <= 0 || cost === null || cost <= 0) {
-            continue;
-          }
-
-          await this.stripe.invoiceItems.create({
-            customer: user.stripeCustomerId,
-            invoice: invoice.id,
-            description: `${metricType.replace(/_/g, ' ')} usage: ${used}${unit ? ` ${unit}` : ''}`,
-            amount: Math.round(cost * 100), // Convert to cents
-            currency: 'usd', // P-C3 FIX: Default to USD instead of EUR
-          }, {
-            idempotencyKey: generateIdempotencyKey('inv_item', userId, metricType, invoice.id),
-          });
+    // #137 FIXED: Wrap invoice creation in a database transaction for consistency
+    const { db } = await import('../db');
+    
+    return await db.transaction(async (tx) => {
+      try {
+        const user = await storage.getUser(String(userId));
+        if (!user?.stripeCustomerId) {
+          throw new Error('User has no Stripe customer ID');
         }
-      }
+        
+        // #136 FIXED: Get currency from customer once (outside loop)
+        const stripeCustomer = await this.stripe.customers.retrieve(user.stripeCustomerId) as Stripe.Customer;
+        const customerCurrency = stripeCustomer.currency || 'usd';
+        
+        // Create an invoice with usage details
+        const invoice = await this.stripe.invoices.create({
+          customer: user.stripeCustomerId,
+          auto_advance: false, // Don't automatically finalize
+          description: 'E-Code Platform Usage',
+          currency: customerCurrency,
+        }, {
+          idempotencyKey: generateIdempotencyKey('invoice', userId),
+        });
+        
+        // Add custom line items for detailed breakdown
+        const usage = await storage.getUserUsage(String(userId));
 
-      const invoiceId = invoice.id;
-      if (!invoiceId) {
-        throw new Error('Invoice identifier missing from Stripe response');
-      }
+        if (usage && typeof usage === 'object') {
+          for (const [metricType, entry] of Object.entries(
+            usage as Record<string, unknown>
+          )) {
+            if (!isUsageSnapshot(entry)) continue;
 
-      // Finalize the invoice
-      const finalizedInvoice = await this.stripe.invoices.finalizeInvoice(invoiceId);
-      
-      logger.info(`Generated invoice ${finalizedInvoice.id} for user ${userId}`);
-      return finalizedInvoice.hosted_invoice_url || '';
-    } catch (error) {
-      logger.error('Failed to generate invoice:', error);
-      throw error;
-    }
+            const used = coerceNumber(entry.used);
+            const cost = coerceNumber(entry.cost);
+            const unit = typeof entry.unit === 'string' ? entry.unit : undefined;
+
+            if (used === null || used <= 0 || cost === null || cost <= 0) {
+              continue;
+            }
+
+            await this.stripe.invoiceItems.create({
+              customer: user.stripeCustomerId,
+              invoice: invoice.id,
+              description: `${metricType.replace(/_/g, ' ')} usage: ${used}${unit ? ` ${unit}` : ''}`,
+              amount: Math.round(cost * 100), // Convert to cents
+              currency: customerCurrency,
+            }, {
+              idempotencyKey: generateIdempotencyKey('inv_item', userId, metricType, invoice.id),
+            });
+          }
+        }
+
+        const invoiceId = invoice.id;
+        if (!invoiceId) {
+          throw new Error('Invoice identifier missing from Stripe response');
+        }
+
+        // Finalize the invoice
+        const finalizedInvoice = await this.stripe.invoices.finalizeInvoice(invoiceId);
+        
+        logger.info(`Generated invoice ${finalizedInvoice.id} for user ${userId}`);
+        return finalizedInvoice.hosted_invoice_url || '';
+      } catch (error) {
+        logger.error('Failed to generate invoice:', error);
+        throw error;
+      }
+    });
   }
   
   async handleWebhook(event: Stripe.Event): Promise<void> {

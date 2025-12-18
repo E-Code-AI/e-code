@@ -366,8 +366,24 @@ class AgentWebSocketService {
       logger.error(`[Agent WebSocket] WebSocket error for ${connectionKey} (device: ${deviceConnection.deviceId}): ${error.message}`);
     });
     
+    // Handle WebSocket-level pong (for native clients)
     ws.on('pong', () => {
       deviceConnection.isAlive = true;
+      this.handlePong(connectionKey, deviceConnection.deviceId);
+    });
+    
+    // Handle application-level messages (including pong for browser clients)
+    ws.on('message', (data) => {
+      try {
+        const message = JSON.parse(data.toString());
+        if (message.type === 'pong') {
+          deviceConnection.isAlive = true;
+          this.handlePong(connectionKey, deviceConnection.deviceId);
+        }
+        // Other message types can be handled here as needed
+      } catch (e) {
+        // Ignore non-JSON messages
+      }
     });
     
     ws.on('close', (code, reason) => {
@@ -701,22 +717,61 @@ class AgentWebSocketService {
     }
   }
   
-  // Heartbeat to detect stale connections
-  // ✅ FIX (Nov 20, 2025): Browser WebSocket clients don't support manual pong API
-  // Sending ws.ping() causes ws library to close connections with code 1006
-  // Solution: Track isAlive flag and only terminate after multiple missed heartbeats
+  // Track last pong responses and missed pings
+  private devicePingState: Map<string, { lastPong: number; missedPings: number }> = new Map();
+  private readonly MAX_MISSED_PINGS = 3;
+  private readonly PING_INTERVAL_MS = 30000;
+  
+  // Heartbeat using application-level ping (JSON messages)
+  // Browser WebSocket clients don't support ws.ping() API, so we use JSON messages
   private startHeartbeat() {
     this.pingInterval = setInterval(() => {
+      const now = Date.now();
+      
       this.connections.forEach((devices, connectionKey) => {
         devices.forEach((device) => {
-          // ✅ CRITICAL: Don't send ping to browser clients
-          // Browsers auto-handle ping/pong internally, manual ping causes 1006 closure
-          // Instead, rely on readyState check and remove dead connections
+          const deviceKey = `${connectionKey}:${device.deviceId}`;
+          
+          // Check if connection is dead
           if (device.ws.readyState === WebSocket.CLOSED || device.ws.readyState === WebSocket.CLOSING) {
             devices.delete(device);
-            logger.debug(`[Heartbeat] Removed stale device ${device.deviceId} from ${connectionKey}`);
+            this.devicePingState.delete(deviceKey);
+            logger.debug(`[Heartbeat] Removed closed device ${device.deviceId} from ${connectionKey}`);
+            return;
           }
-          // For future: Could implement application-level ping (JSON message) instead of WebSocket ping
+          
+          // Initialize ping state if needed
+          if (!this.devicePingState.has(deviceKey)) {
+            this.devicePingState.set(deviceKey, { lastPong: now, missedPings: 0 });
+          }
+          
+          const pingState = this.devicePingState.get(deviceKey)!;
+          
+          // Check if we've received a recent pong
+          if (now - pingState.lastPong > this.PING_INTERVAL_MS * 1.5) {
+            pingState.missedPings++;
+            
+            if (pingState.missedPings >= this.MAX_MISSED_PINGS) {
+              logger.warn(`[Heartbeat] Device ${device.deviceId} missed ${pingState.missedPings} pings, terminating`);
+              try {
+                device.ws.close(1000, 'Heartbeat timeout');
+              } catch (e) {}
+              devices.delete(device);
+              this.devicePingState.delete(deviceKey);
+              return;
+            }
+          } else {
+            pingState.missedPings = 0;
+          }
+          
+          // Send application-level ping
+          if (device.ws.readyState === WebSocket.OPEN) {
+            try {
+              device.ws.send(JSON.stringify({ type: 'ping', timestamp: now }));
+            } catch (e) {
+              logger.error(`[Heartbeat] Failed to ping device ${device.deviceId}: ${e}`);
+            }
+          }
         });
         
         // Clean up empty connection sets
@@ -724,7 +779,25 @@ class AgentWebSocketService {
           this.connections.delete(connectionKey);
         }
       });
-    }, 30000); // Every 30 seconds
+      
+      // Cleanup orphaned ping states
+      for (const [deviceKey] of this.devicePingState.entries()) {
+        const [projSession] = deviceKey.split(':');
+        if (!this.connections.has(projSession)) {
+          this.devicePingState.delete(deviceKey);
+        }
+      }
+    }, this.PING_INTERVAL_MS);
+  }
+  
+  // Handle pong response from client
+  private handlePong(connectionKey: string, deviceId: string) {
+    const deviceKey = `${connectionKey}:${deviceId}`;
+    const pingState = this.devicePingState.get(deviceKey);
+    if (pingState) {
+      pingState.lastPong = Date.now();
+      pingState.missedPings = 0;
+    }
   }
   
   // Broadcast presence updates to all devices EXCEPT the sender

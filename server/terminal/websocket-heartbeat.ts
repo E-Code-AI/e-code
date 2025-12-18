@@ -17,6 +17,7 @@ interface HeartbeatClient {
   isAlive: boolean;
   lastPing: number;
   sessionId: string;
+  missedPings: number;
 }
 
 export class WebSocketHeartbeatManager {
@@ -64,7 +65,8 @@ export class WebSocketHeartbeatManager {
       ws,
       isAlive: true,
       lastPing: Date.now(),
-      sessionId
+      sessionId,
+      missedPings: 0
     };
 
     this.clients.set(ws, client);
@@ -103,18 +105,21 @@ export class WebSocketHeartbeatManager {
 
   /**
    * Check heartbeats and terminate dead connections
+   * Wait for 2-3 missed pings before disconnecting to handle transient network issues
    */
   private checkHeartbeats(): void {
     const now = Date.now();
     let deadConnections = 0;
+    const MAX_MISSED_PINGS = 3;
 
     this.clients.forEach((client, ws) => {
-      // Check if connection is dead (no pong received)
+      // Check if connection is dead (no pong received after multiple attempts)
       if (!client.isAlive) {
-        const timeSinceLastPing = now - client.lastPing;
+        client.missedPings++;
         
-        if (timeSinceLastPing > HEARTBEAT_TIMEOUT_MS) {
-          logger.warn(`Dead connection detected: ${client.sessionId} (no pong for ${timeSinceLastPing}ms)`);
+        if (client.missedPings >= MAX_MISSED_PINGS) {
+          const timeSinceLastPing = now - client.lastPing;
+          logger.warn(`Dead connection detected: ${client.sessionId} (missed ${client.missedPings} pings, no pong for ${timeSinceLastPing}ms)`);
           
           // Terminate connection
           try {
@@ -126,10 +131,22 @@ export class WebSocketHeartbeatManager {
           this.clients.delete(ws);
           deadConnections++;
           this.metrics.deadConnectionsDetected++;
+        } else {
+          // Not dead yet, send another ping
+          try {
+            ws.ping();
+            this.metrics.totalPings++;
+            logger.debug(`Ping retry ${client.missedPings}/${MAX_MISSED_PINGS} for ${client.sessionId}`);
+          } catch (error) {
+            logger.error(`Failed to ping client ${client.sessionId}: ${error}`);
+            this.clients.delete(ws);
+            deadConnections++;
+          }
         }
       } else {
-        // Mark as not alive and send ping
+        // Connection is alive, reset missed pings counter and send new ping
         client.isAlive = false;
+        client.missedPings = 0;
         client.lastPing = now;
 
         try {

@@ -23,9 +23,10 @@ export const authAttempts = pgTable('auth_attempts', {
 }));
 
 // User sessions for enhanced session management
+// #112 FIXED: userId changed from text to integer for consistency with users.id
 export const userSessions = pgTable('user_sessions', {
   id: text('id').primaryKey(),
-  userId: text('user_id').notNull(),
+  userId: integer('user_id').notNull(), // #112 FIXED: Changed from text to integer to match users.id
   ipAddress: text('ip_address').notNull(),
   userAgent: text('user_agent').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),

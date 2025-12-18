@@ -12,12 +12,13 @@
  * 2. Calculates cost based on official pricing
  * 3. Records to ai_usage_metering table
  * 4. Reports to Stripe metered billing (async)
- * 5. NEVER blocks - user pays for what they use
+ * 5. Rate limits per tier (Issue #38)
  */
 
 import { Request, Response, NextFunction } from 'express';
 import { aiMeteringService } from '../services/ai-metering-service';
 import { createLogger } from '../utils/logger';
+import { RateLimiterMemory } from 'rate-limiter-flexible';
 
 const logger = createLogger('ai-usage-tracker');
 
@@ -28,6 +29,33 @@ const MONTHLY_INCLUDED_REQUESTS: Record<SubscriptionTier, number> = {
   free: 100,
   pro: 10_000,
   enterprise: 100_000,
+};
+
+// ✅ Issue #38 FIX: Rate limiting per tier
+// Limits are requests per minute to prevent abuse while allowing normal usage
+const RATE_LIMITS_PER_MINUTE: Record<SubscriptionTier, number> = {
+  free: 10,       // 10 requests/min for free tier
+  pro: 60,        // 60 requests/min for pro tier  
+  enterprise: 300 // 300 requests/min for enterprise tier
+};
+
+// Create rate limiters per tier
+const rateLimiters: Record<SubscriptionTier, RateLimiterMemory> = {
+  free: new RateLimiterMemory({
+    points: RATE_LIMITS_PER_MINUTE.free,
+    duration: 60, // 1 minute
+    keyPrefix: 'ai_rate_free'
+  }),
+  pro: new RateLimiterMemory({
+    points: RATE_LIMITS_PER_MINUTE.pro,
+    duration: 60,
+    keyPrefix: 'ai_rate_pro'
+  }),
+  enterprise: new RateLimiterMemory({
+    points: RATE_LIMITS_PER_MINUTE.enterprise,
+    duration: 60,
+    keyPrefix: 'ai_rate_enterprise'
+  })
 };
 
 interface AiUsageContext {
@@ -41,15 +69,46 @@ interface AiUsageContext {
 }
 
 /**
- * Middleware to track AI usage WITHOUT blocking
- * Attaches tracking context to res.locals for post-request tracking
+ * Middleware to track AI usage with rate limiting per tier
+ * ✅ Issue #38 FIX: Added rate limiting that doesn't block but warns
  */
-export function aiUsageTracker(req: Request, res: Response, next: NextFunction) {
+export async function aiUsageTracker(req: Request, res: Response, next: NextFunction) {
   const user = req.user as any;
   
   if (!user?.id) {
     // Silent skip for unauthenticated requests - this is expected behavior
     return next();
+  }
+
+  const tier: SubscriptionTier = user.subscriptionTier || 'free';
+  const rateLimiter = rateLimiters[tier];
+  
+  // ✅ Issue #38: Check rate limit per tier
+  try {
+    await rateLimiter.consume(user.id);
+  } catch (rateLimitError: any) {
+    // Rate limited - return 429 with retry-after header
+    const retryAfter = Math.ceil(rateLimitError.msBeforeNext / 1000) || 60;
+    
+    logger.warn(`Rate limit exceeded for user ${user.id} (tier: ${tier})`, {
+      userId: user.id,
+      tier,
+      msBeforeNext: rateLimitError.msBeforeNext
+    });
+    
+    res.setHeader('Retry-After', retryAfter);
+    res.setHeader('X-RateLimit-Limit', RATE_LIMITS_PER_MINUTE[tier]);
+    res.setHeader('X-RateLimit-Remaining', 0);
+    res.setHeader('X-RateLimit-Reset', Date.now() + (retryAfter * 1000));
+    
+    return res.status(429).json({
+      error: 'Rate limit exceeded',
+      message: `You've exceeded the ${tier} tier rate limit of ${RATE_LIMITS_PER_MINUTE[tier]} requests per minute. Please try again in ${retryAfter} seconds.`,
+      retryAfter,
+      tier,
+      limit: RATE_LIMITS_PER_MINUTE[tier],
+      upgradeUrl: tier === 'free' ? '/pricing' : undefined
+    });
   }
 
   // Initialize tracking context

@@ -46,6 +46,10 @@ interface ConsoleMessage {
   count?: number;
 }
 
+interface RequestBody {
+  [key: string]: unknown;
+}
+
 interface NetworkRequest {
   id: string;
   method: string;
@@ -58,8 +62,8 @@ interface NetworkRequest {
   timestamp: Date;
   requestHeaders?: Record<string, string>;
   responseHeaders?: Record<string, string>;
-  requestBody?: any;
-  responseBody?: any;
+  requestBody?: RequestBody;
+  responseBody?: RequestBody;
 }
 
 interface ElementInfo {

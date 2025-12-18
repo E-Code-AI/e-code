@@ -81,11 +81,21 @@ function main() {
     indexHtml = indexHtml.replace('<head>', `<head>\n    ${csp}`);
   }
   
-  // Add nonce to all inline scripts
-  indexHtml = indexHtml.replace(/<script(?![^>]*src=)([^>]*)>/g, `<script nonce="${nonce}"$1>`);
+  // Add nonce to all script tags (inline and external) that don't already have a nonce
+  // This includes <script>, <script type="module">, <script src="...">, etc.
+  indexHtml = indexHtml.replace(/<script(?![^>]*nonce=)([^>]*)>/g, (match, attrs) => {
+    return `<script nonce="${nonce}"${attrs}>`;
+  });
   
-  // Add nonce to all inline styles
-  indexHtml = indexHtml.replace(/<style([^>]*)>/g, `<style nonce="${nonce}"$1>`);
+  // Add nonce to all style tags that don't already have a nonce
+  indexHtml = indexHtml.replace(/<style(?![^>]*nonce=)([^>]*)>/g, (match, attrs) => {
+    return `<style nonce="${nonce}"${attrs}>`;
+  });
+  
+  // Also handle link tags with rel="stylesheet" that don't have nonce
+  indexHtml = indexHtml.replace(/<link(?![^>]*nonce=)([^>]*rel=["']stylesheet["'][^>]*)>/g, (match, attrs) => {
+    return `<link nonce="${nonce}"${attrs}>`;
+  });
   
   fs.writeFileSync(path.join(RENDERER_PATH, 'index.html'), indexHtml);
 

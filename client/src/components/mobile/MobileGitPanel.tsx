@@ -344,7 +344,20 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
                 />
                 <Button
                   variant="outline"
-                  onClick={() => remoteUrl && connectRemoteMutation.mutate(remoteUrl)}
+                  onClick={() => {
+                    if (!remoteUrl) return;
+                    const gitUrlPattern = /^(https?:\/\/|git@|ssh:\/\/).+\.(git)?$/i;
+                    const simpleHttpsPattern = /^https?:\/\/.+\/.+$/i;
+                    if (!gitUrlPattern.test(remoteUrl) && !simpleHttpsPattern.test(remoteUrl)) {
+                      toast({
+                        title: 'Invalid Git URL',
+                        description: 'Please enter a valid git repository URL (e.g., https://github.com/user/repo.git)',
+                        variant: 'destructive',
+                      });
+                      return;
+                    }
+                    connectRemoteMutation.mutate(remoteUrl);
+                  }}
                   disabled={!remoteUrl || connectRemoteMutation.isPending}
                   className="h-11 px-4 rounded-lg border-border text-[15px] text-foreground"
                   data-testid="button-create-remote"

@@ -1,4 +1,76 @@
+# =============================================================================
 # E-Code Platform Main Application Deployment
+# =============================================================================
+# VARIABLE SUBSTITUTION:
+# This file uses envsubst-style variables that must be replaced before applying.
+#
+# Required environment variables:
+#   CONTAINER_REGISTRY - Container registry URL (e.g., gcr.io, docker.io)
+#   PROJECT_ID         - GCP project ID or organization name
+#   IMAGE_TAG          - Docker image tag (e.g., v1.2.3, latest, sha-abc123)
+#
+# Example usage:
+#   export CONTAINER_REGISTRY=gcr.io
+#   export PROJECT_ID=my-project
+#   export IMAGE_TAG=$(git rev-parse --short HEAD)
+#   envsubst < kubernetes/app-deployment.yaml | kubectl apply -f -
+#
+# For CI/CD pipelines, these are typically set from:
+#   - GitHub Actions: ${{ secrets.CONTAINER_REGISTRY }}
+#   - GitLab CI: $CI_REGISTRY
+#   - Jenkins: ${env.CONTAINER_REGISTRY}
+# =============================================================================
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: e-code-app-sa
+  namespace: e-code-platform
+  labels:
+    app: e-code
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: e-code-app-role
+  namespace: e-code-platform
+rules:
+- apiGroups: [""]
+  resources: ["configmaps", "secrets"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: e-code-app-rolebinding
+  namespace: e-code-platform
+subjects:
+- kind: ServiceAccount
+  name: e-code-app-sa
+  namespace: e-code-platform
+roleRef:
+  kind: Role
+  name: e-code-app-role
+  apiGroup: rbac.authorization.k8s.io
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: e-code-typescript-pdb
+  namespace: e-code-platform
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: e-code
+      component: typescript-core
+
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -19,9 +91,12 @@ spec:
         app: e-code
         component: typescript-core
     spec:
+      serviceAccountName: e-code-app-sa
       containers:
       - name: typescript-core
-        # Replace with specific version tag in production
+        # IMAGE_TAG SUBSTITUTION: Replace ${IMAGE_TAG} with actual tag before applying
+        # Use: envsubst < app-deployment.yaml | kubectl apply -f -
+        # Or set in CI/CD: IMAGE_TAG=${{ github.sha }} or IMAGE_TAG=$(git describe --tags)
         image: ${CONTAINER_REGISTRY}/${PROJECT_ID}/e-code-platform:${IMAGE_TAG}
         imagePullPolicy: Always
         ports:

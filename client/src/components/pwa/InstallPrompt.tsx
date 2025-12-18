@@ -61,7 +61,6 @@ export function InstallPrompt() {
       setIsInstalled(true);
       setShowPrompt(false);
       setDeferredPrompt(null);
-      console.log('✅ E-Code PWA installed successfully');
     };
 
     window.addEventListener('appinstalled', handleAppInstalled);
@@ -82,10 +81,8 @@ export function InstallPrompt() {
     const { outcome } = await deferredPrompt.userChoice;
 
     if (outcome === 'accepted') {
-      console.log('✅ User accepted PWA installation');
       setShowPrompt(false);
     } else {
-      console.log('❌ User dismissed PWA installation');
       handleDismiss();
     }
 

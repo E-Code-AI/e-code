@@ -39,6 +39,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { codeAnalyzer } from './code-analyzer';
 import { createLogger } from '../utils/logger';
 import { aiBillingService } from '../services/ai-billing-service';
+import { AI_MODELS } from './ai-provider-manager';
 
 const logger = createLogger('ai-provider [DEPRECATED]');
 
@@ -59,12 +60,23 @@ export interface ChatMessage {
 export class OpenAIProvider implements AIProvider {
   name = 'OpenAI';
   private client: OpenAI;
-  private model = 'gpt-5'; // Latest OpenAI model GPT-5
+  private model: string;
+  
+  // Get default model from AI_MODELS catalog
+  private static getDefaultModel(): string {
+    const openaiModels = AI_MODELS.filter(m => m.provider === 'openai');
+    // Prefer gpt-5.1 (flagship), fallback to gpt-5, then gpt-4o
+    return openaiModels.find(m => m.id === 'gpt-5.1')?.id 
+        || openaiModels.find(m => m.id === 'gpt-5')?.id
+        || openaiModels.find(m => m.id === 'gpt-4o')?.id
+        || 'gpt-4o';
+  }
 
   constructor(apiKey?: string) {
     this.client = new OpenAI({
       apiKey: apiKey || process.env.OPENAI_API_KEY,
     });
+    this.model = OpenAIProvider.getDefaultModel();
   }
 
   async generateCompletion(prompt: string, systemPrompt: string, maxTokens = 1024, temperature = 0.2, userId?: number): Promise<string> {
@@ -171,13 +183,22 @@ Generate the requested code following the existing code style and patterns.`;
 export class AnthropicProvider implements AIProvider {
   name = 'Claude';
   private client: Anthropic;
-  // Use the newest AVAILABLE Anthropic model - Claude 4.5 Haiku
-  private model = 'claude-haiku-4-5-20251015'; // Latest available Claude model (validated working)
+  private model: string;
+  
+  // Get default model from AI_MODELS catalog
+  private static getDefaultModel(): string {
+    const anthropicModels = AI_MODELS.filter(m => m.provider === 'anthropic');
+    // Prefer claude-sonnet-4-5 (best balanced), fallback to haiku (fastest)
+    return anthropicModels.find(m => m.id === 'claude-sonnet-4-5-20250929')?.id
+        || anthropicModels.find(m => m.id === 'claude-haiku-4-5-20251015')?.id
+        || 'claude-sonnet-4-5-20250929';
+  }
 
   constructor(apiKey?: string) {
     this.client = new Anthropic({
       apiKey: apiKey || process.env.ANTHROPIC_API_KEY,
     });
+    this.model = AnthropicProvider.getDefaultModel();
   }
 
   async generateCompletion(prompt: string, systemPrompt: string, maxTokens = 1024, temperature = 0.2, userId?: number): Promise<string> {

@@ -579,6 +579,35 @@ export class CreditsService {
   }
 
   // REMOVED: recordPayAsYouGoCharge - now handled by recordUsageIdempotent → pay_as_you_go_queue
+
+  /**
+   * Add credits to a user's balance (for refunds, bonuses, etc.)
+   * #133 FIXED: Transactional credit addition with audit logging
+   */
+  async addCredits(userId: string, amount: number, reason: string): Promise<void> {
+    return await db.transaction(async (tx) => {
+      const user = await tx
+        .select()
+        .from(users)
+        .where(eq(users.id, parseInt(userId)))
+        .for('update')
+        .limit(1);
+
+      if (!user || user.length === 0) {
+        throw new Error('User not found');
+      }
+
+      const userData = user[0];
+      const currentBalance = parseFloat(userData.creditsBalance?.toString() || '0');
+      const newBalance = Math.min(currentBalance + amount, MAX_CREDITS);
+
+      await tx.update(users).set({
+        creditsBalance: newBalance.toFixed(2),
+      }).where(eq(users.id, parseInt(userId)));
+
+      logger.info(`Added ${amount} credits to user ${userId} (reason: ${reason}). Balance: ${currentBalance.toFixed(2)} -> ${newBalance.toFixed(2)}`);
+    });
+  }
 }
 
 export const creditsService = new CreditsService();

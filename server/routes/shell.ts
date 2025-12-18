@@ -52,17 +52,38 @@ function initializeShellWebSocket() {
   shellWss.on('connection', async (ws: WebSocket, req: IncomingMessage) => {
     const url = new URL(req.url || '', `http://${req.headers.host}`);
     const sessionId = url.searchParams.get('sessionId');
-    const userId = parseInt(url.searchParams.get('userId') || '1', 10);
+    const projectId = url.searchParams.get('projectId');
+    
+    // SECURITY FIX #20: Get authenticated userId from request, not query params
+    // The userId must come from authenticated session, not client-supplied params
+    const authenticatedUser = (req as any).user;
+    const userId = authenticatedUser?.id;
     
     if (!sessionId) {
       ws.close(1008, 'Session ID required');
       return;
     }
 
-    // SECURITY: Validate userId to prevent path traversal
-    if (!Number.isInteger(userId) || userId < 0) {
-      ws.close(1008, 'Invalid user ID');
+    // SECURITY FIX #20: Require authenticated user
+    if (!userId || !Number.isInteger(userId) || userId < 0) {
+      ws.close(1008, 'Authentication required');
       return;
+    }
+    
+    // SECURITY FIX #20: Validate project ownership if projectId provided
+    if (projectId) {
+      try {
+        const { storage } = await import('../storage');
+        const project = await storage.getProject(projectId);
+        if (!project || project.ownerId !== userId) {
+          ws.close(1008, 'Access denied: You do not own this project');
+          return;
+        }
+      } catch (error) {
+        logger.error('Failed to validate project ownership:', error);
+        ws.close(1008, 'Project validation failed');
+        return;
+      }
     }
 
     // Create shell home directory for user with path traversal protection

@@ -126,7 +126,7 @@ export class ObjectStorageService {
         metadata: options.metadata,
       });
 
-      const etag = crypto.createHash('md5').update(buffer).digest('hex');
+      const etag = crypto.createHash('sha256').update(buffer).digest('hex');
       
       logger.info(`[ObjectStorage] Uploaded to Replit: ${key} (${buffer.length} bytes)`);
       
@@ -367,7 +367,7 @@ export class ObjectStorageService {
             const stats = await fs.stat(fullPath);
             const key = path.relative(baseDir, fullPath);
             const buffer = await fs.readFile(fullPath);
-            const etag = crypto.createHash('md5').update(buffer).digest('hex');
+            const etag = crypto.createHash('sha256').update(buffer).digest('hex');
             
             files.push({
               key,
@@ -531,7 +531,7 @@ export class ObjectStorageService {
       const filePath = this.getFilePath(key);
       const stats = await fs.stat(filePath);
       const buffer = await fs.readFile(filePath);
-      const etag = crypto.createHash('md5').update(buffer).digest('hex');
+      const etag = crypto.createHash('sha256').update(buffer).digest('hex');
       
       return {
         key,

@@ -157,29 +157,25 @@ export function CodeGenerationPanel() {
                 if (data.trim()) {
                   try {
                     const event: StreamEvent = JSON.parse(data);
-                    console.log('[CodeGen] SSE Event:', event.type, event);
                     
                     if (event.type === 'chunk') {
-                      console.log('[CodeGen] Chunk received:', event.chunkNumber, 'content length:', event.content?.length);
                       setGeneratedCode((prev) => prev + (event.content || ''));
                       setProgress({
                         chunks: event.chunkNumber || 0,
                         length: event.totalLength || 0,
                       });
                     } else if (event.type === 'complete') {
-                      console.log('[CodeGen] Stream complete:', event.totalChunks, 'chunks,', event.totalLength, 'chars');
                       setIsGenerating(false);
                       toast({
                         title: 'Code Generated',
                         description: `Generated ${event.totalLength} characters in ${event.totalChunks} chunks.`,
                       });
                     } else if (event.type === 'error') {
-                      console.error('[CodeGen] Error event:', event.message);
                       setError(event.message || 'Code generation failed');
                       setIsGenerating(false);
                     }
-                  } catch (e) {
-                    console.error('Failed to parse SSE event:', e, 'Data:', data);
+                  } catch {
+                    // Ignore SSE parse errors
                   }
                 }
               }
@@ -189,11 +185,9 @@ export function CodeGenerationPanel() {
       })
       .catch((err) => {
         if (err.name === 'AbortError') {
-          console.log('Code generation aborted');
           return;
         }
         
-        console.error('Code generation error:', err);
         setError(err.message || 'Failed to generate code');
         setIsGenerating(false);
         toast({

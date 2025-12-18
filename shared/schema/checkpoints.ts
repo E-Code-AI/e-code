@@ -1,4 +1,7 @@
 // Comprehensive Checkpoints schema for version control with AI context and database state
+// NOTE (#113-114): This is a duplicate of checkpoints table in shared/schema.ts.
+// The canonical version is in shared/schema.ts which has more fields (Replit Agent 3 style).
+// Consider consolidating these definitions in a future refactoring.
 import { pgTable, serial, text, integer, timestamp, json, boolean, numeric } from 'drizzle-orm/pg-core';
 import { createInsertSchema } from 'drizzle-zod';
 import { z } from 'zod';

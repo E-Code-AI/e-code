@@ -47,15 +47,30 @@ export class SessionManager {
 
   /**
    * Generate session fingerprint based on client characteristics
+   * Enhanced with IP hash and additional headers for better security
    */
   generateFingerprint(req: Request): string {
     const userAgent = req.headers['user-agent'] || '';
     const acceptLanguage = req.headers['accept-language'] || '';
     const acceptEncoding = req.headers['accept-encoding'] || '';
+    const accept = req.headers['accept'] || '';
+    
+    // Hash the IP address for privacy while still using it for fingerprinting
+    const clientIp = req.ip || req.socket?.remoteAddress || '';
+    const ipHash = crypto.createHash('sha256').update(clientIp).digest('hex').substring(0, 16);
+    
+    // Combine all fingerprint components
+    const fingerprintData = [
+      userAgent,
+      acceptLanguage,
+      acceptEncoding,
+      accept,
+      ipHash
+    ].join('|');
     
     return crypto
       .createHash('sha256')
-      .update(userAgent + acceptLanguage + acceptEncoding)
+      .update(fingerprintData)
       .digest('hex');
   }
   

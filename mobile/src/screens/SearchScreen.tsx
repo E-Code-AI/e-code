@@ -12,19 +12,60 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import { mobileColors, mobileSpacing, mobileTypography, mobileBorderRadius } from '../../../shared/theme/mobile-theme';
 import { searchAll, SearchResult } from '../services/api';
+import { StorageService } from '../services/storage';
 
 type SearchScreenProps = NativeStackScreenProps<RootStackParamList, 'Search'>;
+
+const RECENT_SEARCHES_KEY = 'recent_searches';
+const MAX_RECENT_SEARCHES = 10;
 
 const SearchScreen: React.FC<SearchScreenProps> = ({ navigation, route }) => {
   const { token } = route.params;
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
-  const [recentSearches, setRecentSearches] = useState<string[]>([
-    'React hooks',
-    'TypeScript tutorial',
-    'API integration'
-  ]);
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const [isLoadingRecent, setIsLoadingRecent] = useState(true);
+
+  useEffect(() => {
+    loadRecentSearches();
+  }, []);
+
+  const loadRecentSearches = async () => {
+    try {
+      const saved = await StorageService.get<string[]>(RECENT_SEARCHES_KEY);
+      if (saved && Array.isArray(saved)) {
+        setRecentSearches(saved);
+      }
+    } catch (error) {
+      console.error('Failed to load recent searches:', error);
+    } finally {
+      setIsLoadingRecent(false);
+    }
+  };
+
+  const saveRecentSearch = async (searchQuery: string) => {
+    try {
+      const updatedSearches = [
+        searchQuery,
+        ...recentSearches.filter(s => s.toLowerCase() !== searchQuery.toLowerCase())
+      ].slice(0, MAX_RECENT_SEARCHES);
+      
+      setRecentSearches(updatedSearches);
+      await StorageService.set(RECENT_SEARCHES_KEY, updatedSearches);
+    } catch (error) {
+      console.error('Failed to save recent search:', error);
+    }
+  };
+
+  const clearRecentSearches = async () => {
+    try {
+      setRecentSearches([]);
+      await StorageService.remove(RECENT_SEARCHES_KEY);
+    } catch (error) {
+      console.error('Failed to clear recent searches:', error);
+    }
+  };
 
   const handleSearch = useCallback(async (searchQuery: string) => {
     if (!searchQuery.trim()) {
@@ -36,13 +77,16 @@ const SearchScreen: React.FC<SearchScreenProps> = ({ navigation, route }) => {
     try {
       const searchResults = await searchAll(searchQuery, token);
       setResults(searchResults);
+      if (searchResults.length > 0) {
+        saveRecentSearch(searchQuery.trim());
+      }
     } catch (error) {
       console.error('Search error:', error);
       setResults([]);
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [token, recentSearches]);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -61,6 +105,16 @@ const SearchScreen: React.FC<SearchScreenProps> = ({ navigation, route }) => {
   const handleRecentSearch = useCallback((search: string) => {
     setQuery(search);
   }, []);
+
+  const removeRecentSearch = useCallback(async (searchToRemove: string) => {
+    try {
+      const updatedSearches = recentSearches.filter(s => s !== searchToRemove);
+      setRecentSearches(updatedSearches);
+      await StorageService.set(RECENT_SEARCHES_KEY, updatedSearches);
+    } catch (error) {
+      console.error('Failed to remove recent search:', error);
+    }
+  }, [recentSearches]);
 
   const renderResult = useCallback(({ item }: { item: SearchResult }) => (
     <TouchableOpacity
@@ -105,9 +159,14 @@ const SearchScreen: React.FC<SearchScreenProps> = ({ navigation, route }) => {
         </View>
       )}
 
-      {!query && recentSearches.length > 0 && (
+      {!query && recentSearches.length > 0 && !isLoadingRecent && (
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Recent Searches</Text>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Recent Searches</Text>
+            <TouchableOpacity onPress={clearRecentSearches}>
+              <Text style={styles.clearAllText}>Clear All</Text>
+            </TouchableOpacity>
+          </View>
           {recentSearches.map((search, index) => (
             <TouchableOpacity
               key={index}
@@ -116,6 +175,12 @@ const SearchScreen: React.FC<SearchScreenProps> = ({ navigation, route }) => {
             >
               <Text style={styles.recentIcon}>🕐</Text>
               <Text style={styles.recentText}>{search}</Text>
+              <TouchableOpacity 
+                onPress={() => removeRecentSearch(search)}
+                style={styles.removeRecentButton}
+              >
+                <Text style={styles.removeRecentText}>✕</Text>
+              </TouchableOpacity>
             </TouchableOpacity>
           ))}
         </View>
@@ -181,13 +246,23 @@ const styles = StyleSheet.create({
   section: {
     padding: mobileSpacing.md
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: mobileSpacing.md
+  },
   sectionTitle: {
     fontSize: mobileTypography.fontSize.sm,
     fontWeight: '700',
     color: mobileColors.textSecondary,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: mobileSpacing.md
+    letterSpacing: 0.5
+  },
+  clearAllText: {
+    fontSize: mobileTypography.fontSize.sm,
+    color: mobileColors.primary,
+    fontWeight: '600'
   },
   recentItem: {
     flexDirection: 'row',
@@ -201,8 +276,16 @@ const styles = StyleSheet.create({
     marginRight: mobileSpacing.sm
   },
   recentText: {
+    flex: 1,
     fontSize: mobileTypography.fontSize.base,
     color: mobileColors.text
+  },
+  removeRecentButton: {
+    padding: mobileSpacing.xs
+  },
+  removeRecentText: {
+    fontSize: 16,
+    color: mobileColors.textMuted
   },
   results: {
     padding: mobileSpacing.md

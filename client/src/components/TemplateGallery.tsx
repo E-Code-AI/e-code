@@ -262,6 +262,7 @@ export function TemplateGallery({ onSelectTemplate, className }: TemplateGallery
             value={selectedDifficulty}
             onChange={(e) => setSelectedDifficulty(e.target.value)}
             className="px-3 py-2 border rounded-md text-sm"
+            aria-label="Filter by difficulty level"
           >
             <option value="all">All Levels</option>
             <option value="beginner">Beginner</option>

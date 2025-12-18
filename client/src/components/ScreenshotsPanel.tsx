@@ -68,18 +68,24 @@ export function ScreenshotsPanel({ projectId }: ScreenshotsPanelProps) {
     <div className="p-4">
       <div className="mb-4">
         <h3 className="text-lg font-semibold mb-2">Capture Screenshot</h3>
+        <label htmlFor="screenshot-title" className="sr-only">Screenshot title</label>
         <input
+          id="screenshot-title"
           type="text"
           placeholder="Screenshot title (optional)"
           value={screenshotTitle}
           onChange={(e) => setScreenshotTitle(e.target.value)}
           className="w-full p-2 mb-2 border rounded"
+          aria-label="Screenshot title"
         />
+        <label htmlFor="screenshot-description" className="sr-only">Screenshot description</label>
         <textarea
+          id="screenshot-description"
           placeholder="Description (optional)"
           value={screenshotDescription}
           onChange={(e) => setScreenshotDescription(e.target.value)}
           className="w-full p-2 mb-2 border rounded h-20"
+          aria-label="Screenshot description"
         />
         <Button
           onClick={() => captureScreenshotMutation.mutate()}
