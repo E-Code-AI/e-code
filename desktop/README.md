@@ -151,6 +151,35 @@ Build artifacts are in `desktop/dist/`:
 | Run Code | ⌘↵ | Ctrl+Enter |
 | Full Screen | ⌘⌃F | F11 |
 
+## 🔏 Code Signing
+
+For production releases, code signing is required to avoid security warnings:
+
+- **macOS**: Requires Apple Developer ID ($99/year)
+- **Windows**: Requires Code Signing Certificate ($200-500/year)
+
+See **[CODE_SIGNING.md](./CODE_SIGNING.md)** for complete setup instructions.
+
+### Quick Start (CI/CD)
+
+Set these environment variables in your build pipeline:
+
+```bash
+# macOS
+CSC_LINK=<base64-p12-certificate>
+CSC_KEY_PASSWORD=<password>
+APPLE_ID=<apple-id>
+APPLE_APP_SPECIFIC_PASSWORD=<app-password>
+APPLE_TEAM_ID=<team-id>
+
+# Windows
+CSC_LINK=<base64-pfx-certificate>
+CSC_KEY_PASSWORD=<password>
+
+# Production
+PRODUCTION_URL=https://e-code.ai
+```
+
 ## 🔐 Security
 
 The desktop app follows Electron security best practices:
@@ -231,7 +260,7 @@ Create a `.env` file in the desktop directory:
 DEV_SERVER_URL=http://localhost:5000
 
 # Production URL (fallback if no bundled renderer)
-PRODUCTION_URL=https://e-code.replit.app
+PRODUCTION_URL=https://e-code.ai
 
 # Enable dev tools in production (optional)
 ENABLE_DEV_TOOLS=false
