@@ -107,7 +107,7 @@ export class DockerExecutor extends EventEmitter {
         Image: image,
         Cmd: this.getCommand(config),
         WorkingDir: '/app',
-        Env: this.formatEnvironmentVars(config.environmentVars),
+        Env: this.formatEnvironmentVars(config.environmentVars, config.projectId),
         HostConfig: {
           Memory: this.parseMemoryLimit(config.memoryLimit || '512m'),
           CpuQuota: config.cpuLimit ? config.cpuLimit * 100000 : undefined,
@@ -609,9 +609,34 @@ export class DockerExecutor extends EventEmitter {
     return defaultCommands[config.language];
   }
 
-  private formatEnvironmentVars(vars?: Record<string, string>): string[] {
-    if (!vars) return [];
-    return Object.entries(vars).map(([key, value]) => `${key}=${value}`);
+  private formatEnvironmentVars(vars?: Record<string, string>, projectId?: number): string[] {
+    const envVars: string[] = [];
+    
+    // Inject standard E-Code environment variables (Replit parity)
+    const baseUrl = process.env.REPLIT_DEV_DOMAIN 
+      ? `https://${process.env.REPLIT_DEV_DOMAIN}`
+      : `http://host.docker.internal:${process.env.PORT || 5000}`;
+    
+    // REPLIT_DB_URL - Key-value database URL (Replit parity)
+    if (projectId) {
+      envVars.push(`REPLIT_DB_URL=${baseUrl}/api/db/${projectId}`);
+      envVars.push(`ECODE_DB_URL=${baseUrl}/api/db/${projectId}`);
+    }
+    
+    // Standard Replit environment variables
+    envVars.push(`REPL_ID=${projectId || 'unknown'}`);
+    envVars.push(`REPL_OWNER=ecode`);
+    envVars.push(`REPL_SLUG=project-${projectId || 'unknown'}`);
+    envVars.push(`REPLIT_DEPLOYMENT=1`);
+    
+    // Add user-provided environment variables
+    if (vars) {
+      for (const [key, value] of Object.entries(vars)) {
+        envVars.push(`${key}=${value}`);
+      }
+    }
+    
+    return envVars;
   }
 
   private parseMemoryLimit(limit: string): number {
