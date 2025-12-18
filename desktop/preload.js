@@ -70,6 +70,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // ==========================================
   isElectron: true,
   isDesktop: true,
+
+  // ==========================================
+  // Error Reporting APIs
+  // ==========================================
+  reportError: (errorData) => ipcRenderer.invoke('report-error', errorData),
   
   // ==========================================
   // App Information
@@ -306,5 +311,23 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
 });
 
+// ============================================
+// Renderer Process Error Handlers
+// ============================================
+window.onerror = (message, source, lineno, colno, error) => {
+  console.error('Renderer error:', { message, source, lineno, colno, error });
+  if (window.electronAPI && window.electronAPI.reportError) {
+    window.electronAPI.reportError({ message, source, lineno, colno, stack: error?.stack });
+  }
+};
+
+window.onunhandledrejection = (event) => {
+  console.error('Renderer unhandled rejection:', event.reason);
+  if (window.electronAPI && window.electronAPI.reportError) {
+    window.electronAPI.reportError({ type: 'unhandledRejection', reason: String(event.reason) });
+  }
+};
+
 console.log('[E-Code Desktop] Preload script loaded');
 console.log('[E-Code Desktop] electronAPI exposed to window');
+console.log('[E-Code Desktop] Crash reporting initialized');

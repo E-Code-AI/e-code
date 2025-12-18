@@ -1406,3 +1406,39 @@ body.landscape-mode .mobile-navigation {
   background-color: rgba(239, 68, 68, 0.15) !important;
   border-left: 3px solid rgb(239, 68, 68) !important;
 }
+
+/* Debugger breakpoint styles */
+.breakpoint-gutter {
+  width: 20px;
+  cursor: pointer;
+}
+
+.breakpoint-marker {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: #E74C3C;
+  margin: auto;
+  box-shadow: 0 0 4px rgba(231, 76, 60, 0.5);
+}
+
+.breakpoint-marker.disabled {
+  opacity: 0.4;
+}
+
+.breakpoint-marker.conditional {
+  background-color: #F39C12;
+}
+
+.breakpoint-line-highlight {
+  background-color: rgba(231, 76, 60, 0.1);
+}
+
+.breakpoint-hit {
+  animation: breakpoint-pulse 0.5s ease;
+}
+
+@keyframes breakpoint-pulse {
+  0%, 100% { box-shadow: 0 0 4px rgba(231, 76, 60, 0.5); }
+  50% { box-shadow: 0 0 12px rgba(231, 76, 60, 0.8); }
+}
