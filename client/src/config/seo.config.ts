@@ -1,6 +1,6 @@
 import { SEOProps } from '@/components/seo/SEOHead';
 
-const BASE_URL = 'https://e-code.dev';
+const BASE_URL = 'https://e-code.ai';
 
 /**
  * Centralized SEO configuration for all public pages

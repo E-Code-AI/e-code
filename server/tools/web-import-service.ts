@@ -19,7 +19,7 @@ export class WebImportService {
       // Fetch the webpage
       const response = await fetch(url, {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (compatible; E-Code/1.0; +https://e-code.dev)'
+          'User-Agent': 'Mozilla/5.0 (compatible; E-Code/1.0; +https://e-code.ai)'
         }
       });
 

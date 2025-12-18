@@ -437,7 +437,7 @@ export default function PublicDeploymentsPage() {
                 <div className="flex items-center justify-between rounded-xl border bg-muted/60 p-4">
                   <div>
                     <p className="font-medium text-foreground">Primary</p>
-                    <p>app.e-code.dev</p>
+                    <p>app.e-code.ai</p>
                   </div>
                   <div className="text-right">
                     <p className="text-xs uppercase tracking-wide text-foreground/70">Status</p>
@@ -447,7 +447,7 @@ export default function PublicDeploymentsPage() {
                 <div className="flex items-center justify-between rounded-xl border bg-muted/40 p-4">
                   <div>
                     <p className="font-medium text-foreground">Staging</p>
-                    <p>staging.e-code.dev</p>
+                    <p>staging.e-code.ai</p>
                   </div>
                   <div className="text-right">
                     <p className="text-xs uppercase tracking-wide text-foreground/70">Status</p>
@@ -457,7 +457,7 @@ export default function PublicDeploymentsPage() {
                 <div className="flex items-center justify-between rounded-xl border bg-muted/20 p-4">
                   <div>
                     <p className="font-medium text-foreground">Preview</p>
-                    <p>preview.e-code.dev</p>
+                    <p>preview.e-code.ai</p>
                   </div>
                   <div className="text-right">
                     <p className="text-xs uppercase tracking-wide text-foreground/70">Status</p>

@@ -139,7 +139,7 @@ export class DeployCommand {
     return new Promise((resolve, reject) => {
       const config = new Config();
       const token = config.get('auth_token');
-      const apiUrl = config.get('api_url') || 'https://e-code.dev/api';
+      const apiUrl = config.get('api_url') || 'https://e-code.ai/api';
       
       // Convert HTTP URL to WebSocket URL
       const wsUrl = apiUrl

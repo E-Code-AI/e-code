@@ -5,9 +5,9 @@
   "main": "main.js",
   "author": {
     "name": "E-Code Team",
-    "email": "team@e-code.dev"
+    "email": "team@e-code.ai"
   },
-  "homepage": "https://e-code.dev",
+  "homepage": "https://e-code.ai",
   "license": "MIT",
   "scripts": {
     "start": "electron .",
@@ -123,7 +123,7 @@
       ],
       "icon": "resources/icons",
       "category": "Development",
-      "maintainer": "E-Code Team <team@e-code.dev>",
+      "maintainer": "E-Code Team <team@e-code.ai>",
       "vendor": "E-Code",
       "synopsis": "AI-Powered Development Platform",
       "description": "E-Code is a Fortune 500-grade AI-powered development platform for building and deploying applications.",

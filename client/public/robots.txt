@@ -1,5 +1,5 @@
 # E-Code Platform - robots.txt
-# https://e-code.dev
+# https://e-code.ai
 
 User-agent: *
 Allow: /
@@ -67,7 +67,7 @@ Disallow: /node_modules
 Crawl-delay: 1
 
 # Sitemap location
-Sitemap: https://e-code.dev/sitemap.xml
+Sitemap: https://e-code.ai/sitemap.xml
 
 # Google-specific
 User-agent: Googlebot

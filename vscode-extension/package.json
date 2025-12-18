@@ -96,7 +96,7 @@
       "properties": {
         "e-code.apiUrl": {
           "type": "string",
-          "default": "https://e-code.dev/api",
+          "default": "https://e-code.ai/api",
           "description": "E-Code API URL"
         },
         "e-code.autoSync": {

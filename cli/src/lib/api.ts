@@ -10,7 +10,7 @@ export class APIClient {
     this.config = new Config();
     
     this.client = axios.create({
-      baseURL: this.config.get('api_url') || 'https://e-code.dev/api',
+      baseURL: this.config.get('api_url') || 'https://e-code.ai/api',
       timeout: 30000,
       headers: {
         'User-Agent': 'E-Code CLI/1.0.0'

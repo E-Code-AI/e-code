@@ -122,7 +122,7 @@
       "properties": {
         "ecodeCopilot.apiEndpoint": {
           "type": "string",
-          "default": "https://e-code.dev/api",
+          "default": "https://e-code.ai/api",
           "description": "E-Code API endpoint"
         },
         "ecodeCopilot.autoSuggest": {

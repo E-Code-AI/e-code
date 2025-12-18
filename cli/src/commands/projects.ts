@@ -73,7 +73,7 @@ export class ProjectsCommand {
       console.log(chalk.gray(`ID: ${project.id}`));
       console.log(chalk.gray(`Name: ${project.name}`));
       console.log(chalk.gray(`Slug: @${project.owner?.username}/${project.slug}`));
-      console.log(chalk.gray(`URL: https://e-code.dev/@${project.owner?.username}/${project.slug}`));
+      console.log(chalk.gray(`URL: https://e-code.ai/@${project.owner?.username}/${project.slug}`));
       console.log('');
       
       console.log(chalk.yellow('Next steps:'));
@@ -203,7 +203,7 @@ export class ProjectsCommand {
       console.log('');
       
       console.log(chalk.gray('URLs:'));
-      console.log(`  Editor: https://e-code.dev/@${project.owner?.username}/${project.slug}`);
+      console.log(`  Editor: https://e-code.ai/@${project.owner?.username}/${project.slug}`);
       
       if (project.deployments?.length > 0) {
         console.log(`  Live: ${project.deployments[0].url}`);

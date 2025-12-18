@@ -31,7 +31,7 @@ export class ECodeSDK {
 
   constructor(config: ECodeSDKConfig) {
     this.config = {
-      baseURL: 'https://e-code.dev/api',
+      baseURL: 'https://e-code.ai/api',
       timeout: 30000,
       ...config
     };

@@ -52,7 +52,7 @@ async function login() {
         const token = await vscode.window.showInputBox({
             prompt: 'Enter your E-Code API token',
             password: true,
-            placeHolder: 'API Token from https://e-code.dev/account/tokens'
+            placeHolder: 'API Token from https://e-code.ai/account/tokens'
         });
 
         if (!token) {
@@ -141,7 +141,7 @@ async function openInECode(uri?: vscode.Uri) {
         }
 
         const project = await api.getProject(projectId);
-        const url = `https://e-code.dev/@${project.owner?.username}/${project.slug}`;
+        const url = `https://e-code.ai/@${project.owner?.username}/${project.slug}`;
         
         vscode.env.openExternal(vscode.Uri.parse(url));
     } catch (error: any) {
@@ -198,7 +198,7 @@ async function openAIChat() {
 }
 
 async function openProject(project: any) {
-    const url = `https://e-code.dev/@${project.owner?.username}/${project.slug}`;
+    const url = `https://e-code.ai/@${project.owner?.username}/${project.slug}`;
     vscode.env.openExternal(vscode.Uri.parse(url));
 }
 

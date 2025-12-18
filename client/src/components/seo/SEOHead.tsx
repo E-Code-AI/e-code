@@ -17,7 +17,7 @@ export interface SEOProps {
   alternateLanguages?: { lang: string; url: string }[];
 }
 
-const BASE_URL = 'https://e-code.dev';
+const BASE_URL = 'https://e-code.ai';
 const DEFAULT_OG_IMAGE = `${BASE_URL}/assets/og-default.png`;
 const SITE_NAME = 'E-Code';
 const TWITTER_HANDLE = '@ecode_dev';

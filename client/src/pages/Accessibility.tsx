@@ -244,7 +244,7 @@ export default function Accessibility() {
               </Link>
             </div>
             <p className="mt-6 text-sm text-white/80">
-              Email: accessibility@e-code.dev
+              Email: accessibility@e-code.ai
             </p>
           </div>
         </Card>

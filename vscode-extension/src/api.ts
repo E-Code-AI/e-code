@@ -10,7 +10,7 @@ export class ECodeAPI {
         this.context = context;
         
         const config = vscode.workspace.getConfiguration('e-code');
-        const apiUrl = config.get<string>('apiUrl') || 'https://e-code.dev/api';
+        const apiUrl = config.get<string>('apiUrl') || 'https://e-code.ai/api';
         
         this.client = axios.create({
             baseURL: apiUrl,
