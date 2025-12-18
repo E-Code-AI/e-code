@@ -9,7 +9,7 @@ packages = ["glibcLocales", "jq", "libxcrypt", "imagemagick", "jdk"]
 [deployment]
 deploymentTarget = "gce"
 run = ["sh", "-c", "npm run start"]
-build = ["sh", "-c", "npm ci --omit=dev && npm run build"]
+build = ["sh", "-c", "npm ci && npm run build"]
 
 # Health check configuration for Cloud Run
 [[deployment.healthCheck]]
