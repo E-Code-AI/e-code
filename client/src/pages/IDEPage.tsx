@@ -5,7 +5,7 @@
  * which handles all responsive layouts (desktop/tablet/mobile).
  */
 
-import { useCallback, lazy, Suspense, useState, useEffect, useRef } from 'react';
+import { useCallback, Suspense, useState, useEffect, useRef } from 'react';
 import { useParams, useLocation } from 'wouter';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/use-auth';
@@ -15,8 +15,12 @@ import { ECodeLoading } from '@/components/ECodeLoading';
 import { Button } from '@/components/ui/button';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { Toaster } from '@/components/ui/toaster';
+import { instrumentedLazy } from '@/utils/instrumented-lazy';
 
-const UnifiedIDELayout = lazy(() => import('@/components/ide/UnifiedIDELayout'));
+const UnifiedIDELayout = instrumentedLazy(
+  () => import('@/components/ide/UnifiedIDELayout'),
+  'UnifiedIDELayout'
+);
 
 export default function IDEPage() {
   const params = useParams();
