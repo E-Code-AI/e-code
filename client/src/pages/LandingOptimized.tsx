@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useLocation } from 'wouter';
 import { useAuth } from '@/hooks/use-auth';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { MarketingLayout } from '@/components/layout/MarketingLayout';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery } from '@tanstack/react-query';

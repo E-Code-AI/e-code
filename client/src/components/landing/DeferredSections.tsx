@@ -1,16 +1,17 @@
-import { lazy, Suspense } from 'react';
+import { Suspense } from 'react';
 import { useDeferredRender } from '@/hooks/useDeferredRender';
 import { SectionSkeleton, StatsSkeleton, FeaturesSkeleton } from './LandingSkeleton';
+import { instrumentedLazy } from '@/utils/instrumented-lazy';
 
-const LandingStats = lazy(() => import('./sections/LandingStats'));
-const LandingVideo = lazy(() => import('./sections/LandingVideo'));
-const LandingFeatures = lazy(() => import('./sections/LandingFeatures'));
-const LandingProjects = lazy(() => import('./sections/LandingProjects'));
-const LandingTemplates = lazy(() => import('./sections/LandingTemplates'));
-const LandingTestimonials = lazy(() => import('./sections/LandingTestimonials'));
-const LandingLanguages = lazy(() => import('./sections/LandingLanguages'));
-const LandingWorkflow = lazy(() => import('./sections/LandingWorkflow'));
-const LandingCTA = lazy(() => import('./sections/LandingCTA'));
+const LandingStats = instrumentedLazy(() => import('./sections/LandingStats'), 'LandingStats');
+const LandingVideo = instrumentedLazy(() => import('./sections/LandingVideo'), 'LandingVideo');
+const LandingFeatures = instrumentedLazy(() => import('./sections/LandingFeatures'), 'LandingFeatures');
+const LandingProjects = instrumentedLazy(() => import('./sections/LandingProjects'), 'LandingProjects');
+const LandingTemplates = instrumentedLazy(() => import('./sections/LandingTemplates'), 'LandingTemplates');
+const LandingTestimonials = instrumentedLazy(() => import('./sections/LandingTestimonials'), 'LandingTestimonials');
+const LandingLanguages = instrumentedLazy(() => import('./sections/LandingLanguages'), 'LandingLanguages');
+const LandingWorkflow = instrumentedLazy(() => import('./sections/LandingWorkflow'), 'LandingWorkflow');
+const LandingCTA = instrumentedLazy(() => import('./sections/LandingCTA'), 'LandingCTA');
 
 interface DeferredSectionsProps {
   templates: any[];
