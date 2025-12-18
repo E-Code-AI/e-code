@@ -201,7 +201,10 @@ export class DockerExecutor extends EventEmitter {
   private async getOrPullImage(language: string): Promise<string> {
     const imageMap: Record<string, string> = {
       'nodejs': 'node:20-alpine',
+      'javascript': 'node:20-alpine',
+      'js': 'node:20-alpine',
       'python': 'python:3.11-slim',
+      'python3': 'python:3.11-slim',
       'java': 'openjdk:17-alpine',
       'go': 'golang:1.21-alpine',
       'rust': 'rust:1.75-alpine',
@@ -209,6 +212,8 @@ export class DockerExecutor extends EventEmitter {
       'php': 'php:8.2-cli-alpine',
       'csharp': 'mcr.microsoft.com/dotnet/sdk:8.0-alpine',
       'cpp': 'gcc:13-alpine',
+      'c++': 'gcc:13-alpine',
+      'c': 'gcc:13-alpine',
       'swift': 'swift:5.9-slim'
     };
 
@@ -284,17 +289,22 @@ export class DockerExecutor extends EventEmitter {
       return config.command.split(' ');
     }
 
-    // Default commands based on language
+    // Default commands based on language (with aliases)
     const defaultCommands: Record<string, string[]> = {
       'nodejs': ['node', 'index.js'],
+      'javascript': ['node', 'index.js'],
+      'js': ['node', 'index.js'],
       'python': ['python', 'main.py'],
+      'python3': ['python', 'main.py'],
       'java': ['java', 'Main'],
       'go': ['go', 'run', '.'],
       'rust': ['cargo', 'run'],
       'ruby': ['ruby', 'main.rb'],
       'php': ['php', 'index.php'],
       'csharp': ['dotnet', 'run'],
-      'cpp': ['./a.out']
+      'cpp': ['sh', '-c', 'g++ -o main main.cpp && ./main'],
+      'c++': ['sh', '-c', 'g++ -o main main.cpp && ./main'],
+      'c': ['sh', '-c', 'gcc -o main main.c && ./main']
     };
 
     return defaultCommands[config.language];
