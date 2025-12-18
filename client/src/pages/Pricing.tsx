@@ -21,7 +21,8 @@ import { useState, useEffect, useMemo, type ReactNode, Fragment } from 'react';
 import { PublicNavbar } from '@/components/layout/PublicNavbar';
 import { PublicFooter } from '@/components/layout/PublicFooter';
 
-import cloudComputingImg from '@assets/stock_images/cloud_computing_tech_ffd053c9.jpg';
+// Use URL path instead of ES module import to prevent blocking
+const cloudComputingImg = '/attached_assets/stock_images/cloud_computing_tech_ffd053c9.jpg';
 
 interface PricingTier {
   name: string;
