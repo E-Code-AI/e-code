@@ -82,26 +82,22 @@ export function getDbConnectionStats() {
 }
 
 // Database connection retry logic for resilient startup
-export async function connectWithRetry(maxRetries = 5, delay = 2000): Promise<boolean> {
+export async function connectWithRetry(maxRetries = 5, delay = 2000): Promise<void> {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       await db.execute(sql`SELECT 1`);
       console.log('Database connected successfully');
-      return true;
-    } catch (error: any) {
-      console.error(`DB connection attempt ${attempt}/${maxRetries} failed`);
-      if (attempt === maxRetries) return false;
+      return;
+    } catch (error) {
+      console.error(`DB connection attempt ${attempt}/${maxRetries} failed:`, error instanceof Error ? error.message : error);
+      if (attempt === maxRetries) {
+        throw new Error('Failed to connect to database after maximum retries');
+      }
+      console.log(`Retrying in ${delay * attempt}ms...`);
       await new Promise(r => setTimeout(r, delay * attempt));
     }
   }
-  return false;
 }
 
-// Initialize database connection with retry on module load
-connectWithRetry().then(connected => {
-  if (!connected) {
-    console.error('Failed to connect to database after all retries');
-  }
-}).catch(err => {
-  console.error('Database initialization error:', err.message);
-});
+// Re-export transaction helpers for convenient access
+export { withTransaction, withTransactionAndRetry, type TransactionClient } from './utils/db-transactions';

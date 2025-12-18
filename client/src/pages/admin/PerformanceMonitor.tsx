@@ -64,7 +64,6 @@ interface Metric {
 
 export default function PerformanceMonitor() {
   const [autoRefresh, setAutoRefresh] = useState(true);
-  const [eventSource, setEventSource] = useState<EventSource | null>(null);
   const [realtimeMetrics, setRealtimeMetrics] = useState<Metric[]>([]);
 
   // Fetch health status
@@ -81,31 +80,36 @@ export default function PerformanceMonitor() {
 
   // Setup real-time monitoring stream
   useEffect(() => {
+    let eventSource: EventSource | null = null;
+    let isCancelled = false;
+
     if (!autoRefresh) {
-      eventSource?.close();
-      setEventSource(null);
       return;
     }
 
-    const es = new EventSource('/api/monitoring/stream');
+    eventSource = new EventSource('/api/monitoring/stream');
     
-    es.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      
-      if (data.type === 'metric') {
-        setRealtimeMetrics(prev => [...prev.slice(-20), data.metric]);
+    eventSource.onmessage = (event) => {
+      if (!isCancelled) {
+        const data = JSON.parse(event.data);
+        
+        if (data.type === 'metric') {
+          setRealtimeMetrics(prev => [...prev.slice(-20), data.metric]);
+        }
       }
     };
 
-    es.onerror = () => {
-      es.close();
-      setEventSource(null);
+    eventSource.onerror = () => {
+      eventSource?.close();
+      eventSource = null;
     };
 
-    setEventSource(es);
-
     return () => {
-      es.close();
+      isCancelled = true;
+      if (eventSource) {
+        eventSource.close();
+        eventSource = null;
+      }
     };
   }, [autoRefresh]);
 

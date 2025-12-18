@@ -16,13 +16,35 @@ const SCALING_LIMITS = {
   cooldownPeriod: 300, // seconds
 };
 
+// Cache for cooldown tracking
+const lastScaleTime = new Map<string, number>();
+
 /**
- * Validate scaling configuration against limits
+ * Validate scaling configuration against limits (simple sync version for deployment creation)
  */
 function validateScalingLimits(desiredCount: number): void {
   if (desiredCount > SCALING_LIMITS.maxInstances) {
     throw new Error(`Cannot scale beyond ${SCALING_LIMITS.maxInstances} instances`);
   }
+}
+
+/**
+ * Validate scaling request with cooldown enforcement
+ */
+async function validateScaling(deploymentId: string, desiredCount: number): Promise<{ valid: boolean; error?: string }> {
+  // Check max instances
+  if (desiredCount > SCALING_LIMITS.maxInstances) {
+    return { valid: false, error: `Cannot scale beyond ${SCALING_LIMITS.maxInstances} instances` };
+  }
+  
+  // Check cooldown
+  const lastScale = lastScaleTime.get(deploymentId) || 0;
+  const elapsed = (Date.now() - lastScale) / 1000;
+  if (elapsed < SCALING_LIMITS.cooldownPeriod) {
+    return { valid: false, error: `Cooldown: wait ${Math.ceil(SCALING_LIMITS.cooldownPeriod - elapsed)}s before scaling again` };
+  }
+  
+  return { valid: true };
 }
 
 // ============================================================
@@ -306,6 +328,56 @@ router.delete('/api/deployments/:deploymentId', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to delete deployment'
+    });
+  }
+});
+
+// Scale deployment with autoscaling guards
+router.post('/api/deployments/:deploymentId/scale', async (req, res) => {
+  try {
+    const { deploymentId } = req.params;
+    const { desiredCount } = req.body;
+
+    if (typeof desiredCount !== 'number' || desiredCount < 1) {
+      return res.status(400).json({
+        success: false,
+        error: 'desiredCount must be a positive number'
+      });
+    }
+
+    const validation = await validateScaling(deploymentId, desiredCount);
+    
+    if (!validation.valid) {
+      return res.status(400).json({
+        success: false,
+        error: validation.error
+      });
+    }
+    
+    // Update cooldown
+    lastScaleTime.set(deploymentId, Date.now());
+    
+    // Proceed with scaling via deploymentManager
+    await deploymentManager.updateDeployment(deploymentId, {
+      scaling: {
+        minInstances: 1,
+        maxInstances: desiredCount,
+        targetCPU: 70,
+        targetMemory: 80
+      }
+    });
+
+    res.json({
+      success: true,
+      message: `Deployment scaled to ${desiredCount} instances`,
+      desiredCount,
+      cooldownEndsAt: new Date(Date.now() + SCALING_LIMITS.cooldownPeriod * 1000).toISOString()
+    });
+  } catch (error) {
+    console.error('Scale deployment error:', error);
+    res.status(500).json({
+      success: false,
+      message: error instanceof Error ? error.message : 'Failed to scale deployment'
     });
   }
 });

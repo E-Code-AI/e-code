@@ -7,6 +7,36 @@ export interface DetectedPackage {
   isDevDependency: boolean;
 }
 
+// Common package patterns for auto-detection
+export const PACKAGE_PATTERNS: Record<string, string> = {
+  'react': 'react',
+  'useState': 'react',
+  'useEffect': 'react',
+  'useCallback': 'react',
+  'useMemo': 'react',
+  'useRef': 'react',
+  'useContext': 'react',
+  'useReducer': 'react',
+  'express': 'express',
+  'axios': 'axios',
+  'lodash': 'lodash',
+  'moment': 'moment',
+  'dayjs': 'dayjs',
+  'zod': 'zod',
+  'prisma': '@prisma/client',
+  'trpc': '@trpc/server',
+  'nextAuth': 'next-auth',
+  'mongoose': 'mongoose',
+  'sequelize': 'sequelize',
+  'pg': 'pg',
+  'redis': 'redis',
+  'socket.io': 'socket.io',
+  'graphql': 'graphql',
+  'apollo': '@apollo/client',
+  'tailwind': 'tailwindcss',
+  'framer': 'framer-motion',
+};
+
 // Common Node.js built-in modules that don't need installation
 const BUILTIN_MODULES = new Set([
   'fs', 'path', 'http', 'https', 'url', 'util', 'os', 'crypto',
@@ -109,4 +139,37 @@ export function generateInstallCommand(packages: string[], usePnpm = false): str
   }
   
   return commands.join(' && ');
+}
+
+export function detectMissingPackages(code: string, installedPackages: string[]): string[] {
+  const importRegex = /import\s+(?:(?:\{[^}]*\}|\*\s+as\s+\w+|\w+)\s+from\s+)?['"]([^'"]+)['"]/g;
+  const requireRegex = /require\s*\(\s*['"]([^'"]+)['"]\s*\)/g;
+  
+  const imports = new Set<string>();
+  
+  let match;
+  while ((match = importRegex.exec(code)) !== null) {
+    const pkg = match[1].split('/')[0];
+    if (!pkg.startsWith('.') && !pkg.startsWith('@/')) {
+      imports.add(pkg.startsWith('@') ? `${pkg}/${match[1].split('/')[1]}` : pkg);
+    }
+  }
+  
+  while ((match = requireRegex.exec(code)) !== null) {
+    const pkg = match[1].split('/')[0];
+    if (!pkg.startsWith('.')) {
+      imports.add(pkg);
+    }
+  }
+  
+  // Filter out installed packages and built-in Node modules
+  return Array.from(imports).filter(pkg => 
+    !installedPackages.includes(pkg) && 
+    !pkg.startsWith('node:') &&
+    !BUILTIN_MODULES.has(pkg)
+  );
+}
+
+export function suggestPackageFromPattern(identifier: string): string | null {
+  return PACKAGE_PATTERNS[identifier] || null;
 }

@@ -632,11 +632,7 @@ export class StripePaymentService {
       const userId = (customer as Stripe.Customer).metadata?.userId;
       if (!userId) return;
 
-      await storage.updateUser(userId, {
-        lastPaymentDate: new Date(),
-        paymentFailedAt: null,
-      });
-
+      // Note: Payment tracking fields not in schema - using logs for audit trail
       logger.info(`[Stripe] Payment succeeded for user ${userId}, invoice ${invoice.id}`);
     } catch (error) {
       logger.error('[Stripe] Error handling payment success:', error);
@@ -654,10 +650,7 @@ export class StripePaymentService {
       const userId = (customer as Stripe.Customer).metadata?.userId;
       if (!userId) return;
 
-      await storage.updateUser(userId, {
-        paymentFailedAt: new Date(),
-      });
-
+      // Note: Payment tracking fields not in schema - using logs for audit trail
       logger.warn(`[Stripe] Payment failed for user ${userId}, invoice ${invoice.id}`);
     } catch (error) {
       logger.error('[Stripe] Error handling payment failure:', error);

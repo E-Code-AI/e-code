@@ -23,6 +23,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { X, Play, Share2, Rocket, ChevronLeft, ChevronRight, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useResponsive } from '@/hooks/useResponsive';
+import { useMediaQuery } from '@/hooks/use-media-query';
 import { useLayoutStore } from '@/../../shared/stores/layoutStore';
 import { MultiTabEditor } from '../editor/MultiTabEditor';
 import { CommandPalette, generateDefaultCommands } from '../command-palette/CommandPalette';
@@ -61,6 +62,7 @@ export function SplitsEditorLayout({
 }: SplitsEditorLayoutProps) {
   // Responsive state detection
   const responsive = useResponsive();
+  const isMobile = useMediaQuery('(max-width: 768px)');
   
   // Global layout state store (Zustand)
   const {
@@ -158,7 +160,7 @@ export function SplitsEditorLayout({
   });
 
   // Mobile Layout - Tabbed interface instead of split panels
-  if (responsive.isMobile) {
+  if (isMobile) {
     return (
       <>
         <CommandPalette
@@ -205,21 +207,21 @@ export function SplitsEditorLayout({
               <TabsTrigger 
                 value="editor" 
                 className="text-xs data-[state=active]:bg-[var(--ecode-surface-hover)]"
-                data-testid="mobile-tab-editor"
+                data-testid="tab-editor"
               >
                 Editor
               </TabsTrigger>
               <TabsTrigger 
                 value="preview" 
                 className="text-xs data-[state=active]:bg-[var(--ecode-surface-hover)]"
-                data-testid="mobile-tab-preview"
+                data-testid="tab-preview"
               >
                 Preview
               </TabsTrigger>
               <TabsTrigger 
                 value="terminal" 
                 className="text-xs data-[state=active]:bg-[var(--ecode-surface-hover)]"
-                data-testid="mobile-tab-terminal"
+                data-testid="tab-terminal"
               >
                 Terminal
               </TabsTrigger>

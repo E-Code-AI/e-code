@@ -61,6 +61,20 @@ export function AIAgentPanel({ projectId, onClose, selectedCode, currentFilePath
     scrollToBottom();
   }, [messages, currentStreamMessage, codeActionContent]);
 
+  // Cleanup EventSource on unmount
+  useEffect(() => {
+    return () => {
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+        eventSourceRef.current = null;
+      }
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+      }
+    };
+  }, []);
+
   const handleStreamChat = async () => {
     if (!input.trim() || isStreaming) return;
 

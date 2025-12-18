@@ -39,7 +39,9 @@ export default function Sidebar() {
   );
 
   return (
-    <div
+    <aside
+      role="navigation"
+      aria-label="Sidebar navigation"
       className={cn(
         "flex h-full flex-col border-r bg-background",
         isCollapsed ? "w-14" : "w-60"
@@ -61,27 +63,28 @@ export default function Sidebar() {
       </div>
 
       {/* Navigation items */}
-      <div className="flex-1 space-y-4 px-1.5 py-4">
+      <nav aria-label="Main workspace navigation" className="flex-1 space-y-4 px-1.5 py-4">
         {navigationGroups.map((group) => (
           <Fragment key={group.key}>
             {!isCollapsed && (
-              <div className="px-2 pb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <div className="px-2 pb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground" id={`nav-group-${group.key}`}>
                 {group.label}
               </div>
             )}
-            <div className="space-y-1">
+            <ul role="menu" aria-labelledby={!isCollapsed ? `nav-group-${group.key}` : undefined} className="space-y-1">
               {group.items.map((item) => (
-                <NavigationItemRow
-                  key={item.key}
-                  item={item}
-                  isCollapsed={isCollapsed}
-                  isActive={isActiveNavigationItem(location, item)}
-                />
+                <li key={item.key} role="none">
+                  <NavigationItemRow
+                    item={item}
+                    isCollapsed={isCollapsed}
+                    isActive={isActiveNavigationItem(location, item)}
+                  />
+                </li>
               ))}
-            </div>
+            </ul>
           </Fragment>
         ))}
-      </div>
+      </nav>
 
       {/* User profile */}
       <div
@@ -127,7 +130,7 @@ export default function Sidebar() {
           </>
         )}
       </div>
-    </div>
+    </aside>
   );
 }
 
@@ -146,6 +149,7 @@ function NavigationItemRow({ item, isActive, isCollapsed }: NavigationItemProps)
         <Tooltip>
           <TooltipTrigger asChild>
             <button
+              role="menuitem"
               className={cn(
                 "flex w-full justify-center rounded-md p-2 transition-colors",
                 isActive
@@ -153,6 +157,7 @@ function NavigationItemRow({ item, isActive, isCollapsed }: NavigationItemProps)
                   : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
               )}
               aria-label={item.ctaLabel || item.label}
+              aria-current={isActive ? "page" : undefined}
             >
               <item.icon className="h-4 w-4" aria-hidden="true" />
             </button>
@@ -168,6 +173,7 @@ function NavigationItemRow({ item, isActive, isCollapsed }: NavigationItemProps)
         </Tooltip>
       ) : (
         <button
+          role="menuitem"
           className={cn(
             "flex w-full items-center justify-between rounded-md p-2 transition-colors",
             isActive
@@ -175,6 +181,7 @@ function NavigationItemRow({ item, isActive, isCollapsed }: NavigationItemProps)
               : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
           )}
           aria-label={item.ctaLabel || item.label}
+          aria-current={isActive ? "page" : undefined}
         >
           <div className="flex items-center gap-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-md bg-muted text-primary">

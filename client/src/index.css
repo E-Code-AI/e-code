@@ -55,6 +55,26 @@
   .safe-area-right {
     padding-right: env(safe-area-inset-right, 0px);
   }
+  
+  /* Fixed bottom navigation */
+  .fixed-bottom-nav {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  
+  /* Full safe area padding */
+  .safe-area-all {
+    padding: env(safe-area-inset-top, 0px) 
+             env(safe-area-inset-right, 0px) 
+             env(safe-area-inset-bottom, 0px) 
+             env(safe-area-inset-left, 0px);
+  }
+}
+
+/* Dynamic viewport height for mobile */
+.h-screen-safe {
+  height: 100vh;
+  height: 100dvh;
+  height: calc(var(--vh, 1vh) * 100);
 }
 
 /* Keyboard handling for mobile */

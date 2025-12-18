@@ -20,9 +20,10 @@
 import type { IncomingMessage } from 'http';
 import type { Duplex } from 'stream';
 import type { Server } from 'http';
+import { parse as parseCookie } from 'cookie';
 import { markSocketAsHandled, isSocketHandled } from './upgrade-guard';
 import { createCentralizedLogger } from '../logging/centralized-logger';
-import { sessionManager } from '../auth/session-manager';
+import { sessionStore } from '../storage';
 
 const logger = createCentralizedLogger('central-upgrade-dispatcher');
 
@@ -97,28 +98,33 @@ class CentralUpgradeDispatcher {
   
   /**
    * Validate WebSocket connection by checking session cookie
-   * Returns user ID if authenticated, or indicates if validation failed
+   * Uses express-session store to verify the session is valid and user is authenticated
    */
-  private async validateWebSocketConnection(request: IncomingMessage): Promise<{ isValid: boolean; userId?: number }> {
-    // Extract session cookie from request headers
-    const cookieHeader = request.headers.cookie || '';
-    const sessionMatch = cookieHeader.match(/connect\.sid=([^;]+)/);
-    
-    if (!sessionMatch) {
-      return { isValid: false };
-    }
-    
+  private async validateWebSocketConnection(request: IncomingMessage): Promise<boolean> {
     try {
-      const sessionId = decodeURIComponent(sessionMatch[1]);
-      const session = await sessionManager.getSession(sessionId);
+      const cookies = request.headers.cookie;
+      if (!cookies) return false;
       
-      if (session && session.passport?.user) {
-        return { isValid: true, userId: session.passport.user };
-      }
-      return { isValid: false };
-    } catch (error: any) {
-      logger.error('WebSocket session validation failed', { message: error.message });
-      return { isValid: false };
+      const parsedCookies = parseCookie(cookies);
+      const sessionId = parsedCookies['connect.sid'];
+      if (!sessionId) return false;
+      
+      // Extract session ID from signed cookie (remove 's:' prefix and signature)
+      const sid = sessionId.startsWith('s:') 
+        ? sessionId.slice(2).split('.')[0] 
+        : sessionId;
+      
+      return new Promise((resolve) => {
+        sessionStore.get(sid, (err, session) => {
+          if (err || !session) {
+            resolve(false);
+            return;
+          }
+          resolve(session.passport?.user != null);
+        });
+      });
+    } catch {
+      return false;
     }
   }
   
@@ -160,21 +166,21 @@ class CentralUpgradeDispatcher {
     const handler = this.findHandler(effectivePath);
     
     // Public paths that don't require auth
-    const PUBLIC_WS_PATHS = ['/', '/health'];
+    const publicPaths = ['/health', '/api/health'];
     
     // Only validate auth for non-public paths
-    if (handler && !PUBLIC_WS_PATHS.includes(effectivePath)) {
-      const authResult = await this.validateWebSocketConnection(request);
-      if (!authResult.isValid) {
+    if (!publicPaths.includes(effectivePath)) {
+      const isAuthenticated = await this.validateWebSocketConnection(request);
+      if (!isAuthenticated) {
         logger.warn('[Central Dispatcher] Unauthorized WebSocket connection attempt', {
           effectivePath,
           ip: request.socket?.remoteAddress,
         });
-        this.destroySocketWithError(socket, 401, 'Unauthorized');
+        socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
+        socket.destroy();
         return;
       }
       logger.debug('[Central Dispatcher] WebSocket authentication successful', {
-        userId: authResult.userId,
         effectivePath,
       });
     }

@@ -11,13 +11,21 @@ import { hashToken, generateEmailVerificationToken, generatePasswordResetToken, 
 import { revokeToken, revokeAllUserTokens } from "../auth/token-revocation";
 import { sendVerificationEmail, sendPasswordResetEmail, resendVerificationEmail } from "../utils/sendgrid-email-service";
 import { z } from "zod";
-import { db } from "../db";
+import { db, withTransaction } from "../db";
 import { eq, and, gte } from "drizzle-orm";
+import { users } from "@shared/schema";
 import { sessionManager } from "../auth/session-manager";
 import { createLogger } from "../utils/logger";
 import { tierRateLimiters } from "../middleware/tier-rate-limiter";
 
 const logger = createLogger('auth-router');
+
+function sanitizeError(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return 'Unknown error occurred';
+}
 
 // Define a UserForAuth type that includes password for authentication
 // User already has password as a required field, so no override needed
@@ -135,28 +143,36 @@ export class AuthRouter {
         // Hash password
         const hashedPassword = await bcrypt.hash(validatedData.password, 10);
         
-        // Create user with emailVerified set to false (exclude plain password from storage)
-        const { password, ...userDataWithoutPassword } = validatedData;
-        const user = await this.storage.createUser({
-          ...userDataWithoutPassword,
-          password: hashedPassword,
-          emailVerified: false
-        });
-
-        // Generate and save email verification token
+        // Generate verification token before transaction (no DB access)
         const verificationToken = generateEmailVerificationToken();
         const hashedToken = hashToken(verificationToken);
         const expiresAt = new Date();
         expiresAt.setHours(expiresAt.getHours() + 24); // Expires in 24 hours
         
-        await this.storage.saveEmailVerificationToken(
-          user.id.toString(),
-          user.email!,
-          hashedToken,
-          expiresAt
-        );
+        // Create user with emailVerified set to false (exclude plain password from storage)
+        const { password, ...userDataWithoutPassword } = validatedData;
+        
+        // Use transaction to ensure user creation and verification token are atomic
+        const user = await withTransaction(async (tx) => {
+          // Create user
+          const [createdUser] = await tx.insert(users).values({
+            ...userDataWithoutPassword,
+            password: hashedPassword,
+            emailVerified: false
+          }).returning();
+          
+          // Save email verification token
+          await tx.insert(emailVerificationTokens).values({
+            userId: createdUser.id,
+            email: createdUser.email!,
+            token: hashedToken,
+            expiresAt
+          });
+          
+          return createdUser;
+        });
 
-        // Send verification email and track success
+        // Send verification email OUTSIDE transaction (external service, non-critical)
         let emailSent = false;
         try {
           await sendVerificationEmail(
@@ -171,7 +187,7 @@ export class AuthRouter {
           emailSent = false;
         }
 
-        // Log registration event
+        // Log registration event (separate from transaction - audit logs should not block registration)
         await db.insert(securityLogs).values({
           userId: user.id,
           ip: req.ip || 'unknown',
@@ -390,28 +406,36 @@ export class AuthRouter {
         // Hash password
         const hashedPassword = await bcrypt.hash(validatedData.password, 10);
         
-        // Create user with emailVerified set to false (exclude plain password from storage)
-        const { password, ...userDataWithoutPassword } = validatedData;
-        const user = await this.storage.createUser({
-          ...userDataWithoutPassword,
-          password: hashedPassword,
-          emailVerified: false
-        });
-
-        // Generate and save email verification token
+        // Generate verification token before transaction (no DB access)
         const verificationToken = generateEmailVerificationToken();
         const hashedToken = hashToken(verificationToken);
         const expiresAt = new Date();
         expiresAt.setHours(expiresAt.getHours() + 24); // Expires in 24 hours
         
-        await this.storage.saveEmailVerificationToken(
-          user.id.toString(),
-          user.email!,
-          hashedToken,
-          expiresAt
-        );
+        // Create user with emailVerified set to false (exclude plain password from storage)
+        const { password, ...userDataWithoutPassword } = validatedData;
+        
+        // Use transaction to ensure user creation and verification token are atomic
+        const user = await withTransaction(async (tx) => {
+          // Create user
+          const [createdUser] = await tx.insert(users).values({
+            ...userDataWithoutPassword,
+            password: hashedPassword,
+            emailVerified: false
+          }).returning();
+          
+          // Save email verification token
+          await tx.insert(emailVerificationTokens).values({
+            userId: createdUser.id,
+            email: createdUser.email!,
+            token: hashedToken,
+            expiresAt
+          });
+          
+          return createdUser;
+        });
 
-        // Send verification email and track success
+        // Send verification email OUTSIDE transaction (external service, non-critical)
         let emailSent = false;
         try {
           await sendVerificationEmail(
@@ -426,7 +450,7 @@ export class AuthRouter {
           emailSent = false;
         }
 
-        // Log registration event
+        // Log registration event (separate from transaction - audit logs should not block registration)
         await db.insert(securityLogs).values({
           userId: user.id,
           ip: req.ip || 'unknown',
@@ -636,7 +660,7 @@ export class AuthRouter {
           code: "TOKEN_REVOKED"
         });
       } catch (error: any) {
-        logger.error('Token revocation error:', error);
+        logger.error(`[Auth] Operation failed: ${sanitizeError(error)}`);
         res.status(500).json({
           message: "Token revocation failed",
           code: "REVOCATION_ERROR"
@@ -675,7 +699,7 @@ export class AuthRouter {
           revokedCount
         });
       } catch (error: any) {
-        logger.error('Revoke all tokens error:', error);
+        logger.error(`[Auth] Operation failed: ${sanitizeError(error)}`);
         res.status(500).json({
           message: "Failed to revoke tokens",
           code: "REVOCATION_ERROR"
@@ -797,12 +821,19 @@ export class AuthRouter {
         );
 
         // Send verification email
-        await resendVerificationEmail(
-          user.id.toString(),
-          user.email,
-          user.displayName || user.username || 'User',
-          verificationToken
-        );
+        let emailSent = false;
+        try {
+          await resendVerificationEmail(
+            user.id.toString(),
+            user.email,
+            user.displayName || user.username || 'User',
+            verificationToken
+          );
+          emailSent = true;
+        } catch (emailError: any) {
+          console.error('[Email] Failed to send verification email:', emailError);
+          logger.error('Failed to resend verification email', { message: emailError.message });
+        }
 
         // Log resend event
         await db.insert(securityLogs).values({
@@ -810,14 +841,26 @@ export class AuthRouter {
           ip: req.ip || 'unknown',
           action: 'verification_resend',
           resource: user.email,
-          result: 'success',
-          userAgent: req.headers['user-agent'] || ''
+          result: emailSent ? 'success' : 'email_failed',
+          userAgent: req.headers['user-agent'] || '',
+          metadata: { emailSent }
         });
 
-        res.json({ 
-          message: "Verification email has been resent. Please check your inbox.",
-          code: "VERIFICATION_RESENT"
-        });
+        if (emailSent) {
+          res.json({ 
+            success: true,
+            emailSent: true,
+            message: "Verification email has been resent. Please check your inbox.",
+            code: "VERIFICATION_RESENT"
+          });
+        } else {
+          res.json({ 
+            success: true,
+            emailSent: false,
+            message: "Verification token created but email failed - please try again later.",
+            code: "VERIFICATION_RESENT_EMAIL_FAILED"
+          });
+        }
       } catch (error: any) {
         logger.error('Resend verification error', { message: error.message });
         res.status(500).json({ 
@@ -884,6 +927,7 @@ export class AuthRouter {
         );
 
         // Send reset email
+        let emailSent = false;
         try {
           await sendPasswordResetEmail(
             user.id.toString(),
@@ -891,18 +935,21 @@ export class AuthRouter {
             user.displayName || user.username || 'User',
             resetToken
           );
+          emailSent = true;
         } catch (emailError: any) {
+          console.error('[Email] Failed to send password reset email:', emailError);
           logger.error('Failed to send reset email', { message: emailError.message });
         }
 
-        // Log reset request
+        // Log reset request (emailSent tracked in metadata, response stays same to prevent enumeration)
         await db.insert(securityLogs).values({
           userId: user.id,
           ip: req.ip || 'unknown',
           action: 'password_reset_request',
           resource: user.email,
-          result: 'success',
-          userAgent: req.headers['user-agent'] || ''
+          result: emailSent ? 'success' : 'email_failed',
+          userAgent: req.headers['user-agent'] || '',
+          metadata: { emailSent }
         });
 
         res.json(successResponse);
@@ -961,26 +1008,32 @@ export class AuthRouter {
         // Hash new password
         const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-        // Update user password
-        await this.storage.updateUser(resetRecord.userId.toString(), {
-          password: hashedPassword,
-          passwordResetToken: null,
-          passwordResetExpiry: null,
-          failedLoginAttempts: 0,
-          accountLockedUntil: null
-        });
+        // Use transaction to ensure password update, token marking, and logging are atomic
+        await withTransaction(async (tx) => {
+          // Update user password
+          await tx.update(users).set({
+            password: hashedPassword,
+            passwordResetToken: null,
+            passwordResetExpiry: null,
+            failedLoginAttempts: 0,
+            accountLockedUntil: null,
+            updatedAt: new Date()
+          }).where(eq(users.id, resetRecord.userId));
 
-        // Mark token as used
-        await this.storage.markPasswordResetTokenUsed(hashedToken);
+          // Mark token as used
+          await tx.update(passwordResetTokens).set({
+            usedAt: new Date()
+          }).where(eq(passwordResetTokens.token, hashedToken));
 
-        // Log password reset
-        await db.insert(securityLogs).values({
-          userId: resetRecord.userId,
-          ip: req.ip || 'unknown',
-          action: 'password_reset_complete',
-          resource: 'password',
-          result: 'success',
-          userAgent: req.headers['user-agent'] || ''
+          // Log password reset
+          await tx.insert(securityLogs).values({
+            userId: resetRecord.userId,
+            ip: req.ip || 'unknown',
+            action: 'password_reset_complete',
+            resource: 'password',
+            result: 'success',
+            userAgent: req.headers['user-agent'] || ''
+          });
         });
 
         res.json({ 
@@ -1034,7 +1087,7 @@ export class AuthRouter {
           expiresIn: 300 // 5 minutes in seconds
         });
       } catch (error: any) {
-        logger.error('WebSocket token generation error:', error);
+        logger.error(`[Auth] Operation failed: ${sanitizeError(error)}`);
         res.status(500).json({ 
           message: "Failed to generate WebSocket token",
           code: "TOKEN_ERROR"

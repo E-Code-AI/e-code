@@ -95,8 +95,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     mutationFn: async () => {
       // Only remove user-specific queries, keep public data like templates, docs, etc.
       queryClient.removeQueries({ queryKey: ['/api/me'] });
-      queryClient.removeQueries({ queryKey: ['/api/user'] });
+      queryClient.removeQueries({ queryKey: ['user'] });
+      queryClient.removeQueries({ queryKey: ['profile'] });
       queryClient.removeQueries({ queryKey: ['/api/notifications'] });
+      queryClient.removeQueries({ queryKey: ['notifications'] });
+      queryClient.removeQueries({ queryKey: ['settings'] });
+      queryClient.removeQueries({ queryKey: ['billing'] });
       queryClient.removeQueries({ queryKey: ['/api/projects'] });
       // Make the logout API call
       await apiRequest<void>("POST", "/api/logout");
@@ -116,8 +120,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error('Logout error:', error);
       // Still clear user-specific queries on error to ensure clean state
       queryClient.removeQueries({ queryKey: ['/api/me'] });
-      queryClient.removeQueries({ queryKey: ['/api/user'] });
+      queryClient.removeQueries({ queryKey: ['user'] });
+      queryClient.removeQueries({ queryKey: ['profile'] });
       queryClient.removeQueries({ queryKey: ['/api/notifications'] });
+      queryClient.removeQueries({ queryKey: ['notifications'] });
+      queryClient.removeQueries({ queryKey: ['settings'] });
+      queryClient.removeQueries({ queryKey: ['billing'] });
       queryClient.removeQueries({ queryKey: ['/api/projects'] });
       queryClient.setQueryData(["/api/me"], null);
       toast({

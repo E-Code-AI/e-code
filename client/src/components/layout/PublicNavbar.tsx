@@ -217,14 +217,15 @@ export function PublicNavbar() {
           <button
             className="inline-flex items-center gap-1 text-[var(--ecode-accent)] hover:text-[var(--ecode-accent-hover)] dark:text-sky-200 dark:hover:text-white transition-colors"
             onClick={() => navigate('/contact-sales')}
+            aria-label="Talk to a sales expert"
           >
             Talk to an expert
-            <ChevronRight className="h-3 w-3" />
+            <ChevronRight className="h-3 w-3" aria-hidden="true" />
           </button>
         </div>
       </div>
 
-      <nav className="relative border-b border-[var(--ecode-border)] bg-background dark:border-border dark:bg-background backdrop-blur-xl overflow-visible">
+      <nav aria-label="Main navigation" className="relative border-b border-[var(--ecode-border)] bg-background dark:border-border dark:bg-background backdrop-blur-xl overflow-visible">
         <div className="absolute inset-0 marketing-grid opacity-0 dark:opacity-100 pointer-events-none" aria-hidden />
         <div className="container-responsive-nav relative overflow-visible">
           <div className="flex h-16 items-center justify-between overflow-visible">
@@ -255,8 +256,8 @@ export function PublicNavbar() {
 
               <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
                 <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="lg:hidden text-[var(--ecode-text)] dark:text-slate-100">
-                    <Menu className="h-5 w-5" />
+                  <Button variant="ghost" size="icon" aria-label="Open mobile menu" className="lg:hidden text-[var(--ecode-text)] dark:text-slate-100">
+                    <Menu className="h-5 w-5" aria-hidden="true" />
                   </Button>
                 </SheetTrigger>
                 <SheetContent side="right" className="w-full sm:w-[380px] p-0 border-l border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950">
@@ -267,9 +268,10 @@ export function PublicNavbar() {
                         variant="ghost"
                         size="icon"
                         onClick={() => setMobileMenuOpen(false)}
+                        aria-label="Close mobile menu"
                         className="hover:bg-gray-100 dark:hover:bg-gray-800"
                       >
-                        <X className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                        <X className="h-4 w-4 text-gray-600 dark:text-gray-400" aria-hidden="true" />
                       </Button>
                     </div>
                   </div>

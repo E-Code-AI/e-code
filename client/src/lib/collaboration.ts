@@ -2,15 +2,42 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { safeJsonParse } from './safe-json';
 
+const CURSOR_COLORS = [
+  '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4',
+  '#FFEAA7', '#DDA0DD', '#98D8C8', '#F7DC6F',
+  '#BB8FCE', '#85C1E9', '#F8B500', '#00CED1'
+];
+
+export function generateCursorColor(userId: number | string): string {
+  const userIdStr = String(userId);
+  let hash = 0;
+  for (let i = 0; i < userIdStr.length; i++) {
+    hash = userIdStr.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return CURSOR_COLORS[Math.abs(hash) % CURSOR_COLORS.length];
+}
+
+type Position = {
+  lineNumber: number;
+  column: number;
+};
+
+export interface CollaboratorCursor {
+  id: number;
+  name: string;
+  color: string;
+  fileId: number;
+  position: Position;
+  selection?: { start: Position; end: Position };
+}
+
 type CursorPosition = {
   userId: number;
   username: string;
   color: string;
   fileId: number;
-  position: {
-    lineNumber: number;
-    column: number;
-  };
+  position: Position;
+  selection?: { start: Position; end: Position };
 };
 
 type CollaborationMessage = {
@@ -37,17 +64,7 @@ export function useCollaboration(projectId: number | undefined, fileId: number |
     const wsUrl = `${protocol}//${window.location.host}/ws`;
     const ws = new WebSocket(wsUrl);
     
-    const colorMap: string[] = [
-      '#FF5E5B', '#D8D8D8', '#FFFFEA', '#00CECB', '#FFED66',
-      '#9381FF', '#B8B8FF', '#FFEEDD', '#FFD8BE', '#FCD7AD'
-    ];
-    
-    const getUserColor = (userId: number) => {
-      // Use user ID to deterministically select color
-      return colorMap[userId % colorMap.length];
-    };
-    
-    const userColor = getUserColor(user.id);
+    const userColor = generateCursorColor(user.id);
     
     ws.onopen = () => {
       // Send join message
@@ -81,9 +98,10 @@ export function useCollaboration(projectId: number | undefined, fileId: number |
             [message.userId]: {
               userId: message.userId,
               username: message.username,
-              color: message.data.color || '#FF5E5B',
+              color: message.data.color || generateCursorColor(message.userId),
               fileId: message.fileId,
-              position: message.data.position
+              position: message.data.position,
+              selection: message.data.selection
             }
           }));
           break;
@@ -102,7 +120,7 @@ export function useCollaboration(projectId: number | undefined, fileId: number |
             [message.userId]: {
               userId: message.userId,
               username: message.username,
-              color: message.data.color || '#FF5E5B',
+              color: message.data.color || generateCursorColor(message.userId),
               fileId: message.fileId,
               position: { lineNumber: 1, column: 1 }
             }
@@ -187,14 +205,15 @@ export function useCollaboration(projectId: number | undefined, fileId: number |
     };
   }, [projectId, fileId, user]);
   
-  const updateCursorPosition = (position: { lineNumber: number; column: number }) => {
+  const updateCursorPosition = (position: { lineNumber: number; column: number }, selection?: { start: Position; end: Position }) => {
     if (!socket || socket.readyState !== WebSocket.OPEN || !user) return;
     
     const message: CollaborationMessage = {
       type: 'cursor_move',
       data: {
         position,
-        color: cursors[user.id]?.color || '#FF5E5B'
+        color: generateCursorColor(user.id),
+        selection
       },
       userId: user.id,
       username: user.username,

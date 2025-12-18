@@ -1,9 +1,20 @@
 import multer from 'multer';
 import path from 'path';
 import { Request } from 'express';
+import { fileTypeFromBuffer } from 'file-type';
 import { createLogger } from '../utils/logger';
 
 const logger = createLogger('upload-validation');
+
+const ALLOWED_MIME_TYPES = [
+  'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+  'application/pdf',
+  'text/plain', 'text/javascript', 'text/typescript',
+  'application/json', 'application/javascript',
+  'text/css', 'text/html', 'text/markdown', 'text/csv',
+  'text/x-python', 'application/xml', 'text/yaml',
+  'application/zip',
+];
 
 const ALLOWED_TYPES: Record<string, string[]> = {
   'image/jpeg': ['.jpg', '.jpeg'],
@@ -106,3 +117,36 @@ export const validateUploadedFile = (buffer: Buffer, mimetype: string): { valid:
   }
   return { valid: true };
 };
+
+export async function validateUpload(buffer: Buffer, declaredMime: string): Promise<{ valid: boolean; error?: string }> {
+  const detected = await fileTypeFromBuffer(buffer);
+  
+  if (!detected && declaredMime.startsWith('text/')) {
+    if (!ALLOWED_MIME_TYPES.includes(declaredMime)) {
+      logger.warn('File upload rejected - mime type not allowed', { declaredMime });
+      return { valid: false, error: `File type ${declaredMime} is not allowed` };
+    }
+    return { valid: true };
+  }
+  
+  if (!detected && declaredMime.startsWith('application/json')) {
+    return { valid: true };
+  }
+  
+  if (detected && !ALLOWED_MIME_TYPES.includes(detected.mime)) {
+    logger.warn('File upload rejected - detected type not allowed', { detected: detected.mime, declared: declaredMime });
+    return { valid: false, error: `Detected file type ${detected.mime} is not allowed` };
+  }
+  
+  if (detected && detected.mime !== declaredMime) {
+    logger.warn('MIME mismatch detected', { declared: declaredMime, detected: detected.mime });
+    return { valid: false, error: `MIME type mismatch: declared ${declaredMime}, but file is ${detected.mime}` };
+  }
+  
+  if (!detected && !ALLOWED_MIME_TYPES.includes(declaredMime)) {
+    logger.warn('File upload rejected - undetectable and not allowed', { declaredMime });
+    return { valid: false, error: `File type ${declaredMime} is not allowed` };
+  }
+  
+  return { valid: true };
+}
