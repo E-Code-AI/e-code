@@ -1,0 +1,51 @@
+(index):412 [WebSocket] Interceptor installed (Development mode: true)
+(index):388 [WebSocket] Connection attempt: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:/?token=ScnFEjKmUFnD isEssential: false isViteHMR: true isDev: true
+(index):395 [WebSocket] ✅ Allowing real connection: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:/?token=ScnFEjKmUFnD
+(index):399 WebSocket connection to 'wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev/?token=ScnFEjKmUFnD' failed: 
+construct @ (index):399
+(index):388 [WebSocket] Connection attempt: wss://localhost:5173/?token=ScnFEjKmUFnD isEssential: false isViteHMR: true isDev: true
+(index):395 [WebSocket] ✅ Allowing real connection: wss://localhost:5173/?token=ScnFEjKmUFnD
+(index):399 WebSocket connection to 'wss://localhost:5173/?token=ScnFEjKmUFnD' failed: 
+construct @ (index):399
+client:765 [vite] failed to connect to websocket.
+your current setup:
+  (browser) f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev/ <--[HTTP]--> localhost:5173/ (server)
+  (browser) f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:/ <--[WebSocket (failing)]--> localhost:5173/ (server)
+Check out your Vite / network configuration and https://vite.dev/config/server-options.html#server-hmr .
+connect @ client:765
+chunk-E22KYI7D.js?v=d84b4f92:21609 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+telemetry.ts:125 [Telemetry] Object
+service-worker-registration.ts:14 [SW] Skipping in development mode
+cache-reconciliation.ts:37 [CacheReconciliation] Service initialized
+telemetry.ts:125 [Telemetry] Object
+telemetry.ts:125 [Telemetry] Object
+telemetry.ts:125 [Telemetry] Object
+query-persister.ts:107 [QueryPersister] Cache restored (age: 473s)
+/api/me:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)
+telemetry.ts:125 [Telemetry] Object
+query-persister.ts:74 [QueryPersister] Cache persisted to IndexedDB
+(index):1 The resource https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev/src/main.tsx was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.
+(index):1 The resource https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev/src/index.css was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.
+(index):1 <meta name="apple-mobile-web-app-capable" content="yes"> is deprecated. Please include <meta name="mobile-web-app-capable" content="yes">
+(index):1 Error while trying to use the following icon from the Manifest: https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev/icons/icon-144.png (Download error or resource isn't a valid image)
+/api/logs/ingest:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)
+query-persister.ts:74 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:74 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:74 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:74 [QueryPersister] Cache persisted to IndexedDB
+/api/logs/ingest:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)
+/api/rag/stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)
+telemetry.ts:125 [Telemetry] Object
+query-persister.ts:74 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] Object
+/api/models/preferred:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)
+telemetry.ts:125 [Telemetry] Object
+query-persister.ts:74 [QueryPersister] Cache persisted to IndexedDB
+query-persister.ts:74 [QueryPersister] Cache persisted to IndexedDB
+telemetry.ts:125 [Telemetry] Object
+query-persister.ts:74 [QueryPersister] Cache persisted to IndexedDB
+ingest:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)
+telemetry.ts:201 [AnimationMonitor] High frame drops detected, switching to CSS animations
+console.<computed> @ telemetry.ts:201
+(anonyme) @ AnimationMonitor.tsx:98
+telemetry.ts:125 [Telemetry] {level: 'warn', message: 'Console warn: [AnimationMonitor] High frame drops detected, switching to CSS animations', timestamp: '2025-12-18T18:32:11.538Z', source: 'frontend', url: 'https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev/', …}

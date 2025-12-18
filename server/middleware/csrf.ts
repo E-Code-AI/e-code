@@ -18,10 +18,11 @@ declare module 'express-session' {
 // Methods that require CSRF protection
 const PROTECTED_METHODS = ['POST', 'PUT', 'PATCH', 'DELETE'];
 
-// Paths to exclude from CSRF protection (only webhooks should be excluded)
+// Paths to exclude from CSRF protection (webhooks and anonymous endpoints)
 const EXCLUDED_PATHS = [
   '/api/webhooks/stripe',
   '/api/webhooks/github',
+  '/api/logs/ingest',  // Anonymous telemetry - no auth required
 ];
 
 // Base allowed origins for login/register endpoints
