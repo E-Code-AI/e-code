@@ -7,6 +7,7 @@ import { aiService } from '../ai/ai-service';
 import { mobileContainerService } from '../services/mobile-container-service';
 import * as bcrypt from 'bcrypt';
 import * as jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import { getJwtSecret, getJwtRefreshSecret } from '../utils/secrets-manager';
 import { createLogger } from '../utils/logger';
 
@@ -517,5 +518,263 @@ function formatTimeAgo(date: Date): string {
   if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
   return date.toLocaleDateString();
 }
+
+// ====== MOBILE OAUTH FLOW ======
+// Mobile OAuth works by:
+// 1. App requests OAuth URL from server
+// 2. App opens URL in system browser
+// 3. User authenticates with provider
+// 4. Provider redirects to server callback
+// 5. Server redirects to deep link (ecode://auth/callback?token=xxx)
+// 6. App receives deep link and stores token
+
+const MOBILE_OAUTH_REDIRECT = 'ecode://auth/callback';
+
+// Helper to get base URL
+function getBaseUrl(): string {
+  if (process.env.BASE_URL) {
+    return process.env.BASE_URL;
+  }
+  if (process.env.REPL_SLUG && process.env.REPL_OWNER) {
+    return `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`;
+  }
+  return 'https://e-code.ai';
+}
+
+// Initiate GitHub OAuth for mobile
+router.get('/mobile/auth/oauth/github', async (req, res) => {
+  try {
+    const state = crypto.randomUUID();
+    
+    const clientId = process.env.GITHUB_CLIENT_ID;
+    if (!clientId) {
+      return res.status(503).json({ 
+        error: 'GitHub OAuth not configured',
+        message: 'GitHub authentication is not available at this time'
+      });
+    }
+    
+    const params = new URLSearchParams({
+      client_id: clientId,
+      redirect_uri: `${getBaseUrl()}/api/mobile/auth/oauth/github/callback`,
+      scope: 'user:email',
+      state: state,
+      allow_signup: 'true'
+    });
+    
+    res.json({ 
+      authUrl: `https://github.com/login/oauth/authorize?${params.toString()}`,
+      state 
+    });
+  } catch (error) {
+    logger.error('[Mobile OAuth] GitHub init error:', error);
+    res.status(500).json({ error: 'Failed to initialize GitHub OAuth' });
+  }
+});
+
+// GitHub OAuth callback for mobile
+router.get('/mobile/auth/oauth/github/callback', async (req, res) => {
+  try {
+    const { code, error: oauthError } = req.query;
+    
+    if (oauthError) {
+      return res.redirect(`${MOBILE_OAUTH_REDIRECT}?error=${encodeURIComponent(oauthError as string)}`);
+    }
+    
+    if (!code) {
+      return res.redirect(`${MOBILE_OAUTH_REDIRECT}?error=no_code`);
+    }
+    
+    // Exchange code for token
+    const tokenResponse = await fetch('https://github.com/login/oauth/access_token', {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        client_id: process.env.GITHUB_CLIENT_ID,
+        client_secret: process.env.GITHUB_CLIENT_SECRET,
+        code: code,
+        redirect_uri: `${getBaseUrl()}/api/mobile/auth/oauth/github/callback`
+      })
+    });
+    
+    const tokenData = await tokenResponse.json() as any;
+    if (tokenData.error) {
+      return res.redirect(`${MOBILE_OAUTH_REDIRECT}?error=${encodeURIComponent(tokenData.error_description || tokenData.error)}`);
+    }
+    
+    // Get user info from GitHub
+    const userResponse = await fetch('https://api.github.com/user', {
+      headers: {
+        'Accept': 'application/vnd.github.v3+json',
+        'Authorization': `Bearer ${tokenData.access_token}`
+      }
+    });
+    
+    const githubUser = await userResponse.json() as any;
+    
+    // Get primary email
+    const emailsResponse = await fetch('https://api.github.com/user/emails', {
+      headers: {
+        'Accept': 'application/vnd.github.v3+json',
+        'Authorization': `Bearer ${tokenData.access_token}`
+      }
+    });
+    const emails = await emailsResponse.json() as any[];
+    const primaryEmail = emails.find((e: any) => e.primary)?.email || githubUser.email;
+    
+    // Find or create user by email
+    let user = primaryEmail ? await storage.getUserByEmail(primaryEmail) : undefined;
+    
+    if (!user) {
+      // Create new user
+      user = await storage.createUser({
+        username: githubUser.login,
+        email: primaryEmail || `${githubUser.login}@github.local`,
+        displayName: githubUser.name || githubUser.login,
+        avatarUrl: githubUser.avatar_url,
+        password: null,
+        bio: githubUser.bio || null
+      });
+    } else {
+      // Update avatar if not set
+      if (!user.avatarUrl && githubUser.avatar_url) {
+        await storage.updateUser(user.id, { avatarUrl: githubUser.avatar_url });
+      }
+    }
+    
+    // Generate mobile tokens
+    const accessToken = generateMobileAccessToken(user.id, user.username);
+    const refreshToken = generateMobileRefreshToken(user.id);
+    
+    // Redirect to mobile app with tokens
+    const redirectUrl = `${MOBILE_OAUTH_REDIRECT}?` + new URLSearchParams({
+      token: accessToken,
+      refreshToken: refreshToken,
+      userId: user.id,
+      username: user.username,
+      displayName: user.displayName || user.username
+    }).toString();
+    
+    res.redirect(redirectUrl);
+  } catch (error) {
+    logger.error('[Mobile OAuth] GitHub callback error:', error);
+    res.redirect(`${MOBILE_OAUTH_REDIRECT}?error=server_error`);
+  }
+});
+
+// Initiate Google OAuth for mobile
+router.get('/mobile/auth/oauth/google', async (req, res) => {
+  try {
+    const state = crypto.randomUUID();
+    
+    const clientId = process.env.GOOGLE_CLIENT_ID;
+    if (!clientId) {
+      return res.status(503).json({ 
+        error: 'Google OAuth not configured',
+        message: 'Google authentication is not available at this time'
+      });
+    }
+    
+    const params = new URLSearchParams({
+      client_id: clientId,
+      redirect_uri: `${getBaseUrl()}/api/mobile/auth/oauth/google/callback`,
+      response_type: 'code',
+      scope: 'openid email profile',
+      state: state,
+      access_type: 'offline',
+      prompt: 'consent'
+    });
+    
+    res.json({ 
+      authUrl: `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`,
+      state 
+    });
+  } catch (error) {
+    logger.error('[Mobile OAuth] Google init error:', error);
+    res.status(500).json({ error: 'Failed to initialize Google OAuth' });
+  }
+});
+
+// Google OAuth callback for mobile
+router.get('/mobile/auth/oauth/google/callback', async (req, res) => {
+  try {
+    const { code, error: oauthError } = req.query;
+    
+    if (oauthError) {
+      return res.redirect(`${MOBILE_OAUTH_REDIRECT}?error=${encodeURIComponent(oauthError as string)}`);
+    }
+    
+    if (!code) {
+      return res.redirect(`${MOBILE_OAUTH_REDIRECT}?error=no_code`);
+    }
+    
+    // Exchange code for tokens
+    const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        code: code as string,
+        client_id: process.env.GOOGLE_CLIENT_ID!,
+        client_secret: process.env.GOOGLE_CLIENT_SECRET!,
+        redirect_uri: `${getBaseUrl()}/api/mobile/auth/oauth/google/callback`,
+        grant_type: 'authorization_code'
+      }).toString()
+    });
+    
+    const tokenData = await tokenResponse.json() as any;
+    if (tokenData.error) {
+      return res.redirect(`${MOBILE_OAUTH_REDIRECT}?error=${encodeURIComponent(tokenData.error_description || tokenData.error)}`);
+    }
+    
+    // Get user info from Google
+    const userResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+      headers: { 'Authorization': `Bearer ${tokenData.access_token}` }
+    });
+    
+    const googleUser = await userResponse.json() as any;
+    
+    // Find or create user by email
+    let user = googleUser.email ? await storage.getUserByEmail(googleUser.email) : undefined;
+    
+    if (!user) {
+      // Create new user from Google profile
+      const username = googleUser.email.split('@')[0].replace(/[^a-zA-Z0-9_-]/g, '_');
+      user = await storage.createUser({
+        username: username,
+        email: googleUser.email,
+        displayName: googleUser.name || username,
+        avatarUrl: googleUser.picture,
+        password: null,
+        bio: null
+      });
+    } else {
+      // Update avatar if not set
+      if (!user.avatarUrl && googleUser.picture) {
+        await storage.updateUser(user.id, { avatarUrl: googleUser.picture });
+      }
+    }
+    
+    // Generate mobile tokens
+    const accessToken = generateMobileAccessToken(user.id, user.username);
+    const refreshToken = generateMobileRefreshToken(user.id);
+    
+    // Redirect to mobile app with tokens
+    const redirectUrl = `${MOBILE_OAUTH_REDIRECT}?` + new URLSearchParams({
+      token: accessToken,
+      refreshToken: refreshToken,
+      userId: user.id,
+      username: user.username,
+      displayName: user.displayName || user.username
+    }).toString();
+    
+    res.redirect(redirectUrl);
+  } catch (error) {
+    logger.error('[Mobile OAuth] Google callback error:', error);
+    res.redirect(`${MOBILE_OAUTH_REDIRECT}?error=server_error`);
+  }
+});
 
 export const mobileRouter = router;
