@@ -185,3 +185,14 @@ export const ShellPage = lazy(() => import("@/pages/ShellPage"));
 export const PackagesPage = lazy(() => import("@/pages/PackagesPage"));
 export const KVStorePage = lazy(() => import("@/pages/KVStorePage"));
 export const PreviewPage = lazy(() => import("@/pages/PreviewPage"));
+
+export const AuthenticationPage = lazy(() => import("@/pages/AuthenticationPage"));
+export const ExtensionsPage = lazy(() => import("@/pages/ExtensionsPage"));
+export const IntegrationsPage = lazy(() => import("@/pages/IntegrationsPage"));
+
+export const NetworkingPage = lazy(() => import("@/pages/NetworkingPage"));
+export const ThreadsPage = lazy(() => import("@/pages/ThreadsPage"));
+export const ReferralsPage = lazy(() => import("@/pages/ReferralsPage"));
+
+export const VNCPage = lazy(() => import("@/pages/VNCPage"));
+export const NewTeamPage = lazy(() => import("@/pages/NewTeamPage"));
