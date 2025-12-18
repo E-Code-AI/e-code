@@ -1,0 +1,67 @@
+# =============================================================================
+# .replitignore - Exclude from Replit deployments
+# =============================================================================
+
+# Large user data directories (1.6GB+)
+projects/
+uploads/
+
+# Dependencies (installed at deploy time)
+node_modules/
+
+# Git repository
+.git/
+
+# Documentation
+docs/
+*.md
+
+# Tests
+__tests__/
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+coverage/
+playwright-report/
+test-results/
+
+# IDE
+.vscode/
+.idea/
+
+# Assets not needed
+attached_assets/
+previews/
+screenshots/
+
+# Logs
+logs/
+*.log
+
+# Temporary
+tmp/
+temp/
+
+# Mobile/Desktop
+mobile/
+desktop/
+electron/
+android/
+ios/
+
+# Kubernetes
+kubernetes/
+k8s/
+
+# Docker
+Dockerfile*
+docker-compose*
+
+# Replit dev files
+.breakpoints
+.upm/
+.cache/
+
+# Memory bank
+.ecode/
