@@ -81,6 +81,7 @@ import { expoSnackRouter } from "./expo-snack.router";
 import rollbackRouter from "./rollback.router";
 import { replitdbRouter } from "./replitdb.router";
 import sendgridWebhooksRouter from './webhooks-sendgrid.router';
+import logsRouter from './logs.router';
 
 export class MainRouter {
   private authRouter: AuthRouter;
@@ -113,6 +114,9 @@ export class MainRouter {
 
     // Placeholder image routes (no auth required - used for avatars and product images)
     app.use(placeholderRouter);
+
+    // Frontend telemetry ingestion (no auth required - anonymous telemetry)
+    app.use(logsRouter);
 
     // Load testing routes (admin only - Fortune 500 requirement)
     app.use(this.loadTestingRouter.getRouter());
