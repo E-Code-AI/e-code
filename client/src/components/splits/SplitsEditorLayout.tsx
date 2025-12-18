@@ -102,12 +102,6 @@ export function SplitsEditorLayout({
     if (bottomPanelOpen !== open) togglePanel('bottom');
   };
 
-  // FUTURE: Device-specific layouts can be rendered here
-  // - Mobile: MobileWorkspace component with bottom tabs, swipe gestures, FAB
-  // - Tablet: TabletWorkspace component with hybrid layout, keyboard mode  
-  // - Desktop/Laptop: Current 3-column desktop layout (below)
-  // Current implementation uses responsive design with same component structure
-  
   // Render the left tool panel content
   const renderToolPanel = () => {
     switch (activeTool) {
@@ -163,6 +157,155 @@ export function SplitsEditorLayout({
     },
   });
 
+  // Mobile Layout - Tabbed interface instead of split panels
+  if (responsive.isMobile) {
+    return (
+      <>
+        <CommandPalette
+          open={commandPalette.isOpen}
+          onOpenChange={commandPalette.setIsOpen}
+          commands={commands}
+          files={files}
+          onFileSelect={(fileId) => {
+            const file = files.find(f => f.id === fileId);
+            if (file && onFileSelect) onFileSelect(file);
+          }}
+          onToolSelect={setActiveTool}
+        />
+
+        <div className={cn("flex flex-col h-full w-full bg-[var(--ecode-background)]", className)}>
+          {/* Mobile Top Toolbar */}
+          <div className="h-12 border-b border-[var(--ecode-border)] bg-[var(--ecode-surface)] flex items-center px-3 justify-between flex-shrink-0">
+            <h1 className="text-sm font-semibold text-[var(--ecode-text)] font-[family-name:var(--ecode-font-sans)] truncate max-w-[150px]">
+              {projectName}
+            </h1>
+            
+            <div className="flex items-center gap-1">
+              <Button 
+                size="sm" 
+                variant="default"
+                className="bg-[var(--ecode-button-primary)] hover:bg-[var(--ecode-button-primary-hover)] text-white px-3 font-[family-name:var(--ecode-font-sans)]"
+                data-testid="button-run-project-mobile"
+              >
+                <Play className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Mobile Tabbed Content */}
+          <Tabs defaultValue="editor" className="flex-1 flex flex-col overflow-hidden">
+            <TabsList className="w-full shrink-0 h-10 bg-[var(--ecode-surface)] border-b border-[var(--ecode-border)] rounded-none justify-start px-2 gap-1">
+              <TabsTrigger 
+                value="files" 
+                className="text-xs data-[state=active]:bg-[var(--ecode-surface-hover)]"
+                data-testid="mobile-tab-files"
+              >
+                Files
+              </TabsTrigger>
+              <TabsTrigger 
+                value="editor" 
+                className="text-xs data-[state=active]:bg-[var(--ecode-surface-hover)]"
+                data-testid="mobile-tab-editor"
+              >
+                Editor
+              </TabsTrigger>
+              <TabsTrigger 
+                value="preview" 
+                className="text-xs data-[state=active]:bg-[var(--ecode-surface-hover)]"
+                data-testid="mobile-tab-preview"
+              >
+                Preview
+              </TabsTrigger>
+              <TabsTrigger 
+                value="terminal" 
+                className="text-xs data-[state=active]:bg-[var(--ecode-surface-hover)]"
+                data-testid="mobile-tab-terminal"
+              >
+                Terminal
+              </TabsTrigger>
+            </TabsList>
+
+            {/* Files Tab */}
+            <TabsContent value="files" className="flex-1 m-0 overflow-hidden">
+              <ReplitFileSidebar
+                files={files}
+                activeFileId={activeFileId}
+                onFileSelect={onFileSelect || (() => {})}
+                onFileCreate={onFileCreate || (() => {})}
+                onFileDelete={onFileDelete || (() => {})}
+                onFileRename={onFileRename}
+                projectName={projectName}
+                projectId={projectId}
+                onClose={() => {}}
+              />
+            </TabsContent>
+
+            {/* Editor Tab */}
+            <TabsContent value="editor" className="flex-1 m-0 overflow-hidden">
+              <div className="h-full bg-[var(--ecode-editor-bg)] flex flex-col">
+                <ReplitBreadcrumbs
+                  filePath={files?.find(f => f.id === activeFileId)?.path || ''}
+                  onNavigate={(path) => {}}
+                />
+                <div className="flex-1 overflow-hidden">
+                  <MultiTabEditor
+                    files={files}
+                    activeFileId={activeFileId}
+                    onFileSelect={onFileSelect}
+                    onChange={(fileId, content) => {}}
+                  />
+                </div>
+              </div>
+            </TabsContent>
+
+            {/* Preview Tab */}
+            <TabsContent value="preview" className="flex-1 m-0 overflow-hidden">
+              <div className="h-full bg-[var(--ecode-surface)]">
+                {previewContent || (
+                  <div className="flex items-center justify-center h-full text-[var(--ecode-text-muted)]">
+                    <p className="text-sm font-[family-name:var(--ecode-font-sans)]">Preview will appear here</p>
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+
+            {/* Terminal Tab */}
+            <TabsContent value="terminal" className="flex-1 m-0 overflow-hidden">
+              <div className="h-full bg-[var(--ecode-terminal-bg)]">
+                {terminalContent || (
+                  <ReplitTerminal 
+                    projectId={Number(projectId) || 1} 
+                    className="h-full"
+                    theme="dark"
+                    allowMultipleSessions={false}
+                  />
+                )}
+              </div>
+            </TabsContent>
+          </Tabs>
+
+          {/* Mobile Status Bar */}
+          <ReplitStatusBar
+            language={files?.find(f => f.id === activeFileId)?.name?.split('.').pop() || 'plaintext'}
+            lineNumber={1}
+            columnNumber={1}
+            encoding="UTF-8"
+            gitBranch="main"
+            hasGitChanges={false}
+            errorCount={0}
+            warningCount={0}
+            infoCount={0}
+            isConnected={true}
+            onProblemsClick={() => {}}
+            onGitClick={() => {}}
+            onSettingsClick={() => {}}
+          />
+        </div>
+      </>
+    );
+  }
+
+  // Desktop Layout - 3 Column Resizable Split Panels
   return (
     <>
       {/* Command Palette (CMD/CTRL + K) */}

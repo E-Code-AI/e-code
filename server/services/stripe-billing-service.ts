@@ -1,8 +1,15 @@
 import Stripe from 'stripe';
+import crypto from 'crypto';
 import { storage } from '../storage';
 import { createLogger } from '../utils/logger';
 import { resourceMonitor } from './resource-monitor';
 import { coerceNumber, getSubscriptionPeriodBoundary } from './stripe-utils';
+
+function generateIdempotencyKey(prefix: string, ...parts: (string | number)[]): string {
+  const timestamp = Date.now();
+  const uniqueId = crypto.randomUUID().slice(0, 8);
+  return `${prefix}_${parts.join('_')}_${timestamp}_${uniqueId}`;
+}
 
 const logger = createLogger('stripe-billing');
 
@@ -52,6 +59,8 @@ export class StripeBillingService {
         metadata: {
           userId: userId.toString(),
         },
+      }, {
+        idempotencyKey: generateIdempotencyKey('billing_cust', userId),
       });
       
       await storage.updateStripeCustomerId(String(userId), customer.id);
@@ -89,6 +98,8 @@ export class StripeBillingService {
           userId: userId.toString(),
           planId,
         },
+      }, {
+        idempotencyKey: generateIdempotencyKey('billing_sub', userId, planId),
       });
       
       // Update user's subscription info
@@ -299,6 +310,8 @@ export class StripeBillingService {
         customer: user.stripeCustomerId,
         auto_advance: false, // Don't automatically finalize
         description: 'E-Code Platform Usage',
+      }, {
+        idempotencyKey: generateIdempotencyKey('invoice', userId),
       });
       
       // Add custom line items for detailed breakdown
@@ -324,6 +337,8 @@ export class StripeBillingService {
             description: `${metricType.replace(/_/g, ' ')} usage: ${used}${unit ? ` ${unit}` : ''}`,
             amount: Math.round(cost * 100), // Convert to cents
             currency: 'usd', // P-C3 FIX: Default to USD instead of EUR
+          }, {
+            idempotencyKey: generateIdempotencyKey('inv_item', userId, metricType, invoice.id),
           });
         }
       }

@@ -238,6 +238,7 @@ import connectPg from "connect-pg-simple";
 import { client } from "./db";
 import * as crypto from "crypto";
 import { Pool } from 'pg';
+import { withTransaction, type TransactionClient } from "./utils/db-transactions";
 
 type ApiKeyInsertModel = typeof apiKeys.$inferInsert;
 type CodeReviewInsertModel = typeof codeReviews.$inferInsert;
@@ -2619,28 +2620,43 @@ export class DatabaseStorage implements IStorage {
     const originalProject = await this.getProject(projectId);
     if (!originalProject) throw new Error('Project not found');
 
-    const forkedProject = await this.createProject({
-      name: `${originalProject.name} (Fork)`,
-      ownerId: userId,
-      description: originalProject.description,
-      language: originalProject.language,
-      visibility: 'private',
-      forkedFromId: projectId
-    });
-
-    // Copy files from original project
     const originalFiles = await this.getFilesByProjectId(projectId);
-    for (const file of originalFiles) {
-      await this.createFile({
-        projectId: forkedProject.id,
-        name: file.name,
-        path: file.path,
-        content: file.content,
-        isDirectory: file.isDirectory
-      });
-    }
+    const { generateUniqueSlug } = await import('./utils/slug');
 
-    return forkedProject;
+    return await withTransaction(async (tx) => {
+      const projectName = `${originalProject.name} (Fork)`;
+      const slug = await generateUniqueSlug(
+        projectName,
+        async (s) => {
+          const existing = await tx.select().from(projects).where(eq(projects.slug, s)).limit(1);
+          return existing.length > 0;
+        }
+      );
+
+      const [forkedProject] = await tx.insert(projects).values({
+        name: projectName,
+        slug,
+        ownerId: userId,
+        description: originalProject.description,
+        language: originalProject.language,
+        visibility: 'private',
+        forkedFromId: projectId
+      }).returning();
+
+      if (originalFiles.length > 0) {
+        await tx.insert(files).values(
+          originalFiles.map(file => ({
+            projectId: forkedProject.id,
+            name: file.name,
+            path: file.path,
+            content: file.content,
+            isDirectory: file.isDirectory
+          }))
+        );
+      }
+
+      return forkedProject;
+    });
   }
 
   async likeProject(projectId: string, userId: string): Promise<void> {
