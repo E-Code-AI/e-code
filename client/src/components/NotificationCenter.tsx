@@ -143,7 +143,9 @@ export function NotificationCenter() {
     },
   });
 
-  const unreadNotifications = notifications.filter((n: Notification) => !n.read);
+  // Ensure notifications is always an array (API may return null on 401)
+  const safeNotifications = notifications ?? [];
+  const unreadNotifications = safeNotifications.filter((n: Notification) => !n.read);
   const unreadCount = unreadNotifications.length;
 
   const handleNotificationClick = async (notification: Notification) => {
@@ -180,8 +182,8 @@ export function NotificationCenter() {
     clearAllMutation.mutate(undefined);
   };
 
-  // Mock notifications data removed, now using real data from API
-  const allNotifications = notifications;
+  // Use safe notifications array (handles null from 401 responses)
+  const allNotifications = safeNotifications;
 
 
   return (
