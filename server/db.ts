@@ -10,15 +10,35 @@ import {
   getDatabaseClient,
   type DatabaseEnvironment 
 } from './config/database';
+import * as fs from 'fs';
 
-if (!process.env.DATABASE_URL) {
+function getDatabaseUrl(): string {
+  if (process.env.DATABASE_URL) {
+    return process.env.DATABASE_URL;
+  }
+  
+  try {
+    const replitDbPath = '/tmp/replitdb';
+    if (fs.existsSync(replitDbPath)) {
+      const dbUrl = fs.readFileSync(replitDbPath, 'utf-8').trim();
+      if (dbUrl) {
+        console.log('[Database] Using DATABASE_URL from /tmp/replitdb (production mode)');
+        return dbUrl;
+      }
+    }
+  } catch (error) {
+    console.warn('[Database] Could not read /tmp/replitdb:', error);
+  }
+  
   throw new Error(
     "DATABASE_URL must be set. Did you forget to provision a database?",
   );
 }
 
+const DATABASE_URL = getDatabaseUrl();
+
 // Enhanced postgres client with enterprise-grade connection management
-const baseClient = postgres(process.env.DATABASE_URL, {
+const baseClient = postgres(DATABASE_URL, {
   max: 20, // Connection pool size optimized for concurrent users
   idle_timeout: 60, // Keep connections alive for 1 minute when idle
   max_lifetime: 60 * 60, // 1 hour connection lifetime to prevent stale connections
