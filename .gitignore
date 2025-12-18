@@ -19,3 +19,13 @@ dev.db
 
 # OS
 Thumbs.db
+
+# SECURITY: Mobile Credentials - NEVER commit keystore passwords
+mobile/credentials.json
+mobile/android/keystores/*.keystore
+mobile/google-services.json
+mobile/ios/*.mobileprovision
+
+# SECURITY: Desktop Certificates
+desktop/*.p12
+desktop/*.pfx
