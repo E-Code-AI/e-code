@@ -100,16 +100,47 @@ EXPO_PUBLIC_API_BASE="https://your-domain.com/api" npm start
 
 ### Authentication
 - Username/password login against the `/api/mobile/auth/login` endpoint
+- **OAuth Support**: Google, GitHub, Twitter/X, Apple via deep linking (`ecode://` scheme)
 - Session tokens stored securely using `AsyncStorage`
 - Automatic restoration of existing sessions on app launch
 
-### Project dashboard
+### Command Palette (Ctrl+K equivalent)
+- **Triple-tap gesture** or shake device to open
+- Fuzzy search across all commands using Fuse.js
+- Recent commands tracking
+- Categories: File, AI, Navigation, System
+- Actions: New File, Open File, Ask Agent, Generate Code, Search, Settings
+
+### AI Agent Integration
+- **Multi-provider support**: OpenAI, Anthropic, Gemini, xAI, Moonshot
+- Model selector with provider icons and descriptions
+- Real-time streaming chat with SSE
+- Code explanation, bug fixing, refactoring actions
+- Context-aware prompts with project files
+
+### Push Notifications
+- Expo Notifications integration for iOS and Android
+- Server-side token registration at `/api/mobile/notifications/register`
+- Notification tap handling with deep navigation to projects
+
+### Offline Support
+- **AsyncStorage-backed cache** with TTL and stale-while-revalidate
+- Automatic caching of projects, files, and user data
+- Network status detection via `@react-native-community/netinfo`
+- Background sync for pending changes
+
+### OTA Updates
+- Expo Updates integration for instant app updates
+- Manual and automatic update checking
+- Graceful fallback with reload prompts
+
+### Project Dashboard
 - Displays the list of recent projects returned by `/api/mobile/projects`
 - Pull-to-refresh support to fetch the latest information
 - Inline error handling with retry affordances
 - Quick access to project language and activity statistics
 
-### Project workspace
+### Project Workspace
 - Fetches project files from `/api/mobile/projects/:id/files`
 - Select, edit, and save file contents back to the server
 - Run the active file through `/api/mobile/projects/:id/run`
