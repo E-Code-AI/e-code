@@ -25,6 +25,13 @@ interface SendGridEvent {
  */
 router.post('/sendgrid', async (req: Request, res: Response) => {
   try {
+    // Log pour confirmer la réception
+    console.log('🔔 SendGrid webhook received!', {
+      timestamp: new Date().toISOString(),
+      headers: req.headers,
+      bodyLength: JSON.stringify(req.body).length
+    });
+    
     // Vérifier la signature SendGrid (optionnel mais recommandé)
     const signature = req.headers['x-twilio-email-event-webhook-signature'];
     const timestamp = req.headers['x-twilio-email-event-webhook-timestamp'];
@@ -36,8 +43,11 @@ router.post('/sendgrid', async (req: Request, res: Response) => {
 
     if (!Array.isArray(events)) {
       logger.warn('Invalid SendGrid webhook payload');
+      console.error('❌ Invalid payload - not an array');
       return res.status(400).json({ error: 'Invalid payload' });
     }
+    
+    console.log(`✅ Processing ${events.length} SendGrid events`);
 
     for (const event of events) {
       logger.info(`SendGrid event: ${event.event}`, {
