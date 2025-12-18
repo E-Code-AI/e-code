@@ -86,7 +86,7 @@ A cross-platform desktop application featuring multi-window support (`WindowMana
 ### Mobile Application (React Native + Expo)
 A cross-platform mobile application providing platform-specific haptic feedback (`expo-haptics`), reusable swipe-to-action components (`react-native-gesture-handler`), and platform-specific font rendering. It implements an AsyncStorage-backed offline cache with TTL and stale-while-revalidate strategy.
 
-## Security Audit (December 2024) - 142 Issues Resolved
+## Security Audit (December 2025) - 142 Issues Resolved
 
 ### Critical Security Fixes
 - **Auth Bypass Prevention:** Triple `NODE_ENV` production guards in dev-auth-bypass.ts
