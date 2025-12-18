@@ -13,6 +13,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
+import { safeSessionStorage } from '@/lib/safe-storage';
 import type { File, Project } from '@shared/schema';
 import type { ActivityItem } from '@/components/ide/ReplitActivityBar';
 import type { Tab as EditorTab } from '@/components/ide/ReplitTabBar';
@@ -72,20 +73,13 @@ const getStorageKey = (projectId: string) => `ide-state-${projectId}`;
 
 const loadPersistedState = (projectId: string) => {
   if (typeof window === 'undefined') return null;
-  try {
-    const stored = sessionStorage.getItem(getStorageKey(projectId));
-    return stored ? JSON.parse(stored) : null;
-  } catch { /* Storage check - expected to fail in some environments */
-    return null;
-  }
+  const stored = safeSessionStorage.getItem(getStorageKey(projectId));
+  return stored ? JSON.parse(stored) : null;
 };
 
 const savePersistedState = (projectId: string, state: Record<string, unknown>) => {
   if (typeof window === 'undefined') return;
-  try {
-    sessionStorage.setItem(getStorageKey(projectId), JSON.stringify(state));
-  } catch { /* Storage quota - expected to fail when storage is full */
-  }
+  safeSessionStorage.setItem(getStorageKey(projectId), JSON.stringify(state));
 };
 
 const decodeBootstrapToken = (token: string) => {
@@ -128,13 +122,13 @@ const defaultAgentToolsSettings: AgentToolsSettings = {
 
 const getStoredAgentToolsSettings = (projectId: string): AgentToolsSettings | null => {
   if (typeof window === 'undefined') return null;
-  try {
-    const stored = sessionStorage.getItem(`agent-tools-settings-${projectId}`);
-    if (stored) {
+  const stored = safeSessionStorage.getItem(`agent-tools-settings-${projectId}`);
+  if (stored) {
+    try {
       return JSON.parse(stored);
+    } catch (e) {
+      console.error('[useIDEWorkspace] Failed to parse agentToolsSettings:', e);
     }
-  } catch (e) {
-    console.error('[useIDEWorkspace] Failed to load agentToolsSettings:', e);
   }
   return null;
 };
@@ -236,11 +230,7 @@ export function useIDEWorkspace(projectId: string) {
 
   const setAgentToolsSettings = useCallback((newSettings: AgentToolsSettings) => {
     setAgentToolsSettingsInternal(newSettings);
-    try {
-      sessionStorage.setItem(`agent-tools-settings-${projectId}`, JSON.stringify(newSettings));
-    } catch (e) {
-      console.error('[useIDEWorkspace] Failed to save agentToolsSettings:', e);
-    }
+    safeSessionStorage.setItem(`agent-tools-settings-${projectId}`, JSON.stringify(newSettings));
   }, [projectId]);
 
   // ========== GIT STATES ==========
@@ -259,7 +249,7 @@ export function useIDEWorkspace(projectId: string) {
   const bootstrapPromptKey = `agent-prompt-${projectId}`;
   const [persistedBootstrapPrompt, setPersistedBootstrapPrompt] = useState<string | null>(() => {
     if (typeof window !== 'undefined') {
-      const saved = sessionStorage.getItem(bootstrapPromptKey);
+      const saved = safeSessionStorage.getItem(bootstrapPromptKey);
       if (saved) return saved;
     }
     return null;
@@ -318,7 +308,7 @@ export function useIDEWorkspace(projectId: string) {
     ? 'failed'
     : 'idle';
 
-  const storedPrompt = projectId ? sessionStorage.getItem(`agent-prompt-${projectId}`) : null;
+  const storedPrompt = projectId ? safeSessionStorage.getItem(`agent-prompt-${projectId}`) : null;
 
   const agentInitialPrompt = useMemo(() => {
     if (promptParam) return promptParam;
@@ -333,7 +323,7 @@ export function useIDEWorkspace(projectId: string) {
   // Persist prompt from URL param
   useEffect(() => {
     if (promptParam && projectId) {
-      sessionStorage.setItem(`agent-prompt-${projectId}`, promptParam);
+      safeSessionStorage.setItem(`agent-prompt-${projectId}`, promptParam);
       const url = new URL(window.location.href);
       url.searchParams.delete('prompt');
       window.history.replaceState({}, '', url);
@@ -344,7 +334,7 @@ export function useIDEWorkspace(projectId: string) {
   useEffect(() => {
     if (bootstrapToken && project?.description && !persistedBootstrapPrompt) {
       setPersistedBootstrapPrompt(project.description);
-      sessionStorage.setItem(bootstrapPromptKey, project.description);
+      safeSessionStorage.setItem(bootstrapPromptKey, project.description);
     }
   }, [bootstrapToken, project?.description, persistedBootstrapPrompt, bootstrapPromptKey]);
 

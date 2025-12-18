@@ -103,6 +103,7 @@
       ],
       "icon": "resources/icon.ico",
       "publisherName": "E-Code",
+      "certificateSubjectName": "E-Code",
       "verifyUpdateCodeSignature": true,
       "signingHashAlgorithms": ["sha256"],
       "signDlls": true

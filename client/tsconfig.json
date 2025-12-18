@@ -1,0 +1,21 @@
+{
+  "extends": "../tsconfig.json",
+  "include": ["src/**/*"],
+  "compilerOptions": {
+    "strict": true,
+    "noImplicitAny": false,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@shared/*": ["../shared/*"],
+      "@shared/schema": ["../shared/schema.ts"],
+      "@shared/schema.ts": ["../shared/schema.ts"]
+    }
+  }
+}

@@ -211,6 +211,21 @@ textarea:focus {
   background-color: var(--ecode-text-secondary);
 }
 
+/* Mobile touch targets - minimum 44x44px */
+@media (max-width: 768px) {
+  button,
+  [role="button"],
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Ensure icon buttons have proper padding */
+  .btn-icon {
+    padding: 10px;
+  }
+}
+
 /* Mobile-specific utilities */
 @media (max-width: 768px) {
   /* Hide scrollbars but keep scrolling */

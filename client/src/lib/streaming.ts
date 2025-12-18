@@ -3,6 +3,8 @@
  * Handles Server-Sent Events streaming responses from the backend
  */
 
+import { safeJsonParse } from './safe-json';
+
 export interface StreamingOptions {
   onChunk: (content: string) => void;
   onComplete?: (provider: string) => void;
@@ -67,19 +69,16 @@ export async function streamCodeAction(
 
       for (const line of lines) {
         if (line.startsWith('data: ')) {
-          try {
-            const data = JSON.parse(line.slice(6));
-            if (data.content) {
-              options.onChunk(data.content);
-            }
-            if (data.done) {
-              options.onComplete?.(data.provider || 'unknown');
-            }
-            if (data.error) {
-              options.onError?.(data.error);
-            }
-          } catch (e) {
-            console.warn('Failed to parse SSE data:', line);
+          const data = safeJsonParse<{ content?: string; done?: boolean; provider?: string; error?: string } | null>(line.slice(6), null);
+          if (!data) continue;
+          if (data.content) {
+            options.onChunk(data.content);
+          }
+          if (data.done) {
+            options.onComplete?.(data.provider || 'unknown');
+          }
+          if (data.error) {
+            options.onError?.(data.error);
           }
         }
       }
@@ -87,16 +86,14 @@ export async function streamCodeAction(
 
     // Process any remaining buffer
     if (buffer.startsWith('data: ')) {
-      try {
-        const data = JSON.parse(buffer.slice(6));
+      const data = safeJsonParse<{ content?: string; done?: boolean; provider?: string } | null>(buffer.slice(6), null);
+      if (data) {
         if (data.content) {
           options.onChunk(data.content);
         }
         if (data.done) {
           options.onComplete?.(data.provider || 'unknown');
         }
-      } catch (err) {
-        console.warn('[Streaming] Incomplete final SSE chunk, ignoring:', err);
       }
     }
   } catch (error) {
@@ -165,19 +162,16 @@ export async function streamCodeActionWithAbort(
 
       for (const line of lines) {
         if (line.startsWith('data: ')) {
-          try {
-            const data = JSON.parse(line.slice(6));
-            if (data.content) {
-              options.onChunk(data.content);
-            }
-            if (data.done) {
-              options.onComplete?.(data.provider || 'unknown');
-            }
-            if (data.error) {
-              options.onError?.(data.error);
-            }
-          } catch (e) {
-            console.warn('Failed to parse SSE data:', line);
+          const data = safeJsonParse<{ content?: string; done?: boolean; provider?: string; error?: string } | null>(line.slice(6), null);
+          if (!data) continue;
+          if (data.content) {
+            options.onChunk(data.content);
+          }
+          if (data.done) {
+            options.onComplete?.(data.provider || 'unknown');
+          }
+          if (data.error) {
+            options.onError?.(data.error);
           }
         }
       }

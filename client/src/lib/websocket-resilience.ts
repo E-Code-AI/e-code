@@ -10,6 +10,8 @@
  * - Connection quality monitoring
  */
 
+import { safeJsonParse } from './safe-json';
+
 export type ConnectionState = 
   | 'connecting'
   | 'connected'
@@ -221,23 +223,19 @@ export class ResilientWebSocket {
    * Handle incoming messages
    */
   private handleMessage = (event: MessageEvent): void => {
-    try {
-      const data = JSON.parse(event.data);
-      
-      // Handle pong responses for heartbeat
-      if (data.type === 'pong') {
-        this.lastPongTime = Date.now();
-        if (this.heartbeatTimeoutTimer) {
-          clearTimeout(this.heartbeatTimeoutTimer);
-          this.heartbeatTimeoutTimer = null;
-        }
-        return;
+    const data = safeJsonParse<{ type?: string } | null>(event.data, null);
+    
+    // Handle pong responses for heartbeat
+    if (data?.type === 'pong') {
+      this.lastPongTime = Date.now();
+      if (this.heartbeatTimeoutTimer) {
+        clearTimeout(this.heartbeatTimeoutTimer);
+        this.heartbeatTimeoutTimer = null;
       }
-    } catch {
-      // Not JSON, pass through to listeners
+      return;
     }
     
-    // Forward to message listeners
+    // Forward to message listeners (including non-JSON messages)
     this.messageListeners.forEach(listener => {
       try {
         listener(event);

@@ -9,6 +9,7 @@ import { centralUpgradeDispatcher } from '../websocket/central-upgrade-dispatche
 import type { IncomingMessage } from 'http';
 import type { Duplex } from 'stream';
 import { createLogger } from '../utils/logger';
+import { safePath } from '../utils/safe-path';
 
 const logger = createLogger('shell-router');
 const router = Router();
@@ -58,8 +59,20 @@ function initializeShellWebSocket() {
       return;
     }
 
-    // Create shell home directory for user
-    const userHome = path.join(os.homedir(), 'ecode-shells', `user-${userId}`);
+    // SECURITY: Validate userId to prevent path traversal
+    if (!Number.isInteger(userId) || userId < 0) {
+      ws.close(1008, 'Invalid user ID');
+      return;
+    }
+
+    // Create shell home directory for user with path traversal protection
+    const shellsBaseDir = path.join(os.homedir(), 'ecode-shells');
+    const userHome = safePath(shellsBaseDir, `user-${userId}`);
+    
+    if (!userHome) {
+      ws.close(1008, 'Invalid path');
+      return;
+    }
     
     try {
       await fs.mkdir(userHome, { recursive: true });
