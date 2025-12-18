@@ -265,7 +265,7 @@ export function ReplitObjectStorage({ projectId, className }: ReplitObjectStorag
   };
 
   const handleShare = (object: StorageObject) => {
-    const shareUrl = object.url || `https://storage.e-code.app/${selectedBucket?.name}/${object.key}`;
+    const shareUrl = object.url || `https://storage.e-code.ai/${selectedBucket?.name}/${object.key}`;
     navigator.clipboard.writeText(shareUrl);
     toast({
       title: 'Link Copied',

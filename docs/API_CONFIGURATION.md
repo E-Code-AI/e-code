@@ -262,8 +262,8 @@ export const WS_BASE_URL = 'wss://api.e-code.ai';    // Correct domain
 
 **SDK** (sdk/javascript/src/index.ts):
 ```typescript
-baseUrl: 'https://e-code.app'  // Wrong domain, different from CLI
-websocketUrl: 'wss://e-code.app'  // Wrong domain
+baseUrl: 'https://e-code.ai'  // Wrong domain, different from CLI
+websocketUrl: 'wss://e-code.ai'  // Wrong domain
 ```
 
 ### After (Consistent)
@@ -310,7 +310,7 @@ npm run build
 **Solution**: Import from `@shared/config` instead of hardcoding:
 ```typescript
 // ❌ Wrong
-const apiURL = 'https://e-code.app/api';
+const apiURL = 'https://e-code.ai/api';
 
 // ✅ Correct
 import { getAPIURL } from '@shared/config';

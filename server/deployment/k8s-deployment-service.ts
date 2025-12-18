@@ -90,7 +90,7 @@ export class K8sDeploymentService {
       id: deploymentId,
       projectId: config.projectId,
       status: 'deploying',
-      url: `https://${project.name.toLowerCase().replace(/\s+/g, '-')}-${deploymentId}.e-code.app`,
+      url: `https://${project.name.toLowerCase().replace(/\s+/g, '-')}-${deploymentId}.e-code.ai`,
       customDomain: config.customDomain,
       regions: config.regions || ['us-east-1'],
       replicas: 1,

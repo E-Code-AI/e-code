@@ -271,7 +271,7 @@ export default function HealthDashboard() {
                   <div className="flex-1">
                     <h4 className="font-medium text-sm">SSL Certificate</h4>
                     <p className="text-xs text-muted-foreground mt-1">
-                      SSL certificate for *.e-code.app expires in 14 days. Renewal recommended.
+                      SSL certificate for *.e-code.ai expires in 14 days. Renewal recommended.
                     </p>
                     <Button size="sm" variant="link" className="h-auto p-0 text-xs mt-1">
                       Renew Now →

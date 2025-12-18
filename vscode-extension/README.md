@@ -40,6 +40,6 @@ Official Visual Studio Code extension for E-Code - the cloud development platfor
 ## Extension Settings
 
 - `ecode.apiToken`: Your E-Code API token
-- `ecode.apiUrl`: E-Code API URL (default: https://e-code.app)
+- `ecode.apiUrl`: E-Code API URL (default: https://e-code.ai)
 - `ecode.autoSync`: Automatically sync changes (default: true)
 - `ecode.showNotifications`: Show deployment notifications (default: true)

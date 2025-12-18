@@ -140,12 +140,12 @@ export class DeploymentManager {
       deployment.customUrl = `https://${config.customDomain}`;
     } else {
       const subdomain = `${config.projectId}-${deploymentId.slice(0, 8)}`;
-      deployment.url = `https://${subdomain}.e-code.app`;
+      deployment.url = `https://${subdomain}.e-code.ai`;
     }
 
     // Setup SSL certificate if enabled
     if (config.sslEnabled) {
-      await this.setupSSLCertificate(deploymentId, config.customDomain || `${config.projectId}-${deploymentId.slice(0, 8)}.e-code.app`);
+      await this.setupSSLCertificate(deploymentId, config.customDomain || `${config.projectId}-${deploymentId.slice(0, 8)}.e-code.ai`);
     }
 
     // Create deployment record in database
@@ -719,7 +719,7 @@ export class DeploymentManager {
     // Perform certificate renewal
     const domain = deployment.customUrl 
       ? deployment.customUrl.replace(/^https?:\/\//, '') 
-      : `${deploymentId}.e-code.app`;
+      : `${deploymentId}.e-code.ai`;
     
     // Re-use the setupSSLCertificate method which handles both custom and subdomain certs
     await this.setupSSLCertificate(deploymentId, domain);
@@ -783,7 +783,7 @@ export class DeploymentManager {
       if (!hasValidationRecord) {
         // Also check for CNAME validation as alternative
         const cname = await dns.resolveCname(domain).catch(() => null);
-        if (!cname || !cname[0]?.endsWith('.e-code.app')) {
+        if (!cname || !cname[0]?.endsWith('.e-code.ai')) {
           throw new Error(`Domain validation failed. Please add TXT record ${txtRecordName} with value: ${validationToken}`);
         }
       }

@@ -53,10 +53,10 @@ export class ContainerOrchestrator {
   private initializeTargets() {
     // Initialize deployment targets (Kubernetes clusters or Docker hosts)
     const targets: DeploymentTarget[] = [
-      { id: 'us-east-1', region: 'us-east-1', host: 'k8s-us-east-1.e-code.app', port: 443, status: 'active' },
-      { id: 'us-west-1', region: 'us-west-1', host: 'k8s-us-west-1.e-code.app', port: 443, status: 'active' },
-      { id: 'eu-west-1', region: 'eu-west-1', host: 'k8s-eu-west-1.e-code.app', port: 443, status: 'active' },
-      { id: 'ap-northeast-1', region: 'ap-northeast-1', host: 'k8s-ap-northeast-1.e-code.app', port: 443, status: 'active' }
+      { id: 'us-east-1', region: 'us-east-1', host: 'k8s-us-east-1.e-code.ai', port: 443, status: 'active' },
+      { id: 'us-west-1', region: 'us-west-1', host: 'k8s-us-west-1.e-code.ai', port: 443, status: 'active' },
+      { id: 'eu-west-1', region: 'eu-west-1', host: 'k8s-eu-west-1.e-code.ai', port: 443, status: 'active' },
+      { id: 'ap-northeast-1', region: 'ap-northeast-1', host: 'k8s-ap-northeast-1.e-code.ai', port: 443, status: 'active' }
     ];
 
     targets.forEach(target => {
@@ -214,7 +214,7 @@ spec:
 
   private async setupIngress(deployment: ContainerDeployment): Promise<string> {
     const subdomain = deployment.containerName;
-    const domain = 'e-code.app';
+    const domain = 'e-code.ai';
     const url = `https://${subdomain}.${domain}`;
 
     const ingressManifest = `apiVersion: networking.k8s.io/v1

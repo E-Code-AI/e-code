@@ -391,7 +391,7 @@ export class KubernetesOrchestrator {
         },
         spec: {
           rules: [{
-            host: `${projectId}.e-code.app`,
+            host: `${projectId}.e-code.ai`,
             http: {
               paths: [{
                 path: '/',
@@ -408,7 +408,7 @@ export class KubernetesOrchestrator {
             }
           }],
           tls: [{
-            hosts: [`${projectId}.e-code.app`],
+            hosts: [`${projectId}.e-code.ai`],
             secretName: `${projectId}-tls`
           }]
         }

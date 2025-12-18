@@ -82,7 +82,7 @@ const DEMO_STEPS: DemoStep[] = [
     duration: 3000,
     code: [
       '// App completed and deployed!',
-      '// Live at: https://todo.e-code.app',
+      '// Live at: https://todo.e-code.ai',
       '',
       'export default TodoApp;',
       '',
@@ -96,7 +96,7 @@ const DEMO_STEPS: DemoStep[] = [
       '✓ Deployed to E-Code Cloud',
       '',
       '🎉 App is live at:',
-      'https://todo.e-code.app',
+      'https://todo.e-code.ai',
       '',
       'Share your creation!'
     ],

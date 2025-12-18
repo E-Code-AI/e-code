@@ -104,7 +104,7 @@ externalPort = 80
 
 ### Support Production
 - [ ] Documentation complète
-- [ ] Status page public (status.e-code.app)
+- [ ] Status page public (status.e-code.ai)
 - [ ] SLA 99.9% uptime garanti
 - [ ] Support email 24/7
 - [ ] Incident response playbook

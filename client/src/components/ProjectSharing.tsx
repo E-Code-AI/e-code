@@ -45,7 +45,7 @@ type SharePermission = 'private' | 'unlisted' | 'public';
 
 export function ProjectSharing({ projectId, projectName, className }: ProjectSharingProps) {
   const [sharePermission, setSharePermission] = useState<SharePermission>('private');
-  const [shareLink, setShareLink] = useState(`https://e-code.app/u/user/${projectName}`);
+  const [shareLink, setShareLink] = useState(`https://e-code.ai/u/user/${projectName}`);
   const [collaborators, setCollaborators] = useState<Collaborator[]>([
     {
       id: '1',

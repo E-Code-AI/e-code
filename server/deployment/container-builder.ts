@@ -14,7 +14,7 @@ export interface BuildConfig {
 }
 
 export class ContainerBuilder {
-  private registryUrl: string = 'registry.e-code.app';
+  private registryUrl: string = 'registry.e-code.ai';
 
   async buildImage(config: BuildConfig): Promise<string> {
     const project = await storage.getProject(config.projectId);

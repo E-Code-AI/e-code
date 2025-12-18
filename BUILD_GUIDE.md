@@ -59,7 +59,7 @@ Create these secrets in your EAS dashboard or `.env` file:
 
 | Variable | Description |
 |----------|-------------|
-| `EXPO_PUBLIC_API_BASE` | Backend API URL (e.g., `https://e-code.app/api`) |
+| `EXPO_PUBLIC_API_BASE` | Backend API URL (e.g., `https://e-code.ai/api`) |
 | `APPLE_ID` | Your Apple Developer email |
 | `ASC_APP_ID` | App Store Connect App ID |
 | `APPLE_TEAM_ID` | Apple Developer Team ID |
@@ -219,7 +219,7 @@ npm run dev
 
 ```bash
 # Test WebSocket connection (replace with your domain)
-wscat -c "wss://e-code.app/?channel=agent"
+wscat -c "wss://e-code.ai/?channel=agent"
 
 # Expected: Connection established
 # If fails: Check proxy configuration
@@ -229,7 +229,7 @@ wscat -c "wss://e-code.app/?channel=agent"
 
 ```javascript
 // Browser console test
-const ws = new WebSocket('wss://e-code.app/?channel=collaboration');
+const ws = new WebSocket('wss://e-code.ai/?channel=collaboration');
 ws.onopen = () => console.log('Connected!');
 ws.onerror = (e) => console.error('Error:', e);
 ws.onclose = (e) => console.log('Closed:', e.code, e.reason);

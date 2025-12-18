@@ -135,7 +135,7 @@ export class RealDeploymentService {
     if (config.customDomain) {
       return `https://${config.customDomain}`;
     }
-    return `https://${config.projectName.toLowerCase()}-${config.projectId}.e-code.app`;
+    return `https://${config.projectName.toLowerCase()}-${config.projectId}.e-code.ai`;
   }
   
   private async processBuildQueue() {
@@ -316,7 +316,7 @@ export class RealDeploymentService {
       });
     }
     
-    deployment.endpoints.cdn = `https://cdn.e-code.app/${deployment.id}`;
+    deployment.endpoints.cdn = `https://cdn.e-code.ai/${deployment.id}`;
     deployment.deployment.logs.push('Static deployment complete');
   }
   
@@ -406,7 +406,7 @@ export class RealDeploymentService {
       deployment.deployment.logs.push(`Deployed function: ${func.name}`);
     }
     
-    deployment.endpoints.api = `https://api.e-code.app/${deployment.id}`;
+    deployment.endpoints.api = `https://api.e-code.ai/${deployment.id}`;
   }
   
   private async deployScheduled(deployment: RealDeploymentResult, config: RealDeploymentConfig) {
@@ -456,11 +456,11 @@ export class RealDeploymentService {
       await edgeManager.deployToEdge(deployment.id, {
         locations: [region],
         cacheStrategy: 'aggressive',
-        customDomains: [`${deployment.id}.${region}.e-code.app`]
+        customDomains: [`${deployment.id}.${region}.e-code.ai`]
       });
     }
     
-    deployment.endpoints.cdn = `https://cdn.e-code.app/${deployment.id}`;
+    deployment.endpoints.cdn = `https://cdn.e-code.ai/${deployment.id}`;
     deployment.deployment.logs.push('CDN configured successfully');
   }
   

@@ -32,7 +32,7 @@ export class WebSocketService {
     this.io = new SocketIOServer(httpServer, {
       cors: {
         origin: process.env.NODE_ENV === 'production' 
-          ? ['https://e-code.app', 'https://www.e-code.app']
+          ? ['https://e-code.ai', 'https://www.e-code.ai']
           : ['http://localhost:5173', 'http://localhost:3000'],
         credentials: true,
       },

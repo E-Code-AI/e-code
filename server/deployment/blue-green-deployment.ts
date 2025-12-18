@@ -100,7 +100,7 @@ export class BlueGreenDeploymentService {
           version,
           status: 'inactive',
           containerIds: containers.map(c => c.id),
-          deploymentUrl: `https://${targetEnv}.${projectId}.e-code.app`,
+          deploymentUrl: `https://${targetEnv}.${projectId}.e-code.ai`,
         })
         .where(and(
           eq(deploymentEnvironments.projectId, projectId),
@@ -126,7 +126,7 @@ export class BlueGreenDeploymentService {
         environment: targetEnv,
         version,
         status: 'deployed',
-        url: `https://${targetEnv}.${projectId}.e-code.app`,
+        url: `https://${targetEnv}.${projectId}.e-code.ai`,
         containers: containers.length,
       };
     } catch (error) {
@@ -292,8 +292,8 @@ export class BlueGreenDeploymentService {
       version,
       status,
       trafficPercentage,
-      healthCheckUrl: `https://${environmentName}.${projectId}.e-code.app/health`,
-      deploymentUrl: `https://${environmentName}.${projectId}.e-code.app`,
+      healthCheckUrl: `https://${environmentName}.${projectId}.e-code.ai/health`,
+      deploymentUrl: `https://${environmentName}.${projectId}.e-code.ai`,
       containerIds: [],
     });
   }

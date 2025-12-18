@@ -158,7 +158,7 @@ export class MobileContainerService {
     
     return {
       status: 'success',
-      url: `https://project-${projectId}.e-code.app`,
+      url: `https://project-${projectId}.e-code.ai`,
       steps,
       deploymentId: `deploy-${Date.now()}`
     };

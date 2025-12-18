@@ -2,12 +2,12 @@
  * Expo configuration for E-Code Mobile
  * 
  * REQUIRED ENVIRONMENT VARIABLES FOR PRODUCTION:
- * - EXPO_PUBLIC_API_BASE: The base URL for the API (e.g., https://api.e-code.app/api)
+ * - EXPO_PUBLIC_API_BASE: The base URL for the API (e.g., https://api.e-code.ai/api)
  * - EXPO_PUBLIC_ENV: Environment name (development|staging|production)
  * 
  * Example .env file:
  * ```
- * EXPO_PUBLIC_API_BASE=https://api.e-code.app/api
+ * EXPO_PUBLIC_API_BASE=https://api.e-code.ai/api
  * EXPO_PUBLIC_ENV=production
  * ```
  * 
@@ -35,7 +35,7 @@ export default ({ config }) => {
     console.error('  Please set EXPO_PUBLIC_API_BASE in your environment.');
     console.error('');
     console.error('  Example:');
-    console.error('    EXPO_PUBLIC_API_BASE=https://api.e-code.app/api');
+    console.error('    EXPO_PUBLIC_API_BASE=https://api.e-code.ai/api');
     console.error('');
     console.error('  Current configuration:');
     console.error(`    Environment: ${environment}`);

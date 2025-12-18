@@ -91,7 +91,7 @@ export class AdvancedDeploymentService {
       {
         type: 'CNAME',
         name: 'www',
-        value: 'cname.e-code.app',
+        value: 'cname.e-code.ai',
         verified: false
       },
       {
