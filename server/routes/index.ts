@@ -78,6 +78,7 @@ import autoCheckpointsRouter from "./auto-checkpoints.router";
 import mobileSessionsRouter from "./mobile-sessions.router";
 import mobileBuildsRouter from "./mobile-builds.router";
 import rollbackRouter from "./rollback.router";
+import { replitdbRouter } from "./replitdb.router";
 
 export class MainRouter {
   private authRouter: AuthRouter;
@@ -306,6 +307,9 @@ export class MainRouter {
     
     // Database routes (Admin-Only - System-wide DB inspector)
     app.use('/api/admin/database', tierRateLimiters.api, databaseRouter);
+    
+    // ReplitDB-compatible Key-Value Database API (for container code)
+    app.use('/api/db', replitdbRouter);
     
     // Project Data routes (Project-scoped data for regular users)
     app.use('/api/projects', tierRateLimiters.api, projectDataRouter);
