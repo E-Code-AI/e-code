@@ -5407,11 +5407,36 @@ export const getStorage = () => storage;
   }
 })();
 
+// Helper to get DATABASE_URL from env or /tmp/replitdb (production mode)
+function getSessionDatabaseUrl(): string | null {
+  if (process.env.DATABASE_URL) {
+    return process.env.DATABASE_URL;
+  }
+  
+  try {
+    const replitDbPath = '/tmp/replitdb';
+    const fs = require('fs');
+    if (fs.existsSync(replitDbPath)) {
+      const dbUrl = fs.readFileSync(replitDbPath, 'utf-8').trim();
+      if (dbUrl) {
+        console.log('[Session Store] Using DATABASE_URL from /tmp/replitdb (production mode)');
+        return dbUrl;
+      }
+    }
+  } catch (error) {
+    console.warn('[Session Store] Could not read /tmp/replitdb:', error);
+  }
+  
+  return null;
+}
+
 // Initialize session store with error handling
 let sessionStore: any;
 
 try {
-  if (!process.env.DATABASE_URL) {
+  const sessionDbUrl = getSessionDatabaseUrl();
+  
+  if (!sessionDbUrl) {
     console.error('[Storage Module] DATABASE_URL not set, using dummy session store');
     // Create a dummy session store for development
     sessionStore = {
@@ -5424,7 +5449,7 @@ try {
     // Create a native pg pool for session store
     // ✅ PRODUCTION FIX: Increased timeouts and pool size to prevent connection storms
     const pgPool = new Pool({
-      connectionString: process.env.DATABASE_URL,
+      connectionString: sessionDbUrl,
       max: 20, // Aligned with main pool (db.ts) for consistency
       min: 2, // Keep some connections warm
       idleTimeoutMillis: 60000, // 60s - allow longer idle time
