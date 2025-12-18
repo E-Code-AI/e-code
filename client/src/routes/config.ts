@@ -10,14 +10,6 @@ export interface RouteConfig {
 }
 
 export const placeholderRoutes = [
-  { path: "/authentication", feature: "authentication" },
-  { path: "/extensions", feature: "extensions" },
-  { path: "/integrations", feature: "integrations" },
-  { path: "/networking", feature: "networking" },
-  { path: "/threads", feature: "threads" },
-  { path: "/vnc", feature: "vnc" },
-  { path: "/referrals", feature: "referrals" },
-  { path: "/teams/new", feature: "teams/new" },
 ];
 
 export const publicRoutes: RouteConfig[] = [
@@ -107,8 +99,10 @@ export const protectedRoutes: RouteConfig[] = [
   { path: "/apps", component: Pages.Apps, layout: "replit" },
   { path: "/explore", component: Pages.Explore, layout: "replit" },
   { path: "/teams", component: Pages.Teams, layout: "replit" },
+  { path: "/teams/new", component: Pages.NewTeamPage, layout: "replit" },
   { path: "/teams/:id", component: Pages.TeamPage, layout: "replit" },
   { path: "/teams/:id/settings", component: Pages.TeamSettings, layout: "replit" },
+  { path: "/vnc", component: Pages.VNCPage, layout: "replit" },
   { path: "/notifications", component: Pages.Notifications, layout: "replit" },
   { path: "/analytics", component: Pages.Analytics, layout: "replit" },
   { path: "/scalability", component: Pages.Scalability, layout: "replit" },
@@ -189,6 +183,12 @@ export const protectedRoutes: RouteConfig[] = [
   { path: "/packages", component: Pages.PackagesPage, layout: "replit" },
   { path: "/kv-store", component: Pages.KVStorePage, layout: "replit" },
   { path: "/preview", component: Pages.PreviewPage, layout: "replit" },
+  { path: "/authentication", component: Pages.AuthenticationPage, layout: "replit" },
+  { path: "/extensions", component: Pages.ExtensionsPage, layout: "replit" },
+  { path: "/integrations", component: Pages.IntegrationsPage, layout: "replit" },
+  { path: "/networking", component: Pages.NetworkingPage, layout: "replit" },
+  { path: "/threads", component: Pages.ThreadsPage, layout: "replit" },
+  { path: "/referrals", component: Pages.ReferralsPage, layout: "replit" },
 ];
 
 export interface SolarTechAppConfig {
