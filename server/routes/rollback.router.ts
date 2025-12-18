@@ -60,7 +60,7 @@ router.get('/api/deployments/:deploymentId/snapshots/:snapshotId', ensureAuthent
     
     logger.info('Fetching snapshot details', { deploymentId, snapshotId });
     
-    const snapshot = await deploymentRollbackService.getSnapshotById(deploymentId, snapshotId);
+    const snapshot = await deploymentRollbackService.findSnapshotInDeployment(deploymentId, snapshotId);
     
     if (!snapshot) {
       return res.status(404).json({

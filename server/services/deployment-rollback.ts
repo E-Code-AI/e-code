@@ -1725,7 +1725,7 @@ export class DeploymentRollbackService extends EventEmitter {
     return history.slice(offset, offset + limit);
   }
 
-  async getSnapshotById(deploymentId: string, snapshotId: string): Promise<DeploymentSnapshot | null> {
+  async findSnapshotInDeployment(deploymentId: string, snapshotId: string): Promise<DeploymentSnapshot | null> {
     const snapshots = await this.listSnapshots(deploymentId);
     return snapshots.find(s => s.id === snapshotId) || null;
   }
