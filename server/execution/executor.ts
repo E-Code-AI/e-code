@@ -2,6 +2,7 @@ import { spawn, execSync } from 'child_process';
 import { writeFileSync, mkdirSync, existsSync, rmSync } from 'fs';
 import path from 'path';
 import os from 'os';
+import { dockerExecutor } from './docker-executor';
 
 export interface ExecutionOptions {
   timeout?: number;
@@ -17,6 +18,9 @@ export interface ExecutionResult {
   memoryUsed: number;
   exitCode: number;
 }
+
+// Check if Docker execution mode is enabled (production)
+const USE_DOCKER_EXECUTION = process.env.EXECUTION_MODE === 'docker' || process.env.NODE_ENV === 'production';
 
 // Per-language execution adapter - returns command and args without shell parsing
 interface LanguageAdapter {
@@ -95,6 +99,33 @@ export class CodeExecutor {
       };
     }
 
+    // Use Docker executor in production for security
+    if (USE_DOCKER_EXECUTION) {
+      try {
+        const dockerResult = await dockerExecutor.executeCode(
+          language.toLowerCase().trim(),
+          code,
+          options.input
+        );
+        return {
+          output: dockerResult.output,
+          error: dockerResult.error || undefined,
+          executionTime: Date.now() - startTime,
+          memoryUsed: 0, // Docker doesn't expose this easily
+          exitCode: dockerResult.exitCode
+        };
+      } catch (error) {
+        return {
+          output: '',
+          error: error instanceof Error ? error.message : 'Docker execution failed',
+          executionTime: Date.now() - startTime,
+          memoryUsed: 0,
+          exitCode: 1
+        };
+      }
+    }
+
+    // Development mode: use local process execution
     let execDir: string | null = null;
 
     try {
