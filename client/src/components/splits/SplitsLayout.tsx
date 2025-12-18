@@ -66,7 +66,7 @@ export function SplitsLayout({ className, onLayoutChange, defaultLayout }: Split
     }),
     useSensor(TouchSensor, {
       activationConstraint: {
-        delay: 250,
+        delay: 100,
         tolerance: 5,
       },
     })

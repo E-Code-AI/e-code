@@ -142,28 +142,92 @@ console.log('[HTTP Server] ✅ Upgrade listener blocking enabled - only dispatch
  * - Replit preview reliability
  * - Load balancer health checks
  * - Container orchestration
+ * 
+ * DYNAMIC SERVICE REGISTRY:
+ * - Services register themselves at startup
+ * - totalServices is dynamically calculated from registry
+ * - Supports runtime service health tracking
  */
 
-// Track server readiness state
+// Dynamic service registry for health checks
+interface ServiceInfo {
+  ready: boolean;
+  lastCheck: Date;
+  error?: string;
+}
+
+const serviceRegistry = new Map<string, ServiceInfo>();
+
+/**
+ * Register a service in the health check registry
+ * Call this when a service begins initialization
+ */
+export function registerService(name: string): void {
+  serviceRegistry.set(name, { ready: false, lastCheck: new Date() });
+}
+
+/**
+ * Mark a service as ready in the registry
+ * Call this when a service successfully initializes
+ */
+export function markServiceReady(name: string): void {
+  const service = serviceRegistry.get(name);
+  if (service) {
+    service.ready = true;
+    service.lastCheck = new Date();
+    delete service.error;
+  } else {
+    serviceRegistry.set(name, { ready: true, lastCheck: new Date() });
+  }
+}
+
+/**
+ * Mark a service as failed in the registry
+ * Call this when a service fails to initialize
+ */
+export function markServiceFailed(name: string, error?: string): void {
+  const service = serviceRegistry.get(name);
+  if (service) {
+    service.ready = false;
+    service.lastCheck = new Date();
+    service.error = error;
+  } else {
+    serviceRegistry.set(name, { ready: false, lastCheck: new Date(), error });
+  }
+}
+
+/**
+ * Get dynamic service counts from registry
+ */
+function getServiceCounts(): { total: number; ready: number; failed: number } {
+  const services = Array.from(serviceRegistry.values());
+  return {
+    total: serviceRegistry.size,
+    ready: services.filter(s => s.ready).length,
+    failed: services.filter(s => !s.ready && s.error).length
+  };
+}
+
+// Track server readiness state (using dynamic counts)
 const serverState = {
   phase: 'starting' as 'starting' | 'listening' | 'loading' | 'ready',
-  servicesLoaded: 0,
-  totalServices: 12,
   startTime: Date.now(),
   errors: [] as string[]
 };
 
-// Main health check - responds with detailed status
+// Main health check - responds with detailed status (dynamic service counts)
 app.get('/health', (_req, res) => {
   const uptime = Date.now() - serverState.startTime;
+  const { total, ready } = getServiceCounts();
+  
   res.json({
     status: serverState.phase === 'ready' ? 'ok' : 'starting',
     phase: serverState.phase,
     uptime: `${Math.round(uptime / 1000)}s`,
-    services: `${serverState.servicesLoaded}/${serverState.totalServices}`,
+    services: `${ready}/${total}`,
     message: serverState.phase === 'ready'
       ? 'Server is fully operational'
-      : `Server is starting (${serverState.servicesLoaded}/${serverState.totalServices} services loaded)`
+      : `Server is starting (${ready}/${total} services loaded)`
   });
 });
 
@@ -172,23 +236,26 @@ app.get('/health/liveness', (_req, res) => {
   res.status(200).json({ status: 'alive' });
 });
 
-// Kubernetes-style readiness probe - returns 503 until server is ready
+// Kubernetes-style readiness probe - returns 503 until server is ready (dynamic counts)
 app.get('/health/readiness', (_req, res) => {
+  const { total, ready } = getServiceCounts();
+  
   if (serverState.phase === 'ready') {
     res.status(200).json({ status: 'ready' });
   } else {
     res.status(503).json({
       status: 'not ready',
       phase: serverState.phase,
-      services: `${serverState.servicesLoaded}/${serverState.totalServices}`
+      services: `${ready}/${total}`
     });
   }
 });
 
-// Helper to track service loading
+// Helper to track service loading (registers and marks ready)
 const trackServiceLoad = (serviceName: string) => {
-  serverState.servicesLoaded++;
-  console.log(`[Startup] ✅ ${serviceName} (${serverState.servicesLoaded}/${serverState.totalServices})`);
+  markServiceReady(serviceName);
+  const { total, ready } = getServiceCounts();
+  console.log(`[Startup] ✅ ${serviceName} (${ready}/${total})`);
 };
 
 // Mark server as listening immediately

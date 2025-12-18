@@ -33,10 +33,30 @@ const buttonVariants = cva(
   }
 )
 
+/**
+ * Button component props
+ * 
+ * @remarks
+ * For icon-only buttons (size="icon"), you MUST provide an aria-label
+ * to ensure accessibility for screen readers.
+ * 
+ * @example
+ * ```tsx
+ * // Icon-only button - aria-label is required
+ * <Button size="icon" aria-label="Delete item">
+ *   <TrashIcon />
+ * </Button>
+ * 
+ * // Button with text - aria-label is optional
+ * <Button>Save Changes</Button>
+ * ```
+ */
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
   asChild?: boolean
+  /** Required for icon-only buttons to provide accessible name */
+  'aria-label'?: string
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(

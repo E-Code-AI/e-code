@@ -93,8 +93,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      // Clear all cached data first to prevent stale data issues
-      queryClient.clear();
+      // Only remove user-specific queries, keep public data like templates, docs, etc.
+      queryClient.removeQueries({ queryKey: ['/api/me'] });
+      queryClient.removeQueries({ queryKey: ['/api/user'] });
+      queryClient.removeQueries({ queryKey: ['/api/notifications'] });
+      queryClient.removeQueries({ queryKey: ['/api/projects'] });
       // Make the logout API call
       await apiRequest<void>("POST", "/api/logout");
       return;
@@ -111,8 +114,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onError: (error: Error) => {
       console.error('Logout error:', error);
-      // Still clear cache on error to ensure clean state
-      queryClient.clear();
+      // Still clear user-specific queries on error to ensure clean state
+      queryClient.removeQueries({ queryKey: ['/api/me'] });
+      queryClient.removeQueries({ queryKey: ['/api/user'] });
+      queryClient.removeQueries({ queryKey: ['/api/notifications'] });
+      queryClient.removeQueries({ queryKey: ['/api/projects'] });
       queryClient.setQueryData(["/api/me"], null);
       toast({
         title: "Logout failed",

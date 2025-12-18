@@ -67,20 +67,27 @@ export function PerformanceDashboard() {
 
   // Set up SSE for real-time updates
   useEffect(() => {
-    const eventSource = new EventSource('/api/monitoring/stream');
+    let eventSource: EventSource | null = null;
     
-    eventSource.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      setRealTimeMetrics(data);
-    };
+    const start = async () => {
+      eventSource = new EventSource('/api/monitoring/stream');
+      
+      eventSource.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        setRealTimeMetrics(data);
+      };
 
-    eventSource.onerror = () => {
-      console.error('SSE connection error');
-      eventSource.close();
+      eventSource.onerror = () => {
+        console.error('SSE connection error');
+        eventSource?.close();
+        eventSource = null;
+      };
     };
+    
+    start();
 
     return () => {
-      eventSource.close();
+      eventSource?.close();
     };
   }, []);
 

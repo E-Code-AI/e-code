@@ -7,6 +7,7 @@ import { monitoring } from "./lib/monitoring";
 import { initTelemetry } from "./lib/telemetry";
 import { registerServiceWorker } from "./utils/service-worker-registration";
 import { cacheReconciliation } from "./lib/cache-reconciliation";
+import { setupDynamicVH } from "./utils/dynamic-vh";
 
 // Initialize production monitoring
 // This will automatically capture errors and performance metrics
@@ -21,6 +22,9 @@ initTelemetry({
 
 // Register PWA Service Worker
 registerServiceWorker();
+
+// Initialize dynamic viewport height for mobile devices
+setupDynamicVH();
 
 // Initialize Fortune 500 Cache Reconciliation Layer
 // Coordinates Service Worker cache with TanStack Query for seamless offline UX

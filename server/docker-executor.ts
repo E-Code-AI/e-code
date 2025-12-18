@@ -6,6 +6,8 @@
 import { spawn, ChildProcess, execSync } from 'child_process';
 import * as path from 'path';
 import * as fs from 'fs';
+import * as os from 'os';
+import Docker from 'dockerode';
 import { File } from '@shared/schema';
 import { storage } from './storage';
 import { resourceMonitor } from './services/resource-monitor';
@@ -57,6 +59,44 @@ for (let port = 3000; port <= 4000; port++) {
 const portsInUse = new Set<number>();
 
 let dockerAvailable: boolean | null = null;
+
+const docker = new Docker();
+
+/**
+ * Execute container with timeout enforcement
+ * Kills and removes container if it exceeds the specified timeout
+ */
+async function executeWithTimeout(container: Docker.Container, timeout: number): Promise<any> {
+  const timeoutPromise = new Promise((_, reject) => {
+    setTimeout(async () => {
+      try {
+        await container.kill();
+        await container.remove({ force: true });
+      } catch (e) {
+        console.error('Failed to kill container:', e);
+      }
+      reject(new Error(`Container execution timeout after ${timeout}ms`));
+    }, timeout);
+  });
+
+  return Promise.race([
+    container.wait(),
+    timeoutPromise
+  ]);
+}
+
+/**
+ * Temp directory wrapper with automatic cleanup
+ * Ensures temp directories are always cleaned up, even on errors
+ */
+async function withTempDir<T>(fn: (dir: string) => Promise<T>): Promise<T> {
+  const tmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'ecode-'));
+  try {
+    return await fn(tmpDir);
+  } finally {
+    await fs.promises.rm(tmpDir, { recursive: true, force: true }).catch(() => {});
+  }
+}
 
 /**
  * Check if Docker is available on the system
@@ -612,10 +652,7 @@ export class DockerExecutor {
         };
     }
 
-    const tempDir = path.join(process.cwd(), 'temp', 'grading', `exec-${Date.now()}`);
-
-    try {
-      await fs.promises.mkdir(tempDir, { recursive: true });
+    return withTempDir(async (tempDir) => {
       await fs.promises.writeFile(path.join(tempDir, fileName), code);
       await fs.promises.chmod(tempDir, 0o755);
 
@@ -689,15 +726,9 @@ export class DockerExecutor {
           errorOutput += data.toString();
         });
 
-        dockerProcess.on('exit', async (exitCode: number | null) => {
+        dockerProcess.on('exit', (exitCode: number | null) => {
           clearTimeout(timeoutHandle);
           const executionTime = Date.now() - startTime;
-
-          try {
-            await fs.promises.rm(tempDir, { recursive: true, force: true });
-          } catch {
-            // Expected: temp cleanup may fail if already cleaned or permissions issue
-          }
 
           if (killed) {
             resolve({
@@ -721,15 +752,9 @@ export class DockerExecutor {
           }
         });
 
-        dockerProcess.on('error', async (err: Error) => {
+        dockerProcess.on('error', (err: Error) => {
           clearTimeout(timeoutHandle);
           const executionTime = Date.now() - startTime;
-
-          try {
-            await fs.promises.rm(tempDir, { recursive: true, force: true });
-          } catch {
-            // Expected: temp cleanup may fail if already cleaned or permissions issue
-          }
 
           resolve({
             success: false,
@@ -738,19 +763,13 @@ export class DockerExecutor {
           });
         });
       });
-    } catch (error) {
-      try {
-        await fs.promises.rm(tempDir, { recursive: true, force: true });
-      } catch {
-        // Expected: temp cleanup may fail if already cleaned or permissions issue
-      }
-
+    }).catch((error) => {
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
         executionTime: Date.now() - startTime,
       };
-    }
+    })
   }
 }
 

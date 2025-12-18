@@ -23,8 +23,27 @@ const alertVariants = cva(
 
 type AlertVariant = "default" | "destructive" | "secondary"
 
+/**
+ * Alert component props
+ * 
+ * @remarks
+ * For dynamic status alerts that update, add aria-live="polite" and aria-atomic="true"
+ * to ensure screen readers announce changes.
+ * 
+ * @example
+ * ```tsx
+ * <Alert variant="destructive" aria-live="assertive">
+ *   <AlertTitle>Error</AlertTitle>
+ *   <AlertDescription>{errorMessage}</AlertDescription>
+ * </Alert>
+ * ```
+ */
 export interface AlertProps extends React.HTMLAttributes<HTMLDivElement> {
   variant?: AlertVariant | null
+  /** Use "polite" for non-urgent updates, "assertive" for errors */
+  'aria-live'?: 'polite' | 'assertive' | 'off'
+  /** When true, entire region is announced; when false, only changes */
+  'aria-atomic'?: boolean
 }
 
 const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
