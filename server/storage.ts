@@ -235,6 +235,7 @@ import { db } from "./db";
 import session from "express-session";
 import { Store } from "express-session";
 import connectPg from "connect-pg-simple";
+import createMemoryStore from 'memorystore';
 import { client } from "./db";
 import * as crypto from "crypto";
 import { Pool } from 'pg';
@@ -5431,50 +5432,58 @@ function getSessionDatabaseUrl(): string | null {
 }
 
 // Initialize session store with error handling
+// Use memorystore in development to avoid Neon cold-start timeouts
+// Use PostgreSQL in production for persistence across deployments
+const MemoryStore = createMemoryStore(session);
+
 let sessionStore: any;
+const isProduction = process.env.NODE_ENV === 'production';
 
 try {
-  const sessionDbUrl = getSessionDatabaseUrl();
-  
-  if (!sessionDbUrl) {
-    console.error('[Storage Module] DATABASE_URL not set, using dummy session store');
-    // Create a dummy session store for development
-    sessionStore = {
-      get: (_sid: string, callback: Function) => callback(null, null),
-      set: (_sid: string, _session: any, callback: Function) => callback(null),
-      destroy: (_sid: string, callback: Function) => callback(null),
-      touch: (_sid: string, _session: any, callback: Function) => callback(null),
-    };
+  if (!isProduction) {
+    // Development: Use in-memory store to avoid Neon cold-start issues
+    console.log('[Session Store] Using MemoryStore for development (faster, no network latency)');
+    sessionStore = new MemoryStore({
+      checkPeriod: 86400000, // Prune expired entries every 24h
+    });
   } else {
-    // Create a native pg pool for session store
-    // ✅ PRODUCTION FIX: Increased timeouts and pool size to prevent connection storms
-    const pgPool = new Pool({
-      connectionString: sessionDbUrl,
-      max: 20, // Aligned with main pool (db.ts) for consistency
-      min: 2, // Keep some connections warm
-      idleTimeoutMillis: 60000, // 60s - allow longer idle time
-      connectionTimeoutMillis: 60000, // 60s - critical fix for table creation timeouts
-      maxUses: 7500, // Recycle connections after 7500 uses (Neon best practice)
-      allowExitOnIdle: false // Prevent pool shutdown on idle
-    });
-
-    const pgStore = connectPg(session);
+    // Production: Use PostgreSQL for persistence
+    const sessionDbUrl = getSessionDatabaseUrl();
     
-    sessionStore = new pgStore({
-      pool: pgPool,
-      createTableIfMissing: true,
-      ttl: 7 * 24 * 60 * 60, // 7 days
-    });
+    if (!sessionDbUrl) {
+      console.error('[Storage Module] DATABASE_URL not set in production, using MemoryStore fallback');
+      sessionStore = new MemoryStore({
+        checkPeriod: 86400000,
+      });
+    } else {
+      // Create a native pg pool for session store
+      // ✅ PRODUCTION FIX: Increased timeouts and pool size to prevent connection storms
+      const pgPool = new Pool({
+        connectionString: sessionDbUrl,
+        max: 20, // Aligned with main pool (db.ts) for consistency
+        min: 2, // Keep some connections warm
+        idleTimeoutMillis: 60000, // 60s - allow longer idle time
+        connectionTimeoutMillis: 60000, // 60s - critical fix for table creation timeouts
+        maxUses: 7500, // Recycle connections after 7500 uses (Neon best practice)
+        allowExitOnIdle: false // Prevent pool shutdown on idle
+      });
+
+      const pgStore = connectPg(session);
+      
+      sessionStore = new pgStore({
+        pool: pgPool,
+        createTableIfMissing: true,
+        ttl: 7 * 24 * 60 * 60, // 7 days
+      });
+      console.log('[Session Store] Using PostgreSQL store for production');
+    }
   }
 } catch (error) {
   console.error('[Storage Module] Failed to initialize session store:', error);
   // Create a fallback in-memory session store
-  sessionStore = {
-    get: (_sid: string, callback: Function) => callback(null, null),
-    set: (_sid: string, _session: any, callback: Function) => callback(null),
-    destroy: (_sid: string, callback: Function) => callback(null),
-    touch: (_sid: string, _session: any, callback: Function) => callback(null),
-  };
+  sessionStore = new MemoryStore({
+    checkPeriod: 86400000,
+  });
 }
 
 export { sessionStore };
