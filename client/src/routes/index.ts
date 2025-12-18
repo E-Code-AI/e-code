@@ -173,3 +173,15 @@ export const SolarTechStoreApp = lazy(() => import("@/pages/SolarTechStoreApp"))
 
 export const ApplicationIDEWrapper = lazy(() => import("@/components/ApplicationIDEWrapper").then(mod => ({ default: mod.ApplicationIDEWrapper })));
 export const FeaturePlaceholder = lazy(() => import("@/pages/FeaturePlaceholder"));
+
+export const AssistantPage = lazy(() => import("@/pages/AssistantPage"));
+export const CodeSearchPage = lazy(() => import("@/pages/CodeSearchPage"));
+export const ProblemsPage = lazy(() => import("@/pages/ProblemsPage"));
+
+export const DatabasePage = lazy(() => import("@/pages/DatabasePage"));
+export const ConsolePage = lazy(() => import("@/pages/ConsolePage"));
+export const ShellPage = lazy(() => import("@/pages/ShellPage"));
+
+export const PackagesPage = lazy(() => import("@/pages/PackagesPage"));
+export const KVStorePage = lazy(() => import("@/pages/KVStorePage"));
+export const PreviewPage = lazy(() => import("@/pages/PreviewPage"));
