@@ -228,10 +228,11 @@ export class AuthRouter {
     });
 
     // Login endpoint
+    // SECURITY: Session regeneration prevents session fixation attacks (Fortune 500)
     this.router.post("/api/login", csrfProtection, (req: Request, res: Response, next: NextFunction) => {
       passport.authenticate('local', (err: any, user: User, info: any) => {
         if (err) {
-          console.error('Login error:', err);
+          logger.error('Login error:', err.message);
           return res.status(500).json({ 
             error: "Login failed",
             message: "Login failed",
@@ -247,18 +248,37 @@ export class AuthRouter {
           });
         }
         
-        req.login(user, (loginErr: any) => {
-          if (loginErr) {
-            console.error('Session creation failed:', loginErr);
+        // SECURITY: Regenerate session BEFORE login to prevent session fixation
+        req.session.regenerate((regenErr: any) => {
+          if (regenErr) {
+            logger.error('Session regeneration failed:', regenErr.message);
             return res.status(500).json({ 
-              message: "Session creation failed",
+              message: "Session security error",
               code: "SESSION_ERROR"
             });
           }
           
-          res.json({ 
-            message: "Login successful",
-            user: this.sanitizeUser(user)
+          req.login(user, (loginErr: any) => {
+            if (loginErr) {
+              logger.error('Session creation failed:', loginErr.message);
+              return res.status(500).json({ 
+                message: "Session creation failed",
+                code: "SESSION_ERROR"
+              });
+            }
+            
+            // Save session to persist user data
+            req.session.save((saveErr: any) => {
+              if (saveErr) {
+                logger.warn('Session save warning:', saveErr.message);
+              }
+              
+              logger.info(`User ${user.id} logged in successfully`);
+              res.json({ 
+                message: "Login successful",
+                user: this.sanitizeUser(user)
+              });
+            });
           });
         });
       })(req, res, next);
