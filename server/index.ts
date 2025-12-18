@@ -421,21 +421,19 @@ app.get('/api/cors-health', async (_req, res) => {
     const storage = getStorage();
     
     // Initialize token revocation from database for production persistence
-    // Use storage's db directly since it's already initialized
-    setTimeout(async () => {
-      try {
-        const { db } = await import("./db/drizzle");
-        if (db) {
-          const { initializeTokenRevocation } = await import("./auth/token-revocation");
-          await initializeTokenRevocation(db);
-          console.log('[Token Revocation] ✅ Loaded from database - persists across restarts');
-        } else {
-          console.log('[Token Revocation] Database not available - using memory-only mode');
-        }
-      } catch (error) {
-        console.log('[Token Revocation] Using memory-only mode (will persist to DB on revocation)');
+    // SECURITY FIX: Initialize immediately instead of 8s delay to prevent using revoked tokens
+    try {
+      const { db } = await import("./db/drizzle");
+      if (db) {
+        const { initializeTokenRevocation } = await import("./auth/token-revocation");
+        await initializeTokenRevocation(db);
+        console.log('[Token Revocation] ✅ Loaded from database - persists across restarts');
+      } else {
+        console.log('[Token Revocation] Database not available - using memory-only mode');
       }
-    }, 8000);
+    } catch (error) {
+      console.log('[Token Revocation] Using memory-only mode (will persist to DB on revocation)');
+    }
     
     // Setup LSP WebSocket server for real-time diagnostics
     registerService('lsp');
