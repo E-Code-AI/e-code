@@ -42,13 +42,20 @@ const ALLOW_INSECURE_LOCAL_PTY = process.env.ALLOW_INSECURE_LOCAL_PTY === 'true'
 const REQUIRE_DOCKER_TERMINAL = !ALLOW_INSECURE_LOCAL_PTY;
 
 // Security validation: Check if Docker is available (called at startup)
+// FIXED: Use static import instead of dynamic require for ESM compatibility
 async function validateDockerAvailable(): Promise<boolean> {
   return new Promise((resolve) => {
-    const { spawn } = require('child_process');
-    const docker = spawn('docker', ['info'], { stdio: 'pipe' });
-    docker.on('close', (code: number) => resolve(code === 0));
-    docker.on('error', () => resolve(false));
-    setTimeout(() => resolve(false), 5000); // 5s timeout
+    try {
+      const docker = spawn('docker', ['info'], { stdio: 'pipe' });
+      docker.on('close', (code: number) => resolve(code === 0));
+      docker.on('error', () => resolve(false));
+      setTimeout(() => {
+        docker.kill();
+        resolve(false);
+      }, 5000); // 5s timeout
+    } catch (error) {
+      resolve(false);
+    }
   });
 }
 

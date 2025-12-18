@@ -1,6 +1,6 @@
 import EventEmitter from 'events';
 import { createLogger } from '../utils/logger';
-import { spawn, ChildProcess } from 'child_process';
+import { spawn, execSync, ChildProcess } from 'child_process';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
@@ -535,7 +535,6 @@ export class RealDatabaseHostingService extends EventEmitter {
     this.emit('backup-started', { instance, backup });
     
     // Execute real backup process
-    const { execSync } = require('child_process');
     const fs = require('fs').promises;
     const path = require('path');
     
@@ -576,7 +575,6 @@ export class RealDatabaseHostingService extends EventEmitter {
     this.emit('restore-started', { instance, backup });
     
     // Execute real restore process
-    const { execSync } = require('child_process');
     const fs = require('fs').promises;
     const path = require('path');
     
