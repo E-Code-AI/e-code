@@ -36,7 +36,13 @@ import {
   XCircle,
   Loader2,
 } from 'lucide-react';
-import { SiGoogle, SiGithub, SiApple, SiMicrosoft, SiOkta, SiAuth0 } from 'react-icons/si';
+import { SiGoogle, SiGithub, SiApple } from 'react-icons/si';
+import { Building2, KeyRound, ShieldCheck } from 'lucide-react';
+
+// Icon aliases for providers that don't have SI icons
+const SiMicrosoft = Building2;
+const SiOkta = KeyRound;
+const SiAuth0 = ShieldCheck;
 import { useToast } from '@/hooks/use-toast';
 
 interface SSOProvider {

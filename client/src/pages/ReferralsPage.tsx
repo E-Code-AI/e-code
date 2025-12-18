@@ -64,7 +64,11 @@ import {
   HelpCircle,
   Info,
 } from 'lucide-react';
-import { SiTwitter, SiLinkedin, SiFacebook, SiReddit, SiWhatsapp, SiTelegram } from 'react-icons/si';
+import { SiLinkedin, SiFacebook, SiReddit, SiWhatsapp, SiTelegram } from 'react-icons/si';
+import { Twitter, MessageCircle } from 'lucide-react';
+
+// Use lucide Twitter icon (SiTwitter was renamed to SiX but may not exist)
+const SiTwitter = Twitter;
 import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow } from 'date-fns';
 
