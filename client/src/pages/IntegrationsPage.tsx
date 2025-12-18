@@ -47,7 +47,26 @@ import {
   ShieldCheck,
   BarChart3,
 } from 'lucide-react';
-import { SiGithub, SiSlack, SiJira, SiNotion, SiGitlab, SiDiscord, SiTrello, SiAsana, SiFigma, SiLinear, SiZendesk, SiDatadog, SiSentry, SiPagerduty, SiNewrelic, SiGrafana, SiJenkins, SiCircleci, SiGithubactions, SiVercel, SiAmazons3, SiMongodb, SiPostgresql, SiRedis, SiElasticsearch, SiStripe, SiTwilio, SiSendgrid, SiMailchimp, SiIntercom, SiHubspot, SiSalesforce, SiZapier } from 'react-icons/si';
+import { SiGithub, SiSlack, SiJira, SiNotion, SiGitlab, SiDiscord, SiTrello, SiFigma, SiDatadog, SiSentry, SiGrafana, SiJenkins, SiVercel, SiMongodb, SiPostgresql, SiRedis, SiStripe } from 'react-icons/si';
+import { Box, LineChart, Bell, Cloud, Mail, Users, Building2, Workflow as WorkflowIcon, CircleDot, Search as SearchIcon, MessageSquare, Headphones, Phone, Send } from 'lucide-react';
+
+// Icon aliases for providers without SI icons
+const SiAsana = Box;
+const SiLinear = LineChart;
+const SiZendesk = Headphones;
+const SiPagerduty = Bell;
+const SiNewrelic = LineChart;
+const SiCircleci = CircleDot;
+const SiGithubactions = WorkflowIcon;
+const SiAmazons3 = Cloud;
+const SiElasticsearch = SearchIcon;
+const SiTwilio = Phone;
+const SiSendgrid = Send;
+const SiMailchimp = Mail;
+const SiIntercom = MessageSquare;
+const SiHubspot = Users;
+const SiSalesforce = Building2;
+const SiZapier = Zap;
 import { useToast } from '@/hooks/use-toast';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
