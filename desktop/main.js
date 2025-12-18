@@ -18,6 +18,30 @@ const fs = require('fs');
 const Store = require('electron-store');
 const { autoUpdater } = require('electron-updater');
 
+// ============================================
+// Security: Path Validation for IPC Handlers
+// ============================================
+const ALLOWED_PATHS = [
+  app.getPath('userData'),
+  app.getPath('documents'),
+  app.getPath('downloads'),
+  app.getPath('home'),
+];
+
+function isPathAllowed(filePath) {
+  if (!filePath || typeof filePath !== 'string') return false;
+  const resolved = path.resolve(filePath);
+  // Block path traversal attempts
+  if (filePath.includes('..')) return false;
+  // Allow paths within allowed directories
+  return ALLOWED_PATHS.some(allowed => 
+    resolved.startsWith(path.resolve(allowed))
+  );
+}
+
+// Security: Allowed deep link actions whitelist
+const ALLOWED_DEEP_LINK_ACTIONS = ['project', 'file', 'workspace', 'settings', 'open'];
+
 // Initialize electron-store for persistent settings
 const store = new Store({
   name: 'e-code-settings',
@@ -347,6 +371,17 @@ function createWindow() {
   // Development tools
   if (isDev || store.get('devTools')) {
     mainWindow.webContents.openDevTools({ mode: 'detach' });
+  }
+
+  // Security: Disable DevTools keyboard shortcuts in production
+  if (!isDev) {
+    mainWindow.webContents.on('before-input-event', (event, input) => {
+      if (input.key === 'F12' || 
+          (input.control && input.shift && input.key === 'I') ||
+          (input.meta && input.alt && input.key === 'I')) {
+        event.preventDefault();
+      }
+    });
   }
 
   // Cleanup
@@ -763,6 +798,19 @@ function handleDeepLink(url) {
         host: parsed.host,
       };
       
+      // Security: Validate action against whitelist
+      if (data.action && !ALLOWED_DEEP_LINK_ACTIONS.includes(data.action)) {
+        console.warn('[E-Code Desktop] Unknown deep link action:', data.action);
+        return;
+      }
+      
+      // Security: Sanitize parameters to prevent XSS
+      const sanitizedParams = {};
+      for (const [key, value] of Object.entries(data.params || {})) {
+        sanitizedParams[key] = String(value).replace(/[<>"'&]/g, '');
+      }
+      data.params = sanitizedParams;
+      
       console.log('[E-Code Desktop] Parsed deep link:', data);
       
       // Send structured data to renderer process
@@ -829,7 +877,8 @@ function checkForUpdates() {
 }
 
 // Auto updater configuration with environment-specific channels
-autoUpdater.autoDownload = true;
+// Security: Disable auto-download, require user confirmation
+autoUpdater.autoDownload = false;
 autoUpdater.autoInstallOnAppQuit = true;
 autoUpdater.allowDowngrade = false;
 
@@ -911,12 +960,19 @@ autoUpdater.on('update-available', (info) => {
     });
     mainWindow.webContents.send('update-status', { status: 'available', version: info.version });
   }
+  // Security: Show confirmation dialog before downloading update
   dialog.showMessageBox(mainWindow, {
     type: 'info',
     title: 'Update Available',
     message: `A new version (${info.version}) is available.`,
-    detail: 'It will be downloaded in the background.',
-    buttons: ['OK'],
+    detail: 'Would you like to download and install this update?',
+    buttons: ['Download Now', 'Later'],
+    defaultId: 0,
+    cancelId: 1,
+  }).then((result) => {
+    if (result.response === 0) {
+      autoUpdater.downloadUpdate();
+    }
   });
 });
 
@@ -1024,8 +1080,11 @@ ipcMain.handle('show-message-box', async (event, options) => {
   return await dialog.showMessageBox(mainWindow, options);
 });
 
-// File system operations
+// File system operations (with path validation for security)
 ipcMain.handle('read-file', async (event, filePath) => {
+  if (!isPathAllowed(filePath)) {
+    throw new Error('Access denied: path not allowed');
+  }
   try {
     return await fs.promises.readFile(filePath, 'utf-8');
   } catch (error) {
@@ -1034,6 +1093,9 @@ ipcMain.handle('read-file', async (event, filePath) => {
 });
 
 ipcMain.handle('write-file', async (event, filePath, content) => {
+  if (!isPathAllowed(filePath)) {
+    throw new Error('Access denied: path not allowed');
+  }
   try {
     await fs.promises.writeFile(filePath, content, 'utf-8');
     return true;
@@ -1052,6 +1114,9 @@ ipcMain.handle('file-exists', async (event, filePath) => {
 });
 
 ipcMain.handle('read-directory', async (event, dirPath) => {
+  if (!isPathAllowed(dirPath)) {
+    throw new Error('Access denied: path not allowed');
+  }
   try {
     const entries = await fs.promises.readdir(dirPath, { withFileTypes: true });
     return entries.map(entry => ({
@@ -1064,8 +1129,11 @@ ipcMain.handle('read-directory', async (event, dirPath) => {
   }
 });
 
-// Additional file system operations
+// Additional file system operations (with path validation for security)
 ipcMain.handle('delete-file', async (event, filePath) => {
+  if (!isPathAllowed(filePath)) {
+    throw new Error('Access denied: path not allowed');
+  }
   try {
     await fs.promises.unlink(filePath);
     return true;
@@ -1075,6 +1143,9 @@ ipcMain.handle('delete-file', async (event, filePath) => {
 });
 
 ipcMain.handle('mkdir', async (event, dirPath) => {
+  if (!isPathAllowed(dirPath)) {
+    throw new Error('Access denied: path not allowed');
+  }
   try {
     await fs.promises.mkdir(dirPath, { recursive: true });
     return true;
@@ -1099,6 +1170,9 @@ ipcMain.handle('stat', async (event, filePath) => {
 });
 
 ipcMain.handle('rename', async (event, oldPath, newPath) => {
+  if (!isPathAllowed(oldPath) || !isPathAllowed(newPath)) {
+    throw new Error('Access denied: path not allowed');
+  }
   try {
     await fs.promises.rename(oldPath, newPath);
     return true;
@@ -1108,6 +1182,9 @@ ipcMain.handle('rename', async (event, oldPath, newPath) => {
 });
 
 ipcMain.handle('copy', async (event, src, dest) => {
+  if (!isPathAllowed(src) || !isPathAllowed(dest)) {
+    throw new Error('Access denied: path not allowed');
+  }
   try {
     fs.copyFileSync(src, dest);
     return true;
@@ -1117,6 +1194,9 @@ ipcMain.handle('copy', async (event, src, dest) => {
 });
 
 ipcMain.handle('append-file', async (event, filePath, content) => {
+  if (!isPathAllowed(filePath)) {
+    throw new Error('Access denied: path not allowed');
+  }
   try {
     await fs.promises.appendFile(filePath, content, 'utf-8');
     return true;
