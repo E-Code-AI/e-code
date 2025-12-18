@@ -113,7 +113,51 @@ function isPathAllowed(filePath) {
 }
 
 // Security: Allowed deep link actions whitelist
-const ALLOWED_DEEP_LINK_ACTIONS = ['project', 'file', 'workspace', 'settings', 'open'];
+// Each action corresponds to a specific feature in the application
+const ALLOWED_DEEP_LINK_ACTIONS = [
+  'project',    // Open a project by ID
+  'file',       // Open a specific file within a project
+  'workspace',  // Open a workspace
+  'settings',   // Open settings panel
+  'open',       // Generic open action
+  'template',   // Open a template for project creation
+  'deploy',     // Open deployment view
+  'ai',         // Open AI assistant
+];
+
+// Deep link security constraints
+const DEEP_LINK_MAX_PARAM_LENGTH = 1000; // Maximum length for any parameter value
+
+// ============================================
+// IPC Timeout Helper for File Operations
+// ============================================
+function ipcWithTimeout(handler, timeoutMs = 10000) {
+  return async (...args) => {
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => {
+        const error = new Error(`IPC operation timed out after ${timeoutMs}ms`);
+        error.code = 'IPC_TIMEOUT';
+        console.error(`[E-Code Desktop] IPC timeout: operation exceeded ${timeoutMs}ms`);
+        reject(error);
+      }, timeoutMs);
+    });
+
+    try {
+      return await Promise.race([
+        handler(...args),
+        timeoutPromise
+      ]);
+    } catch (error) {
+      if (error.code === 'IPC_TIMEOUT') {
+        console.error(`[E-Code Desktop] IPC timeout error:`, {
+          timeoutMs,
+          timestamp: new Date().toISOString()
+        });
+      }
+      throw error;
+    }
+  };
+}
 
 // Initialize electron-store for persistent settings
 const store = new Store({
@@ -855,13 +899,44 @@ function createTray() {
   });
 }
 
-// Handle deep link URL with validation and sanitization
+/**
+ * Handle deep link URL with validation and sanitization
+ * 
+ * Deep link format: ecode://action?param1=value1&param2=value2
+ * 
+ * Supported actions (defined in ALLOWED_DEEP_LINK_ACTIONS):
+ * - project: Open a project by ID (e.g., ecode://project?id=abc123)
+ * - file: Open a specific file (e.g., ecode://file?project=abc&path=/src/main.ts)
+ * - workspace: Open a workspace (e.g., ecode://workspace?id=ws-123)
+ * - settings: Open settings panel (e.g., ecode://settings?tab=general)
+ * - open: Generic open action (e.g., ecode://open?type=project&id=123)
+ * - template: Open a template (e.g., ecode://template?name=react-starter)
+ * - deploy: Open deployment view (e.g., ecode://deploy?project=abc123)
+ * - ai: Open AI assistant (e.g., ecode://ai?prompt=help%20me%20debug)
+ * 
+ * Security measures:
+ * - Protocol validation (must be 'ecode:')
+ * - Action whitelist validation
+ * - Parameter key sanitization (alphanumeric, dash, underscore only)
+ * - Parameter value length limits (max 1000 chars)
+ * - Special character sanitization to prevent XSS
+ * 
+ * @param {string} url - The deep link URL to handle
+ */
 function handleDeepLink(url) {
   console.log('[E-Code Desktop] Deep link received:', url);
   
   try {
     const parsed = new URL(url);
-    const action = parsed.pathname.replace(/^\/+/, ''); // Remove leading slashes
+    
+    // Validate protocol is 'ecode:'
+    if (parsed.protocol !== 'ecode:') {
+      console.warn('[E-Code Desktop] Invalid deep link protocol:', parsed.protocol);
+      return;
+    }
+    
+    // Extract action from hostname (ecode://action) or pathname (ecode:///action)
+    const action = (parsed.hostname || parsed.pathname.replace(/^\/+/, '')).toLowerCase();
     
     // Validate action is in whitelist
     if (!ALLOWED_DEEP_LINK_ACTIONS.includes(action)) {
@@ -869,12 +944,32 @@ function handleDeepLink(url) {
       return;
     }
 
-    // Sanitize parameters - remove potential XSS characters
+    // Sanitize parameters with comprehensive security measures
     const sanitizedParams = {};
     for (const [key, value] of parsed.searchParams) {
-      // Only allow alphanumeric, dash, underscore, dot
-      sanitizedParams[key] = value.replace(/[<>"'&]/g, '');
+      // Validate parameter key (alphanumeric, dash, underscore only)
+      const sanitizedKey = key.replace(/[^a-zA-Z0-9_-]/g, '');
+      if (!sanitizedKey || sanitizedKey !== key) {
+        console.warn('[E-Code Desktop] Skipping invalid parameter key:', key);
+        continue;
+      }
+      
+      // Enforce parameter value length limit
+      if (value.length > DEEP_LINK_MAX_PARAM_LENGTH) {
+        console.warn(`[E-Code Desktop] Parameter '${sanitizedKey}' exceeds max length (${DEEP_LINK_MAX_PARAM_LENGTH}), truncating`);
+      }
+      const truncatedValue = value.slice(0, DEEP_LINK_MAX_PARAM_LENGTH);
+      
+      // Sanitize parameter value - remove XSS characters and control characters
+      // Allow: alphanumeric, dash, underscore, dot, forward slash, colon, at sign, equals, percent (for encoded chars)
+      const sanitizedValue = truncatedValue
+        .replace(/[<>"'`&;(){}[\]\\]/g, '') // Remove XSS-prone characters
+        .replace(/[\x00-\x1F\x7F]/g, '');    // Remove control characters
+      
+      sanitizedParams[sanitizedKey] = sanitizedValue;
     }
+
+    console.log('[E-Code Desktop] Deep link processed:', { action, params: sanitizedParams });
 
     // Send to renderer
     if (mainWindow && !mainWindow.isDestroyed()) {
@@ -1141,21 +1236,21 @@ nativeTheme.on('updated', () => {
   }
 });
 
-// File dialogs
-ipcMain.handle('show-save-dialog', async (event, options) => {
+// File dialogs (with timeout handling)
+ipcMain.handle('show-save-dialog', ipcWithTimeout(async (event, options) => {
   return await dialog.showSaveDialog(mainWindow, options);
-});
+}, 30000));
 
-ipcMain.handle('show-open-dialog', async (event, options) => {
+ipcMain.handle('show-open-dialog', ipcWithTimeout(async (event, options) => {
   return await dialog.showOpenDialog(mainWindow, options);
-});
+}, 30000));
 
 ipcMain.handle('show-message-box', async (event, options) => {
   return await dialog.showMessageBox(mainWindow, options);
 });
 
-// File system operations (with path validation for security)
-ipcMain.handle('read-file', async (event, filePath) => {
+// File system operations (with path validation for security and timeout handling)
+ipcMain.handle('read-file', ipcWithTimeout(async (event, filePath) => {
   if (!isPathAllowed(filePath)) {
     throw new Error('Access denied: path not allowed');
   }
@@ -1164,9 +1259,9 @@ ipcMain.handle('read-file', async (event, filePath) => {
   } catch (error) {
     throw new Error(`Failed to read file: ${error.message}`);
   }
-});
+}, 10000));
 
-ipcMain.handle('write-file', async (event, filePath, content) => {
+ipcMain.handle('write-file', ipcWithTimeout(async (event, filePath, content) => {
   if (!isPathAllowed(filePath)) {
     throw new Error('Access denied: path not allowed');
   }
@@ -1176,9 +1271,9 @@ ipcMain.handle('write-file', async (event, filePath, content) => {
   } catch (error) {
     throw new Error(`Failed to write file: ${error.message}`);
   }
-});
+}, 10000));
 
-ipcMain.handle('file-exists', async (event, filePath) => {
+ipcMain.handle('file-exists', ipcWithTimeout(async (event, filePath) => {
   if (!isPathAllowed(filePath)) {
     throw new Error('Access denied: path not allowed');
   }
@@ -1188,9 +1283,9 @@ ipcMain.handle('file-exists', async (event, filePath) => {
   } catch {
     return false;
   }
-});
+}, 5000));
 
-ipcMain.handle('read-directory', async (event, dirPath) => {
+ipcMain.handle('read-directory', ipcWithTimeout(async (event, dirPath) => {
   if (!isPathAllowed(dirPath)) {
     throw new Error('Access denied: path not allowed');
   }
@@ -1204,10 +1299,10 @@ ipcMain.handle('read-directory', async (event, dirPath) => {
   } catch (error) {
     throw new Error(`Failed to read directory: ${error.message}`);
   }
-});
+}, 10000));
 
-// Additional file system operations (with path validation for security)
-ipcMain.handle('delete-file', async (event, filePath) => {
+// Additional file system operations (with path validation for security and timeout handling)
+ipcMain.handle('delete-file', ipcWithTimeout(async (event, filePath) => {
   if (!isPathAllowed(filePath)) {
     throw new Error('Access denied: path not allowed');
   }
@@ -1217,9 +1312,9 @@ ipcMain.handle('delete-file', async (event, filePath) => {
   } catch (error) {
     throw new Error(`Failed to delete file: ${error.message}`);
   }
-});
+}, 10000));
 
-ipcMain.handle('mkdir', async (event, dirPath) => {
+ipcMain.handle('mkdir', ipcWithTimeout(async (event, dirPath) => {
   if (!isPathAllowed(dirPath)) {
     throw new Error('Access denied: path not allowed');
   }
@@ -1229,7 +1324,7 @@ ipcMain.handle('mkdir', async (event, dirPath) => {
   } catch (error) {
     throw new Error(`Failed to create directory: ${error.message}`);
   }
-});
+}, 10000));
 
 ipcMain.handle('stat', async (event, filePath) => {
   if (!isPathAllowed(filePath)) {
