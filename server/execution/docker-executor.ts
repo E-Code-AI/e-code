@@ -83,7 +83,8 @@ export class DockerExecutor extends EventEmitter {
       // Prepare project files as tar archive
       const projectTar = await this.createProjectTar(config.files);
       
-      // Container configuration
+      // Container configuration - use DOCKER_NETWORK for sibling container access
+      const networkMode = process.env.DOCKER_NETWORK || 'bridge';
       const containerConfig: Docker.ContainerCreateOptions = {
         name: containerName,
         Image: image,
@@ -94,11 +95,12 @@ export class DockerExecutor extends EventEmitter {
           Memory: this.parseMemoryLimit(config.memoryLimit || '512m'),
           CpuQuota: config.cpuLimit ? config.cpuLimit * 100000 : undefined,
           CpuPeriod: 100000,
-          NetworkMode: 'bridge',
+          NetworkMode: networkMode,
           AutoRemove: false,
           PortBindings: config.port ? {
             [`${config.port}/tcp`]: [{ HostPort: '0' }]
-          } : undefined
+          } : undefined,
+          ExtraHosts: ['host.docker.internal:host-gateway']
         },
         ExposedPorts: config.port ? {
           [`${config.port}/tcp`]: {}
