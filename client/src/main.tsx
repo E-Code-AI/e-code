@@ -1,71 +1,61 @@
 import { createRoot } from "react-dom/client";
-import * as Sentry from '@sentry/react';
 import App from "./App";
-import "./critical.css"; // Fast critical CSS only - Tailwind base
-import "./lib/monaco-config";
+import "./critical.css";
 
-// Load full CSS after first paint for faster initial load
-// Using requestAnimationFrame to defer after render
-if (typeof window !== 'undefined') {
-  const loadDeferredStyles = () => {
-    // Load extended styles after first paint
-    import('./index.css');
-  };
+const deferredInit = () => {
+  import('./index.css');
+  import("./i18n");
+  import("./lib/monaco-config");
   
-  // Use requestIdleCallback if available, otherwise requestAnimationFrame
+  import("./lib/telemetry").then(({ initTelemetry }) => {
+    initTelemetry({
+      enabled: true,
+      debug: import.meta.env.DEV,
+      batchSize: 10,
+      flushInterval: 5000,
+    });
+  });
+  
+  import("./utils/service-worker-registration").then(({ registerServiceWorker }) => {
+    registerServiceWorker();
+  });
+  
+  import("./lib/cache-reconciliation").then(({ cacheReconciliation }) => {
+    cacheReconciliation.init();
+  });
+  
+  import("./utils/dynamic-vh").then(({ setupDynamicVH }) => {
+    setupDynamicVH();
+  });
+  
+  if (import.meta.env.VITE_SENTRY_DSN) {
+    import('@sentry/react').then((Sentry) => {
+      Sentry.init({
+        dsn: import.meta.env.VITE_SENTRY_DSN,
+        environment: import.meta.env.MODE,
+        integrations: [
+          Sentry.browserTracingIntegration(),
+          Sentry.replayIntegration({
+            maskAllText: true,
+            blockAllMedia: true,
+          }),
+        ],
+        tracesSampleRate: import.meta.env.MODE === 'production' ? 0.1 : 1.0,
+        replaysSessionSampleRate: 0.1,
+        replaysOnErrorSampleRate: 1.0,
+      });
+    });
+  }
+};
+
+if (typeof window !== 'undefined') {
   if ('requestIdleCallback' in window) {
-    (window as any).requestIdleCallback(loadDeferredStyles, { timeout: 3000 });
+    (window as any).requestIdleCallback(deferredInit, { timeout: 3000 });
   } else {
-    requestAnimationFrame(() => setTimeout(loadDeferredStyles, 100));
+    requestAnimationFrame(() => setTimeout(deferredInit, 100));
   }
 }
-import "./i18n"; // Initialize i18n for internationalization
-import { monitoring } from "./lib/monitoring";
-import { initTelemetry } from "./lib/telemetry";
-import { registerServiceWorker } from "./utils/service-worker-registration";
-import { cacheReconciliation } from "./lib/cache-reconciliation";
-import { setupDynamicVH } from "./utils/dynamic-vh";
 
-// Initialize Sentry before React renders
-if (import.meta.env.VITE_SENTRY_DSN) {
-  Sentry.init({
-    dsn: import.meta.env.VITE_SENTRY_DSN,
-    environment: import.meta.env.MODE,
-    integrations: [
-      Sentry.browserTracingIntegration(),
-      Sentry.replayIntegration({
-        maskAllText: true,
-        blockAllMedia: true,
-      }),
-    ],
-    tracesSampleRate: import.meta.env.MODE === 'production' ? 0.1 : 1.0,
-    replaysSessionSampleRate: 0.1,
-    replaysOnErrorSampleRate: 1.0,
-  });
-}
-
-// Initialize production monitoring
-// This will automatically capture errors and performance metrics
-
-// Initialize Fortune 500 centralized telemetry
-initTelemetry({
-  enabled: true,
-  debug: import.meta.env.DEV,
-  batchSize: 10,
-  flushInterval: 5000,
-});
-
-// Register PWA Service Worker
-registerServiceWorker();
-
-// Initialize dynamic viewport height for mobile devices
-setupDynamicVH();
-
-// Initialize Fortune 500 Cache Reconciliation Layer
-// Coordinates Service Worker cache with TanStack Query for seamless offline UX
-cacheReconciliation.init();
-
-// Error fallback component for Sentry
 function ErrorFallback() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
@@ -85,14 +75,8 @@ function ErrorFallback() {
   );
 }
 
-// FIXED: Removed duplicate ThemeProvider - already wrapped in App.tsx
-createRoot(document.getElementById("root")!).render(
-  <Sentry.ErrorBoundary fallback={<ErrorFallback />}>
-    <App />
-  </Sentry.ErrorBoundary>
-);
+createRoot(document.getElementById("root")!).render(<App />);
 
-// Hide initial loader once React has rendered
 const initialLoader = document.getElementById('initial-loader');
 if (initialLoader) {
   initialLoader.classList.add('hidden');
