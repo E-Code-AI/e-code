@@ -1,7 +1,9 @@
 /**
  * PTY-based Terminal Service
  * Provides real interactive shell access using node-pty
- * Works on Replit without Docker dependency
+ * 
+ * SECURITY: In production, terminal sessions run inside isolated Docker containers
+ * to prevent access to host filesystem and secrets.
  */
 
 import { WebSocketServer, WebSocket } from 'ws';
@@ -12,11 +14,15 @@ import * as pty from 'node-pty';
 import * as os from 'os';
 import * as path from 'path';
 import * as fs from 'fs';
+import { spawn, ChildProcess } from 'child_process';
 import { createLogger } from '../utils/logger';
 import { storage } from '../storage';
 import { markSocketAsHandled } from '../websocket/upgrade-guard';
 import { centralUpgradeDispatcher } from '../websocket/central-upgrade-dispatcher';
 import jwt from 'jsonwebtoken';
+
+// Security: Use Docker for terminal in production
+const USE_DOCKER_TERMINAL = process.env.EXECUTION_MODE === 'docker' || process.env.NODE_ENV === 'production';
 
 const logger = createLogger('pty-terminal');
 
@@ -54,7 +60,9 @@ class CircularBuffer {
 }
 
 interface PTYSession {
-  ptyProcess: pty.IPty;
+  ptyProcess: pty.IPty | null;  // null when using Docker
+  dockerProcess: ChildProcess | null;  // Docker exec process
+  containerId: string | null;  // Docker container ID
   projectId: string;
   clients: Set<WebSocket>;
   commandHistory: string[];
@@ -63,7 +71,8 @@ interface PTYSession {
   rows: number;
   createdAt: number;
   lastActivity: number;
-  outputBuffer: CircularBuffer; // 8.4 FIX: Add output buffer
+  outputBuffer: CircularBuffer;
+  isDocker: boolean;  // Flag to indicate Docker-based session
 }
 
 export class PTYTerminalService {
@@ -200,12 +209,171 @@ export class PTYTerminalService {
 
   private async createSession(projectId: string): Promise<PTYSession | null> {
     try {
+      // SECURITY: Use Docker in production to isolate terminal sessions
+      if (USE_DOCKER_TERMINAL) {
+        return await this.createDockerSession(projectId);
+      }
+      
+      // Development mode: use local PTY (only for development/testing)
+      return await this.createLocalSession(projectId);
+
+    } catch (error) {
+      logger.error(`Failed to create session for project ${projectId}:`, error);
+      return null;
+    }
+  }
+
+  /**
+   * Create a Docker-based terminal session (SECURE - Production)
+   * Runs the shell inside an isolated container with no access to host
+   */
+  private async createDockerSession(projectId: string): Promise<PTYSession | null> {
+    try {
+      const workDir = await this.setupProjectDirectory(projectId);
+      const containerName = `terminal-${projectId}-${Date.now()}`;
+      
+      logger.info(`[SECURE] Creating Docker terminal session for project ${projectId}`);
+
+      // Start a container with project directory mounted as writable
+      // This allows persistent file changes while maintaining container isolation
+      // Use node:20-alpine as base image for a lightweight shell environment
+      const dockerArgs = [
+        'run',
+        '-it',
+        '--rm',
+        '--name', containerName,
+        // Security: Resource limits
+        '--memory', '512m',
+        '--cpus', '1.0',
+        // Security: Read-only root filesystem except for mounted project
+        '--read-only',
+        '--tmpfs', '/tmp:rw,nosuid,size=128m',
+        // Security: Drop all capabilities
+        '--cap-drop', 'ALL',
+        // Allow network for npm/git (bridge network for isolation from host)
+        '--network', 'bridge',
+        // Security: No privileged escalation
+        '--security-opt', 'no-new-privileges:true',
+        // Mount project directory as writable workspace
+        // This allows npm install, git operations, and file edits to persist
+        '-v', `${workDir}:/workspace`,
+        // Environment
+        '-e', 'TERM=xterm-256color',
+        '-e', 'HOME=/workspace',
+        '-e', 'PS1=user@e-code:\\w$ ',
+        // Working directory is the project
+        '-w', '/workspace',
+        // Image
+        'node:20-alpine',
+        // Start an interactive shell directly in the workspace
+        '/bin/sh'
+      ];
+
+      const dockerProcess = spawn('docker', dockerArgs, {
+        stdio: ['pipe', 'pipe', 'pipe'],
+        env: { ...process.env }
+      });
+
+      const session: PTYSession = {
+        ptyProcess: null,
+        dockerProcess,
+        containerId: containerName,
+        projectId,
+        clients: new Set(),
+        commandHistory: [],
+        currentDirectory: '/workspace',
+        cols: 80,
+        rows: 24,
+        createdAt: Date.now(),
+        lastActivity: Date.now(),
+        outputBuffer: new CircularBuffer(10000),
+        isDocker: true
+      };
+
+      // Handle Docker output
+      dockerProcess.stdout?.on('data', (data: Buffer) => {
+        const output = data.toString();
+        session.outputBuffer.push(output);
+        this.broadcastToSession(session, {
+          type: 'output',
+          data: output
+        });
+      });
+
+      dockerProcess.stderr?.on('data', (data: Buffer) => {
+        const output = data.toString();
+        session.outputBuffer.push(output);
+        this.broadcastToSession(session, {
+          type: 'output',
+          data: output
+        });
+      });
+
+      dockerProcess.on('close', (code) => {
+        logger.info(`Docker terminal exited for project ${projectId}: code=${code}`);
+        this.broadcastToSession(session, {
+          type: 'exit',
+          data: `Terminal session ended`
+        });
+        this.cleanupSession(projectId);
+      });
+
+      dockerProcess.on('error', async (error) => {
+        logger.error(`Docker terminal error for project ${projectId}:`, error);
+        logger.warn('Docker not available, attempting fallback to local PTY');
+        
+        // Clean up the failed Docker session
+        this.sessions.delete(projectId);
+        
+        // Try to create a local session as fallback (development only)
+        if (process.env.NODE_ENV !== 'production') {
+          try {
+            const fallbackSession = await this.createLocalSession(projectId);
+            if (fallbackSession) {
+              this.sessions.set(projectId, fallbackSession);
+              // Notify existing clients of fallback
+              this.broadcastToSession(fallbackSession, {
+                type: 'output',
+                data: '\r\n[NOTICE] Docker unavailable, using local terminal.\r\n'
+              });
+            }
+          } catch (fallbackError) {
+            logger.error('Local PTY fallback also failed:', fallbackError);
+          }
+        } else {
+          // In production, notify clients that terminal is unavailable
+          for (const client of session.clients) {
+            if (client.readyState === WebSocket.OPEN) {
+              client.send(JSON.stringify({
+                type: 'error',
+                data: 'Terminal service unavailable. Docker is required in production.'
+              }));
+              client.close(1011, 'Docker unavailable');
+            }
+          }
+        }
+      });
+
+      return session;
+
+    } catch (error) {
+      logger.error(`Failed to create Docker session for project ${projectId}:`, error);
+      return null;
+    }
+  }
+
+  /**
+   * Create a local PTY session (INSECURE - Development only)
+   */
+  private async createLocalSession(projectId: string): Promise<PTYSession | null> {
+    try {
       const workDir = await this.setupProjectDirectory(projectId);
       
       const shell = this.getShell();
       const shellArgs = this.getShellArgs();
 
-      logger.info(`Creating PTY session for project ${projectId} in ${workDir}`);
+      logger.info(`Creating local PTY session for project ${projectId} in ${workDir}`);
+      logger.warn('[SECURITY] Local PTY is only for development. Use Docker in production.');
 
       const ptyProcess = pty.spawn(shell, shellArgs, {
         name: 'xterm-256color',
@@ -225,6 +393,8 @@ export class PTYTerminalService {
 
       const session: PTYSession = {
         ptyProcess,
+        dockerProcess: null,
+        containerId: null,
         projectId,
         clients: new Set(),
         commandHistory: [],
@@ -233,10 +403,10 @@ export class PTYTerminalService {
         rows: 24,
         createdAt: Date.now(),
         lastActivity: Date.now(),
-        outputBuffer: new CircularBuffer(10000) // 8.4 FIX: Store terminal history
+        outputBuffer: new CircularBuffer(10000),
+        isDocker: false
       };
 
-      // 8.4 FIX: Store output in buffer and broadcast
       ptyProcess.onData((data) => {
         session.outputBuffer.push(data);
         this.broadcastToSession(session, {
@@ -257,7 +427,7 @@ export class PTYTerminalService {
       return session;
 
     } catch (error) {
-      logger.error(`Failed to create session for project ${projectId}:`, error);
+      logger.error(`Failed to create local session for project ${projectId}:`, error);
       return null;
     }
   }
@@ -299,6 +469,69 @@ export class PTYTerminalService {
     }
   }
 
+  /**
+   * Sync modified files from terminal workspace back to database
+   * This ensures terminal changes (npm install, file edits) persist
+   */
+  private async syncFilesBack(projectId: string, workDir: string): Promise<void> {
+    try {
+      const existingFiles = await storage.getFilesByProjectId(projectId);
+      const existingFileMap = new Map(existingFiles.map(f => [f.path || f.name, f]));
+      
+      // Walk the workspace directory and sync changes
+      const walkDir = async (dir: string, basePath: string = ''): Promise<void> => {
+        const entries = await fs.promises.readdir(dir, { withFileTypes: true });
+        
+        for (const entry of entries) {
+          const fullPath = path.join(dir, entry.name);
+          const relativePath = basePath ? path.join(basePath, entry.name) : entry.name;
+          
+          // Skip node_modules and .git for performance (they can be regenerated)
+          if (entry.name === 'node_modules' || entry.name === '.git') {
+            continue;
+          }
+          
+          if (entry.isDirectory()) {
+            // Recursively walk subdirectories
+            await walkDir(fullPath, relativePath);
+          } else {
+            // Read file content and update database
+            try {
+              const content = await fs.promises.readFile(fullPath, 'utf8');
+              const existingFile = existingFileMap.get(relativePath);
+              
+              if (existingFile) {
+                // Update existing file if content changed
+                if (existingFile.content !== content) {
+                  await storage.updateFile(existingFile.id, { content });
+                  logger.debug(`Updated file: ${relativePath}`);
+                }
+              } else {
+                // Create new file
+                await storage.createFile({
+                  projectId: parseInt(projectId, 10),
+                  name: entry.name,
+                  path: relativePath,
+                  content,
+                  isDirectory: false
+                });
+                logger.debug(`Created file: ${relativePath}`);
+              }
+            } catch (fileError) {
+              logger.warn(`Could not sync file ${relativePath}: ${fileError}`);
+            }
+          }
+        }
+      };
+      
+      await walkDir(workDir);
+      logger.info(`Synced terminal changes back to database for project ${projectId}`);
+      
+    } catch (error) {
+      logger.error(`Failed to sync files back for project ${projectId}:`, error);
+    }
+  }
+
   private getShell(): string {
     if (process.platform === 'win32') {
       return 'powershell.exe';
@@ -335,7 +568,7 @@ export class PTYTerminalService {
       switch (message.type) {
         case 'input':
           if (message.data) {
-            session.ptyProcess.write(message.data);
+            this.writeToSession(session, message.data);
           }
           break;
 
@@ -343,7 +576,10 @@ export class PTYTerminalService {
           if (message.cols && message.rows) {
             session.cols = message.cols;
             session.rows = message.rows;
-            session.ptyProcess.resize(message.cols, message.rows);
+            // Resize only works with local PTY
+            if (session.ptyProcess) {
+              session.ptyProcess.resize(message.cols, message.rows);
+            }
           }
           break;
 
@@ -357,8 +593,19 @@ export class PTYTerminalService {
 
     } catch (error) {
       if (typeof rawData === 'string' || Buffer.isBuffer(rawData)) {
-        session.ptyProcess.write(rawData.toString());
+        this.writeToSession(session, rawData.toString());
       }
+    }
+  }
+
+  /**
+   * Write data to the terminal session (Docker or PTY)
+   */
+  private writeToSession(session: PTYSession, data: string): void {
+    if (session.isDocker && session.dockerProcess?.stdin) {
+      session.dockerProcess.stdin.write(data);
+    } else if (session.ptyProcess) {
+      session.ptyProcess.write(data);
     }
   }
 
@@ -379,16 +626,35 @@ export class PTYTerminalService {
     }
   }
 
-  private cleanupSession(projectId: string): void {
+  private async cleanupSession(projectId: string): Promise<void> {
     const session = this.sessions.get(projectId);
     if (!session) return;
 
     logger.info(`Cleaning up terminal session for project ${projectId}`);
 
+    // Sync files back to database before cleanup (for persistent changes)
     try {
-      session.ptyProcess.kill();
+      const workDir = path.join(os.tmpdir(), 'e-code-terminals', `project-${projectId}`);
+      await this.syncFilesBack(projectId, workDir);
+    } catch (syncError) {
+      logger.error(`Error syncing files back for project ${projectId}:`, syncError);
+    }
+
+    try {
+      if (session.isDocker) {
+        // Kill Docker container
+        if (session.dockerProcess) {
+          session.dockerProcess.kill('SIGTERM');
+        }
+        // Also stop the container if it's still running
+        if (session.containerId) {
+          spawn('docker', ['stop', session.containerId], { stdio: 'ignore' });
+        }
+      } else if (session.ptyProcess) {
+        session.ptyProcess.kill();
+      }
     } catch (error) {
-      logger.error(`Error killing PTY process:`, error);
+      logger.error(`Error killing terminal process:`, error);
     }
 
     for (const client of session.clients) {
@@ -430,7 +696,7 @@ export class PTYTerminalService {
       throw new Error('No active session for project');
     }
 
-    session.ptyProcess.write(command + '\r');
+    this.writeToSession(session, command + '\r');
   }
 }
 
