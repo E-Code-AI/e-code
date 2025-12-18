@@ -10,19 +10,25 @@ import session from "express-session";
 import { getStorage, sessionStore } from "../storage";
 import { User } from "@shared/schema";
 import bcrypt from "bcrypt";
+import { sessionSecretRotation } from "../auth/session-rotation";
 
 export function setupPassportAuth(app: Application) {
   const storage = getStorage();
   
-  // Session configuration - SECURITY: No fallback secret
-  const sessionSecret = process.env.SESSION_SECRET;
-  if (!sessionSecret) {
-    throw new Error('[SECURITY] SESSION_SECRET environment variable must be configured');
+  // Session configuration - Uses rotating secrets for enhanced security
+  // The sessionSecretRotation class manages multiple secrets for graceful rotation
+  // Express-session will use the first secret to sign new sessions and all secrets to verify
+  const secrets = sessionSecretRotation.getSecrets();
+  if (secrets.length === 0 || !secrets[0]) {
+    throw new Error('[SECURITY] Session secrets not properly initialized');
   }
+  
+  // Start auto-rotation of session secrets (rotates every 24 hours by default)
+  sessionSecretRotation.startAutoRotation();
   
   app.use(session({
     store: sessionStore,
-    secret: sessionSecret,
+    secret: secrets,
     resave: false,
     saveUninitialized: false,
     rolling: true,

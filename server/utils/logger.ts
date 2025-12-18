@@ -16,6 +16,71 @@ export interface Logger {
   debug: (...args: LogArguments) => void;
 }
 
+const SENSITIVE_FIELDS = [
+  'password',
+  'token',
+  'secret',
+  'apiKey',
+  'api_key',
+  'authorization',
+  'cookie',
+  'session',
+  'creditCard',
+  'credit_card',
+  'ssn',
+  'socialSecurityNumber',
+  'private_key',
+  'privateKey',
+  'accessToken',
+  'access_token',
+  'refreshToken',
+  'refresh_token',
+];
+
+const SENSITIVE_PATTERNS = [
+  /Bearer\s+[A-Za-z0-9\-._~+\/]+=*/gi,
+  /sk-[A-Za-z0-9]{24,}/g,
+  /sk_live_[A-Za-z0-9]+/g,
+  /sk_test_[A-Za-z0-9]+/g,
+  /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g,
+];
+
+function sanitizeValue(value: any, depth = 0): any {
+  if (depth > 10) return '[DEPTH_LIMIT]';
+  
+  if (typeof value === 'string') {
+    let sanitized = value;
+    for (const pattern of SENSITIVE_PATTERNS) {
+      pattern.lastIndex = 0;
+      sanitized = sanitized.replace(pattern, '[REDACTED]');
+    }
+    return sanitized;
+  }
+  
+  if (Array.isArray(value)) {
+    return value.map(v => sanitizeValue(v, depth + 1));
+  }
+  
+  if (value && typeof value === 'object') {
+    const sanitized: Record<string, any> = {};
+    for (const [key, val] of Object.entries(value)) {
+      const keyLower = key.toLowerCase();
+      if (SENSITIVE_FIELDS.some(f => keyLower.includes(f.toLowerCase()))) {
+        sanitized[key] = '[REDACTED]';
+      } else {
+        sanitized[key] = sanitizeValue(val, depth + 1);
+      }
+    }
+    return sanitized;
+  }
+  
+  return value;
+}
+
+const sanitizeFormat = winston.format((info) => {
+  return sanitizeValue(info);
+});
+
 // Create Winston logger instance
 const winstonLogger = winston.createLogger({
   level: process.env.LOG_LEVEL || 'info',
@@ -25,6 +90,7 @@ const winstonLogger = winston.createLogger({
     }),
     winston.format.errors({ stack: true }),
     winston.format.splat(),
+    sanitizeFormat(),
     winston.format.json()
   ),
   defaultMeta: { 
