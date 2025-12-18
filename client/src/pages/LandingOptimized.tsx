@@ -279,8 +279,7 @@ export default function LandingOptimized() {
       <BuildModeSelector
         open={buildModeDialogOpen}
         onOpenChange={setBuildModeDialogOpen}
-        onModeSelect={handleBuildModeSelect}
-        prompt={pendingBuildPrompt}
+        onSelectMode={handleBuildModeSelect}
       />
     </MarketingLayout>
   );
