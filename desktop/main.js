@@ -12,11 +12,44 @@
  * - Deep linking support
  */
 
-const { app, BrowserWindow, Menu, Tray, shell, ipcMain, dialog, nativeTheme, session } = require('electron');
+const { app, BrowserWindow, Menu, Tray, shell, ipcMain, dialog, nativeTheme, session, crashReporter } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const Store = require('electron-store');
 const { autoUpdater } = require('electron-updater');
+
+// ============================================
+// Crash Reporting - Initialize Early
+// ============================================
+crashReporter.start({
+  productName: 'E-Code',
+  companyName: 'E-Code',
+  submitURL: process.env.CRASH_REPORT_URL || 'https://e-code.ai/api/crash-reports',
+  uploadToServer: process.env.NODE_ENV === 'production',
+  compress: true,
+  ignoreSystemCrashHandler: false,
+  extra: {
+    version: app.getVersion(),
+    platform: process.platform,
+    arch: process.arch,
+  },
+});
+
+// Add unhandled exception handler
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+  const logPath = path.join(app.getPath('userData'), 'crash.log');
+  const logEntry = `[${new Date().toISOString()}] Uncaught Exception: ${error.stack || error.message}\n`;
+  fs.appendFileSync(logPath, logEntry);
+});
+
+// Add unhandled rejection handler
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  const logPath = path.join(app.getPath('userData'), 'crash.log');
+  const logEntry = `[${new Date().toISOString()}] Unhandled Rejection: ${reason}\n`;
+  fs.appendFileSync(logPath, logEntry);
+});
 
 // ============================================
 // Security: Path Validation for IPC Handlers
@@ -1052,6 +1085,20 @@ ipcMain.handle('get-platform', () => process.platform);
 ipcMain.handle('get-app-path', (event, name) => app.getPath(name));
 ipcMain.handle('is-dev', () => isDev);
 ipcMain.handle('is-packaged', () => app.isPackaged);
+
+// Error reporting from renderer process
+ipcMain.handle('report-error', async (event, errorData) => {
+  console.error('[E-Code Desktop] Renderer error:', errorData);
+  const logPath = path.join(app.getPath('userData'), 'crash.log');
+  const logEntry = `[${new Date().toISOString()}] Renderer Error: ${JSON.stringify(errorData)}\n`;
+  try {
+    fs.appendFileSync(logPath, logEntry);
+    return { success: true };
+  } catch (err) {
+    console.error('[E-Code Desktop] Failed to write crash log:', err);
+    return { success: false, error: err.message };
+  }
+});
 
 // Theme
 ipcMain.handle('get-system-theme', () => nativeTheme.shouldUseDarkColors ? 'dark' : 'light');

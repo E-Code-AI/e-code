@@ -44,6 +44,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
+import { getCursorColor, getCursorStyle, CURSOR_COLORS } from '@/lib/cursor-colors';
 import * as Y from 'yjs';
 import { WebrtcProvider } from 'y-webrtc';
 import { WebsocketProvider } from 'y-websocket';
@@ -90,18 +91,16 @@ interface RealTimeCollaborationProps {
   onCollaboratorLeave?: (collaboratorId: string) => void;
 }
 
-// Generate a random color for collaborators
-const COLLABORATOR_COLORS = [
-  '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8',
-  '#F7DC6F', '#BB8FCE', '#85C1E2', '#F8C471', '#82E0AA'
-];
-
+// Generate a consistent color for collaborators based on user ID
 const generateCollaboratorColor = (userId?: string | number) => {
-  if (!userId) return COLLABORATOR_COLORS[Math.floor(Math.random() * COLLABORATOR_COLORS.length)];
-  const hash = typeof userId === 'string' 
-    ? userId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
-    : userId;
-  return COLLABORATOR_COLORS[hash % COLLABORATOR_COLORS.length];
+  if (!userId) return CURSOR_COLORS[Math.floor(Math.random() * CURSOR_COLORS.length)].bg;
+  return getCursorColor(userId).bg;
+};
+
+// Get full cursor style with background and text colors
+const getCollaboratorCursorStyle = (userId?: string | number) => {
+  if (!userId) return getCursorStyle('default');
+  return getCursorStyle(userId);
 };
 
 export function RealTimeCollaboration({
@@ -188,11 +187,13 @@ export function RealTimeCollaboration({
     awarenessRef.current = awareness;
 
     // Set local user info with yCollab compatible format
-    const userColor = generateCollaboratorColor();
+    // Use user ID for consistent color assignment across sessions
+    const cursorColor = getCursorColor(user?.id || 'anonymous');
     awareness.setLocalStateField('user', {
       name: user?.username || 'Anonymous',
-      color: userColor,
-      colorLight: userColor + '33',
+      color: cursorColor.bg,
+      colorLight: cursorColor.bg + '33',
+      colorName: cursorColor.name,
     });
 
     // Listen for awareness changes

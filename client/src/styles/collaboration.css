@@ -90,34 +90,66 @@
 }
 
 /* ============================================
-   USER-SPECIFIC CURSOR COLORS (10 distinct)
+   USER-SPECIFIC CURSOR COLORS (12 distinct)
    ============================================ */
 
-.yjs-cursor-1 { color: #FF6B6B; }
-.yjs-cursor-2 { color: #4ECDC4; }
-.yjs-cursor-3 { color: #45B7D1; }
-.yjs-cursor-4 { color: #F9CA24; }
-.yjs-cursor-5 { color: #6C5CE7; }
-.yjs-cursor-6 { color: #A29BFE; }
-.yjs-cursor-7 { color: #FD79A8; }
-.yjs-cursor-8 { color: #FDCB6E; }
-.yjs-cursor-9 { color: #00B894; }
-.yjs-cursor-10 { color: #E17055; }
+.yjs-cursor-1, .collaborative-cursor-red { color: #FF6B6B; }
+.yjs-cursor-2, .collaborative-cursor-teal { color: #4ECDC4; }
+.yjs-cursor-3, .collaborative-cursor-blue { color: #45B7D1; }
+.yjs-cursor-4, .collaborative-cursor-green { color: #96CEB4; }
+.yjs-cursor-5, .collaborative-cursor-yellow { color: #FFEAA7; }
+.yjs-cursor-6, .collaborative-cursor-plum { color: #DDA0DD; }
+.yjs-cursor-7, .collaborative-cursor-orange { color: #FF8C42; }
+.yjs-cursor-8, .collaborative-cursor-purple { color: #6C5CE7; }
+.yjs-cursor-9, .collaborative-cursor-mint { color: #A8E6CF; }
+.yjs-cursor-10, .collaborative-cursor-pink { color: #FFB6C1; }
+.yjs-cursor-11, .collaborative-cursor-sky { color: #87CEEB; }
+.yjs-cursor-12, .collaborative-cursor-khaki { color: #F0E68C; }
 
 /* ============================================
-   USER-SPECIFIC SELECTION COLORS
+   COLLABORATIVE CURSOR COMPONENT STYLES
    ============================================ */
 
-.yjs-selection-1 { background-color: rgba(255, 107, 107, 0.2); }
-.yjs-selection-2 { background-color: rgba(78, 205, 196, 0.2); }
-.yjs-selection-3 { background-color: rgba(69, 183, 209, 0.2); }
-.yjs-selection-4 { background-color: rgba(249, 202, 36, 0.2); }
-.yjs-selection-5 { background-color: rgba(108, 92, 231, 0.2); }
-.yjs-selection-6 { background-color: rgba(162, 155, 254, 0.2); }
-.yjs-selection-7 { background-color: rgba(253, 121, 168, 0.2); }
-.yjs-selection-8 { background-color: rgba(253, 203, 110, 0.2); }
-.yjs-selection-9 { background-color: rgba(0, 184, 148, 0.2); }
-.yjs-selection-10 { background-color: rgba(225, 112, 85, 0.2); }
+.collaborative-cursor {
+  position: absolute;
+  pointer-events: none;
+  z-index: 50;
+  transition: all 0.1s ease;
+}
+
+.collaborative-cursor-caret {
+  width: 2px;
+  height: 1.2em;
+  animation: cursor-blink 1s infinite;
+}
+
+.collaborative-cursor-label {
+  position: absolute;
+  top: -1.5em;
+  left: 0;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0.9;
+}
+
+/* ============================================
+   USER-SPECIFIC SELECTION COLORS (12 distinct)
+   ============================================ */
+
+.yjs-selection-1, .collaborative-selection-red { background-color: rgba(255, 107, 107, 0.2); }
+.yjs-selection-2, .collaborative-selection-teal { background-color: rgba(78, 205, 196, 0.2); }
+.yjs-selection-3, .collaborative-selection-blue { background-color: rgba(69, 183, 209, 0.2); }
+.yjs-selection-4, .collaborative-selection-green { background-color: rgba(150, 206, 180, 0.2); }
+.yjs-selection-5, .collaborative-selection-yellow { background-color: rgba(255, 234, 167, 0.2); }
+.yjs-selection-6, .collaborative-selection-plum { background-color: rgba(221, 160, 221, 0.2); }
+.yjs-selection-7, .collaborative-selection-orange { background-color: rgba(255, 140, 66, 0.2); }
+.yjs-selection-8, .collaborative-selection-purple { background-color: rgba(108, 92, 231, 0.2); }
+.yjs-selection-9, .collaborative-selection-mint { background-color: rgba(168, 230, 207, 0.2); }
+.yjs-selection-10, .collaborative-selection-pink { background-color: rgba(255, 182, 193, 0.2); }
+.yjs-selection-11, .collaborative-selection-sky { background-color: rgba(135, 206, 235, 0.2); }
+.yjs-selection-12, .collaborative-selection-khaki { background-color: rgba(240, 230, 140, 0.2); }
 
 /* ============================================
    MOBILE RESPONSIVE STYLES
