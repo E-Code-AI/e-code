@@ -106,6 +106,7 @@ export default function Settings() {
       toast({
         title: 'Profile saved',
         description: 'Your profile has been successfully updated.',
+        variant: 'success',
       });
     } catch (error) {
       toast({

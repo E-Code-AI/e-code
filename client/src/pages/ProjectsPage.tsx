@@ -230,7 +230,7 @@ const ProjectsPage = () => {
       queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
       setNewProjectOpen(false);
       form.reset();
-      toast({ title: "Success", description: "Project created successfully" });
+      toast({ title: "Success", description: "Project created successfully", variant: "success" });
     },
     onError: (error: any) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -245,7 +245,7 @@ const ProjectsPage = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
-      toast({ title: "Success", description: "Project deleted successfully" });
+      toast({ title: "Success", description: "Project deleted successfully", variant: "success" });
     },
     onError: (error: any) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });

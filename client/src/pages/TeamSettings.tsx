@@ -166,6 +166,7 @@ export default function TeamSettings() {
       toast({
         title: "Team updated!",
         description: "Your team settings have been saved.",
+        variant: "success"
       });
     },
     onError: (error) => {
@@ -186,6 +187,7 @@ export default function TeamSettings() {
       toast({
         title: "Team deleted",
         description: "Your team has been permanently deleted.",
+        variant: "info"
       });
       setLocation('/teams');
     },

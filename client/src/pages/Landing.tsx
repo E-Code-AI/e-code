@@ -245,7 +245,7 @@ export default function Landing() {
 
     try {
       const data = await apiRequest('POST', '/api/newsletter/subscribe', { email }) as any;
-      toast({ title: "Success!", description: data.message || "You've been subscribed!" });
+      toast({ title: "Success!", description: data.message || "You've been subscribed!", variant: "success" });
       setEmail('');
       setTimeout(() => navigate('/login'), 1500);
     } catch (error) {
