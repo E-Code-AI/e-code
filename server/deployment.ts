@@ -134,7 +134,7 @@ export class DeploymentManager {
       this.addLog(deploymentId, 'Deploying application...');
 
       // Generate deployment URL
-      const baseUrl = process.env.DEPLOYMENT_BASE_URL || 'https://e-code.app';
+      const baseUrl = process.env.DEPLOYMENT_BASE_URL || 'https://e-code.ai';
       const deploymentUrl = `${baseUrl}/${project.name}-${deploymentId.substring(0, 8)}`;
 
       // Deploy to actual infrastructure

@@ -562,7 +562,7 @@ router.post('/api/projects/:projectId/publish', ensureAuthenticated, async (req:
         id: deploymentId,
         projectId: projectId,
         status: deployment?.status || 'pending',
-        url: deployment?.url || `https://project-${projectId}.e-code.app`,
+        url: deployment?.url || `https://project-${projectId}.e-code.ai`,
         environment: 'production',
         publishedAt: new Date().toISOString()
       }

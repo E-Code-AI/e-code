@@ -233,7 +233,7 @@ export function AdvancedDeployments({ projectId }: AdvancedDeploymentsProps) {
                     {deployment.environment}
                   </CardTitle>
                   <CardDescription>
-                    {deployment.customDomain || `${projectId}.e-code.app`}
+                    {deployment.customDomain || `${projectId}.e-code.ai`}
                   </CardDescription>
                 </div>
                 <Badge variant="outline">{deployment.region}</Badge>

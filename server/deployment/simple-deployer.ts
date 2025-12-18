@@ -32,7 +32,7 @@ export class SimpleDeployer {
     // Initialize deployment
     const deployment: DeploymentResult = {
       id: deploymentId,
-      url: `https://project-${config.projectId}.e-code.app`,
+      url: `https://project-${config.projectId}.e-code.ai`,
       status: 'deploying',
       logs: ['Starting deployment...']
     };

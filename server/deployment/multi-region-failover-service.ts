@@ -343,7 +343,7 @@ export class MultiRegionFailoverService extends EventEmitter {
             const deployment = {
                 projectId,
                 status: 'deploying' as const,
-                url: `https://${regionId}.deployments.e-code.app/${projectId}`,
+                url: `https://${regionId}.deployments.e-code.ai/${projectId}`,
                 region: regionId,
                 version: '1.0.0',
                 createdAt: new Date(),

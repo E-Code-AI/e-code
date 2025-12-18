@@ -391,9 +391,9 @@ export class ContainerOrchestrator {
     
     // DNS configuration (simplified - in production would use Route53 or similar)
     const dnsEntry = {
-      domain: config.domain || `${deploymentId}.e-code.app`,
+      domain: config.domain || `${deploymentId}.e-code.ai`,
       type: 'CNAME',
-      value: `cdn.e-code.app`,
+      value: `cdn.e-code.ai`,
       ttl: 300
     };
     

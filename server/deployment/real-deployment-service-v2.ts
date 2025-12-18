@@ -153,7 +153,7 @@ export class RealDeploymentServiceV2 {
         targetHosts: config.regions.map(region => ({
           id: region,
           region,
-          host: `k8s-${region}.e-code.app`,
+          host: `k8s-${region}.e-code.ai`,
           port: 443,
           status: 'active' as const
         })),

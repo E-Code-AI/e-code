@@ -26,7 +26,7 @@ router.post('/api/projects/:projectId/container', ensureAuthenticated, async (re
       success: true,
       environment: {
         namespace: environment.namespace,
-        url: `https://${projectId}.e-code.app`,
+        url: `https://${projectId}.e-code.ai`,
         resources: environment.resources,
         status: 'creating'
       }
@@ -58,7 +58,7 @@ router.get('/api/projects/:projectId/container/status', ensureAuthenticated, asy
       success: true,
       status: {
         ...status,
-        url: `https://${projectId}.e-code.app`,
+        url: `https://${projectId}.e-code.ai`,
         accessible: status.deployment.ready
       }
     });
@@ -220,7 +220,7 @@ router.post('/api/projects/:projectId/container/restart', ensureAuthenticated, a
       message: 'Container restarted successfully',
       environment: {
         namespace: environment.namespace,
-        url: `https://${projectId}.e-code.app`,
+        url: `https://${projectId}.e-code.ai`,
         resources: environment.resources
       }
     });

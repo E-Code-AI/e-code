@@ -97,7 +97,7 @@ export class BuildpackDeploymentService {
 
       // Generate deployment URL
       const subdomain = `project-${config.projectId}-${config.deploymentId.slice(0, 8)}`;
-      const url = `https://${subdomain}.e-code.app`;
+      const url = `https://${subdomain}.e-code.ai`;
 
       // Configure reverse proxy (nginx)
       await this.configureReverseProxy(subdomain, config.port, deploymentPath);
@@ -246,7 +246,7 @@ ${config.startCommand || 'python app.py'}
     const nginxConfig = `
 server {
     listen 80;
-    server_name ${subdomain}.e-code.app;
+    server_name ${subdomain}.e-code.ai;
 
     location / {
         proxy_pass http://127.0.0.1:${port};

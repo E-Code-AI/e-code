@@ -767,7 +767,7 @@ export class RealMobileCompiler {
     return {
       simulatorId,
       status: 'running',
-      url: `wss://simulator.e-code.app/${simulatorId}`
+      url: `wss://simulator.e-code.ai/${simulatorId}`
     };
   }
 }

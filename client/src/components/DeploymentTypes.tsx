@@ -369,7 +369,7 @@ export function DeploymentTypes({ projectId, onDeploy }: DeploymentTypesProps) {
                         <span className="text-sm font-medium">Default E-Code Domain</span>
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        Your app will be available at: <code>project-{projectId}.e-code.app</code>
+                        Your app will be available at: <code>project-{projectId}.e-code.ai</code>
                       </p>
                     </div>
                   )}

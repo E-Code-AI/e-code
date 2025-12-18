@@ -240,7 +240,7 @@ metadata:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
 spec:
   rules:
-  - host: e-code.app
+  - host: e-code.ai
     http:
       paths:
       - path: /
@@ -250,7 +250,7 @@ spec:
             name: e-code-platform
             port:
               number: 80
-  - host: "*.e-code.app"
+  - host: "*.e-code.ai"
     http:
       paths:
       - path: /

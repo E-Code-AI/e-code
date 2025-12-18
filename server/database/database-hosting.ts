@@ -172,7 +172,7 @@ export class DatabaseHostingService {
       plan: options.plan,
       config: planConfig,
       connection: {
-        host: `${instanceId}.db.e-code.app`,
+        host: `${instanceId}.db.e-code.ai`,
         port: this.getDefaultPort(options.type),
         database: options.name.toLowerCase().replace(/[^a-z0-9]/g, '_'),
         username: `user_${userId}`,

@@ -34,7 +34,7 @@ cd "$BUILD_DIR"
 # Initialiser Git (requis par EAS)
 echo "🔧 Initializing git repository..."
 git init
-git config user.email "build@e-code.app"
+git config user.email "build@e-code.ai"
 git config user.name "E-Code Build"
 git add -A
 git commit -m "Initial build commit"

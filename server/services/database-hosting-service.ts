@@ -97,7 +97,7 @@ export class DatabaseHostingService {
   private generateCredentials(type: string, name: string): HostedDatabase['credentials'] {
     const sanitizedName = name.toLowerCase().replace(/[^a-z0-9]/g, '_');
     return {
-      host: `${sanitizedName}.db.e-code.app`,
+      host: `${sanitizedName}.db.e-code.ai`,
       port: this.getDefaultPort(type),
       username: `user_${Date.now()}`,
       password: this.generateSecurePassword(),
@@ -221,7 +221,7 @@ export class DatabaseHostingService {
       // In production, this would use real backup tools like pg_dump, mysqldump, etc.
       // For now, we create the backup metadata immediately
       backup.status = 'completed';
-      backup.downloadUrl = `https://backups.e-code.app/download/${backupId}`;
+      backup.downloadUrl = `https://backups.e-code.ai/download/${backupId}`;
       backup.size = database.metrics.storage * 1024 * 1024;
     } catch (error) {
       if (backup) {

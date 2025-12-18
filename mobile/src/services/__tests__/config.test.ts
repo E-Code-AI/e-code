@@ -124,13 +124,13 @@ describe('Mobile API Configuration', () => {
     it('should accept valid production URL', () => {
       resetConfig(false);
       setExpoConfig({
-        apiBaseUrl: 'https://api.e-code.app/api'
+        apiBaseUrl: 'https://api.e-code.ai/api'
       });
       
       const { config } = require('../config');
       
       expect(config.environment).toBe('production');
-      expect(config.apiBaseUrl).toBe('https://api.e-code.app/api');
+      expect(config.apiBaseUrl).toBe('https://api.e-code.ai/api');
       expect(config.isProduction).toBe(true);
       expect(config.isDevelopment).toBe(false);
     });
@@ -163,13 +163,13 @@ describe('Mobile API Configuration', () => {
       resetConfig(false);
       setExpoConfig({
         environment: 'staging',
-        apiBaseUrl: 'https://staging.e-code.app/api'
+        apiBaseUrl: 'https://staging.e-code.ai/api'
       });
       
       const { config } = require('../config');
       
       expect(config.environment).toBe('staging');
-      expect(config.apiBaseUrl).toBe('https://staging.e-code.app/api');
+      expect(config.apiBaseUrl).toBe('https://staging.e-code.ai/api');
       expect(config.isStaging).toBe(true);
       expect(config.isProduction).toBe(false);
     });
@@ -190,7 +190,7 @@ describe('Mobile API Configuration', () => {
       resetConfig(false);
       setExpoConfig({
         releaseChannel: 'staging',
-        apiBaseUrl: 'https://staging.e-code.app/api'
+        apiBaseUrl: 'https://staging.e-code.ai/api'
       });
       
       const { config } = require('../config');
@@ -214,7 +214,7 @@ describe('Mobile API Configuration', () => {
     it('should pass validation for valid production config', () => {
       resetConfig(false);
       setExpoConfig({
-        apiBaseUrl: 'https://api.e-code.app/api'
+        apiBaseUrl: 'https://api.e-code.ai/api'
       });
       
       const { validateConfig } = require('../config');

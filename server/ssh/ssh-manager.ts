@@ -412,7 +412,7 @@ export class SSHManager {
   // Get SSH configuration for project
   getSSHConfig(projectId: string): SSHConfig {
     return {
-      host: 'ssh.e-code.app',
+      host: 'ssh.e-code.ai',
       port: 22,
       username: `project-${projectId}`,
       projectPath: `/projects/${projectId}`,

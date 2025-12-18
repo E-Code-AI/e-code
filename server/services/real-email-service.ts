@@ -338,7 +338,7 @@ export class RealEmailService {
       template: 'welcome',
       templateData: {
         username: user.username,
-        projectUrl: `${process.env.FRONTEND_URL || 'https://e-code.app'}/projects/new`
+        projectUrl: `${process.env.FRONTEND_URL || 'https://e-code.ai'}/projects/new`
       }
     });
   }
@@ -356,7 +356,7 @@ export class RealEmailService {
       templateData: {
         username: user.username,
         resetCode: resetToken.substring(0, 6).toUpperCase(),
-        resetUrl: `${process.env.FRONTEND_URL || 'https://e-code.app'}/reset-password?token=${resetToken}`
+        resetUrl: `${process.env.FRONTEND_URL || 'https://e-code.ai'}/reset-password?token=${resetToken}`
       }
     });
   }

@@ -3,7 +3,7 @@ import axios from 'axios';
 
 export class ECodeCopilotProvider implements CopilotProvider {
     private apiClient = axios.create({
-        baseURL: 'https://e-code.app/api',
+        baseURL: 'https://e-code.ai/api',
         headers: {
             'Content-Type': 'application/json'
         }
