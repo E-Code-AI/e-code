@@ -1,5 +1,5 @@
 # E-Code Platform Production Docker Compose
-# Simplified configuration with proper port mapping
+# Full configuration with Docker-in-Docker for code execution
 
 version: '3.8'
 
@@ -14,16 +14,24 @@ services:
       - PORT=5000
       - DATABASE_URL=${DATABASE_URL}
       - SESSION_SECRET=${SESSION_SECRET}
-      - REDIS_URL=redis://redis:6379
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-changeme}@redis:6379
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - DOCKER_HOST=tcp://docker:2376
+      - DOCKER_TLS_VERIFY=1
+      - DOCKER_CERT_PATH=/certs/client
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      docker:
+        condition: service_started
     restart: unless-stopped
     volumes:
       - ./logs:/app/logs
       - ./uploads:/app/uploads
       - ./attached_assets:/app/attached_assets
+      - docker-certs-client:/certs/client:ro
     networks:
       - ecode-network
     healthcheck:
@@ -44,21 +52,46 @@ services:
     restart: unless-stopped
     networks:
       - ecode-network
-    # Don't expose postgres port externally in production
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PGUSER:-ecode_user} -d ${PGDATABASE:-ecode}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:7-alpine
-    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-changeme}
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-changeme} --maxmemory 256mb --maxmemory-policy allkeys-lru
     volumes:
       - redis-data:/data
     restart: unless-stopped
     networks:
       - ecode-network
-    # Don't expose redis port externally in production
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-changeme}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  docker:
+    image: docker:24-dind
+    container_name: ecode-docker
+    restart: unless-stopped
+    privileged: true
+    environment:
+      - DOCKER_TLS_CERTDIR=/certs
+    volumes:
+      - docker-certs-ca:/certs/ca
+      - docker-certs-client:/certs/client
+      - docker-data:/var/lib/docker
+    networks:
+      - ecode-network
 
 volumes:
   postgres-data:
   redis-data:
+  docker-certs-ca:
+  docker-certs-client:
+  docker-data:
 
 networks:
   ecode-network:
