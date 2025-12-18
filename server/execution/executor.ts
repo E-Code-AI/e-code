@@ -22,6 +22,34 @@ export interface ExecutionResult {
 // Check if Docker execution mode is enabled (production)
 const USE_DOCKER_EXECUTION = process.env.EXECUTION_MODE === 'docker' || process.env.NODE_ENV === 'production';
 
+// Normalize language aliases to canonical names that docker-executor expects
+// Docker executor uses: nodejs, python, java, cpp, c, go, ruby, php, rust
+const LANGUAGE_ALIASES: Record<string, string> = {
+  'js': 'javascript',
+  'javascript': 'javascript',
+  'nodejs': 'javascript',
+  'node': 'javascript',
+  'python': 'python',
+  'python3': 'python',
+  'py': 'python',
+  'go': 'go',
+  'golang': 'go',
+  'cpp': 'cpp',
+  'c++': 'cpp',
+  'c': 'c',  // Keep C separate - docker-executor now supports C directly
+  'java': 'java',
+  'rust': 'rust',
+  'rs': 'rust',
+  'php': 'php',
+  'ruby': 'ruby',
+  'rb': 'ruby',
+};
+
+function normalizeLanguage(lang: string): string {
+  const normalized = lang.toLowerCase().trim();
+  return LANGUAGE_ALIASES[normalized] || normalized;
+}
+
 // Per-language execution adapter - returns command and args without shell parsing
 interface LanguageAdapter {
   cmd: string;
@@ -31,17 +59,8 @@ interface LanguageAdapter {
   compileArgs?: string[];
 }
 
-// Allowed languages for validation
-const ALLOWED_LANGUAGES = new Set([
-  'javascript', 'js',
-  'python', 'python3',
-  'go',
-  'cpp', 'c++',
-  'c',
-  'java',
-  'rust',
-  'php'
-]);
+// Allowed languages for validation (includes all aliases)
+const ALLOWED_LANGUAGES = new Set(Object.keys(LANGUAGE_ALIASES));
 
 // Maximum code size (1MB)
 const MAX_CODE_SIZE = 1024 * 1024;
@@ -102,8 +121,10 @@ export class CodeExecutor {
     // Use Docker executor in production for security
     if (USE_DOCKER_EXECUTION) {
       try {
+        // Normalize language to canonical name for Docker executor compatibility
+        const normalizedLang = normalizeLanguage(language);
         const dockerResult = await dockerExecutor.executeCode(
-          language.toLowerCase().trim(),
+          normalizedLang,
           code,
           options.input
         );
