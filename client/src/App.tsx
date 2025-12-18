@@ -1,32 +1,27 @@
-import { useEffect, useState, Suspense } from "react";
-import { OptimizedMotionProvider, AnimationMonitor } from "@/lib/motion";
+import { useEffect, useState, Suspense, lazy } from "react";
 import { Switch, Route, useLocation, Redirect } from "wouter";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { queryClient, queryPersister } from "./lib/queryClient";
-import { Toaster } from "@/components/ui/toaster";
-import { AppToaster } from "@/components/ui/AppToaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ECodeLoading } from "@/components/ECodeLoading";
 import { ThemeProvider } from "@/components/ThemeProvider";
-import { ScrollToTop } from "@/components/ScrollToTop";
-import { LazyAnimatedRoutes } from "@/components/LazyAnimatedRoutes";
 import { ConnectionStatusProvider } from "./hooks/use-connection-status";
-import { ConnectionStatusBanner } from "./components/ConnectionStatusBanner";
 import { GlobalErrorChannelProvider } from "./hooks/use-global-error-channel";
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { ReplitLayout } from "@/components/layout/ReplitLayout";
-import { LazyShellWidgets } from "@/components/LazyShellWidgets";
 import ErrorBoundary from "@/components/ErrorBoundary";
-import { OfflineFallback } from "@/components/OfflineFallback";
-
-import performanceMonitor from "./utils/performance";
-import { registerServiceWorker } from "./utils/service-worker";
-import budgetMonitor from "./utils/performance-budget";
-import { prefetchResources } from "./utils/network-optimization";
-import { addImagePreloadLinks } from "./utils/image-optimization";
-
 import { publicRoutes, protectedRoutes, placeholderRoutes, solarTechApps, Pages } from "./routes/config";
+
+const Toaster = lazy(() => import("@/components/ui/toaster").then(m => ({ default: m.Toaster })));
+const AppToaster = lazy(() => import("@/components/ui/AppToaster").then(m => ({ default: m.AppToaster })));
+const ScrollToTop = lazy(() => import("@/components/ScrollToTop").then(m => ({ default: m.ScrollToTop })));
+const LazyAnimatedRoutes = lazy(() => import("@/components/LazyAnimatedRoutes").then(m => ({ default: m.LazyAnimatedRoutes })));
+const ConnectionStatusBanner = lazy(() => import("./components/ConnectionStatusBanner").then(m => ({ default: m.ConnectionStatusBanner })));
+const LazyShellWidgets = lazy(() => import("@/components/LazyShellWidgets").then(m => ({ default: m.LazyShellWidgets })));
+const OfflineFallback = lazy(() => import("@/components/OfflineFallback").then(m => ({ default: m.OfflineFallback })));
+const OptimizedMotionProvider = lazy(() => import("@/lib/motion").then(m => ({ default: m.OptimizedMotionProvider })));
+const AnimationMonitor = lazy(() => import("@/lib/motion").then(m => ({ default: m.AnimationMonitor })));
 
 function PageLoader() {
   return <ECodeLoading fullScreen size="lg" text="Loading page..." />;
@@ -115,33 +110,21 @@ function AppContent() {
 
   useEffect(() => {
     if (import.meta.env.PROD) {
-      registerServiceWorker().catch(console.error);
+      import("./utils/service-worker").then(({ registerServiceWorker }) => {
+        registerServiceWorker().catch(console.error);
+      });
+      import("./utils/performance-budget").then(({ default: budgetMonitor }) => {
+        budgetMonitor.startMonitoring();
+      });
+      import("./utils/image-optimization").then(({ addImagePreloadLinks }) => {
+        addImagePreloadLinks(['/assets/logo.svg', '/assets/hero-image.svg']);
+      });
     }
-    if (process.env.NODE_ENV === 'production') {
-      budgetMonitor.startMonitoring();
-    }
-    if (import.meta.env.PROD) {
-      addImagePreloadLinks(['/assets/logo.svg', '/assets/hero-image.svg']);
-    }
-    const publicPaths = ['/', '/login', '/register', '/auth', '/pricing', '/features', '/about', '/docs', '/blog', '/terms', '/privacy', '/status', '/contact-sales', '/careers'];
-    const isPublicPage = publicPaths.some(path => window.location.pathname === path || window.location.pathname.startsWith('/blog/'));
-    if (!isPublicPage) {
-      prefetchResources(['/api/projects', '/api/monitoring/health/summary']).catch(() => {});
-    }
-    performanceMonitor.mark('app-init');
-    return () => {
-      budgetMonitor.stopMonitoring();
-      performanceMonitor.destroy();
-    };
   }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => { if (authLoading) setShowContent(true); }, 2000);
-    if (!authLoading) {
-      setShowContent(true);
-      performanceMonitor.mark('auth-ready');
-      performanceMonitor.measure('auth-init-time', 'app-init', 'auth-ready');
-    }
+    if (!authLoading) setShowContent(true);
     return () => clearTimeout(timer);
   }, [authLoading]);
 
@@ -211,19 +194,19 @@ function AppContent() {
 
 function App() {
   return (
-    <>
-      <OfflineFallback />
-      <ErrorBoundary>
-        <PersistQueryClientProvider 
-          client={queryClient} 
-          persistOptions={{ persister: queryPersister, maxAge: 24 * 60 * 60 * 1000, buster: 'v1' }}
-        >
+    <ErrorBoundary>
+      <PersistQueryClientProvider 
+        client={queryClient} 
+        persistOptions={{ persister: queryPersister, maxAge: 24 * 60 * 60 * 1000, buster: 'v1' }}
+      >
+        <Suspense fallback={<ECodeLoading fullScreen size="lg" text="Loading..." />}>
           <OptimizedMotionProvider>
             <AnimationMonitor>
               <ThemeProvider>
                 <ConnectionStatusProvider>
                   <GlobalErrorChannelProvider>
                     <AuthProvider>
+                      <OfflineFallback />
                       <AppContent />
                     </AuthProvider>
                   </GlobalErrorChannelProvider>
@@ -231,9 +214,9 @@ function App() {
               </ThemeProvider>
             </AnimationMonitor>
           </OptimizedMotionProvider>
-        </PersistQueryClientProvider>
-      </ErrorBoundary>
-    </>
+        </Suspense>
+      </PersistQueryClientProvider>
+    </ErrorBoundary>
   );
 }
 
