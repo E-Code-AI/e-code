@@ -151,32 +151,21 @@ export class StripeBillingService {
         return;
       }
       
-      // Find the subscription item for this price
-      const subscription = await this.stripe.subscriptions.retrieve(
-        user.stripeSubscriptionId,
-        { expand: ['items.data.price'] }
-      );
-      const subscriptionItem = subscription.items.data.find(
-        item => item.price?.id === priceId
-      );
-
-      if (!subscriptionItem) {
-        logger.warn(`No subscription item found for price ${priceId}`);
+      if (!user.stripeCustomerId) {
+        logger.warn(`User ${userId} has no Stripe customer ID`);
         return;
       }
 
-      if (!subscriptionItem.id) {
-        logger.warn(`Subscription item for price ${priceId} is missing an identifier`);
-        return;
-      }
-
-      await (this.stripe.subscriptionItems as any).createUsageRecord(subscriptionItem.id, {
-        action: 'increment',
-        quantity,
+      const meterEvent = await this.stripe.billing.meterEvents.create({
+        event_name: metricType,
+        payload: {
+          stripe_customer_id: user.stripeCustomerId,
+          value: String(quantity),
+        },
         timestamp: Math.floor(Date.now() / 1000),
       });
 
-      logger.info(`Reported usage for user ${userId}: ${metricType} = ${quantity}`);
+      logger.info(`Reported usage for user ${userId}: ${metricType} = ${quantity}, meterEventId=${meterEvent.identifier}`);
     } catch (error) {
       logger.error('Failed to report usage to Stripe:', error);
       // Don't throw - we don't want to break the app if usage reporting fails

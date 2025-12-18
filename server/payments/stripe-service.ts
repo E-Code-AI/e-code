@@ -489,43 +489,25 @@ export class StripePaymentService {
     await this.saveUsageRecord(usageRecord);
 
     try {
-      // Get subscription
-      const subscription = await stripe.subscriptions.retrieve(user.stripeSubscriptionId, {
-        expand: ['items']
-      });
-
-      // Find existing usage subscription item
-      const usageItem = subscription.items.data.find(item => item.price?.id === priceId);
-
-      if (!usageItem) {
-        // Usage-based items must be added to subscription during creation
-        // or manually via Stripe Dashboard. We can't dynamically add them here
-        // due to Stripe's recurring interval constraints.
-        logger.warn(
-          `[Stripe] Usage item for ${metric} not found in subscription ${user.stripeSubscriptionId}. ` +
-          `Usage-based items must be configured during subscription creation.`
-        );
-        return false; // Stored locally but not reported to Stripe
-      }
-
-      // Record usage on existing item
-      const usageItemId = usageItem.id;
-      if (!usageItemId) {
-        logger.error('[Stripe] Unable to determine subscription item identifier for usage record');
+      if (!user.stripeCustomerId) {
+        logger.warn(`[Stripe] User ${userId} has no Stripe customer ID`);
         return false;
       }
 
-      await (stripe.subscriptionItems as any).createUsageRecord(usageItemId, {
-        quantity: Math.ceil(quantity),
+      const meterEvent = await stripe.billing.meterEvents.create({
+        event_name: metric,
+        payload: {
+          stripe_customer_id: user.stripeCustomerId,
+          value: String(Math.ceil(quantity)),
+        },
         timestamp: Math.floor(Date.now() / 1000),
-        action: 'increment',
       });
 
-      logger.info(`[Stripe] ✅ Recorded ${quantity} ${metric} for user ${userId}`);
-      return true; // Successfully reported to Stripe
+      logger.info(`[Stripe] ✅ Recorded ${quantity} ${metric} for user ${userId}, meterEventId=${meterEvent.identifier}`);
+      return true;
     } catch (error) {
       logger.error(`[Stripe] Failed to record usage for ${metric}:`, error);
-      return false; // Stored locally but Stripe reporting failed
+      return false;
     }
   }
 
