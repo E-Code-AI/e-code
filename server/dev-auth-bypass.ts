@@ -1,6 +1,8 @@
 /**
  * Module pour contourner l'authentification en développement
  * NE PAS UTILISER EN PRODUCTION !
+ * 
+ * SECURITY: Includes rate limiting to prevent brute-force attacks on bypass token
  */
 
 import { Request, Response, NextFunction } from "express";
@@ -10,6 +12,37 @@ import { Request, Response, NextFunction } from "express";
 let bypassAuth = false;
 let productionBypassWarningLogged = false;
 const BYPASS_HEADER = 'x-dev-auth-token';
+
+// SECURITY: Rate limiting for bypass attempts (Fortune 500 requirement)
+const bypassAttempts = new Map<string, { count: number; firstAttempt: number }>();
+const MAX_BYPASS_ATTEMPTS = 5;
+const BYPASS_WINDOW_MS = 60000; // 1 minute
+
+function checkBypassRateLimit(ip: string): { allowed: boolean; remaining: number } {
+  const now = Date.now();
+  const record = bypassAttempts.get(ip);
+  
+  // Cleanup old entries
+  if (bypassAttempts.size > 1000) {
+    for (const [key, value] of bypassAttempts.entries()) {
+      if (now - value.firstAttempt > BYPASS_WINDOW_MS) {
+        bypassAttempts.delete(key);
+      }
+    }
+  }
+  
+  if (!record || now - record.firstAttempt > BYPASS_WINDOW_MS) {
+    bypassAttempts.set(ip, { count: 1, firstAttempt: now });
+    return { allowed: true, remaining: MAX_BYPASS_ATTEMPTS - 1 };
+  }
+  
+  if (record.count >= MAX_BYPASS_ATTEMPTS) {
+    return { allowed: false, remaining: 0 };
+  }
+  
+  record.count++;
+  return { allowed: true, remaining: MAX_BYPASS_ATTEMPTS - record.count };
+}
 
 // Export getter function for auth bypass status
 export const isAuthBypassEnabled = () => {
@@ -110,11 +143,24 @@ export function setupAuthBypass(app: any) {
   }
 
   // Endpoint pour activer le contournement
+  // SECURITY: Rate limited to prevent brute-force attacks
   app.get('/api/debug/bypass-auth/enable', (req: Request, res: Response) => {
+    const ip = req.ip || 'unknown';
+    const rateCheck = checkBypassRateLimit(ip);
+    
+    if (!rateCheck.allowed) {
+      return res.status(429).json({
+        status: 'rate_limited',
+        message: 'Too many attempts. Please try again later.',
+        retryAfter: 60
+      });
+    }
+    
     if (!hasValidBypassToken(req)) {
       return res.status(403).json({
         status: 'forbidden',
-        message: 'Missing or invalid dev auth bypass token'
+        message: 'Missing or invalid dev auth bypass token',
+        remaining: rateCheck.remaining
       });
     }
 
@@ -154,11 +200,24 @@ export function setupAuthBypass(app: any) {
   });
 
   // Add POST endpoint for auth bypass
+  // SECURITY: Rate limited to prevent brute-force attacks
   app.post('/api/auth/debug/bypass', (req: Request, res: Response) => {
+    const ip = req.ip || 'unknown';
+    const rateCheck = checkBypassRateLimit(ip);
+    
+    if (!rateCheck.allowed) {
+      return res.status(429).json({
+        success: false,
+        message: 'Too many attempts. Please try again later.',
+        retryAfter: 60
+      });
+    }
+    
     if (!hasValidBypassToken(req)) {
       return res.status(403).json({
         success: false,
-        message: 'Missing or invalid dev auth bypass token'
+        message: 'Missing or invalid dev auth bypass token',
+        remaining: rateCheck.remaining
       });
     }
 
