@@ -281,7 +281,7 @@ export const files = pgTable("files", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
   // Note: DB also has is_folder, but is_directory is the canonical boolean
-});
+}, (table) => [index("files_project_id_idx").on(table.projectId)]);
 
 // API SDK Tables - S-C1 FIXED: Secure API key storage with hash
 export const apiKeys = pgTable("api_keys", {
@@ -314,7 +314,7 @@ export const apiUsage = pgTable("api_usage", {
   statusCode: integer("status_code").notNull(),
   responseTime: integer("response_time"),
   timestamp: timestamp("timestamp").defaultNow(),
-});
+}, (table) => [index("api_usage_key_idx").on(table.apiKeyId), index("api_usage_timestamp_idx").on(table.timestamp)]);
 
 // Security logs table for audit logging
 export const securityLogs = pgTable("security_logs", {
@@ -330,7 +330,7 @@ export const securityLogs = pgTable("security_logs", {
   duration: integer("duration"), // in milliseconds
   metadata: jsonb("metadata").$type<Record<string, any>>(),
   timestamp: timestamp("timestamp").notNull().defaultNow(),
-});
+}, (table) => [index("security_logs_user_idx").on(table.userId), index("security_logs_timestamp_idx").on(table.timestamp)]);
 
 // Usage Events - Idempotent usage ingestion with deduplication
 export const usageEvents = pgTable("usage_events", {
@@ -431,7 +431,7 @@ export const terminalLogs = pgTable("terminal_logs", {
   source: varchar("source", { length: 64 }), // 'runtime', 'terminal', 'build', etc.
   metadata: jsonb("metadata").$type<Record<string, any>>(),
   timestamp: timestamp("timestamp").notNull().defaultNow(),
-});
+}, (table) => [index("terminal_logs_project_idx").on(table.projectId), index("terminal_logs_timestamp_idx").on(table.timestamp)]);
 
 export const newsletterSubscribers = pgTable("newsletter_subscribers", {
   id: serial("id").primaryKey(),
@@ -800,7 +800,7 @@ export const deployments = pgTable("deployments", {
   metadata: jsonb("metadata").default({}),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => [index("deployments_project_id_idx").on(table.projectId)]);
 
 // Deployment type specific configurations
 export const autoscaleDeployments = pgTable("autoscale_deployments", {
@@ -1564,45 +1564,7 @@ export const promptTemplateRatings = pgTable('prompt_template_ratings', {
   unique('unique_template_user_rating').on(table.templateId, table.userId),
 ]);
 
-// Relations
-export const usersRelations = relations(users, ({ many }) => ({
-  projects: many(projects),
-  apiKeys: many(apiKeys),
-  codeReviews: many(codeReviews),
-  mentorProfile: many(mentorProfiles),
-  mentorshipSessions: many(mentorshipSessions),
-  challengeSubmissions: many(challengeSubmissions),
-  mobileDevices: many(mobileDevices),
-  aiUsageRecords: many(aiUsageRecords),
-}));
-
-export const projectsRelations = relations(projects, ({ one, many }) => ({
-  owner: one(users, {
-    fields: [projects.ownerId],
-    references: [users.id],
-  }),
-  files: many(files),
-  codeReviews: many(codeReviews),
-}));
-
-export const filesRelations = relations(files, ({ one }) => ({
-  project: one(projects, {
-    fields: [files.projectId],
-    references: [projects.id],
-  }),
-}));
-
-export const codeReviewsRelations = relations(codeReviews, ({ one, many }) => ({
-  project: one(projects, {
-    fields: [codeReviews.projectId],
-    references: [projects.id],
-  }),
-  createdBy: one(users, {
-    fields: [codeReviews.createdBy],
-    references: [users.id],
-  }),
-  issues: many(reviewIssues),
-}));
+// Relations defined at end of file (see DRIZZLE ORM RELATIONS section)
 
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true, updatedAt: true }).extend({
@@ -4185,3 +4147,98 @@ export type MobileBuild = typeof mobileBuilds.$inferSelect;
 export type InsertMobileBuild = z.infer<typeof insertMobileBuildSchema>;
 export type MobileBuildRequest = z.infer<typeof mobileBuildRequestSchema>;
 
+// ============================================
+// DRIZZLE ORM RELATIONS
+// ============================================
+
+export const usersRelations = relations(users, ({ many }) => ({
+  projects: many(projects),
+  apiKeys: many(apiKeys),
+  aiConversations: many(aiConversations),
+  teamMembers: many(teamMembers),
+  mobileDevices: many(mobileDevices),
+}));
+
+export const projectsRelations = relations(projects, ({ one, many }) => ({
+  owner: one(users, {
+    fields: [projects.ownerId],
+    references: [users.id],
+  }),
+  files: many(files),
+  deployments: many(deployments),
+  checkpoints: many(checkpoints),
+  buildExecutions: many(buildExecutions),
+}));
+
+export const filesRelations = relations(files, ({ one }) => ({
+  project: one(projects, {
+    fields: [files.projectId],
+    references: [projects.id],
+  }),
+  parent: one(files, {
+    fields: [files.parentId],
+    references: [files.id],
+    relationName: 'fileParent',
+  }),
+}));
+
+export const deploymentsRelations = relations(deployments, ({ one }) => ({
+  project: one(projects, {
+    fields: [deployments.projectId],
+    references: [projects.id],
+  }),
+}));
+
+export const checkpointsRelations = relations(checkpoints, ({ one }) => ({
+  project: one(projects, {
+    fields: [checkpoints.projectId],
+    references: [projects.id],
+  }),
+  parent: one(checkpoints, {
+    fields: [checkpoints.parentCheckpointId],
+    references: [checkpoints.id],
+    relationName: 'checkpointParent',
+  }),
+}));
+
+export const aiConversationsRelations = relations(aiConversations, ({ one, many }) => ({
+  user: one(users, {
+    fields: [aiConversations.userId],
+    references: [users.id],
+  }),
+  agentMessages: many(agentMessages),
+}));
+
+export const agentMessagesRelations = relations(agentMessages, ({ one }) => ({
+  conversation: one(aiConversations, {
+    fields: [agentMessages.conversationId],
+    references: [aiConversations.id],
+  }),
+}));
+
+export const teamMembersRelations = relations(teamMembers, ({ one }) => ({
+  user: one(users, {
+    fields: [teamMembers.userId],
+    references: [users.id],
+  }),
+  team: one(teams, {
+    fields: [teamMembers.teamId],
+    references: [teams.id],
+  }),
+}));
+
+export const teamsRelations = relations(teams, ({ many }) => ({
+  members: many(teamMembers),
+}));
+
+export const codeReviewsRelations = relations(codeReviews, ({ one, many }) => ({
+  project: one(projects, {
+    fields: [codeReviews.projectId],
+    references: [projects.id],
+  }),
+  createdBy: one(users, {
+    fields: [codeReviews.createdBy],
+    references: [users.id],
+  }),
+  issues: many(reviewIssues),
+}));
