@@ -406,7 +406,7 @@ export class RealDeploymentService {
       deployment.deployment.logs.push(`Deployed function: ${func.name}`);
     }
     
-    deployment.endpoints.api = `https://api.e-code.ai/${deployment.id}`;
+    deployment.endpoints.api = `https://e-code.ai/${deployment.id}`;
   }
   
   private async deployScheduled(deployment: RealDeploymentResult, config: RealDeploymentConfig) {

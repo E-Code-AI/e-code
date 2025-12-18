@@ -313,7 +313,7 @@ spec:
   - hosts:
     - e-code.ai
     - www.e-code.ai
-    - api.e-code.ai
+    - e-code.ai
     secretName: e-code-tls
   rules:
   - host: e-code.ai

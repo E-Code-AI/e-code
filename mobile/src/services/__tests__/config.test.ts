@@ -124,13 +124,13 @@ describe('Mobile API Configuration', () => {
     it('should accept valid production URL', () => {
       resetConfig(false);
       setExpoConfig({
-        apiBaseUrl: 'https://api.e-code.ai/api'
+        apiBaseUrl: 'https://e-code.ai/api'
       });
       
       const { config } = require('../config');
       
       expect(config.environment).toBe('production');
-      expect(config.apiBaseUrl).toBe('https://api.e-code.ai/api');
+      expect(config.apiBaseUrl).toBe('https://e-code.ai/api');
       expect(config.isProduction).toBe(true);
       expect(config.isDevelopment).toBe(false);
     });
@@ -214,7 +214,7 @@ describe('Mobile API Configuration', () => {
     it('should pass validation for valid production config', () => {
       resetConfig(false);
       setExpoConfig({
-        apiBaseUrl: 'https://api.e-code.ai/api'
+        apiBaseUrl: 'https://e-code.ai/api'
       });
       
       const { validateConfig } = require('../config');
