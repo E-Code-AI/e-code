@@ -105,42 +105,51 @@ router.get('/posts', async (req: Request, res: Response) => {
     .limit(pageSizeNum)
     .offset(offset);
 
-    const postsWithCounts = await Promise.all(
-      posts.map(async (post) => {
-        const [likeCount] = await db.select({
-          count: sql<number>`COUNT(*)`,
-        }).from(communityPostLikes)
-          .where(eq(communityPostLikes.postId, post.id));
+    // OPTIMIZATION: Batch fetch like and comment counts to avoid N+1 queries
+    const postIds = posts.map(p => p.id);
+    
+    // Single query for all like counts using GROUP BY
+    const likeCounts = postIds.length > 0 ? await db.select({
+      postId: communityPostLikes.postId,
+      count: sql<number>`COUNT(*)`,
+    }).from(communityPostLikes)
+      .where(sql`${communityPostLikes.postId} IN (${sql.join(postIds.map(id => sql`${id}`), sql`, `)})`)
+      .groupBy(communityPostLikes.postId) : [];
+    
+    // Single query for all comment counts using GROUP BY
+    const commentCounts = postIds.length > 0 ? await db.select({
+      postId: communityComments.postId,
+      count: sql<number>`COUNT(*)`,
+    }).from(communityComments)
+      .where(sql`${communityComments.postId} IN (${sql.join(postIds.map(id => sql`${id}`), sql`, `)})`)
+      .groupBy(communityComments.postId) : [];
+    
+    // Build lookup maps for O(1) access
+    const likeMap = new Map(likeCounts.map(l => [l.postId, Number(l.count)]));
+    const commentMap = new Map(commentCounts.map(c => [c.postId, Number(c.count)]));
 
-        const [commentCount] = await db.select({
-          count: sql<number>`COUNT(*)`,
-        }).from(communityComments)
-          .where(eq(communityComments.postId, post.id));
-
-        return {
-          id: String(post.id),
-          title: post.title,
-          content: post.content,
-          author: {
-            id: String(post.authorId),
-            username: post.authorUsername || 'anonymous',
-            displayName: post.authorDisplayName || post.authorUsername || 'Anonymous',
-            avatarUrl: post.authorAvatarUrl,
-            reputation: 0,
-          },
-          category: post.category,
-          tags: post.tags || [],
-          likes: Number(likeCount?.count || 0),
-          comments: Number(commentCount?.count || 0),
-          views: post.views || 0,
-          isLiked: false,
-          isBookmarked: false,
-          createdAt: post.createdAt?.toISOString(),
-          projectUrl: post.projectUrl,
-          imageUrl: post.imageUrl,
-        };
-      })
-    );
+    const postsWithCounts = posts.map((post) => ({
+      id: String(post.id),
+      title: post.title,
+      content: post.content,
+      author: {
+        id: String(post.authorId),
+        username: post.authorUsername || 'anonymous',
+        displayName: post.authorDisplayName || post.authorUsername || 'Anonymous',
+        avatarUrl: post.authorAvatarUrl,
+        reputation: 0,
+      },
+      category: post.category,
+      tags: post.tags || [],
+      likes: likeMap.get(post.id) || 0,
+      comments: commentMap.get(post.id) || 0,
+      views: post.views || 0,
+      isLiked: false,
+      isBookmarked: false,
+      createdAt: post.createdAt?.toISOString(),
+      projectUrl: post.projectUrl,
+      imageUrl: post.imageUrl,
+    }));
 
     const [totalResult] = await db.select({
       count: sql<number>`COUNT(*)`,

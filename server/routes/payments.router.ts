@@ -174,9 +174,11 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req: R
     logger.error('Webhook error:', error);
     if (error.message?.includes('signature verification failed')) {
       console.error('Webhook signature verification failed');
-      return res.status(400).send('Webhook Error');
+      return res.status(400).send('Webhook Error: Invalid signature');
     }
-    res.status(200).json({ received: true, warning: error.message || 'Webhook handler encountered an error' });
+    // SECURITY: Return 500 on handler errors, not 200
+    // Returning 200 on errors can cause Stripe to not retry
+    return res.status(500).json({ error: 'Webhook handler encountered an error' });
   }
 });
 

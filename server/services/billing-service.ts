@@ -3,6 +3,7 @@ import { EventEmitter } from 'events';
 import type { userCredits, budgetLimits, usageAlerts } from '@shared/schema';
 import sgMail from '@sendgrid/mail';
 import { billingEmailTemplates } from '../utils/billing-email-templates';
+import { sql } from 'drizzle-orm';
 
 // Initialize SendGrid
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY || '';
@@ -260,28 +261,40 @@ export class BillingService extends EventEmitter {
 
   async resetMonthlyCredits(userId: number): Promise<void> {
     try {
-      const credits = await storage.getUserCredits(userId);
-      if (!credits) return;
-
-      // Check if reset is due
-      const now = new Date();
-      if (now < new Date(credits.resetDate)) return;
-
-      // Reset credits
-      await storage.updateUserCredits(userId, {
-        remainingCredits: credits.monthlyCredits,
-        resetDate: this.getNextResetDate()
-      });
-
-      // Clear old alerts (purge alerts older than the previous reset date)
-      const previousResetDate = new Date(credits.resetDate);
-      const deletedCount = await storage.deleteOldUsageAlerts(userId.toString(), previousResetDate);
+      // SECURITY: Use transaction with FOR UPDATE lock to prevent race conditions
+      const { withTransaction } = await import('../db');
       
-      if (deletedCount > 0) {
-        logger.info(`Purged ${deletedCount} old usage alerts for user ${userId}`);
-      }
+      await withTransaction(async (tx) => {
+        // Lock the row to prevent concurrent resets
+        const creditsResult = await tx.execute(
+          sql`SELECT * FROM user_credits WHERE user_id = ${userId} FOR UPDATE`
+        );
+        
+        const credits = creditsResult.rows[0] as any;
+        if (!credits) return;
 
-      logger.info(`Reset monthly credits for user ${userId}`);
+        // Check if reset is due
+        const now = new Date();
+        if (now < new Date(credits.reset_date)) return;
+
+        // Reset credits atomically within transaction
+        await tx.execute(
+          sql`UPDATE user_credits 
+              SET remaining_credits = ${credits.monthly_credits},
+                  reset_date = ${this.getNextResetDate()}
+              WHERE user_id = ${userId}`
+        );
+
+        // Clear old alerts (purge alerts older than the previous reset date)
+        const previousResetDate = new Date(credits.reset_date);
+        const deletedCount = await storage.deleteOldUsageAlerts(userId.toString(), previousResetDate);
+        
+        if (deletedCount > 0) {
+          logger.info(`Purged ${deletedCount} old usage alerts for user ${userId}`);
+        }
+
+        logger.info(`Reset monthly credits for user ${userId}`);
+      });
     } catch (error) {
       logger.error('Failed to reset monthly credits:', error);
       throw error;
