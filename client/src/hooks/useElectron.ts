@@ -9,6 +9,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { ElectronAPI, ElectronDialogOptions, ThemeSource } from '../types/electron';
+import { safeLocalStorage } from '@/lib/safe-storage';
 
 // Type guard for Electron environment
 export function isElectron(): boolean {
@@ -181,7 +182,7 @@ export function useElectron() {
     if (api) {
       return api.storeGet(key, defaultValue);
     }
-    const stored = localStorage.getItem(key);
+    const stored = safeLocalStorage.getItem(key);
     return stored ? JSON.parse(stored) : defaultValue;
   }, []);
 
@@ -190,7 +191,7 @@ export function useElectron() {
     if (api) {
       await api.storeSet(key, value);
     } else {
-      localStorage.setItem(key, JSON.stringify(value));
+      safeLocalStorage.setItem(key, JSON.stringify(value));
     }
   }, []);
 

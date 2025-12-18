@@ -38,6 +38,14 @@ import {
 } from '@codemirror/autocomplete';
 import { lintKeymap } from '@codemirror/lint';
 
+const getLineNumberExtension = () => {
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  if (isMobile) {
+    return []; // No line numbers on mobile
+  }
+  return lineNumbers();
+};
+
 export function getBaseExtensions(): Extension[] {
   return [
     lineNumbers(),
@@ -91,7 +99,7 @@ export function getReadOnlyExtensions(): Extension[] {
 
 export function getMobileExtensions(): Extension[] {
   return [
-    lineNumbers(),
+    ...getLineNumberExtension(),
     highlightActiveLineGutter(),
     highlightSpecialChars(),
     history(),

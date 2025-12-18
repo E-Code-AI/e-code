@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/use-auth';
+import { safeJsonParse } from './safe-json';
 
 type CursorPosition = {
   userId: number;
@@ -64,87 +65,84 @@ export function useCollaboration(projectId: number | undefined, fileId: number |
     };
     
     ws.onmessage = (event) => {
-      try {
-        const message: CollaborationMessage = JSON.parse(event.data);
-        
-        // Ignore own messages
-        if (message.userId === user.id) return;
-        
-        // Only handle messages for current project/file
-        if (message.projectId !== projectId) return;
-        
-        switch (message.type) {
-          case 'cursor_move':
-            setCursors(prev => ({
-              ...prev,
-              [message.userId]: {
-                userId: message.userId,
-                username: message.username,
-                color: message.data.color || '#FF5E5B',
-                fileId: message.fileId,
-                position: message.data.position
-              }
-            }));
-            break;
-            
-          case 'user_joined':
-            setCollaborators(prev => {
-              // Add only if not already in the list
-              if (!prev.some(c => c.userId === message.userId)) {
-                return [...prev, { userId: message.userId, username: message.username }];
-              }
-              return prev;
-            });
-            
-            setCursors(prev => ({
-              ...prev,
-              [message.userId]: {
-                userId: message.userId,
-                username: message.username,
-                color: message.data.color || '#FF5E5B',
-                fileId: message.fileId,
-                position: { lineNumber: 1, column: 1 }
-              }
-            }));
-            
-            // Send current cursor position to the new user
-            const cursorPositionMessage: CollaborationMessage = {
-              type: 'cursor_move',
-              data: {
-                position: { lineNumber: 1, column: 1 },
-                color: userColor
-              },
-              userId: user.id,
-              username: user.username,
-              projectId,
-              fileId,
-              timestamp: Date.now()
-            };
-            
-            ws.send(JSON.stringify(cursorPositionMessage));
-            break;
-            
-          case 'user_left':
-            setCursors(prev => {
-              const newCursors = { ...prev };
-              delete newCursors[message.userId];
-              return newCursors;
-            });
-            
-            setCollaborators(prev => 
-              prev.filter(c => c.userId !== message.userId)
-            );
-            break;
-            
-          case 'edit':
-            // This will be handled in the Monaco editor integration
-            break;
-            
-          default:
-            break;
-        }
-      } catch (error) {
-        console.error('Error parsing WebSocket message', error);
+      const message = safeJsonParse<CollaborationMessage | null>(event.data, null);
+      if (!message) return;
+      
+      // Ignore own messages
+      if (message.userId === user.id) return;
+      
+      // Only handle messages for current project/file
+      if (message.projectId !== projectId) return;
+      
+      switch (message.type) {
+        case 'cursor_move':
+          setCursors(prev => ({
+            ...prev,
+            [message.userId]: {
+              userId: message.userId,
+              username: message.username,
+              color: message.data.color || '#FF5E5B',
+              fileId: message.fileId,
+              position: message.data.position
+            }
+          }));
+          break;
+          
+        case 'user_joined':
+          setCollaborators(prev => {
+            // Add only if not already in the list
+            if (!prev.some(c => c.userId === message.userId)) {
+              return [...prev, { userId: message.userId, username: message.username }];
+            }
+            return prev;
+          });
+          
+          setCursors(prev => ({
+            ...prev,
+            [message.userId]: {
+              userId: message.userId,
+              username: message.username,
+              color: message.data.color || '#FF5E5B',
+              fileId: message.fileId,
+              position: { lineNumber: 1, column: 1 }
+            }
+          }));
+          
+          // Send current cursor position to the new user
+          const cursorPositionMessage: CollaborationMessage = {
+            type: 'cursor_move',
+            data: {
+              position: { lineNumber: 1, column: 1 },
+              color: userColor
+            },
+            userId: user.id,
+            username: user.username,
+            projectId,
+            fileId,
+            timestamp: Date.now()
+          };
+          
+          ws.send(JSON.stringify(cursorPositionMessage));
+          break;
+          
+        case 'user_left':
+          setCursors(prev => {
+            const newCursors = { ...prev };
+            delete newCursors[message.userId];
+            return newCursors;
+          });
+          
+          setCollaborators(prev => 
+            prev.filter(c => c.userId !== message.userId)
+          );
+          break;
+          
+        case 'edit':
+          // This will be handled in the Monaco editor integration
+          break;
+          
+        default:
+          break;
       }
     };
     

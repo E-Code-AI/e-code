@@ -5,6 +5,7 @@ import crypto from 'crypto';
 import { storage } from '../storage';
 import { billingService } from './billing-service';
 import { deploymentWebSocketService, DeploymentStatusType, UIStatusType, translateStatusToUI } from './deployment-websocket-service';
+import { sslRenewalService } from './ssl-renewal.service';
 
 export interface DeploymentConfig {
   id: string;
@@ -716,15 +717,25 @@ export class DeploymentManager {
 
     deployment.deploymentLog.push('🔒 Renewing SSL certificate...');
 
-    // Perform certificate renewal
     const domain = deployment.customUrl 
       ? deployment.customUrl.replace(/^https?:\/\//, '') 
       : `${deploymentId}.e-code.ai`;
     
-    // Re-use the setupSSLCertificate method which handles both custom and subdomain certs
-    await this.setupSSLCertificate(deploymentId, domain);
-
-    deployment.deploymentLog.push('✅ SSL certificate renewed successfully');
+    if (sslRenewalService.isEnabled()) {
+      const email = process.env.SSL_ADMIN_EMAIL || 'admin@e-code.ai';
+      const renewed = await sslRenewalService.renewCertificate({
+        domain,
+        email,
+        staging: process.env.NODE_ENV !== 'production'
+      });
+      
+      if (renewed) {
+        deployment.deploymentLog.push('✅ SSL certificate renewed via Let\'s Encrypt');
+      }
+    } else {
+      await this.setupSSLCertificate(deploymentId, domain);
+      deployment.deploymentLog.push('✅ SSL certificate renewed (platform-managed)');
+    }
   }
 
   async getDeploymentMetrics(deploymentId: string): Promise<any> {

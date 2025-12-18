@@ -18,20 +18,25 @@ declare module 'express-session' {
 // Methods that require CSRF protection
 const PROTECTED_METHODS = ['POST', 'PUT', 'PATCH', 'DELETE'];
 
-// Paths to exclude from CSRF protection (e.g., API endpoints for external services, or endpoints using alternative auth)
+// Paths to exclude from CSRF protection (only webhooks should be excluded)
 const EXCLUDED_PATHS = [
-  '/api/webhooks',
-  '/api/stripe/webhook',
-  '/api/github/webhook',
-  '/api/health',
-  '/api/cors-health',
-  '/api/dev-login',
-  '/api/dev-auto-login',
-  '/api/cli',  // CLI endpoints use API keys
-  '/mobile',  // Mobile endpoints use JWT auth
-  '/api/csrf-token'  // Token endpoint itself
-  // NOTE: /api/register, /api/login are NOT excluded - they need CSRF protection!
+  '/api/webhooks/stripe',
+  '/api/webhooks/github',
 ];
+
+// Allowed origins for login/register endpoints (origin validation)
+const ALLOWED_ORIGINS = [
+  process.env.APP_URL || 'http://localhost:5000',
+  'https://e-code.ai',
+];
+
+/**
+ * Check if the provided origin is in the allowed list
+ */
+function isAllowedOrigin(origin: string | undefined): boolean {
+  if (!origin) return false;
+  return ALLOWED_ORIGINS.some(allowed => origin.startsWith(allowed));
+}
 
 /**
  * CSRF Protection Service (Singleton)
@@ -194,6 +199,14 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction) 
   // Skip for excluded paths
   if (EXCLUDED_PATHS.some(path => req.path.startsWith(path))) {
     return next();
+  }
+
+  // Origin validation for login/register endpoints
+  if (req.path === '/api/login' || req.path === '/api/register') {
+    const origin = req.get('Origin');
+    if (!isAllowedOrigin(origin)) {
+      return res.status(403).json({ error: 'Invalid origin' });
+    }
   }
 
   // Initialize session if not present

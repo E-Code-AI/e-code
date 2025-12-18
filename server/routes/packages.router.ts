@@ -6,6 +6,7 @@
  * - Package names validated with strict allowlist pattern
  * - Uses spawn instead of exec to prevent command injection
  * - Proper working directory resolution with fallback
+ * - Uses safePath utility to prevent path traversal attacks
  */
 
 import { Router } from 'express';
@@ -14,6 +15,7 @@ import { storage } from '../storage';
 import { spawn } from 'child_process';
 import path from 'path';
 import fs from 'fs/promises';
+import { safePath } from '../utils/safe-path';
 
 const router = Router();
 
@@ -64,6 +66,7 @@ function isValidVersion(version: string): boolean {
 /**
  * Resolves the working directory for a project
  * SECURITY: Returns null if project directory doesn't exist (no fallback to server root)
+ * Uses safePath to prevent path traversal attacks
  */
 async function resolveProjectDirectory(projectId: string): Promise<string | null> {
   // SECURITY: Validate projectId first to prevent path traversal
@@ -71,7 +74,13 @@ async function resolveProjectDirectory(projectId: string): Promise<string | null
     return null;
   }
   
-  const projectDir = path.join(process.cwd(), 'projects', projectId);
+  const projectsDir = path.join(process.cwd(), 'projects');
+  
+  // SECURITY: Use safePath to prevent path traversal
+  const projectDir = safePath(projectsDir, projectId);
+  if (!projectDir) {
+    return null; // Path traversal attempt detected
+  }
   
   try {
     await fs.access(projectDir);
