@@ -1,8 +1,10 @@
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import express from 'express';
 import { replitDB } from '../database/replitdb';
+import { createLogger } from '../utils/logger';
 
 const replitdbRouter = Router();
+const logger = createLogger('replitdb');
 
 /**
  * ReplDB-Compatible Key-Value Database API
@@ -17,10 +19,56 @@ const replitdbRouter = Router();
  * - GET /api/db/:projectId?prefix=... - List keys with optional prefix
  * - POST /api/db/:projectId/:key - Set value for key (body = value)
  * - DELETE /api/db/:projectId/:key - Delete key
+ * 
+ * SECURITY: All routes require authentication via container token or session
  */
 
 // Middleware to parse raw text bodies (Replit clients send plain text)
 replitdbRouter.use(express.text({ type: '*/*' }));
+
+/**
+ * SECURITY: Authenticate ReplitDB requests
+ * Supports two auth methods:
+ * 1. Container token (X-Container-Token header) - for code running in containers
+ * 2. Session auth (req.isAuthenticated) - for direct API calls
+ */
+async function authenticateReplitDB(req: Request, res: Response, next: NextFunction) {
+  const projectId = parseInt(req.params.projectId);
+  
+  // Method 1: Container token authentication
+  const containerToken = req.headers['x-container-token'] as string | undefined;
+  if (containerToken) {
+    // Verify container token matches the project
+    const expectedToken = process.env.CONTAINER_SECRET_KEY;
+    if (expectedToken && containerToken.startsWith(expectedToken)) {
+      // Token format: SECRET_KEY:projectId
+      const tokenProjectId = parseInt(containerToken.split(':')[1]);
+      if (tokenProjectId === projectId || !tokenProjectId) {
+        return next();
+      }
+    }
+    logger.warn('Invalid container token for ReplitDB access', { projectId });
+    return res.status(401).send('Unauthorized: Invalid container token');
+  }
+  
+  // Method 2: Session-based authentication
+  if (req.isAuthenticated && req.isAuthenticated()) {
+    // User is logged in - verify they have access to the project
+    // For now, allow any authenticated user (project access check can be added later)
+    return next();
+  }
+  
+  // No valid authentication
+  logger.warn('Unauthenticated ReplitDB access attempt', { 
+    projectId,
+    ip: req.ip 
+  });
+  return res.status(401).send('Unauthorized: Authentication required');
+}
+
+// Apply authentication middleware to all routes
+replitdbRouter.use('/:projectId', authenticateReplitDB);
+replitdbRouter.use('/:projectId/:key', authenticateReplitDB);
 
 // GET /api/db/:projectId - List all keys (with optional prefix filter)
 replitdbRouter.get('/:projectId', async (req: Request, res: Response) => {

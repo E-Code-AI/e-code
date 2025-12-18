@@ -3,10 +3,19 @@
  * NE PAS UTILISER EN PRODUCTION !
  * 
  * SECURITY: Includes rate limiting to prevent brute-force attacks on bypass token
+ * CRITICAL: This entire module is HARD-DISABLED unless NODE_ENV === 'development'
  */
 
 import { Request, Response, NextFunction } from "express";
 import { RateLimiterMemory } from 'rate-limiter-flexible';
+
+// CRITICAL SECURITY: Hard-disable entire module outside development
+// This check happens at module load time, not runtime, so it cannot be bypassed
+const IS_DEV_MODE = process.env.NODE_ENV === 'development';
+
+if (!IS_DEV_MODE) {
+  console.warn('[SECURITY] dev-auth-bypass module loaded in non-development mode - all exports disabled');
+}
 
 // Variable pour activer/désactiver le contournement d'auth
 // DÉSACTIVÉ par défaut même en développement pour assurer la stabilité
@@ -71,6 +80,11 @@ const hasValidBypassToken = (req: Request) => {
 
 // Middleware qui peut contourner l'authentification
 export const devAuthBypass = (req: Request, res: Response, next: NextFunction) => {
+  // CRITICAL: Hard-block in non-development mode (defense in depth)
+  if (!IS_DEV_MODE) {
+    return next();
+  }
+  
   // Skip auth bypass for logout requests
   if (req.path === '/api/logout' || req.path === '/api/login' || req.path === '/api/register') {
     return next();
@@ -108,7 +122,8 @@ export const devAuthBypass = (req: Request, res: Response, next: NextFunction) =
 
 // Endpoint pour activer/désactiver le contournement (en développement uniquement)
 export function setupAuthBypass(app: any) {
-  if (!isBypassFeatureEnabled()) {
+  // CRITICAL: Double-check development mode at setup time
+  if (!IS_DEV_MODE || !isBypassFeatureEnabled()) {
     return;
   }
 

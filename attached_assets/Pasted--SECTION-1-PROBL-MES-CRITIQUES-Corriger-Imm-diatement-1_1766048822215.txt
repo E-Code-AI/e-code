@@ -1,0 +1,27 @@
+🔴 SECTION 1: PROBLÈMES CRITIQUES (À Corriger Immédiatement)
+1.1 SÉCURITÉ - Authentification Bypass
+#	Fichier	Ligne	Problème	Solution
+1	/server/dev-auth-bypass.ts	73-107	Middleware qui bypass toute l'authentification activable en production	Supprimer ce fichier ou ajouter un check NODE_ENV === 'development' strict
+2	/server/routes/webhooks-sendgrid.router.ts	32-33	Webhook SendGrid sans vérification ECDSA de signature	Implémenter la vérification: const isValid = crypto.verify('sha256', payload, publicKey, signature)
+3	/server/routes/replitdb.router.ts	26-166	Toutes les routes ReplitDB sont publiques sans authentification	Ajouter requireAuth middleware à toutes les routes
+4	/.env	28	DISABLE_CSRF=true - CSRF désactivé	Supprimer cette ligne, activer CSRF obligatoirement
+1.2 PAIEMENTS - Stripe Integration
+#	Fichier	Ligne	Problème	Solution
+5	/server/payments/stripe-service.ts	518	subscriptionItems.createUsageRecord() - API dépréciée	Migrer vers billing.meterEvents.create()
+6	/server/services/stripe-billing-service.ts	173	Même API dépréciée	Idem - utiliser la nouvelle API Billing Meter
+7	/server/services/ai-metering-service.ts	226	Même API dépréciée	Idem
+8	/server/routes/payments.router.ts	175	Webhook retourne 200 OK même sur erreur de signature	Retourner res.status(400) sur erreur de signature
+9	/server/services/billing-service.ts	261-289	Race condition sur le reset des crédits	Ajouter transaction avec FOR UPDATE lock
+10	/server/services/stripe-billing-service.ts	240	Hardcoded 'starter' plan au lieu du plan réel	Récupérer le plan depuis subscription.items.data[0].price.lookup_key
+1.3 BASE DE DONNÉES - Problèmes Critiques
+#	Fichier	Ligne	Problème	Solution
+11	/server/routes/database.router.ts	352-359	SQL injection via concaténation de chaînes	Utiliser parameterized queries: pool.query(sql, [params])
+12	/migrations/0000_tired_shotgun.sql	Multiple	19 tables sans index sur user_id	Créer migration: CREATE INDEX idx_table_user_id ON table(user_id)
+13	/migrations/0002_community_system.sql	Multiple	Type mismatch: author_id VARCHAR vs users.id INTEGER	Modifier les tables community pour utiliser INTEGER
+14	/server/routes/community.router.ts	28-40, 108-143	N+1 queries - O(2N) requêtes pour N posts	Utiliser GROUP BY avec aggregation dans une seule requête
+1.4 DOCKER/KUBERNETES - Sécurité Infrastructure
+#	Fichier	Ligne	Problème	Solution
+15	/docker-compose.yml	22	Container exécuté en tant que root	Changer pour user: nodejs (1001:1001)
+16	/docker-compose.yml	27	Docker socket exposé sans restriction	Utiliser socket proxy ou supprimer le mount
+17	/docker-compose.yml	13, 60, 69	Mot de passe Redis en dur: dev_redis_secret	Utiliser secrets externes: ${REDIS_PASSWORD} obligatoire sans fallback
+18	/kubernetes/postgres-deployment.yaml	31	PostgreSQL single replica - pas de HA	Configurer PostgreSQL avec 1 primary + 2 replicas minimum
