@@ -40,6 +40,10 @@ export const AI_MODELS = [
 
 export type AIModel = typeof AI_MODELS[number];
 
+// AI Providers
+export const AI_PROVIDERS = ['openai', 'anthropic', 'gemini', 'xai', 'moonshot'] as const;
+export type AIProvider = typeof AI_PROVIDERS[number];
+
 // Subscription tiers
 export const SUBSCRIPTION_TIERS = ['free', 'core', 'teams', 'enterprise'] as const;
 export type SubscriptionTier = typeof SUBSCRIPTION_TIERS[number];
