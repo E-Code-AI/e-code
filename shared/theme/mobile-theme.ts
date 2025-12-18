@@ -113,6 +113,7 @@ export const mobileBorderRadius = {
   sm: parseInt(tokens.borderRadius.sm),
   md: parseInt(tokens.borderRadius.md),
   lg: parseInt(tokens.borderRadius.lg),
+  xl: parseInt(tokens.borderRadius.xl),
   full: 9999,
 };
 
