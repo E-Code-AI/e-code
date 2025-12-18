@@ -48,7 +48,7 @@ export const AdminMonitoring = lazy(() => import("@/pages/admin/AdminMonitoring"
 export const PitchDeck = lazy(() => import("@/pages/admin/PitchDeck"));
 export const ChatGPTAdmin = lazy(() => import("@/pages/ChatGPTAdmin"));
 
-export const Landing = instrumentedLazy(() => import("@/pages/Landing"), "Landing");
+export const Landing = instrumentedLazy(() => import("@/pages/LandingOptimized"), "Landing");
 export const Pricing = instrumentedLazy(() => import("@/pages/Pricing"), "Pricing");
 export const Features = instrumentedLazy(() => import("@/pages/Features"), "Features");
 export const About = instrumentedLazy(() => import("@/pages/About"), "About");
