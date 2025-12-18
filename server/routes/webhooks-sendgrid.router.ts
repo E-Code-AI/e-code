@@ -4,9 +4,60 @@ import { createLogger } from '../utils/logger';
 import { db } from '../db';
 import { users } from '@shared/schema';
 import { eq } from 'drizzle-orm';
+import crypto from 'crypto';
 
 const router = Router();
 const logger = createLogger('sendgrid-webhook');
+
+/**
+ * Verify SendGrid webhook signature using ECDSA
+ * https://docs.sendgrid.com/for-developers/tracking-events/getting-started-event-webhook-security-features
+ */
+function verifyWebhookSignature(
+  payload: string,
+  signature: string | undefined,
+  timestamp: string | undefined
+): boolean {
+  const publicKey = process.env.SENDGRID_WEBHOOK_VERIFICATION_KEY;
+  
+  // If no public key configured, reject in production
+  if (!publicKey) {
+    if (process.env.NODE_ENV === 'production') {
+      logger.error('SendGrid webhook signature verification failed: SENDGRID_WEBHOOK_VERIFICATION_KEY not configured');
+      return false;
+    }
+    logger.warn('SendGrid webhook signature verification skipped in development: SENDGRID_WEBHOOK_VERIFICATION_KEY not configured');
+    return true; // Allow in development without key
+  }
+
+  if (!signature || !timestamp) {
+    logger.warn('SendGrid webhook missing signature or timestamp');
+    return false;
+  }
+
+  try {
+    // SendGrid sends timestamp + payload for verification
+    const signedPayload = timestamp + payload;
+    
+    // Decode the base64 signature
+    const decodedSignature = Buffer.from(signature, 'base64');
+    
+    // Verify using ECDSA with SHA256
+    const verifier = crypto.createVerify('sha256');
+    verifier.update(signedPayload);
+    
+    const isValid = verifier.verify(publicKey, decodedSignature);
+    
+    if (!isValid) {
+      logger.warn('SendGrid webhook signature verification failed: invalid signature');
+    }
+    
+    return isValid;
+  } catch (error: any) {
+    logger.error('SendGrid webhook signature verification error', { error: error.message });
+    return false;
+  }
+}
 
 interface SendGridEvent {
   email: string;
@@ -26,20 +77,27 @@ interface SendGridEvent {
 router.post('/sendgrid', async (req: Request, res: Response) => {
   try {
     // Log pour confirmer la réception
-    console.log('🔔 SendGrid webhook received!', {
+    logger.info('SendGrid webhook received', {
       timestamp: new Date().toISOString(),
-      headers: req.headers,
       bodyLength: JSON.stringify(req.body).length
     });
     
-    // Vérifier la signature SendGrid (optionnel mais recommandé)
-    const signature = req.headers['x-twilio-email-event-webhook-signature'];
-    const timestamp = req.headers['x-twilio-email-event-webhook-timestamp'];
+    // SECURITY: Verify SendGrid ECDSA signature
+    const signature = req.headers['x-twilio-email-event-webhook-signature'] as string | undefined;
+    const timestamp = req.headers['x-twilio-email-event-webhook-timestamp'] as string | undefined;
     
-    // TODO: Implémenter la vérification ECDSA si nécessaire
-    // https://docs.sendgrid.com/for-developers/tracking-events/getting-started-event-webhook-security-features
+    // Get raw body for signature verification
+    const rawBody = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
     
-    const events: SendGridEvent[] = req.body;
+    if (!verifyWebhookSignature(rawBody, signature, timestamp)) {
+      logger.warn('SendGrid webhook rejected: signature verification failed', {
+        hasSignature: !!signature,
+        hasTimestamp: !!timestamp
+      });
+      return res.status(401).json({ error: 'Invalid webhook signature' });
+    }
+    
+    const events: SendGridEvent[] = Array.isArray(req.body) ? req.body : JSON.parse(req.body);
 
     if (!Array.isArray(events)) {
       logger.warn('Invalid SendGrid webhook payload');
