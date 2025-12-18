@@ -126,7 +126,7 @@ function getLoadPath() {
   }
   
   // Fallback to production URL
-  const prodUrl = process.env.PRODUCTION_URL || 'https://e-code.replit.app';
+  const prodUrl = process.env.PRODUCTION_URL || 'https://e-code.ai';
   return { type: 'url', path: prodUrl };
 }
 
