@@ -1,19 +1,13 @@
 import { Router } from 'express';
 import { storage } from '../storage';
-import multer from 'multer';
 import path from 'path';
 import fs from 'fs/promises';
 import { ensureAuthenticated } from '../middleware/auth';
+import { createSecureUpload, validateUploadedFile, sanitizeFilename } from '../middleware/upload-validation';
 
 const router = Router();
 
-// Configure multer for file uploads
-const upload = multer({
-  limits: {
-    fileSize: 50 * 1024 * 1024, // 50MB limit
-  },
-  storage: multer.memoryStorage()
-});
+const upload = createSecureUpload();
 
 // Middleware to ensure user has access to project
 const ensureProjectAccess = async (req: any, res: any, next: any) => {
@@ -62,10 +56,14 @@ router.post('/api/projects/:id/upload',
         return res.status(400).json({ error: 'No file provided' });
       }
       
-      // Create the file in storage
+      const validation = validateUploadedFile(file.buffer, file.mimetype);
+      if (!validation.valid) {
+        return res.status(400).json({ error: validation.error });
+      }
+      
       const newFile = await storage.createFile({
         projectId,
-        name: file.originalname,
+        name: sanitizeFilename(file.originalname),
         content: file.buffer.toString('utf-8'),
         isFolder: false,
         parentId: parentId ? parseInt(parentId) : null
@@ -83,7 +81,7 @@ router.post('/api/projects/:id/upload',
 router.post('/api/projects/:id/upload-multiple', 
   ensureAuthenticated, 
   ensureProjectAccess, 
-  upload.array('files', 100),
+  upload.array('files', 10),
   async (req, res) => {
     try {
       const projectId = parseInt(req.params.id);
@@ -94,12 +92,19 @@ router.post('/api/projects/:id/upload-multiple',
         return res.status(400).json({ error: 'No files provided' });
       }
       
+      for (const file of files) {
+        const validation = validateUploadedFile(file.buffer, file.mimetype);
+        if (!validation.valid) {
+          return res.status(400).json({ error: `${file.originalname}: ${validation.error}` });
+        }
+      }
+      
       const createdFiles = [];
       
       for (const file of files) {
         const newFile = await storage.createFile({
           projectId,
-          name: file.originalname,
+          name: sanitizeFilename(file.originalname),
           content: file.buffer.toString('utf-8'),
           isFolder: false,
           parentId: parentId ? parseInt(parentId) : null

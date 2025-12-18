@@ -57,6 +57,36 @@
   }
 }
 
+/* Keyboard handling for mobile */
+@supports (height: 100dvh) {
+  .keyboard-aware {
+    height: 100dvh;
+  }
+}
+
+/* Visual viewport for keyboard */
+.keyboard-pushup {
+  transition: transform 0.3s ease;
+}
+
+/* Input focus improvements */
+input:focus,
+textarea:focus {
+  scroll-margin-bottom: 100px;
+}
+
+/* Prevent zoom on input focus (iOS) */
+@media screen and (max-width: 768px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
+
 /* Solid Color Utilities - No Transparency */
 /* These replace transparent variants with solid colors that work in both themes */
 @layer utilities {
