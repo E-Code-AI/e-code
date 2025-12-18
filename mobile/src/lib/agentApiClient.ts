@@ -4,7 +4,7 @@
  */
 
 import { configureAgentApi, type ApiClient } from '../../../shared/agent';
-import { API_URL } from '../config';
+import { API_BASE_URL as API_URL } from '../services/config';
 
 let authToken: string | null = null;
 

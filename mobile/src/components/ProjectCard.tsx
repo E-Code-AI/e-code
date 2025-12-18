@@ -9,7 +9,7 @@ type ProjectCardProps = {
 };
 
 export const ProjectCard: React.FC<ProjectCardProps> = ({ project, onPress }) => {
-  const formatDate = (date: Date | string | undefined) => {
+  const formatDate = (date: Date | string | null | undefined) => {
     if (!date) return 'recently';
     const d = typeof date === 'string' ? new Date(date) : date;
     if (isNaN(d.getTime())) return 'recently';

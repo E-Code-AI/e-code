@@ -1,6 +1,13 @@
 import { useCallback, useRef, useState } from 'react';
-import { AIModel, AIProvider } from '../../../shared/mobile-types';
-import { streamChatCompletion, StreamingMessage } from '../services/ai-provider';
+import { AIModel } from '../../../shared/mobile-types';
+import { streamChatCompletion, StreamingMessage, AIProvider } from '../services/ai-provider';
+
+function findLastIndex<T>(array: T[], predicate: (item: T) => boolean): number {
+  for (let i = array.length - 1; i >= 0; i--) {
+    if (predicate(array[i])) return i;
+  }
+  return -1;
+}
 
 export interface ChatMessage {
   id: string;
@@ -177,8 +184,8 @@ export function useStreamingChat(options: UseStreamingChatOptions): UseStreaming
     if (!lastUserMessageRef.current) return;
     
     setMessages(prev => {
-      const lastAssistantIdx = prev.findLastIndex(msg => msg.role === 'assistant');
-      const lastUserIdx = prev.findLastIndex(msg => msg.role === 'user');
+      const lastAssistantIdx = findLastIndex(prev, msg => msg.role === 'assistant');
+      const lastUserIdx = findLastIndex(prev, msg => msg.role === 'user');
       
       if (lastAssistantIdx > lastUserIdx) {
         return prev.slice(0, lastAssistantIdx);
