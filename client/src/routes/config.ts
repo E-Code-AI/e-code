@@ -10,19 +10,10 @@ export interface RouteConfig {
 }
 
 export const placeholderRoutes = [
-  { path: "/assistant", feature: "assistant" },
-  { path: "/database", feature: "database" },
-  { path: "/console", feature: "console" },
   { path: "/authentication", feature: "authentication" },
-  { path: "/preview", feature: "preview" },
-  { path: "/code-search", feature: "code-search" },
-  { path: "/packages", feature: "packages" },
   { path: "/extensions", feature: "extensions" },
   { path: "/integrations", feature: "integrations" },
   { path: "/networking", feature: "networking" },
-  { path: "/problems", feature: "problems" },
-  { path: "/kv-store", feature: "kv-store" },
-  { path: "/shell", feature: "shell" },
   { path: "/threads", feature: "threads" },
   { path: "/vnc", feature: "vnc" },
   { path: "/referrals", feature: "referrals" },
@@ -189,6 +180,15 @@ export const protectedRoutes: RouteConfig[] = [
   { path: "/sso-configuration", component: Pages.SSOConfiguration, layout: "replit" },
   { path: "/audit-logs", component: Pages.AuditLogs, layout: "replit" },
   { path: "/custom-roles", component: Pages.CustomRoles, layout: "replit" },
+  { path: "/assistant", component: Pages.AssistantPage, layout: "replit" },
+  { path: "/code-search", component: Pages.CodeSearchPage, layout: "replit" },
+  { path: "/problems", component: Pages.ProblemsPage, layout: "replit" },
+  { path: "/database", component: Pages.DatabasePage, layout: "replit" },
+  { path: "/console", component: Pages.ConsolePage, layout: "replit" },
+  { path: "/shell", component: Pages.ShellPage, layout: "replit" },
+  { path: "/packages", component: Pages.PackagesPage, layout: "replit" },
+  { path: "/kv-store", component: Pages.KVStorePage, layout: "replit" },
+  { path: "/preview", component: Pages.PreviewPage, layout: "replit" },
 ];
 
 export interface SolarTechAppConfig {
