@@ -78,6 +78,8 @@ export default ({ config }) => {
       infoPlist: {
         UIBackgroundModes: ['remote-notification'],
       },
+      // Deep linking: Universal Links for iOS
+      associatedDomains: ['applinks:e-code.ai', 'applinks:www.e-code.ai'],
     },
     android: {
       adaptiveIcon: {
@@ -85,6 +87,20 @@ export default ({ config }) => {
       },
       package: 'com.ecode.mobile',
       useNextNotificationsApi: true,
+      // Deep linking: Intent Filters for Android
+      intentFilters: [
+        {
+          action: 'VIEW',
+          autoVerify: true,
+          data: [
+            { scheme: 'https', host: 'e-code.ai', pathPrefix: '/project' },
+            { scheme: 'https', host: 'e-code.ai', pathPrefix: '/ide' },
+            { scheme: 'https', host: 'www.e-code.ai', pathPrefix: '/project' },
+            { scheme: 'https', host: 'www.e-code.ai', pathPrefix: '/ide' },
+          ],
+          category: ['BROWSABLE', 'DEFAULT'],
+        },
+      ],
     },
     plugins: [
       [

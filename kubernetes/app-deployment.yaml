@@ -200,13 +200,16 @@ spec:
             port: 8080
           initialDelaySeconds: 15
           periodSeconds: 5
-        volumeMounts:
-        - name: docker-socket
-          mountPath: /var/run/docker.sock
-      volumes:
-      - name: docker-socket
-        hostPath:
-          path: /var/run/docker.sock
+        # SECURITY: Docker socket access removed for container escape prevention
+        # Use Docker-in-Docker sidecar or Kubernetes API for code execution instead
+        # volumeMounts:
+        # - name: docker-socket
+        #   mountPath: /var/run/docker.sock
+      # SECURITY: Docker socket volume removed - container escape vulnerability
+      # volumes:
+      # - name: docker-socket
+      #   hostPath:
+      #     path: /var/run/docker.sock
 
 ---
 apiVersion: apps/v1
