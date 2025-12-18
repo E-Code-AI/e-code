@@ -51,8 +51,8 @@ interface ElementSelectorProps {
 }
 
 export function ElementSelector({ sessionId, projectId, className }: ElementSelectorProps) {
-  // Use current origin as default instead of hardcoded localhost
-  const defaultUrl = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5000';
+  // Use current origin as default, fallback to production URL for SSR
+  const defaultUrl = typeof window !== 'undefined' ? window.location.origin : 'https://e-code.ai';
   const [pageUrl, setPageUrl] = useState(defaultUrl);
   const [elementDescription, setElementDescription] = useState('');
   const [preferredType, setPreferredType] = useState<'css' | 'xpath'>('css');
