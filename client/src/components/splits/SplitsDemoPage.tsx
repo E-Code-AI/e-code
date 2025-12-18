@@ -45,7 +45,7 @@ function App() {
   const terminalContent = (
     <div className="w-full h-full bg-black text-green-400 p-4 font-mono">
       <div>$ npm run dev</div>
-      <div>Server running at http://localhost:3000</div>
+      <div>Server running at https://your-project.e-code.ai</div>
       <div>✓ Ready in 2.3s</div>
       <div className="animate-pulse">▊</div>
     </div>

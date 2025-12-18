@@ -71,8 +71,8 @@ interface TestRunnerProps {
 }
 
 export function TestRunner({ sessionId, projectId, className }: TestRunnerProps) {
-  // Use current origin in example instead of hardcoded localhost
-  const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5000';
+  // Use current origin in example, fallback to production URL for SSR
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://e-code.ai';
   const [testScript, setTestScript] = useState(
     `// Example Playwright test\nawait page.goto('${baseUrl}');\nawait page.waitForSelector('[data-testid="button-login"]');\nawait page.click('[data-testid="button-login"]');`
   );
