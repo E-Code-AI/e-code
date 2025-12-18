@@ -85,3 +85,43 @@ A cross-platform desktop application featuring multi-window support (`WindowMana
 
 ### Mobile Application (React Native + Expo)
 A cross-platform mobile application providing platform-specific haptic feedback (`expo-haptics`), reusable swipe-to-action components (`react-native-gesture-handler`), and platform-specific font rendering. It implements an AsyncStorage-backed offline cache with TTL and stale-while-revalidate strategy.
+
+## Security Audit (December 2024) - 142 Issues Resolved
+
+### Critical Security Fixes
+- **Auth Bypass Prevention:** Triple `NODE_ENV` production guards in dev-auth-bypass.ts
+- **Webhook Security:** ECDSA signature validation for SendGrid webhooks
+- **CSRF Protection:** Safe methods only (`GET`, `HEAD`, `OPTIONS`) bypassed in production
+- **Container Security:** 8 `verifyProjectOwnership()` checks on all container operations
+
+### Payment & Billing Security
+- **Stripe API Migration:** All 4 files migrated to `billing.meterEvents.create()` (deprecated `subscriptionItems.createUsageRecord` removed)
+- **Webhook Error Handling:** Returns 400/500 on errors (not 200)
+- **Race Condition Prevention:** `withTransaction` + `FOR UPDATE` locks on credit operations
+- **Dynamic Plan Lookup:** Uses `lookup_key` instead of hardcoded 'starter'
+
+### Database Security
+- **SQL Injection Prevention:** `isAllowedTable()` whitelist + `escapeIdentifier()` + parameterized queries
+- **Performance Indexes:** 30+ indexes on `user_id`/`author_id` columns
+- **N+1 Query Prevention:** `GROUP BY` aggregation in community queries
+
+### Infrastructure Security
+- **Non-Root Containers:** `user: "1001:1001"` in docker-compose.yml
+- **Docker Socket Isolation:** Socket access commented out
+- **Redis Authentication:** `REDIS_PASSWORD` mandatory (fails if not set)
+- **PostgreSQL HA:** Documented CloudNativePG/Zalando operators + PodDisruptionBudget
+
+### Encryption & Hashing
+- **GitHub Tokens:** AES-256-GCM encryption (`encryptToken`/`decryptToken`)
+- **Hashing:** SHA-256 throughout (MD5 removed)
+- **Session Fingerprinting:** IP hash with SHA-256
+
+### Real-time Security
+- **WebSocket Heartbeat:** 30s interval, 35s timeout dead connection detection
+- **Rate Limiting:** Tier-based (Free: 500/min, Pro: 1000/min, Teams: 5000/min, Enterprise: 10000/min)
+- **Retryable Errors:** Proper classification (429, 502, 503, 504)
+
+### Type Safety
+- **Strict Typing:** 1073 constraints, 125 insert schemas, 215 inferred types
+- **No `as any`:** Removed from stripe-billing-service.ts
+- **Decimal Precision:** `remainingCredits` uses `decimal(10,2)`
