@@ -3,6 +3,49 @@ import type { Config } from "tailwindcss";
 export default {
   darkMode: ["class"],
   content: ["./client/index.html", "./client/src/**/*.{js,jsx,ts,tsx}"],
+  
+  // Safelist dynamic classes that might be purged in production
+  // These are classes generated dynamically via template literals or conditionals
+  safelist: [
+    // Status colors (used in getStatusColor functions)
+    'bg-green-500', 'bg-green-600', 'bg-green-100', 'bg-green-500/10', 'bg-green-500/20',
+    'bg-red-500', 'bg-red-600', 'bg-red-100', 'bg-red-500/10', 'bg-red-500/20',
+    'bg-yellow-500', 'bg-yellow-600', 'bg-yellow-100', 'bg-yellow-500/10', 'bg-yellow-500/20',
+    'bg-orange-500', 'bg-orange-600', 'bg-orange-100', 'bg-orange-500/10', 'bg-orange-500/20',
+    'bg-blue-500', 'bg-blue-600', 'bg-blue-100', 'bg-blue-500/10', 'bg-blue-500/20',
+    'bg-purple-500', 'bg-purple-600', 'bg-purple-100', 'bg-purple-500/10', 'bg-purple-500/20',
+    'bg-gray-500', 'bg-gray-600', 'bg-gray-100', 'bg-gray-500/10', 'bg-gray-500/20',
+    
+    // Text status colors
+    'text-green-500', 'text-green-600', 'text-green-400',
+    'text-red-500', 'text-red-600', 'text-red-400',
+    'text-yellow-500', 'text-yellow-600', 'text-yellow-400',
+    'text-orange-500', 'text-orange-600', 'text-orange-400',
+    'text-blue-500', 'text-blue-600', 'text-blue-400',
+    'text-purple-500', 'text-purple-600', 'text-purple-400',
+    'text-gray-500', 'text-gray-600', 'text-gray-400',
+    
+    // Border status colors
+    'border-green-500', 'border-green-200', 'border-green-500/20',
+    'border-red-500', 'border-red-200', 'border-red-500/20',
+    'border-yellow-500', 'border-yellow-200', 'border-yellow-500/20',
+    'border-orange-500', 'border-orange-200', 'border-orange-500/20',
+    'border-blue-500', 'border-blue-200', 'border-blue-500/20',
+    'border-purple-500', 'border-purple-200', 'border-purple-500/20',
+    
+    // Animation states
+    'animate-spin', 'animate-pulse', 'animate-bounce',
+    
+    // Dynamic sizing/positioning used in components
+    'w-1', 'w-2', 'w-3', 'w-4', 'h-1', 'h-2', 'h-3', 'h-4',
+    'rounded-full', 'rounded-lg', 'rounded-md',
+    
+    // Opacity variants for overlays
+    { pattern: /bg-(green|red|yellow|orange|blue|purple|gray)-(100|200|500|600)/ },
+    { pattern: /text-(green|red|yellow|orange|blue|purple|gray)-(400|500|600)/ },
+    { pattern: /border-(green|red|yellow|orange|blue|purple|gray)-(200|500)/ },
+  ],
+  
   theme: {
     screens: {
       'sm': '640px',

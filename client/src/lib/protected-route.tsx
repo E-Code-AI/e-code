@@ -22,22 +22,23 @@ export function ProtectedRoute({
   component: Component,
 }: {
   path: string;
-  component: () => React.JSX.Element;
+  component: React.ComponentType<any>;
 }) {
-  const { user, isLoading, error } = useAuth();
-  const [location] = useLocation();
+  const { user, isLoading } = useAuth();
 
   return (
     <Route path={path}>
-      {isLoading ? (
-        <div className="flex items-center justify-center min-h-screen">
-          <Loader2 className="h-8 w-8 animate-spin text-border" />
-          <div className="ml-2 text-sm text-muted-foreground">Loading authentication...</div>
-        </div>
-      ) : user ? (
-        <Component />
-      ) : (
-        <RedirectToLogin path={path} />
+      {(params) => (
+        isLoading ? (
+          <div className="flex items-center justify-center min-h-screen">
+            <Loader2 className="h-8 w-8 animate-spin text-border" />
+            <div className="ml-2 text-sm text-muted-foreground">Loading authentication...</div>
+          </div>
+        ) : user ? (
+          <Component params={params} {...params} />
+        ) : (
+          <RedirectToLogin path={path} />
+        )
       )}
     </Route>
   );
