@@ -543,4 +543,4 @@ For deployment assistance:
 
 ---
 
-**Copyright © 2024 E-Code Platform. All rights reserved.**
+**Copyright © 2025 E-Code Platform. All rights reserved.**
