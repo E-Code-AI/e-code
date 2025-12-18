@@ -159,55 +159,42 @@ export class AiMeteringService {
   }
 
   /**
-   * DEPRECATED: Old direct Stripe API call (kept for reference)
-   * Now replaced by enqueueStripeUsage + worker processing
+   * Direct Stripe API call using new billing.meterEvents API
+   * Now replaced by enqueueStripeUsage + worker processing for production use
    */
-  private async reportToStripe_DEPRECATED(
+  private async reportToStripe(
     userId: string,
-    subscriptionId: string | undefined,
+    stripeCustomerId: string | undefined,
     costUsd: number,
     meteringId: number
   ): Promise<void> {
-    if (!this.stripe || !subscriptionId) {
-      logger.debug('Stripe not configured or no subscription - skipping metered billing');
+    if (!this.stripe || !stripeCustomerId) {
+      logger.debug('Stripe not configured or no customer ID - skipping metered billing');
       return;
     }
 
     try {
-      // Get the subscription item ID for AI usage
-      const subscription = await this.stripe.subscriptions.retrieve(subscriptionId);
-      const aiUsageItem = subscription.items.data.find(item => 
-        item.price.id === process.env.STRIPE_PRICE_ID_AGENT_USAGE
-      );
+      const quantityCents = Math.ceil(costUsd * 100);
+      const meterEvent = await this.stripe.billing.meterEvents.create({
+        event_name: 'ai_api_usage',
+        payload: {
+          stripe_customer_id: stripeCustomerId,
+          value: String(quantityCents),
+        },
+        timestamp: Math.floor(Date.now() / 1000),
+      });
 
-      if (!aiUsageItem) {
-        logger.warn(`No AI usage price item found for subscription ${subscriptionId}`);
-        return;
-      }
-
-      // Create usage record (Stripe accepts integer quantity, we send cents)
-      const quantityCents = Math.ceil(costUsd * 100); // $0.025 → 3 cents
-      const usageRecord = await this.stripe.subscriptionItems.createUsageRecord(
-        aiUsageItem.id,
-        {
-          quantity: quantityCents,
-          timestamp: Math.floor(Date.now() / 1000),
-          action: 'increment',
-        }
-      );
-
-      // Update metering record with Stripe ID
       await db.update(aiUsageMetering)
         .set({
-          stripeUsageRecordId: usageRecord.id,
+          stripeUsageRecordId: meterEvent.identifier,
           billed: true,
           billedAt: new Date(),
         })
         .where({ id: meteringId });
 
-      logger.info(`Reported to Stripe: $${costUsd.toFixed(6)} → ${quantityCents} cents, record=${usageRecord.id}`);
+      logger.info(`Reported to Stripe: $${costUsd.toFixed(6)} → ${quantityCents} cents, meterEventId=${meterEvent.identifier}`);
     } catch (error) {
-      logger.error('Failed to report to Stripe', { error, userId, subscriptionId });
+      logger.error('Failed to report to Stripe', { error, userId, stripeCustomerId });
       throw error;
     }
   }
