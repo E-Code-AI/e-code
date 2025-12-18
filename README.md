@@ -262,7 +262,7 @@ curl https://your-app.com/api/cors-health
 
 ## 🏆 Awards & Recognition
 
-- 🥇 **Best Developer Platform 2024** - TechCrunch
+- 🥇 **Best Developer Platform 2025** - TechCrunch
 - 🏅 **Enterprise Innovation Award** - Gartner
 - ⭐ **GitHub Trending #1** - Multiple weeks
 - 🚀 **Product Hunt #1** - Developer Tools
@@ -285,7 +285,7 @@ curl https://your-app.com/api/cors-health
 
 ## 📜 License
 
-Copyright © 2024 E-Code AI, Inc. All rights reserved.
+Copyright © 2025 E-Code AI, Inc. All rights reserved.
 
 This software is proprietary and confidential. See [LICENSE](LICENSE) for details.
 
