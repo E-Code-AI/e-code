@@ -21,10 +21,16 @@ import {
   Edit3,
   UserPlus,
   X,
-  Check
+  Check,
+  Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { apiRequest, queryClient } from '@/lib/queryClient';
+import { z } from 'zod';
+
+const emailSchema = z.string().email('Please enter a valid email address');
 
 interface ProjectSharingProps {
   projectId: number;
@@ -46,28 +52,35 @@ type SharePermission = 'private' | 'unlisted' | 'public';
 export function ProjectSharing({ projectId, projectName, className }: ProjectSharingProps) {
   const [sharePermission, setSharePermission] = useState<SharePermission>('private');
   const [shareLink, setShareLink] = useState(`https://e-code.ai/u/user/${projectName}`);
-  const [collaborators, setCollaborators] = useState<Collaborator[]>([
-    {
-      id: '1',
-      username: 'alice_dev',
-      email: 'alice@example.com',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=alice',
-      role: 'owner',
-      status: 'active'
-    },
-    {
-      id: '2',
-      username: 'bob_coder',
-      email: 'bob@example.com',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=bob',
-      role: 'editor',
-      status: 'active'
-    }
-  ]);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<'editor' | 'viewer'>('editor');
-  const [isInviting, setIsInviting] = useState(false);
   const { toast } = useToast();
+
+  const { data: collaboratorsData, isLoading: isLoadingCollaborators } = useQuery<{ collaborators: Collaborator[] }>({
+    queryKey: ['/api/projects', projectId, 'collaborators'],
+  });
+  const collaborators = collaboratorsData?.collaborators || [];
+
+  const inviteMutation = useMutation({
+    mutationFn: async ({ email, role }: { email: string; role: 'editor' | 'viewer' }) => {
+      return apiRequest('POST', '/api/teams/invite', { email, role, projectId });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'collaborators'] });
+      toast({
+        title: 'Invitation Sent',
+        description: `Invitation sent to ${inviteEmail}`,
+      });
+      setInviteEmail('');
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Invitation Failed',
+        description: error.message || 'Failed to send invitation',
+        variant: 'destructive',
+      });
+    },
+  });
 
   const copyShareLink = async () => {
     try {
@@ -86,33 +99,17 @@ export function ProjectSharing({ projectId, projectName, className }: ProjectSha
   };
 
   const handleInvite = async () => {
-    if (!inviteEmail || !inviteEmail.includes('@')) {
+    const validationResult = emailSchema.safeParse(inviteEmail);
+    if (!validationResult.success) {
       toast({
         title: 'Invalid Email',
-        description: 'Please enter a valid email address',
+        description: validationResult.error.errors[0]?.message || 'Please enter a valid email address',
         variant: 'destructive',
       });
       return;
     }
 
-    // Show information about team-based collaboration
-    toast({
-      title: 'Team Collaboration',
-      description: 'Project sharing is managed through Teams. Create or join a team to collaborate on projects.',
-      action: (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => {
-            // Navigate to teams page
-            window.location.href = '/teams';
-          }}
-        >
-          Go to Teams
-        </Button>
-      ),
-    });
-    setInviteEmail('');
+    inviteMutation.mutate({ email: inviteEmail, role: inviteRole });
   };
 
   const removeCollaborator = (id: string) => {
@@ -247,6 +244,7 @@ export function ProjectSharing({ projectId, projectName, className }: ProjectSha
               value={inviteRole}
               onChange={(e) => setInviteRole(e.target.value as 'editor' | 'viewer')}
               className="px-3 py-2 border rounded-md text-sm"
+              aria-label="Select collaborator permission level"
             >
               <option value="editor">Can Edit</option>
               <option value="viewer">Can View</option>
@@ -254,10 +252,14 @@ export function ProjectSharing({ projectId, projectName, className }: ProjectSha
             <Button
               size="sm"
               onClick={handleInvite}
-              disabled={isInviting || !inviteEmail}
+              disabled={inviteMutation.isPending || !inviteEmail}
             >
-              <UserPlus className="h-4 w-4 mr-1" />
-              Invite
+              {inviteMutation.isPending ? (
+                <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+              ) : (
+                <UserPlus className="h-4 w-4 mr-1" />
+              )}
+              {inviteMutation.isPending ? 'Inviting...' : 'Invite'}
             </Button>
           </div>
         </div>
@@ -270,6 +272,17 @@ export function ProjectSharing({ projectId, projectName, className }: ProjectSha
           </div>
           
           <ScrollArea className="h-[200px]">
+            {isLoadingCollaborators ? (
+              <div className="flex items-center justify-center h-full py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : collaborators.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full py-8 text-center">
+                <Users className="h-10 w-10 text-muted-foreground mb-2" />
+                <p className="text-sm font-medium text-muted-foreground">No collaborators yet</p>
+                <p className="text-xs text-muted-foreground mt-1">Invite team members to collaborate on this project</p>
+              </div>
+            ) : (
             <div className="space-y-2">
               {collaborators.map(collaborator => (
                 <div
@@ -310,6 +323,7 @@ export function ProjectSharing({ projectId, projectName, className }: ProjectSha
                             e.target.value as 'editor' | 'viewer'
                           )}
                           className="text-xs border rounded px-2 py-1"
+                          aria-label={`Change ${collaborator.username}'s permission level`}
                         >
                           <option value="editor">Can Edit</option>
                           <option value="viewer">Can View</option>
@@ -328,6 +342,7 @@ export function ProjectSharing({ projectId, projectName, className }: ProjectSha
                 </div>
               ))}
             </div>
+            )}
           </ScrollArea>
         </div>
       </CardContent>

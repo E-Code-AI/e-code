@@ -203,6 +203,9 @@ class DeploymentWebSocketService extends EventEmitter {
     // Start heartbeat for connection health monitoring
     this.startHeartbeat();
     
+    // Start periodic subscription validation
+    this.startSubscriptionValidation();
+    
     this.wss.on('connection', (ws, req) => {
       const clientIp = req.socket?.remoteAddress || 'unknown';
       const clientId = `client-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -393,6 +396,45 @@ class DeploymentWebSocketService extends EventEmitter {
     this.connections.delete(connection.clientId);
     
     logger.debug(`[Deployment WebSocket] Cleaned up connection ${connection.clientId}`);
+  }
+
+  // Periodically validate subscriptions and remove stale ones
+  private subscriptionValidationInterval: NodeJS.Timeout | null = null;
+  
+  private startSubscriptionValidation() {
+    this.subscriptionValidationInterval = setInterval(() => {
+      this.validateAllSubscriptions();
+    }, 60000);
+  }
+  
+  private validateAllSubscriptions() {
+    let cleanedUp = 0;
+    
+    for (const [deploymentId, subscribers] of this.subscriptions.entries()) {
+      for (const connection of subscribers) {
+        if (connection.ws.readyState === WebSocket.CLOSED || 
+            connection.ws.readyState === WebSocket.CLOSING) {
+          subscribers.delete(connection);
+          cleanedUp++;
+        }
+      }
+      
+      if (subscribers.size === 0) {
+        this.subscriptions.delete(deploymentId);
+      }
+    }
+    
+    for (const [clientId, connection] of this.connections.entries()) {
+      if (connection.ws.readyState === WebSocket.CLOSED || 
+          connection.ws.readyState === WebSocket.CLOSING) {
+        this.cleanupConnection(connection);
+        cleanedUp++;
+      }
+    }
+    
+    if (cleanedUp > 0) {
+      logger.info(`[Deployment WebSocket] Subscription validation cleaned up ${cleanedUp} stale entries`);
+    }
   }
   
   // Heartbeat to detect stale connections

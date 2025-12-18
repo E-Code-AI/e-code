@@ -2,7 +2,76 @@ import { io, Socket } from 'socket.io-client';
 import { WS_URL } from './config';
 import AuthService from './auth';
 
-type WebSocketEventHandler = (data: any) => void;
+export interface TerminalOutputData {
+  output: string;
+  projectId?: number;
+}
+
+export interface FileChangeData {
+  path: string;
+  type: 'create' | 'update' | 'delete';
+  content?: string;
+  projectId?: number;
+}
+
+export interface CollabCursorData {
+  userId: string;
+  username: string;
+  fileId: number;
+  line: number;
+  column: number;
+}
+
+export interface CollabSelectionData {
+  userId: string;
+  username: string;
+  fileId: number;
+  startLine: number;
+  startColumn: number;
+  endLine: number;
+  endColumn: number;
+}
+
+export interface AgentMessageData {
+  id: string;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  timestamp: string;
+  isStreaming?: boolean;
+}
+
+export interface AgentStatusData {
+  status: 'idle' | 'thinking' | 'building' | 'error';
+  message?: string;
+}
+
+export interface ConnectionStatusData {
+  status: 'connected' | 'disconnected' | 'error';
+  reason?: string;
+  error?: string;
+}
+
+export type WebSocketEventData = 
+  | TerminalOutputData 
+  | FileChangeData 
+  | CollabCursorData 
+  | CollabSelectionData 
+  | AgentMessageData 
+  | AgentStatusData 
+  | ConnectionStatusData
+  | Error;
+
+export type WebSocketEventType = 
+  | 'terminal:output'
+  | 'file:change'
+  | 'collab:cursor'
+  | 'collab:selection'
+  | 'agent:message'
+  | 'agent:status'
+  | 'connection'
+  | 'error';
+
+export type WebSocketEventHandler<T = WebSocketEventData> = (data: T) => void;
 
 export class WebSocketService {
   private static socket: Socket | null = null;
@@ -10,7 +79,6 @@ export class WebSocketService {
   private static maxReconnectAttempts = 5;
   private static eventHandlers: Map<string, Set<WebSocketEventHandler>> = new Map();
 
-  // Initialize connection
   static connect(projectId?: number): Socket {
     if (this.socket?.connected) {
       return this.socket;
@@ -33,65 +101,59 @@ export class WebSocketService {
     return this.socket;
   }
 
-  // Setup event listeners
   private static setupListeners(): void {
     if (!this.socket) return;
 
     this.socket.on('connect', () => {
       console.log('WebSocket connected');
       this.reconnectAttempts = 0;
-      this.emit('connection', { status: 'connected' });
+      this.emit('connection', { status: 'connected' } as ConnectionStatusData);
     });
 
-    this.socket.on('disconnect', (reason) => {
+    this.socket.on('disconnect', (reason: string) => {
       console.log('WebSocket disconnected:', reason);
-      this.emit('connection', { status: 'disconnected', reason });
+      this.emit('connection', { status: 'disconnected', reason } as ConnectionStatusData);
     });
 
-    this.socket.on('connect_error', (error) => {
+    this.socket.on('connect_error', (error: Error) => {
       console.error('WebSocket connection error:', error);
       this.reconnectAttempts++;
 
       if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-        this.emit('connection', { status: 'error', error: 'Max reconnection attempts reached' });
+        this.emit('connection', { status: 'error', error: 'Max reconnection attempts reached' } as ConnectionStatusData);
       }
     });
 
-    this.socket.on('error', (error) => {
+    this.socket.on('error', (error: Error) => {
       console.error('WebSocket error:', error);
       this.emit('error', error);
     });
 
-    // Terminal output
-    this.socket.on('terminal:output', (data) => {
+    this.socket.on('terminal:output', (data: TerminalOutputData) => {
       this.emit('terminal:output', data);
     });
 
-    // File changes
-    this.socket.on('file:change', (data) => {
+    this.socket.on('file:change', (data: FileChangeData) => {
       this.emit('file:change', data);
     });
 
-    // Collaboration events
-    this.socket.on('collab:cursor', (data) => {
+    this.socket.on('collab:cursor', (data: CollabCursorData) => {
       this.emit('collab:cursor', data);
     });
 
-    this.socket.on('collab:selection', (data) => {
+    this.socket.on('collab:selection', (data: CollabSelectionData) => {
       this.emit('collab:selection', data);
     });
 
-    // Agent events
-    this.socket.on('agent:message', (data) => {
+    this.socket.on('agent:message', (data: AgentMessageData) => {
       this.emit('agent:message', data);
     });
 
-    this.socket.on('agent:status', (data) => {
+    this.socket.on('agent:status', (data: AgentStatusData) => {
       this.emit('agent:status', data);
     });
   }
 
-  // Disconnect
   static disconnect(): void {
     if (this.socket) {
       this.socket.disconnect();
@@ -100,24 +162,21 @@ export class WebSocketService {
     this.eventHandlers.clear();
   }
 
-  // Subscribe to event
-  static on(event: string, handler: WebSocketEventHandler): () => void {
+  static on<T extends WebSocketEventData>(event: WebSocketEventType, handler: WebSocketEventHandler<T>): () => void {
     if (!this.eventHandlers.has(event)) {
       this.eventHandlers.set(event, new Set());
     }
-    this.eventHandlers.get(event)!.add(handler);
+    this.eventHandlers.get(event)!.add(handler as WebSocketEventHandler);
 
-    // Return unsubscribe function
     return () => {
       const handlers = this.eventHandlers.get(event);
       if (handlers) {
-        handlers.delete(handler);
+        handlers.delete(handler as WebSocketEventHandler);
       }
     };
   }
 
-  // Emit event to handlers
-  private static emit(event: string, data: any): void {
+  private static emit(event: string, data: WebSocketEventData): void {
     const handlers = this.eventHandlers.get(event);
     if (handlers) {
       handlers.forEach(handler => {
@@ -130,8 +189,7 @@ export class WebSocketService {
     }
   }
 
-  // Send message to server
-  static send(event: string, data: any): void {
+  static send(event: string, data: Record<string, unknown>): void {
     if (this.socket?.connected) {
       this.socket.emit(event, data);
     } else {
@@ -139,12 +197,10 @@ export class WebSocketService {
     }
   }
 
-  // Check connection status
   static isConnected(): boolean {
     return !!this.socket?.connected;
   }
 
-  // Get socket instance
   static getSocket(): Socket | null {
     return this.socket;
   }

@@ -669,6 +669,13 @@ export class StripePaymentService {
       if (!userId) return;
 
       const refundedAmount = charge.amount_refunded / 100;
+      
+      // #134 FIXED: Add credits back to user's balance on refund
+      if (refundedAmount > 0) {
+        await creditsService.addCredits(userId, refundedAmount, `Stripe refund: Charge ${charge.id}`);
+        logger.info(`[Stripe] Added ${refundedAmount} credits to user ${userId} for refund`);
+      }
+      
       logger.info(`[Stripe] Charge refunded for user ${userId}: $${refundedAmount}`);
     } catch (error) {
       logger.error('[Stripe] Error handling charge refund:', error);
@@ -689,6 +696,27 @@ export class StripePaymentService {
       
       const userId = (customer as Stripe.Customer).metadata?.userId;
       logger.warn(`[Stripe] DISPUTE CREATED for user ${userId}: $${dispute.amount / 100} - Reason: ${dispute.reason}`);
+      
+      // #135 FIXED: Create support ticket for dispute
+      if (userId) {
+        const { db } = await import('../db');
+        const { supportTickets } = await import('../../shared/admin-schema');
+        
+        const ticketNumber = `DSP-${Date.now()}-${crypto.randomUUID().slice(0, 6).toUpperCase()}`;
+        
+        await db.insert(supportTickets).values({
+          userId: parseInt(userId),
+          ticketNumber,
+          subject: `Payment Dispute: $${(dispute.amount / 100).toFixed(2)}`,
+          description: `A payment dispute has been filed for charge ${chargeId}.\n\nAmount: $${(dispute.amount / 100).toFixed(2)}\nReason: ${dispute.reason || 'Not specified'}\nDispute ID: ${dispute.id}\n\nPlease review and respond within the deadline.`,
+          category: 'billing',
+          priority: 'urgent',
+          status: 'open',
+          tags: ['dispute', 'billing', 'auto-generated'],
+        });
+        
+        logger.info(`[Stripe] Created support ticket ${ticketNumber} for dispute ${dispute.id}`);
+      }
     } catch (error) {
       logger.error('[Stripe] Error handling dispute:', error);
     }

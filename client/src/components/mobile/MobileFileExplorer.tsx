@@ -259,9 +259,6 @@ export function MobileFileExplorer({
   
   const createMutation = useMutation({
     mutationFn: async (data: { name: string; isDirectory: boolean; parentId: number | null }) => {
-      if (import.meta.env.DEV) {
-        console.log('[MobileFileExplorer] Creating file:', { projectId, data });
-      }
       const path = data.name;
       return apiRequest('POST', `/api/projects/${projectId}/files`, {
         name: data.name,
@@ -270,10 +267,7 @@ export function MobileFileExplorer({
         content: data.isDirectory ? '' : '',
       });
     },
-    onSuccess: (result) => {
-      if (import.meta.env.DEV) {
-        console.log('[MobileFileExplorer] File created successfully:', result);
-      }
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
       const itemType = newItemDialog?.type === 'folder' ? 'Dossier' : 'Fichier';
       toast({ 
@@ -282,11 +276,8 @@ export function MobileFileExplorer({
       });
       setNewItemDialog(null);
     },
-    onError: (error: any) => {
-      if (import.meta.env.DEV) {
-        console.error('[MobileFileExplorer] Failed to create file:', error);
-      }
-      const errorMessage = error?.message || error?.toString() || 'Échec de la création';
+    onError: (error: Error) => {
+      const errorMessage = error?.message || 'Échec de la création';
       toast({ title: 'Erreur', description: errorMessage, variant: 'destructive' });
     },
   });
@@ -300,7 +291,7 @@ export function MobileFileExplorer({
       toast({ title: 'Succès', description: `${itemType} renommé avec succès` });
       setRenameDialog(null);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       const errorMessage = error?.message || 'Échec du renommage';
       toast({ title: 'Erreur', description: errorMessage, variant: 'destructive' });
     },
@@ -316,7 +307,7 @@ export function MobileFileExplorer({
       setDeleteConfirm(null);
       setShowContextMenu(false);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       const errorMessage = error?.message || 'Échec de la suppression';
       toast({ title: 'Erreur', description: errorMessage, variant: 'destructive' });
     },
@@ -335,7 +326,7 @@ export function MobileFileExplorer({
       toast({ title: 'Succès', description: 'Fichier dupliqué avec succès' });
       setShowContextMenu(false);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       const errorMessage = error?.message || 'Échec de la duplication';
       toast({ title: 'Erreur', description: errorMessage, variant: 'destructive' });
     },

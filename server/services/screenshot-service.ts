@@ -70,7 +70,7 @@ export class ScreenshotService {
     options: ScreenshotStorageOptions = {}
   ): Promise<StorageObject> {
     const timestamp = Date.now();
-    const hash = crypto.createHash('md5').update(buffer).digest('hex').substring(0, 8);
+    const hash = crypto.createHash('sha256').update(buffer).digest('hex').substring(0, 8);
     const key = options.checkpointId 
       ? `screenshots/checkpoints/${projectId}/${options.checkpointId}-${timestamp}-${hash}.png`
       : `screenshots/projects/${projectId}/${timestamp}-${hash}.png`;

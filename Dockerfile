@@ -4,8 +4,15 @@
 # Stage 1: Builder - Install ALL dependencies and build
 FROM node:20-alpine AS builder
 WORKDIR /app
+
+# Copy package files first for better layer caching
 COPY package*.json ./
-RUN npm ci
+
+# Use BuildKit cache mount for npm cache to speed up builds
+# This caches the npm download cache between builds
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci
+
 COPY . .
 RUN npm run build
 

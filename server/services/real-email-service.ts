@@ -214,6 +214,35 @@ export class RealEmailService {
     `);
   }
 
+  private async sendWithRetry(
+    sendFn: () => Promise<EmailResult>,
+    maxAttempts: number = 3,
+    baseDelayMs: number = 1000
+  ): Promise<EmailResult> {
+    let lastError: Error | null = null;
+    
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        const result = await sendFn();
+        if (result.success) {
+          return result;
+        }
+        lastError = new Error(result.error || 'Send failed');
+      } catch (error: any) {
+        lastError = error;
+        logger.warn(`Email send attempt ${attempt}/${maxAttempts} failed: ${error.message}`);
+      }
+      
+      if (attempt < maxAttempts) {
+        const delay = baseDelayMs * Math.pow(2, attempt - 1);
+        logger.info(`Retrying email send in ${delay}ms (attempt ${attempt + 1}/${maxAttempts})`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+    
+    throw lastError || new Error('Email send failed after all retries');
+  }
+
   async sendEmail(config: EmailConfig): Promise<EmailResult> {
     try {
       // Apply template if specified
@@ -227,20 +256,20 @@ export class RealEmailService {
         config.from = process.env.EMAIL_FROM || 'noreply@e-code.ai';
       }
 
-      // Try SendGrid first
+      // Try SendGrid first with exponential backoff retry
       if (this.sendgridEnabled) {
-        return await this.sendWithSendGrid(config);
+        return await this.sendWithRetry(() => this.sendWithSendGrid(config));
       }
 
-      // Fallback to SMTP
+      // Fallback to SMTP with exponential backoff retry
       if (this.transporter) {
-        return await this.sendWithSMTP(config);
+        return await this.sendWithRetry(() => this.sendWithSMTP(config));
       }
 
       throw new Error('No email service configured');
 
-    } catch (error) {
-      logger.error(`Failed to send email: ${error}`);
+    } catch (error: any) {
+      logger.error(`Failed to send email after retries: ${error}`);
       return {
         success: false,
         error: error.message,

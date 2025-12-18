@@ -29,6 +29,30 @@
 #   - Enable WAL archiving for point-in-time recovery
 # =============================================================================
 
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: postgres-sa
+  namespace: e-code-platform
+  labels:
+    app: postgres
+    component: database
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: postgres-pdb
+  namespace: e-code-platform
+  labels:
+    app: postgres
+spec:
+  maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: postgres
+
+---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -53,6 +77,7 @@ spec:
       annotations:
         backup.velero.io/backup-volumes: postgres-storage
     spec:
+      serviceAccountName: postgres-sa
       terminationGracePeriodSeconds: 120
       securityContext:
         fsGroup: 999
@@ -167,7 +192,34 @@ data:
     log_duration = off
     log_min_duration_statement = 1000
     
-    # WAL archiving for backup (configure archive_command for your storage)
+    # ==========================================================================
+    # WAL ARCHIVING FOR POINT-IN-TIME RECOVERY (PITR)
+    # ==========================================================================
+    # WAL (Write-Ahead Log) archiving enables point-in-time recovery by
+    # continuously archiving transaction logs to external storage.
+    #
+    # TO ENABLE WAL ARCHIVING:
+    # 1. Uncomment the settings below
+    # 2. Configure archive_command for your cloud storage:
+    #
+    # For Google Cloud Storage:
+    #   archive_command = 'gcloud storage cp %p gs://YOUR-BUCKET/wal/%f'
+    #
+    # For AWS S3:
+    #   archive_command = 'aws s3 cp %p s3://YOUR-BUCKET/wal/%f'
+    #
+    # For Azure Blob Storage:
+    #   archive_command = 'az storage blob upload --file %p --name wal/%f --container-name YOUR-CONTAINER'
+    #
+    # RESTORE PROCESS:
+    # 1. Restore base backup from Velero or pg_basebackup
+    # 2. Create recovery.conf with restore_command pointing to archived WALs
+    # 3. Start PostgreSQL - it will replay WALs to desired point
+    #
+    # MONITORING:
+    # - Check pg_stat_archiver for archiving status
+    # - Alert if last_archived_time is too old
+    # ==========================================================================
     # archive_mode = on
     # archive_command = 'gcloud storage cp %p gs://your-bucket/wal/%f'
 

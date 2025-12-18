@@ -1,15 +1,15 @@
 name: CI/CD Production Pipeline - Fortune 500 Standard (Kubernetes/EKS)
 
-# ⚠️ DÉSACTIVÉ: Ce workflow est pour déploiement Kubernetes/EKS
-# Pour Replit, utilisez: .github/workflows/replit-deployment.yml
-# Pour activer ce workflow, décommentez les lignes "on:" ci-dessous
+# CI/CD Production Pipeline for Kubernetes/EKS deployments
+# For Replit deployments, use: .github/workflows/replit-deployment.yml
+# To disable automatic triggers, comment out push/pull_request events below
 
 on:
-  # push:
-  #   branches: [main, master]
-  # pull_request:
-  #   branches: [main, master]
-  workflow_dispatch:  # Manuel uniquement
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:  # Manual trigger also available
 
 env:
   NODE_VERSION: '20.x'
@@ -117,8 +117,8 @@ jobs:
           echo "NODE_ENV=test" > .env.test
           echo "DATABASE_URL=postgresql://test:test@localhost:5432/ecode_test" >> .env.test
           echo "REDIS_URL=redis://localhost:6379/1" >> .env.test
-          echo "SESSION_SECRET=test-secret" >> .env.test
-          echo "JWT_SECRET=test-jwt-secret" >> .env.test
+          echo "SESSION_SECRET=${{ secrets.TEST_SESSION_SECRET || 'test-session-secret-for-ci' }}" >> .env.test
+          echo "JWT_SECRET=${{ secrets.TEST_JWT_SECRET || 'test-jwt-secret-for-ci' }}" >> .env.test
 
       - name: Run database migrations
         run: npm run db:push

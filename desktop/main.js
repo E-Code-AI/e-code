@@ -61,11 +61,51 @@ const ALLOWED_PATHS = [
   app.getPath('home'),
 ];
 
+// Blacklist of sensitive paths that should never be accessed
+const SENSITIVE_PATH_PATTERNS = [
+  '.ssh',
+  '.gnupg',
+  '.gpg',
+  '.aws',
+  '.azure',
+  '.kube',
+  '.docker',
+  '.npmrc',
+  '.netrc',
+  '.git-credentials',
+  '.config/gcloud',
+  '.config/gh',
+  '.local/share/keyrings',
+  'id_rsa',
+  'id_ed25519',
+  'id_ecdsa',
+  'id_dsa',
+  '.pem',
+  '.key',
+  'private_key',
+  'credentials.json',
+  'token.json',
+  '.env',
+  '.env.local',
+  '.env.production',
+  'secrets',
+];
+
 function isPathAllowed(filePath) {
   if (!filePath || typeof filePath !== 'string') return false;
   const resolved = path.resolve(filePath);
   // Block path traversal attempts
   if (filePath.includes('..')) return false;
+  
+  // Check against sensitive path patterns
+  const normalizedPath = resolved.toLowerCase();
+  for (const pattern of SENSITIVE_PATH_PATTERNS) {
+    if (normalizedPath.includes(pattern.toLowerCase())) {
+      console.warn(`[E-Code Desktop] Blocked access to sensitive path: ${filePath}`);
+      return false;
+    }
+  }
+  
   // Allow paths within allowed directories
   return ALLOWED_PATHS.some(allowed => 
     resolved.startsWith(path.resolve(allowed))
@@ -427,9 +467,6 @@ function createWindow() {
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
-
-  // Create application menu
-  createMenu();
 }
 
 // Get icon path based on platform
@@ -639,23 +676,23 @@ function createMenu() {
         {
           label: 'New Terminal',
           accelerator: 'CmdOrCtrl+Shift+`',
-          click: () => mainWindow.webContents.send('menu-new-terminal'),
+          click: () => mainWindow?.webContents?.send('menu-new-terminal'),
         },
         {
           label: 'Clear Terminal',
           accelerator: 'CmdOrCtrl+K',
-          click: () => mainWindow.webContents.send('menu-clear-terminal'),
+          click: () => mainWindow?.webContents?.send('menu-clear-terminal'),
         },
         { type: 'separator' },
         {
           label: 'Run Code',
           accelerator: 'CmdOrCtrl+Enter',
-          click: () => mainWindow.webContents.send('menu-run-code'),
+          click: () => mainWindow?.webContents?.send('menu-run-code'),
         },
         {
           label: 'Stop Execution',
           accelerator: 'CmdOrCtrl+Shift+C',
-          click: () => mainWindow.webContents.send('menu-stop-execution'),
+          click: () => mainWindow?.webContents?.send('menu-stop-execution'),
         },
       ],
     },
@@ -920,7 +957,7 @@ const RETRY_DELAY_BASE = 5000; // 5 seconds base delay
 function retryUpdateCheck() {
   if (updateRetries < MAX_UPDATE_RETRIES) {
     updateRetries++;
-    const delay = RETRY_DELAY_BASE * updateRetries; // Exponential backoff: 5s, 10s, 15s
+    const delay = RETRY_DELAY_BASE * Math.pow(2, updateRetries - 1); // Exponential backoff: 5s, 10s, 20s
     console.log(`[E-Code Desktop] Retrying update check (${updateRetries}/${MAX_UPDATE_RETRIES}) in ${delay}ms`);
     
     setTimeout(() => {
@@ -1285,12 +1322,18 @@ ipcMain.handle('open-external', async (event, url) => {
   await shell.openExternal(url);
 });
 
-ipcMain.handle('open-path', async (event, path) => {
-  await shell.openPath(path);
+ipcMain.handle('open-path', async (event, targetPath) => {
+  if (!isPathAllowed(targetPath)) {
+    throw new Error('Access denied: path not allowed');
+  }
+  await shell.openPath(targetPath);
 });
 
-ipcMain.handle('show-item-in-folder', (event, path) => {
-  shell.showItemInFolder(path);
+ipcMain.handle('show-item-in-folder', (event, targetPath) => {
+  if (!isPathAllowed(targetPath)) {
+    throw new Error('Access denied: path not allowed');
+  }
+  shell.showItemInFolder(targetPath);
 });
 
 // Window operations

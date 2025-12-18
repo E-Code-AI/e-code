@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -8,14 +8,37 @@ import {
   Switch,
   Alert,
   Platform,
-  ActivityIndicator
+  ActivityIndicator,
+  useColorScheme,
+  Appearance
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import { mobileColors, mobileSpacing, mobileTypography, mobileBorderRadius } from '../../../shared/theme/mobile-theme';
 import { logout, clearCache } from '../services/api';
+import { StorageService } from '../services/storage';
 
 type SettingsScreenProps = NativeStackScreenProps<RootStackParamList, 'Settings'>;
+
+const SETTINGS_STORAGE_KEY = 'app_settings';
+
+interface AppSettings {
+  notifications: boolean;
+  autoSave: boolean;
+  darkMode: boolean;
+  offlineMode: boolean;
+  biometric: boolean;
+  analytics: boolean;
+}
+
+const DEFAULT_SETTINGS: AppSettings = {
+  notifications: true,
+  autoSave: true,
+  darkMode: true,
+  offlineMode: false,
+  biometric: false,
+  analytics: true
+};
 
 const formatBytes = (bytes: number): string => {
   if (bytes === 0) return '0 B';
@@ -27,14 +50,54 @@ const formatBytes = (bytes: number): string => {
 
 const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation, route }) => {
   const { token } = route.params;
-  const [notifications, setNotifications] = useState(true);
-  const [autoSave, setAutoSave] = useState(true);
-  const [darkMode, setDarkMode] = useState(true);
-  const [offlineMode, setOfflineMode] = useState(false);
-  const [biometric, setBiometric] = useState(false);
-  const [analytics, setAnalytics] = useState(true);
+  const systemColorScheme = useColorScheme();
+  
+  const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
+  const [isLoadingSettings, setIsLoadingSettings] = useState(true);
   const [clearingCache, setClearingCache] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
+
+  useEffect(() => {
+    loadSettings();
+  }, []);
+
+  const loadSettings = async () => {
+    try {
+      const savedSettings = await StorageService.get<AppSettings>(SETTINGS_STORAGE_KEY);
+      if (savedSettings) {
+        setSettings(savedSettings);
+      }
+    } catch (error) {
+      console.error('Failed to load settings:', error);
+    } finally {
+      setIsLoadingSettings(false);
+    }
+  };
+
+  const saveSettings = async (newSettings: AppSettings) => {
+    try {
+      await StorageService.set(SETTINGS_STORAGE_KEY, newSettings);
+    } catch (error) {
+      console.error('Failed to save settings:', error);
+    }
+  };
+
+  const updateSetting = useCallback(<K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {
+    setSettings(prev => {
+      const newSettings = { ...prev, [key]: value };
+      saveSettings(newSettings);
+      return newSettings;
+    });
+  }, []);
+
+  const handleDarkModeToggle = useCallback((value: boolean) => {
+    updateSetting('darkMode', value);
+    Alert.alert(
+      'Theme Updated',
+      `${value ? 'Dark' : 'Light'} mode will be applied on next app restart.`,
+      [{ text: 'OK' }]
+    );
+  }, [updateSetting]);
 
   const handleClearCache = useCallback(() => {
     Alert.alert(
@@ -70,13 +133,9 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation, route }) =>
         {
           text: 'Reset',
           style: 'destructive',
-          onPress: () => {
-            setNotifications(true);
-            setAutoSave(true);
-            setDarkMode(true);
-            setOfflineMode(false);
-            setBiometric(false);
-            setAnalytics(true);
+          onPress: async () => {
+            setSettings(DEFAULT_SETTINGS);
+            await saveSettings(DEFAULT_SETTINGS);
             Alert.alert('Success', 'Settings reset to defaults');
           }
         }
@@ -84,9 +143,16 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation, route }) =>
     );
   }, []);
 
+  if (isLoadingSettings) {
+    return (
+      <View style={[styles.container, styles.loadingContainer]}>
+        <ActivityIndicator size="large" color={mobileColors.primary} />
+      </View>
+    );
+  }
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* General Section */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>General</Text>
 
@@ -98,10 +164,10 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation, route }) =>
             </Text>
           </View>
           <Switch
-            value={notifications}
-            onValueChange={setNotifications}
+            value={settings.notifications}
+            onValueChange={(value) => updateSetting('notifications', value)}
             trackColor={{ false: '#334155', true: '#3b82f6' }}
-            thumbColor={notifications ? '#60a5fa' : '#94a3b8'}
+            thumbColor={settings.notifications ? '#60a5fa' : '#94a3b8'}
           />
         </View>
 
@@ -113,10 +179,10 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation, route }) =>
             </Text>
           </View>
           <Switch
-            value={autoSave}
-            onValueChange={setAutoSave}
+            value={settings.autoSave}
+            onValueChange={(value) => updateSetting('autoSave', value)}
             trackColor={{ false: '#334155', true: '#3b82f6' }}
-            thumbColor={autoSave ? '#60a5fa' : '#94a3b8'}
+            thumbColor={settings.autoSave ? '#60a5fa' : '#94a3b8'}
           />
         </View>
 
@@ -128,15 +194,14 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation, route }) =>
             </Text>
           </View>
           <Switch
-            value={darkMode}
-            onValueChange={setDarkMode}
+            value={settings.darkMode}
+            onValueChange={handleDarkModeToggle}
             trackColor={{ false: '#334155', true: '#3b82f6' }}
-            thumbColor={darkMode ? '#60a5fa' : '#94a3b8'}
+            thumbColor={settings.darkMode ? '#60a5fa' : '#94a3b8'}
           />
         </View>
       </View>
 
-      {/* Advanced Section */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Advanced</Text>
 
@@ -148,10 +213,10 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation, route }) =>
             </Text>
           </View>
           <Switch
-            value={offlineMode}
-            onValueChange={setOfflineMode}
+            value={settings.offlineMode}
+            onValueChange={(value) => updateSetting('offlineMode', value)}
             trackColor={{ false: '#334155', true: '#3b82f6' }}
-            thumbColor={offlineMode ? '#60a5fa' : '#94a3b8'}
+            thumbColor={settings.offlineMode ? '#60a5fa' : '#94a3b8'}
           />
         </View>
 
@@ -163,10 +228,10 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation, route }) =>
             </Text>
           </View>
           <Switch
-            value={biometric}
-            onValueChange={setBiometric}
+            value={settings.biometric}
+            onValueChange={(value) => updateSetting('biometric', value)}
             trackColor={{ false: '#334155', true: '#3b82f6' }}
-            thumbColor={biometric ? '#60a5fa' : '#94a3b8'}
+            thumbColor={settings.biometric ? '#60a5fa' : '#94a3b8'}
           />
         </View>
 
@@ -178,15 +243,14 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation, route }) =>
             </Text>
           </View>
           <Switch
-            value={analytics}
-            onValueChange={setAnalytics}
+            value={settings.analytics}
+            onValueChange={(value) => updateSetting('analytics', value)}
             trackColor={{ false: '#334155', true: '#3b82f6' }}
-            thumbColor={analytics ? '#60a5fa' : '#94a3b8'}
+            thumbColor={settings.analytics ? '#60a5fa' : '#94a3b8'}
           />
         </View>
       </View>
 
-      {/* Account Section */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Account</Text>
 
@@ -215,7 +279,6 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation, route }) =>
         </TouchableOpacity>
       </View>
 
-      {/* Storage Section */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Storage</Text>
 
@@ -238,13 +301,12 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation, route }) =>
         </View>
       </View>
 
-      {/* About Section */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>About</Text>
 
         <TouchableOpacity
           style={styles.actionItem}
-          onPress={() => Alert.alert('E-Code', 'Version 1.0.0\\nBuild 2025.11.24')}
+          onPress={() => Alert.alert('E-Code', 'Version 1.0.0\nBuild 2025.11.24')}
         >
           <Text style={styles.actionLabel}>Version</Text>
           <Text style={styles.actionValue}>1.0.0</Text>
@@ -275,7 +337,6 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation, route }) =>
         </TouchableOpacity>
       </View>
 
-      {/* Danger Zone */}
       <View style={styles.section}>
         <Text style={[styles.sectionTitle, styles.dangerTitle]}>Danger Zone</Text>
 
@@ -336,6 +397,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: mobileColors.background
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center'
   },
   content: {
     padding: mobileSpacing.md

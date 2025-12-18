@@ -8,9 +8,25 @@ import { memoryBankService } from '../services/memory-bank.service';
 import { z } from 'zod';
 import path from 'path';
 import { createLogger } from '../utils/logger';
+import { ensureAuthenticated } from '../middleware/auth';
+import { storage } from '../storage';
 
 const logger = createLogger('memory-bank-router');
 const router = Router();
+
+/**
+ * SECURITY FIX #26: Verify user has access to the project
+ */
+async function verifyProjectAccess(projectId: number, userId: number): Promise<{ valid: boolean; error?: string }> {
+  const project = await storage.getProject(String(projectId));
+  if (!project) {
+    return { valid: false, error: 'Project not found' };
+  }
+  if (project.ownerId !== userId) {
+    return { valid: false, error: 'Access denied: You do not have access to this project' };
+  }
+  return { valid: true };
+}
 
 /**
  * Helper to ensure project base path is set before any Memory Bank operation
@@ -51,11 +67,22 @@ const logChangeSchema = z.object({
  * ✅ AUTO-INIT (Dec 15, 2025): Memory Bank now initializes automatically
  * when first requested, eliminating race conditions with /status endpoint.
  */
-router.get('/:projectId', async (req: Request, res: Response) => {
+router.get('/:projectId', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const projectId = parseInt(req.params.projectId, 10);
     if (isNaN(projectId)) {
       return res.status(400).json({ error: 'Invalid project ID' });
+    }
+
+    const userId = (req.user as any)?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    // SECURITY FIX #26: Verify user has project access
+    const access = await verifyProjectAccess(projectId, userId);
+    if (!access.valid) {
+      return res.status(403).json({ error: access.error });
     }
 
     // ✅ Ensure project-specific path is set
@@ -91,11 +118,22 @@ router.get('/:projectId', async (req: Request, res: Response) => {
  * ✅ AUTO-INIT (Dec 15, 2025): Memory Bank now initializes automatically
  * when status is first checked for existing projects without Memory Bank.
  */
-router.get('/:projectId/status', async (req: Request, res: Response) => {
+router.get('/:projectId/status', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const projectId = parseInt(req.params.projectId, 10);
     if (isNaN(projectId)) {
       return res.status(400).json({ error: 'Invalid project ID' });
+    }
+
+    const userId = (req.user as any)?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    // SECURITY FIX #26: Verify user has project access
+    const access = await verifyProjectAccess(projectId, userId);
+    if (!access.valid) {
+      return res.status(403).json({ error: access.error });
     }
 
     ensureProjectBasePath(projectId);
@@ -124,11 +162,22 @@ router.get('/:projectId/status', async (req: Request, res: Response) => {
  * GET /api/memory-bank/:projectId/context
  * Get formatted context for agent prompt injection
  */
-router.get('/:projectId/context', async (req: Request, res: Response) => {
+router.get('/:projectId/context', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const projectId = parseInt(req.params.projectId, 10);
     if (isNaN(projectId)) {
       return res.status(400).json({ error: 'Invalid project ID' });
+    }
+
+    const userId = (req.user as any)?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    // SECURITY FIX #26: Verify user has project access
+    const access = await verifyProjectAccess(projectId, userId);
+    if (!access.valid) {
+      return res.status(403).json({ error: access.error });
     }
 
     ensureProjectBasePath(projectId);
@@ -148,11 +197,22 @@ router.get('/:projectId/context', async (req: Request, res: Response) => {
  * GET /api/memory-bank/:projectId/files/:filename
  * Get a specific memory file
  */
-router.get('/:projectId/files/:filename', async (req: Request, res: Response) => {
+router.get('/:projectId/files/:filename', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const projectId = parseInt(req.params.projectId, 10);
     if (isNaN(projectId)) {
       return res.status(400).json({ error: 'Invalid project ID' });
+    }
+
+    const userId = (req.user as any)?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    // SECURITY FIX #26: Verify user has project access
+    const access = await verifyProjectAccess(projectId, userId);
+    if (!access.valid) {
+      return res.status(403).json({ error: access.error });
     }
 
     ensureProjectBasePath(projectId);
@@ -174,11 +234,22 @@ router.get('/:projectId/files/:filename', async (req: Request, res: Response) =>
  * PUT /api/memory-bank/:projectId/files/:filename
  * Update or create a memory file
  */
-router.put('/:projectId/files/:filename', async (req: Request, res: Response) => {
+router.put('/:projectId/files/:filename', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const projectId = parseInt(req.params.projectId, 10);
     if (isNaN(projectId)) {
       return res.status(400).json({ error: 'Invalid project ID' });
+    }
+
+    const userId = (req.user as any)?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    // SECURITY FIX #26: Verify user has project access
+    const access = await verifyProjectAccess(projectId, userId);
+    if (!access.valid) {
+      return res.status(403).json({ error: access.error });
     }
 
     ensureProjectBasePath(projectId);
@@ -216,11 +287,22 @@ router.put('/:projectId/files/:filename', async (req: Request, res: Response) =>
  * DELETE /api/memory-bank/:projectId/files/:filename
  * Delete a memory file
  */
-router.delete('/:projectId/files/:filename', async (req: Request, res: Response) => {
+router.delete('/:projectId/files/:filename', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const projectId = parseInt(req.params.projectId, 10);
     if (isNaN(projectId)) {
       return res.status(400).json({ error: 'Invalid project ID' });
+    }
+
+    const userId = (req.user as any)?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    // SECURITY FIX #26: Verify user has project access
+    const access = await verifyProjectAccess(projectId, userId);
+    if (!access.valid) {
+      return res.status(403).json({ error: access.error });
     }
 
     ensureProjectBasePath(projectId);
@@ -242,11 +324,22 @@ router.delete('/:projectId/files/:filename', async (req: Request, res: Response)
  * POST /api/memory-bank/:projectId/log-change
  * Log a recent change (called by agent after modifications)
  */
-router.post('/:projectId/log-change', async (req: Request, res: Response) => {
+router.post('/:projectId/log-change', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const projectId = parseInt(req.params.projectId, 10);
     if (isNaN(projectId)) {
       return res.status(400).json({ error: 'Invalid project ID' });
+    }
+
+    const userId = (req.user as any)?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    // SECURITY FIX #26: Verify user has project access
+    const access = await verifyProjectAccess(projectId, userId);
+    if (!access.valid) {
+      return res.status(403).json({ error: access.error });
     }
 
     ensureProjectBasePath(projectId);

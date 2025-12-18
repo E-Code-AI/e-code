@@ -104,7 +104,7 @@ class CodeAnalysisEngine {
     content: string,
     fileId?: number
   ): Promise<AnalysisResult> {
-    const cacheKey = `${projectId}-${filePath}-${crypto.createHash('md5').update(content).digest('hex')}`;
+    const cacheKey = `${projectId}-${filePath}-${crypto.createHash('sha256').update(content).digest('hex')}`;
     
     // Check cache
     const cached = this.cache.get(cacheKey);
@@ -823,7 +823,7 @@ class CodeAnalysisEngine {
         .join('\n');
       
       if (block.length > 100) {
-        const hash = crypto.createHash('md5').update(block).digest('hex');
+        const hash = crypto.createHash('sha256').update(block).digest('hex');
         
         if (seen.has(hash)) {
           duplicates.push({

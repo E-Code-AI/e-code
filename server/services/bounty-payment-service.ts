@@ -1,6 +1,7 @@
 import Stripe from 'stripe';
 import { storage } from '../storage';
 import { createLogger } from '../utils/logger';
+import { creditsService } from './credits-service';
 
 const logger = createLogger('bounty-payments');
 
@@ -107,6 +108,10 @@ export class BountyPaymentService {
   async refundPayment(paymentIntentId: string, reason?: string): Promise<Stripe.Refund> {
     try {
       const stripe = getStripeClient();
+      
+      const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+      const creatorId = paymentIntent.metadata?.creatorId;
+      
       const refund = await stripe.refunds.create({
         payment_intent: paymentIntentId,
         reason: 'requested_by_customer',
@@ -114,6 +119,13 @@ export class BountyPaymentService {
           refundReason: reason || 'Bounty cancelled',
         },
       });
+      
+      if (creatorId && refund.amount) {
+        const refundedAmount = refund.amount / 100;
+        await creditsService.addCredits(creatorId, refundedAmount, `Bounty refund: ${reason || 'Bounty cancelled'}`);
+        logger.info(`Added ${refundedAmount} credits to user ${creatorId} for refund`);
+      }
+      
       logger.info(`Refunded payment intent ${paymentIntentId}`);
       return refund;
     } catch (error) {

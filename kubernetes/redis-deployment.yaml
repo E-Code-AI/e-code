@@ -1,6 +1,55 @@
-# Redis Cache Deployment
-# NOTE: For production high-availability, consider using Redis Sentinel or Redis Cluster
-# with proper failover configuration. This deployment uses 3 replicas for basic redundancy.
+# =============================================================================
+# REDIS CACHE DEPLOYMENT
+# =============================================================================
+# ⚠️  HIGH AVAILABILITY WARNING:
+# This deployment runs 3 independent Redis replicas WITHOUT replication.
+# Each replica is standalone - data is NOT shared between them.
+# This is suitable for caching but NOT for session storage requiring consistency.
+#
+# FOR PRODUCTION HIGH-AVAILABILITY, USE ONE OF THESE APPROACHES:
+#
+# 1. REDIS SENTINEL (Recommended for HA with automatic failover):
+#    - Provides automatic failover with master election
+#    - Use Bitnami Redis Helm chart: helm install redis bitnami/redis --set sentinel.enabled=true
+#    - Or deploy redis-sentinel containers alongside redis instances
+#    - Sentinel monitors master and promotes replica on failure
+#    - Application connects to Sentinel, which routes to current master
+#
+# 2. REDIS CLUSTER (For horizontal scaling):
+#    - Provides data sharding across multiple masters
+#    - Use: helm install redis bitnami/redis-cluster
+#    - Best for large datasets that exceed single node memory
+#
+# 3. MANAGED REDIS (Simplest for production):
+#    - AWS ElastiCache, Google Memorystore, Azure Cache for Redis
+#    - Handles HA, backups, and scaling automatically
+#
+# CURRENT LIMITATION:
+# With replicas: 3 and no replication, the Service load-balances requests
+# across all pods. Cache hits depend on which pod receives the request.
+# Consider using consistent hashing or sticky sessions if cache locality matters.
+# =============================================================================
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: redis-sa
+  namespace: e-code-platform
+  labels:
+    app: redis
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: redis-pdb
+  namespace: e-code-platform
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: redis
+
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -16,6 +65,7 @@ spec:
       labels:
         app: redis
     spec:
+      serviceAccountName: redis-sa
       containers:
       - name: redis
         image: redis:7-alpine

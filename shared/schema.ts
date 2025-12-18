@@ -139,7 +139,7 @@ export const sessions = pgTable(
 export const revokedTokens = pgTable("revoked_tokens", {
   id: serial("id").primaryKey(),
   jti: varchar("jti", { length: 255 }).notNull().unique(),
-  userId: varchar("user_id", { length: 64 }),
+  userId: integer("user_id").references(() => users.id, { onDelete: 'set null' }), // #111 FIXED: Changed from varchar to integer reference
   expiresAt: timestamp("expires_at").notNull(),
   revokedAt: timestamp("revoked_at").notNull().defaultNow(),
 }, (table) => [
@@ -536,7 +536,9 @@ export const budgetLimits = pgTable("budget_limits", {
   notificationEmail: varchar("notification_email"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => [
+  index("idx_budget_limits_user").on(table.userId), // #105 FIXED: Added user_id index
+]);
 
 export const usageAlerts = pgTable("usage_alerts", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
@@ -618,6 +620,8 @@ export const challengeLeaderboard = pgTable("challenge_leaderboard", {
   bestTime: integer("best_time"), // in milliseconds
   submissionCount: integer("submission_count").default(0),
   lastSubmission: timestamp("last_submission").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(), // #116 FIXED: Added timestamp
+  updatedAt: timestamp("updated_at").defaultNow(), // #116 FIXED: Added timestamp
 });
 
 export const communityCategories = pgTable("community_categories", {
@@ -644,7 +648,9 @@ export const communityPosts = pgTable("community_posts", {
   isLocked: boolean("is_locked").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => [
+  index("idx_community_posts_author").on(table.authorId), // #109 FIXED: Added author_id index
+]);
 
 export const communityPostLikes = pgTable("community_post_likes", {
   postId: integer("post_id").notNull().references(() => communityPosts.id, { onDelete: 'cascade' }),
@@ -670,7 +676,9 @@ export const communityComments = pgTable("community_comments", {
   parentCommentId: integer("parent_comment_id"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => [
+  index("idx_community_comments_post").on(table.postId), // #110 FIXED: Added post_id index
+]);
 
 export const communityFollows = pgTable("community_follows", {
   followerId: integer("follower_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
@@ -692,7 +700,9 @@ export const mobileDevices = pgTable("mobile_devices", {
   isActive: boolean("is_active").default(true),
   lastSeen: timestamp("last_seen").defaultNow(),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => [
+  index("idx_mobile_devices_user").on(table.userId), // #107 FIXED: Added user_id index
+]);
 
 // Mobile platform enum for sessions
 export const mobilePlatformEnum = pgEnum('mobile_platform', ['ios', 'android']);
@@ -707,6 +717,7 @@ export const mobileSessions = pgTable("mobile_sessions", {
   pushToken: varchar("push_token"),
   lastActiveAt: timestamp("last_active_at").defaultNow().notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(), // #118 FIXED: Added updatedAt
   expiresAt: timestamp("expires_at").notNull(),
   isActive: boolean("is_active").default(true).notNull(),
 }, (table) => ({
@@ -728,7 +739,9 @@ export const pushNotifications = pgTable("push_notifications", {
   sent: boolean("sent").default(false),
   sentAt: timestamp("sent_at"),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => [
+  index("idx_push_notifications_user").on(table.userId), // #108 FIXED: Added user_id index
+]);
 
 export const notificationPreferences = pgTable("notification_preferences", {
   userId: integer("user_id")
@@ -1076,7 +1089,9 @@ export const collaborationPresence = pgTable('collaboration_presence', {
   selection: jsonb('selection').default({}), // {start: {line, column}, end: {line, column}}
   isActive: boolean('is_active').notNull().default(true),
   lastSeen: timestamp('last_seen').defaultNow().notNull(),
-});
+}, (table) => [
+  index("idx_collaboration_presence_user").on(table.userId), // #106 FIXED: Added user_id index
+]);
 
 // Time tracking for projects
 export const projectTimeTracking = pgTable('project_time_tracking', {
@@ -1229,7 +1244,9 @@ export const aiConversations = pgTable('ai_conversations', {
   agentMode: agentModeEnum('agent_mode').notNull().default('build'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
+}, (table) => [
+  index("idx_ai_conversations_user").on(table.userId), // #103 FIXED: Added user_id index
+]);
 
 // Dynamic Intelligence settings
 export const dynamicIntelligence = pgTable('dynamic_intelligence', {
@@ -1667,6 +1684,15 @@ export const insertProjectAiRuleSchema = createInsertSchema(projectAiRules).omit
 export const insertPromptUsageHistorySchema = createInsertSchema(promptUsageHistory).omit({ id: true, createdAt: true });
 export const insertPromptTemplateRatingSchema = createInsertSchema(promptTemplateRatings).omit({ id: true, createdAt: true });
 
+// #141 FIXED: Security schema insert schemas - moved after table definitions (see line ~2325)
+
+// #138 FIXED: Date transformer for handling ISO strings from database
+export const dateTransformer = z.union([
+  z.date(),
+  z.string().transform((val) => new Date(val)),
+  z.null(),
+]).optional();
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -1755,6 +1781,22 @@ export type InsertPromptUsageHistory = z.infer<typeof insertPromptUsageHistorySc
 
 export type PromptTemplateRating = typeof promptTemplateRatings.$inferSelect;
 export type InsertPromptTemplateRating = z.infer<typeof insertPromptTemplateRatingSchema>;
+
+// #141 FIXED: Security schema types
+export type SecurityEvent = typeof securityEvents.$inferSelect;
+export type InsertSecurityEvent = z.infer<typeof insertSecurityEventSchema>;
+
+export type SecurityLog = typeof securityLogs.$inferSelect;
+export type InsertSecurityLog = z.infer<typeof insertSecurityLogSchema>;
+
+export type AuthAttempt = typeof authAttempts.$inferSelect;
+export type InsertAuthAttempt = z.infer<typeof insertAuthAttemptSchema>;
+
+export type UserSession = typeof userSessions.$inferSelect;
+export type InsertUserSession = z.infer<typeof insertUserSessionSchema>;
+
+export type AuditLog = typeof auditLogs.$inferSelect;
+export type InsertAuditLog = z.infer<typeof insertAuditLogSchema>;
 
 // Agent Messages Types
 export type AgentMessage = typeof agentMessages.$inferSelect;
@@ -2276,6 +2318,22 @@ export const auditLogs = pgTable('audit_logs', {
 
 // Add security-specific fields to users table if not exists
 // NOTE: Update users table with security fields in a migration
+
+// #141 FIXED: Security schema insert schemas (after table definitions)
+export const insertSecurityEventSchema = createInsertSchema(securityEvents).omit({ id: true, timestamp: true });
+export const insertAuthAttemptSchema = createInsertSchema(authAttempts).omit({ id: true, createdAt: true });
+export const insertUserSessionSchema = createInsertSchema(userSessions).omit({ createdAt: true, lastActivity: true });
+export const insertAuditLogSchema = createInsertSchema(auditLogs).omit({ id: true, timestamp: true });
+
+// #141 FIXED: Security schema type exports
+export type SecurityEvent = typeof securityEvents.$inferSelect;
+export type InsertSecurityEvent = z.infer<typeof insertSecurityEventSchema>;
+export type AuthAttempt = typeof authAttempts.$inferSelect;
+export type InsertAuthAttempt = z.infer<typeof insertAuthAttemptSchema>;
+export type UserSession = typeof userSessions.$inferSelect;
+export type InsertUserSession = z.infer<typeof insertUserSessionSchema>;
+export type AuditLog = typeof auditLogs.$inferSelect;
+export type InsertAuditLog = z.infer<typeof insertAuditLogSchema>;
 
 // ============================================
 // AUTONOMOUS AGENT SYSTEM TABLES

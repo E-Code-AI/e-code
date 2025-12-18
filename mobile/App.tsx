@@ -17,6 +17,17 @@ import LoginScreen from './src/screens/LoginScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import AgentScreen from './src/screens/AgentScreen';
 import ProjectScreen from './src/screens/ProjectScreen';
+import SettingsScreen from './src/screens/SettingsScreen';
+import ProfileScreen from './src/screens/ProfileScreen';
+import SearchScreen from './src/screens/SearchScreen';
+import TerminalScreen from './src/screens/TerminalScreen';
+import FileManagerScreen from './src/screens/FileManagerScreen';
+import CollaborationScreen from './src/screens/CollaborationScreen';
+import DeploymentsScreen from './src/screens/DeploymentsScreen';
+import TemplatesScreen from './src/screens/TemplatesScreen';
+import EditorScreen from './src/screens/EditorScreen';
+import NotificationsScreen from './src/screens/NotificationsScreen';
+import HelpScreen from './src/screens/HelpScreen';
 import { CommandPalette } from './src/components/CommandPalette';
 import { CommandPaletteGestureWrapper } from './src/components/CommandPaletteGestureWrapper';
 import { useCommandPalette } from './src/hooks/useCommandPalette';
@@ -68,42 +79,55 @@ export default function App() {
   const handleAction = useCallback((actionId: string, params?: any) => {
     switch (actionId) {
       case 'newFile':
-        Alert.alert('New File', 'Create new file action triggered');
+        handleNavigate('FileManager', { ...params, action: 'create' });
         break;
       case 'openFile':
         handleNavigate('FileManager', params);
         break;
       case 'saveFile':
-        Alert.alert('Save', 'File saved successfully');
+        Alert.alert('Saved', 'File saved successfully');
         break;
       case 'run':
-        Alert.alert('Run', 'Running project...');
+        handleNavigate('Terminal', params);
         break;
       case 'askAgent':
-        handleNavigate('Agent', params);
+        if (params?.projectId) {
+          handleNavigate('Agent', params);
+        } else {
+          Alert.alert('Select Project', 'Please select a project first to use the AI Agent');
+        }
         break;
       case 'explainCode':
-        Alert.alert('AI', 'Explain code feature triggered');
-        break;
       case 'fixBug':
-        Alert.alert('AI', 'Fix bug feature triggered');
-        break;
       case 'generateCode':
-        Alert.alert('AI', 'Generate code feature triggered');
-        break;
       case 'refactor':
-        Alert.alert('AI', 'Refactor feature triggered');
+        if (params?.projectId) {
+          handleNavigate('Agent', { ...params, action: actionId });
+        } else {
+          Alert.alert('Select Project', 'Please select a project first to use AI features');
+        }
         break;
       case 'goToFile':
-        handleNavigate('FileManager', params);
+        handleNavigate('Search', params);
         break;
       case 'goToLine':
-        Alert.alert('Navigation', 'Go to line feature triggered');
+        handleNavigate('Search', { ...params, searchType: 'line' });
+        break;
+      case 'notifications':
+        handleNavigate('Notifications', params);
+        break;
+      case 'profile':
+        if (user) {
+          handleNavigate('Profile', { token, user });
+        }
+        break;
+      case 'help':
+        handleNavigate('Help');
         break;
       default:
         console.log('Action not implemented:', actionId);
     }
-  }, [handleNavigate]);
+  }, [handleNavigate, token, user]);
 
   const {
     isOpen: commandPaletteOpen,
@@ -358,6 +382,73 @@ export default function App() {
                   />
                 )}
               </Stack.Screen>
+              <Stack.Screen
+                name="Settings"
+                options={{ title: 'Settings' }}
+              >
+                {(props) => (
+                  <SettingsScreen
+                    {...props}
+                    route={{ ...props.route, params: { token } }}
+                  />
+                )}
+              </Stack.Screen>
+              <Stack.Screen
+                name="Profile"
+                options={{ title: 'Profile' }}
+                component={ProfileScreen}
+              />
+              <Stack.Screen
+                name="Search"
+                options={{ title: 'Search' }}
+              >
+                {(props) => (
+                  <SearchScreen
+                    {...props}
+                    route={{ ...props.route, params: { token } }}
+                  />
+                )}
+              </Stack.Screen>
+              <Stack.Screen
+                name="Terminal"
+                options={{ title: 'Terminal' }}
+                component={TerminalScreen}
+              />
+              <Stack.Screen
+                name="FileManager"
+                options={{ title: 'Files' }}
+                component={FileManagerScreen}
+              />
+              <Stack.Screen
+                name="Collaboration"
+                options={{ title: 'Collaboration' }}
+                component={CollaborationScreen}
+              />
+              <Stack.Screen
+                name="Deployments"
+                options={{ title: 'Deployments' }}
+                component={DeploymentsScreen}
+              />
+              <Stack.Screen
+                name="Templates"
+                options={{ title: 'Templates' }}
+                component={TemplatesScreen}
+              />
+              <Stack.Screen
+                name="Editor"
+                options={({ route }) => ({ title: route.params.fileName })}
+                component={EditorScreen}
+              />
+              <Stack.Screen
+                name="Notifications"
+                options={{ title: 'Notifications' }}
+                component={NotificationsScreen}
+              />
+              <Stack.Screen
+                name="Help"
+                options={{ title: 'Help & Support' }}
+                component={HelpScreen}
+              />
             </>
           ) : (
             <Stack.Screen name="Login" options={{ headerShown: false }}>

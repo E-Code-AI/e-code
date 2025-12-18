@@ -6,7 +6,10 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-  Alert
+  Alert,
+  Modal,
+  TextInput,
+  Platform
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
@@ -29,6 +32,9 @@ const CollaborationScreen: React.FC<CollaborationScreenProps> = ({ route }) => {
   const { projectId, token } = route.params;
   const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
   const [loading, setLoading] = useState(true);
+  const [inviteModalVisible, setInviteModalVisible] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviting, setInviting] = useState(false);
 
   const fetchCollaborators = useCallback(async () => {
     try {
@@ -49,30 +55,34 @@ const CollaborationScreen: React.FC<CollaborationScreenProps> = ({ route }) => {
     fetchCollaborators();
   }, [fetchCollaborators]);
 
-  const handleInvite = useCallback(() => {
-    Alert.prompt(
-      'Invite Collaborator',
-      'Enter email address:',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Invite',
-          onPress: async (email) => {
-            if (email) {
-              try {
-                await inviteCollaborator(projectId, { email, role: 'member' }, token);
-                Alert.alert('Success', 'Invitation sent successfully');
-                fetchCollaborators();
-              } catch (error) {
-                Alert.alert('Error', 'Failed to send invitation');
-              }
-            }
-          }
-        }
-      ],
-      'plain-text'
-    );
-  }, [projectId, token, fetchCollaborators]);
+  const handleOpenInviteModal = useCallback(() => {
+    setInviteEmail('');
+    setInviteModalVisible(true);
+  }, []);
+
+  const handleCloseInviteModal = useCallback(() => {
+    setInviteModalVisible(false);
+    setInviteEmail('');
+  }, []);
+
+  const handleSendInvite = useCallback(async () => {
+    if (!inviteEmail.trim()) {
+      Alert.alert('Error', 'Please enter an email address');
+      return;
+    }
+
+    setInviting(true);
+    try {
+      await inviteCollaborator(projectId, { email: inviteEmail.trim(), role: 'member' }, token);
+      Alert.alert('Success', 'Invitation sent successfully');
+      handleCloseInviteModal();
+      fetchCollaborators();
+    } catch (error) {
+      Alert.alert('Error', 'Failed to send invitation');
+    } finally {
+      setInviting(false);
+    }
+  }, [projectId, token, inviteEmail, fetchCollaborators, handleCloseInviteModal]);
 
   const handleRemove = useCallback((collaborator: Collaborator) => {
     Alert.alert(
@@ -178,9 +188,61 @@ const CollaborationScreen: React.FC<CollaborationScreenProps> = ({ route }) => {
         />
       )}
 
-      <TouchableOpacity style={styles.inviteButton} onPress={handleInvite}>
+      <TouchableOpacity style={styles.inviteButton} onPress={handleOpenInviteModal}>
         <Text style={styles.inviteButtonText}>+ Invite Collaborator</Text>
       </TouchableOpacity>
+
+      <Modal
+        visible={inviteModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={handleCloseInviteModal}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Invite Collaborator</Text>
+              <TouchableOpacity onPress={handleCloseInviteModal} style={styles.closeButton}>
+                <Text style={styles.closeButtonText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.modalLabel}>Email Address</Text>
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Enter email address"
+              placeholderTextColor={mobileColors.textMuted}
+              value={inviteEmail}
+              onChangeText={setInviteEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              autoFocus
+            />
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonSecondary]}
+                onPress={handleCloseInviteModal}
+                disabled={inviting}
+              >
+                <Text style={styles.modalButtonTextSecondary}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonPrimary, inviting && styles.modalButtonDisabled]}
+                onPress={handleSendInvite}
+                disabled={inviting}
+              >
+                {inviting ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Text style={styles.modalButtonTextPrimary}>Send Invite</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -284,6 +346,85 @@ const styles = StyleSheet.create({
     fontSize: mobileTypography.fontSize.base,
     fontWeight: '600',
     color: '#fff'
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'center',
+    padding: mobileSpacing.lg
+  },
+  modalContent: {
+    backgroundColor: mobileColors.background,
+    borderRadius: mobileBorderRadius.xl,
+    padding: mobileSpacing.lg
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: mobileSpacing.lg
+  },
+  modalTitle: {
+    fontSize: mobileTypography.fontSize.xl,
+    fontWeight: '700',
+    color: mobileColors.text
+  },
+  closeButton: {
+    padding: mobileSpacing.sm
+  },
+  closeButtonText: {
+    fontSize: mobileTypography.fontSize.lg,
+    color: mobileColors.textMuted
+  },
+  modalLabel: {
+    fontSize: mobileTypography.fontSize.sm,
+    fontWeight: '600',
+    color: mobileColors.textSecondary,
+    marginBottom: mobileSpacing.xs
+  },
+  modalInput: {
+    backgroundColor: mobileColors.surfaceSecondary,
+    borderWidth: 1,
+    borderColor: mobileColors.border,
+    borderRadius: mobileBorderRadius.md,
+    paddingHorizontal: mobileSpacing.md,
+    paddingVertical: mobileSpacing.md,
+    fontSize: mobileTypography.fontSize.base,
+    color: mobileColors.text,
+    marginBottom: mobileSpacing.lg
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: mobileSpacing.sm
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: mobileSpacing.md,
+    borderRadius: mobileBorderRadius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 48
+  },
+  modalButtonPrimary: {
+    backgroundColor: mobileColors.primary
+  },
+  modalButtonSecondary: {
+    backgroundColor: mobileColors.surfaceSecondary,
+    borderWidth: 1,
+    borderColor: mobileColors.border
+  },
+  modalButtonDisabled: {
+    opacity: 0.5
+  },
+  modalButtonTextPrimary: {
+    fontSize: mobileTypography.fontSize.base,
+    fontWeight: '600',
+    color: '#fff'
+  },
+  modalButtonTextSecondary: {
+    fontSize: mobileTypography.fontSize.base,
+    fontWeight: '600',
+    color: mobileColors.text
   }
 });
 

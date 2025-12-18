@@ -100,6 +100,8 @@ export class CollaborationServer {
   private yjsDocs: Map<string, Y.Doc> = new Map();
   private pingInterval: NodeJS.Timeout | null = null;
   private participantSyncInterval: NodeJS.Timeout | null = null;
+  private autoSaveInterval: NodeJS.Timeout | null = null;
+  private pendingSaves: Map<string, boolean> = new Map();
 
   initialize(server: Server) {
     // ✅ 40-YEAR SENIOR ENGINEER FIX (Dec 6, 2025): Use Central Upgrade Dispatcher
@@ -129,6 +131,11 @@ export class CollaborationServer {
     this.participantSyncInterval = setInterval(() => {
       this.syncAllParticipants();
     }, PARTICIPANT_SYNC_INTERVAL_MS);
+    
+    // Auto-save Yjs documents every 30 seconds
+    this.autoSaveInterval = setInterval(() => {
+      this.autoSaveAllDocuments();
+    }, 30000);
     
     logger.info('[Realtime CollaborationServer] Initialized (using central dispatcher)');
   }
@@ -687,6 +694,35 @@ export class CollaborationServer {
     this.clients.delete(ws);
   }
   
+  // Auto-save all Yjs documents to database
+  private async autoSaveAllDocuments(): Promise<void> {
+    for (const [fileKey, yjsDoc] of this.yjsDocs.entries()) {
+      // Skip if save is already pending
+      if (this.pendingSaves.get(fileKey)) continue;
+      
+      try {
+        const [projectId, fileIdStr] = fileKey.split('-');
+        const fileId = parseInt(fileIdStr, 10);
+        if (isNaN(fileId)) continue;
+        
+        this.pendingSaves.set(fileKey, true);
+        
+        await withYjsLock(fileKey, async () => {
+          const yText = yjsDoc.getText('content');
+          const content = yText.toString();
+          if (content) {
+            await storage.updateFile(fileId, { content });
+            logger.debug(`[Collaboration] Auto-saved file ${fileId}`);
+          }
+        });
+      } catch (error) {
+        logger.error(`[Collaboration] Auto-save failed for ${fileKey}:`, error);
+      } finally {
+        this.pendingSaves.delete(fileKey);
+      }
+    }
+  }
+  
   public shutdown(): void {
     logger.info('Shutting down collaboration server...');
     
@@ -696,6 +732,9 @@ export class CollaborationServer {
     }
     if (this.participantSyncInterval) {
       clearInterval(this.participantSyncInterval);
+    }
+    if (this.autoSaveInterval) {
+      clearInterval(this.autoSaveInterval);
     }
     
     // Close all connections with proper code/reason

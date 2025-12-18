@@ -15,41 +15,12 @@ import { createLogger } from '../utils/logger';
 import { normalizeModelName } from '../utils/model-normalizer';
 import { AlertService } from './alert-service';
 import Stripe from 'stripe';
+import { getModelPricing, calculateRequestCost } from '../config/ai-pricing';
 
 const logger = createLogger('ai-metering');
 
-// Model pricing (USD per 1M tokens)
-// Source: Official pricing from OpenAI, Anthropic, Google, xAI, Moonshot (Nov 2025)
-const MODEL_PRICING: Record<string, { input: number; output: number }> = {
-  // OpenAI - 8 models (Dec 2025)
-  'gpt-5.1': { input: 15.0, output: 60.0 },
-  'gpt-5.1-thinking': { input: 15.0, output: 60.0 },  // Same as gpt-5.1
-  'gpt-5': { input: 10.0, output: 40.0 },
-  'gpt-5-mini': { input: 0.3, output: 1.2 },
-  'gpt-5-nano': { input: 0.15, output: 0.6 },
-  'gpt-4o': { input: 5.0, output: 15.0 },
-  'o3': { input: 20.0, output: 80.0 },
-  'o4-mini': { input: 0.4, output: 1.6 },
-  
-  // Anthropic - Only Opus 4.5, Sonnet 4.5, Haiku 4.5 (Dec 2025)
-  'claude-opus-4-5-20251124': { input: 15.0, output: 75.0 },
-  'claude-sonnet-4-5-20250929': { input: 3.0, output: 15.0 },
-  'claude-haiku-4-5-20251015': { input: 0.25, output: 1.25 },
-  
-  // Google Gemini
-  'gemini-2.5-pro': { input: 1.25, output: 5.0 },
-  'gemini-2.5-flash': { input: 0.075, output: 0.3 },
-  
-  // xAI
-  'grok-4': { input: 5.0, output: 15.0 },
-  'grok-4-fast': { input: 0.5, output: 1.5 },
-  
-  // Moonshot AI - Verified Dec 2025: Only 4 models exist on API
-  'kimi-k2-0711-preview': { input: 0.6, output: 2.5 },  // Production recommended
-  'kimi-k2-thinking': { input: 0.6, output: 2.5 },      // Advanced reasoning
-  'moonshot-v1-32k': { input: 0.12, output: 0.12 },     // Classic model
-  'moonshot-v1-128k': { input: 0.24, output: 0.24 },    // Extended context
-};
+// ✅ Issue #36 FIX: Pricing config centralized to server/config/ai-pricing.ts
+// Import getModelPricing and calculateRequestCost from centralized config
 
 interface TrackUsageParams {
   userId: string;
@@ -81,17 +52,10 @@ export class AiMeteringService {
 
   /**
    * Calculate cost in USD based on model and token usage
+   * ✅ Issue #36 FIX: Uses centralized pricing from server/config/ai-pricing.ts
    */
   private calculateCost(model: string, tokensInput: number, tokensOutput: number): number {
-    const pricing = MODEL_PRICING[model];
-    if (!pricing) {
-      logger.warn(`No pricing found for model ${model}, using default`);
-      return ((tokensInput + tokensOutput) / 1_000_000) * 2.0; // Default: $2 per 1M tokens
-    }
-
-    const inputCost = (tokensInput / 1_000_000) * pricing.input;
-    const outputCost = (tokensOutput / 1_000_000) * pricing.output;
-    return inputCost + outputCost;
+    return calculateRequestCost(model, tokensInput, tokensOutput);
   }
 
   /**

@@ -701,6 +701,25 @@ ${historyItems}
   } catch (error: any) {
     logger.error('Streaming chat error:', error);
     
+    // ✅ Issue #34 FIX: Classify errors as retryable vs permanent
+    const isRetryableError = (err: any): boolean => {
+      const status = err.status || err.statusCode || err.response?.status;
+      // 429 = Rate limit, 502/503/504 = Temporary server errors
+      const retryableStatuses = [429, 502, 503, 504];
+      if (retryableStatuses.includes(status)) return true;
+      // Network/timeout errors are retryable
+      const retryableMessages = ['ECONNRESET', 'ETIMEDOUT', 'ENOTFOUND', 'socket hang up', 'network'];
+      if (err.code && retryableMessages.some(m => err.code?.includes(m))) return true;
+      if (err.message && retryableMessages.some(m => err.message?.toLowerCase().includes(m))) return true;
+      return false;
+    };
+    
+    const errorClassification = {
+      isRetryable: isRetryableError(error),
+      status: error.status || error.statusCode || error.response?.status,
+      code: error.code || 'STREAM_ERROR'
+    };
+    
     // ✅ CRITICAL: Track failed AI requests for billing (error = still costs money!)
     if (userId) {
       try {
@@ -734,10 +753,12 @@ ${historyItems}
       }
     }
     
-    // Send error event
+    // Send error event with retryability classification
     sendSSE(res, 'error', {
       message: error.message || 'An error occurred during streaming',
-      code: error.code || 'STREAM_ERROR',
+      code: errorClassification.code,
+      isRetryable: errorClassification.isRetryable,
+      status: errorClassification.status,
       provider
     });
     

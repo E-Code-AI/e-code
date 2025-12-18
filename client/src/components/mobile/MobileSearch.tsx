@@ -111,7 +111,7 @@ export function MobileSearch({ isOpen, onClose, onSearch }: MobileSearchProps) {
     recognition.interimResults = false;
     recognition.lang = 'en-US';
 
-    recognition.onresult = (event: any) => {
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
       const transcript = event.results[0][0].transcript;
       setQuery(transcript);
       setIsListening(false);

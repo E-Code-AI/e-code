@@ -21,9 +21,24 @@ import { ensureAuthenticated as requireAuth } from '../middleware/auth';
 import { checkpointRestoreService } from '../services/checkpoint-restore.service';
 import { Server as SocketIOServer } from 'socket.io';
 import { createLogger } from '../utils/logger';
+import { storage } from '../storage';
 
 const logger = createLogger('auto-checkpoints-router');
 const router = Router();
+
+/**
+ * SECURITY FIX #25: Verify user owns the project before checkpoint operations
+ */
+async function verifyProjectOwnership(projectId: number, userId: number): Promise<{ valid: boolean; error?: string }> {
+  const project = await storage.getProject(String(projectId));
+  if (!project) {
+    return { valid: false, error: 'Project not found' };
+  }
+  if (project.ownerId !== userId) {
+    return { valid: false, error: 'Access denied: You do not own this project' };
+  }
+  return { valid: true };
+}
 
 // Validation schemas
 const paginationSchema = z.object({
@@ -73,6 +88,17 @@ router.get('/projects/:projectId/auto-checkpoints', requireAuth, async (req: Req
     const projectId = parseInt(req.params.projectId, 10);
     if (isNaN(projectId)) {
       return res.status(400).json({ error: 'Invalid project ID' });
+    }
+
+    const userId = (req.user as any)?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    // SECURITY FIX #25: Verify project ownership before listing checkpoints
+    const ownership = await verifyProjectOwnership(projectId, userId);
+    if (!ownership.valid) {
+      return res.status(403).json({ error: ownership.error });
     }
 
     const validation = paginationSchema.safeParse(req.query);
@@ -145,6 +171,12 @@ router.post('/projects/:projectId/auto-checkpoints', requireAuth, async (req: Re
     const userId = (req.user as any)?.id;
     if (!userId) {
       return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    // SECURITY FIX #25: Verify project ownership before creating checkpoint
+    const ownership = await verifyProjectOwnership(projectId, userId);
+    if (!ownership.valid) {
+      return res.status(403).json({ error: ownership.error });
     }
 
     const checkpointData = {

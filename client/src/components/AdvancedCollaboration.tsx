@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { 
   Users, 
   Video, 
@@ -78,6 +79,7 @@ export function AdvancedCollaboration() {
   const [isMuted, setIsMuted] = useState(false);
   const [isDeafened, setIsDeafened] = useState(false);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
+  const [chatInput, setChatInput] = useState('');
   const [chatMessages, setChatMessages] = useState<Array<{
     id: string;
     username: string;
@@ -85,62 +87,26 @@ export function AdvancedCollaboration() {
     timestamp: string;
   }>>([]);
 
-  // Mock real-time collaboration data
-  const collaborators: Collaborator[] = [
-    {
-      userId: 1,
-      username: 'alice_dev',
-      color: '#FF6B6B',
-      status: 'active',
-      activeFile: 'src/App.tsx',
-      cursor: { line: 42, column: 15 },
-      lastActivity: new Date(Date.now() - 30000).toISOString()
-    },
-    {
-      userId: 2,
-      username: 'bob_designer',
-      color: '#4ECDC4',
-      status: 'active',
-      activeFile: 'styles/main.css',
-      cursor: { line: 128, column: 8 },
-      lastActivity: new Date(Date.now() - 120000).toISOString()
-    },
-    {
-      userId: 3,
-      username: 'carol_pm',
-      color: '#45B7D1',
-      status: 'idle',
-      activeFile: 'README.md',
-      cursor: { line: 15, column: 0 },
-      lastActivity: new Date(Date.now() - 300000).toISOString()
-    }
-  ];
+  // Fetch collaborators from API
+  const { data: collaboratorsData, isLoading: isLoadingCollaborators } = useQuery<{ collaborators: Collaborator[] }>({
+    queryKey: ['/api/collaboration', selectedProject, 'collaborators'],
+    enabled: !!selectedProject,
+  });
+  const collaborators = collaboratorsData?.collaborators || [];
 
-  const voiceParticipants: VoiceParticipant[] = [
-    {
-      userId: 1,
-      username: 'alice_dev',
-      isMuted: false,
-      isDeafened: false,
-      isSpeaking: true
-    },
-    {
-      userId: 2,
-      username: 'bob_designer',
-      isMuted: true,
-      isDeafened: false,
-      isSpeaking: false
-    }
-  ];
+  // Fetch voice participants from API
+  const { data: voiceData } = useQuery<{ participants: VoiceParticipant[] }>({
+    queryKey: ['/api/collaboration', selectedProject, 'voice'],
+    enabled: !!selectedProject && voiceConnected,
+  });
+  const voiceParticipants = voiceData?.participants || [];
 
-  const screenShares: ScreenShare[] = [
-    {
-      userId: 1,
-      username: 'alice_dev',
-      streamId: 'stream-123',
-      quality: 'high'
-    }
-  ];
+  // Fetch screen shares from API
+  const { data: screenSharesData } = useQuery<{ shares: ScreenShare[] }>({
+    queryKey: ['/api/collaboration', selectedProject, 'screenshares'],
+    enabled: !!selectedProject,
+  });
+  const screenShares = screenSharesData?.shares || [];
 
   const collaborationStats: CollaborationStats = {
     activeUsers: collaborators.filter(c => c.status === 'active').length,
@@ -410,9 +376,20 @@ export function AdvancedCollaboration() {
                       </Button>
                     </>
                   )}
-                  <Button onClick={handleJoinVoice}>
-                    {voiceConnected ? 'Disconnect' : 'Join Voice'}
-                  </Button>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span>
+                          <Button disabled className="opacity-50 cursor-not-allowed">
+                            Join Voice
+                          </Button>
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Coming Soon - WebRTC integration in progress</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
               </div>
 
@@ -466,10 +443,21 @@ export function AdvancedCollaboration() {
                     </div>
                   </div>
                 </div>
-                <Button onClick={handleToggleScreenShare} variant={isScreenSharing ? 'destructive' : 'default'}>
-                  <ScreenShare className="h-4 w-4 mr-2" />
-                  {isScreenSharing ? 'Stop Sharing' : 'Share Screen'}
-                </Button>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span>
+                        <Button disabled className="opacity-50 cursor-not-allowed">
+                          <ScreenShare className="h-4 w-4 mr-2" />
+                          Share Screen
+                        </Button>
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Coming Soon - Screen sharing in progress</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
 
               {/* Active Screen Shares */}
@@ -544,19 +532,38 @@ export function AdvancedCollaboration() {
               <div className="flex space-x-2">
                 <Input
                   placeholder="Type a message..."
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter' && e.currentTarget.value.trim()) {
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && chatInput.trim()) {
                       setChatMessages(prev => [...prev, {
                         id: `msg-${Date.now()}`,
                         username: 'You',
-                        message: e.currentTarget.value,
+                        message: chatInput.trim(),
                         timestamp: new Date().toISOString()
                       }]);
-                      e.currentTarget.value = '';
+                      setChatInput('');
                     }
                   }}
+                  data-testid="input-chat-message"
                 />
-                <Button size="sm">Send</Button>
+                <Button 
+                  size="sm"
+                  onClick={() => {
+                    if (chatInput.trim()) {
+                      setChatMessages(prev => [...prev, {
+                        id: `msg-${Date.now()}`,
+                        username: 'You',
+                        message: chatInput.trim(),
+                        timestamp: new Date().toISOString()
+                      }]);
+                      setChatInput('');
+                    }
+                  }}
+                  data-testid="button-send-chat"
+                >
+                  Send
+                </Button>
               </div>
             </CardContent>
           </Card>

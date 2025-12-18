@@ -1,8 +1,14 @@
-import { pgTable, text, integer, timestamp, boolean, varchar, uuid, jsonb } from 'drizzle-orm/pg-core';
+import { pgTable, text, integer, timestamp, boolean, varchar, uuid, jsonb, pgEnum } from 'drizzle-orm/pg-core';
 import { createInsertSchema } from 'drizzle-zod';
 import { z } from 'zod';
 
+// #115 FIXED: Define roleEnum for teams (matches shared/schema.ts)
+export const roleEnum = pgEnum('role', ['owner', 'admin', 'member', 'viewer']);
+
 // Teams table
+// NOTE (#113-114): This is a duplicate of teams table in shared/schema.ts.
+// The canonical version is in shared/schema.ts. This file provides extended team features.
+// Consider consolidating these definitions in a future refactoring.
 export const teams = pgTable('teams', {
   id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
   name: varchar('name', { length: 255 }).notNull(),
@@ -25,7 +31,7 @@ export const teamMembers = pgTable('team_members', {
   id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
   teamId: integer('team_id').notNull(),
   userId: integer('user_id').notNull(),
-  role: varchar('role', { length: 50 }).notNull().default('member'), // owner, admin, member, viewer
+  role: roleEnum('role').notNull().default('member'), // #115 FIXED: Changed from varchar to roleEnum
   permissions: jsonb('permissions').default({}),
   joinedAt: timestamp('joined_at').notNull().defaultNow(),
   invitedBy: integer('invited_by'),

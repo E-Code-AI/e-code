@@ -2,9 +2,24 @@ import { Router } from 'express';
 import { orchestrator } from '../kubernetes/orchestrator';
 import { createLogger } from '../utils/logger';
 import { ensureAuthenticated } from '../middleware/auth';
+import { storage } from '../storage';
 
 const router = Router();
 const logger = createLogger('container-routes');
+
+/**
+ * SECURITY: Verify user owns the project before allowing container operations
+ */
+async function verifyProjectOwnership(projectId: string, userId: number): Promise<{ valid: boolean; error?: string }> {
+  const project = await storage.getProject(projectId);
+  if (!project) {
+    return { valid: false, error: 'Project not found' };
+  }
+  if (project.ownerId !== userId) {
+    return { valid: false, error: 'Access denied: You do not own this project' };
+  }
+  return { valid: true };
+}
 
 /**
  * Create isolated container environment for a project
@@ -15,6 +30,12 @@ router.post('/api/projects/:projectId/container', ensureAuthenticated, async (re
 
   if (!userId) {
     return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  // SECURITY FIX #19: Verify project ownership before container operations
+  const ownership = await verifyProjectOwnership(projectId, userId);
+  if (!ownership.valid) {
+    return res.status(403).json({ error: ownership.error });
   }
 
   try {
@@ -49,6 +70,12 @@ router.get('/api/projects/:projectId/container/status', ensureAuthenticated, asy
 
   if (!userId) {
     return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  // SECURITY FIX #19: Verify project ownership before container operations
+  const ownership = await verifyProjectOwnership(projectId, userId);
+  if (!ownership.valid) {
+    return res.status(403).json({ error: ownership.error });
   }
 
   try {
@@ -90,6 +117,12 @@ router.delete('/api/projects/:projectId/container', ensureAuthenticated, async (
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
+  // SECURITY FIX #19: Verify project ownership before container operations
+  const ownership = await verifyProjectOwnership(projectId, userId);
+  if (!ownership.valid) {
+    return res.status(403).json({ error: ownership.error });
+  }
+
   try {
     logger.info(`Deleting container environment for project ${projectId}`);
     
@@ -118,6 +151,12 @@ router.post('/api/projects/:projectId/container/exec', ensureAuthenticated, asyn
 
   if (!userId) {
     return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  // SECURITY FIX #19: Verify project ownership before container operations
+  const ownership = await verifyProjectOwnership(projectId, userId);
+  if (!ownership.valid) {
+    return res.status(403).json({ error: ownership.error });
   }
 
   if (!command || !Array.isArray(command)) {
@@ -151,6 +190,12 @@ router.post('/api/projects/:projectId/container/stop', ensureAuthenticated, asyn
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
+  // SECURITY FIX #19: Verify project ownership before container operations
+  const ownership = await verifyProjectOwnership(projectId, userId);
+  if (!ownership.valid) {
+    return res.status(403).json({ error: ownership.error });
+  }
+
   try {
     logger.info(`Stopping container for project ${projectId}`);
     
@@ -181,6 +226,12 @@ router.get('/api/projects/:projectId/container/logs', ensureAuthenticated, async
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
+  // SECURITY FIX #19: Verify project ownership before container operations
+  const ownership = await verifyProjectOwnership(projectId, userId);
+  if (!ownership.valid) {
+    return res.status(403).json({ error: ownership.error });
+  }
+
   try {
     const logs = await orchestrator.getContainerLogs(userId, projectId);
     
@@ -206,6 +257,12 @@ router.post('/api/projects/:projectId/container/restart', ensureAuthenticated, a
 
   if (!userId) {
     return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  // SECURITY FIX #19: Verify project ownership before container operations
+  const ownership = await verifyProjectOwnership(projectId, userId);
+  if (!ownership.valid) {
+    return res.status(403).json({ error: ownership.error });
   }
 
   try {

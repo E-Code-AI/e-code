@@ -173,13 +173,24 @@ export class ToolExecutor {
       return result;
 
     } catch (error: any) {
-      logger.error(`[AgentExecutor] Tool execution failed: ${toolName}`, { error: error.message });
+      // ✅ Issue #37 FIX: Preserve error stack with cause for better debugging
+      const wrappedError = new Error(`Tool execution failed: ${toolName} - ${error.message}`, {
+        cause: error // Preserve original error with stack trace
+      });
+      
+      logger.error(`[AgentExecutor] Tool execution failed: ${toolName}`, { 
+        error: error.message,
+        stack: error.stack,
+        cause: error.cause?.message
+      });
       
       return {
         success: false,
         error: error.message,
         metadata: {
-          executionTime: Date.now() - startTime
+          executionTime: Date.now() - startTime,
+          stack: error.stack, // Include stack in metadata for debugging
+          originalError: error.name || 'Error'
         }
       };
     }

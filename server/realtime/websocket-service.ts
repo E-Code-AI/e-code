@@ -28,6 +28,12 @@ export class WebSocketService {
   private sessions: Map<number, CollaborationSession> = new Map();
   private userSockets: Map<number, Set<string>> = new Map();
 
+  private clientThrottles: Map<string, Map<string, number>> = new Map();
+  private presenceTimestamps: Map<number, number> = new Map();
+  private cleanupInterval: NodeJS.Timeout | null = null;
+  private readonly PRESENCE_TTL_MS = 60000;
+  private readonly THROTTLE_TTL_MS = 300000;
+
   constructor(httpServer: HTTPServer) {
     this.io = new SocketIOServer(httpServer, {
       cors: {
@@ -37,10 +43,49 @@ export class WebSocketService {
         credentials: true,
       },
       path: '/socket.io',
+      pingInterval: 25000,
+      pingTimeout: 20000,
+    });
+
+    this.io.on('error', (error: Error) => {
+      console.error('[WebSocketService] Socket.IO server error:', error);
     });
 
     this.setupMiddleware();
     this.setupEventHandlers();
+    this.startCleanupInterval();
+  }
+
+  private startCleanupInterval() {
+    this.cleanupInterval = setInterval(() => {
+      const now = Date.now();
+      
+      for (const [clientId, actions] of this.clientThrottles.entries()) {
+        let allExpired = true;
+        for (const [action, timestamp] of actions.entries()) {
+          if (now - timestamp > this.THROTTLE_TTL_MS) {
+            actions.delete(action);
+          } else {
+            allExpired = false;
+          }
+        }
+        if (allExpired || actions.size === 0) {
+          this.clientThrottles.delete(clientId);
+        }
+      }
+      
+      for (const [userId, timestamp] of this.presenceTimestamps.entries()) {
+        if (now - timestamp > this.PRESENCE_TTL_MS) {
+          this.presenceTimestamps.delete(userId);
+          this.sessions.forEach((session, projectId) => {
+            if (session.users.has(userId)) {
+              session.users.delete(userId);
+              this.io.to(`project:${projectId}`).emit('user-left', { userId });
+            }
+          });
+        }
+      }
+    }, 30000);
   }
 
   private setupMiddleware() {
@@ -73,11 +118,16 @@ export class WebSocketService {
     this.io.on('connection', (socket: Socket) => {
       const user = socket.data.user;
 
-      // Track user sockets
+      // Track user sockets and presence
       if (!this.userSockets.has(user.id)) {
         this.userSockets.set(user.id, new Set());
       }
       this.userSockets.get(user.id)!.add(socket.id);
+      this.presenceTimestamps.set(user.id, Date.now());
+
+      socket.on('heartbeat', () => {
+        this.presenceTimestamps.set(user.id, Date.now());
+      });
 
       // Handle joining project collaboration
       socket.on('join-project', async (projectId: number) => {
