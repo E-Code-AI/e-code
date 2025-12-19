@@ -68,11 +68,43 @@ interface AiUsageContext {
   startTime?: number;
 }
 
+// ✅ CRITICAL FIX (Dec 19, 2025): Harmonized multiplier with tier-rate-limiter.ts
+// Development: 1000x (comprehensive E2E testing), Test: 10000x (effectively unlimited), Prod: 1x
+const DEV_MULTIPLIER = 
+  process.env.NODE_ENV === 'test' ? 10000 :
+  process.env.NODE_ENV === 'development' ? 1000 : 
+  1;
+
+// ✅ CRITICAL FIX (Dec 19, 2025): Create dev-mode-aware rate limiters with harmonized multiplier
+const devAwareRateLimiters: Record<SubscriptionTier, RateLimiterMemory> = {
+  free: new RateLimiterMemory({
+    points: RATE_LIMITS_PER_MINUTE.free * DEV_MULTIPLIER,  // 10000 in dev, 10 in prod
+    duration: 60,
+    keyPrefix: 'ai_rate_free'
+  }),
+  pro: new RateLimiterMemory({
+    points: RATE_LIMITS_PER_MINUTE.pro * DEV_MULTIPLIER,   // 60000 in dev, 60 in prod
+    duration: 60,
+    keyPrefix: 'ai_rate_pro'
+  }),
+  enterprise: new RateLimiterMemory({
+    points: RATE_LIMITS_PER_MINUTE.enterprise * DEV_MULTIPLIER, // 300000 in dev, 300 in prod
+    duration: 60,
+    keyPrefix: 'ai_rate_enterprise'
+  })
+};
+
 /**
  * Middleware to track AI usage with rate limiting per tier
  * ✅ Issue #38 FIX: Added rate limiting that doesn't block but warns
+ * ✅ CRITICAL FIX (Dec 19, 2025): Added dev mode bypass and multiplier
  */
 export async function aiUsageTracker(req: Request, res: Response, next: NextFunction) {
+  // ✅ CRITICAL FIX (Dec 19, 2025): Check global rate limit bypass flag
+  if ((req as any)._skipRateLimit === true) {
+    return next();
+  }
+  
   const user = req.user as any;
   
   if (!user?.id) {
@@ -81,7 +113,9 @@ export async function aiUsageTracker(req: Request, res: Response, next: NextFunc
   }
 
   const tier: SubscriptionTier = user.subscriptionTier || 'free';
-  const rateLimiter = rateLimiters[tier];
+  // ✅ CRITICAL FIX (Dec 19, 2025): Use dev-aware rate limiters with 10x multiplier
+  const rateLimiter = devAwareRateLimiters[tier];
+  const effectiveLimit = RATE_LIMITS_PER_MINUTE[tier] * DEV_MULTIPLIER;
   
   // ✅ Issue #38: Check rate limit per tier
   try {
@@ -93,20 +127,22 @@ export async function aiUsageTracker(req: Request, res: Response, next: NextFunc
     logger.warn(`Rate limit exceeded for user ${user.id} (tier: ${tier})`, {
       userId: user.id,
       tier,
+      effectiveLimit,
+      isDev: process.env.NODE_ENV === 'development',
       msBeforeNext: rateLimitError.msBeforeNext
     });
     
     res.setHeader('Retry-After', retryAfter);
-    res.setHeader('X-RateLimit-Limit', RATE_LIMITS_PER_MINUTE[tier]);
+    res.setHeader('X-RateLimit-Limit', effectiveLimit);
     res.setHeader('X-RateLimit-Remaining', 0);
     res.setHeader('X-RateLimit-Reset', Date.now() + (retryAfter * 1000));
     
     return res.status(429).json({
       error: 'Rate limit exceeded',
-      message: `You've exceeded the ${tier} tier rate limit of ${RATE_LIMITS_PER_MINUTE[tier]} requests per minute. Please try again in ${retryAfter} seconds.`,
+      message: `You've exceeded the ${tier} tier rate limit of ${effectiveLimit} requests per minute. Please try again in ${retryAfter} seconds.`,
       retryAfter,
       tier,
-      limit: RATE_LIMITS_PER_MINUTE[tier],
+      limit: effectiveLimit,
       upgradeUrl: tier === 'free' ? '/pricing' : undefined
     });
   }

@@ -132,7 +132,13 @@ A cross-platform mobile application providing platform-specific haptic feedback 
 ### Real-time Security
 - **WebSocket Heartbeat:** 30s interval, 35s timeout dead connection detection
 - **Rate Limiting:** Tier-based (Free: 500/min, Pro: 1000/min, Teams: 5000/min, Enterprise: 10000/min)
+- **Development Mode Rate Limiting (Dec 19, 2025):**
+  - 1000x multiplier for all rate limits in development mode (allows comprehensive testing)
+  - `_skipRateLimit` flag bypass checked by ALL rate limit middleware
+  - Non-API routes (`/src/*`, `/@vite/*`, etc.) bypass rate limiting in development
+  - `aiUsageTracker` harmonized with `tier-rate-limiter` (both use 1000x DEV_MULTIPLIER)
 - **Retryable Errors:** Proper classification (429, 502, 503, 504)
+- **Rate Limit UX:** Non-blocking modal via `RateLimitExperience` component with dismiss capability
 
 ### Type Safety
 - **Strict Typing:** 1073 constraints, 125 insert schemas, 215 inferred types
