@@ -6,6 +6,48 @@ export const queryPersister = createIDBPersister();
 
 interface HttpError extends Error {
   status: number;
+  isRateLimit?: boolean;
+}
+
+export interface RateLimitInfo {
+  tier: string;
+  limit: number;
+  retryAfter: number;
+  message: string;
+  upgradeUrl: string;
+}
+
+export function emitRateLimitEvent(info: RateLimitInfo) {
+  const event = new CustomEvent('rateLimit', { detail: info });
+  window.dispatchEvent(event);
+}
+
+async function handleRateLimitResponse(res: Response): Promise<RateLimitInfo | null> {
+  try {
+    const clonedRes = res.clone();
+    const data = await clonedRes.json();
+    
+    const info: RateLimitInfo = {
+      tier: data.tier || 'free',
+      limit: data.limit || 10,
+      retryAfter: data.retryAfter || parseInt(res.headers.get('Retry-After') || '5', 10),
+      message: data.message || 'Rate limit exceeded',
+      upgradeUrl: data.upgradeUrl || '/pricing',
+    };
+    
+    emitRateLimitEvent(info);
+    return info;
+  } catch {
+    const info: RateLimitInfo = {
+      tier: 'free',
+      limit: 10,
+      retryAfter: parseInt(res.headers.get('Retry-After') || '5', 10),
+      message: 'Rate limit exceeded',
+      upgradeUrl: '/pricing',
+    };
+    emitRateLimitEvent(info);
+    return info;
+  }
 }
 
 async function throwIfResNotOk(res: Response, url?: string): Promise<void> {
@@ -13,9 +55,17 @@ async function throwIfResNotOk(res: Response, url?: string): Promise<void> {
     // Handle 401 specially - redirect to login
     if (res.status === 401) {
       handleUnauthorized(url);
-      // Create error with status for downstream handling
       const error = new Error('Unauthorized') as HttpError;
       error.status = 401;
+      throw error;
+    }
+    
+    // Handle 429 Rate Limit - emit event for graceful UI handling
+    if (res.status === 429) {
+      const rateLimitInfo = await handleRateLimitResponse(res);
+      const error = new Error(rateLimitInfo?.message || 'Rate limit exceeded') as HttpError;
+      error.status = 429;
+      error.isRateLimit = true;
       throw error;
     }
     

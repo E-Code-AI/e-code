@@ -7,6 +7,7 @@ import { ECodeLoading } from "@/components/ECodeLoading";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ConnectionStatusProvider } from "./hooks/use-connection-status";
 import { GlobalErrorChannelProvider } from "./hooks/use-global-error-channel";
+import { RateLimitProvider } from "@/components/ide/RateLimitExperience";
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { ReplitLayout } from "@/components/layout/ReplitLayout";
@@ -205,10 +206,12 @@ function App() {
               <ThemeProvider>
                 <ConnectionStatusProvider>
                   <GlobalErrorChannelProvider>
-                    <AuthProvider>
-                      <OfflineFallback />
-                      <AppContent />
-                    </AuthProvider>
+                    <RateLimitProvider>
+                      <AuthProvider>
+                        <OfflineFallback />
+                        <AppContent />
+                      </AuthProvider>
+                    </RateLimitProvider>
                   </GlobalErrorChannelProvider>
                 </ConnectionStatusProvider>
               </ThemeProvider>
