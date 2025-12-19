@@ -207,8 +207,20 @@ export const rateLimiters = {
  */
 export function createRateLimitMiddleware(type: keyof typeof rateLimiters) {
   return async (req: Request, res: Response, next: NextFunction) => {
+    // ✅ CRITICAL FIX (Dec 19, 2025): Check global rate limit bypass flag first
+    if ((req as any)._skipRateLimit === true) {
+      return next();
+    }
+    
     // Bypass rate limiting entirely in test mode (unless explicitly enabled)
     if (isTestEnv() && process.env.ENABLE_RATE_LIMITING !== 'true') {
+      return next();
+    }
+    
+    const path = req.path || '';
+    
+    // ✅ CRITICAL FIX (Dec 19, 2025): Skip ALL non-API routes in development mode
+    if (process.env.NODE_ENV === 'development' && !path.startsWith('/api')) {
       return next();
     }
     
@@ -317,6 +329,11 @@ export function createTierBasedRateLimiter(limitType: LimitType) {
     // ✅ FIX (Dec 19, 2025): Skip Vite dev paths to prevent module loading failures
     const path = req.path || req.originalUrl || '';
     if (isViteDevPath(path)) {
+      return next();
+    }
+    
+    // ✅ CRITICAL FIX (Dec 19, 2025): Skip ALL non-API routes in development mode
+    if (process.env.NODE_ENV === 'development' && !path.startsWith('/api')) {
       return next();
     }
     
@@ -470,6 +487,11 @@ export const dynamicRateLimiter = (
     
     // ✅ FIX (Dec 19, 2025): Skip Vite dev paths to prevent module loading failures
     if (isViteDevPath(path)) {
+      return next();
+    }
+    
+    // ✅ CRITICAL FIX (Dec 19, 2025): Skip ALL non-API routes in development mode
+    if (process.env.NODE_ENV === 'development' && !path.startsWith('/api')) {
       return next();
     }
 

@@ -174,8 +174,16 @@ async function logViolation(req: Request, tier: SubscriptionTier, limitType: Lim
 
 export function createTierRateLimitMiddleware(limitType: LimitType | 'streaming') {
   return async (req: Request, res: Response, next: NextFunction) => {
+    const path = req.path || req.originalUrl || '';
+    
     // ✅ CRITICAL FIX (Dec 19, 2025): Check global rate limit bypass flag set by early middleware
     if ((req as any)._skipRateLimit === true) {
+      return next();
+    }
+    
+    // ✅ CRITICAL FIX (Dec 19, 2025): Double-check for Vite dev paths
+    // Even if _skipRateLimit wasn't set, skip rate limiting for dev assets
+    if (process.env.NODE_ENV === 'development' && !path.startsWith('/api')) {
       return next();
     }
     
@@ -192,7 +200,6 @@ export function createTierRateLimitMiddleware(limitType: LimitType | 'streaming'
     
     // ✅ PRODUCTION FIX (Dec 10, 2025): Skip rate limiting for static assets
     // ✅ FIX (Dec 19, 2025): Use centralized isViteDevPath helper to prevent module loading failures
-    const path = req.path || req.originalUrl || '';
     if (isViteDevPath(path)) {
       return next();
     }
