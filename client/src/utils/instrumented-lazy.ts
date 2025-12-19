@@ -2,15 +2,24 @@
  * Instrumented Lazy Loader
  * Wraps React.lazy to log module paths and catch empty errors
  * Includes retry mechanism for transient Vite HMR failures
+ * With full page reload fallback for mobile devices with WebSocket issues
  */
 
 import { lazy, ComponentType } from 'react';
 
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000;
+const RELOAD_KEY = 'lazy-load-reload-attempted';
 
 async function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// Detect if we're on a mobile device or in the Replit app
+function isMobileOrReplitApp(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  const ua = navigator.userAgent.toLowerCase();
+  return /iphone|ipad|android|mobile/i.test(ua) || /replit/i.test(ua);
 }
 
 export function instrumentedLazy<T extends ComponentType<any>>(
@@ -27,6 +36,8 @@ export function instrumentedLazy<T extends ComponentType<any>>(
         if (attempt > 1) {
           console.log(`[LAZY] Successfully loaded module on attempt ${attempt}: ${path}`);
         }
+        // Clear reload flag on success
+        sessionStorage.removeItem(RELOAD_KEY);
         return module;
       } catch (error) {
         lastError = error;
@@ -41,6 +52,21 @@ export function instrumentedLazy<T extends ComponentType<any>>(
         }
       }
     }
+    
+    // All retries exhausted - check if we should try a full page reload
+    // This helps with mobile devices where Vite HMR WebSocket fails
+    const alreadyReloaded = sessionStorage.getItem(RELOAD_KEY);
+    
+    if (!alreadyReloaded && isMobileOrReplitApp()) {
+      console.log(`[LAZY] Attempting full page reload to recover from module load failure: ${path}`);
+      sessionStorage.setItem(RELOAD_KEY, 'true');
+      window.location.reload();
+      // Return a never-resolving promise to prevent error boundary from showing
+      return new Promise(() => {});
+    }
+    
+    // Clear reload flag so user can retry later
+    sessionStorage.removeItem(RELOAD_KEY);
     
     // All retries exhausted - log and throw
     console.error(`[LAZY] Failed to load module after ${MAX_RETRIES} attempts: ${path}`, {
