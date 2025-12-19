@@ -266,11 +266,19 @@ export function createRateLimitMiddleware(type: keyof typeof rateLimiters) {
 // Dynamic limits based on user subscription tier
 // ============================================
 
+// ✅ CRITICAL FIX (Dec 19, 2025): Harmonized DEV_MULTIPLIER with tier-rate-limiter.ts and ai-usage-tracker.ts
+// Development: 1000x (comprehensive E2E testing), Test: 10000x (effectively unlimited), Prod: 1x
+const DEV_MULTIPLIER = 
+  process.env.NODE_ENV === 'test' ? 10000 :
+  process.env.NODE_ENV === 'development' ? 1000 : 
+  1;
+
 // Cache of tier-specific rate limiters (created on demand)
 const tierRateLimiters = new Map<string, RateLimiterMemory | RateLimiterRedis>();
 
 /**
  * Get or create a rate limiter for specific tier and limit type
+ * ✅ CRITICAL FIX (Dec 19, 2025): Apply DEV_MULTIPLIER to all tier-based rate limiters
  */
 function getTierRateLimiter(tier: SubscriptionTier, limitType: LimitType): RateLimiterMemory | RateLimiterRedis {
   const key = `${tier}:${limitType}`;
@@ -280,19 +288,21 @@ function getTierRateLimiter(tier: SubscriptionTier, limitType: LimitType): RateL
   }
   
   const limits = TIER_LIMITS[tier][limitType];
+  // ✅ CRITICAL FIX: Apply dev multiplier to allow comprehensive testing
+  const effectivePoints = limits.points * DEV_MULTIPLIER;
   
   const limiter = redisClient 
     ? new RateLimiterRedis({
         storeClient: redisClient,
         keyPrefix: `rl_tier_${key}`,
-        points: limits.points,
+        points: effectivePoints,
         duration: limits.duration,
         blockDuration: Math.min(limits.duration, 60), // Block for max 1 minute
         execEvenly: false,
       })
     : new RateLimiterMemory({
         keyPrefix: `rl_tier_${key}`,
-        points: limits.points,
+        points: effectivePoints,
         duration: limits.duration,
         blockDuration: Math.min(limits.duration, 60),
       });
@@ -352,12 +362,14 @@ export function createTierBasedRateLimiter(limitType: LimitType) {
       // Get the appropriate rate limiter for this tier
       const limiter = getTierRateLimiter(tier, limitType);
       const limits = TIER_LIMITS[tier][limitType];
+      // ✅ CRITICAL FIX: Use effective limit with dev multiplier
+      const effectiveLimit = limits.points * DEV_MULTIPLIER;
       
       // Consume a point
       const result = await limiter.consume(userKey);
       
       // Set rate limit headers
-      res.setHeader('X-RateLimit-Limit', limits.points);
+      res.setHeader('X-RateLimit-Limit', effectiveLimit);
       res.setHeader('X-RateLimit-Remaining', result.remainingPoints);
       res.setHeader('X-RateLimit-Reset', new Date(Date.now() + result.msBeforeNext).toISOString());
       res.setHeader('X-RateLimit-Tier', tier);
@@ -368,6 +380,8 @@ export function createTierBasedRateLimiter(limitType: LimitType) {
       const user = req.user as User | undefined;
       const tier = user?.id ? await getUserTier(user.id) : 'free';
       const limits = TIER_LIMITS[tier][limitType];
+      // ✅ CRITICAL FIX: Use effective limit with dev multiplier
+      const effectiveLimit = limits.points * DEV_MULTIPLIER;
       const retryAfter = Math.round(rejRes.msBeforeNext / 1000) || 60;
       
       logger.warn('Tier-based rate limit exceeded', {
@@ -377,20 +391,21 @@ export function createTierBasedRateLimiter(limitType: LimitType) {
         ip: req.ip,
         path: req.path,
         retryAfter,
-        limit: limits.points
+        limit: effectiveLimit,
+        isDev: process.env.NODE_ENV === 'development'
       });
       
       res.setHeader('Retry-After', retryAfter);
-      res.setHeader('X-RateLimit-Limit', limits.points);
+      res.setHeader('X-RateLimit-Limit', effectiveLimit);
       res.setHeader('X-RateLimit-Remaining', 0);
       res.setHeader('X-RateLimit-Reset', new Date(Date.now() + rejRes.msBeforeNext).toISOString());
       res.setHeader('X-RateLimit-Tier', tier);
       
       res.status(429).json({
         error: 'Rate limit exceeded',
-        message: `You've exceeded your ${tier} tier limit of ${limits.points} requests per ${limits.duration} seconds. Please wait ${retryAfter} seconds or upgrade your plan.`,
+        message: `You've exceeded your ${tier} tier limit of ${effectiveLimit} requests per ${limits.duration} seconds. Please wait ${retryAfter} seconds or upgrade your plan.`,
         tier,
-        limit: limits.points,
+        limit: effectiveLimit,
         duration: limits.duration,
         retryAfter,
         upgradeUrl: tier !== 'enterprise' ? '/pricing' : undefined
