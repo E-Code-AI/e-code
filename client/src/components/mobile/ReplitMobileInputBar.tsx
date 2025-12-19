@@ -1,8 +1,9 @@
-import { useState, useRef, useCallback, memo } from 'react';
+import { useState, useRef, useCallback, memo, useEffect } from 'react';
 import { 
-  ChevronUp, Paperclip, Mic, Zap, Settings2, ArrowUp
+  ChevronUp, Paperclip, Mic, Zap, Settings2, ArrowUp, Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { SlashCommandMenu, DEFAULT_MCP_SERVERS, type MCPServer } from '../ai/SlashCommandMenu';
 
 type BuildMode = 'build' | 'edit' | 'chat';
 
@@ -19,6 +20,10 @@ interface ReplitMobileInputBarProps {
   onSettings?: () => void;
   disabled?: boolean;
   isLoading?: boolean;
+  isWorking?: boolean;
+  agentMode?: string;
+  onSlashCommand?: () => void;
+  onSlashSelect?: (server: MCPServer) => void;
 }
 
 const BuildModeIcon = memo(() => (
@@ -32,7 +37,7 @@ const BuildModeIcon = memo(() => (
 BuildModeIcon.displayName = 'BuildModeIcon';
 
 export const ReplitMobileInputBar = memo(function ReplitMobileInputBar({
-  placeholder = "Make, test, iterate...",
+  placeholder,
   value = "",
   onChange,
   onSubmit,
@@ -44,13 +49,60 @@ export const ReplitMobileInputBar = memo(function ReplitMobileInputBar({
   onSettings,
   disabled = false,
   isLoading = false,
+  isWorking = false,
+  agentMode = 'build',
+  onSlashCommand,
+  onSlashSelect,
 }: ReplitMobileInputBarProps) {
   const [inputValue, setInputValue] = useState(value);
   const [showBuildMenu, setShowBuildMenu] = useState(false);
+  const [showSlashMenu, setShowSlashMenu] = useState(false);
+  const [slashSearchQuery, setSlashSearchQuery] = useState('');
+  const [slashSelectedIndex, setSlashSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  // Sync external value prop with internal state
+  useEffect(() => {
+    if (value !== inputValue) {
+      setInputValue(value);
+    }
+  }, [value]);
+
+  // Dynamic placeholder based on agentMode
+  const dynamicPlaceholder = placeholder || (
+    agentMode === 'build' ? "What would you like me to build? Type / for integrations" :
+    agentMode === 'edit' ? "Describe the changes you want to make..." :
+    agentMode === 'chat' ? "Ask a question..." :
+    "Make, test, iterate..."
+  );
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newValue = e.target.value;
+    const prevValue = inputValue;
+    
+    // Detect "/" input for slash commands
+    if (newValue.endsWith('/') && !prevValue.endsWith('/') && !showSlashMenu) {
+      setShowSlashMenu(true);
+      setSlashSearchQuery('');
+      setSlashSelectedIndex(0);
+      onSlashCommand?.();
+    }
+    
+    // Update search query if slash menu is open
+    if (showSlashMenu && newValue.includes('/')) {
+      const slashIndex = newValue.lastIndexOf('/');
+      const afterSlash = newValue.substring(slashIndex + 1);
+      setSlashSearchQuery(afterSlash);
+      setSlashSelectedIndex(0);
+    }
+    
+    // Close menu if "/" is deleted
+    if (showSlashMenu && !newValue.includes('/')) {
+      setShowSlashMenu(false);
+      setSlashSearchQuery('');
+      setSlashSelectedIndex(0);
+    }
+    
     setInputValue(newValue);
     onChange?.(newValue);
     
@@ -58,24 +110,68 @@ export const ReplitMobileInputBar = memo(function ReplitMobileInputBar({
       inputRef.current.style.height = 'auto';
       inputRef.current.style.height = Math.min(inputRef.current.scrollHeight, 120) + 'px';
     }
-  }, [onChange]);
+  }, [onChange, inputValue, showSlashMenu, onSlashCommand]);
 
   const handleSubmit = useCallback(() => {
-    if (inputValue.trim() && !disabled && !isLoading) {
+    if (inputValue.trim() && !disabled && !isLoading && !isWorking) {
       onSubmit?.(inputValue.trim());
       setInputValue("");
       if (inputRef.current) {
         inputRef.current.style.height = 'auto';
       }
     }
-  }, [inputValue, disabled, isLoading, onSubmit]);
+  }, [inputValue, disabled, isLoading, isWorking, onSubmit]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    // Handle slash menu navigation
+    if (showSlashMenu) {
+      const filteredServers = DEFAULT_MCP_SERVERS.filter(server =>
+        server.name.toLowerCase().includes(slashSearchQuery.toLowerCase()) ||
+        server.description?.toLowerCase().includes(slashSearchQuery.toLowerCase())
+      );
+      
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setShowSlashMenu(false);
+        setSlashSearchQuery('');
+        return;
+      }
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setSlashSelectedIndex(prev => Math.min(prev + 1, filteredServers.length - 1));
+        return;
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setSlashSelectedIndex(prev => Math.max(prev - 1, 0));
+        return;
+      }
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (filteredServers[slashSelectedIndex]) {
+          handleSlashSelect(filteredServers[slashSelectedIndex]);
+        }
+        return;
+      }
+    }
+    
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSubmit();
     }
-  }, [handleSubmit]);
+  }, [handleSubmit, showSlashMenu, slashSearchQuery, slashSelectedIndex]);
+
+  const handleSlashSelect = useCallback((server: MCPServer) => {
+    // Remove the "/" and any search query from input
+    const slashIndex = inputValue.lastIndexOf('/');
+    const beforeSlash = slashIndex > 0 ? inputValue.substring(0, slashIndex) : '';
+    setInputValue(beforeSlash + `@${server.name} `);
+    setShowSlashMenu(false);
+    setSlashSearchQuery('');
+    setSlashSelectedIndex(0);
+    onSlashSelect?.(server);
+    inputRef.current?.focus();
+  }, [inputValue, onSlashSelect]);
 
   const handleBuildModeClick = useCallback(() => {
     if ('vibrate' in navigator) {
@@ -93,9 +189,25 @@ export const ReplitMobileInputBar = memo(function ReplitMobileInputBar({
   }, [onBuildModeChange]);
 
   const hasContent = inputValue.trim().length > 0;
+  const isDisabled = disabled || isLoading || isWorking;
 
   return (
     <div className="fixed bottom-14 left-0 right-0 z-40 px-3 pb-2 mobile-safe-bottom">
+      {/* Slash Command Menu - appears above input */}
+      <SlashCommandMenu
+        isOpen={showSlashMenu}
+        onClose={() => {
+          setShowSlashMenu(false);
+          setSlashSearchQuery('');
+          setSlashSelectedIndex(0);
+        }}
+        onSelect={handleSlashSelect}
+        servers={DEFAULT_MCP_SERVERS}
+        searchQuery={slashSearchQuery}
+        onSearchChange={setSlashSearchQuery}
+        selectedIndex={slashSelectedIndex}
+      />
+      
       <div className="bg-white dark:bg-[#1C1C1C] rounded-2xl border border-gray-200 dark:border-gray-700 shadow-lg overflow-hidden">
         <div className="relative">
           <textarea
@@ -103,14 +215,14 @@ export const ReplitMobileInputBar = memo(function ReplitMobileInputBar({
             value={inputValue}
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
-            placeholder={placeholder}
-            disabled={disabled || isLoading}
+            placeholder={dynamicPlaceholder}
+            disabled={isDisabled}
             rows={1}
             className={cn(
               "w-full px-4 pt-3 pb-12 text-sm resize-none bg-transparent",
               "text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500",
               "focus:outline-none min-h-[48px] max-h-[120px]",
-              (disabled || isLoading) && "opacity-50 cursor-not-allowed"
+              isDisabled && "opacity-50 cursor-not-allowed"
             )}
             data-testid="input-agent-message"
           />
@@ -170,16 +282,20 @@ export const ReplitMobileInputBar = memo(function ReplitMobileInputBar({
 
               <button
                 onClick={handleSubmit}
-                disabled={!hasContent || disabled || isLoading}
+                disabled={!hasContent || isDisabled}
                 className={cn(
                   "p-2 rounded-lg transition-all active:scale-95 touch-manipulation",
-                  hasContent && !disabled && !isLoading
+                  hasContent && !isDisabled
                     ? "bg-[#F59E0B] active:bg-[#D97706] text-white"
                     : "bg-gray-100 dark:bg-[#2A2A2A] text-gray-400"
                 )}
                 data-testid="button-send"
               >
-                <ArrowUp className="h-4 w-4" />
+                {isWorking ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <ArrowUp className="h-4 w-4" />
+                )}
               </button>
             </div>
           </div>
