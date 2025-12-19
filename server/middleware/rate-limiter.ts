@@ -19,6 +19,7 @@ import { createLogger } from '../utils/logger';
 import { db } from '../db';
 import { users, type User } from '@shared/schema';
 import { eq } from 'drizzle-orm';
+import { isViteDevPath } from '../utils/security';
 
 const logger = createLogger('rate-limiter');
 
@@ -378,6 +379,13 @@ export const tierBasedAiRateLimiter = createTierBasedRateLimiter('ai');
 export const tierBasedAuthRateLimiter = createTierBasedRateLimiter('auth');
 export const tierBasedDeployRateLimiter = createTierBasedRateLimiter('deploy');
 
+// ✅ FIX (Dec 19, 2025): Helper function to check if request should skip rate limiting
+const shouldSkipRateLimiting = (req: Request): boolean => {
+  const isLocalhost = req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1';
+  const path = req.path || req.originalUrl || '';
+  return isLocalhost || isViteDevPath(path);
+};
+
 // Legacy express-rate-limit middleware (kept for backward compatibility)
 // Configured to properly handle trusted proxies and extract real client IPs
 // In test environment, use much higher limits to prevent test failures
@@ -391,11 +399,7 @@ export const legacyRateLimiters = {
     standardHeaders: true,
     legacyHeaders: false,
     validate: false,
-    skip: (req: Request) => {
-      // ✅ 40-YEAR SENIOR: Always skip localhost (tests + local development)
-      // Production traffic never originates from 127.0.0.1, so this is safe
-      return req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1';
-    }
+    skip: shouldSkipRateLimiting
   }),
 
   // Standard API rate limit
@@ -408,10 +412,7 @@ export const legacyRateLimiters = {
     legacyHeaders: false,
     validate: false,
     skip: (req: Request) => {
-      // ✅ 40-YEAR SENIOR: Always skip localhost + health endpoint
-      if (req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1') {
-        return true;
-      }
+      if (shouldSkipRateLimiting(req)) return true;
       return req.path === '/api/monitoring/health';
     }
   }),
@@ -422,12 +423,8 @@ export const legacyRateLimiters = {
     max: 1000,
     standardHeaders: true,
     legacyHeaders: false,
-    // Skip validation warnings since Express trust proxy is enabled at app level
     validate: false,
-    skip: (req: Request) => {
-      // ✅ 40-YEAR SENIOR: Always skip localhost
-      return req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1';
-    }
+    skip: shouldSkipRateLimiting
   }),
 
   // Very strict limit for expensive operations
@@ -437,12 +434,8 @@ export const legacyRateLimiters = {
     message: 'This operation is resource intensive. Please wait before trying again.',
     standardHeaders: true,
     legacyHeaders: false,
-    // Skip validation warnings since Express trust proxy is enabled at app level
     validate: false,
-    skip: (req: Request) => {
-      // ✅ 40-YEAR SENIOR: Always skip localhost
-      return req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1';
-    }
+    skip: shouldSkipRateLimiting
   })
 };
 
@@ -454,6 +447,11 @@ export const dynamicRateLimiter = (
 ) => {
   try {
     const path = req.path || '';
+    
+    // ✅ FIX (Dec 19, 2025): Skip Vite dev paths to prevent module loading failures
+    if (isViteDevPath(path)) {
+      return next();
+    }
 
     if (path.startsWith('/api/ai') || path.startsWith('/api/deployments')) {
       return legacyRateLimiters.expensive(req, res, next);
@@ -473,27 +471,9 @@ export const logRateLimitViolations = (
   res: Response,
   next: NextFunction
 ) => {
-  // ✅ PRODUCTION FIX (Dec 10, 2025): Skip logging for static assets
-  // ✅ FIX (Dec 19, 2025): Also skip Vite dev server paths
+  // ✅ FIX (Dec 19, 2025): Use centralized isViteDevPath helper
   const path = req.path || req.originalUrl || '';
-  if (path.startsWith('/assets/') || 
-      path.startsWith('/static/') ||
-      path.startsWith('/src/') ||           // Vite source files
-      path.startsWith('/@vite/') ||         // Vite client
-      path.startsWith('/@fs/') ||           // Vite file system access
-      path.startsWith('/@id/') ||           // Vite module IDs
-      path.startsWith('/@react-refresh') || // React Fast Refresh
-      path.startsWith('/node_modules/') ||  // Node modules
-      path.endsWith('.ts') ||               // TypeScript files
-      path.endsWith('.tsx') ||              // TypeScript React files
-      path.endsWith('.js') || 
-      path.endsWith('.mjs') ||
-      path.endsWith('.css') || 
-      path.endsWith('.png') || 
-      path.endsWith('.jpg') || 
-      path.endsWith('.svg') || 
-      path.endsWith('.ico') ||
-      path.endsWith('.map')) {
+  if (isViteDevPath(path)) {
     return next();
   }
   

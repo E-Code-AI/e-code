@@ -247,6 +247,39 @@ export const requestValidation = {
 };
 
 /**
+ * Check if a path is a Vite development asset that should bypass rate limiting
+ * ✅ FIX (Dec 19, 2025): Centralized function to prevent module loading failures in IDE
+ */
+export function isViteDevPath(path: string): boolean {
+  if (!path) return false;
+  return (
+    path.startsWith('/assets/') ||
+    path.startsWith('/static/') ||
+    path.startsWith('/src/') ||           // Vite source files
+    path.startsWith('/@vite/') ||         // Vite client
+    path.startsWith('/@fs/') ||           // Vite file system access
+    path.startsWith('/@id/') ||           // Vite module IDs
+    path.startsWith('/@react-refresh') || // React Fast Refresh
+    path.startsWith('/node_modules/') ||  // Node modules
+    path.endsWith('.ts') ||               // TypeScript files
+    path.endsWith('.tsx') ||              // TypeScript React files
+    path.endsWith('.js') || 
+    path.endsWith('.mjs') ||
+    path.endsWith('.css') || 
+    path.endsWith('.png') || 
+    path.endsWith('.jpg') || 
+    path.endsWith('.svg') || 
+    path.endsWith('.ico') ||
+    path.endsWith('.woff') ||
+    path.endsWith('.woff2') ||
+    path.endsWith('.ttf') ||
+    path.endsWith('.map') ||
+    path === '/manifest.json' ||          // PWA manifest
+    path === '/'                          // Root HTML
+  );
+}
+
+/**
  * Rate Limiting Utilities
  */
 export const rateLimiting = {
@@ -268,6 +301,12 @@ export const rateLimiting = {
     } = options;
 
     return (req: Request, res: Response, next: NextFunction) => {
+      // ✅ FIX (Dec 19, 2025): Skip rate limiting for Vite dev paths to prevent module loading failures
+      const reqPath = req.path || req.originalUrl || '';
+      if (isViteDevPath(reqPath)) {
+        return next();
+      }
+      
       const key = keyGenerator(req);
       const now = Date.now();
       
