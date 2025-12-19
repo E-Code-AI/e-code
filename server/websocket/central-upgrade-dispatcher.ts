@@ -165,10 +165,18 @@ class CentralUpgradeDispatcher {
     // Find matching handler using effective path (supports both /ws/agent and /?channel=agent)
     const handler = this.findHandler(effectivePath);
     
+    // ✅ FIX (Dec 19, 2025): If no handler is registered, defer to other listeners (e.g., Vite HMR)
+    // This MUST happen BEFORE auth check to allow unauthenticated HMR connections through
+    if (!handler) {
+      logger.debug(`[Central Dispatcher] No handler for ${effectivePath} - deferring to other listeners (e.g., Vite HMR)`);
+      // Don't mark as handled, don't destroy - just return and let other listeners handle it
+      return;
+    }
+    
     // Public paths that don't require auth
     const publicPaths = ['/health', '/api/health'];
     
-    // Only validate auth for non-public paths
+    // Only validate auth for non-public paths with registered handlers
     if (!publicPaths.includes(effectivePath)) {
       const isAuthenticated = await this.validateWebSocketConnection(request);
       if (!isAuthenticated) {
@@ -185,38 +193,33 @@ class CentralUpgradeDispatcher {
       });
     }
     
-    if (handler) {
-      // Update connection stats
-      this.totalConnections++;
-      this.activeConnections++;
-      const currentPathCount = this.connectionsByPath.get(handler.path) || 0;
-      this.connectionsByPath.set(handler.path, currentPathCount + 1);
-      
-      // Track socket close to update active connections
-      socket.once('close', () => {
-        this.activeConnections--;
-      });
-      
-      // AUTHORITATIVE MARKING POINT (Dec 6, 2025):
-      // Mark socket as handled BEFORE delegating to any handler.
-      // This ensures EVERY WebSocket upgrade routed through the dispatcher is marked,
-      // even if downstream handlers forget to call markSocketAsHandled().
-      // This prevents race conditions with other upgrade listeners.
-      markSocketAsHandled(request, socket);
-      
-      logger.info(`[Central Dispatcher] Routing ${effectivePath} to registered handler`);
-      
-      // Delegate to the registered handler (socket is already marked above)
-      try {
-        handler.handler(request, socket, head);
-      } catch (error) {
-        logger.error(`[Central Dispatcher] Handler error for ${pathname}:`, error);
-        this.destroySocketWithError(socket, 500, 'Internal Server Error');
-      }
-    } else {
-      // No handler found - let other listeners (like Vite HMR) handle it
-      // Don't mark as handled, don't destroy - just skip
-      logger.debug(`[Central Dispatcher] No handler for ${pathname} - deferring to other listeners`);
+    // Handler exists - route to it
+    // Update connection stats
+    this.totalConnections++;
+    this.activeConnections++;
+    const currentPathCount = this.connectionsByPath.get(handler.path) || 0;
+    this.connectionsByPath.set(handler.path, currentPathCount + 1);
+    
+    // Track socket close to update active connections
+    socket.once('close', () => {
+      this.activeConnections--;
+    });
+    
+    // AUTHORITATIVE MARKING POINT (Dec 6, 2025):
+    // Mark socket as handled BEFORE delegating to any handler.
+    // This ensures EVERY WebSocket upgrade routed through the dispatcher is marked,
+    // even if downstream handlers forget to call markSocketAsHandled().
+    // This prevents race conditions with other upgrade listeners.
+    markSocketAsHandled(request, socket);
+    
+    logger.info(`[Central Dispatcher] Routing ${effectivePath} to registered handler`);
+    
+    // Delegate to the registered handler (socket is already marked above)
+    try {
+      handler.handler(request, socket, head);
+    } catch (error) {
+      logger.error(`[Central Dispatcher] Handler error for ${pathname}:`, error);
+      this.destroySocketWithError(socket, 500, 'Internal Server Error');
     }
   }
   
