@@ -82,16 +82,27 @@ app.use(loggingMiddleware);
 app.use(securityLoggingMiddleware);
 app.use(performanceLoggingMiddleware(3000)); // Log requests > 3s
 
-// ✅ CRITICAL FIX (Dec 19, 2025): Global Vite dev path bypass
-// Skip ALL rate limiting for Vite development assets to prevent module loading failures
-// This MUST run BEFORE any rate limiting middleware to ensure /src/, /@fs/, /@vite/ paths are never blocked
+// ✅ CRITICAL FIX (Dec 19, 2025): Global rate limit bypass for non-API routes in development
+// Skip ALL rate limiting for:
+// 1. Vite development assets (/src/, /@fs/, /@vite/, /@react-refresh)
+// 2. ALL non-API routes in development mode (prevents external IP rate limiting on frontend routes)
+// This MUST run BEFORE any rate limiting middleware
 app.use((req, res, next) => {
   // Check all possible path sources (req.path, req.originalUrl, req.url)
   const path = req.path || req.originalUrl?.split('?')[0] || req.url?.split('?')[0] || '';
+  
+  // Always skip rate limiting for Vite dev paths
   if (isViteDevPath(path)) {
-    // Mark request as rate-limit-exempt so downstream middleware knows to skip
+    (req as any)._skipRateLimit = true;
+    return next();
+  }
+  
+  // In development mode, skip rate limiting for ALL non-API routes
+  // This prevents external IPs from being blocked when loading frontend assets
+  if (process.env.NODE_ENV === 'development' && !path.startsWith('/api')) {
     (req as any)._skipRateLimit = true;
   }
+  
   next();
 });
 
