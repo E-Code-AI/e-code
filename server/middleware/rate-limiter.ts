@@ -474,15 +474,26 @@ export const logRateLimitViolations = (
   next: NextFunction
 ) => {
   // ✅ PRODUCTION FIX (Dec 10, 2025): Skip logging for static assets
+  // ✅ FIX (Dec 19, 2025): Also skip Vite dev server paths
   const path = req.path || req.originalUrl || '';
   if (path.startsWith('/assets/') || 
-      path.startsWith('/static/') || 
+      path.startsWith('/static/') ||
+      path.startsWith('/src/') ||           // Vite source files
+      path.startsWith('/@vite/') ||         // Vite client
+      path.startsWith('/@fs/') ||           // Vite file system access
+      path.startsWith('/@id/') ||           // Vite module IDs
+      path.startsWith('/@react-refresh') || // React Fast Refresh
+      path.startsWith('/node_modules/') ||  // Node modules
+      path.endsWith('.ts') ||               // TypeScript files
+      path.endsWith('.tsx') ||              // TypeScript React files
       path.endsWith('.js') || 
+      path.endsWith('.mjs') ||
       path.endsWith('.css') || 
       path.endsWith('.png') || 
       path.endsWith('.jpg') || 
       path.endsWith('.svg') || 
-      path.endsWith('.ico')) {
+      path.endsWith('.ico') ||
+      path.endsWith('.map')) {
     return next();
   }
   
