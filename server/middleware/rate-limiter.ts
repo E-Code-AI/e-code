@@ -297,6 +297,11 @@ function getTierRateLimiter(tier: SubscriptionTier, limitType: LimitType): RateL
  */
 export function createTierBasedRateLimiter(limitType: LimitType) {
   return async (req: Request, res: Response, next: NextFunction) => {
+    // ✅ CRITICAL FIX (Dec 19, 2025): Check global rate limit bypass flag set by early middleware
+    if ((req as any)._skipRateLimit === true) {
+      return next();
+    }
+    
     // Bypass rate limiting in test/dev mode
     if (isTestEnv() && process.env.ENABLE_RATE_LIMITING !== 'true') {
       return next();
@@ -387,6 +392,10 @@ export const tierBasedDeployRateLimiter = createTierBasedRateLimiter('deploy');
 
 // ✅ FIX (Dec 19, 2025): Helper function to check if request should skip rate limiting
 const shouldSkipRateLimiting = (req: Request): boolean => {
+  // ✅ CRITICAL FIX (Dec 19, 2025): Check global rate limit bypass flag first
+  if ((req as any)._skipRateLimit === true) {
+    return true;
+  }
   const isLocalhost = req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1';
   const path = req.path || req.originalUrl || '';
   return isLocalhost || isViteDevPath(path);
@@ -452,6 +461,11 @@ export const dynamicRateLimiter = (
   next: NextFunction
 ) => {
   try {
+    // ✅ CRITICAL FIX (Dec 19, 2025): Check global rate limit bypass flag first
+    if ((req as any)._skipRateLimit === true) {
+      return next();
+    }
+    
     const path = req.path || '';
     
     // ✅ FIX (Dec 19, 2025): Skip Vite dev paths to prevent module loading failures

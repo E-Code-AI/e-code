@@ -45,6 +45,7 @@ import { loggingMiddleware, securityLoggingMiddleware, performanceLoggingMiddlew
 import { createCentralizedLogger } from './logging/centralized-logger';
 import { centralUpgradeDispatcher } from './websocket/central-upgrade-dispatcher';
 import { performanceHeaders, earlyHints } from './middleware/performance-headers';
+import { isViteDevPath } from './utils/security';
 
 const serverLogger = createCentralizedLogger('server');
 const app = express();
@@ -80,6 +81,19 @@ app.use(sanitizeInput);
 app.use(loggingMiddleware);
 app.use(securityLoggingMiddleware);
 app.use(performanceLoggingMiddleware(3000)); // Log requests > 3s
+
+// ✅ CRITICAL FIX (Dec 19, 2025): Global Vite dev path bypass
+// Skip ALL rate limiting for Vite development assets to prevent module loading failures
+// This MUST run BEFORE any rate limiting middleware to ensure /src/, /@fs/, /@vite/ paths are never blocked
+app.use((req, res, next) => {
+  // Check all possible path sources (req.path, req.originalUrl, req.url)
+  const path = req.path || req.originalUrl?.split('?')[0] || req.url?.split('?')[0] || '';
+  if (isViteDevPath(path)) {
+    // Mark request as rate-limit-exempt so downstream middleware knows to skip
+    (req as any)._skipRateLimit = true;
+  }
+  next();
+});
 
 // Apply global rate limiting for DDoS protection
 // Log all rate limit violations for security monitoring
