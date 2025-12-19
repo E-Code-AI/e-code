@@ -628,19 +628,56 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
     
     res.status(200).json(responsePayload);
     
-    // 8. ✅ AUTONOMOUS WORKSPACE CREATION (Dec 5, 2025): DEFERRED to WebSocket connection
-    // CRITICAL FIX: Do NOT start autonomous workspace immediately!
-    // PROBLEM: Client hasn't connected to WebSocket yet, so plan events are broadcast to nobody
-    // SOLUTION: Store the prompt in session metadata, let WebSocket connection trigger workflow
-    // The WebSocket service will call startAutonomousWorkspace when client connects
+    // 8. ✅ AUTONOMOUS WORKSPACE CREATION (Dec 19, 2025): START IMMEDIATELY
+    // CRITICAL FIX: Start autonomous workspace IMMEDIATELY after HTTP response
+    // PROBLEM: WebSocket connection often fails on mobile due to Vite HMR issues,
+    //          causing the lazy-loaded IDE components to fail, and WebSocket never connects.
+    //          This means startAutonomousWorkspace was never called and no files were created.
+    // SOLUTION: Start autonomous workspace immediately in fire-and-forget mode.
+    //          Files will be created in the project directory regardless of WebSocket status.
+    //          WebSocket is now only used for streaming progress updates (optional).
+    // NOTE: Idempotency is handled in startAutonomousWorkspace (checks workflowStatus != idle)
     
-    logger.info(`[Bootstrap] ✅ HTTP response sent - workflow will start when client connects via WebSocket`, {
-      sessionId: session.id,
-      projectId: project.id,
-      promptPreview: prompt.substring(0, 50)
-    });
-    
-    logger.info(`[Bootstrap] 📋 Workflow deferred until WebSocket connection for session ${session.id}`);
+    // Only start for full-app and design-first modes, not continue-planning
+    if (buildMode !== 'continue-planning') {
+      logger.info(`[Bootstrap] 🚀 Starting autonomous workspace IMMEDIATELY (fire-and-forget)`, {
+        sessionId: session.id,
+        projectId: project.id,
+        buildMode,
+        promptPreview: prompt.substring(0, 50)
+      });
+      
+      // Fire-and-forget with defensive error handling:
+      // - Detached via setImmediate to isolate from request thread
+      // - Try/catch guards against synchronous throws before first await
+      // - .catch() handles async rejections from the promise
+      setImmediate(() => {
+        try {
+          void agentOrchestrator.startAutonomousWorkspace({
+            sessionId: session.id,
+            projectId: String(project.id),
+            userId: String(userId),
+            prompt: enhancedPrompt,
+            options: {
+              language: options.language,
+              framework: options.framework,
+              buildMode
+            }
+          }).then(() => {
+            logger.info(`[Bootstrap] ✅ Autonomous workspace creation COMPLETED for session ${session.id}`);
+          }).catch((error: Error) => {
+            logger.error(`[Bootstrap] ❌ Autonomous workspace creation FAILED for session ${session.id}:`, error);
+          });
+        } catch (syncError) {
+          logger.error(`[Bootstrap] ❌ Synchronous error starting autonomous workspace for session ${session.id}:`, syncError);
+        }
+      });
+    } else {
+      logger.info(`[Bootstrap] 📋 Skipping autonomous workspace for continue-planning mode`, {
+        sessionId: session.id,
+        projectId: project.id
+      });
+    }
     
   } catch (error: any) {
     const elapsed = Date.now() - startTime;
