@@ -113,7 +113,7 @@ export async function aiUsageTracker(req: Request, res: Response, next: NextFunc
   }
 
   const tier: SubscriptionTier = user.subscriptionTier || 'free';
-  // ✅ CRITICAL FIX (Dec 19, 2025): Use dev-aware rate limiters with 10x multiplier
+  // ✅ CRITICAL FIX (Dec 19, 2025): Use dev-aware rate limiters with 1000x multiplier
   const rateLimiter = devAwareRateLimiters[tier];
   const effectiveLimit = RATE_LIMITS_PER_MINUTE[tier] * DEV_MULTIPLIER;
   
