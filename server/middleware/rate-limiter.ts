@@ -309,6 +309,12 @@ export function createTierBasedRateLimiter(limitType: LimitType) {
       }
     }
     
+    // ✅ FIX (Dec 19, 2025): Skip Vite dev paths to prevent module loading failures
+    const path = req.path || req.originalUrl || '';
+    if (isViteDevPath(path)) {
+      return next();
+    }
+    
     try {
       // Get user ID and tier
       const user = req.user as User | undefined;
