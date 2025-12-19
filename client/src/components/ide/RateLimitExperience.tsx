@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, createContext, useContext } from 'react';
+import { useState, useEffect, useCallback, createContext, useContext, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -23,6 +23,28 @@ interface RateLimitContextType {
 
 const RateLimitContext = createContext<RateLimitContextType | null>(null);
 
+let pendingRateLimitEvent: RateLimitInfo | null = null;
+const rateLimitListeners: Set<(info: RateLimitInfo) => void> = new Set();
+
+export function subscribeToRateLimits(callback: (info: RateLimitInfo) => void): () => void {
+  rateLimitListeners.add(callback);
+  if (pendingRateLimitEvent) {
+    callback(pendingRateLimitEvent);
+    pendingRateLimitEvent = null;
+  }
+  return () => rateLimitListeners.delete(callback);
+}
+
+export function emitRateLimitEvent(info: RateLimitInfo) {
+  if (rateLimitListeners.size === 0) {
+    pendingRateLimitEvent = info;
+  } else {
+    rateLimitListeners.forEach(listener => listener(info));
+  }
+  const event = new CustomEvent('rateLimit', { detail: info });
+  window.dispatchEvent(event);
+}
+
 export function useRateLimit() {
   const context = useContext(RateLimitContext);
   if (!context) {
@@ -43,22 +65,22 @@ export function RateLimitProvider({ children }: { children: React.ReactNode }) {
   const [rateLimitInfo, setRateLimitInfo] = useState<RateLimitInfo | null>(null);
   const [showRateLimitModal, setShowRateLimitModal] = useState(false);
   const [countdown, setCountdown] = useState(0);
-  const [dismissedUntil, setDismissedUntil] = useState<number>(0);
+  const dismissedUntilRef = useRef<number>(0);
 
   const setRateLimitEvent = useCallback((info: RateLimitInfo) => {
     const now = Date.now();
-    if (dismissedUntil > now) {
+    if (dismissedUntilRef.current > now) {
       return;
     }
     
     setRateLimitInfo(info);
     setCountdown(info.retryAfter);
     setShowRateLimitModal(true);
-  }, [dismissedUntil]);
+  }, []);
 
   const dismissModal = useCallback(() => {
     setShowRateLimitModal(false);
-    setDismissedUntil(Date.now() + (rateLimitInfo?.retryAfter || 5) * 1000);
+    dismissedUntilRef.current = Date.now() + (rateLimitInfo?.retryAfter || 5) * 1000;
   }, [rateLimitInfo]);
 
   useEffect(() => {
@@ -78,12 +100,8 @@ export function RateLimitProvider({ children }: { children: React.ReactNode }) {
   }, [countdown]);
 
   useEffect(() => {
-    const handleRateLimitEvent = (event: CustomEvent<RateLimitInfo>) => {
-      setRateLimitEvent(event.detail);
-    };
-
-    window.addEventListener('rateLimit' as any, handleRateLimitEvent);
-    return () => window.removeEventListener('rateLimit' as any, handleRateLimitEvent);
+    const unsubscribe = subscribeToRateLimits(setRateLimitEvent);
+    return unsubscribe;
   }, [setRateLimitEvent]);
 
   return (
@@ -113,10 +131,11 @@ function RateLimitModal({ info, isOpen, countdown, onDismiss }: RateLimitModalPr
   const progressPercent = info.retryAfter > 0 ? ((info.retryAfter - countdown) / info.retryAfter) * 100 : 0;
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onDismiss()}>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onDismiss()} modal={false}>
       <DialogContent 
-        className="sm:max-w-md border-0 shadow-2xl"
+        className="sm:max-w-md border-0 shadow-2xl pointer-events-auto"
         data-testid="rate-limit-modal"
+        onInteractOutside={(e) => e.preventDefault()}
       >
         <button
           onClick={onDismiss}
@@ -254,9 +273,4 @@ export function RateLimitBanner() {
       </div>
     </div>
   );
-}
-
-export function emitRateLimitEvent(info: RateLimitInfo) {
-  const event = new CustomEvent('rateLimit', { detail: info });
-  window.dispatchEvent(event);
 }
