@@ -151,7 +151,14 @@ export default function Home() {
       // Clear search query
       setSearchQuery('');
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      // Handle auth errors silently - redirect to login
+      if (error?.status === 401 || error?.status === 403 || 
+          error?.message?.includes('Unauthorized') || error?.message?.includes('403')) {
+        setIsAuthModalOpen(true);
+        return;
+      }
+      
       toast({
         title: "Failed to create project",
         description: error.message,
