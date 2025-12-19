@@ -2523,6 +2523,7 @@ export function ReplitAgentPanelV3({
               </LazyMotionDiv>
             </div>
           </div>
+          )}
           
           {/* Chat Toolbar - Replit Agent 3 inline icons for quick toggle access */}
           {isCompactMode ? (
@@ -2562,7 +2563,6 @@ export function ReplitAgentPanelV3({
             compact={mode !== 'desktop'}
             actualModelName={model?.name}
           />
-          )}
         </div>
       </div>
         </>
