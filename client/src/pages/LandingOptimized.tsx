@@ -99,7 +99,17 @@ export default function LandingOptimized() {
       } else {
         throw new Error(result.error || 'Bootstrap failed');
       }
-    } catch (error) {
+    } catch (error: any) {
+      // Handle auth errors silently - user is already being redirected to login by queryClient
+      if (error?.status === 401 || error?.status === 403 || 
+          error?.message?.includes('Unauthorized') || error?.message?.includes('403')) {
+        // Store prompt so user can continue after login
+        sessionStorage.setItem('pendingAppDescription', pendingBuildPrompt);
+        sessionStorage.setItem('triggerBuildOnLanding', 'true');
+        navigate('/login');
+        return;
+      }
+      
       toast({
         title: 'Error',
         description: 'Failed to create workspace. Please try again.',
