@@ -7,7 +7,7 @@ import {
   UseMutationResult,
 } from "@tanstack/react-query";
 import { insertUserSchema, User as SelectUser, InsertUser } from "@shared/schema";
-import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
+import { getQueryFn, apiRequest, queryClient, resetCSRFToken } from "../lib/queryClient";
 // CRITICAL FIX: Import toast function directly instead of useToast hook
 // useToast subscribes the component to ALL toast state changes, causing
 // AuthProvider (which wraps the entire app) to re-render on every toast.
@@ -50,6 +50,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return await apiRequest<SelectUser>("POST", "/api/login", credentials);
     },
     onSuccess: async (user: SelectUser) => {
+      // Reset CSRF token after login - session regeneration invalidates old token
+      resetCSRFToken();
       queryClient.setQueryData(["/api/me"], user);
       await queryClient.invalidateQueries();
       const displayName = user.displayName || user.username || user.email?.split('@')[0] || 'User';

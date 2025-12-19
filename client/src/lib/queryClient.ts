@@ -28,6 +28,11 @@ async function throwIfResNotOk(res: Response, url?: string): Promise<void> {
 
 let csrfToken: string | null = null;
 
+// Reset CSRF token (call after login to ensure fresh token for new session)
+export function resetCSRFToken(): void {
+  csrfToken = null;
+}
+
 // Function to fetch CSRF token from server
 async function fetchCSRFToken(): Promise<string> {
   const response = await fetch('/api/csrf-token', {
@@ -70,7 +75,7 @@ export async function apiRequest<T = any>(
   method: string,
   url: string,
   body?: any,
-  options?: RequestInit,
+  options?: RequestInit & { _csrfRetried?: boolean },
 ): Promise<T> {
   // For state-changing methods, ensure we have a CSRF token
   const needsCsrf = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method.toUpperCase());
@@ -107,6 +112,22 @@ export async function apiRequest<T = any>(
   const newToken = res.headers.get('X-CSRF-Token');
   if (newToken) {
     csrfToken = newToken;
+  }
+
+  // Auto-retry on 403 CSRF errors (session regeneration after login invalidates old token)
+  if (res.status === 403 && needsCsrf && !options?._csrfRetried) {
+    // Check if this is a CSRF-related 403 by reading the response
+    const clonedRes = res.clone();
+    try {
+      const errorData = await clonedRes.json();
+      if (errorData?.error?.includes('CSRF') || errorData?.message?.includes('CSRF')) {
+        // Refresh CSRF token and retry once
+        csrfToken = await fetchCSRFToken();
+        return apiRequest<T>(method, url, body, { ...options, _csrfRetried: true });
+      }
+    } catch {
+      // Not JSON or parsing failed, proceed with normal error handling
+    }
   }
 
   // Throw if response not ok (following TanStack Query pattern)

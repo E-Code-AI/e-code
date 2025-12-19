@@ -32,6 +32,7 @@ export default function LandingOptimized() {
   const [appDescription, setAppDescription] = useState('');
   const [buildModeDialogOpen, setBuildModeDialogOpen] = useState(false);
   const [pendingBuildPrompt, setPendingBuildPrompt] = useState('');
+  const [isBuilding, setIsBuilding] = useState(false);
 
   useEffect(() => {
     const triggerBuild = sessionStorage.getItem('triggerBuildOnLanding');
@@ -75,6 +76,10 @@ export default function LandingOptimized() {
       return;
     }
     
+    // Prevent duplicate builds
+    if (isBuilding) return;
+    setIsBuilding(true);
+    
     try {
       const result = await apiRequest('POST', '/api/workspace/bootstrap', {
         prompt: pendingBuildPrompt,
@@ -100,6 +105,8 @@ export default function LandingOptimized() {
         throw new Error(result.error || 'Bootstrap failed');
       }
     } catch (error: any) {
+      setIsBuilding(false);
+      
       // Handle auth errors silently - user is already being redirected to login by queryClient
       if (error?.status === 401 || error?.status === 403 || 
           error?.message?.includes('Unauthorized') || error?.message?.includes('403')) {
