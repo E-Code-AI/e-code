@@ -56,6 +56,7 @@ const ReplitTerminalPanel = lazy(() => import('@/components/editor/ReplitTermina
 const ReplitDeploymentPanel = lazy(() => import('@/components/ide/ReplitDeploymentPanel').then(mod => ({ default: mod.ReplitDeploymentPanel })));
 const ReplitAgentPanelV3 = lazy(() => import('@/components/ai/ReplitAgentPanelV3').then(mod => ({ default: mod.ReplitAgentPanelV3 })));
 import { AgentPanelErrorBoundary } from '@/components/ai/AgentPanelErrorBoundary';
+import type { ExternalInputHandlers } from '@/components/ai/ReplitAgentPanelV3';
 const ResponsiveWebPreview = lazy(() => import('@/components/editor/ResponsiveWebPreview').then(mod => ({ default: mod.ResponsiveWebPreview })));
 const AgentActionsPanel = lazy(() => import('@/components/ide/AgentActionsPanel').then(mod => ({ default: mod.AgentActionsPanel })));
 const ToolsPanel = lazy(() => import('@/components/ide/ToolsPanel').then(mod => ({ default: mod.ToolsPanel })));
@@ -244,6 +245,9 @@ function UnifiedIDELayout({
   const [showExtensionsPanel, setShowExtensionsPanel] = useState(false);
   const [showSettingsPanel, setShowSettingsPanel] = useState(false);
   const [showSecurityPanel, setShowSecurityPanel] = useState(false);
+  
+  // Mobile agent input handlers - exposed from ReplitAgentPanelV3 to ReplitMobileInputBar
+  const [mobileAgentHandlers, setMobileAgentHandlers] = useState<ExternalInputHandlers | null>(null);
 
   // Force agent tab when bootstrapToken is present for inline chat experience
   useEffect(() => {
@@ -456,6 +460,8 @@ function UnifiedIDELayout({
                 onAgentToolsSettingsChange={setAgentToolsSettings}
                 isBootstrapping={!!bootstrapToken}
                 bootstrapToken={bootstrapToken}
+                hideInput={true}
+                onExternalInput={setMobileAgentHandlers}
               />
             </AgentPanelErrorBoundary>
           </Suspense>
@@ -622,10 +628,15 @@ function UnifiedIDELayout({
         {/* Replit-style Floating Input Bar - Only shown on Agent tab */}
         {mobileActiveTab === 'agent' && (
           <ReplitMobileInputBar
-            placeholder="Make, test, iterate..."
+            placeholder={mobileAgentHandlers?.agentMode === 'build' ? "What would you like me to build? Type / for integrations" : undefined}
             onSubmit={(value) => {
-              console.log('Agent prompt:', value);
+              if (mobileAgentHandlers?.handleSubmit) {
+                mobileAgentHandlers.handleSubmit(value);
+              }
             }}
+            isWorking={mobileAgentHandlers?.isWorking}
+            agentMode={mobileAgentHandlers?.agentMode}
+            onSlashCommand={() => mobileAgentHandlers?.handleSlashCommand?.()}
           />
         )}
 
@@ -979,10 +990,15 @@ function UnifiedIDELayout({
           {/* Replit-style Floating Input Bar for Agent Tab */}
           {mobileActiveTab === 'agent' && (
             <ReplitMobileInputBar
-              placeholder="Make, test, iterate..."
+              placeholder={mobileAgentHandlers?.agentMode === 'build' ? "What would you like me to build? Type / for integrations" : undefined}
               onSubmit={(value) => {
-                console.log('Agent prompt:', value);
+                if (mobileAgentHandlers?.handleSubmit) {
+                  mobileAgentHandlers.handleSubmit(value);
+                }
               }}
+              isWorking={mobileAgentHandlers?.isWorking}
+              agentMode={mobileAgentHandlers?.agentMode}
+              onSlashCommand={() => mobileAgentHandlers?.handleSlashCommand?.()}
             />
           )}
 

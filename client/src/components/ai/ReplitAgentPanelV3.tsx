@@ -239,6 +239,14 @@ interface AgentCapability {
   description: string;
 }
 
+export interface ExternalInputHandlers {
+  handleSubmit: (value: string) => void;
+  handleSlashCommand: () => void;
+  isWorking: boolean;
+  agentMode: string;
+  conversationId: number | null;
+}
+
 interface ReplitAgentPanelV3Props {
   projectId: string | number;
   className?: string;
@@ -260,6 +268,10 @@ interface ReplitAgentPanelV3Props {
   isBootstrapping?: boolean;
   // ✅ FIX (Dec 11, 2025): Bootstrap token for inline autonomous workspace creation
   bootstrapToken?: string | null;
+  // ✅ FIX (Dec 19, 2025): Hide input on mobile to use external input bar
+  hideInput?: boolean;
+  // ✅ FIX (Dec 19, 2025): Callback to expose input handlers for external input bar
+  onExternalInput?: (handlers: ExternalInputHandlers) => void;
 }
 
 function categorizeError(error: unknown): { title: string; message: string } {
@@ -342,7 +354,9 @@ export function ReplitAgentPanelV3({
   agentToolsSettings: externalAgentToolsSettings,
   onAgentToolsSettingsChange,
   isBootstrapping = false,
-  bootstrapToken
+  bootstrapToken,
+  hideInput = false,
+  onExternalInput
 }: ReplitAgentPanelV3Props) {
   // DEBUG: Log component render (dev only)
   devLog('[ReplitAgentPanelV3] Component render:', {
@@ -476,6 +490,30 @@ export function ReplitAgentPanelV3({
   const slashCommand = useSlashCommand();
   const [slashSearchQuery, setSlashSearchQuery] = useState('');
   const [slashSelectedIndex, setSlashSelectedIndex] = useState(0);
+  
+  // External input handler for mobile - allows external input bar to trigger submit
+  const handleExternalSubmit = useCallback((value: string) => {
+    if (!value.trim() || isWorking) return;
+    setInput(value);
+    // Trigger submit in next tick after input is set
+    setTimeout(() => {
+      const submitBtn = document.querySelector('[data-testid="button-send"]') as HTMLButtonElement;
+      if (submitBtn) submitBtn.click();
+    }, 0);
+  }, [isWorking]);
+  
+  // Expose handlers to parent for external input bar (mobile)
+  useEffect(() => {
+    if (onExternalInput) {
+      onExternalInput({
+        handleSubmit: handleExternalSubmit,
+        handleSlashCommand: () => slashCommand.open(),
+        isWorking,
+        agentMode,
+        conversationId,
+      });
+    }
+  }, [onExternalInput, handleExternalSubmit, slashCommand, isWorking, agentMode, conversationId]);
   
   // Optimistic UI updates and debounced streaming for faster perceived response
   const { addOptimisticMessage, hasPendingMessages } = useOptimisticMessages(messages, setMessages);
@@ -2317,6 +2355,8 @@ export function ReplitAgentPanelV3({
           )}
           
           {/* Chat input with inline toolbar - Replit-style with attachment/voice/send */}
+          {/* Hidden when hideInput=true (mobile uses external ReplitMobileInputBar) */}
+          {!hideInput && (
           <div className="relative">
             {/* Slash Command Menu - Replit-style "/" to show MCP integrations */}
             <SlashCommandMenu
@@ -2522,6 +2562,7 @@ export function ReplitAgentPanelV3({
             compact={mode !== 'desktop'}
             actualModelName={model?.name}
           />
+          )}
         </div>
       </div>
         </>
