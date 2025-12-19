@@ -174,6 +174,11 @@ async function logViolation(req: Request, tier: SubscriptionTier, limitType: Lim
 
 export function createTierRateLimitMiddleware(limitType: LimitType | 'streaming') {
   return async (req: Request, res: Response, next: NextFunction) => {
+    // ✅ CRITICAL FIX (Dec 19, 2025): Check global rate limit bypass flag set by early middleware
+    if ((req as any)._skipRateLimit === true) {
+      return next();
+    }
+    
     // Skip rate limiting in test mode (unless explicitly enabled)
     if (process.env.NODE_ENV === 'test' && process.env.ENABLE_RATE_LIMITING !== 'true') {
       return next();
