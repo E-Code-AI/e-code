@@ -24,7 +24,7 @@ const OptimizedMotionProvider = lazy(() => import("@/lib/motion").then(m => ({ d
 const AnimationMonitor = lazy(() => import("@/lib/motion").then(m => ({ default: m.AnimationMonitor })));
 
 function PageLoader() {
-  return <ECodeLoading fullScreen size="lg" text="Loading page..." />;
+  return <ECodeLoading fullScreen size="lg" text="Loading..." />;
 }
 
 function AtSymbolRedirectHandler({ children }: { children: React.ReactNode }) {
@@ -129,7 +129,7 @@ function AppContent() {
   }, [authLoading]);
 
   if (authLoading && !showContent) {
-    return <div className="flex items-center justify-center min-h-screen bg-background"><ECodeLoading fullScreen size="lg" text="Initializing..." /></div>;
+    return <ECodeLoading fullScreen size="lg" text="Initializing..." />;
   }
 
   return (

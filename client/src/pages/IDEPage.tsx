@@ -104,8 +104,10 @@ export default function IDEPage() {
     enabled: !!projectId && (!!user || !!bootstrapToken),
   });
 
+  // Show loading while fetching project data
+  // Use same text as inner Suspense for consistent UX
   if (isLoadingProject) {
-    return <ECodeLoading fullScreen size="lg" text="Loading workspace..." />;
+    return <ECodeLoading fullScreen size="lg" text="Loading..." />;
   }
 
   if (!project) {
@@ -127,7 +129,7 @@ export default function IDEPage() {
     <>
       <Toaster />
       <ErrorBoundary>
-        <Suspense fallback={<ECodeLoading fullScreen size="lg" text="Loading workspace..." />}>
+        <Suspense fallback={<ECodeLoading fullScreen size="lg" text="Loading..." />}>
           <UnifiedIDELayout 
             projectId={normalizedProjectId}
             bootstrapToken={bootstrapToken}
