@@ -95,13 +95,16 @@ export default function Dashboard() {
     queryKey: ['/api/projects'],
     enabled: !!user,
     staleTime: 30000, // 30 seconds - prevent excessive refetches
-    select: (data) => {
-      // Safety check - ensure data is an array, throw error if not
-      if (!data || !Array.isArray(data)) {
+    select: (data: unknown) => {
+      // Handle paginated response format: { projects: [...], pagination: {...} }
+      const projects = (data as { projects?: ProjectWithDeployment[] })?.projects ?? data;
+      
+      // Safety check - ensure we have an array
+      if (!projects || !Array.isArray(projects)) {
         throw new Error('Invalid response: expected an array of projects');
       }
       // Sort by most recent first (updatedAt descending)
-      const sorted = [...data].sort((a, b) => {
+      const sorted = [...projects].sort((a, b) => {
         const dateA = new Date(b.updatedAt).getTime();
         const dateB = new Date(a.updatedAt).getTime();
         return dateA - dateB;
