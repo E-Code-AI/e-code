@@ -21,6 +21,7 @@ import Redis from 'ioredis';
 import { db } from '../db';
 import { rateLimitViolations } from '@shared/schema';
 import { createLogger } from '../utils/logger';
+import { isViteDevPath } from '../utils/security';
 
 const logger = createLogger('tier-rate-limiter');
 
@@ -185,31 +186,9 @@ export function createTierRateLimitMiddleware(limitType: LimitType | 'streaming'
     }
     
     // ✅ PRODUCTION FIX (Dec 10, 2025): Skip rate limiting for static assets
-    // Problem: Rate limiter was blocking /assets/* requests in production
-    // Solution: Only rate limit API routes, skip all static files
-    // ✅ FIX (Dec 19, 2025): Also skip Vite dev server paths to prevent module loading failures
+    // ✅ FIX (Dec 19, 2025): Use centralized isViteDevPath helper to prevent module loading failures
     const path = req.path || req.originalUrl || '';
-    if (path.startsWith('/assets/') || 
-        path.startsWith('/static/') ||
-        path.startsWith('/src/') ||           // Vite source files
-        path.startsWith('/@vite/') ||         // Vite client
-        path.startsWith('/@fs/') ||           // Vite file system access
-        path.startsWith('/@id/') ||           // Vite module IDs
-        path.startsWith('/@react-refresh') || // React Fast Refresh
-        path.startsWith('/node_modules/') ||  // Node modules
-        path.endsWith('.ts') ||               // TypeScript files
-        path.endsWith('.tsx') ||              // TypeScript React files
-        path.endsWith('.js') || 
-        path.endsWith('.mjs') ||
-        path.endsWith('.css') || 
-        path.endsWith('.png') || 
-        path.endsWith('.jpg') || 
-        path.endsWith('.svg') || 
-        path.endsWith('.ico') ||
-        path.endsWith('.woff') ||
-        path.endsWith('.woff2') ||
-        path.endsWith('.ttf') ||
-        path.endsWith('.map')) {
+    if (isViteDevPath(path)) {
       return next();
     }
 
