@@ -1,6 +1,7 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 import { handleUnauthorized } from "./auth-redirect";
 import { createIDBPersister } from "./query-persister";
+import { emitRateLimitEvent, type RateLimitInfo } from "@/components/ide/RateLimitExperience";
 
 export const queryPersister = createIDBPersister();
 
@@ -9,18 +10,7 @@ interface HttpError extends Error {
   isRateLimit?: boolean;
 }
 
-export interface RateLimitInfo {
-  tier: string;
-  limit: number;
-  retryAfter: number;
-  message: string;
-  upgradeUrl: string;
-}
-
-export function emitRateLimitEvent(info: RateLimitInfo) {
-  const event = new CustomEvent('rateLimit', { detail: info });
-  window.dispatchEvent(event);
-}
+export type { RateLimitInfo };
 
 async function handleRateLimitResponse(res: Response): Promise<RateLimitInfo | null> {
   try {
