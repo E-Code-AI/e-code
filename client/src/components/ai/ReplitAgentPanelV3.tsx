@@ -1918,6 +1918,29 @@ export function ReplitAgentPanelV3({
 
   const isCompactMode = mode === 'mobile' || mode === 'tablet';
 
+  // ✅ FIX (Dec 19, 2025): Unified loading state during initialization
+  // Show single loading indicator instead of multiple spinners when bootstrapping
+  const isInitializing = isBootstrapping && !conversationId;
+  
+  if (isInitializing && isCompactMode) {
+    return (
+      <div className={cn("h-full flex flex-col bg-background items-center justify-center", className)} data-testid="replit-agent-panel-v3-loading">
+        <div className="flex flex-col items-center gap-3 text-center px-4">
+          <div className="relative">
+            <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+              <Sparkles className="h-6 w-6 text-primary animate-pulse" />
+            </div>
+            <Loader2 className="h-5 w-5 text-primary animate-spin absolute -bottom-1 -right-1" />
+          </div>
+          <div className="space-y-1">
+            <p className="text-sm font-medium">Initializing Agent</p>
+            <p className="text-xs text-muted-foreground">Setting up your workspace...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={cn("h-full flex flex-col bg-background", className)} data-testid="replit-agent-panel-v3">
       {/* Header - Optimized for all screen sizes */}
