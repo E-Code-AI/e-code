@@ -188,8 +188,10 @@ export function useAutonomousChatIntegration({
   const hasConnectedRef = useRef(false);
   const hasAddedUserPromptRef = useRef(false);
   const effectRanRef = useRef(false);
+  const layoutEffectConnectedRef = useRef(false);
   const fallbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isMountedRef = useRef(true);
+  const connectFnRef = useRef<(() => void) | null>(null);
   
   // Reconnection logic with exponential backoff
   const reconnectAttemptRef = useRef(0);
@@ -274,6 +276,158 @@ export function useAutonomousChatIntegration({
     } catch (e) { /* ignore */ }
     console.warn('[AutonomousChatIntegration] 🧪 DIAGNOSTIC: useEffect with [] deps EXECUTED (async, after paint)');
   }, []);
+
+  // Decode bootstrap token to extract session info (memoized for use in both effects)
+  const decodeTokenFn = useCallback((token: string) => {
+    try {
+      const parts = token.split('.');
+      if (parts.length !== 3) return null;
+      
+      let base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+      const pad = base64.length % 4;
+      if (pad) {
+        if (pad === 1) return null;
+        base64 += new Array(5 - pad).join('=');
+      }
+      
+      const payload = JSON.parse(atob(base64));
+      return {
+        projectId: payload.projectId,
+        sessionId: payload.sessionId,
+        userId: payload.userId
+      };
+    } catch {
+      return null;
+    }
+  }, []);
+
+  // 🚀 AGGRESSIVE FALLBACK (useLayoutEffect): Attempt WebSocket connection synchronously
+  // This runs BEFORE useEffect, ensuring connection happens even if useEffect is delayed
+  // Critical for mobile WebView where useEffect may not run reliably
+  useLayoutEffect(() => {
+    // Only attempt if all conditions are met
+    if (!enabled || !conversationId || !projectId) {
+      return;
+    }
+    
+    // Skip if already connected or connecting
+    if (hasConnectedRef.current || layoutEffectConnectedRef.current) {
+      return;
+    }
+    
+    // Skip if WebSocket is already open
+    if (wsRef.current?.readyState === WebSocket.OPEN || wsRef.current?.readyState === WebSocket.CONNECTING) {
+      return;
+    }
+    
+    console.warn('[AutonomousChatIntegration] 🚀 useLayoutEffect: Attempting AGGRESSIVE WebSocket connection (before paint)');
+    
+    try {
+      sessionStorage.setItem('autonomousChatEffect_layoutEffectConnect', String(Date.now()));
+    } catch (e) { /* ignore */ }
+    
+    // Resolve projectId/sessionId from token if needed
+    let wsProjectId = projectId;
+    let wsSessionId = sessionId;
+    
+    if (bootstrapToken && (!wsProjectId || !wsSessionId)) {
+      const tokenData = decodeTokenFn(bootstrapToken);
+      if (tokenData) {
+        wsProjectId = wsProjectId || tokenData.projectId;
+        wsSessionId = wsSessionId || tokenData.sessionId;
+      }
+    }
+    
+    if (!wsProjectId) {
+      console.warn('[AutonomousChatIntegration] 🚀 useLayoutEffect: No projectId, skipping');
+      return;
+    }
+    
+    // Mark as attempting connection
+    layoutEffectConnectedRef.current = true;
+    
+    // Initialize build store
+    useAutonomousBuildStore.getState().startBuild({ 
+      projectId: wsProjectId, 
+      sessionId: wsSessionId || undefined, 
+      conversationId 
+    });
+    
+    // Build WebSocket URL
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const params = new URLSearchParams();
+    params.set('projectId', String(wsProjectId));
+    if (wsSessionId) params.set('sessionId', wsSessionId);
+    if (bootstrapToken) params.set('bootstrap', bootstrapToken);
+    
+    const wsUrl = `${protocol}//${window.location.host}/ws/agent?${params.toString()}`;
+    
+    console.warn('[AutonomousChatIntegration] 🚀 useLayoutEffect: Connecting to:', wsUrl.substring(0, 80) + '...');
+    
+    const ws = new WebSocket(wsUrl);
+    wsRef.current = ws;
+    
+    ws.onopen = () => {
+      console.warn('[AutonomousChatIntegration] 🚀 useLayoutEffect: WebSocket CONNECTED successfully!');
+      hasConnectedRef.current = true;
+      try {
+        sessionStorage.setItem('autonomousChatEffect_layoutEffectConnected', String(Date.now()));
+      } catch (e) { /* ignore */ }
+    };
+    
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        handleProgressEventRef.current?.(data);
+      } catch (err) {
+        console.warn('[AutonomousChatIntegration] 🚀 useLayoutEffect: Failed to parse message:', err);
+      }
+    };
+    
+    ws.onerror = (error) => {
+      console.error('[AutonomousChatIntegration] 🚀 useLayoutEffect: WebSocket error:', error);
+    };
+    
+    ws.onclose = (event) => {
+      console.warn('[AutonomousChatIntegration] 🚀 useLayoutEffect: WebSocket closed:', event.code, event.reason);
+      hasConnectedRef.current = false;
+      wsRef.current = null;
+      
+      // Emit disconnected event
+      AgentEventBus.emit('agent:disconnected', { code: event.code, reason: event.reason });
+      
+      // Attempt reconnection with backoff (same logic as main effect)
+      if (event.code !== 1000 && isMountedRef.current && reconnectAttemptRef.current < maxReconnectAttempts) {
+        reconnectAttemptRef.current++;
+        const delay = Math.min(baseReconnectDelayMs * Math.pow(2, reconnectAttemptRef.current - 1), 30000);
+        console.log(`[AutonomousChatIntegration] 🚀 Scheduling reconnect in ${delay}ms`);
+        
+        if (reconnectTimeoutRef.current) {
+          clearTimeout(reconnectTimeoutRef.current);
+        }
+        
+        reconnectTimeoutRef.current = setTimeout(() => {
+          if (isMountedRef.current && connectFnRef.current) {
+            connectFnRef.current();
+          }
+        }, delay);
+      }
+    };
+    
+    return () => {
+      // Cleanup on unmount or dependency change
+      layoutEffectConnectedRef.current = false;
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
+      }
+      if (wsRef.current) {
+        wsRef.current.close(1000, 'useLayoutEffect cleanup');
+        wsRef.current = null;
+      }
+      hasConnectedRef.current = false;
+    };
+  }, [enabled, conversationId, projectId, sessionId, bootstrapToken, decodeTokenFn, maxReconnectAttempts, baseReconnectDelayMs]);
 
   // ✅ CRITICAL FIX (Dec 13, 2025): Add user's prompt IMMEDIATELY on hook init
   // This ensures the prompt is visible BEFORE WebSocket connects, not after
@@ -1217,8 +1371,15 @@ export function useAutonomousChatIntegration({
       conversationId,
       projectId,
       hasBootstrapToken: !!bootstrapToken,
+      layoutEffectAlreadyConnected: layoutEffectConnectedRef.current,
       timestamp: effectTimestamp
     });
+    
+    // 🚀 Skip if useLayoutEffect already established connection
+    if (layoutEffectConnectedRef.current || hasConnectedRef.current) {
+      console.warn('[AutonomousChatIntegration] ⚡ Skipping useEffect - useLayoutEffect already connected');
+      return;
+    }
     
     if (!enabled) {
       console.warn('[AutonomousChatIntegration] ❌ Skipping - not enabled');
