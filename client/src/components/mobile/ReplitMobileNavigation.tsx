@@ -1,4 +1,4 @@
-import { memo, useCallback } from 'react';
+import { memo, useCallback, useRef, useState, useEffect } from 'react';
 import { 
   Play, 
   Square, 
@@ -20,7 +20,8 @@ import {
   Shield,
   HardDrive,
   Search,
-  Settings
+  Settings,
+  LayoutGrid
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -100,6 +101,9 @@ export const ReplitMobileNavigation = memo(function ReplitMobileNavigation({
   onAddTab,
   onTabSwitcherOpen,
 }: ReplitMobileNavigationProps) {
+  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [isLongPressing, setIsLongPressing] = useState(false);
+
   const handleTabClick = useCallback((tabId: MobileTab) => {
     if ('vibrate' in navigator) {
       navigator.vibrate(10);
@@ -108,11 +112,40 @@ export const ReplitMobileNavigation = memo(function ReplitMobileNavigation({
   }, [onTabChange]);
 
   const handleOpenTabClick = useCallback((tabId: string) => {
+    if (isLongPressing) {
+      setIsLongPressing(false);
+      return;
+    }
     if ('vibrate' in navigator) {
       navigator.vibrate(10);
     }
     onOpenTabSelect?.(tabId);
-  }, [onOpenTabSelect]);
+  }, [onOpenTabSelect, isLongPressing]);
+
+  const handleLongPressStart = useCallback(() => {
+    longPressTimerRef.current = setTimeout(() => {
+      setIsLongPressing(true);
+      if ('vibrate' in navigator) {
+        navigator.vibrate([15, 10, 15]);
+      }
+      onTabSwitcherOpen?.();
+    }, 500);
+  }, [onTabSwitcherOpen]);
+
+  const handleLongPressEnd = useCallback(() => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (longPressTimerRef.current) {
+        clearTimeout(longPressTimerRef.current);
+      }
+    };
+  }, []);
 
   const handlePlayStop = useCallback(() => {
     if ('vibrate' in navigator) {
@@ -191,12 +224,13 @@ export const ReplitMobileNavigation = memo(function ReplitMobileNavigation({
               ? "bg-gray-900 dark:bg-white shadow-lg" 
               : "bg-[#B8A5FF] shadow-lg shadow-purple-500/25"
           )}
+          aria-label={isRunning ? "Stop running" : "Run project"}
           data-testid="button-play-stop"
         >
           {isRunning ? (
-            <Square className="h-4 w-4 text-white dark:text-gray-900" fill="currentColor" />
+            <Square className="h-4 w-4 text-white dark:text-gray-900" fill="currentColor" aria-hidden="true" />
           ) : (
-            <Play className="h-5 w-5 text-white ml-0.5" fill="currentColor" />
+            <Play className="h-5 w-5 text-white ml-0.5" fill="currentColor" aria-hidden="true" />
           )}
         </button>
 
@@ -206,6 +240,21 @@ export const ReplitMobileNavigation = memo(function ReplitMobileNavigation({
         >
           {hasOpenTabs ? (
             <>
+              {/* Dedicated tab switcher button - always visible when tabs exist */}
+              <button
+                onClick={handleTabSwitcherOpen}
+                className={cn(
+                  "relative flex items-center justify-center w-9 h-9 rounded-full transition-all duration-150",
+                  "active:scale-95 active:bg-gray-200 dark:active:bg-[#3A3A3A] touch-manipulation"
+                )}
+                aria-label="Open tab switcher"
+                data-testid="button-tab-switcher"
+              >
+                <LayoutGrid className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+              </button>
+
+              <div className="w-px h-5 bg-gray-300 dark:bg-gray-600 mx-0.5" />
+
               {visibleTabs.map((tab) => {
                 const isActive = activeOpenTabId === tab.id;
                 
@@ -213,12 +262,16 @@ export const ReplitMobileNavigation = memo(function ReplitMobileNavigation({
                   <button
                     key={tab.id}
                     onClick={() => handleOpenTabClick(tab.id)}
-                    onDoubleClick={handleTabSwitcherOpen}
+                    onTouchStart={handleLongPressStart}
+                    onTouchEnd={handleLongPressEnd}
+                    onTouchCancel={handleLongPressEnd}
                     className={cn(
                       "relative flex items-center justify-center w-11 h-9 rounded-full transition-all duration-150",
                       "active:scale-95 touch-manipulation",
                       isActive && "bg-white dark:bg-[#3A3A3A] shadow-sm"
                     )}
+                    aria-label={`Switch to ${tab.name} tab`}
+                    aria-pressed={isActive}
                     data-testid={`tab-${tab.id}`}
                   >
                     {renderTabIcon(tab.icon, isActive)}
@@ -226,6 +279,7 @@ export const ReplitMobileNavigation = memo(function ReplitMobileNavigation({
                     {isActive && (
                       <span 
                         className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 bg-[#7C65C1] rounded-full"
+                        aria-hidden="true"
                       />
                     )}
                   </button>
@@ -239,6 +293,7 @@ export const ReplitMobileNavigation = memo(function ReplitMobileNavigation({
                     "relative flex items-center justify-center w-11 h-9 rounded-full transition-all duration-150",
                     "active:scale-95 active:bg-gray-200 dark:active:bg-[#3A3A3A] touch-manipulation"
                   )}
+                  aria-label={`Show ${openTabs.length - 3} more tabs`}
                   data-testid="button-more-tabs"
                 >
                   <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
@@ -278,7 +333,7 @@ export const ReplitMobileNavigation = memo(function ReplitMobileNavigation({
           
           {showAddButton && (
             <>
-              <div className="w-px h-5 bg-gray-300 dark:bg-gray-600 mx-1" />
+              <div className="w-px h-5 bg-gray-300 dark:bg-gray-600 mx-1" aria-hidden="true" />
               
               <button
                 onClick={handleAddTab}
@@ -286,9 +341,10 @@ export const ReplitMobileNavigation = memo(function ReplitMobileNavigation({
                   "relative flex items-center justify-center w-11 h-9 rounded-full transition-all duration-150",
                   "active:scale-95 active:bg-gray-200 dark:active:bg-[#3A3A3A] touch-manipulation"
                 )}
+                aria-label="Add new tab"
                 data-testid="button-add-tab"
               >
-                <Plus className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                <Plus className="h-5 w-5 text-gray-500 dark:text-gray-400" aria-hidden="true" />
               </button>
             </>
           )}
@@ -300,9 +356,10 @@ export const ReplitMobileNavigation = memo(function ReplitMobileNavigation({
             "flex items-center justify-center w-11 h-11 rounded-xl transition-all duration-150",
             "active:scale-95 active:bg-gray-100 dark:active:bg-[#2A2A2A] touch-manipulation"
           )}
+          aria-label="More options"
           data-testid="button-more"
         >
-          <MoreVertical className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+          <MoreVertical className="h-5 w-5 text-gray-600 dark:text-gray-400" aria-hidden="true" />
         </button>
       </nav>
     </div>
