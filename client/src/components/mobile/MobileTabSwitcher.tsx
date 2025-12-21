@@ -228,12 +228,15 @@ export const MobileTabSwitcher = memo(function MobileTabSwitcher({
           ) : (
             <div className="grid grid-cols-2 gap-3">
               {filteredTabs.map((tab, index) => (
-                <button
+                <div
                   key={tab.id}
-                  ref={index === 0 ? firstFocusableRef : undefined}
+                  role="button"
+                  tabIndex={0}
+                  ref={index === 0 ? firstFocusableRef as React.RefObject<HTMLDivElement> : undefined}
                   onClick={() => handleTabSelect(tab.id)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleTabSelect(tab.id); }}
                   className={cn(
-                    "relative flex flex-col items-center justify-center p-4 rounded-xl border transition-all",
+                    "relative flex flex-col items-center justify-center p-4 rounded-xl border transition-all cursor-pointer",
                     "active:scale-95 touch-manipulation min-h-[100px]",
                     activeTabId === tab.id
                       ? "bg-primary/10 border-primary"
@@ -243,14 +246,17 @@ export const MobileTabSwitcher = memo(function MobileTabSwitcher({
                   aria-current={activeTabId === tab.id ? 'true' : undefined}
                   data-testid={`tab-card-${tab.id}`}
                 >
-                  <button
+                  <div
+                    role="button"
+                    tabIndex={0}
                     onClick={(e) => handleTabClose(e, tab.id)}
-                    className="absolute top-2 right-2 p-1 rounded-full hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleTabClose(e, tab.id); }}
+                    className="absolute top-2 right-2 p-1 rounded-full hover:bg-destructive/10 text-muted-foreground hover:text-destructive cursor-pointer"
                     aria-label={`Close ${tab.name} tab`}
                     data-testid={`button-close-tab-${tab.id}`}
                   >
                     <X className="h-3 w-3" aria-hidden="true" />
-                  </button>
+                  </div>
                   <div className={cn(
                     "flex items-center justify-center w-10 h-10 rounded-lg mb-2",
                     activeTabId === tab.id ? "text-primary" : "text-muted-foreground"
@@ -263,7 +269,7 @@ export const MobileTabSwitcher = memo(function MobileTabSwitcher({
                   )}>
                     {tab.name}
                   </span>
-                </button>
+                </div>
               ))}
             </div>
           )}

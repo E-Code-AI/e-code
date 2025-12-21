@@ -402,6 +402,11 @@ export function ReplitAgentPanelV3({
   const { 
     sendBuildModeSelection, 
     requestPlanChange, 
+    manualReconnect,
+    isConnected: wsIsConnected,
+    connectionError,
+    reconnectAttempt,
+    maxReconnectAttempts,
     effectiveConversationId,
     isUsingTempConversationId 
   } = useAutonomousChatIntegration({
@@ -2129,6 +2134,47 @@ export function ReplitAgentPanelV3({
         <ConversationSyncIndicator
           lastSyncedAt={conversationId ? getLastSyncedAt(conversationId) : undefined}
         />
+        
+        {/* Connection Error/Reconnecting Banner with Retry Button */}
+        {(connectionError || (reconnectAttempt > 0 && reconnectAttempt < maxReconnectAttempts)) && (
+          <div 
+            className={cn(
+              "mx-3 sm:mx-4 mb-3 px-4 py-3 rounded-lg flex items-center justify-between gap-3",
+              connectionError 
+                ? "bg-destructive/10 border border-destructive/20" 
+                : "bg-warning/10 border border-warning/20"
+            )}
+            data-testid="connection-error-banner"
+          >
+            <div className={cn(
+              "flex items-center gap-2 text-sm",
+              connectionError ? "text-destructive" : "text-warning"
+            )}>
+              {reconnectAttempt > 0 && reconnectAttempt < maxReconnectAttempts ? (
+                <RefreshCw className="h-4 w-4 flex-shrink-0 animate-spin" />
+              ) : (
+                <AlertCircle className="h-4 w-4 flex-shrink-0" />
+              )}
+              <span>
+                {reconnectAttempt > 0 && reconnectAttempt < maxReconnectAttempts
+                  ? `Reconnecting... (${reconnectAttempt}/${maxReconnectAttempts})`
+                  : connectionError}
+              </span>
+            </div>
+            {connectionError && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={manualReconnect}
+                className="flex-shrink-0 h-7 px-3 text-xs"
+                data-testid="button-retry-connection"
+              >
+                <RefreshCw className="h-3 w-3 mr-1" />
+                Retry
+              </Button>
+            )}
+          </div>
+        )}
         
         {/* Effort-based Pricing Display - OUTSIDE ScrollArea to prevent virtualization issues */}
         {/* ✅ FIX (Dec 14, 2025): Moved outside ScrollArea so panel stays open on conversation changes */}
