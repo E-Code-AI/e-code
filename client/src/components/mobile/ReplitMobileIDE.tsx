@@ -4,8 +4,11 @@ import { ReplitMobileHeader } from './ReplitMobileHeader';
 import { ReplitMobileNavigation, type MobileTab } from './ReplitMobileNavigation';
 import { ReplitMobileInputBar } from './ReplitMobileInputBar';
 import { ReplitToolsSheet } from './ReplitToolsSheet';
+import { MobileMoreMenu } from './MobileMoreMenu';
 import { useLocation } from 'wouter';
 import { cn } from '@/lib/utils';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { History } from 'lucide-react';
 
 const ReplitAgentIcon = memo(({ className }: { className?: string }) => (
   <svg viewBox="0 0 24 24" className={className} fill="currentColor">
@@ -40,6 +43,8 @@ export const ReplitMobileIDE = memo(function ReplitMobileIDE({
   const [activeTab, setActiveTab] = useState<MobileTab>('agent');
   const [isRunning, setIsRunning] = useState(false);
   const [showToolsSheet, setShowToolsSheet] = useState(false);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [showHistorySheet, setShowHistorySheet] = useState(false);
   const [buildMode, setBuildMode] = useState<'build' | 'edit' | 'chat'>('build');
 
   const handleTabChange = useCallback((tab: MobileTab) => {
@@ -65,13 +70,24 @@ export const ReplitMobileIDE = memo(function ReplitMobileIDE({
   }, [navigate]);
 
   const handleHistory = useCallback(() => {
+    setShowHistorySheet(true);
+    if ('vibrate' in navigator) {
+      navigator.vibrate(10);
+    }
   }, []);
 
   const handleNewTab = useCallback(() => {
     setShowToolsSheet(true);
+    if ('vibrate' in navigator) {
+      navigator.vibrate(10);
+    }
   }, []);
 
   const handleMore = useCallback(() => {
+    setShowMoreMenu(true);
+    if ('vibrate' in navigator) {
+      navigator.vibrate(10);
+    }
   }, []);
 
   const handleToolSelect = useCallback((toolId: string) => {
@@ -171,6 +187,42 @@ export const ReplitMobileIDE = memo(function ReplitMobileIDE({
         onOpenChange={setShowToolsSheet}
         onToolSelect={handleToolSelect}
       />
+
+      <MobileMoreMenu
+        projectId={projectId || 0}
+        isOpen={showMoreMenu}
+        onClose={() => setShowMoreMenu(false)}
+        onOpenHistory={() => {
+          setShowMoreMenu(false);
+          setShowHistorySheet(true);
+        }}
+        onOpenSettings={() => {
+          setShowMoreMenu(false);
+          navigate('/settings');
+        }}
+        onOpenDeploy={() => {
+          setShowMoreMenu(false);
+          if (projectId) navigate(`/ide/${projectId}/deploy`);
+        }}
+      />
+
+      <Sheet open={showHistorySheet} onOpenChange={setShowHistorySheet}>
+        <SheetContent side="bottom" className="h-[70vh] rounded-t-2xl">
+          <SheetHeader>
+            <SheetTitle className="flex items-center gap-2">
+              <History className="h-5 w-5" />
+              Session History
+            </SheetTitle>
+          </SheetHeader>
+          <div className="flex-1 flex items-center justify-center py-12">
+            <div className="text-center text-gray-500 dark:text-gray-400">
+              <History className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p className="text-sm">No history available yet</p>
+              <p className="text-xs mt-1">Your session checkpoints will appear here</p>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 });
