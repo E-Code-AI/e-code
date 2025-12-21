@@ -67,6 +67,7 @@ const EnhancedMobileTerminal = lazy(() => import('@/components/mobile/EnhancedMo
 const MobilePreviewPanel = lazy(() => import('@/components/mobile/MobilePreviewPanel').then(mod => ({ default: mod.MobilePreviewPanel })));
 const MobileMoreMenu = lazy(() => import('@/components/mobile/MobileMoreMenu').then(mod => ({ default: mod.MobileMoreMenu })));
 const MobileSecurityPanel = lazy(() => import('@/components/mobile/MobileSecurityPanel').then(mod => ({ default: mod.MobileSecurityPanel })));
+const MobileTabSwitcher = lazy(() => import('@/components/mobile/MobileTabSwitcher').then(mod => ({ default: mod.MobileTabSwitcher })));
 
 const CommandPalette = lazy(() => import('@/components/CommandPalette').then(mod => ({ default: mod.CommandPalette })));
 const GlobalSearch = lazy(() => import('@/components/GlobalSearch').then(mod => ({ default: mod.GlobalSearch })));
@@ -246,6 +247,18 @@ function UnifiedIDELayout({
   const [showSettingsPanel, setShowSettingsPanel] = useState(false);
   const [showSecurityPanel, setShowSecurityPanel] = useState(false);
   const [showMobileMoreMenu, setShowMobileMoreMenu] = useState(false);
+  const [showTabSwitcher, setShowTabSwitcher] = useState(false);
+  
+  // Open tabs for mobile navigation - tracks which tools are open as tabs
+  interface OpenTab {
+    id: string;
+    name: string;
+    icon: string;
+  }
+  const [openTabs, setOpenTabs] = useState<OpenTab[]>([
+    { id: 'agent', name: 'Agent', icon: 'agent' },
+  ]);
+  const [activeOpenTabId, setActiveOpenTabId] = useState('agent');
   
   // Mobile agent input handlers - exposed from ReplitAgentPanelV3 to ReplitMobileInputBar
   const [mobileAgentHandlers, setMobileAgentHandlers] = useState<ExternalInputHandlers | null>(null);
@@ -264,6 +277,86 @@ function UnifiedIDELayout({
     setter(false);
     setActiveActivityItem('files');
   }, [setActiveActivityItem]);
+
+  // Tool name mapping for display
+  const toolNameMap: Record<string, string> = {
+    agent: 'Agent',
+    preview: 'Preview',
+    deploy: 'Deploy',
+    console: 'Console',
+    database: 'Database',
+    git: 'Git',
+    secrets: 'Secrets',
+    auth: 'Auth',
+    publishing: 'Publishing',
+    assistant: 'Assistant',
+    files: 'Files',
+    search: 'Search',
+    multiplayer: 'Multiplayer',
+    integrations: 'Integrations',
+    developer: 'Developer',
+    'app-storage': 'App Storage',
+    settings: 'Settings',
+    history: 'History',
+    workflows: 'Workflows',
+    extensions: 'Extensions',
+  };
+
+  // Add a new tab when tool is selected from tools sheet
+  const handleAddOpenTab = useCallback((toolId: string) => {
+    const existingTab = openTabs.find(t => t.id === toolId);
+    if (existingTab) {
+      setActiveOpenTabId(toolId);
+    } else {
+      const newTab: OpenTab = {
+        id: toolId,
+        name: toolNameMap[toolId] || toolId,
+        icon: toolId,
+      };
+      setOpenTabs(prev => [...prev, newTab]);
+      setActiveOpenTabId(toolId);
+    }
+    
+    // Also map to legacy mobileActiveTab for panel rendering
+    if (['preview', 'agent', 'deploy'].includes(toolId)) {
+      setMobileActiveTab(toolId as MobileTab);
+    }
+  }, [openTabs]);
+
+  // Close an open tab
+  const handleCloseOpenTab = useCallback((tabId: string) => {
+    setOpenTabs(prev => {
+      const newTabs = prev.filter(t => t.id !== tabId);
+      if (activeOpenTabId === tabId && newTabs.length > 0) {
+        setActiveOpenTabId(newTabs[newTabs.length - 1].id);
+      }
+      return newTabs;
+    });
+  }, [activeOpenTabId]);
+
+  // Select an open tab
+  const handleSelectOpenTab = useCallback((tabId: string) => {
+    setActiveOpenTabId(tabId);
+    // Map to legacy mobileActiveTab for panel rendering
+    if (['preview', 'agent', 'deploy'].includes(tabId)) {
+      setMobileActiveTab(tabId as MobileTab);
+    }
+  }, []);
+
+  // Handle quick access from tab switcher
+  const handleQuickAccess = useCallback((toolId: string) => {
+    switch (toolId) {
+      case 'secrets':
+        setShowSecretsPanel(true);
+        break;
+      case 'database':
+        setShowReplitDB(true);
+        break;
+      case 'auth':
+        // Handle auth panel
+        break;
+    }
+  }, []);
 
   // Electron Desktop Menu Event Handlers (5.1 IPC Handlers)
   useElectronMenuEvents({
@@ -650,6 +743,11 @@ function UnifiedIDELayout({
           isPanelOpen={showToolsSheet}
           onPanelToggle={() => setShowToolsSheet(!showToolsSheet)}
           onMorePress={() => setShowMobileMoreMenu(true)}
+          openTabs={openTabs}
+          activeOpenTabId={activeOpenTabId}
+          onOpenTabSelect={handleSelectOpenTab}
+          onAddTab={() => setShowToolsSheet(true)}
+          onTabSwitcherOpen={() => setShowTabSwitcher(true)}
         />
 
         {/* Mobile Panel Overlays - Fixed positioned panels that appear over mobile content */}
@@ -907,6 +1005,34 @@ function UnifiedIDELayout({
             />
           </Suspense>
         )}
+
+        {/* Mobile Tools Sheet */}
+        <ReplitToolsSheet
+          open={showToolsSheet}
+          onClose={() => setShowToolsSheet(false)}
+          onSelectTool={(tool) => {
+            handleAddTool(tool);
+            handleAddOpenTab(tool);
+            setShowToolsSheet(false);
+          }}
+        />
+
+        {/* Mobile Tab Switcher */}
+        <Suspense fallback={null}>
+          <MobileTabSwitcher
+            isOpen={showTabSwitcher}
+            onClose={() => setShowTabSwitcher(false)}
+            openTabs={openTabs}
+            activeTabId={activeOpenTabId}
+            onTabSelect={handleSelectOpenTab}
+            onTabClose={handleCloseOpenTab}
+            onNewTab={() => {
+              setShowTabSwitcher(false);
+              setShowToolsSheet(true);
+            }}
+            onQuickAccess={handleQuickAccess}
+          />
+        </Suspense>
       </div>
     );
   }
@@ -1037,6 +1163,11 @@ function UnifiedIDELayout({
             isPanelOpen={showToolsSheet}
             onPanelToggle={() => setShowToolsSheet(!showToolsSheet)}
             onMorePress={() => setShowMobileMoreMenu(true)}
+            openTabs={openTabs}
+            activeOpenTabId={activeOpenTabId}
+            onOpenTabSelect={handleSelectOpenTab}
+            onAddTab={() => setShowToolsSheet(true)}
+            onTabSwitcherOpen={() => setShowTabSwitcher(true)}
           />
         </div>
 
@@ -1270,6 +1401,34 @@ function UnifiedIDELayout({
             />
           </Suspense>
         )}
+
+        {/* Tablet Tools Sheet */}
+        <ReplitToolsSheet
+          open={showToolsSheet}
+          onClose={() => setShowToolsSheet(false)}
+          onSelectTool={(tool) => {
+            handleAddTool(tool);
+            handleAddOpenTab(tool);
+            setShowToolsSheet(false);
+          }}
+        />
+
+        {/* Tablet Tab Switcher */}
+        <Suspense fallback={null}>
+          <MobileTabSwitcher
+            isOpen={showTabSwitcher}
+            onClose={() => setShowTabSwitcher(false)}
+            openTabs={openTabs}
+            activeTabId={activeOpenTabId}
+            onTabSelect={handleSelectOpenTab}
+            onTabClose={handleCloseOpenTab}
+            onNewTab={() => {
+              setShowTabSwitcher(false);
+              setShowToolsSheet(true);
+            }}
+            onQuickAccess={handleQuickAccess}
+          />
+        </Suspense>
       </div>
     );
   }
@@ -1492,9 +1651,28 @@ function UnifiedIDELayout({
         onClose={() => setShowToolsSheet(false)}
         onSelectTool={(tool) => {
           handleAddTool(tool);
+          // Also add to open tabs for mobile navigation (harmless on desktop)
+          handleAddOpenTab(tool);
           setShowToolsSheet(false);
         }}
       />
+      
+      {/* Mobile Tab Switcher Overlay */}
+      <Suspense fallback={null}>
+        <MobileTabSwitcher
+          isOpen={showTabSwitcher}
+          onClose={() => setShowTabSwitcher(false)}
+          openTabs={openTabs}
+          activeTabId={activeOpenTabId}
+          onTabSelect={handleSelectOpenTab}
+          onTabClose={handleCloseOpenTab}
+          onNewTab={() => {
+            setShowTabSwitcher(false);
+            setShowToolsSheet(true);
+          }}
+          onQuickAccess={handleQuickAccess}
+        />
+      </Suspense>
       
       <Suspense fallback={null}>
         <CommandPalette
