@@ -16,6 +16,7 @@ E-Code is an AI-assisted web-based IDE designed for rapid prototyping, education
 - **Monaco Editor:** Safe disposal pattern with optional chaining (`d?.dispose?.()`) for all enhancement classes
 - **Lazy Loading:** Use `instrumentedLazy()` instead of `lazy()` for pages - adds retry logic (3 attempts, 1s delay) for transient Vite HMR failures
 - **Documentation:** Ruthlessly remove obsolete/misleading docs - maintain technical honesty
+- **WebSocket Upgrade:** Mark sockets as handled BEFORE async auth checks in central dispatcher to prevent race conditions with upgrade guard's setImmediate cleanup
 
 ## System Architecture
 
