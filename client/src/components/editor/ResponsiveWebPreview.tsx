@@ -71,6 +71,7 @@ export function ResponsiveWebPreview({
 
   // Get preview URL from the backend - REAL BACKEND
   // ✅ FIX (Dec 17, 2025): Proper error handling and race condition prevention
+  // ✅ FIX (Dec 21, 2025): Custom queryFn to properly pass projectId as query parameter
   const { 
     data: previewData, 
     isLoading: isQueryLoading,
@@ -79,6 +80,16 @@ export function ResponsiveWebPreview({
     refetch: refetchPreview 
   } = useQuery<{ previewUrl: string; status?: string }>({
     queryKey: ['/api/preview/url', projectId],
+    queryFn: async () => {
+      const response = await fetch(`/api/preview/url?projectId=${projectId}`, {
+        credentials: 'include'
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Preview error: ${response.status}`);
+      }
+      return response.json();
+    },
     enabled: !!projectId && (typeof projectId === 'string' ? projectId.length > 0 : projectId > 0) && isOnline,
     staleTime: 2000,
     retry: 3,

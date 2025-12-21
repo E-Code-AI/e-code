@@ -113,7 +113,13 @@ export class FilesRouter {
       try {
         const projectId = req.params.projectId;
         const files = await this.storage.getProjectFiles(projectId);
-        res.json(files);
+        // Transform files to include 'type' field for frontend compatibility
+        // Frontend expects type: "file" | "folder", but DB stores isDirectory: boolean
+        const transformedFiles = files.map(file => ({
+          ...file,
+          type: file.isDirectory ? "folder" : "file"
+        }));
+        res.json(transformedFiles);
       } catch (error) {
         console.error('Error fetching files:', error);
         res.status(500).json({ 
