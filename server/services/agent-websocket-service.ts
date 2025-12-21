@@ -246,7 +246,7 @@ class AgentWebSocketService {
    * Called by the central dispatcher after socket is already marked as handled
    */
   private handleAgentUpgrade(request: IncomingMessage, socket: Socket, head: Buffer): void {
-      
+    try {
       // PRODUCTION SECURITY: Origin validation (prevents CSRF attacks)
       const origin = request.headers.origin;
       const host = request.headers.host;
@@ -273,11 +273,10 @@ class AgentWebSocketService {
       const token = url.searchParams.get('bootstrap');
       
       // Parse cookies for session-based auth
-      // Note: Session cookie name is 'ecode.sid' (configured in server/middleware/passport-setup.ts)
       const cookies = this.parseCookies(request.headers.cookie || '');
       const hasSessionCookie = !!cookies['ecode.sid'];
       
-      logger.info('[Agent WebSocket] Upgrade handler: projectId=' + projectId + ', sessionId=' + sessionId + ', hasToken=' + !!token + ', hasSessionCookie=' + hasSessionCookie);
+      logger.info(`[Agent WebSocket] Upgrade handler: projectId=${projectId}, sessionId=${sessionId}, hasToken=${!!token}, hasSessionCookie=${hasSessionCookie}`);
       
       // Validate parameters
       if (!projectId || !sessionId) {
@@ -303,11 +302,11 @@ class AgentWebSocketService {
             return;
           }
           
-          logger.info(`[Agent WebSocket] ✅ Token validated for project ${projectId}, session ${sessionId}`);
+          logger.info(`[Agent WebSocket] Token validated for project ${projectId}, session ${sessionId}`);
           
           // Complete the WebSocket handshake
           this.wss!.handleUpgrade(request, socket, head, (ws) => {
-            logger.info(`[Agent WebSocket] 🎯 UPGRADE COMPLETE! Emitting connection event...`);
+            logger.info(`[Agent WebSocket] Upgrade complete, emitting connection event`);
             this.wss!.emit('connection', ws, request);
           });
           return;
@@ -356,6 +355,18 @@ class AgentWebSocketService {
       logger.warn('[Agent WebSocket] No valid authentication (no token, no session cookie) - rejecting');
       socket.write('HTTP/1.1 401 Unauthorized\r\nContent-Type: text/plain\r\nContent-Length: 42\r\n\r\nAuthentication required (token or session)');
       socket.destroy();
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      const errorStack = error instanceof Error ? error.stack : '';
+      logger.error(`[Agent WebSocket] handleAgentUpgrade crashed: ${errorMsg}`);
+      logger.error(`[Agent WebSocket] Stack trace: ${errorStack}`);
+      try {
+        socket.write('HTTP/1.1 500 Internal Server Error\r\n\r\n');
+        socket.destroy();
+      } catch (e) {
+        // Socket may already be destroyed
+      }
+    }
   }
 
   /**

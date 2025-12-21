@@ -209,10 +209,29 @@ class CentralUpgradeDispatcher {
       return;
     }
     
+    // ✅ CRITICAL FIX (Dec 21, 2025): Mark socket as handled IMMEDIATELY when handler exists!
+    // This MUST happen BEFORE any async operations (like auth validation) to prevent race
+    // conditions with the upgrade guard's setImmediate check that destroys unhandled sockets.
+    // Previous location (after auth) caused race: guard's setImmediate ran before auth completed.
+    markSocketAsHandled(request, socket);
+    
+    // Handler exists - route to it
+    // Update connection stats
+    this.totalConnections++;
+    this.activeConnections++;
+    const currentPathCount = this.connectionsByPath.get(handler.path) || 0;
+    this.connectionsByPath.set(handler.path, currentPathCount + 1);
+    
+    // Track socket close to update active connections
+    socket.once('close', () => {
+      this.activeConnections--;
+    });
+    
     // Public paths that don't require auth
     const publicPaths = ['/health', '/api/health'];
     
     // Only validate auth for non-public paths with registered handlers
+    // NOTE: Socket is already marked as handled above, so auth failures must explicitly destroy
     if (!publicPaths.includes(effectivePath)) {
       const isAuthenticated = await this.validateWebSocketConnection(request);
       if (!isAuthenticated) {
@@ -229,32 +248,16 @@ class CentralUpgradeDispatcher {
       });
     }
     
-    // Handler exists - route to it
-    // Update connection stats
-    this.totalConnections++;
-    this.activeConnections++;
-    const currentPathCount = this.connectionsByPath.get(handler.path) || 0;
-    this.connectionsByPath.set(handler.path, currentPathCount + 1);
-    
-    // Track socket close to update active connections
-    socket.once('close', () => {
-      this.activeConnections--;
-    });
-    
-    // AUTHORITATIVE MARKING POINT (Dec 6, 2025):
-    // Mark socket as handled BEFORE delegating to any handler.
-    // This ensures EVERY WebSocket upgrade routed through the dispatcher is marked,
-    // even if downstream handlers forget to call markSocketAsHandled().
-    // This prevents race conditions with other upgrade listeners.
-    markSocketAsHandled(request, socket);
-    
     logger.info(`[Central Dispatcher] Routing ${effectivePath} to registered handler`);
     
     // Delegate to the registered handler (socket is already marked above)
     try {
+      logger.info(`[Central Dispatcher] 🔍 About to call handler for ${handler.path}...`);
+      logger.info(`[Central Dispatcher] 🔍 Handler type: ${typeof handler.handler}, is function: ${typeof handler.handler === 'function'}`);
       handler.handler(request, socket, head);
+      logger.info(`[Central Dispatcher] ✅ Handler for ${handler.path} returned successfully`);
     } catch (error) {
-      logger.error(`[Central Dispatcher] Handler error for ${pathname}:`, error);
+      logger.error(`[Central Dispatcher] ❌ Handler error for ${pathname}:`, error);
       this.destroySocketWithError(socket, 500, 'Internal Server Error');
     }
   }
