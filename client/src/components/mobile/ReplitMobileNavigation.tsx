@@ -1,8 +1,36 @@
 import { memo, useCallback } from 'react';
-import { Play, Square, Monitor, Radio, Plus, MoreVertical } from 'lucide-react';
+import { 
+  Play, 
+  Square, 
+  Monitor, 
+  Radio, 
+  Plus, 
+  MoreVertical,
+  Bot,
+  Terminal,
+  Database,
+  GitBranch,
+  Lock,
+  Users,
+  Rocket,
+  Code,
+  FileCode,
+  FolderTree,
+  Package,
+  Shield,
+  HardDrive,
+  Search,
+  Settings
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export type MobileTab = 'preview' | 'agent' | 'deploy' | 'more';
+
+export interface OpenTab {
+  id: string;
+  name: string;
+  icon: string;
+}
 
 interface ReplitMobileNavigationProps {
   activeTab: MobileTab;
@@ -12,6 +40,11 @@ interface ReplitMobileNavigationProps {
   isPanelOpen?: boolean;
   onPanelToggle?: () => void;
   onMorePress?: () => void;
+  openTabs?: OpenTab[];
+  activeOpenTabId?: string;
+  onOpenTabSelect?: (tabId: string) => void;
+  onAddTab?: () => void;
+  onTabSwitcherOpen?: () => void;
 }
 
 const ReplitAgentIcon = memo(({ className }: { className?: string }) => (
@@ -28,7 +61,27 @@ const ReplitAgentIcon = memo(({ className }: { className?: string }) => (
 ));
 ReplitAgentIcon.displayName = 'ReplitAgentIcon';
 
-const tabConfig = [
+const iconMap: Record<string, React.ElementType> = {
+  search: Search,
+  files: FolderTree,
+  agent: Bot,
+  assistant: Code,
+  publishing: Rocket,
+  'app-storage': HardDrive,
+  auth: Shield,
+  console: Terminal,
+  database: Database,
+  developer: Code,
+  git: GitBranch,
+  integrations: Package,
+  multiplayer: Users,
+  preview: Monitor,
+  secrets: Lock,
+  deploy: Radio,
+  settings: Settings,
+};
+
+const defaultTabs = [
   { id: 'preview' as const, label: 'Preview' },
   { id: 'agent' as const, label: 'Agent' },
   { id: 'deploy' as const, label: 'Deploy' },
@@ -41,6 +94,11 @@ export const ReplitMobileNavigation = memo(function ReplitMobileNavigation({
   onPlayStop,
   onPanelToggle,
   onMorePress,
+  openTabs = [],
+  activeOpenTabId,
+  onOpenTabSelect,
+  onAddTab,
+  onTabSwitcherOpen,
 }: ReplitMobileNavigationProps) {
   const handleTabClick = useCallback((tabId: MobileTab) => {
     if ('vibrate' in navigator) {
@@ -48,6 +106,13 @@ export const ReplitMobileNavigation = memo(function ReplitMobileNavigation({
     }
     onTabChange(tabId);
   }, [onTabChange]);
+
+  const handleOpenTabClick = useCallback((tabId: string) => {
+    if ('vibrate' in navigator) {
+      navigator.vibrate(10);
+    }
+    onOpenTabSelect?.(tabId);
+  }, [onOpenTabSelect]);
 
   const handlePlayStop = useCallback(() => {
     if ('vibrate' in navigator) {
@@ -70,23 +135,44 @@ export const ReplitMobileNavigation = memo(function ReplitMobileNavigation({
     onMorePress?.();
   }, [onMorePress]);
 
-  const renderTabIcon = useCallback((tabId: MobileTab, isActive: boolean) => {
+  const handleAddTab = useCallback(() => {
+    if ('vibrate' in navigator) {
+      navigator.vibrate(10);
+    }
+    onAddTab?.();
+  }, [onAddTab]);
+
+  const handleTabSwitcherOpen = useCallback(() => {
+    if ('vibrate' in navigator) {
+      navigator.vibrate(10);
+    }
+    onTabSwitcherOpen?.();
+  }, [onTabSwitcherOpen]);
+
+  const renderTabIcon = useCallback((tabId: MobileTab | string, isActive: boolean) => {
     const baseClass = "h-5 w-5 transition-colors duration-150";
     const activeClass = tabId === 'agent' ? "text-[#7C65C1]" : "text-gray-900 dark:text-white";
     const inactiveClass = "text-gray-500 dark:text-gray-400";
     const iconClass = cn(baseClass, isActive ? activeClass : inactiveClass);
 
+    if (tabId === 'agent') {
+      return <ReplitAgentIcon className={iconClass} />;
+    }
+
     switch (tabId) {
       case 'preview':
         return <Monitor className={iconClass} />;
-      case 'agent':
-        return <ReplitAgentIcon className={iconClass} />;
       case 'deploy':
         return <Radio className={iconClass} />;
       default:
-        return null;
+        const Icon = iconMap[tabId] || FileCode;
+        return <Icon className={iconClass} />;
     }
   }, []);
+
+  const hasOpenTabs = openTabs.length > 0;
+  const visibleTabs = hasOpenTabs ? openTabs.slice(0, 3) : [];
+  const showAddButton = !hasOpenTabs || openTabs.length < 4;
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 mobile-safe-bottom">
@@ -118,52 +204,103 @@ export const ReplitMobileNavigation = memo(function ReplitMobileNavigation({
           className="flex items-center bg-gray-100/80 dark:bg-[#2A2A2A]/80 backdrop-blur-sm rounded-full p-1 shadow-sm"
           style={{ WebkitBackdropFilter: 'blur(8px)' }}
         >
-          {tabConfig.map((tab) => {
-            const isActive = activeTab === tab.id;
-            
-            return (
+          {hasOpenTabs ? (
+            <>
+              {visibleTabs.map((tab) => {
+                const isActive = activeOpenTabId === tab.id;
+                
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => handleOpenTabClick(tab.id)}
+                    onDoubleClick={handleTabSwitcherOpen}
+                    className={cn(
+                      "relative flex items-center justify-center w-11 h-9 rounded-full transition-all duration-150",
+                      "active:scale-95 touch-manipulation",
+                      isActive && "bg-white dark:bg-[#3A3A3A] shadow-sm"
+                    )}
+                    data-testid={`tab-${tab.id}`}
+                  >
+                    {renderTabIcon(tab.icon, isActive)}
+                    
+                    {isActive && (
+                      <span 
+                        className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 bg-[#7C65C1] rounded-full"
+                      />
+                    )}
+                  </button>
+                );
+              })}
+              
+              {openTabs.length > 3 && (
+                <button
+                  onClick={handleTabSwitcherOpen}
+                  className={cn(
+                    "relative flex items-center justify-center w-11 h-9 rounded-full transition-all duration-150",
+                    "active:scale-95 active:bg-gray-200 dark:active:bg-[#3A3A3A] touch-manipulation"
+                  )}
+                  data-testid="button-more-tabs"
+                >
+                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                    +{openTabs.length - 3}
+                  </span>
+                </button>
+              )}
+            </>
+          ) : (
+            <>
+              {defaultTabs.map((tab) => {
+                const isActive = activeTab === tab.id;
+                
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => handleTabClick(tab.id)}
+                    className={cn(
+                      "relative flex items-center justify-center w-11 h-9 rounded-full transition-all duration-150",
+                      "active:scale-95 touch-manipulation",
+                      isActive && "bg-white dark:bg-[#3A3A3A] shadow-sm"
+                    )}
+                    data-testid={`tab-${tab.id}`}
+                  >
+                    {renderTabIcon(tab.id, isActive)}
+                    
+                    {isActive && (
+                      <span 
+                        className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 bg-[#7C65C1] rounded-full"
+                      />
+                    )}
+                  </button>
+                );
+              })}
+            </>
+          )}
+          
+          {showAddButton && (
+            <>
+              <div className="w-px h-5 bg-gray-300 dark:bg-gray-600 mx-1" />
+              
               <button
-                key={tab.id}
-                onClick={() => handleTabClick(tab.id)}
+                onClick={handleAddTab}
                 className={cn(
                   "relative flex items-center justify-center w-11 h-9 rounded-full transition-all duration-150",
-                  "active:scale-95 touch-manipulation",
-                  isActive && "bg-white dark:bg-[#3A3A3A] shadow-sm"
+                  "active:scale-95 active:bg-gray-200 dark:active:bg-[#3A3A3A] touch-manipulation"
                 )}
-                data-testid={`tab-${tab.id}`}
+                data-testid="button-add-tab"
               >
-                {renderTabIcon(tab.id, isActive)}
-                
-                {isActive && (
-                  <span 
-                    className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 bg-[#7C65C1] rounded-full"
-                  />
-                )}
+                <Plus className="h-5 w-5 text-gray-500 dark:text-gray-400" />
               </button>
-            );
-          })}
-          
-          <div className="w-px h-5 bg-gray-300 dark:bg-gray-600 mx-1" />
-          
-          <button
-            onClick={handleMorePress}
-            className={cn(
-              "relative flex items-center justify-center w-11 h-9 rounded-full transition-all duration-150",
-              "active:scale-95 active:bg-gray-200 dark:active:bg-[#3A3A3A] touch-manipulation"
-            )}
-            data-testid="button-more"
-          >
-            <Plus className="h-5 w-5 text-gray-500 dark:text-gray-400" />
-          </button>
+            </>
+          )}
         </div>
 
         <button
-          onClick={handlePanelToggle}
+          onClick={handleMorePress}
           className={cn(
             "flex items-center justify-center w-11 h-11 rounded-xl transition-all duration-150",
             "active:scale-95 active:bg-gray-100 dark:active:bg-[#2A2A2A] touch-manipulation"
           )}
-          data-testid="button-panel-toggle"
+          data-testid="button-more"
         >
           <MoreVertical className="h-5 w-5 text-gray-600 dark:text-gray-400" />
         </button>
