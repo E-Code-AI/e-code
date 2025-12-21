@@ -187,6 +187,8 @@ export function useAutonomousChatIntegration({
   const planTextRef = useRef<string>('');
   const hasConnectedRef = useRef(false);
   const hasAddedUserPromptRef = useRef(false);
+  const effectRanRef = useRef(false);
+  const fallbackScheduledRef = useRef(false);
   
   // Reconnection logic with exponential backoff
   const reconnectAttemptRef = useRef(0);
@@ -240,6 +242,96 @@ export function useAutonomousChatIntegration({
     initialPrompt: initialPrompt ? initialPrompt.substring(0, 30) + '...' : null,
     resolvedPrompt: resolvedPrompt ? resolvedPrompt.substring(0, 30) + '...' : null
   });
+
+  // 🆘 MOBILE WEBVIEW FALLBACK: Schedule a fallback connection attempt
+  // On mobile Replit app WebView, useEffect may not execute reliably
+  // This schedules a check 2 seconds after first render - if effect hasn't run, trigger manually
+  // IMPORTANT: This runs during render but uses setTimeout to defer side effects
+  if (enabled && conversationId && projectId && bootstrapToken && !fallbackScheduledRef.current) {
+    fallbackScheduledRef.current = true;
+    // Store current values in closure since we'll use them later
+    const fallbackProjectId = projectId;
+    const fallbackConversationId = conversationId;
+    const fallbackToken = bootstrapToken;
+    
+    console.warn('[AutonomousChatIntegration] 🆘 Scheduling fallback WebSocket connection check');
+    setTimeout(() => {
+      if (!effectRanRef.current && !hasConnectedRef.current) {
+        console.warn('[AutonomousChatIntegration] 🆘 FALLBACK TRIGGERED: useEffect did not run, attempting manual WebSocket connection');
+        // Write to sessionStorage for debugging
+        try {
+          sessionStorage.setItem('autonomousChatEffect_fallbackTriggered', String(Date.now()));
+        } catch (e) { /* ignore */ }
+        
+        // DIRECTLY attempt WebSocket connection (not via event, since useEffect may not work)
+        if (wsRef.current?.readyState === WebSocket.OPEN || wsRef.current?.readyState === WebSocket.CONNECTING) {
+          console.warn('[AutonomousChatIntegration] 🆘 Fallback: Already connected, skipping');
+          return;
+        }
+        
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const params = new URLSearchParams();
+        params.set('projectId', String(fallbackProjectId));
+        if (fallbackToken) params.set('bootstrap', fallbackToken);
+        
+        const wsUrl = `${protocol}//${window.location.host}/ws/agent?${params.toString()}`;
+        
+        console.warn('[AutonomousChatIntegration] 🆘 Fallback: Connecting to:', wsUrl.substring(0, 80) + '...');
+        
+        try {
+          // Initialize build store first
+          useAutonomousBuildStore.getState().startBuild({ 
+            projectId: fallbackProjectId, 
+            sessionId: undefined, 
+            conversationId: fallbackConversationId 
+          });
+          
+          const ws = new WebSocket(wsUrl);
+          wsRef.current = ws;
+          
+          ws.onopen = () => {
+            console.warn('[AutonomousChatIntegration] 🆘 Fallback: WebSocket connected successfully!');
+            hasConnectedRef.current = true;
+            try {
+              sessionStorage.setItem('autonomousChatEffect_fallbackConnected', String(Date.now()));
+            } catch (e) { /* ignore */ }
+          };
+          
+          ws.onmessage = (e) => {
+            console.log('[AutonomousChatIntegration] 🆘 Fallback: Message received:', e.data.substring(0, 100));
+            try {
+              const data = JSON.parse(e.data);
+              handleProgressEventRef.current?.(data);
+            } catch (err) {
+              console.warn('[AutonomousChatIntegration] 🆘 Fallback: Failed to parse message:', err);
+            }
+          };
+          
+          ws.onerror = (error) => {
+            console.error('[AutonomousChatIntegration] 🆘 Fallback: WebSocket error:', error);
+          };
+          
+          ws.onclose = (event) => {
+            console.warn('[AutonomousChatIntegration] 🆘 Fallback: WebSocket closed', event.code, event.reason);
+          };
+        } catch (err) {
+          console.error('[AutonomousChatIntegration] 🆘 Fallback: Failed to create WebSocket:', err);
+        }
+      }
+    }, 2000);
+  }
+
+  // 🔍 DIAGNOSTIC: Test if ANY useEffect runs at all (empty deps = runs on mount only)
+  useEffect(() => {
+    // Write to sessionStorage for mobile WebView debugging
+    try {
+      sessionStorage.setItem('autonomousChatEffect_diagnosticRan', String(Date.now()));
+    } catch (e) { /* ignore */ }
+    console.warn('[AutonomousChatIntegration] 🧪 DIAGNOSTIC: useEffect with [] deps EXECUTED - React effects are working');
+    return () => {
+      console.warn('[AutonomousChatIntegration] 🧪 DIAGNOSTIC: useEffect cleanup on unmount');
+    };
+  }, []);
 
   // ✅ CRITICAL FIX (Dec 13, 2025): Add user's prompt IMMEDIATELY on hook init
   // This ensures the prompt is visible BEFORE WebSocket connects, not after
@@ -1165,21 +1257,34 @@ export function useAutonomousChatIntegration({
   }, []);
 
   useEffect(() => {
+    // Mark that the effect ran (for fallback detection)
+    effectRanRef.current = true;
+    
+    // DEBUG: Write to sessionStorage for mobile WebView debugging (console.log may be deferred)
+    const effectTimestamp = Date.now();
+    try {
+      sessionStorage.setItem('autonomousChatEffect_lastRun', String(effectTimestamp));
+      sessionStorage.setItem('autonomousChatEffect_enabled', String(enabled));
+      sessionStorage.setItem('autonomousChatEffect_conversationId', String(conversationId));
+    } catch (e) { /* ignore storage errors */ }
+    
     // DEBUG: Log activation conditions IMMEDIATELY
-    console.log('[AutonomousChatIntegration] ⚡ useEffect TRIGGERED:', {
+    // Use console.warn for higher priority in mobile WebView log capture
+    console.warn('[AutonomousChatIntegration] ⚡ useEffect TRIGGERED:', {
       enabled,
       conversationId,
       projectId,
-      hasBootstrapToken: !!bootstrapToken
+      hasBootstrapToken: !!bootstrapToken,
+      timestamp: effectTimestamp
     });
     
     if (!enabled) {
-      console.log('[AutonomousChatIntegration] ❌ Skipping - not enabled');
+      console.warn('[AutonomousChatIntegration] ❌ Skipping - not enabled');
       return;
     }
     
     if (!conversationId) {
-      console.log('[AutonomousChatIntegration] ❌ Skipping - no conversationId');
+      console.warn('[AutonomousChatIntegration] ❌ Skipping - no conversationId');
       return;
     }
     
