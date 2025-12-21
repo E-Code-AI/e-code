@@ -15,6 +15,7 @@ import { Request, Response, NextFunction } from 'express';
 import rateLimit from 'express-rate-limit';
 import { RateLimiterRedis, RateLimiterMemory, RateLimiterRes } from 'rate-limiter-flexible';
 import Redis from 'ioredis';
+import { LRUCache } from 'lru-cache';
 import { createLogger } from '../utils/logger';
 import { db } from '../db';
 import { users, type User } from '@shared/schema';
@@ -89,18 +90,26 @@ if (redisUrl) {
   }
 }
 
-// User tier cache (short-lived to reduce DB queries)
-const userTierCache = new Map<number, { tier: SubscriptionTier; expiry: number }>();
+// ✅ PRODUCTION FIX (Dec 21, 2025): LRU cache to prevent memory exhaustion
+// With millions of users, an unbounded Map could consume all memory
+// LRU cache evicts least-recently-used entries when max size is reached
 const TIER_CACHE_TTL_MS = 60000; // 1 minute cache
+const TIER_CACHE_MAX_SIZE = 10000; // Max 10,000 entries (prevents memory exhaustion)
+
+const userTierCache = new LRUCache<number, SubscriptionTier>({
+  max: TIER_CACHE_MAX_SIZE,
+  ttl: TIER_CACHE_TTL_MS,
+  updateAgeOnGet: true, // Reset TTL on access (frequently accessed users stay cached)
+});
 
 /**
- * Get user's subscription tier (with caching)
+ * Get user's subscription tier (with LRU caching)
  */
 async function getUserTier(userId: number): Promise<SubscriptionTier> {
-  // Check cache first
+  // Check cache first (LRU handles TTL automatically)
   const cached = userTierCache.get(userId);
-  if (cached && Date.now() < cached.expiry) {
-    return cached.tier;
+  if (cached) {
+    return cached;
   }
   
   try {
@@ -111,11 +120,8 @@ async function getUserTier(userId: number): Promise<SubscriptionTier> {
     
     const tier = (user?.subscriptionTier as SubscriptionTier) || 'free';
     
-    // Cache the result
-    userTierCache.set(userId, {
-      tier,
-      expiry: Date.now() + TIER_CACHE_TTL_MS
-    });
+    // Cache the result (LRU handles eviction automatically)
+    userTierCache.set(userId, tier);
     
     return tier;
   } catch (error) {
@@ -123,16 +129,6 @@ async function getUserTier(userId: number): Promise<SubscriptionTier> {
     return 'free'; // Default to free on error
   }
 }
-
-// Cleanup user tier cache periodically
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, value] of userTierCache.entries()) {
-    if (now > value.expiry) {
-      userTierCache.delete(key);
-    }
-  }
-}, 60000); // Every minute
 
 // Enhanced rate limiters with Redis or memory fallback
 // In test environment, use much higher thresholds to prevent false failures

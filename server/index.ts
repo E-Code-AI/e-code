@@ -9,7 +9,10 @@ if (!process.env.NODE_ENV) {
 // ✅ Fortune 500 Security: Validate required secrets EARLY in startup
 // Must be after dotenv/config to have access to environment variables
 import { validateRequiredSecrets } from './utils/secrets-manager';
+import { validateProductionEnvironment } from './utils/production-validation';
+
 validateRequiredSecrets();
+validateProductionEnvironment();
 
 // ✅ Fortune 500 Production Monitoring: Initialize Sentry error tracking EARLY
 // Must be done before any other imports to catch startup errors
