@@ -245,6 +245,7 @@ function UnifiedIDELayout({
   const [showExtensionsPanel, setShowExtensionsPanel] = useState(false);
   const [showSettingsPanel, setShowSettingsPanel] = useState(false);
   const [showSecurityPanel, setShowSecurityPanel] = useState(false);
+  const [showMobileMoreMenu, setShowMobileMoreMenu] = useState(false);
   
   // Mobile agent input handlers - exposed from ReplitAgentPanelV3 to ReplitMobileInputBar
   const [mobileAgentHandlers, setMobileAgentHandlers] = useState<ExternalInputHandlers | null>(null);
@@ -607,7 +608,7 @@ function UnifiedIDELayout({
           onBack={() => window.history.back()}
           onHistory={() => setShowHistoryPanel(true)}
           onNewTab={() => setShowQuickFileSearch(true)}
-          onMore={() => setShowToolsSheet(true)}
+          onMore={() => setShowMobileMoreMenu(true)}
         />
 
         {/* Main Content Area - With bottom padding for fixed navigation */}
@@ -648,7 +649,7 @@ function UnifiedIDELayout({
           onPlayStop={handleRunStop}
           isPanelOpen={showToolsSheet}
           onPanelToggle={() => setShowToolsSheet(!showToolsSheet)}
-          onMorePress={() => setShowToolsSheet(true)}
+          onMorePress={() => setShowMobileMoreMenu(true)}
         />
 
         {/* Mobile Panel Overlays - Fixed positioned panels that appear over mobile content */}
@@ -846,6 +847,31 @@ function UnifiedIDELayout({
           </div>
         )}
 
+        <Suspense fallback={null}>
+          <MobileMoreMenu
+            projectId={projectId}
+            isOpen={showMobileMoreMenu}
+            onClose={() => setShowMobileMoreMenu(false)}
+            onOpenGit={() => { setShowMobileMoreMenu(false); setShowGitPanel(true); }}
+            onOpenPackages={() => { setShowMobileMoreMenu(false); setShowPackagesPanel(true); }}
+            onOpenSecrets={() => { setShowMobileMoreMenu(false); setShowSecretsPanel(true); }}
+            onOpenDatabase={() => { setShowMobileMoreMenu(false); setShowReplitDB(true); }}
+            onOpenSettings={() => { setShowMobileMoreMenu(false); setShowSettingsPanel(true); }}
+            onOpenDebug={() => { setShowMobileMoreMenu(false); setShowDebugPanel(true); }}
+            onOpenCollaboration={() => { setShowMobileMoreMenu(false); setShowCollaboration(true); }}
+            onOpenWorkflows={() => { setShowMobileMoreMenu(false); setShowWorkflowsPanel(true); }}
+            onOpenHistory={() => { setShowMobileMoreMenu(false); setShowHistoryPanel(true); }}
+            onOpenCheckpoints={() => { setShowMobileMoreMenu(false); setShowCheckpointsPanel(true); }}
+            onOpenExtensions={() => { setShowMobileMoreMenu(false); setShowExtensionsPanel(true); }}
+            onOpenSecurity={() => { setShowMobileMoreMenu(false); setShowSecurityPanel(true); }}
+            onOpenCommandPalette={() => { setShowMobileMoreMenu(false); setShowCommandPalette(true); }}
+            onOpenGlobalSearch={() => { setShowMobileMoreMenu(false); setShowGlobalSearch(true); }}
+            onOpenQuickFileSearch={() => { setShowMobileMoreMenu(false); setShowQuickFileSearch(true); }}
+            onOpenKeyboardShortcuts={() => { setShowMobileMoreMenu(false); setShowKeyboardShortcuts(true); }}
+            problemsCount={errorsCount}
+          />
+        </Suspense>
+
         {showGlobalSearch && (
           <Suspense fallback={null}>
             <GlobalSearch
@@ -1010,7 +1036,7 @@ function UnifiedIDELayout({
             onPlayStop={handleRunStop}
             isPanelOpen={showToolsSheet}
             onPanelToggle={() => setShowToolsSheet(!showToolsSheet)}
-            onMorePress={() => setShowToolsSheet(true)}
+            onMorePress={() => setShowMobileMoreMenu(true)}
           />
         </div>
 
