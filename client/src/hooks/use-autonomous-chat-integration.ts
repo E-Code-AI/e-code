@@ -7,7 +7,7 @@
  * Also updates the shared autonomousBuildStore for PreviewPanel splash screens
  */
 
-import { useEffect, useLayoutEffect, useRef, useCallback, useMemo } from 'react';
+import { useEffect, useLayoutEffect, useRef, useCallback, useMemo, useState } from 'react';
 import { useAgentConversationStore } from '@/stores/agentConversationStore';
 import { useAutonomousBuildStore } from '@/stores/autonomousBuildStore';
 import { AgentEventBus } from '@/lib/agentEvents';
@@ -193,6 +193,18 @@ export function useAutonomousChatIntegration({
   const isMountedRef = useRef(true);
   const connectFnRef = useRef<(() => void) | null>(null);
   
+  const [connectionState, setConnectionState] = useState<{
+    isConnected: boolean;
+    error: string | null;
+    reconnectAttempt: number;
+    maxReconnectAttempts: number;
+  }>({
+    isConnected: false,
+    error: null,
+    reconnectAttempt: 0,
+    maxReconnectAttempts: 10
+  });
+  
   // Reconnection logic with exponential backoff
   const reconnectAttemptRef = useRef(0);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -370,6 +382,8 @@ export function useAutonomousChatIntegration({
     ws.onopen = () => {
       console.warn('[AutonomousChatIntegration] 🚀 useLayoutEffect: WebSocket CONNECTED successfully!');
       hasConnectedRef.current = true;
+      reconnectAttemptRef.current = 0;
+      setConnectionState({ isConnected: true, error: null, reconnectAttempt: 0, maxReconnectAttempts: 10 });
       try {
         sessionStorage.setItem('autonomousChatEffect_layoutEffectConnected', String(Date.now()));
       } catch (e) { /* ignore */ }
@@ -386,6 +400,7 @@ export function useAutonomousChatIntegration({
     
     ws.onerror = (error) => {
       console.error('[AutonomousChatIntegration] 🚀 useLayoutEffect: WebSocket error:', error);
+      setConnectionState(prev => ({ ...prev, error: 'Connection error occurred' }));
     };
     
     ws.onclose = (event) => {
@@ -401,6 +416,13 @@ export function useAutonomousChatIntegration({
         reconnectAttemptRef.current++;
         const delay = Math.min(baseReconnectDelayMs * Math.pow(2, reconnectAttemptRef.current - 1), 30000);
         console.log(`[AutonomousChatIntegration] 🚀 Scheduling reconnect in ${delay}ms`);
+        // Clear error state when attempting reconnect so banner shows progress
+        setConnectionState(prev => ({ 
+          ...prev, 
+          isConnected: false, 
+          error: null,
+          reconnectAttempt: reconnectAttemptRef.current 
+        }));
         
         if (reconnectTimeoutRef.current) {
           clearTimeout(reconnectTimeoutRef.current);
@@ -411,6 +433,15 @@ export function useAutonomousChatIntegration({
             connectFnRef.current();
           }
         }, delay);
+      } else if (reconnectAttemptRef.current >= maxReconnectAttempts) {
+        setConnectionState(prev => ({ 
+          ...prev, 
+          isConnected: false, 
+          error: 'Maximum reconnection attempts reached. Click retry to try again.',
+          reconnectAttempt: maxReconnectAttempts
+        }));
+      } else {
+        setConnectionState(prev => ({ ...prev, isConnected: false }));
       }
     };
     
@@ -1454,6 +1485,7 @@ export function useAutonomousChatIntegration({
           console.log('[AutonomousChatIntegration] ✅ WebSocket connected successfully, readyState:', ws.readyState);
           hasConnectedRef.current = true;
           reconnectAttemptRef.current = 0; // Reset reconnect counter on success
+          setConnectionState({ isConnected: true, error: null, reconnectAttempt: 0, maxReconnectAttempts: 10 });
         };
 
         ws.onmessage = (event) => {
@@ -1470,6 +1502,7 @@ export function useAutonomousChatIntegration({
 
         ws.onerror = (error) => {
           console.error('[AutonomousChatIntegration] ❌ WebSocket error:', error, 'readyState:', ws.readyState);
+          setConnectionState(prev => ({ ...prev, error: 'Connection error occurred' }));
           // Note: onclose will be called after onerror, which will trigger reconnect
         };
 
@@ -1490,6 +1523,13 @@ export function useAutonomousChatIntegration({
             reconnectAttemptRef.current++;
             const delay = Math.min(baseReconnectDelayMs * Math.pow(2, reconnectAttemptRef.current - 1), 30000);
             console.log(`[AutonomousChatIntegration] Scheduling reconnect in ${delay}ms (attempt ${reconnectAttemptRef.current}/${maxReconnectAttempts})`);
+            // Clear error state when attempting reconnect so banner shows progress
+            setConnectionState(prev => ({ 
+              ...prev, 
+              isConnected: false, 
+              error: null,
+              reconnectAttempt: reconnectAttemptRef.current 
+            }));
             
             // Clear any existing timeout
             if (reconnectTimeoutRef.current) {
@@ -1501,7 +1541,15 @@ export function useAutonomousChatIntegration({
             }, delay);
           } else if (reconnectAttemptRef.current >= maxReconnectAttempts) {
             console.error('[AutonomousChatIntegration] Max reconnection attempts reached, giving up');
+            setConnectionState(prev => ({ 
+              ...prev, 
+              isConnected: false, 
+              error: 'Maximum reconnection attempts reached. Click retry to try again.',
+              reconnectAttempt: maxReconnectAttempts
+            }));
             useAutonomousBuildStore.getState().setError('Connection lost. Please refresh the page.');
+          } else {
+            setConnectionState(prev => ({ ...prev, isConnected: false }));
           }
         };
       } catch (err) {
@@ -1510,6 +1558,9 @@ export function useAutonomousChatIntegration({
       }
     };
 
+    // Store connect function ref for manual retry and reconnection from other effects
+    connectFnRef.current = connectWebSocket;
+    
     // Initial connection
     connectWebSocket();
 
@@ -1526,6 +1577,7 @@ export function useAutonomousChatIntegration({
       }
       hasConnectedRef.current = false;
       reconnectAttemptRef.current = 0;
+      connectFnRef.current = null;
     };
   // Only depend on stable values - not on callbacks or store objects
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1551,10 +1603,40 @@ export function useAutonomousChatIntegration({
     }
   }, [projectId]);
 
+  // Manual reconnect function for retry button
+  const manualReconnect = useCallback(() => {
+    console.log('[AutonomousChatIntegration] 🔄 Manual reconnect triggered');
+    
+    // Reset reconnect counter to allow fresh attempts
+    reconnectAttemptRef.current = 0;
+    setConnectionState(prev => ({ ...prev, error: null, reconnectAttempt: 0 }));
+    
+    // Clear any pending reconnect timeout
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
+    
+    // Close existing connection if any
+    if (wsRef.current) {
+      wsRef.current.close(1000, 'Manual reconnect');
+      wsRef.current = null;
+    }
+    
+    // Trigger reconnect using stored connect function
+    if (connectFnRef.current) {
+      connectFnRef.current();
+    }
+  }, []);
+
   return {
     sendBuildModeSelection,
     requestPlanChange,
-    isConnected: wsRef.current?.readyState === WebSocket.OPEN,
+    manualReconnect,
+    isConnected: connectionState.isConnected,
+    connectionError: connectionState.error,
+    reconnectAttempt: connectionState.reconnectAttempt,
+    maxReconnectAttempts: connectionState.maxReconnectAttempts,
     // Expose effective conversationId for parent components to use when displaying messages
     effectiveConversationId: conversationId,
     // Flag to indicate if we're using a temporary ID (for bootstrap flow)
