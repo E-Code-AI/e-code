@@ -5451,10 +5451,12 @@ try {
     const sessionDbUrl = getSessionDatabaseUrl();
     
     if (!sessionDbUrl) {
-      console.error('[Storage Module] DATABASE_URL not set in production, using MemoryStore fallback');
-      sessionStore = new MemoryStore({
-        checkPeriod: 86400000,
-      });
+      const errorMessage = '[CRITICAL] DATABASE_URL is not set in production. ' +
+        'Session persistence requires a database. MemoryStore fallback is disabled ' +
+        'in production to prevent session loss and security vulnerabilities. ' +
+        'Please ensure DATABASE_URL or /tmp/replitdb is available.';
+      console.error(errorMessage);
+      throw new Error(errorMessage);
     } else {
       // Create a native pg pool for session store
       // ✅ PRODUCTION FIX: Increased timeouts and pool size to prevent connection storms
@@ -5479,6 +5481,10 @@ try {
     }
   }
 } catch (error) {
+  if (isProduction) {
+    console.error('[CRITICAL] Failed to initialize session store in production:', error);
+    process.exit(1);
+  }
   console.error('[Storage Module] Failed to initialize session store:', error);
   // Create a fallback in-memory session store
   sessionStore = new MemoryStore({
