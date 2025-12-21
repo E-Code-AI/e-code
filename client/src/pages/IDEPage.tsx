@@ -25,7 +25,7 @@ const UnifiedIDELayout = instrumentedLazy(
 export default function IDEPage() {
   const params = useParams();
   const [, navigate] = useLocation();
-  const { user } = useAuth();
+  const { user, isLoading: isAuthLoading } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -91,7 +91,11 @@ export default function IDEPage() {
     });
   }, [toast]);
 
-  const { data: project, isLoading: isLoadingProject } = useQuery<Project>({
+  // Determine if we can fetch the project
+  // Either user is authenticated OR we have a bootstrap token for autonomous workspace
+  const canFetchProject = !!projectId && !isAuthLoading && (!!user || !!bootstrapToken);
+  
+  const { data: project, isLoading: isLoadingProject, fetchStatus } = useQuery<Project>({
     queryKey: ['/api/projects', projectId, { bootstrap: !!bootstrapToken }],
     queryFn: async () => {
       const url = `/api/projects/${projectId}${bootstrapToken ? `?bootstrap=${bootstrapToken}` : ''}`;
@@ -101,12 +105,13 @@ export default function IDEPage() {
       }
       return res.json();
     },
-    enabled: !!projectId && (!!user || !!bootstrapToken),
+    enabled: canFetchProject,
   });
 
-  // Show loading while fetching project data
-  // Use same text as inner Suspense for consistent UX
-  if (isLoadingProject) {
+  // Show loading while auth is loading OR project is actually being fetched
+  // In TanStack Query v5, isLoading can be true even when query is disabled,
+  // so we check fetchStatus === 'fetching' to know if we're actually loading
+  if (isAuthLoading || (canFetchProject && fetchStatus === 'fetching' && !project)) {
     return <ECodeLoading fullScreen size="lg" text="Loading..." />;
   }
 

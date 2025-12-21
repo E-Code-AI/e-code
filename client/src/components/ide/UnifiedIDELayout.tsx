@@ -1075,6 +1075,7 @@ function UnifiedIDELayout({
                 setTabletPanel('editor');
               }}
               selectedFileId={selectedFileId}
+              isBootstrapping={!!bootstrapToken}
             />
           </div>
         </div>
@@ -1595,6 +1596,7 @@ function UnifiedIDELayout({
                     projectId={projectId}
                     onFileSelect={handleFileSelect}
                     selectedFileId={selectedFileId}
+                    isBootstrapping={!!bootstrapToken}
                   />
                 </div>
               </ResizablePanel>

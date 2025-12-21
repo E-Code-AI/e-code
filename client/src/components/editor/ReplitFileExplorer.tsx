@@ -81,12 +81,14 @@ interface ReplitFileExplorerProps {
   projectId: string | number;
   onFileSelect?: (file: FileNode) => void;
   selectedFileId?: number;
+  isBootstrapping?: boolean;
 }
 
 export function ReplitFileExplorer({
   projectId,
   onFileSelect,
   selectedFileId,
+  isBootstrapping = false,
 }: ReplitFileExplorerProps) {
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
@@ -102,9 +104,13 @@ export function ReplitFileExplorer({
   const { toast } = useToast();
 
   // Fetch files from API - REAL BACKEND
+  // During bootstrap (autonomous workspace creation), refetch more aggressively
   const { data: files = [], isLoading, refetch } = useQuery<FileNode[]>({
     queryKey: [`/api/projects/${projectId}/files`],
     enabled: !!projectId,
+    refetchOnMount: 'always',
+    staleTime: isBootstrapping ? 0 : 5 * 60 * 1000,
+    refetchInterval: isBootstrapping ? 3000 : false,
   });
 
   // File operations mutations - REAL BACKEND

@@ -17,6 +17,7 @@ interface FileExplorerPanelProps {
   onFileSelect: (file: FileNode) => void;
   onClose: () => void;
   projectId: string;
+  isBootstrapping?: boolean;
 }
 
 export function FileExplorerPanel({
@@ -24,7 +25,8 @@ export function FileExplorerPanel({
   selectedFile,
   onFileSelect,
   onClose,
-  projectId
+  projectId,
+  isBootstrapping = false
 }: FileExplorerPanelProps) {
   // Convert string ID to number for ReplitFileExplorer
   const projectIdNum = parseInt(projectId, 10);
@@ -62,6 +64,7 @@ export function FileExplorerPanel({
           onFileSelect(fileNode);
         }}
         selectedFileId={selectedFileId}
+        isBootstrapping={isBootstrapping}
       />
     </div>
   );
