@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Search, X } from 'lucide-react';
 import { SiAnthropic, SiOpenai } from 'react-icons/si';
 import { cn } from '@/lib/utils';
@@ -313,7 +313,9 @@ export function useSlashCommand() {
     return false;
   }, [isOpen, close]);
 
-  return {
+  // ✅ FIX (Dec 21, 2025): Memoize return object to prevent infinite re-renders
+  // when this hook's return value is used as a useEffect dependency
+  return useMemo(() => ({
     isOpen,
     open,
     close,
@@ -323,5 +325,5 @@ export function useSlashCommand() {
     setSelectedIndex,
     handleInputChange,
     handleKeyDown,
-  };
+  }), [isOpen, open, close, searchQuery, selectedIndex, handleInputChange, handleKeyDown]);
 }
