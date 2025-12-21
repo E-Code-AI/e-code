@@ -97,32 +97,68 @@ class CentralUpgradeDispatcher {
   }
   
   /**
-   * Validate WebSocket connection by checking session cookie
+   * Validate WebSocket connection by checking session cookie OR bootstrap token
    * Uses express-session store to verify the session is valid and user is authenticated
+   * 
+   * ✅ FIX (Dec 21, 2025): Also accept valid bootstrap tokens for /ws/agent path
+   * This allows autonomous workspace creation to work with bootstrap tokens
    */
   private async validateWebSocketConnection(request: IncomingMessage): Promise<boolean> {
     try {
+      // Method 1: Check session cookie (standard authentication)
       const cookies = request.headers.cookie;
-      if (!cookies) return false;
-      
-      const parsedCookies = parseCookie(cookies);
-      const sessionId = parsedCookies['connect.sid'];
-      if (!sessionId) return false;
-      
-      // Extract session ID from signed cookie (remove 's:' prefix and signature)
-      const sid = sessionId.startsWith('s:') 
-        ? sessionId.slice(2).split('.')[0] 
-        : sessionId;
-      
-      return new Promise((resolve) => {
-        sessionStore.get(sid, (err, session) => {
-          if (err || !session) {
-            resolve(false);
-            return;
+      if (cookies) {
+        const parsedCookies = parseCookie(cookies);
+        const sessionId = parsedCookies['connect.sid'];
+        if (sessionId) {
+          // Extract session ID from signed cookie (remove 's:' prefix and signature)
+          const sid = sessionId.startsWith('s:') 
+            ? sessionId.slice(2).split('.')[0] 
+            : sessionId;
+          
+          const hasValidSession = await new Promise<boolean>((resolve) => {
+            sessionStore.get(sid, (err, session) => {
+              if (err || !session) {
+                resolve(false);
+                return;
+              }
+              resolve(session.passport?.user != null);
+            });
+          });
+          
+          if (hasValidSession) {
+            return true;
           }
-          resolve(session.passport?.user != null);
-        });
-      });
+        }
+      }
+      
+      // Method 2: Check bootstrap token in URL query parameters (for autonomous workspace)
+      const url = new URL(request.url || '/', `http://${request.headers.host || 'localhost'}`);
+      const bootstrapToken = url.searchParams.get('bootstrap') || url.searchParams.get('bootstrapToken');
+      
+      if (bootstrapToken) {
+        try {
+          // Dynamically import jwt and getJwtSecret to avoid circular dependencies
+          const jwt = await import('jsonwebtoken');
+          const { getJwtSecret } = await import('../utils/secrets-manager');
+          
+          const decoded = jwt.default.verify(bootstrapToken, getJwtSecret()) as {
+            type: string;
+            projectId: string;
+            userId: number;
+          };
+          
+          // Validate it's a bootstrap token with required fields
+          if (decoded.type === 'agent_bootstrap' && decoded.projectId && decoded.userId) {
+            logger.debug('[Central Dispatcher] Bootstrap token validated for WebSocket connection');
+            return true;
+          }
+        } catch (tokenError) {
+          logger.debug('[Central Dispatcher] Bootstrap token validation failed:', tokenError);
+        }
+      }
+      
+      return false;
     } catch {
       return false;
     }
