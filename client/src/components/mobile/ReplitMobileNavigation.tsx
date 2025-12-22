@@ -21,7 +21,15 @@ import {
   HardDrive,
   Search,
   Settings,
-  LayoutGrid
+  LayoutGrid,
+  Zap,
+  Wrench,
+  History,
+  Puzzle,
+  Workflow,
+  Bug,
+  Save,
+  UserShield
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -80,6 +88,17 @@ const iconMap: Record<string, React.ElementType> = {
   secrets: Lock,
   deploy: Radio,
   settings: Settings,
+  actions: Zap,
+  tools: Wrench,
+  history: History,
+  extensions: Puzzle,
+  workflows: Workflow,
+  debug: Bug,
+  checkpoints: Save,
+  security: UserShield,
+  collaboration: Users,
+  packages: Package,
+  terminal: Terminal,
 };
 
 const defaultTabs = [
