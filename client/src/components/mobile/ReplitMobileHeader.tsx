@@ -1,6 +1,8 @@
 import { memo, useCallback } from 'react';
 import { 
-  ArrowLeft, History, Plus, MoreVertical, Monitor, Globe, X
+  ArrowLeft, History, Plus, MoreVertical, Monitor, Globe, X,
+  FolderTree, Search, GitBranch, Package, Lock, Database, Terminal,
+  Settings, Puzzle, Workflow, Bug, Save, ShieldCheck, Users, Zap, Wrench
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { MobileTab } from './ReplitMobileNavigation';
@@ -30,6 +32,23 @@ const tabConfig: Record<Exclude<MobileTab, 'more'>, { icon: any; label: string; 
   preview: { icon: Monitor, label: 'Preview' },
   agent: { icon: ReplitAgentIcon, label: 'Agent', iconColor: '#7C65C1' },
   deploy: { icon: Globe, label: 'Deploy' },
+  files: { icon: FolderTree, label: 'Files' },
+  search: { icon: Search, label: 'Search' },
+  git: { icon: GitBranch, label: 'Git' },
+  packages: { icon: Package, label: 'Packages' },
+  secrets: { icon: Lock, label: 'Secrets' },
+  database: { icon: Database, label: 'Database' },
+  terminal: { icon: Terminal, label: 'Terminal' },
+  settings: { icon: Settings, label: 'Settings' },
+  history: { icon: History, label: 'History' },
+  extensions: { icon: Puzzle, label: 'Extensions' },
+  workflows: { icon: Workflow, label: 'Workflows' },
+  debug: { icon: Bug, label: 'Debug' },
+  checkpoints: { icon: Save, label: 'Checkpoints' },
+  security: { icon: ShieldCheck, label: 'Security' },
+  collaboration: { icon: Users, label: 'Collaboration' },
+  actions: { icon: Zap, label: 'Actions' },
+  tools: { icon: Wrench, label: 'Tools' },
 };
 
 export const ReplitMobileHeader = memo(function ReplitMobileHeader({
