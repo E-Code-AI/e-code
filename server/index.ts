@@ -1,16 +1,9 @@
-// Ensure NODE_ENV is set (default to development if not specified)
-if (!process.env.NODE_ENV) {
-  process.env.NODE_ENV = 'development';
-}
-
 // Load environment variables in development only (production uses platform env vars)
-if (process.env.NODE_ENV !== 'production') {
-  try {
-    const dotenv = await import('dotenv');
-    dotenv.config();
-  } catch {
-    // dotenv not available, continue with platform env vars
-  }
+// Note: In production builds, this entire block is eliminated via dead code elimination
+// because process.env.NODE_ENV is defined as 'production' at build time
+if (process.env.NODE_ENV === 'development') {
+  const dotenv = await import('dotenv');
+  dotenv.config();
 }
 
 // ✅ Fortune 500 Security: Validate required secrets EARLY in startup

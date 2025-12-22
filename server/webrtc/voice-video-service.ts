@@ -382,7 +382,8 @@ export class VoiceVideoService extends EventEmitter {
   }
 
   private sendToPeer(peer: Peer, message: any) {
-    if (peer.socket.readyState === WebSocket.OPEN) {
+    // Use numeric constant 1 for OPEN state (ws wrapper doesn't export OPEN)
+    if (peer.socket.readyState === 1) {
       peer.socket.send(JSON.stringify(message));
     }
   }
