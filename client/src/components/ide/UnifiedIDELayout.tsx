@@ -307,6 +307,8 @@ function UnifiedIDELayout({
     checkpoints: 'Checkpoints',
     security: 'Security',
     collaboration: 'Collaboration',
+    actions: 'Actions',
+    tools: 'Tools',
   };
 
   // Add a new tab when tool is selected from tools sheet
@@ -675,6 +677,42 @@ function UnifiedIDELayout({
                 handleFileSelect({ id: file.id, name: file.name });
               }}
             />
+          </Suspense>
+        );
+      case 'actions':
+        return (
+          <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Actions..." /></div>}>
+            <AgentPanelErrorBoundary>
+              <ReplitAgentPanelV3
+                projectId={projectId}
+                mode="mobile"
+                agentToolsSettings={agentToolsSettings}
+                onAgentToolsSettingsChange={setAgentToolsSettings}
+                isBootstrapping={!!bootstrapToken}
+                bootstrapToken={bootstrapToken}
+                hideInput={true}
+                onExternalInput={setMobileAgentHandlers}
+                initialTab="actions"
+              />
+            </AgentPanelErrorBoundary>
+          </Suspense>
+        );
+      case 'tools':
+        return (
+          <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Tools..." /></div>}>
+            <AgentPanelErrorBoundary>
+              <ReplitAgentPanelV3
+                projectId={projectId}
+                mode="mobile"
+                agentToolsSettings={agentToolsSettings}
+                onAgentToolsSettingsChange={setAgentToolsSettings}
+                isBootstrapping={!!bootstrapToken}
+                bootstrapToken={bootstrapToken}
+                hideInput={true}
+                onExternalInput={setMobileAgentHandlers}
+                initialTab="tools"
+              />
+            </AgentPanelErrorBoundary>
           </Suspense>
         );
       case 'more':
@@ -1093,6 +1131,8 @@ function UnifiedIDELayout({
             onOpenSecurity={() => { setShowMobileMoreMenu(false); handleAddOpenTab('security'); }}
             onOpenDeploy={() => { setShowMobileMoreMenu(false); handleAddOpenTab('deploy'); }}
             onOpenWeb={() => { setShowMobileMoreMenu(false); handleAddOpenTab('preview'); }}
+            onOpenActions={() => { setShowMobileMoreMenu(false); handleAddOpenTab('actions'); }}
+            onOpenTools={() => { setShowMobileMoreMenu(false); handleAddOpenTab('tools'); }}
             onOpenCommandPalette={() => { setShowMobileMoreMenu(false); setShowCommandPalette(true); }}
             onOpenGlobalSearch={() => { setShowMobileMoreMenu(false); handleAddOpenTab('search'); }}
             onOpenQuickFileSearch={() => { setShowMobileMoreMenu(false); setShowQuickFileSearch(true); }}
