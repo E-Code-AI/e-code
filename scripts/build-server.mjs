@@ -23,7 +23,8 @@ const nativeModules = [
   'jsdom',
   'isomorphic-dompurify',
   'canvas',
-  'dotenv', // Dynamically imported only in development
+  // Note: dotenv is NOT externalized - it's eliminated via dead code elimination
+  // because we define process.env.NODE_ENV='production' at build time
 ];
 
 const nodeBuiltins = [
@@ -56,6 +57,11 @@ async function build() {
       minify: false,
       sourcemap: true,
       metafile: true,
+      // Define NODE_ENV at build time to enable dead code elimination
+      // This removes the dotenv import block entirely from production builds
+      define: {
+        'process.env.NODE_ENV': '"production"',
+      },
       banner: {
         js: `
 import { createRequire as __esbuild_createRequire } from 'module';
