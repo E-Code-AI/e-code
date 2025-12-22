@@ -869,33 +869,66 @@ export class DatabaseHostingService {
       // Connect to database and execute migration
       const dbPassword = process.env[`DB_PASSWORD_${instance.id.toUpperCase().replace(/-/g, '_')}`] || 'defaultpass';
       
-      // SECURITY: Use escape-string-regexp to sanitize all shell inputs
-      // This prevents command injection attacks via crafted SQL/commands
-      const escapeStringRegexp = (str: string) => str.replace(/[|\\{}()[\]^$+*?.]/g, '\\$&').replace(/-/g, '\\x2d');
-      
-      // Validate and sanitize SQL - reject dangerous shell metacharacters
-      const shellDangerousChars = /[`$;|&<>!]/g;
-      if (shellDangerousChars.test(migration.sql)) {
-        throw new Error('SECURITY: Migration SQL contains shell metacharacters. Use parameterized queries or the database driver directly.');
+      // SECURITY: Validate SQL contains only safe characters
+      // Reject shell metacharacters, newlines, and escape sequences
+      const dangerousPatterns = /[`$;|&<>!\n\r\\]/g;
+      if (dangerousPatterns.test(migration.sql)) {
+        throw new Error('SECURITY: Migration SQL contains dangerous characters. Use the database driver directly for complex queries.');
       }
       
-      // Escape single quotes for shell safety (double them up)
-      const escapeSql = (sql: string) => sql.replace(/'/g, "''").replace(/"/g, '\\"');
-      const sanitizedSql = escapeSql(migration.sql);
+      // Validate hostname/database contain only safe alphanumeric and allowed characters
+      const safeIdentifier = /^[a-zA-Z0-9._-]+$/;
+      if (!safeIdentifier.test(instance.connection.host) || 
+          !safeIdentifier.test(instance.connection.database) ||
+          !safeIdentifier.test(instance.connection.username)) {
+        throw new Error('SECURITY: Connection parameters contain invalid characters');
+      }
       
       switch(instance.type) {
         case 'postgresql':
-          // For production, use pg client directly instead of shell
-          await execAsync(`PGPASSWORD=${escapeStringRegexp(dbPassword)} psql -h ${escapeStringRegexp(instance.connection.host)} -p ${instance.connection.port} -U ${escapeStringRegexp(instance.connection.username)} -d ${escapeStringRegexp(instance.connection.database)} -c "${sanitizedSql}"`);
+          // Use environment variable for password to avoid shell exposure
+          const pgEnv = { ...process.env, PGPASSWORD: dbPassword };
+          await new Promise<void>((resolve, reject) => {
+            const { spawn } = require('child_process');
+            const psql = spawn('psql', [
+              '-h', instance.connection.host,
+              '-p', String(instance.connection.port),
+              '-U', instance.connection.username,
+              '-d', instance.connection.database,
+              '-c', migration.sql
+            ], { env: pgEnv, shell: false });
+            let stderr = '';
+            psql.stderr.on('data', (d: Buffer) => stderr += d.toString());
+            psql.on('close', (code: number) => code === 0 ? resolve() : reject(new Error(stderr)));
+          });
           break;
         case 'mysql':
-          await execAsync(`mysql -h ${escapeStringRegexp(instance.connection.host)} -P ${instance.connection.port} -u${escapeStringRegexp(instance.connection.username)} -p${escapeStringRegexp(dbPassword)} ${escapeStringRegexp(instance.connection.database)} -e "${sanitizedSql}"`);
+          // Use --defaults-extra-file for password or MySQL config
+          await new Promise<void>((resolve, reject) => {
+            const { spawn } = require('child_process');
+            const mysql = spawn('mysql', [
+              '-h', instance.connection.host,
+              '-P', String(instance.connection.port),
+              `-u${instance.connection.username}`,
+              `-p${dbPassword}`,
+              instance.connection.database,
+              '-e', migration.sql
+            ], { shell: false });
+            let stderr = '';
+            mysql.stderr.on('data', (d: Buffer) => stderr += d.toString());
+            mysql.on('close', (code: number) => code === 0 ? resolve() : reject(new Error(stderr)));
+          });
           break;
         case 'mongodb':
-          // SECURITY: MongoDB commands should use the native driver, not shell
-          // For now, only allow safe eval commands with proper escaping
-          const mongoUri = `mongodb://${escapeStringRegexp(instance.connection.username)}:${escapeStringRegexp(dbPassword)}@${escapeStringRegexp(instance.connection.host)}:${instance.connection.port}/${escapeStringRegexp(instance.connection.database)}`;
-          await execAsync(`mongosh "${mongoUri}" --eval "${sanitizedSql}"`);
+          // SECURITY: Use spawn with shell: false to prevent injection
+          const mongoUri = `mongodb://${instance.connection.username}:${encodeURIComponent(dbPassword)}@${instance.connection.host}:${instance.connection.port}/${instance.connection.database}`;
+          await new Promise<void>((resolve, reject) => {
+            const { spawn } = require('child_process');
+            const mongosh = spawn('mongosh', [mongoUri, '--eval', migration.sql], { shell: false });
+            let stderr = '';
+            mongosh.stderr.on('data', (d: Buffer) => stderr += d.toString());
+            mongosh.on('close', (code: number) => code === 0 ? resolve() : reject(new Error(stderr)));
+          });
           break;
       }
       

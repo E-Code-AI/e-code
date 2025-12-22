@@ -280,8 +280,6 @@ function buildDockerArgs(
     'ALL',
     '--security-opt',
     'no-new-privileges:true',
-    '--security-opt',
-    'seccomp=unconfined',
     '--ulimit',
     'nofile=1024:1024',
     '-v',

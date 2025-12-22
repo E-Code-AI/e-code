@@ -120,9 +120,11 @@ async function isPathAllowed(filePath) {
     }
     
     // Allow paths within allowed directories (using real paths)
-    return ALLOWED_PATHS.some(allowed => 
-      realPath.startsWith(path.resolve(allowed) + path.sep)
-    );
+    // Match exact directory or any file within it
+    return ALLOWED_PATHS.some(allowed => {
+      const resolvedAllowed = path.resolve(allowed);
+      return realPath === resolvedAllowed || realPath.startsWith(resolvedAllowed + path.sep);
+    });
   } catch (error) {
     console.error(`[E-Code Desktop] Path validation error: ${error.message}`);
     return false;
