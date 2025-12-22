@@ -1,0 +1,118 @@
+2025-12-22T15:34:55Z info: Deployment: a8b8c817-42d7-4ffe-92f6-a5bbc521f026
+2025-12-22T15:34:55Z info: Connecting to builder
+2025-12-22T15:34:56Z info: Builder connected
+2025-12-22T15:35:02Z info: Installing packages
+--> npm install
+
+npm warn config optional Use `--omit=optional` to exclude optional dependencies, or
+npm warn config `--include=optional` to include them.
+npm warn config
+npm warn config       Default value does install optional deps unless otherwise omitted.
+npm warn config production Use `--omit=dev` instead.
+
+
+up to date, audited 2005 packages in 10s
+
+
+8 vulnerabilities (4 moderate, 4 high)
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+
+2025-12-22T15:35:14Z info: Starting Build
+npm warn config optional Use `--omit=optional` to exclude optional dependencies, or
+npm warn config `--include=optional` to include them.
+npm warn config
+npm warn config       Default value does install optional deps unless otherwise omitted.
+
+npm warn config production Use `--omit=dev` instead.
+
+npm warn deprecated xterm-addon-fit@0.8.0: This package is now deprecated. Move to @xterm/addon-fit instead.
+
+npm warn deprecated xterm-addon-web-links@0.9.0: This package is now deprecated. Move to @xterm/addon-web-links instead.
+
+npm warn deprecated lodash.get@4.4.2: This package is deprecated. Use the optional chaining (?.) operator instead.
+
+npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+
+npm warn deprecated lodash.isequal@4.5.0: This package is deprecated. Use require('node:util').isDeepStrictEqual instead.
+
+npm warn deprecated node-domexception@1.0.0: Use your platform's native DOMException instead
+
+npm warn deprecated @esbuild-kit/esm-loader@2.6.5: Merged into tsx: https://tsx.is
+
+npm warn deprecated @esbuild-kit/core-utils@3.3.2: Merged into tsx: https://tsx.is
+
+npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+
+npm warn deprecated glob@7.1.6: Glob versions prior to v9 are no longer supported
+
+npm warn deprecated superagent@8.1.2: Please upgrade to superagent v10.2.2+, see release notes at https://github.com/forwardemail/superagent/releases/tag/v10.2.2 - maintenance is supported by Forward Email @ https://forwardemail.net
+
+npm warn deprecated xterm@5.3.0: This package is now deprecated. Move to @xterm/xterm instead.
+
+
+added 2004 packages, and audited 2005 packages in 1m
+
+vite v7.2.7 building client environment for production...
+
+transforming...
+
+client/src/components/ui/progress.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+
+client/src/components/ui/collapsible.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+
+client/src/components/ui/sheet.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+
+client/src/components/ui/chart.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+
+client/src/components/ui/hover-card.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+
+✓ 6635 modules transformed.
+
+rendering chunks...
+
+[plugin vite:reporter] 
+(!) /home/runner/workspace/client/src/components/mobile/MobileMoreMenu.tsx is dynamically imported by /home/runner/workspace/client/src/components/ide/UnifiedIDELayout.tsx but also statically imported by /home/runner/workspace/client/src/components/mobile/MobileIDEView.tsx, /home/runner/workspace/client/src/components/mobile/ReplitMobileIDE.tsx, /home/runner/workspace/client/src/components/mobile/index.ts, dynamic import will not move module into another chunk.
+
+
+computing gzip size...
+
+../dist/public/index.html                                             12.75 kB │ gzip:   3.89 kB
+
+../dist/public/assets/Toast-DfPtNE0g.js                                0.06 kB │ gzip:   0.08 kB
+
+../dist/public/assets/modern_software_deve_ff7f5fd4-UOVR0u45.js        0.08 kB │ gzip:   0.10 kB
+
+../dist/public/assets/minus-BPsogiE2.js                                0.11 kB │ gzip:   0.13 kB
+
+../dist/public/assets/chart-line-CfCY-CeN.js                           0.18 kB │ gzip:   0.17 kB
+
+../dist/public/assets/radio-DeVQxOIr.js                                0.37 kB │ gzip:   0.25 kB
+
+../dist/public/assets/ScrollToTop-Cu84R38S.js                          0.37 kB │ gzip:   0.26 kB
+
+../dist/public/assets/xterm-addon-web-links-CzLEkrcU.js                2.78 kB │ gzip:   1.33 kB
+
+../dist/public/assets/CommercialAgreement-DTk4-k-U.js                 12.01 kB │ gzip:   3.44 kB
+
+../dist/public/assets/Learn-BuTLi5vt.js                               12.02 kB │ gzip:   3.17 kB
+
+✓ built in 1m 12s
+
+Building server bundle...
+
+External modules: node-pty, dockerode, playwright, playwright-core, @playwright/test, sharp, bcrypt, cpu-features, ssh2, pg-cloudflare, lightningcss, @babel/preset-typescript, @babel/core, jsdom, isomorphic-dompurify, canvas, dotenv
+
+▲ [WARNING] Import "OPEN" will always be undefined because there is no matching export in "node_modules/ws/wrapper.mjs" [import-is-undefined]
+
+    server/webrtc/voice-video-service.ts:385:45:
+      385 │     if (peer.socket.readyState === WebSocket.OPEN) {
+          ╵                                              ~~~~
+
+
+✅ Server bundle built successfully
+
+   Output size: 85.97 MB

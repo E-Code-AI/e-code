@@ -60,7 +60,7 @@ export default ({ config }) => {
     name: 'E-Code',
     slug: 'ecodeai',
     version: '1.0.0',
-    sdkVersion: '49.0.0',
+    sdkVersion: '54.0.0',
     orientation: 'portrait',
     scheme: 'ecode',
     extra: {
