@@ -13,9 +13,10 @@ echo "PostgreSQL is ready!"
 
 # Run database migrations
 echo "Running database migrations..."
-npm run db:push --force || {
-  echo "WARNING: Migration failed, but continuing..."
-}
+if ! npm run db:push --force; then
+  echo "ERROR: Database migration failed! Cannot start without valid schema."
+  exit 1
+fi
 echo "Migrations complete!"
 
 # Start the application

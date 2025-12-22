@@ -91,25 +91,42 @@ const SENSITIVE_PATH_PATTERNS = [
   'secrets',
 ];
 
-function isPathAllowed(filePath) {
+async function isPathAllowed(filePath) {
   if (!filePath || typeof filePath !== 'string') return false;
-  const resolved = path.resolve(filePath);
-  // Block path traversal attempts
+  
+  // Block path traversal attempts (before resolving to catch early)
   if (filePath.includes('..')) return false;
   
-  // Check against sensitive path patterns
-  const normalizedPath = resolved.toLowerCase();
-  for (const pattern of SENSITIVE_PATH_PATTERNS) {
-    if (normalizedPath.includes(pattern.toLowerCase())) {
-      console.warn(`[E-Code Desktop] Blocked access to sensitive path: ${filePath}`);
-      return false;
+  try {
+    const resolved = path.resolve(filePath);
+    
+    // SECURITY FIX #10: Use realpath to resolve symlinks and prevent symlink attacks
+    // This prevents attackers from using symlinks to access sensitive paths
+    let realPath;
+    try {
+      realPath = await fs.promises.realpath(resolved);
+    } catch (e) {
+      // File doesn't exist yet - use resolved path for new files
+      realPath = resolved;
     }
+    
+    // Check against sensitive path patterns using the real path
+    const normalizedPath = realPath.toLowerCase();
+    for (const pattern of SENSITIVE_PATH_PATTERNS) {
+      if (normalizedPath.includes(pattern.toLowerCase())) {
+        console.warn(`[E-Code Desktop] Blocked access to sensitive path: ${filePath}`);
+        return false;
+      }
+    }
+    
+    // Allow paths within allowed directories (using real paths)
+    return ALLOWED_PATHS.some(allowed => 
+      realPath.startsWith(path.resolve(allowed) + path.sep)
+    );
+  } catch (error) {
+    console.error(`[E-Code Desktop] Path validation error: ${error.message}`);
+    return false;
   }
-  
-  // Allow paths within allowed directories
-  return ALLOWED_PATHS.some(allowed => 
-    resolved.startsWith(path.resolve(allowed))
-  );
 }
 
 // Security: Allowed deep link actions whitelist
@@ -1251,7 +1268,7 @@ ipcMain.handle('show-message-box', async (event, options) => {
 
 // File system operations (with path validation for security and timeout handling)
 ipcMain.handle('read-file', ipcWithTimeout(async (event, filePath) => {
-  if (!isPathAllowed(filePath)) {
+  if (!(await isPathAllowed(filePath))) {
     throw new Error('Access denied: path not allowed');
   }
   try {
@@ -1262,7 +1279,7 @@ ipcMain.handle('read-file', ipcWithTimeout(async (event, filePath) => {
 }, 10000));
 
 ipcMain.handle('write-file', ipcWithTimeout(async (event, filePath, content) => {
-  if (!isPathAllowed(filePath)) {
+  if (!(await isPathAllowed(filePath))) {
     throw new Error('Access denied: path not allowed');
   }
   try {
@@ -1274,7 +1291,7 @@ ipcMain.handle('write-file', ipcWithTimeout(async (event, filePath, content) => 
 }, 10000));
 
 ipcMain.handle('file-exists', ipcWithTimeout(async (event, filePath) => {
-  if (!isPathAllowed(filePath)) {
+  if (!(await isPathAllowed(filePath))) {
     throw new Error('Access denied: path not allowed');
   }
   try {
@@ -1286,7 +1303,7 @@ ipcMain.handle('file-exists', ipcWithTimeout(async (event, filePath) => {
 }, 5000));
 
 ipcMain.handle('read-directory', ipcWithTimeout(async (event, dirPath) => {
-  if (!isPathAllowed(dirPath)) {
+  if (!(await isPathAllowed(dirPath))) {
     throw new Error('Access denied: path not allowed');
   }
   try {
@@ -1303,7 +1320,7 @@ ipcMain.handle('read-directory', ipcWithTimeout(async (event, dirPath) => {
 
 // Additional file system operations (with path validation for security and timeout handling)
 ipcMain.handle('delete-file', ipcWithTimeout(async (event, filePath) => {
-  if (!isPathAllowed(filePath)) {
+  if (!(await isPathAllowed(filePath))) {
     throw new Error('Access denied: path not allowed');
   }
   try {
@@ -1315,7 +1332,7 @@ ipcMain.handle('delete-file', ipcWithTimeout(async (event, filePath) => {
 }, 10000));
 
 ipcMain.handle('mkdir', ipcWithTimeout(async (event, dirPath) => {
-  if (!isPathAllowed(dirPath)) {
+  if (!(await isPathAllowed(dirPath))) {
     throw new Error('Access denied: path not allowed');
   }
   try {
@@ -1327,7 +1344,7 @@ ipcMain.handle('mkdir', ipcWithTimeout(async (event, dirPath) => {
 }, 10000));
 
 ipcMain.handle('stat', async (event, filePath) => {
-  if (!isPathAllowed(filePath)) {
+  if (!(await isPathAllowed(filePath))) {
     throw new Error('Access denied: path not allowed');
   }
   try {
@@ -1345,7 +1362,7 @@ ipcMain.handle('stat', async (event, filePath) => {
 });
 
 ipcMain.handle('rename', async (event, oldPath, newPath) => {
-  if (!isPathAllowed(oldPath) || !isPathAllowed(newPath)) {
+  if (!(await isPathAllowed(oldPath)) || !(await isPathAllowed(newPath))) {
     throw new Error('Access denied: path not allowed');
   }
   try {
@@ -1357,7 +1374,7 @@ ipcMain.handle('rename', async (event, oldPath, newPath) => {
 });
 
 ipcMain.handle('copy', async (event, src, dest) => {
-  if (!isPathAllowed(src) || !isPathAllowed(dest)) {
+  if (!(await isPathAllowed(src)) || !(await isPathAllowed(dest))) {
     throw new Error('Access denied: path not allowed');
   }
   try {
@@ -1369,7 +1386,7 @@ ipcMain.handle('copy', async (event, src, dest) => {
 });
 
 ipcMain.handle('append-file', async (event, filePath, content) => {
-  if (!isPathAllowed(filePath)) {
+  if (!(await isPathAllowed(filePath))) {
     throw new Error('Access denied: path not allowed');
   }
   try {
@@ -1384,8 +1401,8 @@ ipcMain.handle('append-file', async (event, filePath, content) => {
 const fileWatchers = new Map();
 let watcherId = 0;
 
-ipcMain.handle('watch-file', (event, filePath) => {
-  if (!isPathAllowed(filePath)) {
+ipcMain.handle('watch-file', async (event, filePath) => {
+  if (!(await isPathAllowed(filePath))) {
     throw new Error('Access denied: path not allowed');
   }
   try {
@@ -1418,14 +1435,14 @@ ipcMain.handle('open-external', async (event, url) => {
 });
 
 ipcMain.handle('open-path', async (event, targetPath) => {
-  if (!isPathAllowed(targetPath)) {
+  if (!(await isPathAllowed(targetPath))) {
     throw new Error('Access denied: path not allowed');
   }
   await shell.openPath(targetPath);
 });
 
-ipcMain.handle('show-item-in-folder', (event, targetPath) => {
-  if (!isPathAllowed(targetPath)) {
+ipcMain.handle('show-item-in-folder', async (event, targetPath) => {
+  if (!(await isPathAllowed(targetPath))) {
     throw new Error('Access denied: path not allowed');
   }
   shell.showItemInFolder(targetPath);
