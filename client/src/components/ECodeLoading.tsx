@@ -111,7 +111,7 @@ export function ECodeLoading({
 
   if (fullScreen) {
     return (
-      <div className="fixed inset-0 bg-[var(--ecode-background)] z-50 flex items-center justify-center">
+      <div className="fixed inset-0 bg-background z-50 flex items-center justify-center" data-testid="ecode-loading-fullscreen">
         {loadingContent}
       </div>
     );
@@ -119,7 +119,7 @@ export function ECodeLoading({
 
   if (centered) {
     return (
-      <div className={cn('flex items-center justify-center min-h-screen w-full', containerClassName)}>
+      <div className={cn('fixed inset-0 flex items-center justify-center w-full h-full bg-background/80 backdrop-blur-sm z-40', containerClassName)}>
         {loadingContent}
       </div>
     );
