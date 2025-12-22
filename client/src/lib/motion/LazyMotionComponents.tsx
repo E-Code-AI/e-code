@@ -176,16 +176,20 @@ export const LazyMotionButton = forwardRef<HTMLButtonElement, MotionButtonProps>
     shouldUseCSS = true;
   }
   
+  // Extract native button props for fallback rendering (onClick, disabled, type, etc.)
+  const { onClick, onMouseDown, onMouseUp, onTouchStart, onTouchEnd, disabled, type, 'data-testid': dataTestId } = props as any;
+  const nativeButtonProps = { onClick, onMouseDown, onMouseUp, onTouchStart, onTouchEnd, disabled, type, 'data-testid': dataTestId };
+  
   if (shouldUseCSS) {
     return (
-      <button className={className} ref={ref}>
+      <button className={className} ref={ref} {...nativeButtonProps}>
         {children as ReactNode}
       </button>
     );
   }
   
   return (
-    <Suspense fallback={<button className={className}>{children as ReactNode}</button>}>
+    <Suspense fallback={<button className={className} {...nativeButtonProps}>{children as ReactNode}</button>}>
       <LazyMotionButtonInner className={className} {...props} ref={ref}>
         {children}
       </LazyMotionButtonInner>

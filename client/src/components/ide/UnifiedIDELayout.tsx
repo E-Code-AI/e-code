@@ -621,23 +621,23 @@ function UnifiedIDELayout({
               inline={true}
               onClose={() => setTabletPanel('editor')}
               onOpenFiles={() => setTabletDrawerOpen(true)}
-              onOpenGit={() => setShowGitPanel(true)}
-              onOpenPackages={() => setShowPackagesPanel(true)}
-              onOpenSecrets={() => setShowSecretsPanel(true)}
-              onOpenDatabase={() => setShowReplitDB(true)}
-              onOpenSettings={() => setShowSettingsPanel(true)}
-              onOpenDebug={() => setShowDebugPanel(true)}
+              onOpenGit={() => { setActiveActivityItem('git'); setShowGitPanel(true); }}
+              onOpenPackages={() => { setActiveActivityItem('packages'); setShowPackagesPanel(true); }}
+              onOpenSecrets={() => { setActiveActivityItem('secrets'); setShowSecretsPanel(true); }}
+              onOpenDatabase={() => { setActiveActivityItem('database'); setShowReplitDB(true); }}
+              onOpenSettings={() => { setActiveActivityItem('settings'); setShowSettingsPanel(true); }}
+              onOpenDebug={() => { setActiveActivityItem('debug'); setShowDebugPanel(true); }}
               onOpenCollaboration={() => setShowCollaboration(true)}
-              onOpenWorkflows={() => setShowWorkflowsPanel(true)}
-              onOpenHistory={() => setShowHistoryPanel(true)}
+              onOpenWorkflows={() => { setActiveActivityItem('workflows'); setShowWorkflowsPanel(true); }}
+              onOpenHistory={() => { setActiveActivityItem('history'); setShowHistoryPanel(true); }}
               onOpenCheckpoints={() => setShowCheckpointsPanel(true)}
-              onOpenExtensions={() => setShowExtensionsPanel(true)}
+              onOpenExtensions={() => { setActiveActivityItem('extensions'); setShowExtensionsPanel(true); }}
               onOpenSecurity={() => setShowSecurityPanel(true)}
               onOpenActions={() => { setLeftPanelTab('actions'); setTabletPanel('agent'); }}
               onOpenTools={() => { setLeftPanelTab('tools'); setTabletPanel('agent'); }}
               onOpenDeploy={() => { setLeftPanelTab('deployment'); setTabletPanel('agent'); }}
               onOpenCommandPalette={() => setShowCommandPalette(true)}
-              onOpenGlobalSearch={() => setShowGlobalSearch(true)}
+              onOpenGlobalSearch={() => { setActiveActivityItem('search'); setShowGlobalSearch(true); }}
               onOpenQuickFileSearch={() => setShowQuickFileSearch(true)}
               onOpenKeyboardShortcuts={() => setShowKeyboardShortcuts(true)}
             />
@@ -952,20 +952,20 @@ function UnifiedIDELayout({
             projectId={projectId}
             isOpen={showMobileMoreMenu}
             onClose={() => setShowMobileMoreMenu(false)}
-            onOpenGit={() => { setShowMobileMoreMenu(false); setShowGitPanel(true); }}
-            onOpenPackages={() => { setShowMobileMoreMenu(false); setShowPackagesPanel(true); }}
-            onOpenSecrets={() => { setShowMobileMoreMenu(false); setShowSecretsPanel(true); }}
-            onOpenDatabase={() => { setShowMobileMoreMenu(false); setShowReplitDB(true); }}
-            onOpenSettings={() => { setShowMobileMoreMenu(false); setShowSettingsPanel(true); }}
-            onOpenDebug={() => { setShowMobileMoreMenu(false); setShowDebugPanel(true); }}
+            onOpenGit={() => { setShowMobileMoreMenu(false); setActiveActivityItem('git'); setShowGitPanel(true); }}
+            onOpenPackages={() => { setShowMobileMoreMenu(false); setActiveActivityItem('packages'); setShowPackagesPanel(true); }}
+            onOpenSecrets={() => { setShowMobileMoreMenu(false); setActiveActivityItem('secrets'); setShowSecretsPanel(true); }}
+            onOpenDatabase={() => { setShowMobileMoreMenu(false); setActiveActivityItem('database'); setShowReplitDB(true); }}
+            onOpenSettings={() => { setShowMobileMoreMenu(false); setActiveActivityItem('settings'); setShowSettingsPanel(true); }}
+            onOpenDebug={() => { setShowMobileMoreMenu(false); setActiveActivityItem('debug'); setShowDebugPanel(true); }}
             onOpenCollaboration={() => { setShowMobileMoreMenu(false); setShowCollaboration(true); }}
-            onOpenWorkflows={() => { setShowMobileMoreMenu(false); setShowWorkflowsPanel(true); }}
-            onOpenHistory={() => { setShowMobileMoreMenu(false); setShowHistoryPanel(true); }}
+            onOpenWorkflows={() => { setShowMobileMoreMenu(false); setActiveActivityItem('workflows'); setShowWorkflowsPanel(true); }}
+            onOpenHistory={() => { setShowMobileMoreMenu(false); setActiveActivityItem('history'); setShowHistoryPanel(true); }}
             onOpenCheckpoints={() => { setShowMobileMoreMenu(false); setShowCheckpointsPanel(true); }}
-            onOpenExtensions={() => { setShowMobileMoreMenu(false); setShowExtensionsPanel(true); }}
+            onOpenExtensions={() => { setShowMobileMoreMenu(false); setActiveActivityItem('extensions'); setShowExtensionsPanel(true); }}
             onOpenSecurity={() => { setShowMobileMoreMenu(false); setShowSecurityPanel(true); }}
             onOpenCommandPalette={() => { setShowMobileMoreMenu(false); setShowCommandPalette(true); }}
-            onOpenGlobalSearch={() => { setShowMobileMoreMenu(false); setShowGlobalSearch(true); }}
+            onOpenGlobalSearch={() => { setShowMobileMoreMenu(false); setActiveActivityItem('search'); setShowGlobalSearch(true); }}
             onOpenQuickFileSearch={() => { setShowMobileMoreMenu(false); setShowQuickFileSearch(true); }}
             onOpenKeyboardShortcuts={() => { setShowMobileMoreMenu(false); setShowKeyboardShortcuts(true); }}
             problemsCount={errorsCount}
