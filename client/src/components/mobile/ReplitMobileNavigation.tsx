@@ -29,7 +29,7 @@ import {
   Workflow,
   Bug,
   Save,
-  UserShield
+  ShieldCheck
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -95,7 +95,7 @@ const iconMap: Record<string, React.ElementType> = {
   workflows: Workflow,
   debug: Bug,
   checkpoints: Save,
-  security: UserShield,
+  security: ShieldCheck,
   collaboration: Users,
   packages: Package,
   terminal: Terminal,
