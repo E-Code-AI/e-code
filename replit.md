@@ -88,4 +88,8 @@ The platform supports two deployment modes: `single-vm` (default, typically for 
 - **Auto-Update (Desktop):** Intentionally disabled for security - requires user confirmation
 - **Shell.tsx:** Uses textContent/DOM APIs instead of innerHTML to prevent XSS attacks
 - **Mobile Tokens:** Stored via expo-secure-store (encrypted keychain/keystore) with AsyncStorage migration fallback
-- **MongoDB Shell:** Commands are sanitized using escape-string-regexp to prevent command injection
+- **Database CLI Execution:** All database migrations use `spawn` with `shell: false` to prevent command injection. PostgreSQL uses PGPASSWORD env var, MySQL/MongoDB pass credentials as arguments. Input validation rejects dangerous characters including shell metacharacters and newlines.
+- **Electron Path Traversal:** Uses async `fs.promises.realpath()` to resolve symlinks before path validation, preventing symlink attacks
+- **WebSocket Message Size:** 1MB limit enforced in agent-websocket-service.ts to prevent memory exhaustion attacks
+- **Docker Entrypoint:** Fails fast on migration errors (exit 1) instead of continuing with invalid schema
+- **Android Haptics:** Uses Vibration API fallback when expo-haptics unavailable (iOS uses expo-haptics)
