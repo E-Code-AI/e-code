@@ -7,6 +7,7 @@ import { EnhancedMobileFileExplorer } from './EnhancedMobileFileExplorer';
 import { InlineMobileFileExplorer } from './InlineMobileFileExplorer';
 import { LazyMobileCodeEditor } from './LazyMobileCodeEditor';
 import { MobilePreviewPanel } from './MobilePreviewPanel';
+import { MobileDeployPanel } from './MobileDeployPanel';
 import { MobileMoreMenu } from './MobileMoreMenu';
 import { MobileCollaborationPanel } from './MobileCollaborationPanel';
 import { MobileGitPanel } from './MobileGitPanel';
@@ -64,7 +65,7 @@ const AgentFallback = () => (
 
 export type MobilePanelType = 'git' | 'packages' | 'secrets' | 'database' | 'settings' | 'debug' | 'security' | 'workflows' | 'history' | 'extensions' | 'actions' | 'tools' | 'deploy' | null;
 
-export type MobileTab = 'agent' | 'files' | 'console' | 'preview' | 'more';
+export type MobileTab = 'agent' | 'files' | 'deploy' | 'preview' | 'more';
 
 interface MobileIDEViewProps {
   projectId: string | number;
@@ -322,10 +323,10 @@ function MobilePublishFAB({ projectId, className, onNavigateToDeploy }: MobilePu
 }
 
 const tabs: { id: MobileTab; label: string; icon: typeof Code }[] = [
-  { id: 'agent', label: 'Agent', icon: Sparkles },
   { id: 'files', label: 'Files', icon: FolderOpen },
-  { id: 'console', label: 'Console', icon: Terminal },
-  { id: 'preview', label: 'Webview', icon: Monitor },
+  { id: 'preview', label: 'Preview', icon: Monitor },
+  { id: 'agent', label: 'Agent', icon: Sparkles },
+  { id: 'deploy', label: 'Deploy', icon: Rocket },
   { id: 'more', label: 'Tools', icon: MoreHorizontal },
 ];
 
@@ -766,9 +767,9 @@ export function MobileIDEView({ projectId, className, bootstrapToken, onWorkspac
                 )
               )}
               
-              {activeTab === 'console' && (
+              {activeTab === 'deploy' && (
                 <Suspense fallback={<TerminalFallback />}>
-                  <EnhancedMobileTerminal projectId={projectId} />
+                  <MobileDeployPanel projectId={normalizedProjectId} />
                 </Suspense>
               )}
               
