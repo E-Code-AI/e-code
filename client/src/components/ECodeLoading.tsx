@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom';
 import { cn } from '@/lib/utils';
 
 interface ECodeLoadingProps {
@@ -110,19 +111,29 @@ export function ECodeLoading({
   );
 
   if (fullScreen) {
-    return (
+    const content = (
       <div className="fixed inset-0 bg-background z-50 flex items-center justify-center" data-testid="ecode-loading-fullscreen">
         {loadingContent}
       </div>
     );
+    // Use portal to escape parent transform contexts that break fixed positioning
+    if (typeof document !== 'undefined') {
+      return createPortal(content, document.body);
+    }
+    return content;
   }
 
   if (centered) {
-    return (
+    const content = (
       <div className={cn('fixed inset-0 flex items-center justify-center w-full h-full bg-background/80 backdrop-blur-sm z-40', containerClassName)}>
         {loadingContent}
       </div>
     );
+    // Use portal to escape parent transform contexts that break fixed positioning
+    if (typeof document !== 'undefined') {
+      return createPortal(content, document.body);
+    }
+    return content;
   }
 
   return loadingContent;
