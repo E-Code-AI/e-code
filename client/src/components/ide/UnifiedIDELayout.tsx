@@ -246,6 +246,7 @@ function UnifiedIDELayout({
   const [showExtensionsPanel, setShowExtensionsPanel] = useState(false);
   const [showSettingsPanel, setShowSettingsPanel] = useState(false);
   const [showSecurityPanel, setShowSecurityPanel] = useState(false);
+  const [showDeployPanel, setShowDeployPanel] = useState(false);
   const [showMobileMoreMenu, setShowMobileMoreMenu] = useState(false);
   const [showTabSwitcher, setShowTabSwitcher] = useState(false);
   
@@ -947,6 +948,22 @@ function UnifiedIDELayout({
           </div>
         )}
 
+        {showDeployPanel && (
+          <div className="fixed inset-0 z-[100] bg-background" data-testid="mobile-deploy-panel">
+            <div className="flex items-center justify-between p-3 border-b">
+              <span className="font-medium">Deploy</span>
+              <Button size="icon" variant="ghost" onClick={() => closePanel(setShowDeployPanel)} className="h-8 w-8" data-testid="button-close-deploy">
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" /></div>}>
+              <div className="h-[calc(100%-52px)] overflow-auto">
+                <ReplitDeploymentPanel projectId={projectId} />
+              </div>
+            </Suspense>
+          </div>
+        )}
+
         <Suspense fallback={null}>
           <MobileMoreMenu
             projectId={projectId}
@@ -964,6 +981,8 @@ function UnifiedIDELayout({
             onOpenCheckpoints={() => { setShowMobileMoreMenu(false); setShowCheckpointsPanel(true); }}
             onOpenExtensions={() => { setShowMobileMoreMenu(false); setActiveActivityItem('extensions'); setShowExtensionsPanel(true); }}
             onOpenSecurity={() => { setShowMobileMoreMenu(false); setShowSecurityPanel(true); }}
+            onOpenDeploy={() => { setShowMobileMoreMenu(false); setActiveActivityItem('deploy'); setShowDeployPanel(true); }}
+            onOpenWeb={() => { setShowMobileMoreMenu(false); setMobileActiveTab('preview'); }}
             onOpenCommandPalette={() => { setShowMobileMoreMenu(false); setShowCommandPalette(true); }}
             onOpenGlobalSearch={() => { setShowMobileMoreMenu(false); setActiveActivityItem('search'); setShowGlobalSearch(true); }}
             onOpenQuickFileSearch={() => { setShowMobileMoreMenu(false); setShowQuickFileSearch(true); }}
