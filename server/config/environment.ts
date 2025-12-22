@@ -1,9 +1,5 @@
-import dotenv from 'dotenv';
-
-// Ensure .env is loaded when running locally
-if (process.env.NODE_ENV !== 'production') {
-  dotenv.config();
-}
+// Dotenv is loaded by server/index.ts in development
+// No import needed here - environment variables are already available
 
 const parseBoolean = (value: string | undefined, fallback = false): boolean => {
   if (value === undefined) return fallback;

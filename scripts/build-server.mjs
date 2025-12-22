@@ -23,6 +23,7 @@ const nativeModules = [
   'jsdom',
   'isomorphic-dompurify',
   'canvas',
+  'dotenv', // Dynamically imported only in development
 ];
 
 const nodeBuiltins = [
