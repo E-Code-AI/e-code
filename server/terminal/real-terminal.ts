@@ -7,11 +7,36 @@ import { WebSocketServer, WebSocket } from 'ws';
 import { Server } from 'http';
 import { dockerExecutor } from '../execution/docker-executor';
 import { createLogger } from '../utils/logger';
-import * as pty from 'node-pty';
-import Docker from 'dockerode';
 
 const logger = createLogger('real-terminal');
-const docker = new Docker();
+
+// Lazy-load native modules to avoid crashes in production
+let ptyModule: typeof import('node-pty') | null = null;
+let dockerModule: typeof import('dockerode') | null = null;
+let dockerInstance: InstanceType<typeof import('dockerode')> | null = null;
+
+async function getPty(): Promise<typeof import('node-pty')> {
+  if (!ptyModule) {
+    try {
+      ptyModule = await import('node-pty');
+    } catch (error) {
+      throw new Error('node-pty is not available in this environment');
+    }
+  }
+  return ptyModule;
+}
+
+async function getDocker(): Promise<InstanceType<typeof import('dockerode')>> {
+  if (!dockerInstance) {
+    try {
+      const Docker = (await import('dockerode')).default;
+      dockerInstance = new Docker();
+    } catch (error) {
+      throw new Error('dockerode is not available in this environment');
+    }
+  }
+  return dockerInstance;
+}
 
 interface TerminalSession {
   containerId: string;
@@ -127,6 +152,7 @@ export class RealTerminalService {
     rows: number
   ) {
     try {
+      const docker = await getDocker();
       const container = docker.getContainer(containerId);
       
       // Verify container exists and is running
@@ -316,6 +342,7 @@ export class RealTerminalService {
       
       // 8.5 FIX: If resize fails, recreate the exec session with new dimensions
       try {
+        const docker = await getDocker();
         const container = docker.getContainer(session.containerId);
         
         // Close old stream gracefully

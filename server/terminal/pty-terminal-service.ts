@@ -10,8 +10,21 @@ import { WebSocketServer, WebSocket } from 'ws';
 import { Server, IncomingMessage } from 'http';
 import { Socket } from 'net';
 import type { Duplex } from 'stream';
-import * as pty from 'node-pty';
 import * as os from 'os';
+
+// Lazy-load node-pty to avoid crashes in production where it's not available
+let ptyModule: typeof import('node-pty') | null = null;
+
+async function getPty(): Promise<typeof import('node-pty')> {
+  if (!ptyModule) {
+    try {
+      ptyModule = await import('node-pty');
+    } catch (error) {
+      throw new Error('node-pty is not available in this environment. Terminal functionality requires native modules.');
+    }
+  }
+  return ptyModule;
+}
 import * as path from 'path';
 import * as fs from 'fs';
 import { spawn, ChildProcess } from 'child_process';
@@ -464,6 +477,7 @@ export class PTYTerminalService {
       logger.info(`Creating local PTY session for project ${projectId} in ${workDir}`);
       logger.warn('[SECURITY] Local PTY is only for development. Use Docker in production.');
 
+      const pty = await getPty();
       const ptyProcess = pty.spawn(shell, shellArgs, {
         name: 'xterm-256color',
         cols: 80,

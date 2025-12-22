@@ -10,16 +10,30 @@ import * as fs from 'fs/promises';
 import * as fsSync from 'fs';
 import * as crypto from 'crypto';
 import * as os from 'os';
+import type Docker from 'dockerode';
 import { createLogger } from '../utils/logger';
 import { storage } from '../storage';
 import { Project, File } from '@shared/schema';
-import Docker from 'dockerode';
 // @ts-ignore - tar-stream doesn't have type definitions
 import * as tarStream from 'tar-stream';
 import { Readable } from 'stream';
 
 const logger = createLogger('docker-executor');
-const docker = new Docker();
+
+// Lazy-load dockerode to avoid crashes in production where it may not be available
+let dockerInstance: InstanceType<typeof import('dockerode')> | null = null;
+
+async function getDocker(): Promise<InstanceType<typeof import('dockerode')>> {
+  if (!dockerInstance) {
+    try {
+      const Docker = (await import('dockerode')).default;
+      dockerInstance = new Docker();
+    } catch (error) {
+      throw new Error('dockerode is not available in this environment');
+    }
+  }
+  return dockerInstance;
+}
 
 // Base directory for execution workspaces
 const EXECUTION_BASE_DIR = path.join(os.tmpdir(), 'e-code-executions');
@@ -135,6 +149,7 @@ export class DockerExecutor extends EventEmitter {
       };
 
       // Create container (files are already in workDir via bind mount)
+      const docker = await getDocker();
       const container = await docker.createContainer(containerConfig);
       
       // Set up output streams
@@ -273,12 +288,14 @@ export class DockerExecutor extends EventEmitter {
     const imageName = imageMap[language] || 'ubuntu:22.04';
     
     try {
+      const docker = await getDocker();
       // Check if image exists locally
       await docker.getImage(imageName).inspect();
       logger.info(`Using existing image: ${imageName}`);
     } catch (error) {
       // Pull image if not found
       logger.info(`Pulling image: ${imageName}`);
+      const docker = await getDocker();
       const stream = await docker.pull(imageName);
       
       // Wait for pull to complete
