@@ -271,17 +271,21 @@ async function logEmailEvent(userId: string | null, action: string, email: strin
 export async function sendVerificationEmail(userId: string, email: string, displayName: string, token: string): Promise<void> {
   // Mock email sending in test mode
   if (isTestEnv) {
+    console.log('[SendGrid] Test mode - skipping email send');
     return;
   }
   
   if (!SENDGRID_API_KEY) {
+    console.warn('[SendGrid] No API key configured - skipping email send');
     return;
   }
   
   const template = emailTemplates.verification(displayName, token);
   
+  console.log(`[SendGrid] Attempting to send verification email to ${email} from ${FROM_EMAIL}`);
+  
   try {
-    await sgMail.send({
+    const response = await sgMail.send({
       to: email,
       from: {
         email: FROM_EMAIL,
@@ -292,14 +296,27 @@ export async function sendVerificationEmail(userId: string, email: string, displ
       text: template.text
     });
     
+    console.log(`[SendGrid] Verification email sent successfully to ${email}`, response[0]?.statusCode);
     await logEmailEvent(userId, 'email_verification_sent', email, 'success', { type: 'verification' });
   } catch (error: any) {
+    // Extract detailed SendGrid error
+    const sgError = error?.response?.body?.errors?.[0]?.message || error.message;
+    const statusCode = error?.code || error?.response?.statusCode;
+    
+    console.error(`[SendGrid] Failed to send verification email:`, {
+      statusCode,
+      message: sgError,
+      fromEmail: FROM_EMAIL,
+      toEmail: email,
+      fullError: JSON.stringify(error?.response?.body || error.message)
+    });
+    
     await logEmailEvent(userId, 'email_verification_sent', email, 'failure', { 
-      error: error.message,
+      error: sgError,
+      statusCode,
       type: 'verification' 
     });
-    console.error('Failed to send verification email:', error);
-    throw new Error('Failed to send verification email');
+    throw new Error(`Failed to send verification email: ${sgError}`);
   }
 }
 
