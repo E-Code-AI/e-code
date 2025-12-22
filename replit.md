@@ -64,7 +64,7 @@ The platform supports two deployment modes: `single-vm` (default, typically for 
 
 ### Applications
 - **Desktop Application (Electron):** Cross-platform with multi-window, deep linking, auto-update, and secure IPC.
-- **Mobile Application (React Native + Expo):** Cross-platform with platform-specific haptics, swipe-to-action, font rendering, and AsyncStorage-backed offline cache.
+- **Mobile Application (React Native + Expo SDK 54):** Cross-platform with platform-specific haptics, swipe-to-action, font rendering, expo-secure-store for token encryption with AsyncStorage migration fallback.
 
 ## Known Limitations & Future Work
 
@@ -86,3 +86,6 @@ The platform supports two deployment modes: `single-vm` (default, typically for 
 - **CSP:** nginx.conf uses `'unsafe-inline'` for styles pending nonce/hash implementation in build pipeline
 - **Docker Socket:** Disabled in kubernetes/production-infrastructure.yaml - use docker-socket-proxy for container orchestration
 - **Auto-Update (Desktop):** Intentionally disabled for security - requires user confirmation
+- **Shell.tsx:** Uses textContent/DOM APIs instead of innerHTML to prevent XSS attacks
+- **Mobile Tokens:** Stored via expo-secure-store (encrypted keychain/keystore) with AsyncStorage migration fallback
+- **MongoDB Shell:** Commands are sanitized using escape-string-regexp to prevent command injection
