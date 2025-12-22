@@ -67,19 +67,20 @@ loadHaptics();
 
 /**
  * Safe haptic feedback wrapper
- * Falls back silently if haptics unavailable
+ * Falls back to Vibration API on Android, expo-haptics on iOS
  */
-async function safeHaptic(action: (h: HapticsModule) => Promise<void>): Promise<void> {
-  // Haptics only work on physical iOS devices (not simulator, not Android emulator)
-  if (Platform.OS !== 'ios') {
-    // Android has limited haptic support, skip for now
-    return;
-  }
-  
+async function safeHaptic(action: (h: HapticsModule) => Promise<void>, androidDuration: number = 10): Promise<void> {
   try {
-    const h = await loadHaptics();
-    if (h) {
-      await action(h);
+    if (Platform.OS === 'ios') {
+      // iOS uses expo-haptics for rich haptic feedback
+      const h = await loadHaptics();
+      if (h) {
+        await action(h);
+      }
+    } else if (Platform.OS === 'android') {
+      // Android fallback: use Vibration API for basic haptic feedback
+      const { Vibration } = require('react-native');
+      Vibration.vibrate(androidDuration);
     }
   } catch (error) {
     // Silently fail - haptics are nice-to-have, not critical

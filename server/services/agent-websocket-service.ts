@@ -384,7 +384,18 @@ class AgentWebSocketService {
     });
     
     // Handle application-level messages (including pong for browser clients)
+    // SECURITY: Message size limit to prevent memory exhaustion attacks
+    const MAX_MESSAGE_SIZE = 1024 * 1024; // 1MB limit
+    
     ws.on('message', (data) => {
+      // SECURITY FIX #26: Reject oversized messages
+      const messageSize = Buffer.isBuffer(data) ? data.length : data.toString().length;
+      if (messageSize > MAX_MESSAGE_SIZE) {
+        logger.warn(`[Agent WebSocket] Message too large (${messageSize} bytes) from ${connectionKey} - closing connection`);
+        ws.close(1009, 'Message too large');
+        return;
+      }
+      
       try {
         const message = JSON.parse(data.toString());
         if (message.type === 'pong') {

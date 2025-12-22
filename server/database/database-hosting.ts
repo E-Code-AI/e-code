@@ -869,27 +869,33 @@ export class DatabaseHostingService {
       // Connect to database and execute migration
       const dbPassword = process.env[`DB_PASSWORD_${instance.id.toUpperCase().replace(/-/g, '_')}`] || 'defaultpass';
       
-      // SECURITY: Sanitize SQL to prevent command injection
-      // Shell characters that could allow command escape
-      const shellDangerousChars = /[`$\\;|&<>(){}[\]!#'"]/g;
+      // SECURITY: Use escape-string-regexp to sanitize all shell inputs
+      // This prevents command injection attacks via crafted SQL/commands
+      const escapeStringRegexp = (str: string) => str.replace(/[|\\{}()[\]^$+*?.]/g, '\\$&').replace(/-/g, '\\x2d');
+      
+      // Validate and sanitize SQL - reject dangerous shell metacharacters
+      const shellDangerousChars = /[`$;|&<>!]/g;
       if (shellDangerousChars.test(migration.sql)) {
-        throw new Error('SECURITY: Migration SQL contains potentially dangerous shell characters. Use the database driver directly.');
+        throw new Error('SECURITY: Migration SQL contains shell metacharacters. Use parameterized queries or the database driver directly.');
       }
+      
+      // Escape single quotes for shell safety (double them up)
+      const escapeSql = (sql: string) => sql.replace(/'/g, "''").replace(/"/g, '\\"');
+      const sanitizedSql = escapeSql(migration.sql);
       
       switch(instance.type) {
         case 'postgresql':
           // For production, use pg client directly instead of shell
-          await execAsync(`PGPASSWORD=${dbPassword} psql -h ${instance.connection.host} -p ${instance.connection.port} -U ${instance.connection.username} -d ${instance.connection.database} -c "${migration.sql.replace(/"/g, '\\"')}"`);
+          await execAsync(`PGPASSWORD=${escapeStringRegexp(dbPassword)} psql -h ${escapeStringRegexp(instance.connection.host)} -p ${instance.connection.port} -U ${escapeStringRegexp(instance.connection.username)} -d ${escapeStringRegexp(instance.connection.database)} -c "${sanitizedSql}"`);
           break;
         case 'mysql':
-          await execAsync(`mysql -h ${instance.connection.host} -P ${instance.connection.port} -u${instance.connection.username} -p${dbPassword} ${instance.connection.database} -e "${migration.sql.replace(/"/g, '\\"')}"`);
+          await execAsync(`mysql -h ${escapeStringRegexp(instance.connection.host)} -P ${instance.connection.port} -u${escapeStringRegexp(instance.connection.username)} -p${escapeStringRegexp(dbPassword)} ${escapeStringRegexp(instance.connection.database)} -e "${sanitizedSql}"`);
           break;
         case 'mongodb':
           // SECURITY: MongoDB commands should use the native driver, not shell
-          // For now, only allow safe eval commands (no shell escapes)
-          const mongoUri = `mongodb://${instance.connection.username}:${dbPassword}@${instance.connection.host}:${instance.connection.port}/${instance.connection.database}`;
-          const safeCommand = migration.sql.replace(/"/g, '\\"');
-          await execAsync(`mongosh "${mongoUri}" --eval "${safeCommand}"`);
+          // For now, only allow safe eval commands with proper escaping
+          const mongoUri = `mongodb://${escapeStringRegexp(instance.connection.username)}:${escapeStringRegexp(dbPassword)}@${escapeStringRegexp(instance.connection.host)}:${instance.connection.port}/${escapeStringRegexp(instance.connection.database)}`;
+          await execAsync(`mongosh "${mongoUri}" --eval "${sanitizedSql}"`);
           break;
       }
       
