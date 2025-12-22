@@ -43,7 +43,13 @@ const baseClient = postgres(DATABASE_URL, {
   idle_timeout: 60, // Keep connections alive for 1 minute when idle
   max_lifetime: 60 * 60, // 1 hour connection lifetime to prevent stale connections
   connect_timeout: 10, // 10 second connection timeout
-  prepare: false, // Disable prepared statements for better stability
+  // NOTE: prepare: false is REQUIRED for Neon serverless databases
+  // This does NOT affect SQL injection protection - Drizzle ORM still uses 
+  // parameterized queries. The 'prepare' option controls PostgreSQL's 
+  // PREPARE/EXECUTE statement caching which is incompatible with Neon's
+  // connection pooler (PgBouncer in transaction mode).
+  // See: https://neon.tech/docs/connect/connection-pooling
+  prepare: false,
   transform: {
     undefined: null, // Transform undefined to null for PostgreSQL compatibility
   },
