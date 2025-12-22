@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from 'events';
-import * as WebSocket from 'ws';
+import { WebSocket } from 'ws';
 import { db } from '../db';
 import { voiceVideoSessions, voiceVideoParticipants } from '@shared/schema';
 import { eq, and } from 'drizzle-orm';
