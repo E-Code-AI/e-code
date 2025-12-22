@@ -10,11 +10,11 @@
  */
 
 import { memo, useCallback, type ElementType } from 'react';
-import { Terminal as TerminalIcon, Monitor, MoreHorizontal, Sparkles, FolderOpen, GitBranch, AlertCircle, Wifi, WifiOff } from 'lucide-react';
+import { Rocket, Monitor, MoreHorizontal, Sparkles, FolderOpen, GitBranch, AlertCircle, Wifi, WifiOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 
-type MobileTab = 'agent' | 'files' | 'console' | 'preview' | 'more';
+type MobileTab = 'agent' | 'files' | 'deploy' | 'preview' | 'more';
 
 interface Tab {
   id: MobileTab;
@@ -38,7 +38,7 @@ const tabs: Tab[] = [
   { id: 'files', icon: FolderOpen, label: 'Files' },
   { id: 'preview', icon: Monitor, label: 'Preview' },
   { id: 'agent', icon: Sparkles, label: 'Agent' },
-  { id: 'console', icon: TerminalIcon, label: 'Console' },
+  { id: 'deploy', icon: Rocket, label: 'Deploy' },
   { id: 'more', icon: MoreHorizontal, label: 'Tools' },
 ];
 
