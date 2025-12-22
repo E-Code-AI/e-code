@@ -14,8 +14,8 @@ import { ReplitLayout } from "@/components/layout/ReplitLayout";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { publicRoutes, protectedRoutes, placeholderRoutes, solarTechApps, Pages } from "./routes/config";
 
-const Toaster = lazy(() => import("@/components/ui/toaster").then(m => ({ default: m.Toaster })));
-const AppToaster = lazy(() => import("@/components/ui/AppToaster").then(m => ({ default: m.AppToaster })));
+import { Toaster } from "@/components/ui/toaster";
+import { AppToaster } from "@/components/ui/AppToaster";
 const ScrollToTop = lazy(() => import("@/components/ScrollToTop").then(m => ({ default: m.ScrollToTop })));
 const LazyAnimatedRoutes = lazy(() => import("@/components/LazyAnimatedRoutes").then(m => ({ default: m.LazyAnimatedRoutes })));
 const ConnectionStatusBanner = lazy(() => import("./components/ConnectionStatusBanner").then(m => ({ default: m.ConnectionStatusBanner })));

@@ -250,8 +250,9 @@ This link expires in 24 hours.
 // Log email event to security logs
 async function logEmailEvent(userId: string | null, action: string, email: string, result: 'success' | 'failure', metadata?: any) {
   try {
+    const numericUserId = userId ? parseInt(userId, 10) : null;
     await db.insert(securityLogs).values({
-      userId,
+      userId: numericUserId,
       ip: '0.0.0.0', // Will be set by the calling endpoint
       action,
       resource: email,

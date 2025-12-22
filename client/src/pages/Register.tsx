@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { apiRequest } from '@/lib/queryClient';
 import { LazyMotionDiv, LazyAnimatePresence } from '@/lib/motion';
 import { 
@@ -41,7 +41,6 @@ const calculatePasswordStrength = (password: string): { score: number; label: st
 
 export default function Register() {
   const [, navigate] = useLocation();
-  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
   const [showPassword, setShowPassword] = useState(false);
@@ -109,10 +108,12 @@ export default function Register() {
         displayName: formData.displayName || formData.username
       });
       
-      toast({
-        title: 'Success!',
-        description: data.message || 'Account created successfully. Please check your email to verify.',
+      toast.success(data.message || 'Account created successfully. Please check your email to verify.', {
+        duration: 5000,
       });
+      
+      // Small delay to ensure toast is visible before navigation
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Check for pending workspace creation (Replit-style flow)
       const pendingAppDescription = sessionStorage.getItem('pendingAppDescription');
@@ -168,10 +169,7 @@ export default function Register() {
   };
 
   const handleSocialSignup = (provider: string) => {
-    toast({
-      title: "Coming Soon",
-      description: `${provider} signup will be available soon!`,
-    });
+    toast.info(`${provider} signup will be available soon!`);
   };
 
   return (
