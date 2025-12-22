@@ -301,6 +301,12 @@ function UnifiedIDELayout({
     history: 'History',
     workflows: 'Workflows',
     extensions: 'Extensions',
+    packages: 'Packages',
+    terminal: 'Terminal',
+    debug: 'Debug',
+    checkpoints: 'Checkpoints',
+    security: 'Security',
+    collaboration: 'Collaboration',
   };
 
   // Add a new tab when tool is selected from tools sheet
@@ -318,10 +324,8 @@ function UnifiedIDELayout({
       setActiveOpenTabId(toolId);
     }
     
-    // Also map to legacy mobileActiveTab for panel rendering
-    if (['preview', 'agent', 'deploy'].includes(toolId)) {
-      setMobileActiveTab(toolId as MobileTab);
-    }
+    // Map all tools to mobileActiveTab for panel rendering
+    setMobileActiveTab(toolId as MobileTab);
   }, [openTabs]);
 
   // Close an open tab
@@ -338,10 +342,8 @@ function UnifiedIDELayout({
   // Select an open tab
   const handleSelectOpenTab = useCallback((tabId: string) => {
     setActiveOpenTabId(tabId);
-    // Map to legacy mobileActiveTab for panel rendering
-    if (['preview', 'agent', 'deploy'].includes(tabId)) {
-      setMobileActiveTab(tabId as MobileTab);
-    }
+    // Map all tools to mobileActiveTab for panel rendering
+    setMobileActiveTab(tabId as MobileTab);
   }, []);
 
   // Handle quick access from tab switcher
@@ -565,6 +567,114 @@ function UnifiedIDELayout({
         return (
           <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Deploy..." /></div>}>
             <ReplitDeploymentPanel projectId={projectId} />
+          </Suspense>
+        );
+      case 'git':
+        return (
+          <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Git..." /></div>}>
+            <ReplitGitPanel projectId={projectId} />
+          </Suspense>
+        );
+      case 'packages':
+        return (
+          <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Packages..." /></div>}>
+            <ReplitPackagesPanel projectId={projectId} />
+          </Suspense>
+        );
+      case 'secrets':
+        return (
+          <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Secrets..." /></div>}>
+            <ReplitSecretsPanel projectId={projectId} />
+          </Suspense>
+        );
+      case 'database':
+        return (
+          <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Database..." /></div>}>
+            <ReplitDB projectId={parseInt(projectId, 10)} />
+          </Suspense>
+        );
+      case 'terminal':
+        return (
+          <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Terminal..." /></div>}>
+            <EnhancedMobileTerminal projectId={projectId} />
+          </Suspense>
+        );
+      case 'files':
+        return (
+          <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Files..." /></div>}>
+            <ReplitFileExplorer
+              projectId={projectId}
+              onFileSelect={handleFileSelect}
+              selectedFileId={selectedFileId}
+              isBootstrapping={!!bootstrapToken}
+            />
+          </Suspense>
+        );
+      case 'history':
+        return (
+          <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading History..." /></div>}>
+            <ReplitHistoryPanel projectId={projectId} />
+          </Suspense>
+        );
+      case 'checkpoints':
+        return (
+          <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Checkpoints..." /></div>}>
+            <CheckpointHistoryPanel projectId={projectId} maxHeight="calc(100vh - 120px)" />
+          </Suspense>
+        );
+      case 'settings':
+        return (
+          <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Settings..." /></div>}>
+            <ReplitSettingsPanel projectId={projectId} />
+          </Suspense>
+        );
+      case 'extensions':
+        return (
+          <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Extensions..." /></div>}>
+            <ExtensionsMarketplace className="h-full" />
+          </Suspense>
+        );
+      case 'workflows':
+        return (
+          <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Workflows..." /></div>}>
+            <WorkflowsPanel projectId={projectId} />
+          </Suspense>
+        );
+      case 'debug':
+        return (
+          <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Debug..." /></div>}>
+            <ReplitDebuggerPanel projectId={projectId} />
+          </Suspense>
+        );
+      case 'security':
+        return (
+          <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Security..." /></div>}>
+            <MobileSecurityPanel projectId={projectId} />
+          </Suspense>
+        );
+      case 'collaboration':
+        return user ? (
+          <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Collaboration..." /></div>}>
+            <CollaborationPanel
+              projectId={parseInt(projectId, 10)}
+              projectName={project?.name}
+              currentUser={user}
+              currentFile={selectedFileId ? files.find(f => f.id === selectedFileId)?.name : undefined}
+              className="h-full"
+            />
+          </Suspense>
+        ) : null;
+      case 'search':
+        return (
+          <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Search..." /></div>}>
+            <GlobalSearch
+              isOpen={true}
+              onClose={() => setMobileActiveTab('agent')}
+              projectId={projectId}
+              onFileSelect={(file) => {
+                handleFileSelect({ id: file.id, name: file.name });
+              }}
+            />
           </Suspense>
         );
       case 'more':
@@ -969,22 +1079,22 @@ function UnifiedIDELayout({
             projectId={projectId}
             isOpen={showMobileMoreMenu}
             onClose={() => setShowMobileMoreMenu(false)}
-            onOpenGit={() => { setShowMobileMoreMenu(false); setActiveActivityItem('git'); setShowGitPanel(true); }}
-            onOpenPackages={() => { setShowMobileMoreMenu(false); setActiveActivityItem('packages'); setShowPackagesPanel(true); }}
-            onOpenSecrets={() => { setShowMobileMoreMenu(false); setActiveActivityItem('secrets'); setShowSecretsPanel(true); }}
-            onOpenDatabase={() => { setShowMobileMoreMenu(false); setActiveActivityItem('database'); setShowReplitDB(true); }}
-            onOpenSettings={() => { setShowMobileMoreMenu(false); setActiveActivityItem('settings'); setShowSettingsPanel(true); }}
-            onOpenDebug={() => { setShowMobileMoreMenu(false); setActiveActivityItem('debug'); setShowDebugPanel(true); }}
-            onOpenCollaboration={() => { setShowMobileMoreMenu(false); setShowCollaboration(true); }}
-            onOpenWorkflows={() => { setShowMobileMoreMenu(false); setActiveActivityItem('workflows'); setShowWorkflowsPanel(true); }}
-            onOpenHistory={() => { setShowMobileMoreMenu(false); setActiveActivityItem('history'); setShowHistoryPanel(true); }}
-            onOpenCheckpoints={() => { setShowMobileMoreMenu(false); setShowCheckpointsPanel(true); }}
-            onOpenExtensions={() => { setShowMobileMoreMenu(false); setActiveActivityItem('extensions'); setShowExtensionsPanel(true); }}
-            onOpenSecurity={() => { setShowMobileMoreMenu(false); setShowSecurityPanel(true); }}
-            onOpenDeploy={() => { setShowMobileMoreMenu(false); setActiveActivityItem('deploy'); setShowDeployPanel(true); }}
-            onOpenWeb={() => { setShowMobileMoreMenu(false); setMobileActiveTab('preview'); }}
+            onOpenGit={() => { setShowMobileMoreMenu(false); handleAddOpenTab('git'); }}
+            onOpenPackages={() => { setShowMobileMoreMenu(false); handleAddOpenTab('packages'); }}
+            onOpenSecrets={() => { setShowMobileMoreMenu(false); handleAddOpenTab('secrets'); }}
+            onOpenDatabase={() => { setShowMobileMoreMenu(false); handleAddOpenTab('database'); }}
+            onOpenSettings={() => { setShowMobileMoreMenu(false); handleAddOpenTab('settings'); }}
+            onOpenDebug={() => { setShowMobileMoreMenu(false); handleAddOpenTab('debug'); }}
+            onOpenCollaboration={() => { setShowMobileMoreMenu(false); handleAddOpenTab('collaboration'); }}
+            onOpenWorkflows={() => { setShowMobileMoreMenu(false); handleAddOpenTab('workflows'); }}
+            onOpenHistory={() => { setShowMobileMoreMenu(false); handleAddOpenTab('history'); }}
+            onOpenCheckpoints={() => { setShowMobileMoreMenu(false); handleAddOpenTab('checkpoints'); }}
+            onOpenExtensions={() => { setShowMobileMoreMenu(false); handleAddOpenTab('extensions'); }}
+            onOpenSecurity={() => { setShowMobileMoreMenu(false); handleAddOpenTab('security'); }}
+            onOpenDeploy={() => { setShowMobileMoreMenu(false); handleAddOpenTab('deploy'); }}
+            onOpenWeb={() => { setShowMobileMoreMenu(false); handleAddOpenTab('preview'); }}
             onOpenCommandPalette={() => { setShowMobileMoreMenu(false); setShowCommandPalette(true); }}
-            onOpenGlobalSearch={() => { setShowMobileMoreMenu(false); setActiveActivityItem('search'); setShowGlobalSearch(true); }}
+            onOpenGlobalSearch={() => { setShowMobileMoreMenu(false); handleAddOpenTab('search'); }}
             onOpenQuickFileSearch={() => { setShowMobileMoreMenu(false); setShowQuickFileSearch(true); }}
             onOpenKeyboardShortcuts={() => { setShowMobileMoreMenu(false); setShowKeyboardShortcuts(true); }}
             problemsCount={errorsCount}
