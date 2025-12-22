@@ -8,8 +8,20 @@
  * Fortune 500 Engineering Standards
  */
 
-import { chromium, firefox, webkit, Browser, Page, BrowserContext } from 'playwright';
+import type { Browser, Page, BrowserContext } from 'playwright';
 import { EventEmitter } from 'events';
+
+let playwrightModule: typeof import('playwright') | null = null;
+async function getPlaywright() {
+  if (!playwrightModule) {
+    try {
+      playwrightModule = await import('playwright');
+    } catch (e) {
+      throw new Error('Playwright is not available in production. This feature requires playwright to be installed.');
+    }
+  }
+  return playwrightModule;
+}
 import { db } from '../db';
 import { 
   browserTestExecutions, 
@@ -281,7 +293,8 @@ export class AgentTestingOrchestrator extends EventEmitter {
     let page: Page | null = null;
 
     try {
-      browser = await chromium.launch({ headless: true });
+      const pw = await getPlaywright();
+      browser = await pw.chromium.launch({ headless: true });
       page = await browser.newPage({
         viewport: options?.viewport || { width: 1920, height: 1080 }
       });
@@ -345,7 +358,8 @@ export class AgentTestingOrchestrator extends EventEmitter {
     context: TestExecutionContext,
     url: string
   ): Promise<{ fcp: number; lcp: number; tti: number; }> {
-    const browser = await chromium.launch({ headless: true });
+    const pw = await getPlaywright();
+    const browser = await pw.chromium.launch({ headless: true });
     const browserContext = await browser.newContext();
     const page = await browserContext.newPage();
 
@@ -418,6 +432,7 @@ export class AgentTestingOrchestrator extends EventEmitter {
     browserType: 'chromium' | 'firefox' | 'webkit',
     options: { headless: boolean; viewport?: { width: number; height: number; } }
   ): Promise<Browser> {
+    const pw = await getPlaywright();
     const launchOptions = { 
       headless: options.headless,
       args: ['--no-sandbox', '--disable-setuid-sandbox']
@@ -425,11 +440,11 @@ export class AgentTestingOrchestrator extends EventEmitter {
 
     switch (browserType) {
       case 'chromium':
-        return await chromium.launch(launchOptions);
+        return await pw.chromium.launch(launchOptions);
       case 'firefox':
-        return await firefox.launch(launchOptions);
+        return await pw.firefox.launch(launchOptions);
       case 'webkit':
-        return await webkit.launch(launchOptions);
+        return await pw.webkit.launch(launchOptions);
       default:
         throw new Error(`Unsupported browser type: ${browserType}`);
     }

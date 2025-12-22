@@ -8,8 +8,20 @@
  * Fortune 500 Engineering Standards
  */
 
-import { chromium, Page } from 'playwright';
+import type { Page } from 'playwright';
 import { db } from '../db';
+
+let playwrightModule: typeof import('playwright') | null = null;
+async function getPlaywright() {
+  if (!playwrightModule) {
+    try {
+      playwrightModule = await import('playwright');
+    } catch (e) {
+      throw new Error('Playwright is not available in production. This feature requires playwright to be installed.');
+    }
+  }
+  return playwrightModule;
+}
 import { elementSelectors, ElementSelector, InsertElementSelector } from '../../shared/schema';
 import { eq, and } from 'drizzle-orm';
 
@@ -45,7 +57,8 @@ export class AgentElementSelectorService {
       throw new Error('URL not allowed. Only localhost and replit.app domains are permitted for security.');
     }
 
-    const browser = await chromium.launch({ headless: true });
+    const pw = await getPlaywright();
+    const browser = await pw.chromium.launch({ headless: true });
     const page = await browser.newPage();
 
     try {
