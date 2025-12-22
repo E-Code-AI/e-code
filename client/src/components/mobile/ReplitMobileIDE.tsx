@@ -1,5 +1,5 @@
 import { useState, useCallback, memo } from 'react';
-import { Monitor, Loader2 } from 'lucide-react';
+import { Monitor, Loader2, History } from 'lucide-react';
 import { ReplitMobileHeader } from './ReplitMobileHeader';
 import { ReplitMobileNavigation, type MobileTab } from './ReplitMobileNavigation';
 import { ReplitMobileInputBar } from './ReplitMobileInputBar';
@@ -8,7 +8,7 @@ import { MobileMoreMenu } from './MobileMoreMenu';
 import { useLocation } from 'wouter';
 import { cn } from '@/lib/utils';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { History } from 'lucide-react';
+import { useAgentTools } from '@/hooks/useAgentTools';
 
 const ReplitAgentIcon = memo(({ className }: { className?: string }) => (
   <svg viewBox="0 0 24 24" className={className} fill="currentColor">
@@ -46,6 +46,7 @@ export const ReplitMobileIDE = memo(function ReplitMobileIDE({
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [showHistorySheet, setShowHistorySheet] = useState(false);
   const [buildMode, setBuildMode] = useState<'build' | 'edit' | 'chat'>('build');
+  const { settings: agentToolsSettings, updateSettings: setAgentToolsSettings } = useAgentTools();
 
   const handleTabChange = useCallback((tab: MobileTab) => {
     setActiveTab(tab);
@@ -170,6 +171,8 @@ export const ReplitMobileIDE = memo(function ReplitMobileIDE({
           onBuildModeChange={setBuildMode}
           disabled={isLoading}
           isLoading={isAgentBusy}
+          agentToolsSettings={agentToolsSettings}
+          onAgentToolsSettingsChange={setAgentToolsSettings}
         />
       )}
 

@@ -731,6 +731,8 @@ function UnifiedIDELayout({
             isWorking={mobileAgentHandlers?.isWorking}
             agentMode={mobileAgentHandlers?.agentMode}
             onSlashCommand={() => mobileAgentHandlers?.handleSlashCommand?.()}
+            agentToolsSettings={agentToolsSettings}
+            onAgentToolsSettingsChange={setAgentToolsSettings}
           />
         )}
 
@@ -1152,6 +1154,8 @@ function UnifiedIDELayout({
               isWorking={mobileAgentHandlers?.isWorking}
               agentMode={mobileAgentHandlers?.agentMode}
               onSlashCommand={() => mobileAgentHandlers?.handleSlashCommand?.()}
+              agentToolsSettings={agentToolsSettings}
+              onAgentToolsSettingsChange={setAgentToolsSettings}
             />
           )}
 
