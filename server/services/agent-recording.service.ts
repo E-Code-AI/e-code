@@ -8,8 +8,20 @@
  * Fortune 500 Engineering Standards
  */
 
-import { chromium, Browser, Page } from 'playwright';
+import type { Browser, Page } from 'playwright';
 import { EventEmitter } from 'events';
+
+let playwrightModule: typeof import('playwright') | null = null;
+async function getPlaywright() {
+  if (!playwrightModule) {
+    try {
+      playwrightModule = await import('playwright');
+    } catch (e) {
+      throw new Error('Playwright is not available in production. This feature requires playwright to be installed.');
+    }
+  }
+  return playwrightModule;
+}
 import { db } from '../db';
 import { sessionRecordings, SessionRecording, InsertSessionRecording } from '../../shared/schema';
 import { eq } from 'drizzle-orm';
@@ -70,7 +82,8 @@ export class AgentRecordingService extends EventEmitter {
     }).returning();
 
     // Launch browser with video recording
-    const browser = await chromium.launch({
+    const pw = await getPlaywright();
+    const browser = await pw.chromium.launch({
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
