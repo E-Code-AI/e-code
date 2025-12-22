@@ -35,10 +35,10 @@ interface ReplitBottomTabsProps {
 }
 
 const tabs: Tab[] = [
-  { id: 'agent', icon: Sparkles, label: 'Agent' },
   { id: 'files', icon: FolderOpen, label: 'Files' },
+  { id: 'preview', icon: Monitor, label: 'Preview' },
+  { id: 'agent', icon: Sparkles, label: 'Agent' },
   { id: 'console', icon: TerminalIcon, label: 'Console' },
-  { id: 'preview', icon: Monitor, label: 'Webview' },
   { id: 'more', icon: MoreHorizontal, label: 'Tools' },
 ];
 
