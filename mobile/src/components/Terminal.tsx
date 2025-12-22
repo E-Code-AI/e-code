@@ -286,7 +286,7 @@ export const Terminal: React.FC<TerminalProps> = ({
   return (
     <KeyboardAvoidingView
       style={[styles.container, { height }]}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={Platform.select({ ios: 'padding', android: 'height' })}
     >
       {/* Toolbar */}
       <View style={styles.toolbar}>

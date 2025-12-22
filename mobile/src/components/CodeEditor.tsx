@@ -84,7 +84,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={Platform.select({ ios: 'padding', android: 'height' })}
     >
       {/* Editor Settings Toolbar */}
       <View style={styles.settingsToolbar}>
