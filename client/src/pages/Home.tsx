@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -70,16 +70,19 @@ export default function Home() {
     retry: 2,
   });
 
-  // Show error toast if projects fail to load
+  // Show error toast if projects fail to load - use ref to avoid toast dependency causing loops
+  const toastRef = useRef(toast);
+  toastRef.current = toast;
+  
   useEffect(() => {
     if (projectsError) {
-      toast({
+      toastRef.current({
         title: "Error loading projects",
         description: "Failed to fetch your projects. Please refresh the page.",
         variant: "destructive",
       });
     }
-  }, [projectsError, toast]);
+  }, [projectsError]);
 
   // Redirect to login if not authenticated
   useEffect(() => {

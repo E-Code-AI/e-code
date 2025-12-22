@@ -113,16 +113,19 @@ export default function Dashboard() {
     },
   });
 
-  // Show error toast if projects fail to load
+  // Show error toast if projects fail to load - use ref to avoid toast dependency causing loops
+  const toastRef = useRef(toast);
+  toastRef.current = toast;
+  
   useEffect(() => {
     if (projectsError) {
-      toast({
+      toastRef.current({
         title: "Error loading projects",
         description: projectsError.message || "Failed to fetch your projects. Please try again.",
         variant: "destructive",
       });
     }
-  }, [projectsError, toast]);
+  }, [projectsError]);
 
   const handleCreateProject = async (e: React.FormEvent) => {
     e.preventDefault();
