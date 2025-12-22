@@ -95,6 +95,12 @@ export default function Dashboard() {
     queryKey: ['/api/projects'],
     enabled: !!user,
     staleTime: 30000, // 30 seconds - prevent excessive refetches
+    retry: (failureCount, error: any) => {
+      // Don't retry for auth errors (401/403) - prevents toast spam
+      if (error?.status === 401 || error?.status === 403) return false;
+      // Limit retries for other errors
+      return failureCount < 2;
+    },
     select: (data: unknown) => {
       // Handle paginated response format: { projects: [...], pagination: {...} }
       const projects = (data as { projects?: ProjectWithDeployment[] })?.projects ?? data;
@@ -113,12 +119,21 @@ export default function Dashboard() {
     },
   });
 
-  // Show error toast if projects fail to load - use ref to avoid toast dependency causing loops
+  // Show error toast if projects fail to load - use refs to avoid loops and duplicates
   const toastRef = useRef(toast);
   toastRef.current = toast;
+  const hasShownErrorRef = useRef(false);
   
   useEffect(() => {
-    if (projectsError) {
+    // Reset error flag when there's no error (query succeeded or reset)
+    if (!projectsError) {
+      hasShownErrorRef.current = false;
+      return;
+    }
+    
+    // Only show toast once per error state to prevent infinite toast spam
+    if (projectsError && !hasShownErrorRef.current) {
+      hasShownErrorRef.current = true;
       toastRef.current({
         title: "Error loading projects",
         description: projectsError.message || "Failed to fetch your projects. Please try again.",
