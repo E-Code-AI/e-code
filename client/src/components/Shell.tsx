@@ -28,7 +28,12 @@ Project: ${projectId}
 `;
     
     if (shellRef.current) {
-      shellRef.current.innerHTML = `<pre class="text-green-400 font-mono text-sm">${welcomeMessage}</pre>`;
+      // SECURITY: Use textContent to prevent XSS
+      shellRef.current.textContent = '';
+      const pre = document.createElement('pre');
+      pre.className = 'text-green-400 font-mono text-sm';
+      pre.textContent = welcomeMessage;
+      shellRef.current.appendChild(pre);
     }
   }, [projectId, isRunning]);
 
@@ -42,12 +47,29 @@ Project: ${projectId}
     const output = handleCommand(command);
     
     if (shellRef.current) {
-      const commandLine = `<div class="font-mono text-sm">
-        <span class="text-green-400">$</span> <span class="text-white">${command}</span>
-      </div>`;
-      const outputLine = output ? `<div class="font-mono text-sm text-gray-300 pl-4">${output}</div>` : '';
+      // SECURITY: Use DOM APIs to prevent XSS
+      const commandDiv = document.createElement('div');
+      commandDiv.className = 'font-mono text-sm';
       
-      shellRef.current.innerHTML += commandLine + outputLine;
+      const prompt = document.createElement('span');
+      prompt.className = 'text-green-400';
+      prompt.textContent = '$ ';
+      
+      const cmdSpan = document.createElement('span');
+      cmdSpan.className = 'text-white';
+      cmdSpan.textContent = command;
+      
+      commandDiv.appendChild(prompt);
+      commandDiv.appendChild(cmdSpan);
+      shellRef.current.appendChild(commandDiv);
+      
+      if (output) {
+        const outputDiv = document.createElement('div');
+        outputDiv.className = 'font-mono text-sm text-gray-300 pl-4';
+        outputDiv.textContent = output;
+        shellRef.current.appendChild(outputDiv);
+      }
+      
       shellRef.current.scrollTop = shellRef.current.scrollHeight;
     }
     
@@ -69,7 +91,7 @@ Project: ${projectId}
       
       case 'clear':
         if (shellRef.current) {
-          shellRef.current.innerHTML = '';
+          shellRef.current.textContent = '';
         }
         return '';
       
@@ -111,7 +133,7 @@ Project: ${projectId}
 
   const handleClear = () => {
     if (shellRef.current) {
-      shellRef.current.innerHTML = '';
+      shellRef.current.textContent = '';
     }
     setHistory([]);
   };

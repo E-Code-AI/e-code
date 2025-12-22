@@ -5,6 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NavigationContainer, NavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import * as Notifications from 'expo-notifications';
+import { SecureStorage, TOKEN_STORAGE_KEY, USER_STORAGE_KEY } from './src/services/secure-storage';
 
 import { RootStackParamList } from './src/navigation/types';
 import { AuthResponse, User } from './src/types';
@@ -63,8 +64,7 @@ try {
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-const TOKEN_STORAGE_KEY = 'ecode.mobile.token';
-const USER_STORAGE_KEY = 'ecode.mobile.user';
+// Token keys are now imported from secure-storage.ts
 
 export default function App() {
   const [token, setToken] = useState<string | null>(null);
@@ -236,13 +236,17 @@ export default function App() {
   useEffect(() => {
     const restoreSession = async () => {
       try {
-        const storedToken = await AsyncStorage.getItem(TOKEN_STORAGE_KEY);
+        // SECURITY: Use SecureStorage for token retrieval
+        const storedToken = await SecureStorage.getItem(TOKEN_STORAGE_KEY);
         const storedUser = await AsyncStorage.getItem(USER_STORAGE_KEY);
 
         if (storedToken && storedUser) {
           setToken(storedToken);
           setUser(JSON.parse(storedUser));
         }
+        
+        // Migrate tokens from AsyncStorage to SecureStorage if needed
+        await SecureStorage.migrateFromAsyncStorage(TOKEN_STORAGE_KEY);
       } catch (error) {
         console.warn('Failed to restore session', error);
       } finally {
@@ -257,7 +261,8 @@ export default function App() {
     try {
       const response: AuthResponse = await loginRequest(username, password);
 
-      await AsyncStorage.setItem(TOKEN_STORAGE_KEY, response.tokens.access);
+      // SECURITY: Use SecureStorage for sensitive tokens
+      await SecureStorage.setItem(TOKEN_STORAGE_KEY, response.tokens.access);
       await AsyncStorage.setItem(USER_STORAGE_KEY, JSON.stringify(response.user));
 
       setToken(response.tokens.access);
@@ -276,9 +281,10 @@ export default function App() {
     
     if (params.token && params.userId && params.username) {
       try {
-        await AsyncStorage.setItem(TOKEN_STORAGE_KEY, params.token);
+        // SECURITY: Use SecureStorage for sensitive tokens
+        await SecureStorage.setItem(TOKEN_STORAGE_KEY, params.token);
         if (params.refreshToken) {
-          await AsyncStorage.setItem('ecode.mobile.refreshToken', params.refreshToken);
+          await SecureStorage.setItem('ecode.mobile.refreshToken', params.refreshToken);
         }
         
         const oauthUser: User = {

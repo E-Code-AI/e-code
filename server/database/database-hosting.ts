@@ -869,16 +869,27 @@ export class DatabaseHostingService {
       // Connect to database and execute migration
       const dbPassword = process.env[`DB_PASSWORD_${instance.id.toUpperCase().replace(/-/g, '_')}`] || 'defaultpass';
       
+      // SECURITY: Sanitize SQL to prevent command injection
+      // Shell characters that could allow command escape
+      const shellDangerousChars = /[`$\\;|&<>(){}[\]!#'"]/g;
+      if (shellDangerousChars.test(migration.sql)) {
+        throw new Error('SECURITY: Migration SQL contains potentially dangerous shell characters. Use the database driver directly.');
+      }
+      
       switch(instance.type) {
         case 'postgresql':
-          await execAsync(`PGPASSWORD=${dbPassword} psql -h ${instance.connection.host} -p ${instance.connection.port} -U ${instance.connection.username} -d ${instance.connection.database} -c "${migration.sql}"`);
+          // For production, use pg client directly instead of shell
+          await execAsync(`PGPASSWORD=${dbPassword} psql -h ${instance.connection.host} -p ${instance.connection.port} -U ${instance.connection.username} -d ${instance.connection.database} -c "${migration.sql.replace(/"/g, '\\"')}"`);
           break;
         case 'mysql':
-          await execAsync(`mysql -h ${instance.connection.host} -P ${instance.connection.port} -u${instance.connection.username} -p${dbPassword} ${instance.connection.database} -e "${migration.sql}"`);
+          await execAsync(`mysql -h ${instance.connection.host} -P ${instance.connection.port} -u${instance.connection.username} -p${dbPassword} ${instance.connection.database} -e "${migration.sql.replace(/"/g, '\\"')}"`);
           break;
         case 'mongodb':
+          // SECURITY: MongoDB commands should use the native driver, not shell
+          // For now, only allow safe eval commands (no shell escapes)
           const mongoUri = `mongodb://${instance.connection.username}:${dbPassword}@${instance.connection.host}:${instance.connection.port}/${instance.connection.database}`;
-          await execAsync(`mongosh ${mongoUri} --eval "${migration.sql}"`);
+          const safeCommand = migration.sql.replace(/"/g, '\\"');
+          await execAsync(`mongosh "${mongoUri}" --eval "${safeCommand}"`);
           break;
       }
       
