@@ -478,7 +478,8 @@ export function MobileIDEView({ projectId, className, bootstrapToken, onWorkspac
     ? (gitStatus.staged?.length || 0) + (gitStatus.unstaged?.length || 0) + (gitStatus.untracked?.length || 0)
     : 0;
   
-  const isConnected = useConnectionStatus();
+  const connectionStatus = useConnectionStatus();
+  const isConnected = connectionStatus.isOnline;
   const { errorsCount } = useProblemsCount(normalizedProjectId);
   
   const [enableShortcutHint, setEnableShortcutHint] = useState(() => {
