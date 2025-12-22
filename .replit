@@ -82,6 +82,7 @@ FEATURE_AI_UX_PROGRESS_TAB = "true"
 FEATURE_AI_UX_PAUSE_RESUME = "true"
 REPLIT_DEV_URL = "https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:5000"
 DISABLE_CSRF = "false"
+FROM_EMAIL = "contact@e-code.ai"
 
 [userenv.development]
 ENABLE_DIRECT_EXECUTION = "true"
