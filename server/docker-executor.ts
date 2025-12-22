@@ -7,7 +7,7 @@ import { spawn, ChildProcess, execSync } from 'child_process';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
-import Docker from 'dockerode';
+import type Docker from 'dockerode';
 import { File } from '@shared/schema';
 import { storage } from './storage';
 import { withTempDir } from './utils/temp-cleanup';
@@ -15,6 +15,21 @@ import { resourceMonitor } from './services/resource-monitor';
 import { createLogger } from './utils/logger';
 
 const logger = createLogger('docker-executor');
+
+// Lazy-load dockerode to avoid crashes in production where it may not be available
+let dockerInstance: InstanceType<typeof import('dockerode')> | null = null;
+
+async function getDocker(): Promise<InstanceType<typeof import('dockerode')>> {
+  if (!dockerInstance) {
+    try {
+      const Docker = (await import('dockerode')).default;
+      dockerInstance = new Docker();
+    } catch (error) {
+      throw new Error('dockerode is not available in this environment');
+    }
+  }
+  return dockerInstance;
+}
 
 interface ContainerConfig {
   image: string;
@@ -60,8 +75,6 @@ for (let port = 3000; port <= 4000; port++) {
 const portsInUse = new Set<number>();
 
 let dockerAvailable: boolean | null = null;
-
-const docker = new Docker();
 
 /**
  * Execute container with timeout enforcement
