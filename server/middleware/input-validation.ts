@@ -5,8 +5,32 @@
 
 import { Request, Response, NextFunction } from 'express';
 import { z, ZodSchema } from 'zod';
-import DOMPurify from 'isomorphic-dompurify';
 import path from 'path';
+
+// Lazy-load isomorphic-dompurify to avoid jsdom issues in production bundles
+let DOMPurifyInstance: typeof import('isomorphic-dompurify').default | null = null;
+
+async function getDOMPurify(): Promise<typeof import('isomorphic-dompurify').default | null> {
+  if (DOMPurifyInstance) return DOMPurifyInstance;
+  try {
+    const module = await import('isomorphic-dompurify');
+    DOMPurifyInstance = module.default;
+    return DOMPurifyInstance;
+  } catch {
+    return null;
+  }
+}
+
+// Initialize DOMPurify asynchronously (non-blocking)
+getDOMPurify().catch(() => {});
+
+// Fallback sanitization when DOMPurify is not available
+function fallbackStripHtml(input: string): string {
+  return input.replace(/<[^>]*>/g, '').replace(/[<>"'&]/g, (c) => {
+    const map: Record<string, string> = { '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;', '&': '&amp;' };
+    return map[c] || c;
+  });
+}
 
 /**
  * Validate request body against a Zod schema
@@ -105,10 +129,13 @@ function sanitizeObject(obj: any): any {
   // Handle primitive strings first (e.g., from express.text() middleware)
   if (typeof obj === 'string') {
     // Sanitize HTML to prevent XSS
-    return DOMPurify.sanitize(obj, { 
-      ALLOWED_TAGS: [], // Strip all HTML tags
-      ALLOWED_ATTR: [] // Strip all attributes
-    });
+    if (DOMPurifyInstance) {
+      return DOMPurifyInstance.sanitize(obj, { 
+        ALLOWED_TAGS: [], // Strip all HTML tags
+        ALLOWED_ATTR: [] // Strip all attributes
+      });
+    }
+    return fallbackStripHtml(obj);
   }
   
   if (Array.isArray(obj)) {

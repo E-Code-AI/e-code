@@ -6,23 +6,77 @@
 import crypto from 'crypto';
 import { createHash } from 'crypto';
 import validator from 'validator';
-import DOMPurify from 'isomorphic-dompurify';
 import { Request, Response, NextFunction } from 'express';
 import { createLogger } from './logger';
 
 const logger = createLogger('security-utils');
 
+// Lazy-load isomorphic-dompurify to avoid jsdom issues in production bundles
+let DOMPurifyInstance: typeof import('isomorphic-dompurify').default | null = null;
+let domPurifyLoadFailed = false;
+
+async function getDOMPurify(): Promise<typeof import('isomorphic-dompurify').default | null> {
+  if (domPurifyLoadFailed) return null;
+  if (DOMPurifyInstance) return DOMPurifyInstance;
+  try {
+    const module = await import('isomorphic-dompurify');
+    DOMPurifyInstance = module.default;
+    return DOMPurifyInstance;
+  } catch (error) {
+    domPurifyLoadFailed = true;
+    logger.warn('DOMPurify not available, using fallback HTML sanitization');
+    return null;
+  }
+}
+
+// Fallback HTML sanitization when DOMPurify is not available
+function fallbackSanitizeHtml(input: string): string {
+  const ALLOWED_TAGS = ['b', 'i', 'em', 'strong', 'a', 'p', 'br', 'ul', 'ol', 'li', 'code', 'pre'];
+  // Simple regex-based sanitization - strips all tags except allowed ones
+  return input.replace(/<\/?([a-zA-Z0-9]+)[^>]*>/gi, (match, tagName) => {
+    const tag = tagName.toLowerCase();
+    if (ALLOWED_TAGS.includes(tag)) {
+      // For allowed tags, only keep basic attributes
+      if (tag === 'a') {
+        const hrefMatch = match.match(/href="([^"]+)"/i);
+        if (hrefMatch) {
+          const href = hrefMatch[1].replace(/javascript:/gi, '');
+          return match.startsWith('</') ? `</${tag}>` : `<${tag} href="${href}" rel="noopener noreferrer">`;
+        }
+      }
+      return match.startsWith('</') ? `</${tag}>` : `<${tag}>`;
+    }
+    return '';
+  });
+}
+
 /**
  * XSS Protection & Input Sanitization
  */
 export const xssProtection = {
-  // Sanitize HTML content
+  // Sanitize HTML content (sync version using fallback if DOMPurify not loaded)
   sanitizeHtml: (input: string): string => {
-    return DOMPurify.sanitize(input, {
-      ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'p', 'br', 'ul', 'ol', 'li', 'code', 'pre'],
-      ALLOWED_ATTR: ['href', 'target', 'rel'],
-      ALLOW_DATA_ATTR: false,
-    });
+    if (DOMPurifyInstance) {
+      return DOMPurifyInstance.sanitize(input, {
+        ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'p', 'br', 'ul', 'ol', 'li', 'code', 'pre'],
+        ALLOWED_ATTR: ['href', 'target', 'rel'],
+        ALLOW_DATA_ATTR: false,
+      });
+    }
+    return fallbackSanitizeHtml(input);
+  },
+  
+  // Async version that ensures DOMPurify is loaded first
+  sanitizeHtmlAsync: async (input: string): Promise<string> => {
+    const purify = await getDOMPurify();
+    if (purify) {
+      return purify.sanitize(input, {
+        ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'p', 'br', 'ul', 'ol', 'li', 'code', 'pre'],
+        ALLOWED_ATTR: ['href', 'target', 'rel'],
+        ALLOW_DATA_ATTR: false,
+      });
+    }
+    return fallbackSanitizeHtml(input);
   },
 
   // Escape HTML entities

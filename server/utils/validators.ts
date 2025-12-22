@@ -4,10 +4,44 @@
  */
 
 import validator from 'validator';
-import DOMPurify from 'isomorphic-dompurify';
 import { createLogger } from './logger';
 
 const logger = createLogger('validators');
+
+// Lazy-load isomorphic-dompurify to avoid jsdom issues in production bundles
+let DOMPurifyInstance: typeof import('isomorphic-dompurify').default | null = null;
+
+async function getDOMPurify(): Promise<typeof import('isomorphic-dompurify').default | null> {
+  if (DOMPurifyInstance) return DOMPurifyInstance;
+  try {
+    const module = await import('isomorphic-dompurify');
+    DOMPurifyInstance = module.default;
+    return DOMPurifyInstance;
+  } catch {
+    return null;
+  }
+}
+
+// Initialize DOMPurify asynchronously
+getDOMPurify().catch(() => {});
+
+// Fallback sanitization when DOMPurify is not available
+function fallbackSanitizeHTML(input: string): string {
+  const ALLOWED_TAGS = ['b', 'i', 'em', 'strong', 'a', 'p', 'br', 'ul', 'ol', 'li', 'code', 'pre', 'blockquote'];
+  return input.replace(/<\/?([a-zA-Z0-9]+)[^>]*>/gi, (match, tagName) => {
+    const tag = tagName.toLowerCase();
+    if (ALLOWED_TAGS.includes(tag)) {
+      if (tag === 'a') {
+        const hrefMatch = match.match(/href="([^"]+)"/i);
+        if (hrefMatch && !hrefMatch[1].toLowerCase().startsWith('javascript:')) {
+          return match.startsWith('</') ? `</${tag}>` : `<${tag} href="${hrefMatch[1]}" rel="noopener noreferrer">`;
+        }
+      }
+      return match.startsWith('</') ? `</${tag}>` : `<${tag}>`;
+    }
+    return '';
+  });
+}
 
 export const validators = {
   /**
@@ -67,18 +101,21 @@ export const validators = {
   sanitizeHTML: (html: string): string => {
     if (!html || typeof html !== 'string') return '';
     
-    return DOMPurify.sanitize(html, {
-      ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'p', 'br', 'ul', 'ol', 'li', 'code', 'pre', 'blockquote'],
-      ALLOWED_ATTR: ['href', 'target', 'rel', 'class'],
-      ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|cid|xmpp):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
-      KEEP_CONTENT: true,
-      ALLOW_DATA_ATTR: false,
-      ADD_TAGS: [],
-      ADD_ATTR: [],
-      ADD_URI_SAFE_ATTR: [],
-      FORBID_TAGS: ['script', 'style', 'iframe', 'object', 'embed', 'form'],
-      FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover']
-    });
+    if (DOMPurifyInstance) {
+      return DOMPurifyInstance.sanitize(html, {
+        ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'p', 'br', 'ul', 'ol', 'li', 'code', 'pre', 'blockquote'],
+        ALLOWED_ATTR: ['href', 'target', 'rel', 'class'],
+        ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|cid|xmpp):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
+        KEEP_CONTENT: true,
+        ALLOW_DATA_ATTR: false,
+        ADD_TAGS: [],
+        ADD_ATTR: [],
+        ADD_URI_SAFE_ATTR: [],
+        FORBID_TAGS: ['script', 'style', 'iframe', 'object', 'embed', 'form'],
+        FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover']
+      });
+    }
+    return fallbackSanitizeHTML(html);
   },
   
   /**
