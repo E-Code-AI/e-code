@@ -1,9 +1,16 @@
-// Load environment variables FIRST - CRITICAL for NODE_ENV
-import 'dotenv/config';
-
 // Ensure NODE_ENV is set (default to development if not specified)
 if (!process.env.NODE_ENV) {
   process.env.NODE_ENV = 'development';
+}
+
+// Load environment variables in development only (production uses platform env vars)
+if (process.env.NODE_ENV !== 'production') {
+  try {
+    const dotenv = await import('dotenv');
+    dotenv.config();
+  } catch {
+    // dotenv not available, continue with platform env vars
+  }
 }
 
 // ✅ Fortune 500 Security: Validate required secrets EARLY in startup
