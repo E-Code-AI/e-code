@@ -65,7 +65,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onOAuthLogin }) => {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={Platform.select({ ios: 'padding', android: 'height' })}
     >
       <View style={styles.card}>
         <Text style={styles.title}>Welcome to E-Code</Text>

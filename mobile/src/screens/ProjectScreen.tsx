@@ -237,8 +237,8 @@ const ProjectScreen: React.FC<ProjectScreenProps> = ({ route, token }) => {
       return (
         <KeyboardAvoidingView
           style={styles.tabContent}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 150 : 0}
+          behavior={Platform.select({ ios: 'padding', android: 'height' })}
+          keyboardVerticalOffset={Platform.select({ ios: 150, android: 100 })}
         >
           <FlatList
             ref={scrollViewRef}
