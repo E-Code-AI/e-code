@@ -65,3 +65,24 @@ The platform supports two deployment modes: `single-vm` (default, typically for 
 ### Applications
 - **Desktop Application (Electron):** Cross-platform with multi-window, deep linking, auto-update, and secure IPC.
 - **Mobile Application (React Native + Expo):** Cross-platform with platform-specific haptics, swipe-to-action, font rendering, and AsyncStorage-backed offline cache.
+
+## Known Limitations & Future Work
+
+### Database Schema
+- **userId field types:** Some legacy tables use `text('user_id')` instead of `integer` with foreign key references. This is intentional for compatibility with OAuth providers that may return non-numeric user IDs. New tables should use proper references.
+- **PostgreSQL HA:** Kubernetes deployment uses `replicas: 1` for PostgreSQL. For production HA, use CloudNativePG Operator or managed services (Cloud SQL, RDS).
+- **Prepared Statements:** `prepare: false` in db.ts is required for Neon serverless (PgBouncer transaction mode). This does NOT affect SQL injection protection - Drizzle ORM uses parameterized queries.
+
+### Frontend Mock Data
+- `AuditLogs.tsx` contains `mockAuditLogs` as fallback when API unavailable
+- `CollaborativePresence.tsx` and `ReplitMultiplayers.tsx` contain `mockCollaborators` for offline/demo mode
+- These are intentional fallbacks, not production data sources
+
+### Mobile Platform
+- **Real Mobile Simulator:** `real-mobile-compiler.ts` returns mock simulator data. Production integration requires Appetize.io or Expo Snack API.
+- **Deep Linking:** Configured via `associatedDomains` (iOS) and `intentFilters` (Android) in app.config.js
+
+### Security Notes
+- **CSP:** nginx.conf uses `'unsafe-inline'` for styles pending nonce/hash implementation in build pipeline
+- **Docker Socket:** Disabled in kubernetes/production-infrastructure.yaml - use docker-socket-proxy for container orchestration
+- **Auto-Update (Desktop):** Intentionally disabled for security - requires user confirmation
