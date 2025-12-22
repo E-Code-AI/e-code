@@ -1344,10 +1344,9 @@ export function useAutonomousChatIntegration({
               progress: store.progress,
               fileOperation: {
                 type: fileOp.type === 'update' ? 'edit' : fileOp.type === 'rename' ? 'move' : fileOp.type as 'create' | 'delete' | 'edit' | 'read' | 'move',
-                filePath: fileOp.filePath,
+                path: fileOp.filePath,
                 language: fileOp.language,
-                linesAdded: fileOp.linesAdded,
-                linesRemoved: fileOp.linesRemoved
+                linesChanged: (fileOp.linesAdded || 0) + (fileOp.linesRemoved || 0)
               }
             }
           );
