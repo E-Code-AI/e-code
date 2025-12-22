@@ -35,6 +35,7 @@ interface MobileMoreMenuProps {
   onOpenActions?: () => void;
   onOpenTools?: () => void;
   onOpenDeploy?: () => void;
+  onOpenWeb?: () => void;
   onOpenCommandPalette?: () => void;
   onOpenGlobalSearch?: () => void;
   onOpenQuickFileSearch?: () => void;
@@ -72,6 +73,7 @@ export function MobileMoreMenu({
   onOpenActions,
   onOpenTools,
   onOpenDeploy,
+  onOpenWeb,
   onOpenCommandPalette,
   onOpenGlobalSearch,
   problemsCount = 0,
@@ -163,7 +165,7 @@ export function MobileMoreMenu({
       label: 'Web', 
       icon: Globe, 
       onClick: () => {
-        toast({ title: 'Web Preview', description: 'Opening web preview...' });
+        if (onOpenWeb) onOpenWeb();
         if (!inline) onClose();
       }
     },
