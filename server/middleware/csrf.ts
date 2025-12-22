@@ -275,11 +275,8 @@ export function generateCSRFToken(): string {
  * IMPORTANT: Uses shared token map via singleton to prevent per-request state loss
  */
 export function csrfProtection(req: Request, res: Response, next: NextFunction) {
-  // SECURITY: Fortune 500 hardening - Never bypass CSRF in production
-  // Requires BOTH explicit development mode AND explicit disable flag
-  if (process.env.NODE_ENV !== 'production' && 
-      process.env.NODE_ENV === 'development' && 
-      process.env.DISABLE_CSRF === 'true') {
+  // SECURITY: Only allow CSRF bypass in explicit development mode with flag
+  if (process.env.NODE_ENV === 'development' && process.env.DISABLE_CSRF === 'true') {
     console.warn('⚠️  SECURITY WARNING: CSRF protection bypassed in development mode');
     return next();
   }

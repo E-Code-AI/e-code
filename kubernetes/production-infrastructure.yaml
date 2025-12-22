@@ -419,8 +419,9 @@ spec:
         securityContext:
           privileged: true
         volumeMounts:
-        - name: docker-sock
-          mountPath: /var/run/docker.sock
+        # SECURITY: Docker socket access disabled - use docker-socket-proxy or Kubernetes Jobs
+        # - name: docker-sock
+        #   mountPath: /var/run/docker.sock
         - name: cgroup
           mountPath: /sys/fs/cgroup
         resources:
@@ -431,9 +432,11 @@ spec:
             memory: "512Mi"
             cpu: "500m"
       volumes:
-      - name: docker-sock
-        hostPath:
-          path: /var/run/docker.sock
+      # SECURITY: Docker socket exposure disabled for production security
+      # Use tecnativa/docker-socket-proxy or migrate to Kubernetes Jobs for code execution
+      # - name: docker-sock
+      #   hostPath:
+      #     path: /var/run/docker.sock
       - name: cgroup
         hostPath:
           path: /sys/fs/cgroup
