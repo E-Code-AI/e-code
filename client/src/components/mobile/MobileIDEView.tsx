@@ -780,6 +780,12 @@ export function MobileIDEView({ projectId, className, bootstrapToken, onWorkspac
                 </Suspense>
               )}
               
+              {(activeTab === 'terminal' || activeTab === 'shell' || activeTab === 'console') && (
+                <Suspense fallback={<TerminalFallback />}>
+                  <EnhancedMobileTerminal projectId={normalizedProjectId} />
+                </Suspense>
+              )}
+              
             </LazyMotionDiv>
           </LazyAnimatePresence>
         </LazyMotionDiv>
