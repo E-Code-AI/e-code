@@ -246,6 +246,28 @@ function UnifiedIDELayout({
   const [showMobileMoreMenu, setShowMobileMoreMenu] = useState(false);
   const [showTabSwitcher, setShowTabSwitcher] = useState(false);
   
+  // Tab content transition animation state
+  // displayedTab holds the tab ID whose content is currently rendered
+  // This allows us to fade out the OLD content before switching to new
+  const [displayedTab, setDisplayedTab] = useState(activeTab);
+  const [tabContentVisible, setTabContentVisible] = useState(true);
+  
+  // Smooth tab transition: fade out old content, then swap, then fade in new content
+  useEffect(() => {
+    if (displayedTab !== activeTab) {
+      // Phase 1: Fade out current content
+      setTabContentVisible(false);
+      
+      // Phase 2: After fade out (100ms), switch to new tab and fade in
+      const timer = setTimeout(() => {
+        setDisplayedTab(activeTab);
+        setTabContentVisible(true);
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [activeTab, displayedTab]);
+  
   // Open tabs for mobile navigation - tracks which tools are open as tabs
   interface OpenTab {
     id: string;
@@ -792,7 +814,8 @@ function UnifiedIDELayout({
   };
 
   const renderDesktopContent = () => {
-    const currentTab = tabs.find(t => t.id === activeTab);
+    // Use displayedTab to render content - this shows the OLD tab during fade-out
+    const currentTab = tabs.find(t => t.id === displayedTab);
     
     if (!currentTab) {
       return <div className="flex items-center justify-center h-full text-muted-foreground">Select a tab</div>;
@@ -1567,7 +1590,15 @@ function UnifiedIDELayout({
           
           <ResizablePanel defaultSize={isSidebarCollapsed ? (showFileExplorer ? 82 : 100) : (showFileExplorer ? 52 : 70)} minSize={30} data-testid="desktop-main-panel">
             <div className="h-full flex flex-col">
-              {renderDesktopContent()}
+              <div 
+                className={cn(
+                  "h-full w-full transition-opacity duration-100 ease-in-out",
+                  tabContentVisible ? "opacity-100" : "opacity-0"
+                )}
+                data-testid="tab-content-wrapper"
+              >
+                {renderDesktopContent()}
+              </div>
             </div>
           </ResizablePanel>
           
