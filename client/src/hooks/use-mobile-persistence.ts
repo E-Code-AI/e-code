@@ -101,11 +101,13 @@ export function useMobileIDEPersistence(projectId: string | number) {
 
 /**
  * Hook to persist tab position
+ * Default: 'deploy' tab for mobile/tablet devices (Replit-style)
  */
 export function useTabPersistence(projectId: string | number) {
   const [activeTab, setActiveTabState] = useState<string>(() => {
     const state = loadState(projectId);
-    return state.activeTab || 'agent';
+    // Default to 'deploy' for mobile/tablet as per user requirement
+    return state.activeTab || 'deploy';
   });
 
   useEffect(() => {

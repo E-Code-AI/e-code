@@ -40,7 +40,7 @@ export const ReplitMobileIDE = memo(function ReplitMobileIDE({
   isAgentBusy = false,
 }: ReplitMobileIDEProps) {
   const [, navigate] = useLocation();
-  const [activeTab, setActiveTab] = useState<MobileTab>('agent');
+  const [activeTab, setActiveTab] = useState<MobileTab>('deploy'); // Deploy active by default on mobile/tablet
   const [isRunning, setIsRunning] = useState(false);
   const [showToolsSheet, setShowToolsSheet] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
