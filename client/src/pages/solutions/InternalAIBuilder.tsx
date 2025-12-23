@@ -42,18 +42,18 @@ export default function InternalAIBuilder() {
     <MarketingLayout>
       <section className="relative overflow-hidden py-16">
         <div className="container-responsive max-w-5xl text-center">
-          <Badge className="mx-auto mb-6 bg-white/10 text-white border-white/20">Internal AI Builder</Badge>
-          <h1 className="text-4xl sm:text-5xl font-semibold text-white tracking-tight">
+          <Badge className="mx-auto mb-6 bg-slate-900/10 dark:bg-white/10 text-slate-900 dark:text-white border-slate-900/20 dark:border-white/20">Internal AI Builder</Badge>
+          <h1 className="text-4xl sm:text-5xl font-semibold text-slate-900 dark:text-white tracking-tight">
             Private AI agents for every team
           </h1>
-          <p className="mt-4 text-base sm:text-lg text-slate-200">
+          <p className="mt-4 text-base sm:text-lg text-slate-600 dark:text-slate-200">
             Deploy governed AI agents that work across engineering, design, and operations—without compromising compliance or control.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-4">
             <Button className="bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 text-white" onClick={() => (window.location.href = '/contact-sales')}>
               Talk to an enterprise specialist
             </Button>
-            <Button variant="outline" className="border-white/20 text-slate-100 hover:text-white" onClick={() => (window.location.href = '/pricing')}>
+            <Button variant="outline" className="border-slate-300 dark:border-white/20 text-slate-700 dark:text-slate-100 hover:text-slate-900 dark:hover:text-white" onClick={() => (window.location.href = '/pricing')}>
               View pricing options
             </Button>
           </div>
@@ -63,13 +63,13 @@ export default function InternalAIBuilder() {
       <section className="py-16">
         <div className="container-responsive max-w-6xl grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {capabilities.map((capability) => (
-            <Card key={capability.title} className="bg-white/5 border-white/10">
+            <Card key={capability.title} className="bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10">
               <CardHeader className="space-y-4">
-                <div className="inline-flex rounded-full bg-white/10 p-3 text-sky-200">
+                <div className="inline-flex rounded-full bg-sky-100 dark:bg-white/10 p-3 text-sky-600 dark:text-sky-200">
                   <capability.icon className="h-6 w-6" />
                 </div>
-                <CardTitle className="text-lg text-white">{capability.title}</CardTitle>
-                <CardDescription className="text-slate-300 leading-relaxed">{capability.description}</CardDescription>
+                <CardTitle className="text-lg text-slate-900 dark:text-white">{capability.title}</CardTitle>
+                <CardDescription className="text-slate-600 dark:text-slate-300 leading-relaxed">{capability.description}</CardDescription>
               </CardHeader>
             </Card>
           ))}
@@ -78,11 +78,11 @@ export default function InternalAIBuilder() {
 
       <section className="pb-20">
         <div className="container-responsive max-w-5xl">
-          <Card className="bg-gradient-to-r from-slate-900 via-slate-950 to-slate-900 border-white/10">
+          <Card className="bg-gradient-to-r from-slate-100 via-slate-50 to-slate-100 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900 border-slate-200 dark:border-white/10">
             <CardContent className="grid gap-8 py-12 text-center sm:text-left sm:grid-cols-[1.5fr_1fr]">
               <div className="space-y-4">
-                <h2 className="text-3xl font-semibold text-white">Launch an internal AI center of excellence</h2>
-                <p className="text-slate-300">
+                <h2 className="text-3xl font-semibold text-slate-900 dark:text-white">Launch an internal AI center of excellence</h2>
+                <p className="text-slate-600 dark:text-slate-300">
                   E-Code provides playbooks, governance frameworks, and dedicated solution architects to help you operationalize AI responsibly across your organization.
                 </p>
               </div>
@@ -90,7 +90,7 @@ export default function InternalAIBuilder() {
                 <Button className="bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 text-white" onClick={() => (window.location.href = '/contact-sales')}>
                   Schedule an executive briefing
                 </Button>
-                <Button variant="outline" className="border-white/20 text-slate-100 hover:text-white" onClick={() => (window.location.href = '/docs')}>
+                <Button variant="outline" className="border-slate-300 dark:border-white/20 text-slate-700 dark:text-slate-100 hover:text-slate-900 dark:hover:text-white" onClick={() => (window.location.href = '/docs')}>
                   Explore documentation
                 </Button>
               </div>
