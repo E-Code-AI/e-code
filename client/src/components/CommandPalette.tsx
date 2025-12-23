@@ -2,7 +2,10 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   Dialog,
   DialogContent,
+  DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog';
+import * as VisuallyHidden from '@radix-ui/react-visually-hidden';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
@@ -658,6 +661,12 @@ export function CommandPalette({
         )}
         onKeyDown={handleKeyDown}
       >
+        <VisuallyHidden.Root asChild>
+          <DialogTitle>Command Palette</DialogTitle>
+        </VisuallyHidden.Root>
+        <VisuallyHidden.Root asChild>
+          <DialogDescription>Search for commands, files, and actions</DialogDescription>
+        </VisuallyHidden.Root>
         <div className="flex items-center border-b px-3">
           <Command className="h-4 w-4 text-muted-foreground mr-2 flex-shrink-0" />
           <Input
