@@ -17,6 +17,8 @@ import { MobileDatabasePanel } from './MobileDatabasePanel';
 import { MobileDebugPanel } from './MobileDebugPanel';
 import { MobileSecurityPanel } from './MobileSecurityPanel';
 import { MobileSlidePanel } from './MobileSlidePanel';
+import { MobileSearch } from './MobileSearch';
+import { MobileToolsPanel } from './MobileToolsPanel';
 import { ReplitBottomTabs } from './ReplitBottomTabs';
 import { MobileFAB } from './MobileFAB';
 import { 
@@ -640,16 +642,8 @@ export function MobileIDEView({ projectId, className, bootstrapToken, onWorkspac
     if (tabId === 'more') {
       setIsMoreMenuOpen(true);
     } else {
-      // Tabs that open as slide panels instead of inline content
-      const panelTabs: MobilePanelType[] = ['git', 'packages', 'secrets', 'database', 'settings', 'debug', 'security', 'workflows', 'history', 'extensions', 'actions', 'tools', 'deploy'];
-      
-      if (panelTabs.includes(tabId as MobilePanelType)) {
-        // Open as slide panel
-        setActivePanel(tabId as MobilePanelType);
-      } else {
-        // Render inline content
-        setActiveTab(tabId);
-      }
+      // All tabs render inline content
+      setActiveTab(tabId);
     }
     
     if ('vibrate' in navigator) {
@@ -795,8 +789,72 @@ export function MobileIDEView({ projectId, className, bootstrapToken, onWorkspac
                 </Suspense>
               )}
 
+              {activeTab === 'git' && (
+                <MobileGitPanel projectId={normalizedProjectId} />
+              )}
+
+              {activeTab === 'packages' && (
+                <MobilePackagesPanel projectId={normalizedProjectId} />
+              )}
+
+              {activeTab === 'secrets' && (
+                <MobileSecretsPanel projectId={normalizedProjectId} />
+              )}
+
+              {activeTab === 'database' && (
+                <MobileDatabasePanel projectId={normalizedProjectId} />
+              )}
+
+              {activeTab === 'settings' && (
+                <div className="h-full overflow-auto">
+                  <ReplitSettingsPanel />
+                </div>
+              )}
+
+              {activeTab === 'debug' && (
+                <MobileDebugPanel projectId={normalizedProjectId} />
+              )}
+
+              {activeTab === 'security' && (
+                <MobileSecurityPanel projectId={normalizedProjectId} />
+              )}
+
+              {activeTab === 'search' && (
+                <MobileSearch 
+                  isOpen={true} 
+                  onClose={() => setActiveTab('agent')}
+                  onSearch={(query, category) => {
+                    toast({ title: 'Search', description: `Searching for "${query}" in ${category}` });
+                  }}
+                />
+              )}
+
+              {activeTab === 'tools' && (
+                <MobileToolsPanel 
+                  isOpen={true} 
+                  onClose={() => setActiveTab('agent')}
+                  onSelectTool={(toolId) => setActiveTab(toolId)}
+                />
+              )}
+
+              {(activeTab === 'web' || activeTab === 'publishing') && (
+                <Suspense fallback={<PreviewFallback />}>
+                  <MobilePreviewPanel projectId={projectId} />
+                </Suspense>
+              )}
+
+              {(activeTab === 'collaboration' || activeTab === 'collaborate' || activeTab === 'multiplayer') && (
+                <MobileCollaborationPanel 
+                  projectId={parseInt(normalizedProjectId, 10) || 0}
+                  isOpen={true}
+                  onClose={() => setActiveTab('agent')}
+                />
+              )}
+
               {/* Fallback for tabs without specific implementations */}
-              {!['agent', 'files', 'deploy', 'preview', 'terminal', 'shell', 'console', 'more'].includes(activeTab) && (
+              {!['agent', 'files', 'deploy', 'preview', 'terminal', 'shell', 'console', 'more', 
+                 'git', 'packages', 'secrets', 'database', 'settings', 'debug', 'security',
+                 'search', 'tools', 'web', 'publishing', 'collaboration', 'collaborate', 'multiplayer'].includes(activeTab) && (
                 <div className="flex-1 flex flex-col items-center justify-center px-8 text-center">
                   <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center mb-4">
                     <Sparkles className="h-8 w-8 text-muted-foreground" />
