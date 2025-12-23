@@ -9,7 +9,8 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
 } from '@/components/ui/navigation-menu';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
+import * as VisuallyHidden from '@radix-ui/react-visually-hidden';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -261,6 +262,12 @@ export function PublicNavbar() {
                   </Button>
                 </SheetTrigger>
                 <SheetContent side="right" className="w-full sm:w-[380px] p-0 border-l border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950">
+                  <VisuallyHidden.Root asChild>
+                    <SheetHeader>
+                      <SheetTitle>Mobile Navigation Menu</SheetTitle>
+                      <SheetDescription>Navigate through E-Code platform sections</SheetDescription>
+                    </SheetHeader>
+                  </VisuallyHidden.Root>
                   <div className="sticky top-0 z-10 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 px-4 py-3">
                     <div className="flex items-center justify-between">
                       <ECodeLogo size="sm" />
