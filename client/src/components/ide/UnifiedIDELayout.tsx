@@ -296,13 +296,16 @@ function UnifiedIDELayout({
   }, [activeTab, displayedTab, prefersReducedMotion]);
   
   // Open tabs for mobile navigation - tracks which tools are open as tabs
+  // Core tabs (Preview, Agent, Deploy) are always visible like Replit's mobile IDE
   interface OpenTab {
     id: string;
     name: string;
     icon: string;
   }
   const [openTabs, setOpenTabs] = useState<OpenTab[]>([
+    { id: 'preview', name: 'Preview', icon: 'preview' },
     { id: 'agent', name: 'Agent', icon: 'agent' },
+    { id: 'deploy', name: 'Deploy', icon: 'deploy' },
   ]);
   const [activeOpenTabId, setActiveOpenTabId] = useState('agent');
   
