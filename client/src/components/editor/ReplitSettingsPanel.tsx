@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useTheme } from '@/components/ThemeProvider';
 import {
   Settings,
   Code,
@@ -68,7 +69,8 @@ export function ReplitSettingsPanel({ projectId }: { projectId?: string }) {
   const [autoSave, setAutoSave] = useState(true);
   const [formatOnSave, setFormatOnSave] = useState(true);
 
-  const [theme, setTheme] = useState('light');
+  // Use global theme from ThemeProvider instead of local state
+  const { theme, setTheme } = useTheme();
   const [editorTheme, setEditorTheme] = useState('vs-light');
 
   const [projectName, setProjectName] = useState('My Project');
@@ -202,7 +204,7 @@ export function ReplitSettingsPanel({ projectId }: { projectId?: string }) {
               <div className="space-y-3 mt-3">
                 <div>
                   <Label htmlFor="theme" className="text-[13px] text-muted-foreground">Application Theme</Label>
-                  <Select value={theme} onValueChange={(v) => { setTheme(v); setIsDirty(true); }}>
+                  <Select value={theme} onValueChange={(v) => { setTheme(v as 'light' | 'dark' | 'system'); setIsDirty(true); }}>
                     <SelectTrigger id="theme" className="mt-1 h-8 rounded-lg bg-card border-border text-[15px] text-foreground">
                       <SelectValue />
                     </SelectTrigger>

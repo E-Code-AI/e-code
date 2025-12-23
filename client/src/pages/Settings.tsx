@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { useAuth } from '@/hooks/use-auth';
+import { useTheme } from '@/components/ThemeProvider';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -56,7 +57,9 @@ export default function Settings() {
   const [displayName, setDisplayName] = useState(user?.displayName || '');
   const [email, setEmail] = useState(user?.email || '');
   const [bio, setBio] = useState(user?.bio || '');
-  const [theme, setTheme] = useState('system');
+  // Use global theme from ThemeProvider
+  const { theme: globalTheme, setTheme: setGlobalTheme } = useTheme();
+  const [pendingTheme, setPendingTheme] = useState<'light' | 'dark' | 'system'>(globalTheme);
   const [editorTheme, setEditorTheme] = useState('dark');
   const [fontSize, setFontSize] = useState('14');
   const [tabSize, setTabSize] = useState('2');
@@ -90,7 +93,7 @@ export default function Settings() {
         email,
         bio,
         preferences: {
-          theme,
+          theme: globalTheme,
           editorTheme,
           fontSize: parseInt(fontSize),
           tabSize: parseInt(tabSize),
@@ -419,7 +422,7 @@ export default function Settings() {
                   <div className="space-y-4">
                     <div>
                       <Label className="text-foreground">Theme</Label>
-                      <Select value={theme} onValueChange={setTheme}>
+                      <Select value={pendingTheme} onValueChange={(v) => setPendingTheme(v as 'light' | 'dark' | 'system')}>
                         <SelectTrigger 
                           className={inputClassName}
                           data-testid="select-theme"
@@ -473,6 +476,13 @@ export default function Settings() {
                   <Button 
                     className="bg-primary hover:bg-primary/90 text-primary-foreground transition-all duration-200"
                     data-testid="button-apply-theme"
+                    onClick={() => {
+                      setGlobalTheme(pendingTheme);
+                      toast({
+                        title: 'Theme Applied',
+                        description: `Theme changed to ${pendingTheme}`,
+                      });
+                    }}
                   >
                     Apply Theme
                   </Button>

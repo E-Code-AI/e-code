@@ -1,4 +1,4 @@
-import { createContext, useContext, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 
 type Theme = 'light' | 'dark' | 'system';
 
@@ -95,9 +95,9 @@ class ThemeManager {
     this.notifyListeners();
   }
 
-  subscribe(listener: () => void) {
+  subscribe(listener: () => void): () => void {
     this.listeners.add(listener);
-    return () => this.listeners.delete(listener);
+    return () => { this.listeners.delete(listener); };
   }
 
   private notifyListeners() {
@@ -105,13 +105,38 @@ class ThemeManager {
   }
 }
 
+// Singleton instance getter
+const getManager = () => ThemeManager.getInstance();
+
 export function ThemeProvider({ children }: ThemeProviderProps) {
-  const manager = ThemeManager.getInstance();
+  const manager = getManager();
+  
+  // Use useState to track theme changes with proper React state updates
+  const [themeState, setThemeState] = useState<{ theme: Theme; resolvedTheme: 'light' | 'dark' }>(() => ({
+    theme: manager.getTheme(),
+    resolvedTheme: manager.getResolvedTheme(),
+  }));
+
+  // Subscribe to theme manager changes
+  useEffect(() => {
+    const unsubscribe = manager.subscribe(() => {
+      setThemeState({
+        theme: manager.getTheme(),
+        resolvedTheme: manager.getResolvedTheme(),
+      });
+    });
+    return unsubscribe;
+  }, [manager]);
+
+  // Stable setTheme callback
+  const setTheme = useCallback((newTheme: Theme) => {
+    manager.setTheme(newTheme);
+  }, [manager]);
 
   const value: ThemeContextValue = {
-    theme: manager.getTheme(),
-    setTheme: (theme: Theme) => manager.setTheme(theme),
-    resolvedTheme: manager.getResolvedTheme(),
+    theme: themeState.theme,
+    setTheme,
+    resolvedTheme: themeState.resolvedTheme,
   };
 
   return (
