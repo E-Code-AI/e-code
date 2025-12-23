@@ -34,6 +34,7 @@ import { redisIdempotency } from '../services/redis-idempotency.service';
 import { speculativeScaffold } from '../services/speculative-scaffold.service';
 import { ViewportValidationService } from '../services/viewport-validation.service';
 import { memoryBankService } from '../services/memory-bank.service';
+import { fastBootstrap } from '../services/fast-bootstrap.service';
 import * as path from 'path';
 import { exec, spawn } from 'child_process';
 import { promisify } from 'util';
@@ -249,9 +250,19 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
         logger.info(`[Bootstrap] Using user's preferred model: ${modelId}`);
       }
     } else {
-      // No preference, use first available
-      modelId = availableModels[0].id;
-      logger.info(`[Bootstrap] No preferred model, using first available: ${modelId}`);
+      // No preference - get fast model recommendation
+      const recommendedFastModel = fastBootstrap.getRecommendedFastModel();
+      const fastModelAvailable = availableModels.some(model => model.id === recommendedFastModel);
+      
+      if (fastModelAvailable) {
+        modelId = recommendedFastModel;
+        fastBootstrap.recordActualUsage(modelId, true);
+        logger.info(`[Bootstrap] No preference - using recommended fast model: ${modelId}`);
+      } else {
+        modelId = availableModels[0].id;
+        fastBootstrap.recordActualUsage(modelId, false);
+        logger.info(`[Bootstrap] No preference - fast model unavailable, using: ${modelId}`);
+      }
     }
     
     // 2.6 ✅ AI-POWERED MEMORY BANK (Dec 16, 2025)
@@ -819,5 +830,75 @@ function verifyBootstrapToken(token: string): BootstrapTokenPayload | null {
     return null;
   }
 }
+
+/**
+ * GET /api/workspace/bootstrap/metrics
+ * 
+ * Returns bootstrap optimization metrics for monitoring
+ * Shows HONEST stats: recommendations vs actual usage
+ */
+router.get('/bootstrap/metrics', ensureAuthenticated, async (req: Request, res: Response) => {
+  try {
+    const stats = fastBootstrap.getCacheStats();
+    
+    res.json({
+      success: true,
+      metrics: {
+        fastModels: stats.fastModels,
+        usage: stats.usage,
+        optimization: {
+          fastModelRecommendationsEnabled: true,
+          parallelExecutionEnabled: true,
+          backgroundNpmInstallEnabled: true,
+          note: 'Fast model recommendations may not always be used due to provider availability'
+        },
+        timestamp: new Date().toISOString()
+      }
+    });
+  } catch (error: any) {
+    logger.error('[Bootstrap Metrics] Error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to retrieve metrics'
+    });
+  }
+});
+
+/**
+ * GET /api/workspace/bootstrap/fast-check
+ * 
+ * Check fast model recommendation status.
+ * Returns available fast models and actual usage effectiveness.
+ */
+router.get('/bootstrap/fast-check', async (req: Request, res: Response) => {
+  try {
+    const stats = fastBootstrap.getCacheStats();
+    
+    // Get available models to check if any fast models are actually available
+    const availableModels = aiProviderManager.getAvailableModels();
+    const availableFastModels = stats.fastModels.filter(fm => 
+      availableModels.some(am => am.id === fm.id)
+    );
+    
+    const hasFastModels = availableFastModels.length > 0;
+    
+    res.json({
+      success: true,
+      ready: hasFastModels,
+      fastModels: stats.fastModels,
+      availableFastModels: availableFastModels.map(m => m.id),
+      effectiveness: stats.usage.effectivenessRate,
+      message: hasFastModels 
+        ? `Fast model recommendations active - ${availableFastModels.length} fast model(s) available`
+        : 'No fast models currently available - recommendations will fall back to other models'
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      ready: false,
+      error: 'Fast bootstrap check failed'
+    });
+  }
+});
 
 export default router;
