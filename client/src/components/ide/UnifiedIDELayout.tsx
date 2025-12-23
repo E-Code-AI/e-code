@@ -90,6 +90,8 @@ const VisualEditorPanel = lazy(() => import('@/components/ide/VisualEditorPanel'
 import { ShortcutHint, ShortcutTester } from '@/components/utilities';
 import { useAutonomousBuildStore } from '@/stores/autonomousBuildStore';
 import { useElectronMenuEvents } from '@/hooks/useElectron';
+import { useSchemaWarmingStore } from '@/stores/schemaWarmingStore';
+import { AppNotReadyPlaceholder } from '@/components/mobile/AppNotReadyPlaceholder';
 
 interface UnifiedIDELayoutProps {
   projectId: string;
@@ -121,6 +123,9 @@ function UnifiedIDELayout({
   
   // Autonomous build store for inline chat integration and preview splash screens
   const autonomousBuildStore = useAutonomousBuildStore();
+  
+  // Schema warming store - shows "App not ready" placeholder until schema is ready
+  const { isReady: isSchemaReady } = useSchemaWarmingStore();
   
   const workspace = useIDEWorkspace(projectId);
   const {
@@ -591,6 +596,10 @@ function UnifiedIDELayout({
     
     switch (mobileActiveTab) {
       case 'preview':
+        // Gate preview with AppNotReadyPlaceholder until schema is ready
+        if (!isSchemaReady) {
+          return <AppNotReadyPlaceholder tabName="Preview" />;
+        }
         return (
           <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Preview..." /></div>}>
             <MobilePreviewPanel projectId={projectId} />
@@ -614,6 +623,10 @@ function UnifiedIDELayout({
           </Suspense>
         );
       case 'deploy':
+        // Gate deploy with AppNotReadyPlaceholder until schema is ready
+        if (!isSchemaReady) {
+          return <AppNotReadyPlaceholder tabName="Deploy" />;
+        }
         return (
           <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Deploy..." /></div>}>
             <ReplitDeploymentPanel projectId={projectId} />
@@ -787,6 +800,10 @@ function UnifiedIDELayout({
           </Suspense>
         );
       case 'preview':
+        // Gate preview with AppNotReadyPlaceholder until schema is ready
+        if (!isSchemaReady) {
+          return <AppNotReadyPlaceholder tabName="Preview" />;
+        }
         return (
           <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" /></div>}>
             <ResponsiveWebPreview projectId={projectId} />
@@ -851,8 +868,11 @@ function UnifiedIDELayout({
       return <div className="flex items-center justify-center h-full text-muted-foreground">Select a tab</div>;
     }
 
-    // Preview panel
+    // Preview panel - gate with AppNotReadyPlaceholder until schema is ready
     if (currentTab.id === 'preview' || currentTab.id === 'webpreview') {
+      if (!isSchemaReady) {
+        return <AppNotReadyPlaceholder tabName="Preview" />;
+      }
       return (
         <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" /></div>}>
           <ResponsiveWebPreview projectId={projectId} />

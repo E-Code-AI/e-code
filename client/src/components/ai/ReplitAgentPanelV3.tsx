@@ -424,6 +424,14 @@ export function ReplitAgentPanelV3({
   useAgentDockNotifications();
   useAgentFavicon();
   
+  // Schema warming store - background data structure pre-drafting while user chats
+  const { 
+    startWarming: triggerSchemaWarming, 
+    isWarming: isSchemaWarming, 
+    isReady: isSchemaReady,
+    progress: schemaProgress
+  } = useSchemaWarmingStore();
+  
   // Use effective conversation ID for displaying autonomous build messages during bootstrap
   // This allows messages to be shown even before the backend provides a real conversation ID
   const displayConversationId = conversationId ?? effectiveConversationId;
@@ -1466,9 +1474,9 @@ export function ReplitAgentPanelV3({
     const userContent = input.trim();
     
     // Trigger schema warming on first message for faster deploy (background process)
-    const schemaStore = useSchemaWarmingStore.getState();
-    if (projectId && messages.length === 0 && !schemaStore.isWarming && !schemaStore.isReady) {
-      schemaStore.startWarming(String(projectId), userContent);
+    // Uses proper Zustand hook subscription for reactive updates
+    if (projectId && messages.length <= 1 && !isSchemaWarming && !isSchemaReady) {
+      triggerSchemaWarming(String(projectId), userContent);
     }
     
     // Use optimistic updates for faster perceived response
