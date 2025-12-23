@@ -795,7 +795,7 @@ export function generateDefaultCommands(callbacks: {
 
   return [
     {
-      id: 'tool-files',
+      id: 'ext-tool-files',
       label: 'Files',
       description: 'Browse project files',
       category: 'view',
@@ -804,7 +804,7 @@ export function generateDefaultCommands(callbacks: {
       action: () => { onToolSelect?.('files'); close(); },
     },
     {
-      id: 'tool-search',
+      id: 'ext-tool-search',
       label: 'Search',
       description: 'Search in files',
       category: 'tool',
@@ -813,7 +813,7 @@ export function generateDefaultCommands(callbacks: {
       action: () => { onToolSelect?.('search'); close(); },
     },
     {
-      id: 'tool-git',
+      id: 'ext-tool-git',
       label: 'Git',
       description: 'Source control',
       category: 'tool',
@@ -822,7 +822,7 @@ export function generateDefaultCommands(callbacks: {
       action: () => { onToolSelect?.('git'); close(); },
     },
     {
-      id: 'tool-terminal',
+      id: 'ext-tool-terminal',
       label: 'Terminal',
       description: 'Open terminal',
       category: 'tool',
@@ -831,7 +831,7 @@ export function generateDefaultCommands(callbacks: {
       action: () => { onToolSelect?.('terminal'); close(); },
     },
     {
-      id: 'tool-debugger',
+      id: 'ext-tool-debugger',
       label: 'Debugger',
       description: 'Debug your code',
       category: 'tool',
@@ -840,7 +840,7 @@ export function generateDefaultCommands(callbacks: {
       action: () => { onToolSelect?.('debugger'); close(); },
     },
     {
-      id: 'tool-testing',
+      id: 'ext-tool-testing',
       label: 'Testing',
       description: 'Run tests',
       category: 'tool',
@@ -849,7 +849,7 @@ export function generateDefaultCommands(callbacks: {
       action: () => { onToolSelect?.('testing'); close(); },
     },
     {
-      id: 'tool-database',
+      id: 'ext-tool-database',
       label: 'Database',
       description: 'Database management',
       category: 'tool',
@@ -858,7 +858,7 @@ export function generateDefaultCommands(callbacks: {
       action: () => { onToolSelect?.('database'); close(); },
     },
     {
-      id: 'tool-packages',
+      id: 'ext-tool-packages',
       label: 'Packages',
       description: 'Manage dependencies',
       category: 'tool',
@@ -867,7 +867,7 @@ export function generateDefaultCommands(callbacks: {
       action: () => { onToolSelect?.('packages'); close(); },
     },
     {
-      id: 'tool-agent',
+      id: 'ext-tool-agent',
       label: 'AI Agent',
       description: 'AI assistant',
       category: 'ai',
@@ -876,7 +876,7 @@ export function generateDefaultCommands(callbacks: {
       action: () => { onToolSelect?.('agent'); close(); },
     },
     {
-      id: 'tool-settings',
+      id: 'ext-tool-settings',
       label: 'Settings',
       description: 'Project settings',
       category: 'tool',
@@ -885,7 +885,7 @@ export function generateDefaultCommands(callbacks: {
       action: () => { onToolSelect?.('settings'); close(); },
     },
     {
-      id: 'action-run',
+      id: 'ext-action-run',
       label: 'Run Project',
       description: 'Start the development server',
       category: 'action',
@@ -894,7 +894,7 @@ export function generateDefaultCommands(callbacks: {
       action: () => { onToolSelect?.('shell'); close(); },
     },
     {
-      id: 'action-deploy',
+      id: 'ext-action-deploy',
       label: 'Deploy',
       description: 'Deploy to production',
       category: 'action',
