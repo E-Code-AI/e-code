@@ -189,17 +189,23 @@ export function ReplitTabBar({
             data-testid={`tab-${tab.id}`}
             className={cn(
               'group relative flex items-center gap-1.5 h-[34px] px-3 cursor-pointer select-none',
-              'text-[13px] font-medium transition-all duration-150',
+              'text-[13px] font-medium',
               'border-r border-[var(--ecode-border)]',
+              // Smooth transition for background, border, and transform
+              'transition-all duration-150 ease-out',
               tab.pinned && 'min-w-[40px] max-w-[40px] justify-center px-0',
               !tab.pinned && 'min-w-[100px] max-w-[180px]',
               isActive && [
                 'bg-[var(--ecode-editor-bg)] text-[var(--ecode-text)]',
                 'border-t-2 border-t-[var(--ecode-accent)] -mt-[2px]',
+                // Subtle scale effect on active tab
+                'transform scale-[1.02]',
               ],
               !isActive && [
                 'bg-[var(--ecode-sidebar-bg)] text-[var(--ecode-text-muted)]',
                 'hover:bg-[var(--ecode-sidebar-hover)] hover:text-[var(--ecode-text)]',
+                'hover:border-t-2 hover:border-t-[var(--ecode-accent)]/50 hover:-mt-[2px]',
+                'transform scale-100',
               ],
               isDragging && 'opacity-50',
               isDragOver && 'bg-surface-tertiary-solid border-l-2 border-l-[var(--ecode-accent)]'
