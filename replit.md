@@ -18,6 +18,7 @@ E-Code is an AI-assisted web-based IDE designed for rapid prototyping, education
 - **LazyMotionButton:** Must pass native button props (onClick, data-testid, etc.) to CSS fallback/Suspense fallback - otherwise clicks won't work when shouldUseCSS is true
 - **Documentation:** Ruthlessly remove obsolete/misleading docs - maintain technical honesty
 - **WebSocket Upgrade:** Mark sockets as handled BEFORE async auth checks in central dispatcher to prevent race conditions with upgrade guard's setImmediate cleanup
+- **IDE Tab Defaults:** Desktop: Chat/Agent tab active by default (left dock index 3). Mobile/Tablet: Deploy tab active by default. Preview panel always visible with wireframe placeholder. Files: `EditorDefaultLayout.tsx`, `use-mobile-persistence.ts`, `ReplitMobileIDE.tsx`
 
 ## System Architecture
 

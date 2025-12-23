@@ -160,7 +160,7 @@ export function createEditorDefaultLayout(
             canClose: false,
           },
         ],
-        activeTabIndex: 0, // Files active by default
+        activeTabIndex: 3, // Chat/Agent tab active by default (index 3 = agent-tab)
         percent: 20,
         minSize: 200,
         maxSize: 40,

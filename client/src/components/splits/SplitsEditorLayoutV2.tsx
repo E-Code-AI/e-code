@@ -149,8 +149,61 @@ export function SplitsEditorLayoutV2({
           </div>
         ),
         preview: (
-          <div className="flex items-center justify-center h-full text-[var(--ecode-text-muted)]">
-            <p className="text-sm font-[family-name:var(--ecode-font-sans)]">Preview will appear here</p>
+          <div className="h-full w-full flex flex-col bg-[var(--ecode-surface)]">
+            {/* Browser-like Header */}
+            <div className="flex items-center gap-2 h-10 px-3 border-b border-[var(--ecode-border)] bg-[var(--ecode-background)]">
+              <div className="flex items-center gap-1.5">
+                <div className="w-3 h-3 rounded-full bg-red-500/80" />
+                <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
+                <div className="w-3 h-3 rounded-full bg-green-500/80" />
+              </div>
+              <div className="flex-1 flex items-center justify-center">
+                <div className="flex items-center gap-2 px-3 py-1 rounded bg-[var(--ecode-surface)] border border-[var(--ecode-border)] text-xs text-[var(--ecode-text-muted)]">
+                  <span className="opacity-60">🔒</span>
+                  <span>localhost:5000</span>
+                </div>
+              </div>
+            </div>
+            
+            {/* Wireframe App Preview */}
+            <div className="flex-1 overflow-auto p-4">
+              <div className="max-w-lg mx-auto space-y-4">
+                {/* Header Wireframe */}
+                <div className="flex items-center justify-between p-4 rounded-lg border border-dashed border-[var(--ecode-border)] bg-[var(--ecode-background)]">
+                  <div className="w-24 h-6 rounded bg-[var(--ecode-border)] animate-pulse" />
+                  <div className="flex gap-2">
+                    <div className="w-16 h-6 rounded bg-[var(--ecode-border)] animate-pulse" />
+                    <div className="w-16 h-6 rounded bg-[var(--ecode-border)] animate-pulse" />
+                  </div>
+                </div>
+                
+                {/* Hero Wireframe */}
+                <div className="p-6 rounded-lg border border-dashed border-[var(--ecode-border)] bg-[var(--ecode-background)] space-y-4">
+                  <div className="w-3/4 h-8 rounded bg-[var(--ecode-border)] animate-pulse mx-auto" />
+                  <div className="w-2/3 h-4 rounded bg-[var(--ecode-border)] animate-pulse mx-auto" />
+                  <div className="w-32 h-10 rounded bg-[var(--ecode-accent)]/20 border border-[var(--ecode-accent)]/40 mx-auto animate-pulse" />
+                </div>
+                
+                {/* Content Cards Wireframe */}
+                <div className="grid grid-cols-2 gap-3">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="p-4 rounded-lg border border-dashed border-[var(--ecode-border)] bg-[var(--ecode-background)] space-y-3">
+                      <div className="w-full h-20 rounded bg-[var(--ecode-border)] animate-pulse" />
+                      <div className="w-3/4 h-4 rounded bg-[var(--ecode-border)] animate-pulse" />
+                      <div className="w-1/2 h-3 rounded bg-[var(--ecode-border)] animate-pulse" />
+                    </div>
+                  ))}
+                </div>
+                
+                {/* Build Status */}
+                <div className="flex items-center justify-center gap-2 p-4 rounded-lg border border-dashed border-[var(--ecode-accent)]/30 bg-[var(--ecode-accent)]/5">
+                  <div className="w-2 h-2 rounded-full bg-[var(--ecode-accent)] animate-pulse" />
+                  <span className="text-sm text-[var(--ecode-text-muted)] font-[family-name:var(--ecode-font-sans)]">
+                    Your app preview will appear here when running
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
         ),
       };
