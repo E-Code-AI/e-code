@@ -640,7 +640,16 @@ export function MobileIDEView({ projectId, className, bootstrapToken, onWorkspac
     if (tabId === 'more') {
       setIsMoreMenuOpen(true);
     } else {
-      setActiveTab(tabId);
+      // Tabs that open as slide panels instead of inline content
+      const panelTabs: MobilePanelType[] = ['git', 'packages', 'secrets', 'database', 'settings', 'debug', 'security', 'workflows', 'history', 'extensions', 'actions', 'tools', 'deploy'];
+      
+      if (panelTabs.includes(tabId as MobilePanelType)) {
+        // Open as slide panel
+        setActivePanel(tabId as MobilePanelType);
+      } else {
+        // Render inline content
+        setActiveTab(tabId);
+      }
     }
     
     if ('vibrate' in navigator) {
@@ -784,6 +793,21 @@ export function MobileIDEView({ projectId, className, bootstrapToken, onWorkspac
                 <Suspense fallback={<TerminalFallback />}>
                   <EnhancedMobileTerminal projectId={normalizedProjectId} />
                 </Suspense>
+              )}
+
+              {/* Fallback for tabs without specific implementations */}
+              {!['agent', 'files', 'deploy', 'preview', 'terminal', 'shell', 'console', 'more'].includes(activeTab) && (
+                <div className="flex-1 flex flex-col items-center justify-center px-8 text-center">
+                  <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center mb-4">
+                    <Sparkles className="h-8 w-8 text-muted-foreground" />
+                  </div>
+                  <h3 className="text-lg font-medium text-foreground mb-2">
+                    {activeTab.charAt(0).toUpperCase() + activeTab.slice(1).replace(/-/g, ' ')}
+                  </h3>
+                  <p className="text-sm text-muted-foreground max-w-xs">
+                    This feature is coming soon to mobile. Use the desktop version for full access.
+                  </p>
+                </div>
               )}
               
             </LazyMotionDiv>
