@@ -89,6 +89,9 @@ ENABLE_DIRECT_EXECUTION = "true"
 TESTING_STRIPE_SECRET_KEY = "sk_test_51QPg0B2VSIgdqPLPR7HBpKWbq4x5BJKOrNCFDTGDgOYZmF1HLgKuYccJjAaHTJSiAT19vjsfS9YUNQlIktRgeMZW00ARQIirpq"
 TESTING_VITE_STRIPE_PUBLIC_KEY = "pk_test_51QPg0B2VSIgdqPLPngii8d0mAYVtYtaHQZSaCDkJCHZVJxjRNW002YDpBWCBMzsynpUZsaky0cPGOwnXwUoaksjD00asCttkC4"
 
+[userenv.production]
+NODE_ENV = "production"
+
 [[ports]]
 localPort = 5000
 externalPort = 80
