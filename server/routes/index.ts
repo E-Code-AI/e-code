@@ -183,6 +183,10 @@ export class MainRouter {
     // Agent workflow routes (feature generation, build selection) - authenticated users
     app.use('/api/agent', tierRateLimiters.api, agentWorkflowRouter);
 
+    // Agent schema warming routes (background data structure pre-drafting) - authenticated users
+    // Mounted at /api/agent for schema/warm, schema/status, schema/stream endpoints
+    app.use('/api/agent', tierRateLimiters.streaming, agentRouter);
+
     // Agent step cache routes (caching intermediate agent phases for cost optimization)
     app.use('/api/agent/step-cache', tierRateLimiters.api, agentStepCacheRouter);
 
