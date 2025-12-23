@@ -7,6 +7,10 @@ const AUDIO_URLS = {
   error: '/assets/agent-sfx/error.mp3',
 };
 
+// Feature flag: disable audio until valid assets are available
+// The current MP3 files are placeholders (0 bytes) - set to true when real audio is added
+const AUDIO_ASSETS_AVAILABLE = false;
+
 interface AudioNotificationSettings {
   enabled: boolean;
   volume: number;
@@ -49,22 +53,47 @@ export function useAgentAudioNotifications() {
   const [isEnabled, setIsEnabledState] = useState(() => getStoredSettings().enabled);
   const volumeRef = useRef(getStoredSettings().volume);
 
+  // Lazy-load audio on first play to avoid 416 errors from empty/invalid files
+  const audioLoadedRef = useRef<{ complete: boolean; error: boolean }>({
+    complete: false,
+    error: false,
+  });
+
+  const getOrCreateAudio = useCallback((type: 'complete' | 'error'): HTMLAudioElement | null => {
+    if (typeof window === 'undefined') return null;
+    
+    // Return cached audio if already loaded
+    if (audioRef.current[type] && audioLoadedRef.current[type]) {
+      return audioRef.current[type];
+    }
+
+    // Create on demand with no preload to avoid range request errors
+    try {
+      const audio = new Audio();
+      audio.volume = volumeRef.current;
+      audio.preload = 'none'; // Don't preload to avoid 416 errors
+      
+      // Handle errors gracefully
+      audio.addEventListener('error', () => {
+        console.debug('[Audio] Failed to load:', AUDIO_URLS[type]);
+        audioLoadedRef.current[type] = false;
+      });
+      
+      audio.addEventListener('canplaythrough', () => {
+        audioLoadedRef.current[type] = true;
+      });
+      
+      audio.src = AUDIO_URLS[type];
+      audioRef.current[type] = audio;
+      return audio;
+    } catch {
+      return null;
+    }
+  }, []);
+
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    // Create audio elements
-    const completeAudio = new Audio(AUDIO_URLS.complete);
-    completeAudio.volume = volumeRef.current;
-    completeAudio.preload = 'auto';
-    audioRef.current.complete = completeAudio;
-
-    const errorAudio = new Audio(AUDIO_URLS.error);
-    errorAudio.volume = volumeRef.current;
-    errorAudio.preload = 'auto';
-    audioRef.current.error = errorAudio;
-
     return () => {
-      // Full cleanup: pause, remove src, and null refs
+      // Full cleanup on unmount
       if (audioRef.current.complete) {
         audioRef.current.complete.pause();
         audioRef.current.complete.src = '';
@@ -79,10 +108,12 @@ export function useAgentAudioNotifications() {
   }, []);
 
   const playSound = useCallback((type: 'complete' | 'error') => {
+    // Skip if audio assets are not available (placeholder files)
+    if (!AUDIO_ASSETS_AVAILABLE) return;
     if (prefersReducedMotion) return;
     if (!isEnabled) return;
 
-    const audio = audioRef.current[type];
+    const audio = getOrCreateAudio(type);
     if (audio) {
       audio.currentTime = 0;
       audio.volume = volumeRef.current;
@@ -90,7 +121,7 @@ export function useAgentAudioNotifications() {
         // Ignore autoplay errors (user hasn't interacted yet)
       });
     }
-  }, [prefersReducedMotion, isEnabled]);
+  }, [prefersReducedMotion, isEnabled, getOrCreateAudio]);
 
   useEffect(() => {
     const unsubComplete = AgentEventBus.on('agent:complete', () => {
