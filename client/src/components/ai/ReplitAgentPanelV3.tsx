@@ -83,6 +83,7 @@ import { UsageTrackingIcon } from './UsageTrackingIcon';
 import { VideoReplayViewer } from './VideoReplayViewer';
 import { ECodeLogo } from '@/components/ECodeLogo';
 import { RAGToggle, RAGStatsDisplay, RetrievedContextPanel, useRAGStats } from './RAGControls';
+import { useSchemaWarmingStore } from '@/stores/schemaWarmingStore';
 // ✅ Memory Bank is 100% TRANSPARENT (like Replit) - no UI, works invisibly in background
 // Context is auto-injected into AI prompts via server/api/ai-streaming.ts
 import { EffortPricingDisplay } from '@/components/EffortPricingDisplay';
@@ -1463,6 +1464,12 @@ export function ReplitAgentPanelV3({
     if (!input.trim() || isWorking) return;
 
     const userContent = input.trim();
+    
+    // Trigger schema warming on first message for faster deploy (background process)
+    const schemaStore = useSchemaWarmingStore.getState();
+    if (projectId && messages.length === 0 && !schemaStore.isWarming && !schemaStore.isReady) {
+      schemaStore.startWarming(String(projectId), userContent);
+    }
     
     // Use optimistic updates for faster perceived response
     const optimisticResult = addOptimisticMessage({

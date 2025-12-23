@@ -5,10 +5,12 @@ import { ReplitMobileNavigation, type MobileTab } from './ReplitMobileNavigation
 import { ReplitMobileInputBar } from './ReplitMobileInputBar';
 import { ReplitToolsSheet } from './ReplitToolsSheet';
 import { MobileMoreMenu } from './MobileMoreMenu';
+import { AppNotReadyPlaceholder } from './AppNotReadyPlaceholder';
 import { useLocation } from 'wouter';
 import { cn } from '@/lib/utils';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { useAgentTools } from '@/hooks/useAgentTools';
+import { useSchemaWarmingStore } from '@/stores/schemaWarmingStore';
 
 const ReplitAgentIcon = memo(({ className }: { className?: string }) => (
   <svg viewBox="0 0 24 24" className={className} fill="currentColor">
@@ -47,6 +49,7 @@ export const ReplitMobileIDE = memo(function ReplitMobileIDE({
   const [showHistorySheet, setShowHistorySheet] = useState(false);
   const [buildMode, setBuildMode] = useState<'build' | 'edit' | 'chat'>('build');
   const { settings: agentToolsSettings, updateSettings: setAgentToolsSettings } = useAgentTools();
+  const { isReady: isSchemaReady, isWarming } = useSchemaWarmingStore();
 
   const handleTabChange = useCallback((tab: MobileTab) => {
     setActiveTab(tab);
@@ -102,23 +105,28 @@ export const ReplitMobileIDE = memo(function ReplitMobileIDE({
   const renderTabContent = () => {
     if (isLoading) {
       return (
-        <div className="flex-1 flex flex-col items-center justify-center px-8">
+        <div className="flex-1 flex flex-col items-center justify-center px-6">
           {activeTab === 'agent' ? (
             <>
-              <ReplitAgentIcon className="h-12 w-12 text-[#7C65C1] mb-4 animate-spin-slow" />
-              <Loader2 className="h-6 w-6 text-gray-400 animate-spin mb-3" />
+              <ReplitAgentIcon className="h-10 w-10 text-[#7C65C1] mb-3 animate-spin-slow" />
+              <Loader2 className="h-5 w-5 text-gray-400 animate-spin mb-2" />
             </>
           ) : (
             <>
-              <Monitor className="h-12 w-12 text-gray-400 mb-4" />
-              <Loader2 className="h-6 w-6 text-gray-400 animate-spin mb-3" />
+              <Monitor className="h-10 w-10 text-gray-400 mb-3" />
+              <Loader2 className="h-5 w-5 text-gray-400 animate-spin mb-2" />
             </>
           )}
-          <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
+          <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
             {loadingText}
           </p>
         </div>
       );
+    }
+
+    // Show AppNotReadyPlaceholder for preview/deploy tabs when schema not ready
+    if (!isSchemaReady && (activeTab === 'preview' || activeTab === 'deploy')) {
+      return <AppNotReadyPlaceholder tabName={activeTab} />;
     }
 
     if (children) {
@@ -126,15 +134,15 @@ export const ReplitMobileIDE = memo(function ReplitMobileIDE({
     }
 
     return (
-      <div className="flex-1 flex flex-col items-center justify-center px-8">
+      <div className="flex-1 flex flex-col items-center justify-center px-6">
         {activeTab === 'agent' ? (
-          <ReplitAgentIcon className="h-12 w-12 text-[#7C65C1] mb-4" />
+          <ReplitAgentIcon className="h-10 w-10 text-[#7C65C1] mb-3" />
         ) : (
-          <Monitor className="h-12 w-12 text-gray-400 mb-4" />
+          <Monitor className="h-10 w-10 text-gray-400 mb-3" />
         )}
-        <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
+        <p className="text-xs text-gray-500 dark:text-gray-400 text-center leading-relaxed">
           {activeTab === 'agent' 
-            ? "Start building by sending a message to the agent"
+            ? "Start building by sending a message"
             : "Run your app to see a preview"}
         </p>
       </div>
@@ -212,16 +220,16 @@ export const ReplitMobileIDE = memo(function ReplitMobileIDE({
       <Sheet open={showHistorySheet} onOpenChange={setShowHistorySheet}>
         <SheetContent side="bottom" className="h-[70vh] rounded-t-2xl">
           <SheetHeader>
-            <SheetTitle className="flex items-center gap-2">
-              <History className="h-5 w-5" />
+            <SheetTitle className="flex items-center gap-2 text-sm">
+              <History className="h-4 w-4" />
               Session History
             </SheetTitle>
           </SheetHeader>
-          <div className="flex-1 flex items-center justify-center py-12">
+          <div className="flex-1 flex items-center justify-center py-8">
             <div className="text-center text-gray-500 dark:text-gray-400">
-              <History className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p className="text-sm">No history available yet</p>
-              <p className="text-xs mt-1">Your session checkpoints will appear here</p>
+              <History className="h-10 w-10 mx-auto mb-3 opacity-50" />
+              <p className="text-xs font-medium">No history available yet</p>
+              <p className="text-[10px] mt-1 opacity-75">Your session checkpoints will appear here</p>
             </div>
           </div>
         </SheetContent>
