@@ -246,27 +246,54 @@ function UnifiedIDELayout({
   const [showMobileMoreMenu, setShowMobileMoreMenu] = useState(false);
   const [showTabSwitcher, setShowTabSwitcher] = useState(false);
   
-  // Tab content transition animation state
+  // Tab content transition animation state (Fortune 500 level)
   // displayedTab holds the tab ID whose content is currently rendered
   // This allows us to fade out the OLD content before switching to new
   const [displayedTab, setDisplayedTab] = useState(activeTab);
   const [tabContentVisible, setTabContentVisible] = useState(true);
+  const transitionTimerRef = useRef<NodeJS.Timeout | null>(null);
   
-  // Smooth tab transition: fade out old content, then swap, then fade in new content
+  // Check for reduced motion preference (accessibility compliance)
+  const prefersReducedMotion = useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    return window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false;
+  }, []);
+  
+  // Smooth tab transition with accessibility and performance optimizations
   useEffect(() => {
     if (displayedTab !== activeTab) {
+      // Clear any pending transition (debounce rapid tab switches)
+      if (transitionTimerRef.current) {
+        clearTimeout(transitionTimerRef.current);
+        transitionTimerRef.current = null;
+      }
+      
+      // Accessibility: Instant switch if user prefers reduced motion
+      if (prefersReducedMotion) {
+        setDisplayedTab(activeTab);
+        setTabContentVisible(true); // Ensure content stays visible
+        return;
+      }
+      
       // Phase 1: Fade out current content
       setTabContentVisible(false);
       
       // Phase 2: After fade out (100ms), switch to new tab and fade in
-      const timer = setTimeout(() => {
+      transitionTimerRef.current = setTimeout(() => {
         setDisplayedTab(activeTab);
         setTabContentVisible(true);
+        transitionTimerRef.current = null;
       }, 100);
-      
-      return () => clearTimeout(timer);
     }
-  }, [activeTab, displayedTab]);
+    
+    // Cleanup: Only clear if a timer was scheduled
+    return () => {
+      if (transitionTimerRef.current) {
+        clearTimeout(transitionTimerRef.current);
+        transitionTimerRef.current = null;
+      }
+    };
+  }, [activeTab, displayedTab, prefersReducedMotion]);
   
   // Open tabs for mobile navigation - tracks which tools are open as tabs
   interface OpenTab {
