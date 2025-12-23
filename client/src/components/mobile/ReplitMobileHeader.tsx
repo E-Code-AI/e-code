@@ -28,7 +28,7 @@ interface ReplitMobileHeaderProps {
   title?: string;
 }
 
-const tabConfig: Record<Exclude<MobileTab, 'more'>, { icon: any; label: string; iconColor?: string }> = {
+const tabConfig: Record<string, { icon: any; label: string; iconColor?: string }> = {
   preview: { icon: Monitor, label: 'Preview' },
   agent: { icon: ReplitAgentIcon, label: 'Agent', iconColor: '#7C65C1' },
   deploy: { icon: Globe, label: 'Deploy' },
@@ -39,6 +39,7 @@ const tabConfig: Record<Exclude<MobileTab, 'more'>, { icon: any; label: string; 
   secrets: { icon: Lock, label: 'Secrets' },
   database: { icon: Database, label: 'Database' },
   terminal: { icon: Terminal, label: 'Terminal' },
+  console: { icon: Terminal, label: 'Console' },
   settings: { icon: Settings, label: 'Settings' },
   history: { icon: History, label: 'History' },
   extensions: { icon: Puzzle, label: 'Extensions' },
@@ -49,6 +50,7 @@ const tabConfig: Record<Exclude<MobileTab, 'more'>, { icon: any; label: string; 
   collaboration: { icon: Users, label: 'Collaboration' },
   actions: { icon: Zap, label: 'Actions' },
   tools: { icon: Wrench, label: 'Tools' },
+  more: { icon: MoreVertical, label: 'More' },
 };
 
 export const ReplitMobileHeader = memo(function ReplitMobileHeader({
@@ -61,7 +63,7 @@ export const ReplitMobileHeader = memo(function ReplitMobileHeader({
   showClose = false,
   title,
 }: ReplitMobileHeaderProps) {
-  const config = activeTab !== 'more' ? tabConfig[activeTab] : tabConfig.preview;
+  const config = tabConfig[activeTab] || tabConfig.preview;
   const Icon = config.icon;
   const displayTitle = title || config.label;
 
