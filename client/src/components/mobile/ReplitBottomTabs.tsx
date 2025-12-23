@@ -97,9 +97,9 @@ export const ReplitBottomTabs = memo(function ReplitBottomTabs({
       
       {/* Status Indicators Row */}
       <div className="absolute -top-8 left-0 right-0 px-4 flex items-center justify-between pointer-events-none">
-        {/* Connection Status Pill */}
+        {/* Connection Status Pill - compact but accessible for mobile */}
         <div
-          className="flex items-center gap-1.5 px-2.5 py-1 rounded-full pointer-events-auto animate-fade-in"
+          className="flex items-center gap-1 px-2 py-0.5 rounded-full pointer-events-auto animate-fade-in"
           style={{
             background: '#1C2333',
             border: `1px solid ${isConnected ? '#22c55e' : '#ef4444'}`,
@@ -117,7 +117,7 @@ export const ReplitBottomTabs = memo(function ReplitBottomTabs({
             )}
           </div>
           <span 
-            className="text-[10px] font-semibold uppercase tracking-wider"
+            className="text-[11px] font-semibold uppercase tracking-wider"
             style={{ 
               color: isConnected ? 'rgb(34, 197, 94)' : 'rgb(239, 68, 68)',
               fontFamily: 'var(--ecode-font-sans)',
@@ -131,7 +131,7 @@ export const ReplitBottomTabs = memo(function ReplitBottomTabs({
         <div className="flex items-center gap-2 pointer-events-auto">
           {badgeCounts.errors && badgeCounts.errors > 0 && (
             <div 
-              className="flex items-center gap-1 px-2 py-1 rounded-full animate-scale-in"
+              className="flex items-center gap-1 px-1.5 py-0.5 rounded-full animate-scale-in"
               style={{
                 background: '#1C2333',
                 border: '1px solid #ef4444',
@@ -140,7 +140,7 @@ export const ReplitBottomTabs = memo(function ReplitBottomTabs({
               data-testid="indicator-errors"
             >
               <AlertCircle className="h-3 w-3 text-red-500" />
-              <span className="text-[10px] font-bold text-red-500" style={{ fontFamily: 'var(--ecode-font-sans)' }}>
+              <span className="text-[11px] font-bold text-red-500" style={{ fontFamily: 'var(--ecode-font-sans)' }}>
                 {badgeCounts.errors}
               </span>
             </div>
@@ -148,7 +148,7 @@ export const ReplitBottomTabs = memo(function ReplitBottomTabs({
           
           {badgeCounts.git && badgeCounts.git > 0 && (
             <div 
-              className="flex items-center gap-1 px-2 py-1 rounded-full animate-scale-in"
+              className="flex items-center gap-1 px-1.5 py-0.5 rounded-full animate-scale-in"
               style={{
                 background: '#1C2333',
                 border: '1px solid #3D4455',
@@ -157,7 +157,7 @@ export const ReplitBottomTabs = memo(function ReplitBottomTabs({
               data-testid="indicator-git-changes"
             >
               <GitBranch className="h-3 w-3 text-[var(--ecode-text-muted)]" />
-              <span className="text-[10px] font-semibold text-[var(--ecode-text-muted)]" style={{ fontFamily: 'var(--ecode-font-sans)' }}>
+              <span className="text-[11px] font-semibold text-[var(--ecode-text-muted)]" style={{ fontFamily: 'var(--ecode-font-sans)' }}>
                 {badgeCounts.git}
               </span>
             </div>
@@ -243,14 +243,14 @@ export const ReplitBottomTabs = memo(function ReplitBottomTabs({
                 )}
               </div>
               
-              {/* Label */}
+              {/* Label - compact but accessible font size for mobile inline tabs */}
               <span 
                 className={cn(
-                  "relative z-10 mt-1 font-semibold leading-tight transition-transform duration-150",
+                  "relative z-10 mt-0.5 font-medium leading-none transition-transform duration-150",
                   isActive && "transform -translate-y-px scale-[1.02]"
                 )}
                 style={{
-                  fontSize: 'var(--mobile-nav-label-size)',
+                  fontSize: '11px', // WCAG-compliant minimum for readability
                   fontFamily: 'var(--ecode-font-sans)',
                   color: isActive ? 'var(--ecode-accent)' : 'var(--ecode-text-muted)',
                   opacity: isActive ? 1 : 'var(--mobile-nav-inactive-opacity)',

@@ -7,6 +7,7 @@ import { agentCommandExecution } from '../services/agent-command-execution.servi
 import { agentToolFramework } from '../services/agent-tool-framework.service';
 import { agentWorkflowEngine } from '../services/agent-workflow-engine.service';
 import { AgentPreferencesService } from '../services/agent-preferences.service';
+import { schemaWarming } from '../services/schema-warming.service';
 import { db } from '../db';
 import { agentSessions, fileOperations, commandExecutions, toolExecutions, agentWorkflows, AI_MODELS } from '@shared/schema';
 import { eq, desc } from 'drizzle-orm';
@@ -822,6 +823,117 @@ router.get('/stats/:sessionId', ensureAdmin, async (req, res) => {
     });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+// Schema Warming Routes - Background data structure pre-drafting
+// POST /api/agent/schema/warm - Start schema warming for a project
+router.post('/schema/warm', async (req, res) => {
+  try {
+    const { projectId, prompt } = req.body;
+    
+    if (!projectId || !prompt) {
+      return res.status(400).json({ error: 'projectId and prompt are required' });
+    }
+    
+    // Start background warming (non-blocking)
+    schemaWarming.startWarming(String(projectId), prompt);
+    
+    // Return current status
+    const status = schemaWarming.getStatus(String(projectId));
+    
+    res.json({
+      success: true,
+      status,
+      message: 'Schema warming started in background',
+    });
+  } catch (error: any) {
+    logger.error('[AgentRouter] Error starting schema warming:', error);
+    res.status(500).json({ error: error.message || 'Failed to start schema warming' });
+  }
+});
+
+// GET /api/agent/schema/status/:projectId - Get schema warming status
+router.get('/schema/status/:projectId', async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const status = schemaWarming.getStatus(projectId);
+    const isReady = schemaWarming.isReady(projectId);
+    
+    res.json({
+      projectId,
+      ...status,
+      isReady,
+    });
+  } catch (error: any) {
+    logger.error('[AgentRouter] Error getting schema status:', error);
+    res.status(500).json({ error: error.message || 'Failed to get schema status' });
+  }
+});
+
+// GET /api/agent/schema/stream/:projectId - SSE stream for schema warming progress
+router.get('/schema/stream/:projectId', async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    
+    // Set up SSE
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no');
+    res.flushHeaders();
+    
+    // Send initial status
+    const initialStatus = schemaWarming.getStatus(projectId);
+    res.write(`data: ${JSON.stringify({ type: 'status', ...initialStatus })}\n\n`);
+    
+    // Listen for progress updates
+    const onProgress = (data: { projectId: string; progress: any }) => {
+      if (data.projectId === projectId) {
+        res.write(`data: ${JSON.stringify({ type: 'progress', ...data.progress })}\n\n`);
+      }
+    };
+    
+    const onReady = (data: { projectId: string; schema: any }) => {
+      if (data.projectId === projectId) {
+        res.write(`data: ${JSON.stringify({ type: 'ready', schemaPreview: 'Schema ready' })}\n\n`);
+        cleanup();
+        res.end();
+      }
+    };
+    
+    const onError = (data: { projectId: string; error: string }) => {
+      if (data.projectId === projectId) {
+        res.write(`data: ${JSON.stringify({ type: 'error', error: data.error })}\n\n`);
+        cleanup();
+        res.end();
+      }
+    };
+    
+    schemaWarming.on('progress', onProgress);
+    schemaWarming.on('ready', onReady);
+    schemaWarming.on('error', onError);
+    
+    const cleanup = () => {
+      schemaWarming.off('progress', onProgress);
+      schemaWarming.off('ready', onReady);
+      schemaWarming.off('error', onError);
+    };
+    
+    // Handle client disconnect
+    req.on('close', () => {
+      cleanup();
+    });
+    
+    // If already ready, close immediately
+    if (schemaWarming.isReady(projectId)) {
+      res.write(`data: ${JSON.stringify({ type: 'ready', schemaPreview: 'Schema already ready' })}\n\n`);
+      cleanup();
+      res.end();
+    }
+  } catch (error: any) {
+    logger.error('[AgentRouter] Error in schema stream:', error);
+    res.status(500).json({ error: error.message || 'Failed to create schema stream' });
   }
 });
 
