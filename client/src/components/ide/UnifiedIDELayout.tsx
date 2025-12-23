@@ -241,13 +241,8 @@ function UnifiedIDELayout({
   const [tabletDrawerOpen, setTabletDrawerOpen] = useState(true);
   
   const [showCommandPalette, setShowCommandPalette] = useState(false);
-  const [showCollaboration, setShowCollaboration] = useState(false);
   const [enableShortcutHint, setEnableShortcutHint] = useState(false);
   const [enableShortcutTester, setEnableShortcutTester] = useState(false);
-  
-  const [showCheckpointsPanel, setShowCheckpointsPanel] = useState(false);
-  const [showSecurityPanel, setShowSecurityPanel] = useState(false);
-  const [showDeployPanel, setShowDeployPanel] = useState(false);
   const [showMobileMoreMenu, setShowMobileMoreMenu] = useState(false);
   const [showTabSwitcher, setShowTabSwitcher] = useState(false);
   
@@ -775,12 +770,12 @@ function UnifiedIDELayout({
               onOpenDatabase={() => { setActiveActivityItem('database'); handleAddTool('database'); setTabletPanel('editor'); }}
               onOpenSettings={() => { setActiveActivityItem('settings'); handleAddTool('settings'); setTabletPanel('editor'); }}
               onOpenDebug={() => { setActiveActivityItem('debug'); handleAddTool('debugger'); setTabletPanel('editor'); }}
-              onOpenCollaboration={() => setShowCollaboration(true)}
+              onOpenCollaboration={() => { handleAddTool('collaboration'); setTabletPanel('editor'); }}
               onOpenWorkflows={() => { setActiveActivityItem('workflows'); handleAddTool('workflows'); setTabletPanel('editor'); }}
               onOpenHistory={() => { setActiveActivityItem('history'); handleAddTool('history'); setTabletPanel('editor'); }}
-              onOpenCheckpoints={() => setShowCheckpointsPanel(true)}
+              onOpenCheckpoints={() => { handleAddTool('checkpoints'); setTabletPanel('editor'); }}
               onOpenExtensions={() => { setActiveActivityItem('extensions'); handleAddTool('extensions'); setTabletPanel('editor'); }}
-              onOpenSecurity={() => setShowSecurityPanel(true)}
+              onOpenSecurity={() => { handleAddTool('security'); setTabletPanel('editor'); }}
               onOpenActions={() => { setLeftPanelTab('actions'); setTabletPanel('agent'); }}
               onOpenTools={() => { setLeftPanelTab('tools'); setTabletPanel('agent'); }}
               onOpenDeploy={() => { setLeftPanelTab('deployment'); setTabletPanel('agent'); }}
@@ -1110,7 +1105,7 @@ function UnifiedIDELayout({
         <ReplitMobileHeader
           activeTab={mobileActiveTab}
           onBack={() => window.history.back()}
-          onHistory={() => setShowHistoryPanel(true)}
+          onHistory={() => handleAddTool('history')}
           onNewTab={() => setShowQuickFileSearch(true)}
           onMore={() => setShowMobileMoreMenu(true)}
         />
@@ -1162,75 +1157,6 @@ function UnifiedIDELayout({
           onAddTab={() => setShowToolsSheet(true)}
           onTabSwitcherOpen={() => setShowTabSwitcher(true)}
         />
-
-        {/* Mobile Panel Overlays - Fixed positioned panels that appear over mobile content */}
-        {showCollaboration && user && (
-          <div className="fixed inset-0 z-[100] bg-background" data-testid="mobile-collaboration-panel">
-            <div className="flex items-center justify-between p-3 border-b">
-              <span className="font-medium">Collaboration</span>
-              <Button size="icon" variant="ghost" onClick={() => closePanel(setShowCollaboration)} className="h-8 w-8" data-testid="button-close-collaboration">
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" /></div>}>
-              <CollaborationPanel
-                projectId={parseInt(projectId, 10)}
-                projectName={project?.name}
-                currentUser={user}
-                currentFile={selectedFileId ? files.find(f => f.id === selectedFileId)?.name : undefined}
-                className="h-[calc(100%-52px)]"
-              />
-            </Suspense>
-          </div>
-        )}
-
-        {showCheckpointsPanel && (
-          <div className="fixed inset-0 z-[100] bg-background" data-testid="mobile-checkpoints-panel">
-            <div className="flex items-center justify-between p-3 border-b">
-              <span className="font-medium">AI Checkpoints</span>
-              <Button size="icon" variant="ghost" onClick={() => closePanel(setShowCheckpointsPanel)} className="h-8 w-8" data-testid="button-close-checkpoints">
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" /></div>}>
-              <div className="h-[calc(100%-52px)] overflow-auto p-2">
-                <CheckpointHistoryPanel projectId={projectId} maxHeight="calc(100vh - 80px)" />
-              </div>
-            </Suspense>
-          </div>
-        )}
-
-        {showSecurityPanel && (
-          <div className="fixed inset-0 z-[100] bg-background" data-testid="mobile-security-panel">
-            <div className="flex items-center justify-between p-3 border-b">
-              <span className="font-medium">Security Scanner</span>
-              <Button size="icon" variant="ghost" onClick={() => closePanel(setShowSecurityPanel)} className="h-8 w-8" data-testid="button-close-security">
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" /></div>}>
-              <div className="h-[calc(100%-52px)] overflow-auto">
-                <MobileSecurityPanel projectId={projectId} />
-              </div>
-            </Suspense>
-          </div>
-        )}
-
-        {showDeployPanel && (
-          <div className="fixed inset-0 z-[100] bg-background" data-testid="mobile-deploy-panel">
-            <div className="flex items-center justify-between p-3 border-b">
-              <span className="font-medium">Deploy</span>
-              <Button size="icon" variant="ghost" onClick={() => closePanel(setShowDeployPanel)} className="h-8 w-8" data-testid="button-close-deploy">
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" /></div>}>
-              <div className="h-[calc(100%-52px)] overflow-auto">
-                <ReplitDeploymentPanel projectId={projectId} />
-              </div>
-            </Suspense>
-          </div>
-        )}
 
         <Suspense fallback={null}>
           <MobileMoreMenu
@@ -1451,59 +1377,6 @@ function UnifiedIDELayout({
           />
         </div>
 
-        {/* Tablet Panel Overlays - Fixed positioned panels that appear over tablet content */}
-        {showCollaboration && user && (
-          <div className="fixed inset-0 z-[100] bg-background" data-testid="tablet-collaboration-panel">
-            <div className="flex items-center justify-between p-3 border-b">
-              <span className="font-medium">Collaboration</span>
-              <Button size="icon" variant="ghost" onClick={() => closePanel(setShowCollaboration)} className="h-8 w-8" data-testid="button-close-collaboration">
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" /></div>}>
-              <CollaborationPanel
-                projectId={parseInt(projectId, 10)}
-                projectName={project?.name}
-                currentUser={user}
-                currentFile={selectedFileId ? files.find(f => f.id === selectedFileId)?.name : undefined}
-                className="h-[calc(100%-52px)]"
-              />
-            </Suspense>
-          </div>
-        )}
-
-        {showCheckpointsPanel && (
-          <div className="fixed inset-0 z-[100] bg-background" data-testid="tablet-checkpoints-panel">
-            <div className="flex items-center justify-between p-3 border-b">
-              <span className="font-medium">AI Checkpoints</span>
-              <Button size="icon" variant="ghost" onClick={() => closePanel(setShowCheckpointsPanel)} className="h-8 w-8" data-testid="button-close-checkpoints">
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" /></div>}>
-              <div className="h-[calc(100%-52px)] overflow-auto p-2">
-                <CheckpointHistoryPanel projectId={projectId} maxHeight="calc(100vh - 80px)" />
-              </div>
-            </Suspense>
-          </div>
-        )}
-
-        {showSecurityPanel && (
-          <div className="fixed inset-0 z-[100] bg-background" data-testid="tablet-security-panel">
-            <div className="flex items-center justify-between p-3 border-b">
-              <span className="font-medium">Security Scanner</span>
-              <Button size="icon" variant="ghost" onClick={() => closePanel(setShowSecurityPanel)} className="h-8 w-8" data-testid="button-close-security">
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" /></div>}>
-              <div className="h-[calc(100%-52px)] overflow-auto">
-                <MobileSecurityPanel projectId={projectId} />
-              </div>
-            </Suspense>
-          </div>
-        )}
-
         {showCommandPalette && (
           <Suspense fallback={null}>
             <CommandPalette
@@ -1589,8 +1462,8 @@ function UnifiedIDELayout({
           onAddTool={handleAddTool}
           showFileExplorer={showFileExplorer}
           onToggleFileExplorer={() => setShowFileExplorer((prev: boolean) => !prev)}
-          showCollaboration={showCollaboration}
-          onToggleCollaboration={() => setShowCollaboration(prev => !prev)}
+          showCollaboration={tabs.some(t => t.id === 'collaboration')}
+          onToggleCollaboration={() => handleAddTool('collaboration')}
           collaboratorCount={0}
           onOpenDeployLogs={() => setDeploymentTab('logs')}
           onOpenDeployAnalytics={() => setDeploymentTab('analytics')}
@@ -1818,212 +1691,6 @@ function UnifiedIDELayout({
           }}
         />
       </Suspense>
-
-      {showCollaboration && user && (
-        <div className="fixed inset-y-0 right-0 w-full sm:w-80 z-[100] shadow-xl border-l bg-background">
-          <div className="flex items-center justify-between p-2 border-b">
-            <span className="font-medium text-sm">Collaboration</span>
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={() => closePanel(setShowCollaboration)}
-              className="h-7 w-7"
-              data-testid="button-close-collaboration"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-          <Suspense fallback={<div className="flex items-center justify-center h-full">Loading...</div>}>
-            <CollaborationPanel
-              projectId={parseInt(projectId, 10)}
-              projectName={project?.name}
-              currentUser={user}
-              currentFile={selectedFileId ? files.find(f => f.id === selectedFileId)?.name : undefined}
-              className="h-[calc(100%-48px)]"
-            />
-          </Suspense>
-        </div>
-      )}
-
-      {showReplitDB && (
-        <div className="fixed inset-y-0 right-0 w-full sm:w-[600px] z-[100] shadow-xl border-l bg-background">
-          <div className="flex items-center justify-between p-2 border-b">
-            <span className="font-medium text-sm">Database Browser</span>
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={() => closePanel(setShowReplitDB)}
-              className="h-7 w-7"
-              data-testid="button-close-database"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-          <Suspense fallback={<div className="flex items-center justify-center h-full">Loading...</div>}>
-            <div className="h-[calc(100%-48px)]">
-              <ReplitDB projectId={parseInt(projectId, 10)} />
-            </div>
-          </Suspense>
-        </div>
-      )}
-
-      {showGitPanel && (
-        <div className="fixed inset-y-0 right-0 w-full sm:w-80 z-[100] shadow-xl border-l bg-background">
-          <div className="flex items-center justify-between p-2 border-b">
-            <span className="font-medium text-sm">Git</span>
-            <Button size="icon" variant="ghost" onClick={() => closePanel(setShowGitPanel)} className="h-7 w-7" data-testid="button-close-git">
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-          <Suspense fallback={<div className="flex items-center justify-center h-full">Loading...</div>}>
-            <div className="h-[calc(100%-48px)]">
-              <ReplitGitPanel projectId={projectId} />
-            </div>
-          </Suspense>
-        </div>
-      )}
-
-      {showPackagesPanel && (
-        <div className="fixed inset-y-0 right-0 w-full sm:w-80 z-[100] shadow-xl border-l bg-background">
-          <div className="flex items-center justify-between p-2 border-b">
-            <span className="font-medium text-sm">Packages</span>
-            <Button size="icon" variant="ghost" onClick={() => closePanel(setShowPackagesPanel)} className="h-7 w-7" data-testid="button-close-packages">
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-          <Suspense fallback={<div className="flex items-center justify-center h-full">Loading...</div>}>
-            <div className="h-[calc(100%-48px)]">
-              <ReplitPackagesPanel projectId={projectId} />
-            </div>
-          </Suspense>
-        </div>
-      )}
-
-      {showDebugPanel && (
-        <div className="fixed inset-y-0 right-0 w-full sm:w-96 z-[100] shadow-xl border-l bg-background">
-          <div className="flex items-center justify-between p-2 border-b">
-            <span className="font-medium text-sm">Debugger</span>
-            <Button size="icon" variant="ghost" onClick={() => closePanel(setShowDebugPanel)} className="h-7 w-7" data-testid="button-close-debug">
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-          <Suspense fallback={<div className="flex items-center justify-center h-full">Loading...</div>}>
-            <div className="h-[calc(100%-48px)]">
-              <ReplitDebuggerPanel projectId={projectId} />
-            </div>
-          </Suspense>
-        </div>
-      )}
-
-      {showSecretsPanel && (
-        <div className="fixed inset-y-0 right-0 w-full sm:w-80 z-[100] shadow-xl border-l bg-background">
-          <div className="flex items-center justify-between p-2 border-b">
-            <span className="font-medium text-sm">Secrets</span>
-            <Button size="icon" variant="ghost" onClick={() => closePanel(setShowSecretsPanel)} className="h-7 w-7" data-testid="button-close-secrets">
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-          <Suspense fallback={<div className="flex items-center justify-center h-full">Loading...</div>}>
-            <div className="h-[calc(100%-48px)]">
-              <ReplitSecretsPanel projectId={projectId} />
-            </div>
-          </Suspense>
-        </div>
-      )}
-
-      {showWorkflowsPanel && (
-        <div className="fixed inset-y-0 right-0 w-full sm:w-96 z-[100] shadow-xl border-l bg-background">
-          <div className="flex items-center justify-between p-2 border-b">
-            <span className="font-medium text-sm">Workflows</span>
-            <Button size="icon" variant="ghost" onClick={() => closePanel(setShowWorkflowsPanel)} className="h-7 w-7" data-testid="button-close-workflows">
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-          <Suspense fallback={<div className="flex items-center justify-center h-full">Loading...</div>}>
-            <div className="h-[calc(100%-48px)]">
-              <WorkflowsPanel projectId={projectId} />
-            </div>
-          </Suspense>
-        </div>
-      )}
-
-      {showHistoryPanel && (
-        <div className="fixed inset-y-0 right-0 w-full sm:w-96 z-[100] shadow-xl border-l bg-background">
-          <div className="flex items-center justify-between p-2 border-b">
-            <span className="font-medium text-sm">History</span>
-            <Button size="icon" variant="ghost" onClick={() => closePanel(setShowHistoryPanel)} className="h-7 w-7" data-testid="button-close-history">
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-          <Suspense fallback={<div className="flex items-center justify-center h-full">Loading...</div>}>
-            <div className="h-[calc(100%-48px)]">
-              <ReplitHistoryPanel projectId={projectId} />
-            </div>
-          </Suspense>
-        </div>
-      )}
-
-      {showCheckpointsPanel && (
-        <div className="fixed inset-y-0 right-0 w-full sm:w-96 z-[100] shadow-xl border-l bg-background">
-          <div className="flex items-center justify-between p-2 border-b">
-            <span className="font-medium text-sm">AI Checkpoints</span>
-            <Button size="icon" variant="ghost" onClick={() => closePanel(setShowCheckpointsPanel)} className="h-7 w-7" data-testid="button-close-checkpoints">
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-          <Suspense fallback={<div className="flex items-center justify-center h-full">Loading...</div>}>
-            <div className="h-[calc(100%-48px)] overflow-auto p-2">
-              <CheckpointHistoryPanel projectId={projectId} maxHeight="calc(100vh - 80px)" />
-            </div>
-          </Suspense>
-        </div>
-      )}
-
-      {showExtensionsPanel && (
-        <div className="fixed inset-y-0 right-0 w-full sm:w-[500px] z-[100] shadow-xl border-l bg-background">
-          <div className="flex items-center justify-between p-2 border-b">
-            <span className="font-medium text-sm">Extensions</span>
-            <Button size="icon" variant="ghost" onClick={() => closePanel(setShowExtensionsPanel)} className="h-7 w-7" data-testid="button-close-extensions">
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-          <Suspense fallback={<div className="flex items-center justify-center h-full">Loading...</div>}>
-            <ExtensionsMarketplace className="h-[calc(100%-48px)]" />
-          </Suspense>
-        </div>
-      )}
-
-      {showSettingsPanel && (
-        <div className="fixed inset-y-0 right-0 w-full sm:w-[500px] z-[100] shadow-xl border-l bg-background">
-          <div className="flex items-center justify-between p-2 border-b">
-            <span className="font-medium text-sm">Settings</span>
-            <Button size="icon" variant="ghost" onClick={() => closePanel(setShowSettingsPanel)} className="h-7 w-7" data-testid="button-close-settings">
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-          <Suspense fallback={<div className="flex items-center justify-center h-full">Loading...</div>}>
-            <div className="h-[calc(100%-48px)]">
-              <ReplitSettingsPanel projectId={projectId} />
-            </div>
-          </Suspense>
-        </div>
-      )}
-
-      {showSecurityPanel && (
-        <div className="fixed inset-y-0 right-0 w-full sm:w-96 z-[100] shadow-xl border-l bg-background">
-          <div className="flex items-center justify-between p-2 border-b">
-            <span className="font-medium text-sm">Security Scanner</span>
-            <Button size="icon" variant="ghost" onClick={() => closePanel(setShowSecurityPanel)} className="h-7 w-7" data-testid="button-close-security">
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-          <Suspense fallback={<div className="flex items-center justify-center h-full">Loading...</div>}>
-            <div className="h-[calc(100%-48px)]">
-              <MobileSecurityPanel projectId={projectId} />
-            </div>
-          </Suspense>
-        </div>
-      )}
 
       {/* Autonomous Workspace Viewer - Shows bootstrap progress as dialog (only when inline mode is disabled) */}
       {/* When inline mode is enabled (default), progress appears in the agent chat instead */}
