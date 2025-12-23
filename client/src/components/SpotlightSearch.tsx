@@ -103,18 +103,21 @@ export function SpotlightSearch({ open: controlledOpen, onOpenChange }: Spotligh
   const toolsAndFeatures = [
     // File Operations
     {
+      id: 'tool-files',
       icon: <FileText className="h-4 w-4" />,
       label: 'Files',
       description: 'Find a file',
       onSelect: () => handleSelect(() => navigate('/projects')),
     },
     {
+      id: 'tool-search',
       icon: <Search className="h-4 w-4" />,
       label: 'Search',
       description: 'Search through your files',
       onSelect: () => handleSelect(() => navigate('/search')),
     },
     {
+      id: 'tool-new-file',
       icon: <Plus className="h-4 w-4" />,
       label: 'New file',
       description: 'Create a new file',
@@ -123,60 +126,70 @@ export function SpotlightSearch({ open: controlledOpen, onOpenChange }: Spotligh
     
     // Tools - Tab Management
     {
+      id: 'tab-assistant',
       icon: <Bot className="h-4 w-4" />,
       label: 'Assistant',
       description: 'Move existing tab here',
       onSelect: () => handleSelect(() => navigate('/assistant')),
     },
     {
+      id: 'tab-database',
       icon: <Database className="h-4 w-4" />,
       label: 'Database',
       description: 'Move existing tab here',
       onSelect: () => handleSelect(() => navigate('/database')),
     },
     {
+      id: 'tab-shell',
       icon: <Terminal className="h-4 w-4" />,
       label: 'Shell',
       description: 'Move existing tab here',
       onSelect: () => handleSelect(() => navigate('/shell')),
     },
     {
+      id: 'tab-workflows',
       icon: <Zap className="h-4 w-4" />,
       label: 'Workflows',
       description: 'Move existing tab here',
       onSelect: () => handleSelect(() => navigate('/workflows')),
     },
     {
+      id: 'tab-secrets',
       icon: <Key className="h-4 w-4" />,
       label: 'Secrets',
       description: 'Move existing tab here',
       onSelect: () => handleSelect(() => navigate('/secrets')),
     },
     {
+      id: 'tab-console',
       icon: <Terminal className="h-4 w-4" />,
       label: 'Console',
       description: 'Move existing tab here',
       onSelect: () => handleSelect(() => navigate('/console')),
     },
     {
+      id: 'tab-authentication',
       icon: <Lock className="h-4 w-4" />,
       label: 'Authentication',
       description: 'Move existing tab here',
       onSelect: () => handleSelect(() => navigate('/login')),
     },
     {
+      id: 'tab-preview',
       icon: <Eye className="h-4 w-4" />,
       label: 'Preview',
       description: 'Move existing tab here',
       onSelect: () => handleSelect(() => navigate('/preview')),
     },
     {
+      id: 'tab-agent',
       icon: <Bot className="h-4 w-4" />,
       label: 'Agent',
       description: 'Move existing tab here',
       onSelect: () => handleSelect(() => navigate('/agent')),
     },
     {
+      id: 'tab-deployments',
       icon: <Globe className="h-4 w-4" />,
       label: 'Deployments',
       description: 'Move existing tab here',
@@ -185,6 +198,7 @@ export function SpotlightSearch({ open: controlledOpen, onOpenChange }: Spotligh
     
     // Auth
     {
+      id: 'tool-auth',
       icon: <Lock className="h-4 w-4" />,
       label: 'Auth',
       description: 'Let users log in to your App via a prebuilt login page',
@@ -193,24 +207,28 @@ export function SpotlightSearch({ open: controlledOpen, onOpenChange }: Spotligh
     
     // Advanced Tools
     {
+      id: 'tool-code-search',
       icon: <FileSearch className="h-4 w-4" />,
       label: 'Code Search',
       description: 'Search through the text contents of your App',
       onSelect: () => handleSelect(() => navigate('/code-search')),
     },
     {
+      id: 'tool-packages',
       icon: <Package className="h-4 w-4" />,
-      label: 'Install, upgrade, and manage dependencies for your environment, build system, and application runtime',
-      description: '',
+      label: 'Packages',
+      description: 'Install, upgrade, and manage dependencies for your environment',
       onSelect: () => handleSelect(() => navigate('/packages')),
     },
     {
+      id: 'tool-docs',
       icon: <BookOpen className="h-4 w-4" />,
       label: 'Docs',
       description: 'View Replit Documentation to learn about workspace features, AI, Deployments, and more',
       onSelect: () => handleSelect(() => navigate('/docs')),
     },
     {
+      id: 'tool-extension-store',
       icon: <CloudUpload className="h-4 w-4" />,
       label: 'Extension Store',
       description: 'Find and install workspaces extensions',
@@ -219,12 +237,14 @@ export function SpotlightSearch({ open: controlledOpen, onOpenChange }: Spotligh
     
     // Version Control & Integration
     {
+      id: 'tool-git',
       icon: <GitBranch className="h-4 w-4" />,
       label: 'Git',
       description: 'Version control for your App',
       onSelect: () => handleSelect(() => navigate('/git')),
     },
     {
+      id: 'tool-integrations',
       icon: <Layers className="h-4 w-4" />,
       label: 'Integrations',
       description: 'Connect to Replit-native and external services',
@@ -233,38 +253,37 @@ export function SpotlightSearch({ open: controlledOpen, onOpenChange }: Spotligh
     
     // Infrastructure
     {
+      id: 'tool-networking',
       icon: <Network className="h-4 w-4" />,
       label: 'Networking',
       description: 'Configure web server ports for your App',
       onSelect: () => handleSelect(() => navigate('/networking')),
     },
     {
+      id: 'tool-object-storage',
       icon: <HardDrive className="h-4 w-4" />,
       label: 'Object Storage',
       description: 'Persistent, shared file storage which can be accessed programmatically in your App',
       onSelect: () => handleSelect(() => navigate('/object-storage')),
     },
-    {
-      icon: <Eye className="h-4 w-4" />,
-      label: 'Preview',
-      description: 'Preview your App',
-      onSelect: () => handleSelect(() => navigate('/preview')),
-    },
     
     // Analysis & Security
     {
+      id: 'tool-problems',
       icon: <AlertTriangle className="h-4 w-4" />,
       label: 'Problems',
       description: 'View problems in your code detected by static analysis tools like type checkers and linters',
       onSelect: () => handleSelect(() => navigate('/problems')),
     },
     {
+      id: 'tool-kv-store',
       icon: <Database className="h-4 w-4" />,
       label: 'Replit Key-Value Store',
       description: 'Free, easy-to-use key-value store suitable for unstructured data, caching, session management, fast lookups, and flexible data models',
       onSelect: () => handleSelect(() => navigate('/kv-store')),
     },
     {
+      id: 'tool-security-scanner',
       icon: <ShieldAlert className="h-4 w-4" />,
       label: 'Security Scanner',
       description: 'Scan your app for vulnerabilities',
@@ -273,18 +292,21 @@ export function SpotlightSearch({ open: controlledOpen, onOpenChange }: Spotligh
     
     // Access & Communication
     {
+      id: 'tool-shell-cli',
       icon: <Terminal className="h-4 w-4" />,
-      label: 'Shell',
+      label: 'Shell CLI',
       description: 'Directly access your App through a command line interface (CLI)',
       onSelect: () => handleSelect(() => navigate('/shell')),
     },
     {
+      id: 'tool-ssh',
       icon: <Wifi className="h-4 w-4" />,
       label: 'SSH',
       description: 'Configure remote access to connect to this Repl from another machine or IDE',
       onSelect: () => handleSelect(() => navigate('/ssh')),
     },
     {
+      id: 'tool-threads',
       icon: <MessageSquare className="h-4 w-4" />,
       label: 'Threads',
       description: 'Comment and discuss topics with collaborators directly inside code or text files',
@@ -293,12 +315,14 @@ export function SpotlightSearch({ open: controlledOpen, onOpenChange }: Spotligh
     
     // Settings
     {
+      id: 'tool-user-settings',
       icon: <Settings className="h-4 w-4" />,
       label: 'User Settings',
       description: 'Configure personal editor preferences and workspace settings which apply to all Apps',
       onSelect: () => handleSelect(() => navigate('/settings')),
     },
     {
+      id: 'tool-vnc',
       icon: <Monitor className="h-4 w-4" />,
       label: 'VNC',
       description: "View your app's desktop screen output",
@@ -376,7 +400,7 @@ export function SpotlightSearch({ open: controlledOpen, onOpenChange }: Spotligh
               )
               .map((tool) => (
                 <CommandItem
-                  key={tool.label}
+                  key={tool.id}
                   onSelect={tool.onSelect}
                 >
                   {tool.icon}
