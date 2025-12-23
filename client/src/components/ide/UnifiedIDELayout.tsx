@@ -85,6 +85,7 @@ const CheckpointHistoryPanel = lazy(() => import('@/components/ai/CheckpointHist
 const ReplitSettingsPanel = lazy(() => import('@/components/editor/ReplitSettingsPanel').then(mod => ({ default: mod.ReplitSettingsPanel })));
 const WorkflowsPanel = lazy(() => import('@/components/ide/WorkflowsPanel').then(mod => ({ default: mod.WorkflowsPanel })));
 const ExtensionsMarketplace = lazy(() => import('@/components/ExtensionsMarketplace').then(mod => ({ default: mod.ExtensionsMarketplace })));
+const VisualEditorPanel = lazy(() => import('@/components/ide/VisualEditorPanel').then(mod => ({ default: mod.VisualEditorPanel })));
 
 import { ShortcutHint, ShortcutTester } from '@/components/utilities';
 import { useAutonomousBuildStore } from '@/stores/autonomousBuildStore';
@@ -179,16 +180,20 @@ function UnifiedIDELayout({
         setShowFileExplorer((prev: boolean) => !prev);
         break;
       case 'search':
-        setShowGlobalSearch(true);
+        // Open search as inline tab instead of overlay
+        handleAddTool('search');
         break;
       case 'git':
-        setShowGitPanel(true);
+        // Open git as inline tab instead of overlay
+        handleAddTool('git');
         break;
       case 'packages':
-        setShowPackagesPanel(true);
+        // Open packages as inline tab instead of overlay
+        handleAddTool('packages');
         break;
       case 'debug':
-        setShowDebugPanel(true);
+        // Open debugger as inline tab instead of overlay
+        handleAddTool('debugger');
         break;
       case 'terminal':
         handleAddTool('terminal');
@@ -198,29 +203,35 @@ function UnifiedIDELayout({
         setLeftPanelTab('agent');
         break;
       case 'deploy':
-        setIsSidebarCollapsed(false);
-        setLeftPanelTab('deployment');
+        // Open deployment as inline tab
+        handleAddTool('deployment');
         break;
       case 'secrets':
-        setShowSecretsPanel(true);
+        // Open secrets as inline tab instead of overlay
+        handleAddTool('secrets');
         break;
       case 'database':
-        setShowReplitDB(true);
+        // Open database as inline tab instead of overlay
+        handleAddTool('database');
         break;
       case 'preview':
         handleAddTool('preview');
         break;
       case 'workflows':
-        setShowWorkflowsPanel(true);
+        // Open workflows as inline tab instead of overlay
+        handleAddTool('workflows');
         break;
       case 'history':
-        setShowHistoryPanel(true);
+        // Open history as inline tab instead of overlay
+        handleAddTool('history');
         break;
       case 'extensions':
-        setShowExtensionsPanel(true);
+        // Open extensions as inline tab instead of overlay
+        handleAddTool('extensions');
         break;
       case 'settings':
-        setShowSettingsPanel(true);
+        // Open settings as inline tab instead of overlay
+        handleAddTool('settings');
         break;
     }
   }, [setActiveActivityItem, setShowFileExplorer, setIsSidebarCollapsed, setLeftPanelTab, handleAddTool]);
@@ -230,21 +241,11 @@ function UnifiedIDELayout({
   const [tabletDrawerOpen, setTabletDrawerOpen] = useState(true);
   
   const [showCommandPalette, setShowCommandPalette] = useState(false);
-  const [showGlobalSearch, setShowGlobalSearch] = useState(false);
   const [showCollaboration, setShowCollaboration] = useState(false);
-  const [showReplitDB, setShowReplitDB] = useState(false);
   const [enableShortcutHint, setEnableShortcutHint] = useState(false);
   const [enableShortcutTester, setEnableShortcutTester] = useState(false);
   
-  const [showGitPanel, setShowGitPanel] = useState(false);
-  const [showPackagesPanel, setShowPackagesPanel] = useState(false);
-  const [showDebugPanel, setShowDebugPanel] = useState(false);
-  const [showSecretsPanel, setShowSecretsPanel] = useState(false);
-  const [showWorkflowsPanel, setShowWorkflowsPanel] = useState(false);
-  const [showHistoryPanel, setShowHistoryPanel] = useState(false);
   const [showCheckpointsPanel, setShowCheckpointsPanel] = useState(false);
-  const [showExtensionsPanel, setShowExtensionsPanel] = useState(false);
-  const [showSettingsPanel, setShowSettingsPanel] = useState(false);
   const [showSecurityPanel, setShowSecurityPanel] = useState(false);
   const [showDeployPanel, setShowDeployPanel] = useState(false);
   const [showMobileMoreMenu, setShowMobileMoreMenu] = useState(false);
@@ -352,16 +353,16 @@ function UnifiedIDELayout({
   const handleQuickAccess = useCallback((toolId: string) => {
     switch (toolId) {
       case 'secrets':
-        setShowSecretsPanel(true);
+        handleAddOpenTab('secrets');
         break;
       case 'database':
-        setShowReplitDB(true);
+        handleAddOpenTab('database');
         break;
       case 'auth':
-        // Handle auth panel
+        handleAddOpenTab('auth');
         break;
     }
-  }, []);
+  }, [handleAddOpenTab]);
 
   // Electron Desktop Menu Event Handlers (5.1 IPC Handlers)
   useElectronMenuEvents({
@@ -385,7 +386,7 @@ function UnifiedIDELayout({
       toast({ title: 'All files saved', description: 'All open files have been saved.' });
     },
     onPreferences: () => {
-      setShowSettingsPanel(true);
+      handleAddTool('settings');
     },
     onFind: () => {
       // Trigger Monaco find widget
@@ -452,7 +453,7 @@ function UnifiedIDELayout({
       }
       if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'f') {
         e.preventDefault();
-        setShowGlobalSearch(prev => !prev);
+        handleAddTool('search');
       }
       if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'p') {
         e.preventDefault();
@@ -768,23 +769,23 @@ function UnifiedIDELayout({
               inline={true}
               onClose={() => setTabletPanel('editor')}
               onOpenFiles={() => setTabletDrawerOpen(true)}
-              onOpenGit={() => { setActiveActivityItem('git'); setShowGitPanel(true); }}
-              onOpenPackages={() => { setActiveActivityItem('packages'); setShowPackagesPanel(true); }}
-              onOpenSecrets={() => { setActiveActivityItem('secrets'); setShowSecretsPanel(true); }}
-              onOpenDatabase={() => { setActiveActivityItem('database'); setShowReplitDB(true); }}
-              onOpenSettings={() => { setActiveActivityItem('settings'); setShowSettingsPanel(true); }}
-              onOpenDebug={() => { setActiveActivityItem('debug'); setShowDebugPanel(true); }}
+              onOpenGit={() => { setActiveActivityItem('git'); handleAddTool('git'); setTabletPanel('editor'); }}
+              onOpenPackages={() => { setActiveActivityItem('packages'); handleAddTool('packages'); setTabletPanel('editor'); }}
+              onOpenSecrets={() => { setActiveActivityItem('secrets'); handleAddTool('secrets'); setTabletPanel('editor'); }}
+              onOpenDatabase={() => { setActiveActivityItem('database'); handleAddTool('database'); setTabletPanel('editor'); }}
+              onOpenSettings={() => { setActiveActivityItem('settings'); handleAddTool('settings'); setTabletPanel('editor'); }}
+              onOpenDebug={() => { setActiveActivityItem('debug'); handleAddTool('debugger'); setTabletPanel('editor'); }}
               onOpenCollaboration={() => setShowCollaboration(true)}
-              onOpenWorkflows={() => { setActiveActivityItem('workflows'); setShowWorkflowsPanel(true); }}
-              onOpenHistory={() => { setActiveActivityItem('history'); setShowHistoryPanel(true); }}
+              onOpenWorkflows={() => { setActiveActivityItem('workflows'); handleAddTool('workflows'); setTabletPanel('editor'); }}
+              onOpenHistory={() => { setActiveActivityItem('history'); handleAddTool('history'); setTabletPanel('editor'); }}
               onOpenCheckpoints={() => setShowCheckpointsPanel(true)}
-              onOpenExtensions={() => { setActiveActivityItem('extensions'); setShowExtensionsPanel(true); }}
+              onOpenExtensions={() => { setActiveActivityItem('extensions'); handleAddTool('extensions'); setTabletPanel('editor'); }}
               onOpenSecurity={() => setShowSecurityPanel(true)}
               onOpenActions={() => { setLeftPanelTab('actions'); setTabletPanel('agent'); }}
               onOpenTools={() => { setLeftPanelTab('tools'); setTabletPanel('agent'); }}
               onOpenDeploy={() => { setLeftPanelTab('deployment'); setTabletPanel('agent'); }}
               onOpenCommandPalette={() => setShowCommandPalette(true)}
-              onOpenGlobalSearch={() => { setActiveActivityItem('search'); setShowGlobalSearch(true); }}
+              onOpenGlobalSearch={() => { setActiveActivityItem('search'); handleAddTool('search'); setTabletPanel('editor'); }}
               onOpenQuickFileSearch={() => setShowQuickFileSearch(true)}
               onOpenKeyboardShortcuts={() => setShowKeyboardShortcuts(true)}
             />
@@ -802,7 +803,8 @@ function UnifiedIDELayout({
       return <div className="flex items-center justify-center h-full text-muted-foreground">Select a tab</div>;
     }
 
-    if (currentTab.id === 'preview') {
+    // Preview panel
+    if (currentTab.id === 'preview' || currentTab.id === 'webpreview') {
       return (
         <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" /></div>}>
           <ResponsiveWebPreview projectId={projectId} />
@@ -810,7 +812,8 @@ function UnifiedIDELayout({
       );
     }
 
-    if (currentTab.id === 'terminal') {
+    // Terminal/Shell/Console
+    if (currentTab.id === 'terminal' || currentTab.id === 'shell' || currentTab.id === 'console') {
       return (
         <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" /></div>}>
           <ReplitTerminalPanel projectId={projectId} />
@@ -818,6 +821,7 @@ function UnifiedIDELayout({
       );
     }
 
+    // File editor
     if (currentTab.id.startsWith('file:')) {
       return (
         <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" /></div>}>
@@ -825,6 +829,266 @@ function UnifiedIDELayout({
             projectId={projectId}
             fileId={selectedFileId}
           />
+        </Suspense>
+      );
+    }
+
+    // Git panel - inline
+    if (currentTab.id === 'git') {
+      return (
+        <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Git..." /></div>}>
+          <ReplitGitPanel projectId={projectId} />
+        </Suspense>
+      );
+    }
+
+    // Packages panel - inline
+    if (currentTab.id === 'packages') {
+      return (
+        <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Packages..." /></div>}>
+          <ReplitPackagesPanel projectId={projectId} />
+        </Suspense>
+      );
+    }
+
+    // Secrets panel - inline
+    if (currentTab.id === 'secrets' || currentTab.id === 'env' || currentTab.id === 'env-vars') {
+      return (
+        <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Secrets..." /></div>}>
+          <ReplitSecretsPanel projectId={projectId} />
+        </Suspense>
+      );
+    }
+
+    // Database panel - inline
+    if (currentTab.id === 'database' || currentTab.id === 'database-browser') {
+      return (
+        <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Database..." /></div>}>
+          <ReplitDB projectId={parseInt(projectId, 10)} />
+        </Suspense>
+      );
+    }
+
+    // Debug panel - inline
+    if (currentTab.id === 'debugger' || currentTab.id === 'debug') {
+      return (
+        <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Debugger..." /></div>}>
+          <ReplitDebuggerPanel projectId={projectId} />
+        </Suspense>
+      );
+    }
+
+    // Settings panel - inline
+    if (currentTab.id === 'settings') {
+      return (
+        <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Settings..." /></div>}>
+          <ReplitSettingsPanel projectId={projectId} />
+        </Suspense>
+      );
+    }
+
+    // History panel - inline
+    if (currentTab.id === 'history' || currentTab.id === 'rewind') {
+      return (
+        <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading History..." /></div>}>
+          <ReplitHistoryPanel projectId={projectId} />
+        </Suspense>
+      );
+    }
+
+    // Checkpoints panel - inline
+    if (currentTab.id === 'checkpoints') {
+      return (
+        <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Checkpoints..." /></div>}>
+          <CheckpointHistoryPanel projectId={projectId} />
+        </Suspense>
+      );
+    }
+
+    // Workflows panel - inline
+    if (currentTab.id === 'workflows') {
+      return (
+        <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Workflows..." /></div>}>
+          <WorkflowsPanel projectId={projectId} />
+        </Suspense>
+      );
+    }
+
+    // Extensions panel - inline
+    if (currentTab.id === 'extensions') {
+      return (
+        <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Extensions..." /></div>}>
+          <ExtensionsMarketplace />
+        </Suspense>
+      );
+    }
+
+    // Security panel - inline
+    if (currentTab.id === 'security') {
+      return (
+        <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Security..." /></div>}>
+          <MobileSecurityPanel projectId={projectId} />
+        </Suspense>
+      );
+    }
+
+    // Collaboration panel - inline
+    if (currentTab.id === 'collaboration' || currentTab.id === 'multiplayer') {
+      return user ? (
+        <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Collaboration..." /></div>}>
+          <CollaborationPanel
+            projectId={parseInt(projectId, 10)}
+            currentUser={user}
+          />
+        </Suspense>
+      ) : (
+        <div className="flex items-center justify-center h-full text-muted-foreground">Please log in to access collaboration</div>
+      );
+    }
+
+    // Global search - inline
+    if (currentTab.id === 'search' || currentTab.id === 'global-search') {
+      return (
+        <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Search..." /></div>}>
+          <GlobalSearch
+            isOpen={true}
+            onClose={() => {}}
+            projectId={projectId}
+            onFileSelect={(file) => handleFileSelect({ id: file.id, name: file.name })}
+          />
+        </Suspense>
+      );
+    }
+
+    // Deployment panel - inline
+    if (currentTab.id === 'deployment' || currentTab.id === 'deploy') {
+      return (
+        <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Deployment..." /></div>}>
+          <ReplitDeploymentPanel projectId={projectId} />
+        </Suspense>
+      );
+    }
+
+    // Testing panel - inline
+    if (currentTab.id === 'testing' || currentTab.id === 'test-runner') {
+      return (
+        <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Tests..." /></div>}>
+          <div className="h-full overflow-auto p-4">
+            <h2 className="text-lg font-semibold mb-4">Test Runner</h2>
+            <p className="text-muted-foreground">Run and manage your tests here.</p>
+          </div>
+        </Suspense>
+      );
+    }
+
+    // Problems panel - inline
+    if (currentTab.id === 'problems') {
+      return (
+        <div className="h-full overflow-auto p-4">
+          <h2 className="text-lg font-semibold mb-4">Problems</h2>
+          <p className="text-muted-foreground">View errors and warnings in your code.</p>
+        </div>
+      );
+    }
+
+    // Output panel - inline
+    if (currentTab.id === 'output') {
+      return (
+        <div className="h-full overflow-auto p-4">
+          <h2 className="text-lg font-semibold mb-4">Output</h2>
+          <p className="text-muted-foreground">View build and runtime output here.</p>
+        </div>
+      );
+    }
+
+    // Resources panel - inline
+    if (currentTab.id === 'resources') {
+      return (
+        <div className="h-full overflow-auto p-4">
+          <h2 className="text-lg font-semibold mb-4">Resources</h2>
+          <p className="text-muted-foreground">View CPU, memory, and storage usage.</p>
+        </div>
+      );
+    }
+
+    // Logs viewer - inline
+    if (currentTab.id === 'logs') {
+      return (
+        <div className="h-full overflow-auto p-4">
+          <h2 className="text-lg font-semibold mb-4">Logs Viewer</h2>
+          <p className="text-muted-foreground">View application logs here.</p>
+        </div>
+      );
+    }
+
+    // Visual editor - inline
+    if (currentTab.id === 'visual-editor') {
+      return (
+        <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Visual Editor..." /></div>}>
+          <VisualEditorPanel projectId={projectId} />
+        </Suspense>
+      );
+    }
+
+    // AI Assistant - inline (redirects to agent panel)
+    if (currentTab.id === 'ai-assistant') {
+      return (
+        <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading AI Assistant..." /></div>}>
+          <ReplitAgentPanelV3
+            projectId={projectId}
+            mode="desktop"
+            agentToolsSettings={agentToolsSettings}
+            onAgentToolsSettingsChange={setAgentToolsSettings}
+          />
+        </Suspense>
+      );
+    }
+
+    // Progress panel - inline
+    if (currentTab.id === 'progress') {
+      return (
+        <div className="h-full overflow-auto p-4">
+          <h2 className="text-lg font-semibold mb-4">Progress</h2>
+          <p className="text-muted-foreground">View task progress and status.</p>
+        </div>
+      );
+    }
+
+    // Video replay - inline
+    if (currentTab.id === 'video-replay') {
+      return (
+        <div className="h-full overflow-auto p-4">
+          <h2 className="text-lg font-semibold mb-4">Video Replay</h2>
+          <p className="text-muted-foreground">Review recorded sessions.</p>
+        </div>
+      );
+    }
+
+    // Billing - inline
+    if (currentTab.id === 'billing') {
+      return (
+        <div className="h-full overflow-auto p-4">
+          <h2 className="text-lg font-semibold mb-4">Billing</h2>
+          <p className="text-muted-foreground">Manage your subscription and usage.</p>
+        </div>
+      );
+    }
+
+    // Import/Export - inline
+    if (currentTab.id === 'import-export') {
+      return (
+        <div className="h-full overflow-auto p-4">
+          <h2 className="text-lg font-semibold mb-4">Import / Export</h2>
+          <p className="text-muted-foreground">Import or export project files.</p>
+        </div>
+      );
+    }
+
+    // Package viewer - inline
+    if (currentTab.id === 'package-viewer') {
+      return (
+        <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Package Viewer..." /></div>}>
+          <ReplitPackagesPanel projectId={projectId} />
         </Suspense>
       );
     }
@@ -900,102 +1164,6 @@ function UnifiedIDELayout({
         />
 
         {/* Mobile Panel Overlays - Fixed positioned panels that appear over mobile content */}
-        {showGitPanel && (
-          <div className="fixed inset-0 z-[100] bg-background" data-testid="mobile-git-panel">
-            <div className="flex items-center justify-between p-3 border-b">
-              <span className="font-medium">Git</span>
-              <Button size="icon" variant="ghost" onClick={() => closePanel(setShowGitPanel)} className="h-8 w-8" data-testid="button-close-git">
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" /></div>}>
-              <div className="h-[calc(100%-52px)] overflow-auto">
-                <ReplitGitPanel projectId={projectId} />
-              </div>
-            </Suspense>
-          </div>
-        )}
-
-        {showPackagesPanel && (
-          <div className="fixed inset-0 z-[100] bg-background" data-testid="mobile-packages-panel">
-            <div className="flex items-center justify-between p-3 border-b">
-              <span className="font-medium">Packages</span>
-              <Button size="icon" variant="ghost" onClick={() => closePanel(setShowPackagesPanel)} className="h-8 w-8" data-testid="button-close-packages">
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" /></div>}>
-              <div className="h-[calc(100%-52px)] overflow-auto">
-                <ReplitPackagesPanel projectId={projectId} />
-              </div>
-            </Suspense>
-          </div>
-        )}
-
-        {showSecretsPanel && (
-          <div className="fixed inset-0 z-[100] bg-background" data-testid="mobile-secrets-panel">
-            <div className="flex items-center justify-between p-3 border-b">
-              <span className="font-medium">Secrets</span>
-              <Button size="icon" variant="ghost" onClick={() => closePanel(setShowSecretsPanel)} className="h-8 w-8" data-testid="button-close-secrets">
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" /></div>}>
-              <div className="h-[calc(100%-52px)] overflow-auto">
-                <ReplitSecretsPanel projectId={projectId} />
-              </div>
-            </Suspense>
-          </div>
-        )}
-
-        {showReplitDB && (
-          <div className="fixed inset-0 z-[100] bg-background" data-testid="mobile-database-panel">
-            <div className="flex items-center justify-between p-3 border-b">
-              <span className="font-medium">Database Browser</span>
-              <Button size="icon" variant="ghost" onClick={() => closePanel(setShowReplitDB)} className="h-8 w-8" data-testid="button-close-database">
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" /></div>}>
-              <div className="h-[calc(100%-52px)] overflow-auto">
-                <ReplitDB projectId={parseInt(projectId, 10)} />
-              </div>
-            </Suspense>
-          </div>
-        )}
-
-        {showDebugPanel && (
-          <div className="fixed inset-0 z-[100] bg-background" data-testid="mobile-debug-panel">
-            <div className="flex items-center justify-between p-3 border-b">
-              <span className="font-medium">Debugger</span>
-              <Button size="icon" variant="ghost" onClick={() => closePanel(setShowDebugPanel)} className="h-8 w-8" data-testid="button-close-debug">
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" /></div>}>
-              <div className="h-[calc(100%-52px)] overflow-auto">
-                <ReplitDebuggerPanel projectId={projectId} />
-              </div>
-            </Suspense>
-          </div>
-        )}
-
-        {showSettingsPanel && (
-          <div className="fixed inset-0 z-[100] bg-background" data-testid="mobile-settings-panel">
-            <div className="flex items-center justify-between p-3 border-b">
-              <span className="font-medium">Settings</span>
-              <Button size="icon" variant="ghost" onClick={() => closePanel(setShowSettingsPanel)} className="h-8 w-8" data-testid="button-close-settings">
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" /></div>}>
-              <div className="h-[calc(100%-52px)] overflow-auto">
-                <ReplitSettingsPanel projectId={projectId} />
-              </div>
-            </Suspense>
-          </div>
-        )}
-
         {showCollaboration && user && (
           <div className="fixed inset-0 z-[100] bg-background" data-testid="mobile-collaboration-panel">
             <div className="flex items-center justify-between p-3 border-b">
@@ -1016,38 +1184,6 @@ function UnifiedIDELayout({
           </div>
         )}
 
-        {showWorkflowsPanel && (
-          <div className="fixed inset-0 z-[100] bg-background" data-testid="mobile-workflows-panel">
-            <div className="flex items-center justify-between p-3 border-b">
-              <span className="font-medium">Workflows</span>
-              <Button size="icon" variant="ghost" onClick={() => closePanel(setShowWorkflowsPanel)} className="h-8 w-8" data-testid="button-close-workflows">
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" /></div>}>
-              <div className="h-[calc(100%-52px)] overflow-auto">
-                <WorkflowsPanel projectId={projectId} />
-              </div>
-            </Suspense>
-          </div>
-        )}
-
-        {showHistoryPanel && (
-          <div className="fixed inset-0 z-[100] bg-background" data-testid="mobile-history-panel">
-            <div className="flex items-center justify-between p-3 border-b">
-              <span className="font-medium">History</span>
-              <Button size="icon" variant="ghost" onClick={() => closePanel(setShowHistoryPanel)} className="h-8 w-8" data-testid="button-close-history">
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" /></div>}>
-              <div className="h-[calc(100%-52px)] overflow-auto">
-                <ReplitHistoryPanel projectId={projectId} />
-              </div>
-            </Suspense>
-          </div>
-        )}
-
         {showCheckpointsPanel && (
           <div className="fixed inset-0 z-[100] bg-background" data-testid="mobile-checkpoints-panel">
             <div className="flex items-center justify-between p-3 border-b">
@@ -1060,20 +1196,6 @@ function UnifiedIDELayout({
               <div className="h-[calc(100%-52px)] overflow-auto p-2">
                 <CheckpointHistoryPanel projectId={projectId} maxHeight="calc(100vh - 80px)" />
               </div>
-            </Suspense>
-          </div>
-        )}
-
-        {showExtensionsPanel && (
-          <div className="fixed inset-0 z-[100] bg-background" data-testid="mobile-extensions-panel">
-            <div className="flex items-center justify-between p-3 border-b">
-              <span className="font-medium">Extensions</span>
-              <Button size="icon" variant="ghost" onClick={() => closePanel(setShowExtensionsPanel)} className="h-8 w-8" data-testid="button-close-extensions">
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" /></div>}>
-              <ExtensionsMarketplace className="h-[calc(100%-52px)]" />
             </Suspense>
           </div>
         )}
@@ -1138,20 +1260,6 @@ function UnifiedIDELayout({
             problemsCount={errorsCount}
           />
         </Suspense>
-
-        {showGlobalSearch && (
-          <Suspense fallback={null}>
-            <GlobalSearch
-              isOpen={showGlobalSearch}
-              onClose={() => closePanel(setShowGlobalSearch)}
-              projectId={projectId}
-              onFileSelect={(file) => {
-                handleFileSelect({ id: file.id, name: file.name });
-                closePanel(setShowGlobalSearch);
-              }}
-            />
-          </Suspense>
-        )}
 
         {showCommandPalette && (
           <Suspense fallback={null}>
@@ -1344,102 +1452,6 @@ function UnifiedIDELayout({
         </div>
 
         {/* Tablet Panel Overlays - Fixed positioned panels that appear over tablet content */}
-        {showGitPanel && (
-          <div className="fixed inset-0 z-[100] bg-background" data-testid="tablet-git-panel">
-            <div className="flex items-center justify-between p-3 border-b">
-              <span className="font-medium">Git</span>
-              <Button size="icon" variant="ghost" onClick={() => closePanel(setShowGitPanel)} className="h-8 w-8" data-testid="button-close-git">
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" /></div>}>
-              <div className="h-[calc(100%-52px)] overflow-auto">
-                <ReplitGitPanel projectId={projectId} />
-              </div>
-            </Suspense>
-          </div>
-        )}
-
-        {showPackagesPanel && (
-          <div className="fixed inset-0 z-[100] bg-background" data-testid="tablet-packages-panel">
-            <div className="flex items-center justify-between p-3 border-b">
-              <span className="font-medium">Packages</span>
-              <Button size="icon" variant="ghost" onClick={() => closePanel(setShowPackagesPanel)} className="h-8 w-8" data-testid="button-close-packages">
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" /></div>}>
-              <div className="h-[calc(100%-52px)] overflow-auto">
-                <ReplitPackagesPanel projectId={projectId} />
-              </div>
-            </Suspense>
-          </div>
-        )}
-
-        {showSecretsPanel && (
-          <div className="fixed inset-0 z-[100] bg-background" data-testid="tablet-secrets-panel">
-            <div className="flex items-center justify-between p-3 border-b">
-              <span className="font-medium">Secrets</span>
-              <Button size="icon" variant="ghost" onClick={() => closePanel(setShowSecretsPanel)} className="h-8 w-8" data-testid="button-close-secrets">
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" /></div>}>
-              <div className="h-[calc(100%-52px)] overflow-auto">
-                <ReplitSecretsPanel projectId={projectId} />
-              </div>
-            </Suspense>
-          </div>
-        )}
-
-        {showReplitDB && (
-          <div className="fixed inset-0 z-[100] bg-background" data-testid="tablet-database-panel">
-            <div className="flex items-center justify-between p-3 border-b">
-              <span className="font-medium">Database Browser</span>
-              <Button size="icon" variant="ghost" onClick={() => closePanel(setShowReplitDB)} className="h-8 w-8" data-testid="button-close-database">
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" /></div>}>
-              <div className="h-[calc(100%-52px)] overflow-auto">
-                <ReplitDB projectId={parseInt(projectId, 10)} />
-              </div>
-            </Suspense>
-          </div>
-        )}
-
-        {showDebugPanel && (
-          <div className="fixed inset-0 z-[100] bg-background" data-testid="tablet-debug-panel">
-            <div className="flex items-center justify-between p-3 border-b">
-              <span className="font-medium">Debugger</span>
-              <Button size="icon" variant="ghost" onClick={() => closePanel(setShowDebugPanel)} className="h-8 w-8" data-testid="button-close-debug">
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" /></div>}>
-              <div className="h-[calc(100%-52px)] overflow-auto">
-                <ReplitDebuggerPanel projectId={projectId} />
-              </div>
-            </Suspense>
-          </div>
-        )}
-
-        {showSettingsPanel && (
-          <div className="fixed inset-0 z-[100] bg-background" data-testid="tablet-settings-panel">
-            <div className="flex items-center justify-between p-3 border-b">
-              <span className="font-medium">Settings</span>
-              <Button size="icon" variant="ghost" onClick={() => closePanel(setShowSettingsPanel)} className="h-8 w-8" data-testid="button-close-settings">
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" /></div>}>
-              <div className="h-[calc(100%-52px)] overflow-auto">
-                <ReplitSettingsPanel projectId={projectId} />
-              </div>
-            </Suspense>
-          </div>
-        )}
-
         {showCollaboration && user && (
           <div className="fixed inset-0 z-[100] bg-background" data-testid="tablet-collaboration-panel">
             <div className="flex items-center justify-between p-3 border-b">
@@ -1460,38 +1472,6 @@ function UnifiedIDELayout({
           </div>
         )}
 
-        {showWorkflowsPanel && (
-          <div className="fixed inset-0 z-[100] bg-background" data-testid="tablet-workflows-panel">
-            <div className="flex items-center justify-between p-3 border-b">
-              <span className="font-medium">Workflows</span>
-              <Button size="icon" variant="ghost" onClick={() => closePanel(setShowWorkflowsPanel)} className="h-8 w-8" data-testid="button-close-workflows">
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" /></div>}>
-              <div className="h-[calc(100%-52px)] overflow-auto">
-                <WorkflowsPanel projectId={projectId} />
-              </div>
-            </Suspense>
-          </div>
-        )}
-
-        {showHistoryPanel && (
-          <div className="fixed inset-0 z-[100] bg-background" data-testid="tablet-history-panel">
-            <div className="flex items-center justify-between p-3 border-b">
-              <span className="font-medium">History</span>
-              <Button size="icon" variant="ghost" onClick={() => closePanel(setShowHistoryPanel)} className="h-8 w-8" data-testid="button-close-history">
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" /></div>}>
-              <div className="h-[calc(100%-52px)] overflow-auto">
-                <ReplitHistoryPanel projectId={projectId} />
-              </div>
-            </Suspense>
-          </div>
-        )}
-
         {showCheckpointsPanel && (
           <div className="fixed inset-0 z-[100] bg-background" data-testid="tablet-checkpoints-panel">
             <div className="flex items-center justify-between p-3 border-b">
@@ -1504,20 +1484,6 @@ function UnifiedIDELayout({
               <div className="h-[calc(100%-52px)] overflow-auto p-2">
                 <CheckpointHistoryPanel projectId={projectId} maxHeight="calc(100vh - 80px)" />
               </div>
-            </Suspense>
-          </div>
-        )}
-
-        {showExtensionsPanel && (
-          <div className="fixed inset-0 z-[100] bg-background" data-testid="tablet-extensions-panel">
-            <div className="flex items-center justify-between p-3 border-b">
-              <span className="font-medium">Extensions</span>
-              <Button size="icon" variant="ghost" onClick={() => closePanel(setShowExtensionsPanel)} className="h-8 w-8" data-testid="button-close-extensions">
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" /></div>}>
-              <ExtensionsMarketplace className="h-[calc(100%-52px)]" />
             </Suspense>
           </div>
         )}
@@ -1536,20 +1502,6 @@ function UnifiedIDELayout({
               </div>
             </Suspense>
           </div>
-        )}
-
-        {showGlobalSearch && (
-          <Suspense fallback={null}>
-            <GlobalSearch
-              isOpen={showGlobalSearch}
-              onClose={() => closePanel(setShowGlobalSearch)}
-              projectId={projectId}
-              onFileSelect={(file) => {
-                handleFileSelect({ id: file.id, name: file.name });
-                closePanel(setShowGlobalSearch);
-              }}
-            />
-          </Suspense>
         )}
 
         {showCommandPalette && (
@@ -1644,7 +1596,7 @@ function UnifiedIDELayout({
           onOpenDeployAnalytics={() => setDeploymentTab('analytics')}
           showTabs={false}
           onOpenCommandPalette={() => setShowCommandPalette(true)}
-          onOpenGlobalSearch={() => setShowGlobalSearch(true)}
+          onOpenGlobalSearch={() => handleAddTool('search')}
         />
         
         <ReplitTabBar
@@ -1863,18 +1815,6 @@ function UnifiedIDELayout({
           onToolSelect={(tool) => {
             setShowCommandPalette(false);
             handleAddTool(tool);
-          }}
-        />
-      </Suspense>
-
-      <Suspense fallback={null}>
-        <GlobalSearch
-          isOpen={showGlobalSearch}
-          onClose={() => closePanel(setShowGlobalSearch)}
-          projectId={projectId}
-          onFileSelect={(file) => {
-            handleFileSelect({ id: file.id, name: file.name });
-            closePanel(setShowGlobalSearch);
           }}
         />
       </Suspense>
