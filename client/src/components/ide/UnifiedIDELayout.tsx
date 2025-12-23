@@ -692,7 +692,6 @@ function UnifiedIDELayout({
                 bootstrapToken={bootstrapToken}
                 hideInput={true}
                 onExternalInput={setMobileAgentHandlers}
-                initialTab="actions"
               />
             </AgentPanelErrorBoundary>
           </Suspense>
@@ -710,7 +709,6 @@ function UnifiedIDELayout({
                 bootstrapToken={bootstrapToken}
                 hideInput={true}
                 onExternalInput={setMobileAgentHandlers}
-                initialTab="tools"
               />
             </AgentPanelErrorBoundary>
           </Suspense>
