@@ -2,7 +2,8 @@ import { memo, useCallback } from 'react';
 import { 
   ArrowLeft, History, Plus, MoreVertical, Monitor, Globe, X,
   FolderTree, Search, GitBranch, Package, Lock, Database, Terminal,
-  Settings, Puzzle, Workflow, Bug, Save, ShieldCheck, Users, Zap, Wrench
+  Settings, Puzzle, Workflow, Bug, Save, ShieldCheck, Users, Zap, Wrench,
+  Code, Rocket, HardDrive, Share2, Command, Radio
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { MobileTab } from './ReplitMobileNavigation';
@@ -40,6 +41,7 @@ const tabConfig: Record<string, { icon: any; label: string; iconColor?: string }
   database: { icon: Database, label: 'Database' },
   terminal: { icon: Terminal, label: 'Terminal' },
   console: { icon: Terminal, label: 'Console' },
+  shell: { icon: Terminal, label: 'Shell' },
   settings: { icon: Settings, label: 'Settings' },
   history: { icon: History, label: 'History' },
   extensions: { icon: Puzzle, label: 'Extensions' },
@@ -51,6 +53,18 @@ const tabConfig: Record<string, { icon: any; label: string; iconColor?: string }
   actions: { icon: Zap, label: 'Actions' },
   tools: { icon: Wrench, label: 'Tools' },
   more: { icon: MoreVertical, label: 'More' },
+  assistant: { icon: Code, label: 'Assistant' },
+  publishing: { icon: Rocket, label: 'Publishing' },
+  'app-storage': { icon: HardDrive, label: 'App Storage' },
+  auth: { icon: ShieldCheck, label: 'Auth' },
+  developer: { icon: Code, label: 'Developer' },
+  integrations: { icon: Package, label: 'Integrations' },
+  multiplayer: { icon: Users, label: 'Multiplayer' },
+  web: { icon: Globe, label: 'Web' },
+  commands: { icon: Command, label: 'Commands' },
+  collaborate: { icon: Users, label: 'Collaborate' },
+  share: { icon: Share2, label: 'Share' },
+  radio: { icon: Radio, label: 'Radio' },
 };
 
 export const ReplitMobileHeader = memo(function ReplitMobileHeader({
