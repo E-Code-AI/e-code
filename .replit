@@ -19,13 +19,6 @@ periodSeconds = 10
 timeoutSeconds = 5
 failureThreshold = 3
 
-[[deployment.healthCheck]]
-path = "/health/readiness"
-initialDelaySeconds = 10
-periodSeconds = 5
-timeoutSeconds = 3
-failureThreshold = 2
-
 [workflows]
 runButton = "Project"
 
@@ -95,7 +88,3 @@ NODE_ENV = "production"
 [[ports]]
 localPort = 5000
 externalPort = 80
-
-[[ports]]
-localPort = 24678
-externalPort = 3001
