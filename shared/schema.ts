@@ -1386,6 +1386,37 @@ export const environmentVariables = pgTable('environment_variables', {
   unique().on(table.projectId, table.key, table.environment),
 ]);
 
+// Project Databases - Like Replit's per-project PostgreSQL provisioning
+export const projectDatabases = pgTable('project_databases', {
+  id: serial('id').primaryKey(),
+  projectId: integer('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }).unique(),
+  name: varchar('name').notNull(),
+  type: varchar('type').notNull().default('postgresql'), // postgresql, mysql, redis
+  status: varchar('status').notNull().default('provisioning'), // provisioning, running, stopped, error, deleted
+  region: varchar('region').notNull().default('us-east-1'),
+  version: varchar('version').notNull().default('15'),
+  plan: varchar('plan').notNull().default('free'), // free, basic, standard, premium
+  connectionUrl: text('connection_url'), // Encrypted DATABASE_URL
+  host: varchar('host'),
+  port: integer('port').default(5432),
+  database: varchar('database'),
+  username: varchar('username'),
+  encryptedPassword: text('encrypted_password'),
+  sslEnabled: boolean('ssl_enabled').default(true),
+  storageUsedMb: integer('storage_used_mb').default(0),
+  storageLimitMb: integer('storage_limit_mb').default(500), // 500MB for free tier
+  connectionCount: integer('connection_count').default(0),
+  maxConnections: integer('max_connections').default(10),
+  autoBackup: boolean('auto_backup').default(true),
+  lastBackupAt: timestamp('last_backup_at'),
+  provisionedAt: timestamp('provisioned_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => [
+  index('project_databases_project_id_idx').on(table.projectId),
+  index('project_databases_status_idx').on(table.status),
+]);
+
 // Git Integration
 export const gitRepositories = pgTable('git_repositories', {
   id: serial('id').primaryKey(),
@@ -1613,6 +1644,7 @@ export const insertAgentMessageSchema = createInsertSchema(agentMessages).omit({
 export const insertBuildExecutionSchema = createInsertSchema(buildExecutions).omit({ id: true, createdAt: true });
 export const insertSecretSchema = createInsertSchema(secrets).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertEnvironmentVariableSchema = createInsertSchema(environmentVariables).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertProjectDatabaseSchema = createInsertSchema(projectDatabases).omit({ id: true, createdAt: true, updatedAt: true, provisionedAt: true, lastBackupAt: true });
 export const insertGitRepositorySchema = createInsertSchema(gitRepositories).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertGitCommitSchema = createInsertSchema(gitCommits).omit({ id: true, syncedAt: true });
 export const insertCustomDomainSchema = createInsertSchema(customDomains).omit({ id: true, createdAt: true, updatedAt: true });
@@ -1693,6 +1725,9 @@ export type InsertMobileSession = z.infer<typeof insertMobileSessionSchema>;
 
 export type Deployment = typeof deployments.$inferSelect;
 export type InsertDeployment = z.infer<typeof insertDeploymentSchema>;
+
+export type ProjectDatabase = typeof projectDatabases.$inferSelect;
+export type InsertProjectDatabase = z.infer<typeof insertProjectDatabaseSchema>;
 
 export type Comment = typeof comments.$inferSelect;
 export type InsertComment = z.infer<typeof insertCommentSchema>;
