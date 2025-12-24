@@ -54,9 +54,13 @@ async function build() {
       format: 'esm',
       outdir: 'dist',
       external,
-      minify: false,
-      sourcemap: true,
+      minify: true,
+      treeShaking: true,
+      sourcemap: false,
       metafile: true,
+      legalComments: 'none',
+      keepNames: false,
+      drop: ['debugger'],
       // Define NODE_ENV at build time to enable dead code elimination
       // This removes the dotenv import block entirely from production builds
       define: {
