@@ -4,7 +4,7 @@ import {
   Smartphone, Tablet, Monitor, RotateCw, RefreshCw,
   ExternalLink, ChevronDown, Lock, Copy, Globe,
   Signal, Wifi, BatteryFull, MoreVertical, MonitorX,
-  Code, Trees, X, Play
+  Code, Trees, X, Play, Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -25,6 +25,8 @@ import {
 } from '@/components/ui/sheet';
 import { useToast } from '@/hooks/use-toast';
 import { PreviewSplashScreen } from '@/components/ide/PreviewSplashScreen';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { apiRequest, queryClient } from '@/lib/queryClient';
 
 interface DevicePreset {
   name: string;
@@ -368,9 +370,15 @@ function URLBar({ url, onCopy }: { url: string; onCopy: () => void }) {
   );
 }
 
+interface PreviewStatus {
+  previewUrl: string | null;
+  status: 'running' | 'stopped' | 'starting' | 'error' | 'static' | 'no_runnable_files';
+  message?: string;
+}
+
 export function MobilePreviewPanel({ 
   projectId, 
-  previewUrl,
+  previewUrl: externalPreviewUrl,
   className 
 }: MobilePreviewPanelProps) {
   const [selectedDevice, setSelectedDevice] = useState<DevicePreset>(devicePresets[2]);
@@ -383,7 +391,49 @@ export function MobilePreviewPanel({
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const { toast } = useToast();
 
-  const computedPreviewUrl = previewUrl || `${window.location.origin}/preview/${projectId}`;
+  // Query preview status from backend
+  const { data: previewStatus, isLoading: isStatusLoading, refetch: refetchStatus } = useQuery<PreviewStatus>({
+    queryKey: ['/api/preview/url', projectId],
+    queryFn: async () => {
+      const response = await fetch(`/api/preview/url?projectId=${projectId}`, {
+        credentials: 'include'
+      });
+      if (!response.ok) {
+        throw new Error('Failed to get preview status');
+      }
+      return response.json();
+    },
+    enabled: !!projectId,
+    refetchInterval: (query) => {
+      const data = query.state.data;
+      if (data?.status === 'starting') return 2000;
+      if (data?.status === 'running') return 10000;
+      return false;
+    }
+  });
+
+  // Start preview mutation
+  const startPreviewMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest('POST', `/api/preview/projects/${projectId}/preview/start`, {});
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({ title: 'Starting preview...', description: 'Your app is being built and started.' });
+      setTimeout(() => refetchStatus(), 2000);
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: 'Failed to start preview', 
+        description: error.message || 'An error occurred',
+        variant: 'destructive'
+      });
+    }
+  });
+
+  const isPreviewRunning = previewStatus?.status === 'running' || previewStatus?.status === 'static';
+  const isPreviewStarting = previewStatus?.status === 'starting' || startPreviewMutation.isPending;
+  const computedPreviewUrl = externalPreviewUrl || previewStatus?.previewUrl || `/api/preview/projects/${projectId}/preview/`;
 
   const deviceWidth = isLandscape ? selectedDevice.height : selectedDevice.width;
   const deviceHeight = isLandscape ? selectedDevice.width : selectedDevice.height;
@@ -447,13 +497,7 @@ export function MobilePreviewPanel({
   };
 
   const handleRun = () => {
-    setIsLoading(true);
-    setHasError(false);
-    setIframeKey(prev => prev + 1);
-    toast({
-      title: 'Starting app',
-      description: 'Running your application...',
-    });
+    startPreviewMutation.mutate();
   };
 
   const handleShareDevLink = () => {
@@ -697,14 +741,31 @@ export function MobilePreviewPanel({
             }}
           >
             <LazyAnimatePresence mode="wait">
-              {isLoading && (
+              {(isLoading || isStatusLoading || isPreviewStarting) && (
                 <PreviewSplashScreen key="splash" />
               )}
             </LazyAnimatePresence>
 
-            {hasError ? (
+            {/* Show different states based on preview status */}
+            {isStatusLoading ? (
+              <div className="absolute inset-0 flex items-center justify-center bg-white dark:bg-gray-900">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : isPreviewStarting ? (
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-white dark:bg-gray-900">
+                <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+                <p className="text-sm text-muted-foreground">Starting preview...</p>
+              </div>
+            ) : previewStatus?.status === 'no_runnable_files' ? (
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-white dark:bg-gray-900 text-center p-4">
+                <Globe className="h-12 w-12 text-muted-foreground mb-4 opacity-50" />
+                <p className="text-sm text-muted-foreground">No preview available. Add an HTML file or package.json.</p>
+              </div>
+            ) : !isPreviewRunning && !hasError ? (
               <AppNotRunningState onRun={handleRun} />
-            ) : (
+            ) : hasError ? (
+              <AppNotRunningState onRun={handleRun} />
+            ) : previewStatus?.previewUrl || externalPreviewUrl ? (
               <iframe
                 ref={iframeRef}
                 key={iframeKey}
@@ -722,6 +783,8 @@ export function MobilePreviewPanel({
                 sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
                 data-testid="mobile-preview-iframe"
               />
+            ) : (
+              <AppNotRunningState onRun={handleRun} />
             )}
           </div>
         </LazyMotionDiv>
