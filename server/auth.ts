@@ -1,6 +1,6 @@
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
-import bcrypt from "bcrypt";
+import bcrypt from "./utils/bcrypt-compat";
 
 // Extend session data to include custom properties
 declare module 'express-session' {

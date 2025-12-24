@@ -3,7 +3,7 @@ import { type IStorage } from "../storage";
 import { devAuthBypass, isAuthBypassEnabled } from "../dev-auth-bypass";
 import { csrfProtection } from "../middleware/csrf";
 import type { User } from "@shared/schema";
-import bcrypt from "bcrypt";
+import bcrypt from "../utils/bcrypt-compat";
 
 export class UsersRouter {
   private router: Router;

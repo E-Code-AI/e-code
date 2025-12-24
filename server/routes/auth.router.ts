@@ -1,5 +1,5 @@
 import { Router, Request, Response, NextFunction } from "express";
-import bcrypt from "bcrypt";
+import bcrypt from "../utils/bcrypt-compat";
 import passport from "passport";
 import { userRegistrationSchema, securityLogs, emailVerificationTokens, passwordResetTokens } from "@shared/schema";
 import { type IStorage } from "../storage";

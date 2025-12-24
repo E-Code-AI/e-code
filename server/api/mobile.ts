@@ -5,7 +5,7 @@ import { projects, files } from '@shared/schema';
 import { eq, desc } from 'drizzle-orm';
 import { aiService } from '../ai/ai-service';
 import { mobileContainerService } from '../services/mobile-container-service';
-import * as bcrypt from 'bcrypt';
+import bcrypt from '../utils/bcrypt-compat';
 import * as jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { getJwtSecret, getJwtRefreshSecret } from '../utils/secrets-manager';
