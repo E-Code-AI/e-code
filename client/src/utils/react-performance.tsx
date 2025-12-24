@@ -173,8 +173,8 @@ interface LazyComponentProps {
 
 export function LazyComponent({
   loader,
-  fallback = <div>Loading...</div>,
-  errorFallback = <div>Failed to load component</div>,
+  fallback = <div className="flex items-center justify-center h-full text-muted-foreground text-sm">Loading...</div>,
+  errorFallback = <div className="flex items-center justify-center h-full text-destructive text-sm">Failed to load component</div>,
   delay = 300,
   ...props
 }: LazyComponentProps) {
