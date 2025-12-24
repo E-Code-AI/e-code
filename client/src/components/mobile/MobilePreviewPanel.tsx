@@ -435,6 +435,20 @@ export function MobilePreviewPanel({
   const isPreviewStarting = previewStatus?.status === 'starting' || startPreviewMutation.isPending;
   const computedPreviewUrl = externalPreviewUrl || previewStatus?.previewUrl || `/api/preview/projects/${projectId}/preview/`;
 
+  // Auto-start preview like Replit does (use ref to prevent re-triggering)
+  const hasAttemptedAutoStart = useRef(false);
+  useEffect(() => {
+    // Auto-start when preview is stopped and we haven't already tried
+    if (
+      previewStatus?.status === 'stopped' && 
+      !hasAttemptedAutoStart.current &&
+      projectId
+    ) {
+      hasAttemptedAutoStart.current = true;
+      startPreviewMutation.mutate();
+    }
+  }, [previewStatus?.status, projectId]);
+
   const deviceWidth = isLandscape ? selectedDevice.height : selectedDevice.width;
   const deviceHeight = isLandscape ? selectedDevice.width : selectedDevice.height;
 
