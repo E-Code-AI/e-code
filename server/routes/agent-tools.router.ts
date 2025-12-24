@@ -918,11 +918,182 @@ export default function createAgentToolsRouter(): Router {
           enabled: true,
           status: 'operational',
           maxDuration: 240 // minutes
+        },
+        databaseProvisioning: {
+          enabled: true,
+          status: 'operational',
+          types: ['postgresql']
         }
       });
     } catch (error: any) {
       logger.error('Error fetching tools status:', error);
       res.status(500).json({ error: 'Failed to fetch tools status' });
+    }
+  });
+
+  // ============================================
+  // DATABASE PROVISIONING TOOL ENDPOINTS
+  // ============================================
+
+  // Helper for project ownership in agent tools
+  async function checkAgentProjectAccess(req: any, res: any, projectId: number): Promise<boolean> {
+    if (!req.user) {
+      res.status(401).json({ error: 'Authentication required' });
+      return false;
+    }
+    const [project] = await db.select().from(projects).where(eq(projects.id, projectId)).limit(1);
+    if (!project) {
+      res.status(404).json({ error: 'Project not found' });
+      return false;
+    }
+    const userId = typeof req.user.id === 'string' ? parseInt(req.user.id) : req.user.id;
+    if (project.userId !== userId && !req.user.isAdmin) {
+      res.status(403).json({ error: 'Not authorized' });
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * GET /api/agent/tools/database/:projectId
+   * Get project database info for AI agent
+   * REQUIRES: Authentication + Project ownership
+   */
+  router.get('/tools/database/:projectId', async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      if (isNaN(projectId)) {
+        return res.status(400).json({ error: 'Invalid project ID' });
+      }
+
+      if (!await checkAgentProjectAccess(req, res, projectId)) {
+        return;
+      }
+
+      const { projectDatabaseService } = await import('../services/project-database-provisioning.service');
+      const database = await projectDatabaseService.getProjectDatabase(projectId);
+
+      if (!database) {
+        return res.json({
+          provisioned: false,
+          message: 'No database provisioned. Use the provision-database tool to create one.'
+        });
+      }
+
+      const stats = await projectDatabaseService.getDatabaseStats(projectId);
+
+      res.json({
+        provisioned: true,
+        database: {
+          name: database.name,
+          type: database.type,
+          status: database.status,
+          plan: database.plan,
+          region: database.region,
+          host: database.host,
+          port: database.port,
+          databaseName: database.database,
+          username: database.username,
+          sslEnabled: database.sslEnabled,
+          storageUsedMb: database.storageUsedMb,
+          storageLimitMb: database.storageLimitMb
+        },
+        stats
+      });
+    } catch (error: any) {
+      logger.error('Error fetching project database:', error);
+      res.status(500).json({ error: 'Failed to fetch project database' });
+    }
+  });
+
+  /**
+   * POST /api/agent/tools/database/:projectId/provision
+   * Provision a new database for the project
+   * REQUIRES: Authentication + Project ownership
+   */
+  router.post('/tools/database/:projectId/provision', async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      if (isNaN(projectId)) {
+        return res.status(400).json({ error: 'Invalid project ID' });
+      }
+
+      if (!await checkAgentProjectAccess(req, res, projectId)) {
+        return;
+      }
+
+      const { plan = 'free', region = 'us-east-1' } = req.body;
+      const { projectDatabaseService } = await import('../services/project-database-provisioning.service');
+      
+      const database = await projectDatabaseService.provisionDatabase(projectId, {
+        plan,
+        region
+      });
+
+      logger.info(`Agent provisioned database for project ${projectId}`);
+
+      res.json({
+        success: true,
+        message: `Database provisioned successfully on ${plan} plan`,
+        database: {
+          name: database.name,
+          type: database.type,
+          status: database.status,
+          host: database.host,
+          port: database.port,
+          databaseName: database.database,
+          username: database.username
+        }
+      });
+    } catch (error: any) {
+      logger.error('Error provisioning database:', error);
+      res.status(500).json({ error: error.message || 'Failed to provision database' });
+    }
+  });
+
+  /**
+   * GET /api/agent/tools/database/:projectId/credentials
+   * Get database credentials for agent to inject into code
+   * REQUIRES: Authentication + Project ownership
+   */
+  router.get('/tools/database/:projectId/credentials', async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      if (isNaN(projectId)) {
+        return res.status(400).json({ error: 'Invalid project ID' });
+      }
+
+      if (!await checkAgentProjectAccess(req, res, projectId)) {
+        return;
+      }
+
+      const { projectDatabaseService } = await import('../services/project-database-provisioning.service');
+      const credentials = await projectDatabaseService.getCredentials(projectId);
+
+      if (!credentials) {
+        return res.status(404).json({ 
+          error: 'No database provisioned',
+          hint: 'Use the provision-database tool first'
+        });
+      }
+
+      res.json({
+        credentials: {
+          connectionUrl: credentials.connectionUrl,
+          host: credentials.host,
+          port: credentials.port,
+          database: credentials.database,
+          databaseName: credentials.database,
+          username: credentials.username,
+          password: credentials.password,
+          sslEnabled: credentials.sslEnabled
+        },
+        envVarName: 'DATABASE_URL',
+        usage: 'Set DATABASE_URL environment variable or use the connection URL directly'
+      });
+    } catch (error: any) {
+      logger.error('Error fetching database credentials:', error);
+      res.status(500).json({ error: 'Failed to fetch database credentials' });
     }
   });
 

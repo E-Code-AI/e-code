@@ -4,6 +4,7 @@ import { db, pool } from '../db';
 import * as schema from '@shared/schema';
 import { ensureAdmin } from '../middleware/admin-auth';
 import { eq, sql } from 'drizzle-orm';
+import { projectDatabaseService } from '../services/project-database-provisioning.service';
 
 const databaseRouter = Router();
 
@@ -439,6 +440,212 @@ databaseRouter.get('/stats', ensureAdmin, async (req: Request, res: Response) =>
   } catch (error: any) {
     console.error('[Database API] Get stats error:', error);
     return res.status(500).json({ error: error.message || 'Failed to get database stats' });
+  }
+});
+
+// ============================================================
+// PROJECT DATABASE PROVISIONING ENDPOINTS
+// ============================================================
+
+// Helper: Check project ownership
+async function checkProjectOwnership(req: Request, res: Response, projectId: number): Promise<boolean> {
+  if (!req.user) {
+    res.status(401).json({ error: 'Authentication required' });
+    return false;
+  }
+  
+  const [project] = await db.select().from(schema.projects).where(eq(schema.projects.id, projectId)).limit(1);
+  if (!project) {
+    res.status(404).json({ error: 'Project not found' });
+    return false;
+  }
+  
+  const userId = typeof req.user.id === 'string' ? parseInt(req.user.id) : req.user.id;
+  if (project.userId !== userId && !(req.user as any).isAdmin) {
+    res.status(403).json({ error: 'Not authorized to access this project' });
+    return false;
+  }
+  
+  return true;
+}
+
+/**
+ * Get database info for a specific project
+ * GET /api/database/project/:projectId
+ * REQUIRES: Authentication + Project ownership
+ */
+databaseRouter.get('/project/:projectId', async (req: Request, res: Response) => {
+  try {
+    const projectId = parseInt(req.params.projectId);
+    if (isNaN(projectId)) {
+      return res.status(400).json({ error: 'Invalid project ID' });
+    }
+
+    if (!await checkProjectOwnership(req, res, projectId)) {
+      return;
+    }
+
+    const database = await projectDatabaseService.getProjectDatabase(projectId);
+    if (!database) {
+      return res.json({ 
+        provisioned: false, 
+        message: 'No database provisioned for this project' 
+      });
+    }
+
+    const stats = await projectDatabaseService.getDatabaseStats(projectId);
+
+    return res.json({
+      provisioned: true,
+      database: {
+        id: database.id,
+        name: database.name,
+        type: database.type,
+        status: database.status,
+        region: database.region,
+        version: database.version,
+        plan: database.plan,
+        host: database.host,
+        port: database.port,
+        databaseName: database.database,
+        username: database.username,
+        sslEnabled: database.sslEnabled,
+        storageUsedMb: database.storageUsedMb,
+        storageLimitMb: database.storageLimitMb,
+        connectionCount: database.connectionCount,
+        maxConnections: database.maxConnections,
+        autoBackup: database.autoBackup,
+        lastBackupAt: database.lastBackupAt,
+        provisionedAt: database.provisionedAt,
+        createdAt: database.createdAt
+      },
+      stats
+    });
+  } catch (error: any) {
+    console.error('[Database API] Get project database error:', error);
+    return res.status(500).json({ error: error.message || 'Failed to get project database' });
+  }
+});
+
+/**
+ * Provision a new database for a project
+ * POST /api/database/project/:projectId/provision
+ * REQUIRES: Authentication + Project ownership
+ */
+const provisionSchema = z.object({
+  type: z.enum(['postgresql', 'mysql']).optional().default('postgresql'),
+  region: z.string().optional().default('us-east-1'),
+  plan: z.enum(['free', 'starter', 'pro', 'enterprise']).optional().default('free')
+});
+
+databaseRouter.post('/project/:projectId/provision', async (req: Request, res: Response) => {
+  try {
+    const projectId = parseInt(req.params.projectId);
+    if (isNaN(projectId)) {
+      return res.status(400).json({ error: 'Invalid project ID' });
+    }
+
+    if (!await checkProjectOwnership(req, res, projectId)) {
+      return;
+    }
+
+    const validation = provisionSchema.safeParse(req.body);
+    if (!validation.success) {
+      return res.status(400).json({ error: 'Invalid request body', details: validation.error.issues });
+    }
+
+    const options = validation.data;
+    const database = await projectDatabaseService.provisionDatabase(projectId, options);
+
+    return res.json({
+      success: true,
+      message: 'Database provisioned successfully',
+      database: {
+        id: database.id,
+        name: database.name,
+        type: database.type,
+        status: database.status,
+        region: database.region,
+        plan: database.plan,
+        host: database.host,
+        port: database.port,
+        databaseName: database.database,
+        username: database.username,
+        sslEnabled: database.sslEnabled,
+        storageLimitMb: database.storageLimitMb,
+        maxConnections: database.maxConnections
+      }
+    });
+  } catch (error: any) {
+    console.error('[Database API] Provision database error:', error);
+    return res.status(500).json({ error: error.message || 'Failed to provision database' });
+  }
+});
+
+/**
+ * Get database credentials (connection string)
+ * GET /api/database/project/:projectId/credentials
+ * REQUIRES: Authentication + Project ownership
+ */
+databaseRouter.get('/project/:projectId/credentials', async (req: Request, res: Response) => {
+  try {
+    const projectId = parseInt(req.params.projectId);
+    if (isNaN(projectId)) {
+      return res.status(400).json({ error: 'Invalid project ID' });
+    }
+
+    if (!await checkProjectOwnership(req, res, projectId)) {
+      return;
+    }
+
+    const credentials = await projectDatabaseService.getCredentials(projectId);
+    if (!credentials) {
+      return res.status(404).json({ error: 'No database provisioned for this project' });
+    }
+
+    return res.json({
+      credentials: {
+        host: credentials.host,
+        port: credentials.port,
+        database: credentials.database,
+        databaseName: credentials.database,
+        username: credentials.username,
+        password: credentials.password,
+        connectionUrl: credentials.connectionUrl,
+        sslEnabled: credentials.sslEnabled
+      }
+    });
+  } catch (error: any) {
+    console.error('[Database API] Get credentials error:', error);
+    return res.status(500).json({ error: error.message || 'Failed to get database credentials' });
+  }
+});
+
+/**
+ * Delete/deprovision a project database
+ * DELETE /api/database/project/:projectId
+ * REQUIRES: Authentication + Project ownership
+ */
+databaseRouter.delete('/project/:projectId', async (req: Request, res: Response) => {
+  try {
+    const projectId = parseInt(req.params.projectId);
+    if (isNaN(projectId)) {
+      return res.status(400).json({ error: 'Invalid project ID' });
+    }
+
+    if (!await checkProjectOwnership(req, res, projectId)) {
+      return;
+    }
+
+    const success = await projectDatabaseService.deleteDatabase(projectId);
+    if (!success) {
+      return res.status(404).json({ error: 'No database found for this project' });
+    }
+
+    return res.json({ success: true, message: 'Database deleted successfully' });
+  } catch (error: any) {
+    console.error('[Database API] Delete database error:', error);
+    return res.status(500).json({ error: error.message || 'Failed to delete database' });
   }
 });
 
