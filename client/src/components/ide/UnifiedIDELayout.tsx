@@ -1608,13 +1608,13 @@ function UnifiedIDELayout({
                   </TabsContent>
                   
                   <TabsContent value="actions" className="flex-1 mt-0 overflow-hidden">
-                    <Suspense fallback={<div className="flex items-center justify-center h-full">Loading...</div>}>
+                    <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="sm" text="Loading Actions..." /></div>}>
                       <AgentActionsPanel projectId={projectId} />
                     </Suspense>
                   </TabsContent>
                   
                   <TabsContent value="tools" className="flex-1 mt-0 overflow-hidden">
-                    <Suspense fallback={<div className="flex items-center justify-center h-full">Loading...</div>}>
+                    <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="sm" text="Loading Tools..." /></div>}>
                       <ToolsPanel
                         availableTools={availableTools}
                         onSelectTool={handleAddTool}
@@ -1624,7 +1624,7 @@ function UnifiedIDELayout({
                   </TabsContent>
                   
                   <TabsContent value="deployment" className="flex-1 mt-0 overflow-hidden">
-                    <Suspense fallback={<div className="flex items-center justify-center h-full">Loading...</div>}>
+                    <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="sm" text="Loading Deploy..." /></div>}>
                       <ReplitDeploymentPanel
                         projectId={projectId}
                         defaultTab={deploymentTab || 'deploy'}

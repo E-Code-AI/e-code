@@ -6,6 +6,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { Mail, CheckCircle, XCircle, AlertCircle, Send, Settings2 } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
+import { ECodeLoading } from '@/components/ECodeLoading';
 
 export default function NewsletterSettings() {
   const { toast } = useToast();
@@ -54,8 +55,8 @@ export default function NewsletterSettings() {
   if (loading) {
     return (
       <Card>
-        <CardContent className="p-8">
-          <div className="text-center text-muted-foreground">Loading...</div>
+        <CardContent className="p-8 flex items-center justify-center">
+          <ECodeLoading size="md" text="Loading..." />
         </CardContent>
       </Card>
     );
