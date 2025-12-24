@@ -105,7 +105,7 @@ export function PreviewDeploymentPanel({
     runId: previewData.runId || '',
     ports: previewData.ports || [],
     primaryPort: previewData.primaryPort || 0,
-    url: `/preview/${projectId}/`,
+    url: `/api/preview/projects/${projectId}/preview/`,
     status: previewData.status as PreviewStatus['status'],
     services: previewData.services || [],
     lastHealthCheck: previewData.lastHealthCheck,
@@ -115,7 +115,7 @@ export function PreviewDeploymentPanel({
   const isRunning = preview?.status === 'running';
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
   const previewUrl = isRunning 
-    ? `${origin}/preview/${projectId}/`
+    ? `${origin}/api/preview/projects/${projectId}/preview/`
     : null;
 
   useEffect(() => {
@@ -412,7 +412,7 @@ export function PreviewDeploymentPanel({
                               size="icon"
                               className="h-6 w-6"
                               onClick={() => {
-                                const serviceUrl = `${window.location.origin}/preview/${projectId}/${service.port}/`;
+                                const serviceUrl = `${window.location.origin}/api/preview/projects/${projectId}/preview/${service.port}/`;
                                 window.open(serviceUrl, '_blank');
                               }}
                               data-testid={`button-open-service-${service.port}`}
