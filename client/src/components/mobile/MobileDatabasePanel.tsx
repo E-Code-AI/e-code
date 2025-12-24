@@ -1,10 +1,29 @@
 import { useState } from 'react';
-import { useQuery, useQueries } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
+import { useQuery, useQueries, useMutation } from '@tanstack/react-query';
+import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
+import { Progress } from '@/components/ui/progress';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import {
   Database,
   RefreshCw,
@@ -14,7 +33,16 @@ import {
   Rocket,
   Key,
   Plus,
-  Table as TableIcon
+  Table as TableIcon,
+  Copy,
+  Eye,
+  EyeOff,
+  Trash2,
+  Server,
+  HardDrive,
+  Users,
+  Calendar,
+  Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -56,6 +84,36 @@ interface TableDataResponse {
   };
 }
 
+interface DatabaseInfo {
+  provisioned: boolean;
+  status?: 'running' | 'stopped' | 'error' | 'provisioning';
+  host?: string;
+  port?: number;
+  databaseName?: string;
+  username?: string;
+  storageUsedMb?: number;
+  storageLimitMb?: number;
+  connectionCount?: number;
+  maxConnections?: number;
+  lastBackupAt?: string;
+  plan?: string;
+  region?: string;
+}
+
+interface DatabaseCredentials {
+  host: string;
+  port: number;
+  databaseName: string;
+  username: string;
+  password: string;
+  connectionUrl: string;
+}
+
+interface ProvisionRequest {
+  plan: string;
+  region: string;
+}
+
 interface MobileDatabasePanelProps {
   projectId: string;
   className?: string;
@@ -67,6 +125,20 @@ const iconMap: Record<string, any> = {
   Key,
   Database
 };
+
+const PLAN_OPTIONS = [
+  { value: 'free', label: 'Free', storage: '500MB' },
+  { value: 'starter', label: 'Starter', storage: '2GB' },
+  { value: 'pro', label: 'Pro', storage: '10GB' },
+  { value: 'enterprise', label: 'Enterprise', storage: '100GB' },
+];
+
+const REGION_OPTIONS = [
+  { value: 'us-east-1', label: 'US East (N. Virginia)' },
+  { value: 'us-west-2', label: 'US West (Oregon)' },
+  { value: 'eu-west-1', label: 'EU (Ireland)' },
+  { value: 'ap-southeast-1', label: 'Asia Pacific (Singapore)' },
+];
 
 function ShimmerSkeleton({ className }: { className?: string }) {
   return (
@@ -136,11 +208,81 @@ function EmptyState({ onAction }: { onAction?: () => void }) {
 
 export function MobileDatabasePanel({ projectId, className }: MobileDatabasePanelProps) {
   const [selectedTable, setSelectedTable] = useState<string>('files');
-  const [activeTab, setActiveTab] = useState<'tables' | 'data'>('tables');
+  const [activeTab, setActiveTab] = useState<'provision' | 'tables' | 'data'>('provision');
   const [expandedTables, setExpandedTables] = useState<Set<string>>(new Set(['files']));
   const [currentPage, setCurrentPage] = useState<number>(1);
+  const [selectedPlan, setSelectedPlan] = useState<string>('free');
+  const [selectedRegion, setSelectedRegion] = useState<string>('us-east-1');
+  const [showPassword, setShowPassword] = useState<boolean>(false);
   
   const { toast } = useToast();
+
+  const { data: databaseInfo, isLoading: databaseInfoLoading, refetch: refetchDatabaseInfo } = useQuery<DatabaseInfo>({
+    queryKey: ['/api/database/project', projectId],
+    queryFn: async () => {
+      try {
+        const response = await apiRequest('GET', `/api/database/project/${projectId}`);
+        return response;
+      } catch (error: any) {
+        if (error?.status === 404) {
+          return { provisioned: false };
+        }
+        throw error;
+      }
+    },
+    staleTime: 30000,
+    enabled: !!projectId
+  });
+
+  const { data: credentials, isLoading: credentialsLoading, refetch: refetchCredentials } = useQuery<DatabaseCredentials>({
+    queryKey: ['/api/database/project', projectId, 'credentials'],
+    queryFn: async () => {
+      const response = await apiRequest('GET', `/api/database/project/${projectId}/credentials`);
+      return response;
+    },
+    staleTime: 60000,
+    enabled: !!projectId && databaseInfo?.provisioned === true
+  });
+
+  const provisionMutation = useMutation({
+    mutationFn: async (data: ProvisionRequest) => {
+      return apiRequest('POST', `/api/database/project/${projectId}/provision`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/database/project', projectId] });
+      toast({
+        title: 'Database Provisioned',
+        description: 'Your PostgreSQL database is being provisioned.',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Provisioning Failed',
+        description: error.message || 'Failed to provision database',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest('DELETE', `/api/database/project/${projectId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/database/project', projectId] });
+      toast({
+        title: 'Database Deleted',
+        description: 'Your database has been deleted successfully.',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Deletion Failed',
+        description: error.message || 'Failed to delete database',
+        variant: 'destructive',
+      });
+    },
+  });
 
   const { data: tablesData, isLoading: tablesLoading, error: tablesError, refetch: refetchTables } = useQuery<ProjectDataTablesResponse>({
     queryKey: ['/api/projects', projectId, 'data/tables'],
@@ -148,7 +290,8 @@ export function MobileDatabasePanel({ projectId, className }: MobileDatabasePane
       const response = await apiRequest('GET', `/api/projects/${projectId}/data/tables`);
       return response;
     },
-    staleTime: 30000
+    staleTime: 30000,
+    enabled: activeTab === 'tables' || activeTab === 'data'
   });
 
   const { data: tableData, isLoading: dataLoading } = useQuery<TableDataResponse>({
@@ -219,11 +362,57 @@ export function MobileDatabasePanel({ projectId, className }: MobileDatabasePane
 
   const handleRefresh = () => {
     refetchTables();
+    refetchDatabaseInfo();
     toast({
       title: "Refreshed",
       description: "Project data reloaded"
     });
   };
+
+  const handleProvision = () => {
+    provisionMutation.mutate({ plan: selectedPlan, region: selectedRegion });
+  };
+
+  const handleCopyConnectionUrl = async () => {
+    if (credentials?.connectionUrl) {
+      try {
+        await navigator.clipboard.writeText(credentials.connectionUrl);
+        toast({
+          title: 'Copied',
+          description: 'Connection URL copied to clipboard',
+        });
+      } catch {
+        toast({
+          title: 'Copy Failed',
+          description: 'Failed to copy to clipboard',
+          variant: 'destructive',
+        });
+      }
+    }
+  };
+
+  const getStatusBadge = (status?: string) => {
+    switch (status) {
+      case 'running':
+        return <Badge className="bg-green-500/10 text-green-500 border-green-500/30">Running</Badge>;
+      case 'stopped':
+        return <Badge className="bg-yellow-500/10 text-yellow-500 border-yellow-500/30">Stopped</Badge>;
+      case 'error':
+        return <Badge className="bg-red-500/10 text-red-500 border-red-500/30">Error</Badge>;
+      case 'provisioning':
+        return <Badge className="bg-blue-500/10 text-blue-500 border-blue-500/30">Provisioning</Badge>;
+      default:
+        return <Badge variant="outline">Unknown</Badge>;
+    }
+  };
+
+  const storagePercentage = databaseInfo?.storageLimitMb 
+    ? ((databaseInfo.storageUsedMb || 0) / databaseInfo.storageLimitMb) * 100 
+    : 0;
+
+  const connectionPercentage = databaseInfo?.maxConnections 
+    ? ((databaseInfo.connectionCount || 0) / databaseInfo.maxConnections) * 100 
+    : 0;
 
   const Icon = selectedTable && tablesData?.tables.find(t => t.name === selectedTable)
     ? iconMap[tablesData.tables.find(t => t.name === selectedTable)!.icon] || Database
@@ -231,7 +420,6 @@ export function MobileDatabasePanel({ projectId, className }: MobileDatabasePane
 
   return (
     <div className={cn("flex flex-col h-full bg-background", className)} data-testid="mobile-database-panel">
-      {/* Header */}
       <div className="p-4 border-b border-border min-h-[56px] flex flex-col justify-center space-y-2">
         <div className="flex items-center justify-between">
           <h3 className="text-[17px] font-medium leading-tight text-foreground flex items-center gap-2">
@@ -241,11 +429,11 @@ export function MobileDatabasePanel({ projectId, className }: MobileDatabasePane
           <Button
             variant="ghost"
             onClick={handleRefresh}
-            disabled={tablesLoading}
+            disabled={tablesLoading || databaseInfoLoading}
             className="w-11 h-11 p-0 rounded-lg hover:bg-muted"
             data-testid="button-refresh-database"
           >
-            <RefreshCw className={cn("w-[18px] h-[18px] text-muted-foreground", tablesLoading && "animate-spin")} />
+            <RefreshCw className={cn("w-[18px] h-[18px] text-muted-foreground", (tablesLoading || databaseInfoLoading) && "animate-spin")} />
           </Button>
         </div>
 
@@ -256,8 +444,19 @@ export function MobileDatabasePanel({ projectId, className }: MobileDatabasePane
         )}
       </div>
 
-      {/* Tabs */}
       <div className="flex border-b border-border">
+        <button
+          onClick={() => setActiveTab('provision')}
+          className={cn(
+            "flex-1 h-11 text-[15px] font-medium border-b-2 transition-colors",
+            activeTab === 'provision'
+              ? "border-primary text-primary"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          )}
+          data-testid="tab-provision"
+        >
+          Provision
+        </button>
         <button
           onClick={() => setActiveTab('tables')}
           className={cn(
@@ -286,8 +485,234 @@ export function MobileDatabasePanel({ projectId, className }: MobileDatabasePane
         </button>
       </div>
 
-      {/* Content */}
       <ScrollArea className="flex-1">
+        {activeTab === 'provision' && (
+          <div className="p-4">
+            {databaseInfoLoading ? (
+              <div className="flex items-center justify-center py-16">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : databaseInfo?.provisioned ? (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between border border-border rounded-lg p-4">
+                  <div className="flex items-center gap-3">
+                    <Server className="h-5 w-5 text-primary" />
+                    <div>
+                      <h4 className="font-medium text-foreground text-[15px]">PostgreSQL</h4>
+                      <p className="text-[13px] text-muted-foreground">{databaseInfo.plan} • {databaseInfo.region}</p>
+                    </div>
+                  </div>
+                  {getStatusBadge(databaseInfo.status)}
+                </div>
+
+                <div className="border border-border rounded-lg p-4 space-y-4">
+                  <h5 className="font-medium text-foreground flex items-center gap-2 text-[15px]">
+                    <Key className="h-4 w-4" />
+                    Connection Info
+                  </h5>
+                  
+                  {credentialsLoading ? (
+                    <div className="flex items-center justify-center py-4">
+                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : credentials ? (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between min-h-[40px]">
+                        <span className="text-[13px] text-muted-foreground">Host</span>
+                        <code className="text-[13px] font-mono text-foreground bg-muted px-2 py-1 rounded" data-testid="text-host">
+                          {credentials.host}
+                        </code>
+                      </div>
+                      <div className="flex items-center justify-between min-h-[40px]">
+                        <span className="text-[13px] text-muted-foreground">Port</span>
+                        <code className="text-[13px] font-mono text-foreground bg-muted px-2 py-1 rounded" data-testid="text-port">
+                          {credentials.port}
+                        </code>
+                      </div>
+                      <div className="flex items-center justify-between min-h-[40px]">
+                        <span className="text-[13px] text-muted-foreground">Database</span>
+                        <code className="text-[13px] font-mono text-foreground bg-muted px-2 py-1 rounded" data-testid="text-database-name">
+                          {credentials.databaseName}
+                        </code>
+                      </div>
+                      <div className="flex items-center justify-between min-h-[40px]">
+                        <span className="text-[13px] text-muted-foreground">Username</span>
+                        <code className="text-[13px] font-mono text-foreground bg-muted px-2 py-1 rounded" data-testid="text-username">
+                          {credentials.username}
+                        </code>
+                      </div>
+                      <div className="flex items-center justify-between min-h-[40px]">
+                        <span className="text-[13px] text-muted-foreground">Password</span>
+                        <div className="flex items-center gap-2">
+                          <code className="text-[13px] font-mono text-foreground bg-muted px-2 py-1 rounded" data-testid="text-password">
+                            {showPassword ? credentials.password : '••••••••'}
+                          </code>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => setShowPassword(!showPassword)}
+                            data-testid="button-toggle-password"
+                          >
+                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </Button>
+                        </div>
+                      </div>
+                      <Button
+                        variant="outline"
+                        className="w-full h-11 mt-2"
+                        onClick={handleCopyConnectionUrl}
+                        data-testid="button-copy-connection-url"
+                      >
+                        <Copy className="h-4 w-4 mr-2" />
+                        Copy Connection URL
+                      </Button>
+                    </div>
+                  ) : (
+                    <p className="text-[13px] text-muted-foreground">Unable to load credentials</p>
+                  )}
+                </div>
+
+                <div className="border border-border rounded-lg p-4 space-y-3">
+                  <h5 className="font-medium text-foreground flex items-center gap-2 text-[15px]">
+                    <HardDrive className="h-4 w-4" />
+                    Storage
+                  </h5>
+                  <div className="flex items-center justify-between text-[13px]">
+                    <span className="text-muted-foreground">Used</span>
+                    <span className="text-foreground" data-testid="text-storage-usage">
+                      {databaseInfo.storageUsedMb?.toFixed(1) || 0} / {databaseInfo.storageLimitMb || 0} MB
+                    </span>
+                  </div>
+                  <Progress value={storagePercentage} className="h-2" data-testid="progress-storage" />
+                </div>
+
+                <div className="border border-border rounded-lg p-4 space-y-3">
+                  <h5 className="font-medium text-foreground flex items-center gap-2 text-[15px]">
+                    <Users className="h-4 w-4" />
+                    Connections
+                  </h5>
+                  <div className="flex items-center justify-between text-[13px]">
+                    <span className="text-muted-foreground">Active</span>
+                    <span className="text-foreground" data-testid="text-connection-count">
+                      {databaseInfo.connectionCount || 0} / {databaseInfo.maxConnections || 0}
+                    </span>
+                  </div>
+                  <Progress value={connectionPercentage} className="h-2" data-testid="progress-connections" />
+                </div>
+
+                {databaseInfo.lastBackupAt && (
+                  <div className="border border-border rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-[13px] text-muted-foreground">Last Backup</span>
+                      </div>
+                      <span className="text-[13px] text-foreground" data-testid="text-last-backup">
+                        {new Date(databaseInfo.lastBackupAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="destructive"
+                      className="w-full h-11"
+                      data-testid="button-delete-database"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete Database
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete Database?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action cannot be undone. All data will be permanently deleted.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel data-testid="button-cancel-delete">Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => deleteMutation.mutate()}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        data-testid="button-confirm-delete"
+                      >
+                        {deleteMutation.isPending ? (
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        ) : (
+                          <Trash2 className="h-4 w-4 mr-2" />
+                        )}
+                        Delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                <div className="text-center py-8">
+                  <Database className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
+                  <h4 className="text-[17px] font-medium text-foreground mb-2">No Database</h4>
+                  <p className="text-[15px] text-muted-foreground max-w-[280px] mx-auto">
+                    Provision a dedicated PostgreSQL database for your project
+                  </p>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-[15px] font-medium text-foreground mb-2 block">Plan</label>
+                    <Select value={selectedPlan} onValueChange={setSelectedPlan}>
+                      <SelectTrigger className="h-11" data-testid="select-plan">
+                        <SelectValue placeholder="Select a plan" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {PLAN_OPTIONS.map((plan) => (
+                          <SelectItem key={plan.value} value={plan.value} data-testid={`option-plan-${plan.value}`}>
+                            {plan.label} ({plan.storage})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <label className="text-[15px] font-medium text-foreground mb-2 block">Region</label>
+                    <Select value={selectedRegion} onValueChange={setSelectedRegion}>
+                      <SelectTrigger className="h-11" data-testid="select-region">
+                        <SelectValue placeholder="Select a region" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {REGION_OPTIONS.map((region) => (
+                          <SelectItem key={region.value} value={region.value} data-testid={`option-region-${region.value}`}>
+                            {region.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <Button
+                    className="w-full h-11"
+                    onClick={handleProvision}
+                    disabled={provisionMutation.isPending}
+                    data-testid="button-provision-database"
+                  >
+                    {provisionMutation.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : (
+                      <Database className="h-4 w-4 mr-2" />
+                    )}
+                    Provision Database
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {activeTab === 'tables' && (
           <div className="p-4 space-y-3">
             {tablesLoading && <TableSkeleton />}
@@ -460,7 +885,6 @@ export function MobileDatabasePanel({ projectId, className }: MobileDatabasePane
         )}
       </ScrollArea>
 
-      {/* Bottom Action Bar - Pagination */}
       {activeTab === 'data' && tableData && (tableData.pagination.hasNextPage || tableData.pagination.hasPrevPage) && (
         <div
           className="border-t border-border bg-card p-4 flex items-center justify-between"
