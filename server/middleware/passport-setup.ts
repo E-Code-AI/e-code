@@ -9,7 +9,7 @@ import { Application } from "express";
 import session from "express-session";
 import { getStorage, sessionStore } from "../storage";
 import { User } from "@shared/schema";
-import bcrypt from "bcrypt";
+import bcrypt from "../utils/bcrypt-compat";
 import { sessionSecretRotation } from "../auth/session-rotation";
 
 export function setupPassportAuth(app: Application) {

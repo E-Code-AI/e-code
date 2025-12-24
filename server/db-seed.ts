@@ -1,4 +1,4 @@
-import bcrypt from "bcrypt";
+import bcrypt from "./utils/bcrypt-compat";
 import crypto from "crypto";
 import { storage } from "./storage";
 import { createLogger } from './utils/logger';
