@@ -4,38 +4,15 @@ export default {
   darkMode: ["class"],
   content: ["./client/index.html", "./client/src/**/*.{js,jsx,ts,tsx}"],
   
-  // Safelist dynamic classes that might be purged in production
-  // These are classes generated dynamically via template literals or conditionals
+  // Safelist - MINIMAL set for truly dynamic classes only
+  // Most colors are now semantic (status-success, status-critical, etc.)
   safelist: [
     // Animation states
     'animate-spin', 'animate-pulse', 'animate-bounce',
-    
-    // Dynamic sizing/positioning used in components
-    'w-1', 'w-2', 'w-3', 'w-4', 'h-1', 'h-2', 'h-3', 'h-4',
-    'rounded-full', 'rounded-lg', 'rounded-md',
-    
-    // Comprehensive color patterns for all dynamic color usage
-    // Covers: green, red, yellow, orange, blue, purple, gray, cyan, pink, violet, emerald, amber, indigo, teal, rose, lime, sky, slate, zinc
-    { 
-      pattern: /bg-(green|red|yellow|orange|blue|purple|gray|cyan|pink|violet|emerald|amber|indigo|teal|rose|lime|sky|slate|zinc)-(50|100|200|300|400|500|600|700|800|900)/,
-      variants: ['dark', 'hover', 'dark:hover']
-    },
-    { 
-      pattern: /bg-(green|red|yellow|orange|blue|purple|gray|cyan|pink|violet|emerald|amber|indigo|teal|rose|lime|sky|slate|zinc)-(500|600|700|800|900)\/(10|20|30|40|50)/,
-      variants: ['dark']
-    },
-    { 
-      pattern: /text-(green|red|yellow|orange|blue|purple|gray|cyan|pink|violet|emerald|amber|indigo|teal|rose|lime|sky|slate|zinc)-(400|500|600|700)/,
-      variants: ['dark', 'hover', 'dark:hover']
-    },
-    { 
-      pattern: /border-(green|red|yellow|orange|blue|purple|gray|cyan|pink|violet|emerald|amber|indigo|teal|rose)-(200|300|400|500)/,
-      variants: ['dark', 'hover']
-    },
-    {
-      pattern: /ring-(green|red|yellow|orange|blue|purple|gray|cyan|pink|violet|emerald|amber)-(400|500|600)/,
-      variants: ['focus', 'dark:focus']
-    },
+    // Essential status colors only (used dynamically in runtime)
+    'bg-green-500', 'bg-red-500', 'bg-yellow-500', 'bg-blue-500',
+    'text-green-500', 'text-red-500', 'text-yellow-500', 'text-blue-500',
+    'dark:bg-green-600', 'dark:bg-red-600', 'dark:text-green-400', 'dark:text-red-400',
   ],
   
   theme: {
