@@ -760,7 +760,31 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
             </div>
             {sqlError && (
               <div className="mt-2 p-2 bg-red-500/10 border border-red-500/30 rounded text-red-500 text-xs" data-testid="sql-error">
-                {sqlError}
+                <div>{sqlError}</div>
+                {sqlError.includes('not provisioned') && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="mt-2"
+                    onClick={() => provisionMutation.mutate({ plan: 'free', region: 'us-east-1' })}
+                    disabled={provisionMutation.isPending}
+                  >
+                    {provisionMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
+                    Provision Database
+                  </Button>
+                )}
+                {sqlError.includes('not available') && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="mt-2"
+                    onClick={() => executeSqlMutation.mutate(sqlQuery)}
+                    disabled={executeSqlMutation.isPending}
+                  >
+                    {executeSqlMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
+                    Retry
+                  </Button>
+                )}
               </div>
             )}
             {sqlResults && (

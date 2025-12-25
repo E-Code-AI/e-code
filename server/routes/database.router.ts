@@ -982,6 +982,23 @@ databaseRouter.post('/project/:projectId/sql/execute', async (req: Request, res:
       }
     }
 
+    // Check if database is provisioned and running first
+    const dbInfo = await projectDatabaseService.getDatabaseInfo(projectId);
+    if (!dbInfo || !dbInfo.provisioned) {
+      return res.status(400).json({ 
+        error: 'Database not provisioned. Please provision a database first.',
+        needsProvisioning: true
+      });
+    }
+    
+    if (dbInfo.status !== 'running') {
+      return res.status(503).json({ 
+        error: `Database is not available (status: ${dbInfo.status}). Please wait for provisioning to complete or retry.`,
+        status: dbInfo.status,
+        retryable: dbInfo.status === 'provisioning'
+      });
+    }
+
     const startTime = Date.now();
     const result = await projectDatabaseService.executeQuery(projectId, query);
     const executionTime = Date.now() - startTime;
