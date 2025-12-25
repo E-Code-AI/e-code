@@ -14,6 +14,8 @@ import { ReplitDatabasePanel } from '../editor/ReplitDatabasePanel';
 import { ReplitPackagesPanel } from '../editor/ReplitPackagesPanel';
 import { ReplitHistoryPanel } from '../editor/ReplitHistoryPanel';
 import { ReplitSecretsPanel } from '../editor/ReplitSecretsPanel';
+import { ShellPanel } from '../editor/ShellPanel';
+import { AppStoragePanel } from '../editor/AppStoragePanel';
 import { ReplitProblemsPanel } from '../editor/ReplitProblemsPanel';
 import { ReplitOutputPanel } from '../editor/ReplitOutputPanel';
 import { ReplitStatusBar } from '../editor/ReplitStatusBar';
@@ -137,6 +139,10 @@ export function SplitsEditorLayout({
         return <ReplitHistoryPanel projectId={projectId} />;
       case 'secrets':
         return <ReplitSecretsPanel projectId={projectId} />;
+      case 'shell':
+        return <ShellPanel projectId={projectId || ''} />;
+      case 'storage':
+        return <AppStoragePanel projectId={projectId || ''} />;
       case 'agent':
         return <ReplitAgentPanelV3 projectId={projectId || '1'} className="h-full" />;
       case 'settings':

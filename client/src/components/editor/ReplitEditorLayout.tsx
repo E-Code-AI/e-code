@@ -26,6 +26,8 @@ import { ReplitSecretsPanel } from './ReplitSecretsPanel';
 import { ReplitThemesPanel } from './ReplitThemesPanel';
 import { ReplitDebuggerPanel } from './ReplitDebuggerPanel';
 import { ReplitHistoryPanel } from './ReplitHistoryPanel';
+import { ShellPanel } from './ShellPanel';
+import { AppStoragePanel } from './AppStoragePanel';
 
 const ReplitTerminalPanel = React.lazy(() => 
   import('./ReplitTerminalPanel').then(module => ({ default: module.ReplitTerminalPanel }))
@@ -206,6 +208,10 @@ export function ReplitEditorLayout({
         );
       case 'secrets':
         return <ReplitSecretsPanel projectId={projectId} />;
+      case 'shell':
+        return <ShellPanel projectId={projectId || ''} />;
+      case 'storage':
+        return <AppStoragePanel projectId={projectId || ''} />;
       case 'themes':
         return <ReplitThemesPanel projectId={projectId} />;
       case 'history':

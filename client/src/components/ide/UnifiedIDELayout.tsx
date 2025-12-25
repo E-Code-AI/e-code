@@ -86,6 +86,8 @@ const ReplitSettingsPanel = lazy(() => import('@/components/editor/ReplitSetting
 const WorkflowsPanel = lazy(() => import('@/components/ide/WorkflowsPanel').then(mod => ({ default: mod.WorkflowsPanel })));
 const ExtensionsMarketplace = lazy(() => import('@/components/ExtensionsMarketplace').then(mod => ({ default: mod.ExtensionsMarketplace })));
 const VisualEditorPanel = lazy(() => import('@/components/ide/VisualEditorPanel').then(mod => ({ default: mod.VisualEditorPanel })));
+const ShellPanel = lazy(() => import('@/components/editor/ShellPanel').then(mod => ({ default: mod.ShellPanel })));
+const AppStoragePanel = lazy(() => import('@/components/editor/AppStoragePanel').then(mod => ({ default: mod.AppStoragePanel })));
 
 import { ShortcutHint, ShortcutTester } from '@/components/utilities';
 import { useAutonomousBuildStore } from '@/stores/autonomousBuildStore';
@@ -654,6 +656,18 @@ function UnifiedIDELayout({
         return (
           <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Database..." /></div>}>
             <DatabasePanel projectId={projectId} />
+          </Suspense>
+        );
+      case 'shell':
+        return (
+          <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Shell..." /></div>}>
+            <ShellPanel projectId={projectId} />
+          </Suspense>
+        );
+      case 'storage':
+        return (
+          <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Storage..." /></div>}>
+            <AppStoragePanel projectId={projectId} />
           </Suspense>
         );
       case 'terminal':
