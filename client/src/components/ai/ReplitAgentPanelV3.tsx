@@ -385,6 +385,10 @@ export function ReplitAgentPanelV3({
   const [agentMode, setAgentMode] = useState<AgentMode>('build');
   const [autonomySessionId, setAutonomySessionId] = useState<string | null>(null);
   
+  // ✅ FIX (Dec 25, 2025): Track bootstrap failure to exit loading state
+  // If conversation bootstrap fails, don't block the UI forever
+  const [bootstrapFailed, setBootstrapFailed] = useState(false);
+  
   // Zustand store for message persistence across tab switches
   const { 
     getMessages, 
@@ -643,15 +647,35 @@ export function ReplitAgentPanelV3({
         setAgentMode(response.agentMode);
       } catch (error) {
         console.error('Failed to bootstrap conversation:', error);
+        // ✅ FIX (Dec 25, 2025): Set bootstrapFailed to exit loading state
+        setBootstrapFailed(true);
         toast({
           title: "Conversation Setup Failed",
-          description: "Could not initialize agent conversation",
+          description: "Could not initialize agent conversation. You can still chat.",
           variant: "destructive"
         });
       }
     };
 
-    bootstrapConversation();
+    // Track if bootstrap completed to avoid race with timeout
+    let bootstrapCompleted = false;
+    
+    bootstrapConversation().then(() => {
+      bootstrapCompleted = true;
+    }).catch(() => {
+      bootstrapCompleted = true; // Error was handled in try/catch
+    });
+    
+    // ✅ FIX (Dec 25, 2025): Timeout fallback - exit loading after 15 seconds max
+    // This prevents the UI from being stuck forever if API is slow/down
+    const timeoutId = setTimeout(() => {
+      if (!bootstrapCompleted) {
+        console.warn('[ReplitAgentPanelV3] Bootstrap timeout - allowing UI interaction');
+        setBootstrapFailed(true);
+      }
+    }, 15000);
+    
+    return () => clearTimeout(timeoutId);
   }, [projectId, toast, migrateMessages]);
 
   // Track if initial sync from backend has been completed for this conversation
@@ -1940,7 +1964,8 @@ export function ReplitAgentPanelV3({
 
   // ✅ FIX (Dec 19, 2025): Unified loading state during initialization
   // Show single loading indicator instead of multiple spinners when bootstrapping
-  const isInitializing = isBootstrapping && !conversationId;
+  // ✅ FIX (Dec 25, 2025): Exit loading state if bootstrap failed or timed out
+  const isInitializing = isBootstrapping && !conversationId && !bootstrapFailed;
   
   if (isInitializing && isCompactMode) {
     return (
