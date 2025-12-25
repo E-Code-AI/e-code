@@ -84,6 +84,7 @@ import sendgridWebhooksRouter from './webhooks-sendgrid.router';
 import logsRouter from './logs.router';
 import effortRouter from './effort.router';
 import secretsRouter from './secrets.router';
+import projectShellRouter from './shell.router';
 
 export class MainRouter {
   private authRouter: AuthRouter;
@@ -343,6 +344,9 @@ export class MainRouter {
 
     // Secrets routes (Per-project secrets management - Replit-style)
     app.use('/api/projects/:projectId/secrets', tierRateLimiters.api, secretsRouter);
+
+    // Per-project Shell routes (Create/manage shell sessions per project)
+    app.use('/api/projects', tierRateLimiters.api, projectShellRouter);
 
     // Multi-Device Sync routes (Workspace state, preferences, devices)
     app.use('/api/sync', tierRateLimiters.api, syncRouter);
