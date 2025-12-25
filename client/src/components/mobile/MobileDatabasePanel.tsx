@@ -532,23 +532,23 @@ export function MobileDatabasePanel({ projectId, className }: MobileDatabasePane
         )}
       </div>
 
-      <div className="flex border-b border-border">
+      <div className="flex border-b border-border overflow-x-auto">
         <button
           onClick={() => setActiveTab('provision')}
           className={cn(
-            "flex-1 h-11 text-[15px] font-medium border-b-2 transition-colors",
+            "flex-1 min-w-0 h-10 text-[13px] font-medium border-b-2 transition-colors px-1",
             activeTab === 'provision'
               ? "border-primary text-primary"
               : "border-transparent text-muted-foreground hover:text-foreground"
           )}
           data-testid="tab-provision"
         >
-          Provision
+          DB
         </button>
         <button
           onClick={() => setActiveTab('tables')}
           className={cn(
-            "flex-1 h-11 text-[15px] font-medium border-b-2 transition-colors",
+            "flex-1 min-w-0 h-10 text-[13px] font-medium border-b-2 transition-colors px-1",
             activeTab === 'tables'
               ? "border-primary text-primary"
               : "border-transparent text-muted-foreground hover:text-foreground"
@@ -561,7 +561,7 @@ export function MobileDatabasePanel({ projectId, className }: MobileDatabasePane
           onClick={() => setActiveTab('data')}
           disabled={!selectedTable}
           className={cn(
-            "flex-1 h-11 text-[15px] font-medium border-b-2 transition-colors",
+            "flex-1 min-w-0 h-10 text-[13px] font-medium border-b-2 transition-colors px-1",
             activeTab === 'data'
               ? "border-primary text-primary"
               : "border-transparent text-muted-foreground hover:text-foreground",
@@ -575,7 +575,7 @@ export function MobileDatabasePanel({ projectId, className }: MobileDatabasePane
           onClick={() => setActiveTab('backups')}
           disabled={!databaseInfo?.provisioned}
           className={cn(
-            "flex-1 h-11 text-[15px] font-medium border-b-2 transition-colors",
+            "flex-1 min-w-0 h-10 text-[13px] font-medium border-b-2 transition-colors px-1",
             activeTab === 'backups'
               ? "border-primary text-primary"
               : "border-transparent text-muted-foreground hover:text-foreground",
