@@ -82,6 +82,7 @@ import rollbackRouter from "./rollback.router";
 import { replitdbRouter } from "./replitdb.router";
 import sendgridWebhooksRouter from './webhooks-sendgrid.router';
 import logsRouter from './logs.router';
+import effortRouter from './effort.router';
 
 export class MainRouter {
   private authRouter: AuthRouter;
@@ -350,6 +351,9 @@ export class MainRouter {
 
     // Bounties Marketplace routes (Stripe Connect integration)
     app.use('/api/bounties', tierRateLimiters.api, bountiesRouter);
+
+    // Effort pricing/usage tracking routes
+    app.use('/api/effort', tierRateLimiters.api, effortRouter);
 
     // Agent Grid routes (Phase 2 - AG Grid Dashboard)
     app.use('/api/agent-grid', tierRateLimiters.api, agentGridRouter);

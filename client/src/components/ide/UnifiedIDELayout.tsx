@@ -72,7 +72,7 @@ const MobileTabSwitcher = lazy(() => import('@/components/mobile/MobileTabSwitch
 const CommandPalette = lazy(() => import('@/components/CommandPalette').then(mod => ({ default: mod.CommandPalette })));
 const GlobalSearch = lazy(() => import('@/components/GlobalSearch').then(mod => ({ default: mod.GlobalSearch })));
 const CollaborationPanel = lazy(() => import('@/components/CollaborationPanel').then(mod => ({ default: mod.CollaborationPanel })));
-const ReplitDB = lazy(() => import('@/components/ReplitDB').then(mod => ({ default: mod.ReplitDB })));
+const DatabasePanel = lazy(() => import('@/components/ide/DatabasePanel').then(mod => ({ default: mod.DatabasePanel })));
 // ✅ FIX (Dec 11, 2025): Use default export for simpler lazy loading
 const AutonomousWorkspaceViewer = lazy(() => import('@/components/ide/AutonomousWorkspaceViewer'));
 
@@ -653,7 +653,7 @@ function UnifiedIDELayout({
       case 'database':
         return (
           <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Database..." /></div>}>
-            <ReplitDB projectId={parseInt(projectId, 10)} />
+            <DatabasePanel projectId={projectId} />
           </Suspense>
         );
       case 'terminal':
@@ -932,7 +932,7 @@ function UnifiedIDELayout({
     if (currentTab.id === 'database' || currentTab.id === 'database-browser') {
       return (
         <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Database..." /></div>}>
-          <ReplitDB projectId={parseInt(projectId, 10)} />
+          <DatabasePanel projectId={projectId} />
         </Suspense>
       );
     }
