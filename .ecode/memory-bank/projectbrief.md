@@ -1,7 +1,7 @@
 # Project Brief
 
 ## Overview
-Project from Template #132
+AutoDB-GCnhgH
 
 ## Core Requirements
 [To be extracted from requirements]

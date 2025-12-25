@@ -96,3 +96,12 @@ The platform supports two deployment modes: `single-vm` (default, typically for 
 - **WebSocket Message Size:** 1MB limit enforced in agent-websocket-service.ts to prevent memory exhaustion attacks
 - **Docker Entrypoint:** Fails fast on migration errors (exit 1) instead of continuing with invalid schema
 - **Android Haptics:** Uses Vibration API fallback when expo-haptics unavailable (iOS uses expo-haptics)
+- **Per-Project Database Provisioning:** Schema+role isolation model with security hardening:
+  - Each project gets unique PostgreSQL role (`proj_user_{projectId}`) with random 32-char password
+  - Each project gets dedicated schema (`proj_{projectId}`) owned by its role
+  - PUBLIC privileges revoked on public schema to prevent cross-tenant access
+  - Role restrictions: NOSUPERUSER, NOCREATEDB, NOCREATEROLE
+  - Identifiers/passwords escaped via `escapeIdentifier()` and `escapePassword()` to prevent SQL injection
+  - Connection URLs use `encodeURIComponent()` for safe URL encoding
+  - Credentials encrypted with AES-256-CBC before storage
+  - Files: `server/services/providers/local.provider.ts`, `server/services/project-database-provisioning.service.ts`

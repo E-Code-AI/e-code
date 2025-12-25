@@ -40,6 +40,15 @@ export class LocalProvider implements IDatabaseProvider {
     return name.replace(/[^a-zA-Z0-9_]/g, '_');
   }
   
+  private escapeIdentifier(identifier: string): string {
+    const sanitized = this.sanitizeIdentifier(identifier);
+    return `"${sanitized.replace(/"/g, '""')}"`;
+  }
+  
+  private escapePassword(password: string): string {
+    return password.replace(/'/g, "''");
+  }
+  
   async provision(
     projectId: number,
     options: ProvisioningOptions
@@ -47,79 +56,138 @@ export class LocalProvider implements IDatabaseProvider {
     const plan = (options.plan || 'free') as PlanType;
     const planLimits = PLAN_LIMITS[plan];
     
-    const host = process.env.PGHOST || 'localhost';
-    const port = parseInt(process.env.PGPORT || '5432');
-    const database = this.sanitizeIdentifier(`ecode_proj_${projectId}`);
-    const username = this.sanitizeIdentifier(`user_proj_${projectId}`);
-    const password = this.generatePassword();
+    const connectionUrl = process.env.DATABASE_URL || '';
     
-    logger.info(`Provisioning real local database for project ${projectId}`, { plan, database, username });
+    let host = process.env.PGHOST || 'localhost';
+    let port = parseInt(process.env.PGPORT || '5432');
+    let database = process.env.PGDATABASE || 'neondb';
+    
+    if (connectionUrl) {
+      try {
+        const url = new URL(connectionUrl);
+        host = url.hostname;
+        port = parseInt(url.port) || 5432;
+        database = url.pathname.replace('/', '') || database;
+      } catch (e) {
+        logger.warn('Failed to parse DATABASE_URL, using individual env vars');
+      }
+    }
+    
+    const schemaName = this.sanitizeIdentifier(`proj_${projectId}`);
+    const roleName = this.sanitizeIdentifier(`proj_user_${projectId}`);
+    const rolePassword = this.generatePassword();
+    
+    const escapedSchema = this.escapeIdentifier(schemaName);
+    const escapedRole = this.escapeIdentifier(roleName);
+    const escapedPassword = this.escapePassword(rolePassword);
+    
+    logger.info(`Provisioning schema-based database for project ${projectId}`, { 
+      plan, 
+      mode: 'schema-isolation',
+      schema: schemaName,
+      role: roleName
+    });
     
     try {
-      const checkDbResult = await db.execute(sql`
-        SELECT 1 FROM pg_database WHERE datname = ${database}
+      const checkRoleResult = await db.execute(sql`
+        SELECT 1 FROM pg_roles WHERE rolname = ${roleName}
       `);
-      const checkDb = extractRows(checkDbResult);
+      const roleExists = extractRows(checkRoleResult).length > 0;
       
-      if (checkDb.length === 0) {
-        await db.execute(sql.raw(`CREATE DATABASE "${database}"`));
-        logger.info(`Created database: ${database}`);
+      if (!roleExists) {
+        await db.execute(sql.raw(`CREATE ROLE ${escapedRole} WITH LOGIN PASSWORD '${escapedPassword}' NOSUPERUSER NOCREATEDB NOCREATEROLE`));
+        logger.info(`Created role: ${roleName}`);
       } else {
-        logger.info(`Database ${database} already exists`);
+        await db.execute(sql.raw(`ALTER ROLE ${escapedRole} WITH PASSWORD '${escapedPassword}'`));
+        logger.info(`Updated password for existing role: ${roleName}`);
       }
       
-      const checkUserResult = await db.execute(sql`
-        SELECT 1 FROM pg_roles WHERE rolname = ${username}
+      const checkSchemaResult = await db.execute(sql`
+        SELECT 1 FROM information_schema.schemata WHERE schema_name = ${schemaName}
       `);
-      const checkUser = extractRows(checkUserResult);
+      const schemaExists = extractRows(checkSchemaResult).length > 0;
       
-      if (checkUser.length === 0) {
-        await db.execute(sql.raw(`CREATE USER "${username}" WITH PASSWORD '${password}'`));
-        logger.info(`Created user: ${username}`);
+      if (!schemaExists) {
+        await db.execute(sql.raw(`CREATE SCHEMA ${escapedSchema} AUTHORIZATION ${escapedRole}`));
+        logger.info(`Created schema: ${schemaName}`);
       } else {
-        await db.execute(sql.raw(`ALTER USER "${username}" WITH PASSWORD '${password}'`));
-        logger.info(`Updated password for existing user: ${username}`);
+        await db.execute(sql.raw(`ALTER SCHEMA ${escapedSchema} OWNER TO ${escapedRole}`));
+        logger.info(`Updated schema ownership: ${schemaName}`);
       }
       
-      await db.execute(sql.raw(`GRANT ALL PRIVILEGES ON DATABASE "${database}" TO "${username}"`));
+      let publicRevokedGlobally = false;
+      try {
+        await db.execute(sql.raw(`REVOKE ALL ON SCHEMA public FROM PUBLIC`));
+        await db.execute(sql.raw(`REVOKE USAGE ON SCHEMA public FROM PUBLIC`));
+        await db.execute(sql.raw(`REVOKE CREATE ON SCHEMA public FROM PUBLIC`));
+        publicRevokedGlobally = true;
+        logger.info(`Revoked PUBLIC privileges on public schema (global revocation)`);
+      } catch (revokeErr: any) {
+        logger.warn(`Could not revoke PUBLIC privileges globally (requires schema owner): ${revokeErr.message}`);
+      }
       
-      await db.execute(sql.raw(`ALTER DATABASE "${database}" SET statement_timeout = '30s'`));
+      try {
+        await db.execute(sql.raw(`REVOKE ALL ON SCHEMA public FROM ${escapedRole}`));
+        await db.execute(sql.raw(`REVOKE USAGE ON SCHEMA public FROM ${escapedRole}`));
+        await db.execute(sql.raw(`REVOKE CREATE ON SCHEMA public FROM ${escapedRole}`));
+        logger.info(`Revoked public schema access from role: ${roleName}`);
+      } catch (roleRevokeErr: any) {
+        logger.warn(`Could not revoke public schema access from role: ${roleRevokeErr.message}`);
+      }
       
-      const storageLimitBytes = planLimits.storageMb * 1024 * 1024;
-      await db.execute(sql.raw(`
-        COMMENT ON DATABASE "${database}" IS 'E-Code project ${projectId} | Plan: ${plan} | Storage Limit: ${storageLimitBytes} bytes | Max Connections: ${planLimits.maxConnections}'
-      `));
+      if (!publicRevokedGlobally) {
+        logger.warn(`SECURITY: Per-project isolation may be incomplete - PUBLIC privileges on public schema could not be globally revoked. In production, ensure the provisioning service role owns the public schema or use separate databases per project.`);
+      }
       
-      logger.info(`Successfully provisioned local database for project ${projectId}`, {
-        database,
-        username,
+      await db.execute(sql.raw(`REVOKE ALL ON ALL TABLES IN SCHEMA public FROM ${escapedRole}`));
+      await db.execute(sql.raw(`REVOKE ALL ON ALL SEQUENCES IN SCHEMA public FROM ${escapedRole}`));
+      await db.execute(sql.raw(`REVOKE ALL ON ALL FUNCTIONS IN SCHEMA public FROM ${escapedRole}`));
+      
+      const escapedDatabase = this.escapeIdentifier(database);
+      try {
+        await db.execute(sql.raw(`GRANT CONNECT ON DATABASE ${escapedDatabase} TO ${escapedRole}`));
+      } catch (grantErr: any) {
+        logger.warn(`Could not grant CONNECT on database (may require superuser): ${grantErr.message}`);
+      }
+      await db.execute(sql.raw(`GRANT USAGE, CREATE ON SCHEMA ${escapedSchema} TO ${escapedRole}`));
+      await db.execute(sql.raw(`GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA ${escapedSchema} TO ${escapedRole}`));
+      await db.execute(sql.raw(`GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA ${escapedSchema} TO ${escapedRole}`));
+      await db.execute(sql.raw(`ALTER DEFAULT PRIVILEGES IN SCHEMA ${escapedSchema} GRANT ALL ON TABLES TO ${escapedRole}`));
+      await db.execute(sql.raw(`ALTER DEFAULT PRIVILEGES IN SCHEMA ${escapedSchema} GRANT ALL ON SEQUENCES TO ${escapedRole}`));
+      
+      await db.execute(sql.raw(`ALTER ROLE ${escapedRole} SET search_path TO ${escapedSchema}`));
+      
+      logger.info(`Successfully provisioned schema for project ${projectId}`, {
+        schema: schemaName,
+        role: roleName,
         plan,
         storageLimitMb: planLimits.storageMb,
         maxConnections: planLimits.maxConnections
       });
       
     } catch (error: any) {
-      logger.error(`Failed to provision local database for project ${projectId}`, { 
+      logger.error(`Failed to provision schema for project ${projectId}`, { 
         error: error.message,
-        database,
-        username 
+        schema: schemaName
       });
       throw new Error(`Database provisioning failed: ${error.message}`);
     }
     
-    const connectionUrl = `postgresql://${username}:${password}@${host}:${port}/${database}?sslmode=prefer`;
+    const projectConnectionUrl = `postgresql://${encodeURIComponent(roleName)}:${encodeURIComponent(rolePassword)}@${host}:${port}/${database}?sslmode=require`;
     
     return {
       projectId: String(projectId),
       host,
       port,
       database,
-      username,
-      password,
-      connectionUrl,
+      username: roleName,
+      password: rolePassword,
+      connectionUrl: projectConnectionUrl,
       metadata: {
         provider: 'local',
         plan,
+        mode: 'schema-isolation',
+        schema: schemaName,
         storageLimitMb: planLimits.storageMb,
         maxConnections: planLimits.maxConnections
       }
@@ -127,26 +195,23 @@ export class LocalProvider implements IDatabaseProvider {
   }
   
   async deprovision(databaseId: number): Promise<void> {
-    const database = this.sanitizeIdentifier(`ecode_proj_${databaseId}`);
-    const username = this.sanitizeIdentifier(`user_proj_${databaseId}`);
+    const schemaName = this.sanitizeIdentifier(`proj_${databaseId}`);
+    const roleName = this.sanitizeIdentifier(`proj_user_${databaseId}`);
     
-    logger.info(`Deprovisioning local database for project ${databaseId}`, { database, username });
+    const escapedSchema = this.escapeIdentifier(schemaName);
+    const escapedRole = this.escapeIdentifier(roleName);
+    
+    logger.info(`Deprovisioning schema for project ${databaseId}`, { schema: schemaName, role: roleName });
     
     try {
-      await db.execute(sql.raw(`
-        SELECT pg_terminate_backend(pid) 
-        FROM pg_stat_activity 
-        WHERE datname = '${database}' AND pid <> pg_backend_pid()
-      `));
+      await db.execute(sql.raw(`DROP SCHEMA IF EXISTS ${escapedSchema} CASCADE`));
+      logger.info(`Dropped schema: ${schemaName}`);
       
-      await db.execute(sql.raw(`DROP DATABASE IF EXISTS "${database}"`));
-      logger.info(`Dropped database: ${database}`);
-      
-      await db.execute(sql.raw(`DROP USER IF EXISTS "${username}"`));
-      logger.info(`Dropped user: ${username}`);
+      await db.execute(sql.raw(`DROP ROLE IF EXISTS ${escapedRole}`));
+      logger.info(`Dropped role: ${roleName}`);
       
     } catch (error: any) {
-      logger.error(`Failed to deprovision local database for project ${databaseId}`, { 
+      logger.error(`Failed to deprovision schema for project ${databaseId}`, { 
         error: error.message 
       });
       throw new Error(`Database deprovisioning failed: ${error.message}`);
@@ -154,89 +219,107 @@ export class LocalProvider implements IDatabaseProvider {
   }
   
   async suspend(databaseId: number): Promise<void> {
-    const database = this.sanitizeIdentifier(`ecode_proj_${databaseId}`);
-    const username = this.sanitizeIdentifier(`user_proj_${databaseId}`);
+    const roleName = this.sanitizeIdentifier(`proj_user_${databaseId}`);
+    const escapedRole = this.escapeIdentifier(roleName);
     
-    logger.info(`Suspending local database for project ${databaseId}`);
+    logger.info(`Suspending database access for project ${databaseId}`);
     
     try {
-      await db.execute(sql.raw(`
-        SELECT pg_terminate_backend(pid) 
-        FROM pg_stat_activity 
-        WHERE datname = '${database}' AND pid <> pg_backend_pid()
-      `));
-      
-      await db.execute(sql.raw(`REVOKE CONNECT ON DATABASE "${database}" FROM "${username}"`));
-      logger.info(`Suspended database: ${database}`);
+      await db.execute(sql.raw(`ALTER ROLE ${escapedRole} NOLOGIN`));
+      logger.info(`Suspended role: ${roleName}`);
     } catch (error: any) {
-      logger.error(`Failed to suspend database ${databaseId}`, { error: error.message });
+      logger.warn(`Failed to suspend role ${roleName}`, { error: error.message });
     }
   }
   
   async resume(databaseId: number): Promise<void> {
-    const database = this.sanitizeIdentifier(`ecode_proj_${databaseId}`);
-    const username = this.sanitizeIdentifier(`user_proj_${databaseId}`);
+    const roleName = this.sanitizeIdentifier(`proj_user_${databaseId}`);
+    const escapedRole = this.escapeIdentifier(roleName);
     
-    logger.info(`Resuming local database for project ${databaseId}`);
+    logger.info(`Resuming database access for project ${databaseId}`);
     
     try {
-      await db.execute(sql.raw(`GRANT CONNECT ON DATABASE "${database}" TO "${username}"`));
-      logger.info(`Resumed database: ${database}`);
+      await db.execute(sql.raw(`ALTER ROLE ${escapedRole} LOGIN`));
+      logger.info(`Resumed role: ${roleName}`);
     } catch (error: any) {
-      logger.error(`Failed to resume database ${databaseId}`, { error: error.message });
+      logger.warn(`Failed to resume role ${roleName}`, { error: error.message });
     }
   }
   
   async rotateCredentials(databaseId: number): Promise<DatabaseCredentials> {
-    const newPassword = this.generatePassword();
-    const host = process.env.PGHOST || 'localhost';
-    const port = parseInt(process.env.PGPORT || '5432');
-    const database = this.sanitizeIdentifier(`ecode_proj_${databaseId}`);
-    const username = this.sanitizeIdentifier(`user_proj_${databaseId}`);
+    const connectionUrl = process.env.DATABASE_URL || '';
     
-    logger.info(`Rotating credentials for local database ${databaseId}`);
+    let host = process.env.PGHOST || 'localhost';
+    let port = parseInt(process.env.PGPORT || '5432');
+    let database = process.env.PGDATABASE || 'neondb';
+    
+    if (connectionUrl) {
+      try {
+        const url = new URL(connectionUrl);
+        host = url.hostname;
+        port = parseInt(url.port) || 5432;
+        database = url.pathname.replace('/', '') || database;
+      } catch (e) {
+        logger.warn('Failed to parse DATABASE_URL for credential rotation');
+      }
+    }
+    
+    const schemaName = this.sanitizeIdentifier(`proj_${databaseId}`);
+    const roleName = this.sanitizeIdentifier(`proj_user_${databaseId}`);
+    const newPassword = this.generatePassword();
+    
+    const escapedRole = this.escapeIdentifier(roleName);
+    const escapedPassword = this.escapePassword(newPassword);
+    
+    logger.info(`Rotating credentials for project ${databaseId}`);
     
     try {
-      await db.execute(sql.raw(`ALTER USER "${username}" WITH PASSWORD '${newPassword}'`));
-      logger.info(`Rotated credentials for user: ${username}`);
+      await db.execute(sql.raw(`ALTER ROLE ${escapedRole} WITH PASSWORD '${escapedPassword}'`));
+      logger.info(`Rotated credentials for role: ${roleName}`);
     } catch (error: any) {
-      logger.error(`Failed to rotate credentials for database ${databaseId}`, { error: error.message });
+      logger.error(`Failed to rotate credentials for project ${databaseId}`, { error: error.message });
       throw new Error(`Credential rotation failed: ${error.message}`);
     }
+    
+    const projectConnectionUrl = `postgresql://${encodeURIComponent(roleName)}:${encodeURIComponent(newPassword)}@${host}:${port}/${database}?sslmode=require`;
     
     return {
       host,
       port,
       database,
-      username,
+      username: roleName,
       password: newPassword,
-      connectionUrl: `postgresql://${username}:${newPassword}@${host}:${port}/${database}?sslmode=prefer`,
-      sslEnabled: false
+      connectionUrl: projectConnectionUrl,
+      sslEnabled: true
     };
   }
   
   async getMetrics(databaseId: number): Promise<DatabaseMetrics> {
-    const database = this.sanitizeIdentifier(`ecode_proj_${databaseId}`);
+    const schemaName = this.sanitizeIdentifier(`proj_${databaseId}`);
+    const roleName = this.sanitizeIdentifier(`proj_user_${databaseId}`);
+    const database = process.env.PGDATABASE || 'neondb';
     
-    logger.info(`Getting metrics for local database ${databaseId}`);
+    logger.info(`Getting metrics for project ${databaseId}`, { schema: schemaName });
     
     try {
       const sizeRows = extractRows(await db.execute(sql`
-        SELECT pg_database_size(${database}) as size_bytes
+        SELECT COALESCE(SUM(pg_total_relation_size(quote_ident(schemaname) || '.' || quote_ident(tablename))), 0) as size_bytes
+        FROM pg_tables 
+        WHERE schemaname = ${schemaName}
       `));
-      const storageUsedBytes = (sizeRows[0]?.size_bytes as number) || 0;
+      const storageUsedBytes = parseInt((sizeRows[0]?.size_bytes as string) || '0');
       
       const connRows = extractRows(await db.execute(sql`
         SELECT count(*) as conn_count 
         FROM pg_stat_activity 
-        WHERE datname = ${database}
+        WHERE datname = ${database} AND usename = ${roleName}
       `));
       const connectionCount = parseInt((connRows[0]?.conn_count as string) || '0');
       
       const queryRows = extractRows(await db.execute(sql`
         SELECT count(*) as active_count 
         FROM pg_stat_activity 
-        WHERE datname = ${database} AND state = 'active'
+        WHERE datname = ${database} AND usename = ${roleName} AND state = 'active'
       `));
       const activeQueries = parseInt((queryRows[0]?.active_count as string) || '0');
       
@@ -246,7 +329,7 @@ export class LocalProvider implements IDatabaseProvider {
         activeQueries
       };
     } catch (error: any) {
-      logger.warn(`Failed to get metrics for database ${databaseId}`, { error: error.message });
+      logger.warn(`Failed to get metrics for project ${databaseId}`, { error: error.message });
       return {
         storageUsedMb: 0,
         connectionCount: 0,
@@ -256,17 +339,19 @@ export class LocalProvider implements IDatabaseProvider {
   }
   
   async createBackup(databaseId: number, options?: BackupOptions): Promise<BackupInfo> {
-    const database = this.sanitizeIdentifier(`ecode_proj_${databaseId}`);
+    const schemaName = this.sanitizeIdentifier(`proj_${databaseId}`);
     const backupName = options?.name || `backup-${Date.now()}`;
     const backupId = `local-${databaseId}-${Date.now()}`;
     
-    logger.info(`Creating local backup for database ${databaseId}`, { name: backupName, database });
+    logger.info(`Creating backup for project ${databaseId}`, { name: backupName, schema: schemaName });
     
     try {
       const sizeRows = extractRows(await db.execute(sql`
-        SELECT pg_database_size(${database}) as size_bytes
+        SELECT COALESCE(SUM(pg_total_relation_size(quote_ident(schemaname) || '.' || quote_ident(tablename))), 0) as size_bytes
+        FROM pg_tables 
+        WHERE schemaname = ${schemaName}
       `));
-      const sizeBytes = (sizeRows[0]?.size_bytes as number) || 0;
+      const sizeBytes = parseInt((sizeRows[0]?.size_bytes as string) || '0');
       
       return {
         id: backupId,
@@ -276,7 +361,7 @@ export class LocalProvider implements IDatabaseProvider {
         createdAt: new Date()
       };
     } catch (error: any) {
-      logger.error(`Failed to create backup for database ${databaseId}`, { error: error.message });
+      logger.error(`Failed to create backup for project ${databaseId}`, { error: error.message });
       return {
         id: backupId,
         name: backupName,
@@ -288,17 +373,17 @@ export class LocalProvider implements IDatabaseProvider {
   }
   
   async listBackups(databaseId: number): Promise<BackupInfo[]> {
-    logger.info(`Listing backups for local database ${databaseId}`);
+    logger.info(`Listing backups for project ${databaseId}`);
     return [];
   }
   
   async restoreBackup(databaseId: number, backupId: string): Promise<void> {
-    logger.info(`Restoring backup ${backupId} for local database ${databaseId}`);
-    logger.warn('Local backup restore requires pg_restore - operation logged but not executed');
+    logger.info(`Restoring backup ${backupId} for project ${databaseId}`);
+    logger.warn('Schema backup restore requires manual intervention - operation logged but not executed');
   }
   
   async deleteBackup(databaseId: number, backupId: string): Promise<void> {
-    logger.info(`Deleting backup ${backupId} for local database ${databaseId}`);
+    logger.info(`Deleting backup ${backupId} for project ${databaseId}`);
   }
   
   async isHealthy(): Promise<boolean> {
