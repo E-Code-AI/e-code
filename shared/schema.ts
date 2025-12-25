@@ -1387,6 +1387,10 @@ export const environmentVariables = pgTable('environment_variables', {
 ]);
 
 // Project Databases - Like Replit's per-project PostgreSQL provisioning
+// Database provider enum for enterprise multi-provider support
+export const databaseProviderEnum = pgEnum('database_provider', ['neon', 'cloudnativepg', 'supabase', 'local']);
+export const backupStatusEnum = pgEnum('backup_status', ['pending', 'running', 'completed', 'failed', 'expired']);
+
 export const projectDatabases = pgTable('project_databases', {
   id: serial('id').primaryKey(),
   projectId: integer('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }).unique(),
@@ -1395,7 +1399,16 @@ export const projectDatabases = pgTable('project_databases', {
   status: varchar('status').notNull().default('provisioning'), // provisioning, running, stopped, error, deleted
   region: varchar('region').notNull().default('us-east-1'),
   version: varchar('version').notNull().default('15'),
-  plan: varchar('plan').notNull().default('free'), // free, basic, standard, premium
+  plan: varchar('plan').notNull().default('free'), // free, starter, pro, enterprise
+  
+  // Provider tracking for enterprise multi-provider support
+  provider: varchar('provider').notNull().default('neon'), // neon, cloudnativepg, supabase, local
+  providerProjectId: varchar('provider_project_id'), // External provider project/branch ID
+  providerBranchId: varchar('provider_branch_id'), // Neon branch ID
+  providerEndpointId: varchar('provider_endpoint_id'), // Neon endpoint ID
+  providerMetadata: jsonb('provider_metadata'), // Additional provider-specific data
+  
+  // Connection details
   connectionUrl: text('connection_url'), // Encrypted DATABASE_URL
   host: varchar('host'),
   port: integer('port').default(5432),
@@ -1403,18 +1416,68 @@ export const projectDatabases = pgTable('project_databases', {
   username: varchar('username'),
   encryptedPassword: text('encrypted_password'),
   sslEnabled: boolean('ssl_enabled').default(true),
+  
+  // Resource limits and usage
   storageUsedMb: integer('storage_used_mb').default(0),
   storageLimitMb: integer('storage_limit_mb').default(500), // 500MB for free tier
   connectionCount: integer('connection_count').default(0),
   maxConnections: integer('max_connections').default(10),
+  
+  // Backup configuration
   autoBackup: boolean('auto_backup').default(true),
+  backupRetentionDays: integer('backup_retention_days').default(7), // 7d free, 14d starter, 30d pro, 90d enterprise
   lastBackupAt: timestamp('last_backup_at'),
+  
+  // Kubernetes operator fields (for CloudNativePG)
+  k8sNamespace: varchar('k8s_namespace'), // Kubernetes namespace for isolation
+  k8sClusterName: varchar('k8s_cluster_name'), // CloudNativePG Cluster CR name
+  
+  // Timestamps
   provisionedAt: timestamp('provisioned_at'),
+  suspendedAt: timestamp('suspended_at'), // For Neon auto-suspend
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 }, (table) => [
   index('project_databases_project_id_idx').on(table.projectId),
   index('project_databases_status_idx').on(table.status),
+  index('project_databases_provider_idx').on(table.provider),
+]);
+
+// Database backups table for automated backup infrastructure
+export const projectDatabaseBackups = pgTable('project_database_backups', {
+  id: serial('id').primaryKey(),
+  projectDatabaseId: integer('project_database_id').notNull().references(() => projectDatabases.id, { onDelete: 'cascade' }),
+  
+  // Backup identification
+  name: varchar('name').notNull(), // Human-readable backup name
+  providerBackupId: varchar('provider_backup_id'), // External backup ID (Neon snapshot, S3 key, etc.)
+  
+  // Backup type and status
+  backupType: varchar('backup_type').notNull().default('scheduled'), // scheduled, manual, pre_migration, pitr
+  status: varchar('status').notNull().default('pending'), // pending, running, completed, failed, expired
+  
+  // Storage details
+  sizeBytes: integer('size_bytes'),
+  storageLocation: text('storage_location'), // S3 URI or provider-specific location
+  
+  // Recovery metadata
+  restorePoint: timestamp('restore_point'), // Point-in-time for PITR
+  isIncremental: boolean('is_incremental').default(false),
+  parentBackupId: integer('parent_backup_id'), // For incremental chains
+  
+  // Lifecycle
+  initiatedBy: varchar('initiated_by').default('system'), // system, user, migration
+  expiresAt: timestamp('expires_at'), // Based on retention policy
+  completedAt: timestamp('completed_at'),
+  
+  // Error tracking
+  errorMessage: text('error_message'),
+  
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => [
+  index('project_database_backups_database_id_idx').on(table.projectDatabaseId),
+  index('project_database_backups_status_idx').on(table.status),
+  index('project_database_backups_expires_at_idx').on(table.expiresAt),
 ]);
 
 // Git Integration
@@ -1644,7 +1707,8 @@ export const insertAgentMessageSchema = createInsertSchema(agentMessages).omit({
 export const insertBuildExecutionSchema = createInsertSchema(buildExecutions).omit({ id: true, createdAt: true });
 export const insertSecretSchema = createInsertSchema(secrets).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertEnvironmentVariableSchema = createInsertSchema(environmentVariables).omit({ id: true, createdAt: true, updatedAt: true });
-export const insertProjectDatabaseSchema = createInsertSchema(projectDatabases).omit({ id: true, createdAt: true, updatedAt: true, provisionedAt: true, lastBackupAt: true });
+export const insertProjectDatabaseSchema = createInsertSchema(projectDatabases).omit({ id: true, createdAt: true, updatedAt: true, provisionedAt: true, lastBackupAt: true, suspendedAt: true });
+export const insertProjectDatabaseBackupSchema = createInsertSchema(projectDatabaseBackups).omit({ id: true, createdAt: true, completedAt: true });
 export const insertGitRepositorySchema = createInsertSchema(gitRepositories).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertGitCommitSchema = createInsertSchema(gitCommits).omit({ id: true, syncedAt: true });
 export const insertCustomDomainSchema = createInsertSchema(customDomains).omit({ id: true, createdAt: true, updatedAt: true });
@@ -1728,6 +1792,8 @@ export type InsertDeployment = z.infer<typeof insertDeploymentSchema>;
 
 export type ProjectDatabase = typeof projectDatabases.$inferSelect;
 export type InsertProjectDatabase = z.infer<typeof insertProjectDatabaseSchema>;
+export type ProjectDatabaseBackup = typeof projectDatabaseBackups.$inferSelect;
+export type InsertProjectDatabaseBackup = z.infer<typeof insertProjectDatabaseBackupSchema>;
 
 export type Comment = typeof comments.$inferSelect;
 export type InsertComment = z.infer<typeof insertCommentSchema>;

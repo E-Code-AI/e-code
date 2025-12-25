@@ -535,7 +535,10 @@ databaseRouter.get('/project/:projectId', async (req: Request, res: Response) =>
 const provisionSchema = z.object({
   type: z.enum(['postgresql', 'mysql']).optional().default('postgresql'),
   region: z.string().optional().default('us-east-1'),
-  plan: z.enum(['free', 'starter', 'pro', 'enterprise']).optional().default('free')
+  plan: z.enum(['free', 'starter', 'pro', 'enterprise']).optional().default('free'),
+  provider: z.enum(['neon', 'cloudnativepg', 'supabase', 'local']).optional(),
+  suspendTimeoutSeconds: z.number().optional(),
+  k8sNamespace: z.string().optional()
 });
 
 databaseRouter.post('/project/:projectId/provision', async (req: Request, res: Response) => {
@@ -567,13 +570,15 @@ databaseRouter.post('/project/:projectId/provision', async (req: Request, res: R
         status: database.status,
         region: database.region,
         plan: database.plan,
+        provider: database.provider,
         host: database.host,
         port: database.port,
         databaseName: database.database,
         username: database.username,
         sslEnabled: database.sslEnabled,
         storageLimitMb: database.storageLimitMb,
-        maxConnections: database.maxConnections
+        maxConnections: database.maxConnections,
+        backupRetentionDays: database.backupRetentionDays
       }
     });
   } catch (error: any) {
@@ -646,6 +651,299 @@ databaseRouter.delete('/project/:projectId', async (req: Request, res: Response)
   } catch (error: any) {
     console.error('[Database API] Delete database error:', error);
     return res.status(500).json({ error: error.message || 'Failed to delete database' });
+  }
+});
+
+/**
+ * Rotate database credentials
+ * POST /api/database/project/:projectId/rotate-credentials
+ * REQUIRES: Authentication + Project ownership
+ */
+databaseRouter.post('/project/:projectId/rotate-credentials', async (req: Request, res: Response) => {
+  try {
+    const projectId = parseInt(req.params.projectId);
+    if (isNaN(projectId)) {
+      return res.status(400).json({ error: 'Invalid project ID' });
+    }
+
+    if (!await checkProjectOwnership(req, res, projectId)) {
+      return;
+    }
+
+    const credentials = await projectDatabaseService.rotateCredentials(projectId);
+    if (!credentials) {
+      return res.status(404).json({ error: 'No database found for this project' });
+    }
+
+    return res.json({
+      success: true,
+      message: 'Credentials rotated successfully',
+      credentials: {
+        host: credentials.host,
+        port: credentials.port,
+        database: credentials.database,
+        username: credentials.username,
+        password: credentials.password,
+        connectionUrl: credentials.connectionUrl,
+        sslEnabled: credentials.sslEnabled
+      }
+    });
+  } catch (error: any) {
+    console.error('[Database API] Rotate credentials error:', error);
+    return res.status(500).json({ error: error.message || 'Failed to rotate credentials' });
+  }
+});
+
+/**
+ * Suspend database (for auto-suspend support)
+ * POST /api/database/project/:projectId/suspend
+ * REQUIRES: Authentication + Project ownership
+ */
+databaseRouter.post('/project/:projectId/suspend', async (req: Request, res: Response) => {
+  try {
+    const projectId = parseInt(req.params.projectId);
+    if (isNaN(projectId)) {
+      return res.status(400).json({ error: 'Invalid project ID' });
+    }
+
+    if (!await checkProjectOwnership(req, res, projectId)) {
+      return;
+    }
+
+    await projectDatabaseService.suspendDatabase(projectId);
+    return res.json({ success: true, message: 'Database suspended successfully' });
+  } catch (error: any) {
+    console.error('[Database API] Suspend database error:', error);
+    return res.status(500).json({ error: error.message || 'Failed to suspend database' });
+  }
+});
+
+/**
+ * Resume suspended database
+ * POST /api/database/project/:projectId/resume
+ * REQUIRES: Authentication + Project ownership
+ */
+databaseRouter.post('/project/:projectId/resume', async (req: Request, res: Response) => {
+  try {
+    const projectId = parseInt(req.params.projectId);
+    if (isNaN(projectId)) {
+      return res.status(400).json({ error: 'Invalid project ID' });
+    }
+
+    if (!await checkProjectOwnership(req, res, projectId)) {
+      return;
+    }
+
+    await projectDatabaseService.resumeDatabase(projectId);
+    return res.json({ success: true, message: 'Database resumed successfully' });
+  } catch (error: any) {
+    console.error('[Database API] Resume database error:', error);
+    return res.status(500).json({ error: error.message || 'Failed to resume database' });
+  }
+});
+
+/**
+ * Get database metrics
+ * GET /api/database/project/:projectId/metrics
+ * REQUIRES: Authentication + Project ownership
+ */
+databaseRouter.get('/project/:projectId/metrics', async (req: Request, res: Response) => {
+  try {
+    const projectId = parseInt(req.params.projectId);
+    if (isNaN(projectId)) {
+      return res.status(400).json({ error: 'Invalid project ID' });
+    }
+
+    if (!await checkProjectOwnership(req, res, projectId)) {
+      return;
+    }
+
+    const metrics = await projectDatabaseService.getMetrics(projectId);
+    if (!metrics) {
+      return res.status(404).json({ error: 'No database found for this project' });
+    }
+
+    return res.json({ metrics });
+  } catch (error: any) {
+    console.error('[Database API] Get metrics error:', error);
+    return res.status(500).json({ error: error.message || 'Failed to get database metrics' });
+  }
+});
+
+// ============ Backup Management Endpoints ============
+
+/**
+ * Create a backup for a project database
+ * POST /api/database/project/:projectId/backups
+ * REQUIRES: Authentication + Project ownership
+ */
+const createBackupSchema = z.object({
+  name: z.string().min(1).max(100).optional(),
+  backupType: z.enum(['manual', 'pre_migration']).optional().default('manual')
+});
+
+databaseRouter.post('/project/:projectId/backups', async (req: Request, res: Response) => {
+  try {
+    const projectId = parseInt(req.params.projectId);
+    if (isNaN(projectId)) {
+      return res.status(400).json({ error: 'Invalid project ID' });
+    }
+
+    if (!await checkProjectOwnership(req, res, projectId)) {
+      return;
+    }
+
+    const validation = createBackupSchema.safeParse(req.body);
+    if (!validation.success) {
+      return res.status(400).json({ error: 'Invalid request body', details: validation.error.issues });
+    }
+
+    const backup = await projectDatabaseService.createBackup(projectId, {
+      name: validation.data.name,
+      backupType: validation.data.backupType,
+      initiatedBy: 'user'
+    });
+
+    return res.json({
+      success: true,
+      message: 'Backup created successfully',
+      backup: {
+        id: backup.id,
+        name: backup.name,
+        status: backup.status,
+        backupType: backup.backupType,
+        createdAt: backup.createdAt,
+        expiresAt: backup.expiresAt
+      }
+    });
+  } catch (error: any) {
+    console.error('[Database API] Create backup error:', error);
+    return res.status(500).json({ error: error.message || 'Failed to create backup' });
+  }
+});
+
+/**
+ * List all backups for a project database
+ * GET /api/database/project/:projectId/backups
+ * REQUIRES: Authentication + Project ownership
+ */
+databaseRouter.get('/project/:projectId/backups', async (req: Request, res: Response) => {
+  try {
+    const projectId = parseInt(req.params.projectId);
+    if (isNaN(projectId)) {
+      return res.status(400).json({ error: 'Invalid project ID' });
+    }
+
+    if (!await checkProjectOwnership(req, res, projectId)) {
+      return;
+    }
+
+    const backups = await projectDatabaseService.listBackups(projectId);
+
+    return res.json({
+      backups: backups.map(backup => ({
+        id: backup.id,
+        name: backup.name,
+        status: backup.status,
+        backupType: backup.backupType,
+        sizeBytes: backup.sizeBytes,
+        restorePoint: backup.restorePoint,
+        createdAt: backup.createdAt,
+        expiresAt: backup.expiresAt,
+        completedAt: backup.completedAt
+      }))
+    });
+  } catch (error: any) {
+    console.error('[Database API] List backups error:', error);
+    return res.status(500).json({ error: error.message || 'Failed to list backups' });
+  }
+});
+
+/**
+ * Restore a backup
+ * POST /api/database/project/:projectId/backups/:backupId/restore
+ * REQUIRES: Authentication + Project ownership
+ */
+databaseRouter.post('/project/:projectId/backups/:backupId/restore', async (req: Request, res: Response) => {
+  try {
+    const projectId = parseInt(req.params.projectId);
+    const backupId = parseInt(req.params.backupId);
+    
+    if (isNaN(projectId) || isNaN(backupId)) {
+      return res.status(400).json({ error: 'Invalid project ID or backup ID' });
+    }
+
+    if (!await checkProjectOwnership(req, res, projectId)) {
+      return;
+    }
+
+    await projectDatabaseService.restoreBackup(projectId, backupId);
+
+    return res.json({
+      success: true,
+      message: 'Backup restoration initiated successfully'
+    });
+  } catch (error: any) {
+    console.error('[Database API] Restore backup error:', error);
+    return res.status(500).json({ error: error.message || 'Failed to restore backup' });
+  }
+});
+
+/**
+ * Delete a backup
+ * DELETE /api/database/project/:projectId/backups/:backupId
+ * REQUIRES: Authentication + Project ownership
+ */
+databaseRouter.delete('/project/:projectId/backups/:backupId', async (req: Request, res: Response) => {
+  try {
+    const projectId = parseInt(req.params.projectId);
+    const backupId = parseInt(req.params.backupId);
+    
+    if (isNaN(projectId) || isNaN(backupId)) {
+      return res.status(400).json({ error: 'Invalid project ID or backup ID' });
+    }
+
+    if (!await checkProjectOwnership(req, res, projectId)) {
+      return;
+    }
+
+    await projectDatabaseService.deleteBackup(projectId, backupId);
+
+    return res.json({
+      success: true,
+      message: 'Backup deleted successfully'
+    });
+  } catch (error: any) {
+    console.error('[Database API] Delete backup error:', error);
+    return res.status(500).json({ error: error.message || 'Failed to delete backup' });
+  }
+});
+
+/**
+ * Get database stats including backup info
+ * GET /api/database/project/:projectId/stats
+ * REQUIRES: Authentication + Project ownership
+ */
+databaseRouter.get('/project/:projectId/stats', async (req: Request, res: Response) => {
+  try {
+    const projectId = parseInt(req.params.projectId);
+    if (isNaN(projectId)) {
+      return res.status(400).json({ error: 'Invalid project ID' });
+    }
+
+    if (!await checkProjectOwnership(req, res, projectId)) {
+      return;
+    }
+
+    const stats = await projectDatabaseService.getDatabaseStats(projectId);
+    if (!stats) {
+      return res.status(404).json({ error: 'No database found for this project' });
+    }
+
+    return res.json({ stats });
+  } catch (error: any) {
+    console.error('[Database API] Get stats error:', error);
+    return res.status(500).json({ error: error.message || 'Failed to get database stats' });
   }
 });
 

@@ -47,7 +47,12 @@ import {
   Server,
   HardDrive,
   Users,
-  Calendar
+  Calendar,
+  Archive,
+  RotateCcw,
+  Download,
+  Plus,
+  Clock
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -125,6 +130,34 @@ interface DatabaseCredentials {
 interface ProvisionRequest {
   plan: string;
   region: string;
+  provider?: string;
+}
+
+interface BackupInfo {
+  id: number;
+  name: string;
+  status: 'pending' | 'running' | 'completed' | 'failed' | 'expired';
+  backupType: 'scheduled' | 'manual' | 'pre_migration' | 'pitr';
+  sizeBytes?: number;
+  restorePoint?: string;
+  createdAt: string;
+  expiresAt?: string;
+  completedAt?: string;
+}
+
+interface BackupsResponse {
+  backups: BackupInfo[];
+}
+
+interface DatabaseStats {
+  stats: {
+    storagePercent: number;
+    connectionPercent: number;
+    status: string;
+    lastBackup: string | null;
+    provider: string;
+    backupCount: number;
+  };
 }
 
 const tableIcons = {
@@ -225,6 +258,76 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
       toast({
         title: 'Deletion Failed',
         description: error.message || 'Failed to delete database',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const { data: backupsData, isLoading: backupsLoading, refetch: refetchBackups } = useQuery<BackupsResponse>({
+    queryKey: ['/api/database/project', projectId, 'backups'],
+    queryFn: async () => {
+      return apiRequest('GET', `/api/database/project/${projectId}/backups`);
+    },
+    staleTime: 30000,
+    enabled: !!projectId && databaseInfo?.provisioned === true
+  });
+
+  const createBackupMutation = useMutation({
+    mutationFn: async (data: { name?: string; backupType?: string }) => {
+      return apiRequest('POST', `/api/database/project/${projectId}/backups`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/database/project', projectId, 'backups'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/database/project', projectId] });
+      toast({
+        title: 'Backup Created',
+        description: 'Your database backup has been created successfully.',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Backup Failed',
+        description: error.message || 'Failed to create backup',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const restoreBackupMutation = useMutation({
+    mutationFn: async (backupId: number) => {
+      return apiRequest('POST', `/api/database/project/${projectId}/backups/${backupId}/restore`, {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/database/project', projectId] });
+      toast({
+        title: 'Restore Initiated',
+        description: 'Database restore has been initiated. This may take a few minutes.',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Restore Failed',
+        description: error.message || 'Failed to restore backup',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const deleteBackupMutation = useMutation({
+    mutationFn: async (backupId: number) => {
+      return apiRequest('DELETE', `/api/database/project/${projectId}/backups/${backupId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/database/project', projectId, 'backups'] });
+      toast({
+        title: 'Backup Deleted',
+        description: 'The backup has been deleted successfully.',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Delete Failed',
+        description: error.message || 'Failed to delete backup',
         variant: 'destructive',
       });
     },
@@ -439,6 +542,7 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
         <TabsList className="mx-4 mt-2">
           <TabsTrigger value="data" data-testid="tab-data">Data</TabsTrigger>
+          <TabsTrigger value="backups" data-testid="tab-backups" disabled={!databaseInfo?.provisioned}>Backups</TabsTrigger>
           <TabsTrigger value="provision" data-testid="tab-provision">Provision</TabsTrigger>
         </TabsList>
 
@@ -614,6 +718,213 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
               </div>
             </ScrollArea>
           </div>
+        </TabsContent>
+
+        <TabsContent value="backups" className="flex-1 overflow-auto m-0 p-4">
+          <ScrollArea className="h-full">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                  <Archive className="h-5 w-5" />
+                  Database Backups
+                </h3>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => refetchBackups()}
+                    disabled={backupsLoading}
+                    data-testid="button-refresh-backups"
+                  >
+                    <RefreshCw className={cn("h-4 w-4 mr-2", backupsLoading && "animate-spin")} />
+                    Refresh
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => createBackupMutation.mutate({ name: `manual-${new Date().toISOString().split('T')[0]}` })}
+                    disabled={createBackupMutation.isPending}
+                    data-testid="button-create-backup"
+                  >
+                    {createBackupMutation.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : (
+                      <Plus className="h-4 w-4 mr-2" />
+                    )}
+                    Create Backup
+                  </Button>
+                </div>
+              </div>
+
+              {backupsLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                </div>
+              ) : backupsData?.backups && backupsData.backups.length > 0 ? (
+                <div className="space-y-3">
+                  {backupsData.backups.map((backup) => (
+                    <div
+                      key={backup.id}
+                      className="border border-border rounded-lg p-4 hover:bg-muted/50 transition-colors"
+                      data-testid={`backup-item-${backup.id}`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className={cn(
+                            "p-2 rounded-full",
+                            backup.status === 'completed' && "bg-green-500/10 text-green-500",
+                            backup.status === 'pending' && "bg-yellow-500/10 text-yellow-500",
+                            backup.status === 'running' && "bg-blue-500/10 text-blue-500",
+                            backup.status === 'failed' && "bg-red-500/10 text-red-500",
+                            backup.status === 'expired' && "bg-gray-500/10 text-gray-500"
+                          )}>
+                            {backup.status === 'completed' ? (
+                              <CheckCircle className="h-4 w-4" />
+                            ) : backup.status === 'running' || backup.status === 'pending' ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <AlertCircle className="h-4 w-4" />
+                            )}
+                          </div>
+                          <div>
+                            <div className="font-medium text-foreground" data-testid={`backup-name-${backup.id}`}>
+                              {backup.name}
+                            </div>
+                            <div className="text-sm text-muted-foreground flex items-center gap-2">
+                              <Badge variant="outline" className="text-xs">
+                                {backup.backupType}
+                              </Badge>
+                              <span className="flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                {new Date(backup.createdAt).toLocaleString()}
+                              </span>
+                              {backup.sizeBytes && (
+                                <span className="flex items-center gap-1">
+                                  <HardDrive className="h-3 w-3" />
+                                  {(backup.sizeBytes / 1024 / 1024).toFixed(2)} MB
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge
+                            variant={
+                              backup.status === 'completed' ? 'default' :
+                              backup.status === 'failed' ? 'destructive' :
+                              'secondary'
+                            }
+                          >
+                            {backup.status}
+                          </Badge>
+                          {backup.status === 'completed' && (
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  data-testid={`button-restore-${backup.id}`}
+                                >
+                                  <RotateCcw className="h-4 w-4 mr-2" />
+                                  Restore
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Restore Backup?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    This will restore your database to the state at {new Date(backup.createdAt).toLocaleString()}.
+                                    Current data will be replaced.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => restoreBackupMutation.mutate(backup.id)}
+                                    data-testid={`button-confirm-restore-${backup.id}`}
+                                  >
+                                    {restoreBackupMutation.isPending ? (
+                                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                    ) : (
+                                      <RotateCcw className="h-4 w-4 mr-2" />
+                                    )}
+                                    Restore
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          )}
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-destructive hover:text-destructive"
+                                data-testid={`button-delete-backup-${backup.id}`}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete Backup?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This will permanently delete the backup "{backup.name}".
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => deleteBackupMutation.mutate(backup.id)}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  data-testid={`button-confirm-delete-backup-${backup.id}`}
+                                >
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </div>
+                      {backup.expiresAt && (
+                        <div className="mt-2 text-xs text-muted-foreground">
+                          Expires: {new Date(backup.expiresAt).toLocaleDateString()}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <Archive className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
+                  <h4 className="text-lg font-semibold text-foreground mb-2">No Backups Yet</h4>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Create your first backup to protect your data
+                  </p>
+                  <Button
+                    onClick={() => createBackupMutation.mutate({ name: `manual-${new Date().toISOString().split('T')[0]}` })}
+                    disabled={createBackupMutation.isPending}
+                    data-testid="button-create-first-backup"
+                  >
+                    {createBackupMutation.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : (
+                      <Plus className="h-4 w-4 mr-2" />
+                    )}
+                    Create First Backup
+                  </Button>
+                </div>
+              )}
+
+              <div className="border-t border-border pt-4 mt-4">
+                <h4 className="text-sm font-medium text-foreground mb-2">Backup Policy</h4>
+                <div className="text-sm text-muted-foreground space-y-1">
+                  <p>• Automatic backups run daily when enabled</p>
+                  <p>• Backup retention: {databaseInfo?.plan === 'enterprise' ? '90 days' : databaseInfo?.plan === 'pro' ? '30 days' : databaseInfo?.plan === 'starter' ? '14 days' : '7 days'}</p>
+                  <p>• Point-in-time recovery available for Pro and Enterprise plans</p>
+                </div>
+              </div>
+            </div>
+          </ScrollArea>
         </TabsContent>
 
         <TabsContent value="provision" className="flex-1 overflow-auto m-0 p-4">
