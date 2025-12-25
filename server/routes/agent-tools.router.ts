@@ -947,7 +947,7 @@ export default function createAgentToolsRouter(): Router {
       return false;
     }
     const userId = typeof req.user.id === 'string' ? parseInt(req.user.id) : req.user.id;
-    if (project.userId !== userId && !req.user.isAdmin) {
+    if (project.ownerId !== userId && !req.user.isAdmin) {
       res.status(403).json({ error: 'Not authorized' });
       return false;
     }

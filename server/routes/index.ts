@@ -321,6 +321,9 @@ export class MainRouter {
     // Database routes (Admin-Only - System-wide DB inspector)
     app.use('/api/admin/database', tierRateLimiters.api, databaseRouter);
 
+    // Database routes (Per-project database provisioning - Replit-style)
+    app.use('/api/database', tierRateLimiters.api, databaseRouter);
+
     // ReplitDB-compatible Key-Value Database API (for container code)
     app.use('/api/db', replitdbRouter);
 
