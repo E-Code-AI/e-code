@@ -189,10 +189,6 @@ function UnifiedIDELayout({
       case 'files':
         setShowFileExplorer((prev: boolean) => !prev);
         break;
-      case 'search':
-        // Open search as inline tab instead of overlay
-        handleAddTool('search');
-        break;
       case 'git':
         // Open git as inline tab instead of overlay
         handleAddTool('git');
@@ -510,7 +506,9 @@ function UnifiedIDELayout({
       }
       if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'f') {
         e.preventDefault();
-        handleAddTool('search');
+        // Search is now handled by AI Agent - focus the agent panel
+        setIsSidebarCollapsed(false);
+        setLeftPanelTab('agent');
       }
       if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'p') {
         e.preventDefault();
@@ -884,7 +882,7 @@ function UnifiedIDELayout({
               onOpenTools={() => { setLeftPanelTab('tools'); setTabletPanel('agent'); }}
               onOpenDeploy={() => { setLeftPanelTab('deployment'); setTabletPanel('agent'); }}
               onOpenCommandPalette={() => setShowCommandPalette(true)}
-              onOpenGlobalSearch={() => { setActiveActivityItem('search'); handleAddTool('search'); setTabletPanel('editor'); }}
+              onOpenGlobalSearch={() => { setIsSidebarCollapsed(false); setLeftPanelTab('agent'); setTabletPanel('agent'); }}
               onOpenQuickFileSearch={() => setShowQuickFileSearch(true)}
               onOpenKeyboardShortcuts={() => setShowKeyboardShortcuts(true)}
             />
@@ -1577,7 +1575,7 @@ function UnifiedIDELayout({
           onOpenDeployAnalytics={() => setDeploymentTab('analytics')}
           showTabs={false}
           onOpenCommandPalette={() => setShowCommandPalette(true)}
-          onOpenGlobalSearch={() => handleAddTool('search')}
+          onOpenGlobalSearch={() => { setIsSidebarCollapsed(false); setLeftPanelTab('agent'); }}
         />
         
         <ReplitTabBar
