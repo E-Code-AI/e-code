@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
@@ -13,6 +15,7 @@ import {
   AlertCircle,
   CheckCircle,
   FileText,
+  Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -24,6 +27,20 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { LazyMotionDiv } from '@/lib/motion';
+import { useToast } from '@/hooks/use-toast';
+
+interface APICheckpoint {
+  id: number;
+  name: string;
+  description?: string;
+  type: 'manual' | 'automatic' | 'before_action' | 'error_recovery';
+  createdAt: string;
+  userId: number;
+  projectId: number;
+  filesSnapshot?: Record<string, any>;
+  changedFiles?: string[];
+  parentCheckpointId?: number;
+}
 
 interface Checkpoint {
   id: string;
@@ -43,6 +60,37 @@ interface Checkpoint {
     additions: number;
     deletions: number;
   }>;
+}
+
+interface CheckpointsAPIResponse {
+  success: boolean;
+  checkpoints: APICheckpoint[];
+  count: number;
+}
+
+function mapAPICheckpointToUI(checkpoint: APICheckpoint): Checkpoint {
+  const changedFilesCount = checkpoint.changedFiles?.length || 0;
+  const filesSnapshot = checkpoint.filesSnapshot as Record<string, any> | undefined;
+  
+  return {
+    id: String(checkpoint.id),
+    title: checkpoint.name,
+    description: checkpoint.description,
+    timestamp: new Date(checkpoint.createdAt),
+    author: 'User',
+    type: checkpoint.type === 'automatic' ? 'auto' : checkpoint.type === 'manual' ? 'manual' : 'manual',
+    changes: {
+      additions: 0,
+      deletions: 0,
+      files: changedFilesCount || (filesSnapshot ? Object.keys(filesSnapshot).length : 0),
+    },
+    files: checkpoint.changedFiles?.map((fileName) => ({
+      name: fileName,
+      status: 'modified' as const,
+      additions: 0,
+      deletions: 0,
+    })),
+  };
 }
 
 function SkeletonShimmer({ className }: { className?: string }) {
@@ -112,72 +160,83 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
   const [showRestoreDialog, setShowRestoreDialog] = useState(false);
   const [restoreTarget, setRestoreTarget] = useState<Checkpoint | null>(null);
   const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
-  const [isLoading] = useState(false);
+  const { toast } = useToast();
 
-  const checkpoints: Checkpoint[] = [
-    {
-      id: '1',
-      title: 'Current changes',
-      description: 'Unsaved changes in your workspace',
-      timestamp: new Date(),
-      author: 'You',
-      type: 'manual',
-      changes: { additions: 23, deletions: 5, files: 3 },
-      files: [
-        { name: 'src/components/Header.tsx', status: 'modified', additions: 12, deletions: 3 },
-        { name: 'src/styles.css', status: 'modified', additions: 8, deletions: 2 },
-        { name: 'src/utils/new.ts', status: 'added', additions: 3, deletions: 0 }
-      ]
+  const numericProjectId = projectId ? parseInt(projectId, 10) : null;
+
+  const { data, isLoading, error } = useQuery<CheckpointsAPIResponse>({
+    queryKey: ['/api/projects', numericProjectId, 'checkpoints'],
+    queryFn: async () => {
+      const response = await fetch(`/api/projects/${numericProjectId}/checkpoints`, {
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch checkpoints');
+      }
+      return response.json();
     },
-    {
-      id: '2',
-      title: 'Auto-save',
-      timestamp: new Date(Date.now() - 1000 * 60 * 5),
-      author: 'System',
-      type: 'auto',
-      changes: { additions: 45, deletions: 12, files: 5 }
+    enabled: !!numericProjectId,
+  });
+
+  const checkpoints: Checkpoint[] = data?.checkpoints?.map(mapAPICheckpointToUI) || [];
+
+  const createCheckpointMutation = useMutation({
+    mutationFn: async (checkpointData: { name: string; description?: string }) => {
+      return apiRequest<{ success: boolean; checkpoint: APICheckpoint }>('POST', '/api/checkpoints', {
+        projectId: numericProjectId,
+        name: checkpointData.name,
+        description: checkpointData.description,
+        type: 'manual',
+      });
     },
-    {
-      id: '3',
-      title: 'Deploy to production',
-      description: 'v1.2.0 release',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2),
-      author: 'John Doe',
-      type: 'deploy',
-      changes: { additions: 234, deletions: 89, files: 15 },
-      files: [
-        { name: 'package.json', status: 'modified', additions: 2, deletions: 1 },
-        { name: 'src/api/auth.ts', status: 'modified', additions: 45, deletions: 20 },
-        { name: 'src/components/Login.tsx', status: 'added', additions: 187, deletions: 0 }
-      ]
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/projects', numericProjectId, 'checkpoints'] });
+      toast({
+        title: 'Checkpoint saved',
+        description: 'Your manual checkpoint has been created successfully.',
+      });
     },
-    {
-      id: '4',
-      title: 'Feature: User authentication',
-      description: 'Added login and registration',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24),
-      author: 'Jane Smith',
-      type: 'manual',
-      changes: { additions: 567, deletions: 23, files: 12 }
+    onError: (err) => {
+      toast({
+        title: 'Failed to save checkpoint',
+        description: err instanceof Error ? err.message : 'An error occurred',
+        variant: 'destructive',
+      });
     },
-    {
-      id: '5',
-      title: 'Auto-save',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2),
-      author: 'System',
-      type: 'auto',
-      changes: { additions: 12, deletions: 3, files: 2 }
+  });
+
+  const restoreCheckpointMutation = useMutation({
+    mutationFn: async (checkpointId: number) => {
+      return apiRequest<{ success: boolean; message: string }>('POST', `/api/checkpoints/${checkpointId}/restore`, {
+        restoreFiles: true,
+        restoreDatabase: true,
+        restoreEnvironment: true,
+      });
     },
-    {
-      id: '6',
-      title: 'Initial commit',
-      description: 'Project setup',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7),
-      author: 'John Doe',
-      type: 'manual',
-      changes: { additions: 1234, deletions: 0, files: 45 }
-    }
-  ];
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/projects', numericProjectId, 'checkpoints'] });
+      toast({
+        title: 'Checkpoint restored',
+        description: 'Your workspace has been restored to the selected checkpoint.',
+      });
+      setShowRestoreDialog(false);
+      setRestoreTarget(null);
+    },
+    onError: (err) => {
+      toast({
+        title: 'Failed to restore checkpoint',
+        description: err instanceof Error ? err.message : 'An error occurred',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const handleSaveCheckpoint = () => {
+    createCheckpointMutation.mutate({
+      name: `Manual checkpoint - ${new Date().toLocaleString()}`,
+      description: 'Saved manually by user',
+    });
+  };
 
   const toggleCheckpointExpansion = (checkpointId: string) => {
     const newExpanded = new Set(expandedCheckpoints);
@@ -195,8 +254,9 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
   };
 
   const confirmRestore = () => {
-    setShowRestoreDialog(false);
-    setRestoreTarget(null);
+    if (restoreTarget) {
+      restoreCheckpointMutation.mutate(parseInt(restoreTarget.id, 10));
+    }
   };
 
   const getTimeAgo = (date: Date) => {
@@ -287,9 +347,15 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
             variant="outline"
             className="h-8 rounded-lg text-[13px] border-gray-300 dark:border-[#3d4452] text-gray-700 dark:text-[#d4d8dd] bg-transparent hover:bg-gray-100 dark:hover:bg-[#242b3d]"
             data-testid="button-save-checkpoint"
+            onClick={handleSaveCheckpoint}
+            disabled={createCheckpointMutation.isPending || !numericProjectId}
           >
-            <Save className="w-[18px] h-[18px] mr-1.5" />
-            Save Checkpoint
+            {createCheckpointMutation.isPending ? (
+              <Loader2 className="w-[18px] h-[18px] mr-1.5 animate-spin" />
+            ) : (
+              <Save className="w-[18px] h-[18px] mr-1.5" />
+            )}
+            {createCheckpointMutation.isPending ? 'Saving...' : 'Save Checkpoint'}
           </Button>
         </div>
 
@@ -541,8 +607,16 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
               className="h-8 rounded-lg text-[13px] bg-blue-600 hover:bg-blue-700 text-white"
               onClick={confirmRestore}
               data-testid="button-confirm-restore"
+              disabled={restoreCheckpointMutation.isPending}
             >
-              Restore Checkpoint
+              {restoreCheckpointMutation.isPending ? (
+                <>
+                  <Loader2 className="w-[18px] h-[18px] mr-1.5 animate-spin" />
+                  Restoring...
+                </>
+              ) : (
+                'Restore Checkpoint'
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
