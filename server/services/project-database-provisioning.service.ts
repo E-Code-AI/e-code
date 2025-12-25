@@ -1,8 +1,25 @@
 import { db } from '../db';
-import { projectDatabases, projects, type InsertProjectDatabase, type ProjectDatabase } from '@shared/schema';
-import { eq, and } from 'drizzle-orm';
+import { 
+  projectDatabases, 
+  projectDatabaseBackups,
+  projects, 
+  type InsertProjectDatabase, 
+  type InsertProjectDatabaseBackup,
+  type ProjectDatabase,
+  type ProjectDatabaseBackup 
+} from '@shared/schema';
+import { eq, and, lt, desc } from 'drizzle-orm';
 import { createLogger } from '../utils/logger';
 import crypto from 'crypto';
+import { 
+  selectBestProvider, 
+  getProvider, 
+  PLAN_LIMITS,
+  type DatabaseProvider,
+  type ProvisioningOptions as ProviderOptions,
+  type IDatabaseProvider,
+  type PlanType
+} from './providers';
 
 const logger = createLogger('ProjectDatabaseProvisioning');
 
@@ -38,21 +55,17 @@ function decrypt(text: string): string {
   return decrypted.toString();
 }
 
-function generatePassword(length: number = 24): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%';
-  return Array.from(crypto.randomBytes(length))
-    .map(byte => chars[byte % chars.length])
-    .join('');
-}
-
-interface ProvisioningOptions {
+export interface ProvisioningOptions {
   type?: 'postgresql' | 'mysql';
   region?: string;
   version?: string;
   plan?: 'free' | 'starter' | 'pro' | 'enterprise';
+  provider?: DatabaseProvider;
+  suspendTimeoutSeconds?: number;
+  k8sNamespace?: string;
 }
 
-interface DatabaseCredentials {
+export interface DatabaseCredentials {
   host: string;
   port: number;
   database: string;
@@ -61,13 +74,6 @@ interface DatabaseCredentials {
   connectionUrl: string;
   sslEnabled: boolean;
 }
-
-const PLAN_LIMITS = {
-  free: { storageMb: 500, maxConnections: 10 },
-  starter: { storageMb: 2000, maxConnections: 25 },
-  pro: { storageMb: 10000, maxConnections: 100 },
-  enterprise: { storageMb: 100000, maxConnections: 500 }
-};
 
 class ProjectDatabaseProvisioningService {
   async getProjectDatabase(projectId: number): Promise<ProjectDatabase | null> {
@@ -99,38 +105,29 @@ class ProjectDatabaseProvisioningService {
       throw new Error(`Project ${projectId} not found`);
     }
 
-    const dbName = `ecode_proj_${projectId}_${Date.now().toString(36)}`;
-    const username = `user_${projectId}`;
-    const password = generatePassword();
-    const plan = options.plan || 'free';
+    const provider = await selectBestProvider(options);
+    const plan = (options.plan || 'free') as PlanType;
     const planLimits = PLAN_LIMITS[plan];
-
-    const host = process.env.PGHOST || 'localhost';
-    const port = parseInt(process.env.PGPORT || '5432');
-    const connectionUrl = `postgresql://${username}:${password}@${host}:${port}/${dbName}?sslmode=require`;
-
-    const encryptedPassword = encrypt(password);
+    
+    logger.info(`Using provider ${provider.name} for project ${projectId}`);
 
     const insertData: InsertProjectDatabase = {
       projectId,
-      name: dbName,
+      name: `ecode_proj_${projectId}`,
       type: options.type || 'postgresql',
       status: 'provisioning',
       region: options.region || 'us-east-1',
-      version: options.version || '15',
+      version: options.version || '16',
       plan,
-      connectionUrl,
-      host,
-      port,
-      database: dbName,
-      username,
-      encryptedPassword,
+      provider: provider.name,
       sslEnabled: true,
       storageUsedMb: 0,
       storageLimitMb: planLimits.storageMb,
       connectionCount: 0,
       maxConnections: planLimits.maxConnections,
-      autoBackup: true
+      autoBackup: true,
+      backupRetentionDays: planLimits.backupRetentionDays,
+      k8sNamespace: options.k8sNamespace
     };
 
     const [newDatabase] = await db
@@ -139,18 +136,32 @@ class ProjectDatabaseProvisioningService {
       .returning();
 
     try {
-      await this.createActualDatabase(dbName, username, password);
+      const provisionedDb = await provider.provision(projectId, options);
+      
+      const encryptedPassword = encrypt(provisionedDb.password);
       
       const [updatedDb] = await db
         .update(projectDatabases)
         .set({ 
           status: 'running',
-          provisionedAt: new Date()
+          provisionedAt: new Date(),
+          host: provisionedDb.host,
+          port: provisionedDb.port,
+          database: provisionedDb.database,
+          username: provisionedDb.username,
+          encryptedPassword,
+          connectionUrl: provisionedDb.connectionUrl,
+          providerProjectId: provisionedDb.projectId,
+          providerBranchId: provisionedDb.branchId,
+          providerEndpointId: provisionedDb.endpointId,
+          providerMetadata: provisionedDb.metadata,
+          k8sClusterName: provisionedDb.metadata?.clusterName as string,
+          updatedAt: new Date()
         })
         .where(eq(projectDatabases.id, newDatabase.id))
         .returning();
 
-      logger.info(`Database ${dbName} provisioned successfully for project ${projectId}`);
+      logger.info(`Database provisioned successfully for project ${projectId} via ${provider.name}`);
       return updatedDb;
     } catch (error) {
       await db
@@ -161,10 +172,6 @@ class ProjectDatabaseProvisioningService {
       logger.error(`Failed to provision database for project ${projectId}:`, error);
       throw error;
     }
-  }
-
-  private async createActualDatabase(dbName: string, username: string, password: string): Promise<void> {
-    logger.info(`Database ${dbName} provisioned (virtual namespace on shared Neon instance)`);
   }
 
   async getCredentials(projectId: number): Promise<DatabaseCredentials | null> {
@@ -191,6 +198,29 @@ class ProjectDatabaseProvisioningService {
     return credentials?.connectionUrl || null;
   }
 
+  async rotateCredentials(projectId: number): Promise<DatabaseCredentials | null> {
+    const database = await this.getProjectDatabase(projectId);
+    if (!database) {
+      return null;
+    }
+
+    const provider = getProvider(database.provider as DatabaseProvider);
+    const newCredentials = await provider.rotateCredentials(database.id);
+    
+    const encryptedPassword = encrypt(newCredentials.password);
+    
+    await db
+      .update(projectDatabases)
+      .set({ 
+        encryptedPassword,
+        updatedAt: new Date()
+      })
+      .where(eq(projectDatabases.id, database.id));
+
+    logger.info(`Credentials rotated for project ${projectId}`);
+    return newCredentials;
+  }
+
   async updateStatus(projectId: number, status: ProjectDatabase['status']): Promise<void> {
     await db
       .update(projectDatabases)
@@ -204,6 +234,13 @@ class ProjectDatabaseProvisioningService {
       return false;
     }
 
+    try {
+      const provider = getProvider(database.provider as DatabaseProvider);
+      await provider.deprovision(database.id);
+    } catch (error) {
+      logger.error(`Failed to deprovision database from provider:`, error);
+    }
+
     await db
       .update(projectDatabases)
       .set({ status: 'deleted', updatedAt: new Date() })
@@ -211,6 +248,75 @@ class ProjectDatabaseProvisioningService {
 
     logger.info(`Database for project ${projectId} marked as deleted`);
     return true;
+  }
+
+  async suspendDatabase(projectId: number): Promise<void> {
+    const database = await this.getProjectDatabase(projectId);
+    if (!database) {
+      throw new Error(`Database not found for project ${projectId}`);
+    }
+
+    const provider = getProvider(database.provider as DatabaseProvider);
+    await provider.suspend(database.id);
+
+    await db
+      .update(projectDatabases)
+      .set({ 
+        status: 'stopped',
+        suspendedAt: new Date(),
+        updatedAt: new Date()
+      })
+      .where(eq(projectDatabases.id, database.id));
+
+    logger.info(`Database suspended for project ${projectId}`);
+  }
+
+  async resumeDatabase(projectId: number): Promise<void> {
+    const database = await this.getProjectDatabase(projectId);
+    if (!database) {
+      throw new Error(`Database not found for project ${projectId}`);
+    }
+
+    const provider = getProvider(database.provider as DatabaseProvider);
+    await provider.resume(database.id);
+
+    await db
+      .update(projectDatabases)
+      .set({ 
+        status: 'running',
+        suspendedAt: null,
+        updatedAt: new Date()
+      })
+      .where(eq(projectDatabases.id, database.id));
+
+    logger.info(`Database resumed for project ${projectId}`);
+  }
+
+  async getMetrics(projectId: number): Promise<{
+    storageUsedMb: number;
+    connectionCount: number;
+    activeQueries: number;
+    cpuPercent?: number;
+    memoryUsedMb?: number;
+  } | null> {
+    const database = await this.getProjectDatabase(projectId);
+    if (!database) {
+      return null;
+    }
+
+    const provider = getProvider(database.provider as DatabaseProvider);
+    const metrics = await provider.getMetrics(database.id);
+
+    await db
+      .update(projectDatabases)
+      .set({ 
+        storageUsedMb: metrics.storageUsedMb,
+        connectionCount: metrics.connectionCount,
+        updatedAt: new Date()
+      })
+      .where(eq(projectDatabases.id, database.id));
+
+    return metrics;
   }
 
   async updateStorageUsage(projectId: number, usedMb: number): Promise<void> {
@@ -233,6 +339,192 @@ class ProjectDatabaseProvisioningService {
       .where(eq(projectDatabases.projectId, projectId));
   }
 
+  // ============ Backup Management ============
+
+  async createBackup(projectId: number, options: {
+    name?: string;
+    backupType?: 'scheduled' | 'manual' | 'pre_migration' | 'pitr';
+    initiatedBy?: string;
+  } = {}): Promise<ProjectDatabaseBackup> {
+    const database = await this.getProjectDatabase(projectId);
+    if (!database) {
+      throw new Error(`Database not found for project ${projectId}`);
+    }
+
+    const provider = getProvider(database.provider as DatabaseProvider);
+    const backupName = options.name || `backup-${Date.now()}`;
+    
+    const retentionDays = database.backupRetentionDays || PLAN_LIMITS[database.plan as PlanType]?.backupRetentionDays || 7;
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + retentionDays);
+
+    const insertData: InsertProjectDatabaseBackup = {
+      projectDatabaseId: database.id,
+      name: backupName,
+      backupType: options.backupType || 'manual',
+      status: 'pending',
+      initiatedBy: options.initiatedBy || 'user',
+      expiresAt
+    };
+
+    const [newBackup] = await db
+      .insert(projectDatabaseBackups)
+      .values(insertData)
+      .returning();
+
+    try {
+      const providerBackup = await provider.createBackup(database.id, {
+        name: backupName,
+        backupType: options.backupType
+      });
+
+      const [updatedBackup] = await db
+        .update(projectDatabaseBackups)
+        .set({
+          status: providerBackup.status,
+          providerBackupId: providerBackup.id,
+          sizeBytes: providerBackup.sizeBytes,
+          restorePoint: providerBackup.restorePoint,
+          completedAt: providerBackup.status === 'completed' ? new Date() : null
+        })
+        .where(eq(projectDatabaseBackups.id, newBackup.id))
+        .returning();
+
+      await db
+        .update(projectDatabases)
+        .set({ lastBackupAt: new Date() })
+        .where(eq(projectDatabases.id, database.id));
+
+      logger.info(`Backup created for project ${projectId}: ${backupName}`);
+      return updatedBackup;
+    } catch (error) {
+      await db
+        .update(projectDatabaseBackups)
+        .set({ 
+          status: 'failed',
+          errorMessage: error instanceof Error ? error.message : 'Unknown error'
+        })
+        .where(eq(projectDatabaseBackups.id, newBackup.id));
+
+      throw error;
+    }
+  }
+
+  async listBackups(projectId: number): Promise<ProjectDatabaseBackup[]> {
+    const database = await this.getProjectDatabase(projectId);
+    if (!database) {
+      return [];
+    }
+
+    const backups = await db
+      .select()
+      .from(projectDatabaseBackups)
+      .where(eq(projectDatabaseBackups.projectDatabaseId, database.id))
+      .orderBy(desc(projectDatabaseBackups.createdAt));
+
+    return backups;
+  }
+
+  async restoreBackup(projectId: number, backupId: number): Promise<void> {
+    const database = await this.getProjectDatabase(projectId);
+    if (!database) {
+      throw new Error(`Database not found for project ${projectId}`);
+    }
+
+    const [backup] = await db
+      .select()
+      .from(projectDatabaseBackups)
+      .where(and(
+        eq(projectDatabaseBackups.id, backupId),
+        eq(projectDatabaseBackups.projectDatabaseId, database.id)
+      ))
+      .limit(1);
+
+    if (!backup) {
+      throw new Error(`Backup ${backupId} not found`);
+    }
+
+    if (!backup.providerBackupId) {
+      throw new Error(`Backup ${backupId} has no provider backup ID`);
+    }
+
+    const provider = getProvider(database.provider as DatabaseProvider);
+    await provider.restoreBackup(database.id, backup.providerBackupId);
+
+    logger.info(`Backup ${backupId} restored for project ${projectId}`);
+  }
+
+  async deleteBackup(projectId: number, backupId: number): Promise<void> {
+    const database = await this.getProjectDatabase(projectId);
+    if (!database) {
+      throw new Error(`Database not found for project ${projectId}`);
+    }
+
+    const [backup] = await db
+      .select()
+      .from(projectDatabaseBackups)
+      .where(and(
+        eq(projectDatabaseBackups.id, backupId),
+        eq(projectDatabaseBackups.projectDatabaseId, database.id)
+      ))
+      .limit(1);
+
+    if (!backup) {
+      throw new Error(`Backup ${backupId} not found`);
+    }
+
+    if (backup.providerBackupId) {
+      const provider = getProvider(database.provider as DatabaseProvider);
+      await provider.deleteBackup(database.id, backup.providerBackupId);
+    }
+
+    await db
+      .delete(projectDatabaseBackups)
+      .where(eq(projectDatabaseBackups.id, backupId));
+
+    logger.info(`Backup ${backupId} deleted for project ${projectId}`);
+  }
+
+  async pruneExpiredBackups(): Promise<number> {
+    const now = new Date();
+    
+    const expiredBackups = await db
+      .select()
+      .from(projectDatabaseBackups)
+      .where(and(
+        lt(projectDatabaseBackups.expiresAt, now),
+        eq(projectDatabaseBackups.status, 'completed')
+      ));
+
+    let prunedCount = 0;
+    for (const backup of expiredBackups) {
+      try {
+        const [database] = await db
+          .select()
+          .from(projectDatabases)
+          .where(eq(projectDatabases.id, backup.projectDatabaseId))
+          .limit(1);
+
+        if (database && backup.providerBackupId) {
+          const provider = getProvider(database.provider as DatabaseProvider);
+          await provider.deleteBackup(database.id, backup.providerBackupId);
+        }
+
+        await db
+          .update(projectDatabaseBackups)
+          .set({ status: 'expired' })
+          .where(eq(projectDatabaseBackups.id, backup.id));
+
+        prunedCount++;
+      } catch (error) {
+        logger.error(`Failed to prune backup ${backup.id}:`, error);
+      }
+    }
+
+    logger.info(`Pruned ${prunedCount} expired backups`);
+    return prunedCount;
+  }
+
   async recordBackup(projectId: number): Promise<void> {
     await db
       .update(projectDatabases)
@@ -248,11 +540,16 @@ class ProjectDatabaseProvisioningService {
     connectionPercent: number;
     status: string;
     lastBackup: Date | null;
+    provider: string;
+    backupCount: number;
   } | null> {
     const database = await this.getProjectDatabase(projectId);
     if (!database) {
       return null;
     }
+
+    const backups = await this.listBackups(projectId);
+    const completedBackups = backups.filter(b => b.status === 'completed');
 
     return {
       storagePercent: database.storageLimitMb 
@@ -262,7 +559,9 @@ class ProjectDatabaseProvisioningService {
         ? ((database.connectionCount || 0) / database.maxConnections) * 100 
         : 0,
       status: database.status,
-      lastBackup: database.lastBackupAt
+      lastBackup: database.lastBackupAt,
+      provider: database.provider || 'local',
+      backupCount: completedBackups.length
     };
   }
 }
