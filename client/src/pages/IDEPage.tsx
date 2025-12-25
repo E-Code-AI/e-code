@@ -58,12 +58,18 @@ export default function IDEPage() {
   // Use stable token for AutonomousWorkspaceViewer, URL token for queries
   const bootstrapToken = stableBootstrapToken;
   
-  console.log('[IDEPage] Component render:', {
-    projectId,
-    hasStableToken: !!stableBootstrapToken,
-    hasUrlToken: !!urlBootstrapToken,
-    tokenLength: stableBootstrapToken?.length
-  });
+  // Debug logging for bootstrap troubleshooting (dev only)
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[IDEPage] Component render:', {
+      projectId,
+      hasStableToken: !!stableBootstrapToken,
+      hasUrlToken: !!urlBootstrapToken,
+      tokenLength: stableBootstrapToken?.length,
+      isAuthLoading,
+      hasUser: !!user,
+      canFetchProject: !!projectId && !isAuthLoading && (!!user || !!stableBootstrapToken),
+    });
+  }
 
   const handleWorkspaceComplete = useCallback(() => {
     // Clear the stable bootstrap token - workspace creation is complete
@@ -74,8 +80,8 @@ export default function IDEPage() {
     url.searchParams.delete('bootstrap');
     window.history.replaceState({}, '', url);
 
-    queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}`] });
-    queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
+    queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId] });
+    queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'files'] });
 
     toast({
       title: "Workspace Ready!",
@@ -110,9 +116,14 @@ export default function IDEPage() {
   // Either user is authenticated OR we have a bootstrap token for autonomous workspace
   const canFetchProject = !!projectId && !isAuthLoading && (!!user || !!bootstrapToken);
   
+  // ✅ FIX (Dec 25, 2025): Use stable query key without bootstrap flag
+  // The bootstrap token is only needed for the initial fetch - once we have the project,
+  // we don't want clearing the token to invalidate the cache and cause "Project not found"
   const { data: project, isLoading: isLoadingProject, fetchStatus } = useQuery<Project>({
-    queryKey: ['/api/projects', projectId, { bootstrap: !!bootstrapToken }],
+    queryKey: ['/api/projects', projectId],
     queryFn: async () => {
+      // Use the current bootstrapToken value for the fetch, but it's not in the query key
+      // This ensures the cache persists even after the token is cleared
       const url = `/api/projects/${projectId}${bootstrapToken ? `?bootstrap=${bootstrapToken}` : ''}`;
       const res = await fetch(url, { credentials: "include" });
       if (!res.ok) {
@@ -121,6 +132,8 @@ export default function IDEPage() {
       return res.json();
     },
     enabled: canFetchProject,
+    // Keep stale data when the query is disabled to prevent "Project not found" flash
+    staleTime: Infinity,
   });
 
   // Show loading while auth is loading OR project is actually being fetched

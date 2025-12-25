@@ -256,8 +256,10 @@ export function useIDEWorkspace(projectId: string) {
   });
 
   // ========== QUERIES ==========
+  // ✅ FIX (Dec 25, 2025): Use stable query keys without bootstrap flag
+  // This ensures cache persists when bootstrap token is cleared
   const { data: project, isLoading: isLoadingProject } = useQuery<Project>({
-    queryKey: ['/api/projects', projectId, { bootstrap: !!bootstrapToken }],
+    queryKey: ['/api/projects', projectId],
     queryFn: async () => {
       const url = `/api/projects/${projectId}${bootstrapToken ? `?bootstrap=${bootstrapToken}` : ''}`;
       const res = await fetch(url, { credentials: "include" });
@@ -267,10 +269,11 @@ export function useIDEWorkspace(projectId: string) {
       return res.json();
     },
     enabled: !!projectId && (!!user || !!bootstrapToken),
+    staleTime: Infinity,
   });
 
   const { data: files = [], isLoading: isLoadingFiles } = useQuery<File[]>({
-    queryKey: ['/api/projects', projectId, 'files', { bootstrap: !!bootstrapToken }],
+    queryKey: ['/api/projects', projectId, 'files'],
     queryFn: async () => {
       const url = `/api/projects/${projectId}/files${bootstrapToken ? `?bootstrap=${bootstrapToken}` : ''}`;
       const res = await fetch(url, { credentials: "include" });
@@ -280,6 +283,7 @@ export function useIDEWorkspace(projectId: string) {
       return res.json();
     },
     enabled: !!projectId && (!!user || !!bootstrapToken),
+    staleTime: Infinity,
   });
 
   const { data: publishState } = useQuery<PublishState>({
@@ -392,8 +396,8 @@ export function useIDEWorkspace(projectId: string) {
     url.searchParams.delete('bootstrap');
     window.history.replaceState({}, '', url);
     
-    queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}`] });
-    queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
+    queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId] });
+    queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'files'] });
     
     toast({
       title: "Workspace Ready!",
