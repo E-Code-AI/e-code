@@ -113,8 +113,7 @@ export function ReplitDatabasePanel({ projectId }: { projectId?: string }) {
     queryKey: ['/api/database/project', projectId],
     queryFn: async () => {
       if (!projectId) return { provisioned: false };
-      const response = await apiRequest('GET', `/api/database/project/${projectId}`);
-      return response.json();
+      return apiRequest<DatabaseInfo>('GET', `/api/database/project/${projectId}`);
     },
     enabled: !!projectId,
     staleTime: 30000,
@@ -124,8 +123,7 @@ export function ReplitDatabasePanel({ projectId }: { projectId?: string }) {
   const { data: credentials, isLoading: credentialsLoading, refetch: refetchCredentials } = useQuery<{ credentials: DatabaseCredentials }>({
     queryKey: ['/api/database/project', projectId, 'credentials'],
     queryFn: async () => {
-      const response = await apiRequest('GET', `/api/database/project/${projectId}/credentials`);
-      return response.json();
+      return apiRequest<{ credentials: DatabaseCredentials }>('GET', `/api/database/project/${projectId}/credentials`);
     },
     enabled: !!projectId && databaseInfo?.provisioned === true,
     staleTime: 60000,
@@ -134,11 +132,10 @@ export function ReplitDatabasePanel({ projectId }: { projectId?: string }) {
   // Provision mutation
   const provisionMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest('POST', `/api/database/project/${projectId}/provision`, {
+      return apiRequest('POST', `/api/database/project/${projectId}/provision`, {
         plan: selectedPlan,
         type: 'postgresql',
       });
-      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/database/project', projectId] });
