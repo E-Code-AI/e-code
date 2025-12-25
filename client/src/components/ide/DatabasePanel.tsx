@@ -193,6 +193,7 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
   const [selectedPlan, setSelectedPlan] = useState<string>('free');
   const [selectedRegion, setSelectedRegion] = useState<string>('us-east-1');
   const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [autoRetryAttempted, setAutoRetryAttempted] = useState<boolean>(false);
   
   const { toast } = useToast();
 
@@ -242,6 +243,63 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
       });
     },
   });
+
+  // Auto-retry for failed databases - like Replit's automatic recovery
+  useEffect(() => {
+    if (
+      databaseInfo?.status === 'error' && 
+      !autoRetryAttempted && 
+      !provisionMutation.isPending &&
+      projectId
+    ) {
+      setAutoRetryAttempted(true);
+      console.log('[DatabasePanel] Auto-retrying failed database provisioning for project', projectId);
+      
+      // Small delay to let the UI render first
+      const retryTimer = setTimeout(() => {
+        provisionMutation.mutate({ plan: 'free', region: 'us-east-1' });
+        toast({
+          title: 'Auto-Retrying',
+          description: 'Automatically retrying database provisioning...',
+        });
+      }, 1000);
+      
+      return () => clearTimeout(retryTimer);
+    }
+  }, [databaseInfo?.status, autoRetryAttempted, provisionMutation.isPending, projectId]);
+
+  // Reset auto-retry flag when database becomes healthy
+  useEffect(() => {
+    if (databaseInfo?.status === 'running' && autoRetryAttempted) {
+      setAutoRetryAttempted(false);
+    }
+  }, [databaseInfo?.status, autoRetryAttempted]);
+
+  // Auto-provision for projects with no database at all - like Replit
+  useEffect(() => {
+    if (
+      databaseInfo?.provisioned === false && 
+      !databaseInfo?.status &&
+      !autoRetryAttempted && 
+      !provisionMutation.isPending &&
+      !databaseInfoLoading &&
+      projectId
+    ) {
+      setAutoRetryAttempted(true);
+      console.log('[DatabasePanel] Auto-provisioning database for project', projectId);
+      
+      // Small delay to let the UI render first
+      const provisionTimer = setTimeout(() => {
+        provisionMutation.mutate({ plan: 'free', region: 'us-east-1' });
+        toast({
+          title: 'Auto-Provisioning',
+          description: 'Automatically provisioning your database...',
+        });
+      }, 1500);
+      
+      return () => clearTimeout(provisionTimer);
+    }
+  }, [databaseInfo?.provisioned, databaseInfo?.status, autoRetryAttempted, provisionMutation.isPending, databaseInfoLoading, projectId]);
 
   const deleteMutation = useMutation({
     mutationFn: async () => {
