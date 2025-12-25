@@ -79,10 +79,13 @@ const AutonomousWorkspaceViewer = lazy(() => import('@/components/ide/Autonomous
 const ReplitGitPanel = lazy(() => import('@/components/editor/ReplitGitPanel').then(mod => ({ default: mod.ReplitGitPanel })));
 const ReplitPackagesPanel = lazy(() => import('@/components/editor/ReplitPackagesPanel').then(mod => ({ default: mod.ReplitPackagesPanel })));
 const ReplitDebuggerPanel = lazy(() => import('@/components/editor/ReplitDebuggerPanel').then(mod => ({ default: mod.ReplitDebuggerPanel })));
+const ReplitTestingPanel = lazy(() => import('@/components/editor/ReplitTestingPanel').then(mod => ({ default: mod.ReplitTestingPanel })));
 const ReplitSecretsPanel = lazy(() => import('@/components/editor/ReplitSecretsPanel').then(mod => ({ default: mod.ReplitSecretsPanel })));
 const ReplitHistoryPanel = lazy(() => import('@/components/editor/ReplitHistoryPanel').then(mod => ({ default: mod.ReplitHistoryPanel })));
 const CheckpointHistoryPanel = lazy(() => import('@/components/ai/CheckpointHistoryPanel').then(mod => ({ default: mod.CheckpointHistoryPanel })));
 const ReplitSettingsPanel = lazy(() => import('@/components/editor/ReplitSettingsPanel').then(mod => ({ default: mod.ReplitSettingsPanel })));
+const ReplitThemesPanel = lazy(() => import('@/components/editor/ReplitThemesPanel').then(mod => ({ default: mod.ReplitThemesPanel })));
+const ReplitMultiplayers = lazy(() => import('@/components/editor/ReplitMultiplayers').then(mod => ({ default: mod.ReplitMultiplayers })));
 const WorkflowsPanel = lazy(() => import('@/components/ide/WorkflowsPanel').then(mod => ({ default: mod.WorkflowsPanel })));
 const ExtensionsMarketplace = lazy(() => import('@/components/ExtensionsMarketplace').then(mod => ({ default: mod.ExtensionsMarketplace })));
 const VisualEditorPanel = lazy(() => import('@/components/ide/VisualEditorPanel').then(mod => ({ default: mod.VisualEditorPanel })));
@@ -693,6 +696,18 @@ function UnifiedIDELayout({
             <ReplitHistoryPanel projectId={projectId} />
           </Suspense>
         );
+      case 'themes':
+        return (
+          <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Themes..." /></div>}>
+            <ReplitThemesPanel projectId={projectId} />
+          </Suspense>
+        );
+      case 'multiplayers':
+        return (
+          <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Multiplayers..." /></div>}>
+            <ReplitMultiplayers projectId={projectId} />
+          </Suspense>
+        );
       case 'checkpoints':
         return (
           <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Checkpoints..." /></div>}>
@@ -721,6 +736,12 @@ function UnifiedIDELayout({
         return (
           <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Debug..." /></div>}>
             <ReplitDebuggerPanel projectId={projectId} />
+          </Suspense>
+        );
+      case 'testing':
+        return (
+          <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Testing..." /></div>}>
+            <ReplitTestingPanel projectId={projectId} />
           </Suspense>
         );
       case 'security':

@@ -14,6 +14,8 @@ import { ReplitDatabasePanel } from '../editor/ReplitDatabasePanel';
 import { ReplitPackagesPanel } from '../editor/ReplitPackagesPanel';
 import { ReplitHistoryPanel } from '../editor/ReplitHistoryPanel';
 import { ReplitSecretsPanel } from '../editor/ReplitSecretsPanel';
+import { ReplitThemesPanel } from '../editor/ReplitThemesPanel';
+import { ReplitMultiplayers } from '../editor/ReplitMultiplayers';
 import { ShellPanel } from '../editor/ShellPanel';
 import { AppStoragePanel } from '../editor/AppStoragePanel';
 import { ReplitProblemsPanel } from '../editor/ReplitProblemsPanel';
@@ -124,7 +126,7 @@ export function SplitsEditorLayout({
           />
         );
       case 'search':
-        return <ReplitSearchPanel />;
+        return <ReplitSearchPanel projectId={projectId} />;
       case 'git':
         return <ReplitGitPanel projectId={projectId} />;
       case 'debugger':
@@ -146,7 +148,11 @@ export function SplitsEditorLayout({
       case 'agent':
         return <ReplitAgentPanelV3 projectId={projectId || '1'} className="h-full" />;
       case 'settings':
-        return <ReplitSettingsPanel />;
+        return <ReplitSettingsPanel projectId={projectId} />;
+      case 'themes':
+        return <ReplitThemesPanel projectId={projectId} />;
+      case 'multiplayers':
+        return <ReplitMultiplayers projectId={projectId} />;
       default:
         return null;
     }
