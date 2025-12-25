@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { PageShell, PageHeader } from '@/components/layout/PageShell';
 import { ReplitDatabase } from '@/components/ReplitDatabase';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -72,44 +73,6 @@ interface QueryResult {
   error?: string;
 }
 
-const MOCK_SCHEMAS: TableSchema[] = [
-  {
-    name: 'users',
-    columns: [
-      { name: 'id', type: 'serial', nullable: false, primaryKey: true },
-      { name: 'username', type: 'varchar(255)', nullable: false, primaryKey: false },
-      { name: 'email', type: 'varchar(255)', nullable: false, primaryKey: false },
-      { name: 'password_hash', type: 'text', nullable: false, primaryKey: false },
-      { name: 'created_at', type: 'timestamp', nullable: false, primaryKey: false },
-      { name: 'avatar_url', type: 'text', nullable: true, primaryKey: false },
-    ],
-    rowCount: 1247,
-  },
-  {
-    name: 'projects',
-    columns: [
-      { name: 'id', type: 'serial', nullable: false, primaryKey: true },
-      { name: 'name', type: 'varchar(255)', nullable: false, primaryKey: false },
-      { name: 'description', type: 'text', nullable: true, primaryKey: false },
-      { name: 'user_id', type: 'integer', nullable: false, primaryKey: false, foreignKey: { table: 'users', column: 'id' } },
-      { name: 'is_public', type: 'boolean', nullable: false, primaryKey: false },
-      { name: 'created_at', type: 'timestamp', nullable: false, primaryKey: false },
-    ],
-    rowCount: 3842,
-  },
-  {
-    name: 'files',
-    columns: [
-      { name: 'id', type: 'serial', nullable: false, primaryKey: true },
-      { name: 'project_id', type: 'integer', nullable: false, primaryKey: false, foreignKey: { table: 'projects', column: 'id' } },
-      { name: 'path', type: 'text', nullable: false, primaryKey: false },
-      { name: 'content', type: 'text', nullable: true, primaryKey: false },
-      { name: 'updated_at', type: 'timestamp', nullable: false, primaryKey: false },
-    ],
-    rowCount: 28491,
-  },
-];
-
 const SAMPLE_QUERIES = [
   { name: 'Select all users', query: 'SELECT * FROM users LIMIT 100;' },
   { name: 'Count projects', query: 'SELECT COUNT(*) as total FROM projects;' },
@@ -122,14 +85,27 @@ export default function DatabasePage() {
   const [, navigate] = useLocation();
   const [activeTab, setActiveTab] = useState('explorer');
   const [selectedTable, setSelectedTable] = useState<string | null>(null);
-  const [schemas, setSchemas] = useState<TableSchema[]>(MOCK_SCHEMAS);
   const [query, setQuery] = useState('SELECT * FROM users LIMIT 10;');
   const [queryResult, setQueryResult] = useState<QueryResult | null>(null);
   const [isExecuting, setIsExecuting] = useState(false);
-  const [expandedTables, setExpandedTables] = useState<Set<string>>(new Set(['users']));
-  const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'connecting'>('connected');
+  const [expandedTables, setExpandedTables] = useState<Set<string>>(new Set());
+  const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'connecting'>('connecting');
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [showConnectionSettings, setShowConnectionSettings] = useState(false);
+
+  const { data: schemasData, isLoading: schemasLoading, error: schemasError } = useQuery<{ tables: TableSchema[] }>({
+    queryKey: ['/api/admin/database/tables'],
+  });
+
+  const schemas = schemasData?.tables || [];
+  
+  useEffect(() => {
+    if (schemasData && connectionStatus === 'connecting') {
+      setConnectionStatus('connected');
+    } else if (schemasError && connectionStatus !== 'disconnected') {
+      setConnectionStatus('disconnected');
+    }
+  }, [schemasData, schemasError, connectionStatus]);
 
   const getTypeIcon = (type: string) => {
     if (type.includes('int') || type.includes('serial')) return <Hash className="h-3 w-3" />;
@@ -154,25 +130,19 @@ export default function DatabasePage() {
   const executeQuery = async () => {
     setIsExecuting(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      const mockResult: QueryResult = {
-        columns: ['id', 'username', 'email', 'created_at'],
-        rows: [
-          [1, 'john_doe', 'john@example.com', '2024-01-15'],
-          [2, 'jane_smith', 'jane@example.com', '2024-01-16'],
-          [3, 'bob_wilson', 'bob@example.com', '2024-01-17'],
-          [4, 'alice_jones', 'alice@example.com', '2024-01-18'],
-          [5, 'charlie_brown', 'charlie@example.com', '2024-01-19'],
-        ],
-        rowCount: 5,
-        executionTime: 23,
-      };
-      
-      setQueryResult(mockResult);
+      // Security: Custom SQL queries are disabled for Fortune 500 compliance
+      // Use the table data browser or safe predefined operations instead
+      setQueryResult({
+        columns: [],
+        rows: [],
+        rowCount: 0,
+        executionTime: 0,
+        error: 'Custom SQL queries are disabled for security. Use the table browser on the left to view data safely.',
+      });
       toast({
-        title: 'Query Executed',
-        description: `${mockResult.rowCount} rows returned in ${mockResult.executionTime}ms`,
+        title: 'SQL Queries Disabled',
+        description: 'Use the table browser for safe data access',
+        variant: 'destructive',
       });
     } catch (error) {
       setQueryResult({
