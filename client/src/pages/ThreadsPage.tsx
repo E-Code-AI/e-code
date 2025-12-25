@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { PageShell, PageHeader } from '@/components/layout/PageShell';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Dialog,
   DialogContent,
@@ -68,6 +69,7 @@ import {
   Star,
   ThumbsUp,
   ThumbsDown,
+  Loader2,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow } from 'date-fns';
@@ -77,20 +79,8 @@ interface ThreadAuthor {
   username: string;
   displayName: string;
   avatarUrl?: string;
-  role: 'admin' | 'moderator' | 'member';
+  role?: 'admin' | 'moderator' | 'member';
   reputation: number;
-}
-
-interface ThreadReply {
-  id: string;
-  content: string;
-  author: ThreadAuthor;
-  createdAt: string;
-  updatedAt?: string;
-  likes: number;
-  isLiked: boolean;
-  isAccepted: boolean;
-  mentions: string[];
 }
 
 interface Thread {
@@ -101,174 +91,33 @@ interface Thread {
   category: string;
   tags: string[];
   createdAt: string;
-  updatedAt?: string;
   views: number;
   likes: number;
-  replies: number;
+  comments: number;
   isLiked: boolean;
   isBookmarked: boolean;
-  isPinned: boolean;
-  isLocked: boolean;
-  isSolved: boolean;
-  lastReplyAt?: string;
-  lastReplyBy?: ThreadAuthor;
+  projectUrl?: string;
+  imageUrl?: string;
 }
 
 interface Category {
   id: string;
   name: string;
   icon: string;
-  color: string;
-  threadCount: number;
-  description: string;
+  postCount: number;
+  description?: string;
 }
 
-const mockCategories: Category[] = [
-  { id: 'general', name: 'General Discussion', icon: 'MessageSquare', color: 'bg-blue-500', threadCount: 1247, description: 'General topics and community discussions' },
-  { id: 'help', name: 'Help & Support', icon: 'HelpCircle', color: 'bg-green-500', threadCount: 892, description: 'Get help from the community' },
-  { id: 'showcase', name: 'Project Showcase', icon: 'Rocket', color: 'bg-purple-500', threadCount: 456, description: 'Share your projects and get feedback' },
-  { id: 'tutorials', name: 'Tutorials & Guides', icon: 'BookOpen', color: 'bg-orange-500', threadCount: 324, description: 'Learn from community tutorials' },
-  { id: 'feedback', name: 'Feature Requests', icon: 'Lightbulb', color: 'bg-yellow-500', threadCount: 567, description: 'Suggest new features and improvements' },
-  { id: 'bugs', name: 'Bug Reports', icon: 'Bug', color: 'bg-red-500', threadCount: 234, description: 'Report and track bugs' },
-];
-
-const mockAuthors: ThreadAuthor[] = [
-  { id: '1', username: 'johndoe', displayName: 'John Doe', avatarUrl: undefined, role: 'admin', reputation: 15420 },
-  { id: '2', username: 'janedeveloper', displayName: 'Jane Developer', avatarUrl: undefined, role: 'moderator', reputation: 8750 },
-  { id: '3', username: 'codemaster', displayName: 'Code Master', avatarUrl: undefined, role: 'member', reputation: 4230 },
-  { id: '4', username: 'devguru', displayName: 'Dev Guru', avatarUrl: undefined, role: 'member', reputation: 2890 },
-];
-
-const mockThreads: Thread[] = [
-  {
-    id: '1',
-    title: 'How to implement real-time collaboration in E-Code?',
-    content: 'I\'m trying to implement real-time collaboration features using WebSockets. Has anyone done this before? Looking for best practices and code examples.\n\n```javascript\nconst socket = new WebSocket(\'wss://example.com\');\nsocket.onmessage = (event) => {\n  console.log(event.data);\n};\n```',
-    author: mockAuthors[0],
-    category: 'help',
-    tags: ['websockets', 'real-time', 'collaboration'],
-    createdAt: '2024-01-20T10:30:00Z',
-    views: 1247,
-    likes: 89,
-    replies: 23,
-    isLiked: false,
-    isBookmarked: true,
-    isPinned: true,
-    isLocked: false,
-    isSolved: true,
-    lastReplyAt: '2024-01-21T15:45:00Z',
-    lastReplyBy: mockAuthors[1],
-  },
-  {
-    id: '2',
-    title: 'Announcing E-Code v2.0 - Massive Performance Improvements',
-    content: 'We\'re excited to announce the release of E-Code v2.0! This update brings massive performance improvements, including:\n\n- 50% faster code compilation\n- Improved memory management\n- Better TypeScript support\n\nCheck out the full changelog for more details!',
-    author: mockAuthors[0],
-    category: 'general',
-    tags: ['announcement', 'v2.0', 'performance'],
-    createdAt: '2024-01-19T08:00:00Z',
-    views: 5678,
-    likes: 342,
-    replies: 67,
-    isLiked: true,
-    isBookmarked: false,
-    isPinned: true,
-    isLocked: false,
-    isSolved: false,
-    lastReplyAt: '2024-01-22T10:30:00Z',
-    lastReplyBy: mockAuthors[2],
-  },
-  {
-    id: '3',
-    title: 'Built a full-stack e-commerce platform in 48 hours',
-    content: 'Just finished building a complete e-commerce platform using E-Code. Features include:\n\n- User authentication\n- Product catalog with search\n- Shopping cart and checkout\n- Stripe payment integration\n- Admin dashboard\n\nHappy to share the code and answer questions!',
-    author: mockAuthors[2],
-    category: 'showcase',
-    tags: ['e-commerce', 'react', 'node.js', 'stripe'],
-    createdAt: '2024-01-18T14:20:00Z',
-    views: 2345,
-    likes: 156,
-    replies: 34,
-    isLiked: false,
-    isBookmarked: false,
-    isPinned: false,
-    isLocked: false,
-    isSolved: false,
-    lastReplyAt: '2024-01-20T09:15:00Z',
-    lastReplyBy: mockAuthors[3],
-  },
-  {
-    id: '4',
-    title: 'Complete Guide to TypeScript Best Practices in E-Code',
-    content: 'After working with TypeScript extensively in E-Code, I\'ve compiled a comprehensive guide covering:\n\n1. Type inference strategies\n2. Generic types and utility types\n3. Error handling patterns\n4. Testing with TypeScript\n\nLet me know if you have any questions!',
-    author: mockAuthors[1],
-    category: 'tutorials',
-    tags: ['typescript', 'best-practices', 'guide'],
-    createdAt: '2024-01-17T11:00:00Z',
-    views: 3456,
-    likes: 234,
-    replies: 45,
-    isLiked: true,
-    isBookmarked: true,
-    isPinned: false,
-    isLocked: false,
-    isSolved: false,
-    lastReplyAt: '2024-01-21T16:00:00Z',
-    lastReplyBy: mockAuthors[0],
-  },
-  {
-    id: '5',
-    title: '[Bug] Editor crashes when opening large files',
-    content: 'I\'ve noticed that the editor crashes when opening files larger than 10MB. Steps to reproduce:\n\n1. Create a file with >10MB of content\n2. Open the file in the editor\n3. Editor freezes and crashes\n\nBrowser: Chrome 120\nOS: Windows 11',
-    author: mockAuthors[3],
-    category: 'bugs',
-    tags: ['bug', 'editor', 'performance'],
-    createdAt: '2024-01-16T09:30:00Z',
-    views: 567,
-    likes: 23,
-    replies: 12,
-    isLiked: false,
-    isBookmarked: false,
-    isPinned: false,
-    isLocked: false,
-    isSolved: true,
-    lastReplyAt: '2024-01-18T14:30:00Z',
-    lastReplyBy: mockAuthors[0],
-  },
-];
-
-const mockReplies: ThreadReply[] = [
-  {
-    id: '1',
-    content: 'Great question! Here\'s how I implemented real-time collaboration:\n\n```javascript\nimport { io } from \'socket.io-client\';\n\nconst socket = io(\'wss://api.example.com\');\n\nsocket.on(\'code-change\', (data) => {\n  editor.updateContent(data);\n});\n```\n\nMake sure to handle reconnection logic and conflict resolution.',
-    author: mockAuthors[1],
-    createdAt: '2024-01-20T11:15:00Z',
-    likes: 45,
-    isLiked: true,
-    isAccepted: true,
-    mentions: ['@johndoe'],
-  },
-  {
-    id: '2',
-    content: 'Adding to what @janedeveloper said, you might also want to look into Y.js for CRDT-based collaboration. It handles conflict resolution automatically.',
-    author: mockAuthors[2],
-    createdAt: '2024-01-20T12:30:00Z',
-    likes: 23,
-    isLiked: false,
-    isAccepted: false,
-    mentions: ['@janedeveloper'],
-  },
-  {
-    id: '3',
-    content: 'Thanks everyone! The Y.js approach worked perfectly for my use case. Marking this as solved.',
-    author: mockAuthors[0],
-    createdAt: '2024-01-21T15:45:00Z',
-    likes: 12,
-    isLiked: false,
-    isAccepted: false,
-    mentions: [],
-  },
-];
+interface PostsResponse {
+  posts: Thread[];
+  pagination: {
+    page: number;
+    pageSize: number;
+    total: number;
+    totalPages: number;
+    hasMore: boolean;
+  };
+}
 
 export default function ThreadsPage() {
   const { toast } = useToast();
@@ -289,38 +138,48 @@ export default function ThreadsPage() {
 
   const [replyContent, setReplyContent] = useState('');
 
+  const { data: categories = [], isLoading: categoriesLoading } = useQuery<Category[]>({
+    queryKey: ['/api/community/categories'],
+  });
+
+  const { data: postsData, isLoading: postsLoading } = useQuery<PostsResponse>({
+    queryKey: ['/api/community/posts', selectedCategory, searchQuery],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (selectedCategory !== 'all') {
+        params.set('category', selectedCategory);
+      }
+      if (searchQuery) {
+        params.set('search', searchQuery);
+      }
+      const response = await fetch(`/api/community/posts?${params.toString()}`);
+      if (!response.ok) throw new Error('Failed to fetch posts');
+      return response.json();
+    },
+  });
+
+  const threads = postsData?.posts ?? [];
+  const totalThreadCount = postsData?.pagination?.total ?? 0;
+
   const filteredThreads = useMemo(() => {
-    let threads = [...mockThreads];
-    
-    if (selectedCategory !== 'all') {
-      threads = threads.filter(t => t.category === selectedCategory);
-    }
-    
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      threads = threads.filter(t => 
-        t.title.toLowerCase().includes(query) ||
-        t.content.toLowerCase().includes(query) ||
-        t.tags.some(tag => tag.toLowerCase().includes(query))
-      );
-    }
+    let result = [...threads];
 
     switch (sortBy) {
       case 'popular':
-        threads.sort((a, b) => b.likes - a.likes);
+        result.sort((a, b) => b.likes - a.likes);
         break;
       case 'views':
-        threads.sort((a, b) => b.views - a.views);
+        result.sort((a, b) => b.views - a.views);
         break;
       case 'replies':
-        threads.sort((a, b) => b.replies - a.replies);
+        result.sort((a, b) => b.comments - a.comments);
         break;
       default:
-        threads.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     }
 
-    return threads;
-  }, [selectedCategory, searchQuery, sortBy]);
+    return result;
+  }, [threads, sortBy]);
 
   const handleCreateThread = () => {
     toast({ title: 'Thread created', description: 'Your thread has been published successfully.' });
@@ -414,7 +273,7 @@ export default function ThreadsPage() {
                           <SelectValue placeholder="Select a category" />
                         </SelectTrigger>
                         <SelectContent>
-                          {mockCategories.map((cat) => (
+                          {categories.map((cat) => (
                             <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
                           ))}
                         </SelectContent>
@@ -489,33 +348,43 @@ export default function ThreadsPage() {
                 <CardTitle className="text-sm font-medium">Categories</CardTitle>
               </CardHeader>
               <CardContent className="space-y-1">
-                <button
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-all ${
-                    selectedCategory === 'all' 
-                      ? 'bg-primary/10 text-primary' 
-                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                  }`}
-                  onClick={() => setSelectedCategory('all')}
-                  data-testid="button-category-all"
-                >
-                  <span>All Categories</span>
-                  <Badge variant="secondary">{mockThreads.length}</Badge>
-                </button>
-                {mockCategories.map((cat) => (
-                  <button
-                    key={cat.id}
-                    className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-all ${
-                      selectedCategory === cat.id 
-                        ? 'bg-primary/10 text-primary' 
-                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                    }`}
-                    onClick={() => setSelectedCategory(cat.id)}
-                    data-testid={`button-category-${cat.id}`}
-                  >
-                    <span>{cat.name}</span>
-                    <Badge variant="secondary">{cat.threadCount}</Badge>
-                  </button>
-                ))}
+                {categoriesLoading ? (
+                  <div className="space-y-2">
+                    {[1, 2, 3, 4].map((i) => (
+                      <Skeleton key={i} className="h-9 w-full" />
+                    ))}
+                  </div>
+                ) : (
+                  <>
+                    <button
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-all ${
+                        selectedCategory === 'all' 
+                          ? 'bg-primary/10 text-primary' 
+                          : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                      }`}
+                      onClick={() => setSelectedCategory('all')}
+                      data-testid="button-category-all"
+                    >
+                      <span>All Categories</span>
+                      <Badge variant="secondary">{totalThreadCount}</Badge>
+                    </button>
+                    {categories.map((cat) => (
+                      <button
+                        key={cat.id}
+                        className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-all ${
+                          selectedCategory === cat.id 
+                            ? 'bg-primary/10 text-primary' 
+                            : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                        }`}
+                        onClick={() => setSelectedCategory(cat.id)}
+                        data-testid={`button-category-${cat.id}`}
+                      >
+                        <span>{cat.name}</span>
+                        <Badge variant="secondary">{cat.postCount}</Badge>
+                      </button>
+                    ))}
+                  </>
+                )}
               </CardContent>
             </Card>
 
@@ -551,19 +420,23 @@ export default function ThreadsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {mockAuthors.slice(0, 4).map((author, i) => (
-                  <div key={author.id} className="flex items-center gap-3" data-testid={`contributor-${author.id}`}>
-                    <span className="text-sm text-muted-foreground w-4">{i + 1}</span>
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={author.avatarUrl} />
-                      <AvatarFallback>{author.displayName[0]}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{author.displayName}</p>
-                      <p className="text-xs text-muted-foreground">{author.reputation.toLocaleString()} rep</p>
+                {threads.length > 0 ? (
+                  threads.slice(0, 4).map((thread, i) => (
+                    <div key={thread.author.id} className="flex items-center gap-3" data-testid={`contributor-${thread.author.id}`}>
+                      <span className="text-sm text-muted-foreground w-4">{i + 1}</span>
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={thread.author.avatarUrl} />
+                        <AvatarFallback>{thread.author.displayName?.[0] || thread.author.username?.[0] || '?'}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{thread.author.displayName || thread.author.username}</p>
+                        <p className="text-xs text-muted-foreground">{(thread.author.reputation || 0).toLocaleString()} rep</p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground">No contributors yet</p>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -615,10 +488,7 @@ export default function ThreadsPage() {
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
-                          {selectedThread.isPinned && <Badge variant="outline"><Pin className="h-3 w-3 mr-1" />Pinned</Badge>}
-                          {selectedThread.isLocked && <Badge variant="destructive"><Lock className="h-3 w-3 mr-1" />Locked</Badge>}
-                          {selectedThread.isSolved && <Badge variant="default" className="bg-green-500"><CheckCircle className="h-3 w-3 mr-1" />Solved</Badge>}
-                          <Badge variant="secondary">{mockCategories.find(c => c.id === selectedThread.category)?.name}</Badge>
+                          <Badge variant="secondary">{categories.find(c => c.id === selectedThread.category)?.name || selectedThread.category}</Badge>
                         </div>
                         <CardTitle className="text-xl">{selectedThread.title}</CardTitle>
                       </div>
@@ -640,12 +510,12 @@ export default function ThreadsPage() {
                     <div className="flex items-center gap-3 mt-4">
                       <Avatar className="h-10 w-10">
                         <AvatarImage src={selectedThread.author.avatarUrl} />
-                        <AvatarFallback>{selectedThread.author.displayName[0]}</AvatarFallback>
+                        <AvatarFallback>{selectedThread.author.displayName?.[0] || selectedThread.author.username?.[0] || '?'}</AvatarFallback>
                       </Avatar>
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="font-medium">{selectedThread.author.displayName}</span>
-                          {getRoleBadge(selectedThread.author.role)}
+                          <span className="font-medium">{selectedThread.author.displayName || selectedThread.author.username}</span>
+                          {selectedThread.author.role && getRoleBadge(selectedThread.author.role)}
                         </div>
                         <span className="text-sm text-muted-foreground">
                           Posted {formatDistanceToNow(new Date(selectedThread.createdAt), { addSuffix: true })}
@@ -685,7 +555,7 @@ export default function ThreadsPage() {
                         </span>
                         <span className="text-sm text-muted-foreground flex items-center gap-1">
                           <MessageCircle className="h-4 w-4" />
-                          {selectedThread.replies} replies
+                          {selectedThread.comments} comments
                         </span>
                       </div>
                       <Button 
@@ -702,48 +572,19 @@ export default function ThreadsPage() {
 
                 <Card className={cardClassName} data-testid="card-replies">
                   <CardHeader>
-                    <CardTitle className="text-lg">{mockReplies.length} Replies</CardTitle>
+                    <CardTitle className="text-lg">{selectedThread.comments} Comments</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    {mockReplies.map((reply) => (
-                      <div 
-                        key={reply.id} 
-                        className={`p-4 rounded-lg border ${reply.isAccepted ? 'border-green-500 bg-green-500/5' : 'border-border'}`}
-                        data-testid={`reply-${reply.id}`}
-                      >
-                        {reply.isAccepted && (
-                          <Badge className="bg-green-500 mb-3"><CheckCircle className="h-3 w-3 mr-1" />Accepted Answer</Badge>
-                        )}
-                        <div className="flex items-start gap-3">
-                          <Avatar className="h-8 w-8">
-                            <AvatarImage src={reply.author.avatarUrl} />
-                            <AvatarFallback>{reply.author.displayName[0]}</AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium text-sm">{reply.author.displayName}</span>
-                              {getRoleBadge(reply.author.role)}
-                              <span className="text-xs text-muted-foreground">
-                                {formatDistanceToNow(new Date(reply.createdAt), { addSuffix: true })}
-                              </span>
-                            </div>
-                            <div className="prose prose-sm dark:prose-invert mt-2 max-w-none">
-                              <p className="whitespace-pre-wrap text-sm">{reply.content}</p>
-                            </div>
-                            <div className="flex items-center gap-3 mt-3">
-                              <Button variant="ghost" size="sm" className={reply.isLiked ? 'text-primary' : ''} data-testid={`button-like-reply-${reply.id}`}>
-                                <ThumbsUp className={`h-3 w-3 mr-1 ${reply.isLiked ? 'fill-current' : ''}`} />
-                                {reply.likes}
-                              </Button>
-                              <Button variant="ghost" size="sm" data-testid={`button-reply-to-${reply.id}`}>
-                                <Reply className="h-3 w-3 mr-1" />
-                                Reply
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
+                    {selectedThread.comments === 0 ? (
+                      <div className="text-center py-4 text-muted-foreground">
+                        <MessageCircle className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                        <p>No comments yet. Be the first to reply!</p>
                       </div>
-                    ))}
+                    ) : (
+                      <div className="text-center py-4 text-muted-foreground">
+                        <p className="text-sm">Comments are loading from the server...</p>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
 
@@ -783,6 +624,28 @@ export default function ThreadsPage() {
                   </CardFooter>
                 </Card>
               </div>
+            ) : postsLoading ? (
+              <div className="space-y-3" data-testid="posts-loading">
+                {[1, 2, 3, 4].map((i) => (
+                  <Card key={i} className={cardClassName}>
+                    <CardContent className="pt-4">
+                      <div className="flex items-start gap-4">
+                        <Skeleton className="h-10 w-10 rounded-full hidden sm:flex" />
+                        <div className="flex-1 space-y-3">
+                          <Skeleton className="h-4 w-24" />
+                          <Skeleton className="h-5 w-3/4" />
+                          <Skeleton className="h-4 w-full" />
+                          <div className="flex gap-4">
+                            <Skeleton className="h-3 w-16" />
+                            <Skeleton className="h-3 w-16" />
+                            <Skeleton className="h-3 w-16" />
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             ) : (
               <div className="space-y-3">
                 {filteredThreads.map((thread) => (
@@ -796,21 +659,18 @@ export default function ThreadsPage() {
                       <div className="flex items-start gap-4">
                         <Avatar className="h-10 w-10 hidden sm:flex">
                           <AvatarImage src={thread.author.avatarUrl} />
-                          <AvatarFallback>{thread.author.displayName[0]}</AvatarFallback>
+                          <AvatarFallback>{thread.author.displayName?.[0] || thread.author.username?.[0] || '?'}</AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap mb-1">
-                            {thread.isPinned && <Pin className="h-3 w-3 text-primary" />}
-                            {thread.isLocked && <Lock className="h-3 w-3 text-muted-foreground" />}
-                            {thread.isSolved && <CheckCircle className="h-3 w-3 text-green-500" />}
-                            <Badge variant="outline" className="text-xs">{mockCategories.find(c => c.id === thread.category)?.name}</Badge>
+                            <Badge variant="outline" className="text-xs">{categories.find(c => c.id === thread.category)?.name || thread.category}</Badge>
                           </div>
                           <h3 className="font-medium text-foreground line-clamp-1">{thread.title}</h3>
-                          <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{thread.content.replace(/```[\s\S]*?```/g, '[code block]')}</p>
+                          <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{thread.content?.replace(/```[\s\S]*?```/g, '[code block]') || ''}</p>
                           <div className="flex items-center gap-4 mt-3 text-sm text-muted-foreground">
                             <span className="flex items-center gap-1">
                               <Clock className="h-3 w-3" />
-                              {formatDistanceToNow(new Date(thread.createdAt), { addSuffix: true })}
+                              {thread.createdAt ? formatDistanceToNow(new Date(thread.createdAt), { addSuffix: true }) : 'recently'}
                             </span>
                             <span className="flex items-center gap-1">
                               <Heart className={`h-3 w-3 ${thread.isLiked ? 'fill-primary text-primary' : ''}`} />
@@ -818,7 +678,7 @@ export default function ThreadsPage() {
                             </span>
                             <span className="flex items-center gap-1">
                               <MessageCircle className="h-3 w-3" />
-                              {thread.replies}
+                              {thread.comments}
                             </span>
                             <span className="flex items-center gap-1">
                               <Eye className="h-3 w-3" />

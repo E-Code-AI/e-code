@@ -6,6 +6,7 @@ import { ensureAdmin } from '../middleware/admin-auth';
 import { ensureAuthenticated } from '../middleware/auth';
 import { csrfProtection } from '../middleware/csrf';
 import { createLogger } from '../utils/logger';
+import { realAuditLogsService } from '../services/real-audit-logs';
 
 const router = Router();
 const adminService = new AdminService(storage);
@@ -1076,6 +1077,54 @@ router.get('/activity-logs', async (req, res) => {
   } catch (error) {
     logger.error('Error fetching activity logs', { error });
     res.status(500).json({ message: 'Failed to fetch activity logs' });
+  }
+});
+
+// Audit logs endpoint
+router.get('/audit-logs', async (req, res) => {
+  try {
+    const filters: any = {
+      limit: req.query.limit ? parseInt(req.query.limit as string) : 100,
+      offset: req.query.offset ? parseInt(req.query.offset as string) : 0,
+    };
+
+    if (req.query.search) {
+      filters.search = req.query.search as string;
+    }
+    if (req.query.action && req.query.action !== 'all') {
+      filters.action = req.query.action as string;
+    }
+    if (req.query.status && req.query.status !== 'all') {
+      filters.result = req.query.status as 'success' | 'failure' | 'error';
+    }
+    if (req.query.from) {
+      filters.startDate = new Date(req.query.from as string);
+    }
+    if (req.query.to) {
+      filters.endDate = new Date(req.query.to as string);
+    }
+
+    const { logs, total } = await realAuditLogsService.query(filters);
+    
+    const formattedLogs = logs.map(log => ({
+      id: log.id,
+      organizationId: log.metadata?.organizationId || null,
+      userId: log.userId,
+      username: log.userName,
+      action: log.action,
+      resourceType: log.resource,
+      resourceId: log.resourceId || null,
+      ipAddress: log.ipAddress || null,
+      userAgent: log.userAgent || null,
+      details: log.details || {},
+      status: log.result === 'error' ? 'failure' : log.result,
+      timestamp: log.timestamp.toISOString(),
+    }));
+
+    res.json(formattedLogs);
+  } catch (error: any) {
+    logger.error('Error fetching audit logs', { error: error?.message });
+    res.status(500).json({ message: 'Failed to fetch audit logs' });
   }
 });
 
