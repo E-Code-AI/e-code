@@ -73,13 +73,13 @@ export function ReplitThemesPanel({ projectId }: { projectId?: string }) {
   const [borderRadius, setBorderRadius] = useState([4]);
 
   // Fetch theme settings from API
-  const { data: themeSettings, isLoading } = useQuery<ThemeSettings>({
+  const { data: themeSettings, isLoading, isSuccess } = useQuery<ThemeSettings>({
     queryKey: ['/api/projects', projectId, 'themes'],
     queryFn: async () => {
       if (!projectId) return null;
       const res = await apiRequest('GET', `/api/projects/${projectId}/themes`);
       if (!res.ok) throw new Error('Failed to fetch theme settings');
-      return res.json();
+      return await res.json();
     },
     enabled: !!projectId,
   });
@@ -102,7 +102,7 @@ export function ReplitThemesPanel({ projectId }: { projectId?: string }) {
       if (!projectId) throw new Error('No project ID');
       const res = await apiRequest('PUT', `/api/projects/${projectId}/themes`, settings);
       if (!res.ok) throw new Error('Failed to save theme settings');
-      return res.json();
+      return await res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'themes'] });
@@ -113,10 +113,10 @@ export function ReplitThemesPanel({ projectId }: { projectId?: string }) {
     },
   });
 
-  // Auto-save when theme changes
+  // Auto-save when theme changes - only save after initial data is loaded
   const handleThemeSelect = (themeId: string) => {
     setSelectedTheme(themeId);
-    if (projectId) {
+    if (projectId && isSuccess) {
       saveThemeMutation.mutate({ themeId, customColors, fontSize: fontSize[0], borderRadius: borderRadius[0] });
     }
   };
@@ -204,7 +204,7 @@ export function ReplitThemesPanel({ projectId }: { projectId?: string }) {
   };
 
   const handleSaveCustomTheme = () => {
-    if (projectId) {
+    if (projectId && !isLoading) {
       saveThemeMutation.mutate({ 
         themeId: 'custom', 
         customColors, 
@@ -215,7 +215,7 @@ export function ReplitThemesPanel({ projectId }: { projectId?: string }) {
   };
 
   const handleSaveEditorSettings = () => {
-    if (projectId) {
+    if (projectId && !isLoading) {
       saveThemeMutation.mutate({ 
         themeId: selectedTheme, 
         customColors, 
@@ -257,7 +257,9 @@ export function ReplitThemesPanel({ projectId }: { projectId?: string }) {
               "flex items-center justify-center gap-2",
               selectedTheme === 'light' && "bg-background shadow-sm"
             )}
-            onClick={() => setSelectedTheme('light')}
+            onClick={() => handleThemeSelect('light')}
+            disabled={isLoading}
+            data-testid="button-theme-light"
           >
             <Sun className="h-3 w-3" />
             Light
@@ -268,7 +270,9 @@ export function ReplitThemesPanel({ projectId }: { projectId?: string }) {
               "flex items-center justify-center gap-2",
               selectedTheme === 'dark' && "bg-background shadow-sm"
             )}
-            onClick={() => setSelectedTheme('dark')}
+            onClick={() => handleThemeSelect('dark')}
+            disabled={isLoading}
+            data-testid="button-theme-dark"
           >
             <Moon className="h-3 w-3" />
             Dark
@@ -279,7 +283,9 @@ export function ReplitThemesPanel({ projectId }: { projectId?: string }) {
               "flex items-center justify-center gap-2",
               selectedTheme === 'system' && "bg-background shadow-sm"
             )}
-            onClick={() => setSelectedTheme('system')}
+            onClick={() => handleThemeSelect('system')}
+            disabled={isLoading}
+            data-testid="button-theme-system"
           >
             <Monitor className="h-3 w-3" />
             System
