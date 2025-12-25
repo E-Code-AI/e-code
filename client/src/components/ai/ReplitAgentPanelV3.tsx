@@ -273,6 +273,8 @@ interface ReplitAgentPanelV3Props {
   hideInput?: boolean;
   // ✅ FIX (Dec 19, 2025): Callback to expose input handlers for external input bar
   onExternalInput?: (handlers: ExternalInputHandlers) => void;
+  // ✅ FIX (Dec 25, 2025): Callback when agent bootstrap fails (clears token to exit loading)
+  onBootstrapFailure?: () => void;
 }
 
 function categorizeError(error: unknown): { title: string; message: string } {
@@ -357,7 +359,8 @@ export function ReplitAgentPanelV3({
   isBootstrapping = false,
   bootstrapToken,
   hideInput = false,
-  onExternalInput
+  onExternalInput,
+  onBootstrapFailure
 }: ReplitAgentPanelV3Props) {
   // DEBUG: Log component render (dev only)
   devLog('[ReplitAgentPanelV3] Component render:', {
@@ -625,19 +628,25 @@ export function ReplitAgentPanelV3({
   // External conversation IDs from bootstrap tokens are UUIDs but aiConversations.id is integer
   // The backend will return existing conversation if one exists for this projectId
   useEffect(() => {
+    let isMounted = true;
+    let bootstrapCompleted = false;
+    
     const bootstrapConversation = async () => {
       try {
+        devLog('[ReplitAgentPanelV3] Starting conversation bootstrap for projectId:', projectId);
+        
         const response = await apiRequest('POST', '/api/agent/conversation', {
           projectId: projectId.toString()
         }) as { conversationId: number; agentMode: 'plan' | 'build'; existing: boolean };
 
+        if (!isMounted) return;
+        
+        devLog('[ReplitAgentPanelV3] Bootstrap successful:', response);
+
         // ✅ FIX (Dec 12, 2025): Migrate messages from temp conversationId to real conversationId
-        // During bootstrap, messages are stored under a temporary negative projectId (-712)
-        // Once we get the real conversationId, migrate those messages so they remain visible
         const tempConversationId = -parseInt(projectId.toString(), 10);
         const realConversationId = response.conversationId;
         
-        // Only migrate if we have a valid real conversationId (not null/undefined)
         if (realConversationId && tempConversationId && realConversationId !== tempConversationId) {
           devLog('[ReplitAgentPanelV3] Migrating messages from temp', tempConversationId, 'to real', realConversationId);
           migrateMessages(tempConversationId, realConversationId);
@@ -645,38 +654,50 @@ export function ReplitAgentPanelV3({
 
         setConversationId(realConversationId);
         setAgentMode(response.agentMode);
-      } catch (error) {
-        console.error('Failed to bootstrap conversation:', error);
-        // ✅ FIX (Dec 25, 2025): Set bootstrapFailed to exit loading state
+        bootstrapCompleted = true;
+      } catch (error: unknown) {
+        if (!isMounted) return;
+        
+        console.error('[ReplitAgentPanelV3] Bootstrap conversation failed:', error);
+        bootstrapCompleted = true;
+        
+        // ✅ FIX (Dec 25, 2025): Set bootstrapFailed to exit loading state immediately
         setBootstrapFailed(true);
-        toast({
-          title: "Conversation Setup Failed",
-          description: "Could not initialize agent conversation. You can still chat.",
-          variant: "destructive"
-        });
+        // ✅ FIX (Dec 25, 2025): Notify parent to clear bootstrap token
+        onBootstrapFailure?.();
+        
+        // Only show toast for non-401 errors (401 is expected during bootstrap with token)
+        const isAuthError = error instanceof Error && 
+          (error.message.includes('401') || error.message.toLowerCase().includes('unauthorized'));
+        
+        if (!isAuthError) {
+          toast({
+            title: "Conversation Setup Failed",
+            description: "Could not initialize agent conversation. You can still chat.",
+            variant: "destructive"
+          });
+        }
       }
     };
 
-    // Track if bootstrap completed to avoid race with timeout
-    let bootstrapCompleted = false;
+    bootstrapConversation();
     
-    bootstrapConversation().then(() => {
-      bootstrapCompleted = true;
-    }).catch(() => {
-      bootstrapCompleted = true; // Error was handled in try/catch
-    });
-    
-    // ✅ FIX (Dec 25, 2025): Timeout fallback - exit loading after 15 seconds max
+    // ✅ FIX (Dec 25, 2025): Faster timeout fallback - exit loading after 5 seconds max
     // This prevents the UI from being stuck forever if API is slow/down
     const timeoutId = setTimeout(() => {
-      if (!bootstrapCompleted) {
-        console.warn('[ReplitAgentPanelV3] Bootstrap timeout - allowing UI interaction');
+      if (!bootstrapCompleted && isMounted) {
+        console.warn('[ReplitAgentPanelV3] Bootstrap timeout (5s) - allowing UI interaction');
         setBootstrapFailed(true);
+        // ✅ FIX (Dec 25, 2025): Notify parent to clear bootstrap token
+        onBootstrapFailure?.();
       }
-    }, 15000);
+    }, 5000);
     
-    return () => clearTimeout(timeoutId);
-  }, [projectId, toast, migrateMessages]);
+    return () => {
+      isMounted = false;
+      clearTimeout(timeoutId);
+    };
+  }, [projectId, toast, migrateMessages, onBootstrapFailure]);
 
   // Track if initial sync from backend has been completed for this conversation
   const initialSyncDoneRef = useRef<number | null>(null);
