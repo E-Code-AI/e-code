@@ -95,12 +95,55 @@ const router = Router();
 // CRITICAL: Streaming is high-cost and MUST be accurately tracked
 router.use(aiUsageTracker);
 
+// ✅ FORTUNE 500: Get allowed origins for SSE (no wildcard in production)
+function getSSEAllowedOrigin(req?: any): string {
+  const origin = req?.headers?.origin;
+  
+  // Allowed origins for SSE
+  const allowedOrigins = [
+    process.env.APP_URL || 'http://localhost:5000',
+    'https://e-code.ai',
+    'http://localhost:5000',
+    'http://localhost:3000',
+  ];
+  
+  // Add Replit domains dynamically
+  if (process.env.REPLIT_DEV_DOMAIN) {
+    allowedOrigins.push(`https://${process.env.REPLIT_DEV_DOMAIN}`);
+  }
+  if (process.env.REPLIT_DEV_URL) {
+    allowedOrigins.push(process.env.REPLIT_DEV_URL);
+  }
+  
+  // In development, allow Replit patterns
+  if (process.env.NODE_ENV === 'development' && origin) {
+    const replitPatterns = [
+      /^https:\/\/[a-f0-9-]+\.replit\.dev$/,
+      /^https:\/\/[a-f0-9-]+-\d+-[a-z0-9]+\.riker\.replit\.dev$/,
+      /^https:\/\/[a-z0-9-]+\.repl\.co$/,
+    ];
+    if (replitPatterns.some(pattern => pattern.test(origin))) {
+      return origin;
+    }
+  }
+  
+  // Return matching origin or default
+  if (origin && allowedOrigins.includes(origin)) {
+    return origin;
+  }
+  
+  return allowedOrigins[0]; // Default to primary
+}
+
 // Helper to set SSE headers (Fortune 500-grade reliability)
 const setupSSE = (res: any, req?: any): ((cleanupFn?: () => void) => void) => {
+  const allowedOrigin = getSSEAllowedOrigin(req);
+  
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache, no-transform');
   res.setHeader('Connection', 'keep-alive');
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('X-Accel-Buffering', 'no'); // Disable nginx/proxy buffering
   
   // ✅ FORTUNE 500 FIX: Flush headers immediately to establish SSE connection
