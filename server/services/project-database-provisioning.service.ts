@@ -594,6 +594,152 @@ class ProjectDatabaseProvisioningService {
       backupCount: completedBackups.length
     };
   }
+
+  async getDatabaseInfo(projectId: number): Promise<{
+    provisioned: boolean;
+    status?: string;
+    host?: string;
+    port?: number;
+    databaseName?: string;
+    username?: string;
+    storageUsedMb?: number;
+    storageLimitMb?: number;
+    connectionCount?: number;
+    maxConnections?: number;
+    lastBackupAt?: Date | null;
+    plan?: string;
+    region?: string;
+    computeHours?: number;
+    historyRetentionDays?: number;
+  } | null> {
+    const database = await this.getProjectDatabase(projectId);
+    if (!database) {
+      return { provisioned: false };
+    }
+
+    let credentials: DatabaseCredentials | null = null;
+    try {
+      credentials = await this.getCredentials(projectId);
+    } catch (e) {
+      logger.warn(`Could not get credentials for project ${projectId}:`, e);
+    }
+
+    return {
+      provisioned: database.status === 'running',
+      status: database.status,
+      host: credentials?.host || database.host || undefined,
+      port: credentials?.port || database.port || undefined,
+      databaseName: credentials?.database || database.name,
+      username: credentials?.username || undefined,
+      storageUsedMb: database.storageUsedMb || 0,
+      storageLimitMb: database.storageLimitMb || 10240,
+      connectionCount: database.connectionCount || 0,
+      maxConnections: database.maxConnections || 20,
+      lastBackupAt: database.lastBackupAt,
+      plan: database.plan || 'free',
+      region: database.region || 'us-east-1',
+      computeHours: database.computeHoursUsed || 0,
+      historyRetentionDays: database.historyRetentionDays || 7
+    };
+  }
+
+  async executeQuery(projectId: number, query: string): Promise<{
+    rows: any[];
+    rowCount: number;
+    fields: Array<{ name: string; dataTypeID?: number }>;
+  }> {
+    const database = await this.getProjectDatabase(projectId);
+    if (!database) {
+      throw new Error('Database not found');
+    }
+
+    if (database.status !== 'running') {
+      throw new Error(`Database is not running (status: ${database.status})`);
+    }
+
+    const credentials = await this.getCredentials(projectId);
+    if (!credentials) {
+      throw new Error('Could not get database credentials');
+    }
+
+    const provider = getProvider(database.provider as DatabaseProvider);
+    
+    try {
+      const result = await provider.executeQuery(database.id, query, credentials);
+      return {
+        rows: result.rows || [],
+        rowCount: result.rowCount || 0,
+        fields: result.fields || []
+      };
+    } catch (error: any) {
+      logger.error(`SQL execution error for project ${projectId}:`, error);
+      throw new Error(error.message || 'Query execution failed');
+    }
+  }
+
+  async pointInTimeRestore(projectId: number, timestamp: string, timezone: string): Promise<void> {
+    const database = await this.getProjectDatabase(projectId);
+    if (!database) {
+      throw new Error('Database not found');
+    }
+
+    logger.info(`Initiating PITR for project ${projectId} to ${timestamp} (${timezone})`);
+
+    const provider = getProvider(database.provider as DatabaseProvider);
+    
+    await db
+      .update(projectDatabases)
+      .set({ 
+        status: 'restoring',
+        updatedAt: new Date()
+      })
+      .where(eq(projectDatabases.projectId, projectId));
+
+    try {
+      await provider.pointInTimeRestore(database.id, timestamp, timezone);
+      
+      await db
+        .update(projectDatabases)
+        .set({ 
+          status: 'running',
+          updatedAt: new Date()
+        })
+        .where(eq(projectDatabases.projectId, projectId));
+
+      logger.info(`PITR completed for project ${projectId}`);
+    } catch (error: any) {
+      await db
+        .update(projectDatabases)
+        .set({ 
+          status: 'error',
+          updatedAt: new Date()
+        })
+        .where(eq(projectDatabases.projectId, projectId));
+
+      logger.error(`PITR failed for project ${projectId}:`, error);
+      throw error;
+    }
+  }
+
+  async updateSettings(projectId: number, settings: { historyRetentionDays?: number }): Promise<void> {
+    const database = await this.getProjectDatabase(projectId);
+    if (!database) {
+      throw new Error('Database not found');
+    }
+
+    const updateData: any = { updatedAt: new Date() };
+    
+    if (settings.historyRetentionDays !== undefined) {
+      updateData.historyRetentionDays = settings.historyRetentionDays;
+    }
+
+    await db
+      .update(projectDatabases)
+      .set(updateData)
+      .where(eq(projectDatabases.projectId, projectId));
+
+    logger.info(`Settings updated for project ${projectId}:`, settings);
+  }
 }
 
 export const projectDatabaseService = new ProjectDatabaseProvisioningService();

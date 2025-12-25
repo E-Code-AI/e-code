@@ -1426,7 +1426,11 @@ export const projectDatabases = pgTable('project_databases', {
   // Backup configuration
   autoBackup: boolean('auto_backup').default(true),
   backupRetentionDays: integer('backup_retention_days').default(7), // 7d free, 14d starter, 30d pro, 90d enterprise
+  historyRetentionDays: integer('history_retention_days').default(7), // Point-in-time restore window
   lastBackupAt: timestamp('last_backup_at'),
+  
+  // Compute usage tracking (for billing)
+  computeHoursUsed: integer('compute_hours_used').default(0), // Total compute hours used this billing period
   
   // Kubernetes operator fields (for CloudNativePG)
   k8sNamespace: varchar('k8s_namespace'), // Kubernetes namespace for isolation

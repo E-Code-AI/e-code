@@ -311,6 +311,44 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
     },
   });
 
+  const [sqlResults, setSqlResults] = useState<{ rows: any[]; rowCount: number; fields: any[] } | null>(null);
+  const [sqlError, setSqlError] = useState<string | null>(null);
+
+  const executeSqlMutation = useMutation({
+    mutationFn: async (query: string) => {
+      return apiRequest('POST', `/api/database/project/${projectId}/sql/execute`, { query });
+    },
+    onSuccess: (data) => {
+      setSqlResults(data);
+      setSqlError(null);
+      toast({
+        title: 'Query Executed',
+        description: `Returned ${data.rowCount || 0} rows in ${data.executionTime || 0}ms`,
+      });
+    },
+    onError: (error: any) => {
+      setSqlError(error.message || 'Query execution failed');
+      setSqlResults(null);
+      toast({
+        title: 'Query Failed',
+        description: error.message || 'Failed to execute query',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const handleExecuteSql = () => {
+    if (!sqlQuery.trim()) {
+      toast({
+        title: 'Empty Query',
+        description: 'Please enter a SQL query',
+        variant: 'destructive',
+      });
+      return;
+    }
+    executeSqlMutation.mutate(sqlQuery);
+  };
+
   const { data: tablesData, isLoading: tablesLoading, refetch: refetchTables } = useQuery<ProjectDataTablesResponse>({
     queryKey: isAdmin ? ['/api/admin/database/tables'] : ['/api/projects', projectId, 'data/tables'],
     queryFn: async () => {
@@ -708,10 +746,49 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
               data-testid="textarea-sql"
             />
             <div className="flex justify-end mt-2">
-              <Button size="sm" data-testid="button-execute-sql">
+              <Button 
+                size="sm" 
+                onClick={handleExecuteSql}
+                disabled={executeSqlMutation.isPending}
+                data-testid="button-execute-sql"
+              >
+                {executeSqlMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : null}
                 Execute
               </Button>
             </div>
+            {sqlError && (
+              <div className="mt-2 p-2 bg-red-500/10 border border-red-500/30 rounded text-red-500 text-xs">
+                {sqlError}
+              </div>
+            )}
+            {sqlResults && sqlResults.rows && sqlResults.rows.length > 0 && (
+              <div className="mt-2 max-h-48 overflow-auto border border-border rounded">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="bg-muted border-b border-border">
+                      {Object.keys(sqlResults.rows[0] || {}).map((key) => (
+                        <th key={key} className="px-2 py-1 text-left font-medium text-foreground">
+                          {key}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sqlResults.rows.map((row, index) => (
+                      <tr key={index} className="border-b border-border">
+                        {Object.values(row).map((value, i) => (
+                          <td key={i} className="px-2 py-1 text-muted-foreground font-mono">
+                            {value !== null && value !== undefined ? String(value) : 'null'}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
 

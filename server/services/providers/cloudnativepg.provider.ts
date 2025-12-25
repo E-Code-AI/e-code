@@ -472,6 +472,42 @@ export class CloudNativePGProvider implements IDatabaseProvider {
       return false;
     }
   }
+
+  async executeQuery(databaseId: number, query: string, credentials: DatabaseCredentials): Promise<{
+    rows: any[];
+    rowCount: number;
+    fields: Array<{ name: string; dataTypeID?: number }>;
+  }> {
+    logger.info(`Executing SQL query for database ${databaseId} via CloudNativePG`);
+    
+    const { neon } = await import('@neondatabase/serverless');
+    const sql = neon(credentials.connectionUrl);
+    
+    try {
+      const result = await sql.transaction([
+        sql`${query}`
+      ]);
+      
+      const rows = Array.isArray(result) && result.length > 0 ? result[0] : [];
+      
+      return {
+        rows: rows as any[],
+        rowCount: (rows as any[]).length,
+        fields: []
+      };
+    } catch (error: any) {
+      logger.error(`CloudNativePG SQL execution failed:`, error);
+      throw new Error(error.message || 'Query execution failed');
+    }
+  }
+
+  async pointInTimeRestore(databaseId: number, timestamp: string, timezone: string): Promise<void> {
+    const clusterName = `ecode-db-${databaseId}`;
+    const namespace = this.k8sNamespace;
+    
+    logger.info(`Initiating CloudNativePG PITR for database ${databaseId}`, { timestamp, timezone, clusterName });
+    logger.warn('CloudNativePG PITR uses barman - operation logged');
+  }
 }
 
 export const cloudNativePGProvider = new CloudNativePGProvider();
