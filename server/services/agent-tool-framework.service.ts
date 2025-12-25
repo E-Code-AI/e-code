@@ -434,6 +434,144 @@ export class AgentToolFrameworkService extends EventEmitter {
       }
     });
 
+    // Database Provisioning Tool - Like Replit's automatic database creation
+    this.registerTool({
+      name: 'provision_database',
+      displayName: 'Provision Database',
+      description: 'Create a new PostgreSQL database for the project. Use this when the user needs a database for their app, wants to store data, or needs persistent storage.',
+      capability: 'database',
+      inputSchema: z.object({
+        plan: z.enum(['free', 'starter', 'pro', 'enterprise']).optional().default('free').describe('Database plan tier'),
+        region: z.string().optional().default('us-east-1').describe('Database region')
+      }),
+      execute: async (input, context) => {
+        try {
+          // Validate projectId is available
+          if (!context.projectId) {
+            return {
+              success: false,
+              error: 'Project ID is required to provision a database. This tool must be called within a project context.'
+            };
+          }
+          
+          const { projectDatabaseService } = await import('./project-database-provisioning.service');
+          
+          // Check if database already exists
+          const existing = await projectDatabaseService.getProjectDatabase(context.projectId);
+          if (existing) {
+            const credentials = await projectDatabaseService.getCredentials(context.projectId);
+            return {
+              success: true,
+              alreadyExists: true,
+              message: 'Database already provisioned for this project',
+              database: {
+                name: existing.name,
+                type: existing.type,
+                status: existing.status,
+                host: existing.host,
+                port: existing.port,
+                databaseName: existing.database,
+                username: existing.username
+              },
+              connectionUrl: credentials?.connectionUrl,
+              envVar: 'DATABASE_URL'
+            };
+          }
+          
+          // Provision new database
+          const database = await projectDatabaseService.provisionDatabase(context.projectId, {
+            plan: input.plan || 'free',
+            region: input.region || 'us-east-1'
+          });
+          
+          const credentials = await projectDatabaseService.getCredentials(context.projectId);
+          
+          logger.info(`[ToolFramework] Agent provisioned database for project ${context.projectId}`);
+          
+          return {
+            success: true,
+            alreadyExists: false,
+            message: `Database provisioned successfully on ${input.plan || 'free'} plan`,
+            database: {
+              name: database.name,
+              type: database.type,
+              status: database.status,
+              host: database.host,
+              port: database.port,
+              databaseName: database.database,
+              username: database.username
+            },
+            connectionUrl: credentials?.connectionUrl,
+            envVar: 'DATABASE_URL',
+            usage: 'Use DATABASE_URL environment variable to connect. For Drizzle ORM, import { db } from your db config file.'
+          };
+        } catch (error: any) {
+          logger.error('[ToolFramework] Database provisioning failed:', error);
+          return {
+            success: false,
+            error: error.message
+          };
+        }
+      }
+    });
+
+    // Get Database Info Tool
+    this.registerTool({
+      name: 'get_database_info',
+      displayName: 'Get Database Info',
+      description: 'Get information about the project database including connection details, status, and credentials.',
+      capability: 'database',
+      inputSchema: z.object({}),
+      execute: async (input, context) => {
+        try {
+          // Validate projectId is available
+          if (!context.projectId) {
+            return {
+              provisioned: false,
+              error: 'Project ID is required. This tool must be called within a project context.'
+            };
+          }
+          
+          const { projectDatabaseService } = await import('./project-database-provisioning.service');
+          
+          const database = await projectDatabaseService.getProjectDatabase(context.projectId);
+          if (!database) {
+            return {
+              provisioned: false,
+              message: 'No database provisioned. Use provision_database tool to create one.'
+            };
+          }
+          
+          const credentials = await projectDatabaseService.getCredentials(context.projectId);
+          const stats = await projectDatabaseService.getDatabaseStats(context.projectId);
+          
+          return {
+            provisioned: true,
+            database: {
+              name: database.name,
+              type: database.type,
+              status: database.status,
+              plan: database.plan,
+              host: database.host,
+              port: database.port,
+              databaseName: database.database,
+              username: database.username,
+              storageUsedMb: database.storageUsedMb,
+              storageLimitMb: database.storageLimitMb
+            },
+            connectionUrl: credentials?.connectionUrl,
+            stats
+          };
+        } catch (error: any) {
+          logger.error('[ToolFramework] Get database info failed:', error);
+          return {
+            success: false,
+            error: error.message
+          };
+        }
+      }
+    });
+
     // API Integration Tools
     this.registerTool({
       name: 'http_request',
