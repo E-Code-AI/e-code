@@ -275,24 +275,29 @@ export class ProjectsRouter {
           projectLogger.warn(`[Projects] Failed to initialize memory bank for project ${project.id}:`, mbError);
         }
         
-        // Async database provisioning for new project (like Replit)
-        // Don't block project creation - provision in background
-        const provisionDatabaseAsync = async () => {
+        // Auto-provision database ASYNCHRONOUSLY like Replit
+        // This ensures project creation is fast while database provisions in background
+        const databaseInfo: { provisioned: boolean; status: string; message: string; connectionUrl?: string; database?: any } = {
+          provisioned: false,
+          status: 'provisioning',
+          message: 'Database is being provisioned in the background'
+        };
+        
+        // Fire-and-forget: Start provisioning in background without blocking response
+        // This prevents API timeout issues when Neon/K8s providers take 45-60s
+        import('../services/project-database-provisioning.service').then(async ({ projectDatabaseService }) => {
           try {
-            const { projectDatabaseService } = await import('../services/project-database-provisioning.service');
-            const db = await projectDatabaseService.provisionDatabase(project.id, {
+            const database = await projectDatabaseService.provisionDatabase(project.id, {
               plan: 'free',
               region: 'us-east-1'
             });
-            projectLogger.info(`[Projects] Database auto-provisioned for project ${project.id}: ${db.database}`);
-          } catch (dbError) {
+            projectLogger.info(`[Projects] Database auto-provisioned for project ${project.id}: ${database.database}`);
+          } catch (dbError: any) {
+            // Log error - database can be provisioned later via agent or retry
             projectLogger.warn(`[Projects] Failed to auto-provision database for project ${project.id}:`, dbError);
           }
-        };
-        
-        // Start async provisioning - don't await
-        provisionDatabaseAsync().catch(err => {
-          projectLogger.error(`[Projects] Async database provisioning error for project ${project.id}:`, err);
+        }).catch((importErr) => {
+          projectLogger.error(`[Projects] Failed to import database provisioning service:`, importErr);
         });
         
         const owner = await this.storage.getUser(String(userId));
@@ -300,11 +305,7 @@ export class ProjectsRouter {
         res.json({ 
           ...project, 
           owner,
-          database: {
-            provisioned: false,
-            status: 'provisioning',
-            message: 'Database is being provisioned in the background'
-          }
+          database: databaseInfo
         });
       } catch (error: any) {
         projectLogger.error('Error creating project:', error);
