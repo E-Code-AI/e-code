@@ -91,6 +91,21 @@ export default function IDEPage() {
     });
   }, [toast]);
 
+  // ✅ FIX (Dec 25, 2025): Handle agent bootstrap failure by clearing the token
+  // This allows the agent panel to exit "Initializing Agent" state and enable chat
+  const handleBootstrapFailure = useCallback(() => {
+    console.log('[IDEPage] Bootstrap failed - clearing token to exit loading state');
+    
+    // Clear the stable bootstrap token so isBootstrapping becomes false
+    setStableBootstrapToken(null);
+    initialTokenRef.current = null;
+    
+    // Clean up URL
+    const url = new URL(window.location.href);
+    url.searchParams.delete('bootstrap');
+    window.history.replaceState({}, '', url);
+  }, []);
+
   // Determine if we can fetch the project
   // Either user is authenticated OR we have a bootstrap token for autonomous workspace
   const canFetchProject = !!projectId && !isAuthLoading && (!!user || !!bootstrapToken);
@@ -140,6 +155,7 @@ export default function IDEPage() {
             bootstrapToken={bootstrapToken}
             onWorkspaceComplete={handleWorkspaceComplete}
             onWorkspaceError={handleWorkspaceError}
+            onBootstrapFailure={handleBootstrapFailure}
           />
         </Suspense>
       </ErrorBoundary>

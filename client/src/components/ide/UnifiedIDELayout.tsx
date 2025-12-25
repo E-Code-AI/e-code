@@ -104,6 +104,8 @@ interface UnifiedIDELayoutProps {
   bootstrapToken?: string | null;
   onWorkspaceComplete?: () => void;
   onWorkspaceError?: (error: string) => void;
+  // ✅ FIX (Dec 25, 2025): Callback when agent bootstrap fails (clears token to exit loading)
+  onBootstrapFailure?: () => void;
 }
 
 type TabletPanel = 'editor' | 'terminal' | 'preview' | 'agent' | 'more';
@@ -119,6 +121,7 @@ function UnifiedIDELayout({
   bootstrapToken,
   onWorkspaceComplete,
   onWorkspaceError,
+  onBootstrapFailure,
 }: UnifiedIDELayoutProps) {
   const deviceType = useDeviceType();
   const { toast } = useToast();
@@ -621,6 +624,7 @@ function UnifiedIDELayout({
                 bootstrapToken={bootstrapToken}
                 hideInput={true}
                 onExternalInput={setMobileAgentHandlers}
+                onBootstrapFailure={onBootstrapFailure}
               />
             </AgentPanelErrorBoundary>
           </Suspense>
@@ -786,6 +790,7 @@ function UnifiedIDELayout({
                 bootstrapToken={bootstrapToken}
                 hideInput={true}
                 onExternalInput={setMobileAgentHandlers}
+                onBootstrapFailure={onBootstrapFailure}
               />
             </AgentPanelErrorBoundary>
           </Suspense>
@@ -803,6 +808,7 @@ function UnifiedIDELayout({
                 bootstrapToken={bootstrapToken}
                 hideInput={true}
                 onExternalInput={setMobileAgentHandlers}
+                onBootstrapFailure={onBootstrapFailure}
               />
             </AgentPanelErrorBoundary>
           </Suspense>
@@ -853,6 +859,7 @@ function UnifiedIDELayout({
                 onAgentToolsSettingsChange={setAgentToolsSettings}
                 isBootstrapping={!!bootstrapToken}
                 bootstrapToken={bootstrapToken}
+                onBootstrapFailure={onBootstrapFailure}
               />
             </AgentPanelErrorBoundary>
           </Suspense>
@@ -1636,6 +1643,7 @@ function UnifiedIDELayout({
                         onAgentToolsSettingsChange={setAgentToolsSettings}
                         isBootstrapping={!!bootstrapToken}
                         bootstrapToken={bootstrapToken}
+                        onBootstrapFailure={onBootstrapFailure}
                       />
                     </Suspense>
                   </TabsContent>
