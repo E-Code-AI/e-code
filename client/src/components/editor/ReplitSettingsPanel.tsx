@@ -1,4 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { apiRequest, queryClient } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 import { LazyMotionDiv } from '@/lib/motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,7 +20,8 @@ import {
   User,
   Save,
   RotateCcw,
-  ChevronRight
+  ChevronRight,
+  Loader2
 } from 'lucide-react';
 import {
   Select,
@@ -33,6 +37,38 @@ interface SettingSection {
   title: string;
   icon: React.ElementType;
 }
+
+interface ProjectSettings {
+  projectId?: number;
+  fontSize: string;
+  tabSize: string;
+  wordWrap: boolean;
+  lineNumbers: boolean;
+  minimap: boolean;
+  autoSave: boolean;
+  formatOnSave: boolean;
+  editorTheme: string;
+  projectName: string;
+  projectDescription: string;
+  projectPrivacy: 'public' | 'private' | 'unlisted';
+  themeId?: string;
+  customColors?: Record<string, string>;
+  borderRadius?: number;
+}
+
+const defaultSettings: ProjectSettings = {
+  fontSize: '14',
+  tabSize: '2',
+  wordWrap: true,
+  lineNumbers: true,
+  minimap: true,
+  autoSave: true,
+  formatOnSave: true,
+  editorTheme: 'vs-light',
+  projectName: 'My Project',
+  projectDescription: 'A Replit project',
+  projectPrivacy: 'public',
+};
 
 function SettingsSkeleton() {
   return (
@@ -59,23 +95,65 @@ function SettingsSkeleton() {
 export function ReplitSettingsPanel({ projectId }: { projectId?: string }) {
   const [activeSection, setActiveSection] = useState('editor');
   const [isDirty, setIsDirty] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
-  const [fontSize, setFontSize] = useState('14');
-  const [tabSize, setTabSize] = useState('2');
-  const [wordWrap, setWordWrap] = useState(true);
-  const [lineNumbers, setLineNumbers] = useState(true);
-  const [minimap, setMinimap] = useState(true);
-  const [autoSave, setAutoSave] = useState(true);
-  const [formatOnSave, setFormatOnSave] = useState(true);
+  const [fontSize, setFontSize] = useState(defaultSettings.fontSize);
+  const [tabSize, setTabSize] = useState(defaultSettings.tabSize);
+  const [wordWrap, setWordWrap] = useState(defaultSettings.wordWrap);
+  const [lineNumbers, setLineNumbers] = useState(defaultSettings.lineNumbers);
+  const [minimap, setMinimap] = useState(defaultSettings.minimap);
+  const [autoSave, setAutoSave] = useState(defaultSettings.autoSave);
+  const [formatOnSave, setFormatOnSave] = useState(defaultSettings.formatOnSave);
 
-  // Use global theme from ThemeProvider instead of local state
   const { theme, setTheme } = useTheme();
-  const [editorTheme, setEditorTheme] = useState('vs-light');
+  const [editorTheme, setEditorTheme] = useState(defaultSettings.editorTheme);
 
-  const [projectName, setProjectName] = useState('My Project');
-  const [projectDescription, setProjectDescription] = useState('A Replit project');
-  const [projectPrivacy, setProjectPrivacy] = useState('public');
+  const [projectName, setProjectName] = useState(defaultSettings.projectName);
+  const [projectDescription, setProjectDescription] = useState(defaultSettings.projectDescription);
+  const [projectPrivacy, setProjectPrivacy] = useState<'public' | 'private' | 'unlisted'>(defaultSettings.projectPrivacy);
+
+  const { data: settings, isLoading, refetch } = useQuery<ProjectSettings>({
+    queryKey: ['/api/projects', projectId, 'settings'],
+    enabled: !!projectId,
+  });
+
+  useEffect(() => {
+    if (settings) {
+      setFontSize(settings.fontSize ?? defaultSettings.fontSize);
+      setTabSize(settings.tabSize ?? defaultSettings.tabSize);
+      setWordWrap(settings.wordWrap ?? defaultSettings.wordWrap);
+      setLineNumbers(settings.lineNumbers ?? defaultSettings.lineNumbers);
+      setMinimap(settings.minimap ?? defaultSettings.minimap);
+      setAutoSave(settings.autoSave ?? defaultSettings.autoSave);
+      setFormatOnSave(settings.formatOnSave ?? defaultSettings.formatOnSave);
+      setEditorTheme(settings.editorTheme ?? defaultSettings.editorTheme);
+      setProjectName(settings.projectName ?? defaultSettings.projectName);
+      setProjectDescription(settings.projectDescription ?? defaultSettings.projectDescription);
+      setProjectPrivacy(settings.projectPrivacy ?? defaultSettings.projectPrivacy);
+      setIsDirty(false);
+    }
+  }, [settings]);
+
+  const saveMutation = useMutation({
+    mutationFn: async (data: Partial<ProjectSettings>) => {
+      return apiRequest<ProjectSettings>('PUT', `/api/projects/${projectId}/settings`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'settings'] });
+      setIsDirty(false);
+      toast({
+        title: 'Settings saved',
+        description: 'Your project settings have been saved successfully.',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Failed to save settings',
+        description: error.message || 'An error occurred while saving settings.',
+        variant: 'destructive',
+      });
+    },
+  });
 
   const sections: SettingSection[] = [
     { id: 'editor', title: 'Editor', icon: Code },
@@ -88,11 +166,28 @@ export function ReplitSettingsPanel({ projectId }: { projectId?: string }) {
   ];
 
   const handleSave = () => {
-    setIsDirty(false);
+    saveMutation.mutate({
+      fontSize,
+      tabSize,
+      wordWrap,
+      lineNumbers,
+      minimap,
+      autoSave,
+      formatOnSave,
+      editorTheme,
+      projectName,
+      projectDescription,
+      projectPrivacy,
+    });
   };
 
-  const handleReset = () => {
+  const handleReset = async () => {
+    await refetch();
     setIsDirty(false);
+    toast({
+      title: 'Settings reset',
+      description: 'Settings have been reset to last saved values.',
+    });
   };
 
   const renderSectionContent = () => {
@@ -332,7 +427,7 @@ export function ReplitSettingsPanel({ projectId }: { projectId?: string }) {
 
                 <div>
                   <Label htmlFor="privacy" className="text-[13px] text-muted-foreground">Privacy</Label>
-                  <Select value={projectPrivacy} onValueChange={(v) => { setProjectPrivacy(v); setIsDirty(true); }}>
+                  <Select value={projectPrivacy} onValueChange={(v) => { setProjectPrivacy(v as 'public' | 'private' | 'unlisted'); setIsDirty(true); }}>
                     <SelectTrigger id="privacy" className="mt-1 h-8 rounded-lg bg-card border-border text-[15px] text-foreground">
                       <SelectValue />
                     </SelectTrigger>
@@ -383,6 +478,7 @@ export function ReplitSettingsPanel({ projectId }: { projectId?: string }) {
                         ? "bg-card text-primary"
                         : "text-muted-foreground hover:bg-accent hover:text-foreground"
                     )}
+                    data-testid={`button-section-${section.id}`}
                   >
                     <Icon className="w-[18px] h-[18px]" />
                     <span className="flex-1 text-left text-[15px] leading-[20px]">{section.title}</span>
@@ -414,6 +510,8 @@ export function ReplitSettingsPanel({ projectId }: { projectId?: string }) {
                     variant="outline" 
                     className="h-8 rounded-lg bg-transparent border-border text-[15px] text-muted-foreground hover:bg-accent hover:text-foreground"
                     onClick={handleReset}
+                    disabled={saveMutation.isPending}
+                    data-testid="button-reset-settings"
                   >
                     <RotateCcw className="w-[18px] h-[18px] mr-1" />
                     Reset
@@ -421,9 +519,15 @@ export function ReplitSettingsPanel({ projectId }: { projectId?: string }) {
                   <Button 
                     className="h-8 rounded-lg bg-primary text-[15px] text-primary-foreground hover:bg-primary/90"
                     onClick={handleSave}
+                    disabled={saveMutation.isPending}
+                    data-testid="button-save-settings"
                   >
-                    <Save className="w-[18px] h-[18px] mr-1" />
-                    Save Changes
+                    {saveMutation.isPending ? (
+                      <Loader2 className="w-[18px] h-[18px] mr-1 animate-spin" />
+                    ) : (
+                      <Save className="w-[18px] h-[18px] mr-1" />
+                    )}
+                    {saveMutation.isPending ? 'Saving...' : 'Save Changes'}
                   </Button>
                 </div>
               </div>
