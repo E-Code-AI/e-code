@@ -16,7 +16,7 @@ function getEncryptionKey(): string {
     return ENCRYPTION_KEY.padEnd(32).slice(0, 32);
   }
   const dbUrl = process.env.DATABASE_URL || 'ecode-fallback-key';
-  const hash = require('crypto').createHash('sha256').update(dbUrl).digest('hex');
+  const hash = crypto.createHash('sha256').update(dbUrl).digest('hex');
   return hash.slice(0, 32);
 }
 
