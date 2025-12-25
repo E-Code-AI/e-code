@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useDeferredValue, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -22,6 +23,12 @@ interface SearchResult {
   match: string;
   preview: string;
   type: 'file' | 'code' | 'symbol';
+}
+
+interface SearchResponse {
+  results: SearchResult[];
+  totalResults: number;
+  query: string;
 }
 
 function ShimmerSkeleton() {
@@ -51,42 +58,32 @@ export function ReplitSearchPanel({ projectId }: { projectId?: string }) {
   const [searchType, setSearchType] = useState<'all' | 'files' | 'code' | 'symbols'>('all');
   const [caseSensitive, setCaseSensitive] = useState(false);
   const [useRegex, setUseRegex] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [results, setResults] = useState<SearchResult[]>([
-    {
-      id: '1',
-      file: 'src/components/Header.tsx',
-      line: 15,
-      column: 8,
-      match: 'Header',
-      preview: 'export function Header({ title, user }: HeaderProps) {',
-      type: 'code'
-    },
-    {
-      id: '2',
-      file: 'src/utils/auth.ts',
-      line: 23,
-      column: 12,
-      match: 'authenticate',
-      preview: '  const authenticate = async (token: string) => {',
-      type: 'symbol'
-    },
-    {
-      id: '3',
-      file: 'package.json',
-      line: 5,
-      column: 3,
-      match: 'version',
-      preview: '  "version": "1.0.0",',
-      type: 'code'
-    }
-  ]);
+  
+  const deferredQuery = useDeferredValue(searchQuery);
 
-  const handleSearch = () => {
-    if (!searchQuery.trim()) return;
-    setIsLoading(true);
-    setTimeout(() => setIsLoading(false), 800);
-  };
+  const searchUrl = (() => {
+    if (!projectId || !deferredQuery.trim()) return null;
+    
+    const params = new URLSearchParams({
+      q: deferredQuery.trim(),
+      caseSensitive: String(caseSensitive),
+      useRegex: String(useRegex),
+      type: searchType,
+    });
+    
+    if (searchType === 'files') {
+      return `/api/projects/${projectId}/files?${params.toString()}`;
+    }
+    return `/api/projects/${projectId}/search?${params.toString()}`;
+  })();
+
+  const { data, isLoading, isFetching } = useQuery<SearchResponse>({
+    queryKey: [searchUrl],
+    enabled: !!searchUrl && deferredQuery.trim().length >= 2,
+  });
+
+  const results = data?.results || [];
+  const showLoading = isLoading || (isFetching && deferredQuery !== searchQuery);
 
   const getResultIcon = (type: string) => {
     switch (type) {
@@ -103,19 +100,16 @@ export function ReplitSearchPanel({ projectId }: { projectId?: string }) {
 
   return (
     <div className="h-full flex flex-col bg-background">
-      {/* Header */}
       <div className="p-3 border-b border-border min-h-[48px]">
         <div className="flex items-center gap-2 mb-3">
           <Search className="w-[18px] h-[18px] text-muted-foreground" />
           <h3 className="text-[17px] font-medium leading-tight text-foreground">Search</h3>
         </div>
 
-        {/* Search Input */}
         <div className="relative">
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
             placeholder="Search in project..."
             className="pr-8 text-[15px] leading-[20px] bg-card border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary"
             data-testid="input-search"
@@ -131,7 +125,6 @@ export function ReplitSearchPanel({ projectId }: { projectId?: string }) {
           )}
         </div>
 
-        {/* Filters */}
         <div className="mt-3 space-y-2">
           <div className="flex gap-2">
             <Button
@@ -216,11 +209,10 @@ export function ReplitSearchPanel({ projectId }: { projectId?: string }) {
         </div>
       </div>
 
-      {/* Results */}
       <ScrollArea className="flex-1">
-        {isLoading ? (
+        {showLoading ? (
           <ShimmerSkeleton />
-        ) : results.length > 0 && searchQuery ? (
+        ) : results.length > 0 && deferredQuery ? (
           <div className="p-3">
             <div className="text-[11px] uppercase tracking-wider text-muted-foreground px-2 py-1 mb-2">
               {results.length} results
@@ -246,7 +238,7 @@ export function ReplitSearchPanel({ projectId }: { projectId?: string }) {
                       <span className="text-muted-foreground">{result.line}: </span>
                       <span dangerouslySetInnerHTML={{
                         __html: result.preview.replace(
-                          new RegExp(result.match, 'gi'),
+                          new RegExp(result.match.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'),
                           `<mark class="bg-accent text-foreground rounded px-0.5">${result.match}</mark>`
                         )
                       }} />
@@ -257,12 +249,20 @@ export function ReplitSearchPanel({ projectId }: { projectId?: string }) {
               </button>
             ))}
           </div>
-        ) : searchQuery ? (
+        ) : deferredQuery && deferredQuery.trim().length >= 2 ? (
           <div className="flex flex-col items-center justify-center h-full text-center p-3">
             <Search className="w-12 h-12 text-muted-foreground opacity-40 mb-3" />
             <p className="text-[17px] font-medium leading-tight text-foreground">No results found</p>
             <p className="text-[13px] text-muted-foreground mt-1">
               Try adjusting your search terms or filters
+            </p>
+          </div>
+        ) : deferredQuery && deferredQuery.trim().length < 2 ? (
+          <div className="flex flex-col items-center justify-center h-full text-center p-3">
+            <Search className="w-12 h-12 text-muted-foreground opacity-40 mb-3" />
+            <p className="text-[17px] font-medium leading-tight text-foreground">Keep typing...</p>
+            <p className="text-[13px] text-muted-foreground mt-1">
+              Enter at least 2 characters to search
             </p>
           </div>
         ) : (

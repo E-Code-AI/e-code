@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -16,15 +18,26 @@ import {
   Upload,
   Sparkles,
   Eye,
-  Edit
+  Edit,
+  Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
 } from '@/components/ui/tabs';
+
+interface ThemeSettings {
+  id?: number;
+  projectId: number;
+  themeId: string;
+  customColors: Record<string, string>;
+  fontSize: number;
+  borderRadius: number;
+}
 
 interface ThemePreset {
   id: string;
@@ -44,6 +57,7 @@ interface ThemePreset {
 }
 
 export function ReplitThemesPanel({ projectId }: { projectId?: string }) {
+  const { toast } = useToast();
   const [selectedTheme, setSelectedTheme] = useState('light');
   const [customColors, setCustomColors] = useState({
     primary: '#3b82f6',
@@ -57,6 +71,55 @@ export function ReplitThemesPanel({ projectId }: { projectId?: string }) {
 
   const [fontSize, setFontSize] = useState([14]);
   const [borderRadius, setBorderRadius] = useState([4]);
+
+  // Fetch theme settings from API
+  const { data: themeSettings, isLoading } = useQuery<ThemeSettings>({
+    queryKey: ['/api/projects', projectId, 'themes'],
+    queryFn: async () => {
+      if (!projectId) return null;
+      const res = await apiRequest('GET', `/api/projects/${projectId}/themes`);
+      if (!res.ok) throw new Error('Failed to fetch theme settings');
+      return res.json();
+    },
+    enabled: !!projectId,
+  });
+
+  // Sync local state with fetched settings
+  useEffect(() => {
+    if (themeSettings) {
+      setSelectedTheme(themeSettings.themeId || 'light');
+      if (themeSettings.customColors && Object.keys(themeSettings.customColors).length > 0) {
+        setCustomColors(prev => ({ ...prev, ...themeSettings.customColors }));
+      }
+      setFontSize([themeSettings.fontSize || 14]);
+      setBorderRadius([themeSettings.borderRadius || 4]);
+    }
+  }, [themeSettings]);
+
+  // Save theme mutation
+  const saveThemeMutation = useMutation({
+    mutationFn: async (settings: Partial<ThemeSettings>) => {
+      if (!projectId) throw new Error('No project ID');
+      const res = await apiRequest('PUT', `/api/projects/${projectId}/themes`, settings);
+      if (!res.ok) throw new Error('Failed to save theme settings');
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'themes'] });
+      toast({ title: 'Theme saved', description: 'Your theme settings have been saved.' });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    },
+  });
+
+  // Auto-save when theme changes
+  const handleThemeSelect = (themeId: string) => {
+    setSelectedTheme(themeId);
+    if (projectId) {
+      saveThemeMutation.mutate({ themeId, customColors, fontSize: fontSize[0], borderRadius: borderRadius[0] });
+    }
+  };
 
   const themePresets: ThemePreset[] = [
     {
@@ -141,7 +204,25 @@ export function ReplitThemesPanel({ projectId }: { projectId?: string }) {
   };
 
   const handleSaveCustomTheme = () => {
+    if (projectId) {
+      saveThemeMutation.mutate({ 
+        themeId: 'custom', 
+        customColors, 
+        fontSize: fontSize[0], 
+        borderRadius: borderRadius[0] 
+      });
+    }
+  };
 
+  const handleSaveEditorSettings = () => {
+    if (projectId) {
+      saveThemeMutation.mutate({ 
+        themeId: selectedTheme, 
+        customColors, 
+        fontSize: fontSize[0], 
+        borderRadius: borderRadius[0] 
+      });
+    }
   };
 
   const handleExportTheme = () => {

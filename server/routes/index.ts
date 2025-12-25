@@ -55,6 +55,7 @@ import { tierRateLimiters } from "../middleware/tier-rate-limiter";
 import { aiUsageTracker } from "../middleware/ai-usage-tracker";
 import { apiVersionMiddleware, rejectUnsupportedVersions } from "../middleware/api-versioning";
 import globalSearchRouter from "./global-search.router";
+import projectSearchRouter from "./project-search.router";
 import logsViewerRouter from "./logs-viewer.router";
 import envVarsRouter from "./env-vars.router";
 import projectDataRouter from "./project-data.router";
@@ -84,6 +85,7 @@ import sendgridWebhooksRouter from './webhooks-sendgrid.router';
 import logsRouter from './logs.router';
 import effortRouter from './effort.router';
 import secretsRouter from './secrets.router';
+import themesRouter from './themes.router';
 import projectShellRouter from './shell.router';
 import storageRouter from './storage.router';
 
@@ -337,6 +339,9 @@ export class MainRouter {
     // Global Search routes (Priorité 1 - Core IDE)
     app.use('/api/search', tierRateLimiters.api, globalSearchRouter);
 
+    // Project-scoped Search routes (file content and file name search)
+    app.use('/api/projects', tierRateLimiters.api, projectSearchRouter);
+
     // Logs Viewer routes (Priorité 1 - Core IDE)
     app.use('/api/logs', tierRateLimiters.api, logsViewerRouter);
 
@@ -345,6 +350,9 @@ export class MainRouter {
 
     // Secrets routes (Per-project secrets management - Replit-style)
     app.use('/api/projects/:projectId/secrets', tierRateLimiters.api, secretsRouter);
+
+    // Themes routes (Per-project theme persistence)
+    app.use('/api/projects/:projectId/themes', tierRateLimiters.api, themesRouter);
 
     // Storage routes (Per-project object storage - Replit-style App Storage)
     app.use('/api/projects/:projectId/storage', tierRateLimiters.api, storageRouter);
