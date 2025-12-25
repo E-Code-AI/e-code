@@ -17,6 +17,15 @@ import { sql } from 'drizzle-orm';
 
 const logger = createLogger('LocalProvider');
 
+function extractRows(result: unknown): Record<string, unknown>[] {
+  if (!result) return [];
+  if (Array.isArray(result)) return result;
+  if (typeof result === 'object' && 'rows' in result) {
+    return (result as { rows: Record<string, unknown>[] }).rows || [];
+  }
+  return [];
+}
+
 export class LocalProvider implements IDatabaseProvider {
   readonly name: DatabaseProvider = 'local';
   
@@ -47,22 +56,24 @@ export class LocalProvider implements IDatabaseProvider {
     logger.info(`Provisioning real local database for project ${projectId}`, { plan, database, username });
     
     try {
-      const checkDb = await db.execute(sql`
+      const checkDbResult = await db.execute(sql`
         SELECT 1 FROM pg_database WHERE datname = ${database}
       `);
+      const checkDb = extractRows(checkDbResult);
       
-      if (checkDb.rows.length === 0) {
+      if (checkDb.length === 0) {
         await db.execute(sql.raw(`CREATE DATABASE "${database}"`));
         logger.info(`Created database: ${database}`);
       } else {
         logger.info(`Database ${database} already exists`);
       }
       
-      const checkUser = await db.execute(sql`
+      const checkUserResult = await db.execute(sql`
         SELECT 1 FROM pg_roles WHERE rolname = ${username}
       `);
+      const checkUser = extractRows(checkUserResult);
       
-      if (checkUser.rows.length === 0) {
+      if (checkUser.length === 0) {
         await db.execute(sql.raw(`CREATE USER "${username}" WITH PASSWORD '${password}'`));
         logger.info(`Created user: ${username}`);
       } else {
@@ -210,24 +221,24 @@ export class LocalProvider implements IDatabaseProvider {
     logger.info(`Getting metrics for local database ${databaseId}`);
     
     try {
-      const sizeResult = await db.execute(sql`
+      const sizeRows = extractRows(await db.execute(sql`
         SELECT pg_database_size(${database}) as size_bytes
-      `);
-      const storageUsedBytes = sizeResult.rows[0]?.size_bytes as number || 0;
+      `));
+      const storageUsedBytes = (sizeRows[0]?.size_bytes as number) || 0;
       
-      const connResult = await db.execute(sql`
+      const connRows = extractRows(await db.execute(sql`
         SELECT count(*) as conn_count 
         FROM pg_stat_activity 
         WHERE datname = ${database}
-      `);
-      const connectionCount = parseInt(connResult.rows[0]?.conn_count as string || '0');
+      `));
+      const connectionCount = parseInt((connRows[0]?.conn_count as string) || '0');
       
-      const queryResult = await db.execute(sql`
+      const queryRows = extractRows(await db.execute(sql`
         SELECT count(*) as active_count 
         FROM pg_stat_activity 
         WHERE datname = ${database} AND state = 'active'
-      `);
-      const activeQueries = parseInt(queryResult.rows[0]?.active_count as string || '0');
+      `));
+      const activeQueries = parseInt((queryRows[0]?.active_count as string) || '0');
       
       return {
         storageUsedMb: storageUsedBytes / (1024 * 1024),
@@ -252,10 +263,10 @@ export class LocalProvider implements IDatabaseProvider {
     logger.info(`Creating local backup for database ${databaseId}`, { name: backupName, database });
     
     try {
-      const sizeResult = await db.execute(sql`
+      const sizeRows = extractRows(await db.execute(sql`
         SELECT pg_database_size(${database}) as size_bytes
-      `);
-      const sizeBytes = sizeResult.rows[0]?.size_bytes as number || 0;
+      `));
+      const sizeBytes = (sizeRows[0]?.size_bytes as number) || 0;
       
       return {
         id: backupId,
