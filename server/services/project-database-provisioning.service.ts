@@ -91,8 +91,15 @@ class ProjectDatabaseProvisioningService {
     
     const existingDb = await this.getProjectDatabase(projectId);
     if (existingDb) {
-      logger.info(`Database already exists for project ${projectId}`);
-      return existingDb;
+      // Allow retry if status is 'error' - delete the failed record and re-provision
+      if (existingDb.status === 'error') {
+        logger.info(`Database for project ${projectId} has error status - deleting for retry`);
+        await db.delete(projectDatabases).where(eq(projectDatabases.id, existingDb.id));
+        // Continue to provision a new database
+      } else {
+        logger.info(`Database already exists for project ${projectId} with status ${existingDb.status}`);
+        return existingDb;
+      }
     }
 
     const [project] = await db
