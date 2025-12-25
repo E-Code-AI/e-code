@@ -86,8 +86,10 @@ import logsRouter from './logs.router';
 import effortRouter from './effort.router';
 import secretsRouter from './secrets.router';
 import themesRouter from './themes.router';
+import settingsRouter from './settings.router';
 import projectShellRouter from './shell.router';
 import storageRouter from './storage.router';
+import extensionsRouter from './extensions.router';
 
 export class MainRouter {
   private authRouter: AuthRouter;
@@ -354,8 +356,14 @@ export class MainRouter {
     // Themes routes (Per-project theme persistence)
     app.use('/api/projects/:projectId/themes', tierRateLimiters.api, themesRouter);
 
+    // Settings routes (Per-project settings persistence - editor, project, appearance)
+    app.use('/api/projects/:projectId/settings', tierRateLimiters.api, settingsRouter);
+
     // Storage routes (Per-project object storage - Replit-style App Storage)
     app.use('/api/projects/:projectId/storage', tierRateLimiters.api, storageRouter);
+
+    // Extensions routes (Per-project extensions management)
+    app.use('/api/extensions', tierRateLimiters.api, extensionsRouter);
 
     // Per-project Shell routes (Create/manage shell sessions per project)
     app.use('/api/projects', tierRateLimiters.api, projectShellRouter);

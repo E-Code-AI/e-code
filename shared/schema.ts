@@ -1677,6 +1677,24 @@ export const projectSettings = pgTable('project_settings', {
   unique('unique_project_settings').on(table.projectId),
 ]);
 
+// Project Extensions - Per-project extensions management
+export const projectExtensions = pgTable('project_extensions', {
+  id: serial('id').primaryKey(),
+  projectId: integer('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
+  extensionId: varchar('extension_id', { length: 100 }).notNull(),
+  name: varchar('name', { length: 200 }).notNull(),
+  description: text('description'),
+  author: varchar('author', { length: 100 }),
+  version: varchar('version', { length: 50 }),
+  category: varchar('category', { length: 50 }),
+  icon: varchar('icon', { length: 50 }),
+  enabled: boolean('enabled').default(true).notNull(),
+  installedAt: timestamp('installed_at').defaultNow().notNull(),
+}, (table) => [
+  index('project_extensions_project_idx').on(table.projectId),
+  unique('unique_project_extension').on(table.projectId, table.extensionId),
+]);
+
 // Relations defined at end of file (see DRIZZLE ORM RELATIONS section)
 
 // Insert schemas
@@ -1761,6 +1779,7 @@ export const insertProjectAiRuleSchema = createInsertSchema(projectAiRules).omit
 export const insertPromptUsageHistorySchema = createInsertSchema(promptUsageHistory).omit({ id: true, createdAt: true });
 export const insertPromptTemplateRatingSchema = createInsertSchema(promptTemplateRatings).omit({ id: true, createdAt: true });
 export const insertProjectSettingsSchema = createInsertSchema(projectSettings).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertProjectExtensionSchema = createInsertSchema(projectExtensions).omit({ id: true, installedAt: true });
 
 // #141 FIXED: Security schema insert schemas - moved after table definitions (see line ~2325)
 
@@ -1865,6 +1884,8 @@ export type InsertPromptUsageHistory = z.infer<typeof insertPromptUsageHistorySc
 export type PromptTemplateRating = typeof promptTemplateRatings.$inferSelect;
 export type InsertPromptTemplateRating = z.infer<typeof insertPromptTemplateRatingSchema>;
 export type ProjectSettings = typeof projectSettings.$inferSelect;
+export type ProjectExtension = typeof projectExtensions.$inferSelect;
+export type InsertProjectExtension = z.infer<typeof insertProjectExtensionSchema>;
 export type InsertProjectSettings = z.infer<typeof insertProjectSettingsSchema>;
 
 // #141 FIXED: Security schema types
