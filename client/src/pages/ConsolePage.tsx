@@ -179,14 +179,6 @@ const TERMINAL_THEMES = {
   },
 };
 
-const MOCK_LOGS: LogEntry[] = [
-  { id: '1', level: 'info', message: 'Application started successfully', timestamp: new Date(), source: 'app' },
-  { id: '2', level: 'info', message: 'Connected to database', timestamp: new Date(), source: 'database' },
-  { id: '3', level: 'warn', message: 'High memory usage detected', timestamp: new Date(), source: 'monitor' },
-  { id: '4', level: 'error', message: 'Failed to connect to external API', timestamp: new Date(), source: 'api' },
-  { id: '5', level: 'debug', message: 'Processing request #12345', timestamp: new Date(), source: 'server' },
-];
-
 export default function ConsolePage() {
   const { toast } = useToast();
   const terminalRef = useRef<HTMLDivElement>(null);
@@ -202,14 +194,8 @@ export default function ConsolePage() {
   const [showHistory, setShowHistory] = useState(false);
   const [showQuickCommands, setShowQuickCommands] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [commandHistory, setCommandHistory] = useState<CommandHistoryItem[]>([
-    { command: 'npm run dev', timestamp: new Date(Date.now() - 3600000), exitCode: 0 },
-    { command: 'git status', timestamp: new Date(Date.now() - 7200000), exitCode: 0 },
-    { command: 'ls -la', timestamp: new Date(Date.now() - 10800000), exitCode: 0 },
-    { command: 'npm install express', timestamp: new Date(Date.now() - 14400000), exitCode: 0 },
-    { command: 'cat package.json', timestamp: new Date(Date.now() - 18000000), exitCode: 0 },
-  ]);
-  const [logs, setLogs] = useState<LogEntry[]>(MOCK_LOGS);
+  const [commandHistory, setCommandHistory] = useState<CommandHistoryItem[]>([]);
+  const [logs, setLogs] = useState<LogEntry[]>([]);
   const [activeTab, setActiveTab] = useState('terminal');
 
   useEffect(() => {

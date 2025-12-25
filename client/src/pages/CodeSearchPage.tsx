@@ -82,29 +82,16 @@ const FILE_TYPE_FILTERS = [
   { id: 'config', label: 'Config', pattern: '*.config.*,.*rc*' },
 ];
 
-const MOCK_CODE_INDEX = [
-  { id: '1', file: 'AIAssistant.tsx', path: 'client/src/components/AIAssistant.tsx', content: 'export function AIAssistant({ projectId, selectedFile, selectedCode }', language: 'typescript', line: 68 },
-  { id: '2', file: 'Settings.tsx', path: 'client/src/pages/Settings.tsx', content: 'export default function Settings() {', language: 'typescript', line: 50 },
-  { id: '3', file: 'PageShell.tsx', path: 'client/src/components/layout/PageShell.tsx', content: 'export function PageShell({ children, padded = true })', language: 'typescript', line: 15 },
-  { id: '4', file: 'queryClient.ts', path: 'client/src/lib/queryClient.ts', content: 'export const apiRequest = async (method, url, data)', language: 'typescript', line: 25 },
-  { id: '5', file: 'use-auth.ts', path: 'client/src/hooks/use-auth.ts', content: 'export function useAuth() { return useContext(AuthContext) }', language: 'typescript', line: 12 },
-  { id: '6', file: 'Button.tsx', path: 'client/src/components/ui/button.tsx', content: 'const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(', language: 'typescript', line: 42 },
-  { id: '7', file: 'index.css', path: 'client/src/index.css', content: ':root { --background: 0 0% 100%; --foreground: 222.2 84% 4.9%; }', language: 'css', line: 1 },
-  { id: '8', file: 'schema.ts', path: 'shared/schema.ts', content: 'export const users = pgTable("users", {', language: 'typescript', line: 15 },
-  { id: '9', file: 'routes.ts', path: 'server/routes.ts', content: 'export function registerRoutes(app: Express)', language: 'typescript', line: 8 },
-  { id: '10', file: 'storage.ts', path: 'server/storage.ts', content: 'export interface IStorage { getUser(id: number): Promise<User | undefined>', language: 'typescript', line: 5 },
-];
+type CodeIndexItem = {
+  id: string;
+  file: string;
+  path: string;
+  content: string;
+  language: string;
+  line: number;
+};
 
-const MOCK_SAVED_SEARCHES: SavedSearch[] = [
-  { id: '1', query: 'useQuery', isRegex: false, filters: ['typescript'], timestamp: new Date(Date.now() - 86400000) },
-  { id: '2', query: 'export.*function', isRegex: true, filters: ['typescript', 'javascript'], timestamp: new Date(Date.now() - 172800000) },
-];
-
-const MOCK_RECENT_SEARCHES: RecentSearch[] = [
-  { id: '1', query: 'useState', resultCount: 45, timestamp: new Date(Date.now() - 3600000) },
-  { id: '2', query: 'apiRequest', resultCount: 12, timestamp: new Date(Date.now() - 7200000) },
-  { id: '3', query: 'PageShell', resultCount: 8, timestamp: new Date(Date.now() - 10800000) },
-];
+const CODE_INDEX: CodeIndexItem[] = [];
 
 export default function CodeSearchPage() {
   const { toast } = useToast();
@@ -116,11 +103,11 @@ export default function CodeSearchPage() {
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
   const [selectedFileTypes, setSelectedFileTypes] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(true);
-  const [savedSearches, setSavedSearches] = useState<SavedSearch[]>(MOCK_SAVED_SEARCHES);
-  const [recentSearches, setRecentSearches] = useState<RecentSearch[]>(MOCK_RECENT_SEARCHES);
+  const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([]);
+  const [recentSearches, setRecentSearches] = useState<RecentSearch[]>([]);
   const [activeTab, setActiveTab] = useState('results');
 
-  const fuse = useMemo(() => new Fuse(MOCK_CODE_INDEX, {
+  const fuse = useMemo(() => new Fuse(CODE_INDEX, {
     keys: ['content', 'file', 'path'],
     threshold: 0.3,
     includeScore: true,
@@ -141,7 +128,7 @@ export default function CodeSearchPage() {
       if (isRegexMode) {
         try {
           const regex = new RegExp(searchQuery, 'gi');
-          searchResults = MOCK_CODE_INDEX
+          searchResults = CODE_INDEX
             .filter(item => {
               const matchesLanguage = selectedLanguages.length === 0 || selectedLanguages.includes(item.language);
               return matchesLanguage && regex.test(item.content);

@@ -141,12 +141,6 @@ const KEYBOARD_SHORTCUTS: KeyboardShortcut[] = [
   { id: 'print-screen', name: 'Print Screen', keys: ['PrtSc'], description: 'Capture remote screen', category: 'System' },
 ];
 
-const MOCK_DISPLAYS: DisplayInfo[] = [
-  { id: 0, name: 'Primary Display', resolution: '1920x1080', primary: true, active: true },
-  { id: 1, name: 'Secondary Display', resolution: '1680x1050', primary: false, active: true },
-  { id: 2, name: 'Third Display', resolution: '1920x1080', primary: false, active: false },
-];
-
 export default function VNCPage() {
   const { toast } = useToast();
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -182,12 +176,8 @@ export default function VNCPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [activeTab, setActiveTab] = useState('connection');
   const [showShortcutsDialog, setShowShortcutsDialog] = useState(false);
-  const [displays] = useState<DisplayInfo[]>(MOCK_DISPLAYS);
-  const [connectionHistory, setConnectionHistory] = useState<string[]>([
-    '192.168.1.100:5900',
-    'dev-server.local:5901',
-    '10.0.0.50:5900',
-  ]);
+  const [displays] = useState<DisplayInfo[]>([]);
+  const [connectionHistory, setConnectionHistory] = useState<string[]>([]);
 
   const handleConnect = useCallback(() => {
     if (!config.host) {

@@ -60,19 +60,11 @@ const AI_MODELS: AIModel[] = [
   { id: 'gemini-pro', name: 'Gemini Pro', provider: 'Google', description: 'Multi-modal capabilities', speed: 'fast', capability: 'advanced' },
 ];
 
-const MOCK_CONVERSATIONS: Conversation[] = [
-  { id: '1', title: 'React hooks best practices', preview: 'Can you explain when to use useMemo vs useCallback...', timestamp: new Date(Date.now() - 3600000), starred: true, messageCount: 12, model: 'gpt-4' },
-  { id: '2', title: 'TypeScript generics help', preview: 'I need help understanding generic constraints...', timestamp: new Date(Date.now() - 86400000), starred: false, messageCount: 8, model: 'claude-3-opus' },
-  { id: '3', title: 'Database optimization', preview: 'How can I improve query performance for...', timestamp: new Date(Date.now() - 172800000), starred: true, messageCount: 15, model: 'gpt-4' },
-  { id: '4', title: 'CSS Grid layout issue', preview: 'My grid layout is not responsive on mobile...', timestamp: new Date(Date.now() - 259200000), starred: false, messageCount: 6, model: 'gpt-3.5-turbo' },
-  { id: '5', title: 'API authentication', preview: 'What is the best way to implement JWT refresh...', timestamp: new Date(Date.now() - 345600000), starred: false, messageCount: 10, model: 'claude-3-sonnet' },
-];
-
 export default function AssistantPage() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('chat');
-  const [conversations, setConversations] = useState<Conversation[]>(MOCK_CONVERSATIONS);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showStarredOnly, setShowStarredOnly] = useState(false);

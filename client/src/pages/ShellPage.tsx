@@ -87,48 +87,6 @@ interface SSHConnection {
   status: 'connected' | 'disconnected' | 'connecting';
 }
 
-const MOCK_ENV_VARS: EnvVariable[] = [
-  { key: 'NODE_ENV', value: 'development', isSecret: false, source: 'system' },
-  { key: 'PORT', value: '5000', isSecret: false, source: 'project' },
-  { key: 'DATABASE_URL', value: 'postgresql://...', isSecret: true, source: 'project' },
-  { key: 'API_KEY', value: 'sk-...', isSecret: true, source: 'user' },
-  { key: 'JWT_SECRET', value: '...', isSecret: true, source: 'project' },
-  { key: 'REDIS_URL', value: 'redis://localhost:6379', isSecret: false, source: 'project' },
-  { key: 'LOG_LEVEL', value: 'debug', isSecret: false, source: 'user' },
-];
-
-const MOCK_FILE_TREE: FileNode[] = [
-  {
-    name: 'src',
-    type: 'directory',
-    path: '/src',
-    children: [
-      { name: 'index.ts', type: 'file', path: '/src/index.ts' },
-      { name: 'app.ts', type: 'file', path: '/src/app.ts' },
-      {
-        name: 'components',
-        type: 'directory',
-        path: '/src/components',
-        children: [
-          { name: 'Button.tsx', type: 'file', path: '/src/components/Button.tsx' },
-          { name: 'Card.tsx', type: 'file', path: '/src/components/Card.tsx' },
-        ],
-      },
-    ],
-  },
-  {
-    name: 'public',
-    type: 'directory',
-    path: '/public',
-    children: [
-      { name: 'index.html', type: 'file', path: '/public/index.html' },
-      { name: 'favicon.ico', type: 'file', path: '/public/favicon.ico' },
-    ],
-  },
-  { name: 'package.json', type: 'file', path: '/package.json' },
-  { name: 'tsconfig.json', type: 'file', path: '/tsconfig.json' },
-  { name: '.env', type: 'file', path: '/.env' },
-];
 
 const SCRIPT_TEMPLATES: ScriptTemplate[] = [
   {
@@ -196,13 +154,11 @@ export default function ShellPage() {
   const [fitAddon, setFitAddon] = useState<FitAddon | null>(null);
   const [activeTab, setActiveTab] = useState('shell');
   const [currentPath, setCurrentPath] = useState('/home/user/project');
-  const [expandedDirs, setExpandedDirs] = useState<Set<string>>(new Set(['/src']));
-  const [envVars, setEnvVars] = useState<EnvVariable[]>(MOCK_ENV_VARS);
+  const [expandedDirs, setExpandedDirs] = useState<Set<string>>(new Set());
+  const [fileTree, setFileTree] = useState<FileNode[]>([]);
+  const [envVars, setEnvVars] = useState<EnvVariable[]>([]);
   const [showSecrets, setShowSecrets] = useState<Set<string>>(new Set());
-  const [sshConnections, setSshConnections] = useState<SSHConnection[]>([
-    { id: '1', name: 'Production Server', host: 'prod.example.com', port: 22, username: 'deploy', status: 'disconnected' },
-    { id: '2', name: 'Staging Server', host: 'staging.example.com', port: 22, username: 'admin', status: 'disconnected' },
-  ]);
+  const [sshConnections, setSshConnections] = useState<SSHConnection[]>([]);
   const [showAddEnvDialog, setShowAddEnvDialog] = useState(false);
   const [showSSHDialog, setShowSSHDialog] = useState(false);
   const [showScriptEditor, setShowScriptEditor] = useState(false);
@@ -482,7 +438,16 @@ export default function ShellPage() {
             </CardHeader>
             <CardContent className="p-0">
               <ScrollArea className="h-[300px]">
-                <div className="p-2">{renderFileTree(MOCK_FILE_TREE)}</div>
+                <div className="p-2">
+                  {fileTree.length > 0 ? (
+                    renderFileTree(fileTree)
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-[200px] text-muted-foreground p-4 text-center">
+                      <FolderTree className="h-8 w-8 mb-2 opacity-20" />
+                      <p className="text-sm">No files found</p>
+                    </div>
+                  )}
+                </div>
               </ScrollArea>
             </CardContent>
           </Card>
@@ -495,40 +460,55 @@ export default function ShellPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              {sshConnections.map((conn) => (
-                <div
-                  key={conn.id}
-                  className="flex items-center justify-between p-2 rounded-lg border"
-                  data-testid={`ssh-connection-${conn.id}`}
-                >
-                  <div className="flex items-center gap-2">
-                    {conn.status === 'connected' ? (
-                      <Wifi className="h-4 w-4 text-green-500" />
-                    ) : conn.status === 'connecting' ? (
-                      <RefreshCw className="h-4 w-4 text-yellow-500 animate-spin" />
-                    ) : (
-                      <WifiOff className="h-4 w-4 text-muted-foreground" />
-                    )}
-                    <div>
-                      <p className="text-sm font-medium">{conn.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {conn.username}@{conn.host}
-                      </p>
-                    </div>
-                  </div>
-                  <Button
-                    variant={conn.status === 'connected' ? 'destructive' : 'outline'}
-                    size="sm"
-                    onClick={() =>
-                      conn.status === 'connected' ? disconnectSSH(conn.id) : connectSSH(conn.id)
-                    }
-                    disabled={conn.status === 'connecting'}
-                    data-testid={`ssh-toggle-${conn.id}`}
+              {sshConnections.length > 0 ? (
+                sshConnections.map((conn) => (
+                  <div
+                    key={conn.id}
+                    className="flex items-center justify-between p-2 rounded-lg border"
+                    data-testid={`ssh-connection-${conn.id}`}
                   >
-                    {conn.status === 'connected' ? 'Disconnect' : 'Connect'}
+                    <div className="flex items-center gap-2">
+                      {conn.status === 'connected' ? (
+                        <Wifi className="h-4 w-4 text-green-500" />
+                      ) : conn.status === 'connecting' ? (
+                        <RefreshCw className="h-4 w-4 text-yellow-500 animate-spin" />
+                      ) : (
+                        <WifiOff className="h-4 w-4 text-muted-foreground" />
+                      )}
+                      <div>
+                        <p className="text-sm font-medium">{conn.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {conn.username}@{conn.host}
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      variant={conn.status === 'connected' ? 'destructive' : 'outline'}
+                      size="sm"
+                      onClick={() =>
+                        conn.status === 'connected' ? disconnectSSH(conn.id) : connectSSH(conn.id)
+                      }
+                      disabled={conn.status === 'connecting'}
+                      data-testid={`ssh-toggle-${conn.id}`}
+                    >
+                      {conn.status === 'connected' ? 'Disconnect' : 'Connect'}
+                    </Button>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-6 border rounded-lg border-dashed">
+                  <Server className="h-8 w-8 mx-auto text-muted-foreground opacity-20 mb-2" />
+                  <p className="text-sm text-muted-foreground">No SSH connections</p>
+                  <Button
+                    variant="link"
+                    size="sm"
+                    className="mt-1"
+                    onClick={() => setShowSSHDialog(true)}
+                  >
+                    Add Connection
                   </Button>
                 </div>
-              ))}
+              )}
             </CardContent>
           </Card>
         </div>
@@ -618,77 +598,95 @@ export default function ShellPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {envVars.map((envVar) => (
-                      <div
-                        key={envVar.key}
-                        className="flex items-center justify-between p-3 rounded-lg border"
-                        data-testid={`env-var-${envVar.key}`}
-                      >
-                        <div className="flex items-center gap-3 flex-1 min-w-0">
-                          {envVar.isSecret ? (
-                            <Lock className="h-4 w-4 text-amber-500 shrink-0" />
-                          ) : (
-                            <Unlock className="h-4 w-4 text-muted-foreground shrink-0" />
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <code className="font-medium text-sm">{envVar.key}</code>
-                              <Badge
-                                variant="outline"
-                                className={`text-[10px] ${getSourceBadgeColor(envVar.source)}`}
-                              >
-                                {envVar.source}
-                              </Badge>
-                            </div>
-                            <div className="flex items-center gap-2 mt-1">
-                              <code className="text-xs text-muted-foreground truncate">
-                                {envVar.isSecret && !showSecrets.has(envVar.key)
-                                  ? '••••••••'
-                                  : envVar.value}
-                              </code>
+                    {envVars.length > 0 ? (
+                      envVars.map((envVar) => (
+                        <div
+                          key={envVar.key}
+                          className="flex items-center justify-between p-3 rounded-lg border"
+                          data-testid={`env-var-${envVar.key}`}
+                        >
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                            {envVar.isSecret ? (
+                              <Lock className="h-4 w-4 text-amber-500 shrink-0" />
+                            ) : (
+                              <Unlock className="h-4 w-4 text-muted-foreground shrink-0" />
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <code className="font-medium text-sm">{envVar.key}</code>
+                                <Badge
+                                  variant="outline"
+                                  className={`text-[10px] ${getSourceBadgeColor(envVar.source)}`}
+                                >
+                                  {envVar.source}
+                                </Badge>
+                              </div>
+                              <div className="flex items-center gap-2 mt-1">
+                                <code className="text-xs text-muted-foreground truncate">
+                                  {envVar.isSecret && !showSecrets.has(envVar.key)
+                                    ? '••••••••'
+                                    : envVar.value}
+                                </code>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                        <div className="flex items-center gap-1 shrink-0">
-                          {envVar.isSecret && (
+                          <div className="flex items-center gap-1 shrink-0">
+                            {envVar.isSecret && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7"
+                                onClick={() => toggleSecretVisibility(envVar.key)}
+                              >
+                                {showSecrets.has(envVar.key) ? (
+                                  <EyeOff className="h-3.5 w-3.5" />
+                                ) : (
+                                  <Eye className="h-3.5 w-3.5" />
+                                )}
+                              </Button>
+                            )}
                             <Button
                               variant="ghost"
                               size="icon"
                               className="h-7 w-7"
-                              onClick={() => toggleSecretVisibility(envVar.key)}
+                              onClick={() => copyValue(envVar.value, envVar.key)}
                             >
-                              {showSecrets.has(envVar.key) ? (
-                                <EyeOff className="h-3.5 w-3.5" />
+                              {copiedKey === envVar.key ? (
+                                <Check className="h-3.5 w-3.5 text-green-500" />
                               ) : (
-                                <Eye className="h-3.5 w-3.5" />
+                                <Copy className="h-3.5 w-3.5" />
                               )}
                             </Button>
-                          )}
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7"
-                            onClick={() => copyValue(envVar.value, envVar.key)}
-                          >
-                            {copiedKey === envVar.key ? (
-                              <Check className="h-3.5 w-3.5 text-green-500" />
-                            ) : (
-                              <Copy className="h-3.5 w-3.5" />
+                            {envVar.source === 'user' && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-destructive"
+                                onClick={() => deleteEnvVar(envVar.key)}
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
                             )}
-                          </Button>
-                          {envVar.source === 'user' && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7 text-destructive"
-                              onClick={() => deleteEnvVar(envVar.key)}
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
-                          )}
+                          </div>
                         </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-12 border rounded-xl border-dashed">
+                        <Key className="h-10 w-10 mx-auto text-muted-foreground opacity-20 mb-3" />
+                        <h3 className="text-sm font-medium">No Environment Variables</h3>
+                        <p className="text-xs text-muted-foreground mt-1 mb-4">
+                          Add variables to configure your shell environment
+                        </p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShowAddEnvDialog(true)}
+                        >
+                          <Plus className="h-3.5 w-3.5 mr-2" />
+                          Add Variable
+                        </Button>
                       </div>
-                    ))}
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -843,44 +841,51 @@ export default function ShellPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            {sshConnections.map((conn) => (
-              <Card key={conn.id} className="p-4" data-testid={`ssh-dialog-conn-${conn.id}`}>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    {conn.status === 'connected' ? (
-                      <CheckCircle2 className="h-5 w-5 text-green-500" />
-                    ) : conn.status === 'connecting' ? (
-                      <RefreshCw className="h-5 w-5 text-yellow-500 animate-spin" />
-                    ) : (
-                      <XCircle className="h-5 w-5 text-muted-foreground" />
-                    )}
-                    <div>
-                      <p className="font-medium">{conn.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {conn.username}@{conn.host}:{conn.port}
-                      </p>
+            {sshConnections.length > 0 ? (
+              sshConnections.map((conn) => (
+                <Card key={conn.id} className="p-4" data-testid={`ssh-dialog-conn-${conn.id}`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      {conn.status === 'connected' ? (
+                        <CheckCircle2 className="h-5 w-5 text-green-500" />
+                      ) : conn.status === 'connecting' ? (
+                        <RefreshCw className="h-5 w-5 text-yellow-500 animate-spin" />
+                      ) : (
+                        <XCircle className="h-5 w-5 text-muted-foreground" />
+                      )}
+                      <div>
+                        <p className="font-medium">{conn.name}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {conn.username}@{conn.host}:{conn.port}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button variant="ghost" size="icon">
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant={conn.status === 'connected' ? 'destructive' : 'default'}
+                        size="sm"
+                        onClick={() =>
+                          conn.status === 'connected'
+                            ? disconnectSSH(conn.id)
+                            : connectSSH(conn.id)
+                        }
+                        disabled={conn.status === 'connecting'}
+                      >
+                        {conn.status === 'connected' ? 'Disconnect' : 'Connect'}
+                      </Button>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="icon">
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant={conn.status === 'connected' ? 'destructive' : 'default'}
-                      size="sm"
-                      onClick={() =>
-                        conn.status === 'connected'
-                          ? disconnectSSH(conn.id)
-                          : connectSSH(conn.id)
-                      }
-                      disabled={conn.status === 'connecting'}
-                    >
-                      {conn.status === 'connected' ? 'Disconnect' : 'Connect'}
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-            ))}
+                </Card>
+              ))
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 border-2 border-dashed rounded-lg">
+                <Server className="h-12 w-12 text-muted-foreground opacity-20 mb-3" />
+                <p className="text-muted-foreground text-sm">No SSH connections configured</p>
+              </div>
+            )}
             <Button variant="outline" className="w-full" data-testid="button-add-ssh">
               <Plus className="h-4 w-4 mr-2" />
               Add New Connection
