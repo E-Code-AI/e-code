@@ -84,7 +84,7 @@ export function ShellPanel({ projectId, className }: ShellPanelProps) {
     ));
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/shell?sessionId=${sessionId}&projectId=${projectId}`;
+    const wsUrl = `${protocol}//${window.location.host}/api/terminal/ws?sessionId=${sessionId}&projectId=${projectId}`;
 
     try {
       const ws = new WebSocket(wsUrl);
@@ -109,6 +109,14 @@ export function ShellPanel({ projectId, className }: ShellPanelProps) {
         try {
           const message = JSON.parse(event.data);
           switch (message.type) {
+            case 'connected':
+              instance.term.writeln(`\r\n\x1b[1;32m✓ ${message.data}\x1b[0m`);
+              break;
+            case 'history':
+              if (message.data) {
+                instance.term.write(message.data);
+              }
+              break;
             case 'output':
               instance.term.write(message.data);
               break;
@@ -116,16 +124,19 @@ export function ShellPanel({ projectId, className }: ShellPanelProps) {
               instance.term.write(`\x1b[1;31m${message.data}\x1b[0m`);
               break;
             case 'exit':
-              instance.term.writeln(`\r\n\x1b[90mProcess exited with code ${message.code}\x1b[0m`);
-              instance.term.write('\x1b[1;36muser@project\x1b[0m:\x1b[1;34m~/workspace\x1b[0m$ ');
+              instance.term.writeln(`\r\n\x1b[90mProcess exited with code ${message.code || message.data}\x1b[0m`);
               break;
             case 'cwd':
               setTabs(prev => prev.map(tab => 
                 tab.id === tabId ? { ...tab, cwd: message.data } : tab
               ));
               break;
+            case 'pong':
+              break;
             default:
-              instance.term.write(message.data || event.data);
+              if (message.data) {
+                instance.term.write(message.data);
+              }
           }
         } catch {
           instance.term.write(event.data);

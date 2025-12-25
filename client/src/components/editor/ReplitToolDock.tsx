@@ -11,7 +11,9 @@ import {
   Lock,
   Settings,
   HelpCircle,
-  Grid
+  Grid,
+  Terminal,
+  HardDrive
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -30,12 +32,17 @@ interface ReplitToolDockProps {
 }
 
 const tools: Tool[] = [
-  // Top section - main tools (only working panels)
+  // Top section - main tools
   { id: 'files', name: 'Files', icon: Folder, section: 'top' },
   { id: 'search', name: 'Search', icon: Search, section: 'top' },
   { id: 'git', name: 'Git', icon: GitBranch, section: 'top' },
   { id: 'debug', name: 'Debugger', icon: Bug, section: 'top' },
   { id: 'agent', name: 'AI Agent', icon: Sparkles, section: 'top' },
+  { id: 'database', name: 'Database', icon: Database, section: 'top' },
+  { id: 'secrets', name: 'Secrets', icon: Lock, section: 'top' },
+  { id: 'shell', name: 'Shell', icon: Terminal, section: 'top' },
+  { id: 'packages', name: 'Packages', icon: Package, section: 'top' },
+  { id: 'storage', name: 'App Storage', icon: HardDrive, section: 'top' },
   // Bottom section
   { id: 'settings', name: 'Settings', icon: Settings, section: 'bottom' },
 ];
