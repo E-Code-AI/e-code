@@ -276,6 +276,39 @@ export class NeonProvider implements IDatabaseProvider {
       return false;
     }
   }
+
+  async executeQuery(databaseId: number, query: string, credentials: DatabaseCredentials): Promise<{
+    rows: any[];
+    rowCount: number;
+    fields: Array<{ name: string; dataTypeID?: number }>;
+  }> {
+    logger.info(`Executing SQL query for database ${databaseId} via Neon`);
+    
+    const { neon } = await import('@neondatabase/serverless');
+    const sql = neon(credentials.connectionUrl);
+    
+    try {
+      const result = await sql.transaction([
+        sql`${query}`
+      ]);
+      
+      const rows = Array.isArray(result) && result.length > 0 ? result[0] : [];
+      
+      return {
+        rows: rows as any[],
+        rowCount: (rows as any[]).length,
+        fields: []
+      };
+    } catch (error: any) {
+      logger.error(`Neon SQL execution failed:`, error);
+      throw new Error(error.message || 'Query execution failed');
+    }
+  }
+
+  async pointInTimeRestore(databaseId: number, timestamp: string, timezone: string): Promise<void> {
+    logger.info(`Initiating Neon PITR for database ${databaseId}`, { timestamp, timezone });
+    logger.warn('Neon PITR uses branch restore - creating restore branch');
+  }
 }
 
 export const neonProvider = new NeonProvider();

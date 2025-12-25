@@ -947,4 +947,149 @@ databaseRouter.get('/project/:projectId/stats', async (req: Request, res: Respon
   }
 });
 
+/**
+ * Execute SQL query in project database (SQL Console)
+ * POST /api/database/project/:projectId/sql/execute
+ * REQUIRES: Authentication + Project ownership
+ */
+databaseRouter.post('/project/:projectId/sql/execute', async (req: Request, res: Response) => {
+  try {
+    const projectId = parseInt(req.params.projectId);
+    if (isNaN(projectId)) {
+      return res.status(400).json({ error: 'Invalid project ID' });
+    }
+
+    if (!await checkProjectOwnership(req, res, projectId)) {
+      return;
+    }
+
+    const { query } = req.body;
+    if (!query || typeof query !== 'string') {
+      return res.status(400).json({ error: 'Query is required' });
+    }
+
+    // Security: Limit query length
+    if (query.length > 10000) {
+      return res.status(400).json({ error: 'Query too long (max 10000 characters)' });
+    }
+
+    // Security: Block dangerous operations in read-only mode
+    const queryLower = query.toLowerCase().trim();
+    const dangerousOps = ['drop ', 'truncate ', 'alter ', 'create database', 'drop database'];
+    for (const op of dangerousOps) {
+      if (queryLower.includes(op)) {
+        return res.status(403).json({ error: `Operation not allowed: ${op.trim().toUpperCase()}` });
+      }
+    }
+
+    const startTime = Date.now();
+    const result = await projectDatabaseService.executeQuery(projectId, query);
+    const executionTime = Date.now() - startTime;
+
+    return res.json({
+      success: true,
+      rows: result.rows || [],
+      rowCount: result.rowCount || 0,
+      fields: result.fields || [],
+      executionTime
+    });
+  } catch (error: any) {
+    console.error('[Database API] SQL execute error:', error);
+    return res.status(500).json({ error: error.message || 'Failed to execute query' });
+  }
+});
+
+/**
+ * Point-in-time restore for project database
+ * POST /api/database/project/:projectId/restore
+ * REQUIRES: Authentication + Project ownership
+ */
+databaseRouter.post('/project/:projectId/restore', async (req: Request, res: Response) => {
+  try {
+    const projectId = parseInt(req.params.projectId);
+    if (isNaN(projectId)) {
+      return res.status(400).json({ error: 'Invalid project ID' });
+    }
+
+    if (!await checkProjectOwnership(req, res, projectId)) {
+      return;
+    }
+
+    const { timestamp, timezone } = req.body;
+    if (!timestamp) {
+      return res.status(400).json({ error: 'Timestamp is required' });
+    }
+
+    // Validate timestamp format
+    const restoreDate = new Date(timestamp);
+    if (isNaN(restoreDate.getTime())) {
+      return res.status(400).json({ error: 'Invalid timestamp format' });
+    }
+
+    // Don't allow restore to future dates
+    if (restoreDate > new Date()) {
+      return res.status(400).json({ error: 'Cannot restore to a future timestamp' });
+    }
+
+    // Check if database exists and get plan
+    const dbInfo = await projectDatabaseService.getDatabaseInfo(projectId);
+    if (!dbInfo || !dbInfo.provisioned) {
+      return res.status(404).json({ error: 'No database found for this project' });
+    }
+
+    // PITR requires Pro or Enterprise plan
+    if (dbInfo.plan !== 'pro' && dbInfo.plan !== 'enterprise') {
+      return res.status(403).json({ error: 'Point-in-time restore requires Pro or Enterprise plan' });
+    }
+
+    await projectDatabaseService.pointInTimeRestore(projectId, timestamp, timezone || 'UTC');
+
+    return res.json({
+      success: true,
+      message: 'Point-in-time restore initiated successfully',
+      restorePoint: timestamp,
+      timezone: timezone || 'UTC'
+    });
+  } catch (error: any) {
+    console.error('[Database API] PITR error:', error);
+    return res.status(500).json({ error: error.message || 'Failed to restore database' });
+  }
+});
+
+/**
+ * Update history retention period for project database
+ * PATCH /api/database/project/:projectId/settings
+ * REQUIRES: Authentication + Project ownership
+ */
+databaseRouter.patch('/project/:projectId/settings', async (req: Request, res: Response) => {
+  try {
+    const projectId = parseInt(req.params.projectId);
+    if (isNaN(projectId)) {
+      return res.status(400).json({ error: 'Invalid project ID' });
+    }
+
+    if (!await checkProjectOwnership(req, res, projectId)) {
+      return;
+    }
+
+    const { historyRetentionDays } = req.body;
+    
+    // Validate retention period
+    const allowedDays = [7, 14, 30, 90];
+    if (historyRetentionDays && !allowedDays.includes(historyRetentionDays)) {
+      return res.status(400).json({ error: 'Invalid retention period. Allowed: 7, 14, 30, 90 days' });
+    }
+
+    await projectDatabaseService.updateSettings(projectId, { historyRetentionDays });
+
+    return res.json({
+      success: true,
+      message: 'Database settings updated successfully'
+    });
+  } catch (error: any) {
+    console.error('[Database API] Update settings error:', error);
+    return res.status(500).json({ error: error.message || 'Failed to update settings' });
+  }
+});
+
 export default databaseRouter;

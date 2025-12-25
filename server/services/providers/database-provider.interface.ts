@@ -60,6 +60,12 @@ export interface ProvisionedDatabase {
   metadata?: Record<string, unknown>;
 }
 
+export interface QueryResult {
+  rows: any[];
+  rowCount: number;
+  fields: Array<{ name: string; dataTypeID?: number }>;
+}
+
 export interface IDatabaseProvider {
   readonly name: DatabaseProvider;
   
@@ -87,6 +93,10 @@ export interface IDatabaseProvider {
   deleteBackup(databaseId: number, backupId: string): Promise<void>;
   
   isHealthy(): Promise<boolean>;
+  
+  executeQuery(databaseId: number, query: string, credentials: DatabaseCredentials): Promise<QueryResult>;
+  
+  pointInTimeRestore(databaseId: number, timestamp: string, timezone: string): Promise<void>;
 }
 
 export const PLAN_LIMITS = {

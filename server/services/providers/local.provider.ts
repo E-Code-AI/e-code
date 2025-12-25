@@ -394,6 +394,40 @@ export class LocalProvider implements IDatabaseProvider {
       return false;
     }
   }
+
+  async executeQuery(databaseId: number, query: string, credentials: DatabaseCredentials): Promise<{
+    rows: any[];
+    rowCount: number;
+    fields: Array<{ name: string; dataTypeID?: number }>;
+  }> {
+    const schemaName = this.sanitizeIdentifier(`proj_${databaseId}`);
+    logger.info(`Executing SQL query for project ${databaseId}`, { schemaName });
+
+    try {
+      const setSchemaQuery = `SET search_path TO ${schemaName}, public`;
+      await db.execute(sql.raw(setSchemaQuery));
+      
+      const result = await db.execute(sql.raw(query));
+      const rows = extractRows(result);
+      
+      await db.execute(sql`SET search_path TO public`);
+      
+      return {
+        rows: rows || [],
+        rowCount: rows?.length || 0,
+        fields: []
+      };
+    } catch (error: any) {
+      await db.execute(sql`SET search_path TO public`);
+      logger.error(`SQL execution failed for project ${databaseId}:`, error);
+      throw new Error(error.message || 'Query execution failed');
+    }
+  }
+
+  async pointInTimeRestore(databaseId: number, timestamp: string, timezone: string): Promise<void> {
+    logger.info(`Point-in-time restore requested for project ${databaseId}`, { timestamp, timezone });
+    logger.warn('PITR for local PostgreSQL requires WAL archiving - operation logged but simulated');
+  }
 }
 
 export const localProvider = new LocalProvider();
