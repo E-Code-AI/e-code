@@ -404,6 +404,10 @@ export function ReplitAgentPanelV3({
     migrateMessages
   } = useAgentConversationStore();
   
+  // ✅ FIX (Dec 25, 2025): Track if we're in an active build session for WebSocket streaming
+  // Keep WebSocket connected after conversation is created, not just during bootstrap
+  const [isActiveBuildSession, setIsActiveBuildSession] = useState(false);
+  
   // Autonomous chat integration - bridges WebSocket events to inline chat messages
   // This hook connects to the autonomous workspace WebSocket and pushes messages to the chat
   // MUST be called before messages retrieval to use effectiveConversationId
@@ -421,7 +425,9 @@ export function ReplitAgentPanelV3({
     conversationId,
     projectId: typeof projectId === 'string' ? parseInt(projectId, 10) : projectId,
     sessionId: externalSessionId,
-    enabled: !!bootstrapToken && autonomousBuildStore.inlineMode,
+    // ✅ FIX (Dec 25, 2025): Enable streaming for BOTH bootstrap AND active build sessions
+    // This keeps WebSocket connected after conversation is created so real-time progress shows
+    enabled: (!!bootstrapToken || isActiveBuildSession || !!conversationId) && autonomousBuildStore.inlineMode,
     bootstrapToken,
     initialPrompt
   });
@@ -655,6 +661,10 @@ export function ReplitAgentPanelV3({
         setConversationId(realConversationId);
         setAgentMode(response.agentMode);
         bootstrapCompleted = true;
+        
+        // ✅ FIX (Dec 25, 2025): Enable active build session for WebSocket streaming
+        // This keeps the WebSocket connected for real-time progress updates
+        setIsActiveBuildSession(true);
       } catch (error: unknown) {
         if (!isMounted) return;
         
