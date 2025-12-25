@@ -1102,14 +1102,11 @@ export function ReplitAgentPanelV3({
 
   // Ref to track if auto-start has been processed (prevent double execution)
   const autoStartExecutedRef = useRef(false);
+  // ✅ FORTUNE 500 FIX: Track pending auto-start state for WebSocket readiness
+  const [pendingAutoStart, setPendingAutoStart] = useState<{ prompt: string; startTime: number } | null>(null);
   
-  // ✅ FIX (Dec 9, 2025): CONSOLIDATED auto-start effect
-  // This is now the ONLY auto-start mechanism. The previous first effect was removed
-  // because it was clearing sessionStorage before this effect could read it.
-  // This effect properly:
-  // 1. Waits for conversationId to be available (messages persist to store)
-  // 2. Checks multiple prompt sources in priority order
-  // 3. Only clears sessionStorage AFTER successfully starting
+  // ✅ FORTUNE 500 FIX (Dec 25, 2025): CONSOLIDATED auto-start effect with WebSocket readiness
+  // Uses state (pendingAutoStart) instead of ref to trigger re-renders when WS connects
   useEffect(() => {
     // CRITICAL: Don't start until conversationId is available so messages persist to store
     if (!conversationId) {
@@ -1130,31 +1127,67 @@ export function ReplitAgentPanelV3({
     // Check session storage for prompt (IDEPage.tsx and MobileIDEView.tsx store bootstrap prompt here)
     const promptFromSession = window.sessionStorage.getItem(`agent-prompt-${projectId}`);
     
-    // ✅ FIX (Dec 9, 2025): Priority order for prompt sources:
+    // Priority order for prompt sources:
     // 1. initialPrompt prop (passed from parent component like MobileIDEView)
     // 2. URL param (?prompt=...)
     // 3. sessionStorage (bootstrap flow)
     const resolvedPrompt = initialPrompt || promptFromUrl || promptFromSession;
     
-    // ✅ FIX (Dec 25, 2025): Also trigger auto-start when prompt exists in sessionStorage
+    // Trigger auto-start when prompt exists in sessionStorage
     // This handles the Replit-like flow: landing page → login → IDE with preserved prompt
-    // Previously this only triggered with agent=true, bootstrap token, or autoStart prop
     const hasStoredPrompt = !!promptFromSession;
     const shouldAutoStart = (agentEnabled || hasBootstrapToken || autoStart || hasStoredPrompt) && resolvedPrompt && !isWorking;
     
-    if (shouldAutoStart) {
-      // Mark as executed to prevent re-runs
-      autoStartExecutedRef.current = true;
-      // Set the prompt in the input
-      setInput(resolvedPrompt);
-      
-      // Clear session storage
-      if (promptFromSession) {
-        window.sessionStorage.removeItem(`agent-prompt-${projectId}`);
+    if (!shouldAutoStart) {
+      return;
+    }
+    
+    // ✅ FORTUNE 500 FIX: Check WebSocket readiness before streaming
+    const WS_READY_TIMEOUT = 5000; // 5 seconds max wait for WebSocket
+    
+    // If WS not connected and not pending, set pending state (triggers re-render when WS connects)
+    if (!wsIsConnected && !pendingAutoStart) {
+      setPendingAutoStart({ prompt: resolvedPrompt, startTime: Date.now() });
+      devLog('[AutoStart] Waiting for WebSocket connection before streaming...', { conversationId });
+      return;
+    }
+    
+    // Check if we've been waiting too long
+    if (pendingAutoStart) {
+      const waitTime = Date.now() - pendingAutoStart.startTime;
+      if (!wsIsConnected && waitTime < WS_READY_TIMEOUT) {
+        // Still waiting, the dependency on wsIsConnected will re-fire this effect
+        devLog('[AutoStart] Still waiting for WebSocket...', { waitTime, wsIsConnected });
+        return;
       }
-      
-      // Auto-start building after a brief delay
-      setTimeout(() => {
+      if (!wsIsConnected && waitTime >= WS_READY_TIMEOUT) {
+        devLog('[AutoStart] WebSocket timeout - proceeding without WS', { waitTime });
+      }
+    }
+    
+    // Mark as executed to prevent re-runs
+    autoStartExecutedRef.current = true;
+    setPendingAutoStart(null);
+    
+    // Set the prompt in the input
+    setInput(resolvedPrompt);
+    
+    // Clear session storage
+    if (promptFromSession) {
+      window.sessionStorage.removeItem(`agent-prompt-${projectId}`);
+    }
+    
+    devLog('[AutoStart] ✅ Starting build with prompt', { 
+      conversationId, 
+      wsIsConnected, 
+      promptLength: resolvedPrompt.length 
+    });
+    
+    // ✅ FORTUNE 500: Activate build session BEFORE streaming to ensure WS is ready
+    setIsActiveBuildSession(true);
+    
+    // Auto-start building after a brief delay to ensure state propagation
+    setTimeout(() => {
         const userMessage: Message = {
           id: Date.now().toString(),
           role: 'user',
@@ -1223,9 +1256,28 @@ export function ReplitAgentPanelV3({
               })
             });
 
+            // ✅ FORTUNE 500 FIX: Enhanced error handling for non-2xx responses
             if (!response.ok) {
-              throw new Error('Failed to get AI response');
+              let errorMessage = 'Failed to get AI response';
+              try {
+                const errorText = await response.text();
+                // Check if it's JSON error or HTML error page
+                if (errorText.startsWith('{')) {
+                  const errorJson = JSON.parse(errorText);
+                  errorMessage = errorJson.message || errorJson.error || errorMessage;
+                } else if (response.status === 429) {
+                  errorMessage = 'Rate limit exceeded. Please wait a moment and try again.';
+                } else if (response.status >= 500) {
+                  errorMessage = 'Server error. Please try again later.';
+                }
+              } catch (e) {
+                // Use default error message
+              }
+              devLog('[AutoStart] ❌ Streaming error:', { status: response.status, errorMessage });
+              throw new Error(errorMessage);
             }
+            
+            devLog('[AutoStart] ✅ Stream connected, first chunk timestamp:', Date.now());
 
             const reader = response.body?.getReader();
             const decoder = new TextDecoder();
@@ -1250,95 +1302,114 @@ export function ReplitAgentPanelV3({
             const thinkingSteps: ThinkingStep[] = [];
             const toolExecutions: ToolExecution[] = [];
             
+            // ✅ FORTUNE 500 FIX: Buffer for partial SSE frames
+            // SSE events can be split across network chunks - we need to buffer until we get complete frames
+            let sseBuffer = '';
+            
             while (reader) {
               const { done, value } = await reader.read();
               
               if (done) break;
               
-              const chunk = decoder.decode(value);
-              const lines = chunk.split('\n');
+              const chunk = decoder.decode(value, { stream: true }); // stream: true for proper multi-byte handling
+              // ✅ FORTUNE 500 FIX: Normalize line endings (handle \r\n and \r from different servers)
+              sseBuffer += chunk.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
               
-              for (const line of lines) {
-                if (line.startsWith('event: ')) {
-                  continue;
-                }
+              // ✅ FORTUNE 500 FIX: Parse complete SSE events (delimited by \n\n)
+              // This ensures we only process complete events, not partial frames
+              const eventBoundary = '\n\n';
+              let boundaryIndex;
+              
+              while ((boundaryIndex = sseBuffer.indexOf(eventBoundary)) !== -1) {
+                const eventText = sseBuffer.slice(0, boundaryIndex);
+                sseBuffer = sseBuffer.slice(boundaryIndex + eventBoundary.length);
                 
-                if (line.startsWith('data: ')) {
-                  try {
-                    const data = JSON.parse(line.slice(6));
+                // Parse the complete event
+                const lines = eventText.split('\n');
+                
+                for (const line of lines) {
+                  if (line.startsWith('event: ')) {
+                    continue;
+                  }
+                  
+                  if (line.startsWith('data: ')) {
+                    try {
+                      const data = JSON.parse(line.slice(6));
                     
-                    if (data.content) {
-                      fullContent += data.content;
-                      setStreamingContent(fullContent);
-                      setIsPendingResponse(false); // First chunk received
-                    }
-                    
-                    if (data.step) {
-                      setIsPendingResponse(false); // Thinking step received
-                      const step: ThinkingStep = {
-                        ...data.step,
-                        timestamp: new Date(data.step.timestamp)
-                      };
-                      
-                      const existingIndex = thinkingSteps.findIndex(s => s.id === step.id);
-                      if (existingIndex >= 0) {
-                        thinkingSteps[existingIndex] = step;
-                      } else {
-                        thinkingSteps.push(step);
+                      if (data.content) {
+                        fullContent += data.content;
+                        setStreamingContent(fullContent);
+                        setIsPendingResponse(false); // First chunk received
                       }
-                      
-                      setActiveThinking([...thinkingSteps]);
-                    }
                     
-                    if (data.toolCallId) {
-                      const toolId = data.toolCallId;
-                      
-                      if (data.tool && data.parameters && !data.result) {
-                        const toolExecution: ToolExecution = {
-                          id: toolId,
-                          tool: data.tool,
-                          parameters: data.parameters,
-                          status: 'running'
+                      if (data.step) {
+                        setIsPendingResponse(false); // Thinking step received
+                        const step: ThinkingStep = {
+                          ...data.step,
+                          timestamp: new Date(data.step.timestamp)
                         };
-                        toolExecutions.push(toolExecution);
-                      }
                       
-                      if (data.result !== undefined) {
-                        const index = toolExecutions.findIndex(t => t.id === toolId);
-                        if (index >= 0) {
-                          toolExecutions[index] = {
-                            ...toolExecutions[index],
-                            result: data.result,
-                            success: data.success,
-                            status: 'complete',
-                            metadata: data.metadata
+                        const existingIndex = thinkingSteps.findIndex(s => s.id === step.id);
+                        if (existingIndex >= 0) {
+                          thinkingSteps[existingIndex] = step;
+                        } else {
+                          thinkingSteps.push(step);
+                        }
+                      
+                        setActiveThinking([...thinkingSteps]);
+                      }
+                    
+                      if (data.toolCallId) {
+                        const toolId = data.toolCallId;
+                      
+                        if (data.tool && data.parameters && !data.result) {
+                          const toolExecution: ToolExecution = {
+                            id: toolId,
+                            tool: data.tool,
+                            parameters: data.parameters,
+                            status: 'running'
                           };
+                          toolExecutions.push(toolExecution);
                         }
-                      }
                       
-                      if (data.error) {
-                        const index = toolExecutions.findIndex(t => t.id === toolId);
-                        if (index >= 0) {
-                          toolExecutions[index] = {
-                            ...toolExecutions[index],
-                            status: 'error',
-                            error: data.error
-                          };
+                        if (data.result !== undefined) {
+                          const index = toolExecutions.findIndex(t => t.id === toolId);
+                          if (index >= 0) {
+                            toolExecutions[index] = {
+                              ...toolExecutions[index],
+                              result: data.result,
+                              success: data.success,
+                              status: 'complete',
+                              metadata: data.metadata
+                            };
+                          }
                         }
-                      }
                       
-                      assistantMessage.toolExecutions = [...toolExecutions];
-                      setMessages(prev => {
-                        const newMessages = [...prev];
-                        const lastMessage = newMessages[newMessages.length - 1];
-                        if (lastMessage && lastMessage.role === 'assistant') {
-                          lastMessage.toolExecutions = [...toolExecutions];
+                        if (data.error) {
+                          const index = toolExecutions.findIndex(t => t.id === toolId);
+                          if (index >= 0) {
+                            toolExecutions[index] = {
+                              ...toolExecutions[index],
+                              status: 'error',
+                              error: data.error
+                            };
+                          }
                         }
-                        return newMessages;
-                      });
+                      
+                        assistantMessage.toolExecutions = [...toolExecutions];
+                        setMessages(prev => {
+                          const newMessages = [...prev];
+                          const lastMessage = newMessages[newMessages.length - 1];
+                          if (lastMessage && lastMessage.role === 'assistant') {
+                            lastMessage.toolExecutions = [...toolExecutions];
+                          }
+                          return newMessages;
+                        });
+                      }
+                    } catch (e) {
+                      // Skip invalid JSON - but log in dev mode for debugging
+                      devLog('[SSE Parse] Invalid JSON in data line:', { line: line.slice(0, 100) });
                     }
-                  } catch (e) {
-                    // Skip invalid JSON
                   }
                 }
               }
@@ -1435,7 +1506,7 @@ export function ReplitAgentPanelV3({
       const newUrl = window.location.pathname;
       window.history.replaceState({}, '', newUrl);
     }
-  }, [projectId, conversationId, autoStart, isWorking, initialPrompt]); // ✅ FIX (Dec 9, 2025): Added initialPrompt to deps for mobile bootstrap
+  }, [projectId, conversationId, autoStart, isWorking, initialPrompt, wsIsConnected, pendingAutoStart]); // ✅ FORTUNE 500 FIX: Added wsIsConnected + pendingAutoStart for WS readiness
 
   const toggleCapability = useCallback((capabilityId: string) => {
     setCapabilities(prev => prev.map(cap =>
