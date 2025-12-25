@@ -25,6 +25,7 @@ import { ReplitSettingsPanel } from './ReplitSettingsPanel';
 import { ReplitSecretsPanel } from './ReplitSecretsPanel';
 import { ReplitThemesPanel } from './ReplitThemesPanel';
 import { ReplitDebuggerPanel } from './ReplitDebuggerPanel';
+import { ReplitTestingPanel } from './ReplitTestingPanel';
 import { ReplitHistoryPanel } from './ReplitHistoryPanel';
 import { ShellPanel } from './ShellPanel';
 import { AppStoragePanel } from './AppStoragePanel';
@@ -188,6 +189,8 @@ export function ReplitEditorLayout({
       case 'debug':
       case 'debugger':
         return <ReplitDebuggerPanel projectId={projectId} />;
+      case 'testing':
+        return <ReplitTestingPanel projectId={projectId} />;
       case 'database':
         return <ReplitDatabasePanel projectId={projectId} />;
       case 'packages':
