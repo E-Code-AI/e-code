@@ -587,8 +587,8 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
   );
 
   const MyDataTab = () => (
-    <div className="flex flex-1 overflow-hidden">
-      <div className="w-64 border-r border-border flex flex-col">
+    <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
+      <div className="w-full md:w-48 lg:w-64 border-b md:border-b-0 md:border-r border-border flex flex-col shrink-0">
         <div className="p-3 space-y-2">
           <Button
             variant={showSqlConsole ? "default" : "outline"}
@@ -679,28 +679,28 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
           </div>
         )}
 
-        <div className="flex items-center gap-2 px-4 py-2 border-b border-border">
+        <div className="flex flex-wrap items-center gap-2 px-2 sm:px-4 py-2 border-b border-border">
           <div className="flex items-center gap-1 border border-border rounded-md">
-            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-none">
-              <List className="h-4 w-4" />
+            <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8 rounded-none">
+              <List className="h-3 w-3 sm:h-4 sm:w-4" />
             </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-none">
-              <LayoutGrid className="h-4 w-4" />
+            <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8 rounded-none hidden sm:flex">
+              <LayoutGrid className="h-3 w-3 sm:h-4 sm:w-4" />
             </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-none">
-              <Grid3X3 className="h-4 w-4" />
+            <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8 rounded-none hidden md:flex">
+              <Grid3X3 className="h-3 w-3 sm:h-4 sm:w-4" />
             </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-none">
-              <Filter className="h-4 w-4" />
+            <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8 rounded-none">
+              <Filter className="h-3 w-3 sm:h-4 sm:w-4" />
             </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-none">
-              <Columns className="h-4 w-4" />
+            <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8 rounded-none hidden sm:flex">
+              <Columns className="h-3 w-3 sm:h-4 sm:w-4" />
             </Button>
           </div>
-          <Button size="icon" className="h-8 w-8 bg-primary text-primary-foreground">
-            <Plus className="h-4 w-4" />
+          <Button size="icon" className="h-7 w-7 sm:h-8 sm:w-8 bg-primary text-primary-foreground">
+            <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
           </Button>
-          <div className="flex-1" />
+          <div className="flex-1 min-w-0" />
           <div className="flex items-center gap-1 text-sm text-muted-foreground">
             <Button
               variant="ghost"
@@ -1002,10 +1002,10 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
           <div className="space-y-3">
             <div>
               <label className="text-sm text-muted-foreground mb-1 block">Timestamp</label>
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <Input
                   type="date"
-                  className="flex-1"
+                  className="flex-1 min-w-0"
                   value={restoreDate}
                   onChange={(e) => setRestoreDate(e.target.value)}
                   placeholder="jj / mm / aaaa"
@@ -1013,7 +1013,7 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
                 />
                 <Input
                   type="time"
-                  className="w-32"
+                  className="w-full sm:w-32"
                   value={restoreTime}
                   onChange={(e) => setRestoreTime(e.target.value)}
                   placeholder="--:--:--"
@@ -1057,16 +1057,16 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
         <div>
           <h4 className="text-sm font-semibold text-foreground mb-3">Environment variables</h4>
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-mono text-muted-foreground">DATABASE_URL</span>
-              <div className="flex items-center gap-1">
-                <code className="text-sm bg-muted px-2 py-1 rounded max-w-[200px] truncate">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <span className="text-xs sm:text-sm font-mono text-muted-foreground shrink-0">DATABASE_URL</span>
+              <div className="flex items-center gap-1 min-w-0">
+                <code className="text-xs sm:text-sm bg-muted px-2 py-1 rounded max-w-[120px] sm:max-w-[200px] truncate">
                   {showDatabaseUrl ? credentials?.connectionUrl : '••••••••••••••••••'}
                 </code>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7"
+                  className="h-7 w-7 shrink-0"
                   onClick={() => handleCopyToClipboard(credentials?.connectionUrl || '', 'DATABASE_URL')}
                 >
                   <Copy className="h-3 w-3" />
@@ -1074,7 +1074,7 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7"
+                  className="h-7 w-7 shrink-0"
                   onClick={() => setShowDatabaseUrl(!showDatabaseUrl)}
                 >
                   {showDatabaseUrl ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
@@ -1082,16 +1082,16 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
               </div>
             </div>
 
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-mono text-muted-foreground">PGDATABASE</span>
-              <div className="flex items-center gap-1">
-                <code className="text-sm bg-muted px-2 py-1 rounded">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <span className="text-xs sm:text-sm font-mono text-muted-foreground shrink-0">PGDATABASE</span>
+              <div className="flex items-center gap-1 min-w-0">
+                <code className="text-xs sm:text-sm bg-muted px-2 py-1 rounded truncate">
                   {credentials?.databaseName || 'neondb'}
                 </code>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7"
+                  className="h-7 w-7 shrink-0"
                   onClick={() => handleCopyToClipboard(credentials?.databaseName || '', 'PGDATABASE')}
                 >
                   <Copy className="h-3 w-3" />
@@ -1099,16 +1099,16 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
               </div>
             </div>
 
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-mono text-muted-foreground">PGHOST</span>
-              <div className="flex items-center gap-1">
-                <code className="text-sm bg-muted px-2 py-1 rounded max-w-[200px] truncate">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <span className="text-xs sm:text-sm font-mono text-muted-foreground shrink-0">PGHOST</span>
+              <div className="flex items-center gap-1 min-w-0">
+                <code className="text-xs sm:text-sm bg-muted px-2 py-1 rounded max-w-[120px] sm:max-w-[200px] truncate">
                   {credentials?.host || 'ep-lively-resonance-a6vcsxeu.u'}
                 </code>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7"
+                  className="h-7 w-7 shrink-0"
                   onClick={() => handleCopyToClipboard(credentials?.host || '', 'PGHOST')}
                 >
                   <Copy className="h-3 w-3" />
@@ -1116,10 +1116,10 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
               </div>
             </div>
 
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-mono text-muted-foreground">PGPORT</span>
-              <div className="flex items-center gap-1">
-                <code className="text-sm bg-muted px-2 py-1 rounded">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <span className="text-xs sm:text-sm font-mono text-muted-foreground shrink-0">PGPORT</span>
+              <div className="flex items-center gap-1 min-w-0">
+                <code className="text-xs sm:text-sm bg-muted px-2 py-1 rounded">
                   {credentials?.port || '5432'}
                 </code>
                 <Button
@@ -1133,16 +1133,16 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
               </div>
             </div>
 
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-mono text-muted-foreground">PGUSER</span>
-              <div className="flex items-center gap-1">
-                <code className="text-sm bg-muted px-2 py-1 rounded">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <span className="text-xs sm:text-sm font-mono text-muted-foreground shrink-0">PGUSER</span>
+              <div className="flex items-center gap-1 min-w-0">
+                <code className="text-xs sm:text-sm bg-muted px-2 py-1 rounded truncate">
                   {credentials?.username || 'neondb_owner'}
                 </code>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7"
+                  className="h-7 w-7 shrink-0"
                   onClick={() => handleCopyToClipboard(credentials?.username || '', 'PGUSER')}
                 >
                   <Copy className="h-3 w-3" />
@@ -1150,16 +1150,16 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
               </div>
             </div>
 
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-mono text-muted-foreground">PGPASSWORD</span>
-              <div className="flex items-center gap-1">
-                <code className="text-sm bg-muted px-2 py-1 rounded">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <span className="text-xs sm:text-sm font-mono text-muted-foreground shrink-0">PGPASSWORD</span>
+              <div className="flex items-center gap-1 min-w-0">
+                <code className="text-xs sm:text-sm bg-muted px-2 py-1 rounded truncate">
                   {showPassword ? credentials?.password : '••••••••••••••••'}
                 </code>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7"
+                  className="h-7 w-7 shrink-0"
                   onClick={() => handleCopyToClipboard(credentials?.password || '', 'PGPASSWORD')}
                 >
                   <Copy className="h-3 w-3" />
@@ -1167,7 +1167,7 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7"
+                  className="h-7 w-7 shrink-0"
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
