@@ -4,10 +4,10 @@ import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Progress } from '@/components/ui/progress';
+import { Switch } from '@/components/ui/switch';
 import {
   Select,
   SelectContent,
@@ -27,32 +27,36 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
   Database,
   Table,
   RefreshCw,
   ChevronRight,
   ChevronDown,
-  Circle,
-  CheckCircle,
-  AlertCircle,
+  ChevronLeft,
   Search,
   Settings,
-  Key,
-  FileText,
   Loader2,
   Copy,
   Eye,
   EyeOff,
   Trash2,
-  Server,
-  HardDrive,
-  Users,
-  Calendar,
-  Archive,
-  RotateCcw,
-  Download,
+  MoreVertical,
+  Terminal,
+  LayoutGrid,
+  List,
+  Filter,
+  Columns,
   Plus,
-  Clock
+  Calendar,
+  Info,
+  Grid3X3,
+  Layers
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -116,6 +120,7 @@ interface DatabaseInfo {
   lastBackupAt?: string;
   plan?: string;
   region?: string;
+  computeHours?: number;
 }
 
 interface DatabaseCredentials {
@@ -133,69 +138,53 @@ interface ProvisionRequest {
   provider?: string;
 }
 
-interface BackupInfo {
-  id: number;
-  name: string;
-  status: 'pending' | 'running' | 'completed' | 'failed' | 'expired';
-  backupType: 'scheduled' | 'manual' | 'pre_migration' | 'pitr';
-  sizeBytes?: number;
-  restorePoint?: string;
-  createdAt: string;
-  expiresAt?: string;
-  completedAt?: string;
-}
+type DatabaseView = 'all' | 'development' | 'production';
+type DetailTab = 'overview' | 'mydata' | 'settings';
 
-interface BackupsResponse {
-  backups: BackupInfo[];
-}
-
-interface DatabaseStats {
-  stats: {
-    storagePercent: number;
-    connectionPercent: number;
-    status: string;
-    lastBackup: string | null;
-    provider: string;
-    backupCount: number;
-  };
-}
-
-const tableIcons = {
-  table: Table,
-  file: FileText,
-  key: Key,
-  rocket: Database
-};
-
-const PLAN_OPTIONS = [
-  { value: 'free', label: 'Free', storage: '500MB' },
-  { value: 'starter', label: 'Starter', storage: '2GB' },
-  { value: 'pro', label: 'Pro', storage: '10GB' },
-  { value: 'enterprise', label: 'Enterprise', storage: '100GB' },
+const HISTORY_RETENTION_OPTIONS = [
+  { value: '7', label: '7 Days' },
+  { value: '14', label: '14 Days' },
+  { value: '30', label: '30 Days' },
+  { value: '90', label: '90 Days' },
 ];
 
-const REGION_OPTIONS = [
-  { value: 'us-east-1', label: 'US East (N. Virginia)' },
-  { value: 'us-west-2', label: 'US West (Oregon)' },
-  { value: 'eu-west-1', label: 'EU (Ireland)' },
-  { value: 'ap-southeast-1', label: 'Asia Pacific (Singapore)' },
+const TIMEZONE_OPTIONS = [
+  { value: 'UTC', label: 'UTC' },
+  { value: 'America/New_York', label: 'America/New_York' },
+  { value: 'America/Los_Angeles', label: 'America/Los_Angeles' },
+  { value: 'Europe/London', label: 'Europe/London' },
+  { value: 'Europe/Paris', label: 'Europe/Paris' },
+  { value: 'Asia/Jerusalem', label: 'Asia/Jerusalem' },
+  { value: 'Asia/Tokyo', label: 'Asia/Tokyo' },
+  { value: 'Asia/Shanghai', label: 'Asia/Shanghai' },
 ];
 
 export function DatabasePanel({ projectId }: DatabasePanelProps) {
   const { user } = useAuth();
   const isAdmin = user?.isAdmin || false;
+  const { toast } = useToast();
   
+  const [currentView, setCurrentView] = useState<DatabaseView>('all');
+  const [activeDetailTab, setActiveDetailTab] = useState<DetailTab>('overview');
   const [selectedTable, setSelectedTable] = useState<string>('');
-  const [expandedTables, setExpandedTables] = useState<Set<string>>(new Set());
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [searchTerm, setSearchTerm] = useState<string>('');
-  const [activeTab, setActiveTab] = useState<string>('data');
-  const [selectedPlan, setSelectedPlan] = useState<string>('free');
-  const [selectedRegion, setSelectedRegion] = useState<string>('us-east-1');
   const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [showDatabaseUrl, setShowDatabaseUrl] = useState<boolean>(false);
+  const [historyRetention, setHistoryRetention] = useState<string>('7');
+  const [restoreDate, setRestoreDate] = useState<string>('');
+  const [restoreTime, setRestoreTime] = useState<string>('');
+  const [restoreTimezone, setRestoreTimezone] = useState<string>('Asia/Jerusalem');
+  const [readOnlyMode, setReadOnlyMode] = useState<boolean>(true);
+  const [tableRowsCount, setTableRowsCount] = useState<boolean>(true);
+  const [expandSubviews, setExpandSubviews] = useState<boolean>(false);
+  const [paginationType, setPaginationType] = useState<'limit' | 'pages'>('limit');
+  const [flatSchemas, setFlatSchemas] = useState<boolean>(false);
+  const [showByteaAs, setShowByteaAs] = useState<'hex' | 'utf8'>('hex');
+  const [showSettingsPanel, setShowSettingsPanel] = useState<boolean>(false);
+  const [sqlQuery, setSqlQuery] = useState<string>('');
+  const [showSqlConsole, setShowSqlConsole] = useState<boolean>(false);
   const [autoRetryAttempted, setAutoRetryAttempted] = useState<boolean>(false);
-  
-  const { toast } = useToast();
 
   const { data: databaseInfo, isLoading: databaseInfoLoading, refetch: refetchDatabaseInfo } = useQuery<DatabaseInfo>({
     queryKey: ['/api/database/project', projectId],
@@ -232,7 +221,7 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
       queryClient.invalidateQueries({ queryKey: ['/api/database/project', projectId] });
       toast({
         title: 'Database Provisioned',
-        description: 'Your PostgreSQL database is being provisioned. It will be ready shortly.',
+        description: 'Your PostgreSQL database is being provisioned.',
       });
     },
     onError: (error: any) => {
@@ -244,7 +233,6 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
     },
   });
 
-  // Auto-retry for failed databases - like Replit's automatic recovery
   useEffect(() => {
     if (
       databaseInfo?.status === 'error' && 
@@ -253,29 +241,19 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
       projectId
     ) {
       setAutoRetryAttempted(true);
-      console.log('[DatabasePanel] Auto-retrying failed database provisioning for project', projectId);
-      
-      // Small delay to let the UI render first
       const retryTimer = setTimeout(() => {
         provisionMutation.mutate({ plan: 'free', region: 'us-east-1' });
-        toast({
-          title: 'Auto-Retrying',
-          description: 'Automatically retrying database provisioning...',
-        });
       }, 1000);
-      
       return () => clearTimeout(retryTimer);
     }
   }, [databaseInfo?.status, autoRetryAttempted, provisionMutation.isPending, projectId]);
 
-  // Reset auto-retry flag when database becomes healthy
   useEffect(() => {
     if (databaseInfo?.status === 'running' && autoRetryAttempted) {
       setAutoRetryAttempted(false);
     }
   }, [databaseInfo?.status, autoRetryAttempted]);
 
-  // Auto-provision for projects with no database at all - like Replit
   useEffect(() => {
     if (
       databaseInfo?.provisioned === false && 
@@ -286,17 +264,9 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
       projectId
     ) {
       setAutoRetryAttempted(true);
-      console.log('[DatabasePanel] Auto-provisioning database for project', projectId);
-      
-      // Small delay to let the UI render first
       const provisionTimer = setTimeout(() => {
         provisionMutation.mutate({ plan: 'free', region: 'us-east-1' });
-        toast({
-          title: 'Auto-Provisioning',
-          description: 'Automatically provisioning your database...',
-        });
       }, 1500);
-      
       return () => clearTimeout(provisionTimer);
     }
   }, [databaseInfo?.provisioned, databaseInfo?.status, autoRetryAttempted, provisionMutation.isPending, databaseInfoLoading, projectId]);
@@ -311,6 +281,7 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
         title: 'Database Deleted',
         description: 'Your database has been deleted successfully.',
       });
+      setCurrentView('all');
     },
     onError: (error: any) => {
       toast({
@@ -321,943 +292,946 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
     },
   });
 
-  const { data: backupsData, isLoading: backupsLoading, refetch: refetchBackups } = useQuery<BackupsResponse>({
-    queryKey: ['/api/database/project', projectId, 'backups'],
-    queryFn: async () => {
-      return apiRequest('GET', `/api/database/project/${projectId}/backups`);
-    },
-    staleTime: 30000,
-    enabled: !!projectId && databaseInfo?.provisioned === true
-  });
-
-  const createBackupMutation = useMutation({
-    mutationFn: async (data: { name?: string; backupType?: string }) => {
-      return apiRequest('POST', `/api/database/project/${projectId}/backups`, data);
+  const restoreMutation = useMutation({
+    mutationFn: async (data: { timestamp: string; timezone: string }) => {
+      return apiRequest('POST', `/api/database/project/${projectId}/restore`, data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/database/project', projectId, 'backups'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/database/project', projectId] });
-      toast({
-        title: 'Backup Created',
-        description: 'Your database backup has been created successfully.',
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: 'Backup Failed',
-        description: error.message || 'Failed to create backup',
-        variant: 'destructive',
-      });
-    },
-  });
-
-  const restoreBackupMutation = useMutation({
-    mutationFn: async (backupId: number) => {
-      return apiRequest('POST', `/api/database/project/${projectId}/backups/${backupId}/restore`, {});
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/database/project', projectId] });
       toast({
         title: 'Restore Initiated',
-        description: 'Database restore has been initiated. This may take a few minutes.',
+        description: 'Point-in-time restore has been initiated.',
       });
     },
     onError: (error: any) => {
       toast({
         title: 'Restore Failed',
-        description: error.message || 'Failed to restore backup',
+        description: error.message || 'Failed to restore database',
         variant: 'destructive',
       });
     },
   });
 
-  const deleteBackupMutation = useMutation({
-    mutationFn: async (backupId: number) => {
-      return apiRequest('DELETE', `/api/database/project/${projectId}/backups/${backupId}`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/database/project', projectId, 'backups'] });
-      toast({
-        title: 'Backup Deleted',
-        description: 'The backup has been deleted successfully.',
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: 'Delete Failed',
-        description: error.message || 'Failed to delete backup',
-        variant: 'destructive',
-      });
-    },
-  });
-
-  const { data: tablesData, isLoading: tablesLoading, error: tablesError, refetch: refetchTables } = useQuery<ProjectDataTablesResponse>({
+  const { data: tablesData, isLoading: tablesLoading, refetch: refetchTables } = useQuery<ProjectDataTablesResponse>({
     queryKey: isAdmin ? ['/api/admin/database/tables'] : ['/api/projects', projectId, 'data/tables'],
     queryFn: async () => {
-      try {
-        const endpoint = isAdmin 
-          ? '/api/admin/database/tables'
-          : `/api/projects/${projectId}/data/tables`;
-        const response = await apiRequest('GET', endpoint);
-        return response;
-      } catch (error: any) {
-        console.error('[DatabasePanel] Tables fetch error:', error);
-        throw error;
-      }
+      const endpoint = isAdmin 
+        ? '/api/admin/database/tables'
+        : `/api/projects/${projectId}/data/tables`;
+      const response = await apiRequest('GET', endpoint);
+      return response;
     },
     staleTime: 30000,
-    enabled: (isAdmin || !!projectId) && activeTab === 'data'
+    enabled: (isAdmin || !!projectId) && currentView !== 'all'
   });
 
   const allTables = tablesData?.tables || [];
-  const tablesHash = allTables.map(t => t.name).join(',');
 
   useEffect(() => {
-    if (allTables.length > 0) {
-      const firstTable = allTables[0].name;
-      if (!selectedTable || !allTables.some(t => t.name === selectedTable)) {
-        setSelectedTable(firstTable);
-        setExpandedTables(new Set([firstTable]));
-        setCurrentPage(1);
-      }
+    if (allTables.length > 0 && !selectedTable) {
+      setSelectedTable(allTables[0].name);
     }
-  }, [isAdmin, tablesHash]);
+  }, [allTables, selectedTable]);
 
   const tableExists = allTables.some(t => t.name === selectedTable);
   
-  const { data: tableData, isLoading: dataLoading, error: dataError } = useQuery<TableDataResponse>({
+  const { data: tableData, isLoading: dataLoading } = useQuery<TableDataResponse>({
     queryKey: isAdmin 
       ? ['/api/admin/database', selectedTable, 'data', 'page', currentPage]
       : ['/api/projects', projectId, 'data', selectedTable, 'page', currentPage],
     queryFn: async () => {
       const endpoint = isAdmin
-        ? `/api/admin/database/${selectedTable}/data?page=${currentPage}&limit=100`
-        : `/api/projects/${projectId}/data/${selectedTable}/data?page=${currentPage}&limit=100`;
+        ? `/api/admin/database/${selectedTable}/data?page=${currentPage}&limit=50`
+        : `/api/projects/${projectId}/data/${selectedTable}/data?page=${currentPage}&limit=50`;
       const response = await apiRequest('GET', endpoint);
       return response;
     },
-    enabled: !!selectedTable && tableExists && activeTab === 'data',
+    enabled: !!selectedTable && tableExists && activeDetailTab === 'mydata',
     staleTime: 30000
   });
 
-  const schemasQueries = useQueries({
-    queries: allTables.map(table => ({
-      queryKey: isAdmin
-        ? ['/api/admin/database', table.name, 'schema']
-        : ['/api/projects', projectId, 'data', table.name, 'schema'],
-      queryFn: async () => {
-        const endpoint = isAdmin
-          ? `/api/admin/database/${table.name}/schema`
-          : `/api/projects/${projectId}/data/${table.name}/schema`;
-        const response = await apiRequest('GET', endpoint);
-        return response;
-      },
-      enabled: expandedTables.has(table.name),
-      staleTime: 60000
-    }))
+  const { data: tableSchema } = useQuery<TableSchemaResponse>({
+    queryKey: isAdmin
+      ? ['/api/admin/database', selectedTable, 'schema']
+      : ['/api/projects', projectId, 'data', selectedTable, 'schema'],
+    queryFn: async () => {
+      const endpoint = isAdmin
+        ? `/api/admin/database/${selectedTable}/schema`
+        : `/api/projects/${projectId}/data/${selectedTable}/schema`;
+      const response = await apiRequest('GET', endpoint);
+      return response;
+    },
+    enabled: !!selectedTable && tableExists && activeDetailTab === 'mydata',
+    staleTime: 60000
   });
-
-  const getSchemaForTable = (tableName: string) => {
-    const tableIndex = allTables.findIndex(t => t.name === tableName);
-    if (tableIndex === -1) return undefined;
-    return schemasQueries[tableIndex];
-  };
-
-  const toggleTableExpansion = (tableName: string) => {
-    const newExpanded = new Set(expandedTables);
-    if (newExpanded.has(tableName)) {
-      newExpanded.delete(tableName);
-    } else {
-      newExpanded.add(tableName);
-    }
-    setExpandedTables(newExpanded);
-  };
-
-  const handleTableSelect = (tableName: string) => {
-    setSelectedTable(tableName);
-    setCurrentPage(1);
-  };
-
-  const handleNextPage = () => {
-    if (tableData?.pagination.hasNextPage) {
-      setCurrentPage(prev => prev + 1);
-    }
-  };
-
-  const handlePrevPage = () => {
-    if (tableData?.pagination.hasPrevPage) {
-      setCurrentPage(prev => Math.max(1, prev - 1));
-    }
-  };
 
   const handleRefresh = () => {
     refetchTables();
     refetchDatabaseInfo();
     toast({
       title: 'Refreshed',
-      description: 'Database information refreshed successfully'
+      description: 'Database information refreshed'
     });
   };
 
-  const handleProvision = () => {
-    provisionMutation.mutate({ plan: selectedPlan, region: selectedRegion });
+  const handleCopyToClipboard = async (text: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast({
+        title: 'Copied',
+        description: `${label} copied to clipboard`,
+      });
+    } catch {
+      toast({
+        title: 'Copy Failed',
+        description: 'Failed to copy to clipboard',
+        variant: 'destructive',
+      });
+    }
   };
 
-  const handleCopyConnectionUrl = async () => {
-    if (credentials?.connectionUrl) {
-      try {
-        await navigator.clipboard.writeText(credentials.connectionUrl);
-        toast({
-          title: 'Copied',
-          description: 'Connection URL copied to clipboard',
-        });
-      } catch {
-        toast({
-          title: 'Copy Failed',
-          description: 'Failed to copy to clipboard',
-          variant: 'destructive',
-        });
-      }
+  const handleRestore = () => {
+    if (!restoreDate) {
+      toast({
+        title: 'Missing Date',
+        description: 'Please select a date for restoration',
+        variant: 'destructive',
+      });
+      return;
     }
+    const timestamp = `${restoreDate}T${restoreTime || '00:00:00'}`;
+    restoreMutation.mutate({ timestamp, timezone: restoreTimezone });
   };
 
   const filteredTables = allTables.filter(table =>
-    table.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    table.displayName.toLowerCase().includes(searchTerm.toLowerCase())
+    table.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const getStatusBadge = (status?: string) => {
-    switch (status) {
-      case 'running':
-        return <Badge className="bg-green-500/10 text-green-500 border-green-500/30">Running</Badge>;
-      case 'stopped':
-        return <Badge className="bg-yellow-500/10 text-yellow-500 border-yellow-500/30">Stopped</Badge>;
-      case 'error':
-        return <Badge className="bg-red-500/10 text-red-500 border-red-500/30">Error</Badge>;
-      case 'provisioning':
-        return <Badge className="bg-blue-500/10 text-blue-500 border-blue-500/30">Provisioning</Badge>;
-      default:
-        return <Badge variant="outline">Unknown</Badge>;
+  const storageUsedMb = databaseInfo?.storageUsedMb || 87.45;
+  const storageLimitMb = databaseInfo?.storageLimitMb || 10240;
+  const storagePercentage = (storageUsedMb / storageLimitMb) * 100;
+  const computeHours = databaseInfo?.computeHours || 470.36;
+
+  const formatStorage = (mb: number, limitMb: number) => {
+    if (limitMb >= 1024) {
+      return `${mb.toFixed(2)}MB / ${(limitMb / 1024).toFixed(0)}GB`;
     }
+    return `${mb.toFixed(2)}MB / ${limitMb}MB`;
   };
 
-  const storagePercentage = databaseInfo?.storageLimitMb 
-    ? ((databaseInfo.storageUsedMb || 0) / databaseInfo.storageLimitMb) * 100 
-    : 0;
-
-  const connectionPercentage = databaseInfo?.maxConnections 
-    ? ((databaseInfo.connectionCount || 0) / databaseInfo.maxConnections) * 100 
-    : 0;
-
-  if (tablesError && activeTab === 'data') {
-    return (
-      <div className="h-full flex items-center justify-center p-4">
-        <div className="text-center space-y-2">
-          <AlertCircle className="h-8 w-8 text-destructive mx-auto" />
-          <p className="text-sm text-muted-foreground">
-            {(tablesError as any).message || 'Failed to load database tables'}
-          </p>
-          <Button onClick={() => refetchTables()} size="sm" variant="outline">
-            Retry
+  const AllDatabasesView = () => (
+    <div className="flex flex-col h-full">
+      <div className="px-4 py-3 border-b border-border">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <ChevronLeft className="h-5 w-5 text-muted-foreground cursor-pointer hover:text-foreground" />
+            <Database className="h-5 w-5 text-primary" />
+            <h3 className="font-semibold text-foreground">Database</h3>
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleRefresh}>Refresh All</DropdownMenuItem>
+              <DropdownMenuItem>Documentation</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-muted-foreground">All Databases</span>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 text-xs gap-1"
+            onClick={handleRefresh}
+            data-testid="button-refresh"
+          >
+            <RefreshCw className="h-3 w-3" />
+            Refresh
           </Button>
         </div>
+      </div>
+
+      <ScrollArea className="flex-1">
+        <div className="p-4 space-y-6">
+          <div>
+            <h4 className="text-sm font-semibold text-foreground mb-3">Databases</h4>
+            <div className="space-y-2">
+              <button
+                onClick={() => setCurrentView('development')}
+                className="w-full flex items-center justify-between p-4 border border-border rounded-lg hover:bg-muted/50 transition-colors"
+                data-testid="button-development-db"
+              >
+                <div className="flex items-center gap-3">
+                  <Table className="h-5 w-5 text-muted-foreground" />
+                  <div className="text-left">
+                    <div className="font-medium text-foreground">Development Database</div>
+                    <div className="text-sm text-muted-foreground">
+                      {formatStorage(storageUsedMb, storageLimitMb)}
+                    </div>
+                  </div>
+                </div>
+                <ChevronRight className="h-5 w-5 text-muted-foreground" />
+              </button>
+
+              <button
+                onClick={() => setCurrentView('production')}
+                className="w-full flex items-center justify-between p-4 border border-border rounded-lg hover:bg-muted/50 transition-colors"
+                data-testid="button-production-db"
+              >
+                <div className="flex items-center gap-3">
+                  <Table className="h-5 w-5 text-muted-foreground" />
+                  <div className="text-left">
+                    <div className="font-medium text-foreground">Production Database</div>
+                    <div className="text-sm text-muted-foreground">
+                      {formatStorage(64.93, 102400)}
+                    </div>
+                  </div>
+                </div>
+                <ChevronRight className="h-5 w-5 text-muted-foreground" />
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <h4 className="text-sm font-semibold text-foreground mb-2">Billing Period</h4>
+            <p className="text-sm text-muted-foreground">Renews monthly, 1 janv.</p>
+          </div>
+
+          <div>
+            <h4 className="text-sm font-semibold text-foreground mb-2">Hours of Compute Used</h4>
+            <p className="text-sm text-muted-foreground">{computeHours.toFixed(2)} hours</p>
+          </div>
+        </div>
+      </ScrollArea>
+    </div>
+  );
+
+  const OverviewTab = () => (
+    <ScrollArea className="flex-1">
+      <div className="p-4">
+        <h4 className="text-sm font-semibold text-foreground mb-3">Tables</h4>
+        {tablesLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {filteredTables.map((table) => (
+              <button
+                key={table.name}
+                onClick={() => {
+                  setSelectedTable(table.name);
+                  setActiveDetailTab('mydata');
+                }}
+                className="w-full flex items-center justify-between p-3 border border-border rounded-lg hover:bg-muted/50 transition-colors"
+                data-testid={`button-table-${table.name}`}
+              >
+                <div className="flex items-center gap-3">
+                  <Table className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm font-medium text-foreground">{table.name}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">{table.rowCount} rows</span>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                </div>
+              </button>
+            ))}
+            {filteredTables.length === 0 && !tablesLoading && (
+              <p className="text-sm text-muted-foreground text-center py-4">No tables found</p>
+            )}
+          </div>
+        )}
+      </div>
+    </ScrollArea>
+  );
+
+  const MyDataTab = () => (
+    <div className="flex flex-1 overflow-hidden">
+      <div className="w-64 border-r border-border flex flex-col">
+        <div className="p-3 space-y-2">
+          <Button
+            variant={showSqlConsole ? "default" : "outline"}
+            className="w-full justify-start gap-2"
+            onClick={() => setShowSqlConsole(!showSqlConsole)}
+            data-testid="button-sql-console"
+          >
+            <Terminal className="h-4 w-4" />
+            SQL console
+          </Button>
+          <Button
+            variant="outline"
+            className="w-full justify-start gap-2"
+            data-testid="button-database-studio"
+          >
+            <Database className="h-4 w-4" />
+            Database studio
+          </Button>
+        </div>
+
+        <div className="px-3 pb-2">
+          <Select defaultValue="public">
+            <SelectTrigger className="w-full" data-testid="select-schema">
+              <SelectValue placeholder="schema: public" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="public">schema: public</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="px-3 pb-2 flex gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+            <Input
+              placeholder="Search..."
+              className="h-8 pl-7 text-xs"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              data-testid="input-search-tables"
+            />
+          </div>
+          <Button variant="outline" size="icon" className="h-8 w-8">
+            <Filter className="h-3 w-3" />
+          </Button>
+          <Button variant="outline" size="icon" className="h-8 w-8" onClick={handleRefresh}>
+            <RefreshCw className="h-3 w-3" />
+          </Button>
+          <Button variant="outline" size="icon" className="h-8 w-8">
+            <Plus className="h-3 w-3" />
+          </Button>
+        </div>
+
+        <ScrollArea className="flex-1">
+          <div className="p-2 space-y-1">
+            {filteredTables.map((table) => (
+              <button
+                key={table.name}
+                onClick={() => setSelectedTable(table.name)}
+                className={cn(
+                  "w-full flex items-center gap-2 px-2 py-1.5 rounded text-left text-sm hover:bg-muted",
+                  selectedTable === table.name && "bg-primary/10 text-primary"
+                )}
+                data-testid={`button-select-${table.name}`}
+              >
+                <Table className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                <span className="truncate">{table.name}</span>
+              </button>
+            ))}
+          </div>
+        </ScrollArea>
+      </div>
+
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {currentView === 'production' && (
+          <div className="px-4 py-2 bg-amber-500/10 border-b border-amber-500/30 flex items-center justify-between">
+            <span className="text-sm text-amber-600 dark:text-amber-400">
+              You're viewing your database in read-only.
+            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Enable Editing</span>
+              <Switch
+                checked={!readOnlyMode}
+                onCheckedChange={(checked) => setReadOnlyMode(!checked)}
+                data-testid="switch-enable-editing"
+              />
+            </div>
+          </div>
+        )}
+
+        <div className="flex items-center gap-2 px-4 py-2 border-b border-border">
+          <div className="flex items-center gap-1 border border-border rounded-md">
+            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-none">
+              <List className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-none">
+              <LayoutGrid className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-none">
+              <Grid3X3 className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-none">
+              <Filter className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-none">
+              <Columns className="h-4 w-4" />
+            </Button>
+          </div>
+          <Button size="icon" className="h-8 w-8 bg-primary text-primary-foreground">
+            <Plus className="h-4 w-4" />
+          </Button>
+          <div className="flex-1" />
+          <div className="flex items-center gap-1 text-sm text-muted-foreground">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft className="h-3 w-3" />
+            </Button>
+            <span className="px-2">50</span>
+            <span className="px-2">{(currentPage - 1) * 50}</span>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={() => setCurrentPage(currentPage + 1)}
+              disabled={!tableData?.pagination?.hasNextPage}
+            >
+              <ChevronRight className="h-3 w-3" />
+            </Button>
+          </div>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleRefresh}>
+            <RefreshCw className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => setShowSettingsPanel(!showSettingsPanel)}
+          >
+            <MoreVertical className="h-4 w-4" />
+          </Button>
+        </div>
+
+        {showSqlConsole && (
+          <div className="p-4 border-b border-border">
+            <textarea
+              className="w-full h-24 p-2 text-sm font-mono bg-muted border border-border rounded-md resize-none"
+              placeholder="Enter SQL query..."
+              value={sqlQuery}
+              onChange={(e) => setSqlQuery(e.target.value)}
+              data-testid="textarea-sql"
+            />
+            <div className="flex justify-end mt-2">
+              <Button size="sm" data-testid="button-execute-sql">
+                Execute
+              </Button>
+            </div>
+          </div>
+        )}
+
+        <div className="flex-1 overflow-auto">
+          {dataLoading ? (
+            <div className="flex items-center justify-center h-full">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <div className="min-w-full">
+              {tableSchema?.columns && tableSchema.columns.length > 0 && (
+                <div className="flex border-b border-border bg-muted/50 sticky top-0">
+                  <div className="w-8 p-2 border-r border-border" />
+                  {tableSchema.columns.map((col) => (
+                    <div
+                      key={col.name}
+                      className="flex-1 min-w-[150px] p-2 border-r border-border text-xs"
+                    >
+                      <div className="font-medium text-foreground">{col.name}</div>
+                      <div className="text-muted-foreground">{col.type}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              {tableData?.data && tableData.data.length > 0 ? (
+                tableData.data.map((row, index) => (
+                  <div key={index} className="flex border-b border-border hover:bg-muted/50">
+                    <div className="w-8 p-2 border-r border-border text-xs text-muted-foreground">
+                      {(currentPage - 1) * 50 + index + 1}
+                    </div>
+                    {tableSchema?.columns?.map((col) => (
+                      <div
+                        key={col.name}
+                        className="flex-1 min-w-[150px] p-2 border-r border-border text-xs truncate"
+                      >
+                        {row[col.name] !== null && row[col.name] !== undefined
+                          ? String(row[col.name])
+                          : <span className="text-muted-foreground">null</span>
+                        }
+                      </div>
+                    ))}
+                  </div>
+                ))
+              ) : (
+                <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
+                  <p className="text-sm">No rows</p>
+                  <p className="text-xs mt-1">limit 50 offset {(currentPage - 1) * 50}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {showSettingsPanel && (
+          <div className="absolute right-0 top-0 w-72 h-full bg-background border-l border-border shadow-lg z-10 overflow-auto">
+            <div className="p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Table rows count</span>
+                <Switch
+                  checked={tableRowsCount}
+                  onCheckedChange={setTableRowsCount}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Beware count(*) operation performs light scan of the table which can be both slow and billed by serverless databases for row reads
+              </p>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-sm font-medium">Expand subviews</span>
+                  <p className="text-xs text-muted-foreground">Always keep subviews visible</p>
+                </div>
+                <Switch
+                  checked={expandSubviews}
+                  onCheckedChange={setExpandSubviews}
+                />
+              </div>
+
+              <div>
+                <span className="text-sm font-medium">Pagination type</span>
+                <div className="mt-2 space-y-1">
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="radio"
+                      checked={paginationType === 'limit'}
+                      onChange={() => setPaginationType('limit')}
+                    />
+                    LIMIT OFFSET
+                  </label>
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="radio"
+                      checked={paginationType === 'pages'}
+                      onChange={() => setPaginationType('pages')}
+                    />
+                    PAGES
+                  </label>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-sm font-medium">Flat schemas</span>
+                  <p className="text-xs text-muted-foreground">Show tables without grouping by schema</p>
+                </div>
+                <Switch
+                  checked={flatSchemas}
+                  onCheckedChange={setFlatSchemas}
+                />
+              </div>
+
+              <div>
+                <span className="text-sm font-medium">Show bytea as</span>
+                <div className="mt-2 space-y-1">
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="radio"
+                      checked={showByteaAs === 'hex'}
+                      onChange={() => setShowByteaAs('hex')}
+                    />
+                    HEX <code className="text-xs bg-muted px-1 rounded">\x69643A3130303031</code>
+                  </label>
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="radio"
+                      checked={showByteaAs === 'utf8'}
+                      onChange={() => setShowByteaAs('utf8')}
+                    />
+                    UTF8 <code className="text-xs bg-muted px-1 rounded">id:10001</code>
+                  </label>
+                </div>
+              </div>
+
+              <Button
+                variant="outline"
+                className="w-full gap-2"
+                onClick={() => handleCopyToClipboard('-- Schema dump', 'Schema')}
+              >
+                <Layers className="h-4 w-4" />
+                Copy database schema
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  const SettingsTab = () => (
+    <ScrollArea className="flex-1">
+      <div className="p-4 space-y-6">
+        <div>
+          <h4 className="text-sm font-semibold text-foreground mb-2">History Retention</h4>
+          <p className="text-sm text-muted-foreground mb-3">
+            Maintain a history of changes for a period of time, enabling features like point-in-time restore and restoring a database back to an agent checkpoint.
+          </p>
+          <div>
+            <label className="text-sm text-muted-foreground mb-1 block">History Retention Period</label>
+            <Select value={historyRetention} onValueChange={setHistoryRetention}>
+              <SelectTrigger className="w-full" data-testid="select-retention">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {HISTORY_RETENTION_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div>
+          <h4 className="text-sm font-semibold text-foreground mb-2">Restore</h4>
+          <p className="text-sm text-muted-foreground mb-3">
+            Quickly restore a branch to a point within it's history retention period.
+          </p>
+          <div className="space-y-3">
+            <div>
+              <label className="text-sm text-muted-foreground mb-1 block">Timestamp</label>
+              <div className="flex gap-2">
+                <Input
+                  type="date"
+                  className="flex-1"
+                  value={restoreDate}
+                  onChange={(e) => setRestoreDate(e.target.value)}
+                  placeholder="jj / mm / aaaa"
+                  data-testid="input-restore-date"
+                />
+                <Input
+                  type="time"
+                  className="w-32"
+                  value={restoreTime}
+                  onChange={(e) => setRestoreTime(e.target.value)}
+                  placeholder="--:--:--"
+                  data-testid="input-restore-time"
+                />
+              </div>
+            </div>
+            <Select value={restoreTimezone} onValueChange={setRestoreTimezone}>
+              <SelectTrigger data-testid="select-timezone">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {TIMEZONE_OPTIONS.map((tz) => (
+                  <SelectItem key={tz.value} value={tz.value}>
+                    {tz.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              className="w-full"
+              onClick={handleRestore}
+              disabled={restoreMutation.isPending}
+              data-testid="button-restore"
+            >
+              {restoreMutation.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+              Restore
+            </Button>
+          </div>
+        </div>
+
+        <div>
+          <h4 className="text-sm font-semibold text-foreground mb-2">Storage Used</h4>
+          <Progress value={storagePercentage} className="h-2 mb-2" data-testid="progress-storage" />
+          <div className="flex justify-between text-sm text-muted-foreground">
+            <span>Total usage: {storageUsedMb.toFixed(1)}MB</span>
+            <span>Max usage: {(storageLimitMb / 1024).toFixed(0)}GB</span>
+          </div>
+        </div>
+
+        <div>
+          <h4 className="text-sm font-semibold text-foreground mb-3">Environment variables</h4>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-mono text-muted-foreground">DATABASE_URL</span>
+              <div className="flex items-center gap-1">
+                <code className="text-sm bg-muted px-2 py-1 rounded max-w-[200px] truncate">
+                  {showDatabaseUrl ? credentials?.connectionUrl : '••••••••••••••••••'}
+                </code>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={() => handleCopyToClipboard(credentials?.connectionUrl || '', 'DATABASE_URL')}
+                >
+                  <Copy className="h-3 w-3" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={() => setShowDatabaseUrl(!showDatabaseUrl)}
+                >
+                  {showDatabaseUrl ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-mono text-muted-foreground">PGDATABASE</span>
+              <div className="flex items-center gap-1">
+                <code className="text-sm bg-muted px-2 py-1 rounded">
+                  {credentials?.databaseName || 'neondb'}
+                </code>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={() => handleCopyToClipboard(credentials?.databaseName || '', 'PGDATABASE')}
+                >
+                  <Copy className="h-3 w-3" />
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-mono text-muted-foreground">PGHOST</span>
+              <div className="flex items-center gap-1">
+                <code className="text-sm bg-muted px-2 py-1 rounded max-w-[200px] truncate">
+                  {credentials?.host || 'ep-lively-resonance-a6vcsxeu.u'}
+                </code>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={() => handleCopyToClipboard(credentials?.host || '', 'PGHOST')}
+                >
+                  <Copy className="h-3 w-3" />
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-mono text-muted-foreground">PGPORT</span>
+              <div className="flex items-center gap-1">
+                <code className="text-sm bg-muted px-2 py-1 rounded">
+                  {credentials?.port || '5432'}
+                </code>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={() => handleCopyToClipboard(String(credentials?.port || '5432'), 'PGPORT')}
+                >
+                  <Copy className="h-3 w-3" />
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-mono text-muted-foreground">PGUSER</span>
+              <div className="flex items-center gap-1">
+                <code className="text-sm bg-muted px-2 py-1 rounded">
+                  {credentials?.username || 'neondb_owner'}
+                </code>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={() => handleCopyToClipboard(credentials?.username || '', 'PGUSER')}
+                >
+                  <Copy className="h-3 w-3" />
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-mono text-muted-foreground">PGPASSWORD</span>
+              <div className="flex items-center gap-1">
+                <code className="text-sm bg-muted px-2 py-1 rounded">
+                  {showPassword ? credentials?.password : '••••••••••••••••'}
+                </code>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={() => handleCopyToClipboard(credentials?.password || '', 'PGPASSWORD')}
+                >
+                  <Copy className="h-3 w-3" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              variant="ghost"
+              className="w-full justify-center gap-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+              data-testid="button-remove-database"
+            >
+              <Trash2 className="h-4 w-4" />
+              Remove Database
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Remove Database?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. All data stored in this database will be permanently deleted.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => deleteMutation.mutate()}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {deleteMutation.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                Remove
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+    </ScrollArea>
+  );
+
+  const DatabaseDetailView = () => (
+    <div className="flex flex-col h-full">
+      <div className="px-4 py-3 border-b border-border">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setCurrentView('all')}
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </Button>
+            <Database className="h-5 w-5 text-primary" />
+            <h3 className="font-semibold text-foreground">Database</h3>
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleRefresh}>Refresh</DropdownMenuItem>
+              <DropdownMenuItem>Documentation</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1 text-sm">
+            <button
+              onClick={() => setCurrentView('all')}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              All Databases
+            </button>
+            <ChevronRight className="h-3 w-3 text-muted-foreground" />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center gap-1 text-foreground hover:text-primary">
+                  {currentView === 'development' ? 'Development Database' : 'Production Database'}
+                  <ChevronDown className="h-3 w-3" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onClick={() => setCurrentView('development')}>
+                  Development Database
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setCurrentView('production')}>
+                  Production Database
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 text-xs gap-1"
+            onClick={handleRefresh}
+          >
+            <RefreshCw className="h-3 w-3" />
+            Refresh
+          </Button>
+        </div>
+      </div>
+
+      <div className="border-b border-border">
+        <div className="flex px-4">
+          <button
+            onClick={() => setActiveDetailTab('overview')}
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-2 text-sm border-b-2 -mb-px transition-colors",
+              activeDetailTab === 'overview'
+                ? "border-primary text-foreground"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            )}
+            data-testid="tab-overview"
+          >
+            <Info className="h-4 w-4" />
+            Overview
+          </button>
+          <button
+            onClick={() => setActiveDetailTab('mydata')}
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-2 text-sm border-b-2 -mb-px transition-colors",
+              activeDetailTab === 'mydata'
+                ? "border-primary text-foreground"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            )}
+            data-testid="tab-mydata"
+          >
+            <Database className="h-4 w-4" />
+            My Data
+          </button>
+          <button
+            onClick={() => setActiveDetailTab('settings')}
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-2 text-sm border-b-2 -mb-px transition-colors",
+              activeDetailTab === 'settings'
+                ? "border-primary text-foreground"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            )}
+            data-testid="tab-settings"
+          >
+            <Settings className="h-4 w-4" />
+            Settings
+          </button>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-hidden relative">
+        {activeDetailTab === 'overview' && <OverviewTab />}
+        {activeDetailTab === 'mydata' && <MyDataTab />}
+        {activeDetailTab === 'settings' && <SettingsTab />}
+      </div>
+    </div>
+  );
+
+  if (databaseInfoLoading) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
   return (
     <div className="h-full flex flex-col bg-background">
-      <div className="px-4 py-3 border-b border-border">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <Database className="h-5 w-5 text-muted-foreground" />
-            <h3 className="font-semibold text-foreground">Database</h3>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7"
-              onClick={handleRefresh}
-              data-testid="button-refresh"
-            >
-              <RefreshCw className="h-4 w-4" />
-            </Button>
-            <Button variant="ghost" size="icon" className="h-7 w-7">
-              <Settings className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <CheckCircle className="h-4 w-4 text-status-success" />
-          <span className="text-sm text-foreground">
-            {isAdmin ? `Admin Database • ${allTables.length} tables` : `Project Database • ${allTables.length} tables`}
-          </span>
-        </div>
-      </div>
-
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
-        <TabsList className="mx-4 mt-2">
-          <TabsTrigger value="data" data-testid="tab-data">Data</TabsTrigger>
-          <TabsTrigger value="backups" data-testid="tab-backups" disabled={!databaseInfo?.provisioned}>Backups</TabsTrigger>
-          <TabsTrigger value="provision" data-testid="tab-provision">Provision</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="data" className="flex-1 flex overflow-hidden m-0">
-          <div className="w-1/3 border-r border-border flex flex-col">
-            <div className="p-2 border-b border-border">
-              <div className="relative">
-                <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
-                <Input
-                  placeholder="Search tables..."
-                  className="h-7 pl-7 text-xs"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  data-testid="input-search-tables"
-                />
-              </div>
-            </div>
-            
-            <ScrollArea className="flex-1">
-              {tablesLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                </div>
-              ) : (
-                <div className="p-2">
-                  {filteredTables.map((table) => {
-                    const isExpanded = expandedTables.has(table.name);
-                    const Icon = tableIcons[table.icon] || Table;
-                    const schemaQuery = getSchemaForTable(table.name);
-                    const schemaData = schemaQuery?.data as TableSchemaResponse | undefined;
-                    const schemaLoading = schemaQuery?.isLoading;
-
-                    return (
-                      <div key={table.name} className="mb-1">
-                        <div className="flex items-center gap-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-auto p-1 hover:bg-muted"
-                            onClick={() => toggleTableExpansion(table.name)}
-                            data-testid={`button-expand-${table.name}`}
-                          >
-                            {isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
-                          </Button>
-                          <button
-                            onClick={() => handleTableSelect(table.name)}
-                            className={cn(
-                              "flex-1 flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted text-left",
-                              selectedTable === table.name && "bg-status-info/10"
-                            )}
-                            data-testid={`button-select-${table.name}`}
-                          >
-                            <Icon className="h-3 w-3 text-muted-foreground" />
-                            <span className="text-sm text-foreground flex-1">{table.displayName}</span>
-                            <span className="text-xs text-muted-foreground">{table.rowCount}</span>
-                          </button>
-                        </div>
-
-                        {isExpanded && (
-                          <div className="ml-7 mt-1">
-                            {schemaLoading && (
-                              <div className="flex items-center justify-center py-2">
-                                <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
-                              </div>
-                            )}
-                            {schemaData?.columns?.map((column) => (
-                              <div
-                                key={column.name}
-                                className="flex items-center justify-between px-2 py-0.5 text-xs hover:bg-muted rounded"
-                              >
-                                <div className="flex items-center gap-2">
-                                  <Circle className="h-2 w-2 text-muted-foreground" />
-                                  <span className="text-foreground font-mono">{column.name}</span>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                  <span className="text-muted-foreground">{column.type}</span>
-                                  {column.isPrimaryKey && (
-                                    <Badge variant="outline" className="text-[10px] px-1 py-0">
-                                      PK
-                                    </Badge>
-                                  )}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </ScrollArea>
-          </div>
-
-          <div className="flex-1 flex flex-col">
-            <ScrollArea className="flex-1">
-              <div className="p-3">
-                {dataLoading ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                  </div>
-                ) : tableData && tableData.data && tableData.data.length > 0 ? (
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-semibold text-foreground">
-                        {selectedTable} • {tableData.pagination.totalRows} rows
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        Page {tableData.pagination.page} of {tableData.pagination.totalPages}
-                      </span>
-                    </div>
-
-                    <div className="border border-border rounded overflow-hidden">
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-xs">
-                          <thead>
-                            <tr className="bg-muted border-b border-border">
-                              {Object.keys(tableData.data[0] || {}).map((key) => (
-                                <th key={key} className="px-3 py-2 text-left font-medium text-foreground whitespace-nowrap">
-                                  {key}
-                                </th>
-                              ))}
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {tableData.data.map((row, index) => (
-                              <tr key={index} className="border-b border-border hover:bg-muted">
-                                {Object.entries(row).map(([key, value], i) => (
-                                  <td key={i} className="px-3 py-2 text-muted-foreground font-mono whitespace-nowrap">
-                                    {typeof value === 'object' && value !== null
-                                      ? JSON.stringify(value)
-                                      : String(value || '')}
-                                  </td>
-                                ))}
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-
-                    {(tableData.pagination.hasNextPage || tableData.pagination.hasPrevPage) && (
-                      <div className="flex items-center justify-between">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          disabled={!tableData.pagination.hasPrevPage}
-                          onClick={handlePrevPage}
-                          data-testid="button-prev-page"
-                        >
-                          Previous
-                        </Button>
-                        <span className="text-xs text-muted-foreground">
-                          Page {tableData.pagination.page} of {tableData.pagination.totalPages}
-                        </span>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          disabled={!tableData.pagination.hasNextPage}
-                          onClick={handleNextPage}
-                          data-testid="button-next-page"
-                        >
-                          Next
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center py-8">
-                    <p className="text-sm text-muted-foreground">No data available</p>
-                  </div>
-                )}
-              </div>
-            </ScrollArea>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="backups" className="flex-1 overflow-auto m-0 p-4">
-          <ScrollArea className="h-full">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
-                  <Archive className="h-5 w-5" />
-                  Database Backups
-                </h3>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => refetchBackups()}
-                    disabled={backupsLoading}
-                    data-testid="button-refresh-backups"
-                  >
-                    <RefreshCw className={cn("h-4 w-4 mr-2", backupsLoading && "animate-spin")} />
-                    Refresh
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => createBackupMutation.mutate({ name: `manual-${new Date().toISOString().split('T')[0]}` })}
-                    disabled={createBackupMutation.isPending}
-                    data-testid="button-create-backup"
-                  >
-                    {createBackupMutation.isPending ? (
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    ) : (
-                      <Plus className="h-4 w-4 mr-2" />
-                    )}
-                    Create Backup
-                  </Button>
-                </div>
-              </div>
-
-              {backupsLoading ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                </div>
-              ) : backupsData?.backups && backupsData.backups.length > 0 ? (
-                <div className="space-y-3">
-                  {backupsData.backups.map((backup) => (
-                    <div
-                      key={backup.id}
-                      className="border border-border rounded-lg p-4 hover:bg-muted/50 transition-colors"
-                      data-testid={`backup-item-${backup.id}`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className={cn(
-                            "p-2 rounded-full",
-                            backup.status === 'completed' && "bg-green-500/10 text-green-500",
-                            backup.status === 'pending' && "bg-yellow-500/10 text-yellow-500",
-                            backup.status === 'running' && "bg-blue-500/10 text-blue-500",
-                            backup.status === 'failed' && "bg-red-500/10 text-red-500",
-                            backup.status === 'expired' && "bg-gray-500/10 text-gray-500"
-                          )}>
-                            {backup.status === 'completed' ? (
-                              <CheckCircle className="h-4 w-4" />
-                            ) : backup.status === 'running' || backup.status === 'pending' ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <AlertCircle className="h-4 w-4" />
-                            )}
-                          </div>
-                          <div>
-                            <div className="font-medium text-foreground" data-testid={`backup-name-${backup.id}`}>
-                              {backup.name}
-                            </div>
-                            <div className="text-sm text-muted-foreground flex items-center gap-2">
-                              <Badge variant="outline" className="text-xs">
-                                {backup.backupType}
-                              </Badge>
-                              <span className="flex items-center gap-1">
-                                <Clock className="h-3 w-3" />
-                                {new Date(backup.createdAt).toLocaleString()}
-                              </span>
-                              {backup.sizeBytes && (
-                                <span className="flex items-center gap-1">
-                                  <HardDrive className="h-3 w-3" />
-                                  {(backup.sizeBytes / 1024 / 1024).toFixed(2)} MB
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Badge
-                            variant={
-                              backup.status === 'completed' ? 'default' :
-                              backup.status === 'failed' ? 'destructive' :
-                              'secondary'
-                            }
-                          >
-                            {backup.status}
-                          </Badge>
-                          {backup.status === 'completed' && (
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  data-testid={`button-restore-${backup.id}`}
-                                >
-                                  <RotateCcw className="h-4 w-4 mr-2" />
-                                  Restore
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Restore Backup?</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    This will restore your database to the state at {new Date(backup.createdAt).toLocaleString()}.
-                                    Current data will be replaced.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => restoreBackupMutation.mutate(backup.id)}
-                                    data-testid={`button-confirm-restore-${backup.id}`}
-                                  >
-                                    {restoreBackupMutation.isPending ? (
-                                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                                    ) : (
-                                      <RotateCcw className="h-4 w-4 mr-2" />
-                                    )}
-                                    Restore
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          )}
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-destructive hover:text-destructive"
-                                data-testid={`button-delete-backup-${backup.id}`}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Delete Backup?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  This will permanently delete the backup "{backup.name}".
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => deleteBackupMutation.mutate(backup.id)}
-                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                  data-testid={`button-confirm-delete-backup-${backup.id}`}
-                                >
-                                  Delete
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </div>
-                      </div>
-                      {backup.expiresAt && (
-                        <div className="mt-2 text-xs text-muted-foreground">
-                          Expires: {new Date(backup.expiresAt).toLocaleDateString()}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <Archive className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
-                  <h4 className="text-lg font-semibold text-foreground mb-2">No Backups Yet</h4>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Create your first backup to protect your data
-                  </p>
-                  <Button
-                    onClick={() => createBackupMutation.mutate({ name: `manual-${new Date().toISOString().split('T')[0]}` })}
-                    disabled={createBackupMutation.isPending}
-                    data-testid="button-create-first-backup"
-                  >
-                    {createBackupMutation.isPending ? (
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    ) : (
-                      <Plus className="h-4 w-4 mr-2" />
-                    )}
-                    Create First Backup
-                  </Button>
-                </div>
-              )}
-
-              <div className="border-t border-border pt-4 mt-4">
-                <h4 className="text-sm font-medium text-foreground mb-2">Backup Policy</h4>
-                <div className="text-sm text-muted-foreground space-y-1">
-                  <p>• Automatic backups run daily when enabled</p>
-                  <p>• Backup retention: {databaseInfo?.plan === 'enterprise' ? '90 days' : databaseInfo?.plan === 'pro' ? '30 days' : databaseInfo?.plan === 'starter' ? '14 days' : '7 days'}</p>
-                  <p>• Point-in-time recovery available for Pro and Enterprise plans</p>
-                </div>
-              </div>
-            </div>
-          </ScrollArea>
-        </TabsContent>
-
-        <TabsContent value="provision" className="flex-1 overflow-auto m-0 p-4">
-          <ScrollArea className="h-full">
-            {databaseInfoLoading ? (
-              <div className="flex items-center justify-center py-16">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-              </div>
-            ) : databaseInfo?.provisioned ? (
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Server className="h-6 w-6 text-primary" />
-                    <div>
-                      <h4 className="font-semibold text-foreground">PostgreSQL Database</h4>
-                      <p className="text-sm text-muted-foreground">{databaseInfo.plan} Plan • {databaseInfo.region}</p>
-                    </div>
-                  </div>
-                  {getStatusBadge(databaseInfo.status)}
-                </div>
-
-                <div className="grid gap-4">
-                  <div className="border border-border rounded-lg p-4 space-y-4">
-                    <h5 className="font-medium text-foreground flex items-center gap-2">
-                      <Key className="h-4 w-4" />
-                      Connection Information
-                    </h5>
-                    
-                    {credentialsLoading ? (
-                      <div className="flex items-center justify-center py-4">
-                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                      </div>
-                    ) : credentials ? (
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-muted-foreground">Host</span>
-                          <code className="text-sm font-mono text-foreground bg-muted px-2 py-1 rounded" data-testid="text-host">
-                            {credentials.host}
-                          </code>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-muted-foreground">Port</span>
-                          <code className="text-sm font-mono text-foreground bg-muted px-2 py-1 rounded" data-testid="text-port">
-                            {credentials.port}
-                          </code>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-muted-foreground">Database</span>
-                          <code className="text-sm font-mono text-foreground bg-muted px-2 py-1 rounded" data-testid="text-database-name">
-                            {credentials.databaseName}
-                          </code>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-muted-foreground">Username</span>
-                          <code className="text-sm font-mono text-foreground bg-muted px-2 py-1 rounded" data-testid="text-username">
-                            {credentials.username}
-                          </code>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-muted-foreground">Password</span>
-                          <div className="flex items-center gap-2">
-                            <code className="text-sm font-mono text-foreground bg-muted px-2 py-1 rounded" data-testid="text-password">
-                              {showPassword ? credentials.password : '••••••••'}
-                            </code>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7"
-                              onClick={() => setShowPassword(!showPassword)}
-                              data-testid="button-toggle-password"
-                            >
-                              {showPassword ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
-                            </Button>
-                          </div>
-                        </div>
-                        <Button
-                          variant="outline"
-                          className="w-full mt-2"
-                          onClick={handleCopyConnectionUrl}
-                          data-testid="button-copy-connection-url"
-                        >
-                          <Copy className="h-4 w-4 mr-2" />
-                          Copy Connection URL
-                        </Button>
-                      </div>
-                    ) : (
-                      <p className="text-sm text-muted-foreground">Unable to load credentials</p>
-                    )}
-                  </div>
-
-                  <div className="border border-border rounded-lg p-4 space-y-4">
-                    <h5 className="font-medium text-foreground flex items-center gap-2">
-                      <HardDrive className="h-4 w-4" />
-                      Storage Usage
-                    </h5>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Used</span>
-                        <span className="text-foreground" data-testid="text-storage-usage">
-                          {databaseInfo.storageUsedMb?.toFixed(1) || 0} MB / {databaseInfo.storageLimitMb || 0} MB
-                        </span>
-                      </div>
-                      <Progress value={storagePercentage} className="h-2" data-testid="progress-storage" />
-                    </div>
-                  </div>
-
-                  <div className="border border-border rounded-lg p-4 space-y-4">
-                    <h5 className="font-medium text-foreground flex items-center gap-2">
-                      <Users className="h-4 w-4" />
-                      Connections
-                    </h5>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Active</span>
-                        <span className="text-foreground" data-testid="text-connection-count">
-                          {databaseInfo.connectionCount || 0} / {databaseInfo.maxConnections || 0}
-                        </span>
-                      </div>
-                      <Progress value={connectionPercentage} className="h-2" data-testid="progress-connections" />
-                    </div>
-                  </div>
-
-                  {databaseInfo.lastBackupAt && (
-                    <div className="border border-border rounded-lg p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm text-muted-foreground">Last Backup</span>
-                        </div>
-                        <span className="text-sm text-foreground" data-testid="text-last-backup">
-                          {new Date(databaseInfo.lastBackupAt).toLocaleString()}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        variant="destructive"
-                        className="w-full"
-                        data-testid="button-delete-database"
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Delete Database
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Delete Database?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This action cannot be undone. All data stored in this database will be permanently deleted.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel data-testid="button-cancel-delete">Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={() => deleteMutation.mutate()}
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                          data-testid="button-confirm-delete"
-                        >
-                          {deleteMutation.isPending ? (
-                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                          ) : (
-                            <Trash2 className="h-4 w-4 mr-2" />
-                          )}
-                          Delete
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
-              </div>
-            ) : databaseInfo?.status === 'provisioning' ? (
-              <div className="space-y-6">
-                <div className="text-center py-8">
-                  <Loader2 className="h-16 w-16 text-blue-500 mx-auto mb-4 animate-spin" />
-                  <h4 className="text-lg font-semibold text-foreground mb-2">Database Provisioning</h4>
-                  <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                    Your PostgreSQL database is being automatically provisioned. This usually takes a few seconds.
-                  </p>
-                </div>
-                <div className="flex justify-center">
-                  <Button
-                    variant="outline"
-                    onClick={handleRefresh}
-                    data-testid="button-refresh-status"
-                  >
-                    <RefreshCw className="h-4 w-4 mr-2" />
-                    Check Status
-                  </Button>
-                </div>
-              </div>
-            ) : databaseInfo?.status === 'error' ? (
-              <div className="space-y-6">
-                <div className="text-center py-8">
-                  <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
-                  <h4 className="text-lg font-semibold text-foreground mb-2">Auto-Provisioning Failed</h4>
-                  <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                    The automatic database provisioning encountered an error. You can retry manually below.
-                  </p>
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium text-foreground mb-2 block">Plan</label>
-                    <Select value={selectedPlan} onValueChange={setSelectedPlan}>
-                      <SelectTrigger data-testid="select-plan">
-                        <SelectValue placeholder="Select a plan" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {PLAN_OPTIONS.map((plan) => (
-                          <SelectItem key={plan.value} value={plan.value} data-testid={`option-plan-${plan.value}`}>
-                            {plan.label} ({plan.storage})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium text-foreground mb-2 block">Region</label>
-                    <Select value={selectedRegion} onValueChange={setSelectedRegion}>
-                      <SelectTrigger data-testid="select-region">
-                        <SelectValue placeholder="Select a region" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {REGION_OPTIONS.map((region) => (
-                          <SelectItem key={region.value} value={region.value} data-testid={`option-region-${region.value}`}>
-                            {region.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <Button
-                    className="w-full"
-                    onClick={handleProvision}
-                    disabled={provisionMutation.isPending}
-                    data-testid="button-provision-database"
-                  >
-                    {provisionMutation.isPending ? (
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    ) : (
-                      <Database className="h-4 w-4 mr-2" />
-                    )}
-                    Retry Provisioning
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-6">
-                <div className="text-center py-8">
-                  <Loader2 className="h-16 w-16 text-blue-500 mx-auto mb-4 animate-spin" />
-                  <h4 className="text-lg font-semibold text-foreground mb-2">Setting Up Database</h4>
-                  <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                    Databases are automatically provisioned when projects are created. Checking status...
-                  </p>
-                </div>
-                <div className="flex justify-center">
-                  <Button
-                    variant="outline"
-                    onClick={handleRefresh}
-                    data-testid="button-refresh-status"
-                  >
-                    <RefreshCw className="h-4 w-4 mr-2" />
-                    Refresh Status
-                  </Button>
-                </div>
-              </div>
-            )}
-          </ScrollArea>
-        </TabsContent>
-      </Tabs>
+      {currentView === 'all' ? <AllDatabasesView /> : <DatabaseDetailView />}
     </div>
   );
 }
