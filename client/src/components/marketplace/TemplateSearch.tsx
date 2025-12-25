@@ -53,16 +53,18 @@ export function TemplateSearch({ value, onChange, onSearch, className }: Templat
   }, [debouncedValue]);
 
   const fetchSuggestions = async (query: string) => {
-    // Simulate suggestions (in real app, this would be an API call)
-    const mockSuggestions = [
-      `${query} with TypeScript`,
-      `${query} dashboard`,
-      `${query} API`,
-      `${query} landing page`,
-      `${query} mobile app`,
-    ].filter(s => s.toLowerCase().includes(query.toLowerCase()));
-    
-    setSuggestions(mockSuggestions);
+    try {
+      const response = await fetch(`/api/templates/suggestions?q=${encodeURIComponent(query)}&limit=5`);
+      if (response.ok) {
+        const data = await response.json();
+        setSuggestions(data.suggestions || []);
+      } else {
+        setSuggestions([]);
+      }
+    } catch (error) {
+      console.error('Failed to fetch suggestions:', error);
+      setSuggestions([]);
+    }
   };
 
   const handleSearch = (searchValue?: string) => {

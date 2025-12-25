@@ -830,4 +830,44 @@ router.get('/api/templates/collections/:id', async (req, res) => {
   }
 });
 
+/**
+ * GET /api/templates/suggestions
+ * Get search suggestions based on partial query
+ */
+router.get('/api/templates/suggestions', async (req, res) => {
+  try {
+    const { q, limit = '5' } = req.query;
+    const limitNum = Math.min(parseInt(limit as string) || 5, 10);
+
+    if (!q || typeof q !== 'string' || q.length < 2) {
+      return res.json({ suggestions: [] });
+    }
+
+    // Get template names that match the query
+    const matchingTemplates = await db
+      .select({ name: templates.name })
+      .from(templates)
+      .where(ilike(templates.name, `%${q}%`))
+      .orderBy(desc(templates.downloads))
+      .limit(limitNum);
+
+    // Get unique category names that match
+    const matchingCategories = await db
+      .select({ name: templateCategories.name })
+      .from(templateCategories)
+      .where(ilike(templateCategories.name, `%${q}%`))
+      .limit(3);
+
+    const suggestions = [
+      ...matchingTemplates.map(t => t.name),
+      ...matchingCategories.map(c => `${c.name} templates`)
+    ].slice(0, limitNum);
+
+    res.json({ suggestions });
+  } catch (error) {
+    logger.error('Error fetching template suggestions', { error });
+    res.status(500).json({ error: 'Failed to fetch suggestions' });
+  }
+});
+
 export default router;
