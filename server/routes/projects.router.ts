@@ -275,9 +275,37 @@ export class ProjectsRouter {
           projectLogger.warn(`[Projects] Failed to initialize memory bank for project ${project.id}:`, mbError);
         }
         
+        // Async database provisioning for new project (like Replit)
+        // Don't block project creation - provision in background
+        const provisionDatabaseAsync = async () => {
+          try {
+            const { projectDatabaseService } = await import('../services/project-database-provisioning.service');
+            const db = await projectDatabaseService.provisionDatabase(project.id, {
+              plan: 'free',
+              region: 'us-east-1'
+            });
+            projectLogger.info(`[Projects] Database auto-provisioned for project ${project.id}: ${db.database}`);
+          } catch (dbError) {
+            projectLogger.warn(`[Projects] Failed to auto-provision database for project ${project.id}:`, dbError);
+          }
+        };
+        
+        // Start async provisioning - don't await
+        provisionDatabaseAsync().catch(err => {
+          projectLogger.error(`[Projects] Async database provisioning error for project ${project.id}:`, err);
+        });
+        
         const owner = await this.storage.getUser(String(userId));
         
-        res.json({ ...project, owner });
+        res.json({ 
+          ...project, 
+          owner,
+          database: {
+            provisioned: false,
+            status: 'provisioning',
+            message: 'Database is being provisioned in the background'
+          }
+        });
       } catch (error: any) {
         projectLogger.error('Error creating project:', error);
         if (error.name === 'ZodError') {
