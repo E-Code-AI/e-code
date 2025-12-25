@@ -21,6 +21,7 @@ E-Code is an AI-assisted web-based IDE designed for rapid prototyping, education
 - **IDE Tab Defaults:** Desktop: Chat/Agent tab active by default (left dock index 3). Mobile/Tablet: Deploy tab active by default. Preview panel always visible with wireframe placeholder. Files: `EditorDefaultLayout.tsx`, `use-mobile-persistence.ts`, `ReplitMobileIDE.tsx`
 - **Schema Warming:** Background data structure pre-drafting while user chats. Schema often "warmed up" by deploy time. Shows "App not ready" placeholder until schema is ready. Files: `server/services/schema-warming.service.ts`, `client/src/stores/schemaWarmingStore.ts`, `client/src/components/mobile/AppNotReadyPlaceholder.tsx`
 - **Mobile Font Sizes:** Compact but WCAG-compliant font sizes (11px minimum) in mobile inline tab navigation. Tab labels use 11px, status badges use 11px. Files: `ReplitBottomTabs.tsx`, `ReplitMobileIDE.tsx`
+- **Database Auto-Provisioning:** Databases provision asynchronously (fire-and-forget) on project creation to avoid API gateway timeouts. Neon/K8s providers take 45-60s so sync await is forbidden. Frontend polls status via `/api/database/project/:id`. Files: `server/routes/projects.router.ts`, `client/src/components/ide/DatabasePanel.tsx`, `server/services/project-database-provisioning.service.ts`
 
 ## System Architecture
 
