@@ -135,9 +135,8 @@ class ProjectDatabaseProvisioningService {
       .values(insertData)
       .returning();
 
-    try {
-      const provisionedDb = await provider.provision(projectId, options);
-      
+    // Helper function to update database with provisioned credentials
+    const updateWithCredentials = async (dbRecord: typeof newDatabase, provisionedDb: any, providerName: string) => {
       const encryptedPassword = encrypt(provisionedDb.password);
       
       const [updatedDb] = await db
@@ -156,20 +155,44 @@ class ProjectDatabaseProvisioningService {
           providerEndpointId: provisionedDb.endpointId,
           providerMetadata: provisionedDb.metadata,
           k8sClusterName: provisionedDb.metadata?.clusterName as string,
+          provider: providerName,
           updatedAt: new Date()
         })
-        .where(eq(projectDatabases.id, newDatabase.id))
+        .where(eq(projectDatabases.id, dbRecord.id))
         .returning();
+      
+      return updatedDb;
+    };
 
+    try {
+      const provisionedDb = await provider.provision(projectId, options);
+      const updatedDb = await updateWithCredentials(newDatabase, provisionedDb, provider.name);
       logger.info(`Database provisioned successfully for project ${projectId} via ${provider.name}`);
       return updatedDb;
     } catch (error) {
+      logger.warn(`Primary provider ${provider.name} failed for project ${projectId}:`, error);
+      
+      // FALLBACK: If primary provider fails (e.g., Neon), try local provider
+      if (provider.name !== 'local') {
+        logger.info(`Attempting fallback to local provider for project ${projectId}`);
+        try {
+          const { localProvider } = await import('./providers/local.provider');
+          const provisionedDb = await localProvider.provision(projectId, options);
+          const updatedDb = await updateWithCredentials(newDatabase, provisionedDb, 'local');
+          logger.info(`Database provisioned successfully for project ${projectId} via local (fallback)`);
+          return updatedDb;
+        } catch (fallbackError) {
+          logger.error(`Fallback to local provider also failed for project ${projectId}:`, fallbackError);
+        }
+      }
+      
+      // Both providers failed - mark as error
       await db
         .update(projectDatabases)
         .set({ status: 'error' })
         .where(eq(projectDatabases.id, newDatabase.id));
       
-      logger.error(`Failed to provision database for project ${projectId}:`, error);
+      logger.error(`Failed to provision database for project ${projectId} (all providers failed):`, error);
       throw error;
     }
   }
