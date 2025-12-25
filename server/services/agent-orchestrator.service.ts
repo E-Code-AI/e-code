@@ -583,6 +583,7 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
     const context = {
       sessionId: session.id,
       userId,
+      projectId: session.projectId || session.context?.projectId || 0,
       projectPath: session.context?.workingDirectory || '.',
       environment: session.context?.environment || {}
     };

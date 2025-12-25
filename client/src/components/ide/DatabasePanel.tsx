@@ -1098,13 +1098,33 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
                   </AlertDialog>
                 </div>
               </div>
-            ) : (
+            ) : databaseInfo?.status === 'provisioning' ? (
               <div className="space-y-6">
                 <div className="text-center py-8">
-                  <Database className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-50" />
-                  <h4 className="text-lg font-semibold text-foreground mb-2">No Database Provisioned</h4>
+                  <Loader2 className="h-16 w-16 text-blue-500 mx-auto mb-4 animate-spin" />
+                  <h4 className="text-lg font-semibold text-foreground mb-2">Database Provisioning</h4>
                   <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                    Provision a dedicated PostgreSQL database for your project
+                    Your PostgreSQL database is being automatically provisioned. This usually takes a few seconds.
+                  </p>
+                </div>
+                <div className="flex justify-center">
+                  <Button
+                    variant="outline"
+                    onClick={handleRefresh}
+                    data-testid="button-refresh-status"
+                  >
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Check Status
+                  </Button>
+                </div>
+              </div>
+            ) : databaseInfo?.status === 'error' ? (
+              <div className="space-y-6">
+                <div className="text-center py-8">
+                  <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
+                  <h4 className="text-lg font-semibold text-foreground mb-2">Auto-Provisioning Failed</h4>
+                  <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                    The automatic database provisioning encountered an error. You can retry manually below.
                   </p>
                 </div>
 
@@ -1152,7 +1172,27 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
                     ) : (
                       <Database className="h-4 w-4 mr-2" />
                     )}
-                    Provision Database
+                    Retry Provisioning
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                <div className="text-center py-8">
+                  <Loader2 className="h-16 w-16 text-blue-500 mx-auto mb-4 animate-spin" />
+                  <h4 className="text-lg font-semibold text-foreground mb-2">Setting Up Database</h4>
+                  <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                    Databases are automatically provisioned when projects are created. Checking status...
+                  </p>
+                </div>
+                <div className="flex justify-center">
+                  <Button
+                    variant="outline"
+                    onClick={handleRefresh}
+                    data-testid="button-refresh-status"
+                  >
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Refresh Status
                   </Button>
                 </div>
               </div>

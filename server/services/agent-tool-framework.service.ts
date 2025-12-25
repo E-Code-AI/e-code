@@ -52,6 +52,7 @@ export interface ToolDefinition {
 export interface ToolContext {
   sessionId: string;
   userId: string;
+  projectId: number;
   projectPath: string;
   environment: Record<string, string>;
 }
@@ -1035,8 +1036,9 @@ export class AgentToolFrameworkService extends EventEmitter {
               });
             });
             
-            watcher.on('error', error => {
-              logger.error(`[ToolFramework] Watcher error: ${error.message}`);
+            watcher.on('error', (error: unknown) => {
+              const errorMessage = error instanceof Error ? error.message : String(error);
+              logger.error(`[ToolFramework] Watcher error: ${errorMessage}`);
             });
             
             setTimeout(async () => {
@@ -1287,7 +1289,7 @@ export class AgentToolFrameworkService extends EventEmitter {
       execute: async (input, context) => {
         // Audit all env writes
         await db.insert(agentAuditTrail).values({
-          userId: context.userId,
+          userId: typeof context.userId === 'string' ? parseInt(context.userId) || 0 : context.userId,
           sessionId: context.sessionId,
           action: 'write_env',
           resourceType: 'environment_variable',
@@ -1295,10 +1297,10 @@ export class AgentToolFrameworkService extends EventEmitter {
           details: {
             key: input.key,
             namespace: input.namespace,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            outcome: 'success'
           },
-          severity: 'medium',
-          outcome: 'success'
+          severity: 'medium'
         });
         
         return {
@@ -1588,7 +1590,7 @@ export class AgentToolFrameworkService extends EventEmitter {
   ) {
     await db.insert(agentAuditTrail).values({
       sessionId,
-      userId,
+      userId: typeof userId === 'string' ? parseInt(userId) || 0 : userId,
       action,
       resourceType: 'tool',
       resourceId: toolName,
