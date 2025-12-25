@@ -759,34 +759,41 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
               </Button>
             </div>
             {sqlError && (
-              <div className="mt-2 p-2 bg-red-500/10 border border-red-500/30 rounded text-red-500 text-xs">
+              <div className="mt-2 p-2 bg-red-500/10 border border-red-500/30 rounded text-red-500 text-xs" data-testid="sql-error">
                 {sqlError}
               </div>
             )}
-            {sqlResults && sqlResults.rows && sqlResults.rows.length > 0 && (
-              <div className="mt-2 max-h-48 overflow-auto border border-border rounded">
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="bg-muted border-b border-border">
-                      {Object.keys(sqlResults.rows[0] || {}).map((key) => (
-                        <th key={key} className="px-2 py-1 text-left font-medium text-foreground">
-                          {key}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {sqlResults.rows.map((row, index) => (
-                      <tr key={index} className="border-b border-border">
-                        {Object.values(row).map((value, i) => (
-                          <td key={i} className="px-2 py-1 text-muted-foreground font-mono">
-                            {value !== null && value !== undefined ? String(value) : 'null'}
-                          </td>
+            {sqlResults && (
+              <div className="mt-2" data-testid="sql-results-container">
+                <div className="p-2 bg-green-500/10 border border-green-500/30 rounded text-green-600 text-xs mb-2" data-testid="sql-results-summary">
+                  Query executed successfully. {sqlResults.rowCount !== undefined ? `${sqlResults.rowCount} row(s)` : 'No rows'} affected/returned.
+                </div>
+                {sqlResults.rows && sqlResults.rows.length > 0 && (
+                  <div className="max-h-48 overflow-auto border border-border rounded" data-testid="sql-results-table">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="bg-muted border-b border-border">
+                          {Object.keys(sqlResults.rows[0] || {}).map((key) => (
+                            <th key={key} className="px-2 py-1 text-left font-medium text-foreground" data-testid={`sql-column-${key}`}>
+                              {key}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {sqlResults.rows.map((row, index) => (
+                          <tr key={index} className="border-b border-border" data-testid={`sql-row-${index}`}>
+                            {Object.values(row).map((value, i) => (
+                              <td key={i} className="px-2 py-1 text-muted-foreground font-mono" data-testid={`sql-cell-${index}-${i}`}>
+                                {value !== null && value !== undefined ? String(value) : 'null'}
+                              </td>
+                            ))}
+                          </tr>
                         ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             )}
           </div>
