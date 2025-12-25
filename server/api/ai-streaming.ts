@@ -96,7 +96,7 @@ const router = Router();
 router.use(aiUsageTracker);
 
 // Helper to set SSE headers (Fortune 500-grade reliability)
-const setupSSE = (res: any, req?: any): (() => void) => {
+const setupSSE = (res: any, req?: any): ((cleanupFn?: () => void) => void) => {
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache, no-transform');
   res.setHeader('Connection', 'keep-alive');
@@ -493,10 +493,13 @@ ${historyItems}
     let fullResponse = '';
     
     // ✅ Stream based on provider and CAPTURE token usage for billing
+    // ✅ FORTUNE 500: Pass abort signal and connection state for graceful cleanup
+    const abortState = { signal: abortController.signal, isAborted: () => isConnectionClosed };
+    
     let usage: { tokensInput: number; tokensOutput: number } | undefined;
     switch (provider) {
       case 'openai':
-        usage = await streamOpenAI(res, messages, { model, temperature, maxTokens, tools: enforcedTools, projectId });
+        usage = await streamOpenAI(res, messages, { model, temperature, maxTokens, tools: enforcedTools, projectId, abortState });
         break;
         
       case 'anthropic':
@@ -506,26 +509,27 @@ ${historyItems}
           maxTokens,
           tools: enforcedTools,
           projectId,
-          extendedThinking: capabilities.extendedThinking || false
+          extendedThinking: capabilities.extendedThinking || false,
+          abortState
         });
         break;
         
       case 'gemini':
-        usage = await streamGemini(res, messages, { model, temperature, maxTokens, tools: enforcedTools, projectId });
+        usage = await streamGemini(res, messages, { model, temperature, maxTokens, tools: enforcedTools, projectId, abortState });
         break;
         
       case 'xai':
-        usage = await streamXAI(res, messages, { model, temperature, maxTokens, tools: enforcedTools, projectId });
+        usage = await streamXAI(res, messages, { model, temperature, maxTokens, tools: enforcedTools, projectId, abortState });
         break;
         
       case 'moonshot':
-        usage = await streamMoonshot(res, messages, { model, temperature, maxTokens, tools: enforcedTools, projectId });
+        usage = await streamMoonshot(res, messages, { model, temperature, maxTokens, tools: enforcedTools, projectId, abortState });
         break;
         
       default:
         // Fallback to OpenAI with warning
         logger.warn(`Unknown provider "${provider}", falling back to OpenAI`);
-        usage = await streamOpenAI(res, messages, { model, temperature, maxTokens, tools: enforcedTools, projectId });
+        usage = await streamOpenAI(res, messages, { model, temperature, maxTokens, tools: enforcedTools, projectId, abortState });
     }
     
     // ✅ CRITICAL: Track AI usage for billing (Pay-As-You-Go)
@@ -739,6 +743,12 @@ ${historyItems}
       }
     }
     
+    // ✅ FORTUNE 500: Skip final events if client disconnected
+    if (isConnectionClosed) {
+      logger.info('[AI Stream] Client disconnected - skipping final done event');
+      return;
+    }
+    
     // Send completion event
     sendSSE(res, 'done', { 
       conversationId,
@@ -805,6 +815,12 @@ ${historyItems}
       }
     }
     
+    // ✅ FORTUNE 500: Skip error event if client already disconnected
+    if (isConnectionClosed) {
+      logger.info('[AI Stream] Client disconnected - skipping error event');
+      return;
+    }
+    
     // Send error event with retryability classification
     sendSSE(res, 'error', {
       message: error.message || 'An error occurred during streaming',
@@ -865,6 +881,12 @@ async function streamOpenAI(res: any, messages: any[], options: any) {
   let tokensOutput = 0;
   
   for await (const chunk of stream) {
+    // ✅ FORTUNE 500: Check for client disconnect before processing
+    if (options.abortState?.isAborted?.()) {
+      logger.info('[OpenAI Stream] Client disconnected - aborting stream early');
+      break;
+    }
+    
     const delta = chunk.choices[0]?.delta;
     
     // ✅ Capture token usage from final chunk
@@ -906,6 +928,12 @@ async function streamOpenAI(res: any, messages: any[], options: any) {
   // Execute tools autonomously
   const toolResults: any[] = [];
   for (const toolCall of toolCalls) {
+    // ✅ FORTUNE 500: Skip tool execution if client disconnected
+    if (options.abortState?.isAborted?.()) {
+      logger.info('[OpenAI Stream] Client disconnected - skipping tool execution');
+      break;
+    }
+    
     try {
       const functionName = toolCall.function.name;
       const functionArgs = JSON.parse(toolCall.function.arguments);
@@ -1004,6 +1032,12 @@ async function streamAnthropic(res: any, messages: any[], options: any) {
   
   // ✅ Process stream events
   for await (const event of stream) {
+    // ✅ FORTUNE 500: Check for client disconnect before processing
+    if (options.abortState?.isAborted?.()) {
+      logger.info('[Anthropic Stream] Client disconnected - aborting stream early');
+      break;
+    }
+    
     // Handle thinking blocks (extended thinking)
     if (event.type === 'content_block_start' && (event as any).content_block?.type === 'thinking') {
       currentThinkingStep = {
@@ -1073,6 +1107,12 @@ async function streamAnthropic(res: any, messages: any[], options: any) {
   // Execute tools autonomously
   const toolResults: any[] = [];
   for (const toolCall of toolCalls) {
+    // ✅ FORTUNE 500: Skip tool execution if client disconnected
+    if (options.abortState?.isAborted?.()) {
+      logger.info('[Anthropic Stream] Client disconnected - skipping tool execution');
+      break;
+    }
+    
     try {
       const functionArgs = JSON.parse(toolCall.input);
       
@@ -1104,6 +1144,12 @@ async function streamAnthropic(res: any, messages: any[], options: any) {
         error: error.message
       });
     }
+  }
+  
+  // ✅ FORTUNE 500: Skip final message if client disconnected
+  if (options.abortState?.isAborted?.()) {
+    logger.info('[Anthropic Stream] Client disconnected - skipping final message');
+    return { tokensInput: 0, tokensOutput: 0 };
   }
   
   // Send final message
@@ -1162,6 +1208,12 @@ async function streamGemini(res: any, messages: any[], options: any) {
   let tokensOutput = 0;
   
   for await (const chunk of result.stream) {
+    // ✅ FORTUNE 500: Check for client disconnect before processing
+    if (options.abortState?.isAborted?.()) {
+      logger.info('[Gemini Stream] Client disconnected - aborting stream early');
+      break;
+    }
+    
     const text = chunk.text();
     if (text) {
       fullContent += text;
@@ -1233,6 +1285,12 @@ async function streamXAI(res: any, messages: any[], options: any) {
     let tokensOutput = 0;
     
     for await (const chunk of stream) {
+      // ✅ FORTUNE 500: Check for client disconnect before processing
+      if (options.abortState?.isAborted?.()) {
+        logger.info('[xAI Stream] Client disconnected - aborting stream early');
+        break;
+      }
+      
       const delta = chunk.choices[0]?.delta;
       
       // Capture token usage from final chunk
@@ -1245,6 +1303,11 @@ async function streamXAI(res: any, messages: any[], options: any) {
         fullContent += delta.content;
         sendSSE(res, 'token', { content: delta.content });
       }
+    }
+    
+    // ✅ FORTUNE 500: Skip final message if client disconnected
+    if (options.abortState?.isAborted?.()) {
+      return { tokensInput, tokensOutput };
     }
     
     // Send final message
@@ -1304,6 +1367,12 @@ async function streamMoonshot(res: any, messages: any[], options: any) {
     let tokensOutput = 0;
     
     for await (const chunk of stream) {
+      // ✅ FORTUNE 500: Check for client disconnect before processing
+      if (options.abortState?.isAborted?.()) {
+        logger.info('[Moonshot Stream] Client disconnected - aborting stream early');
+        break;
+      }
+      
       const delta = chunk.choices[0]?.delta;
       
       // Capture token usage from final chunk
@@ -1316,6 +1385,11 @@ async function streamMoonshot(res: any, messages: any[], options: any) {
         fullContent += delta.content;
         sendSSE(res, 'token', { content: delta.content });
       }
+    }
+    
+    // ✅ FORTUNE 500: Skip final message if client disconnected
+    if (options.abortState?.isAborted?.()) {
+      return { tokensInput, tokensOutput };
     }
     
     // Send final message
