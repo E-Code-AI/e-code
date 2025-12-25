@@ -457,4 +457,332 @@ router.get('/installed', ensureAuthenticated, ensureProjectAccess, async (req, r
   }
 });
 
+/**
+ * Search packages from registry (npm/pip)
+ * GET /api/packages/:projectId/search?q=query
+ */
+router.get('/:projectId/search', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const query = req.query.q as string;
+    const language = req.query.language as string || 'nodejs';
+    
+    if (!query || query.length < 2) {
+      return res.status(400).json({ 
+        error: 'Search query is required',
+        details: 'Query must be at least 2 characters'
+      });
+    }
+    
+    let packages: any[] = [];
+    
+    if (language === 'python') {
+      // Search PyPI
+      try {
+        const response = await fetch(`https://pypi.org/pypi/${encodeURIComponent(query)}/json`);
+        if (response.ok) {
+          const data = await response.json();
+          packages = [{
+            name: data.info.name,
+            version: data.info.version,
+            description: data.info.summary || '',
+            homepage: data.info.home_page || data.info.project_url || '',
+          }];
+        }
+      } catch {
+        // PyPI API doesn't have a search endpoint, so we try exact match
+        packages = [];
+      }
+    } else {
+      // Search npm registry
+      try {
+        const response = await fetch(`https://registry.npmjs.org/-/v1/search?text=${encodeURIComponent(query)}&size=20`);
+        if (response.ok) {
+          const data = await response.json();
+          packages = data.objects?.map((obj: any) => ({
+            name: obj.package.name,
+            version: obj.package.version,
+            description: obj.package.description || '',
+            homepage: obj.package.links?.homepage || obj.package.links?.npm || '',
+            score: obj.score?.final || 0,
+          })) || [];
+        }
+      } catch (e) {
+        console.error('[Packages] npm search failed:', e);
+        packages = [];
+      }
+    }
+    
+    res.json({
+      success: true,
+      packages,
+      query,
+      language,
+    });
+  } catch (error: any) {
+    console.error('[Packages] Search failed:', error);
+    res.status(500).json({
+      error: 'Package search failed',
+      message: error.message,
+    });
+  }
+});
+
+/**
+ * Update a package to a specific version
+ * POST /api/packages/:projectId/update
+ */
+router.post('/:projectId/update', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const { package: packageName, name, version } = req.body;
+    
+    if (!isValidProjectId(projectId)) {
+      return res.status(400).json({ 
+        error: 'Invalid project ID',
+        details: 'Project ID contains invalid characters'
+      });
+    }
+    
+    const pkgToUpdate = packageName || name || '';
+    
+    if (!pkgToUpdate) {
+      return res.status(400).json({ error: 'Package name is required' });
+    }
+    
+    if (!isValidPackageName(pkgToUpdate)) {
+      return res.status(400).json({ 
+        error: 'Invalid package name',
+        details: 'Package name contains invalid characters'
+      });
+    }
+    
+    if (version && !isValidVersion(version)) {
+      return res.status(400).json({ 
+        error: 'Invalid version string',
+        details: 'Version contains invalid characters'
+      });
+    }
+    
+    const workingDir = await resolveProjectDirectory(projectId);
+    
+    if (!workingDir) {
+      return res.status(404).json({ 
+        error: 'Project not found',
+        details: `Project directory does not exist for project ${projectId}`
+      });
+    }
+    
+    let packageManager: string;
+    let updateArgs: string[];
+    
+    try {
+      await fs.access(path.join(workingDir, 'package.json'));
+      packageManager = 'npm';
+      updateArgs = ['install', version ? `${pkgToUpdate}@${version}` : `${pkgToUpdate}@latest`];
+    } catch {
+      try {
+        await fs.access(path.join(workingDir, 'requirements.txt'));
+        packageManager = 'pip';
+        updateArgs = ['install', '--upgrade', version ? `${pkgToUpdate}==${version}` : pkgToUpdate];
+      } catch {
+        packageManager = 'npm';
+        updateArgs = ['install', version ? `${pkgToUpdate}@${version}` : `${pkgToUpdate}@latest`];
+      }
+    }
+    
+    const { stdout, stderr } = await spawnPackageManager(packageManager, updateArgs, workingDir);
+    
+    res.json({
+      success: true,
+      message: `Successfully updated ${pkgToUpdate}`,
+      package: pkgToUpdate,
+      version: version || 'latest',
+      output: stdout,
+    });
+  } catch (error: any) {
+    console.error('[Packages] Update failed:', error);
+    res.status(500).json({
+      error: 'Package update failed',
+      message: error.message,
+      details: error.stderr || error.stdout,
+    });
+  }
+});
+
+/**
+ * Get installed packages (alternative route for per-project)
+ * GET /api/packages/:projectId/list
+ */
+router.get('/:projectId/list', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    
+    if (!isValidProjectId(projectId)) {
+      return res.status(400).json({ 
+        error: 'Invalid project ID',
+        details: 'Project ID contains invalid characters'
+      });
+    }
+    
+    const workingDir = await resolveProjectDirectory(projectId);
+    
+    if (!workingDir) {
+      return res.json({
+        success: true,
+        packages: [],
+        systemDependencies: [],
+        message: 'Project directory does not exist',
+      });
+    }
+    
+    let packages: any[] = [];
+    let language = 'nodejs';
+    
+    // Try to read package.json
+    try {
+      const packageJsonPath = path.join(workingDir, 'package.json');
+      const packageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf-8'));
+      
+      const dependencies = packageJson.dependencies || {};
+      const devDependencies = packageJson.devDependencies || {};
+      
+      packages = [
+        ...Object.entries(dependencies).map(([name, version]) => ({
+          name,
+          version: version as string,
+          type: 'production',
+          isDev: false,
+        })),
+        ...Object.entries(devDependencies).map(([name, version]) => ({
+          name,
+          version: version as string,
+          type: 'development',
+          isDev: true,
+        })),
+      ];
+      language = 'nodejs';
+    } catch {
+      // Try Python requirements.txt
+      try {
+        const requirementsPath = path.join(workingDir, 'requirements.txt');
+        const requirements = await fs.readFile(requirementsPath, 'utf-8');
+        
+        packages = requirements
+          .split('\n')
+          .filter(line => line.trim() && !line.startsWith('#'))
+          .map(line => {
+            const match = line.match(/^([a-zA-Z0-9_.-]+)(?:==|>=|<=|~=|!=)?(.*)$/);
+            return {
+              name: match ? match[1].trim() : line.trim(),
+              version: match && match[2] ? match[2].trim() : 'latest',
+              type: 'production',
+              isDev: false,
+            };
+          });
+        language = 'python';
+      } catch {
+        packages = [];
+      }
+    }
+    
+    // System dependencies (from .replit or nix config if available)
+    let systemDependencies: any[] = [];
+    try {
+      const replitPath = path.join(workingDir, '.replit');
+      const replitContent = await fs.readFile(replitPath, 'utf-8');
+      // Parse basic nix packages from .replit file
+      const nixMatch = replitContent.match(/nix\s*=\s*\[([^\]]*)\]/);
+      if (nixMatch) {
+        systemDependencies = nixMatch[1]
+          .split(',')
+          .map(pkg => pkg.trim().replace(/["']/g, ''))
+          .filter(pkg => pkg)
+          .map(pkg => ({ name: pkg, type: 'system' }));
+      }
+    } catch {
+      systemDependencies = [];
+    }
+    
+    return res.json({
+      success: true,
+      packages,
+      systemDependencies,
+      language,
+    });
+  } catch (error: any) {
+    console.error('[Packages] Failed to fetch packages:', error);
+    res.status(500).json({
+      error: 'Failed to fetch packages',
+      message: error.message,
+    });
+  }
+});
+
+/**
+ * Remove a specific package (DELETE variant)
+ * DELETE /api/packages/:projectId/:packageName
+ */
+router.delete('/:projectId/:packageName', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+  try {
+    const { projectId, packageName } = req.params;
+    
+    if (!isValidProjectId(projectId)) {
+      return res.status(400).json({ 
+        error: 'Invalid project ID',
+        details: 'Project ID contains invalid characters'
+      });
+    }
+    
+    if (!isValidPackageName(packageName)) {
+      return res.status(400).json({ 
+        error: 'Invalid package name',
+        details: 'Package name contains invalid characters'
+      });
+    }
+    
+    const workingDir = await resolveProjectDirectory(projectId);
+    
+    if (!workingDir) {
+      return res.status(404).json({ 
+        error: 'Project not found',
+        details: `Project directory does not exist for project ${projectId}`
+      });
+    }
+    
+    let packageManager: string;
+    let uninstallArgs: string[];
+    
+    try {
+      await fs.access(path.join(workingDir, 'package.json'));
+      packageManager = 'npm';
+      uninstallArgs = ['uninstall', packageName];
+    } catch {
+      try {
+        await fs.access(path.join(workingDir, 'requirements.txt'));
+        packageManager = 'pip';
+        uninstallArgs = ['uninstall', '-y', packageName];
+      } catch {
+        packageManager = 'npm';
+        uninstallArgs = ['uninstall', packageName];
+      }
+    }
+    
+    const { stdout, stderr } = await spawnPackageManager(packageManager, uninstallArgs, workingDir);
+    
+    res.json({
+      success: true,
+      message: `Successfully removed ${packageName}`,
+      package: packageName,
+      output: stdout,
+    });
+  } catch (error: any) {
+    console.error('[Packages] Removal failed:', error);
+    res.status(500).json({
+      error: 'Package removal failed',
+      message: error.message,
+    });
+  }
+});
+
 export default router;
