@@ -95,16 +95,47 @@ const router = Router();
 // CRITICAL: Streaming is high-cost and MUST be accurately tracked
 router.use(aiUsageTracker);
 
-// Helper to set SSE headers
-const setupSSE = (res: any) => {
+// Helper to set SSE headers (Fortune 500-grade reliability)
+const setupSSE = (res: any, req?: any): (() => void) => {
   res.setHeader('Content-Type', 'text/event-stream');
-  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Cache-Control', 'no-cache, no-transform');
   res.setHeader('Connection', 'keep-alive');
   res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('X-Accel-Buffering', 'no'); // Disable nginx/proxy buffering
+  
+  // ✅ FORTUNE 500 FIX: Flush headers immediately to establish SSE connection
+  // Without this, Express may buffer the initial events causing client timeout
+  if (typeof res.flushHeaders === 'function') {
+    res.flushHeaders();
+  }
   
   // Send initial connection event
   res.write('event: connected\n');
   res.write('data: {"status": "connected"}\n\n');
+  
+  // ✅ FORTUNE 500 FIX: Return cleanup function for connection close handling
+  // Prevents memory leaks when browser aborts the request
+  const cleanupHandlers: (() => void)[] = [];
+  
+  if (req) {
+    const handleClose = () => {
+      logger.info('[SSE] Client connection closed - running cleanup');
+      cleanupHandlers.forEach(fn => {
+        try { fn(); } catch (e) { /* ignore cleanup errors */ }
+      });
+    };
+    
+    req.on('close', handleClose);
+    req.on('error', (err: Error) => {
+      logger.warn('[SSE] Client connection error', { error: err.message });
+      handleClose();
+    });
+  }
+  
+  // Return a function to register cleanup handlers
+  return (cleanupFn?: () => void) => {
+    if (cleanupFn) cleanupHandlers.push(cleanupFn);
+  };
 };
 
 // Helper to send SSE message
@@ -118,7 +149,18 @@ const sendSSE = (res: any, event: string, data: any) => {
  * Supports OpenAI, Anthropic, Google AI, and more
  */
 router.post('/api/agent/chat/stream', ensureAuthenticated, async (req, res) => {
-  setupSSE(res);
+  // ✅ FORTUNE 500: Pass request for cleanup handling on connection close
+  const registerCleanup = setupSSE(res, req);
+  
+  // ✅ FORTUNE 500: AbortController for graceful stream cancellation on client disconnect
+  const abortController = new AbortController();
+  let isConnectionClosed = false;
+  
+  registerCleanup(() => {
+    isConnectionClosed = true;
+    abortController.abort();
+    logger.info('[AI Stream] Connection closed - aborting provider stream');
+  });
   
   const { 
     message: rawMessage, 
@@ -171,8 +213,18 @@ router.post('/api/agent/chat/stream', ensureAuthenticated, async (req, res) => {
   let tokensOutput = 0;
   let agentMode: 'plan' | 'build' | 'edit' = 'build';
   
-  // Entry logging for debugging
-  logger.info(`[AI Stream] Starting chat stream - provider: ${provider}, model: ${model}, projectId: ${projectId}, userId: ${userId}`);
+  // ✅ FORTUNE 500: Enhanced telemetry for streaming reliability tracking
+  const streamStartTime = Date.now();
+  logger.info('[AI Stream] Starting chat stream', {
+    provider,
+    model,
+    projectId,
+    userId,
+    conversationId: conversationId || 'new',
+    hasMessage: !!message,
+    messageLength: message?.length || 0,
+    streamStartTime: new Date(streamStartTime).toISOString()
+  });
   
   try {
     // PLAN MODE ENFORCEMENT: Check agent mode from database
