@@ -83,6 +83,7 @@ import { replitdbRouter } from "./replitdb.router";
 import sendgridWebhooksRouter from './webhooks-sendgrid.router';
 import logsRouter from './logs.router';
 import effortRouter from './effort.router';
+import secretsRouter from './secrets.router';
 
 export class MainRouter {
   private authRouter: AuthRouter;
@@ -339,6 +340,9 @@ export class MainRouter {
 
     // Environment Variables routes (Priorité 1 - Core IDE)
     app.use('/api/env-vars', tierRateLimiters.api, envVarsRouter);
+
+    // Secrets routes (Per-project secrets management - Replit-style)
+    app.use('/api/projects/:projectId/secrets', tierRateLimiters.api, secretsRouter);
 
     // Multi-Device Sync routes (Workspace state, preferences, devices)
     app.use('/api/sync', tierRateLimiters.api, syncRouter);
