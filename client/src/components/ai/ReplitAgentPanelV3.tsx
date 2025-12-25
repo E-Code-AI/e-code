@@ -1136,8 +1136,11 @@ export function ReplitAgentPanelV3({
     // 3. sessionStorage (bootstrap flow)
     const resolvedPrompt = initialPrompt || promptFromUrl || promptFromSession;
     
-    // ✅ FIX (Dec 7, 2025): Also trigger for bootstrap token, not just agent=true
-    const shouldAutoStart = (agentEnabled || hasBootstrapToken || autoStart) && resolvedPrompt && !isWorking;
+    // ✅ FIX (Dec 25, 2025): Also trigger auto-start when prompt exists in sessionStorage
+    // This handles the Replit-like flow: landing page → login → IDE with preserved prompt
+    // Previously this only triggered with agent=true, bootstrap token, or autoStart prop
+    const hasStoredPrompt = !!promptFromSession;
+    const shouldAutoStart = (agentEnabled || hasBootstrapToken || autoStart || hasStoredPrompt) && resolvedPrompt && !isWorking;
     
     if (shouldAutoStart) {
       // Mark as executed to prevent re-runs
