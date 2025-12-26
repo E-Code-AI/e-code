@@ -200,7 +200,9 @@ export function useIDEWorkspace(projectId: string) {
   // ========== BASE STATES ==========
   const [activeTab, setActiveTab] = useState(validatedState?.activeTab || 'preview');
   const [tabs, setTabs] = useState<Tab[]>(validatedState?.tabs || [
-    { id: 'preview', label: 'Preview', closable: false }
+    { id: 'preview', label: 'Preview', closable: false },
+    { id: 'console', label: 'Console', closable: false },
+    { id: 'shell', label: 'Shell', closable: false }
   ]);
   const [selectedFileId, setSelectedFileId] = useState<number | undefined>(validatedState?.selectedFileId);
   const [showFileExplorer, setShowFileExplorer] = useState(validatedState?.showFileExplorer ?? true);
