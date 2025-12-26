@@ -930,11 +930,11 @@ function UnifiedIDELayout({
       );
     }
 
-    // Shell/Terminal - Interactive PTY terminal
-    if (currentTab.id === 'terminal' || currentTab.id === 'shell') {
+    // Shell - Interactive PTY terminal with multi-session support
+    if (currentTab.id === 'shell') {
       return (
         <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Shell..." /></div>}>
-          <ReplitTerminalPanel projectId={projectId} />
+          <ShellPanel projectId={projectId} />
         </Suspense>
       );
     }
