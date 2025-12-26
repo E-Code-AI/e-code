@@ -1502,10 +1502,9 @@ export function ReplitAgentPanelV3({
         })();
       }, 500); // 500ms delay for smooth UX (reduced from 1000ms since we now wait for conversationId)
       
-      // Remove URL params to clean up the URL
-      const newUrl = window.location.pathname;
-      window.history.replaceState({}, '', newUrl);
-    }
+    // Remove URL params to clean up the URL
+    const newUrl = window.location.pathname;
+    window.history.replaceState({}, '', newUrl);
   }, [projectId, conversationId, autoStart, isWorking, initialPrompt, wsIsConnected, pendingAutoStart]); // ✅ FORTUNE 500 FIX: Added wsIsConnected + pendingAutoStart for WS readiness
 
   const toggleCapability = useCallback((capabilityId: string) => {
