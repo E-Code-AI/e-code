@@ -1222,7 +1222,8 @@ function UnifiedIDELayout({
           'touch-manipulation',
           className
         )}
-        data-testid="mobile-layout"
+        data-testid="unified-ide-layout"
+        data-layout-type="mobile"
       >
         {/* Replit-style Mobile Header */}
         <ReplitMobileHeader
@@ -1371,7 +1372,8 @@ function UnifiedIDELayout({
           'touch-manipulation select-none',
           className
         )}
-        data-testid="tablet-layout"
+        data-testid="unified-ide-layout"
+        data-layout-type="tablet"
         {...tabletPanHandlers}
       >
         <div
@@ -1554,7 +1556,7 @@ function UnifiedIDELayout({
   }
 
   return (
-    <div className={cn("flex h-screen bg-[var(--ecode-background)] overflow-hidden", className)} data-testid="desktop-layout">
+    <div className={cn("flex h-screen bg-[var(--ecode-background)] overflow-hidden", className)} data-testid="unified-ide-layout" data-layout-type="desktop">
       <ReplitActivityBar
         activeItem={activeActivityItem}
         onItemClick={handleActivityItemClick}

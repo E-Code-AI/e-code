@@ -8,7 +8,8 @@
 import { lazy, ComponentType } from 'react';
 
 const MAX_RETRIES = 3;
-const RETRY_DELAY = 1000;
+// Fortune 500 optimization: Fast initial retry, exponential backoff only on repeated failures
+const RETRY_DELAY = 200; // Fast first retry (was 1000ms)
 const RELOAD_KEY = 'lazy-load-reload-attempted';
 
 async function sleep(ms: number): Promise<void> {
@@ -48,6 +49,7 @@ export function instrumentedLazy<T extends ComponentType<any>>(
             errorMessage: error instanceof Error ? error.message : String(error),
             isEmptyObject: typeof error === 'object' && Object.keys(error || {}).length === 0
           });
+          // Exponential backoff: 200ms, 400ms, 600ms (faster than old 1s, 2s, 3s)
           await sleep(RETRY_DELAY * attempt);
         }
       }
