@@ -90,6 +90,7 @@ import settingsRouter from './settings.router';
 import projectShellRouter from './shell.router';
 import storageRouter from './storage.router';
 import extensionsRouter from './extensions.router';
+import workflowsRouter from './workflows.router';
 
 export class MainRouter {
   private authRouter: AuthRouter;
@@ -365,6 +366,9 @@ export class MainRouter {
 
     // Extensions routes (Per-project extensions management)
     app.use('/api/extensions', tierRateLimiters.api, extensionsRouter);
+
+    // Workflows routes (Project workflows like npm run dev, npm run build)
+    app.use(tierRateLimiters.api, workflowsRouter);
 
     // Per-project Shell routes (Create/manage shell sessions per project)
     app.use('/api/projects', tierRateLimiters.api, projectShellRouter);
