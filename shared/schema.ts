@@ -4163,17 +4163,43 @@ export type InsertUserRole = z.infer<typeof insertUserRoleSchema>;
 // REPLIT-STYLE AUTOMATIC CHECKPOINT SYSTEM
 // ============================================
 
-// Auto Checkpoints - Replit-style automatic checkpoint system
+// Auto Checkpoints - Unified Replit-style checkpoint system
 export const autoCheckpoints = pgTable('auto_checkpoints', {
   id: serial('id').primaryKey(),
   projectId: integer('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
-  type: varchar('type', { length: 50 }).notNull().default('auto'), // auto, manual, milestone
+  
+  // Core identification fields (from legacy checkpoints)
+  name: text('name'), // Checkpoint name
+  description: text('description'), // Human-readable description
+  type: varchar('type', { length: 50 }).notNull().default('auto'), // auto, manual, milestone, before_action, error_recovery
   triggerSource: varchar('trigger_source', { length: 100 }), // ai_response, feature_complete, manual
   status: varchar('status', { length: 20 }).notNull().default('pending'), // pending, creating, complete, failed
+  
+  // AI-related fields
   aiSummary: text('ai_summary'), // AI-generated description
-  includesDatabase: boolean('includes_database').notNull().default(false),
-  filesSnapshot: jsonb('files_snapshot').$type<Record<string, { hash: string; size: number }>>().default({}), // file paths and content/hashes
+  userPrompt: text('user_prompt'), // User's original request that triggered this checkpoint
+  conversationId: varchar('conversation_id'), // Link to AI conversation
   conversationSnapshot: jsonb('conversation_snapshot').$type<Array<{ role: string; content: string; timestamp?: string }>>(), // AI conversation state
+  
+  // File tracking
+  filesSnapshot: jsonb('files_snapshot').$type<Record<string, { hash: string; size: number }>>().default({}), // file paths and content/hashes
+  changedFiles: jsonb('changed_files').$type<string[]>().default([]), // List of modified file paths
+  
+  // Database state
+  includesDatabase: boolean('includes_database').notNull().default(false),
+  databaseBranchId: varchar('database_branch_id'), // Neon branch ID for dev/prod separation
+  environment: varchar('environment', { length: 20 }).default('development'), // development, production
+  
+  // Preview and testing
+  screenshotUrl: text('screenshot_url'), // App preview screenshot
+  testResults: jsonb('test_results').$type<{passed: boolean; total: number; failures: any[]}>(), // Automated test results
+  
+  // Rollback chain
+  parentCheckpointId: integer('parent_checkpoint_id'), // Self-referencing FK for rollback chain
+  rollbackCount: integer('rollback_count').default(0), // Times this checkpoint was rolled back to
+  
+  // Metadata and timestamps
+  metadata: jsonb('metadata').notNull().default({}), // General metadata storage
   retainedUntil: timestamp('retained_until'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   createdBy: integer('created_by').references(() => users.id, { onDelete: 'set null' }),
@@ -4182,6 +4208,8 @@ export const autoCheckpoints = pgTable('auto_checkpoints', {
   index('auto_checkpoints_status_idx').on(table.status),
   index('auto_checkpoints_created_at_idx').on(table.createdAt),
   index('auto_checkpoints_type_idx').on(table.type),
+  index('auto_checkpoints_project_environment_idx').on(table.projectId, table.environment), // Fast filtering by project + environment
+  index('auto_checkpoints_parent_id_idx').on(table.parentCheckpointId), // Rollback chain traversal
 ]);
 
 // Auto Checkpoint Files - Individual file storage for checkpoints
