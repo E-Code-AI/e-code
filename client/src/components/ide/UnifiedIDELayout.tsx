@@ -91,6 +91,7 @@ const ExtensionsMarketplace = lazy(() => import('@/components/ExtensionsMarketpl
 const VisualEditorPanel = lazy(() => import('@/components/ide/VisualEditorPanel').then(mod => ({ default: mod.VisualEditorPanel })));
 const ShellPanel = lazy(() => import('@/components/editor/ShellPanel').then(mod => ({ default: mod.ShellPanel })));
 const AppStoragePanel = lazy(() => import('@/components/editor/AppStoragePanel').then(mod => ({ default: mod.AppStoragePanel })));
+const ReplitConsolePanel = lazy(() => import('@/components/ide/ReplitConsolePanel').then(mod => ({ default: mod.ReplitConsolePanel })));
 
 import { ShortcutHint, ShortcutTester } from '@/components/utilities';
 import { useAutonomousBuildStore } from '@/stores/autonomousBuildStore';
@@ -920,10 +921,19 @@ function UnifiedIDELayout({
       );
     }
 
-    // Terminal/Shell/Console
-    if (currentTab.id === 'terminal' || currentTab.id === 'shell' || currentTab.id === 'console') {
+    // Console - Read-only runtime output (stdout, stderr, exit codes)
+    if (currentTab.id === 'console') {
       return (
-        <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" /></div>}>
+        <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Console..." /></div>}>
+          <ReplitConsolePanel projectId={projectId} />
+        </Suspense>
+      );
+    }
+
+    // Shell/Terminal - Interactive PTY terminal
+    if (currentTab.id === 'terminal' || currentTab.id === 'shell') {
+      return (
+        <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Shell..." /></div>}>
           <ReplitTerminalPanel projectId={projectId} />
         </Suspense>
       );
