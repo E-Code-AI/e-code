@@ -140,7 +140,7 @@ export default function IDEPage() {
   // In TanStack Query v5, isLoading can be true even when query is disabled,
   // so we check fetchStatus === 'fetching' to know if we're actually loading
   if (isAuthLoading || (canFetchProject && fetchStatus === 'fetching' && !project)) {
-    return <ECodeLoading fullScreen size="lg" text="Loading..." />;
+    return <div data-testid="ide-loading-auth"><ECodeLoading fullScreen size="lg" text="Loading..." /></div>;
   }
 
   if (!project) {
@@ -162,7 +162,7 @@ export default function IDEPage() {
     <>
       <Toaster />
       <ErrorBoundary>
-        <Suspense fallback={<ECodeLoading fullScreen size="lg" text="Loading..." />}>
+        <Suspense fallback={<div data-testid="ide-loading-layout"><ECodeLoading fullScreen size="lg" text="Loading IDE..." /></div>}>
           <UnifiedIDELayout 
             projectId={normalizedProjectId}
             bootstrapToken={bootstrapToken}
