@@ -7,7 +7,7 @@ interface GridFallbackProps {
   rows?: number;
 }
 
-function GridFallback({ height = '400px', rows = 5 }: GridFallbackProps) {
+export function GridFallback({ height = '400px', rows = 5 }: GridFallbackProps) {
   return (
     <div 
       className="flex flex-col bg-background rounded-md border overflow-hidden"
