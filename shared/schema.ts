@@ -846,26 +846,33 @@ export const staticDeployments = pgTable("static_deployments", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Team and collaboration tables (existing from previous implementation)
+// Team and collaboration tables - ALIGNED WITH PRODUCTION DATABASE
 export const teams = pgTable("teams", {
-  id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
-  name: varchar("name").notNull(),
-  slug: varchar("slug").notNull().unique(),
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  name: varchar("name", { length: 255 }).notNull(),
+  slug: varchar("slug", { length: 255 }).notNull().unique(),
   description: text("description"),
-  visibility: visibilityEnum("visibility").notNull().default('private'),
+  logo: text("logo"),
   ownerId: integer("owner_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
-  memberCount: integer("member_count").notNull().default(1),
-  projectCount: integer("project_count").notNull().default(0),
+  plan: varchar("plan", { length: 50 }).notNull().default('free'),
+  settings: jsonb("settings").default({}),
+  stripeCustomerId: varchar("stripe_customer_id", { length: 255 }),
+  stripeSubscriptionId: varchar("stripe_subscription_id", { length: 255 }),
+  memberLimit: integer("member_limit").notNull().default(5),
+  storageLimit: integer("storage_limit").notNull().default(10737418240),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
 export const teamMembers = pgTable("team_members", {
-  id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   teamId: integer("team_id").notNull().references(() => teams.id, { onDelete: 'cascade' }),
   userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
-  role: roleEnum("role").notNull().default('member'),
+  role: varchar("role", { length: 50 }).notNull().default('member'),
+  permissions: jsonb("permissions").default({}),
   joinedAt: timestamp("joined_at").notNull().defaultNow(),
+  invitedBy: integer("invited_by"),
+  isActive: boolean("is_active").notNull().default(true),
 });
 
 // Comments system for projects and files
