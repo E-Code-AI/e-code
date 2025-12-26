@@ -75,7 +75,9 @@ import { prometheusRouter } from "../monitoring/prometheus";
 import aiHealthRouter from "./ai-health";
 import generationMetricsRouter from "./generation-metrics.router";
 import memoryBankRouter from "./memory-bank.router";
-import autoCheckpointsRouter from "./auto-checkpoints.router";
+// DEPRECATED: Use unified checkpoints router instead
+// import autoCheckpointsRouter from "./auto-checkpoints.router";
+import unifiedCheckpointsRouter from "./unified-checkpoints.router";
 import mobileSessionsRouter from "./mobile-sessions.router";
 import mobileBuildsRouter from "./mobile-builds.router";
 import { expoSnackRouter } from "./expo-snack.router";
@@ -270,8 +272,10 @@ export class MainRouter {
     // Memory Bank routes (Kilocode-inspired persistent project context)
     app.use('/api/memory-bank', tierRateLimiters.api, memoryBankRouter);
 
-    // Auto Checkpoints routes (Replit-style automatic checkpoint system)
-    app.use('/api', tierRateLimiters.api, autoCheckpointsRouter);
+    // Unified Checkpoints routes (Replit-style checkpoint system)
+    // DEPRECATED: Old autoCheckpointsRouter - use unifiedCheckpointsRouter instead
+    // app.use('/api', tierRateLimiters.api, autoCheckpointsRouter);
+    app.use('/api', tierRateLimiters.api, unifiedCheckpointsRouter);
 
     // AI Health Check routes (Fortune 500 - validates all 21 models with 60s cache)
     app.use('/api/ai/health', tierRateLimiters.api, aiHealthRouter);
