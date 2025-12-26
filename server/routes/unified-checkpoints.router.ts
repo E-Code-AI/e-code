@@ -269,29 +269,30 @@ router.post(
 
       const data = validation.data;
 
-      const checkpointData = {
+      const checkpointData: Record<string, unknown> = {
         projectId,
         name: data.name || `Checkpoint ${new Date().toISOString()}`,
-        description: data.description,
         type: data.type,
         triggerSource: data.triggerSource || (data.type === 'manual' ? 'user_manual' : 'system'),
-        aiSummary: data.aiSummary,
-        userPrompt: data.userPrompt,
-        conversationId: data.conversationId,
-        conversationSnapshot: data.conversationSnapshot,
         filesSnapshot: data.filesSnapshot ?? {},
         changedFiles: data.changedFiles ?? [],
-        includesDatabase: data.includesDatabase,
-        databaseBranchId: data.databaseBranchId,
-        environment: data.environment,
-        screenshotUrl: data.screenshotUrl,
-        testResults: data.testResults,
-        parentCheckpointId: data.parentCheckpointId,
-        retainedUntil: data.retainedUntil ? new Date(data.retainedUntil) : null,
+        includesDatabase: data.includesDatabase ?? false,
+        environment: data.environment ?? 'development',
         metadata: data.metadata ?? {},
         createdBy: userId,
         status: 'pending' as const,
       };
+      
+      if (data.description) checkpointData.description = data.description;
+      if (data.aiSummary) checkpointData.aiSummary = data.aiSummary;
+      if (data.userPrompt) checkpointData.userPrompt = data.userPrompt;
+      if (data.conversationId) checkpointData.conversationId = data.conversationId;
+      if (data.conversationSnapshot) checkpointData.conversationSnapshot = data.conversationSnapshot;
+      if (data.databaseBranchId) checkpointData.databaseBranchId = data.databaseBranchId;
+      if (data.screenshotUrl) checkpointData.screenshotUrl = data.screenshotUrl;
+      if (data.testResults) checkpointData.testResults = data.testResults;
+      if (data.parentCheckpointId) checkpointData.parentCheckpointId = data.parentCheckpointId;
+      if (data.retainedUntil) checkpointData.retainedUntil = new Date(data.retainedUntil);
 
       const [checkpoint] = await db
         .insert(autoCheckpoints)
