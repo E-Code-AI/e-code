@@ -87,7 +87,7 @@ import { useSchemaWarmingStore } from '@/stores/schemaWarmingStore';
 // ✅ Memory Bank is 100% TRANSPARENT (like Replit) - no UI, works invisibly in background
 // Context is auto-injected into AI prompts via server/api/ai-streaming.ts
 import { EffortPricingDisplay } from '@/components/EffortPricingDisplay';
-import { CheckpointsPanel } from '@/components/CheckpointsPanel';
+import { UnifiedCheckpointsPanel } from '@/components/UnifiedCheckpointsPanel';
 import { TaskDecompositionDisplay, type DecomposedTask } from '@/components/agent/TaskDecompositionDisplay';
 import { SlashCommandMenu, useSlashCommand, DEFAULT_MCP_SERVERS, type MCPServer } from './SlashCommandMenu';
 import { AIModelIndicator, AIModelBadge, type DelegationInfo } from '@/components/agent/AIModelIndicator';
@@ -2338,7 +2338,7 @@ export function ReplitAgentPanelV3({
             data-testid="checkpoints-panel"
           >
             <div>
-              <CheckpointsPanel projectId={projectIdNum} />
+              <UnifiedCheckpointsPanel projectId={projectIdNum} showCreateForm={true} />
             </div>
           </div>
           

@@ -82,7 +82,7 @@ const ReplitDebuggerPanel = instrumentedLazy(() => import('@/components/editor/R
 const ReplitTestingPanel = instrumentedLazy(() => import('@/components/editor/ReplitTestingPanel').then(mod => ({ default: mod.ReplitTestingPanel })), 'ReplitTestingPanel');
 const ReplitSecretsPanel = instrumentedLazy(() => import('@/components/editor/ReplitSecretsPanel').then(mod => ({ default: mod.ReplitSecretsPanel })), 'ReplitSecretsPanel');
 const ReplitHistoryPanel = instrumentedLazy(() => import('@/components/editor/ReplitHistoryPanel').then(mod => ({ default: mod.ReplitHistoryPanel })), 'ReplitHistoryPanel');
-const CheckpointHistoryPanel = instrumentedLazy(() => import('@/components/ai/CheckpointHistoryPanel').then(mod => ({ default: mod.CheckpointHistoryPanel })), 'CheckpointHistoryPanel');
+const UnifiedCheckpointsPanel = instrumentedLazy(() => import('@/components/UnifiedCheckpointsPanel').then(mod => ({ default: mod.UnifiedCheckpointsPanel })), 'UnifiedCheckpointsPanel');
 const ReplitSettingsPanel = instrumentedLazy(() => import('@/components/editor/ReplitSettingsPanel').then(mod => ({ default: mod.ReplitSettingsPanel })), 'ReplitSettingsPanel');
 const ReplitThemesPanel = instrumentedLazy(() => import('@/components/editor/ReplitThemesPanel').then(mod => ({ default: mod.ReplitThemesPanel })), 'ReplitThemesPanel');
 const ReplitMultiplayers = instrumentedLazy(() => import('@/components/editor/ReplitMultiplayers').then(mod => ({ default: mod.ReplitMultiplayers })), 'ReplitMultiplayers');
@@ -714,7 +714,7 @@ function UnifiedIDELayout({
       case 'checkpoints':
         return (
           <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Checkpoints..." /></div>}>
-            <CheckpointHistoryPanel projectId={projectId} maxHeight="calc(100vh - 120px)" />
+            <UnifiedCheckpointsPanel projectId={projectId} maxHeight="calc(100vh - 120px)" />
           </Suspense>
         );
       case 'settings':
@@ -1018,7 +1018,7 @@ function UnifiedIDELayout({
     if (currentTab.id === 'checkpoints') {
       return (
         <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Checkpoints..." /></div>}>
-          <CheckpointHistoryPanel projectId={projectId} />
+          <UnifiedCheckpointsPanel projectId={projectId} />
         </Suspense>
       );
     }
