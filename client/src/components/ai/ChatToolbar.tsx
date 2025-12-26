@@ -10,7 +10,6 @@ import {
 import {
   Brain,
   Sparkles,
-  Globe,
   MousePointer2,
   Coins,
   Loader2,
@@ -20,10 +19,8 @@ import { cn } from '@/lib/utils';
 interface ChatToolbarProps {
   extendedThinking: boolean;
   highPowerModels: boolean;
-  webSearch: boolean;
   onToggleExtendedThinking: () => void;
   onToggleHighPowerModels: () => void;
-  onToggleWebSearch: () => void;
   onToggleElementSelector?: () => void;
   elementSelectorActive?: boolean;
   isUpdating?: boolean;
@@ -35,10 +32,8 @@ interface ChatToolbarProps {
 export function ChatToolbar({
   extendedThinking,
   highPowerModels,
-  webSearch,
   onToggleExtendedThinking,
   onToggleHighPowerModels,
-  onToggleWebSearch,
   onToggleElementSelector,
   elementSelectorActive = false,
   isUpdating = false,
@@ -107,30 +102,6 @@ export function ChatToolbar({
           </TooltipContent>
         </Tooltip>
 
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant={webSearch ? "default" : "ghost"}
-              size="sm"
-              onClick={onToggleWebSearch}
-              disabled={isUpdating}
-              className={cn(
-                "h-11 w-11 p-0 md:h-9 md:w-9 min-h-[44px] min-w-[44px] md:min-h-[36px] md:min-w-[36px] touch-manipulation",
-                webSearch && "bg-blue-500 hover:bg-blue-600 text-white"
-              )}
-              data-testid="toolbar-web-search"
-            >
-              <Globe className="h-4 w-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="top" className="max-w-[200px]">
-            <p className="font-medium">Web Search</p>
-            <p className="text-xs text-muted-foreground">
-              Search for up-to-date docs and APIs
-            </p>
-          </TooltipContent>
-        </Tooltip>
-
         {onToggleElementSelector && (
           <Tooltip>
             <TooltipTrigger asChild>
@@ -186,10 +157,8 @@ export function ChatToolbar({
 export function ChatToolbarMobile({
   extendedThinking,
   highPowerModels,
-  webSearch,
   onToggleExtendedThinking,
   onToggleHighPowerModels,
-  onToggleWebSearch,
   isUpdating = false,
   className,
 }: Omit<ChatToolbarProps, 'onToggleElementSelector' | 'elementSelectorActive' | 'credits' | 'onOpenUsage'>) {
@@ -245,27 +214,6 @@ export function ChatToolbarMobile({
           </TooltipTrigger>
           <TooltipContent side="top">
             <p className="font-medium">High Power Mode</p>
-          </TooltipContent>
-        </Tooltip>
-
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant={webSearch ? "default" : "ghost"}
-              size="sm"
-              onClick={onToggleWebSearch}
-              disabled={isUpdating}
-              className={cn(
-                "h-11 w-11 p-0 min-h-[44px] min-w-[44px] touch-manipulation",
-                webSearch && "bg-blue-500 hover:bg-blue-600 text-white"
-              )}
-              data-testid="toolbar-mobile-search"
-            >
-              <Globe className="h-5 w-5" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="top">
-            <p className="font-medium">Web Search</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
