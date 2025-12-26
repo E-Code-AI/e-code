@@ -1,43 +1,33 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { 
-  Workflow, 
-  Plus, 
+  ArrowLeft,
   Play, 
-  Pause, 
-  RotateCcw, 
-  Settings,
-  GitBranch,
-  Clock,
-  CheckCircle2,
-  XCircle,
-  AlertCircle,
-  Code2,
-  Terminal,
-  FileCode,
-  Timer,
-  Calendar,
-  Zap,
+  Plus, 
+  MoreVertical,
+  ChevronDown,
   ChevronRight,
-  Copy,
+  Search,
+  Terminal,
+  Settings,
   Trash2,
-  Edit
+  ExternalLink,
+  Zap
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { ECodeLoading } from "@/components/ECodeLoading";
+import { useLocation } from "wouter";
+import { cn } from "@/lib/utils";
 
 interface WorkflowRun {
   id: string;
@@ -65,33 +55,38 @@ interface WorkflowConfig {
   lastRun?: WorkflowRun;
   runs: number;
   successRate: number;
+  isAgentWorkflow?: boolean;
 }
 
-export default function Workflows() {
-  const { toast } = useToast();
-  const [selectedWorkflow, setSelectedWorkflow] = useState<WorkflowConfig | null>(null);
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
+interface WorkflowsProps {
+  onBack?: () => void;
+  embedded?: boolean;
+}
 
-  // Form state for new workflow
+export default function Workflows({ onBack, embedded = false }: WorkflowsProps) {
+  const { toast } = useToast();
+  const [, setLocation] = useLocation();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [agentWorkflowsOpen, setAgentWorkflowsOpen] = useState(true);
+  const [userWorkflowsOpen, setUserWorkflowsOpen] = useState(true);
+
   const [newWorkflow, setNewWorkflow] = useState({
     name: '',
     description: '',
-    trigger: 'push' as const,
+    trigger: 'manual' as const,
     schedule: '',
     branches: ['main'],
     steps: [{
-      name: 'Build and Test',
-      run: 'npm install\nnpm test\nnpm run build'
+      name: 'Run command',
+      run: 'npm run dev'
     }]
   });
 
-  // Fetch workflows
   const { data: workflows = [], isLoading } = useQuery<WorkflowConfig[]>({
     queryKey: ['/api/workflows'],
   });
 
-  // Create workflow mutation
   const createWorkflowMutation = useMutation({
     mutationFn: async (workflow: typeof newWorkflow) => {
       const res = await apiRequest('POST', '/api/workflows', workflow);
@@ -105,22 +100,20 @@ export default function Workflows() {
         title: "Workflow created",
         description: "Your workflow has been created successfully",
       });
-      // Reset form
       setNewWorkflow({
         name: '',
         description: '',
-        trigger: 'push',
+        trigger: 'manual',
         schedule: '',
         branches: ['main'],
         steps: [{
-          name: 'Build and Test',
-          run: 'npm install\nnpm test\nnpm run build'
+          name: 'Run command',
+          run: 'npm run dev'
         }]
       });
     }
   });
 
-  // Run workflow mutation
   const runWorkflowMutation = useMutation({
     mutationFn: async (workflowId: string) => {
       const res = await apiRequest('POST', `/api/workflows/${workflowId}/run`);
@@ -136,369 +129,346 @@ export default function Workflows() {
     }
   });
 
-  // Toggle workflow mutation
-  const toggleWorkflowMutation = useMutation({
-    mutationFn: async ({ id, enabled }: { id: string; enabled: boolean }) => {
-      const res = await apiRequest('PATCH', `/api/workflows/${id}`, { enabled });
-      if (!res.ok) throw new Error('Failed to update workflow');
+  const deleteWorkflowMutation = useMutation({
+    mutationFn: async (workflowId: string) => {
+      const res = await apiRequest('DELETE', `/api/workflows/${workflowId}`);
+      if (!res.ok) throw new Error('Failed to delete workflow');
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/workflows'] });
+      toast({
+        title: "Workflow deleted",
+        description: "The workflow has been removed",
+      });
     }
   });
 
-  const getStatusIcon = (status?: string) => {
-    switch (status) {
-      case 'running': return <div className="animate-spin"><RotateCcw className="h-4 w-4 text-blue-500" /></div>;
-      case 'success': return <CheckCircle2 className="h-4 w-4 text-green-500" />;
-      case 'failed': return <XCircle className="h-4 w-4 text-red-500" />;
-      case 'cancelled': return <AlertCircle className="h-4 w-4 text-yellow-500" />;
-      default: return <Clock className="h-4 w-4 text-muted-foreground" />;
+  const handleBack = () => {
+    if (onBack) {
+      onBack();
+    } else {
+      setLocation('/');
     }
   };
 
-  const getTriggerIcon = (trigger: string) => {
-    switch (trigger) {
-      case 'push': return <GitBranch className="h-4 w-4" />;
-      case 'pull_request': return <Code2 className="h-4 w-4" />;
-      case 'schedule': return <Calendar className="h-4 w-4" />;
-      case 'manual': return <Play className="h-4 w-4" />;
-      default: return <Zap className="h-4 w-4" />;
-    }
-  };
+  const filteredWorkflows = workflows.filter(workflow =>
+    workflow.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    workflow.description?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const agentWorkflows = filteredWorkflows.filter(w => w.isAgentWorkflow);
+  const userWorkflows = filteredWorkflows.filter(w => !w.isAgentWorkflow);
 
   if (isLoading) {
     return (
-      <div className="container mx-auto p-6 max-w-7xl">
-        <div className="relative h-full min-h-[calc(100vh-200px)]">
-          <div className="absolute inset-0 flex items-center justify-center">
-            <ECodeLoading size="lg" text="Loading workflows..." />
-          </div>
+      <div className={cn("flex flex-col h-full bg-background", !embedded && "min-h-screen")}>
+        <div className="flex-1 flex items-center justify-center">
+          <ECodeLoading size="lg" text="Loading workflows..." />
         </div>
       </div>
     );
   }
 
-  return (
-    <div className="container mx-auto p-6 max-w-7xl">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">Workflows</h1>
-          <p className="text-muted-foreground">
-            Automate your development process with custom workflows
-          </p>
+  const WorkflowItem = ({ workflow }: { workflow: WorkflowConfig }) => (
+    <div 
+      className="flex items-center justify-between px-4 py-3 hover:bg-muted/50 transition-colors border-b border-border/50 last:border-b-0"
+      data-testid={`workflow-item-${workflow.id}`}
+    >
+      <div className="flex items-center gap-3 flex-1 min-w-0">
+        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+          <Terminal className="w-4 h-4 text-primary" />
         </div>
-        <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              New Workflow
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium truncate">{workflow.name}</p>
+          {workflow.description && (
+            <p className="text-xs text-muted-foreground truncate">{workflow.description}</p>
+          )}
+        </div>
+      </div>
+      <div className="flex items-center gap-1">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
+          onClick={() => runWorkflowMutation.mutate(workflow.id)}
+          disabled={runWorkflowMutation.isPending}
+          data-testid={`run-workflow-${workflow.id}`}
+        >
+          <Play className="w-4 h-4" />
+        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-8 w-8" data-testid={`workflow-menu-${workflow.id}`}>
+              <MoreVertical className="w-4 h-4" />
             </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Create New Workflow</DialogTitle>
-              <DialogDescription>
-                Set up automated tasks for your project
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Workflow Name</Label>
-                <Input
-                  id="name"
-                  value={newWorkflow.name}
-                  onChange={(e) => setNewWorkflow({ ...newWorkflow, name: e.target.value })}
-                  placeholder="CI/CD Pipeline"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  value={newWorkflow.description}
-                  onChange={(e) => setNewWorkflow({ ...newWorkflow, description: e.target.value })}
-                  placeholder="Describe what this workflow does..."
-                  rows={3}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="trigger">Trigger</Label>
-                <Select
-                  value={newWorkflow.trigger}
-                  onValueChange={(value: any) => setNewWorkflow({ ...newWorkflow, trigger: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="push">On Push</SelectItem>
-                    <SelectItem value="pull_request">On Pull Request</SelectItem>
-                    <SelectItem value="schedule">On Schedule</SelectItem>
-                    <SelectItem value="manual">Manual</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              {newWorkflow.trigger === 'schedule' && (
-                <div className="space-y-2">
-                  <Label htmlFor="schedule">Cron Schedule</Label>
-                  <Input
-                    id="schedule"
-                    value={newWorkflow.schedule}
-                    onChange={(e) => setNewWorkflow({ ...newWorkflow, schedule: e.target.value })}
-                    placeholder="0 2 * * * (every day at 2 AM)"
-                  />
-                </div>
-              )}
-              <div className="space-y-2">
-                <Label>Workflow Steps</Label>
-                <Textarea
-                  value={newWorkflow.steps[0].run}
-                  onChange={(e) => setNewWorkflow({
-                    ...newWorkflow,
-                    steps: [{ ...newWorkflow.steps[0], run: e.target.value }]
-                  })}
-                  placeholder="npm install&#10;npm test&#10;npm run build"
-                  rows={6}
-                  className="font-mono text-sm"
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button 
-                onClick={() => createWorkflowMutation.mutate(newWorkflow)}
-                disabled={!newWorkflow.name || createWorkflowMutation.isPending}
-              >
-                Create Workflow
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => runWorkflowMutation.mutate(workflow.id)}>
+              <Play className="w-4 h-4 mr-2" />
+              Run
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <Settings className="w-4 h-4 mr-2" />
+              Configure
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              className="text-destructive"
+              onClick={() => deleteWorkflowMutation.mutate(workflow.id)}
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className={cn("flex flex-col h-full bg-background", !embedded && "min-h-screen")}>
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={handleBack}
+          className="h-9 w-9"
+          data-testid="back-button"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </Button>
+        <div className="flex items-center gap-2">
+          <Play className="w-5 h-5 text-primary" />
+          <span className="font-semibold text-base">Workflows</span>
+        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-9 w-9" data-testid="header-menu">
+              <MoreVertical className="w-5 h-5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => setCreateDialogOpen(true)}>
+              <Plus className="w-4 h-4 mr-2" />
+              New Workflow
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <Settings className="w-4 h-4 mr-2" />
+              Settings
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
-      {/* Workflows Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {workflows.map((workflow) => (
-          <Card key={workflow.id} className="hover:shadow-md transition-shadow">
-            <CardHeader>
-              <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    {getTriggerIcon(workflow.trigger)}
-                    {workflow.name}
-                  </CardTitle>
-                  <CardDescription className="mt-1">
-                    {workflow.description}
-                  </CardDescription>
-                </div>
-                <Switch
-                  checked={workflow.enabled}
-                  onCheckedChange={(enabled) => 
-                    toggleWorkflowMutation.mutate({ id: workflow.id, enabled })
-                  }
-                />
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Trigger Info */}
-              <div className="flex items-center gap-2 text-sm">
-                <Badge variant="secondary">
-                  {workflow.trigger === 'push' && `On push to ${workflow.branches?.join(', ')}`}
-                  {workflow.trigger === 'pull_request' && 'On pull request'}
-                  {workflow.trigger === 'schedule' && workflow.schedule}
-                  {workflow.trigger === 'manual' && 'Manual trigger'}
-                </Badge>
-              </div>
+      {/* Search & New Workflow */}
+      <div className="flex items-center gap-2 px-4 py-3 border-b">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Search for a workflow..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9 h-10"
+            data-testid="search-workflows"
+          />
+        </div>
+        <Button 
+          onClick={() => setCreateDialogOpen(true)}
+          className="bg-blue-500 hover:bg-blue-600 text-white shrink-0"
+          data-testid="new-workflow-button"
+        >
+          <Plus className="w-4 h-4 mr-1" />
+          New Workflow
+        </Button>
+      </div>
 
-              {/* Stats */}
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="text-muted-foreground">Total Runs</p>
-                  <p className="text-xl font-semibold">{workflow.runs}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Success Rate</p>
-                  <p className="text-xl font-semibold">{workflow.successRate}%</p>
-                </div>
-              </div>
+      {/* Learn More Link */}
+      <a 
+        href="https://docs.replit.com/replit-workspace/running-code/workflows"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center gap-1 px-4 py-3 text-blue-500 hover:text-blue-600 text-sm font-medium border-b"
+        data-testid="learn-more-link"
+      >
+        Learn more about configuring Workflows
+        <ExternalLink className="w-3 h-3" />
+      </a>
 
-              {/* Last Run */}
-              {workflow.lastRun && (
-                <div className="border-t pt-3">
-                  <p className="text-sm text-muted-foreground mb-2">Last Run</p>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      {getStatusIcon(workflow.lastRun.status)}
-                      <span className="text-sm capitalize">{workflow.lastRun.status}</span>
-                    </div>
-                    <span className="text-xs text-muted-foreground">
-                      {workflow.lastRun.startedAt}
-                    </span>
-                  </div>
-                  {workflow.lastRun.triggeredBy && (
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {workflow.lastRun.triggeredBy}
-                    </p>
-                  )}
-                </div>
+      {/* Scrollable Content */}
+      <div className="flex-1 overflow-y-auto">
+        {/* Agent Workflows Section */}
+        <Collapsible open={agentWorkflowsOpen} onOpenChange={setAgentWorkflowsOpen}>
+          <CollapsibleTrigger className="flex items-center justify-between w-full px-4 py-3 text-left hover:bg-muted/50 transition-colors">
+            <span className="text-sm font-medium">Agent Workflows</span>
+            {agentWorkflowsOpen ? (
+              <ChevronDown className="w-5 h-5 text-muted-foreground" />
+            ) : (
+              <ChevronRight className="w-5 h-5 text-muted-foreground" />
+            )}
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            {agentWorkflows.length > 0 ? (
+              <div className="border-t">
+                {agentWorkflows.map((workflow) => (
+                  <WorkflowItem key={workflow.id} workflow={workflow} />
+                ))}
+              </div>
+            ) : (
+              <div className="px-4 py-6 text-center text-muted-foreground text-sm">
+                <Zap className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                <p>No agent workflows yet</p>
+                <p className="text-xs mt-1">Workflows created by AI agents will appear here</p>
+              </div>
+            )}
+          </CollapsibleContent>
+        </Collapsible>
+
+        {/* User Workflows Section */}
+        {userWorkflows.length > 0 && (
+          <Collapsible open={userWorkflowsOpen} onOpenChange={setUserWorkflowsOpen}>
+            <CollapsibleTrigger className="flex items-center justify-between w-full px-4 py-3 text-left hover:bg-muted/50 transition-colors border-t">
+              <span className="text-sm font-medium">My Workflows</span>
+              {userWorkflowsOpen ? (
+                <ChevronDown className="w-5 h-5 text-muted-foreground" />
+              ) : (
+                <ChevronRight className="w-5 h-5 text-muted-foreground" />
               )}
-
-              {/* Actions */}
-              <div className="flex gap-2 pt-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => runWorkflowMutation.mutate(workflow.id)}
-                  disabled={!workflow.enabled || runWorkflowMutation.isPending}
-                  className="flex-1"
-                >
-                  <Play className="mr-1 h-3 w-3" />
-                  Run
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setSelectedWorkflow(workflow)}
-                  className="flex-1"
-                >
-                  <Settings className="mr-1 h-3 w-3" />
-                  Configure
-                </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <div className="border-t">
+                {userWorkflows.map((workflow) => (
+                  <WorkflowItem key={workflow.id} workflow={workflow} />
+                ))}
               </div>
-            </CardContent>
-          </Card>
-        ))}
+            </CollapsibleContent>
+          </Collapsible>
+        )}
 
         {/* Empty State */}
-        {workflows.length === 0 && (
-          <Card className="col-span-full">
-            <CardContent className="text-center py-12">
-              <Workflow className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No workflows yet</h3>
-              <p className="text-muted-foreground mb-4">
-                Create your first workflow to automate your development process
-              </p>
-              <Button onClick={() => setCreateDialogOpen(true)}>
-                <Plus className="mr-2 h-4 w-4" />
-                Create Workflow
-              </Button>
-            </CardContent>
-          </Card>
+        {filteredWorkflows.length === 0 && searchQuery && (
+          <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
+            <Search className="w-12 h-12 text-muted-foreground/50 mb-4" />
+            <h3 className="text-base font-medium mb-1">No workflows found</h3>
+            <p className="text-sm text-muted-foreground">
+              Try a different search term or create a new workflow
+            </p>
+          </div>
+        )}
+
+        {workflows.length === 0 && !searchQuery && (
+          <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
+            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+              <Play className="w-8 h-8 text-primary" />
+            </div>
+            <h3 className="text-base font-medium mb-1">No workflows yet</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Create your first workflow to automate tasks
+            </p>
+            <Button 
+              onClick={() => setCreateDialogOpen(true)}
+              className="bg-blue-500 hover:bg-blue-600 text-white"
+              data-testid="create-first-workflow"
+            >
+              <Plus className="w-4 h-4 mr-1" />
+              New Workflow
+            </Button>
+          </div>
         )}
       </div>
 
-      {/* Workflow Details Modal */}
-      {selectedWorkflow && (
-        <Dialog open={!!selectedWorkflow} onOpenChange={() => setSelectedWorkflow(null)}>
-          <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                {getTriggerIcon(selectedWorkflow.trigger)}
-                {selectedWorkflow.name}
-              </DialogTitle>
-              <DialogDescription>
-                {selectedWorkflow.description}
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="space-y-6 py-4">
-              {/* Configuration */}
-              <div>
-                <h3 className="font-semibold mb-3">Configuration</h3>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Trigger</span>
-                    <Badge variant="outline">{selectedWorkflow.trigger}</Badge>
-                  </div>
-                  {selectedWorkflow.branches && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Branches</span>
-                      <span>{selectedWorkflow.branches.join(', ')}</span>
-                    </div>
-                  )}
-                  {selectedWorkflow.schedule && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Schedule</span>
-                      <span className="font-mono">{selectedWorkflow.schedule}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Status</span>
-                    <Badge variant={selectedWorkflow.enabled ? "default" : "secondary"}>
-                      {selectedWorkflow.enabled ? "Enabled" : "Disabled"}
-                    </Badge>
-                  </div>
-                </div>
-              </div>
-
-              {/* Workflow Steps */}
-              <div>
-                <h3 className="font-semibold mb-3">Workflow Steps</h3>
-                <div className="space-y-3">
-                  {selectedWorkflow.steps.map((step, index) => (
-                    <div key={index} className="border rounded-lg p-4">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Terminal className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-medium">{step.name}</span>
-                      </div>
-                      <pre className="text-sm bg-muted p-3 rounded overflow-x-auto">
-                        <code>{step.run}</code>
-                      </pre>
-                      {step.env && Object.keys(step.env).length > 0 && (
-                        <div className="mt-2">
-                          <p className="text-xs text-muted-foreground mb-1">Environment Variables:</p>
-                          <div className="text-xs font-mono">
-                            {Object.entries(step.env).map(([key, value]) => (
-                              <div key={key}>
-                                {key}={value}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Recent Runs */}
-              <div>
-                <h3 className="font-semibold mb-3">Recent Runs</h3>
-                <Alert>
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    Run history will appear here once workflows are executed
-                  </AlertDescription>
-                </Alert>
-              </div>
+      {/* Create Workflow Dialog */}
+      <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+        <DialogContent className="max-w-md mx-4">
+          <DialogHeader>
+            <DialogTitle>Create New Workflow</DialogTitle>
+            <DialogDescription>
+              Set up automated tasks for your project
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Workflow Name</Label>
+              <Input
+                id="name"
+                value={newWorkflow.name}
+                onChange={(e) => setNewWorkflow({ ...newWorkflow, name: e.target.value })}
+                placeholder="Start application"
+                data-testid="workflow-name-input"
+              />
             </div>
-
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setSelectedWorkflow(null)}>
-                Close
-              </Button>
-              <Button variant="outline">
-                <Edit className="mr-2 h-4 w-4" />
-                Edit Workflow
-              </Button>
-              <Button
-                onClick={() => {
-                  runWorkflowMutation.mutate(selectedWorkflow.id);
-                  setSelectedWorkflow(null);
-                }}
+            <div className="space-y-2">
+              <Label htmlFor="description">Description (optional)</Label>
+              <Input
+                id="description"
+                value={newWorkflow.description}
+                onChange={(e) => setNewWorkflow({ ...newWorkflow, description: e.target.value })}
+                placeholder="Describe what this workflow does..."
+                data-testid="workflow-description-input"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="trigger">Trigger</Label>
+              <Select
+                value={newWorkflow.trigger}
+                onValueChange={(value: any) => setNewWorkflow({ ...newWorkflow, trigger: value })}
               >
-                <Play className="mr-2 h-4 w-4" />
-                Run Now
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
+                <SelectTrigger data-testid="workflow-trigger-select">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="manual">Manual</SelectItem>
+                  <SelectItem value="push">On Push</SelectItem>
+                  <SelectItem value="pull_request">On Pull Request</SelectItem>
+                  <SelectItem value="schedule">On Schedule</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {newWorkflow.trigger === 'schedule' && (
+              <div className="space-y-2">
+                <Label htmlFor="schedule">Cron Schedule</Label>
+                <Input
+                  id="schedule"
+                  value={newWorkflow.schedule}
+                  onChange={(e) => setNewWorkflow({ ...newWorkflow, schedule: e.target.value })}
+                  placeholder="0 2 * * *"
+                />
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label>Command</Label>
+              <Textarea
+                value={newWorkflow.steps[0].run}
+                onChange={(e) => setNewWorkflow({
+                  ...newWorkflow,
+                  steps: [{ ...newWorkflow.steps[0], run: e.target.value }]
+                })}
+                placeholder="npm run dev"
+                rows={4}
+                className="font-mono text-sm"
+                data-testid="workflow-command-input"
+              />
+            </div>
+          </div>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => setCreateDialogOpen(false)}
+              className="w-full sm:w-auto"
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={() => createWorkflowMutation.mutate(newWorkflow)}
+              disabled={!newWorkflow.name || createWorkflowMutation.isPending}
+              className="w-full sm:w-auto bg-blue-500 hover:bg-blue-600 text-white"
+              data-testid="create-workflow-submit"
+            >
+              Create Workflow
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

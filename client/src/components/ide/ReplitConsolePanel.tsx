@@ -207,11 +207,14 @@ export function ReplitConsolePanel({
 
   useEffect(() => {
     if (isRunning && executionId) {
+      // Mark the start of a new run for "Show Only Latest" feature
+      setLatestRunStartIndex(logs.length);
       connect(executionId);
     } else if (!isRunning) {
       disconnect();
       setRunningWorkflowIds(new Set());
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isRunning, executionId, connect, disconnect]);
 
   const displayedLogs = showOnlyLatest 
@@ -227,13 +230,11 @@ export function ReplitConsolePanel({
   };
 
   const clearPastRuns = () => {
-    if (showOnlyLatest) {
-      setLogs(prev => prev.slice(latestRunStartIndex));
-      setLatestRunStartIndex(0);
-    } else {
-      setLogs([]);
-      setLatestRunStartIndex(0);
-    }
+    // Keep only the current run's logs, clear all previous runs
+    setLogs(prev => prev.slice(latestRunStartIndex));
+    setLatestRunStartIndex(0);
+    // Also notify backend to clear history
+    clearWsLogs();
     toast({ title: 'Past runs cleared' });
   };
 
