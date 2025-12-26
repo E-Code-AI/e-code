@@ -332,6 +332,8 @@ export const securityLogs = pgTable("security_logs", {
   timestamp: timestamp("timestamp").notNull().defaultNow(),
 }, (table) => [index("security_logs_user_idx").on(table.userId), index("security_logs_timestamp_idx").on(table.timestamp)]);
 
+export const insertSecurityLogSchema = createInsertSchema(securityLogs).omit({ id: true, timestamp: true });
+
 // Usage Events - Idempotent usage ingestion with deduplication
 export const usageEvents = pgTable("usage_events", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
@@ -2438,15 +2440,7 @@ export const insertAuthAttemptSchema = createInsertSchema(authAttempts).omit({ i
 export const insertUserSessionSchema = createInsertSchema(userSessions).omit({ createdAt: true, lastActivity: true });
 export const insertAuditLogSchema = createInsertSchema(auditLogs).omit({ id: true, timestamp: true });
 
-// #141 FIXED: Security schema type exports
-export type SecurityEvent = typeof securityEvents.$inferSelect;
-export type InsertSecurityEvent = z.infer<typeof insertSecurityEventSchema>;
-export type AuthAttempt = typeof authAttempts.$inferSelect;
-export type InsertAuthAttempt = z.infer<typeof insertAuthAttemptSchema>;
-export type UserSession = typeof userSessions.$inferSelect;
-export type InsertUserSession = z.infer<typeof insertUserSessionSchema>;
-export type AuditLog = typeof auditLogs.$inferSelect;
-export type InsertAuditLog = z.infer<typeof insertAuditLogSchema>;
+// #141 FIXED: Security schema type exports - REMOVED (defined earlier in file)
 
 // ============================================
 // AUTONOMOUS AGENT SYSTEM TABLES
