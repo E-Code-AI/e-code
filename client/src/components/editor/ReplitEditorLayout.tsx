@@ -1,4 +1,5 @@
 import React, { useState, useEffect, Suspense } from 'react';
+import { instrumentedLazy } from '@/utils/instrumented-lazy';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
@@ -30,8 +31,8 @@ import { ReplitHistoryPanel } from './ReplitHistoryPanel';
 import { ShellPanel } from './ShellPanel';
 import { AppStoragePanel } from './AppStoragePanel';
 
-const ReplitTerminalPanel = React.lazy(() => 
-  import('./ReplitTerminalPanel').then(module => ({ default: module.ReplitTerminalPanel }))
+const ReplitTerminalPanel = instrumentedLazy(() => 
+  import('./ReplitTerminalPanel').then(module => ({ default: module.ReplitTerminalPanel })), 'ReplitTerminalPanel'
 );
 
 const TerminalFallback = () => (
@@ -44,8 +45,8 @@ const TerminalFallback = () => (
 );
 // Lazy load Splits to avoid bundling with non-editor pages
 // Using V2 with SplitsLayout + Floating Panes support
-const SplitsEditorLayout = React.lazy(() => 
-  import('../splits').then(module => ({ default: module.SplitsEditorLayoutV2 }))
+const SplitsEditorLayout = instrumentedLazy(() => 
+  import('../splits').then(module => ({ default: module.SplitsEditorLayoutV2 })), 'SplitsEditorLayout'
 );
 
 interface ReplitEditorLayoutProps {

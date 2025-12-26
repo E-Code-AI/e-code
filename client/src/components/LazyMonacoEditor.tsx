@@ -3,11 +3,12 @@
  * Migrated from Monaco to CodeMirror 6 for better bundle size.
  */
 
-import { lazy, Suspense } from 'react';
+import { Suspense } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { instrumentedLazy } from '@/utils/instrumented-lazy';
 
-const CM6Editor = lazy(() => 
-  import('@/components/editor/CM6Editor').then(mod => ({ default: mod.CM6Editor }))
+const CM6Editor = instrumentedLazy(() => 
+  import('@/components/editor/CM6Editor').then(mod => ({ default: mod.CM6Editor })), 'CM6Editor'
 );
 
 interface LazyMonacoEditorProps {

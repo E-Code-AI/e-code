@@ -4,7 +4,8 @@
  * Phase 2 - Agent Activity Dashboard
  */
 
-import { useState, useCallback, lazy, Suspense } from 'react';
+import { useState, useCallback, Suspense } from 'react';
+import { instrumentedLazy } from '@/utils/instrumented-lazy';
 import { 
   X, ChevronLeft, Activity, Table2, BarChart3, 
   FileCode, MessageSquare, Maximize2, Minimize2
@@ -30,7 +31,7 @@ import {
 } from '@/components/lazy/LazyAgGrid';
 import type { AgentSessionRow } from '@shared/types/agent-grid.types';
 
-const AgentMetricsDashboard = lazy(() => import('./AgentMetricsDashboard').then(m => ({ default: m.AgentMetricsDashboard })));
+const AgentMetricsDashboard = instrumentedLazy(() => import('./AgentMetricsDashboard').then(m => ({ default: m.AgentMetricsDashboard })), 'AgentMetricsDashboard');
 
 interface AgentHistoryModalProps {
   open: boolean;

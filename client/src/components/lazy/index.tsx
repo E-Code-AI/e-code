@@ -3,27 +3,28 @@ export * from './LazyTerminal';
 export * from './LazyAgGrid';
 export * from './LazyCharts';
 
-import { lazy, Suspense, ReactNode } from 'react';
+import { Suspense, ReactNode } from 'react';
 import { ECodeLoading } from '@/components/ECodeLoading';
+import { instrumentedLazy } from '@/utils/instrumented-lazy';
 
-export const LazyDatabaseManagement = lazy(() => 
-  import('@/components/DatabaseManagement').then(mod => ({ default: mod.DatabaseManagement }))
+export const LazyDatabaseManagement = instrumentedLazy(() => 
+  import('@/components/DatabaseManagement').then(mod => ({ default: mod.DatabaseManagement })), 'DatabaseManagement'
 );
 
-export const LazyReplitJSONEditor = lazy(() => 
-  import('@/components/ReplitJSONEditor').then(mod => ({ default: mod.ReplitJSONEditor }))
+export const LazyReplitJSONEditor = instrumentedLazy(() => 
+  import('@/components/ReplitJSONEditor').then(mod => ({ default: mod.ReplitJSONEditor })), 'ReplitJSONEditor'
 );
 
-export const LazyCodeGenerationPanel = lazy(() => 
-  import('@/components/CodeGenerationPanel').then(mod => ({ default: mod.CodeGenerationPanel }))
+export const LazyCodeGenerationPanel = instrumentedLazy(() => 
+  import('@/components/CodeGenerationPanel').then(mod => ({ default: mod.CodeGenerationPanel })), 'CodeGenerationPanel'
 );
 
-export const LazyRealTimeCollaboration = lazy(() => 
-  import('@/components/collaboration/RealTimeCollaboration').then(mod => ({ default: mod.RealTimeCollaboration }))
+export const LazyRealTimeCollaboration = instrumentedLazy(() => 
+  import('@/components/collaboration/RealTimeCollaboration').then(mod => ({ default: mod.RealTimeCollaboration })), 'RealTimeCollaboration'
 );
 
-export const LazyGitBlameDecorator = lazy(() => 
-  import('@/components/git/GitBlameDecorator').then(mod => ({ default: mod.GitBlameDecorator }))
+export const LazyGitBlameDecorator = instrumentedLazy(() => 
+  import('@/components/git/GitBlameDecorator').then(mod => ({ default: mod.GitBlameDecorator })), 'GitBlameDecorator'
 );
 
 export function createSuspenseWrapper<P extends object>(

@@ -1,11 +1,12 @@
-import { lazy, Suspense } from 'react';
+import { Suspense } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { LazyMotionDiv } from '@/lib/motion';
+import { instrumentedLazy } from '@/utils/instrumented-lazy';
 
-const TabletIDEView = lazy(() => 
+const TabletIDEView = instrumentedLazy(() => 
   import('./TabletIDEView').then(module => ({
     default: module.TabletIDEView
-  }))
+  })), 'TabletIDEView'
 );
 
 interface LazyTabletIDEViewProps {

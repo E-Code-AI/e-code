@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, useRef, Suspense } from "react";
+import { useEffect, useMemo, useState, useRef, Suspense } from "react";
 import { useParams } from "wouter";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -17,9 +17,11 @@ import { NixConfig } from "@/components/NixConfig";
 import { KeyboardShortcuts } from "@/components/KeyboardShortcuts";
 import { ShortcutHint, ShortcutTester } from "@/components/utilities";
 import { Bot, Database, Globe, Package, Loader2 } from "lucide-react";
+import { instrumentedLazy } from "@/utils/instrumented-lazy";
 
-const ReplitCodeEditor = React.lazy(() => 
-  import("@/components/editor/ReplitCodeEditor").then(module => ({ default: module.ReplitCodeEditor }))
+const ReplitCodeEditor = instrumentedLazy(() => 
+  import("@/components/editor/ReplitCodeEditor").then(module => ({ default: module.ReplitCodeEditor })),
+  'ReplitCodeEditor'
 );
 
 const EditorFallback = () => (

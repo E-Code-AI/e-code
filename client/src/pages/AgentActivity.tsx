@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense } from 'react';
+import { useState, Suspense } from 'react';
 import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,8 +20,9 @@ import {
 import { ToolCatalog } from '@/components/agent/ToolCatalog';
 import { WorkflowStatus } from '@/components/agent/WorkflowStatus';
 import type { AgentSessionRow } from '@shared/types/agent-grid.types';
+import { instrumentedLazy } from '@/utils/instrumented-lazy';
 
-const AgentMetricsDashboard = lazy(() => import('@/components/grids/AgentMetricsDashboard').then(m => ({ default: m.AgentMetricsDashboard })));
+const AgentMetricsDashboard = instrumentedLazy(() => import('@/components/grids/AgentMetricsDashboard').then(m => ({ default: m.AgentMetricsDashboard })), 'AgentMetricsDashboard');
 
 const DashboardSkeleton = () => (
   <div className="space-y-4 p-4">

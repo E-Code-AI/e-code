@@ -1,4 +1,4 @@
-import { useEffect, useState, Suspense, lazy } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { Switch, Route, useLocation, Redirect } from "wouter";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { queryClient, queryPersister } from "./lib/queryClient";
@@ -13,16 +13,17 @@ import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { ReplitLayout } from "@/components/layout/ReplitLayout";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { publicRoutes, protectedRoutes, placeholderRoutes, solarTechApps, Pages } from "./routes/config";
+import { instrumentedLazy } from "@/utils/instrumented-lazy";
 
 import { Toaster } from "@/components/ui/toaster";
 import { AppToaster } from "@/components/ui/AppToaster";
-const ScrollToTop = lazy(() => import("@/components/ScrollToTop").then(m => ({ default: m.ScrollToTop })));
-const LazyAnimatedRoutes = lazy(() => import("@/components/LazyAnimatedRoutes").then(m => ({ default: m.LazyAnimatedRoutes })));
-const ConnectionStatusBanner = lazy(() => import("./components/ConnectionStatusBanner").then(m => ({ default: m.ConnectionStatusBanner })));
-const LazyShellWidgets = lazy(() => import("@/components/LazyShellWidgets").then(m => ({ default: m.LazyShellWidgets })));
-const OfflineFallback = lazy(() => import("@/components/OfflineFallback").then(m => ({ default: m.OfflineFallback })));
-const OptimizedMotionProvider = lazy(() => import("@/lib/motion").then(m => ({ default: m.OptimizedMotionProvider })));
-const AnimationMonitor = lazy(() => import("@/lib/motion").then(m => ({ default: m.AnimationMonitor })));
+const ScrollToTop = instrumentedLazy(() => import("@/components/ScrollToTop").then(m => ({ default: m.ScrollToTop })), 'ScrollToTop');
+const LazyAnimatedRoutes = instrumentedLazy(() => import("@/components/LazyAnimatedRoutes").then(m => ({ default: m.LazyAnimatedRoutes })), 'LazyAnimatedRoutes');
+const ConnectionStatusBanner = instrumentedLazy(() => import("./components/ConnectionStatusBanner").then(m => ({ default: m.ConnectionStatusBanner })), 'ConnectionStatusBanner');
+const LazyShellWidgets = instrumentedLazy(() => import("@/components/LazyShellWidgets").then(m => ({ default: m.LazyShellWidgets })), 'LazyShellWidgets');
+const OfflineFallback = instrumentedLazy(() => import("@/components/OfflineFallback").then(m => ({ default: m.OfflineFallback })), 'OfflineFallback');
+const OptimizedMotionProvider = instrumentedLazy(() => import("@/lib/motion").then(m => ({ default: m.OptimizedMotionProvider })), 'OptimizedMotionProvider');
+const AnimationMonitor = instrumentedLazy(() => import("@/lib/motion").then(m => ({ default: m.AnimationMonitor })), 'AnimationMonitor');
 
 function PageLoader() {
   return <ECodeLoading fullScreen size="lg" text="Loading..." />;

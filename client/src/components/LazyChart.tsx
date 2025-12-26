@@ -1,11 +1,12 @@
-import { lazy, Suspense } from 'react';
+import { Suspense } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { instrumentedLazy } from '@/utils/instrumented-lazy';
 
 // Lazy load Recharts components
-const RechartsComponents = lazy(() =>
+const RechartsComponents = instrumentedLazy(() =>
   import('recharts').then(module => ({
     default: module
-  }))
+  })), 'RechartsComponents'
 );
 
 // Chart skeleton that matches chart dimensions
@@ -75,22 +76,22 @@ export function LazyChart({ type, data, height = 300, width = '100%', children, 
 }
 
 // Export individual lazy-loaded chart components
-export const LazyLineChart = lazy(() => 
-  import('recharts').then(m => ({ default: m.LineChart }))
+export const LazyLineChart = instrumentedLazy(() => 
+  import('recharts').then(m => ({ default: m.LineChart })), 'LineChart'
 );
 
-export const LazyBarChart = lazy(() => 
-  import('recharts').then(m => ({ default: m.BarChart }))
+export const LazyBarChart = instrumentedLazy(() => 
+  import('recharts').then(m => ({ default: m.BarChart })), 'BarChart'
 );
 
-export const LazyAreaChart = lazy(() => 
-  import('recharts').then(m => ({ default: m.AreaChart }))
+export const LazyAreaChart = instrumentedLazy(() => 
+  import('recharts').then(m => ({ default: m.AreaChart })), 'AreaChart'
 );
 
-export const LazyPieChart = lazy(() => 
-  import('recharts').then(m => ({ default: m.PieChart }))
+export const LazyPieChart = instrumentedLazy(() => 
+  import('recharts').then(m => ({ default: m.PieChart })), 'PieChart'
 );
 
-export const LazyResponsiveContainer = lazy(() => 
-  import('recharts').then(m => ({ default: m.ResponsiveContainer }))
+export const LazyResponsiveContainer = instrumentedLazy(() => 
+  import('recharts').then(m => ({ default: m.ResponsiveContainer })), 'ResponsiveContainer'
 );

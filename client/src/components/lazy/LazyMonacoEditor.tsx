@@ -3,8 +3,9 @@
  * Migrated from Monaco to CodeMirror 6 for better bundle size.
  */
 
-import { lazy, Suspense, ComponentType } from 'react';
+import { Suspense, ComponentType } from 'react';
 import { Loader2 } from 'lucide-react';
+import { instrumentedLazy } from '@/utils/instrumented-lazy';
 
 interface EditorFallbackProps {
   height?: string | number;
@@ -23,30 +24,30 @@ function EditorFallback({ height = '100%' }: EditorFallbackProps) {
   );
 }
 
-export const LazyExternalMonacoEditor = lazy(() => 
-  import('@/components/editor/ExternalMonacoEditor').then(mod => ({ default: mod.ExternalMonacoEditor }))
+export const LazyExternalMonacoEditor = instrumentedLazy(() => 
+  import('@/components/editor/ExternalMonacoEditor').then(mod => ({ default: mod.ExternalMonacoEditor })), 'ExternalMonacoEditor'
 );
 
-export const LazyCodeEditor = lazy(() => import('@/components/CodeEditor'));
+export const LazyCodeEditor = instrumentedLazy(() => import('@/components/CodeEditor'), 'CodeEditor');
 
-export const LazyReplitMonacoEditor = lazy(() => 
-  import('@/components/editor/ReplitMonacoEditor').then(mod => ({ default: mod.ReplitMonacoEditor }))
+export const LazyReplitMonacoEditor = instrumentedLazy(() => 
+  import('@/components/editor/ReplitMonacoEditor').then(mod => ({ default: mod.ReplitMonacoEditor })), 'ReplitMonacoEditor'
 );
 
-export const LazyReplitCodeEditor = lazy(() => 
-  import('@/components/editor/ReplitCodeEditor').then(mod => ({ default: mod.ReplitCodeEditor }))
+export const LazyReplitCodeEditor = instrumentedLazy(() => 
+  import('@/components/editor/ReplitCodeEditor').then(mod => ({ default: mod.ReplitCodeEditor })), 'ReplitCodeEditor'
 );
 
-export const LazyMultiTabEditor = lazy(() => 
-  import('@/components/editor/MultiTabEditor').then(mod => ({ default: mod.MultiTabEditor }))
+export const LazyMultiTabEditor = instrumentedLazy(() => 
+  import('@/components/editor/MultiTabEditor').then(mod => ({ default: mod.MultiTabEditor })), 'MultiTabEditor'
 );
 
-export const LazyVisualDiffEditor = lazy(() => 
-  import('@/components/git/VisualDiffEditor').then(mod => ({ default: mod.VisualDiffEditor }))
+export const LazyVisualDiffEditor = instrumentedLazy(() => 
+  import('@/components/git/VisualDiffEditor').then(mod => ({ default: mod.VisualDiffEditor })), 'VisualDiffEditor'
 );
 
-export const LazyCM6Editor = lazy(() => 
-  import('@/components/editor/CM6Editor').then(mod => ({ default: mod.CM6Editor }))
+export const LazyCM6Editor = instrumentedLazy(() => 
+  import('@/components/editor/CM6Editor').then(mod => ({ default: mod.CM6Editor })), 'CM6Editor'
 );
 
 interface LazyEditorWrapperProps {
@@ -69,9 +70,10 @@ export function LazyEditorWrapper({
 
 export function withLazyEditor<P extends Record<string, unknown>>(
   importFn: () => Promise<{ default: ComponentType<P> }>,
-  fallbackHeight?: string | number
+  fallbackHeight?: string | number,
+  moduleName?: string
 ) {
-  const LazyComponent = lazy(importFn);
+  const LazyComponent = instrumentedLazy(importFn, moduleName || 'EditorComponent');
   
   return function LazyEditorHOC(props: P) {
     return (

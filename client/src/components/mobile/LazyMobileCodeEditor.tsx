@@ -1,12 +1,13 @@
-import { lazy, Suspense } from 'react';
+import { Suspense } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { LazyMotionDiv } from '@/lib/motion';
+import { instrumentedLazy } from '@/utils/instrumented-lazy';
 
 // Lazy load Enhanced Mobile Code Editor (CodeMirror 6 based)
-const EnhancedMobileCodeEditor = lazy(() => 
+const EnhancedMobileCodeEditor = instrumentedLazy(() => 
   import('./EnhancedMobileCodeEditor').then(module => ({
     default: module.EnhancedMobileCodeEditor
-  }))
+  })), 'EnhancedMobileCodeEditor'
 );
 
 interface LazyMobileCodeEditorProps {

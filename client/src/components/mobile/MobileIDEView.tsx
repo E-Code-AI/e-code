@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, Suspense, useCallback } from 'react';
+import { instrumentedLazy } from '@/utils/instrumented-lazy';
 import { LazyMotionDiv, LazyMotionButton, LazyAnimatePresence, type PanInfo } from '@/lib/motion';
 import { useNativeMotionValue } from '@/lib/native-motion';
 import { Terminal, Monitor, MoreHorizontal, Sparkles, Loader2, CheckCircle, ExternalLink, FolderOpen, Rocket, Code, ArrowLeft } from 'lucide-react';
@@ -41,12 +42,12 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { toast } from '@/hooks/use-toast';
 
-const EnhancedMobileTerminal = React.lazy(() => 
-  import('./EnhancedMobileTerminal').then(module => ({ default: module.EnhancedMobileTerminal }))
+const EnhancedMobileTerminal = instrumentedLazy(() => 
+  import('./EnhancedMobileTerminal').then(module => ({ default: module.EnhancedMobileTerminal })), 'EnhancedMobileTerminal'
 );
 
-const AutonomousWorkspaceViewer = React.lazy(() => 
-  import('../ide/AutonomousWorkspaceViewer').then(module => ({ default: module.AutonomousWorkspaceViewer }))
+const AutonomousWorkspaceViewer = instrumentedLazy(() => 
+  import('../ide/AutonomousWorkspaceViewer').then(module => ({ default: module.AutonomousWorkspaceViewer })), 'AutonomousWorkspaceViewer'
 );
 
 const TerminalFallback = () => (

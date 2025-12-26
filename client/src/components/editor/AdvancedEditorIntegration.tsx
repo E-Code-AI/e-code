@@ -2,13 +2,14 @@ import React, { useState, Suspense } from "react";
 import { ReplitFileExplorer } from "../files/ReplitFileExplorer";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { Loader2 } from "lucide-react";
+import { instrumentedLazy } from '@/utils/instrumented-lazy';
 
-const ReplitMonacoEditor = React.lazy(() => 
-  import("./ReplitMonacoEditor").then(module => ({ default: module.ReplitMonacoEditor }))
+const ReplitMonacoEditor = instrumentedLazy(() => 
+  import("./ReplitMonacoEditor").then(module => ({ default: module.ReplitMonacoEditor })), 'ReplitMonacoEditor'
 );
 
-const ReplitTerminal = React.lazy(() => 
-  import("../terminal/ReplitTerminal").then(module => ({ default: module.ReplitTerminal }))
+const ReplitTerminal = instrumentedLazy(() => 
+  import("../terminal/ReplitTerminal").then(module => ({ default: module.ReplitTerminal })), 'ReplitTerminal'
 );
 
 const EditorFallback = () => (

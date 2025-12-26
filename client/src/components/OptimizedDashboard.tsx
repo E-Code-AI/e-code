@@ -1,4 +1,5 @@
-import React, { useState, useRef, useMemo, useCallback, memo } from 'react';
+import React, { useState, useRef, useMemo, useCallback, memo, Suspense } from 'react';
+import { instrumentedLazy } from '@/utils/instrumented-lazy';
 import { useLocation } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { Project } from '@shared/schema';
@@ -33,8 +34,8 @@ import {
 import analyticsImagePath from '@assets/stock_images/cloud_computing_tech_ffd053c9.jpg';
 
 // Lazy load heavy components
-const LazyCharts = React.lazy(() => import('./DashboardCharts'));
-const LazyActivityFeed = React.lazy(() => import('./ActivityFeed'));
+const LazyCharts = instrumentedLazy(() => import('./DashboardCharts'), 'DashboardCharts');
+const LazyActivityFeed = instrumentedLazy(() => import('./ActivityFeed'), 'ActivityFeed');
 
 // Memoized project card component
 const ProjectCard = optimizedMemo(({ 

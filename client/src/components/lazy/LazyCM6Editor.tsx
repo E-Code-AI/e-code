@@ -5,8 +5,9 @@
  * to enable code splitting and improve initial load performance.
  */
 
-import { lazy, Suspense, ComponentType } from 'react';
+import { Suspense, ComponentType } from 'react';
 import { Loader2 } from 'lucide-react';
+import { instrumentedLazy } from '@/utils/instrumented-lazy';
 
 interface EditorFallbackProps {
   height?: string | number;
@@ -24,22 +25,22 @@ function EditorFallback({ height = '100%' }: EditorFallbackProps) {
   );
 }
 
-export const LazyCM6Editor = lazy(() => 
-  import('@/components/editor/CM6Editor').then(mod => ({ default: mod.CM6Editor }))
+export const LazyCM6Editor = instrumentedLazy(() => 
+  import('@/components/editor/CM6Editor').then(mod => ({ default: mod.CM6Editor })), 'CM6Editor'
 );
 
-export const LazyCodeEditor = lazy(() => import('@/components/CodeEditor'));
+export const LazyCodeEditor = instrumentedLazy(() => import('@/components/CodeEditor'), 'CodeEditor');
 
-export const LazyReplitCodeEditor = lazy(() => 
-  import('@/components/editor/ReplitCodeEditor').then(mod => ({ default: mod.ReplitCodeEditor }))
+export const LazyReplitCodeEditor = instrumentedLazy(() => 
+  import('@/components/editor/ReplitCodeEditor').then(mod => ({ default: mod.ReplitCodeEditor })), 'ReplitCodeEditor'
 );
 
-export const LazyMultiTabEditor = lazy(() => 
-  import('@/components/editor/MultiTabEditor').then(mod => ({ default: mod.MultiTabEditor }))
+export const LazyMultiTabEditor = instrumentedLazy(() => 
+  import('@/components/editor/MultiTabEditor').then(mod => ({ default: mod.MultiTabEditor })), 'MultiTabEditor'
 );
 
-export const LazyVisualDiffEditor = lazy(() => 
-  import('@/components/git/VisualDiffEditor').then(mod => ({ default: mod.VisualDiffEditor }))
+export const LazyVisualDiffEditor = instrumentedLazy(() => 
+  import('@/components/git/VisualDiffEditor').then(mod => ({ default: mod.VisualDiffEditor })), 'VisualDiffEditor'
 );
 
 interface LazyEditorWrapperProps {
@@ -62,9 +63,10 @@ export function LazyEditorWrapper({
 
 export function withLazyEditor<P extends Record<string, unknown>>(
   importFn: () => Promise<{ default: ComponentType<P> }>,
-  fallbackHeight?: string | number
+  fallbackHeight?: string | number,
+  moduleName?: string
 ) {
-  const LazyComponent = lazy(importFn);
+  const LazyComponent = instrumentedLazy(importFn, moduleName || 'EditorComponent');
   
   return function LazyEditorHOC(props: P) {
     return (
