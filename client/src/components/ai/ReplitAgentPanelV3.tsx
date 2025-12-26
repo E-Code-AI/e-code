@@ -88,7 +88,6 @@ import { useSchemaWarmingStore } from '@/stores/schemaWarmingStore';
 // Context is auto-injected into AI prompts via server/api/ai-streaming.ts
 import { EffortPricingDisplay } from '@/components/EffortPricingDisplay';
 import { CheckpointsPanel } from '@/components/CheckpointsPanel';
-import { PreviewDeploymentButton } from './PreviewDeploymentPanel';
 import { TaskDecompositionDisplay, type DecomposedTask } from '@/components/agent/TaskDecompositionDisplay';
 import { SlashCommandMenu, useSlashCommand, DEFAULT_MCP_SERVERS, type MCPServer } from './SlashCommandMenu';
 import { AIModelIndicator, AIModelBadge, type DelegationInfo } from '@/components/agent/AIModelIndicator';
@@ -2233,9 +2232,6 @@ export function ReplitAgentPanelV3({
                 <TooltipContent>Checkpoints & Rollback</TooltipContent>
               </Tooltip>
             </TooltipProvider>
-
-            {/* Preview Deployment - Quick access to app preview */}
-            <PreviewDeploymentButton projectId={projectId} />
 
             <TooltipProvider>
               <Tooltip>
