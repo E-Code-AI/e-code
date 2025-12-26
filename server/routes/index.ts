@@ -248,8 +248,9 @@ export class MainRouter {
 
     // AI Usage Tracking (Pay-As-You-Go) - Track AI routes for billing
     // CRITICAL: Apply BEFORE mounting routers to ensure all AI endpoints are tracked
+    // NOTE: Only apply to endpoints that actually consume AI credits, not metadata endpoints
     app.use('/api/ai', aiUsageTracker);
-    app.use('/api/models', aiUsageTracker);
+    // Removed: /api/models - This is a metadata endpoint, doesn't consume AI credits
 
     // AI routes (REST endpoints for chat, completions, etc.)
     app.use('/api', tierRateLimiters.api, aiRouter);
