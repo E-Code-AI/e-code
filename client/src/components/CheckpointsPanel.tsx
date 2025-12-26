@@ -83,7 +83,7 @@ export function CheckpointsPanel({ projectId }: CheckpointsPanelProps) {
           className="w-full p-2 mb-2 border rounded h-20"
         />
         <Button
-          onClick={() => createCheckpointMutation.mutate()}
+          onClick={() => createCheckpointMutation.mutate(undefined)}
           disabled={createCheckpointMutation.isPending}
           className="w-full"
         >
