@@ -10,7 +10,7 @@ import { ensureAdmin } from '../middleware/admin-auth';
 import { ChatGPTService } from '../services/chatgpt-service';
 import { ensureAuthenticated } from '../middleware/auth';
 import { createLogger } from '../utils/logger';
-import { setSSEHeaders } from '../utils/sse-headers';
+import { validateAndSetSSEHeaders } from '../utils/sse-headers';
 
 const logger = createLogger('chatgpt-router');
 
@@ -212,8 +212,10 @@ export class ChatGPTRouter {
           return res.status(400).json({ message: 'Message is required' });
         }
 
-        // Set up Server-Sent Events with CORS security
-        setSSEHeaders(res, req);
+        // Set up Server-Sent Events with CORS security - reject invalid origins with 403
+        if (!validateAndSetSSEHeaders(res, req)) {
+          return;
+        }
         
         // Send initial connection message
         res.write('data: {"type":"connected"}\n\n');

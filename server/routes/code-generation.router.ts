@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { aiProviderManager } from '../ai/ai-provider-manager';
 import { createLogger } from '../utils/logger';
 import { tierRateLimiters } from '../middleware/tier-rate-limiter';
-import { setSSEHeaders } from '../utils/sse-headers';
+import { validateAndSetSSEHeaders } from '../utils/sse-headers';
 
 const logger = createLogger('code-generation-router');
 const router = Router();
@@ -37,8 +37,10 @@ router.post('/generate', tierRateLimiters.api, async (req, res) => {
       fileCount: files?.length || 0
     });
     
-    // Set SSE headers with CORS security
-    setSSEHeaders(res, req);
+    // Set SSE headers with CORS security - reject invalid origins with 403
+    if (!validateAndSetSSEHeaders(res, req)) {
+      return;
+    }
     
     // Build system prompt
     const systemPrompt = `You are an expert ${language || 'code'} developer. Generate clean, production-ready code based on the user's requirements.

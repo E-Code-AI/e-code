@@ -3,8 +3,10 @@
  * Fortune 500 Production-Grade - Cross-Origin Security for SSE
  * 
  * This utility provides consistent, secure SSE header handling across
- * all streaming endpoints. It enforces origin validation to prevent
+ * all streaming endpoints. It enforces STRICT origin validation to prevent
  * cross-origin data exfiltration attacks.
+ * 
+ * SECURITY: Returns null for invalid origins - callers MUST handle with 403
  * 
  * Date: December 26, 2025
  * Status: Production-ready
@@ -16,27 +18,54 @@ import { createLogger } from './logger';
 const logger = createLogger('sse-headers');
 
 /**
- * Get allowed origin for SSE response headers
- * NO WILDCARDS - Fortune 500 security requirement
+ * Get validated allowed origins list
  */
-export function getSSEAllowedOrigin(req?: Request): string {
-  const origin = req?.headers?.origin as string | undefined;
-  
-  const allowedOrigins = [
-    process.env.APP_URL || 'http://localhost:5000',
+function getAllowedOrigins(): string[] {
+  const origins = [
     'https://e-code.ai',
-    'http://localhost:5000',
-    'http://localhost:3000',
+    'https://www.e-code.ai',
   ];
   
-  if (process.env.REPLIT_DEV_DOMAIN) {
-    allowedOrigins.push(`https://${process.env.REPLIT_DEV_DOMAIN}`);
-  }
-  if (process.env.REPLIT_DEV_URL) {
-    allowedOrigins.push(process.env.REPLIT_DEV_URL);
+  if (process.env.APP_URL) {
+    origins.push(process.env.APP_URL);
   }
   
-  if (process.env.NODE_ENV === 'development' && origin) {
+  if (process.env.REPLIT_DEV_DOMAIN) {
+    origins.push(`https://${process.env.REPLIT_DEV_DOMAIN}`);
+  }
+  
+  if (process.env.REPLIT_DEV_URL) {
+    origins.push(process.env.REPLIT_DEV_URL);
+  }
+  
+  if (process.env.NODE_ENV === 'development') {
+    origins.push('http://localhost:5000', 'http://localhost:3000');
+  }
+  
+  return origins;
+}
+
+/**
+ * Validate origin against allowed list
+ * @returns origin string if valid, null if invalid/missing
+ */
+export function validateSSEOrigin(req?: Request): string | null {
+  const origin = req?.headers?.origin as string | undefined;
+  
+  if (!origin) {
+    if (process.env.NODE_ENV === 'development') {
+      return 'http://localhost:5000';
+    }
+    return null;
+  }
+  
+  const allowedOrigins = getAllowedOrigins();
+  
+  if (allowedOrigins.includes(origin)) {
+    return origin;
+  }
+  
+  if (process.env.NODE_ENV === 'development') {
     const replitPatterns = [
       /^https:\/\/[a-f0-9-]+\.replit\.dev$/,
       /^https:\/\/[a-f0-9-]+-\d+-[a-z0-9]+\.riker\.replit\.dev$/,
@@ -47,63 +76,71 @@ export function getSSEAllowedOrigin(req?: Request): string {
     }
   }
   
-  if (origin && allowedOrigins.includes(origin)) {
-    return origin;
-  }
-  
-  return allowedOrigins[0];
+  logger.warn('[SSE] Rejected invalid origin', { origin, allowedOrigins });
+  return null;
 }
 
 /**
- * Set SSE headers with Fortune 500-grade security
- * @param res Express Response object
- * @param req Express Request object (for origin validation)
+ * Get allowed origin for SSE response headers
+ * STRICT: Returns 'null' for invalid origins (CORS will block)
  */
-export function setSSEHeaders(res: Response, req?: Request): void {
-  const allowedOrigin = getSSEAllowedOrigin(req);
+export function getSSEAllowedOrigin(req?: Request): string {
+  const validatedOrigin = validateSSEOrigin(req);
+  return validatedOrigin || 'null';
+}
+
+/**
+ * Validate SSE origin and reject with 403 if invalid
+ * MUST be called at the start of every SSE endpoint
+ * @returns true if origin is valid and headers are set, false if rejected (403 sent)
+ */
+export function validateAndSetSSEHeaders(res: Response, req: Request): boolean {
+  const validatedOrigin = validateSSEOrigin(req);
+  
+  if (!validatedOrigin) {
+    logger.warn('[SSE] Rejected SSE connection from invalid origin', {
+      origin: req.headers.origin,
+      ip: req.ip,
+      path: req.path,
+    });
+    res.status(403).json({ error: 'Origin not allowed' });
+    return false;
+  }
   
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache, no-transform');
   res.setHeader('Connection', 'keep-alive');
-  res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
+  res.setHeader('Access-Control-Allow-Origin', validatedOrigin);
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('X-Accel-Buffering', 'no');
   
   if (typeof res.flushHeaders === 'function') {
     res.flushHeaders();
   }
+  
+  return true;
+}
+
+/**
+ * Set SSE headers with Fortune 500-grade security
+ * @deprecated REMOVED - Use validateAndSetSSEHeaders() for proper 403 rejection
+ * @throws Error if called - forces migration to secure validateAndSetSSEHeaders()
+ */
+export function setSSEHeaders(_res: Response, _req?: Request): void {
+  throw new Error(
+    'setSSEHeaders is deprecated and disabled. Use validateAndSetSSEHeaders() instead for Fortune 500 security compliance.'
+  );
 }
 
 /**
  * Full SSE setup with cleanup handling
- * Returns a function to register cleanup handlers for connection close
+ * @deprecated Use validateAndSetSSEHeaders() + custom cleanup instead
+ * @throws Error if called - forces migration to secure validateAndSetSSEHeaders()
  */
-export function setupSSE(res: Response, req?: Request): (cleanupFn?: () => void) => void {
-  setSSEHeaders(res, req);
-  
-  res.write('event: connected\n');
-  res.write('data: {"status": "connected"}\n\n');
-  
-  const cleanupHandlers: (() => void)[] = [];
-  
-  if (req) {
-    const handleClose = () => {
-      logger.info('[SSE] Client connection closed - running cleanup');
-      cleanupHandlers.forEach(fn => {
-        try { fn(); } catch (e) { /* ignore cleanup errors */ }
-      });
-    };
-    
-    req.on('close', handleClose);
-    req.on('error', (err: Error) => {
-      logger.warn('[SSE] Client connection error', { error: err.message });
-      handleClose();
-    });
-  }
-  
-  return (cleanupFn?: () => void) => {
-    if (cleanupFn) cleanupHandlers.push(cleanupFn);
-  };
+export function setupSSE(_res: Response, _req?: Request): (cleanupFn?: () => void) => void {
+  throw new Error(
+    'setupSSE is deprecated and disabled. Use validateAndSetSSEHeaders() instead for Fortune 500 security compliance.'
+  );
 }
 
 /**

@@ -5,7 +5,7 @@ import { createRateLimitMiddleware } from '../middleware/rate-limiter';
 import { type IStorage } from '../storage';
 import { aiPlanGenerator } from '../services/ai-plan-generator.service';
 import { createLogger } from '../utils/logger';
-import { setSSEHeaders } from '../utils/sse-headers';
+import { validateAndSetSSEHeaders } from '../utils/sse-headers';
 
 const logger = createLogger('AgentPlanRouter');
 
@@ -104,8 +104,10 @@ export class AgentPlanRouter {
           return res.status(403).json({ error: 'Access denied' });
         }
 
-        // Set SSE headers with CORS security
-        setSSEHeaders(res, req);
+        // Set SSE headers with CORS security - reject invalid origins with 403
+        if (!validateAndSetSSEHeaders(res, req)) {
+          return;
+        }
         
         // Setup heartbeat to prevent proxy drops (every 15 seconds)
         const heartbeatInterval = setInterval(() => {

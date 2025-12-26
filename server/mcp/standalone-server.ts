@@ -11,7 +11,7 @@ import { promisify } from 'util';
 import * as crypto from 'crypto';
 import { db } from '../db';
 import fetch from 'node-fetch';
-import { setSSEHeaders } from '../utils/sse-headers';
+import { validateAndSetSSEHeaders } from '../utils/sse-headers';
 
 const execAsync = promisify(exec);
 const app = express();
@@ -656,8 +656,10 @@ app.get('/events', (req, res) => {
     return res.status(401).json({ error: 'Invalid session' });
   }
 
-  // Set SSE headers with CORS security
-  setSSEHeaders(res, req);
+  // Set SSE headers with CORS security - reject invalid origins with 403
+  if (!validateAndSetSSEHeaders(res, req)) {
+    return;
+  }
 
   const heartbeat = setInterval(() => {
     try {

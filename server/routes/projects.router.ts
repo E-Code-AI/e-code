@@ -12,7 +12,7 @@ import { aiSecurityService } from '../services/ai-security.service';
 import { createRateLimitMiddleware } from '../middleware/rate-limiter';
 import { memoryBankService } from '../services/memory-bank.service';
 import { createLogger } from '../utils/logger';
-import { setSSEHeaders } from '../utils/sse-headers';
+import { validateAndSetSSEHeaders } from '../utils/sse-headers';
 
 const projectLogger = createLogger('projects-router');
 
@@ -497,8 +497,10 @@ export class ProjectsRouter {
           });
         }
 
-        // Set up Server-Sent Events (SSE) for streaming with CORS security
-        setSSEHeaders(res, req);
+        // Set up Server-Sent Events (SSE) for streaming with CORS security - reject invalid origins with 403
+        if (!validateAndSetSSEHeaders(res, req)) {
+          return;
+        }
 
         // Get AI agent instance
         const aiAgent = getProjectAIAgent(this.storage);
