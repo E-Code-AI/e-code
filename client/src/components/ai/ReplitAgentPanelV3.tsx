@@ -2743,20 +2743,16 @@ export function ReplitAgentPanelV3({
             <ChatToolbarMobile
               extendedThinking={agentToolsSettings.extendedThinking}
               highPowerModels={agentToolsSettings.highPowerModels}
-              webSearch={agentToolsSettings.webSearch}
               onToggleExtendedThinking={() => handleAgentToolsChange({ ...agentToolsSettings, extendedThinking: !agentToolsSettings.extendedThinking })}
               onToggleHighPowerModels={() => handleAgentToolsChange({ ...agentToolsSettings, highPowerModels: !agentToolsSettings.highPowerModels })}
-              onToggleWebSearch={() => handleAgentToolsChange({ ...agentToolsSettings, webSearch: !agentToolsSettings.webSearch })}
               isUpdating={false}
             />
           ) : (
             <ChatToolbar
               extendedThinking={agentToolsSettings.extendedThinking}
               highPowerModels={agentToolsSettings.highPowerModels}
-              webSearch={agentToolsSettings.webSearch}
               onToggleExtendedThinking={() => handleAgentToolsChange({ ...agentToolsSettings, extendedThinking: !agentToolsSettings.extendedThinking })}
               onToggleHighPowerModels={() => handleAgentToolsChange({ ...agentToolsSettings, highPowerModels: !agentToolsSettings.highPowerModels })}
-              onToggleWebSearch={() => handleAgentToolsChange({ ...agentToolsSettings, webSearch: !agentToolsSettings.webSearch })}
               onToggleElementSelector={() => setElementEditorActive(!elementEditorActive)}
               elementSelectorActive={elementEditorActive}
               isUpdating={false}
