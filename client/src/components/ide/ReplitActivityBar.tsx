@@ -18,7 +18,6 @@ import {
   Key,
   Database,
   LayoutGrid,
-  History,
   Zap,
   Eye,
   ChevronLeft,
@@ -37,7 +36,6 @@ export type ActivityItem =
   | 'database'
   | 'preview'
   | 'workflows'
-  | 'history'
   | 'extensions'
   | 'settings';
 
@@ -71,7 +69,6 @@ const defaultItems: ActivityBarItem[] = [
   { id: 'database', icon: Database, label: 'Database', separator: true },
   { id: 'preview', icon: Eye, label: 'Preview', shortcut: '⌘⇧P' },
   { id: 'workflows', icon: Zap, label: 'Workflows' },
-  { id: 'history', icon: History, label: 'History' },
 ];
 
 const bottomItems: ActivityBarItem[] = [
