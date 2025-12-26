@@ -21,10 +21,13 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import { AgentSessionsGrid } from './AgentSessionsGrid';
-import { AgentActionsGrid } from './AgentActionsGrid';
-import { FileOperationsGrid } from './FileOperationsGrid';
-import { ConversationHistoryGrid } from './ConversationHistoryGrid';
+import { 
+  LazyAgentSessionsGrid, 
+  LazyAgentActionsGrid, 
+  LazyFileOperationsGrid, 
+  LazyConversationHistoryGrid,
+  GridFallback 
+} from '@/components/lazy/LazyAgGrid';
 import type { AgentSessionRow } from '@shared/types/agent-grid.types';
 
 const AgentMetricsDashboard = lazy(() => import('./AgentMetricsDashboard').then(m => ({ default: m.AgentMetricsDashboard })));
@@ -165,24 +168,30 @@ export function AgentHistoryModal({
               <ScrollArea className="flex-1">
                 <div className="p-6">
                   <TabsContent value="actions" className="mt-0">
-                    <AgentActionsGrid 
-                      sessionId={selectedSession.id}
-                      height={isFullscreen ? 'calc(100vh - 200px)' : 500}
-                    />
+                    <Suspense fallback={<GridFallback height={isFullscreen ? 'calc(100vh - 200px)' : 500} />}>
+                      <LazyAgentActionsGrid 
+                        sessionId={selectedSession.id}
+                        height={isFullscreen ? 'calc(100vh - 200px)' : 500}
+                      />
+                    </Suspense>
                   </TabsContent>
                   
                   <TabsContent value="files" className="mt-0">
-                    <FileOperationsGrid 
-                      sessionId={selectedSession.id}
-                      height={isFullscreen ? 'calc(100vh - 200px)' : 500}
-                    />
+                    <Suspense fallback={<GridFallback height={isFullscreen ? 'calc(100vh - 200px)' : 500} />}>
+                      <LazyFileOperationsGrid 
+                        sessionId={selectedSession.id}
+                        height={isFullscreen ? 'calc(100vh - 200px)' : 500}
+                      />
+                    </Suspense>
                   </TabsContent>
                   
                   <TabsContent value="messages" className="mt-0">
-                    <ConversationHistoryGrid 
-                      sessionId={selectedSession.id}
-                      height={isFullscreen ? 'calc(100vh - 200px)' : 500}
-                    />
+                    <Suspense fallback={<GridFallback height={isFullscreen ? 'calc(100vh - 200px)' : 500} />}>
+                      <LazyConversationHistoryGrid 
+                        sessionId={selectedSession.id}
+                        height={isFullscreen ? 'calc(100vh - 200px)' : 500}
+                      />
+                    </Suspense>
                   </TabsContent>
                 </div>
               </ScrollArea>
@@ -214,11 +223,13 @@ export function AgentHistoryModal({
               <ScrollArea className="flex-1">
                 <div className="p-6">
                   <TabsContent value="sessions" className="mt-0">
-                    <AgentSessionsGrid 
-                      projectId={projectId}
-                      onSessionSelect={handleSessionSelect}
-                      height={isFullscreen ? 'calc(100vh - 200px)' : 550}
-                    />
+                    <Suspense fallback={<GridFallback height={isFullscreen ? 'calc(100vh - 200px)' : 550} />}>
+                      <LazyAgentSessionsGrid 
+                        projectId={projectId}
+                        onSessionSelect={handleSessionSelect}
+                        height={isFullscreen ? 'calc(100vh - 200px)' : 550}
+                      />
+                    </Suspense>
                   </TabsContent>
                   
                   <TabsContent value="metrics" className="mt-0">

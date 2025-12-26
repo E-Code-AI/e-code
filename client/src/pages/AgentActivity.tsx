@@ -10,10 +10,13 @@ import {
   MessageSquare, Zap, Clock, Bot, TrendingUp,
   Wrench, Workflow
 } from 'lucide-react';
-import { AgentSessionsGrid } from '@/components/grids/AgentSessionsGrid';
-import { AgentActionsGrid } from '@/components/grids/AgentActionsGrid';
-import { FileOperationsGrid } from '@/components/grids/FileOperationsGrid';
-import { ConversationHistoryGrid } from '@/components/grids/ConversationHistoryGrid';
+import { 
+  LazyAgentSessionsGrid, 
+  LazyAgentActionsGrid, 
+  LazyFileOperationsGrid, 
+  LazyConversationHistoryGrid,
+  GridFallback 
+} from '@/components/lazy/LazyAgGrid';
 import { ToolCatalog } from '@/components/agent/ToolCatalog';
 import { WorkflowStatus } from '@/components/agent/WorkflowStatus';
 import type { AgentSessionRow } from '@shared/types/agent-grid.types';
@@ -219,7 +222,9 @@ export default function AgentActivity() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <AgentSessionsGrid onSessionSelect={handleSessionSelect} />
+                <Suspense fallback={<GridFallback />}>
+                  <LazyAgentSessionsGrid onSessionSelect={handleSessionSelect} />
+                </Suspense>
               </CardContent>
             </Card>
           </TabsContent>
@@ -241,7 +246,9 @@ export default function AgentActivity() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <AgentActionsGrid sessionId={selectedSession?.id} />
+                <Suspense fallback={<GridFallback />}>
+                  <LazyAgentActionsGrid sessionId={selectedSession?.id} />
+                </Suspense>
               </CardContent>
             </Card>
           </TabsContent>
@@ -263,7 +270,9 @@ export default function AgentActivity() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <FileOperationsGrid sessionId={selectedSession?.id} />
+                <Suspense fallback={<GridFallback />}>
+                  <LazyFileOperationsGrid sessionId={selectedSession?.id} />
+                </Suspense>
               </CardContent>
             </Card>
           </TabsContent>
@@ -285,7 +294,9 @@ export default function AgentActivity() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <ConversationHistoryGrid sessionId={selectedSession?.id} />
+                <Suspense fallback={<GridFallback />}>
+                  <LazyConversationHistoryGrid sessionId={selectedSession?.id} />
+                </Suspense>
               </CardContent>
             </Card>
           </TabsContent>
