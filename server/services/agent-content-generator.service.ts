@@ -655,7 +655,9 @@ edition = "2021"
     if (fileName.endsWith('index.php')) {
       return `<?php
 header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
+// SECURITY: Configure allowed origins for your production domain
+// Example: header('Access-Control-Allow-Origin: https://your-domain.com');
+header('Access-Control-Allow-Origin: ' . ($_SERVER['HTTP_ORIGIN'] ?? '*'));
 
 $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 

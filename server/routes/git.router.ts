@@ -6,6 +6,7 @@ import path from 'path';
 import { ensureAuthenticated } from '../middleware/auth';
 import { csrfProtection } from '../middleware/csrf';
 import { githubOAuth } from '../services/github-oauth';
+import { setSSEHeaders } from '../utils/sse-headers';
 
 const router = Router();
 
@@ -849,9 +850,8 @@ router.get('/log/stream', ensureAuthenticated, async (req: Request, res: Respons
       args.push(branch);
     }
 
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
+    // Set SSE headers with CORS security
+    setSSEHeaders(res, req);
     
     const gitProcess = spawn('git', args, { cwd: PROJECT_ROOT });
     
@@ -904,9 +904,8 @@ router.get('/diff/stream/:filePath(*)', ensureAuthenticated, async (req: Request
       ? ['diff', '--cached', '--', filePath]
       : ['diff', '--', filePath];
 
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
+    // Set SSE headers with CORS security
+    setSSEHeaders(res, req);
     
     const gitProcess = spawn('git', args, { cwd: PROJECT_ROOT });
     

@@ -10,9 +10,12 @@ if (process.env.NODE_ENV === 'development') {
 // Must be after dotenv/config to have access to environment variables
 import { validateRequiredSecrets } from './utils/secrets-manager';
 import { validateProductionEnvironment } from './utils/production-validation';
+// ✅ Fortune 500: Zod-validated environment configuration (validates on import)
+import { envConfig } from './utils/env-config';
 
 validateRequiredSecrets();
 validateProductionEnvironment();
+// envConfig is already validated on module load
 
 // ✅ Fortune 500 Production Monitoring: Initialize Sentry error tracking EARLY
 // Must be done before any other imports to catch startup errors

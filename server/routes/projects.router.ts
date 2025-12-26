@@ -12,6 +12,7 @@ import { aiSecurityService } from '../services/ai-security.service';
 import { createRateLimitMiddleware } from '../middleware/rate-limiter';
 import { memoryBankService } from '../services/memory-bank.service';
 import { createLogger } from '../utils/logger';
+import { setSSEHeaders } from '../utils/sse-headers';
 
 const projectLogger = createLogger('projects-router');
 
@@ -496,11 +497,8 @@ export class ProjectsRouter {
           });
         }
 
-        // Set up Server-Sent Events (SSE) for streaming
-        res.setHeader('Content-Type', 'text/event-stream');
-        res.setHeader('Cache-Control', 'no-cache');
-        res.setHeader('Connection', 'keep-alive');
-        res.setHeader('X-Accel-Buffering', 'no'); // Disable nginx buffering
+        // Set up Server-Sent Events (SSE) for streaming with CORS security
+        setSSEHeaders(res, req);
 
         // Get AI agent instance
         const aiAgent = getProjectAIAgent(this.storage);

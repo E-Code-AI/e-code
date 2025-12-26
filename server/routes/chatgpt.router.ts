@@ -10,6 +10,7 @@ import { ensureAdmin } from '../middleware/admin-auth';
 import { ChatGPTService } from '../services/chatgpt-service';
 import { ensureAuthenticated } from '../middleware/auth';
 import { createLogger } from '../utils/logger';
+import { setSSEHeaders } from '../utils/sse-headers';
 
 const logger = createLogger('chatgpt-router');
 
@@ -211,11 +212,8 @@ export class ChatGPTRouter {
           return res.status(400).json({ message: 'Message is required' });
         }
 
-        // Set up Server-Sent Events
-        res.setHeader('Content-Type', 'text/event-stream');
-        res.setHeader('Cache-Control', 'no-cache');
-        res.setHeader('Connection', 'keep-alive');
-        res.setHeader('X-Accel-Buffering', 'no'); // Disable nginx buffering
+        // Set up Server-Sent Events with CORS security
+        setSSEHeaders(res, req);
         
         // Send initial connection message
         res.write('data: {"type":"connected"}\n\n');

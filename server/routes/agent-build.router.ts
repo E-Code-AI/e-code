@@ -5,6 +5,7 @@ import { createRateLimitMiddleware } from '../middleware/rate-limiter';
 import { type IStorage } from '../storage';
 import { getBuildExecutor } from '../services/build-executor.service';
 import { createLogger } from '../utils/logger';
+import { setSSEHeaders } from '../utils/sse-headers';
 
 const logger = createLogger('AgentBuildRouter');
 
@@ -173,11 +174,8 @@ export class AgentBuildRouter {
             return res.status(403).json({ error: 'Access denied' });
           }
 
-          // Set SSE headers
-          res.setHeader('Content-Type', 'text/event-stream');
-          res.setHeader('Cache-Control', 'no-cache');
-          res.setHeader('Connection', 'keep-alive');
-          res.flushHeaders();
+          // Set SSE headers with CORS security
+          setSSEHeaders(res, req);
 
           // Setup heartbeat to prevent proxy drops (every 15 seconds)
           const heartbeatInterval = setInterval(() => {
