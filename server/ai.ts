@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { aiProviderManager } from './ai/ai-provider-manager';
 import { ProjectContextService, ProjectContext } from './services/project-context.service';
 import { storage } from './storage';
-import { setSSEHeaders } from './utils/sse-headers';
+import { validateAndSetSSEHeaders } from './utils/sse-headers';
 
 type ChatMessage = {
   role: 'system' | 'user' | 'assistant';
@@ -488,8 +488,10 @@ export async function handleCodeActionsStream(req: Request, res: Response) {
       provider = aiProviderManager.getDefaultProvider();
     }
 
-    // Set SSE headers with CORS security
-    setSSEHeaders(res, req);
+    // Set SSE headers with CORS security - reject invalid origins with 403
+    if (!validateAndSetSSEHeaders(res, req)) {
+      return;
+    }
 
     // Build context block if project context is available
     const contextBlock = projectContext ? `

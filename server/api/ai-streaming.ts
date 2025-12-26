@@ -95,69 +95,57 @@ const router = Router();
 // CRITICAL: Streaming is high-cost and MUST be accurately tracked
 router.use(aiUsageTracker);
 
-// ✅ FORTUNE 500: Get allowed origins for SSE (no wildcard in production)
-function getSSEAllowedOrigin(req?: any): string {
+// Helper to validate and setup SSE headers (Fortune 500-grade reliability with 403 rejection)
+const setupSSE = (res: any, req?: any): ((cleanupFn?: () => void) => void) | null => {
   const origin = req?.headers?.origin;
-  
-  // Allowed origins for SSE
   const allowedOrigins = [
-    process.env.APP_URL || 'http://localhost:5000',
     'https://e-code.ai',
-    'http://localhost:5000',
-    'http://localhost:3000',
-  ];
+    'https://www.e-code.ai',
+    process.env.APP_URL,
+    process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : null,
+    process.env.REPLIT_DEV_URL,
+    ...(process.env.NODE_ENV === 'development' ? ['http://localhost:5000', 'http://localhost:3000'] : []),
+  ].filter(Boolean);
   
-  // Add Replit domains dynamically
-  if (process.env.REPLIT_DEV_DOMAIN) {
-    allowedOrigins.push(`https://${process.env.REPLIT_DEV_DOMAIN}`);
-  }
-  if (process.env.REPLIT_DEV_URL) {
-    allowedOrigins.push(process.env.REPLIT_DEV_URL);
-  }
+  let validatedOrigin: string | null = null;
   
-  // In development, allow Replit patterns
-  if (process.env.NODE_ENV === 'development' && origin) {
+  if (!origin) {
+    if (process.env.NODE_ENV === 'development') {
+      validatedOrigin = 'http://localhost:5000';
+    }
+  } else if (allowedOrigins.includes(origin)) {
+    validatedOrigin = origin;
+  } else if (process.env.NODE_ENV === 'development') {
     const replitPatterns = [
       /^https:\/\/[a-f0-9-]+\.replit\.dev$/,
       /^https:\/\/[a-f0-9-]+-\d+-[a-z0-9]+\.riker\.replit\.dev$/,
       /^https:\/\/[a-z0-9-]+\.repl\.co$/,
     ];
     if (replitPatterns.some(pattern => pattern.test(origin))) {
-      return origin;
+      validatedOrigin = origin;
     }
   }
   
-  // Return matching origin or default
-  if (origin && allowedOrigins.includes(origin)) {
-    return origin;
+  if (!validatedOrigin) {
+    logger.warn('[SSE] Rejected SSE connection from invalid origin', { origin, ip: req?.ip, path: req?.path });
+    res.status(403).json({ error: 'Origin not allowed' });
+    return null;
   }
-  
-  return allowedOrigins[0]; // Default to primary
-}
-
-// Helper to set SSE headers (Fortune 500-grade reliability)
-const setupSSE = (res: any, req?: any): ((cleanupFn?: () => void) => void) => {
-  const allowedOrigin = getSSEAllowedOrigin(req);
   
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache, no-transform');
   res.setHeader('Connection', 'keep-alive');
-  res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
+  res.setHeader('Access-Control-Allow-Origin', validatedOrigin);
   res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('X-Accel-Buffering', 'no'); // Disable nginx/proxy buffering
+  res.setHeader('X-Accel-Buffering', 'no');
   
-  // ✅ FORTUNE 500 FIX: Flush headers immediately to establish SSE connection
-  // Without this, Express may buffer the initial events causing client timeout
   if (typeof res.flushHeaders === 'function') {
     res.flushHeaders();
   }
   
-  // Send initial connection event
   res.write('event: connected\n');
   res.write('data: {"status": "connected"}\n\n');
   
-  // ✅ FORTUNE 500 FIX: Return cleanup function for connection close handling
-  // Prevents memory leaks when browser aborts the request
   const cleanupHandlers: (() => void)[] = [];
   
   if (req) {
@@ -175,7 +163,6 @@ const setupSSE = (res: any, req?: any): ((cleanupFn?: () => void) => void) => {
     });
   }
   
-  // Return a function to register cleanup handlers
   return (cleanupFn?: () => void) => {
     if (cleanupFn) cleanupHandlers.push(cleanupFn);
   };
@@ -192,8 +179,11 @@ const sendSSE = (res: any, event: string, data: any) => {
  * Supports OpenAI, Anthropic, Google AI, and more
  */
 router.post('/api/agent/chat/stream', ensureAuthenticated, async (req, res) => {
-  // ✅ FORTUNE 500: Pass request for cleanup handling on connection close
+  // ✅ FORTUNE 500: Validate origin and setup SSE with 403 rejection for invalid origins
   const registerCleanup = setupSSE(res, req);
+  if (!registerCleanup) {
+    return; // 403 already sent by setupSSE
+  }
   
   // ✅ FORTUNE 500: AbortController for graceful stream cancellation on client disconnect
   const abortController = new AbortController();

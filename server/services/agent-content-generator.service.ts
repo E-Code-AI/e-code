@@ -655,9 +655,20 @@ edition = "2021"
     if (fileName.endsWith('index.php')) {
       return `<?php
 header('Content-Type: application/json');
-// SECURITY: Configure allowed origins for your production domain
-// Example: header('Access-Control-Allow-Origin: https://your-domain.com');
-header('Access-Control-Allow-Origin: ' . ($_SERVER['HTTP_ORIGIN'] ?? '*'));
+
+// CORS Security: Define your allowed origins here
+$allowedOrigins = [
+    'https://your-production-domain.com',
+    // Add more allowed origins as needed
+];
+
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+if (in_array($origin, $allowedOrigins, true)) {
+    header('Access-Control-Allow-Origin: ' . $origin);
+} elseif (getenv('APP_ENV') === 'development') {
+    header('Access-Control-Allow-Origin: http://localhost:3000');
+}
+// Note: No header set for unrecognized origins (CORS blocks request)
 
 $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
