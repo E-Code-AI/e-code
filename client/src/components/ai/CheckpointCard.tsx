@@ -1,18 +1,43 @@
-import { Badge } from '@/components/ui/badge';
+import { useState } from 'react';
+import { Check, RotateCcw, Code2, Eye, ChevronDown, ChevronUp, Clock, FileCode, GitCommit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { History, RotateCcw } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
+import { Card } from '@/components/ui/card';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
+import { formatDistanceToNow } from 'date-fns';
 import { LazyMotionDiv } from '@/lib/motion';
+
+interface CheckpointStats {
+  timeWorked?: string;
+  workDone?: number;
+  itemsRead?: number;
+  codeChangedAdd?: number;
+  codeChangedRemove?: number;
+  agentUsage?: number;
+}
 
 interface CheckpointCardProps {
   checkpointId: number;
   aiSummary?: string;
   filesCount?: number;
   createdAt: string;
+  type?: 'auto' | 'manual' | 'milestone' | 'before_action' | 'error_recovery';
+  status?: 'complete' | 'pending' | 'creating' | 'failed';
+  commitId?: string;
+  stats?: CheckpointStats;
   onRestore?: (id: number) => void;
+  onViewChanges?: (id: number) => void;
+  onPreview?: (id: number) => void;
   isRestoring?: boolean;
-  type?: 'auto' | 'manual' | 'milestone';
 }
 
 export function CheckpointCard({ 
@@ -20,53 +45,263 @@ export function CheckpointCard({
   aiSummary, 
   filesCount, 
   createdAt, 
+  type = 'auto',
+  status = 'complete',
+  commitId,
+  stats,
   onRestore, 
-  isRestoring,
-  type = 'auto'
+  onViewChanges,
+  onPreview,
+  isRestoring 
 }: CheckpointCardProps) {
-  const typeLabel = type === 'milestone' ? 'Milestone' : type === 'manual' ? 'Manual' : 'Auto-saved';
-  const typeVariant = type === 'milestone' ? 'default' : 'outline';
+  const [showStats, setShowStats] = useState(false);
+  const [showRollbackDialog, setShowRollbackDialog] = useState(false);
+
+  const timeAgo = formatDistanceToNow(new Date(createdAt), { addSuffix: true });
+  
+  const statusIcon = {
+    complete: <Check className="h-4 w-4 text-green-600" />,
+    pending: <Clock className="h-4 w-4 text-yellow-600 animate-pulse" />,
+    creating: <Clock className="h-4 w-4 text-blue-600 animate-spin" />,
+    failed: <Clock className="h-4 w-4 text-red-600" />,
+  };
+
+  const handleRollback = () => {
+    setShowRollbackDialog(false);
+    onRestore?.(checkpointId);
+  };
+
+  const description = aiSummary || `Checkpoint #${checkpointId}`;
 
   return (
-    <LazyMotionDiv 
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg border border-border/50 hover:border-primary/30 transition-colors" 
-      data-testid={`checkpoint-card-${checkpointId}`}
-    >
-      <div className="p-2 bg-primary/10 rounded-full shrink-0">
-        <History className="h-4 w-4 text-primary" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-sm font-medium">Checkpoint #{checkpointId}</span>
-          <Badge variant={typeVariant} className="text-xs">{typeLabel}</Badge>
-        </div>
-        {aiSummary && (
-          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{aiSummary}</p>
-        )}
-        <div className="flex items-center gap-3 mt-2">
-          <span className="text-xs text-muted-foreground">
-            {formatDistanceToNow(new Date(createdAt), { addSuffix: true })}
-          </span>
-          {filesCount !== undefined && filesCount > 0 && (
-            <span className="text-xs text-muted-foreground">{filesCount} files</span>
+    <>
+      <LazyMotionDiv 
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
+        <Card 
+          className={cn(
+            "bg-muted/50 border-border/50 p-4 rounded-xl"
           )}
-        </div>
-      </div>
-      {onRestore && (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => onRestore(checkpointId)}
-          disabled={isRestoring}
-          className="shrink-0"
-          data-testid={`restore-checkpoint-${checkpointId}`}
+          data-testid={`checkpoint-card-${checkpointId}`}
         >
-          <RotateCcw className={cn("h-4 w-4 mr-1", isRestoring && "animate-spin")} />
-          Restore
-        </Button>
-      )}
-    </LazyMotionDiv>
+          <div className="space-y-3">
+            <div className="flex items-start gap-3">
+              <div className={cn(
+                "flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center",
+                status === 'complete' && "bg-green-100 dark:bg-green-900/30",
+                status === 'pending' && "bg-yellow-100 dark:bg-yellow-900/30",
+                status === 'creating' && "bg-blue-100 dark:bg-blue-900/30",
+                status === 'failed' && "bg-red-100 dark:bg-red-900/30",
+              )}>
+                {statusIcon[status]}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-muted-foreground mb-1" data-testid={`checkpoint-time-${checkpointId}`}>
+                  {timeAgo}
+                </p>
+                <p className="text-sm font-medium text-foreground leading-snug" data-testid={`checkpoint-description-${checkpointId}`}>
+                  {description}
+                </p>
+                {commitId && (
+                  <div className="flex items-center gap-1 mt-1">
+                    <GitCommit className="h-3 w-3 text-muted-foreground" />
+                    <code className="text-[10px] text-muted-foreground font-mono">
+                      {commitId.slice(0, 7)}
+                    </code>
+                  </div>
+                )}
+                {filesCount !== undefined && filesCount > 0 && !commitId && (
+                  <p className="text-xs text-muted-foreground mt-1">{filesCount} files changed</p>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 flex-wrap">
+              <Button
+                variant="secondary"
+                size="sm"
+                className="h-8 px-3 text-xs font-medium bg-background hover:bg-muted border border-border"
+                onClick={() => setShowRollbackDialog(true)}
+                disabled={isRestoring || status !== 'complete'}
+                data-testid={`button-rollback-${checkpointId}`}
+              >
+                <RotateCcw className={cn("h-3.5 w-3.5 mr-1.5", isRestoring && "animate-spin")} />
+                Rollback here
+              </Button>
+              
+              <Button
+                variant="secondary"
+                size="sm"
+                className="h-8 px-3 text-xs font-medium bg-background hover:bg-muted border border-border"
+                onClick={() => onViewChanges?.(checkpointId)}
+                disabled={!commitId && !onViewChanges}
+                data-testid={`button-changes-${checkpointId}`}
+              >
+                <Code2 className="h-3.5 w-3.5 mr-1.5" />
+                Changes
+              </Button>
+              
+              <Button
+                variant="secondary"
+                size="sm"
+                className="h-8 px-3 text-xs font-medium bg-background hover:bg-muted border border-border"
+                onClick={() => onPreview?.(checkpointId)}
+                data-testid={`button-preview-${checkpointId}`}
+              >
+                <Eye className="h-3.5 w-3.5 mr-1.5" />
+                Preview
+              </Button>
+            </div>
+          </div>
+
+          {stats && (
+            <div className="mt-3 pt-3 border-t border-border/50">
+              <button
+                onClick={() => setShowStats(!showStats)}
+                className="flex items-center justify-between w-full text-left hover:bg-muted/50 rounded-lg p-2 -m-2 transition-colors"
+                data-testid={`button-toggle-stats-${checkpointId}`}
+              >
+                <span className="text-sm text-muted-foreground flex items-center gap-2">
+                  <FileCode className="h-4 w-4" />
+                  {showStats ? 'Show less' : 'Show more'}
+                </span>
+                {showStats ? (
+                  <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                ) : (
+                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                )}
+              </button>
+              
+              {showStats && (
+                <div className="mt-3 space-y-2 text-sm">
+                  {stats.timeWorked && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Time worked</span>
+                      <span className="font-medium">{stats.timeWorked}</span>
+                    </div>
+                  )}
+                  {stats.workDone !== undefined && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Work done</span>
+                      <span className="font-medium">{stats.workDone} actions</span>
+                    </div>
+                  )}
+                  {stats.itemsRead !== undefined && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Items read</span>
+                      <span className="font-medium">{stats.itemsRead} lines</span>
+                    </div>
+                  )}
+                  {(stats.codeChangedAdd !== undefined || stats.codeChangedRemove !== undefined) && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Code changed</span>
+                      <span className="font-medium">
+                        <span className="text-green-600">+{stats.codeChangedAdd || 0}</span>
+                        {' '}
+                        <span className="text-red-600">-{stats.codeChangedRemove || 0}</span>
+                      </span>
+                    </div>
+                  )}
+                  {stats.agentUsage !== undefined && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground flex items-center gap-1">
+                        Agent Usage
+                        <ChevronDown className="h-3 w-3" />
+                      </span>
+                      <span className="font-medium">${stats.agentUsage.toFixed(2)}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </Card>
+      </LazyMotionDiv>
+
+      <AlertDialog open={showRollbackDialog} onOpenChange={setShowRollbackDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Rollback to this checkpoint?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will restore your project to the state it was in when this checkpoint was created.
+              Any changes made after this point will be lost.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleRollback} disabled={isRestoring}>
+              {isRestoring ? 'Rolling back...' : 'Rollback'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
+
+export function CollapsedAgentMessage({
+  messageCount,
+  actionCount,
+  summary,
+  checkpoint,
+  onExpand,
+  className,
+}: {
+  messageCount: number;
+  actionCount: number;
+  summary: string;
+  checkpoint?: Omit<CheckpointCardProps, 'onRestore' | 'isRestoring'> & {
+    onRestore?: (id: number) => void;
+    isRestoring?: boolean;
+  };
+  onExpand?: () => void;
+  className?: string;
+}) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  return (
+    <div className={cn("space-y-3", className)} data-testid="collapsed-agent-message">
+      <button
+        onClick={() => {
+          setIsExpanded(!isExpanded);
+          onExpand?.();
+        }}
+        className="flex items-center justify-between w-full text-left hover:bg-muted/30 rounded-lg p-2 -mx-2 transition-colors"
+        data-testid="button-expand-message"
+      >
+        <span className="text-sm text-muted-foreground">
+          {messageCount} message{messageCount !== 1 ? 's' : ''} & {actionCount} action{actionCount !== 1 ? 's' : ''}
+        </span>
+        {isExpanded ? (
+          <ChevronUp className="h-4 w-4 text-muted-foreground" />
+        ) : (
+          <ChevronDown className="h-4 w-4 text-muted-foreground" />
+        )}
+      </button>
+      
+      {!isExpanded && (
+        <p className="text-sm text-foreground line-clamp-2" data-testid="message-summary">
+          {summary}
+        </p>
+      )}
+      
+      {checkpoint && (
+        <CheckpointCard 
+          checkpointId={checkpoint.checkpointId}
+          aiSummary={checkpoint.aiSummary}
+          filesCount={checkpoint.filesCount}
+          createdAt={checkpoint.createdAt}
+          type={checkpoint.type}
+          status={checkpoint.status}
+          commitId={checkpoint.commitId}
+          stats={checkpoint.stats}
+          onRestore={checkpoint.onRestore}
+          isRestoring={checkpoint.isRestoring}
+        />
+      )}
+    </div>
+  );
+}
+
+export default CheckpointCard;
