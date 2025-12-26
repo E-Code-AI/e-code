@@ -1,7 +1,7 @@
 # Project Brief
 
 ## Overview
-AutoDB-GCnhgH
+Created by automated e2e test
 
 ## Core Requirements
 [To be extracted from requirements]
