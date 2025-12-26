@@ -8,6 +8,7 @@ import { Server as MCPServer } from "@modelcontextprotocol/sdk/server/index.js";
 import { EventEmitter } from "events";
 import * as crypto from "crypto";
 import { Readable, Writable } from "stream";
+import { setSSEHeaders } from "../utils/sse-headers";
 
 const uuidv4 = () => crypto.randomUUID();
 
@@ -194,12 +195,8 @@ export class MCPHttpServer {
       const session = this.sessions.get(sessionId)!;
       session.lastActivity = new Date();
       
-      // Set up SSE
-      res.writeHead(200, {
-        "Content-Type": "text/event-stream",
-        "Cache-Control": "no-cache",
-        "Connection": "keep-alive",
-      });
+      // Set up SSE with CORS security
+      setSSEHeaders(res, req);
       
       // Send initial ping
       res.write("data: {\"type\":\"ping\"}\n\n");

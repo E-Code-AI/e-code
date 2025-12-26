@@ -13,6 +13,7 @@ import { agentSessions, fileOperations, commandExecutions, toolExecutions, agent
 import { eq, desc } from 'drizzle-orm';
 import type { IStorage } from '../storage';
 import { createLogger } from '../utils/logger';
+import { setSSEHeaders } from '../utils/sse-headers';
 
 const logger = createLogger('agent-router');
 const router = Router();
@@ -492,9 +493,7 @@ router.post('/sessions/:sessionId/stream', ensureAdmin, async (req, res) => {
     const { prompt } = req.body;
     const userId = String(req.user!.id);
 
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
+    setSSEHeaders(res, req);
 
     const stream = agentOrchestrator.streamAgentExecution(sessionId, prompt, userId);
 
@@ -876,12 +875,8 @@ router.get('/schema/stream/:projectId', async (req, res) => {
   try {
     const { projectId } = req.params;
     
-    // Set up SSE
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
-    res.setHeader('X-Accel-Buffering', 'no');
-    res.flushHeaders();
+    // Set up SSE with CORS security
+    setSSEHeaders(res, req);
     
     // Send initial status
     const initialStatus = schemaWarming.getStatus(projectId);

@@ -11,6 +11,7 @@ import { promisify } from 'util';
 import * as crypto from 'crypto';
 import { db } from '../db';
 import fetch from 'node-fetch';
+import { setSSEHeaders } from '../utils/sse-headers';
 
 const execAsync = promisify(exec);
 const app = express();
@@ -655,12 +656,8 @@ app.get('/events', (req, res) => {
     return res.status(401).json({ error: 'Invalid session' });
   }
 
-  res.setHeader('Content-Type', 'text/event-stream');
-  res.setHeader('Cache-Control', 'no-cache');
-  res.setHeader('Connection', 'keep-alive');
-  if (typeof res.flushHeaders === 'function') {
-    res.flushHeaders();
-  }
+  // Set SSE headers with CORS security
+  setSSEHeaders(res, req);
 
   const heartbeat = setInterval(() => {
     try {

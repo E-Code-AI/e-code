@@ -6,6 +6,7 @@ import { logAggregator } from './log-aggregator';
 import { uptimeMonitor } from '../services/uptime-monitor';
 import { databaseQueryOptimizer } from '../services/database-query-optimizer';
 import { redisCache } from '../services/redis-cache';
+import { setSSEHeaders } from '../utils/sse-headers';
 
 export const monitoringRouter = Router();
 
@@ -136,11 +137,8 @@ monitoringRouter.get('/status', ensureAuthenticated, (req, res) => {
 
 // Server-sent events for real-time monitoring (protected)
 monitoringRouter.get('/stream', ensureAuthenticated, (req, res) => {
-  res.writeHead(200, {
-    'Content-Type': 'text/event-stream',
-    'Cache-Control': 'no-cache',
-    'Connection': 'keep-alive',
-  });
+  // Set SSE headers with CORS security
+  setSSEHeaders(res, req);
 
   // Send initial data
   res.write(`data: ${JSON.stringify({
