@@ -1,25 +1,67 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from '@/components/ui/sheet';
 import { 
   Trash2, 
   Copy, 
   Download, 
   Play,
+  Square,
   CheckCircle, 
   XCircle,
-  Loader2
+  Loader2,
+  ChevronDown,
+  MoreVertical,
+  Sparkles,
+  Settings,
+  Terminal,
+  X,
+  Zap
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRuntimeLogs, RuntimeLogEntry } from '@/hooks/useRuntimeLogs';
 import { useToast } from '@/hooks/use-toast';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 
 interface ConsoleLog {
   id: string;
-  type: 'info' | 'error' | 'warn' | 'log' | 'debug' | 'stdout' | 'stderr' | 'system' | 'exit';
+  type: 'info' | 'error' | 'warn' | 'log' | 'debug' | 'stdout' | 'stderr' | 'system' | 'exit' | 'http';
   message: string;
   timestamp: Date;
   stack?: string;
+  method?: string;
+  path?: string;
+  status?: number;
+  duration?: number;
+}
+
+interface Workflow {
+  id: string;
+  name: string;
+  command: string;
+  description?: string;
+  icon?: string;
+  isDefault?: boolean;
+  isSystem?: boolean;
+  isRunning?: boolean;
 }
 
 interface ReplitConsolePanelProps {
@@ -28,15 +70,104 @@ interface ReplitConsolePanelProps {
   isRunning?: boolean;
   executionId?: string;
   className?: string;
+  onRunWorkflow?: (workflow: Workflow) => void;
+  onStopWorkflow?: (workflowId: string) => void;
+  onAskAgent?: () => void;
+  onManageWorkflows?: () => void;
+  onCloseTab?: () => void;
 }
 
-export function ReplitConsolePanel({ projectId, userId, isRunning, executionId, className }: ReplitConsolePanelProps) {
+const DEFAULT_WORKFLOWS: Workflow[] = [
+  { id: 'run-command', name: 'Run .replit run command', command: '.replit run', isSystem: true },
+  { id: 'project', name: 'Project', command: 'npm run dev', isDefault: true, isSystem: true },
+  { id: 'start-application', name: 'Start application', command: 'npm run dev', isSystem: true },
+];
+
+export function ReplitConsolePanel({ 
+  projectId, 
+  userId, 
+  isRunning, 
+  executionId, 
+  className,
+  onRunWorkflow,
+  onStopWorkflow,
+  onAskAgent,
+  onManageWorkflows,
+  onCloseTab
+}: ReplitConsolePanelProps) {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   
   const [logs, setLogs] = useState<ConsoleLog[]>([]);
-  const [filter, setFilter] = useState<'all' | 'error' | 'warn' | 'info'>('all');
+  const [showOnlyLatest, setShowOnlyLatest] = useState(false);
+  const [latestRunStartIndex, setLatestRunStartIndex] = useState(0);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [selectedWorkflow, setSelectedWorkflow] = useState<Workflow | null>(null);
+  const [runningWorkflowIds, setRunningWorkflowIds] = useState<Set<string>>(new Set());
+  
   const scrollRef = useRef<HTMLDivElement>(null);
   const autoScrollRef = useRef(true);
+
+  const { data: customWorkflows } = useQuery<Workflow[]>({
+    queryKey: ['/api/workflows', projectId],
+    queryFn: async () => {
+      const response = await fetch(`/api/workflows?projectId=${projectId}`, {
+        credentials: 'include'
+      });
+      if (!response.ok) return [];
+      return response.json();
+    },
+    enabled: !!projectId
+  });
+
+  const allWorkflows = [...DEFAULT_WORKFLOWS, ...(customWorkflows || [])];
+
+  const runWorkflowMutation = useMutation({
+    mutationFn: async (workflow: Workflow) => {
+      const response = await apiRequest('POST', `/api/preview/projects/${projectId}/preview/start`, {
+        workflow: workflow.id,
+        command: workflow.command
+      });
+      return response.json();
+    },
+    onMutate: (workflow) => {
+      setRunningWorkflowIds(prev => new Set(prev).add(workflow.id));
+      setLatestRunStartIndex(logs.length);
+    },
+    onSuccess: (_, workflow) => {
+      toast({ title: `Running: ${workflow.name}` });
+      onRunWorkflow?.(workflow);
+    },
+    onError: (error: Error, workflow) => {
+      setRunningWorkflowIds(prev => {
+        const next = new Set(prev);
+        next.delete(workflow.id);
+        return next;
+      });
+      toast({ title: 'Failed to run workflow', description: error.message, variant: 'destructive' });
+    }
+  });
+
+  const stopWorkflowMutation = useMutation({
+    mutationFn: async (workflowId: string) => {
+      const response = await apiRequest('POST', `/api/preview/projects/${projectId}/preview/stop`, {
+        workflow: workflowId
+      });
+      return response.json();
+    },
+    onSuccess: (_, workflowId) => {
+      setRunningWorkflowIds(prev => {
+        const next = new Set(prev);
+        next.delete(workflowId);
+        return next;
+      });
+      toast({ title: 'Workflow stopped' });
+      onStopWorkflow?.(workflowId);
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Failed to stop workflow', description: error.message, variant: 'destructive' });
+    }
+  });
 
   const handleLog = useCallback((log: RuntimeLogEntry) => {
     const consoleLog: ConsoleLog = {
@@ -45,6 +176,17 @@ export function ReplitConsolePanel({ projectId, userId, isRunning, executionId, 
       message: log.content,
       timestamp: new Date(log.timestamp),
     };
+
+    if (log.content.match(/^(GET|POST|PUT|DELETE|PATCH|OPTIONS|HEAD)\s+/)) {
+      const httpMatch = log.content.match(/^(GET|POST|PUT|DELETE|PATCH|OPTIONS|HEAD)\s+(\S+)\s+(\d{3})?\s*(\d+ms)?/);
+      if (httpMatch) {
+        consoleLog.type = 'http';
+        consoleLog.method = httpMatch[1];
+        consoleLog.path = httpMatch[2];
+        consoleLog.status = httpMatch[3] ? parseInt(httpMatch[3]) : undefined;
+        consoleLog.duration = httpMatch[4] ? parseInt(httpMatch[4]) : undefined;
+      }
+    }
     
     setLogs(prev => [...prev, consoleLog]);
     
@@ -65,25 +207,38 @@ export function ReplitConsolePanel({ projectId, userId, isRunning, executionId, 
 
   useEffect(() => {
     if (isRunning && executionId) {
-      setLogs([]);
       connect(executionId);
     } else if (!isRunning) {
       disconnect();
+      setRunningWorkflowIds(new Set());
     }
   }, [isRunning, executionId, connect, disconnect]);
 
-  const filteredLogs = logs.filter(log => {
-    if (filter === 'all') return true;
-    return log.type === filter;
-  });
+  const displayedLogs = showOnlyLatest 
+    ? logs.slice(latestRunStartIndex) 
+    : logs;
+
+  const errorCount = displayedLogs.filter(log => log.type === 'error' || log.type === 'stderr').length;
 
   const clearLogs = () => {
     setLogs([]);
+    setLatestRunStartIndex(0);
     clearWsLogs();
   };
 
+  const clearPastRuns = () => {
+    if (showOnlyLatest) {
+      setLogs(prev => prev.slice(latestRunStartIndex));
+      setLatestRunStartIndex(0);
+    } else {
+      setLogs([]);
+      setLatestRunStartIndex(0);
+    }
+    toast({ title: 'Past runs cleared' });
+  };
+
   const copyLogs = () => {
-    const text = filteredLogs
+    const text = displayedLogs
       .map(log => `[${log.timestamp.toLocaleTimeString()}] ${log.type.toUpperCase()}: ${log.message}`)
       .join('\n');
     navigator.clipboard.writeText(text);
@@ -91,7 +246,7 @@ export function ReplitConsolePanel({ projectId, userId, isRunning, executionId, 
   };
 
   const downloadLogs = () => {
-    const text = filteredLogs
+    const text = displayedLogs
       .map(log => `[${log.timestamp.toISOString()}] ${log.type.toUpperCase()}: ${log.message}${log.stack ? '\n' + log.stack : ''}`)
       .join('\n\n');
     
@@ -116,6 +271,8 @@ export function ReplitConsolePanel({ projectId, userId, isRunning, executionId, 
         return 'text-primary';
       case 'debug': 
         return 'text-muted-foreground';
+      case 'http':
+        return 'text-blue-500';
       case 'stdout':
       case 'log':
         return 'text-foreground';
@@ -126,12 +283,22 @@ export function ReplitConsolePanel({ projectId, userId, isRunning, executionId, 
     }
   };
 
+  const getHttpStatusColor = (status?: number) => {
+    if (!status) return 'text-muted-foreground';
+    if (status >= 200 && status < 300) return 'text-green-500';
+    if (status >= 400 && status < 500) return 'text-yellow-500';
+    if (status >= 500) return 'text-red-500';
+    return 'text-muted-foreground';
+  };
+
+  const hasAnyRunning = isRunning || runningWorkflowIds.size > 0;
+
   return (
     <div className={cn("flex flex-col h-full bg-background", className)} data-testid="replit-console-panel">
       <div className="h-9 flex items-center justify-between px-2 border-b bg-card">
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-muted border border-border">
-            <Play className="w-4 h-4 text-primary" />
+            <Terminal className="w-4 h-4 text-primary" />
             <span className="text-[13px] font-medium">Console</span>
           </div>
           
@@ -160,37 +327,130 @@ export function ReplitConsolePanel({ projectId, userId, isRunning, executionId, 
         </div>
         
         <div className="flex items-center gap-1">
-          <Button
-            variant={filter === 'all' ? 'secondary' : 'ghost'}
-            size="sm"
-            className="h-6 px-2 text-xs"
-            onClick={() => setFilter('all')}
-            data-testid="console-filter-all"
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-6 w-6" 
+            onClick={() => setMobileMenuOpen(true)} 
+            title="More options"
+            data-testid="console-menu"
           >
-            All ({logs.length})
-          </Button>
-          <Button
-            variant={filter === 'error' ? 'secondary' : 'ghost'}
-            size="sm"
-            className="h-6 px-2 text-xs"
-            onClick={() => setFilter('error')}
-            data-testid="console-filter-error"
-          >
-            Errors
-          </Button>
-          
-          <div className="w-px h-4 bg-border mx-1" />
-          
-          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={clearLogs} title="Clear" data-testid="console-clear">
-            <Trash2 className="h-3 w-3" />
-          </Button>
-          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={copyLogs} title="Copy" data-testid="console-copy">
-            <Copy className="h-3 w-3" />
-          </Button>
-          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={downloadLogs} title="Download" data-testid="console-download">
-            <Download className="h-3 w-3" />
+            <MoreVertical className="h-3.5 w-3.5" />
           </Button>
         </div>
+      </div>
+
+      <div className="h-9 flex items-center gap-2 px-2 border-b bg-muted/30">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="h-7 text-xs gap-1" data-testid="workflows-dropdown">
+              <Zap className="h-3 w-3" />
+              Workflows
+              <ChevronDown className="h-3 w-3" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-64">
+            {allWorkflows.map((workflow) => {
+              const isWorkflowRunning = runningWorkflowIds.has(workflow.id);
+              return (
+                <DropdownMenuItem
+                  key={workflow.id}
+                  className="flex items-center justify-between py-2"
+                  onSelect={(e) => e.preventDefault()}
+                >
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <Terminal className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                    <span className="text-sm truncate">{workflow.name}</span>
+                    {workflow.isDefault && (
+                      <Badge variant="outline" className="text-[10px] h-4 shrink-0">Default</Badge>
+                    )}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={cn(
+                      "h-6 w-6 shrink-0 ml-2",
+                      isWorkflowRunning 
+                        ? "text-red-500 hover:text-red-600 hover:bg-red-50" 
+                        : "text-green-600 hover:text-green-700 hover:bg-green-50"
+                    )}
+                    onClick={() => {
+                      if (isWorkflowRunning) {
+                        stopWorkflowMutation.mutate(workflow.id);
+                      } else {
+                        runWorkflowMutation.mutate(workflow);
+                      }
+                    }}
+                    disabled={runWorkflowMutation.isPending || stopWorkflowMutation.isPending}
+                  >
+                    {isWorkflowRunning ? (
+                      <Square className="h-3 w-3 fill-current" />
+                    ) : (
+                      <Play className="h-3 w-3 fill-current" />
+                    )}
+                  </Button>
+                </DropdownMenuItem>
+              );
+            })}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={onManageWorkflows} className="text-muted-foreground">
+              <Settings className="h-3.5 w-3.5 mr-2" />
+              Manage Workflows
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <div className="flex items-center gap-1.5">
+          <Switch
+            id="show-latest"
+            checked={showOnlyLatest}
+            onCheckedChange={setShowOnlyLatest}
+            className="scale-75"
+            data-testid="show-latest-toggle"
+          />
+          <Label htmlFor="show-latest" className="text-xs text-muted-foreground cursor-pointer">
+            Show Only Latest
+          </Label>
+        </div>
+
+        <div className="flex-1" />
+
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-7 text-xs gap-1"
+          onClick={clearPastRuns}
+          data-testid="clear-past-runs"
+        >
+          <Trash2 className="h-3 w-3" />
+          Clear Past Runs
+        </Button>
+
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-7 text-xs gap-1 text-primary"
+          onClick={onAskAgent}
+          data-testid="ask-agent"
+        >
+          <Sparkles className="h-3 w-3" />
+          Ask Agent...
+        </Button>
+
+        {hasAnyRunning && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-50"
+            onClick={() => {
+              runningWorkflowIds.forEach(id => stopWorkflowMutation.mutate(id));
+            }}
+            disabled={stopWorkflowMutation.isPending}
+            data-testid="stop-all-button"
+          >
+            <Square className="h-4 w-4 fill-current" />
+          </Button>
+        )}
       </div>
 
       <ScrollArea 
@@ -202,40 +462,179 @@ export function ReplitConsolePanel({ projectId, userId, isRunning, executionId, 
         }}
       >
         <div className="p-2 space-y-0.5">
-          {filteredLogs.length === 0 ? (
-            <div className="text-muted-foreground text-center py-8" data-testid="console-empty">
+          {displayedLogs.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 px-4" data-testid="console-empty">
               {isRunning ? (
-                <div className="flex items-center justify-center gap-2">
+                <div className="flex items-center justify-center gap-2 text-muted-foreground">
                   <Loader2 className="h-4 w-4 animate-spin" />
                   <span>Waiting for output...</span>
                 </div>
               ) : (
-                <span>Click "Run" to see output</span>
+                <>
+                  <Terminal className="h-12 w-12 text-muted-foreground/30 mb-4" />
+                  <p className="text-muted-foreground text-sm text-center mb-6">
+                    Results of your code will appear here when you run
+                  </p>
+                  
+                  <div className="w-full max-w-sm space-y-4">
+                    <div>
+                      <h4 className="text-xs font-medium text-muted-foreground mb-2">Default</h4>
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start gap-2 h-10"
+                        onClick={() => {
+                          const defaultWorkflow = allWorkflows.find(w => w.isDefault) || allWorkflows[0];
+                          if (defaultWorkflow) runWorkflowMutation.mutate(defaultWorkflow);
+                        }}
+                        disabled={runWorkflowMutation.isPending}
+                        data-testid="run-default-workflow"
+                      >
+                        <div className="h-6 w-6 rounded bg-green-500 flex items-center justify-center">
+                          <Play className="h-3 w-3 text-white fill-current" />
+                        </div>
+                        <span className="text-sm">Project</span>
+                      </Button>
+                    </div>
+                    
+                    <div>
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <Settings className="h-3 w-3 text-muted-foreground" />
+                        <h4 className="text-xs font-medium text-muted-foreground">Workflows</h4>
+                      </div>
+                      <div className="space-y-1.5">
+                        {allWorkflows.slice(0, 3).map((workflow) => (
+                          <Button
+                            key={workflow.id}
+                            variant="outline"
+                            className="w-full justify-start gap-2 h-10"
+                            onClick={() => runWorkflowMutation.mutate(workflow)}
+                            disabled={runWorkflowMutation.isPending}
+                            data-testid={`run-workflow-${workflow.id}`}
+                          >
+                            <div className="h-6 w-6 rounded bg-green-500 flex items-center justify-center">
+                              <Play className="h-3 w-3 text-white fill-current" />
+                            </div>
+                            <span className="text-sm">{workflow.name}</span>
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </>
               )}
             </div>
           ) : (
-            filteredLogs.map((log) => (
-              <div key={log.id} className="group hover:bg-muted/50 px-2 py-0.5 rounded" data-testid={`console-log-${log.id}`}>
-                <div className="flex items-start gap-2">
-                  <span className="text-muted-foreground shrink-0">
-                    [{log.timestamp.toLocaleTimeString()}]
-                  </span>
-                  <span className={cn("font-semibold uppercase text-[10px]", getLogColor(log.type))}>
-                    {log.type}
-                  </span>
-                  <span className="break-all whitespace-pre-wrap">{log.message}</span>
+            <>
+              {displayedLogs.map((log) => (
+                <div key={log.id} className="group hover:bg-muted/50 px-2 py-0.5 rounded" data-testid={`console-log-${log.id}`}>
+                  {log.type === 'http' ? (
+                    <div className="flex items-center gap-2">
+                      <span className="text-muted-foreground shrink-0">
+                        [{log.timestamp.toLocaleTimeString()}]
+                      </span>
+                      <Badge variant="outline" className={cn("text-[10px] font-mono", getLogColor(log.type))}>
+                        {log.method}
+                      </Badge>
+                      <span className="text-foreground">{log.path}</span>
+                      {log.status && (
+                        <Badge 
+                          variant="outline" 
+                          className={cn("text-[10px]", getHttpStatusColor(log.status))}
+                        >
+                          {log.status}
+                        </Badge>
+                      )}
+                      {log.duration && (
+                        <span className="text-muted-foreground text-[10px]">{log.duration}ms</span>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex items-start gap-2">
+                      <span className="text-muted-foreground shrink-0">
+                        [{log.timestamp.toLocaleTimeString()}]
+                      </span>
+                      <span className={cn("font-semibold uppercase text-[10px]", getLogColor(log.type))}>
+                        {log.type}
+                      </span>
+                      <span className="break-all whitespace-pre-wrap">{log.message}</span>
+                    </div>
+                  )}
+                  {log.stack && (
+                    <pre className="ml-16 mt-1 text-muted-foreground text-[10px] whitespace-pre-wrap">
+                      {log.stack}
+                    </pre>
+                  )}
                 </div>
-                {log.stack && (
-                  <pre className="ml-16 mt-1 text-muted-foreground text-[10px] whitespace-pre-wrap">
-                    {log.stack}
-                  </pre>
-                )}
-              </div>
-            ))
+              ))}
+              <div ref={scrollRef} />
+            </>
           )}
-          <div ref={scrollRef} />
         </div>
       </ScrollArea>
+
+      {displayedLogs.length > 0 && (
+        <div className="h-7 flex items-center justify-between px-2 border-t bg-muted/30 text-xs text-muted-foreground">
+          <div className="flex items-center gap-2">
+            <span>{displayedLogs.length} entries</span>
+            {errorCount > 0 && (
+              <Badge variant="destructive" className="text-[10px] h-4">
+                {errorCount} {errorCount === 1 ? 'error' : 'errors'}
+              </Badge>
+            )}
+          </div>
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="icon" className="h-5 w-5" onClick={clearLogs} title="Clear" data-testid="console-clear">
+              <Trash2 className="h-3 w-3" />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-5 w-5" onClick={copyLogs} title="Copy" data-testid="console-copy">
+              <Copy className="h-3 w-3" />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-5 w-5" onClick={downloadLogs} title="Download" data-testid="console-download">
+              <Download className="h-3 w-3" />
+            </Button>
+          </div>
+        </div>
+      )}
+
+      <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+        <SheetContent side="bottom" className="h-auto max-h-[50vh]">
+          <SheetHeader className="text-left">
+            <SheetTitle className="flex items-center gap-2">
+              <Terminal className="h-5 w-5" />
+              Console
+            </SheetTitle>
+            <SheetDescription>
+              View logs and output from your running code
+            </SheetDescription>
+          </SheetHeader>
+          <div className="py-4 space-y-1">
+            <Button
+              variant="ghost"
+              className="w-full justify-start gap-3 h-12"
+              onClick={() => {
+                clearLogs();
+                setMobileMenuOpen(false);
+              }}
+              data-testid="mobile-clear-history"
+            >
+              <Trash2 className="h-5 w-5 text-muted-foreground" />
+              <span>Clear History</span>
+            </Button>
+            <Button
+              variant="ghost"
+              className="w-full justify-start gap-3 h-12"
+              onClick={() => {
+                onCloseTab?.();
+                setMobileMenuOpen(false);
+              }}
+              data-testid="mobile-close-tab"
+            >
+              <X className="h-5 w-5 text-muted-foreground" />
+              <span>Close tab</span>
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
