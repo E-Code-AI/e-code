@@ -8,10 +8,11 @@
  * fall back to CSS transitions for better performance.
  */
 
-import { lazy, Suspense, ReactNode, forwardRef, Children, cloneElement, isValidElement } from 'react';
+import { Suspense, ReactNode, forwardRef, Children, cloneElement, isValidElement } from 'react';
 import type { HTMLMotionProps, AnimatePresenceProps } from 'framer-motion';
 import { useAnimationPerformance } from './AnimationMonitor';
 import { CSSFade, CSSInViewFade, CSSInViewSlide, CSSInViewScale } from './CSSAnimations';
+import { instrumentedLazy } from '@/utils/instrumented-lazy';
 
 type VariantObject = Record<string, unknown>;
 type Variants = Record<string, VariantObject>;
@@ -113,12 +114,12 @@ type MotionSpanProps = HTMLMotionProps<'span'>;
 type MotionUlProps = HTMLMotionProps<'ul'>;
 type MotionLiProps = HTMLMotionProps<'li'>;
 
-const LazyMotionDivInner = lazy(() =>
+const LazyMotionDivInner = instrumentedLazy(() =>
   import('framer-motion').then(mod => ({
     default: forwardRef<HTMLDivElement, MotionDivProps>((props, ref) => (
       <mod.m.div ref={ref} {...props} />
     ))
-  }))
+  })), 'MotionDivInner'
 );
 
 export const LazyMotionDiv = forwardRef<HTMLDivElement, MotionDivProps>(({ className, children, ...props }, ref) => {
@@ -157,12 +158,12 @@ export const LazyMotionDiv = forwardRef<HTMLDivElement, MotionDivProps>(({ class
 });
 LazyMotionDiv.displayName = 'LazyMotionDiv';
 
-const LazyMotionButtonInner = lazy(() =>
+const LazyMotionButtonInner = instrumentedLazy(() =>
   import('framer-motion').then(mod => ({
     default: forwardRef<HTMLButtonElement, MotionButtonProps>((props, ref) => (
       <mod.m.button ref={ref} {...props} />
     ))
-  }))
+  })), 'MotionButtonInner'
 );
 
 export const LazyMotionButton = forwardRef<HTMLButtonElement, MotionButtonProps>(({ className, children, ...props }, ref) => {
@@ -198,12 +199,12 @@ export const LazyMotionButton = forwardRef<HTMLButtonElement, MotionButtonProps>
 });
 LazyMotionButton.displayName = 'LazyMotionButton';
 
-const LazyMotionSpanInner = lazy(() =>
+const LazyMotionSpanInner = instrumentedLazy(() =>
   import('framer-motion').then(mod => ({
     default: forwardRef<HTMLSpanElement, MotionSpanProps>((props, ref) => (
       <mod.m.span ref={ref} {...props} />
     ))
-  }))
+  })), 'MotionSpanInner'
 );
 
 export const LazyMotionSpan = forwardRef<HTMLSpanElement, MotionSpanProps>(({ className, children, ...props }, ref) => {
@@ -235,12 +236,12 @@ export const LazyMotionSpan = forwardRef<HTMLSpanElement, MotionSpanProps>(({ cl
 });
 LazyMotionSpan.displayName = 'LazyMotionSpan';
 
-const LazyMotionUlInner = lazy(() =>
+const LazyMotionUlInner = instrumentedLazy(() =>
   import('framer-motion').then(mod => ({
     default: forwardRef<HTMLUListElement, MotionUlProps>((props, ref) => (
       <mod.m.ul ref={ref} {...props} />
     ))
-  }))
+  })), 'MotionUlInner'
 );
 
 export const LazyMotionUl = forwardRef<HTMLUListElement, MotionUlProps>(({ className, children, ...props }, ref) => {
@@ -272,12 +273,12 @@ export const LazyMotionUl = forwardRef<HTMLUListElement, MotionUlProps>(({ class
 });
 LazyMotionUl.displayName = 'LazyMotionUl';
 
-const LazyMotionLiInner = lazy(() =>
+const LazyMotionLiInner = instrumentedLazy(() =>
   import('framer-motion').then(mod => ({
     default: forwardRef<HTMLLIElement, MotionLiProps>((props, ref) => (
       <mod.m.li ref={ref} {...props} />
     ))
-  }))
+  })), 'MotionLiInner'
 );
 
 export const LazyMotionLi = forwardRef<HTMLLIElement, MotionLiProps>(({ className, children, ...props }, ref) => {
@@ -309,10 +310,10 @@ export const LazyMotionLi = forwardRef<HTMLLIElement, MotionLiProps>(({ classNam
 });
 LazyMotionLi.displayName = 'LazyMotionLi';
 
-const LazyAnimatePresenceComponent = lazy(() =>
+const LazyAnimatePresenceComponent = instrumentedLazy(() =>
   import('framer-motion').then(mod => ({
     default: mod.AnimatePresence
-  }))
+  })), 'AnimatePresence'
 );
 
 export function LazyAnimatePresence({ children, ...props }: AnimatePresenceProps & { children: ReactNode }) {
@@ -339,10 +340,10 @@ export function LazyAnimatePresence({ children, ...props }: AnimatePresenceProps
   );
 }
 
-const LazyM = lazy(() =>
+const LazyM = instrumentedLazy(() =>
   import('framer-motion').then(mod => ({
     default: mod.m
-  }))
+  })), 'framer-motion-m'
 );
 
 export { LazyM as m };

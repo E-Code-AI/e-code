@@ -1,4 +1,3 @@
-import { lazy } from "react";
 import { instrumentedLazy } from "../utils/instrumented-lazy";
 
 export const NotFound = instrumentedLazy(() => import("@/pages/not-found"), "NotFound");
@@ -12,9 +11,9 @@ export const ProjectsPage = instrumentedLazy(() => import("@/pages/ProjectsPage"
 export const Login = instrumentedLazy(() => import("@/pages/Login"), "Login");
 export const Register = instrumentedLazy(() => import("@/pages/Register"), "Register");
 export const ProjectPage = instrumentedLazy(() => import("@/pages/ProjectPage"), "ProjectPage");
-export const RuntimesPage = lazy(() => import("@/pages/RuntimesPage"));
-export const RuntimeDiagnosticsPage = lazy(() => import("@/pages/RuntimeDiagnosticsPage"));
-export const RuntimePublicPage = lazy(() => import("@/pages/RuntimePublicPage"));
+export const RuntimesPage = instrumentedLazy(() => import("@/pages/RuntimesPage"), "RuntimesPage");
+export const RuntimeDiagnosticsPage = instrumentedLazy(() => import("@/pages/RuntimeDiagnosticsPage"), "RuntimeDiagnosticsPage");
+export const RuntimePublicPage = instrumentedLazy(() => import("@/pages/RuntimePublicPage"), "RuntimePublicPage");
 
 export const Dashboard = instrumentedLazy(() => import("@/pages/Dashboard"), "Dashboard");
 export const Explore = instrumentedLazy(() => import("@/pages/Explore"), "Explore");
@@ -22,9 +21,9 @@ export const Teams = instrumentedLazy(() => import("@/pages/Teams"), "Teams");
 export const Notifications = instrumentedLazy(() => import("@/pages/Notifications"), "Notifications");
 export const Analytics = instrumentedLazy(() => import("@/pages/Analytics"), "Analytics");
 
-export const Education = lazy(() => import("@/pages/Education"));
-export const Marketplace = lazy(() => import("@/pages/Marketplace"));
-export const TemplateMarketplace = lazy(() => import("@/pages/TemplateMarketplace"));
+export const Education = instrumentedLazy(() => import("@/pages/Education"), "Education");
+export const Marketplace = instrumentedLazy(() => import("@/pages/Marketplace"), "Marketplace");
+export const TemplateMarketplace = instrumentedLazy(() => import("@/pages/TemplateMarketplace"), "TemplateMarketplace");
 
 export const TeamPage = instrumentedLazy(() => import("@/pages/TeamPage"), "TeamPage");
 export const TeamSettings = instrumentedLazy(() => import("@/pages/TeamSettings"), "TeamSettings");
@@ -32,84 +31,85 @@ export const Settings = instrumentedLazy(() => import("@/pages/Settings"), "Sett
 export const Profile = instrumentedLazy(() => import("@/pages/Profile"), "Profile");
 export const UserProfile = instrumentedLazy(() => import("@/pages/UserProfile"), "UserProfile");
 export const UserSettings = instrumentedLazy(() => import("@/pages/UserSettings"), "UserSettings");
-export const TemplatesPage = lazy(() => import("@/pages/TemplatesPage"));
-export const Community = lazy(() => import("@/pages/Community"));
-export const CommunityPost = lazy(() => import("@/pages/CommunityPost"));
-export const SearchPage = lazy(() => import("@/pages/SearchPage"));
-export const AdminDashboard = lazy(() => import("@/pages/AdminDashboard"));
-export const AdminUsage = lazy(() => import("@/pages/AdminUsage"));
-export const AdminAIUsage = lazy(() => import("@/pages/AdminAIUsage"));
-export const AdminBilling = lazy(() => import("@/pages/AdminBilling"));
-export const AdminAIModels = lazy(() => import("@/pages/admin/AIModels"));
-export const AdminFormRequests = lazy(() => import("@/pages/admin/FormRequests"));
-export const AdminAIOptimization = lazy(() => import("@/pages/admin/AIOptimizationDashboard"));
-export const AdminSEOManagement = lazy(() => import("@/pages/admin/SEOManagement"));
-export const AdminMonitoring = lazy(() => import("@/pages/admin/AdminMonitoring"));
-export const PitchDeck = lazy(() => import("@/pages/admin/PitchDeck"));
-export const ChatGPTAdmin = lazy(() => import("@/pages/ChatGPTAdmin"));
+export const TemplatesPage = instrumentedLazy(() => import("@/pages/TemplatesPage"), "TemplatesPage");
+export const Community = instrumentedLazy(() => import("@/pages/Community"), "Community");
+export const CommunityPost = instrumentedLazy(() => import("@/pages/CommunityPost"), "CommunityPost");
+export const SearchPage = instrumentedLazy(() => import("@/pages/SearchPage"), "SearchPage");
+export const AdminDashboard = instrumentedLazy(() => import("@/pages/AdminDashboard"), "AdminDashboard");
+export const AdminUsage = instrumentedLazy(() => import("@/pages/AdminUsage"), "AdminUsage");
+export const AdminAIUsage = instrumentedLazy(() => import("@/pages/AdminAIUsage"), "AdminAIUsage");
+export const AdminBilling = instrumentedLazy(() => import("@/pages/AdminBilling"), "AdminBilling");
+export const AdminAIModels = instrumentedLazy(() => import("@/pages/admin/AIModels"), "AdminAIModels");
+export const AdminFormRequests = instrumentedLazy(() => import("@/pages/admin/FormRequests"), "AdminFormRequests");
+export const AdminAIOptimization = instrumentedLazy(() => import("@/pages/admin/AIOptimizationDashboard"), "AdminAIOptimization");
+export const AdminSEOManagement = instrumentedLazy(() => import("@/pages/admin/SEOManagement"), "AdminSEOManagement");
+export const AdminMonitoring = instrumentedLazy(() => import("@/pages/admin/AdminMonitoring"), "AdminMonitoring");
+export const PitchDeck = instrumentedLazy(() => import("@/pages/admin/PitchDeck"), "PitchDeck");
+export const ChatGPTAdmin = instrumentedLazy(() => import("@/pages/ChatGPTAdmin"), "ChatGPTAdmin");
 
 export const Landing = instrumentedLazy(() => import("@/pages/LandingOptimized"), "Landing");
 export const Pricing = instrumentedLazy(() => import("@/pages/Pricing"), "Pricing");
 export const Features = instrumentedLazy(() => import("@/pages/Features"), "Features");
 export const About = instrumentedLazy(() => import("@/pages/About"), "About");
-export const Careers = lazy(() => import("@/pages/Careers"));
-export const Blog = lazy(() => import("@/pages/Blog"));
-export const BlogDetail = lazy(() => import("@/pages/BlogDetail"));
-export const Docs = lazy(() => import("@/pages/Docs"));
-export const ContactSales = lazy(() => import("@/pages/ContactSales"));
-export const Terms = lazy(() => import("@/pages/Terms"));
-export const Privacy = lazy(() => import("@/pages/Privacy"));
-export const Status = lazy(() => import("@/pages/Status"));
-export const Forum = lazy(() => import("@/pages/Forum"));
-export const ComparePage = lazy(() => import("@/pages/compare/ComparePage"));
+export const Careers = instrumentedLazy(() => import("@/pages/Careers"), "Careers");
+export const Blog = instrumentedLazy(() => import("@/pages/Blog"), "Blog");
+export const BlogDetail = instrumentedLazy(() => import("@/pages/BlogDetail"), "BlogDetail");
+export const Docs = instrumentedLazy(() => import("@/pages/Docs"), "Docs");
+export const ContactSales = instrumentedLazy(() => import("@/pages/ContactSales"), "ContactSales");
+export const Terms = instrumentedLazy(() => import("@/pages/Terms"), "Terms");
+export const Privacy = instrumentedLazy(() => import("@/pages/Privacy"), "Privacy");
+export const Status = instrumentedLazy(() => import("@/pages/Status"), "Status");
+export const Forum = instrumentedLazy(() => import("@/pages/Forum"), "Forum");
+export const ComparePage = instrumentedLazy(() => import("@/pages/compare/ComparePage"), "ComparePage");
 
-export const MobileAdmin = lazy(() => import("@/pages/admin/MobileAdminDashboard"));
-export const MobileWorkspace = lazy(() => import("@/pages/MobileWorkspace"));
-export const MobileMarketingPage = lazy(() => import("@/pages/mobile"));
-export const AI = lazy(() => import("@/pages/AI"));
-export const Press = lazy(() => import("@/pages/Press"));
-export const Partners = lazy(() => import("@/pages/Partners"));
-export const Security = lazy(() => import("@/pages/Security"));
-export const Desktop = lazy(() => import("@/pages/Desktop"));
+export const MobileAdmin = instrumentedLazy(() => import("@/pages/admin/MobileAdminDashboard"), "MobileAdmin");
+export const MobileWorkspace = instrumentedLazy(() => import("@/pages/MobileWorkspace"), "MobileWorkspace");
+export const MobileMarketingPage = instrumentedLazy(() => import("@/pages/mobile"), "MobileMarketingPage");
+export const AI = instrumentedLazy(() => import("@/pages/AI"), "AI");
+export const Press = instrumentedLazy(() => import("@/pages/Press"), "Press");
+export const Partners = instrumentedLazy(() => import("@/pages/Partners"), "Partners");
+export const Security = instrumentedLazy(() => import("@/pages/Security"), "Security");
+export const Desktop = instrumentedLazy(() => import("@/pages/Desktop"), "Desktop");
 
-export const AIAgentStudio = lazy(() => import("@/pages/AIAgentStudio"));
-export const AgentActivity = lazy(() => import("@/pages/AgentActivity"));
-export const PublicTeamPage = lazy(() => import("@/pages/PublicTeamPage"));
-export const PublicDeploymentsPage = lazy(() => import("@/pages/PublicDeploymentsPage"));
-export const Scalability = lazy(() => import("@/pages/Scalability"));
-export const MarketingBounties = lazy(() => import("@/pages/marketing/Bounties"));
+export const AIAgentStudio = instrumentedLazy(() => import("@/pages/AIAgentStudio"), "AIAgentStudio");
+export const AgentActivity = instrumentedLazy(() => import("@/pages/AgentActivity"), "AgentActivity");
+export const PublicTeamPage = instrumentedLazy(() => import("@/pages/PublicTeamPage"), "PublicTeamPage");
+export const PublicDeploymentsPage = instrumentedLazy(() => import("@/pages/PublicDeploymentsPage"), "PublicDeploymentsPage");
+export const Scalability = instrumentedLazy(() => import("@/pages/Scalability"), "Scalability");
+export const MarketingBounties = instrumentedLazy(() => import("@/pages/marketing/Bounties"), "MarketingBounties");
 
-export const Compare = lazy(() => import("@/pages/marketing/Compare"));
-export const VsGitHubCodespaces = lazy(() => import("@/pages/marketing/VsGitHubCodespaces"));
-export const VsGlitch = lazy(() => import("@/pages/marketing/VsGlitch"));
-export const VsHeroku = lazy(() => import("@/pages/marketing/VsHeroku"));
-export const VsCodeSandbox = lazy(() => import("@/pages/marketing/VsCodeSandbox"));
-export const VsAwsCloud9 = lazy(() => import("@/pages/marketing/VsAwsCloud9"));
+export const Compare = instrumentedLazy(() => import("@/pages/marketing/Compare"), "Compare");
+export const VsGitHubCodespaces = instrumentedLazy(() => import("@/pages/marketing/VsGitHubCodespaces"), "VsGitHubCodespaces");
+export const VsGlitch = instrumentedLazy(() => import("@/pages/marketing/VsGlitch"), "VsGlitch");
+export const VsHeroku = instrumentedLazy(() => import("@/pages/marketing/VsHeroku"), "VsHeroku");
+export const VsCodeSandbox = instrumentedLazy(() => import("@/pages/marketing/VsCodeSandbox"), "VsCodeSandbox");
+export const VsAwsCloud9 = instrumentedLazy(() => import("@/pages/marketing/VsAwsCloud9"), "VsAwsCloud9");
 
-export const AuthenticationDemo = lazy(() =>
+export const AuthenticationDemo = instrumentedLazy(() =>
   import("@/components/AuthenticationDemo").then((module) => ({
     default: module.AuthenticationDemo,
-  }))
+  })),
+  "AuthenticationDemo"
 );
 
-export const Account = lazy(() => import("@/pages/Account"));
-export const ThemeValidation = lazy(() => import("@/pages/ThemeValidation"));
-export const Deployments = lazy(() => import("@/pages/Deployments"));
-export const Learn = lazy(() => import("@/pages/Learn"));
-export const Support = lazy(() => import("@/pages/Support"));
-export const Themes = lazy(() => import("@/pages/Themes"));
-export const Usage = lazy(() => import("@/pages/Usage"));
-export const Subscribe = lazy(() => import("@/pages/Subscribe"));
-export const Plans = lazy(() => import("@/pages/Plans"));
-export const Cycles = lazy(() => import("@/pages/Cycles"));
-export const Bounties = lazy(() => import("@/pages/Bounties"));
-export const PowerUps = lazy(() => import("@/pages/PowerUps"));
-export const Badges = lazy(() => import("@/pages/Badges"));
+export const Account = instrumentedLazy(() => import("@/pages/Account"), "Account");
+export const ThemeValidation = instrumentedLazy(() => import("@/pages/ThemeValidation"), "ThemeValidation");
+export const Deployments = instrumentedLazy(() => import("@/pages/Deployments"), "Deployments");
+export const Learn = instrumentedLazy(() => import("@/pages/Learn"), "Learn");
+export const Support = instrumentedLazy(() => import("@/pages/Support"), "Support");
+export const Themes = instrumentedLazy(() => import("@/pages/Themes"), "Themes");
+export const Usage = instrumentedLazy(() => import("@/pages/Usage"), "Usage");
+export const Subscribe = instrumentedLazy(() => import("@/pages/Subscribe"), "Subscribe");
+export const Plans = instrumentedLazy(() => import("@/pages/Plans"), "Plans");
+export const Cycles = instrumentedLazy(() => import("@/pages/Cycles"), "Cycles");
+export const Bounties = instrumentedLazy(() => import("@/pages/Bounties"), "Bounties");
+export const PowerUps = instrumentedLazy(() => import("@/pages/PowerUps"), "PowerUps");
+export const Badges = instrumentedLazy(() => import("@/pages/Badges"), "Badges");
 
-export const SSOConfiguration = lazy(() => import("@/pages/SSOConfiguration"));
-export const AuditLogs = lazy(() => import("@/pages/AuditLogs"));
-export const CustomRoles = lazy(() => import("@/pages/CustomRoles"));
-export const Subprocessors = lazy(() => import("@/pages/Subprocessors"));
+export const SSOConfiguration = instrumentedLazy(() => import("@/pages/SSOConfiguration"), "SSOConfiguration");
+export const AuditLogs = instrumentedLazy(() => import("@/pages/AuditLogs"), "AuditLogs");
+export const CustomRoles = instrumentedLazy(() => import("@/pages/CustomRoles"), "CustomRoles");
+export const Subprocessors = instrumentedLazy(() => import("@/pages/Subprocessors"), "Subprocessors");
 export const HealthDashboard = instrumentedLazy(() => import("@/pages/HealthDashboard"), "HealthDashboard");
 export const StudentDPA = instrumentedLazy(() => import("@/pages/StudentDPA"), "StudentDPA");
 export const Languages = instrumentedLazy(() => import("@/pages/Languages"), "Languages");
@@ -126,73 +126,73 @@ export const DatabaseManagement = instrumentedLazy(() => import("@/pages/Databas
 export const SecretManagement = instrumentedLazy(() => import("@/pages/SecretManagement"), "SecretManagement");
 export const UsageAlerts = instrumentedLazy(() => import("@/pages/UsageAlerts"), "UsageAlerts");
 
-export const NewsletterConfirmed = lazy(() => import("@/pages/NewsletterConfirmed"));
-export const NewsletterConfirm = lazy(() => import("@/pages/NewsletterConfirm"));
-export const NewsletterUnsubscribe = lazy(() => import("@/pages/NewsletterUnsubscribe"));
+export const NewsletterConfirmed = instrumentedLazy(() => import("@/pages/NewsletterConfirmed"), "NewsletterConfirmed");
+export const NewsletterConfirm = instrumentedLazy(() => import("@/pages/NewsletterConfirm"), "NewsletterConfirm");
+export const NewsletterUnsubscribe = instrumentedLazy(() => import("@/pages/NewsletterUnsubscribe"), "NewsletterUnsubscribe");
 
-export const DPA = lazy(() => import("@/pages/DPA"));
-export const CommercialAgreement = lazy(() => import("@/pages/CommercialAgreement"));
-export const ReportAbuse = lazy(() => import("@/pages/ReportAbuse"));
-export const SharedSnippet = lazy(() => import("@/pages/SharedSnippet"));
-export const AIDocumentation = lazy(() => import("@/pages/AIDocumentation"));
+export const DPA = instrumentedLazy(() => import("@/pages/DPA"), "DPA");
+export const CommercialAgreement = instrumentedLazy(() => import("@/pages/CommercialAgreement"), "CommercialAgreement");
+export const ReportAbuse = instrumentedLazy(() => import("@/pages/ReportAbuse"), "ReportAbuse");
+export const SharedSnippet = instrumentedLazy(() => import("@/pages/SharedSnippet"), "SharedSnippet");
+export const AIDocumentation = instrumentedLazy(() => import("@/pages/AIDocumentation"), "AIDocumentation");
 
-export const APISDKPage = lazy(() => import("@/pages/APISDKPage"));
-export const MobileAppsPage = lazy(() => import("@/pages/MobileAppsPage"));
-export const Apps = lazy(() => import("@/pages/Apps"));
-export const FigmaImport = lazy(() => import("@/pages/FigmaImport"));
-export const BoltImport = lazy(() => import("@/pages/BoltImport"));
-export const LovableImport = lazy(() => import("@/pages/LovableImport"));
+export const APISDKPage = instrumentedLazy(() => import("@/pages/APISDKPage"), "APISDKPage");
+export const MobileAppsPage = instrumentedLazy(() => import("@/pages/MobileAppsPage"), "MobileAppsPage");
+export const Apps = instrumentedLazy(() => import("@/pages/Apps"), "Apps");
+export const FigmaImport = instrumentedLazy(() => import("@/pages/FigmaImport"), "FigmaImport");
+export const BoltImport = instrumentedLazy(() => import("@/pages/BoltImport"), "BoltImport");
+export const LovableImport = instrumentedLazy(() => import("@/pages/LovableImport"), "LovableImport");
 
-export const PerformanceDashboard = lazy(() => import("@/pages/PerformanceDashboard"));
+export const PerformanceDashboard = instrumentedLazy(() => import("@/pages/PerformanceDashboard"), "PerformanceDashboard");
 
-export const AppBuilder = lazy(() => import("@/pages/solutions/AppBuilder"));
-export const WebsiteBuilder = lazy(() => import("@/pages/solutions/WebsiteBuilder"));
-export const GameBuilder = lazy(() => import("@/pages/solutions/GameBuilder"));
-export const DashboardBuilder = lazy(() => import("@/pages/solutions/DashboardBuilder"));
-export const ChatbotBuilder = lazy(() => import("@/pages/solutions/ChatbotBuilder"));
-export const InternalAIBuilder = lazy(() => import("@/pages/solutions/InternalAIBuilder"));
-export const Enterprise = lazy(() => import("@/pages/solutions/Enterprise"));
-export const Startups = lazy(() => import("@/pages/solutions/Startups"));
-export const Freelancers = lazy(() => import("@/pages/solutions/Freelancers"));
+export const AppBuilder = instrumentedLazy(() => import("@/pages/solutions/AppBuilder"), "AppBuilder");
+export const WebsiteBuilder = instrumentedLazy(() => import("@/pages/solutions/WebsiteBuilder"), "WebsiteBuilder");
+export const GameBuilder = instrumentedLazy(() => import("@/pages/solutions/GameBuilder"), "GameBuilder");
+export const DashboardBuilder = instrumentedLazy(() => import("@/pages/solutions/DashboardBuilder"), "DashboardBuilder");
+export const ChatbotBuilder = instrumentedLazy(() => import("@/pages/solutions/ChatbotBuilder"), "ChatbotBuilder");
+export const InternalAIBuilder = instrumentedLazy(() => import("@/pages/solutions/InternalAIBuilder"), "InternalAIBuilder");
+export const Enterprise = instrumentedLazy(() => import("@/pages/solutions/Enterprise"), "Enterprise");
+export const Startups = instrumentedLazy(() => import("@/pages/solutions/Startups"), "Startups");
+export const Freelancers = instrumentedLazy(() => import("@/pages/solutions/Freelancers"), "Freelancers");
 
-export const Tutorials = lazy(() => import("@/pages/resources/Tutorials"));
-export const Changelog = lazy(() => import("@/pages/resources/Changelog"));
-export const CaseStudies = lazy(() => import("@/pages/resources/CaseStudies"));
-export const HelpCenter = lazy(() => import("@/pages/resources/HelpCenter"));
+export const Tutorials = instrumentedLazy(() => import("@/pages/resources/Tutorials"), "Tutorials");
+export const Changelog = instrumentedLazy(() => import("@/pages/resources/Changelog"), "Changelog");
+export const CaseStudies = instrumentedLazy(() => import("@/pages/resources/CaseStudies"), "CaseStudies");
+export const HelpCenter = instrumentedLazy(() => import("@/pages/resources/HelpCenter"), "HelpCenter");
 
-export const Contact = lazy(() => import("@/pages/Contact"));
-export const Accessibility = lazy(() => import("@/pages/Accessibility"));
+export const Contact = instrumentedLazy(() => import("@/pages/Contact"), "Contact");
+export const Accessibility = instrumentedLazy(() => import("@/pages/Accessibility"), "Accessibility");
 
-export const PreviewWithDevTools = lazy(() => import("@/pages/PreviewWithDevTools"));
-export const MCPInterface = lazy(() => import("@/pages/MCPInterface"));
-export const PolyglotBackendPage = lazy(() => import("@/pages/PolyglotBackendPage"));
+export const PreviewWithDevTools = instrumentedLazy(() => import("@/pages/PreviewWithDevTools"), "PreviewWithDevTools");
+export const MCPInterface = instrumentedLazy(() => import("@/pages/MCPInterface"), "MCPInterface");
+export const PolyglotBackendPage = instrumentedLazy(() => import("@/pages/PolyglotBackendPage"), "PolyglotBackendPage");
 
-export const SolarTechAIChatApp = lazy(() => import("@/pages/SolarTechAIChatApp"));
-export const SolarTechCRMApp = lazy(() => import("@/pages/SolarTechCRMApp"));
-export const SolarTechStoreApp = lazy(() => import("@/pages/SolarTechStoreApp"));
+export const SolarTechAIChatApp = instrumentedLazy(() => import("@/pages/SolarTechAIChatApp"), "SolarTechAIChatApp");
+export const SolarTechCRMApp = instrumentedLazy(() => import("@/pages/SolarTechCRMApp"), "SolarTechCRMApp");
+export const SolarTechStoreApp = instrumentedLazy(() => import("@/pages/SolarTechStoreApp"), "SolarTechStoreApp");
 
-export const ApplicationIDEWrapper = lazy(() => import("@/components/ApplicationIDEWrapper").then(mod => ({ default: mod.ApplicationIDEWrapper })));
-export const FeaturePlaceholder = lazy(() => import("@/pages/FeaturePlaceholder"));
+export const ApplicationIDEWrapper = instrumentedLazy(() => import("@/components/ApplicationIDEWrapper").then(mod => ({ default: mod.ApplicationIDEWrapper })), "ApplicationIDEWrapper");
+export const FeaturePlaceholder = instrumentedLazy(() => import("@/pages/FeaturePlaceholder"), "FeaturePlaceholder");
 
-export const AssistantPage = lazy(() => import("@/pages/AssistantPage"));
-export const CodeSearchPage = lazy(() => import("@/pages/CodeSearchPage"));
-export const ProblemsPage = lazy(() => import("@/pages/ProblemsPage"));
+export const AssistantPage = instrumentedLazy(() => import("@/pages/AssistantPage"), "AssistantPage");
+export const CodeSearchPage = instrumentedLazy(() => import("@/pages/CodeSearchPage"), "CodeSearchPage");
+export const ProblemsPage = instrumentedLazy(() => import("@/pages/ProblemsPage"), "ProblemsPage");
 
-export const DatabasePage = lazy(() => import("@/pages/DatabasePage"));
-export const ConsolePage = lazy(() => import("@/pages/ConsolePage"));
-export const ShellPage = lazy(() => import("@/pages/ShellPage"));
+export const DatabasePage = instrumentedLazy(() => import("@/pages/DatabasePage"), "DatabasePage");
+export const ConsolePage = instrumentedLazy(() => import("@/pages/ConsolePage"), "ConsolePage");
+export const ShellPage = instrumentedLazy(() => import("@/pages/ShellPage"), "ShellPage");
 
-export const PackagesPage = lazy(() => import("@/pages/PackagesPage"));
-export const KVStorePage = lazy(() => import("@/pages/KVStorePage"));
-export const PreviewPage = lazy(() => import("@/pages/PreviewPage"));
+export const PackagesPage = instrumentedLazy(() => import("@/pages/PackagesPage"), "PackagesPage");
+export const KVStorePage = instrumentedLazy(() => import("@/pages/KVStorePage"), "KVStorePage");
+export const PreviewPage = instrumentedLazy(() => import("@/pages/PreviewPage"), "PreviewPage");
 
-export const AuthenticationPage = lazy(() => import("@/pages/AuthenticationPage"));
-export const ExtensionsPage = lazy(() => import("@/pages/ExtensionsPage"));
-export const IntegrationsPage = lazy(() => import("@/pages/IntegrationsPage"));
+export const AuthenticationPage = instrumentedLazy(() => import("@/pages/AuthenticationPage"), "AuthenticationPage");
+export const ExtensionsPage = instrumentedLazy(() => import("@/pages/ExtensionsPage"), "ExtensionsPage");
+export const IntegrationsPage = instrumentedLazy(() => import("@/pages/IntegrationsPage"), "IntegrationsPage");
 
-export const NetworkingPage = lazy(() => import("@/pages/NetworkingPage"));
-export const ThreadsPage = lazy(() => import("@/pages/ThreadsPage"));
-export const ReferralsPage = lazy(() => import("@/pages/ReferralsPage"));
+export const NetworkingPage = instrumentedLazy(() => import("@/pages/NetworkingPage"), "NetworkingPage");
+export const ThreadsPage = instrumentedLazy(() => import("@/pages/ThreadsPage"), "ThreadsPage");
+export const ReferralsPage = instrumentedLazy(() => import("@/pages/ReferralsPage"), "ReferralsPage");
 
-export const VNCPage = lazy(() => import("@/pages/VNCPage"));
-export const NewTeamPage = lazy(() => import("@/pages/NewTeamPage"));
+export const VNCPage = instrumentedLazy(() => import("@/pages/VNCPage"), "VNCPage");
+export const NewTeamPage = instrumentedLazy(() => import("@/pages/NewTeamPage"), "NewTeamPage");

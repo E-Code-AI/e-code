@@ -1,6 +1,7 @@
-import { lazy, Suspense, ComponentType } from 'react';
+import { Suspense, ComponentType } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Loader2, Table } from 'lucide-react';
+import { instrumentedLazy } from '@/utils/instrumented-lazy';
 
 interface GridFallbackProps {
   height?: string | number;
@@ -28,20 +29,20 @@ export function GridFallback({ height = '400px', rows = 5 }: GridFallbackProps) 
   );
 }
 
-export const LazyAgentSessionsGrid = lazy(() => 
-  import('@/components/grids/AgentSessionsGrid').then(mod => ({ default: mod.AgentSessionsGrid }))
+export const LazyAgentSessionsGrid = instrumentedLazy(() => 
+  import('@/components/grids/AgentSessionsGrid').then(mod => ({ default: mod.AgentSessionsGrid })), 'AgentSessionsGrid'
 );
 
-export const LazyAgentActionsGrid = lazy(() => 
-  import('@/components/grids/AgentActionsGrid').then(mod => ({ default: mod.AgentActionsGrid }))
+export const LazyAgentActionsGrid = instrumentedLazy(() => 
+  import('@/components/grids/AgentActionsGrid').then(mod => ({ default: mod.AgentActionsGrid })), 'AgentActionsGrid'
 );
 
-export const LazyConversationHistoryGrid = lazy(() => 
-  import('@/components/grids/ConversationHistoryGrid').then(mod => ({ default: mod.ConversationHistoryGrid }))
+export const LazyConversationHistoryGrid = instrumentedLazy(() => 
+  import('@/components/grids/ConversationHistoryGrid').then(mod => ({ default: mod.ConversationHistoryGrid })), 'ConversationHistoryGrid'
 );
 
-export const LazyFileOperationsGrid = lazy(() => 
-  import('@/components/grids/FileOperationsGrid').then(mod => ({ default: mod.FileOperationsGrid }))
+export const LazyFileOperationsGrid = instrumentedLazy(() => 
+  import('@/components/grids/FileOperationsGrid').then(mod => ({ default: mod.FileOperationsGrid })), 'FileOperationsGrid'
 );
 
 interface LazyGridWrapperProps {
@@ -67,9 +68,10 @@ export function LazyGridWrapper({
 export function withLazyGrid<P extends Record<string, unknown>>(
   importFn: () => Promise<{ default: ComponentType<P> }>,
   fallbackHeight?: string | number,
-  fallbackRows?: number
+  fallbackRows?: number,
+  moduleName?: string
 ) {
-  const LazyComponent = lazy(importFn);
+  const LazyComponent = instrumentedLazy(importFn, moduleName || 'GridComponent');
   
   return function LazyGridHOC(props: P) {
     return (

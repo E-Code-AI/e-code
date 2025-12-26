@@ -1,5 +1,6 @@
-import { lazy, Suspense, ComponentType } from 'react';
+import { Suspense, ComponentType } from 'react';
 import { Loader2, Terminal as TerminalIcon } from 'lucide-react';
+import { instrumentedLazy } from '@/utils/instrumented-lazy';
 
 interface TerminalFallbackProps {
   height?: string | number;
@@ -18,22 +19,22 @@ function TerminalFallback({ height = '300px' }: TerminalFallbackProps) {
   );
 }
 
-export const LazyTerminal = lazy(() => import('@/components/Terminal'));
+export const LazyTerminal = instrumentedLazy(() => import('@/components/Terminal'), 'Terminal');
 
-export const LazyReplitTerminal = lazy(() => 
-  import('@/components/terminal/ReplitTerminal').then(mod => ({ default: mod.ReplitTerminal }))
+export const LazyReplitTerminal = instrumentedLazy(() => 
+  import('@/components/terminal/ReplitTerminal').then(mod => ({ default: mod.ReplitTerminal })), 'ReplitTerminal'
 );
 
-export const LazyAdvancedTerminal = lazy(() => 
-  import('@/components/terminal/AdvancedTerminal').then(mod => ({ default: mod.AdvancedTerminal }))
+export const LazyAdvancedTerminal = instrumentedLazy(() => 
+  import('@/components/terminal/AdvancedTerminal').then(mod => ({ default: mod.AdvancedTerminal })), 'AdvancedTerminal'
 );
 
-export const LazyReplitTerminalPanel = lazy(() => 
-  import('@/components/editor/ReplitTerminalPanel').then(mod => ({ default: mod.ReplitTerminalPanel }))
+export const LazyReplitTerminalPanel = instrumentedLazy(() => 
+  import('@/components/editor/ReplitTerminalPanel').then(mod => ({ default: mod.ReplitTerminalPanel })), 'ReplitTerminalPanel'
 );
 
-export const LazyMobileTerminal = lazy(() => 
-  import('@/components/mobile/MobileTerminal').then(mod => ({ default: mod.MobileTerminal }))
+export const LazyMobileTerminal = instrumentedLazy(() => 
+  import('@/components/mobile/MobileTerminal').then(mod => ({ default: mod.MobileTerminal })), 'MobileTerminal'
 );
 
 interface LazyTerminalWrapperProps {
@@ -56,9 +57,10 @@ export function LazyTerminalWrapper({
 
 export function withLazyTerminal<P extends Record<string, unknown>>(
   importFn: () => Promise<{ default: ComponentType<P> }>,
-  fallbackHeight?: string | number
+  fallbackHeight?: string | number,
+  moduleName?: string
 ) {
-  const LazyComponent = lazy(importFn);
+  const LazyComponent = instrumentedLazy(importFn, moduleName || 'TerminalComponent');
   
   return function LazyTerminalHOC(props: P) {
     return (

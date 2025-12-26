@@ -1,6 +1,7 @@
-import { lazy, Suspense, ComponentType } from 'react';
+import { Suspense, ComponentType } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Loader2, BarChart3 } from 'lucide-react';
+import { instrumentedLazy } from '@/utils/instrumented-lazy';
 
 interface ChartFallbackProps {
   height?: string | number;
@@ -23,40 +24,40 @@ function ChartFallback({ height = '300px', width = '100%' }: ChartFallbackProps)
   );
 }
 
-export const LazyResponseTimeChart = lazy(() => 
-  import('@/components/monitoring/ResponseTimeChart').then(mod => ({ default: mod.ResponseTimeChart }))
+export const LazyResponseTimeChart = instrumentedLazy(() => 
+  import('@/components/monitoring/ResponseTimeChart').then(mod => ({ default: mod.ResponseTimeChart })), 'ResponseTimeChart'
 );
 
-export const LazyErrorRateChart = lazy(() => 
-  import('@/components/monitoring/ErrorRateChart').then(mod => ({ default: mod.ErrorRateChart }))
+export const LazyErrorRateChart = instrumentedLazy(() => 
+  import('@/components/monitoring/ErrorRateChart').then(mod => ({ default: mod.ErrorRateChart })), 'ErrorRateChart'
 );
 
-export const LazyThroughputChart = lazy(() => 
-  import('@/components/monitoring/ThroughputChart').then(mod => ({ default: mod.ThroughputChart }))
+export const LazyThroughputChart = instrumentedLazy(() => 
+  import('@/components/monitoring/ThroughputChart').then(mod => ({ default: mod.ThroughputChart })), 'ThroughputChart'
 );
 
-export const LazyResourceUsageChart = lazy(() => 
-  import('@/components/monitoring/ResourceUsageChart').then(mod => ({ default: mod.ResourceUsageChart }))
+export const LazyResourceUsageChart = instrumentedLazy(() => 
+  import('@/components/monitoring/ResourceUsageChart').then(mod => ({ default: mod.ResourceUsageChart })), 'ResourceUsageChart'
 );
 
-export const LazyCustomMetricChart = lazy(() => 
-  import('@/components/monitoring/CustomMetricChart').then(mod => ({ default: mod.CustomMetricChart }))
+export const LazyCustomMetricChart = instrumentedLazy(() => 
+  import('@/components/monitoring/CustomMetricChart').then(mod => ({ default: mod.CustomMetricChart })), 'CustomMetricChart'
 );
 
-export const LazyDashboardCharts = lazy(() => 
-  import('@/components/DashboardCharts').then(mod => ({ default: mod.default }))
+export const LazyDashboardCharts = instrumentedLazy(() => 
+  import('@/components/DashboardCharts').then(mod => ({ default: mod.default })), 'DashboardCharts'
 );
 
-export const LazyDeploymentMetrics = lazy(() => 
-  import('@/components/deployment/DeploymentMetrics').then(mod => ({ default: mod.DeploymentMetrics }))
+export const LazyDeploymentMetrics = instrumentedLazy(() => 
+  import('@/components/deployment/DeploymentMetrics').then(mod => ({ default: mod.DeploymentMetrics })), 'DeploymentMetrics'
 );
 
-export const LazyAIUsageDashboard = lazy(() => 
-  import('@/components/AIUsageDashboard').then(mod => ({ default: mod.AIUsageDashboard }))
+export const LazyAIUsageDashboard = instrumentedLazy(() => 
+  import('@/components/AIUsageDashboard').then(mod => ({ default: mod.AIUsageDashboard })), 'AIUsageDashboard'
 );
 
-export const LazyPerformanceDashboard = lazy(() => 
-  import('@/components/monitoring/PerformanceDashboard').then(mod => ({ default: mod.PerformanceDashboard }))
+export const LazyPerformanceDashboard = instrumentedLazy(() => 
+  import('@/components/monitoring/PerformanceDashboard').then(mod => ({ default: mod.PerformanceDashboard })), 'PerformanceDashboard'
 );
 
 interface LazyChartWrapperProps {
@@ -82,9 +83,10 @@ export function LazyChartWrapper({
 export function withLazyChart<P extends Record<string, unknown>>(
   importFn: () => Promise<{ default: ComponentType<P> }>,
   fallbackHeight?: string | number,
-  fallbackWidth?: string | number
+  fallbackWidth?: string | number,
+  moduleName?: string
 ) {
-  const LazyComponent = lazy(importFn);
+  const LazyComponent = instrumentedLazy(importFn, moduleName || 'ChartComponent');
   
   return function LazyChartHOC(props: P) {
     return (

@@ -1,4 +1,4 @@
-import React, { useState, Suspense } from 'react';
+import { useState, Suspense } from 'react';
 import { useParams } from 'wouter';
 import { apiRequest } from '@/lib/queryClient';
 import { ReplitBottomTabs } from '@/components/mobile/ReplitBottomTabs';
@@ -28,9 +28,11 @@ import {
   Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { instrumentedLazy } from '@/utils/instrumented-lazy';
 
-const MobileTerminal = React.lazy(() => 
-  import('@/components/mobile/MobileTerminal').then(module => ({ default: module.MobileTerminal }))
+const MobileTerminal = instrumentedLazy(() => 
+  import('@/components/mobile/MobileTerminal').then(module => ({ default: module.MobileTerminal })),
+  'MobileTerminal'
 );
 
 const TerminalFallback = () => (

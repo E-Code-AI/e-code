@@ -1,8 +1,9 @@
 import React, { Suspense } from 'react';
 import { Loader2 } from 'lucide-react';
+import { instrumentedLazy } from '@/utils/instrumented-lazy';
 
-const ReplitTerminalPanel = React.lazy(() => 
-  import('@/components/editor/ReplitTerminalPanel').then(module => ({ default: module.ReplitTerminalPanel }))
+const ReplitTerminalPanel = instrumentedLazy(() => 
+  import('@/components/editor/ReplitTerminalPanel').then(module => ({ default: module.ReplitTerminalPanel })), 'ReplitTerminalPanel'
 );
 
 const TerminalFallback = () => (

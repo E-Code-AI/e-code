@@ -5,6 +5,7 @@
  */
 
 import React, { useState, useRef, useEffect, useCallback, Suspense } from 'react';
+import { instrumentedLazy } from '@/utils/instrumented-lazy';
 import { useQuery } from '@tanstack/react-query';
 import { LazyMotionDiv, LazyAnimatePresence } from '@/lib/motion';
 import {
@@ -58,12 +59,12 @@ import { ReplitSecretsPanel } from '@/components/editor/ReplitSecretsPanel';
 import { useConnectionStatus } from '@/hooks/use-connection-status';
 import { useProblemsCount } from '@/hooks/use-problems-count';
 
-const MobileTerminal = React.lazy(() => 
-  import('@/components/mobile/MobileTerminal').then(module => ({ default: module.MobileTerminal }))
+const MobileTerminal = instrumentedLazy(() => 
+  import('@/components/mobile/MobileTerminal').then(module => ({ default: module.MobileTerminal })), 'MobileTerminal'
 );
 
-const AutonomousWorkspaceViewer = React.lazy(() => 
-  import('@/components/ide/AutonomousWorkspaceViewer').then(module => ({ default: module.AutonomousWorkspaceViewer }))
+const AutonomousWorkspaceViewer = instrumentedLazy(() => 
+  import('@/components/ide/AutonomousWorkspaceViewer').then(module => ({ default: module.AutonomousWorkspaceViewer })), 'AutonomousWorkspaceViewer'
 );
 
 const TerminalFallback = () => (
