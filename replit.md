@@ -7,7 +7,8 @@ E-Code is an AI-assisted web-based IDE for rapid prototyping, education, and ent
 - **Build:** ✅ Production build successful (15.57MB server bundle)
 - **Security:** SSE CORS hardening across 13 endpoints with server-side 403 rejection
 - **Environment:** All required secrets configured and Zod-validated at startup
-- **E2E Testing:** Core flows verified (homepage, auth, project creation, IDE panels)
+- **E2E Testing:** Fortune 500-grade Playwright config with tiered timeouts (120s critical, 60s navigation, 30s actions), multi-browser coverage (Chrome, Mobile, Tablet), 3 retries in CI
+- **Server Warmup:** Use `npx tsx scripts/warmup-server.ts` to pre-warm server endpoints before E2E tests
 - **Test User:** testuser@test.com / testpass123 (seeded for testing)
 
 ## User Preferences
