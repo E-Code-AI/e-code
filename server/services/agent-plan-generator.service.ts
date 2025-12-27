@@ -198,8 +198,9 @@ Break this down into a step-by-step execution plan. Be specific and actionable.`
   private analyzeDependencies(tasks: Task[]): Map<string, string[]> {
     const graph = new Map<string, string[]>();
     
+    // ✅ FIX (Dec 27, 2025): Default to empty array if dependencies undefined
     tasks.forEach(task => {
-      graph.set(task.id, task.dependencies);
+      graph.set(task.id, task.dependencies || []);
     });
     
     return graph;
@@ -213,7 +214,8 @@ Break this down into a step-by-step execution plan. Be specific and actionable.`
     const visited = new Set<string>();
     
     // Find tasks with no dependencies (entry points)
-    const entryTasks = tasks.filter(task => !task.dependencies.length);
+    // ✅ FIX (Dec 27, 2025): Use optional chaining - AI-generated tasks may omit dependencies
+    const entryTasks = tasks.filter(task => !task.dependencies?.length);
     
     // Simple DFS to find longest path (critical path)
     const findLongestPath = (taskId: string, currentPath: string[]): string[] => {
@@ -226,7 +228,8 @@ Break this down into a step-by-step execution plan. Be specific and actionable.`
       currentPath.push(taskId);
       
       // Find dependent tasks
-      const dependents = tasks.filter(t => t.dependencies.includes(taskId));
+      // ✅ FIX (Dec 27, 2025): Use optional chaining - AI-generated tasks may omit dependencies
+      const dependents = tasks.filter(t => t.dependencies?.includes(taskId));
       
       if (dependents.length === 0) {
         return currentPath;
