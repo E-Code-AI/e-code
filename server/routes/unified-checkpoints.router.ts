@@ -269,34 +269,31 @@ router.post(
 
       const data = validation.data;
 
-      const checkpointData: Record<string, unknown> = {
-        projectId,
-        name: data.name || `Checkpoint ${new Date().toISOString()}`,
-        type: data.type,
-        triggerSource: data.triggerSource || (data.type === 'manual' ? 'user_manual' : 'system'),
-        filesSnapshot: data.filesSnapshot ?? {},
-        changedFiles: data.changedFiles ?? [],
-        includesDatabase: data.includesDatabase ?? false,
-        environment: data.environment ?? 'development',
-        metadata: data.metadata ?? {},
-        createdBy: userId,
-        status: 'pending' as const,
-      };
-      
-      if (data.description) checkpointData.description = data.description;
-      if (data.aiSummary) checkpointData.aiSummary = data.aiSummary;
-      if (data.userPrompt) checkpointData.userPrompt = data.userPrompt;
-      if (data.conversationId) checkpointData.conversationId = data.conversationId;
-      if (data.conversationSnapshot) checkpointData.conversationSnapshot = data.conversationSnapshot;
-      if (data.databaseBranchId) checkpointData.databaseBranchId = data.databaseBranchId;
-      if (data.screenshotUrl) checkpointData.screenshotUrl = data.screenshotUrl;
-      if (data.testResults) checkpointData.testResults = data.testResults;
-      if (data.parentCheckpointId) checkpointData.parentCheckpointId = data.parentCheckpointId;
-      if (data.retainedUntil) checkpointData.retainedUntil = new Date(data.retainedUntil);
-
       const [checkpoint] = await db
         .insert(autoCheckpoints)
-        .values(checkpointData)
+        .values({
+          projectId,
+          name: data.name || `Checkpoint ${new Date().toISOString()}`,
+          type: data.type,
+          triggerSource: data.triggerSource || (data.type === 'manual' ? 'user_manual' : 'system'),
+          filesSnapshot: data.filesSnapshot ?? {},
+          changedFiles: data.changedFiles ?? [],
+          includesDatabase: data.includesDatabase ?? false,
+          environment: data.environment ?? 'development',
+          metadata: data.metadata ?? {},
+          createdBy: userId,
+          status: 'pending',
+          description: data.description ?? null,
+          aiSummary: data.aiSummary ?? null,
+          userPrompt: data.userPrompt ?? null,
+          conversationId: data.conversationId ?? null,
+          conversationSnapshot: data.conversationSnapshot ?? null,
+          databaseBranchId: data.databaseBranchId ?? null,
+          screenshotUrl: data.screenshotUrl ?? null,
+          testResults: data.testResults ?? null,
+          parentCheckpointId: data.parentCheckpointId ?? null,
+          retainedUntil: data.retainedUntil ? new Date(data.retainedUntil) : null,
+        })
         .returning();
 
       logger.info(`Created checkpoint ${checkpoint.id} for project ${projectId}`, {
@@ -474,7 +471,7 @@ router.post(
           restoredDatabase: restoreResult.restoredDatabase,
           restoredConversation: restoreResult.restoredConversation,
           duration: restoreResult.duration,
-          backupCheckpointId: restoreResult.backupCheckpointId,
+          backupCheckpointId: (restoreResult as { backupCheckpointId?: number }).backupCheckpointId,
         },
         errors: restoreResult.errors.length > 0 ? restoreResult.errors : undefined,
       });
