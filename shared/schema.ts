@@ -4321,6 +4321,106 @@ export type InsertMobileBuild = z.infer<typeof insertMobileBuildSchema>;
 export type MobileBuildRequest = z.infer<typeof mobileBuildRequestSchema>;
 
 // ============================================
+// PROJECT WORKFLOWS (Replit-style)
+// ============================================
+
+export const workflowExecutionModeEnum = pgEnum('workflow_execution_mode', ['sequential', 'parallel']);
+export const workflowTaskTypeEnum = pgEnum('workflow_task_type', ['shell', 'packages', 'workflow']);
+export const workflowRunStatusEnum = pgEnum('workflow_run_status', ['pending', 'running', 'success', 'failed', 'cancelled']);
+
+export const projectWorkflows = pgTable('project_workflows', {
+  id: serial('id').primaryKey(),
+  projectId: integer('project_id').references(() => projects.id, { onDelete: 'cascade' }),
+  name: varchar('name', { length: 255 }).notNull(),
+  executionMode: workflowExecutionModeEnum('execution_mode').notNull().default('sequential'),
+  isRunButton: boolean('is_run_button').notNull().default(false),
+  isGenerated: boolean('is_generated').notNull().default(false),
+  isSystem: boolean('is_system').notNull().default(false),
+  enabled: boolean('enabled').notNull().default(true),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => [
+  index('project_workflows_project_id_idx').on(table.projectId),
+  index('project_workflows_is_run_button_idx').on(table.isRunButton),
+]);
+
+export const workflowTasks = pgTable('workflow_tasks', {
+  id: serial('id').primaryKey(),
+  workflowId: integer('workflow_id').notNull().references(() => projectWorkflows.id, { onDelete: 'cascade' }),
+  orderIndex: integer('order_index').notNull().default(0),
+  taskType: workflowTaskTypeEnum('task_type').notNull().default('shell'),
+  // For shell: the command to execute
+  // For packages: 'all' or specific package names
+  // For workflow: the target workflow ID
+  command: text('command'),
+  // For workflow task type: reference to another workflow
+  targetWorkflowId: integer('target_workflow_id').references(() => projectWorkflows.id, { onDelete: 'set null' }),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => [
+  index('workflow_tasks_workflow_id_idx').on(table.workflowId),
+  index('workflow_tasks_order_idx').on(table.orderIndex),
+]);
+
+export const workflowRuns = pgTable('workflow_runs', {
+  id: serial('id').primaryKey(),
+  workflowId: integer('workflow_id').notNull().references(() => projectWorkflows.id, { onDelete: 'cascade' }),
+  status: workflowRunStatusEnum('status').notNull().default('pending'),
+  triggeredBy: varchar('triggered_by', { length: 50 }).notNull().default('manual'),
+  logs: text('logs'),
+  startedAt: timestamp('started_at').defaultNow().notNull(),
+  completedAt: timestamp('completed_at'),
+}, (table) => [
+  index('workflow_runs_workflow_id_idx').on(table.workflowId),
+  index('workflow_runs_status_idx').on(table.status),
+]);
+
+// Zod schemas
+export const insertProjectWorkflowSchema = createInsertSchema(projectWorkflows).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertWorkflowTaskSchema = createInsertSchema(workflowTasks).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertWorkflowRunSchema = createInsertSchema(workflowRuns).omit({
+  id: true,
+  startedAt: true,
+});
+
+// Types
+export type ProjectWorkflow = typeof projectWorkflows.$inferSelect;
+export type InsertProjectWorkflow = z.infer<typeof insertProjectWorkflowSchema>;
+export type WorkflowTask = typeof workflowTasks.$inferSelect;
+export type InsertWorkflowTask = z.infer<typeof insertWorkflowTaskSchema>;
+export type WorkflowRun = typeof workflowRuns.$inferSelect;
+export type InsertWorkflowRun = z.infer<typeof insertWorkflowRunSchema>;
+
+// Full workflow with tasks for API responses
+export const workflowWithTasksSchema = z.object({
+  id: z.number(),
+  projectId: z.number().nullable(),
+  name: z.string(),
+  executionMode: z.enum(['sequential', 'parallel']),
+  isRunButton: z.boolean(),
+  isGenerated: z.boolean(),
+  isSystem: z.boolean(),
+  enabled: z.boolean(),
+  tasks: z.array(z.object({
+    id: z.number(),
+    orderIndex: z.number(),
+    taskType: z.enum(['shell', 'packages', 'workflow']),
+    command: z.string().nullable(),
+    targetWorkflowId: z.number().nullable(),
+  })),
+});
+
+export type WorkflowWithTasks = z.infer<typeof workflowWithTasksSchema>;
+
+// ============================================
 // DRIZZLE ORM RELATIONS
 // ============================================
 

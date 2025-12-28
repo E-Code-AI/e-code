@@ -1,13 +1,14 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Badge } from "@/components/ui/badge";
 import { 
   ArrowLeft,
   Play, 
@@ -17,10 +18,14 @@ import {
   ChevronRight,
   Search,
   Terminal,
-  Settings,
   Trash2,
   ExternalLink,
-  Zap
+  Zap,
+  Package,
+  PlayCircle,
+  GripVertical,
+  Square,
+  X
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -28,120 +33,265 @@ import { queryClient } from "@/lib/queryClient";
 import { ECodeLoading } from "@/components/ECodeLoading";
 import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
-interface WorkflowRun {
-  id: string;
-  status: 'running' | 'success' | 'failed' | 'cancelled';
-  startedAt: string;
-  completedAt?: string;
-  duration?: number;
-  triggeredBy: string;
-  commitHash?: string;
+interface WorkflowTask {
+  id: number;
+  orderIndex: number;
+  taskType: 'shell' | 'packages' | 'workflow';
+  command: string | null;
+  targetWorkflowId: number | null;
 }
 
-interface WorkflowConfig {
-  id: string;
+interface WorkflowWithTasks {
+  id: number;
+  projectId: number | null;
   name: string;
-  description: string;
-  trigger: 'push' | 'pull_request' | 'schedule' | 'manual';
-  schedule?: string;
-  branches?: string[];
+  executionMode: 'sequential' | 'parallel';
+  isRunButton: boolean;
+  isGenerated: boolean;
+  isSystem: boolean;
   enabled: boolean;
-  steps: {
-    name: string;
-    run: string;
-    env?: Record<string, string>;
-  }[];
-  lastRun?: WorkflowRun;
-  runs: number;
-  successRate: number;
-  isAgentWorkflow?: boolean;
+  tasks: WorkflowTask[];
 }
 
 interface WorkflowsProps {
   onBack?: () => void;
   embedded?: boolean;
+  projectId?: number;
 }
 
-export default function Workflows({ onBack, embedded = false }: WorkflowsProps) {
+function SortableTaskItem({ 
+  task, 
+  workflows,
+  onUpdate,
+  onDelete 
+}: { 
+  task: WorkflowTask;
+  workflows: WorkflowWithTasks[];
+  onUpdate: (task: WorkflowTask) => void;
+  onDelete: () => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: task.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  const getTaskIcon = () => {
+    switch (task.taskType) {
+      case 'shell': return <Terminal className="w-4 h-4 text-muted-foreground" />;
+      case 'packages': return <Package className="w-4 h-4 text-muted-foreground" />;
+      case 'workflow': return <PlayCircle className="w-4 h-4 text-muted-foreground" />;
+    }
+  };
+
+  const getTaskLabel = () => {
+    switch (task.taskType) {
+      case 'shell': return 'Execute Shell Command';
+      case 'packages': return 'Install Packages';
+      case 'workflow': return 'Run Workflow';
+    }
+  };
+
+  const getTaskValue = () => {
+    if (task.taskType === 'workflow') {
+      const target = workflows.find(w => w.id === task.targetWorkflowId);
+      return target?.name || 'Select workflow...';
+    }
+    return task.command || '';
+  };
+
+  return (
+    <Collapsible>
+      <div
+        ref={setNodeRef}
+        style={style}
+        className="border rounded-lg bg-background"
+      >
+        <CollapsibleTrigger asChild>
+          <div className="flex items-center gap-2 px-3 py-2.5 cursor-pointer hover:bg-muted/50 transition-colors">
+            <div
+              {...attributes}
+              {...listeners}
+              className="cursor-grab touch-none"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <GripVertical className="w-4 h-4 text-muted-foreground" />
+            </div>
+            {getTaskIcon()}
+            <span className="text-sm flex-1 truncate">{getTaskLabel()}</span>
+            <ChevronDown className="w-4 h-4 text-muted-foreground" />
+          </div>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <div className="px-3 pb-3 pt-1 space-y-3 border-t">
+            {task.taskType === 'workflow' ? (
+              <Select
+                value={task.targetWorkflowId?.toString() || ''}
+                onValueChange={(value) => onUpdate({ ...task, targetWorkflowId: parseInt(value) })}
+              >
+                <SelectTrigger className="h-9" data-testid={`task-workflow-select-${task.id}`}>
+                  <SelectValue placeholder="Select workflow..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {workflows.map((w) => (
+                    <SelectItem key={w.id} value={w.id.toString()}>
+                      {w.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <Input
+                value={task.command || ''}
+                onChange={(e) => onUpdate({ ...task, command: e.target.value })}
+                placeholder={task.taskType === 'shell' ? 'npm run dev' : 'all'}
+                className="h-9 font-mono text-sm"
+                data-testid={`task-command-${task.id}`}
+              />
+            )}
+            <div className="flex justify-end">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-destructive hover:text-destructive h-7 text-xs"
+                onClick={onDelete}
+                data-testid={`delete-task-${task.id}`}
+              >
+                <Trash2 className="w-3 h-3 mr-1" />
+                Remove
+              </Button>
+            </div>
+          </div>
+        </CollapsibleContent>
+      </div>
+      <div className="pl-6 text-xs text-muted-foreground py-1 truncate">
+        {getTaskValue()}
+      </div>
+    </Collapsible>
+  );
+}
+
+export default function Workflows({ onBack, embedded = false, projectId }: WorkflowsProps) {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [agentWorkflowsOpen, setAgentWorkflowsOpen] = useState(true);
-  const [userWorkflowsOpen, setUserWorkflowsOpen] = useState(true);
+  const [expandedWorkflowId, setExpandedWorkflowId] = useState<number | null>(null);
 
   const [newWorkflow, setNewWorkflow] = useState({
     name: '',
-    description: '',
-    trigger: 'manual' as const,
-    schedule: '',
-    branches: ['main'],
-    steps: [{
-      name: 'Run command',
-      run: 'npm run dev'
-    }]
+    executionMode: 'sequential' as 'sequential' | 'parallel',
+    isRunButton: false,
   });
 
-  const { data: workflows = [], isLoading } = useQuery<WorkflowConfig[]>({
-    queryKey: ['/api/workflows'],
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const { data: workflows = [], isLoading } = useQuery<WorkflowWithTasks[]>({
+    queryKey: ['/api/workflows', projectId],
+    queryFn: async () => {
+      const url = projectId ? `/api/workflows?projectId=${projectId}` : '/api/workflows';
+      const res = await fetch(url, { credentials: 'include' });
+      if (!res.ok) throw new Error('Failed to fetch workflows');
+      return res.json();
+    },
   });
 
   const createWorkflowMutation = useMutation({
     mutationFn: async (workflow: typeof newWorkflow) => {
-      const res = await apiRequest('POST', '/api/workflows', workflow);
+      const res = await apiRequest('POST', '/api/workflows', {
+        ...workflow,
+        projectId,
+        tasks: [{ taskType: 'shell', command: 'npm run dev', orderIndex: 0 }],
+      });
       if (!res.ok) throw new Error('Failed to create workflow');
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/workflows'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/workflows', projectId] });
       setCreateDialogOpen(false);
-      toast({
-        title: "Workflow created",
-        description: "Your workflow has been created successfully",
-      });
-      setNewWorkflow({
-        name: '',
-        description: '',
-        trigger: 'manual',
-        schedule: '',
-        branches: ['main'],
-        steps: [{
-          name: 'Run command',
-          run: 'npm run dev'
-        }]
-      });
-    }
+      toast({ title: "Workflow created" });
+      setNewWorkflow({ name: '', executionMode: 'sequential', isRunButton: false });
+    },
   });
 
-  const runWorkflowMutation = useMutation({
-    mutationFn: async (workflowId: string) => {
-      const res = await apiRequest('POST', `/api/workflows/${workflowId}/run`);
-      if (!res.ok) throw new Error('Failed to run workflow');
+  const updateWorkflowMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: Partial<WorkflowWithTasks> }) => {
+      const res = await apiRequest('PATCH', `/api/workflows/${id}`, data);
+      if (!res.ok) throw new Error('Failed to update workflow');
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/workflows'] });
-      toast({
-        title: "Workflow started",
-        description: "The workflow run has been triggered",
-      });
-    }
+      queryClient.invalidateQueries({ queryKey: ['/api/workflows', projectId] });
+    },
   });
 
   const deleteWorkflowMutation = useMutation({
-    mutationFn: async (workflowId: string) => {
+    mutationFn: async (workflowId: number) => {
       const res = await apiRequest('DELETE', `/api/workflows/${workflowId}`);
       if (!res.ok) throw new Error('Failed to delete workflow');
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/workflows'] });
-      toast({
-        title: "Workflow deleted",
-        description: "The workflow has been removed",
-      });
-    }
+      queryClient.invalidateQueries({ queryKey: ['/api/workflows', projectId] });
+      toast({ title: "Workflow deleted" });
+    },
+  });
+
+  const runWorkflowMutation = useMutation({
+    mutationFn: async (workflowId: number) => {
+      const res = await apiRequest('POST', `/api/workflows/${workflowId}/run`);
+      if (!res.ok) throw new Error('Failed to run workflow');
+      return res.json();
+    },
+    onSuccess: (_, workflowId) => {
+      const workflow = workflows.find(w => w.id === workflowId);
+      toast({ title: `Workflow "${workflow?.name}" started` });
+    },
+  });
+
+  const setRunButtonMutation = useMutation({
+    mutationFn: async (workflowId: number) => {
+      const res = await apiRequest('POST', `/api/workflows/${workflowId}/set-run-button`);
+      if (!res.ok) throw new Error('Failed to set run button');
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/workflows', projectId] });
+      toast({ title: "Run button assigned" });
+    },
   });
 
   const handleBack = () => {
@@ -152,13 +302,46 @@ export default function Workflows({ onBack, embedded = false }: WorkflowsProps) 
     }
   };
 
+  const handleAddTask = useCallback((workflow: WorkflowWithTasks, taskType: 'shell' | 'packages' | 'workflow') => {
+    const newTask: WorkflowTask = {
+      id: Date.now(),
+      orderIndex: workflow.tasks.length,
+      taskType,
+      command: taskType === 'packages' ? 'all' : '',
+      targetWorkflowId: null,
+    };
+    updateWorkflowMutation.mutate({
+      id: workflow.id,
+      data: { tasks: [...workflow.tasks, newTask] },
+    });
+  }, [updateWorkflowMutation]);
+
+  const handleUpdateTask = useCallback((workflow: WorkflowWithTasks, updatedTask: WorkflowTask) => {
+    const newTasks = workflow.tasks.map(t => t.id === updatedTask.id ? updatedTask : t);
+    updateWorkflowMutation.mutate({ id: workflow.id, data: { tasks: newTasks } });
+  }, [updateWorkflowMutation]);
+
+  const handleDeleteTask = useCallback((workflow: WorkflowWithTasks, taskId: number) => {
+    const newTasks = workflow.tasks.filter(t => t.id !== taskId);
+    updateWorkflowMutation.mutate({ id: workflow.id, data: { tasks: newTasks } });
+  }, [updateWorkflowMutation]);
+
+  const handleDragEnd = useCallback((workflow: WorkflowWithTasks, event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      const oldIndex = workflow.tasks.findIndex(t => t.id === active.id);
+      const newIndex = workflow.tasks.findIndex(t => t.id === over.id);
+      const newTasks = arrayMove(workflow.tasks, oldIndex, newIndex).map((t, i) => ({ ...t, orderIndex: i }));
+      updateWorkflowMutation.mutate({ id: workflow.id, data: { tasks: newTasks } });
+    }
+  }, [updateWorkflowMutation]);
+
   const filteredWorkflows = workflows.filter(workflow =>
-    workflow.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    workflow.description?.toLowerCase().includes(searchQuery.toLowerCase())
+    workflow.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const agentWorkflows = filteredWorkflows.filter(w => w.isAgentWorkflow);
-  const userWorkflows = filteredWorkflows.filter(w => !w.isAgentWorkflow);
+  const agentWorkflows = filteredWorkflows.filter(w => w.isGenerated);
+  const userWorkflows = filteredWorkflows.filter(w => !w.isGenerated);
 
   if (isLoading) {
     return (
@@ -170,65 +353,181 @@ export default function Workflows({ onBack, embedded = false }: WorkflowsProps) 
     );
   }
 
-  const WorkflowItem = ({ workflow }: { workflow: WorkflowConfig }) => (
-    <div 
-      className="flex items-center justify-between px-4 py-3 hover:bg-muted/50 transition-colors border-b border-border/50 last:border-b-0"
-      data-testid={`workflow-item-${workflow.id}`}
-    >
-      <div className="flex items-center gap-3 flex-1 min-w-0">
-        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-          <Terminal className="w-4 h-4 text-primary" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium truncate">{workflow.name}</p>
-          {workflow.description && (
-            <p className="text-xs text-muted-foreground truncate">{workflow.description}</p>
-          )}
-        </div>
-      </div>
-      <div className="flex items-center gap-1">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
-          onClick={() => runWorkflowMutation.mutate(workflow.id)}
-          disabled={runWorkflowMutation.isPending}
-          data-testid={`run-workflow-${workflow.id}`}
-        >
-          <Play className="w-4 h-4" />
-        </Button>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8" data-testid={`workflow-menu-${workflow.id}`}>
-              <MoreVertical className="w-4 h-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => runWorkflowMutation.mutate(workflow.id)}>
-              <Play className="w-4 h-4 mr-2" />
-              Run
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Settings className="w-4 h-4 mr-2" />
-              Configure
-            </DropdownMenuItem>
-            <DropdownMenuItem 
-              className="text-destructive"
-              onClick={() => deleteWorkflowMutation.mutate(workflow.id)}
+  const WorkflowItem = ({ workflow }: { workflow: WorkflowWithTasks }) => {
+    const isExpanded = expandedWorkflowId === workflow.id;
+
+    return (
+      <Collapsible open={isExpanded} onOpenChange={(open) => setExpandedWorkflowId(open ? workflow.id : null)}>
+        <div className="border-b border-border/50 last:border-b-0">
+          <CollapsibleTrigger asChild>
+            <div 
+              className="flex items-center justify-between px-4 py-3 hover:bg-muted/50 transition-colors cursor-pointer"
+              data-testid={`workflow-item-${workflow.id}`}
             >
-              <Trash2 className="w-4 h-4 mr-2" />
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-    </div>
-  );
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 shrink-0 text-green-600 hover:text-green-700 hover:bg-green-50"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    runWorkflowMutation.mutate(workflow.id);
+                  }}
+                  data-testid={`run-workflow-${workflow.id}`}
+                >
+                  <Play className="w-4 h-4 fill-current" />
+                </Button>
+                <span className="text-sm font-medium truncate">{workflow.name}</span>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {workflow.isRunButton && (
+                    <Badge variant="default" className="bg-green-500 hover:bg-green-600 text-[10px] px-1.5 py-0" data-testid={`badge-run-button-${workflow.id}`}>
+                      Run Button
+                    </Badge>
+                  )}
+                  {workflow.isGenerated && (
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0" data-testid={`badge-generated-${workflow.id}`}>
+                      Generated
+                    </Badge>
+                  )}
+                </div>
+              </div>
+              <ChevronDown className={cn("w-5 h-5 text-muted-foreground transition-transform", isExpanded && "rotate-180")} />
+            </div>
+          </CollapsibleTrigger>
+
+          <CollapsibleContent>
+            <div className="px-4 pb-4 space-y-4 border-t bg-muted/20">
+              {/* Workflow Name */}
+              <div className="pt-4 space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Workflow</Label>
+                <Input
+                  value={workflow.name}
+                  onChange={(e) => updateWorkflowMutation.mutate({ id: workflow.id, data: { name: e.target.value } })}
+                  className="h-9"
+                  data-testid={`workflow-name-${workflow.id}`}
+                />
+              </div>
+
+              {/* Execution Mode */}
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Mode</Label>
+                <ToggleGroup
+                  type="single"
+                  value={workflow.executionMode}
+                  onValueChange={(value) => {
+                    if (value) {
+                      updateWorkflowMutation.mutate({ id: workflow.id, data: { executionMode: value as 'sequential' | 'parallel' } });
+                    }
+                  }}
+                  className="justify-start"
+                >
+                  <ToggleGroupItem value="sequential" className="text-xs px-3 h-8" data-testid={`mode-sequential-${workflow.id}`}>
+                    Sequential
+                  </ToggleGroupItem>
+                  <ToggleGroupItem value="parallel" className="text-xs px-3 h-8" data-testid={`mode-parallel-${workflow.id}`}>
+                    Parallel
+                  </ToggleGroupItem>
+                </ToggleGroup>
+              </div>
+
+              {/* Tasks */}
+              <div className="space-y-2">
+                <Label className="text-xs text-muted-foreground">Tasks</Label>
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={(e) => handleDragEnd(workflow, e)}
+                >
+                  <SortableContext
+                    items={workflow.tasks.map(t => t.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <div className="space-y-1">
+                      {workflow.tasks.sort((a, b) => a.orderIndex - b.orderIndex).map((task) => (
+                        <SortableTaskItem
+                          key={task.id}
+                          task={task}
+                          workflows={workflows}
+                          onUpdate={(t) => handleUpdateTask(workflow, t)}
+                          onDelete={() => handleDeleteTask(workflow, task.id)}
+                        />
+                      ))}
+                    </div>
+                  </SortableContext>
+                </DndContext>
+
+                {/* Add Task Buttons */}
+                <div className="flex flex-wrap gap-2 pt-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-xs h-7"
+                    onClick={() => handleAddTask(workflow, 'shell')}
+                    data-testid={`add-shell-task-${workflow.id}`}
+                  >
+                    <Terminal className="w-3 h-3 mr-1" />
+                    Shell Command
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-xs h-7"
+                    onClick={() => handleAddTask(workflow, 'packages')}
+                    data-testid={`add-packages-task-${workflow.id}`}
+                  >
+                    <Package className="w-3 h-3 mr-1" />
+                    Install Packages
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-xs h-7"
+                    onClick={() => handleAddTask(workflow, 'workflow')}
+                    data-testid={`add-workflow-task-${workflow.id}`}
+                  >
+                    <PlayCircle className="w-3 h-3 mr-1" />
+                    Run Workflow
+                  </Button>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center justify-between pt-2 border-t">
+                {!workflow.isRunButton ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-xs h-7"
+                    onClick={() => setRunButtonMutation.mutate(workflow.id)}
+                    data-testid={`set-run-button-${workflow.id}`}
+                  >
+                    Assign to Run Button
+                  </Button>
+                ) : (
+                  <span className="text-xs text-muted-foreground">Assigned to Run Button</span>
+                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs h-7 text-destructive hover:text-destructive"
+                  onClick={() => deleteWorkflowMutation.mutate(workflow.id)}
+                  data-testid={`delete-workflow-${workflow.id}`}
+                >
+                  <Trash2 className="w-3 h-3 mr-1" />
+                  Delete
+                </Button>
+              </div>
+            </div>
+          </CollapsibleContent>
+        </div>
+      </Collapsible>
+    );
+  };
 
   return (
     <div className={cn("flex flex-col h-full bg-background", !embedded && "min-h-screen")}>
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b">
+      <div className="flex items-center justify-between px-4 py-3 border-b shrink-0">
         <Button 
           variant="ghost" 
           size="icon" 
@@ -253,16 +552,12 @@ export default function Workflows({ onBack, embedded = false }: WorkflowsProps) 
               <Plus className="w-4 h-4 mr-2" />
               New Workflow
             </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Settings className="w-4 h-4 mr-2" />
-              Settings
-            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
 
       {/* Search & New Workflow */}
-      <div className="flex items-center gap-2 px-4 py-3 border-b">
+      <div className="flex items-center gap-2 px-4 py-3 border-b shrink-0">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
@@ -275,20 +570,20 @@ export default function Workflows({ onBack, embedded = false }: WorkflowsProps) 
         </div>
         <Button 
           onClick={() => setCreateDialogOpen(true)}
-          className="bg-blue-500 hover:bg-blue-600 text-white shrink-0"
+          className="bg-green-500 hover:bg-green-600 text-white shrink-0"
           data-testid="new-workflow-button"
         >
           <Plus className="w-4 h-4 mr-1" />
-          New Workflow
+          <span className="hidden sm:inline">New Workflow</span>
         </Button>
       </div>
 
       {/* Learn More Link */}
       <a 
-        href="https://docs.replit.com/replit-workspace/running-code/workflows"
+        href="https://docs.replit.com/replit-workspace/workflows"
         target="_blank"
         rel="noopener noreferrer"
-        className="flex items-center gap-1 px-4 py-3 text-blue-500 hover:text-blue-600 text-sm font-medium border-b"
+        className="flex items-center gap-1 px-4 py-3 text-blue-500 hover:text-blue-600 text-sm font-medium border-b shrink-0"
         data-testid="learn-more-link"
       >
         Learn more about configuring Workflows
@@ -315,7 +610,7 @@ export default function Workflows({ onBack, embedded = false }: WorkflowsProps) 
                 ))}
               </div>
             ) : (
-              <div className="px-4 py-6 text-center text-muted-foreground text-sm">
+              <div className="px-4 py-6 text-center text-muted-foreground text-sm border-t">
                 <Zap className="w-8 h-8 mx-auto mb-2 opacity-50" />
                 <p>No agent workflows yet</p>
                 <p className="text-xs mt-1">Workflows created by AI agents will appear here</p>
@@ -326,14 +621,10 @@ export default function Workflows({ onBack, embedded = false }: WorkflowsProps) 
 
         {/* User Workflows Section */}
         {userWorkflows.length > 0 && (
-          <Collapsible open={userWorkflowsOpen} onOpenChange={setUserWorkflowsOpen}>
+          <Collapsible defaultOpen>
             <CollapsibleTrigger className="flex items-center justify-between w-full px-4 py-3 text-left hover:bg-muted/50 transition-colors border-t">
               <span className="text-sm font-medium">My Workflows</span>
-              {userWorkflowsOpen ? (
-                <ChevronDown className="w-5 h-5 text-muted-foreground" />
-              ) : (
-                <ChevronRight className="w-5 h-5 text-muted-foreground" />
-              )}
+              <ChevronDown className="w-5 h-5 text-muted-foreground" />
             </CollapsibleTrigger>
             <CollapsibleContent>
               <div className="border-t">
@@ -367,7 +658,7 @@ export default function Workflows({ onBack, embedded = false }: WorkflowsProps) 
             </p>
             <Button 
               onClick={() => setCreateDialogOpen(true)}
-              className="bg-blue-500 hover:bg-blue-600 text-white"
+              className="bg-green-500 hover:bg-green-600 text-white"
               data-testid="create-first-workflow"
             >
               <Plus className="w-4 h-4 mr-1" />
@@ -393,61 +684,34 @@ export default function Workflows({ onBack, embedded = false }: WorkflowsProps) 
                 id="name"
                 value={newWorkflow.name}
                 onChange={(e) => setNewWorkflow({ ...newWorkflow, name: e.target.value })}
-                placeholder="Start application"
+                placeholder="My Workflow"
                 data-testid="workflow-name-input"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="description">Description (optional)</Label>
-              <Input
-                id="description"
-                value={newWorkflow.description}
-                onChange={(e) => setNewWorkflow({ ...newWorkflow, description: e.target.value })}
-                placeholder="Describe what this workflow does..."
-                data-testid="workflow-description-input"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="trigger">Trigger</Label>
-              <Select
-                value={newWorkflow.trigger}
-                onValueChange={(value: any) => setNewWorkflow({ ...newWorkflow, trigger: value })}
+              <Label>Execution Mode</Label>
+              <ToggleGroup
+                type="single"
+                value={newWorkflow.executionMode}
+                onValueChange={(value) => {
+                  if (value) {
+                    setNewWorkflow({ ...newWorkflow, executionMode: value as 'sequential' | 'parallel' });
+                  }
+                }}
+                className="justify-start"
               >
-                <SelectTrigger data-testid="workflow-trigger-select">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="manual">Manual</SelectItem>
-                  <SelectItem value="push">On Push</SelectItem>
-                  <SelectItem value="pull_request">On Pull Request</SelectItem>
-                  <SelectItem value="schedule">On Schedule</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            {newWorkflow.trigger === 'schedule' && (
-              <div className="space-y-2">
-                <Label htmlFor="schedule">Cron Schedule</Label>
-                <Input
-                  id="schedule"
-                  value={newWorkflow.schedule}
-                  onChange={(e) => setNewWorkflow({ ...newWorkflow, schedule: e.target.value })}
-                  placeholder="0 2 * * *"
-                />
-              </div>
-            )}
-            <div className="space-y-2">
-              <Label>Command</Label>
-              <Textarea
-                value={newWorkflow.steps[0].run}
-                onChange={(e) => setNewWorkflow({
-                  ...newWorkflow,
-                  steps: [{ ...newWorkflow.steps[0], run: e.target.value }]
-                })}
-                placeholder="npm run dev"
-                rows={4}
-                className="font-mono text-sm"
-                data-testid="workflow-command-input"
-              />
+                <ToggleGroupItem value="sequential" className="text-xs px-3">
+                  Sequential
+                </ToggleGroupItem>
+                <ToggleGroupItem value="parallel" className="text-xs px-3">
+                  Parallel
+                </ToggleGroupItem>
+              </ToggleGroup>
+              <p className="text-xs text-muted-foreground">
+                {newWorkflow.executionMode === 'sequential' 
+                  ? 'Tasks run one after another, stopping if any task fails'
+                  : 'All tasks run at the same time, independently'}
+              </p>
             </div>
           </div>
           <DialogFooter className="flex-col sm:flex-row gap-2">
@@ -461,7 +725,7 @@ export default function Workflows({ onBack, embedded = false }: WorkflowsProps) 
             <Button 
               onClick={() => createWorkflowMutation.mutate(newWorkflow)}
               disabled={!newWorkflow.name || createWorkflowMutation.isPending}
-              className="w-full sm:w-auto bg-blue-500 hover:bg-blue-600 text-white"
+              className="w-full sm:w-auto bg-green-500 hover:bg-green-600 text-white"
               data-testid="create-workflow-submit"
             >
               Create Workflow
