@@ -105,6 +105,26 @@ export async function aiUsageTracker(req: Request, res: Response, next: NextFunc
     return next();
   }
   
+  // ✅ CRITICAL FIX (Dec 28, 2025): Skip rate limiting for non-AI routes
+  // These are conversation management routes that don't make actual AI calls
+  // Note: When middleware is mounted at /api/agent, req.path is the sub-path (e.g., /conversation)
+  // Use req.originalUrl for full path matching
+  const nonAiPathPatterns = [
+    '/conversation',      // Matches /api/agent/conversation
+    '/preferences',       // Matches /api/agent/preferences
+    '/models',            // Matches /api/agent/models
+    '/recommend-model',   // Matches /api/agent/recommend-model
+    '/repo-overview',     // Matches /api/agent/repo-overview
+    '/step-cache',        // Matches /api/agent/step-cache
+  ];
+  
+  const isNonAiRoute = nonAiPathPatterns.some(pattern => 
+    req.path === pattern || req.path.startsWith(pattern + '/')
+  );
+  if (isNonAiRoute) {
+    return next();
+  }
+  
   const user = req.user as any;
   
   if (!user?.id) {
