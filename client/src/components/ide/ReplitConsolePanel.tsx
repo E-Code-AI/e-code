@@ -37,6 +37,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRuntimeLogs, RuntimeLogEntry } from '@/hooks/useRuntimeLogs';
+import { useServerLogs, ServerLogEntry } from '@/hooks/useServerLogs';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
@@ -197,12 +198,53 @@ export function ReplitConsolePanel({
     }
   }, []);
 
+  const handleServerLog = useCallback((log: ServerLogEntry) => {
+    const formatLogMessage = (log: ServerLogEntry): string => {
+      const timestamp = log.timestamp ? new Date(log.timestamp).toISOString().replace('T', ' ').slice(0, 23) : '';
+      const service = log.service ? `[${log.service}]` : '';
+      const level = log.level?.toUpperCase() || 'INFO';
+      return `${timestamp} ${service} ${level.toLowerCase()}: ${log.message}`;
+    };
+
+    const consoleLog: ConsoleLog = {
+      id: `server_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      type: log.level === 'error' ? 'error' : log.level === 'warn' ? 'warn' : log.level === 'debug' ? 'debug' : 'info',
+      message: formatLogMessage(log),
+      timestamp: new Date(log.timestamp || Date.now()),
+    };
+
+    setLogs(prev => {
+      const newLogs = [...prev, consoleLog];
+      if (newLogs.length > 2000) {
+        return newLogs.slice(-2000);
+      }
+      return newLogs;
+    });
+    
+    if (autoScrollRef.current && scrollRef.current) {
+      setTimeout(() => {
+        scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 10);
+    }
+  }, []);
+
   const { isConnected, isComplete, exitCode, connect, disconnect, clearLogs: clearWsLogs } = useRuntimeLogs({
     projectId,
     userId,
     executionId,
     enabled: Boolean(isRunning && executionId),
     onLog: handleLog,
+  });
+
+  const { 
+    isConnected: isServerLogsConnected, 
+    clearLogs: clearServerLogs 
+  } = useServerLogs({
+    projectId,
+    userId,
+    enabled: true,
+    onLog: handleServerLog,
+    autoReconnect: true,
   });
 
   useEffect(() => {
@@ -227,6 +269,7 @@ export function ReplitConsolePanel({
     setLogs([]);
     setLatestRunStartIndex(0);
     clearWsLogs();
+    clearServerLogs();
   };
 
   const clearPastRuns = () => {
@@ -303,14 +346,32 @@ export function ReplitConsolePanel({
             <span className="text-[13px] font-medium">Console</span>
           </div>
           
-          {isRunning && (
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <div className={cn(
-                "w-2 h-2 rounded-full animate-pulse",
-                isConnected ? "bg-green-500" : "bg-yellow-500"
-              )} />
-              <span>{isConnected ? 'Live' : 'Connecting...'}</span>
-            </div>
+          {isServerLogsConnected && (
+            <Badge variant="outline" className="h-5 text-[10px] gap-1 border-blue-500/50 bg-blue-500/10 text-blue-600">
+              <div className="w-1.5 h-1.5 rounded-full animate-pulse bg-blue-500" />
+              Server Live
+            </Badge>
+          )}
+          
+          {isRunning && isConnected && (
+            <Badge variant="outline" className="h-5 text-[10px] gap-1 border-green-500/50 bg-green-500/10 text-green-600">
+              <div className="w-1.5 h-1.5 rounded-full animate-pulse bg-green-500" />
+              Runtime
+            </Badge>
+          )}
+          
+          {isRunning && !isConnected && (
+            <Badge variant="outline" className="h-5 text-[10px] gap-1 border-yellow-500/50 bg-yellow-500/10 text-yellow-600">
+              <div className="w-1.5 h-1.5 rounded-full animate-pulse bg-yellow-500" />
+              Runtime Connecting...
+            </Badge>
+          )}
+          
+          {!isServerLogsConnected && userId && !isRunning && (
+            <Badge variant="outline" className="h-5 text-[10px] gap-1 border-yellow-500/50 bg-yellow-500/10 text-yellow-600">
+              <div className="w-1.5 h-1.5 rounded-full animate-pulse bg-yellow-500" />
+              Connecting...
+            </Badge>
           )}
           
           {isComplete && exitCode !== null && (

@@ -514,6 +514,21 @@ app.get('/api/cors-health', async (_req, res) => {
       markServiceFailed('runtime-logs', String(error));
     }
     
+    // Setup Server Logs WebSocket server for real-time Winston log streaming (Replit-like)
+    registerService('server-logs');
+    try {
+      const { serverLogsService } = await import("./services/ServerLogsService");
+      serverLogsService.setup(httpServer);
+      
+      // Make server logs service available globally
+      (global as any).serverLogsService = serverLogsService;
+      markServiceReady('server-logs');
+      console.log('[ServerLogs] WebSocket server initialized at /api/server/logs/ws');
+    } catch (error) {
+      console.error('[WORKING SERVER] Failed to setup Server Logs WebSocket:', error);
+      markServiceFailed('server-logs', String(error));
+    }
+    
     // Setup Test Runs WebSocket server for real-time test result streaming
     registerService('test-runs');
     try {
