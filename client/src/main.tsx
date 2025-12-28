@@ -9,9 +9,7 @@ const deferredInit = () => {
   import("./utils/dynamic-vh").then(({ setupDynamicVH }) => {
     setupDynamicVH();
   });
-};
-
-const heavyInit = () => {
+  
   import("./lib/telemetry").then(({ initTelemetry }) => {
     initTelemetry({
       enabled: true,
@@ -51,11 +49,9 @@ const heavyInit = () => {
 
 if (typeof window !== 'undefined') {
   if ('requestIdleCallback' in window) {
-    (window as any).requestIdleCallback(deferredInit, { timeout: 1000 });
-    (window as any).requestIdleCallback(heavyInit, { timeout: 5000 });
+    (window as any).requestIdleCallback(deferredInit, { timeout: 3000 });
   } else {
-    requestAnimationFrame(() => setTimeout(deferredInit, 50));
-    requestAnimationFrame(() => setTimeout(heavyInit, 2000));
+    requestAnimationFrame(() => setTimeout(deferredInit, 100));
   }
 }
 

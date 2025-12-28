@@ -17,6 +17,8 @@ import ErrorBoundary from '@/components/ErrorBoundary';
 import { Toaster } from '@/components/ui/toaster';
 import { instrumentedLazy } from '@/utils/instrumented-lazy';
 
+import('@/lib/monaco-config');
+
 const UnifiedIDELayout = instrumentedLazy(
   () => import('@/components/ide/UnifiedIDELayout'),
   'UnifiedIDELayout'
