@@ -1114,11 +1114,11 @@ export function ReplitAgentPanelV3({
     const agentEnabled = urlParams.get('agent') === 'true';
     const hasBootstrapToken = !!urlParams.get('bootstrap');
     
-    // Check session storage for prompt (IDEPage.tsx and MobileIDEView.tsx store bootstrap prompt here)
+    // Check session storage for prompt (IDEPage.tsx stores bootstrap prompt here)
     const promptFromSession = window.sessionStorage.getItem(`agent-prompt-${projectId}`);
     
     // Priority order for prompt sources:
-    // 1. initialPrompt prop (passed from parent component like MobileIDEView)
+    // 1. initialPrompt prop (passed from parent component)
     // 2. URL param (?prompt=...)
     // 3. sessionStorage (bootstrap flow)
     const resolvedPrompt = initialPrompt || promptFromUrl || promptFromSession;
