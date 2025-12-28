@@ -131,11 +131,10 @@ function RateLimitModal({ info, isOpen, countdown, onDismiss }: RateLimitModalPr
   const progressPercent = info.retryAfter > 0 ? ((info.retryAfter - countdown) / info.retryAfter) * 100 : 0;
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onDismiss()} modal={false}>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onDismiss()}>
       <DialogContent 
-        className="sm:max-w-md border-0 shadow-2xl pointer-events-auto"
+        className="sm:max-w-md border-0 shadow-2xl"
         data-testid="rate-limit-modal"
-        onInteractOutside={(e) => e.preventDefault()}
       >
         <button
           onClick={onDismiss}
