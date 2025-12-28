@@ -108,7 +108,6 @@ function getLayoutWrappedComponent(Component: React.ComponentType<any>, layout?:
 
 function AppContent() {
   const { isLoading: authLoading } = useAuth();
-  const [showContent, setShowContent] = useState(false);
 
   useEffect(() => {
     if (import.meta.env.PROD) {
@@ -123,16 +122,6 @@ function AppContent() {
       });
     }
   }, []);
-
-  useEffect(() => {
-    const timer = setTimeout(() => { if (authLoading) setShowContent(true); }, 2000);
-    if (!authLoading) setShowContent(true);
-    return () => clearTimeout(timer);
-  }, [authLoading]);
-
-  if (authLoading && !showContent) {
-    return <ECodeLoading fullScreen size="lg" text="Initializing..." />;
-  }
 
   return (
     <ErrorBoundary>

@@ -5,8 +5,13 @@ import "./critical.css";
 const deferredInit = () => {
   import('./index.css');
   import("./i18n");
-  import("./lib/monaco-config");
   
+  import("./utils/dynamic-vh").then(({ setupDynamicVH }) => {
+    setupDynamicVH();
+  });
+};
+
+const heavyInit = () => {
   import("./lib/telemetry").then(({ initTelemetry }) => {
     initTelemetry({
       enabled: true,
@@ -22,10 +27,6 @@ const deferredInit = () => {
   
   import("./lib/cache-reconciliation").then(({ cacheReconciliation }) => {
     cacheReconciliation.init();
-  });
-  
-  import("./utils/dynamic-vh").then(({ setupDynamicVH }) => {
-    setupDynamicVH();
   });
   
   if (import.meta.env.VITE_SENTRY_DSN) {
@@ -50,9 +51,11 @@ const deferredInit = () => {
 
 if (typeof window !== 'undefined') {
   if ('requestIdleCallback' in window) {
-    (window as any).requestIdleCallback(deferredInit, { timeout: 3000 });
+    (window as any).requestIdleCallback(deferredInit, { timeout: 1000 });
+    (window as any).requestIdleCallback(heavyInit, { timeout: 5000 });
   } else {
-    requestAnimationFrame(() => setTimeout(deferredInit, 100));
+    requestAnimationFrame(() => setTimeout(deferredInit, 50));
+    requestAnimationFrame(() => setTimeout(heavyInit, 2000));
   }
 }
 
