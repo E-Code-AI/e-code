@@ -38,7 +38,6 @@ import {
   Loader2,
   Settings,
   Brain,
-  Globe,
   Zap,
   MoreHorizontal,
   Copy,
@@ -78,7 +77,6 @@ import { useMaxAutonomy } from '@/hooks/useMaxAutonomy';
 import { AgentToolsPanel, type AgentToolsSettings } from './AgentToolsPanel';
 import { ElementEditor, type ElementSelection } from './ElementEditor';
 import { ChatToolbar, ChatToolbarMobile } from './ChatToolbar';
-import { WebSearchToggle, WebSearchBadge } from './WebSearchToggle';
 import { UsageTrackingIcon } from './UsageTrackingIcon';
 import { VideoReplayViewer } from './VideoReplayViewer';
 import { ECodeLogo } from '@/components/ECodeLogo';
@@ -489,13 +487,6 @@ export function ReplitAgentPanelV3({
       enabled: true,
       badge: 'PRO',
       description: 'Deep reasoning with visible thought process'
-    },
-    {
-      id: 'web_search',
-      label: 'Web Search',
-      icon: Globe,
-      enabled: false,
-      description: 'Search the internet for up-to-date information'
     },
     {
       id: 'high_power',
@@ -2103,20 +2094,6 @@ export function ReplitAgentPanelV3({
               </Badge>
             )}
             {/* ✅ Memory Bank is 100% TRANSPARENT - no visible badge like Replit */}
-            {/* Web Search Toggle - Prominent first-class feature (Task 8: Replit Agent 3 parity) */}
-            <WebSearchToggle
-              enabled={agentToolsSettings.webSearch}
-              onToggle={() => handleAgentToolsChange({ ...agentToolsSettings, webSearch: !agentToolsSettings.webSearch })}
-              variant="button"
-              size="sm"
-              showLabel={false}
-            />
-            {/* Web Search Badge - Shows when web search is active */}
-            <LazyAnimatePresence>
-              {agentToolsSettings.webSearch && !isCompactMode && (
-                <WebSearchBadge enabled={agentToolsSettings.webSearch} />
-              )}
-            </LazyAnimatePresence>
             {/* Model chip with dropdown for quick model selection */}
             <DropdownMenu open={isModelSelectorOpen} onOpenChange={setIsModelSelectorOpen}>
               <DropdownMenuTrigger asChild>
