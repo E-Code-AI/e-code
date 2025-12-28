@@ -402,12 +402,12 @@ export function ReplitConsolePanel({
         </div>
       </div>
 
-      <div className="h-9 flex items-center gap-2 px-2 border-b bg-muted/30">
+      <div className="h-9 flex items-center gap-1 sm:gap-2 px-1 sm:px-2 border-b bg-muted/30 overflow-x-auto">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="h-7 text-xs gap-1" data-testid="workflows-dropdown">
+            <Button variant="outline" size="sm" className="h-7 text-xs gap-1 shrink-0" data-testid="workflows-dropdown">
               <Zap className="h-3 w-3" />
-              Workflows
+              <span className="hidden sm:inline">Workflows</span>
               <ChevronDown className="h-3 w-3" />
             </Button>
           </DropdownMenuTrigger>
@@ -462,7 +462,7 @@ export function ReplitConsolePanel({
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 shrink-0">
           <Switch
             id="show-latest"
             checked={showOnlyLatest}
@@ -470,33 +470,34 @@ export function ReplitConsolePanel({
             className="scale-75"
             data-testid="show-latest-toggle"
           />
-          <Label htmlFor="show-latest" className="text-xs text-muted-foreground cursor-pointer">
-            Show Only Latest
+          <Label htmlFor="show-latest" className="text-[10px] sm:text-xs text-muted-foreground cursor-pointer whitespace-nowrap">
+            <span className="hidden sm:inline">Latest Only</span>
+            <span className="sm:hidden">Latest</span>
           </Label>
         </div>
 
-        <div className="flex-1" />
+        <div className="flex-1 min-w-0" />
 
         <Button
           variant="ghost"
-          size="sm"
-          className="h-7 text-xs gap-1"
+          size="icon"
+          className="h-7 w-7 shrink-0"
           onClick={clearPastRuns}
+          title="Clear Past Runs"
           data-testid="clear-past-runs"
         >
-          <Trash2 className="h-3 w-3" />
-          Clear Past Runs
+          <Trash2 className="h-3.5 w-3.5" />
         </Button>
 
         <Button
           variant="ghost"
           size="sm"
-          className="h-7 text-xs gap-1 text-primary"
+          className="h-7 text-xs gap-1 text-primary shrink-0"
           onClick={onAskAgent}
           data-testid="ask-agent"
         >
           <Sparkles className="h-3 w-3" />
-          Ask Agent...
+          <span className="hidden sm:inline">Agent</span>
         </Button>
 
         {hasAnyRunning && (
@@ -659,7 +660,7 @@ export function ReplitConsolePanel({
       )}
 
       <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-        <SheetContent side="bottom" className="h-auto max-h-[50vh]">
+        <SheetContent side="bottom" className="h-auto max-h-[60vh]">
           <SheetHeader className="text-left">
             <SheetTitle className="flex items-center gap-2">
               <Terminal className="h-5 w-5" />
@@ -670,6 +671,65 @@ export function ReplitConsolePanel({
             </SheetDescription>
           </SheetHeader>
           <div className="py-4 space-y-1">
+            <div className="flex items-center justify-between py-3 px-3 rounded-lg hover:bg-muted">
+              <Label htmlFor="mobile-show-latest" className="text-sm cursor-pointer">
+                Show Only Latest Run
+              </Label>
+              <Switch
+                id="mobile-show-latest"
+                checked={showOnlyLatest}
+                onCheckedChange={setShowOnlyLatest}
+                data-testid="mobile-show-latest-toggle"
+              />
+            </div>
+            <Button
+              variant="ghost"
+              className="w-full justify-start gap-3 h-12"
+              onClick={() => {
+                onAskAgent?.();
+                setMobileMenuOpen(false);
+              }}
+              data-testid="mobile-ask-agent"
+            >
+              <Sparkles className="h-5 w-5 text-primary" />
+              <span>Ask Agent</span>
+            </Button>
+            <Button
+              variant="ghost"
+              className="w-full justify-start gap-3 h-12"
+              onClick={() => {
+                clearPastRuns();
+                setMobileMenuOpen(false);
+              }}
+              data-testid="mobile-clear-past-runs"
+            >
+              <Trash2 className="h-5 w-5 text-muted-foreground" />
+              <span>Clear Past Runs</span>
+            </Button>
+            <Button
+              variant="ghost"
+              className="w-full justify-start gap-3 h-12"
+              onClick={() => {
+                copyLogs();
+                setMobileMenuOpen(false);
+              }}
+              data-testid="mobile-copy-logs"
+            >
+              <Copy className="h-5 w-5 text-muted-foreground" />
+              <span>Copy Logs</span>
+            </Button>
+            <Button
+              variant="ghost"
+              className="w-full justify-start gap-3 h-12"
+              onClick={() => {
+                downloadLogs();
+                setMobileMenuOpen(false);
+              }}
+              data-testid="mobile-download-logs"
+            >
+              <Download className="h-5 w-5 text-muted-foreground" />
+              <span>Download Logs</span>
+            </Button>
             <Button
               variant="ghost"
               className="w-full justify-start gap-3 h-12"
@@ -679,8 +739,8 @@ export function ReplitConsolePanel({
               }}
               data-testid="mobile-clear-history"
             >
-              <Trash2 className="h-5 w-5 text-muted-foreground" />
-              <span>Clear History</span>
+              <Trash2 className="h-5 w-5 text-destructive" />
+              <span>Clear All History</span>
             </Button>
             <Button
               variant="ghost"
@@ -692,7 +752,7 @@ export function ReplitConsolePanel({
               data-testid="mobile-close-tab"
             >
               <X className="h-5 w-5 text-muted-foreground" />
-              <span>Close tab</span>
+              <span>Close Tab</span>
             </Button>
           </div>
         </SheetContent>
