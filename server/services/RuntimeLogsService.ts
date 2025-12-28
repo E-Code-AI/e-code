@@ -10,6 +10,7 @@ import { isOriginAllowed } from '../utils/origin-validation';
 import { createLogger } from '../utils/logger';
 import { centralUpgradeDispatcher } from '../websocket/central-upgrade-dispatcher';
 import { markSocketAsHandled } from '../websocket/upgrade-guard';
+import { sessionManager } from '../auth/session-manager';
 
 const logger = createLogger('runtime-logs');
 const rateLimiter = new WebSocketRateLimiter(20, 60000);
@@ -56,11 +57,13 @@ export class RuntimeLogsService {
       try {
         const url = new URL(req.url || '', `http://${req.headers.host}`);
         const projectId = url.searchParams.get('projectId');
-        const userId = url.searchParams.get('userId');
         const executionId = url.searchParams.get('executionId');
+        
+        // Get userId from authenticated session (set during upgrade), NOT from query params
+        const userId = String((req as any).authenticatedUserId || '');
 
         if (!projectId || !userId) {
-          ws.close(1008, 'Missing projectId or userId');
+          ws.close(1008, 'Missing projectId or authenticated userId');
           return;
         }
 
@@ -77,17 +80,17 @@ export class RuntimeLogsService {
   /**
    * Handle WebSocket upgrade requests routed by the central dispatcher
    * Performs validation before completing the handshake
+   * NOTE: Must be synchronous - centralUpgradeDispatcher does not await promises
    */
   private handleRuntimeLogsUpgrade(request: IncomingMessage, socket: Duplex, head: Buffer): void {
     try {
       const url = new URL(request.url || '', `http://${request.headers.host}`);
       const projectId = url.searchParams.get('projectId');
-      const userId = url.searchParams.get('userId');
 
-      // Validate required parameters
-      if (!projectId || !userId) {
-        logger.warn('[RuntimeLogs] Upgrade rejected - missing projectId or userId');
-        this.destroySocketWithError(socket, 400, 'Missing projectId or userId');
+      // Validate required parameters (projectId only - userId comes from session)
+      if (!projectId) {
+        logger.warn('[RuntimeLogs] Upgrade rejected - missing projectId');
+        this.destroySocketWithError(socket, 400, 'Missing projectId');
         return;
       }
 
@@ -108,23 +111,49 @@ export class RuntimeLogsService {
         return;
       }
 
-      // Mark socket as handled to prevent other handlers from interfering
+      // Session-based authentication - get userId from session, not query params
+      const cookieHeader = request.headers.cookie || '';
+      const sessionCookie = this.parseSessionCookie(cookieHeader);
+      
+      if (!sessionCookie) {
+        logger.warn('[RuntimeLogs] Upgrade rejected - no session cookie found');
+        this.destroySocketWithError(socket, 401, 'Session required');
+        return;
+      }
+
+      // Mark socket as handled BEFORE async operations to prevent race conditions
       markSocketAsHandled(request, socket);
 
-      // Authenticate asynchronously, then complete upgrade
-      this.authenticateConnection(request, userId, projectId)
-        .then((authorized) => {
-          if (!authorized) {
-            logger.warn(`[RuntimeLogs] Upgrade rejected - unauthorized user ${userId} for project ${projectId}`);
-            this.destroySocketWithError(socket, 401, 'Unauthorized');
+      // Chain all async operations with .then() - do NOT use async/await
+      sessionManager.getSession(sessionCookie)
+        .then((session) => {
+          if (!session || !session.userId) {
+            logger.warn('[RuntimeLogs] Upgrade rejected - invalid or expired session');
+            this.destroySocketWithError(socket, 401, 'Invalid session');
             return;
           }
 
-          // Complete the WebSocket handshake
-          this.wss!.handleUpgrade(request, socket, head, (ws) => {
-            logger.debug(`[RuntimeLogs] Upgrade complete for project=${projectId}, user=${userId}`);
-            this.wss!.emit('connection', ws, request);
-          });
+          // Get authenticated userId from session (NOT from query params)
+          const authenticatedUserId = session.userId;
+
+          // Store authenticated userId on request for use in connection handler
+          (request as any).authenticatedUserId = authenticatedUserId;
+
+          // Authenticate using session userId (not client-supplied)
+          return this.authenticateConnection(request, authenticatedUserId, projectId)
+            .then((authorized) => {
+              if (!authorized) {
+                logger.warn(`[RuntimeLogs] Upgrade rejected - unauthorized user ${authenticatedUserId} for project ${projectId}`);
+                this.destroySocketWithError(socket, 401, 'Unauthorized');
+                return;
+              }
+
+              // Complete the WebSocket handshake
+              this.wss!.handleUpgrade(request, socket, head, (ws) => {
+                logger.debug(`[RuntimeLogs] Upgrade complete for project=${projectId}, user=${authenticatedUserId}`);
+                this.wss!.emit('connection', ws, request);
+              });
+            });
         })
         .catch((error) => {
           logger.error('[RuntimeLogs] Upgrade authentication error:', error);
@@ -148,6 +177,22 @@ export class RuntimeLogsService {
 
     socket.write(httpResponse);
     socket.destroy();
+  }
+
+  /**
+   * Parse session cookie from cookie header
+   */
+  private parseSessionCookie(cookieHeader: string): string | null {
+    if (!cookieHeader) return null;
+    
+    const cookies = cookieHeader.split(';').map(c => c.trim());
+    for (const cookie of cookies) {
+      if (cookie.startsWith('connect.sid=')) {
+        const value = cookie.substring('connect.sid='.length);
+        return decodeURIComponent(value);
+      }
+    }
+    return null;
   }
 
   private async authenticateConnection(
