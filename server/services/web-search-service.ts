@@ -1,5 +1,6 @@
 // Use native fetch in Node.js 18+
 import { createLogger } from '../utils/logger';
+import { TavilySearchService } from './tavily-search';
 
 const logger = createLogger('web-search');
 
@@ -19,10 +20,15 @@ export interface SearchResponse {
 }
 
 export class WebSearchService {
+  private tavilyService: TavilySearchService;
   private searchEngines = {
     duckduckgo: 'https://api.duckduckgo.com/',
     searx: 'https://searx.be/search'
   };
+
+  constructor() {
+    this.tavilyService = new TavilySearchService();
+  }
 
   async search(query: string, options?: {
     maxResults?: number;
@@ -33,7 +39,22 @@ export class WebSearchService {
     const maxResults = options?.maxResults || 10;
     
     try {
-      // Use DuckDuckGo instant answer API as primary search
+      // Use Tavily as primary search engine (if configured)
+      if (this.tavilyService.isConfigured()) {
+        const tavilyResults = await this.searchTavily(query, maxResults);
+        if (tavilyResults.length > 0) {
+          const searchTime = Date.now() - startTime;
+          logger.info(`Tavily search completed for "${query}" - ${tavilyResults.length} results in ${searchTime}ms`);
+          return {
+            query,
+            results: tavilyResults,
+            totalResults: tavilyResults.length,
+            searchTime
+          };
+        }
+      }
+      
+      // Fallback to DuckDuckGo if Tavily not configured or returns no results
       const results = await this.searchDuckDuckGo(query, maxResults);
       
       // If no results from DuckDuckGo, try alternative sources
@@ -64,6 +85,26 @@ export class WebSearchService {
         totalResults: fallbackResults.length,
         searchTime: Date.now() - startTime
       };
+    }
+  }
+
+  private async searchTavily(query: string, maxResults: number): Promise<SearchResult[]> {
+    try {
+      const tavilyResults = await this.tavilyService.search(query, {
+        maxResults,
+        searchDepth: 'basic'
+      });
+      
+      return tavilyResults.map(result => ({
+        title: result.title,
+        url: result.url,
+        snippet: result.content,
+        source: 'Tavily',
+        publishedDate: new Date().toISOString()
+      }));
+    } catch (error) {
+      logger.error('Tavily search error:', error);
+      return [];
     }
   }
 
