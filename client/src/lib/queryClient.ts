@@ -237,8 +237,8 @@ export const queryClient = new QueryClient({
       queryFn: getQueryFn({ on401: "returnNull" }), // Graceful 401 handling - return null for unauth
       refetchInterval: false,
       refetchOnWindowFocus: false,
-      staleTime: 5 * 60 * 1000, // 5 minutes - data considered fresh
-      gcTime: 10 * 60 * 1000, // 10 minutes - data kept in cache (renamed from cacheTime in v5)
+      staleTime: 10 * 60 * 1000, // 10 minutes - data considered fresh
+      gcTime: 30 * 60 * 1000, // 30 minutes - data kept in cache (renamed from cacheTime in v5)
       retry: (failureCount, error: any) => {
         // Don't retry on 401 Unauthorized - redirect already triggered
         if (error?.status === 401 || error?.message?.includes('401')) return false;
