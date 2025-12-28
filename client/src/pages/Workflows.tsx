@@ -38,6 +38,7 @@ import {
   closestCenter,
   KeyboardSensor,
   PointerSensor,
+  TouchSensor,
   useSensor,
   useSensors,
   DragEndEvent,
@@ -105,9 +106,9 @@ function SortableTaskItem({
 
   const getTaskIcon = () => {
     switch (task.taskType) {
-      case 'shell': return <Terminal className="w-4 h-4 text-muted-foreground" />;
-      case 'packages': return <Package className="w-4 h-4 text-muted-foreground" />;
-      case 'workflow': return <PlayCircle className="w-4 h-4 text-muted-foreground" />;
+      case 'shell': return <Terminal className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />;
+      case 'packages': return <Package className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />;
+      case 'workflow': return <PlayCircle className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />;
     }
   };
 
@@ -135,18 +136,18 @@ function SortableTaskItem({
         className="border rounded-lg bg-background"
       >
         <CollapsibleTrigger asChild>
-          <div className="flex items-center gap-2 px-3 py-2.5 cursor-pointer hover:bg-muted/50 transition-colors">
+          <div className="flex items-center gap-2 sm:gap-3 px-3 py-3 sm:py-2.5 cursor-pointer hover:bg-muted/50 transition-colors min-h-[48px] sm:min-h-[44px]">
             <div
               {...attributes}
               {...listeners}
-              className="cursor-grab touch-none"
+              className="cursor-grab p-2 -m-2 rounded-md hover:bg-muted/80 active:bg-muted touch-manipulation"
               onClick={(e) => e.stopPropagation()}
             >
-              <GripVertical className="w-4 h-4 text-muted-foreground" />
+              <GripVertical className="w-5 h-5 sm:w-4 sm:h-4 text-muted-foreground" />
             </div>
             {getTaskIcon()}
-            <span className="text-sm flex-1 truncate">{getTaskLabel()}</span>
-            <ChevronDown className="w-4 h-4 text-muted-foreground" />
+            <span className="text-sm sm:text-sm flex-1 truncate">{getTaskLabel()}</span>
+            <ChevronDown className="w-5 h-5 sm:w-4 sm:h-4 text-muted-foreground" />
           </div>
         </CollapsibleTrigger>
         <CollapsibleContent>
@@ -156,12 +157,12 @@ function SortableTaskItem({
                 value={task.targetWorkflowId?.toString() || ''}
                 onValueChange={(value) => onUpdate({ ...task, targetWorkflowId: parseInt(value) })}
               >
-                <SelectTrigger className="h-9" data-testid={`task-workflow-select-${task.id}`}>
+                <SelectTrigger className="h-12 sm:h-10 text-base sm:text-sm" data-testid={`task-workflow-select-${task.id}`}>
                   <SelectValue placeholder="Select workflow..." />
                 </SelectTrigger>
                 <SelectContent>
                   {workflows.map((w) => (
-                    <SelectItem key={w.id} value={w.id.toString()}>
+                    <SelectItem key={w.id} value={w.id.toString()} className="min-h-[44px] sm:min-h-[36px]">
                       {w.name}
                     </SelectItem>
                   ))}
@@ -172,7 +173,7 @@ function SortableTaskItem({
                 value={task.command || ''}
                 onChange={(e) => onUpdate({ ...task, command: e.target.value })}
                 placeholder={task.taskType === 'shell' ? 'npm run dev' : 'all'}
-                className="h-9 font-mono text-sm"
+                className="h-12 sm:h-10 font-mono text-base sm:text-sm"
                 data-testid={`task-command-${task.id}`}
               />
             )}
@@ -180,11 +181,11 @@ function SortableTaskItem({
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-destructive hover:text-destructive h-7 text-xs"
+                className="text-destructive hover:text-destructive h-11 sm:h-9 text-sm sm:text-xs px-4 sm:px-3 touch-manipulation"
                 onClick={onDelete}
                 data-testid={`delete-task-${task.id}`}
               >
-                <Trash2 className="w-3 h-3 mr-1" />
+                <Trash2 className="w-4 h-4 sm:w-3 sm:h-3 mr-2 sm:mr-1" />
                 Remove
               </Button>
             </div>
@@ -213,7 +214,12 @@ export default function Workflows({ onBack, embedded = false, projectId }: Workf
   });
 
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 200, tolerance: 5 },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
@@ -361,56 +367,56 @@ export default function Workflows({ onBack, embedded = false, projectId }: Workf
         <div className="border-b border-border/50 last:border-b-0">
           <CollapsibleTrigger asChild>
             <div 
-              className="flex items-center justify-between px-4 py-3 hover:bg-muted/50 transition-colors cursor-pointer"
+              className="flex items-center justify-between px-3 sm:px-4 py-3 sm:py-3 hover:bg-muted/50 transition-colors cursor-pointer min-h-[56px] sm:min-h-[52px]"
               data-testid={`workflow-item-${workflow.id}`}
             >
-              <div className="flex items-center gap-3 flex-1 min-w-0">
+              <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7 shrink-0 text-green-600 hover:text-green-700 hover:bg-green-50"
+                  className="h-11 w-11 sm:h-9 sm:w-9 shrink-0 text-green-600 hover:text-green-700 hover:bg-green-50 touch-manipulation"
                   onClick={(e) => {
                     e.stopPropagation();
                     runWorkflowMutation.mutate(workflow.id);
                   }}
                   data-testid={`run-workflow-${workflow.id}`}
                 >
-                  <Play className="w-4 h-4 fill-current" />
+                  <Play className="w-5 h-5 sm:w-4 sm:h-4 fill-current" />
                 </Button>
                 <span className="text-sm font-medium truncate">{workflow.name}</span>
-                <div className="flex items-center gap-1.5 shrink-0">
+                <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 flex-wrap">
                   {workflow.isRunButton && (
-                    <Badge variant="default" className="bg-green-500 hover:bg-green-600 text-[10px] px-1.5 py-0" data-testid={`badge-run-button-${workflow.id}`}>
+                    <Badge variant="default" className="bg-green-500 hover:bg-green-600 text-[10px] sm:text-[10px] px-1.5 py-0.5 sm:py-0" data-testid={`badge-run-button-${workflow.id}`}>
                       Run Button
                     </Badge>
                   )}
                   {workflow.isGenerated && (
-                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0" data-testid={`badge-generated-${workflow.id}`}>
+                    <Badge variant="secondary" className="text-[10px] sm:text-[10px] px-1.5 py-0.5 sm:py-0" data-testid={`badge-generated-${workflow.id}`}>
                       Generated
                     </Badge>
                   )}
                 </div>
               </div>
-              <ChevronDown className={cn("w-5 h-5 text-muted-foreground transition-transform", isExpanded && "rotate-180")} />
+              <ChevronDown className={cn("w-6 h-6 sm:w-5 sm:h-5 text-muted-foreground transition-transform ml-2", isExpanded && "rotate-180")} />
             </div>
           </CollapsibleTrigger>
 
           <CollapsibleContent>
             <div className="px-4 pb-4 space-y-4 border-t bg-muted/20">
               {/* Workflow Name */}
-              <div className="pt-4 space-y-1.5">
-                <Label className="text-xs text-muted-foreground">Workflow</Label>
+              <div className="pt-4 space-y-2 sm:space-y-1.5">
+                <Label className="text-sm sm:text-xs text-muted-foreground">Workflow</Label>
                 <Input
                   value={workflow.name}
                   onChange={(e) => updateWorkflowMutation.mutate({ id: workflow.id, data: { name: e.target.value } })}
-                  className="h-9"
+                  className="h-12 sm:h-10 text-base sm:text-sm"
                   data-testid={`workflow-name-${workflow.id}`}
                 />
               </div>
 
               {/* Execution Mode */}
-              <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">Mode</Label>
+              <div className="space-y-2 sm:space-y-1.5">
+                <Label className="text-sm sm:text-xs text-muted-foreground">Mode</Label>
                 <ToggleGroup
                   type="single"
                   value={workflow.executionMode}
@@ -421,10 +427,10 @@ export default function Workflows({ onBack, embedded = false, projectId }: Workf
                   }}
                   className="justify-start"
                 >
-                  <ToggleGroupItem value="sequential" className="text-xs px-3 h-8" data-testid={`mode-sequential-${workflow.id}`}>
+                  <ToggleGroupItem value="sequential" className="text-sm sm:text-xs px-4 sm:px-3 h-11 sm:h-9 touch-manipulation" data-testid={`mode-sequential-${workflow.id}`}>
                     Sequential
                   </ToggleGroupItem>
-                  <ToggleGroupItem value="parallel" className="text-xs px-3 h-8" data-testid={`mode-parallel-${workflow.id}`}>
+                  <ToggleGroupItem value="parallel" className="text-sm sm:text-xs px-4 sm:px-3 h-11 sm:h-9 touch-manipulation" data-testid={`mode-parallel-${workflow.id}`}>
                     Parallel
                   </ToggleGroupItem>
                 </ToggleGroup>
@@ -457,63 +463,63 @@ export default function Workflows({ onBack, embedded = false, projectId }: Workf
                 </DndContext>
 
                 {/* Add Task Buttons */}
-                <div className="flex flex-wrap gap-2 pt-2">
+                <div className="flex flex-col sm:flex-row flex-wrap gap-2 pt-2">
                   <Button
                     variant="outline"
                     size="sm"
-                    className="text-xs h-7"
+                    className="text-sm sm:text-xs h-11 sm:h-9 px-4 sm:px-3 justify-start sm:justify-center touch-manipulation"
                     onClick={() => handleAddTask(workflow, 'shell')}
                     data-testid={`add-shell-task-${workflow.id}`}
                   >
-                    <Terminal className="w-3 h-3 mr-1" />
+                    <Terminal className="w-4 h-4 sm:w-3 sm:h-3 mr-2 sm:mr-1" />
                     Shell Command
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
-                    className="text-xs h-7"
+                    className="text-sm sm:text-xs h-11 sm:h-9 px-4 sm:px-3 justify-start sm:justify-center touch-manipulation"
                     onClick={() => handleAddTask(workflow, 'packages')}
                     data-testid={`add-packages-task-${workflow.id}`}
                   >
-                    <Package className="w-3 h-3 mr-1" />
+                    <Package className="w-4 h-4 sm:w-3 sm:h-3 mr-2 sm:mr-1" />
                     Install Packages
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
-                    className="text-xs h-7"
+                    className="text-sm sm:text-xs h-11 sm:h-9 px-4 sm:px-3 justify-start sm:justify-center touch-manipulation"
                     onClick={() => handleAddTask(workflow, 'workflow')}
                     data-testid={`add-workflow-task-${workflow.id}`}
                   >
-                    <PlayCircle className="w-3 h-3 mr-1" />
+                    <PlayCircle className="w-4 h-4 sm:w-3 sm:h-3 mr-2 sm:mr-1" />
                     Run Workflow
                   </Button>
                 </div>
               </div>
 
               {/* Actions */}
-              <div className="flex items-center justify-between pt-2 border-t">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 pt-3 border-t">
                 {!workflow.isRunButton ? (
                   <Button
                     variant="outline"
                     size="sm"
-                    className="text-xs h-7"
+                    className="text-sm sm:text-xs h-11 sm:h-9 px-4 sm:px-3 touch-manipulation"
                     onClick={() => setRunButtonMutation.mutate(workflow.id)}
                     data-testid={`set-run-button-${workflow.id}`}
                   >
                     Assign to Run Button
                   </Button>
                 ) : (
-                  <span className="text-xs text-muted-foreground">Assigned to Run Button</span>
+                  <span className="text-sm sm:text-xs text-muted-foreground py-2">Assigned to Run Button</span>
                 )}
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-xs h-7 text-destructive hover:text-destructive"
+                  className="text-sm sm:text-xs h-11 sm:h-9 px-4 sm:px-3 text-destructive hover:text-destructive touch-manipulation"
                   onClick={() => deleteWorkflowMutation.mutate(workflow.id)}
                   data-testid={`delete-workflow-${workflow.id}`}
                 >
-                  <Trash2 className="w-3 h-3 mr-1" />
+                  <Trash2 className="w-4 h-4 sm:w-3 sm:h-3 mr-2 sm:mr-1" />
                   Delete
                 </Button>
               </div>
@@ -527,28 +533,28 @@ export default function Workflows({ onBack, embedded = false, projectId }: Workf
   return (
     <div className={cn("flex flex-col h-full bg-background", !embedded && "min-h-screen")}>
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b shrink-0">
+      <div className="flex items-center justify-between px-3 sm:px-4 py-2 sm:py-3 border-b shrink-0 min-h-[56px] sm:min-h-[52px]">
         <Button 
           variant="ghost" 
           size="icon" 
           onClick={handleBack}
-          className="h-9 w-9"
+          className="h-11 w-11 sm:h-10 sm:w-10 touch-manipulation"
           data-testid="back-button"
         >
-          <ArrowLeft className="w-5 h-5" />
+          <ArrowLeft className="w-6 h-6 sm:w-5 sm:h-5" />
         </Button>
         <div className="flex items-center gap-2">
-          <Play className="w-5 h-5 text-primary" />
-          <span className="font-semibold text-base">Workflows</span>
+          <Play className="w-5 h-5 sm:w-5 sm:h-5 text-primary" />
+          <span className="font-semibold text-base sm:text-base">Workflows</span>
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-9 w-9" data-testid="header-menu">
-              <MoreVertical className="w-5 h-5" />
+            <Button variant="ghost" size="icon" className="h-11 w-11 sm:h-10 sm:w-10 touch-manipulation" data-testid="header-menu">
+              <MoreVertical className="w-6 h-6 sm:w-5 sm:h-5" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => setCreateDialogOpen(true)}>
+            <DropdownMenuItem onClick={() => setCreateDialogOpen(true)} className="min-h-[44px] text-sm">
               <Plus className="w-4 h-4 mr-2" />
               New Workflow
             </DropdownMenuItem>
@@ -557,24 +563,24 @@ export default function Workflows({ onBack, embedded = false, projectId }: Workf
       </div>
 
       {/* Search & New Workflow */}
-      <div className="flex items-center gap-2 px-4 py-3 border-b shrink-0">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 px-3 sm:px-4 py-3 border-b shrink-0">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 sm:w-4 sm:h-4 text-muted-foreground" />
           <Input
             placeholder="Search for a workflow..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 h-10"
+            className="pl-10 sm:pl-9 h-12 sm:h-10 text-base sm:text-sm"
             data-testid="search-workflows"
           />
         </div>
         <Button 
           onClick={() => setCreateDialogOpen(true)}
-          className="bg-green-500 hover:bg-green-600 text-white shrink-0"
+          className="bg-green-500 hover:bg-green-600 text-white shrink-0 h-12 sm:h-10 text-base sm:text-sm px-4 touch-manipulation"
           data-testid="new-workflow-button"
         >
-          <Plus className="w-4 h-4 mr-1" />
-          <span className="hidden sm:inline">New Workflow</span>
+          <Plus className="w-5 h-5 sm:w-4 sm:h-4 mr-2 sm:mr-1" />
+          <span>New Workflow</span>
         </Button>
       </div>
 
@@ -583,23 +589,23 @@ export default function Workflows({ onBack, embedded = false, projectId }: Workf
         href="https://docs.replit.com/replit-workspace/workflows"
         target="_blank"
         rel="noopener noreferrer"
-        className="flex items-center gap-1 px-4 py-3 text-blue-500 hover:text-blue-600 text-sm font-medium border-b shrink-0"
+        className="flex items-center gap-2 sm:gap-1 px-3 sm:px-4 py-4 sm:py-3 text-blue-500 hover:text-blue-600 text-base sm:text-sm font-medium border-b shrink-0 min-h-[52px] sm:min-h-[44px] touch-manipulation"
         data-testid="learn-more-link"
       >
         Learn more about configuring Workflows
-        <ExternalLink className="w-3 h-3" />
+        <ExternalLink className="w-4 h-4 sm:w-3 sm:h-3" />
       </a>
 
       {/* Scrollable Content */}
       <div className="flex-1 overflow-y-auto">
         {/* Agent Workflows Section */}
         <Collapsible open={agentWorkflowsOpen} onOpenChange={setAgentWorkflowsOpen}>
-          <CollapsibleTrigger className="flex items-center justify-between w-full px-4 py-3 text-left hover:bg-muted/50 transition-colors">
-            <span className="text-sm font-medium">Agent Workflows</span>
+          <CollapsibleTrigger className="flex items-center justify-between w-full px-3 sm:px-4 py-4 sm:py-3 text-left hover:bg-muted/50 transition-colors min-h-[52px] sm:min-h-[44px] touch-manipulation">
+            <span className="text-base sm:text-sm font-medium">Agent Workflows</span>
             {agentWorkflowsOpen ? (
-              <ChevronDown className="w-5 h-5 text-muted-foreground" />
+              <ChevronDown className="w-6 h-6 sm:w-5 sm:h-5 text-muted-foreground" />
             ) : (
-              <ChevronRight className="w-5 h-5 text-muted-foreground" />
+              <ChevronRight className="w-6 h-6 sm:w-5 sm:h-5 text-muted-foreground" />
             )}
           </CollapsibleTrigger>
           <CollapsibleContent>
@@ -622,9 +628,9 @@ export default function Workflows({ onBack, embedded = false, projectId }: Workf
         {/* User Workflows Section */}
         {userWorkflows.length > 0 && (
           <Collapsible defaultOpen>
-            <CollapsibleTrigger className="flex items-center justify-between w-full px-4 py-3 text-left hover:bg-muted/50 transition-colors border-t">
-              <span className="text-sm font-medium">My Workflows</span>
-              <ChevronDown className="w-5 h-5 text-muted-foreground" />
+            <CollapsibleTrigger className="flex items-center justify-between w-full px-3 sm:px-4 py-4 sm:py-3 text-left hover:bg-muted/50 transition-colors border-t min-h-[52px] sm:min-h-[44px] touch-manipulation">
+              <span className="text-base sm:text-sm font-medium">My Workflows</span>
+              <ChevronDown className="w-6 h-6 sm:w-5 sm:h-5 text-muted-foreground" />
             </CollapsibleTrigger>
             <CollapsibleContent>
               <div className="border-t">
@@ -652,16 +658,16 @@ export default function Workflows({ onBack, embedded = false, projectId }: Workf
             <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
               <Play className="w-8 h-8 text-primary" />
             </div>
-            <h3 className="text-base font-medium mb-1">No workflows yet</h3>
-            <p className="text-sm text-muted-foreground mb-4">
+            <h3 className="text-lg sm:text-base font-medium mb-1">No workflows yet</h3>
+            <p className="text-base sm:text-sm text-muted-foreground mb-4">
               Create your first workflow to automate tasks
             </p>
             <Button 
               onClick={() => setCreateDialogOpen(true)}
-              className="bg-green-500 hover:bg-green-600 text-white"
+              className="bg-green-500 hover:bg-green-600 text-white h-12 sm:h-10 text-base sm:text-sm px-6 sm:px-4 touch-manipulation"
               data-testid="create-first-workflow"
             >
-              <Plus className="w-4 h-4 mr-1" />
+              <Plus className="w-5 h-5 sm:w-4 sm:h-4 mr-2 sm:mr-1" />
               New Workflow
             </Button>
           </div>
@@ -678,18 +684,19 @@ export default function Workflows({ onBack, embedded = false, projectId }: Workf
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Workflow Name</Label>
+            <div className="space-y-3 sm:space-y-2">
+              <Label htmlFor="name" className="text-base sm:text-sm">Workflow Name</Label>
               <Input
                 id="name"
                 value={newWorkflow.name}
                 onChange={(e) => setNewWorkflow({ ...newWorkflow, name: e.target.value })}
                 placeholder="My Workflow"
+                className="h-12 sm:h-10 text-base sm:text-sm"
                 data-testid="workflow-name-input"
               />
             </div>
-            <div className="space-y-2">
-              <Label>Execution Mode</Label>
+            <div className="space-y-3 sm:space-y-2">
+              <Label className="text-base sm:text-sm">Execution Mode</Label>
               <ToggleGroup
                 type="single"
                 value={newWorkflow.executionMode}
@@ -700,32 +707,32 @@ export default function Workflows({ onBack, embedded = false, projectId }: Workf
                 }}
                 className="justify-start"
               >
-                <ToggleGroupItem value="sequential" className="text-xs px-3">
+                <ToggleGroupItem value="sequential" className="text-sm sm:text-xs px-4 sm:px-3 h-11 sm:h-9 touch-manipulation">
                   Sequential
                 </ToggleGroupItem>
-                <ToggleGroupItem value="parallel" className="text-xs px-3">
+                <ToggleGroupItem value="parallel" className="text-sm sm:text-xs px-4 sm:px-3 h-11 sm:h-9 touch-manipulation">
                   Parallel
                 </ToggleGroupItem>
               </ToggleGroup>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm sm:text-xs text-muted-foreground">
                 {newWorkflow.executionMode === 'sequential' 
                   ? 'Tasks run one after another, stopping if any task fails'
                   : 'All tasks run at the same time, independently'}
               </p>
             </div>
           </div>
-          <DialogFooter className="flex-col sm:flex-row gap-2">
+          <DialogFooter className="flex-col sm:flex-row gap-3 sm:gap-2">
             <Button 
               variant="outline" 
               onClick={() => setCreateDialogOpen(false)}
-              className="w-full sm:w-auto"
+              className="w-full sm:w-auto h-12 sm:h-10 text-base sm:text-sm touch-manipulation"
             >
               Cancel
             </Button>
             <Button 
               onClick={() => createWorkflowMutation.mutate(newWorkflow)}
               disabled={!newWorkflow.name || createWorkflowMutation.isPending}
-              className="w-full sm:w-auto bg-green-500 hover:bg-green-600 text-white"
+              className="w-full sm:w-auto bg-green-500 hover:bg-green-600 text-white h-12 sm:h-10 text-base sm:text-sm touch-manipulation"
               data-testid="create-workflow-submit"
             >
               Create Workflow
