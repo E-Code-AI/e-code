@@ -1,7 +1,9 @@
-# Exclude parent workspace directories
+# Exclude EVERYTHING from parent workspace
+../**
 ../*
-.git
-.git/**
+../.*
+
+# Exclude all hidden directories
 .local
 .local/**
 .cache
@@ -10,6 +12,10 @@
 .npm/**
 .pnpm-store
 .pnpm-store/**
+.git
+.git/**
+.replit
+.config
 
 # Exclude workspace root folders (relative to mobile/)
 ../client
@@ -18,6 +24,12 @@
 ../desktop
 ../node_modules
 ../.local
+../attached_assets
+../backups
+../scripts
+../tests
+../dist
+../build
 
 # Development files
 node_modules

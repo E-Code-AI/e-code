@@ -145,6 +145,7 @@
     "dotenv": "^17.2.1",
     "drizzle-orm": "^0.44.6",
     "drizzle-zod": "^0.7.0",
+    "eas-cli": "^16.28.0",
     "embla-carousel-react": "^8.6.0",
     "execa": "^9.6.0",
     "expo-background-fetch": "^14.0.9",

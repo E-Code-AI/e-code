@@ -26,7 +26,8 @@
         "simulator": false
       },
       "android": {
-        "buildType": "apk"
+        "buildType": "apk",
+        "withoutCredentials": true
       },
       "channel": "preview",
       "env": {
