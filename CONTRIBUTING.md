@@ -101,6 +101,20 @@ docs(api): update endpoint documentation
 - Use explicit return types for public functions
 - Avoid `any` - use `unknown` or proper types
 
+### ESLint Configuration
+
+The project uses ESLint with TypeScript and React plugins. Configuration is in `.eslintrc.cjs`:
+
+```bash
+npm run lint        # Check for linting errors
+npm run lint:fix    # Auto-fix linting errors
+```
+
+Key rules enforced:
+- No unused variables or imports
+- Consistent React hooks usage
+- TypeScript strict type checking
+
 ### React
 
 - All React hooks must be called before any early returns
@@ -120,12 +134,23 @@ docs(api): update endpoint documentation
 - Use environment variables for configuration
 - Validate all user input on both client and server
 
+### Performance Guidelines
+
+- Use `instrumentedLazy()` instead of `React.lazy()` for pages (adds retry logic for Vite HMR failures)
+- Wrap development-only console.log statements with `if (import.meta.env.DEV)`
+- Use TanStack Query for data fetching and caching
+- Implement proper loading states for async operations
+- Compress images and use appropriate formats (WebP, SVG)
+- Minimize bundle size by avoiding unnecessary dependencies
+
 ## Testing
+
+All code changes must pass tests before merging.
 
 ### Running Tests
 
 ```bash
-# Run all tests
+# Run all tests (required before PR)
 npm test
 
 # Run specific test file
@@ -133,6 +158,9 @@ npm test -- client/src/__tests__/components.test.tsx
 
 # Run with coverage
 npm test -- --coverage
+
+# Run E2E tests with Playwright
+npx playwright test
 ```
 
 ### Writing Tests
@@ -141,6 +169,7 @@ npm test -- --coverage
 - Use descriptive test names
 - Test both success and error cases
 - Mock external dependencies
+- Always import and test actual production code, not mock implementations
 
 ## Mobile Development
 
