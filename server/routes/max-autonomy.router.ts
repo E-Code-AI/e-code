@@ -10,6 +10,8 @@
 
 import { Router, Request, Response, NextFunction } from 'express';
 import { maxAutonomyService } from '../services/max-autonomy-service';
+import { delegationManager } from '../services/delegation-manager.service';
+import { orchestratorMetrics } from '../services/orchestrator-metrics.service';
 import { ensureAuthenticated } from '../middleware/auth';
 import { createLogger } from '../utils/logger';
 import { db } from '../db';
@@ -20,6 +22,38 @@ import type { RiskThreshold } from '@shared/schema';
 const router = Router();
 const logger = createLogger('MaxAutonomyRouter');
 
+/**
+ * GET /api/autonomy/orchestrator/health
+ * Public endpoint - returns provider health status and orchestrator metrics
+ * ✅ No auth required - this is read-only health/metrics data
+ */
+router.get('/orchestrator/health', async (req: Request, res: Response) => {
+  try {
+    const providerHealth = delegationManager.getProviderHealth();
+    const healthStatus = orchestratorMetrics.getHealthStatus();
+    
+    res.json({
+      success: true,
+      providers: providerHealth,
+      tiers: {
+        fast: { threshold: 3, description: 'Simple tasks (complexity < 3)' },
+        balanced: { threshold: 7, description: 'Moderate tasks (complexity 3-7)' },
+        quality: { threshold: 10, description: 'Complex tasks (complexity > 7)' }
+      },
+      globalStats: {
+        totalTasks: healthStatus.totalSamples,
+        successRate: healthStatus.avgAccuracy,
+        uniqueTaskTypes: healthStatus.uniqueTaskTypes,
+        bufferSize: healthStatus.bufferSize
+      }
+    });
+  } catch (error: any) {
+    logger.error('Error fetching orchestrator health:', error);
+    res.status(500).json({ error: 'Failed to fetch orchestrator health' });
+  }
+});
+
+// All other routes require authentication
 router.use(ensureAuthenticated);
 
 async function ensureSessionOwnership(req: Request, res: Response, next: NextFunction) {

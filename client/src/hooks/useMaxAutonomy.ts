@@ -44,6 +44,15 @@ export interface MaxAutonomyTask {
   errorMessage: string | null;
 }
 
+export interface CurrentTaskDelegation {
+  tier: 'fast' | 'balanced' | 'quality';
+  model: string;
+  provider: string;
+  reason?: string;
+  taskComplexity?: number;
+  estimatedTokens?: number;
+}
+
 export interface SessionProgress {
   sessionId: string;
   status: SessionStatus;
@@ -63,8 +72,12 @@ export interface SessionProgress {
   totalCostUsd: string;
   elapsedTimeMs: number;
   estimatedRemainingMs: number;
+  etaConfidence: number;
+  etaBasedOnSamples: number;
   startedAt: string | null;
   pausedAt: string | null;
+  // Orchestrator delegation info for current task
+  currentTaskDelegation?: CurrentTaskDelegation;
 }
 
 export interface StartSessionParams {

@@ -43,6 +43,15 @@ export interface MaxAutonomySessionOptions {
   riskThreshold?: RiskThreshold;
 }
 
+export interface CurrentTaskDelegation {
+  tier: 'fast' | 'balanced' | 'quality';
+  model: string;
+  provider: string;
+  reason?: string;
+  taskComplexity?: number;
+  estimatedTokens?: number;
+}
+
 export interface SessionProgress {
   sessionId: string;
   status: string;
@@ -66,6 +75,8 @@ export interface SessionProgress {
   etaBasedOnSamples: number;
   startedAt: Date | null;
   pausedAt: Date | null;
+  // Orchestrator delegation info for current/last task
+  currentTaskDelegation?: CurrentTaskDelegation;
 }
 
 export interface TaskQueueItem {
@@ -851,6 +862,23 @@ class MaxAutonomyService extends EventEmitter {
       rawEstimatedRemainingMs
     );
     
+    // Get delegation info from executor if session is active
+    let currentTaskDelegation: CurrentTaskDelegation | undefined;
+    const activeSession = this.activeSessions.get(sessionId);
+    if (activeSession?.executor) {
+      const delegationInfo = activeSession.executor.getCurrentDelegationInfo();
+      if (delegationInfo) {
+        currentTaskDelegation = {
+          tier: delegationInfo.tier,
+          model: delegationInfo.model,
+          provider: delegationInfo.provider,
+          reason: delegationInfo.reason,
+          taskComplexity: delegationInfo.taskComplexity,
+          estimatedTokens: delegationInfo.estimatedTokens
+        };
+      }
+    }
+    
     return {
       sessionId: session.id,
       status: session.status,
@@ -873,7 +901,8 @@ class MaxAutonomyService extends EventEmitter {
       etaConfidence: etaInfo.confidence,
       etaBasedOnSamples: etaInfo.basedOnSamples,
       startedAt: session.startedAt,
-      pausedAt: session.pausedAt
+      pausedAt: session.pausedAt,
+      currentTaskDelegation
     };
   }
   

@@ -300,23 +300,35 @@ export function MiniProgressIndicator({
   completed, 
   total, 
   eta,
+  etaConfidence,
   className 
 }: { 
   completed: number; 
   total: number; 
   eta?: number;
+  etaConfidence?: number;
   className?: string;
 }) {
   const progress = total > 0 ? (completed / total) * 100 : 0;
+  const confidenceInfo = etaConfidence !== undefined ? getConfidenceLabel(etaConfidence) : null;
   
   return (
-    <div className={cn("flex items-center gap-2", className)}>
+    <div className={cn("flex items-center gap-2", className)} data-testid="mini-progress-indicator">
       <div className="flex-1 min-w-[60px]">
-        <Progress value={progress} className="h-1.5" />
+        <Progress value={progress} className="h-1.5" data-testid="progress-mini" />
       </div>
       <span className="text-xs text-muted-foreground tabular-nums whitespace-nowrap">
         {completed}/{total}
-        {eta && eta > 0 && ` · ${formatTime(eta)}`}
+        {eta && eta > 0 && (
+          <>
+            {' · '}{formatTime(eta)}
+            {confidenceInfo && (
+              <span className={cn("ml-1", confidenceInfo.color)} data-testid="text-eta-confidence">
+                ({confidenceInfo.label})
+              </span>
+            )}
+          </>
+        )}
       </span>
     </div>
   );
