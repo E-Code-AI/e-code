@@ -10,6 +10,7 @@ export type Environment = 'development' | 'staging' | 'production';
  */
 export interface AppConfig {
   apiBaseUrl: string;
+  wsUrl: string;
   environment: Environment;
   isProduction: boolean;
   isDevelopment: boolean;
@@ -106,6 +107,17 @@ function getApiBaseUrl(): string {
 }
 
 /**
+ * Get the WebSocket URL derived from the API URL
+ */
+function getWsUrl(apiUrl: string): string {
+  // If API URL is https://e-code.ai/api, WS URL should be wss://e-code.ai
+  // If API URL is http://localhost:5000/api, WS URL should be ws://localhost:5000
+  const wsProtocol = apiUrl.startsWith('https') ? 'wss' : 'ws';
+  const host = apiUrl.replace(/^https?:\/\//, '').split('/')[0];
+  return `${wsProtocol}://${host}`;
+}
+
+/**
  * Check if a URL points to localhost
  */
 function isLocalhostUrl(url: string): boolean {
@@ -128,18 +140,21 @@ function isLocalhostUrl(url: string): boolean {
 function createConfig(): AppConfig {
   const environment = detectEnvironment();
   const apiBaseUrl = getApiBaseUrl();
+  const wsUrl = getWsUrl(apiBaseUrl);
   
   // Log configuration in development for debugging
   if (__DEV__) {
     console.log('[Mobile Config]', {
       environment,
       apiBaseUrl,
+      wsUrl,
       expoConfig: Constants.expoConfig?.extra
     });
   }
   
   return {
     apiBaseUrl,
+    wsUrl,
     environment,
     isProduction: environment === 'production',
     isDevelopment: environment === 'development',
@@ -158,6 +173,7 @@ export const config: AppConfig = createConfig();
  * @deprecated Use config.apiBaseUrl instead
  */
 export const API_BASE_URL: string = config.apiBaseUrl;
+export const WS_URL: string = config.wsUrl;
 
 /**
  * Get the current configuration
