@@ -12,6 +12,14 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 
+export interface CurrentTaskDelegation {
+  tier: 'fast' | 'balanced' | 'quality';
+  model: string;
+  provider: string;
+  reason?: string;
+  taskComplexity?: number;
+}
+
 export interface SessionProgressData {
   sessionId: string;
   status: 'pending' | 'running' | 'paused' | 'completed' | 'failed' | 'cancelled';
@@ -35,6 +43,7 @@ export interface SessionProgressData {
   etaBasedOnSamples: number;
   startedAt: string | null;
   pausedAt: string | null;
+  currentTaskDelegation?: CurrentTaskDelegation;
 }
 
 interface OrchestratorProgressProps {
