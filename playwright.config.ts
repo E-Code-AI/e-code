@@ -123,18 +123,29 @@ export default defineConfig({
         // Fortune 500-Grade: Slow motion for debugging complex flows
         launchOptions: {
           slowMo: process.env.SLOWMO ? parseInt(process.env.SLOWMO) : 0,
+          executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium',
         },
       },
     },
     // Mobile: iPhone (responsive testing)
     {
       name: 'mobile-chrome',
-      use: { ...devices['Pixel 5'] },
+      use: { 
+        ...devices['Pixel 5'],
+        launchOptions: {
+          executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium',
+        },
+      },
     },
     // Tablet: iPad (enterprise dashboard testing)
     {
       name: 'tablet',
-      use: { ...devices['iPad Pro 11'] },
+      use: { 
+        ...devices['iPad Pro 11'],
+        launchOptions: {
+          executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium',
+        },
+      },
     },
   ],
 
