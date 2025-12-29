@@ -57,6 +57,15 @@ jobs:
         working-directory: mobile
         run: yarn install
 
+      - name: Verify yarn.lock exists
+        working-directory: mobile
+        run: |
+          if [ ! -f "yarn.lock" ] || [ ! -s "yarn.lock" ]; then
+            echo "::error::yarn.lock is missing or empty. Please run 'yarn install' locally in the mobile/ directory and commit yarn.lock before pushing."
+            exit 1
+          fi
+          echo "yarn.lock verified"
+
       - name: Build Android APK
         working-directory: mobile
         run: |
@@ -109,6 +118,15 @@ jobs:
       - name: Install dependencies
         working-directory: mobile
         run: yarn install
+
+      - name: Verify yarn.lock exists
+        working-directory: mobile
+        run: |
+          if [ ! -f "yarn.lock" ] || [ ! -s "yarn.lock" ]; then
+            echo "::error::yarn.lock is missing or empty. Please run 'yarn install' locally in the mobile/ directory and commit yarn.lock before pushing."
+            exit 1
+          fi
+          echo "yarn.lock verified"
 
       - name: Build iOS
         working-directory: mobile
