@@ -158,6 +158,7 @@
     "framer-motion": "^11.13.1",
     "fuse.js": "^7.1.0",
     "glob": "^11.0.3",
+    "google-auth-library": "^10.5.0",
     "groq-sdk": "^0.34.0",
     "helmet": "^8.1.0",
     "http-proxy-middleware": "^3.0.5",

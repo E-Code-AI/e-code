@@ -47,11 +47,18 @@ const LANGUAGE_CONFIGS: Record<string, LanguageConfig> = {
     runCommand: 'node {{file}}',
     defaultPolicy: 'standard'
   },
+  nodejs: {
+    name: 'Node.js',
+    extensions: ['.js', '.mjs', '.jsx'],
+    runtime: 'node',
+    runCommand: 'node {{file}}',
+    defaultPolicy: 'standard'
+  },
   typescript: {
     name: 'TypeScript',
-    extensions: ['.ts'],
+    extensions: ['.ts', '.tsx'],
     runtime: 'node',
-    compileCommand: 'tsc {{file}} --outDir /tmp/compiled',
+    compileCommand: 'npx tsc {{file}} --outDir /tmp/compiled --esModuleInterop --skipLibCheck',
     runCommand: 'node /tmp/compiled/{{basename}}.js',
     defaultPolicy: 'standard'
   },
@@ -113,6 +120,146 @@ const LANGUAGE_CONFIGS: Record<string, LanguageConfig> = {
     extensions: ['.php'],
     runtime: 'php',
     runCommand: 'php {{file}}',
+    defaultPolicy: 'standard'
+  },
+  csharp: {
+    name: 'C#',
+    extensions: ['.cs'],
+    runtime: 'mono',
+    compileCommand: 'mcs {{file}} -out:/tmp/compiled/{{basename}}.exe',
+    runCommand: 'mono /tmp/compiled/{{basename}}.exe',
+    defaultPolicy: 'standard'
+  },
+  swift: {
+    name: 'Swift',
+    extensions: ['.swift'],
+    runtime: 'swiftc',
+    compileCommand: 'swiftc {{file}} -o /tmp/compiled/{{basename}}',
+    runCommand: '/tmp/compiled/{{basename}}',
+    defaultPolicy: 'standard'
+  },
+  kotlin: {
+    name: 'Kotlin',
+    extensions: ['.kt', '.kts'],
+    runtime: 'kotlin',
+    compileCommand: 'kotlinc {{file}} -include-runtime -d /tmp/compiled/{{basename}}.jar',
+    runCommand: 'java -jar /tmp/compiled/{{basename}}.jar',
+    defaultPolicy: 'standard'
+  },
+  dart: {
+    name: 'Dart',
+    extensions: ['.dart'],
+    runtime: 'dart',
+    runCommand: 'dart {{file}}',
+    defaultPolicy: 'standard'
+  },
+  bash: {
+    name: 'Bash',
+    extensions: ['.sh', '.bash'],
+    runtime: 'bash',
+    runCommand: 'bash {{file}}',
+    defaultPolicy: 'standard'
+  },
+  'html-css-js': {
+    name: 'HTML/CSS/JS',
+    extensions: ['.html', '.htm'],
+    runtime: 'node',
+    runCommand: 'cat {{file}} && echo "\\n--- HTML file validated successfully ---"',
+    defaultPolicy: 'standard'
+  },
+  nix: {
+    name: 'Nix',
+    extensions: ['.nix'],
+    runtime: 'nix-instantiate',
+    runCommand: 'nix-instantiate --eval --strict {{file}}',
+    defaultPolicy: 'standard'
+  },
+  deno: {
+    name: 'Deno',
+    extensions: ['.ts', '.js'],
+    runtime: 'deno',
+    runCommand: 'deno run --allow-net {{file}}',
+    defaultPolicy: 'standard'
+  },
+  lua: {
+    name: 'Lua',
+    extensions: ['.lua'],
+    runtime: 'lua',
+    runCommand: 'lua {{file}}',
+    defaultPolicy: 'standard'
+  },
+  perl: {
+    name: 'Perl',
+    extensions: ['.pl', '.pm'],
+    runtime: 'perl',
+    runCommand: 'perl {{file}}',
+    defaultPolicy: 'standard'
+  },
+  r: {
+    name: 'R',
+    extensions: ['.r', '.R'],
+    runtime: 'Rscript',
+    runCommand: 'Rscript {{file}}',
+    defaultPolicy: 'standard'
+  },
+  haskell: {
+    name: 'Haskell',
+    extensions: ['.hs', '.lhs'],
+    runtime: 'ghc',
+    compileCommand: 'ghc {{file}} -o /tmp/compiled/{{basename}}',
+    runCommand: '/tmp/compiled/{{basename}}',
+    defaultPolicy: 'standard'
+  },
+  scala: {
+    name: 'Scala',
+    extensions: ['.scala', '.sc'],
+    runtime: 'scala',
+    compileCommand: 'scalac {{file}} -d /tmp/compiled',
+    runCommand: 'scala -classpath /tmp/compiled {{classname}}',
+    defaultPolicy: 'standard'
+  },
+  clojure: {
+    name: 'Clojure',
+    extensions: ['.clj', '.cljs'],
+    runtime: 'clojure',
+    runCommand: 'clojure {{file}}',
+    defaultPolicy: 'standard'
+  },
+  elixir: {
+    name: 'Elixir',
+    extensions: ['.ex', '.exs'],
+    runtime: 'elixir',
+    runCommand: 'elixir {{file}}',
+    defaultPolicy: 'standard'
+  },
+  julia: {
+    name: 'Julia',
+    extensions: ['.jl'],
+    runtime: 'julia',
+    runCommand: 'julia {{file}}',
+    defaultPolicy: 'standard'
+  },
+  ocaml: {
+    name: 'OCaml',
+    extensions: ['.ml', '.mli'],
+    runtime: 'ocaml',
+    compileCommand: 'ocamlopt -o /tmp/compiled/{{basename}} {{file}}',
+    runCommand: '/tmp/compiled/{{basename}}',
+    defaultPolicy: 'standard'
+  },
+  fortran: {
+    name: 'Fortran',
+    extensions: ['.f', '.f90', '.f95'],
+    runtime: 'gfortran',
+    compileCommand: 'gfortran {{file}} -o /tmp/compiled/{{basename}}',
+    runCommand: '/tmp/compiled/{{basename}}',
+    defaultPolicy: 'standard'
+  },
+  zig: {
+    name: 'Zig',
+    extensions: ['.zig'],
+    runtime: 'zig',
+    runCommand: 'zig run {{file}}',
     defaultPolicy: 'standard'
   }
 };

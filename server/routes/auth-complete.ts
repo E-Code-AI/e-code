@@ -6,7 +6,7 @@ import { hashPassword, comparePasswords } from '../auth.js';
 import { generateEmailVerificationToken, generatePasswordResetToken } from '../utils/auth-utils.js';
 import { sendVerificationEmail, sendPasswordResetEmail } from '../utils/email-utils.js';
 import { sendAdminAlertEmail } from '../utils/gandi-email.js';
-// Note: Google OAuth removed - google-auth-library package not installed for Replit Reserved VM deployment
+import { OAuth2Client } from 'google-auth-library';
 import { Octokit } from '@octokit/rest';
 
 const router = Router();
@@ -37,8 +37,14 @@ const verifyEmailSchema = z.object({
   token: z.string()
 });
 
-// Google OAuth removed for Replit Reserved VM deployment - use Replit Auth or other OAuth providers instead
-const googleClient = null;
+// Google OAuth - requires GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET environment variables
+const googleClient = process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+  ? new OAuth2Client(
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_CLIENT_SECRET,
+      `${process.env.APP_URL || 'http://localhost:5000'}/api/auth/google/callback`
+    )
+  : null;
 
 // User Registration
 router.post('/register', async (req, res) => {
@@ -189,12 +195,12 @@ router.post('/reset-password', async (req, res) => {
 // Google OAuth
 router.get('/google', (req, res) => {
   if (!googleClient) {
-    return res.status(501).json({ error: 'Google OAuth not configured' });
+    return res.status(501).json({ error: 'Google OAuth not configured. Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET.' });
   }
   
   const authUrl = googleClient.generateAuthUrl({
     access_type: 'offline',
-    scope: ['profile', 'email']
+    scope: ['openid', 'profile', 'email']
   });
   
   res.redirect(authUrl);
@@ -207,20 +213,62 @@ router.get('/google/callback', async (req, res) => {
     }
     
     const { code } = req.query;
+    if (!code) {
+      throw new Error('No authorization code received');
+    }
+    
     const { tokens } = await googleClient.getToken(code as string);
     googleClient.setCredentials(tokens);
     
-    // Get user info
-    const ticket = await googleClient.verifyIdToken({
-      idToken: tokens.id_token!,
-      audience: process.env.GOOGLE_CLIENT_ID!
-    });
+    let googleId: string;
+    let email: string;
+    let name: string;
+    let picture: string | undefined;
     
-    const payload = ticket.getPayload()!;
-    const googleId = payload.sub;
-    const email = payload.email!;
-    const name = payload.name || email.split('@')[0];
-    const picture = payload.picture;
+    // Try to get user info from id_token if available (preferred)
+    if (tokens.id_token) {
+      const ticket = await googleClient.verifyIdToken({
+        idToken: tokens.id_token,
+        audience: process.env.GOOGLE_CLIENT_ID!
+      });
+      
+      const payload = ticket.getPayload();
+      if (!payload) {
+        throw new Error('Failed to verify ID token');
+      }
+      
+      googleId = payload.sub;
+      email = payload.email!;
+      name = payload.name || email.split('@')[0];
+      picture = payload.picture;
+    } else {
+      // Fallback: fetch user info from Google userinfo API
+      const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: {
+          'Authorization': `Bearer ${tokens.access_token}`
+        }
+      });
+      
+      if (!userInfoResponse.ok) {
+        throw new Error('Failed to fetch user info from Google');
+      }
+      
+      const userInfo = await userInfoResponse.json() as {
+        sub: string;
+        email: string;
+        name?: string;
+        picture?: string;
+      };
+      
+      googleId = userInfo.sub;
+      email = userInfo.email;
+      name = userInfo.name || email.split('@')[0];
+      picture = userInfo.picture;
+    }
+    
+    if (!email) {
+      throw new Error('No email address found in Google account');
+    }
     
     // Find or create user
     let user = await storage.getUserByEmail(email);
@@ -228,7 +276,7 @@ router.get('/google/callback', async (req, res) => {
       user = await storage.createUser({
         username: `google_${googleId}`,
         email,
-        password: randomBytes(32).toString('hex'), // Random password for OAuth users
+        password: randomBytes(32).toString('hex'),
         displayName: name,
         avatarUrl: picture || null,
         bio: null
@@ -238,6 +286,7 @@ router.get('/google/callback', async (req, res) => {
     // Log the user in
     req.login(user, (err) => {
       if (err) {
+        console.error('Google OAuth login error:', err);
         return res.redirect('/login?error=oauth_failed');
       }
       res.redirect('/dashboard');
