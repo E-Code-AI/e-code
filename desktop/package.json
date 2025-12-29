@@ -20,7 +20,9 @@
     "pack": "electron-builder --dir",
     "postinstall": "electron-builder install-app-deps",
     "clean": "rimraf dist renderer",
-    "prepare-renderer": "node scripts/prepare-renderer.js"
+    "prepare-renderer": "node scripts/prepare-renderer.js",
+    "verify": "node scripts/verify-build.js",
+    "verify:quick": "node scripts/verify-build.js --quick"
   },
   "build": {
     "appId": "com.ecode.desktop",

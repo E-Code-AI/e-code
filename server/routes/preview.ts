@@ -1,6 +1,194 @@
 import { Router } from 'express';
 import { storage } from '../storage';
 import { ensureAuthenticated } from '../middleware/auth';
+import { previewEvents } from '../preview/preview-websocket';
+
+// Hot-reload script to inject into HTML files
+// This connects to the preview WebSocket and reloads when file changes are detected
+function getHotReloadScript(projectId: string): string {
+  return `
+    <script data-hot-reload="true">
+      (function() {
+        // Hot-reload WebSocket connection for live preview
+        const projectId = '${projectId}';
+        let ws = null;
+        let reconnectAttempts = 0;
+        const maxReconnectAttempts = 10;
+        const reconnectDelay = 2000;
+        
+        function connect() {
+          const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+          const wsUrl = protocol + '//' + window.location.host + '/ws/preview';
+          
+          try {
+            ws = new WebSocket(wsUrl);
+            
+            ws.onopen = function() {
+              console.log('[Hot-Reload] Connected to preview server');
+              reconnectAttempts = 0;
+              // Subscribe to this project's updates
+              ws.send(JSON.stringify({ type: 'subscribe', projectId: parseInt(projectId) }));
+            };
+            
+            ws.onmessage = function(event) {
+              try {
+                const data = JSON.parse(event.data);
+                
+                if (data.type === 'preview:file-change') {
+                  console.log('[Hot-Reload] File changed:', data.filePath);
+                  
+                  // Check if it's a CSS file - we can hot-swap CSS without full reload
+                  if (data.filePath && data.filePath.endsWith('.css')) {
+                    hotSwapCSS(data.filePath);
+                  } else {
+                    // For HTML/JS changes, do a full reload with cache-busting
+                    console.log('[Hot-Reload] Reloading page...');
+                    var url = new URL(window.location.href);
+                    url.searchParams.set('_t', Date.now().toString());
+                    window.location.href = url.toString();
+                  }
+                } else if (data.type === 'preview:rebuild') {
+                  console.log('[Hot-Reload] Rebuild triggered, reloading...');
+                  var url = new URL(window.location.href);
+                  url.searchParams.set('_t', Date.now().toString());
+                  window.location.href = url.toString();
+                } else if (data.type === 'ping') {
+                  ws.send(JSON.stringify({ type: 'pong' }));
+                }
+              } catch (e) {
+                console.error('[Hot-Reload] Message parse error:', e);
+              }
+            };
+            
+            ws.onclose = function() {
+              console.log('[Hot-Reload] Connection closed');
+              attemptReconnect();
+            };
+            
+            ws.onerror = function(error) {
+              console.error('[Hot-Reload] WebSocket error:', error);
+            };
+          } catch (e) {
+            console.error('[Hot-Reload] Failed to create WebSocket:', e);
+            attemptReconnect();
+          }
+        }
+        
+        function attemptReconnect() {
+          if (reconnectAttempts < maxReconnectAttempts) {
+            reconnectAttempts++;
+            console.log('[Hot-Reload] Reconnecting in ' + reconnectDelay + 'ms (attempt ' + reconnectAttempts + ')');
+            setTimeout(connect, reconnectDelay);
+          } else {
+            console.log('[Hot-Reload] Max reconnection attempts reached');
+          }
+        }
+        
+        function hotSwapCSS(cssPath) {
+          // Find all link elements and update matching CSS files
+          const links = document.querySelectorAll('link[rel="stylesheet"]');
+          links.forEach(function(link) {
+            const href = link.getAttribute('href');
+            if (href && (href.includes(cssPath) || cssPath.includes(href.split('?')[0]))) {
+              // Add cache-busting timestamp
+              const newHref = href.split('?')[0] + '?_t=' + Date.now();
+              link.setAttribute('href', newHref);
+              console.log('[Hot-Reload] CSS hot-swapped:', newHref);
+            }
+          });
+          
+          // Also handle inline style elements if needed
+          const styles = document.querySelectorAll('style[data-file]');
+          styles.forEach(function(style) {
+            const filePath = style.getAttribute('data-file');
+            if (filePath && filePath.includes(cssPath)) {
+              // For inline styles, we need a full reload
+              window.location.reload();
+            }
+          });
+        }
+        
+        // Connect when DOM is ready
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', connect);
+        } else {
+          connect();
+        }
+      })();
+    </script>`;
+}
+
+// Rewrite root-absolute asset paths in HTML to use project-relative URLs
+// This transforms /path/to/asset → /api/preview/projects/${projectId}/preview/path/to/asset
+// Only rewrites paths that start with "/" (root-absolute), not:
+// - Relative paths like "./style.css" or "style.css"
+// - External URLs like "https://cdn.example.com/"
+// - Data URIs like "data:image/png;base64,..."
+// - Protocol-relative URLs like "//cdn.example.com/"
+function rewriteAssetPaths(html: string, projectId: string): string {
+  const basePrefix = `/api/preview/projects/${projectId}/preview`;
+  
+  // Pattern to match href="/path" or src="/path" attributes (root-absolute paths)
+  // Captures: (1) attribute prefix with quote, (2) the path after leading slash
+  // Excludes paths that start with //, http, https, data:, or are already rewritten
+  const attrPattern = /((?:href|src|action|poster|data)\s*=\s*["'])\/(?!\/|api\/preview)([^"']*)/gi;
+  
+  // Pattern to match url(/path) in CSS (inline styles or style tags)
+  // Captures: (1) url( with optional quote, (2) the path after leading slash
+  const cssUrlPattern = /(url\s*\(\s*["']?)\/(?!\/|api\/preview)([^"'\)]*)/gi;
+  
+  // Pattern to match srcset attribute values with root-absolute paths
+  const srcsetPattern = /(srcset\s*=\s*["'])([^"']+)(["'])/gi;
+  
+  let result = html;
+  
+  // Rewrite href, src, action, poster, data attributes with root-absolute paths
+  // Example: href="/style.css" → href="/api/preview/projects/123/preview/style.css"
+  result = result.replace(attrPattern, (match, prefix, path) => {
+    return `${prefix}${basePrefix}/${path}`;
+  });
+  
+  // Rewrite CSS url() with root-absolute paths
+  // Example: url(/fonts/font.woff) → url(/api/preview/projects/123/preview/fonts/font.woff)
+  result = result.replace(cssUrlPattern, (match, urlStart, path) => {
+    return `${urlStart}${basePrefix}/${path}`;
+  });
+  
+  // Rewrite srcset attribute (contains multiple paths with sizes)
+  result = result.replace(srcsetPattern, (match, prefix, srcsetValue, suffix) => {
+    const rewrittenValue = srcsetValue.replace(/(\s|^)\/(?!\/|api\/preview)([^\s,]+)/g, (m: string, space: string, path: string) => {
+      return `${space}${basePrefix}/${path}`;
+    });
+    return `${prefix}${rewrittenValue}${suffix}`;
+  });
+  
+  return result;
+}
+
+// Helper to inject hot-reload script into HTML content and rewrite asset paths
+// NOTE: We do NOT inject a <base> tag because:
+// 1. It breaks asset resolution when paths conflict with explicit route handlers (status/start/stop)
+// 2. Instead, we rewrite root-absolute paths to use project-relative URLs
+function injectPreviewScripts(content: string, projectId: string): string {
+  const hotReload = getHotReloadScript(projectId);
+  
+  // First, rewrite asset paths BEFORE injecting hot-reload script
+  // This ensures the hot-reload script URLs are not affected
+  let modifiedContent = rewriteAssetPaths(content, projectId);
+  
+  // Insert hot-reload script after <head> tag
+  if (/<head>/i.test(modifiedContent)) {
+    return modifiedContent.replace(/<head>/i, `<head>\n    ${hotReload}`);
+  }
+  
+  // If no <head> tag, try inserting after <html> tag
+  if (/<html/i.test(modifiedContent)) {
+    return modifiedContent.replace(/<html([^>]*)>/i, `<html$1>\n  <head>\n    ${hotReload}\n  </head>`);
+  }
+  
+  // Last resort: prepend the scripts
+  return `<head>\n    ${hotReload}\n  </head>\n${modifiedContent}`;
+}
 
 // Middleware to ensure user has access to project
 const ensureProjectAccess = async (req: any, res: any, next: any) => {
@@ -147,46 +335,88 @@ router.get('/projects/:id/preview', (req, res) => {
   res.redirect(301, `/api/preview/projects/${req.params.id}/preview/`);
 });
 
+// Helper to find a file by path in the files array
+function findFileByPath(files: any[], requestedPath: string): any | null {
+  const normalizedPath = requestedPath.startsWith('/') ? requestedPath.slice(1) : requestedPath;
+  
+  return files.find(f => {
+    if (f.isDirectory) return false;
+    const filePath = f.path?.startsWith('/') ? f.path.slice(1) : f.path;
+    return filePath === normalizedPath || f.name === normalizedPath;
+  }) || null;
+}
+
+// Helper to find index.html in a directory
+function findIndexInDirectory(files: any[], dirPath: string): any | null {
+  const normalizedDir = dirPath.startsWith('/') ? dirPath.slice(1) : dirPath;
+  const indexPath = normalizedDir ? `${normalizedDir}/index.html` : 'index.html';
+  
+  return files.find(f => {
+    if (f.isDirectory) return false;
+    const filePath = f.path?.startsWith('/') ? f.path.slice(1) : f.path;
+    return filePath === indexPath;
+  }) || null;
+}
+
+// Helper to set cache control headers for all preview responses
+function setCacheHeaders(res: any): void {
+  res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+}
+
 // Live preview for HTML/CSS/JS projects - root path (serves index.html)
+// Supports ?file=path/to/file.html query param for specific file selection
 // Note: This route handles /api/preview/projects/:id/preview/
 router.get('/projects/:id/preview/', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
   try {
     const projectId = req.params.id;
     
+    // Add cache-control headers to prevent stale content
+    setCacheHeaders(res);
+    
     // Get all project files
     const files = await storage.getFilesByProject(projectId);
     
-    // Find index.html as default
-    const indexFile = files.find(f => f.name === 'index.html' && !f.isDirectory);
-    if (indexFile) {
-      // Handle empty or existing content
-      const content = indexFile.content ?? '';
+    // Check for ?file= query parameter for specific file selection
+    const fileParam = req.query.file as string | undefined;
+    if (fileParam) {
+      const requestedFile = findFileByPath(files, fileParam);
+      if (requestedFile) {
+        const content = requestedFile.content ?? '';
+        if (fileParam.endsWith('.html')) {
+          const modifiedContent = content ? injectPreviewScripts(content, projectId) : '';
+          res.type('html').send(modifiedContent);
+        } else {
+          const ext = path.extname(fileParam).toLowerCase();
+          switch (ext) {
+            case '.css': res.type('text/css'); break;
+            case '.js': res.type('application/javascript'); break;
+            case '.json': res.type('application/json'); break;
+            default: res.type('text/plain');
+          }
+          res.send(content);
+        }
+        return;
+      }
+      return res.status(404).send(`File not found: ${fileParam}`);
+    }
+    
+    // Find root index.html by path (not just name) to avoid matching nested index.html
+    const rootIndexFile = findFileByPath(files, 'index.html');
+    if (rootIndexFile) {
+      const content = rootIndexFile.content ?? '';
       if (!content) {
-        // Empty file, just serve it as-is
         res.type('html').send('');
         return;
       }
-      const modifiedContent = content.replace(
-        /<head>/i,
-        `<head>
-        <base href="/api/preview/projects/${projectId}/preview/">
-        <script>
-          // Handle relative imports for JS modules
-          const originalFetch = window.fetch;
-          window.fetch = function(url, ...args) {
-            if (typeof url === 'string' && !url.startsWith('http') && !url.startsWith('/api')) {
-              url = '/api/preview/projects/${projectId}/preview/' + url;
-            }
-            return originalFetch(url, ...args);
-          };
-        </script>`
-      );
+      const modifiedContent = injectPreviewScripts(content, projectId);
       res.type('html').send(modifiedContent);
       return;
     }
     
-    // No index.html found, return 404
-    return res.status(404).send('No index.html found in project');
+    // No root index.html found, return 404
+    return res.status(404).send('No index.html found in project root');
   } catch (error) {
     console.error('Error serving preview root:', error);
     res.status(500).send('Failed to serve preview');
@@ -303,26 +533,54 @@ router.post('/projects/:id/preview/switch-port', ensureAuthenticated, ensureProj
 
 // Live preview for HTML/CSS/JS projects - specific files
 // IMPORTANT: This wildcard route MUST come AFTER the specific routes above
+// Supports:
+// - Direct file paths: /api/preview/projects/:id/preview/css/style.css
+// - Directory paths: /api/preview/projects/:id/preview/public/ (serves public/index.html)
+// - Nested index.html: /api/preview/projects/:id/preview/public/index.html
 // Note: This route handles /api/preview/projects/:id/preview/:filepath
 router.get('/projects/:id/preview/:filepath(*)', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
   try {
     const projectId = req.params.id;
-    const filepath = req.params.filepath || 'index.html';
+    let filepath = req.params.filepath || 'index.html';
+    
+    // Add cache-control headers to prevent stale content for ALL responses
+    setCacheHeaders(res);
     
     // Get all project files
     const files = await storage.getFilesByProject(projectId);
     
-    // Find the requested file
-    const file = files.find(f => f.name === filepath && !f.isDirectory);
+    // Normalize the filepath
+    const normalizedPath = filepath.startsWith('/') ? filepath.slice(1) : filepath;
     
-    if (!file) {
-      // Try to find index.html as default
-      const indexFile = files.find(f => f.name === 'index.html' && !f.isDirectory);
+    // Check if path ends with / (directory request) - serve its index.html
+    if (normalizedPath.endsWith('/')) {
+      const dirPath = normalizedPath.slice(0, -1);
+      const indexFile = findIndexInDirectory(files, dirPath);
       if (indexFile) {
-        res.type('html').send(indexFile.content || '');
+        const content = indexFile.content ?? '';
+        const modifiedContent = content ? injectPreviewScripts(content, projectId) : '';
+        res.type('html').send(modifiedContent);
         return;
       }
-      return res.status(404).send('File not found');
+      return res.status(404).send(`No index.html found in directory: ${dirPath || 'root'}`);
+    }
+    
+    // Try to find the file by exact path
+    let file = findFileByPath(files, normalizedPath);
+    
+    // If not found and no extension, it might be a directory - try to find its index.html
+    if (!file && !path.extname(normalizedPath)) {
+      const indexFile = findIndexInDirectory(files, normalizedPath);
+      if (indexFile) {
+        const content = indexFile.content ?? '';
+        const modifiedContent = content ? injectPreviewScripts(content, projectId) : '';
+        res.type('html').send(modifiedContent);
+        return;
+      }
+    }
+    
+    if (!file) {
+      return res.status(404).send(`File not found: ${normalizedPath}`);
     }
     
     // Set appropriate content type
@@ -353,27 +611,23 @@ router.get('/projects/:id/preview/:filepath(*)', ensureAuthenticated, ensureProj
       case '.svg':
         res.type('image/svg+xml');
         break;
+      case '.woff':
+      case '.woff2':
+        res.type('font/woff2');
+        break;
+      case '.ttf':
+        res.type('font/ttf');
+        break;
+      case '.ico':
+        res.type('image/x-icon');
+        break;
       default:
         res.type('text/plain');
     }
     
-    // For HTML files, inject a script to handle relative paths
+    // For HTML files, inject hot-reload script for live updates
     if (ext === '.html' && file.content) {
-      const modifiedContent = file.content.replace(
-        /<head>/i,
-        `<head>
-        <base href="/api/preview/projects/${projectId}/preview/">
-        <script>
-          // Handle relative imports for JS modules
-          const originalFetch = window.fetch;
-          window.fetch = function(url, ...args) {
-            if (typeof url === 'string' && !url.startsWith('http') && !url.startsWith('/api')) {
-              url = '/api/preview/projects/${projectId}/preview/' + url;
-            }
-            return originalFetch(url, ...args);
-          };
-        </script>`
-      );
+      const modifiedContent = injectPreviewScripts(file.content, projectId);
       res.send(modifiedContent);
     } else {
       res.send(file.content || '');

@@ -7,6 +7,8 @@ import { parse as parseCookie } from 'cookie';
 import { storage } from '../storage';
 
 // Event emitter for preview updates
+// NOTE: File changes are emitted by files.router.ts when files are mutated via REST API
+// since project files are stored in the database, not the filesystem
 export const previewEvents = new EventEmitter();
 
 interface PreviewClient {
@@ -241,6 +243,15 @@ class PreviewWebSocketService {
       projectId: data.projectId,
       message: 'Preview rebuilding due to file changes...'
     }));
+
+    // Hot-reload: Listen for file changes and notify clients
+    createListener('preview:file-change', (data) => this.broadcastToProject(data.projectId, {
+      type: 'preview:file-change',
+      projectId: data.projectId,
+      filePath: data.filePath,
+      changeType: data.changeType,
+      timestamp: data.timestamp || new Date().toISOString()
+    }));
   }
 
   private async handleMessage(clientId: string, data: any) {
@@ -263,6 +274,11 @@ class PreviewWebSocketService {
         }
 
         client.projectId = projectId;
+        
+        // NOTE: File watching is handled via REST API mutations in files.router.ts
+        // which emits preview:file-change events when files are created/updated/deleted
+        // No filesystem watcher needed since files are stored in the database
+        
         client.ws.send(JSON.stringify({
           type: 'subscribed',
           projectId: projectId
