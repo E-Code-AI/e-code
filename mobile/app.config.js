@@ -103,13 +103,8 @@ export default ({ config }) => {
       ],
     },
     plugins: [
-      [
-        'expo-notifications',
-        {
-          color: '#38bdf8',
-          sounds: [],
-        },
-      ],
+      // Note: expo-notifications plugin configured in EAS build
+      // The plugin is included in the cloud build environment
     ],
     updates: {
       url: 'https://u.expo.dev/17ae93ae-3912-48a0-97d1-05d9f7d0799a',
