@@ -90,6 +90,7 @@ import { TaskDecompositionDisplay, type DecomposedTask } from '@/components/agen
 import { SlashCommandMenu, useSlashCommand, DEFAULT_MCP_SERVERS, type MCPServer } from './SlashCommandMenu';
 import { AIModelIndicator, AIModelBadge, type DelegationInfo } from '@/components/agent/AIModelIndicator';
 import { OrchestratorProgress, MiniProgressIndicator, type SessionProgressData } from '@/components/agent/OrchestratorProgress';
+import { ProviderHealthBadge } from '@/components/agent/ProviderHealthIndicator';
 import { MessageQueue, type QueuedMessage } from '@/components/agent/MessageQueue';
 import { History, X, MousePointer2, Coins, Database, Volume2, VolumeX, DollarSign, RotateCcw } from 'lucide-react';
 import { SiFigma } from 'react-icons/si';
@@ -2489,20 +2490,27 @@ export function ReplitAgentPanelV3({
           {/* Max Autonomy Progress with Orchestrator Display - shown when toggle is on */}
           {agentToolsSettings.maxAutonomy && autonomySessionId && (
             <div className="space-y-3">
-              {/* AI Model Indicator - shows current delegation tier and model */}
-              {orchestratorProgress?.progress?.metadata?.delegation && (
-                <div className="flex items-center justify-between">
-                  <AIModelIndicator
-                    delegation={orchestratorProgress.progress.metadata.delegation}
-                    showDetails={true}
-                  />
-                  <MiniProgressIndicator
-                    completed={orchestratorProgress.progress.tasksCompleted || 0}
-                    total={orchestratorProgress.progress.tasksTotal || 0}
-                    eta={orchestratorProgress.progress.estimatedRemainingMs}
-                  />
+              {/* AI Model + Provider Health Indicators - responsive layout */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:justify-between">
+                <div className="flex items-center gap-2 flex-wrap">
+                  {/* AI Model Indicator - shows current delegation tier and model */}
+                  {orchestratorProgress?.progress?.currentTaskDelegation && (
+                    <AIModelIndicator
+                      delegation={orchestratorProgress.progress.currentTaskDelegation}
+                      showDetails={true}
+                      size="sm"
+                    />
+                  )}
+                  {/* Provider Health Badge - shows AI provider availability */}
+                  <ProviderHealthBadge />
                 </div>
-              )}
+                <MiniProgressIndicator
+                  completed={orchestratorProgress?.progress?.tasksCompleted || 0}
+                  total={orchestratorProgress?.progress?.tasksTotal || 0}
+                  eta={orchestratorProgress?.progress?.estimatedRemainingMs}
+                  etaConfidence={orchestratorProgress?.progress?.etaConfidence}
+                />
+              </div>
               
               {/* Orchestrator Progress - shows task progress, ETA, and controls */}
               {orchestratorProgress?.progress && (

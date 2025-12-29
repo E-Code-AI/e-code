@@ -50,6 +50,15 @@ export interface GoalComplexityAnalysis {
   riskLevel: 'low' | 'medium' | 'high';
 }
 
+export interface DelegationInfo {
+  tier: 'fast' | 'balanced' | 'quality';
+  model: string;
+  provider: string;
+  reason?: string;
+  taskComplexity?: number;
+  estimatedTokens?: number;
+}
+
 export interface TaskExecutionResult {
   success: boolean;
   output?: Record<string, any>;
@@ -59,6 +68,7 @@ export interface TaskExecutionResult {
   commandsExecuted?: string[];
   aiResponse?: string;
   tokensUsed?: number;
+  delegationInfo?: DelegationInfo;
 }
 
 export interface ExecutorOptions {
@@ -758,6 +768,20 @@ Generate the task breakdown (aim for ${complexityAnalysis.suggestedTaskCount} ta
       logger.warn(`Failed to record metrics: ${metricsError.message}`);
     }
     
+    // ✅ Add delegation info to result for frontend visibility
+    if (delegationDecision) {
+      result.delegationInfo = {
+        tier: delegationDecision.tier,
+        model: delegationDecision.selectedModel,
+        provider: delegationDecision.selectedProvider,
+        reason: delegationDecision.reason,
+        taskComplexity: complexityScore,
+        estimatedTokens: estimatedTokens
+      };
+      // Store for getCurrentDelegationInfo() to return between tasks
+      this.lastDelegationInfo = result.delegationInfo;
+    }
+    
     // Clear task-specific model
     this.currentTaskModel = null;
     this.currentTaskProvider = null;
@@ -768,6 +792,32 @@ Generate the task breakdown (aim for ${complexityAnalysis.suggestedTaskCount} ta
   // Task-specific model and provider (set by delegation)
   private currentTaskModel: string | null = null;
   private currentTaskProvider: string | null = null;
+  private lastDelegationInfo: DelegationInfo | null = null;
+  
+  /**
+   * Get the current delegation info (for UI display)
+   */
+  getCurrentDelegationInfo(): DelegationInfo | null {
+    if (this.currentTaskModel && this.currentTaskProvider) {
+      return {
+        tier: this.getDelegationTier(),
+        model: this.currentTaskModel,
+        provider: this.currentTaskProvider
+      };
+    }
+    return this.lastDelegationInfo;
+  }
+  
+  private getDelegationTier(): 'fast' | 'balanced' | 'quality' {
+    const model = this.currentTaskModel || '';
+    if (model.includes('nano') || model.includes('haiku') || model.includes('flash')) {
+      return 'fast';
+    }
+    if (model.includes('mini') || model.includes('sonnet')) {
+      return 'balanced';
+    }
+    return 'quality';
+  }
   
   /**
    * Execute file creation task
