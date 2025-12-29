@@ -5,6 +5,7 @@ import { devAuthBypass, isAuthBypassEnabled } from "../dev-auth-bypass";
 import { csrfProtection } from "../middleware/csrf";
 import type { User } from "@shared/schema";
 import path from 'path';
+import { previewEvents } from '../preview/preview-websocket';
 
 export class FilesRouter {
   private router: Router;
@@ -21,6 +22,16 @@ export class FilesRouter {
   private async getFileByPath(projectId: string, filePath: string): Promise<any | undefined> {
     const allFiles = await this.storage.getFilesByProjectId(projectId);
     return allFiles.find(f => f.path === filePath);
+  }
+
+  // Helper to emit file change events for hot-reload
+  private emitFileChange(projectId: string, filePath: string, changeType: 'create' | 'update' | 'delete') {
+    previewEvents.emit('preview:file-change', {
+      projectId: parseInt(projectId, 10),
+      filePath,
+      changeType,
+      timestamp: new Date().toISOString()
+    });
   }
 
   private ensureAuthenticated = (req: Request, res: Response, next: NextFunction) => {
@@ -258,6 +269,9 @@ export class FilesRouter {
           
           // ✅ 40-YEAR SENIOR FIX: Wrap response in { file } envelope (test contract)
           res.json({ file: updatedFile });
+          
+          // Emit file change event for hot-reload
+          this.emitFileChange(projectId, validatedData.path, 'update');
         } else {
           // Create new file
           const file = await this.storage.createFile(validatedData);
@@ -273,6 +287,9 @@ export class FilesRouter {
           
           // ✅ 40-YEAR SENIOR FIX: Wrap response in { file } envelope (test contract)
           res.json({ file });
+          
+          // Emit file change event for hot-reload
+          this.emitFileChange(projectId, validatedData.path, 'create');
         }
       } catch (error: any) {
         console.error('Error saving file:', error);
@@ -329,6 +346,9 @@ export class FilesRouter {
         });
         
         res.json(updatedFile);
+        
+        // Emit file change event for hot-reload
+        this.emitFileChange(projectId, filePath, 'update');
       } catch (error) {
         console.error('Error updating file:', error);
         res.status(500).json({ 
@@ -370,6 +390,9 @@ export class FilesRouter {
         
         await this.storage.deleteFile(file.id);
         res.json({ message: "File deleted successfully" });
+        
+        // Emit file change event for hot-reload
+        this.emitFileChange(projectId, filePath, 'delete');
       } catch (error) {
         console.error('Error deleting file:', error);
         res.status(500).json({ 
@@ -411,6 +434,9 @@ export class FilesRouter {
         });
         
         res.json(updatedFile);
+        
+        // Emit file change event for hot-reload
+        this.emitFileChange(String(file.projectId), file.path || file.name, 'update');
       } catch (error) {
         console.error('Error updating file:', error);
         res.status(500).json({ 
@@ -446,6 +472,9 @@ export class FilesRouter {
         
         await this.storage.deleteFile(fileId);
         res.json({ message: "File deleted successfully" });
+        
+        // Emit file change event for hot-reload
+        this.emitFileChange(String(file.projectId), file.path || file.name, 'delete');
       } catch (error) {
         console.error('Error deleting file:', error);
         res.status(500).json({ 

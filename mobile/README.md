@@ -1,6 +1,6 @@
 # E-Code Mobile App
 
-A React Native application built with Expo that lets you access your E-Code projects on the go. The app focuses on the most important workflows for mobile users:
+A React Native application built with Expo SDK 54 that lets you access your E-Code projects on the go. The app focuses on the most important workflows for mobile users:
 
 - Authenticate with the platform and persist your session
 - Browse your recent projects and inspect metadata
@@ -11,30 +11,66 @@ A React Native application built with Expo that lets you access your E-Code proj
 
 ### Prerequisites for Production Builds
 
-1. Install EAS CLI globally:
+1. **Install EAS CLI globally:**
    ```bash
-   npm install -g eas-cli
+   npm install -g eas-cli@latest
    ```
 
-2. Log in to your Expo account:
+2. **Create an Expo account** at https://expo.dev (required for EAS builds)
+
+3. **Log in to your Expo account:**
    ```bash
    eas login
    ```
 
-3. Configure your project (first time only):
+4. **Configure your project (first time only):**
    ```bash
+   cd mobile
    eas build:configure
    ```
+
+### Build Profiles
+
+The project includes three build profiles in `eas.json`:
+
+| Profile | Purpose | Output | OTA Channel |
+|---------|---------|--------|-------------|
+| `development` | Local debugging with expo-dev-client | APK (debug) | development |
+| `preview` | Internal testing/QA | APK (release) | preview |
+| `production` | App Store/Play Store release | AAB/IPA | production |
 
 ### Build Commands
 
 | Command | Description |
 |---------|-------------|
-| `npm run build:dev` | Development build (internal distribution) |
-| `npm run build:preview` | Preview/staging build (APK for Android) |
+| `npm run build:dev` | Development build with expo-dev-client (internal) |
+| `npm run build:preview` | Preview/staging APK build for testing |
 | `npm run build:ios` | Production iOS build (.ipa) |
 | `npm run build:android` | Production Android build (.aab) |
 | `npm run build:all` | Production builds for both platforms |
+
+### Step-by-Step Build Process
+
+#### For Android APK (Testing/Preview)
+```bash
+cd mobile
+npm install
+eas build --profile preview --platform android
+```
+
+#### For Android AAB (Production - Play Store)
+```bash
+cd mobile
+npm install
+eas build --profile production --platform android
+```
+
+#### For iOS (Production - App Store)
+```bash
+cd mobile
+npm install
+eas build --profile production --platform ios
+```
 
 ### Submit to App Stores
 
@@ -44,14 +80,38 @@ A React Native application built with Expo that lets you access your E-Code proj
 | `npm run submit:android` | Submit to Google Play Store |
 | `npm run submit:all` | Submit to both stores |
 
-### Required Secrets for Production
+### Required Credentials
 
-Set these in your EAS dashboard or as environment variables:
+#### iOS (Apple App Store)
 
-- `APPLE_ID` - Your Apple Developer account email
-- `ASC_APP_ID` - App Store Connect App ID
-- `APPLE_TEAM_ID` - Your Apple Team ID
-- `google-services.json` - Google Play Console service account key
+Set these in EAS secrets (https://expo.dev/accounts/[username]/projects/[project]/secrets):
+
+| Secret | Description | How to Get |
+|--------|-------------|------------|
+| `EXPO_APPLE_ID` | Apple Developer account email | Your Apple ID email |
+| `EXPO_APPLE_APP_SPECIFIC_PASSWORD` | App-specific password | https://appleid.apple.com/account/manage |
+| `EXPO_APPLE_TEAM_ID` | 10-character Team ID | Apple Developer Portal → Membership |
+| `ASC_APP_ID` | App Store Connect App ID | App Store Connect → App → General → App Information |
+
+#### Android (Google Play Store)
+
+| Credential | Description | How to Get |
+|------------|-------------|------------|
+| `google-services.json` | Service account key | Google Cloud Console → IAM & Admin → Service Accounts |
+
+Place `google-services.json` in the `mobile/` directory or configure via EAS secrets.
+
+### OTA Updates
+
+The app supports Over-The-Air updates via expo-updates:
+
+```bash
+# Push an update to all users on the production channel
+eas update --branch production --message "Bug fixes and improvements"
+
+# Push to preview channel for testing
+eas update --branch preview --message "Testing new feature"
+```
 
 ## Shared Code Integration
 

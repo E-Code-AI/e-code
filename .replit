@@ -4,7 +4,7 @@ hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 
 [nix]
 channel = "stable-24_05"
-packages = ["glibcLocales", "jq", "libxcrypt", "imagemagick", "jdk", "python3", "gcc", "gnumake", "chromium"]
+packages = ["glibcLocales", "jq", "libxcrypt", "imagemagick", "jdk", "python3", "gcc", "gnumake", "chromium", "go", "rustc", "cargo", "ruby", "php", "lua", "deno", "R", "ghc", "gfortran", "zig", "scala", "clojure", "elixir", "julia", "ocaml", "dart", "mono", "kotlin"]
 
 [deployment]
 deploymentTarget = "gce"

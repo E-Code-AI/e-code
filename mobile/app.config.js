@@ -111,6 +111,14 @@ export default ({ config }) => {
         },
       ],
     ],
+    updates: {
+      url: 'https://u.expo.dev/17ae93ae-3912-48a0-97d1-05d9f7d0799a',
+      enabled: true,
+      fallbackToCacheTimeout: 0,
+    },
+    runtimeVersion: {
+      policy: 'appVersion',
+    },
     web: {
       bundler: 'metro'
     }
