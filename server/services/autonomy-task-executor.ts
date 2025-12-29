@@ -17,6 +17,8 @@ import { eq, and } from 'drizzle-orm';
 import type { MaxAutonomyTask } from '@shared/schema';
 import type { CheckpointService } from './checkpoint-service';
 import type { BackgroundTestingService } from './background-testing-service';
+import { delegationManager, type DelegationDecision } from './delegation-manager.service';
+import { orchestratorMetrics, type TaskMetric } from './orchestrator-metrics.service';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { exec } from 'child_process';
@@ -641,44 +643,131 @@ Generate the task breakdown (aim for ${complexityAnalysis.suggestedTaskCount} ta
   }
   
   /**
-   * Execute a single task
+   * Execute a single task with intelligent model delegation and metrics tracking
+   * ✅ INTEGRATED: DelegationManager + OrchestratorMetrics (Dec 29, 2025)
+   * ✅ FIXED: Read complexity from task entity columns, not task.input (Dec 29, 2025)
    */
   async executeTask(task: MaxAutonomyTask): Promise<TaskExecutionResult> {
     logger.info(`Executing task ${task.id}: ${task.title}`);
     
     const startTime = Date.now();
     
+    // ✅ FIXED: Read complexity data from task entity columns (top-level), not task.input
+    // MaxAutonomyTask has complexityScore, confidenceScore, estimatedTokens as direct columns
+    const complexityScore = task.complexityScore ?? 5;
+    const confidenceScore = task.confidenceScore ?? 0.7;
+    const estimatedTokens = task.estimatedTokens ?? 1500;
+    const estimatedDurationMs = task.estimatedDurationMs ?? 5000;
+    
+    // ✅ INTELLIGENT DELEGATION: Route to appropriate model based on complexity
+    let delegationDecision: DelegationDecision | null = null;
+    try {
+      delegationDecision = await delegationManager.delegateTask({
+        complexityScore,
+        confidenceScore,
+        estimatedTokens,
+        taskType: task.type,
+        preferredProvider: 'openai' // Default preference
+      });
+      
+      // Update the model to use the delegated one
+      this.currentTaskModel = delegationDecision.selectedModel;
+      this.currentTaskProvider = delegationDecision.selectedProvider;
+      
+      logger.info(`Delegation: ${delegationDecision.selectedProvider}/${delegationDecision.selectedModel} (tier: ${delegationDecision.tier})`);
+    } catch (delegationError: any) {
+      logger.warn(`Delegation failed, using default model: ${delegationError.message}`);
+      this.currentTaskModel = this.model;
+      this.currentTaskProvider = 'openai';
+    }
+    
+    let result: TaskExecutionResult;
+    
     try {
       switch (task.type) {
         case 'file_create':
-          return await this.executeFileCreate(task);
+          result = await this.executeFileCreate(task);
+          break;
         case 'file_edit':
-          return await this.executeFileEdit(task);
+          result = await this.executeFileEdit(task);
+          break;
         case 'file_delete':
-          return await this.executeFileDelete(task);
+          result = await this.executeFileDelete(task);
+          break;
         case 'command':
-          return await this.executeCommand(task);
+          result = await this.executeCommand(task);
+          break;
         case 'install_package':
-          return await this.executeInstallPackage(task);
+          result = await this.executeInstallPackage(task);
+          break;
         case 'database':
-          return await this.executeDatabaseOperation(task);
+          result = await this.executeDatabaseOperation(task);
+          break;
         case 'config':
-          return await this.executeConfig(task);
+          result = await this.executeConfig(task);
+          break;
         case 'analysis':
-          return await this.executeAnalysis(task);
+          result = await this.executeAnalysis(task);
+          break;
         default:
-          return await this.executeGenericTask(task);
+          result = await this.executeGenericTask(task);
       }
       
     } catch (error: any) {
       logger.error(`Task ${task.id} execution failed:`, error);
-      return {
+      result = {
         success: false,
         error: error.message,
         errorStack: error.stack
       };
     }
+    
+    const actualDurationMs = Date.now() - startTime;
+    // ✅ FIXED: Only use actual tokens if returned, otherwise use estimate
+    const actualTokens = (result.tokensUsed && result.tokensUsed > 0) ? result.tokensUsed : estimatedTokens;
+    
+    // ✅ METRICS RECORDING: Track execution for ETA improvement
+    try {
+      const metric: TaskMetric = {
+        taskType: task.type,
+        complexity: complexityScore,
+        estimatedDurationMs,
+        actualDurationMs,
+        estimatedTokens,
+        actualTokens,
+        success: result.success,
+        provider: this.currentTaskProvider || 'openai',
+        model: this.currentTaskModel || this.model,
+        timestamp: new Date()
+      };
+      
+      orchestratorMetrics.recordTaskExecution(metric);
+      logger.info(`Metrics recorded: duration=${actualDurationMs}ms, tokens=${actualTokens}, success=${result.success}`);
+      
+      // ✅ FIXED: Report provider success/failure for ALL failures, not just API/timeout
+      // This ensures circuit breaker properly degrades unavailable providers
+      const provider = this.currentTaskProvider as any || 'openai';
+      if (result.success) {
+        delegationManager.reportProviderSuccess(provider);
+      } else {
+        // Report failure for any non-success - broader failure detection
+        delegationManager.reportProviderFailure(provider);
+        logger.warn(`Provider ${provider} failure reported: ${result.error || 'unknown error'}`);
+      }
+    } catch (metricsError: any) {
+      logger.warn(`Failed to record metrics: ${metricsError.message}`);
+    }
+    
+    // Clear task-specific model
+    this.currentTaskModel = null;
+    this.currentTaskProvider = null;
+    
+    return result;
   }
+  
+  // Task-specific model and provider (set by delegation)
+  private currentTaskModel: string | null = null;
+  private currentTaskProvider: string | null = null;
   
   /**
    * Execute file creation task
@@ -907,6 +996,7 @@ Generate the task breakdown (aim for ${complexityAnalysis.suggestedTaskCount} ta
   
   /**
    * Ask AI for task execution guidance
+   * ✅ INTEGRATED: Uses delegated model based on task complexity (Dec 29, 2025)
    */
   private async askAIForTaskExecution(task: MaxAutonomyTask): Promise<any> {
     const prompt = TASK_EXECUTION_PROMPT
@@ -921,23 +1011,45 @@ Generate the task breakdown (aim for ${complexityAnalysis.suggestedTaskCount} ta
       { role: 'user', content: prompt }
     ];
     
+    // ✅ Use delegated model if available, otherwise fall back to default
+    const modelToUse = this.currentTaskModel || this.model;
+    logger.info(`AI execution using model: ${modelToUse}`);
+    
     let response = '';
-    for await (const chunk of this.aiProvider.streamChat(this.model, messages, {
-      system: 'You are an expert AI coding agent. Respond only with valid JSON.',
-      max_tokens: 4000,
-      temperature: 0.2
-    })) {
-      response += chunk;
+    let tokensUsed = 0;
+    
+    try {
+      for await (const chunk of this.aiProvider.streamChat(modelToUse, messages, {
+        system: 'You are an expert AI coding agent. Respond only with valid JSON.',
+        max_tokens: 4000,
+        temperature: 0.2
+      })) {
+        response += chunk;
+      }
+      
+      // Estimate tokens used (rough calculation)
+      tokensUsed = Math.ceil((prompt.length + response.length) / 4);
+    } catch (aiError: any) {
+      logger.error(`AI call failed with model ${modelToUse}:`, aiError);
+      
+      // Report failure for circuit breaker
+      if (this.currentTaskProvider) {
+        delegationManager.reportProviderFailure(this.currentTaskProvider as any);
+      }
+      
+      throw aiError;
     }
     
     try {
       const jsonMatch = response.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
-        return JSON.parse(jsonMatch[0]);
+        const result = JSON.parse(jsonMatch[0]);
+        result.tokensUsed = tokensUsed;
+        return result;
       }
-      return { action: 'analysis', findings: response };
+      return { action: 'analysis', findings: response, tokensUsed };
     } catch {
-      return { action: 'analysis', findings: response };
+      return { action: 'analysis', findings: response, tokensUsed };
     }
   }
   
