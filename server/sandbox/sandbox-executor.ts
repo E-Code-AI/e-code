@@ -1,7 +1,8 @@
 import { SandboxManager, SandboxConfig, SandboxResult } from './sandbox-manager';
 import { SecurityPolicy, getPolicyByName } from './security-policy';
 import { sandboxMonitor } from './sandbox-monitor';
-import { renderHtmlPreview } from './runtimes/htmlPreview';
+// Note: renderHtmlPreview in ./runtimes/htmlPreview.ts is available for standalone use
+// but sandbox execution uses inline Node.js script for security isolation
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
@@ -308,23 +309,63 @@ export class SandboxExecutor {
         langConfig
       );
 
-      // Handle custom handlers (e.g., HTML preview)
+      // Handle HTML preview via sandbox execution
+      // The HTML preview runs a Node.js script inside the sandbox for security isolation
       if (langConfig.customHandler === 'htmlPreview') {
-        const previewResult = await renderHtmlPreview(mainFile, {
-          timeout: request.timeout || 5000,
-          captureConsole: true,
-          executeJs: true
-        });
+        // Execute Node.js JSDOM preview inside sandbox
+        const previewScript = `
+          const fs = require('fs');
+          const { JSDOM } = require('jsdom');
+          try {
+            const html = fs.readFileSync('${mainFile}', 'utf-8');
+            const logs = [];
+            const errors = [];
+            const virtualConsole = {
+              log: (...args) => logs.push(args.map(a => String(a)).join(' ')),
+              error: (...args) => errors.push(args.map(a => String(a)).join(' ')),
+              warn: (...args) => logs.push('[WARN] ' + args.map(a => String(a)).join(' ')),
+              info: (...args) => logs.push('[INFO] ' + args.map(a => String(a)).join(' '))
+            };
+            const dom = new JSDOM(html, {
+              runScripts: 'dangerously',
+              pretendToBeVisual: true,
+              virtualConsole: { sendTo: virtualConsole }
+            });
+            const doc = dom.window.document;
+            const title = doc.title || 'Untitled';
+            const elements = doc.querySelectorAll('*').length;
+            console.log('=== DOM Summary ===');
+            console.log('Title: ' + title);
+            console.log('Elements: ' + elements);
+            if (logs.length) console.log('\\n=== Console Output ===\\n' + logs.join('\\n'));
+            if (errors.length) console.error('\\n=== Errors ===\\n' + errors.join('\\n'));
+            dom.window.close();
+          } catch(e) {
+            console.error('HTML Preview Error:', e.message);
+            process.exit(1);
+          }
+        `;
         
+        const result = await this.sandboxManager.executeSandbox(
+          sandboxId,
+          'node',
+          ['-e', previewScript],
+          {
+            ...request.env,
+            NODE_PATH: '/home/runner/workspace/node_modules'
+          }
+        );
+
         return {
-          success: previewResult.success,
-          exitCode: previewResult.success ? 0 : 1,
-          stdout: previewResult.stdout,
-          stderr: previewResult.stderr,
-          executionTime: (Date.now() - startTime) / 1000,
-          memoryUsage: 0,
-          cpuUsage: 0,
-          filesCreated: []
+          success: result.exitCode === 0,
+          exitCode: result.exitCode,
+          stdout: result.stdout,
+          stderr: result.stderr,
+          executionTime: result.executionTime,
+          memoryUsage: result.memoryUsage,
+          cpuUsage: result.cpuUsage,
+          filesCreated: result.filesCreated,
+          securityViolations: result.securityViolations.length > 0 ? result.securityViolations : undefined
         };
       }
 
