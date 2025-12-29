@@ -1,6 +1,7 @@
 import { SandboxManager, SandboxConfig, SandboxResult } from './sandbox-manager';
 import { SecurityPolicy, getPolicyByName } from './security-policy';
 import { sandboxMonitor } from './sandbox-monitor';
+import { renderHtmlPreview } from './runtimes/htmlPreview';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
@@ -37,6 +38,7 @@ interface LanguageConfig {
   runCommand: string;
   dockerImage?: string; // Kept for compatibility, not used
   defaultPolicy: string;
+  customHandler?: string; // Custom handler function name for special execution
 }
 
 const LANGUAGE_CONFIGS: Record<string, LanguageConfig> = {
@@ -164,8 +166,9 @@ const LANGUAGE_CONFIGS: Record<string, LanguageConfig> = {
     name: 'HTML/CSS/JS',
     extensions: ['.html', '.htm'],
     runtime: 'node',
-    runCommand: 'cat {{file}} && echo "\\n--- HTML file validated successfully ---"',
-    defaultPolicy: 'standard'
+    runCommand: 'node -e "console.log(require(\"fs\").readFileSync(\"{{file}}\", \"utf-8\"))"',
+    defaultPolicy: 'standard',
+    customHandler: 'htmlPreview'
   },
   nix: {
     name: 'Nix',
@@ -304,6 +307,26 @@ export class SandboxExecutor {
         request.files,
         langConfig
       );
+
+      // Handle custom handlers (e.g., HTML preview)
+      if (langConfig.customHandler === 'htmlPreview') {
+        const previewResult = await renderHtmlPreview(mainFile, {
+          timeout: request.timeout || 5000,
+          captureConsole: true,
+          executeJs: true
+        });
+        
+        return {
+          success: previewResult.success,
+          exitCode: previewResult.success ? 0 : 1,
+          stdout: previewResult.stdout,
+          stderr: previewResult.stderr,
+          executionTime: (Date.now() - startTime) / 1000,
+          memoryUsage: 0,
+          cpuUsage: 0,
+          filesCreated: []
+        };
+      }
 
       // Compile if needed
       if (langConfig.compileCommand) {
