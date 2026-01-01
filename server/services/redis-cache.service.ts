@@ -24,7 +24,7 @@ export class RedisCacheService {
   }
 
   private initialize() {
-    // Check if Redis is enabled in config (respects REDIS_DISABLED env var)
+    // Check if Redis is enabled via REDIS_ENABLED env var (defaults to true in production)
     if (!config.redis.enabled) {
       logger.warn('⚠️ Redis disabled in configuration - using in-memory fallback (not suitable for production at scale)');
       this.isEnabled = false;

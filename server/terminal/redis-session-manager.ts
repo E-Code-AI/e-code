@@ -41,7 +41,7 @@ export class RedisSessionManager {
    */
   private async initialize(): Promise<void> {
     try {
-      // Check if Redis is enabled in config (respects REDIS_DISABLED env var)
+      // Check if Redis is enabled via REDIS_ENABLED env var (defaults to true in production)
       if (!config.redis.enabled) {
         logger.info('Redis disabled in configuration - session persistence disabled (sessions will be lost on restart)');
         this.isConnected = false;
