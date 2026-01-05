@@ -12,6 +12,7 @@ import { validateRequiredSecrets } from './utils/secrets-manager';
 import { validateProductionEnvironment } from './utils/production-validation';
 // ✅ Fortune 500: Zod-validated environment configuration (validates on import)
 import { envConfig } from './utils/env-config';
+import { initializeRuntimes } from './execution/runtime-warmup';
 
 validateRequiredSecrets();
 validateProductionEnvironment();
@@ -998,6 +999,14 @@ app.get('/api/cors-health', async (_req, res) => {
     // ✅ CRITICAL: Log that server is listening - this is what Replit workflow monitors for
     console.log(`🚀 E-Code Platform listening on port ${port}`);
     console.log(`[Server] Environment: ${process.env.NODE_ENV || 'development'}`);
+    
+    // ✅ Initialize language runtime warmup asynchronously
+    setImmediate(() => {
+      console.log('[RuntimeWarmup] Starting background runtime initialization...');
+      initializeRuntimes().catch(err => {
+        console.error('[RuntimeWarmup] Failed to initialize runtimes:', err);
+      });
+    });
     
     // ✅ Restore original methods to allow adding the final guard
     if ((global as any).__restoreUpgradeListenerMethods) {

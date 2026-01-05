@@ -9,6 +9,7 @@ import { aiProviderManager } from '../ai/ai-provider-manager';
 import { agentOrchestrator } from '../services/agent-orchestrator.service';
 import { db } from '../db';
 import { sql } from 'drizzle-orm';
+import { runtimeWarmup } from '../execution/runtime-warmup';
 
 export class HealthRouter {
   private router: Router;
@@ -450,6 +451,17 @@ export class HealthRouter {
           error: 'Failed to check provider health'
         });
       }
+    });
+
+    // Language Runtime Health Check - All 29 languages
+    this.router.get("/api/health/runtimes", (req: Request, res: Response) => {
+      const status = runtimeWarmup.getStatus();
+      res.status(200).json({
+        timestamp: new Date().toISOString(),
+        status: status.warmupComplete ? (status.readyCount === status.totalCount ? 'healthy' : 'degraded') : 'warming_up',
+        service: 'Language Runtimes',
+        ...status
+      });
     });
   }
 
