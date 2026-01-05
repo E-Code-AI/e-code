@@ -406,20 +406,21 @@ router.post('/api/projects/:id/execute-direct', ensureAuthenticated, async (req,
  * GET /api/execute/languages
  * Get list of supported languages for direct execution
  * SECURITY: Requires authentication to gate execution feature info
+ * Returns all 27+ supported languages from the language configuration
  */
-router.get('/api/execute/languages', ensureAuthenticated, (req, res) => {
-  res.json({
-    languages: [
-      { id: 'javascript', name: 'JavaScript', extension: '.js' },
-      { id: 'python', name: 'Python', extension: '.py' },
-      { id: 'go', name: 'Go', extension: '.go' },
-      { id: 'cpp', name: 'C++', extension: '.cpp' },
-      { id: 'c', name: 'C', extension: '.c' },
-      { id: 'java', name: 'Java', extension: '.java' },
-      { id: 'rust', name: 'Rust', extension: '.rs' },
-      { id: 'php', name: 'PHP', extension: '.php' }
-    ]
-  });
+router.get('/api/execute/languages', ensureAuthenticated, async (req, res) => {
+  // Import from languages config for full language support
+  const { languageConfigs } = await import('../runtimes/languages');
+  
+  const languages = Object.entries(languageConfigs).map(([id, config]) => ({
+    id,
+    name: (config as any).displayName,
+    extension: (config as any).fileExtensions[0],
+    version: (config as any).version || undefined,
+    icon: (config as any).icon
+  }));
+  
+  res.json({ languages });
 });
 
 export default router;

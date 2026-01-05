@@ -3,13 +3,15 @@
 ## Overview
 E-Code is an AI-assisted web-based IDE for rapid prototyping, education, and enterprise use. It streamlines coding and enhances learning through autonomous workspace generation from natural language prompts, live previews, and streaming progress. The platform supports multi-provider AI model selection, real-time collaboration, and robust security, aiming to be an enterprise-grade solution and a market leader in AI-driven development tools.
 
-## Production Status (December 2025)
+## Production Status (January 2026)
 - **Build:** ✅ Production build successful (15.57MB server bundle)
+- **Startup Time:** ~6-7s in development (optimized from 16s via middleware bypass for static assets)
 - **Security:** SSE CORS hardening across 13 endpoints with server-side 403 rejection
 - **Environment:** All required secrets configured and Zod-validated at startup
 - **E2E Testing:** Fortune 500-grade Playwright config with tiered timeouts (120s critical, 60s navigation, 30s actions), multi-browser coverage (Chrome, Mobile, Tablet), 3 retries in CI
 - **Server Warmup:** Use `npx tsx scripts/warmup-server.ts` to pre-warm server endpoints before E2E tests
 - **Test User:** testuser@test.com / testpass123 (seeded for testing)
+- **Language Support:** 29 languages supported for code execution via `/api/execute`
 
 ## User Preferences
 - **Communication:** Simple, everyday language
