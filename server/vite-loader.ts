@@ -165,12 +165,49 @@ export async function safeSetupVite(app: Application, server: Server): Promise<b
       console.log('[Vite Loader] /ws/agent connections will now bypass Vite HMR and survive');
       console.log('[Vite Loader] ⚠️  Wrapped listeners remain active, subsequent listeners run normally');
     } else {
-      console.log('[Vite Loader] 🏭 Production mode - calling serveStatic...');
+      console.log('[Vite Loader] 🏭 Production mode - serving static files from dist/public...');
       try {
-        viteModule.serveStatic(app);
-        console.log('[Vite Loader] ✅ serveStatic completed successfully');
+        // Use our own production static file serving (dist/public is the correct path)
+        const expressModule = await import('express');
+        const pathModule = await import('path');
+        const fsModule = await import('fs');
+        
+        // Production build outputs to dist/public (relative to project root)
+        const distPath = pathModule.resolve(process.cwd(), 'dist', 'public');
+        const indexHtmlPath = pathModule.join(distPath, 'index.html');
+        
+        if (!fsModule.existsSync(distPath)) {
+          throw new Error(`Build directory not found: ${distPath}. Run 'npm run build' first.`);
+        }
+        
+        console.log(`[Vite Loader] Serving static files from: ${distPath}`);
+        
+        // Serve static assets with caching
+        app.use(expressModule.static(distPath, {
+          maxAge: '1d',
+          etag: true,
+          lastModified: true,
+        }));
+        
+        // Read index.html for SPA fallback
+        const indexHtml = fsModule.readFileSync(indexHtmlPath, 'utf-8');
+        
+        // SPA fallback - serve index.html for all non-API routes
+        app.use('*', (req: any, res: any, next: any) => {
+          // Skip API and WebSocket routes
+          if (req.originalUrl.startsWith('/api/') || 
+              req.originalUrl.startsWith('/health') ||
+              req.originalUrl.startsWith('/metrics') ||
+              req.originalUrl.startsWith('/ws/') ||
+              req.originalUrl.startsWith('/collaboration')) {
+            return next();
+          }
+          res.status(200).set({ 'Content-Type': 'text/html' }).end(indexHtml);
+        });
+        
+        console.log('[Vite Loader] ✅ Production static serving configured successfully');
       } catch (staticError: any) {
-        console.error('[Vite Loader] ❌ serveStatic failed:', staticError.message);
+        console.error('[Vite Loader] ❌ Production serving failed:', staticError.message);
         throw staticError;
       }
     }

@@ -135,8 +135,8 @@ export function AIUsageDashboard() {
                 <YAxis yAxisId="left" orientation="left" stroke="#8884d8" />
                 <YAxis yAxisId="right" orientation="right" stroke="#82ca9d" />
                 <Tooltip />
-                <Bar yAxisId="left" dataKey="tokens" fill="#8884d8" name="Tokens (K)" />
-                <Bar yAxisId="right" dataKey="cost" fill="#82ca9d" name="Cost ($)" />
+                <Bar yAxisId="left" dataKey="tokens" fill="hsl(var(--primary))" name="Tokens (K)" />
+                <Bar yAxisId="right" dataKey="cost" fill="hsl(var(--secondary))" name="Cost ($)" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>

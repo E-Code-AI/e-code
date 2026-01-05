@@ -54,13 +54,8 @@
 
 /* Optimized panel backgrounds (Solid Colors) */
 .backdrop-optimized {
-  background-color: #1C2333;
+  background-color: var(--background-default);
   transform: translateZ(0);
-}
-
-.light .backdrop-optimized,
-:root:not(.dark) .backdrop-optimized {
-  background-color: #ffffff;
 }
 
 /* Motion preference support */
