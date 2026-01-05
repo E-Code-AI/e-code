@@ -27,7 +27,7 @@ export default function LandingCTA() {
           <Button 
             size="lg" 
             variant="outline"
-            className="border-2 border-white text-white hover:bg-white/10 gap-2 px-8 py-6 text-lg"
+            className="border-2 border-gray-900 text-gray-900 bg-white/20 hover:bg-white/40 gap-2 px-8 py-6 text-lg font-semibold"
             onClick={() => navigate('/pricing')}
             data-testid="button-cta-pricing"
           >

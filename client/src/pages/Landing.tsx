@@ -1183,7 +1183,7 @@ export default function Landing() {
               <Button 
                 size="lg"
                 variant="ghost"
-                className="text-white border-2 border-white/50 hover:bg-white/10 hover:border-white px-8 py-6 text-lg transition-all duration-300"
+                className="text-gray-900 border-2 border-gray-900 bg-white/20 hover:bg-white/40 px-8 py-6 text-lg font-semibold transition-all duration-300"
                 onClick={() => navigate('/contact-sales')}
                 data-testid="button-contact-sales"
               >
