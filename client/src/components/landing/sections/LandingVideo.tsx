@@ -50,6 +50,7 @@ export default function LandingVideo() {
                     setIsPlaying(!isPlaying);
                   }
                 }}
+                data-testid="button-video-play-toggle"
               >
                 <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
                   {isPlaying ? (
@@ -70,6 +71,7 @@ export default function LandingVideo() {
                       videoRef.current.muted = !isMuted;
                     }
                   }}
+                  data-testid="button-video-mute-toggle"
                 >
                   {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
                 </button>
@@ -80,6 +82,7 @@ export default function LandingVideo() {
                     e.stopPropagation();
                     videoRef.current?.requestFullscreen();
                   }}
+                  data-testid="button-video-fullscreen"
                 >
                   <Maximize className="h-5 w-5" />
                 </button>

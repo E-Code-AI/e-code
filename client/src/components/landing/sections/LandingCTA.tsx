@@ -18,16 +18,18 @@ export default function LandingCTA() {
           <Button 
             size="lg"
             className="bg-white text-ecode-accent hover:bg-white/90 gap-2 px-8 py-6 text-lg font-semibold"
-            onClick={() => navigate('/login')}
+            onClick={() => navigate('/register')}
+            data-testid="button-cta-register"
           >
             <Sparkles className="h-5 w-5" />
             Start Building Free
           </Button>
           <Button 
-            size="lg"
+            size="lg" 
             variant="outline"
             className="border-2 border-white text-white hover:bg-white/10 gap-2 px-8 py-6 text-lg"
             onClick={() => navigate('/pricing')}
+            data-testid="button-cta-pricing"
           >
             View Enterprise Plans
             <ArrowRight className="h-5 w-5" />

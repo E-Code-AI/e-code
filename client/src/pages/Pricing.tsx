@@ -197,7 +197,11 @@ export default function Pricing() {
 
       // Use API features if available, otherwise use default features
       const features = apiData?.features 
-        ? apiData.features.map((f: string) => ({ text: f, included: true, highlight: false }))
+        ? apiData.features.map((f: string) => ({ 
+            text: f, 
+            included: true, 
+            highlight: f.toLowerCase().includes('unlimited') || f.toLowerCase().includes('priority') || f.toLowerCase().includes('vcpus') 
+          }))
         : fallbackFeatures;
 
       return {
@@ -416,10 +420,10 @@ export default function Pricing() {
                         ) : (
                           <div>
                             <div className="flex items-baseline gap-1">
-                              <span className="text-4xl font-bold text-[var(--ecode-text)]">
+                              <span className="text-4xl font-bold text-[var(--ecode-text)]" data-testid={`text-price-${tier.name.toLowerCase()}`}>
                                 ${billingPeriod === 'monthly' ? tier.monthlyPrice : tier.yearlyPrice}
                               </span>
-                              <span className="text-[var(--ecode-text-muted)]">
+                              <span className="text-[var(--ecode-text-muted)]" data-testid="text-billing-interval">
                                 /month
                               </span>
                             </div>
@@ -489,6 +493,13 @@ export default function Pricing() {
                         {tier.features.length > 10 && (
                           <button 
                             className="text-sm text-[var(--ecode-accent)] font-medium mt-4 hover:underline transition-all duration-200 hover:text-[var(--ecode-accent-hover)]"
+                            onClick={() => {
+                              // Smooth scroll to comparison section or expand list
+                              const comparisonSection = document.getElementById('section-comparison');
+                              if (comparisonSection) {
+                                comparisonSection.scrollIntoView({ behavior: 'smooth' });
+                              }
+                            }}
                             data-testid={`button-more-features-${tier.name.toLowerCase()}`}
                           >
                             + {tier.features.length - 10} more features
@@ -504,7 +515,7 @@ export default function Pricing() {
       </section>
 
       {/* Detailed Comparison Table - E-Code Styled */}
-      <section className="py-20 bg-[var(--ecode-surface-tertiary,var(--ecode-surface))]" data-testid="section-comparison">
+      <section id="section-comparison" className="py-20 bg-[var(--ecode-surface-tertiary,var(--ecode-surface))]" data-testid="section-comparison">
         <div className="container-responsive max-w-7xl">
           <div 
             className="text-center mb-12"
@@ -521,6 +532,12 @@ export default function Pricing() {
             </p>
           </div>
 
+          <div className="lg:hidden text-center mb-4">
+            <Badge variant="outline" className="text-[10px] text-[var(--ecode-text-muted)] animate-pulse">
+              <ChevronRight className="h-3 w-3 mr-1" />
+              Swipe left to compare all plans
+            </Badge>
+          </div>
           <div
             className="animate-slide-in-up opacity-0"
             style={{ animationDelay: '100ms', animationFillMode: 'forwards' }}
@@ -530,23 +547,23 @@ export default function Pricing() {
                 <table className="w-full" data-testid="table-comparison">
                   <thead>
                     <tr className="border-b border-[var(--ecode-border)] bg-[var(--ecode-surface-tertiary,var(--ecode-surface))]">
-                      <th className="text-left p-6 font-semibold text-[var(--ecode-text)]">Features</th>
-                      <th className="text-center p-6 min-w-[150px]">
-                        <div className="font-semibold text-[var(--ecode-text)]">Starter</div>
-                        <div className="text-sm text-[var(--ecode-text-muted)] mt-1">Free forever</div>
-                      </th>
-                      <th className="text-center p-6 min-w-[150px]">
-                        <div className="font-semibold text-[var(--ecode-accent)]">Core</div>
-                        <div className="text-sm text-[var(--ecode-text-muted)] mt-1">Most popular</div>
-                      </th>
-                      <th className="text-center p-6 min-w-[150px]">
-                        <div className="font-semibold text-[var(--ecode-text)]">Teams</div>
-                        <div className="text-sm text-[var(--ecode-text-muted)] mt-1">For teams</div>
-                      </th>
-                      <th className="text-center p-6 min-w-[150px]">
-                        <div className="font-semibold text-[var(--ecode-text)]">Enterprise</div>
-                        <div className="text-sm text-[var(--ecode-text-muted)] mt-1">Custom</div>
-                      </th>
+                          <th className="text-left p-6 font-semibold text-[var(--ecode-text)]" data-testid="column-features">Features</th>
+                          <th className="text-center p-6 min-w-[150px]" data-testid="column-tier-starter">
+                            <div className="font-semibold text-[var(--ecode-text)]">Starter</div>
+                            <div className="text-sm text-[var(--ecode-text-muted)] mt-1">Free forever</div>
+                          </th>
+                          <th className="text-center p-6 min-w-[150px]" data-testid="column-tier-core">
+                            <div className="font-semibold text-[var(--ecode-accent)]">Core</div>
+                            <div className="text-sm text-[var(--ecode-text-muted)] mt-1">Most popular</div>
+                          </th>
+                          <th className="text-center p-6 min-w-[150px]" data-testid="column-tier-teams">
+                            <div className="font-semibold text-[var(--ecode-text)]">Teams</div>
+                            <div className="text-sm text-[var(--ecode-text-muted)] mt-1">For teams</div>
+                          </th>
+                          <th className="text-center p-6 min-w-[150px]" data-testid="column-tier-enterprise">
+                            <div className="font-semibold text-[var(--ecode-text)]">Enterprise</div>
+                            <div className="text-sm text-[var(--ecode-text-muted)] mt-1">Custom</div>
+                          </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -584,10 +601,14 @@ export default function Pricing() {
 
       {/* Enterprise Section - E-Code Styled */}
       <section 
-        className="py-20 bg-gradient-to-r from-slate-900 to-slate-800 dark:from-slate-950 dark:to-slate-900 text-white"
+        className="py-20 bg-slate-900 dark:bg-slate-950 text-white overflow-hidden relative"
         data-testid="section-enterprise"
       >
-        <div className="container-responsive max-w-6xl">
+        <div className="absolute inset-0 opacity-10 pointer-events-none">
+          <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[var(--ecode-accent)] rounded-full blur-[120px]" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600 rounded-full blur-[120px]" />
+        </div>
+        <div className="container-responsive max-w-6xl relative z-10">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <LazyMotionDiv
               initial={{ opacity: 0, x: -50 }}
@@ -672,7 +693,7 @@ export default function Pricing() {
                       'Priority feature requests',
                       'Custom billing & contracts'
                     ].map((item, idx) => (
-                      <li key={idx} className="flex items-center gap-3 text-white/90 group">
+                      <li key={idx} className="flex items-center gap-3 text-white/90 group" data-testid={`list-item-enterprise-${idx}`}>
                         <CheckCircle2 className="h-5 w-5 text-[var(--ecode-accent)] group-hover:scale-110 transition-transform duration-200" />
                         <span>{item}</span>
                       </li>

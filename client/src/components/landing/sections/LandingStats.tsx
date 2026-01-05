@@ -17,15 +17,15 @@ export default function LandingStats() {
               key={index}
               className="text-center group animate-fade-in"
               style={{ animationDelay: `${index * 100}ms` }}
-              data-testid={`stat-${stat.label.toLowerCase().replace(/\s/g, '-')}`}
+              data-testid={`container-stat-${index}`}
             >
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-ecode-accent/10 mb-3 transition-all duration-300 group-hover:bg-ecode-accent/20 group-hover:scale-110">
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-ecode-accent/10 mb-3 transition-all duration-300 group-hover:bg-ecode-accent/20 group-hover:scale-110" data-testid={`icon-stat-${index}`}>
                 <div className="text-ecode-accent">{stat.icon}</div>
               </div>
-              <div className="text-4xl font-bold bg-gradient-to-r from-ecode-orange via-ecode-orange-light to-ecode-yellow bg-clip-text text-transparent">
+              <div className="text-4xl font-bold bg-gradient-to-r from-ecode-orange via-ecode-orange-light to-ecode-yellow bg-clip-text text-transparent" data-testid={`text-stat-value-${index}`}>
                 {stat.value}
               </div>
-              <div className="text-sm text-[var(--ecode-text-muted)] mt-1">
+              <div className="text-sm text-[var(--ecode-text-muted)] mt-1" data-testid={`text-stat-label-${index}`}>
                 {stat.label}
               </div>
             </div>

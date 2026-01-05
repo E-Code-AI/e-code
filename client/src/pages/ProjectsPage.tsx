@@ -154,10 +154,24 @@ const ProjectsPage = () => {
     },
   });
 
+  const [page, setPage] = useState(1);
+  const itemsPerPage = 12;
+
   const { data: projectsData, isLoading, error } = useQuery<{ projects: ProjectWithOwner[], pagination: { total: number, limit: number, offset: number, hasMore: boolean } }>({
-    queryKey: ['/api/projects'],
+    queryKey: ['/api/projects', page, debouncedSearchQuery, filterLanguage, filterVisibility],
     queryFn: async () => {
-      const res = await apiRequest('GET', '/api/projects');
+      const offset = (page - 1) * itemsPerPage;
+      let url = `/api/projects?limit=${itemsPerPage}&offset=${offset}`;
+      if (debouncedSearchQuery) {
+        url += `&search=${encodeURIComponent(debouncedSearchQuery)}`;
+      }
+      if (filterLanguage.length === 1) {
+        url += `&language=${encodeURIComponent(filterLanguage[0])}`;
+      }
+      if (filterVisibility.length === 1) {
+        url += `&visibility=${encodeURIComponent(filterVisibility[0])}`;
+      }
+      const res = await apiRequest('GET', url);
       if (!res.ok) {
         throw new Error('Failed to fetch projects');
       }
@@ -179,20 +193,22 @@ const ProjectsPage = () => {
   const filteredAndSortedProjects = useMemo(() => {
     let filtered = [...projectsArray];
 
-    if (debouncedSearchQuery) {
+    // Note: Search, language (if single), and visibility (if single) are handled server-side
+    // We keep client-side filtering as a secondary layer for multiple selections or immediate feedback
+    if (debouncedSearchQuery && projectsData?.pagination.total === undefined) {
       filtered = filtered.filter(p => 
         p.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
         p.description?.toLowerCase().includes(debouncedSearchQuery.toLowerCase())
       );
     }
 
-    if (filterLanguage.length > 0) {
+    if (filterLanguage.length > 1) {
       filtered = filtered.filter(p => {
         return p.language && filterLanguage.includes(p.language);
       });
     }
 
-    if (filterVisibility.length > 0) {
+    if (filterVisibility.length > 1) {
       filtered = filtered.filter(p => filterVisibility.includes(p.visibility));
     }
 
@@ -1137,7 +1153,7 @@ const ProjectsPage = () => {
             )}
 
             {/* Pagination - E-Code Styled */}
-            {filteredAndSortedProjects.length > 0 && (
+            {projectsData && projectsData.pagination.total > itemsPerPage && (
               <div 
                 className="mt-8 flex justify-center animate-fadeIn"
               >
@@ -1145,41 +1161,49 @@ const ProjectsPage = () => {
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    disabled
-                    className="border-[var(--ecode-border)] text-[var(--ecode-text-muted)]"
+                    disabled={page === 1}
+                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                    className="border-[var(--ecode-border)] text-[var(--ecode-text)] hover:bg-[var(--ecode-accent)]/10 hover:text-[var(--ecode-accent)]"
                     data-testid="button-page-prev"
                   >
                     Previous
                   </Button>
                   <div className="flex items-center gap-1">
-                    <Button 
-                      size="sm"
-                      className="bg-[var(--ecode-accent)] hover:bg-[var(--ecode-accent-hover)] text-white"
-                      data-testid="button-page-1"
-                    >
-                      1
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      className="border-[var(--ecode-border)] text-[var(--ecode-text)] hover:bg-[var(--ecode-accent)]/10 hover:text-[var(--ecode-accent)] hover:border-[var(--ecode-accent)]/30"
-                      data-testid="button-page-2"
-                    >
-                      2
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      className="border-[var(--ecode-border)] text-[var(--ecode-text)] hover:bg-[var(--ecode-accent)]/10 hover:text-[var(--ecode-accent)] hover:border-[var(--ecode-accent)]/30"
-                      data-testid="button-page-3"
-                    >
-                      3
-                    </Button>
+                    {Array.from({ length: Math.ceil(projectsData.pagination.total / itemsPerPage) }).map((_, i) => {
+                      const pageNum = i + 1;
+                      if (
+                        pageNum === 1 || 
+                        pageNum === Math.ceil(projectsData.pagination.total / itemsPerPage) ||
+                        (pageNum >= page - 1 && pageNum <= page + 1)
+                      ) {
+                        return (
+                          <Button 
+                            key={pageNum}
+                            size="sm"
+                            variant={page === pageNum ? "default" : "outline"}
+                            className={page === pageNum 
+                              ? "bg-[var(--ecode-accent)] hover:bg-[var(--ecode-accent-hover)] text-white"
+                              : "border-[var(--ecode-border)] text-[var(--ecode-text)] hover:bg-[var(--ecode-accent)]/10 hover:text-[var(--ecode-accent)]"
+                            }
+                            onClick={() => setPage(pageNum)}
+                            data-testid={`button-page-${pageNum}`}
+                          >
+                            {pageNum}
+                          </Button>
+                        );
+                      }
+                      if (pageNum === page - 2 || pageNum === page + 2) {
+                        return <span key={pageNum} className="px-2 text-[var(--ecode-text-muted)]">...</span>;
+                      }
+                      return null;
+                    })}
                   </div>
                   <Button 
                     variant="outline" 
                     size="sm"
-                    className="border-[var(--ecode-border)] text-[var(--ecode-text)] hover:bg-[var(--ecode-accent)]/10 hover:text-[var(--ecode-accent)] hover:border-[var(--ecode-accent)]/30"
+                    disabled={!projectsData.pagination.hasMore}
+                    onClick={() => setPage(p => p + 1)}
+                    className="border-[var(--ecode-border)] text-[var(--ecode-text)] hover:bg-[var(--ecode-accent)]/10 hover:text-[var(--ecode-accent)]"
                     data-testid="button-page-next"
                   >
                     Next
