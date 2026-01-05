@@ -1731,15 +1731,34 @@ export function useAutonomousChatIntegration({
     }
   }, []);
 
-  // ✅ FIX (Jan 2026): This MUST be the LAST useLayoutEffect in the hook
+  // ✅ FIX (Jan 2026): FINAL UNMOUNT HANDLER - Guarantees socket closure on component unmount
+  // This MUST be the LAST useLayoutEffect in the hook
   // React cleanup runs in REVERSE declaration order, so this cleanup runs FIRST
-  // This ensures intentionalTeardownRef is set BEFORE other cleanups check it
+  // This cleanup does TWO things:
+  // 1. Set intentionalTeardownRef so other cleanups know this is unmount
+  // 2. DIRECTLY close the socket here as a guarantee (defense in depth)
   useLayoutEffect(() => {
     return () => {
       // This cleanup runs FIRST during unmount (reverse order)
-      // Set the flag so other cleanups know this is an intentional teardown
-      console.log('[AutonomousChatIntegration] 🚨 Component unmounting - setting intentionalTeardownRef');
+      console.log('[AutonomousChatIntegration] 🚨 UNMOUNT HANDLER: Setting intentionalTeardownRef and closing socket');
       intentionalTeardownRef.current = true;
+      
+      // ✅ GUARANTEE: Close socket directly here, don't rely on other cleanups
+      // This ensures socket is closed even if other cleanup logic has edge cases
+      if (wsRef.current) {
+        console.log('[AutonomousChatIntegration] 🚨 UNMOUNT HANDLER: Force-closing WebSocket');
+        try {
+          wsRef.current.close(1000, 'component-unmount-guarantee');
+        } catch (e) {
+          console.error('[AutonomousChatIntegration] Error closing WebSocket on unmount:', e);
+        }
+        wsRef.current = null;
+      }
+      
+      // Reset connection flags
+      layoutEffectConnectedRef.current = false;
+      hasConnectedRef.current = false;
+      bootstrapActiveRef.current = false;
     };
   }, []);
 
