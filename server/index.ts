@@ -78,19 +78,66 @@ app.use(compression({ level: 6 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: false, limit: '10mb' }));
 
+// ✅ PERFORMANCE FIX (Jan 2026): Early bypass for static assets
+// Skip ALL heavy middleware for Vite dev paths and static assets
+// This MUST run BEFORE monitoring, prometheus, logging, and sanitization
+app.use((req, res, next) => {
+  const path = req.path || req.originalUrl?.split('?')[0] || req.url?.split('?')[0] || '';
+  
+  // Fast path for Vite dev assets - skip all heavy middleware
+  if (isViteDevPath(path)) {
+    (req as any)._skipHeavyMiddleware = true;
+    (req as any)._skipRateLimit = true;
+  }
+  
+  // Skip heavy middleware for static assets in development
+  if (process.env.NODE_ENV === 'development' && 
+      (path.startsWith('/src/') || path.startsWith('/node_modules/') || 
+       path.startsWith('/@') || path.endsWith('.css') || 
+       path.endsWith('.js') || path.endsWith('.ts') || path.endsWith('.tsx'))) {
+    (req as any)._skipHeavyMiddleware = true;
+    (req as any)._skipRateLimit = true;
+  }
+  
+  next();
+});
+
 // Production monitoring middleware - tracks API latency, errors, WebSocket connections
-app.use(monitoringMiddleware);
+// Skip for static assets to improve performance
+app.use((req, res, next) => {
+  if ((req as any)._skipHeavyMiddleware) return next();
+  monitoringMiddleware(req, res, next);
+});
 
 // Prometheus metrics collection middleware - Fortune 500 observability
-app.use(prometheusMiddleware);
+// Skip for static assets to improve performance
+app.use((req, res, next) => {
+  if ((req as any)._skipHeavyMiddleware) return next();
+  prometheusMiddleware(req, res, next);
+});
 
 // XSS sanitization middleware - sanitizes all user input
-app.use(sanitizeInput);
+// Skip for static assets (no user input to sanitize)
+app.use((req, res, next) => {
+  if ((req as any)._skipHeavyMiddleware) return next();
+  sanitizeInput(req, res, next);
+});
 
 // Centralized logging middleware with request correlation IDs (Fortune 500 Standard)
-app.use(loggingMiddleware);
-app.use(securityLoggingMiddleware);
-app.use(performanceLoggingMiddleware(3000)); // Log requests > 3s
+// Skip verbose logging for static assets in development
+const perfLogger = performanceLoggingMiddleware(3000);
+app.use((req, res, next) => {
+  if ((req as any)._skipHeavyMiddleware) return next();
+  loggingMiddleware(req, res, next);
+});
+app.use((req, res, next) => {
+  if ((req as any)._skipHeavyMiddleware) return next();
+  securityLoggingMiddleware(req, res, next);
+});
+app.use((req, res, next) => {
+  if ((req as any)._skipHeavyMiddleware) return next();
+  perfLogger(req, res, next);
+});
 
 // ✅ CRITICAL FIX (Dec 19, 2025): Global rate limit bypass for non-API routes in development
 // Skip ALL rate limiting for:
