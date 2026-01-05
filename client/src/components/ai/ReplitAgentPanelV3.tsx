@@ -386,9 +386,10 @@ export function ReplitAgentPanelV3({
   const [agentMode, setAgentMode] = useState<AgentMode>('build');
   const [autonomySessionId, setAutonomySessionId] = useState<string | null>(null);
   
-  // ✅ FIX (Dec 25, 2025): Track bootstrap failure to exit loading state
-  // If conversation bootstrap fails, don't block the UI forever
-  const [bootstrapFailed, setBootstrapFailed] = useState(false);
+  // ✅ FIX (Jan 2026): Use Zustand store for bootstrap failure state - survives component remounts
+  // This prevents mobile users from being stuck on "Initializing Agent" forever
+  const { bootstrapTimedOut, startBootstrapTimer, setBootstrapTimedOut } = useAutonomousBuildStore();
+  const bootstrapFailed = bootstrapTimedOut;
   
   // Zustand store for message persistence across tab switches
   const { 
@@ -653,6 +654,9 @@ export function ReplitAgentPanelV3({
         setAgentMode(response.agentMode);
         bootstrapCompleted = true;
         
+        // ✅ FIX (Jan 2026): Reset bootstrapTimedOut on success for next project
+        setBootstrapTimedOut(false);
+        
         // ✅ FIX (Dec 25, 2025): Enable active build session for WebSocket streaming
         // This keeps the WebSocket connected for real-time progress updates
         setIsActiveBuildSession(true);
@@ -662,8 +666,8 @@ export function ReplitAgentPanelV3({
         console.error('[ReplitAgentPanelV3] Bootstrap conversation failed:', error);
         bootstrapCompleted = true;
         
-        // ✅ FIX (Dec 25, 2025): Set bootstrapFailed to exit loading state immediately
-        setBootstrapFailed(true);
+        // ✅ FIX (Jan 2026): Set bootstrapTimedOut in global store to exit loading state
+        setBootstrapTimedOut(true);
         // ✅ FIX (Dec 25, 2025): Notify parent to clear bootstrap token
         onBootstrapFailure?.();
         
@@ -683,22 +687,16 @@ export function ReplitAgentPanelV3({
 
     bootstrapConversation();
     
-    // ✅ FIX (Dec 25, 2025): Faster timeout fallback - exit loading after 5 seconds max
-    // This prevents the UI from being stuck forever if API is slow/down
-    const timeoutId = setTimeout(() => {
-      if (!bootstrapCompleted && isMounted) {
-        console.warn('[ReplitAgentPanelV3] Bootstrap timeout (5s) - allowing UI interaction');
-        setBootstrapFailed(true);
-        // ✅ FIX (Dec 25, 2025): Notify parent to clear bootstrap token
-        onBootstrapFailure?.();
-      }
-    }, 5000);
+    // ✅ FIX (Jan 2026): Use global timer that survives component remounts
+    // This prevents mobile users from being stuck on "Initializing Agent" forever
+    // The timer runs in Zustand store, not in this component's lifecycle
+    startBootstrapTimer();
     
     return () => {
       isMounted = false;
-      clearTimeout(timeoutId);
+      // Note: We DON'T clear the global timer here - it survives remounts intentionally
     };
-  }, [projectId, toast, migrateMessages, onBootstrapFailure]);
+  }, [projectId, toast, migrateMessages, onBootstrapFailure, startBootstrapTimer, setBootstrapTimedOut]);
 
   // Track if initial sync from backend has been completed for this conversation
   const initialSyncDoneRef = useRef<number | null>(null);
