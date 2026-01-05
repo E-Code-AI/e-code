@@ -80,6 +80,12 @@ export default function Register() {
     if (!formData.username || !formData.email || !formData.password) {
       validationErrors.push('Please fill in all required fields');
     }
+
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (formData.email && !emailRegex.test(formData.email)) {
+      validationErrors.push('Please enter a valid email address');
+    }
     
     if (formData.password !== formData.confirmPassword) {
       validationErrors.push('Passwords do not match');
@@ -264,6 +270,7 @@ export default function Register() {
                   value={formData.displayName}
                   onChange={handleInputChange}
                   disabled={isLoading}
+                  data-testid="input-display-name"
                 />
               </div>
             </div>
@@ -363,6 +370,7 @@ export default function Register() {
                   onChange={handleInputChange}
                   disabled={isLoading}
                   required
+                  data-testid="input-confirm-password"
                 />
                 <button
                   type="button"
