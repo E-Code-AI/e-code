@@ -23,7 +23,7 @@ export interface ExecutionResult {
 const USE_DOCKER_EXECUTION = process.env.EXECUTION_MODE === 'docker' || process.env.NODE_ENV === 'production';
 
 // Normalize language aliases to canonical names
-// Full 27-language support for Fortune 500 production parity with Replit
+// Full 29-language support for Fortune 500 production parity with Replit
 const LANGUAGE_ALIASES: Record<string, string> = {
   // JavaScript/TypeScript/Node.js
   'js': 'javascript',
@@ -58,10 +58,13 @@ const LANGUAGE_ALIASES: Record<string, string> = {
   // Ruby
   'ruby': 'ruby',
   'rb': 'ruby',
-  // C#/.NET
+  // C#/.NET/F#
   'csharp': 'csharp',
   'cs': 'csharp',
   'c#': 'csharp',
+  'fsharp': 'fsharp',
+  'fs': 'fsharp',
+  'f#': 'fsharp',
   // Shell
   'bash': 'bash',
   'sh': 'bash',
@@ -76,6 +79,8 @@ const LANGUAGE_ALIASES: Record<string, string> = {
   'hs': 'haskell',
   'elixir': 'elixir',
   'ex': 'elixir',
+  'erlang': 'erlang',
+  'erl': 'erlang',
   'julia': 'julia',
   'jl': 'julia',
   'ocaml': 'ocaml',
@@ -340,6 +345,9 @@ export class CodeExecutor {
       case 'csharp':
         return { cmd: 'dotnet', args: ['script', 'main.csx'], entryFile: 'main.csx' };
       
+      case 'fsharp':
+        return { cmd: 'dotnet', args: ['fsi', 'main.fsx'], entryFile: 'main.fsx' };
+      
       case 'go':
         return { cmd: 'go', args: ['run', 'main.go'], entryFile: 'main.go' };
       
@@ -375,6 +383,9 @@ export class CodeExecutor {
       
       case 'elixir':
         return { cmd: 'elixir', args: ['main.exs'], entryFile: 'main.exs' };
+      
+      case 'erlang':
+        return { cmd: 'escript', args: ['main.erl'], entryFile: 'main.erl' };
       
       case 'julia':
         return { cmd: 'julia', args: ['main.jl'], entryFile: 'main.jl' };

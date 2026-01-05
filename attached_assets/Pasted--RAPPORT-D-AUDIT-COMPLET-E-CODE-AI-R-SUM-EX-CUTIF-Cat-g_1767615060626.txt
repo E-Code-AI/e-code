@@ -1,0 +1,1604 @@
+ RAPPORT D'AUDIT COMPLET - E-CODE.AI
+🔴 RÉSUMÉ EXÉCUTIF
+Catégorie	Critiques	Hauts	Moyens	Bas	Total
+Backend/Sécurité	4	18	23	6	51
+Frontend UI/UX	5	12	15	8	40
+Mobile/Responsive	3	8	12	5	28
+Features Core IDE	7	22	23	9	61
+Production/Config	17	25	15	10	67
+TOTAL	36	85	88	38	247
+🔴 PARTIE 1 : PROBLÈMES CRITIQUES (À CORRIGER EN PRIORITÉ)
+1.1 SÉCURITÉ - SECRETS EXPOSÉS
+Problème 1 : Fichier .env commité avec secrets
+Fichier: /home/user/e-code/.env
+Lignes: 10-11, 27
+
+SESSION_SECRET=development-session-secret-change-in-production
+JWT_SECRET=development-jwt-secret-change-in-production  
+DISABLE_CSRF=true
+
+Solution:
+
+Supprimer .env du dépôt Git immédiatement
+Ajouter .env à .gitignore
+Regénérer tous les secrets avec: openssl rand -base64 32
+Utiliser des variables d'environnement Replit pour la production
+Problème 2 : Génération automatique de secrets faibles
+Fichier: /home/user/e-code/server/utils/secrets-manager.ts
+Lignes: 45-65, 122-127
+
+Description: Les secrets sont générés de manière déterministe basée sur REPL_ID - cryptographiquement faibles.
+
+Solution:
+
+// Remplacer ligne 45-65 par:
+import crypto from 'crypto';
+
+function generateSecureSecret(): string {
+  return crypto.randomBytes(32).toString('base64');
+}
+
+// Au lieu de la génération basée sur REPL_ID
+
+Problème 3 : Endpoint sans authentification
+Fichier: /home/user/e-code/server/routes/ai-health.ts
+Ligne: 255
+
+Description: POST /api/health/clear-cache permet à n'importe qui de vider le cache.
+
+Solution:
+
+// Ligne 255 - Ajouter middleware d'authentification:
+router.post('/clear-cache', requireAuth, requireAdmin, async (req, res) => {
+  // ...existing code
+});
+
+Problème 4 : Credentials Git exposés dans l'URL
+Fichier: /home/user/e-code/server/git/git-backend.ts
+Lignes: 56-69
+
+Description: Token GitHub visible dans les URLs de clone: https://${token}@github.com/...
+
+Solution:
+
+// Utiliser git credential helper au lieu d'embedding le token
+import { execSync } from 'child_process';
+
+// Configurer credential helper
+execSync(`git config credential.helper 'store --file=/tmp/.git-credentials'`);
+// Écrire credentials de façon sécurisée
+fs.writeFileSync('/tmp/.git-credentials', `https://${token}:x-oauth-basic@github.com`);
+// Cloner sans token dans l'URL
+spawn('git', ['clone', repoUrl]);
+
+1.2 DOCKER - PROBLÈMES CRITIQUES
+Problème 5 : Migrations forcées sans backup
+Fichier: /home/user/e-code/docker-entrypoint.sh
+Ligne: 16
+
+npm run db:push --force
+
+Solution:
+
+# Remplacer ligne 16 par:
+echo "Creating database backup..."
+pg_dump ${DATABASE_URL} > /app/backups/backup-$(date +%Y%m%d_%H%M%S).sql
+echo "Running safe migrations..."
+npm run db:push  # Sans --force
+
+Problème 6 : Conteneur Docker privilégié
+Fichier: /home/user/e-code/docker-compose.production.yml
+Ligne: 128
+
+privileged: true
+
+Solution:
+
+# Remplacer par des capabilities spécifiques:
+cap_add:
+  - SYS_ADMIN
+security_opt:
+  - seccomp:unconfined
+# Ajouter limites de ressources:
+deploy:
+  resources:
+    limits:
+      cpus: '2.0'
+      memory: 4G
+
+Problème 7 : Mot de passe PostgreSQL optionnel
+Fichier: /home/user/e-code/docker-compose.production.yml
+Ligne: 98
+
+Solution:
+
+# Remplacer:
+POSTGRES_PASSWORD=${PGPASSWORD}
+# Par:
+POSTGRES_PASSWORD=${PGPASSWORD:?PGPASSWORD is required}
+
+1.3 STRIPE - VULNÉRABILITÉS PAIEMENT
+Problème 8 : Webhook Stripe non vérifié
+Fichier: /home/user/e-code/server/services/stripe-billing-service.ts
+
+Description: Pas de vérification de signature des webhooks Stripe.
+
+Solution:
+
+// Ajouter dans le webhook handler:
+import Stripe from 'stripe';
+
+const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+app.post('/webhook', express.raw({type: 'application/json'}), (req, res) => {
+  const sig = req.headers['stripe-signature'];
+  
+  let event;
+  try {
+    event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+  } catch (err) {
+    console.error('Webhook signature verification failed');
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+  
+  // Traiter l'événement vérifié
+});
+
+Problème 9 : Clé d'idempotence non-unique
+Fichier: /home/user/e-code/server/services/stripe-billing-service.ts
+Lignes: 8-12
+
+Solution:
+
+// Remplacer:
+function generateIdempotencyKey(): string {
+  return `${Date.now()}-${uuidv4().slice(0, 8)}`;
+}
+// Par:
+function generateIdempotencyKey(): string {
+  return uuidv4(); // UUID complet
+}
+
+1.4 COLLABORATION - FONCTIONNALITÉ CASSÉE
+Problème 10 : Synchronisation des curseurs cassée
+Fichier: /home/user/e-code/client/src/hooks/useYjsCollaboration.ts
+Lignes: 118-119
+
+Description: Bug de closure - les positions des curseurs ne sont pas envoyées aux autres collaborateurs.
+
+Solution:
+
+// Remplacer les lignes 118-119:
+const editorViewRef = useRef<EditorView | null>(null);
+
+// Au lieu de:
+// setEditorView(view);
+// Utiliser:
+editorViewRef.current = view;
+
+// Et mettre à jour toutes les références à editorView pour utiliser editorViewRef.current
+
+Problème 11 : Pas de reconnexion WebSocket automatique
+Fichier: /home/user/e-code/client/src/components/Collaboration.tsx
+Lignes: 170-178
+
+Solution:
+
+// Ajouter après la gestion de fermeture:
+let reconnectAttempts = 0;
+const maxReconnectAttempts = 5;
+
+ws.onclose = () => {
+  setConnectionStatus('disconnected');
+  
+  if (reconnectAttempts < maxReconnectAttempts) {
+    const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
+    setTimeout(() => {
+      reconnectAttempts++;
+      connectWebSocket(); // Fonction de reconnexion
+    }, delay);
+  }
+};
+
+1.5 AUTO-SAVE - RISQUE DE PERTE DE DONNÉES
+Problème 12 : Race conditions sur l'auto-save
+Fichier: /home/user/e-code/client/src/components/CodeEditor.tsx
+Lignes: 109-144
+
+Description: Plusieurs modifications rapides déclenchent des sauvegardes concurrentes sans queue.
+
+Solution:
+
+// Ajouter un système de queue:
+import { useMemo } from 'react';
+import { debounce } from 'lodash';
+
+const saveQueue = useRef<string[]>([]);
+const isSaving = useRef(false);
+
+const processQueue = async () => {
+  if (isSaving.current || saveQueue.current.length === 0) return;
+  
+  isSaving.current = true;
+  const content = saveQueue.current.pop();
+  saveQueue.current = []; // Clear pending saves
+  
+  try {
+    await saveFile(content);
+  } finally {
+    isSaving.current = false;
+    if (saveQueue.current.length > 0) {
+      processQueue();
+    }
+  }
+};
+
+const debouncedSave = useMemo(
+  () => debounce((content: string) => {
+    saveQueue.current.push(content);
+    processQueue();
+  }, 2000),
+  []
+);
+
+🟠 PARTIE 2 : BACKEND - PROBLÈMES ET SOLUTIONS
+2.1 AUTHENTIFICATION
+Problème 13 : Validation mot de passe insuffisante
+Fichier: /home/user/e-code/server/routes/auth-complete.ts
+
+Description: Pas de détection des patterns communs (Password123!)
+
+Solution:
+
+// Ajouter liste noire de mots de passe:
+const commonPasswords = ['password', 'Password123!', '123456', 'qwerty'];
+
+function validatePassword(password: string): boolean {
+  if (commonPasswords.some(p => password.toLowerCase().includes(p.toLowerCase()))) {
+    return false;
+  }
+  // ...existing validation
+}
+
+Problème 14 : Session timeout trop long
+Fichier: /home/user/e-code/server/auth/session-manager.ts
+Ligne: 153
+
+Description: 30 minutes d'inactivité - trop permissif pour une plateforme de code.
+
+Solution:
+
+// Réduire à 15 minutes pour les sessions normales:
+const SESSION_TIMEOUT = 15 * 60 * 1000; // 15 minutes
+
+// Ajouter option "Remember me" avec 7 jours:
+const EXTENDED_SESSION_TIMEOUT = 7 * 24 * 60 * 60 * 1000;
+
+Problème 15 : Tokens révoqués perdus au redémarrage
+Fichier: /home/user/e-code/server/auth/token-revocation.ts
+
+Description: Stockage mémoire uniquement - tokens révoqués perdus si le serveur redémarre.
+
+Solution:
+
+// Utiliser Redis pour la persistence:
+import Redis from 'ioredis';
+
+const redis = new Redis(process.env.REDIS_URL);
+
+async function revokeToken(token: string, expiresAt: Date): Promise<void> {
+  const ttl = Math.ceil((expiresAt.getTime() - Date.now()) / 1000);
+  await redis.setex(`revoked:${token}`, ttl, '1');
+}
+
+async function isTokenRevoked(token: string): Promise<boolean> {
+  return (await redis.exists(`revoked:${token}`)) === 1;
+}
+
+2.2 BASE DE DONNÉES
+Problème 16 : Injection potentielle MongoDB
+Fichier: /home/user/e-code/server/database/database-hosting.ts
+Ligne: 927
+
+const mongosh = spawn('mongosh', [mongoUri, '--eval', migration.sql], { shell: false });
+
+Solution:
+
+// Valider et sanitizer les entrées:
+import { escape } from 'validator';
+
+const sanitizedMigration = escape(migration.sql);
+if (sanitizedMigration.includes('db.dropDatabase') || 
+    sanitizedMigration.includes('$where')) {
+  throw new Error('Dangerous operation detected');
+}
+
+const mongosh = spawn('mongosh', [mongoUri, '--eval', sanitizedMigration], { 
+  shell: false,
+  timeout: 30000 // Timeout de sécurité
+});
+
+Problème 17 : Vulnérabilité new Function()
+Fichier: /home/user/e-code/server/data/data-provisioning-service.ts
+Lignes: 323-326
+
+const generatorFunction = new Function('faker', `return ${field.generator}`);
+
+Solution:
+
+// Remplacer par une whitelist de générateurs:
+const ALLOWED_GENERATORS: Record<string, (faker: Faker) => unknown> = {
+  'faker.person.firstName()': (faker) => faker.person.firstName(),
+  'faker.person.lastName()': (faker) => faker.person.lastName(),
+  'faker.internet.email()': (faker) => faker.internet.email(),
+  // ...ajouter tous les générateurs autorisés
+};
+
+function executeGenerator(field: Field): unknown {
+  const generator = ALLOWED_GENERATORS[field.generator];
+  if (!generator) {
+    throw new Error(`Generator not allowed: ${field.generator}`);
+  }
+  return generator(faker);
+}
+
+2.3 WEBSOCKET
+Problème 18 : Auth WebSocket dans le message handler
+Fichier: /home/user/e-code/server/websocket/background-testing-ws.ts
+Ligne: 41
+
+Description: JWT vérifié après connexion établie - attaquant peut établir connexion avant vérification.
+
+Solution:
+
+// Vérifier auth AVANT d'accepter la connexion:
+wss.on('connection', async (ws, req) => {
+  const token = new URL(req.url, 'ws://localhost').searchParams.get('token');
+  
+  try {
+    const decoded = await verifyJWT(token);
+    ws.userId = decoded.userId;
+  } catch (error) {
+    ws.close(4001, 'Unauthorized');
+    return;
+  }
+  
+  // Connexion autorisée, continuer...
+});
+
+Problème 19 : Fuite mémoire potentielle connexions
+Fichier: /home/user/e-code/server/websocket/collaborative-editing-ws.ts
+
+Description: Map<Set> sans timeout cleanup pour connexions abandonnées.
+
+Solution:
+
+// Ajouter cleanup périodique:
+const CONNECTION_TIMEOUT = 5 * 60 * 1000; // 5 minutes
+
+setInterval(() => {
+  const now = Date.now();
+  connectionMap.forEach((connections, roomId) => {
+    connections.forEach((conn) => {
+      if (now - conn.lastPing > CONNECTION_TIMEOUT) {
+        conn.ws.close(1000, 'Idle timeout');
+        connections.delete(conn);
+      }
+    });
+    if (connections.size === 0) {
+      connectionMap.delete(roomId);
+    }
+  });
+}, 60000); // Check every minute
+
+2.4 ERROR HANDLING
+Problème 20 : process.exit() sans cleanup gracieux
+Fichier: /home/user/e-code/server/middleware/error-handler.ts
+Lignes: 344, 367, 408, 420, 423
+
+Solution:
+
+// Remplacer tous les process.exit() par:
+async function gracefulShutdown(exitCode: number): Promise<void> {
+  console.log('Starting graceful shutdown...');
+  
+  // Notifier les clients WebSocket
+  wss.clients.forEach(client => {
+    client.send(JSON.stringify({ type: 'server_shutdown' }));
+    client.close(1001, 'Server shutting down');
+  });
+  
+  // Fermer les connexions DB
+  await db.end();
+  
+  // Fermer le serveur HTTP
+  server.close(() => {
+    console.log('HTTP server closed');
+    process.exit(exitCode);
+  });
+  
+  // Force exit après 10s si graceful échoue
+  setTimeout(() => process.exit(exitCode), 10000);
+}
+
+2.5 RATE LIMITING
+Problème 21 : Conflits entre rate limiters
+Fichiers:
+
+/home/user/e-code/server/middleware/rate-limiter.ts (Free: 100/min)
+/home/user/e-code/server/middleware/tier-rate-limiter.ts (Free: 500/min)
+Solution:
+
+// Supprimer un des deux fichiers et centraliser:
+// server/middleware/unified-rate-limiter.ts
+
+export const RATE_LIMITS = {
+  free: { requests: 100, window: 60 },
+  pro: { requests: 500, window: 60 },
+  enterprise: { requests: 2000, window: 60 },
+} as const;
+
+// Utiliser uniquement ce fichier dans l'application
+
+Problème 22 : Fallback mémoire silencieux
+Fichier: /home/user/e-code/server/middleware/rate-limiter.ts
+Lignes: 70-91
+
+Description: Si Redis échoue, utilise mémoire sans avertissement.
+
+Solution:
+
+// Faire échouer en production si Redis indisponible:
+if (process.env.NODE_ENV === 'production') {
+  try {
+    await redis.ping();
+  } catch (error) {
+    console.error('FATAL: Redis unavailable in production');
+    process.exit(1);
+  }
+}
+
+2.6 CORS & CSRF
+Problème 23 : Requêtes sans Origin acceptées
+Fichier: /home/user/e-code/server/middleware/cors-config.ts
+Lignes: 154-156
+
+Solution:
+
+// Rejeter les requêtes sans Origin pour les endpoints authentifiés:
+function isAllowedOrigin(origin: string | undefined, req: Request): boolean {
+  // Autoriser sans origin seulement pour health checks
+  if (!origin || origin === 'null') {
+    return req.path === '/api/health' || req.path === '/api/monitoring/health';
+  }
+  // ...reste de la validation
+}
+
+Problème 24 : CSP permet unpkg.com/cdnjs
+Fichier: /home/user/e-code/server/middleware/security.ts
+Lignes: 54-85
+
+Solution:
+
+// Remplacer par des sources spécifiques:
+scriptSrc: [
+  "'self'",
+  "'nonce-{{NONCE}}'", // Générer nonce par requête
+  // Supprimer: 'https://cdnjs.cloudflare.com', 'https://unpkg.com'
+],
+
+🟡 PARTIE 3 : FRONTEND - PROBLÈMES ET SOLUTIONS
+3.1 ACCESSIBILITÉ (A11Y)
+Problème 25 : 265 composants sans attributs a11y
+Fichiers: /home/user/e-code/client/src/components/*.tsx
+
+Description: 50% des composants manquent de aria-label, role, etc.
+
+Solution:
+
+// Exemple pour un bouton icône:
+// AVANT:
+<Button size="icon" onClick={onClose}>
+  <X className="h-4 w-4" />
+</Button>
+
+// APRÈS:
+<Button 
+  size="icon" 
+  onClick={onClose}
+  aria-label="Fermer"
+>
+  <X className="h-4 w-4" aria-hidden="true" />
+</Button>
+
+Checklist à appliquer:
+
+ Ajouter aria-label à tous les boutons icônes
+ Ajouter aria-describedby aux inputs avec erreurs
+ Ajouter role="alert" aux messages d'erreur
+ Ajouter aria-live="polite" aux contenus dynamiques
+Problème 26 : Formulaires sans labels associés
+Fichier: /home/user/e-code/client/src/pages/Register.tsx
+Lignes: 240-276
+
+Solution:
+
+// AVANT:
+<Input id="email" type="email" ... />
+<span className="error">Email invalide</span>
+
+// APRÈS:
+<div>
+  <Label htmlFor="email">Email</Label>
+  <Input 
+    id="email" 
+    type="email"
+    aria-describedby="email-error"
+    aria-invalid={!!errors.email}
+    ...
+  />
+  {errors.email && (
+    <span id="email-error" role="alert" className="error">
+      {errors.email}
+    </span>
+  )}
+</div>
+
+3.2 TYPE SAFETY
+Problème 27 : 7,766 instances de types unsafe
+Description: Usage massif de any, as any, @ts-ignore
+
+Solution:
+
+// 1. Activer strict mode dans tsconfig.json:
+{
+  "compilerOptions": {
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true
+  }
+}
+
+// 2. Remplacer any par types spécifiques:
+// AVANT:
+const agentRef = useRef<any>(null);
+
+// APRÈS:
+interface AgentRef {
+  sendMessage: (msg: string) => void;
+  reset: () => void;
+}
+const agentRef = useRef<AgentRef | null>(null);
+
+Problème 28 : 189 console.log en production
+Fichiers: Multiples fichiers client
+
+Solution:
+
+// 1. Créer un wrapper de logging:
+// client/src/utils/logger.ts
+const isDev = import.meta.env.DEV;
+
+export const logger = {
+  log: (...args: unknown[]) => isDev && console.log(...args),
+  error: (...args: unknown[]) => console.error(...args), // Garder les erreurs
+  warn: (...args: unknown[]) => isDev && console.warn(...args),
+};
+
+// 2. Remplacer tous les console.log par logger.log
+// 3. Ajouter règle ESLint:
+// "no-console": ["error", { allow: ["error"] }]
+
+3.3 FORMULAIRES
+Problème 29 : Validation email insuffisante
+Fichier: /home/user/e-code/client/src/pages/Register.tsx
+Ligne: 85
+
+/^[^\s@]+@[^\s@]+\.[^\s@]+$/  // Trop permissif
+
+Solution:
+
+// Utiliser validator.js:
+import { isEmail } from 'validator';
+
+// Ou regex plus strict:
+const EMAIL_REGEX = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+
+Problème 30 : Pas de validation async username/email
+Fichier: /home/user/e-code/client/src/pages/Register.tsx
+
+Solution:
+
+// Ajouter debounced validation:
+import { useDebouncedCallback } from 'use-debounce';
+
+const checkEmailExists = useDebouncedCallback(async (email: string) => {
+  const response = await fetch(`/api/auth/check-email?email=${encodeURIComponent(email)}`);
+  const { exists } = await response.json();
+  if (exists) {
+    setErrors(prev => ({ ...prev, email: 'Cet email est déjà utilisé' }));
+  }
+}, 500);
+
+// Dans le onChange de l'input email:
+onChange={(e) => {
+  setEmail(e.target.value);
+  checkEmailExists(e.target.value);
+}}
+
+3.4 ÉTATS DE CHARGEMENT
+Problème 31 : Loading states manquants
+Fichiers: Multiples composants
+
+Solution:
+
+// Créer un composant skeleton réutilisable:
+// client/src/components/ui/Skeleton.tsx
+export function TableSkeleton({ rows = 5 }: { rows?: number }) {
+  return (
+    <div className="space-y-2">
+      {Array.from({ length: rows }).map((_, i) => (
+        <div key={i} className="h-12 bg-gray-200 animate-pulse rounded" />
+      ))}
+    </div>
+  );
+}
+
+// Utiliser dans les tables:
+{isLoading ? <TableSkeleton rows={10} /> : <DataTable data={data} />}
+
+3.5 THEME/DARK MODE
+Problème 32 : Variables CSS incohérentes
+Description: Mix de --ecode-* et --replit-*
+
+Solution:
+
+/* Centraliser dans client/src/styles/theme.css */
+:root {
+  /* Couleurs primaires */
+  --color-primary: #F26207;
+  --color-primary-hover: #F99D25;
+  
+  /* Texte */
+  --color-text-primary: #1a1a1a;
+  --color-text-secondary: #666666;
+  
+  /* Backgrounds */
+  --color-bg-primary: #ffffff;
+  --color-bg-secondary: #f5f5f5;
+}
+
+.dark {
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #a0a0a0;
+  --color-bg-primary: #1a1a1a;
+  --color-bg-secondary: #2d2d2d;
+}
+
+Problème 33 : Couleurs hardcodées dans Login
+Fichier: /home/user/e-code/client/src/pages/Login.tsx
+Lignes: 256-264
+
+style={{
+  background: 'linear-gradient(135deg, #F26207 0%, #F99D25 100%)',
+}}
+
+Solution:
+
+// Utiliser Tailwind:
+<Button className="bg-gradient-to-br from-primary to-primary-light hover:from-primary-dark hover:to-primary">
+  Se connecter
+</Button>
+
+// Ou CSS variables:
+<Button className="btn-primary-gradient">
+  Se connecter
+</Button>
+
+3.6 INTERNATIONALISATION
+Problème 34 : 80%+ des textes non traduits
+Fichiers: /home/user/e-code/client/src/pages/Register.tsx, /home/user/e-code/client/src/pages/Login.tsx, etc.
+
+Solution:
+
+// AVANT:
+<Label>Email</Label>
+<span>Mot de passe invalide</span>
+
+// APRÈS:
+import { useTranslation } from 'react-i18next';
+
+const { t } = useTranslation();
+
+<Label>{t('auth.email')}</Label>
+<span>{t('auth.errors.invalidPassword')}</span>
+
+// Ajouter dans locales/fr.json:
+{
+  "auth": {
+    "email": "Adresse email",
+    "errors": {
+      "invalidPassword": "Mot de passe invalide"
+    }
+  }
+}
+
+🔵 PARTIE 4 : MOBILE/RESPONSIVE - PROBLÈMES ET SOLUTIONS
+4.1 BREAKPOINTS MANQUANTS
+Problème 35 : Pas de support petits téléphones (320-375px)
+Fichier: /home/user/e-code/tailwind.config.ts
+
+Solution:
+
+// tailwind.config.ts
+export default {
+  theme: {
+    screens: {
+      'xs': '320px',    // Petits téléphones
+      'sm': '375px',    // iPhone SE
+      'md': '640px',    // Tablettes portrait
+      'lg': '768px',    // Tablettes paysage
+      'xl': '1024px',   // Desktop
+      '2xl': '1280px',  // Large desktop
+    },
+  },
+}
+
+4.2 INTERACTIONS TACTILES
+Problème 36 : 1,047 éléments hover-only invisibles sur mobile
+Fichiers: Multiples composants avec group-hover:opacity-100
+
+Exemple: /home/user/e-code/client/src/components/replit/ReplitTabBar.tsx
+
+Solution:
+
+// AVANT:
+<button className="opacity-0 group-hover:opacity-100">
+  <X />
+</button>
+
+// APRÈS:
+<button className="opacity-100 md:opacity-0 md:group-hover:opacity-100 touch:opacity-100">
+  <X />
+</button>
+
+// Ou utiliser une approche alternative pour mobile:
+<button className="hidden md:group-hover:block touch:block">
+  <X />
+</button>
+
+Problème 37 : Touch targets trop petits
+Fichiers: 387 éléments avec cursor-pointer sans taille tactile appropriée
+
+Solution:
+
+// Créer une classe utilitaire:
+// Dans tailwind.config.ts:
+theme: {
+  extend: {
+    minHeight: {
+      'touch': '44px',
+    },
+    minWidth: {
+      'touch': '44px',
+    },
+  },
+}
+
+// Utiliser dans les composants:
+<button className="min-h-touch min-w-touch p-2">
+  <Icon />
+</button>
+
+Problème 38 : Resize handles impossibles à utiliser sur mobile
+Fichier: /home/user/e-code/client/src/components/splits/SplitsResizeHandle.tsx
+
+Description: 1px à 3px de largeur - inutilisable au toucher
+
+Solution:
+
+// Agrandir la zone tactile:
+<div 
+  className="
+    w-1 hover:w-[3px] 
+    md:w-1 md:hover:w-[3px]
+    touch:w-4 touch:bg-transparent touch:border-x touch:border-gray-300
+  "
+  style={{ touchAction: 'none' }}
+>
+  {/* Zone tactile invisible plus large */}
+  <div className="absolute inset-y-0 -left-2 -right-2 md:hidden" />
+</div>
+
+4.3 CAPACITOR/MOBILE APP
+Problème 39 : 8+ plugins Capacitor manquants
+Fichier: /home/user/e-code/capacitor.config.ts
+
+Description: Seulement Keyboard et StatusBar configurés
+
+Solution:
+
+// capacitor.config.ts
+import { CapacitorConfig } from '@capacitor/cli';
+
+const config: CapacitorConfig = {
+  appId: 'ai.ecode.app',
+  appName: 'E-Code',
+  webDir: 'dist',
+  plugins: {
+    Keyboard: {
+      resize: 'body',
+      style: 'dark',
+    },
+    StatusBar: {
+      style: 'dark',
+    },
+    // AJOUTER:
+    SplashScreen: {
+      launchShowDuration: 2000,
+      backgroundColor: '#1a1a1a',
+    },
+    Haptics: {},
+    App: {
+      // Lifecycle handling
+    },
+    Storage: {
+      // Pour données persistantes
+    },
+    Network: {
+      // Détection réseau
+    },
+    PushNotifications: {
+      presentationOptions: ['badge', 'sound', 'alert'],
+    },
+  },
+};
+
+export default config;
+
+Problème 40 : Haptics utilisé sans plugin installé
+Fichier: /home/user/e-code/client/src/components/mobile/MobileNavigation.tsx
+
+Description: navigator.vibrate() utilisé mais Capacitor Haptics non configuré
+
+Solution:
+
+// 1. Installer le plugin:
+// npm install @capacitor/haptics
+
+// 2. Remplacer navigator.vibrate():
+import { Haptics, ImpactStyle } from '@capacitor/haptics';
+
+// AVANT:
+navigator.vibrate(10);
+
+// APRÈS:
+await Haptics.impact({ style: ImpactStyle.Light });
+
+4.4 PWA
+Problème 41 : Manifest incomplet
+Fichier: /home/user/e-code/client/public/manifest.json
+
+Solution:
+
+{
+  "name": "E-Code - IDE en ligne",
+  "short_name": "E-Code",
+  "description": "Plateforme de développement collaborative",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a1a1a",
+  "theme_color": "#F26207",
+  "icons": [
+    // ...existing icons
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/desktop.png",
+      "sizes": "1920x1080",
+      "type": "image/png",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/screenshots/mobile.png",
+      "sizes": "750x1334",
+      "type": "image/png"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Nouveau projet",
+      "url": "/new",
+      "icons": [{ "src": "/icons/new-project.png", "sizes": "96x96" }]
+    }
+  ],
+  "share_target": {
+    "action": "/share",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "files": [{ "name": "files", "accept": ["text/*", ".js", ".ts", ".py"] }]
+    }
+  },
+  "categories": ["developer", "productivity"]
+}
+
+Problème 42 : Pas de notification de mise à jour PWA
+Fichier: /home/user/e-code/client/src/utils/service-worker-registration.ts
+
+Solution:
+
+// Ajouter dans service-worker-registration.ts:
+export function registerSW() {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').then(registration => {
+      registration.addEventListener('updatefound', () => {
+        const newWorker = registration.installing;
+        
+        newWorker?.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            // Nouvelle version disponible
+            showUpdateNotification();
+          }
+        });
+      });
+    });
+  }
+}
+
+function showUpdateNotification() {
+  // Afficher toast ou banner
+  toast({
+    title: 'Mise à jour disponible',
+    description: 'Rechargez pour utiliser la nouvelle version',
+    action: <Button onClick={() => window.location.reload()}>Recharger</Button>,
+  });
+}
+
+4.5 ELECTRON DESKTOP
+Problème 43 : Context isolation désactivé
+Fichier: /home/user/e-code/desktop/main.js
+
+Description: Risque de sécurité - preload peut accéder au processus main
+
+Solution:
+
+// main.js
+const mainWindow = new BrowserWindow({
+  webPreferences: {
+    nodeIntegration: false,
+    contextIsolation: true,  // ACTIVER
+    sandbox: true,           // ACTIVER
+    preload: path.join(__dirname, 'preload.js'),
+  },
+});
+
+// preload.js - Exposer uniquement les APIs nécessaires:
+const { contextBridge, ipcRenderer } = require('electron');
+
+contextBridge.exposeInMainWorld('electronAPI', {
+  readFile: (path) => ipcRenderer.invoke('read-file', path),
+  writeFile: (path, content) => ipcRenderer.invoke('write-file', path, content),
+  // N'exposer QUE ce qui est nécessaire
+});
+
+Problème 44 : Pas d'auto-update configuré
+Fichier: /home/user/e-code/desktop/main.js
+
+Solution:
+
+// main.js
+const { autoUpdater } = require('electron-updater');
+
+app.whenReady().then(() => {
+  // Vérifier les mises à jour
+  autoUpdater.checkForUpdatesAndNotify();
+  
+  autoUpdater.on('update-available', () => {
+    mainWindow.webContents.send('update-available');
+  });
+  
+  autoUpdater.on('update-downloaded', () => {
+    mainWindow.webContents.send('update-downloaded');
+  });
+});
+
+// Dans le renderer:
+window.electronAPI.onUpdateDownloaded(() => {
+  // Afficher dialog de mise à jour
+  const response = dialog.showMessageBoxSync({
+    type: 'info',
+    buttons: ['Redémarrer', 'Plus tard'],
+    title: 'Mise à jour disponible',
+    message: 'Une nouvelle version a été téléchargée.',
+  });
+  
+  if (response === 0) {
+    autoUpdater.quitAndInstall();
+  }
+});
+
+🟢 PARTIE 5 : FEATURES IDE - PROBLÈMES ET SOLUTIONS
+5.1 ÉDITEUR DE CODE
+Problème 45 : 11 langages sans syntax highlighting
+Fichier: /home/user/e-code/client/src/lib/cm6/language-loader.ts
+Lignes: 139-200
+
+Langages manquants: Lua, Perl, R, Haskell, Scala, Clojure, Elixir, Julia, OCaml, Fortran, Zig
+
+Solution:
+
+// language-loader.ts - Ajouter les imports:
+import { StreamLanguage } from '@codemirror/language';
+import { lua } from '@codemirror/legacy-modes/mode/lua';
+import { perl } from '@codemirror/legacy-modes/mode/perl';
+import { r } from '@codemirror/legacy-modes/mode/r';
+import { haskell } from '@codemirror/legacy-modes/mode/haskell';
+// etc.
+
+// Ajouter dans le switch:
+case 'lua':
+  return StreamLanguage.define(lua);
+case 'perl':
+case 'pl':
+  return StreamLanguage.define(perl);
+case 'r':
+  return StreamLanguage.define(r);
+case 'hs':
+case 'haskell':
+  return StreamLanguage.define(haskell);
+// etc.
+
+Problème 46 : Pas de LSP (Language Server Protocol)
+Description: Aucune intelligence de code (go-to-definition, find references, etc.)
+
+Solution:
+
+// 1. Installer @codemirror/language-server
+// 2. Créer un service LSP:
+// server/services/lsp-service.ts
+
+import { spawn } from 'child_process';
+
+const LSP_SERVERS: Record<string, string[]> = {
+  typescript: ['typescript-language-server', '--stdio'],
+  python: ['pylsp'],
+  rust: ['rust-analyzer'],
+  go: ['gopls'],
+};
+
+export function startLSP(language: string, projectPath: string) {
+  const cmd = LSP_SERVERS[language];
+  if (!cmd) return null;
+  
+  return spawn(cmd[0], cmd.slice(1), {
+    cwd: projectPath,
+    stdio: ['pipe', 'pipe', 'pipe'],
+  });
+}
+
+// 3. Connecter au client via WebSocket
+
+5.2 EXPLORATEUR DE FICHIERS
+Problème 47 : Erreurs non affichées à l'utilisateur
+Fichier: /home/user/e-code/client/src/components/FileExplorer.tsx
+Ligne: 301
+
+console.error('Error creating new item:', error);
+
+Solution:
+
+// Remplacer par:
+import { toast } from 'sonner';
+
+try {
+  await createItem(name, type);
+} catch (error) {
+  console.error('Error creating new item:', error);
+  toast.error(t('fileExplorer.errors.createFailed', { 
+    name, 
+    message: error instanceof Error ? error.message : 'Unknown error' 
+  }));
+}
+
+Problème 48 : Pas de drag-and-drop pour déplacer fichiers
+Fichier: /home/user/e-code/client/src/components/FileExplorer.tsx
+
+Solution:
+
+// Ajouter react-dnd:
+import { useDrag, useDrop } from 'react-dnd';
+
+function FileItem({ file, onMove }: Props) {
+  const [{ isDragging }, drag] = useDrag({
+    type: 'FILE',
+    item: { id: file.id, path: file.path },
+    collect: (monitor) => ({
+      isDragging: monitor.isDragging(),
+    }),
+  });
+
+  const [{ isOver }, drop] = useDrop({
+    accept: 'FILE',
+    drop: (item: { id: string; path: string }) => {
+      onMove(item.path, file.path);
+    },
+    collect: (monitor) => ({
+      isOver: monitor.isOver(),
+    }),
+  });
+
+  return (
+    <div 
+      ref={(node) => drag(drop(node))} 
+      className={cn(isDragging && 'opacity-50', isOver && 'bg-blue-100')}
+    >
+      {file.name}
+    </div>
+  );
+}
+
+5.3 TERMINAL
+Problème 49 : Output avec polling 1s au lieu de streaming
+Fichier: /home/user/e-code/client/src/components/ExecutionConsole.tsx
+Lignes: 60-90
+
+Solution:
+
+// Utiliser WebSocket pour streaming:
+// client/src/hooks/useTerminalStream.ts
+
+export function useTerminalStream(sessionId: string) {
+  const [output, setOutput] = useState<string>('');
+  
+  useEffect(() => {
+    const ws = new WebSocket(`${WS_URL}/terminal/${sessionId}`);
+    
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      if (data.type === 'output') {
+        setOutput(prev => prev + data.content);
+      }
+    };
+    
+    return () => ws.close();
+  }, [sessionId]);
+  
+  return output;
+}
+
+Problème 50 : Pas de support couleurs ANSI
+Fichier: /home/user/e-code/client/src/components/ExecutionConsole.tsx
+
+Solution:
+
+// Installer et utiliser ansi-to-html:
+import Convert from 'ansi-to-html';
+
+const convert = new Convert({
+  fg: '#fff',
+  bg: '#1a1a1a',
+  newline: true,
+  escapeXML: true,
+});
+
+// Dans le rendu:
+<div 
+  className="terminal-output"
+  dangerouslySetInnerHTML={{ 
+    __html: convert.toHtml(output) 
+  }} 
+/>
+
+5.4 PREVIEW
+Problème 51 : Iframe sans sandbox
+Fichier: /home/user/e-code/client/src/components/Preview.tsx
+Ligne: 95
+
+Solution:
+
+<iframe
+  src={previewUrl}
+  sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+  // NE PAS ajouter allow-top-navigation pour éviter les redirections malicieuses
+/>
+
+Problème 52 : Health check 5s trop lent
+Fichier: /home/user/e-code/client/src/components/Preview.tsx
+Lignes: 52-96
+
+Solution:
+
+// Réduire l'intervalle et ajouter détection offline:
+const HEALTH_CHECK_INTERVAL = 2000; // 2s au lieu de 5s
+const OFFLINE_THRESHOLD = 3; // 3 échecs consécutifs
+
+let failCount = 0;
+
+const checkHealth = async () => {
+  try {
+    const response = await fetch(healthUrl, { 
+      method: 'HEAD',
+      signal: AbortSignal.timeout(1000) 
+    });
+    if (response.ok) {
+      failCount = 0;
+      setStatus('running');
+    }
+  } catch {
+    failCount++;
+    if (failCount >= OFFLINE_THRESHOLD) {
+      setStatus('offline');
+    }
+  }
+};
+
+5.5 AI ASSISTANT
+Problème 53 : Pas de streaming des réponses AI
+Fichier: /home/user/e-code/client/src/components/AIAssistant.tsx
+Lignes: 217-252
+
+Description: Utilise .json() - attente complète avant affichage
+
+Solution:
+
+// Utiliser streaming:
+const response = await fetch('/api/ai/chat', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ messages }),
+});
+
+const reader = response.body?.getReader();
+const decoder = new TextDecoder();
+
+let fullResponse = '';
+
+while (reader) {
+  const { done, value } = await reader.read();
+  if (done) break;
+  
+  const chunk = decoder.decode(value);
+  fullResponse += chunk;
+  
+  // Mise à jour UI en temps réel
+  setMessages(prev => {
+    const updated = [...prev];
+    updated[updated.length - 1].content = fullResponse;
+    return updated;
+  });
+}
+
+Problème 54 : Pas de gestion du context window
+Fichier: /home/user/e-code/client/src/components/AIAssistant.tsx
+Ligne: 224
+
+history: messages.slice(-5)  // Arbitraire, peut dépasser le contexte
+
+Solution:
+
+import { encode } from 'gpt-tokenizer';
+
+const MAX_CONTEXT_TOKENS = 8000;
+
+function truncateHistory(messages: Message[]): Message[] {
+  let totalTokens = 0;
+  const truncated: Message[] = [];
+  
+  // Parcourir du plus récent au plus ancien
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const tokens = encode(messages[i].content).length;
+    if (totalTokens + tokens > MAX_CONTEXT_TOKENS) break;
+    totalTokens += tokens;
+    truncated.unshift(messages[i]);
+  }
+  
+  return truncated;
+}
+
+5.6 IMPORT/EXPORT
+Problème 55 : Barre de progression fausse
+Fichier: /home/user/e-code/client/src/components/ImportExport.tsx
+Lignes: 130-150
+
+setImportProgress(0);  // Jamais incrémenté
+
+Solution:
+
+// Utiliser streaming upload avec progress:
+const formData = new FormData();
+formData.append('file', file);
+
+const xhr = new XMLHttpRequest();
+
+xhr.upload.addEventListener('progress', (e) => {
+  if (e.lengthComputable) {
+    const percent = Math.round((e.loaded / e.total) * 100);
+    setImportProgress(percent);
+  }
+});
+
+xhr.addEventListener('load', () => {
+  setImportProgress(100);
+  // ...handle success
+});
+
+xhr.open('POST', '/api/projects/import');
+xhr.send(formData);
+
+Problème 56 : Import URL non implémenté
+Fichier: /home/user/e-code/client/src/components/ImportExport.tsx
+Ligne: 25
+
+Solution:
+
+// Ajouter handler pour import depuis URL:
+async function importFromUrl(url: string): Promise<void> {
+  setIsImporting(true);
+  setImportProgress(0);
+  
+  try {
+    const response = await fetch('/api/projects/import-url', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url }),
+    });
+    
+    const reader = response.body?.getReader();
+    // Stream progress...
+    
+    const project = await response.json();
+    toast.success(`Projet "${project.name}" importé avec succès`);
+  } catch (error) {
+    toast.error('Échec de l\'import depuis l\'URL');
+  } finally {
+    setIsImporting(false);
+  }
+}
+
+🟣 PARTIE 6 : CONFIGURATION PRODUCTION - PROBLÈMES ET SOLUTIONS
+6.1 SSL/HTTPS
+Problème 57 : CSP avec unsafe-inline
+Fichier: /home/user/e-code/nginx.conf
+Ligne: 75
+
+Solution:
+
+# Implémenter nonces:
+# Dans le server block:
+set $csp_nonce $request_id;
+
+add_header Content-Security-Policy "
+  default-src 'self';
+  script-src 'self' 'nonce-$csp_nonce';
+  style-src 'self' 'nonce-$csp_nonce';
+  img-src 'self' data: https:;
+  font-src 'self';
+  connect-src 'self' wss://*.e-code.ai;
+";
+
+# Passer le nonce au backend via header:
+proxy_set_header X-CSP-Nonce $csp_nonce;
+
+Problème 58 : HSTS sans preload
+Fichier: /home/user/e-code/nginx.conf
+Ligne: 50
+
+Solution:
+
+# Remplacer:
+add_header Strict-Transport-Security "max-age=31536000";
+# Par:
+add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+
+Problème 59 : Pas d'OCSP stapling
+Fichier: /home/user/e-code/nginx.conf
+
+Solution:
+
+# Ajouter dans le server block SSL:
+ssl_stapling on;
+ssl_stapling_verify on;
+ssl_trusted_certificate /etc/letsencrypt/live/e-code.ai/chain.pem;
+resolver 8.8.8.8 8.8.4.4 valid=300s;
+resolver_timeout 5s;
+
+6.2 CI/CD
+Problème 60 : Secrets de test hardcodés
+Fichier: /home/user/e-code/.github/workflows/ci-cd-production.yml
+Lignes: 120-121
+
+Solution:
+
+# Supprimer les fallbacks:
+env:
+  SESSION_SECRET: ${{ secrets.TEST_SESSION_SECRET }}
+  JWT_SECRET: ${{ secrets.TEST_JWT_SECRET }}
+  # Pas de || 'fallback-value'
+
+Problème 61 : Scan Docker non bloquant
+Fichier: /home/user/e-code/.github/workflows/ci-cd-production.yml
+Lignes: 334-344
+
+Solution:
+
+- name: Scan Docker image
+  uses: aquasecurity/trivy-action@master
+  with:
+    image-ref: ${{ env.IMAGE_TAG }}
+    exit-code: '1'  # AJOUTER - Échouer si vulnérabilités
+    severity: 'CRITICAL,HIGH'
+    ignore-unfixed: true
+
+Problème 62 : Pas de rollback automatique
+Fichier: /home/user/e-code/.github/workflows/ci-cd-production.yml
+Lignes: 446-465
+
+Solution:
+
+- name: Deploy and verify
+  run: |
+    # Deploy
+    kubectl apply -f k8s/deployment.yml
+    
+    # Wait for rollout
+    if ! kubectl rollout status deployment/e-code --timeout=300s; then
+      echo "Deployment failed, rolling back..."
+      kubectl rollout undo deployment/e-code
+      exit 1
+    fi
+    
+    # Health check
+    for i in {1..10}; do
+      if curl -sf https://e-code.ai/api/health; then
+        echo "Health check passed"
+        exit 0
+      fi
+      sleep 10
+    done
+    
+    echo "Health checks failed, rolling back..."
+    kubectl rollout undo deployment/e-code
+    exit 1
+
+6.3 SENTRY
+Problème 63 : Sample rate trop bas (10%)
+Fichier: /home/user/e-code/server/services/error-tracking.ts
+Ligne: 55
+
+Solution:
+
+// Remplacer:
+tracesSampleRate: parseFloat(process.env.SENTRY_TRACES_SAMPLE_RATE || '0.1')
+// Par:
+tracesSampleRate: process.env.NODE_ENV === 'production' ? 1.0 : 0.1,
+// Capturer 100% des erreurs en production
+
+Problème 64 : SENTRY_DSN optionnel en production
+Fichier: /home/user/e-code/server/services/error-tracking.ts
+Ligne: 96
+
+Solution:
+
+// Rendre obligatoire en production:
+if (process.env.NODE_ENV === 'production' && !process.env.SENTRY_DSN) {
+  console.error('FATAL: SENTRY_DSN is required in production');
+  process.exit(1);
+}
+
+6.4 SESSION
+Problème 65 : Pas de régénération de session après login
+Fichier: /home/user/e-code/server/routes/auth.router.ts
+
+Solution:
+
+// Dans le handler de login, après vérification du mot de passe:
+router.post('/login', async (req, res) => {
+  // ...validation et vérification...
+  
+  // Régénérer la session pour prévenir la fixation
+  req.session.regenerate((err) => {
+    if (err) {
+      return res.status(500).json({ error: 'Session error' });
+    }
+    
+    req.session.userId = user.id;
+    req.session.save((err) => {
+      if (err) {
+        return res.status(500).json({ error: 'Session save error' });
+      }
+      res.json({ success: true, user });
+    });
+  });
+});
+
+Problème 66 : Cookie flags non explicites
+Fichier: /home/user/e-code/server/auth/session-manager.ts
+
+Solution:
+
+// Configurer express-session:
+app.use(session({
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 15 * 60 * 1000, // 15 minutes
+    domain: process.env.NODE_ENV === 'production' ? '.e-code.ai' : undefined,
+  },
+  store: new RedisStore({ client: redisClient }),
+}));
+
+Update Todos
+ Explorer la structure globale du projet
+ Analyser le backend (API, auth, database, sécurité)
+ Analyser le frontend web (UI/UX, composants, pages)
+ Analyser la compatibilité mobile/responsive
+ Analyser les features core (IDE, terminal, file system)
+ Analyser l'intégration desktop (Electron)
+ Vérifier la configuration production/déploiement
+ Compiler le rapport final avec problèmes et solutions
+📊 RÉSUMÉ ET ORDRE DE PRIORITÉ
+🚨 PHASE 1 : CRITIQUES (À faire IMMÉDIATEMENT)
+#	Problème	Fichier	Impact
+1	Secrets exposés dans .env	.env	Sécurité critique
+2	Secrets auto-générés faibles	secrets-manager.ts	Sécurité critique
+3	Endpoint sans auth (cache clear)	ai-health.ts:255	Sécurité
+4	Git credentials dans URL	git-backend.ts:56-69	Sécurité
+5	Migrations forcées	docker-entrypoint.sh:16	Données
+8	Webhook Stripe non vérifié	stripe-billing-service.ts	Paiement
+10	Curseurs collaboration cassés	useYjsCollaboration.ts:118	Feature cassée
+12	Race condition auto-save	CodeEditor.tsx:109-144	Perte données
+⚠️ PHASE 2 : HAUTS (À faire cette semaine)
+#	Problème	Fichier
+7	Password PostgreSQL optionnel	docker-compose.production.yml:98
+11	Pas de reconnexion WebSocket	Collaboration.tsx:170-178
+18	Auth WebSocket dans handler	background-testing-ws.ts:41
+20	process.exit() sans cleanup	error-handler.ts:344+
+25	265 composants sans a11y	components/*.tsx
+27	7,766 types unsafe	Codebase
+36	1,047 hover-only éléments	Composants
+43	Electron sans context isolation	desktop/main.js
+🔶 PHASE 3 : MOYENS (À faire ce mois)
+Problèmes 13-17 : Auth et DB
+Problèmes 28-34 : Frontend UI/UX
+Problèmes 37-44 : Mobile/Desktop
+Problèmes 45-56 : Features IDE
+Problèmes 57-66 : Production config
+✅ CHECKLIST DE MISE EN PRODUCTION
+Avant d'accepter des utilisateurs payants, vous DEVEZ :
+
+ Sécurité
+
+ Supprimer .env du repo
+ Configurer secrets forts via Replit Secrets
+ Activer CSRF en production
+ Vérifier webhooks Stripe
+ Sécuriser les credentials Git
+ Stabilité
+
+ Corriger la collaboration temps réel
+ Implémenter auto-save avec queue
+ Ajouter reconnexion WebSocket
+ Streamer les réponses AI
+ Qualité
+
+ Corriger l'accessibilité (a11y)
+ Supprimer les console.log
+ Ajouter types TypeScript stricts
+ Internationaliser tous les textes
+ Mobile
+
+ Ajouter breakpoint 320px
+ Remplacer hover par touch-friendly
+ Installer plugins Capacitor manquants
+ Compléter manifest PWA
+ Production
+
+ HSTS preload
+ OCSP stapling
+ Sentry 100% en production
+ Rollback automatique CI/CD
