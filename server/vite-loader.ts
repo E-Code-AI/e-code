@@ -168,7 +168,9 @@ export async function safeSetupVite(app: Application, server: Server): Promise<b
       console.log('[Vite Loader] 🏭 Production mode - serving static files from dist/public...');
       try {
         // Use our own production static file serving (dist/public is the correct path)
+        // Note: ES module default exports require .default access
         const expressModule = await import('express');
+        const express = expressModule.default;
         const pathModule = await import('path');
         const fsModule = await import('fs');
         
@@ -183,7 +185,7 @@ export async function safeSetupVite(app: Application, server: Server): Promise<b
         console.log(`[Vite Loader] Serving static files from: ${distPath}`);
         
         // Serve static assets with caching
-        app.use(expressModule.static(distPath, {
+        app.use(express.static(distPath, {
           maxAge: '1d',
           etag: true,
           lastModified: true,
@@ -233,7 +235,9 @@ export async function safeSetupVite(app: Application, server: Server): Promise<b
  */
 export async function setupFallbackServer(app: Application): Promise<void> {
   // Use dynamic imports for ES modules
-  const express = await import('express');
+  // Note: ES module default exports require .default access
+  const expressModule = await import('express');
+  const express = expressModule.default;
   const path = await import('path');
   const fs = await import('fs');
   
