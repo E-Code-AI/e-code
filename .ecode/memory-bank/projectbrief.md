@@ -1,7 +1,7 @@
 # Project Brief
 
 ## Overview
-Created by automated e2e test
+Test project
 
 ## Core Requirements
 [To be extracted from requirements]

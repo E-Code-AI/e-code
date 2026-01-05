@@ -22,27 +22,72 @@ export interface ExecutionResult {
 // Check if Docker execution mode is enabled (production)
 const USE_DOCKER_EXECUTION = process.env.EXECUTION_MODE === 'docker' || process.env.NODE_ENV === 'production';
 
-// Normalize language aliases to canonical names that docker-executor expects
-// Docker executor uses: nodejs, python, java, cpp, c, go, ruby, php, rust
+// Normalize language aliases to canonical names
+// Full 27-language support for Fortune 500 production parity with Replit
 const LANGUAGE_ALIASES: Record<string, string> = {
+  // JavaScript/TypeScript/Node.js
   'js': 'javascript',
   'javascript': 'javascript',
   'nodejs': 'javascript',
   'node': 'javascript',
+  'typescript': 'typescript',
+  'ts': 'typescript',
+  // Python
   'python': 'python',
   'python3': 'python',
   'py': 'python',
+  // Go
   'go': 'go',
   'golang': 'go',
+  // C/C++
   'cpp': 'cpp',
   'c++': 'cpp',
-  'c': 'c',  // Keep C separate - docker-executor now supports C directly
+  'c': 'c',
+  // Java/JVM languages
   'java': 'java',
+  'kotlin': 'kotlin',
+  'kt': 'kotlin',
+  'scala': 'scala',
+  'clojure': 'clojure',
+  'clj': 'clojure',
+  // Rust
   'rust': 'rust',
   'rs': 'rust',
+  // PHP
   'php': 'php',
+  // Ruby
   'ruby': 'ruby',
   'rb': 'ruby',
+  // C#/.NET
+  'csharp': 'csharp',
+  'cs': 'csharp',
+  'c#': 'csharp',
+  // Shell
+  'bash': 'bash',
+  'sh': 'bash',
+  'shell': 'bash',
+  // Other languages
+  'deno': 'deno',
+  'lua': 'lua',
+  'perl': 'perl',
+  'pl': 'perl',
+  'r': 'r',
+  'haskell': 'haskell',
+  'hs': 'haskell',
+  'elixir': 'elixir',
+  'ex': 'elixir',
+  'julia': 'julia',
+  'jl': 'julia',
+  'ocaml': 'ocaml',
+  'ml': 'ocaml',
+  'fortran': 'fortran',
+  'f90': 'fortran',
+  'zig': 'zig',
+  'dart': 'dart',
+  'nix': 'nix',
+  // HTML/CSS/JS (web preview)
+  'html': 'html-css-js',
+  'html-css-js': 'html-css-js',
 };
 
 function normalizeLanguage(lang: string): string {
@@ -86,7 +131,8 @@ export class CodeExecutor {
     
     const normalizedLang = language.toLowerCase().trim();
     if (!ALLOWED_LANGUAGES.has(normalizedLang)) {
-      return { valid: false, error: `Unsupported language: ${language}. Supported: javascript, python, go, cpp, c, java, rust, php` };
+      const supportedList = [...new Set(Object.values(LANGUAGE_ALIASES))].sort().join(', ');
+      return { valid: false, error: `Unsupported language: ${language}. Supported: ${supportedList}` };
     }
 
     // Validate code
@@ -239,75 +285,110 @@ export class CodeExecutor {
    * Using args array prevents shell metacharacter injection
    */
   private getLanguageAdapter(language: string): LanguageAdapter {
-    const normalizedLang = language.toLowerCase().trim();
+    const normalizedLang = normalizeLanguage(language);
     
     switch (normalizedLang) {
       case 'javascript':
-      case 'js':
-        return {
-          cmd: 'node',
-          args: ['main.js'],
-          entryFile: 'main.js'
-        };
+        return { cmd: 'node', args: ['main.js'], entryFile: 'main.js' };
+      
+      case 'typescript':
+        return { cmd: 'npx', args: ['tsx', 'main.ts'], entryFile: 'main.ts' };
       
       case 'python':
-      case 'python3':
-        return {
-          cmd: 'python3',
-          args: ['main.py'],
-          entryFile: 'main.py'
-        };
+        return { cmd: 'python3', args: ['main.py'], entryFile: 'main.py' };
       
       case 'java':
         return {
-          cmd: 'java',
-          args: ['Main'],
-          entryFile: 'Main.java',
-          compileCmd: 'javac',
-          compileArgs: ['Main.java']
+          cmd: 'java', args: ['Main'], entryFile: 'Main.java',
+          compileCmd: 'javac', compileArgs: ['Main.java']
         };
       
-      case 'cpp':
-      case 'c++':
+      case 'kotlin':
         return {
-          cmd: './main',
-          args: [],
-          entryFile: 'main.cpp',
-          compileCmd: 'g++',
-          compileArgs: ['-o', 'main', 'main.cpp']
+          cmd: 'java', args: ['-jar', 'main.jar'], entryFile: 'Main.kt',
+          compileCmd: 'kotlinc', compileArgs: ['Main.kt', '-include-runtime', '-d', 'main.jar']
+        };
+      
+      case 'scala':
+        return { cmd: 'scala', args: ['main.scala'], entryFile: 'main.scala' };
+      
+      case 'clojure':
+        return { cmd: 'clojure', args: ['main.clj'], entryFile: 'main.clj' };
+      
+      case 'cpp':
+        return {
+          cmd: './main', args: [], entryFile: 'main.cpp',
+          compileCmd: 'g++', compileArgs: ['-o', 'main', 'main.cpp']
         };
       
       case 'c':
         return {
-          cmd: './main',
-          args: [],
-          entryFile: 'main.c',
-          compileCmd: 'gcc',
-          compileArgs: ['-o', 'main', 'main.c']
+          cmd: './main', args: [], entryFile: 'main.c',
+          compileCmd: 'gcc', compileArgs: ['-o', 'main', 'main.c']
         };
       
+      case 'csharp':
+        return { cmd: 'dotnet', args: ['script', 'main.csx'], entryFile: 'main.csx' };
+      
       case 'go':
-        return {
-          cmd: 'go',
-          args: ['run', 'main.go'],
-          entryFile: 'main.go'
-        };
+        return { cmd: 'go', args: ['run', 'main.go'], entryFile: 'main.go' };
       
       case 'rust':
         return {
-          cmd: './main',
-          args: [],
-          entryFile: 'main.rs',
-          compileCmd: 'rustc',
-          compileArgs: ['main.rs', '-o', 'main']
+          cmd: './main', args: [], entryFile: 'main.rs',
+          compileCmd: 'rustc', compileArgs: ['main.rs', '-o', 'main']
         };
       
       case 'php':
+        return { cmd: 'php', args: ['main.php'], entryFile: 'main.php' };
+      
+      case 'ruby':
+        return { cmd: 'ruby', args: ['main.rb'], entryFile: 'main.rb' };
+      
+      case 'bash':
+        return { cmd: 'bash', args: ['main.sh'], entryFile: 'main.sh' };
+      
+      case 'deno':
+        return { cmd: 'deno', args: ['run', '--allow-all', 'main.ts'], entryFile: 'main.ts' };
+      
+      case 'lua':
+        return { cmd: 'lua', args: ['main.lua'], entryFile: 'main.lua' };
+      
+      case 'perl':
+        return { cmd: 'perl', args: ['main.pl'], entryFile: 'main.pl' };
+      
+      case 'r':
+        return { cmd: 'Rscript', args: ['main.R'], entryFile: 'main.R' };
+      
+      case 'haskell':
+        return { cmd: 'runhaskell', args: ['main.hs'], entryFile: 'main.hs' };
+      
+      case 'elixir':
+        return { cmd: 'elixir', args: ['main.exs'], entryFile: 'main.exs' };
+      
+      case 'julia':
+        return { cmd: 'julia', args: ['main.jl'], entryFile: 'main.jl' };
+      
+      case 'ocaml':
+        return { cmd: 'ocaml', args: ['main.ml'], entryFile: 'main.ml' };
+      
+      case 'fortran':
         return {
-          cmd: 'php',
-          args: ['main.php'],
-          entryFile: 'main.php'
+          cmd: './main', args: [], entryFile: 'main.f90',
+          compileCmd: 'gfortran', compileArgs: ['-o', 'main', 'main.f90']
         };
+      
+      case 'zig':
+        return { cmd: 'zig', args: ['run', 'main.zig'], entryFile: 'main.zig' };
+      
+      case 'dart':
+        return { cmd: 'dart', args: ['run', 'main.dart'], entryFile: 'main.dart' };
+      
+      case 'nix':
+        return { cmd: 'nix-instantiate', args: ['--eval', 'main.nix'], entryFile: 'main.nix' };
+      
+      case 'html-css-js':
+        return { cmd: 'node', args: ['preview.js'], entryFile: 'index.html' };
       
       default:
         throw new Error(`Unsupported language: ${language}`);
