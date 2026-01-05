@@ -59,10 +59,10 @@
   --borderRadiusFull: 9999px;
   
   /* RUI Shadows */
-  --shadow1: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow2: 0 2px 4px rgba(0, 0, 0, 0.08);
-  --shadow3: 0 4px 8px rgba(0, 0, 0, 0.12);
-  --shadow4: 0 8px 16px rgba(0, 0, 0, 0.16);
+  --shadow1: 0 1px 2px color-mix(in srgb, var(--foreground-default) 5%, transparent);
+  --shadow2: 0 2px 4px color-mix(in srgb, var(--foreground-default) 8%, transparent);
+  --shadow3: 0 4px 8px color-mix(in srgb, var(--foreground-default) 12%, transparent);
+  --shadow4: 0 8px 16px color-mix(in srgb, var(--foreground-default) 16%, transparent);
 
   /* Design tokens used by the Tailwind theme */
   --background: 0 0% 99%;
@@ -155,22 +155,22 @@
   --ecode-button-secondary: #f7f8fa;
   --ecode-button-secondary-hover: #eef0f3;
 
-  --ecode-shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-  --ecode-shadow-md: 0 4px 8px -2px rgba(0, 0, 0, 0.1);
-  --ecode-shadow-lg: 0 12px 24px -6px rgba(0, 0, 0, 0.12);
+  --ecode-shadow-sm: 0 1px 3px 0 color-mix(in srgb, var(--foreground-default) 10%, transparent);
+  --ecode-shadow-md: 0 4px 8px -2px color-mix(in srgb, var(--foreground-default) 10%, transparent);
+  --ecode-shadow-lg: 0 12px 24px -6px color-mix(in srgb, var(--foreground-default) 12%, transparent);
 
   /* Marketing surfaces - Clean and professional */
   --marketing-surface-bg: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%);
   --marketing-surface-text: #212529;
-  --marketing-backdrop: linear-gradient(180deg, rgba(248, 249, 250, 0.95), rgba(233, 236, 239, 0.95));
-  --marketing-gradient: radial-gradient(circle at 20% 20%, rgba(13, 110, 253, 0.05), transparent 50%),
-    radial-gradient(circle at 80% 15%, rgba(25, 135, 84, 0.05), transparent 50%),
-    radial-gradient(circle at 50% 75%, rgba(111, 66, 193, 0.05), transparent 45%);
-  --marketing-grid-line: rgba(206, 212, 218, 0.6);
-  --marketing-divider: linear-gradient(90deg, rgba(206, 212, 218, 0), rgba(206, 212, 218, 1), rgba(206, 212, 218, 0));
-  --marketing-glass-bg: rgba(255, 255, 255, 0.9);
-  --marketing-glass-border: rgba(206, 212, 218, 0.8);
-  --marketing-glass-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  --marketing-backdrop: linear-gradient(180deg, color-mix(in srgb, var(--background-default) 95%, transparent), color-mix(in srgb, var(--background-higher) 95%, transparent));
+  --marketing-gradient: radial-gradient(circle at 20% 20%, color-mix(in srgb, var(--ecode-blue) 5%, transparent), transparent 50%),
+    radial-gradient(circle at 80% 15%, color-mix(in srgb, var(--status-success) 5%, transparent), transparent 50%),
+    radial-gradient(circle at 50% 75%, color-mix(in srgb, var(--ecode-purple) 5%, transparent), transparent 45%);
+  --marketing-grid-line: color-mix(in srgb, var(--border-stronger) 60%, transparent);
+  --marketing-divider: linear-gradient(90deg, transparent, var(--border-stronger), transparent);
+  --marketing-glass-bg: color-mix(in srgb, var(--background-root) 90%, transparent);
+  --marketing-glass-border: color-mix(in srgb, var(--border-default) 80%, transparent);
+  --marketing-glass-shadow: 0 4px 16px color-mix(in srgb, var(--foreground-default) 8%, transparent);
 
   /* Spacing - Replit system */
   --ecode-space-1: 4px;
@@ -205,10 +205,10 @@
   --mobile-nav-blur: 0;
   --mobile-nav-border: #E5E7EB;
   --mobile-nav-border-top: #E5E7EB;
-  --mobile-nav-shadow: 0 -1px 3px rgba(0, 0, 0, 0.08), 0 -4px 16px -4px rgba(0, 0, 0, 0.06);
-  --mobile-nav-shadow-elevated: 0 -2px 24px -4px rgba(0, 0, 0, 0.10);
-  --mobile-nav-glow: rgba(242, 98, 7, 0.2);
-  --mobile-nav-glow-strong: rgba(242, 98, 7, 0.35);
+  --mobile-nav-shadow: 0 -1px 3px color-mix(in srgb, var(--foreground-default) 8%, transparent), 0 -4px 16px -4px color-mix(in srgb, var(--foreground-default) 6%, transparent);
+  --mobile-nav-shadow-elevated: 0 -2px 24px -4px color-mix(in srgb, var(--foreground-default) 10%, transparent);
+  --mobile-nav-glow: color-mix(in srgb, var(--accent-default) 20%, transparent);
+  --mobile-nav-glow-strong: color-mix(in srgb, var(--accent-default) 35%, transparent);
   --mobile-nav-radius: 20px;
   --mobile-nav-item-radius: 14px;
   --mobile-nav-active-bg: #FEF3E8;
@@ -477,29 +477,29 @@
   --ecode-surface-hover: #f5f5f5;
   --ecode-surface-elevated: #ffffff;
 
-  --ecode-shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-  --ecode-shadow-md: 0 4px 8px -2px rgba(0, 0, 0, 0.1);
-  --ecode-shadow-lg: 0 12px 24px -6px rgba(0, 0, 0, 0.12);
+  --ecode-shadow-sm: 0 1px 3px 0 color-mix(in srgb, var(--foreground-default) 10%, transparent);
+  --ecode-shadow-md: 0 4px 8px -2px color-mix(in srgb, var(--foreground-default) 10%, transparent);
+  --ecode-shadow-lg: 0 12px 24px -6px color-mix(in srgb, var(--foreground-default) 12%, transparent);
 
   /* Marketing surfaces - Clean and professional */
   --marketing-surface-bg: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%);
   --marketing-surface-text: #212529;
-  --marketing-backdrop: linear-gradient(180deg, rgba(248, 249, 250, 0.95), rgba(233, 236, 239, 0.95));
-  --marketing-gradient: radial-gradient(circle at 20% 20%, rgba(13, 110, 253, 0.05), transparent 50%),
-    radial-gradient(circle at 80% 15%, rgba(25, 135, 84, 0.05), transparent 50%),
-    radial-gradient(circle at 50% 75%, rgba(111, 66, 193, 0.05), transparent 45%);
-  --marketing-grid-line: rgba(206, 212, 218, 0.6);
-  --marketing-divider: linear-gradient(90deg, rgba(206, 212, 218, 0), rgba(206, 212, 218, 1), rgba(206, 212, 218, 0));
-  --marketing-glass-bg: rgba(255, 255, 255, 0.9);
-  --marketing-glass-border: rgba(206, 212, 218, 0.8);
-  --marketing-glass-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  --marketing-backdrop: linear-gradient(180deg, color-mix(in srgb, var(--background-default) 95%, transparent), color-mix(in srgb, var(--background-higher) 95%, transparent));
+  --marketing-gradient: radial-gradient(circle at 20% 20%, color-mix(in srgb, var(--ecode-blue) 5%, transparent), transparent 50%),
+    radial-gradient(circle at 80% 15%, color-mix(in srgb, var(--status-success) 5%, transparent), transparent 50%),
+    radial-gradient(circle at 50% 75%, color-mix(in srgb, var(--ecode-purple) 5%, transparent), transparent 45%);
+  --marketing-grid-line: color-mix(in srgb, var(--border-stronger) 60%, transparent);
+  --marketing-divider: linear-gradient(90deg, transparent, var(--border-stronger), transparent);
+  --marketing-glass-bg: color-mix(in srgb, var(--background-root) 90%, transparent);
+  --marketing-glass-border: color-mix(in srgb, var(--border-default) 80%, transparent);
+  --marketing-glass-shadow: 0 4px 16px color-mix(in srgb, var(--foreground-default) 8%, transparent);
 }
 
 /* Header refinements */
 .replit-header {
   background: var(--ecode-surface-elevated);
   border-bottom: 1px solid var(--ecode-border);
-  box-shadow: 0 1px 3px #00000010;
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--foreground-default) 10%, transparent);
   color: var(--ecode-text);
   position: sticky;
   top: 0;
@@ -542,9 +542,9 @@
 }
 
 .replit-nav-link--active {
-  color: #ffffff;
+  color: var(--primary-foreground);
   background: var(--ecode-accent);
-  box-shadow: 0 2px 4px rgba(3, 102, 214, 0.2);
+  box-shadow: 0 2px 4px color-mix(in srgb, var(--ecode-accent) 20%, transparent);
 }
 
 .replit-header-search {
@@ -598,16 +598,16 @@
 }
 
 .dark .replit-header-search {
-  background: rgba(30, 38, 56, 0.8);
-  border-color: rgba(96, 165, 250, 0.2);
+  background: color-mix(in srgb, var(--background-default) 80%, transparent);
+  border-color: color-mix(in srgb, var(--status-info) 20%, transparent);
   color: var(--ecode-text-muted);
 }
 
 .dark .replit-header-search:hover {
-  background: rgba(36, 46, 68, 0.92);
-  border-color: rgba(96, 165, 250, 0.35);
+  background: color-mix(in srgb, var(--background-higher) 92%, transparent);
+  border-color: color-mix(in srgb, var(--status-info) 35%, transparent);
   color: var(--ecode-text);
-  box-shadow: 0 14px 30px -24px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 14px 30px -24px color-mix(in srgb, var(--foreground-default) 60%, transparent);
 }
 
 .dark .replit-header-controls {
@@ -667,7 +667,7 @@
   width: 8px;
   height: 8px;
   border-radius: 9999px;
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.65);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--background-root) 65%, transparent);
 }
 
 .replit-footer__plan {
@@ -676,9 +676,9 @@
   gap: 6px;
   border-radius: 4px;
   padding: 4px 12px;
-  border: 1px solid rgba(246, 106, 10, 0.2);
-  background: rgba(246, 106, 10, 0.08);
-  color: #f66a0a;
+  border: 1px solid color-mix(in srgb, var(--ecode-accent) 20%, transparent);
+  background: color-mix(in srgb, var(--ecode-accent) 8%, transparent);
+  color: var(--ecode-accent);
   font-weight: 600;
   text-transform: none;
 }

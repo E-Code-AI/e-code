@@ -240,7 +240,7 @@
 .skeleton-shimmer {
   position: relative;
   overflow: hidden;
-  background-color: #f3f4f6;
+  background-color: var(--background-higher);
 }
 
 .skeleton-shimmer::after {
@@ -276,13 +276,8 @@
 
 /* Optimized Panel Background (Solid Colors) */
 .backdrop-blur-optimized {
-  background-color: #1C2333;
+  background-color: var(--background-default);
   transform: translateZ(0);
-}
-
-.light .backdrop-blur-optimized,
-:root:not(.dark) .backdrop-blur-optimized {
-  background-color: #ffffff;
 }
 
 /* Prevent Layout Shift */

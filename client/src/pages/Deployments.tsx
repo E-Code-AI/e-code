@@ -59,15 +59,20 @@ export default function Deployments() {
 
   const getStatusConfig = (status: string) => {
     switch (status?.toLowerCase()) {
-      case 'success':
       case 'active':
+      case 'success':
+      case 'live':
         return { icon: CheckCircle2, color: 'text-green-500', bg: 'bg-green-500/10' };
       case 'failed':
       case 'error':
         return { icon: XCircle, color: 'text-red-500', bg: 'bg-red-500/10' };
       case 'building':
       case 'deploying':
+      case 'publishing':
         return { icon: Activity, color: 'text-blue-500', bg: 'bg-blue-500/10' };
+      case 'stopped':
+      case 'idle':
+        return { icon: AlertCircle, color: 'text-gray-500', bg: 'bg-gray-500/10' };
       default:
         return { icon: AlertCircle, color: 'text-yellow-500', bg: 'bg-yellow-500/10' };
     }
@@ -99,7 +104,7 @@ export default function Deployments() {
         {/* Quick Stats */}
         {!isLoading && deployments && deployments.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card>
+            <Card data-testid="card-total-deployments">
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
                   Total Deployments
@@ -112,7 +117,7 @@ export default function Deployments() {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card data-testid="card-active-deployments">
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
                   Active
@@ -125,7 +130,7 @@ export default function Deployments() {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card data-testid="card-failed-deployments">
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
                   Failed
@@ -161,6 +166,12 @@ export default function Deployments() {
             <CardDescription>
               View and manage all your deployments
             </CardDescription>
+            <Tabs value={selectedTab} onValueChange={setSelectedTab} className="mt-4">
+              <TabsList className="grid w-full grid-cols-2" data-testid="tabs-deployments">
+                <TabsTrigger value="active" data-testid="tab-active-deployments">Active</TabsTrigger>
+                <TabsTrigger value="all" data-testid="tab-all-deployments">All History</TabsTrigger>
+              </TabsList>
+            </Tabs>
           </CardHeader>
           <CardContent>
             {isLoading ? (
@@ -192,7 +203,9 @@ export default function Deployments() {
             ) : (
               <ScrollArea className="h-[600px]">
                 <div className="space-y-4 pr-4">
-                  {filteredDeployments.map((deployment: Deployment, index: number) => {
+                  {filteredDeployments
+                    .filter((d: Deployment) => selectedTab === 'all' || d.status === 'active')
+                    .map((deployment: Deployment, index: number) => {
                     const statusConfig = getStatusConfig(deployment.status);
                     const StatusIcon = statusConfig.icon;
 
@@ -214,7 +227,10 @@ export default function Deployments() {
                                 <h4 className="font-semibold truncate">
                                   {deployment.url || `Deployment #${deployment.id}`}
                                 </h4>
-                                <Badge variant={deployment.status === 'active' ? 'default' : 'destructive'}>
+                                <Badge 
+                                  variant={deployment.status === 'active' ? 'default' : 'destructive'}
+                                  data-testid={`badge-deployment-status-${deployment.id}`}
+                                >
                                   {deployment.status}
                                 </Badge>
                               </div>

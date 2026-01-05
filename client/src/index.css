@@ -1426,20 +1426,20 @@ body.landscape-mode .mobile-navigation {
 
 /* AI Result Applied Highlight */
 .ai-applied-highlight {
-  background-color: rgba(34, 197, 94, 0.15) !important;
-  border-left: 3px solid rgb(34, 197, 94) !important;
+  background-color: color-mix(in srgb, var(--status-success) 15%, transparent) !important;
+  border-left: 3px solid var(--status-success) !important;
   animation: fadeHighlight 2s ease-out forwards;
 }
 
 @keyframes fadeHighlight {
-  0% { background-color: rgba(34, 197, 94, 0.3); }
+  0% { background-color: color-mix(in srgb, var(--status-success) 30%, transparent); }
   100% { background-color: transparent; }
 }
 
 /* AI Error Highlight */
 .ai-error-highlight {
-  background-color: rgba(239, 68, 68, 0.15) !important;
-  border-left: 3px solid rgb(239, 68, 68) !important;
+  background-color: color-mix(in srgb, var(--status-error) 15%, transparent) !important;
+  border-left: 3px solid var(--status-error) !important;
 }
 
 /* Debugger breakpoint styles */
@@ -1452,9 +1452,9 @@ body.landscape-mode .mobile-navigation {
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background-color: #E74C3C;
+  background-color: var(--status-error);
   margin: auto;
-  box-shadow: 0 0 4px rgba(231, 76, 60, 0.5);
+  box-shadow: 0 0 4px color-mix(in srgb, var(--status-error) 50%, transparent);
 }
 
 .breakpoint-marker.disabled {
@@ -1462,11 +1462,11 @@ body.landscape-mode .mobile-navigation {
 }
 
 .breakpoint-marker.conditional {
-  background-color: #F39C12;
+  background-color: var(--status-warning);
 }
 
 .breakpoint-line-highlight {
-  background-color: rgba(231, 76, 60, 0.1);
+  background-color: color-mix(in srgb, var(--status-error) 10%, transparent);
 }
 
 .breakpoint-hit {
@@ -1474,6 +1474,6 @@ body.landscape-mode .mobile-navigation {
 }
 
 @keyframes breakpoint-pulse {
-  0%, 100% { box-shadow: 0 0 4px rgba(231, 76, 60, 0.5); }
-  50% { box-shadow: 0 0 12px rgba(231, 76, 60, 0.8); }
+  0%, 100% { box-shadow: 0 0 4px color-mix(in srgb, var(--status-error) 50%, transparent); }
+  50% { box-shadow: 0 0 12px color-mix(in srgb, var(--status-error) 80%, transparent); }
 }

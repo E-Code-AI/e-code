@@ -130,7 +130,8 @@ export default function Usage() {
 
   const getUsageIcon = (type: string) => {
     switch (type) {
-      case 'compute': return <Cpu className="h-4 w-4" />;
+      case 'compute':
+      case 'cpu': return <Cpu className="h-4 w-4" />;
       case 'storage': return <HardDrive className="h-4 w-4" />;
       case 'bandwidth': return <Globe className="h-4 w-4" />;
       case 'privateProjects': return <Shield className="h-4 w-4" />;
@@ -142,13 +143,14 @@ export default function Usage() {
 
   const getUsageLabel = (type: string) => {
     switch (type) {
-      case 'compute': return 'Compute Time';
+      case 'compute':
+      case 'cpu': return 'Compute Time';
       case 'storage': return 'Storage';
       case 'bandwidth': return 'Bandwidth';
       case 'privateProjects': return 'Private Projects';
       case 'deployments': return 'Active Deployments';
       case 'collaborators': return 'Team Members';
-      default: return type;
+      default: return type.charAt(0).toUpperCase() + type.slice(1);
     }
   };
 
@@ -313,10 +315,10 @@ export default function Usage() {
       {/* Usage Tabs */}
       <Tabs defaultValue="ai" className="space-y-4">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="ai">AI Usage</TabsTrigger>
-          <TabsTrigger value="overview">Resources</TabsTrigger>
-          <TabsTrigger value="details">Details</TabsTrigger>
-          <TabsTrigger value="history">History</TabsTrigger>
+          <TabsTrigger value="ai" data-testid="tab-ai-usage">AI Usage</TabsTrigger>
+          <TabsTrigger value="overview" data-testid="tab-resources">Resources</TabsTrigger>
+          <TabsTrigger value="details" data-testid="tab-details">Details</TabsTrigger>
+          <TabsTrigger value="history" data-testid="tab-history">History</TabsTrigger>
         </TabsList>
 
         {/* AI Usage Tab */}
@@ -326,42 +328,47 @@ export default function Usage() {
 
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {Object.entries(usage).map(([key, value]) => (
-              <Card key={key}>
-                <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      {getUsageIcon(key)}
-                      <CardTitle className="text-sm font-medium">
-                        {getUsageLabel(key)}
-                      </CardTitle>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {Object.entries(usage).map(([key, value]) => (
+                <Card key={key} data-testid={`card-usage-${key}`}>
+                  <CardHeader className="pb-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        {getUsageIcon(key)}
+                        <CardTitle className="text-sm font-medium">
+                          {getUsageLabel(key)}
+                        </CardTitle>
+                      </div>
+                      <Badge 
+                        variant={value.percentage >= 90 ? "destructive" : 
+                                value.percentage >= 75 ? "secondary" : "outline"}
+                        className="text-xs"
+                        data-testid={`badge-usage-percentage-${key}`}
+                      >
+                        {value.percentage}%
+                      </Badge>
                     </div>
-                    <Badge 
-                      variant={value.percentage >= 90 ? "destructive" : 
-                              value.percentage >= 75 ? "secondary" : "outline"}
-                      className="text-xs"
-                    >
-                      {value.percentage}%
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <Progress value={value.percentage} className="h-2" />
-                    <div className="flex justify-between text-sm">
-                      <span className={getUsageColor(value.percentage)}>
-                        {value.used} {value.unit}
-                      </span>
-                      <span className="text-muted-foreground">
-                        of {value.limit} {value.unit}
-                      </span>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <Progress 
+                        value={value.percentage} 
+                        className="h-2" 
+                        data-testid={`progress-usage-${key}`}
+                      />
+                      <div className="flex justify-between text-sm">
+                        <span className={getUsageColor(value.percentage)} data-testid={`text-used-${key}`}>
+                          {value.used} {value.unit}
+                        </span>
+                        <span className="text-muted-foreground" data-testid={`text-limit-${key}`}>
+                          of {value.limit} {value.unit}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
 
           {/* Quick Actions */}
           <Card>
@@ -509,11 +516,23 @@ export default function Usage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="h-64 bg-muted rounded-lg flex items-center justify-center">
-                <div className="text-center text-muted-foreground">
-                  <TrendingUp className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                  <p>Usage chart visualization would go here</p>
-                </div>
+              <div className="h-64 rounded-lg flex items-center justify-center">
+                {usageData ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={Object.entries(usage).map(([key, val]) => ({ name: getUsageLabel(key), value: val.percentage }))}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <Tooltip />
+                      <Bar dataKey="value" fill="#F26207" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="text-center text-muted-foreground">
+                    <TrendingUp className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                    <p>Usage chart visualization would go here</p>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
