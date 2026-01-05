@@ -700,6 +700,35 @@ export function ReplitAgentPanelV3({
     };
   }, [projectId, toast, migrateMessages, onBootstrapFailure, startBootstrapTimer, setBootstrapTimedOut]);
 
+  // ✅ FIX (Jan 2026): React to bootstrap timeout and seed fallback message
+  // When the global timer fires, we need to:
+  // 1. Notify parent to clear isBootstrapping state
+  // 2. Seed a system message so the chat is never empty (Replit-style UX)
+  useEffect(() => {
+    if (bootstrapTimedOut && !conversationId) {
+      devLog('[ReplitAgentPanelV3] Bootstrap timeout detected - seeding fallback message');
+      
+      // Notify parent to clear bootstrap token and isBootstrapping state
+      onBootstrapFailure?.();
+      
+      // Seed a system message so the chat isn't empty
+      // Use the temp conversationId (negative projectId) for offline/degraded mode
+      const tempConvId = -projectIdNum;
+      const fallbackMessage: Message = {
+        id: `system-bootstrap-timeout-${Date.now()}`,
+        role: 'assistant',
+        content: "I'm ready to help! The connection took a moment, but you can start chatting now. Type your request below.",
+        timestamp: new Date().toISOString(),
+      };
+      
+      // Only add if we don't already have messages
+      const existingMessages = getMessages(tempConvId);
+      if (existingMessages.length === 0) {
+        addStoreMessage(tempConvId, fallbackMessage);
+      }
+    }
+  }, [bootstrapTimedOut, conversationId, projectIdNum, onBootstrapFailure, getMessages, addStoreMessage]);
+
   // Track if initial sync from backend has been completed for this conversation
   const initialSyncDoneRef = useRef<number | null>(null);
   
