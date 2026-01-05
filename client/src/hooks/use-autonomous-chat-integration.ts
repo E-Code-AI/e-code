@@ -193,6 +193,18 @@ export function useAutonomousChatIntegration({
   const isMountedRef = useRef(true);
   const connectFnRef = useRef<(() => void) | null>(null);
   
+  // ✅ FIX (Jan 2026): Stable connection during bootstrap
+  // Track if we're in an active bootstrap build to protect against transient enabled toggles
+  const bootstrapActiveRef = useRef(false);
+  
+  // Track if build reached a terminal state (complete, error) - then stop protecting
+  const buildCompletedRef = useRef(false);
+  
+  // ✅ FIX (Jan 2026): Debounced cleanup for transient toggles
+  // When cleanup is triggered during active bootstrap, wait briefly before closing
+  // If enabled returns to true within the delay, cancel the close
+  const pendingCleanupRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  
   const [connectionState, setConnectionState] = useState<{
     isConnected: boolean;
     error: string | null;
@@ -317,19 +329,27 @@ export function useAutonomousChatIntegration({
   // This runs BEFORE useEffect, ensuring connection happens even if useEffect is delayed
   // Critical for mobile WebView where useEffect may not run reliably
   useLayoutEffect(() => {
+    // ✅ FIX (Jan 2026): Cancel any pending debounced cleanup
+    // This happens when enabled toggles back to true quickly (transient toggle)
+    if (pendingCleanupRef.current) {
+      console.log('[AutonomousChatIntegration] 🔒 Cancelling pending cleanup - enabled returned to true');
+      clearTimeout(pendingCleanupRef.current);
+      pendingCleanupRef.current = null;
+    }
+    
     // Only attempt if all conditions are met
     if (!enabled || !conversationId || !projectId) {
-      return;
+      return; // No cleanup needed if we never connected in this effect run
     }
     
-    // Skip if already connected or connecting
+    // Skip if already connected or connecting - return no-op cleanup (connection persists)
     if (hasConnectedRef.current || layoutEffectConnectedRef.current) {
-      return;
+      return; // Keep existing connection, main cleanup handles it
     }
     
-    // Skip if WebSocket is already open
+    // Skip if WebSocket is already open - return no-op cleanup
     if (wsRef.current?.readyState === WebSocket.OPEN || wsRef.current?.readyState === WebSocket.CONNECTING) {
-      return;
+      return; // Keep existing connection
     }
     
     console.warn('[AutonomousChatIntegration] 🚀 useLayoutEffect: Attempting AGGRESSIVE WebSocket connection (before paint)');
@@ -383,6 +403,13 @@ export function useAutonomousChatIntegration({
       console.warn('[AutonomousChatIntegration] 🚀 useLayoutEffect: WebSocket CONNECTED successfully!');
       hasConnectedRef.current = true;
       reconnectAttemptRef.current = 0;
+      // ✅ FIX (Jan 2026): Mark bootstrap as active
+      // This protects the connection from transient enabled toggles until build completes
+      if (bootstrapToken) {
+        bootstrapActiveRef.current = true;
+        buildCompletedRef.current = false;
+        console.log('[AutonomousChatIntegration] 🔒 Bootstrap ACTIVE - protecting from transient enabled toggles');
+      }
       setConnectionState({ isConnected: true, error: null, reconnectAttempt: 0, maxReconnectAttempts: 10 });
       try {
         sessionStorage.setItem('autonomousChatEffect_layoutEffectConnected', String(Date.now()));
@@ -446,17 +473,51 @@ export function useAutonomousChatIntegration({
     };
     
     return () => {
-      // Cleanup on unmount or dependency change
-      layoutEffectConnectedRef.current = false;
+      // ✅ FIX (Jan 2026): Use debounced cleanup during active bootstrap
+      // This allows transient toggles (enabled briefly false then true again) to be detected
+      // The next effect run will cancel the pending cleanup if enabled returns to true
+      const isBootstrapActive = bootstrapActiveRef.current && 
+        !buildCompletedRef.current && 
+        bootstrapToken &&
+        wsRef.current?.readyState === WebSocket.OPEN;
+      
+      console.warn('[AutonomousChatIntegration] 🧪 DIAGNOSTIC: useLayoutEffect cleanup', 
+        { isBootstrapActive, bootstrapActive: bootstrapActiveRef.current, buildCompleted: buildCompletedRef.current, enabled, hasBootstrapToken: !!bootstrapToken }
+      );
+      
+      // Always cleanup reconnect timeout
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
         reconnectTimeoutRef.current = null;
       }
-      if (wsRef.current) {
-        wsRef.current.close(1000, 'useLayoutEffect cleanup');
-        wsRef.current = null;
+      
+      // Cancel any existing pending cleanup
+      if (pendingCleanupRef.current) {
+        clearTimeout(pendingCleanupRef.current);
+        pendingCleanupRef.current = null;
       }
-      hasConnectedRef.current = false;
+      
+      const doCleanup = () => {
+        console.log('[AutonomousChatIntegration] 🔓 Executing cleanup');
+        layoutEffectConnectedRef.current = false;
+        if (wsRef.current) {
+          wsRef.current.close(1000, 'useLayoutEffect cleanup');
+          wsRef.current = null;
+        }
+        hasConnectedRef.current = false;
+        bootstrapActiveRef.current = false;
+        pendingCleanupRef.current = null;
+      };
+      
+      if (isBootstrapActive) {
+        // ✅ Debounce: Wait 150ms before closing
+        // If enabled returns to true within this time, the new effect will cancel this
+        console.log('[AutonomousChatIntegration] 🕐 Scheduling debounced cleanup (150ms) - may be cancelled if enabled toggles back');
+        pendingCleanupRef.current = setTimeout(doCleanup, 150);
+      } else {
+        // Not in active bootstrap - cleanup immediately
+        doCleanup();
+      }
     };
   }, [enabled, conversationId, projectId, sessionId, bootstrapToken, decodeTokenFn, maxReconnectAttempts, baseReconnectDelayMs]);
 
@@ -812,6 +873,10 @@ export function useAutonomousChatIntegration({
       case 'complete': {
         store.setComplete();
         
+        // ✅ FIX (Jan 2026): Mark build as completed - allows normal cleanup
+        buildCompletedRef.current = true;
+        bootstrapActiveRef.current = false;
+        
         // Emit complete event for favicon/audio/notifications
         AgentEventBus.emit('agent:complete', { projectId, sessionId });
         AgentEventBus.emit('agent:status', { status: 'complete' });
@@ -840,6 +905,10 @@ export function useAutonomousChatIntegration({
       case 'error': {
         const errorMsg = data?.errorMessage || eventMessage || 'An error occurred';
         store.setError(errorMsg);
+        
+        // ✅ FIX (Jan 2026): Mark build as completed (with error) - allows normal cleanup
+        buildCompletedRef.current = true;
+        bootstrapActiveRef.current = false;
         
         // Emit error event for favicon/audio/notifications
         AgentEventBus.emit('agent:error', { projectId, sessionId, message: errorMsg });
