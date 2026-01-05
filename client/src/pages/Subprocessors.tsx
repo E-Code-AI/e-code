@@ -139,14 +139,14 @@ export default function Subprocessors() {
   const lastUpdated = new Date('2025-07-01');
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background" data-testid="page-subprocessors">
       <PublicNavbar />
 
       {/* Hero Section */}
       <section className="border-b bg-gradient-to-b from-muted/30 to-background">
         <div className="container-responsive py-20">
           <div className="text-center max-w-3xl mx-auto">
-            <h1 className="text-4xl md:text-6xl font-bold mb-6">
+            <h1 className="text-4xl md:text-6xl font-bold mb-6" data-testid="heading-subprocessors">
               Subprocessors
             </h1>
             <p className="text-xl text-muted-foreground mb-8">
@@ -383,7 +383,7 @@ export default function Subprocessors() {
                     <p className="text-sm mb-3">
                       Stay informed about changes to our subprocessor list
                     </p>
-                    <Button className="w-full" asChild>
+                    <Button className="w-full min-h-[44px]" asChild data-testid="button-subprocessors-subscribe">
                       <a href="mailto:privacy@e-code.ai?subject=Subscribe to Subprocessor Updates">
                         Subscribe to Notifications
                       </a>

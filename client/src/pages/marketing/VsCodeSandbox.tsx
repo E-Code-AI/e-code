@@ -45,62 +45,62 @@ export default function VsCodeSandbox() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
-      <div className="container mx-auto px-4 py-12 max-w-7xl">
+      <div className="container mx-auto px-4 py-8 sm:py-12 max-w-7xl">
         <Link href="/compare">
-          <Button variant="ghost" className="mb-6" data-testid="button-back">
+          <Button variant="ghost" className="mb-4 sm:mb-6 min-h-[44px]" data-testid="button-back">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Comparisons
           </Button>
         </Link>
 
-        <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
+        <div className="text-center mb-8 sm:mb-12">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-3 sm:mb-4">
             E-Code Platform vs CodeSandbox
           </h1>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+          <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto px-4 sm:px-0">
             Full-stack platform vs frontend-focused editor
           </p>
         </div>
 
-        <Card className="mb-12">
-          <CardHeader>
-            <CardTitle>Feature Comparison</CardTitle>
-            <CardDescription>
+        <Card className="mb-8 sm:mb-12" data-testid="card-comparison-table">
+          <CardHeader className="p-4 sm:p-6">
+            <CardTitle className="text-lg sm:text-xl">Feature Comparison</CardTitle>
+            <CardDescription className="text-sm">
               How E-Code Platform compares to CodeSandbox
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-2 sm:p-6 pt-0 sm:pt-0">
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full" data-testid="table-comparison">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left p-4 font-semibold">Feature</th>
-                    <th className="text-left p-4 font-semibold">E-Code Platform</th>
-                    <th className="text-left p-4 font-semibold">CodeSandbox</th>
+                    <th className="text-left p-2 sm:p-4 font-semibold text-xs sm:text-sm">Feature</th>
+                    <th className="text-left p-2 sm:p-4 font-semibold text-xs sm:text-sm">E-Code Platform</th>
+                    <th className="text-left p-2 sm:p-4 font-semibold text-xs sm:text-sm">CodeSandbox</th>
                   </tr>
                 </thead>
                 <tbody>
                   {comparisons.map((item, index) => (
-                    <tr key={index} className="border-b hover:bg-muted/50">
-                      <td className="p-4 font-medium">{item.feature}</td>
-                      <td className="p-4">
-                        <div className="flex items-start gap-2">
+                    <tr key={index} className="border-b hover:bg-muted/50" data-testid={`row-comparison-${index}`}>
+                      <td className="p-2 sm:p-4 font-medium text-xs sm:text-sm">{item.feature}</td>
+                      <td className="p-2 sm:p-4">
+                        <div className="flex items-start gap-1 sm:gap-2">
                           {item.advantage === "eCode" || item.advantage === "both" ? (
-                            <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+                            <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-green-500 flex-shrink-0 mt-0.5" />
                           ) : (
-                            <XCircle className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
+                            <XCircle className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
                           )}
-                          <span className="text-sm">{item.eCode}</span>
+                          <span className="text-xs sm:text-sm">{item.eCode}</span>
                         </div>
                       </td>
-                      <td className="p-4">
-                        <div className="flex items-start gap-2">
+                      <td className="p-2 sm:p-4">
+                        <div className="flex items-start gap-1 sm:gap-2">
                           {item.advantage === "codesandbox" || item.advantage === "both" ? (
-                            <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+                            <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-green-500 flex-shrink-0 mt-0.5" />
                           ) : (
-                            <XCircle className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
+                            <XCircle className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
                           )}
-                          <span className="text-sm">{item.codesandbox}</span>
+                          <span className="text-xs sm:text-sm">{item.codesandbox}</span>
                         </div>
                       </td>
                     </tr>
@@ -112,13 +112,13 @@ export default function VsCodeSandbox() {
         </Card>
 
         <Card className="bg-primary/5 border-primary/20">
-          <CardContent className="pt-6 text-center">
-            <h2 className="text-2xl font-bold mb-2">Build Full-Stack Apps with AI</h2>
-            <p className="text-muted-foreground mb-4">
+          <CardContent className="p-4 sm:p-6 pt-4 sm:pt-6 text-center">
+            <h2 className="text-xl sm:text-2xl font-bold mb-2">Build Full-Stack Apps with AI</h2>
+            <p className="text-sm sm:text-base text-muted-foreground mb-3 sm:mb-4">
               E-Code Platform supports both frontend and backend development
             </p>
             <Link href="/register">
-              <Button size="lg" data-testid="button-get-started">
+              <Button size="lg" className="min-h-[44px]" data-testid="button-get-started">
                 Get Started Free
               </Button>
             </Link>

@@ -6,13 +6,13 @@ import { FileText, Download, Mail } from "lucide-react";
 
 export default function DPA() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background" data-testid="page-dpa">
       <PublicNavbar />
       
       <section className="py-responsive">
         <div className="container-responsive">
           <div className="max-w-4xl mx-auto">
-            <h1 className="text-responsive-2xl font-bold tracking-tight mb-4">
+            <h1 className="text-responsive-2xl font-bold tracking-tight mb-4" data-testid="heading-dpa">
               Data Processing Agreement
             </h1>
             
@@ -171,11 +171,11 @@ export default function DPA() {
             </Card>
 
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button size="lg" className="flex items-center gap-2">
+              <Button size="lg" className="flex items-center gap-2 min-h-[44px]" data-testid="button-dpa-download">
                 <Download className="h-4 w-4" />
                 Download PDF
               </Button>
-              <Button size="lg" variant="outline" className="flex items-center gap-2">
+              <Button size="lg" variant="outline" className="flex items-center gap-2 min-h-[44px]" data-testid="button-dpa-contact-legal">
                 <Mail className="h-4 w-4" />
                 Contact Legal
               </Button>

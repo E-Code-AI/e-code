@@ -57,7 +57,7 @@ export default function Security() {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col" data-testid="page-security">
       <PublicNavbar />
       
       <main className="flex-1">
@@ -66,7 +66,7 @@ export default function Security() {
           <div className="container-responsive">
             <div className="text-center max-w-3xl mx-auto">
               <Shield className="h-12 w-12 mx-auto mb-4 text-primary" />
-              <h1 className="text-4xl font-bold mb-4">Enterprise-Grade Security</h1>
+              <h1 className="text-4xl font-bold mb-4" data-testid="heading-security">Enterprise-Grade Security</h1>
               <p className="text-lg text-muted-foreground mb-8">
                 Your code and data are protected by industry-leading security measures
               </p>
@@ -194,8 +194,9 @@ export default function Security() {
               Learn more about our security practices, compliance certifications, and commitment to protecting your data
             </p>
             <button 
-              className="px-6 py-3 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+              className="px-6 py-3 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 min-h-[44px]"
               onClick={() => window.location.href = '/trust-center'}
+              data-testid="button-security-trust-center"
             >
               Visit Trust Center
             </button>

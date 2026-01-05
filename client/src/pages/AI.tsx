@@ -364,13 +364,13 @@ export default function AI() {
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 mb-12">
-                <Button size="lg" asChild className="text-lg px-8 h-14 shadow-lg hover:shadow-xl transition-shadow">
+                <Button size="lg" asChild className="text-lg px-8 h-14 shadow-lg hover:shadow-xl transition-shadow" data-testid="button-start-building">
                   <Link href="/ai-agent">
                     Start Building Now
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Link>
                 </Button>
-                <Button size="lg" variant="outline" asChild className="text-lg px-8 h-14">
+                <Button size="lg" variant="outline" asChild className="text-lg px-8 h-14" data-testid="button-watch-demo">
                   <a href="#demo-video" className="scroll-smooth">
                     Watch Demo
                   </a>
@@ -496,6 +496,7 @@ export default function AI() {
                   }`}
                   onClick={handleVideoToggle}
                   aria-label={isVideoPlaying ? 'Pause demo video' : 'Play demo video'}
+                  data-testid="button-video-toggle"
                 >
                   {isVideoPlaying ? (
                     <>
@@ -628,6 +629,7 @@ export default function AI() {
                       selectedFeature === key ? 'ring-2 ring-primary shadow-lg' : 'hover:shadow-md'
                     }`}
                     onClick={() => setSelectedFeature(key as FeatureKey)}
+                    data-testid={`card-feature-${key}`}
                   >
                     <CardHeader className="pb-3">
                       <div className="flex items-start gap-3">
@@ -684,7 +686,7 @@ export default function AI() {
             {aiTools.map((tool) => {
               const Icon = tool.icon;
               return (
-                <Card key={tool.name} className="text-center hover:shadow-lg transition-all">
+                <Card key={tool.name} className="text-center hover:shadow-lg transition-all" data-testid={`card-tool-${tool.name?.replace(/\s+/g, '-').toLowerCase()}`}>
                   <CardContent className="pt-6">
                     <div className="w-12 h-12 mx-auto mb-3 bg-primary/10 rounded-lg flex items-center justify-center">
                       <Icon className="h-6 w-6 text-primary" />
@@ -715,7 +717,7 @@ export default function AI() {
             {useCases.map((useCase) => {
               const Icon = useCase.icon;
               return (
-                <Card key={useCase.title} className="hover:shadow-lg transition-all">
+                <Card key={useCase.title} className="hover:shadow-lg transition-all" data-testid={`card-usecase-${useCase.title?.replace(/\s+/g, '-').toLowerCase()}`}>
                   <CardHeader>
                     <div className="flex items-start gap-4">
                       <div className="p-3 bg-primary/10 rounded-lg">
@@ -759,24 +761,24 @@ export default function AI() {
                 <div className="bg-muted rounded-lg p-4">
                   <p className="text-sm text-muted-foreground mb-2">Example prompts to try:</p>
                   <div className="space-y-2">
-                    <Button variant="outline" size="sm" className="w-full justify-start" asChild>
+                    <Button variant="outline" size="sm" className="w-full justify-start" asChild data-testid="button-prompt-portfolio">
                       <Link href="/agent?prompt=Build a personal portfolio website with dark mode">
                         "Build a personal portfolio website with dark mode"
                       </Link>
                     </Button>
-                    <Button variant="outline" size="sm" className="w-full justify-start" asChild>
+                    <Button variant="outline" size="sm" className="w-full justify-start" asChild data-testid="button-prompt-quiz">
                       <Link href="/agent?prompt=Create a quiz app with score tracking">
                         "Create a quiz app with score tracking"
                       </Link>
                     </Button>
-                    <Button variant="outline" size="sm" className="w-full justify-start" asChild>
+                    <Button variant="outline" size="sm" className="w-full justify-start" asChild data-testid="button-prompt-chinese">
                       <Link href="/agent?prompt=做一个待办事项应用">
                         "做一个待办事项应用" (Chinese)
                       </Link>
                     </Button>
                   </div>
                 </div>
-                <Button size="lg" className="w-full" asChild>
+                <Button size="lg" className="w-full" asChild data-testid="button-open-agent">
                   <Link href="/agent">
                     Open AI Agent
                     <ArrowRight className="ml-2 h-5 w-5" />
@@ -799,10 +801,10 @@ export default function AI() {
               No credit card required. Build unlimited apps with our free tier.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" asChild>
+              <Button size="lg" asChild data-testid="button-get-started-free">
                 <Link href="/signup">Get Started Free</Link>
               </Button>
-              <Button size="lg" variant="outline" asChild>
+              <Button size="lg" variant="outline" asChild data-testid="button-view-pricing">
                 <Link href="/pricing">View Pricing</Link>
               </Button>
             </div>

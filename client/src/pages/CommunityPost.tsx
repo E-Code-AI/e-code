@@ -182,6 +182,7 @@ export default function CommunityPost() {
           size="sm" 
           onClick={() => navigate('/community')}
           className="mb-6"
+          data-testid="button-back-to-community"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Community
@@ -205,7 +206,7 @@ export default function CommunityPost() {
                   </p>
                 </div>
               </div>
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" data-testid="button-post-options">
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </div>
@@ -260,6 +261,7 @@ export default function CommunityPost() {
                   size="sm"
                   onClick={() => likePostMutation.mutate()}
                   disabled={likePostMutation.isPending}
+                  data-testid="button-like-post"
                 >
                   <ThumbsUp className="h-4 w-4 mr-1" />
                   {post.likes}
@@ -279,10 +281,11 @@ export default function CommunityPost() {
                   size="icon"
                   onClick={() => bookmarkPostMutation.mutate()}
                   disabled={bookmarkPostMutation.isPending}
+                  data-testid="button-bookmark-post"
                 >
                   <Bookmark className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="icon">
+                <Button variant="ghost" size="icon" data-testid="button-share-post">
                   <Share2 className="h-4 w-4" />
                 </Button>
               </div>
@@ -307,11 +310,13 @@ export default function CommunityPost() {
                   value={commentText}
                   onChange={(e) => setCommentText(e.target.value)}
                   rows={3}
+                  data-testid="textarea-comment"
                 />
                 <div className="flex justify-end">
                   <Button 
                     onClick={handleAddComment}
                     disabled={!commentText.trim() || addCommentMutation.isPending}
+                    data-testid="button-submit-comment"
                   >
                     <Send className="h-4 w-4 mr-2" />
                     Comment

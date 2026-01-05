@@ -340,6 +340,7 @@ export default function AIAgentStudio() {
                     onChange={(event) => setPrompt(event.target.value)}
                     placeholder="Ex: Build a collaborative note taking app with authentication, AI suggestions, and Stripe billing"
                     disabled={generatePreviewMutation.isPending}
+                    data-testid="textarea-agent-prompt"
                   />
                 </div>
 
@@ -351,7 +352,7 @@ export default function AIAgentStudio() {
                       onValueChange={setLanguage}
                       disabled={generatePreviewMutation.isPending}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger data-testid="select-language">
                         <SelectValue placeholder="Select a language" />
                       </SelectTrigger>
                       <SelectContent>
@@ -372,6 +373,7 @@ export default function AIAgentStudio() {
                       value={projectId}
                       onChange={(event) => setProjectId(event.target.value)}
                       disabled={generatePreviewMutation.isPending}
+                      data-testid="input-project-id"
                     />
                     <p className="text-xs text-muted-foreground">
                       Provide a project ID to apply files instantly after review.
@@ -380,7 +382,7 @@ export default function AIAgentStudio() {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3">
-                  <Button type="submit" size="lg" disabled={generatePreviewMutation.isPending}>
+                  <Button type="submit" size="lg" disabled={generatePreviewMutation.isPending} data-testid="button-generate-preview">
                     {generatePreviewMutation.isPending ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating workspace
@@ -396,6 +398,7 @@ export default function AIAgentStudio() {
                     variant="secondary"
                     disabled={!result || applyPreviewMutation.isPending}
                     onClick={() => applyPreviewMutation.mutate(undefined)}
+                    data-testid="button-apply-preview"
                   >
                     {applyPreviewMutation.isPending ? (
                       <>
@@ -577,6 +580,7 @@ export default function AIAgentStudio() {
                               ? "border-primary bg-primary/10 text-primary"
                               : "border-muted text-muted-foreground hover:border-primary/40 hover:text-foreground",
                           )}
+                          data-testid={`button-file-${file.id}`}
                         >
                           <div className="flex items-center justify-between gap-2">
                             <span className="truncate font-medium">{file.fileName}</span>
@@ -614,6 +618,7 @@ export default function AIAgentStudio() {
                           size="sm"
                           variant="ghost"
                           onClick={() => handleCopyFile(selectedFile)}
+                          data-testid="button-copy-file"
                         >
                           {copiedFileId === selectedFile.id ? (
                             <Check className="h-4 w-4 text-green-500" />
@@ -622,10 +627,10 @@ export default function AIAgentStudio() {
                           )}
                         </Button>
                       </div>
-                      <Tabs defaultValue="code" className="mt-4 flex h-full flex-col">
+                      <Tabs defaultValue="code" className="mt-4 flex h-full flex-col" data-testid="tabs-file-view">
                         <TabsList className="w-fit">
-                          <TabsTrigger value="code">Source</TabsTrigger>
-                          <TabsTrigger value="preview">Rendered</TabsTrigger>
+                          <TabsTrigger value="code" data-testid="tab-source">Source</TabsTrigger>
+                          <TabsTrigger value="preview" data-testid="tab-rendered">Rendered</TabsTrigger>
                         </TabsList>
                         <TabsContent value="code" className="mt-4 flex-1 overflow-auto">
                           <pre className="max-h-[360px] whitespace-pre-wrap rounded-md bg-background p-4 text-xs text-foreground">

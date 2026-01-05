@@ -111,8 +111,8 @@ export default function Explore() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex flex-col gap-4">
             <div className="flex items-center justify-between">
-              <h1 className="text-2xl font-bold">Explore Community</h1>
-              <Button variant="outline" onClick={() => navigate('/dashboard')}>
+              <h1 className="text-2xl font-bold" data-testid="text-explore-title">Explore Community</h1>
+              <Button variant="outline" onClick={() => navigate('/dashboard')} data-testid="button-back-dashboard">
                 Back to Dashboard
               </Button>
             </div>
@@ -126,16 +126,17 @@ export default function Explore() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10"
+                  data-testid="input-search-explore"
                 />
               </div>
               <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-full sm:w-[160px]">
+                <SelectTrigger className="w-full sm:w-[160px]" data-testid="select-sort">
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="trending">Trending</SelectItem>
-                  <SelectItem value="popular">Most Popular</SelectItem>
-                  <SelectItem value="recent">Recently Updated</SelectItem>
+                  <SelectItem value="trending" data-testid="select-sort-trending">Trending</SelectItem>
+                  <SelectItem value="popular" data-testid="select-sort-popular">Most Popular</SelectItem>
+                  <SelectItem value="recent" data-testid="select-sort-recent">Recently Updated</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -156,6 +157,7 @@ export default function Explore() {
                   size="sm"
                   onClick={() => setSelectedCategory(category.id)}
                   className="flex items-center gap-2 whitespace-nowrap"
+                  data-testid={`button-category-${category.id}`}
                 >
                   <Icon className="h-4 w-4" />
                   {category.name}
@@ -230,6 +232,7 @@ export default function Explore() {
                 key={repl.id} 
                 className="cursor-pointer hover:shadow-lg transition-all"
                 onClick={() => navigate(`/@${repl.author}/${repl.slug}`)}
+                data-testid={`card-explore-project-${repl.id}`}
               >
                 <CardHeader>
                   <div className="flex items-start justify-between">

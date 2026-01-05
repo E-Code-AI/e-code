@@ -453,7 +453,7 @@ export default function Languages() {
   });
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background" data-testid="page-languages">
       <PublicNavbar />
 
       {/* Hero Section */}
@@ -461,23 +461,23 @@ export default function Languages() {
         <div className="container-responsive">
           <div className="flex items-center gap-2 mb-4">
             <Code className="h-5 w-5 text-primary" />
-            <Badge variant="secondary">{languages.length}+ Languages</Badge>
+            <Badge variant="secondary" data-testid="badge-languages-count">{languages.length}+ Languages</Badge>
           </div>
           
-          <h1 className="text-responsive-2xl font-bold tracking-tight mb-4">
+          <h1 className="text-responsive-2xl font-bold tracking-tight mb-4" data-testid="text-languages-title">
             Programming Languages on E-Code
           </h1>
           
-          <p className="text-responsive-base text-muted-foreground max-w-3xl mb-6">
+          <p className="text-responsive-base text-muted-foreground max-w-3xl mb-6" data-testid="text-languages-description">
             Code in your favorite language with zero setup. E-Code supports all major programming 
             languages with pre-configured environments, package managers, and debugging tools.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4">
-            <Button asChild size="lg">
+            <Button asChild size="lg" data-testid="button-browse-templates">
               <Link href="/templates">Browse Templates</Link>
             </Button>
-            <Button variant="outline" asChild size="lg">
+            <Button variant="outline" asChild size="lg" data-testid="button-view-docs">
               <Link href="/docs">View Documentation</Link>
             </Button>
           </div>
@@ -496,6 +496,7 @@ export default function Languages() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
+                data-testid="input-language-search"
               />
             </div>
 
@@ -503,7 +504,7 @@ export default function Languages() {
             <Tabs value={selectedCategory} onValueChange={setSelectedCategory}>
               <TabsList className="flex-wrap h-auto p-1">
                 {categories.map(cat => (
-                  <TabsTrigger key={cat.id} value={cat.id} className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                  <TabsTrigger key={cat.id} value={cat.id} className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground" data-testid={`tab-category-${cat.id}`}>
                     {cat.name} ({cat.count})
                   </TabsTrigger>
                 ))}
@@ -517,27 +518,28 @@ export default function Languages() {
       <section className="py-responsive">
         <div className="container-responsive">
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredLanguages.map((language) => (
-              <Card key={language.name} className="group hover:shadow-lg transition-all hover:-translate-y-1">
+            {filteredLanguages.map((language, langIndex) => (
+              <Card key={language.name} className="group hover:shadow-lg transition-all hover:-translate-y-1" data-testid={`card-language-${language.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}>
                 <CardHeader>
                   <div className="flex items-start justify-between mb-2">
                     <div className={`p-3 rounded-lg ${language.color} bg-opacity-10`}>
                       {language.icon}
                     </div>
-                    <Badge variant="secondary" className="text-xs">
+                    <Badge variant="secondary" className="text-xs" data-testid={`badge-language-version-${langIndex}`}>
                       {language.version}
                     </Badge>
                   </div>
-                  <CardTitle className="text-lg flex items-center justify-between">
+                  <CardTitle className="text-lg flex items-center justify-between" data-testid={`text-language-name-${langIndex}`}>
                     {language.name}
                     <Badge 
                       variant={language.popularity === 'Most Popular' ? 'default' : 'outline'}
                       className="text-xs"
+                      data-testid={`badge-language-popularity-${langIndex}`}
                     >
                       {language.popularity}
                     </Badge>
                   </CardTitle>
-                  <CardDescription>{language.description}</CardDescription>
+                  <CardDescription data-testid={`text-language-description-${langIndex}`}>{language.description}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
@@ -550,7 +552,7 @@ export default function Languages() {
                   </div>
                   
                   <div className="pt-2 flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">
+                    <span className="text-sm text-muted-foreground" data-testid={`text-language-templates-${langIndex}`}>
                       {language.templates} templates
                     </span>
                     <Button 
@@ -558,6 +560,7 @@ export default function Languages() {
                       size="sm" 
                       asChild
                       className="group-hover:bg-primary group-hover:text-primary-foreground"
+                      data-testid={`button-start-coding-${language.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
                     >
                       <Link href={`/templates?language=${language.name.toLowerCase()}`}>
                         Start coding
@@ -571,7 +574,7 @@ export default function Languages() {
           </div>
           
           {filteredLanguages.length === 0 && (
-            <div className="text-center py-12">
+            <div className="text-center py-12" data-testid="text-no-languages-found">
               <p className="text-muted-foreground">No languages found matching your search.</p>
             </div>
           )}

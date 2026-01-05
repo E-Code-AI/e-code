@@ -116,15 +116,15 @@ export default function HealthDashboard() {
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" data-testid="button-configure">
                 <Settings className="h-4 w-4 mr-2" />
                 Configure
               </Button>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" data-testid="button-export">
                 <Download className="h-4 w-4 mr-2" />
                 Export
               </Button>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" data-testid="button-share">
                 <Share className="h-4 w-4 mr-2" />
                 Share
               </Button>
@@ -133,6 +133,7 @@ export default function HealthDashboard() {
                 size="sm"
                 onClick={refresh}
                 disabled={refreshing}
+                data-testid="button-refresh"
               >
                 <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
                 Refresh
@@ -205,19 +206,19 @@ export default function HealthDashboard() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <Button variant="outline" className="h-16 flex flex-col gap-1">
+                <Button variant="outline" className="h-16 flex flex-col gap-1" data-testid="button-health-check">
                   <Activity className="h-5 w-5" />
                   <span className="text-sm">Run Health Check</span>
                 </Button>
-                <Button variant="outline" className="h-16 flex flex-col gap-1">
+                <Button variant="outline" className="h-16 flex flex-col gap-1" data-testid="button-performance-audit">
                   <TrendingUp className="h-5 w-5" />
                   <span className="text-sm">Performance Audit</span>
                 </Button>
-                <Button variant="outline" className="h-16 flex flex-col gap-1">
+                <Button variant="outline" className="h-16 flex flex-col gap-1" data-testid="button-security-scan">
                   <AlertTriangle className="h-5 w-5" />
                   <span className="text-sm">Security Scan</span>
                 </Button>
-                <Button variant="outline" className="h-16 flex flex-col gap-1">
+                <Button variant="outline" className="h-16 flex flex-col gap-1" data-testid="button-generate-report">
                   <Download className="h-5 w-5" />
                   <span className="text-sm">Generate Report</span>
                 </Button>

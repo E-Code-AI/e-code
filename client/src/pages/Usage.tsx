@@ -9,6 +9,7 @@ import {
   Zap, Database, Globe, Users, Shield, Activity, TrendingUp,
   AlertTriangle, Check, X, Info, Clock, Cpu, HardDrive, BarChart3
 } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { ECodeLoading } from "@/components/ECodeLoading";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
@@ -212,11 +213,11 @@ export default function Usage() {
         icon={BarChart3}
         actions={(
           <div className="flex flex-col gap-2 sm:flex-row">
-            <Button className="gap-2" onClick={handleUpgradePlan}>
+            <Button className="gap-2" onClick={handleUpgradePlan} data-testid="button-upgrade-plan">
               <TrendingUp className="h-4 w-4" />
               Upgrade plan
             </Button>
-            <Button variant="outline" className="gap-2" onClick={handleContactSales}>
+            <Button variant="outline" className="gap-2" onClick={handleContactSales} data-testid="button-contact-sales">
               <Info className="h-4 w-4" />
               Talk to sales
             </Button>
@@ -379,15 +380,15 @@ export default function Usage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-wrap gap-2">
-              <Button onClick={handleUpgradePlan}>
+              <Button onClick={handleUpgradePlan} data-testid="button-quick-upgrade">
                 <TrendingUp className="mr-2 h-4 w-4" />
                 Upgrade Plan
               </Button>
-              <Button variant="outline" onClick={handleBuyPowerUps}>
+              <Button variant="outline" onClick={handleBuyPowerUps} data-testid="button-buy-powerups">
                 <Zap className="mr-2 h-4 w-4" />
                 Buy Power Ups
               </Button>
-              <Button variant="outline" onClick={handleManageStorage}>
+              <Button variant="outline" onClick={handleManageStorage} data-testid="button-manage-storage">
                 <Database className="mr-2 h-4 w-4" />
                 Manage Storage
               </Button>

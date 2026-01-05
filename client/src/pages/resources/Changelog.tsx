@@ -119,20 +119,20 @@ export default function Changelog() {
     <PublicLayout>
       <SEOHead {...seo} />
 
-      <div className="container mx-auto px-4 py-12 sm:py-16 md:py-20">
+      <div className="container mx-auto px-4 py-12 sm:py-16 md:py-20" data-testid="page-changelog">
         {/* Hero Section */}
         <div className="text-center max-w-4xl mx-auto mb-12 sm:mb-16">
           <Badge className="mb-4 px-4 py-1.5 text-sm font-medium bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0">
             Product Updates
           </Badge>
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400 bg-clip-text text-transparent">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400 bg-clip-text text-transparent" data-testid="heading-changelog">
             Changelog
           </h1>
           <p className="text-lg sm:text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
             Stay updated with the latest E-Code features, improvements, and fixes.
             We ship new features every week.
           </p>
-          <Button size="lg" variant="outline" className="gap-2">
+          <Button size="lg" variant="outline" className="gap-2 min-h-[44px]" data-testid="button-changelog-subscribe">
             <Bell className="h-5 w-5" />
             Subscribe to Updates
           </Button>
@@ -224,7 +224,7 @@ export default function Changelog() {
               Experience the newest E-Code features. Start building today.
             </p>
             <Link href="/register">
-              <Button size="lg" className="gap-2 min-h-[48px] bg-white text-purple-600 hover:bg-purple-50">
+              <Button size="lg" className="gap-2 min-h-[48px] bg-white text-purple-600 hover:bg-purple-50" data-testid="button-changelog-get-started">
                 Get Started Free
                 <ArrowRight className="h-5 w-5" />
               </Button>

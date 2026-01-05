@@ -8,27 +8,27 @@ import PublicLayout from "@/components/layout/PublicLayout";
 export default function GameBuilder() {
   return (
     <PublicLayout>
-      <div className="container mx-auto px-4 py-20">
+      <div className="container mx-auto px-4 py-12 sm:py-16 md:py-20">
         {/* Hero Section */}
-        <div className="text-center max-w-4xl mx-auto mb-20">
-          <Badge className="mb-4 px-4 py-1.5 text-sm font-medium bg-gradient-to-r from-orange-500 to-red-500 text-white border-0">
+        <div className="text-center max-w-4xl mx-auto mb-12 sm:mb-16 md:mb-20">
+          <Badge className="mb-3 sm:mb-4 px-3 sm:px-4 py-1 sm:py-1.5 text-xs sm:text-sm font-medium bg-gradient-to-r from-orange-500 to-red-500 text-white border-0">
             Game Development Made Easy
           </Badge>
-          <h1 className="text-5xl font-bold mb-6 bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 sm:mb-6 bg-gradient-to-r from-orange-600 to-red-600 dark:from-orange-400 dark:to-red-400 bg-clip-text text-transparent">
             Game Builder
           </h1>
-          <p className="text-xl text-muted-foreground mb-8">
+          <p className="text-base sm:text-lg md:text-xl text-muted-foreground mb-6 sm:mb-8 px-4 sm:px-0">
             Design and code games with AI. From simple puzzles to complex adventures.
           </p>
-          <div className="flex gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4 sm:px-0">
             <Link href="/register">
-              <Button size="lg" className="gap-2">
+              <Button size="lg" className="gap-2 min-h-[44px] w-full sm:w-auto" data-testid="button-gamebuilder-start">
                 Create Your Game
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
             <Link href="/showcase?type=games">
-              <Button size="lg" variant="outline" className="gap-2">
+              <Button size="lg" variant="outline" className="gap-2 min-h-[44px] w-full sm:w-auto" data-testid="button-gamebuilder-examples">
                 <Play className="h-4 w-4" />
                 Play Examples
               </Button>
@@ -37,42 +37,42 @@ export default function GameBuilder() {
         </div>
 
         {/* Features Grid */}
-        <div className="grid md:grid-cols-3 gap-8 mb-20">
-          <Card className="p-6 hover:shadow-lg transition-shadow">
-            <div className="p-3 bg-orange-100 dark:bg-orange-900/20 rounded-lg w-fit mb-4">
-              <Gamepad2 className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 md:gap-8 mb-12 sm:mb-16 md:mb-20">
+          <Card className="p-4 sm:p-6 hover:shadow-lg transition-shadow" data-testid="card-feature-genre">
+            <div className="p-2 sm:p-3 bg-orange-100 dark:bg-orange-900/20 rounded-lg w-fit mb-3 sm:mb-4">
+              <Gamepad2 className="h-5 w-5 sm:h-6 sm:w-6 text-orange-600 dark:text-orange-400" />
             </div>
-            <h3 className="text-xl font-semibold mb-2">Any Game Genre</h3>
-            <p className="text-muted-foreground">
+            <h3 className="text-lg sm:text-xl font-semibold mb-2">Any Game Genre</h3>
+            <p className="text-sm sm:text-base text-muted-foreground">
               Create platformers, puzzles, RPGs, strategy games, or any genre you imagine.
             </p>
           </Card>
 
-          <Card className="p-6 hover:shadow-lg transition-shadow">
-            <div className="p-3 bg-red-100 dark:bg-red-900/20 rounded-lg w-fit mb-4">
-              <Code className="h-6 w-6 text-red-600 dark:text-red-400" />
+          <Card className="p-4 sm:p-6 hover:shadow-lg transition-shadow" data-testid="card-feature-nocode">
+            <div className="p-2 sm:p-3 bg-red-100 dark:bg-red-900/20 rounded-lg w-fit mb-3 sm:mb-4">
+              <Code className="h-5 w-5 sm:h-6 sm:w-6 text-red-600 dark:text-red-400" />
             </div>
-            <h3 className="text-xl font-semibold mb-2">No Coding Required</h3>
-            <p className="text-muted-foreground">
+            <h3 className="text-lg sm:text-xl font-semibold mb-2">No Coding Required</h3>
+            <p className="text-sm sm:text-base text-muted-foreground">
               Describe your game idea and watch as AI creates all the code and assets.
             </p>
           </Card>
 
-          <Card className="p-6 hover:shadow-lg transition-shadow">
-            <div className="p-3 bg-pink-100 dark:bg-pink-900/20 rounded-lg w-fit mb-4">
-              <Users className="h-6 w-6 text-pink-600 dark:text-pink-400" />
+          <Card className="p-4 sm:p-6 hover:shadow-lg transition-shadow sm:col-span-2 md:col-span-1" data-testid="card-feature-multiplayer">
+            <div className="p-2 sm:p-3 bg-pink-100 dark:bg-pink-900/20 rounded-lg w-fit mb-3 sm:mb-4">
+              <Users className="h-5 w-5 sm:h-6 sm:w-6 text-pink-600 dark:text-pink-400" />
             </div>
-            <h3 className="text-xl font-semibold mb-2">Multiplayer Support</h3>
-            <p className="text-muted-foreground">
+            <h3 className="text-lg sm:text-xl font-semibold mb-2">Multiplayer Support</h3>
+            <p className="text-sm sm:text-base text-muted-foreground">
               Build real-time multiplayer games with built-in networking and matchmaking.
             </p>
           </Card>
         </div>
 
         {/* Game Types */}
-        <div className="mb-20">
-          <h2 className="text-3xl font-bold text-center mb-12">Games You Can Create</h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="mb-12 sm:mb-16 md:mb-20">
+          <h2 className="text-2xl sm:text-3xl font-bold text-center mb-8 sm:mb-12">Games You Can Create</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
             {[
               "2D Platformers",
               "Puzzle Games",
@@ -82,10 +82,10 @@ export default function GameBuilder() {
               "RPG Adventures",
               "Arcade Classics",
               "Educational Games"
-            ].map((gameType) => (
-              <Card key={gameType} className="p-4 text-center hover:shadow-md transition-shadow">
-                <CheckCircle className="h-5 w-5 text-green-500 mx-auto mb-2" />
-                <p className="font-medium">{gameType}</p>
+            ].map((gameType, index) => (
+              <Card key={gameType} className="p-3 sm:p-4 text-center hover:shadow-md transition-shadow" data-testid={`card-gametype-${index}`}>
+                <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-500 mx-auto mb-1.5 sm:mb-2" />
+                <p className="font-medium text-xs sm:text-sm md:text-base">{gameType}</p>
               </Card>
             ))}
           </div>
@@ -145,14 +145,14 @@ export default function GameBuilder() {
         </div>
 
         {/* CTA Section */}
-        <Card className="p-12 bg-gradient-to-r from-orange-600/10 to-red-600/10 border-2 border-primary/20">
+        <Card className="p-6 sm:p-8 md:p-12 bg-gradient-to-r from-orange-600/10 to-red-600/10 border-2 border-primary/20">
           <div className="text-center">
-            <h2 className="text-3xl font-bold mb-4">Start Building Your Game</h2>
-            <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
+            <h2 className="text-2xl sm:text-3xl font-bold mb-3 sm:mb-4">Start Building Your Game</h2>
+            <p className="text-sm sm:text-base md:text-lg text-muted-foreground mb-6 sm:mb-8 max-w-2xl mx-auto px-4 sm:px-0">
               Turn your game ideas into reality. No experience needed - just imagination.
             </p>
             <Link href="/register">
-              <Button size="lg" className="gap-2">
+              <Button size="lg" className="gap-2 min-h-[44px]" data-testid="button-gamebuilder-cta">
                 Build Your First Game
                 <ArrowRight className="h-4 w-4" />
               </Button>

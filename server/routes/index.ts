@@ -88,11 +88,14 @@ import logsRouter from './logs.router';
 import effortRouter from './effort.router';
 import secretsRouter from './secrets.router';
 import themesRouter from './themes.router';
+import globalThemesRouter from './global-themes.router';
 import settingsRouter from './settings.router';
 import projectShellRouter from './shell.router';
 import storageRouter from './storage.router';
 import extensionsRouter from './extensions.router';
 import workflowsRouter from './workflows.router';
+import teamsRouter from './teams.router';
+import polyglotRouter from '../polyglot-routes';
 
 export class MainRouter {
   private authRouter: AuthRouter;
@@ -240,6 +243,12 @@ export class MainRouter {
     // Community routes
     app.use('/api/community', tierRateLimiters.api, communityRouter);
 
+    // Teams routes
+    app.use('/api/teams', tierRateLimiters.api, teamsRouter);
+
+    // Polyglot Backend routes (TypeScript, Go, Python multi-language services)
+    app.use(tierRateLimiters.api, polyglotRouter);
+
     // Admin routes
     app.use('/api/admin', tierRateLimiters.api, adminRouter);
 
@@ -361,6 +370,9 @@ export class MainRouter {
 
     // Themes routes (Per-project theme persistence)
     app.use('/api/projects/:projectId/themes', tierRateLimiters.api, themesRouter);
+
+    // Global themes routes (user-wide theme preferences and available themes)
+    app.use('/api/themes', tierRateLimiters.api, globalThemesRouter);
 
     // Settings routes (Per-project settings persistence - editor, project, appearance)
     app.use('/api/projects/:projectId/settings', tierRateLimiters.api, settingsRouter);

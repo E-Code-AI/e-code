@@ -143,9 +143,9 @@ export default function Badges() {
   };
 
   return (
-    <div className="container mx-auto py-8 px-4 max-w-7xl">
+    <div className="container mx-auto py-8 px-4 max-w-7xl" data-testid="page-badges">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2 flex items-center gap-2">
+        <h1 className="text-3xl font-bold mb-2 flex items-center gap-2" data-testid="heading-badges">
           <Award className="h-8 w-8 text-yellow-500" />
           Badges
         </h1>
@@ -155,17 +155,17 @@ export default function Badges() {
       </div>
 
       {/* Overall Progress */}
-      <Card className="mb-8">
+      <Card className="mb-8" data-testid="card-progress">
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <span>Your Progress</span>
-            <Badge variant="default" className="text-lg px-3 py-1">
+            <Badge variant="default" className="text-lg px-3 py-1" data-testid="badge-count">
               {earnedCount}/{totalBadges} Badges
             </Badge>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <Progress value={(earnedCount / totalBadges) * 100} className="h-3" />
+          <Progress value={(earnedCount / totalBadges) * 100} className="h-3" data-testid="progress-badges" />
           <div className="grid grid-cols-4 gap-4 mt-6">
             <div className="text-center">
               <p className="text-2xl font-bold">{earnedBadges.filter((b: any) => b.rarity === 'common').length}</p>
@@ -191,7 +191,7 @@ export default function Badges() {
       {badgeCategories.map((category) => {
         const CategoryIcon = category.icon;
         return (
-          <Card key={category.id} className="mb-6">
+          <Card key={category.id} className="mb-6" data-testid={`card-category-${category.id}`}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <CategoryIcon className="h-5 w-5" />
@@ -213,6 +213,7 @@ export default function Badges() {
                           ? 'border-primary bg-primary/5' 
                           : 'border-muted opacity-75'
                       }`}
+                      data-testid={`badge-item-${badge.id}`}
                     >
                       <div className="flex items-start justify-between mb-3">
                         <div className={`p-3 rounded-full ${

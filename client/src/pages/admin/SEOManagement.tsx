@@ -317,17 +317,17 @@ export default function SEOManagement() {
                       Enterprise SEO Suite
                     </Badge>
                   </div>
-                  <h1 className="text-3xl lg:text-4xl font-bold mb-2">SEO Command Center</h1>
+                  <h1 className="text-3xl lg:text-4xl font-bold mb-2" data-testid="heading-seo-command-center">SEO Command Center</h1>
                   <p className="text-white/80 max-w-xl">
                     Monitor, optimize, and dominate search rankings with AI-powered insights
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-3">
-                  <Button className="bg-white text-violet-600 hover:bg-white/90 gap-2 shadow-xl">
+                  <Button className="bg-white text-violet-600 hover:bg-white/90 gap-2 shadow-xl" data-testid="button-ai-audit">
                     <Sparkles className="h-4 w-4" />
                     AI Audit
                   </Button>
-                  <Button variant="outline" className="border-white/30 text-white hover:bg-white/10 gap-2">
+                  <Button variant="outline" className="border-white/30 text-white hover:bg-white/10 gap-2" data-testid="button-export-report">
                     <Download className="h-4 w-4" />
                     Export Report
                   </Button>
@@ -455,7 +455,7 @@ export default function SEOManagement() {
                     <AlertTriangle className="h-4 w-4 text-amber-500" />
                   </div>
                   <div className="text-3xl font-bold text-amber-600 mb-1">{stats.issuesCount}</div>
-                  <Button variant="link" className="p-0 h-auto text-amber-600 text-sm">
+                  <Button variant="link" className="p-0 h-auto text-amber-600 text-sm" data-testid="button-view-all-issues">
                     View all <ChevronRight className="h-3 w-3" />
                   </Button>
                 </CardContent>
@@ -518,19 +518,19 @@ export default function SEOManagement() {
             {/* Main Content Tabs */}
             <Tabs defaultValue="pages" className="space-y-6">
               <TabsList className="bg-muted/50 p-1 rounded-xl">
-                <TabsTrigger value="pages" className="gap-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                <TabsTrigger value="pages" className="gap-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm" data-testid="tab-pages">
                   <FileText className="h-4 w-4" />
                   All Pages
                 </TabsTrigger>
-                <TabsTrigger value="issues" className="gap-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                <TabsTrigger value="issues" className="gap-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm" data-testid="tab-issues">
                   <AlertTriangle className="h-4 w-4" />
                   Issues ({stats.issuesCount})
                 </TabsTrigger>
-                <TabsTrigger value="og-generator" className="gap-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                <TabsTrigger value="og-generator" className="gap-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm" data-testid="tab-og-generator">
                   <Image className="h-4 w-4" />
                   OG Generator
                 </TabsTrigger>
-                <TabsTrigger value="technical" className="gap-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                <TabsTrigger value="technical" className="gap-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm" data-testid="tab-technical">
                   <Globe className="h-4 w-4" />
                   Technical SEO
                 </TabsTrigger>
@@ -547,11 +547,12 @@ export default function SEOManagement() {
                           placeholder="Search pages by URL or title..."
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
+                          data-testid="input-search-seo-pages"
                           className="pl-10 bg-background"
                         />
                       </div>
                       <Select value={statusFilter} onValueChange={setStatusFilter}>
-                        <SelectTrigger className="w-[180px] bg-background">
+                        <SelectTrigger className="w-[180px] bg-background" data-testid="select-seo-status-filter">
                           <SelectValue placeholder="Filter by status" />
                         </SelectTrigger>
                         <SelectContent>
@@ -600,6 +601,7 @@ export default function SEOManagement() {
                                 key={page.path}
                                 className="group hover:bg-muted/50 animate-fadeIn"
                                 style={{ animationDelay: `${index * 20}ms` }}
+                                data-testid={`row-seo-page-${page.path.replace(/\//g, '-')}`}
                               >
                                 <TableCell>
                                   <div className="flex items-center gap-3">
@@ -653,6 +655,7 @@ export default function SEOManagement() {
                                           variant="ghost"
                                           size="sm"
                                           onClick={() => window.open(page.path, '_blank')}
+                                          data-testid={`button-preview-${page.path.replace(/\//g, '-')}`}
                                         >
                                           <Eye className="h-4 w-4" />
                                         </Button>
@@ -665,6 +668,7 @@ export default function SEOManagement() {
                                           variant="ghost"
                                           size="sm"
                                           onClick={() => copyToClipboard(`https://e-code.ai${page.path}`)}
+                                          data-testid={`button-copy-url-${page.path.replace(/\//g, '-')}`}
                                         >
                                           {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
                                         </Button>
@@ -673,7 +677,7 @@ export default function SEOManagement() {
                                     </Tooltip>
                                     <Dialog>
                                       <DialogTrigger asChild>
-                                        <Button variant="ghost" size="sm">
+                                        <Button variant="ghost" size="sm" data-testid={`button-edit-seo-${page.path.replace(/\//g, '-')}`}>
                                           <Edit className="h-4 w-4" />
                                         </Button>
                                       </DialogTrigger>
@@ -721,11 +725,11 @@ export default function SEOManagement() {
                                           )}
                                           <Separator />
                                           <div className="flex gap-2">
-                                            <Button className="flex-1 gap-2">
+                                            <Button className="flex-1 gap-2" data-testid="button-save-seo-changes">
                                               <CheckCircle className="h-4 w-4" />
                                               Save Changes
                                             </Button>
-                                            <Button variant="outline" className="gap-2">
+                                            <Button variant="outline" className="gap-2" data-testid="button-ai-optimize-seo">
                                               <Sparkles className="h-4 w-4" />
                                               AI Optimize
                                             </Button>
@@ -758,7 +762,7 @@ export default function SEOManagement() {
                               <p className="text-xs text-muted-foreground truncate max-w-[250px]">{page.title}</p>
                             </div>
                           </div>
-                          <Button variant="outline" size="sm" className="gap-2">
+                          <Button variant="outline" size="sm" className="gap-2" data-testid={`button-auto-fix-${page.path.replace(/\//g, '-')}`}>
                             <Sparkles className="h-3 w-3" />
                             Auto-fix
                           </Button>

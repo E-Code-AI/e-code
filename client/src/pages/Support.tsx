@@ -166,11 +166,11 @@ export default function Support() {
         icon={HelpCircle}
         actions={(
           <div className="flex flex-col gap-2 sm:flex-row">
-            <Button variant="outline" className="gap-2" onClick={() => setExpandedFaq(null)}>
+            <Button variant="outline" className="gap-2" onClick={() => setExpandedFaq(null)} data-testid="button-browse-articles">
               <Search className="h-4 w-4" />
               Browse articles
             </Button>
-            <Button className="gap-2" onClick={scrollToTicketForm}>
+            <Button className="gap-2" onClick={scrollToTicketForm} data-testid="button-submit-ticket-top">
               <Mail className="h-4 w-4" />
               Submit ticket
             </Button>
@@ -204,12 +204,12 @@ export default function Support() {
         ))}
       </div>
 
-      <Tabs defaultValue="help" className="space-y-4">
+      <Tabs defaultValue="help" className="space-y-4" data-testid="tabs-support">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="help">Help Articles</TabsTrigger>
-          <TabsTrigger value="faqs">FAQs</TabsTrigger>
-          <TabsTrigger value="contact">Contact Us</TabsTrigger>
-          <TabsTrigger value="status">System Status</TabsTrigger>
+          <TabsTrigger value="help" data-testid="tab-help">Help Articles</TabsTrigger>
+          <TabsTrigger value="faqs" data-testid="tab-faqs">FAQs</TabsTrigger>
+          <TabsTrigger value="contact" data-testid="tab-contact">Contact Us</TabsTrigger>
+          <TabsTrigger value="status" data-testid="tab-status">System Status</TabsTrigger>
         </TabsList>
 
         {/* Help Articles Tab */}
@@ -224,6 +224,7 @@ export default function Support() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10"
+                  data-testid="input-search-help"
                 />
               </div>
             </CardContent>
@@ -347,6 +348,7 @@ export default function Support() {
                     value={ticketType}
                     onChange={(e) => setTicketType(e.target.value)}
                     required
+                    data-testid="select-ticket-type"
                   >
                     <option value="">Select issue type</option>
                     <option value="technical">Technical Issue</option>
@@ -366,6 +368,7 @@ export default function Support() {
                       onChange={(e) => setTicketName(e.target.value)}
                       placeholder="How should we address you?"
                       required
+                      data-testid="input-ticket-name"
                     />
                   </div>
                   <div className="space-y-2">
@@ -377,6 +380,7 @@ export default function Support() {
                       onChange={(e) => setTicketEmail(e.target.value)}
                       placeholder="you@example.com"
                       required
+                      data-testid="input-ticket-email"
                     />
                   </div>
                 </div>
@@ -413,7 +417,7 @@ export default function Support() {
                   </ul>
                 </div>
 
-                <Button type="submit" className="w-full" disabled={isSubmittingTicket}>
+                <Button type="submit" className="w-full" disabled={isSubmittingTicket} data-testid="button-submit-ticket">
                   {isSubmittingTicket ? 'Submitting...' : 'Submit Support Ticket'}
                 </Button>
               </form>

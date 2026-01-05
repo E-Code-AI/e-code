@@ -134,9 +134,9 @@ export default function Learn() {
 
   return (
     <ReplitLayout showSidebar={false}>
-      <div className="container mx-auto max-w-6xl py-12 px-6">
+      <div className="container mx-auto max-w-6xl py-12 px-6" data-testid="page-learn">
         <div className="mb-8">
-        <h1 className="text-3xl font-bold flex items-center gap-2">
+        <h1 className="text-3xl font-bold flex items-center gap-2" data-testid="heading-learn">
           <Book className="h-8 w-8 text-primary" />
           Learn
         </h1>
@@ -193,12 +193,12 @@ export default function Learn() {
         </Card>
       </div>
 
-      <Tabs defaultValue="courses" className="space-y-4">
+      <Tabs defaultValue="courses" className="space-y-4" data-testid="tabs-learn">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="courses">Courses</TabsTrigger>
-          <TabsTrigger value="tutorials">Tutorials</TabsTrigger>
-          <TabsTrigger value="progress">My Progress</TabsTrigger>
-          <TabsTrigger value="achievements">Achievements</TabsTrigger>
+          <TabsTrigger value="courses" data-testid="tab-courses">Courses</TabsTrigger>
+          <TabsTrigger value="tutorials" data-testid="tab-tutorials">Tutorials</TabsTrigger>
+          <TabsTrigger value="progress" data-testid="tab-progress">My Progress</TabsTrigger>
+          <TabsTrigger value="achievements" data-testid="tab-achievements-learn">Achievements</TabsTrigger>
         </TabsList>
 
         {/* Courses Tab */}
@@ -215,6 +215,7 @@ export default function Learn() {
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="pl-10"
+                      data-testid="input-search-courses"
                     />
                   </div>
                 </div>
@@ -225,6 +226,7 @@ export default function Learn() {
                       variant={selectedCategory === category.id ? 'default' : 'outline'}
                       size="sm"
                       onClick={() => setSelectedCategory(category.id)}
+                      data-testid={`button-category-${category.id}`}
                     >
                       {category.icon}
                       <span className="ml-1">{category.name}</span>
@@ -293,7 +295,7 @@ export default function Learn() {
                             ({course.students.toLocaleString()} students)
                           </span>
                         </div>
-                        <Button size="sm">
+                        <Button size="sm" data-testid={`button-start-course-${course.id}`}>
                           {course.completedLessons > 0 ? 'Continue' : 'Start'}
                           <ChevronRight className="ml-1 h-4 w-4" />
                         </Button>

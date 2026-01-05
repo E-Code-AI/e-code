@@ -103,7 +103,7 @@ export default function Analytics() {
           <div className="flex items-center gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" data-testid="button-time-range">
                   <Calendar className="h-4 w-4 mr-2" />
                   Last 7 days
                 </Button>
@@ -116,12 +116,12 @@ export default function Analytics() {
               </DropdownMenuContent>
             </DropdownMenu>
             
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" data-testid="button-export">
               <Download className="h-4 w-4 mr-2" />
               Export
             </Button>
             
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" data-testid="button-share">
               <Share className="h-4 w-4 mr-2" />
               Share
             </Button>
@@ -162,11 +162,11 @@ export default function Analytics() {
 
         <Tabs defaultValue="overview" className="space-y-6">
           <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="traffic">Traffic</TabsTrigger>
-            <TabsTrigger value="pages">Pages</TabsTrigger>
-            <TabsTrigger value="audience">Audience</TabsTrigger>
-            <TabsTrigger value="realtime">Real-time</TabsTrigger>
+            <TabsTrigger value="overview" data-testid="tab-overview">Overview</TabsTrigger>
+            <TabsTrigger value="traffic" data-testid="tab-traffic">Traffic</TabsTrigger>
+            <TabsTrigger value="pages" data-testid="tab-pages">Pages</TabsTrigger>
+            <TabsTrigger value="audience" data-testid="tab-audience">Audience</TabsTrigger>
+            <TabsTrigger value="realtime" data-testid="tab-realtime">Real-time</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">

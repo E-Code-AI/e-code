@@ -36,13 +36,14 @@ export default function NewsletterConfirmed() {
               {errorMessage || "If you're having trouble, please try subscribing again or contact our support team."}
             </p>
             <div className="flex flex-col gap-2">
-              <Button onClick={() => setLocation('/')} className="w-full">
+              <Button onClick={() => setLocation('/')} className="w-full" data-testid="button-go-home-error">
                 Go to Homepage
               </Button>
               <Button 
                 variant="outline" 
                 onClick={() => setLocation('/support')}
                 className="w-full"
+                data-testid="button-contact-support"
               >
                 Contact Support
               </Button>
@@ -97,13 +98,13 @@ export default function NewsletterConfirmed() {
             </p>
             <div className="flex flex-col gap-2">
               <Link href="/projects">
-                <Button className="w-full group">
+                <Button className="w-full group" data-testid="button-start-creating">
                   Start Creating
                   <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Button>
               </Link>
               <Link href="/">
-                <Button variant="outline" className="w-full">
+                <Button variant="outline" className="w-full" data-testid="button-go-home-success">
                   Go to Homepage
                 </Button>
               </Link>

@@ -218,8 +218,8 @@ export default function Home() {
         {/* Hero Section with Chat Input - E-Code Style */}
         <div className="bg-gradient-to-r from-orange-500 to-yellow-500 p-8 text-white">
           <div className="max-w-5xl mx-auto">
-            <h1 className="text-4xl font-bold mb-4">Let's build something amazing</h1>
-            <p className="text-xl mb-6 text-orange-50">The collaborative, in-browser IDE that makes coding accessible</p>
+            <h1 className="text-4xl font-bold mb-4" data-testid="text-home-hero-title">Let's build something amazing</h1>
+            <p className="text-xl mb-6 text-orange-50" data-testid="text-home-hero-subtitle">The collaborative, in-browser IDE that makes coding accessible</p>
             
             {/* AI Model Selection */}
             <div className="mb-6">
@@ -238,11 +238,13 @@ export default function Home() {
                       handleCreateProject(searchQuery);
                     }
                   }}
+                  data-testid="input-ai-prompt"
                 />
                 <Button 
                   className="shrink-0 bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 text-white font-semibold"
                   onClick={() => searchQuery.trim() ? handleCreateProject(searchQuery) : setIsCreateModalOpen(true)}
                   disabled={createProjectMutation.isPending}
+                  data-testid="button-build-project"
                 >
                   <span className="hidden sm:inline">{searchQuery.trim() ? 'Build' : 'Create Project'}</span>
                   {searchQuery.trim() ? <Sparkles className="h-4 w-4 sm:ml-2" /> : <Plus className="h-4 w-4 sm:ml-2" />}
@@ -256,6 +258,7 @@ export default function Home() {
                   onClick={() => {
                     setSearchQuery("Build a full-stack e-commerce marketplace with Stripe payments, product catalog, shopping cart, user authentication, order management, and mobile-responsive design");
                   }}
+                  data-testid="button-example-ecommerce"
                 >
                   E-commerce
                 </Button>
@@ -265,6 +268,7 @@ export default function Home() {
                   onClick={() => {
                     setSearchQuery("Create a Slack-like real-time messaging app with WebSocket connections, channels, direct messages, file sharing, reactions, and presence indicators");
                   }}
+                  data-testid="button-example-chat"
                 >
                   Chat App
                 </Button>
@@ -274,6 +278,7 @@ export default function Home() {
                   onClick={() => {
                     setSearchQuery("Design a Fortune 500-grade analytics dashboard with real-time charts, KPI widgets, data tables with sorting/filtering, date range picker, and CSV/PDF export");
                   }}
+                  data-testid="button-example-dashboard"
                 >
                   Dashboard
                 </Button>
@@ -283,6 +288,7 @@ export default function Home() {
                   onClick={() => {
                     setSearchQuery("Build an AI chatbot with OpenAI GPT-4 integration, conversation memory, document upload for RAG, streaming responses, and conversation history");
                   }}
+                  data-testid="button-example-ai"
                 >
                   AI Assistant
                 </Button>
@@ -395,8 +401,8 @@ export default function Home() {
         {/* Header */}
         <div className="border-b p-4">
           <div className="flex justify-between items-center mb-4">
-            <h1 className="text-2xl font-bold">Home</h1>
-            <Button onClick={() => setIsCreateModalOpen(true)}>
+            <h1 className="text-2xl font-bold" data-testid="text-home-title">Home</h1>
+            <Button onClick={() => setIsCreateModalOpen(true)} data-testid="button-create-project">
               <Plus className="h-4 w-4 mr-2" />
               Create
             </Button>
@@ -411,6 +417,7 @@ export default function Home() {
                 className="pl-9"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                data-testid="input-search-projects"
               />
             </div>
             <div className="flex items-center space-x-2">
@@ -419,6 +426,7 @@ export default function Home() {
                 size="icon"
                 onClick={() => setDisplayMode("grid")}
                 className="h-8 w-8"
+                data-testid="button-view-grid"
               >
                 <Grid className="h-4 w-4" />
               </Button>
@@ -427,6 +435,7 @@ export default function Home() {
                 size="icon"
                 onClick={() => setDisplayMode("list")}
                 className="h-8 w-8"
+                data-testid="button-view-list"
               >
                 <List className="h-4 w-4" />
               </Button>
@@ -435,11 +444,11 @@ export default function Home() {
           
           {/* Tabs */}
           <Tabs defaultValue="recent" className="mt-2" onValueChange={setActiveTab}>
-            <TabsList>
-              <TabsTrigger value="recent">Recent</TabsTrigger>
-              <TabsTrigger value="name">Name</TabsTrigger>
-              <TabsTrigger value="my-repls">My Projects</TabsTrigger>
-              <TabsTrigger value="templates">Templates</TabsTrigger>
+            <TabsList data-testid="tabs-projects">
+              <TabsTrigger value="recent" data-testid="tab-recent">Recent</TabsTrigger>
+              <TabsTrigger value="name" data-testid="tab-name">Name</TabsTrigger>
+              <TabsTrigger value="my-repls" data-testid="tab-my-projects">My Projects</TabsTrigger>
+              <TabsTrigger value="templates" data-testid="tab-templates">Templates</TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
@@ -457,6 +466,7 @@ export default function Home() {
                       key={project.id}
                       className="bg-card border border-border hover:border-primary transition-colors cursor-pointer"
                       onClick={() => navigate(getProjectUrl(project, user?.username))}
+                      data-testid={`card-project-${project.id}`}
                     >
                       <CardHeader className="pb-2">
                         <CardTitle className="flex items-center justify-between text-lg">
@@ -533,6 +543,7 @@ export default function Home() {
                       key={project.id}
                       className="flex items-center p-3 border rounded-md hover:bg-accent cursor-pointer"
                       onClick={() => navigate(getProjectUrl(project, user?.username))}
+                      data-testid={`row-project-${project.id}`}
                     >
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
@@ -589,7 +600,7 @@ export default function Home() {
               <div className="text-center py-12 bg-card rounded-lg border border-border">
                 <h3 className="text-xl mb-2">Welcome, {user?.username || 'user'}!</h3>
                 <p className="text-muted-foreground mb-6">Create your first project to get started with PLOT</p>
-                <Button onClick={() => setIsCreateModalOpen(true)}>
+                <Button onClick={() => setIsCreateModalOpen(true)} data-testid="button-create-first-project">
                   <Plus className="h-4 w-4 mr-2" />
                   Create a Project
                 </Button>

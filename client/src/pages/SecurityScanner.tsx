@@ -162,6 +162,7 @@ export default function SecurityScanner() {
         <Button 
           onClick={() => startScanMutation.mutate()}
           disabled={startScanMutation.isPending || scanProgress > 0 && scanProgress < 100}
+          data-testid="button-run-scan"
         >
           <RefreshCw className={`mr-2 h-4 w-4 ${startScanMutation.isPending ? 'animate-spin' : ''}`} />
           {scanProgress > 0 && scanProgress < 100 ? `Scanning... ${scanProgress}%` : 'Run Scan'}
@@ -216,10 +217,10 @@ export default function SecurityScanner() {
       )}
 
       {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <Tabs value={activeTab} onValueChange={setActiveTab} data-testid="tabs-security">
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="vulnerabilities">
+          <TabsTrigger value="overview" data-testid="tab-overview">Overview</TabsTrigger>
+          <TabsTrigger value="vulnerabilities" data-testid="tab-vulnerabilities">
             Vulnerabilities
             {scanResult && scanResult.vulnerabilities.total > 0 && (
               <Badge variant="destructive" className="ml-2">
@@ -227,7 +228,7 @@ export default function SecurityScanner() {
               </Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="history">History</TabsTrigger>
+          <TabsTrigger value="history" data-testid="tab-history">History</TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
@@ -321,7 +322,8 @@ export default function SecurityScanner() {
             <div className="space-y-4">
               {scanResult.findings.map((vuln) => (
                 <Card key={vuln.id} className="hover:shadow-md transition-shadow cursor-pointer"
-                  onClick={() => setSelectedVulnerability(vuln)}>
+                  onClick={() => setSelectedVulnerability(vuln)}
+                  data-testid={`card-vulnerability-${vuln.id}`}>
                   <CardHeader>
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
@@ -388,7 +390,7 @@ export default function SecurityScanner() {
             <CardContent>
               <div className="space-y-2">
                 {metrics?.trendsData.map((data, index) => (
-                  <div key={index} className="flex items-center justify-between p-2 hover:bg-muted rounded">
+                  <div key={index} className="flex items-center justify-between p-2 hover:bg-muted rounded" data-testid={`row-trend-${index}`}>
                     <span className="text-sm">{data.date}</span>
                     <div className="flex items-center gap-4">
                       <Badge variant="outline" className="font-mono">

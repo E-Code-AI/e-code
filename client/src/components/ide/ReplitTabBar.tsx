@@ -244,8 +244,8 @@ export function ReplitTabBar({
             )}
           </div>
         </ContextMenuTrigger>
-        <ContextMenuContent className="w-48">
-          <ContextMenuItem onClick={() => onTabClose(tab.id)}>
+        <ContextMenuContent className="w-48" data-testid={`tab-context-menu-${tab.id}`}>
+          <ContextMenuItem onClick={() => onTabClose(tab.id)} data-testid={`menu-close-tab-${tab.id}`}>
             <X className="h-4 w-4 mr-2" />
             Close
           </ContextMenuItem>
@@ -253,6 +253,7 @@ export function ReplitTabBar({
             onClick={() => {
               tabs.filter(t => t.id !== tab.id).forEach(t => onTabClose(t.id));
             }}
+            data-testid={`menu-close-others-${tab.id}`}
           >
             Close Others
           </ContextMenuItem>
@@ -261,12 +262,13 @@ export function ReplitTabBar({
               const idx = tabs.findIndex(t => t.id === tab.id);
               tabs.slice(idx + 1).forEach(t => onTabClose(t.id));
             }}
+            data-testid={`menu-close-right-${tab.id}`}
           >
             Close to the Right
           </ContextMenuItem>
           <ContextMenuSeparator />
           {onTabPin && (
-            <ContextMenuItem onClick={() => onTabPin(tab.id)}>
+            <ContextMenuItem onClick={() => onTabPin(tab.id)} data-testid={`menu-pin-tab-${tab.id}`}>
               {tab.pinned ? (
                 <>
                   <PinOff className="h-4 w-4 mr-2" />
@@ -281,13 +283,13 @@ export function ReplitTabBar({
             </ContextMenuItem>
           )}
           {onTabDuplicate && (
-            <ContextMenuItem onClick={() => onTabDuplicate(tab.id)}>
+            <ContextMenuItem onClick={() => onTabDuplicate(tab.id)} data-testid={`menu-duplicate-tab-${tab.id}`}>
               <Copy className="h-4 w-4 mr-2" />
               Duplicate
             </ContextMenuItem>
           )}
           {onSplitRight && (
-            <ContextMenuItem onClick={() => onSplitRight(tab.id)}>
+            <ContextMenuItem onClick={() => onSplitRight(tab.id)} data-testid={`menu-split-right-${tab.id}`}>
               <SplitSquareVertical className="h-4 w-4 mr-2" />
               Split Right
             </ContextMenuItem>
@@ -297,6 +299,7 @@ export function ReplitTabBar({
               <ContextMenuSeparator />
               <ContextMenuItem 
                 onClick={() => navigator.clipboard.writeText(tab.path!)}
+                data-testid={`menu-copy-path-${tab.id}`}
               >
                 Copy Path
               </ContextMenuItem>

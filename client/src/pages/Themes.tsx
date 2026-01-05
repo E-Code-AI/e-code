@@ -251,9 +251,9 @@ export default function Themes() {
   }
 
   return (
-    <div className="container mx-auto max-w-6xl py-8 px-6">
+    <div className="container mx-auto max-w-6xl py-8 px-6" data-testid="page-themes">
       <div className="mb-8">
-        <h1 className="text-3xl font-semibold flex items-center gap-3 text-[var(--ecode-text)]">
+        <h1 className="text-3xl font-semibold flex items-center gap-3 text-[var(--ecode-text)]" data-testid="heading-themes">
           <Palette className="h-8 w-8 text-purple-500" />
           Themes
         </h1>
@@ -262,12 +262,12 @@ export default function Themes() {
         </p>
       </div>
 
-      <Tabs defaultValue="browse" className="space-y-4">
+      <Tabs defaultValue="browse" className="space-y-4" data-testid="tabs-themes">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="browse">Browse Themes</TabsTrigger>
-          <TabsTrigger value="installed">Installed</TabsTrigger>
-          <TabsTrigger value="create">Create Theme</TabsTrigger>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
+          <TabsTrigger value="browse" data-testid="tab-browse">Browse Themes</TabsTrigger>
+          <TabsTrigger value="installed" data-testid="tab-installed">Installed</TabsTrigger>
+          <TabsTrigger value="create" data-testid="tab-create">Create Theme</TabsTrigger>
+          <TabsTrigger value="settings" data-testid="tab-settings">Settings</TabsTrigger>
         </TabsList>
 
         {/* Browse Themes Tab */}
@@ -289,6 +289,7 @@ export default function Themes() {
                       selectedTheme === theme.id ? 'ring-2 ring-primary' : ''
                     }`}
                     onClick={() => handleThemeChange(theme.id)}
+                    data-testid={`card-theme-${theme.id}`}
                   >
                     <CardContent className="pt-6">
                       <div className="flex items-start justify-between mb-3">
@@ -349,11 +350,12 @@ export default function Themes() {
                                 installThemeMutation.mutate(theme.id);
                               }}
                               disabled={installThemeMutation.isPending}
+                              data-testid={`button-install-theme-${theme.id}`}
                             >
                               Install
                             </Button>
                           )}
-                          <Button size="sm" variant="outline">
+                          <Button size="sm" variant="outline" data-testid={`button-preview-theme-${theme.id}`}>
                             Preview
                           </Button>
                         </div>
@@ -399,7 +401,7 @@ export default function Themes() {
                         />
                       </div>
                       
-                      <Button size="sm" className="w-full">
+                      <Button size="sm" className="w-full" data-testid={`button-apply-ui-theme-${theme.id}`}>
                         Apply Theme
                       </Button>
                     </CardContent>
@@ -465,11 +467,11 @@ export default function Themes() {
               </div>
               
               <div className="flex gap-2 mt-6">
-                <Button variant="outline" onClick={handleImportTheme}>
+                <Button variant="outline" onClick={handleImportTheme} data-testid="button-import-theme">
                   <Upload className="mr-2 h-4 w-4" />
                   Import Theme
                 </Button>
-                <Button variant="outline" onClick={handleExportTheme}>
+                <Button variant="outline" onClick={handleExportTheme} data-testid="button-export-theme">
                   <Download className="mr-2 h-4 w-4" />
                   Export Current
                 </Button>
@@ -495,7 +497,7 @@ export default function Themes() {
                   Create beautiful, personalized themes with our visual theme editor. 
                   Customize colors, fonts, and more.
                 </p>
-                <Button onClick={handleCreateTheme}>
+                <Button onClick={handleCreateTheme} data-testid="button-create-theme">
                   <Brush className="mr-2 h-4 w-4" />
                   Open Theme Creator
                 </Button>
@@ -547,23 +549,23 @@ export default function Themes() {
               {/* System Theme */}
               <div className="space-y-3">
                 <Label>System Theme</Label>
-                <RadioGroup value={systemTheme} onValueChange={setSystemTheme}>
+                <RadioGroup value={systemTheme} onValueChange={setSystemTheme} data-testid="radiogroup-system-theme">
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="light" id="light" />
+                    <RadioGroupItem value="light" id="light" data-testid="radio-light" />
                     <Label htmlFor="light" className="flex items-center gap-2 cursor-pointer">
                       <Sun className="h-4 w-4" />
                       Light
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="dark" id="dark" />
+                    <RadioGroupItem value="dark" id="dark" data-testid="radio-dark" />
                     <Label htmlFor="dark" className="flex items-center gap-2 cursor-pointer">
                       <Moon className="h-4 w-4" />
                       Dark
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="auto" id="auto" />
+                    <RadioGroupItem value="auto" id="auto" data-testid="radio-auto" />
                     <Label htmlFor="auto" className="flex items-center gap-2 cursor-pointer">
                       <Monitor className="h-4 w-4" />
                       Auto (follow system)

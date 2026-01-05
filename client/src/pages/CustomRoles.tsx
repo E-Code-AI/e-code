@@ -183,11 +183,11 @@ export function CustomRoles() {
         </p>
       </div>
 
-      <Tabs defaultValue="roles" className="space-y-4">
+      <Tabs defaultValue="roles" className="space-y-4" data-testid="tabs-custom-roles">
         <TabsList>
-          <TabsTrigger value="roles">Roles</TabsTrigger>
-          <TabsTrigger value="permissions">Available Permissions</TabsTrigger>
-          <TabsTrigger value="users">Role Assignments</TabsTrigger>
+          <TabsTrigger value="roles" data-testid="tab-roles">Roles</TabsTrigger>
+          <TabsTrigger value="permissions" data-testid="tab-permissions">Available Permissions</TabsTrigger>
+          <TabsTrigger value="users" data-testid="tab-role-users">Role Assignments</TabsTrigger>
         </TabsList>
 
         <TabsContent value="roles">
@@ -208,9 +208,10 @@ export function CustomRoles() {
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className="pl-9 w-64"
+                      data-testid="input-search-roles"
                     />
                   </div>
-                  <Button onClick={() => setCreateDialogOpen(true)}>
+                  <Button onClick={() => setCreateDialogOpen(true)} data-testid="button-create-role">
                     <Plus className="mr-2 h-4 w-4" />
                     Create Role
                   </Button>
@@ -266,6 +267,7 @@ export function CustomRoles() {
                               setSelectedPermissions(new Set(role.permissions));
                             }}
                             disabled={role.isSystem}
+                            data-testid={`button-edit-role-${role.id}`}
                           >
                             <Edit2 className="h-4 w-4" />
                           </Button>
@@ -274,6 +276,7 @@ export function CustomRoles() {
                             size="sm"
                             onClick={() => deleteRoleMutation.mutate(role.id)}
                             disabled={role.isSystem || deleteRoleMutation.isPending}
+                            data-testid={`button-delete-role-${role.id}`}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -377,6 +380,7 @@ export function CustomRoles() {
                   defaultValue={editingRole?.name}
                   placeholder="e.g., Content Editor"
                   required
+                  data-testid="input-role-name"
                 />
               </div>
 
@@ -388,6 +392,7 @@ export function CustomRoles() {
                   defaultValue={editingRole?.description}
                   placeholder="Describe what this role can do..."
                   rows={3}
+                  data-testid="textarea-role-description"
                 />
               </div>
 
@@ -437,14 +442,14 @@ export function CustomRoles() {
             </div>
 
             <DialogFooter className="mt-6">
-              <Button type="button" variant="outline" onClick={() => {
+              <Button type="button" variant="outline" data-testid="button-cancel-role" onClick={() => {
                 setCreateDialogOpen(false);
                 setEditingRole(null);
                 setSelectedPermissions(new Set());
               }}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={createRoleMutation.isPending || updateRoleMutation.isPending}>
+              <Button type="submit" disabled={createRoleMutation.isPending || updateRoleMutation.isPending} data-testid="button-submit-role">
                 {editingRole ? 'Update Role' : 'Create Role'}
               </Button>
             </DialogFooter>

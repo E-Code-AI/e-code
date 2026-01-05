@@ -332,6 +332,7 @@ export default function Careers() {
                   size="lg" 
                   className="text-lg px-8"
                   onClick={() => document.getElementById('open-positions')?.scrollIntoView({ behavior: 'smooth' })}
+                  data-testid="button-careers-view-roles"
                 >
                   View open roles
                   <ArrowRight className="ml-2 h-5 w-5" />
@@ -341,6 +342,7 @@ export default function Careers() {
                   variant="outline"
                   className="text-lg px-8"
                   onClick={() => navigate('/about')}
+                  data-testid="button-careers-learn-about"
                 >
                   Learn about us
                 </Button>
@@ -492,6 +494,7 @@ export default function Careers() {
                 key={job.id} 
                 className="group hover:shadow-xl transition-all duration-300 cursor-pointer hover:scale-[1.01]"
                 onClick={() => handleJobClick(job)}
+                data-testid={`card-job-${job.id}`}
               >
                 <CardHeader className="pb-4">
                   <div className="flex items-start justify-between">
@@ -547,7 +550,7 @@ export default function Careers() {
                 We're always looking for exceptional talent. If you're passionate about our mission, 
                 we'd love to hear from you.
               </p>
-              <Button variant="outline" size="lg" className="gap-2">
+              <Button variant="outline" size="lg" className="gap-2" data-testid="button-careers-general-application">
                 <ExternalLink className="h-4 w-4" />
                 Submit general application
               </Button>
@@ -570,6 +573,7 @@ export default function Careers() {
               size="lg" 
               variant="secondary"
               onClick={() => document.getElementById('open-positions')?.scrollIntoView({ behavior: 'smooth' })}
+              data-testid="button-careers-cta-view-positions"
             >
               View all positions
             </Button>
@@ -578,6 +582,7 @@ export default function Careers() {
               variant="outline"
               className="bg-transparent text-primary-foreground border-primary-foreground hover:bg-primary-foreground/10"
               onClick={() => navigate('/about')}
+              data-testid="button-careers-cta-learn-about"
             >
               Learn about us
             </Button>
@@ -697,6 +702,7 @@ export default function Careers() {
                       // In a real app, this would open an application form
                       window.open(`mailto:careers@e-code.ai?subject=Application for ${selectedJob.title}`, '_blank');
                     }}
+                    data-testid="button-job-apply"
                   >
                     <ExternalLink className="h-4 w-4" />
                     Apply for this role
@@ -706,6 +712,7 @@ export default function Careers() {
                     variant="outline"
                     className="flex-1"
                     onClick={() => setIsDialogOpen(false)}
+                    data-testid="button-job-close"
                   >
                     Close
                   </Button>

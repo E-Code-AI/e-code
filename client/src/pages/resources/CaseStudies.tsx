@@ -121,13 +121,13 @@ export default function CaseStudies() {
     <PublicLayout>
       <SEOHead {...seo} />
 
-      <div className="container mx-auto px-4 py-12 sm:py-16 md:py-20">
+      <div className="container mx-auto px-4 py-12 sm:py-16 md:py-20" data-testid="page-case-studies">
         {/* Hero Section */}
         <div className="text-center max-w-4xl mx-auto mb-12 sm:mb-16">
           <Badge className="mb-4 px-4 py-1.5 text-sm font-medium bg-gradient-to-r from-emerald-500 to-teal-500 text-white border-0">
             Customer Success
           </Badge>
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-400 dark:to-teal-400 bg-clip-text text-transparent">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-400 dark:to-teal-400 bg-clip-text text-transparent" data-testid="heading-case-studies">
             Case Studies
           </h1>
           <p className="text-lg sm:text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
@@ -230,13 +230,13 @@ export default function CaseStudies() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/contact-sales">
-                <Button size="lg" className="gap-2 min-h-[48px] bg-white text-emerald-600 hover:bg-emerald-50">
+                <Button size="lg" className="gap-2 min-h-[48px] bg-white text-emerald-600 hover:bg-emerald-50" data-testid="button-case-studies-talk-sales">
                   Talk to Sales
                   <ArrowRight className="h-5 w-5" />
                 </Button>
               </Link>
               <Link href="/register">
-                <Button size="lg" variant="outline" className="gap-2 min-h-[48px] border-white/30 text-white hover:bg-white/10">
+                <Button size="lg" variant="outline" className="gap-2 min-h-[48px] border-white/30 text-white hover:bg-white/10" data-testid="button-case-studies-free-trial">
                   <Rocket className="h-5 w-5" />
                   Start Free Trial
                 </Button>

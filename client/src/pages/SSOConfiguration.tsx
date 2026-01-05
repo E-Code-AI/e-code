@@ -90,12 +90,12 @@ export function SSOConfiguration() {
         </p>
       </div>
 
-      <Tabs defaultValue="configure" className="space-y-4">
+      <Tabs defaultValue="configure" className="space-y-4" data-testid="tabs-sso-config">
         <TabsList>
-          <TabsTrigger value="configure">Configure SSO</TabsTrigger>
-          <TabsTrigger value="providers">Active Providers</TabsTrigger>
-          <TabsTrigger value="users">SSO Users</TabsTrigger>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
+          <TabsTrigger value="configure" data-testid="tab-configure">Configure SSO</TabsTrigger>
+          <TabsTrigger value="providers" data-testid="tab-providers">Active Providers</TabsTrigger>
+          <TabsTrigger value="users" data-testid="tab-users">SSO Users</TabsTrigger>
+          <TabsTrigger value="settings" data-testid="tab-settings">Settings</TabsTrigger>
         </TabsList>
 
         <TabsContent value="configure">
@@ -128,7 +128,7 @@ export function SSOConfiguration() {
                   <div className="space-y-2">
                     <Label htmlFor="providerType">Provider Type</Label>
                     <Select name="providerType" required>
-                      <SelectTrigger>
+                      <SelectTrigger data-testid="select-provider-type">
                         <SelectValue placeholder="Select provider type" />
                       </SelectTrigger>
                       <SelectContent>
@@ -146,6 +146,7 @@ export function SSOConfiguration() {
                       name="providerName"
                       placeholder="e.g., Okta, Azure AD, Google"
                       required
+                      data-testid="input-provider-name"
                     />
                   </div>
                 </div>
@@ -156,6 +157,7 @@ export function SSOConfiguration() {
                     id="entityId"
                     name="entityId"
                     placeholder="https://your-idp.com/saml"
+                    data-testid="input-entity-id"
                   />
                 </div>
 
@@ -165,6 +167,7 @@ export function SSOConfiguration() {
                     id="ssoUrl"
                     name="ssoUrl"
                     placeholder="https://your-idp.com/sso/saml"
+                    data-testid="input-sso-url"
                   />
                 </div>
 
@@ -176,6 +179,7 @@ export function SSOConfiguration() {
                     placeholder="-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----"
                     className="font-mono text-xs"
                     rows={6}
+                    data-testid="textarea-certificate"
                   />
                 </div>
 
@@ -210,7 +214,7 @@ export function SSOConfiguration() {
                 </div>
 
                 <div className="flex justify-end">
-                  <Button type="submit" disabled={configureMutation.isPending}>
+                  <Button type="submit" disabled={configureMutation.isPending} data-testid="button-configure-provider">
                     {configureMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Configure Provider
                   </Button>
@@ -315,7 +319,7 @@ export function SSOConfiguration() {
                     Require all users to authenticate via SSO
                   </p>
                 </div>
-                <Switch />
+                <Switch data-testid="switch-enforce-sso" />
               </div>
 
               <div className="flex items-center justify-between">
@@ -325,7 +329,7 @@ export function SSOConfiguration() {
                     Automatically create user accounts on first SSO login
                   </p>
                 </div>
-                <Switch defaultChecked />
+                <Switch defaultChecked data-testid="switch-auto-provision" />
               </div>
 
               <div className="flex items-center justify-between">
@@ -335,11 +339,11 @@ export function SSOConfiguration() {
                     Update user profile from SSO attributes on each login
                   </p>
                 </div>
-                <Switch defaultChecked />
+                <Switch defaultChecked data-testid="switch-update-attributes" />
               </div>
 
               <div className="pt-4">
-                <Button>Save Settings</Button>
+                <Button data-testid="button-save-sso-settings">Save Settings</Button>
               </div>
             </CardContent>
           </Card>

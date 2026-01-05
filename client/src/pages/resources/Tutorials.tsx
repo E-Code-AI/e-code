@@ -123,13 +123,13 @@ export default function Tutorials() {
         structuredData={structuredData.website()}
       />
 
-      <div className="container mx-auto px-4 py-12 sm:py-16 md:py-20">
+      <div className="container mx-auto px-4 py-12 sm:py-16 md:py-20" data-testid="page-tutorials">
         {/* Hero Section */}
         <div className="text-center max-w-4xl mx-auto mb-12 sm:mb-16">
           <Badge className="mb-4 px-4 py-1.5 text-sm font-medium bg-gradient-to-r from-blue-500 to-cyan-500 text-white border-0">
             Learn & Build
           </Badge>
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-blue-600 to-cyan-600 dark:from-blue-400 dark:to-cyan-400 bg-clip-text text-transparent">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-blue-600 to-cyan-600 dark:from-blue-400 dark:to-cyan-400 bg-clip-text text-transparent" data-testid="heading-tutorials">
             Tutorials
           </h1>
           <p className="text-lg sm:text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
@@ -146,6 +146,7 @@ export default function Tutorials() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-12 h-12 text-lg"
+              data-testid="input-tutorials-search"
             />
           </div>
         </div>
@@ -158,7 +159,8 @@ export default function Tutorials() {
               variant={activeCategory === category ? "default" : "outline"}
               size="sm"
               onClick={() => setActiveCategory(category)}
-              className={activeCategory === category ? "bg-blue-600 hover:bg-blue-700" : ""}
+              className={`min-h-[44px] ${activeCategory === category ? "bg-blue-600 hover:bg-blue-700" : ""}`}
+              data-testid={`button-tutorials-category-${category.toLowerCase().replace(/\s+/g, '-')}`}
             >
               {category}
             </Button>
@@ -216,7 +218,7 @@ export default function Tutorials() {
               <BookOpen className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
               <h3 className="text-xl font-semibold mb-2">No tutorials found</h3>
               <p className="text-muted-foreground mb-4">Try a different search term or category.</p>
-              <Button variant="outline" onClick={() => { setSearchQuery(""); setActiveCategory("All"); }}>
+              <Button variant="outline" onClick={() => { setSearchQuery(""); setActiveCategory("All"); }} className="min-h-[44px]" data-testid="button-tutorials-clear-filters">
                 Clear Filters
               </Button>
             </Card>
@@ -263,13 +265,13 @@ export default function Tutorials() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/register">
-                <Button size="lg" className="gap-2 min-h-[48px] bg-white text-blue-600 hover:bg-blue-50">
+                <Button size="lg" className="gap-2 min-h-[48px] bg-white text-blue-600 hover:bg-blue-50" data-testid="button-tutorials-start-free">
                   Start Free
                   <ArrowRight className="h-5 w-5" />
                 </Button>
               </Link>
               <Link href="/docs">
-                <Button size="lg" variant="outline" className="gap-2 min-h-[48px] border-white/30 text-white hover:bg-white/10">
+                <Button size="lg" variant="outline" className="gap-2 min-h-[48px] border-white/30 text-white hover:bg-white/10" data-testid="button-tutorials-read-docs">
                   <BookOpen className="h-5 w-5" />
                   Read Docs
                 </Button>

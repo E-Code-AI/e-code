@@ -130,10 +130,10 @@ export default function Cycles() {
 
       {/* Actions */}
       <div className="mt-8 flex gap-4">
-        <Button onClick={() => window.location.href = '/plans'}>
+        <Button onClick={() => window.location.href = '/plans'} data-testid="button-upgrade-plan">
           Upgrade Plan
         </Button>
-        <Button variant="outline" onClick={() => window.location.href = '/usage'}>
+        <Button variant="outline" onClick={() => window.location.href = '/usage'} data-testid="button-view-usage">
           View Detailed Usage
         </Button>
       </div>

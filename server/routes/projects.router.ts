@@ -255,6 +255,96 @@ export class ProjectsRouter {
       }
     });
 
+    // Get public projects for explore page (no auth required)
+    this.router.get("/api/explore/projects", async (req: Request, res: Response) => {
+      try {
+        const category = req.query.category as string | undefined;
+        const sort = req.query.sort as string | undefined;
+        const search = req.query.search as string | undefined;
+        const limit = Math.min(Math.max(1, parseInt(req.query.limit as string) || 20), 50);
+        const offset = Math.max(0, parseInt(req.query.offset as string) || 0);
+        
+        // Get public projects only
+        const allProjects = await this.storage.getAllProjects();
+        let publicProjects = allProjects.filter(p => p.visibility === 'public');
+        
+        // Apply search filter
+        if (search) {
+          const searchLower = search.toLowerCase();
+          publicProjects = publicProjects.filter(p => 
+            p.name.toLowerCase().includes(searchLower) ||
+            (p.description?.toLowerCase().includes(searchLower)) ||
+            (p.language?.toLowerCase().includes(searchLower))
+          );
+        }
+        
+        // Apply category filter (using language as proxy for category)
+        if (category && category !== 'all') {
+          const categoryMapping: Record<string, string[]> = {
+            'web': ['javascript', 'typescript', 'html', 'css'],
+            'games': ['python', 'javascript', 'cpp'],
+            'ai': ['python', 'typescript'],
+            'data': ['python', 'sql'],
+          };
+          const languages = categoryMapping[category] || [];
+          if (languages.length > 0) {
+            publicProjects = publicProjects.filter(p => 
+              p.language && languages.includes(p.language.toLowerCase())
+            );
+          }
+        }
+        
+        // Apply sorting
+        publicProjects.sort((a, b) => {
+          switch (sort) {
+            case 'popular':
+              return (b.likes || 0) - (a.likes || 0);
+            case 'recent':
+              return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+            case 'trending':
+            default:
+              // Trending: combination of recency and likes
+              const aScore = (a.likes || 0) + (new Date(a.updatedAt).getTime() / 1000000000);
+              const bScore = (b.likes || 0) + (new Date(b.updatedAt).getTime() / 1000000000);
+              return bScore - aScore;
+          }
+        });
+        
+        // Apply pagination
+        const paginatedProjects = publicProjects.slice(offset, offset + limit);
+        
+        // Enrich with owner info and format for explore page
+        const enrichedProjects = await Promise.all(paginatedProjects.map(async (project) => {
+          const owner = await this.storage.getUser(String(project.ownerId));
+          return {
+            id: project.id,
+            name: project.name,
+            slug: project.slug,
+            description: project.description,
+            language: project.language || 'JavaScript',
+            stars: project.likes || 0,
+            forks: project.forks || 0,
+            runs: project.runs || 0,
+            category: project.language?.toLowerCase() === 'python' ? 'data' : 'web',
+            tags: (project.tags as string[]) || [],
+            author: owner?.username || 'anonymous',
+            avatar: owner?.profileImageUrl || null,
+            lastUpdated: new Date(project.updatedAt).toLocaleDateString(),
+            createdAt: project.createdAt,
+            updatedAt: project.updatedAt,
+          };
+        }));
+        
+        res.json(enrichedProjects);
+      } catch (error) {
+        projectLogger.error('Error fetching explore projects:', error);
+        res.status(500).json({ 
+          message: "Failed to fetch public projects",
+          code: "FETCH_ERROR"
+        });
+      }
+    });
+
     // Create a new project
     this.router.post("/api/projects", this.ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
       try {

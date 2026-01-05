@@ -16,14 +16,14 @@ export default function AIDocumentation() {
         </div>
 
         {/* Main Content */}
-        <Tabs defaultValue="overview" className="space-y-8">
+        <Tabs defaultValue="overview" className="space-y-8" data-testid="tabs-ai-docs">
           <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-6">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="models">AI Models</TabsTrigger>
-            <TabsTrigger value="prompts">Custom Prompts</TabsTrigger>
-            <TabsTrigger value="templates">Templates</TabsTrigger>
-            <TabsTrigger value="api">API Reference</TabsTrigger>
-            <TabsTrigger value="examples">Examples</TabsTrigger>
+            <TabsTrigger value="overview" data-testid="tab-overview">Overview</TabsTrigger>
+            <TabsTrigger value="models" data-testid="tab-models">AI Models</TabsTrigger>
+            <TabsTrigger value="prompts" data-testid="tab-prompts">Custom Prompts</TabsTrigger>
+            <TabsTrigger value="templates" data-testid="tab-templates">Templates</TabsTrigger>
+            <TabsTrigger value="api" data-testid="tab-api">API Reference</TabsTrigger>
+            <TabsTrigger value="examples" data-testid="tab-examples">Examples</TabsTrigger>
           </TabsList>
 
           {/* Overview Tab */}

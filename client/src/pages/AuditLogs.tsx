@@ -96,11 +96,12 @@ export function AuditLogs() {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-9"
+                data-testid="input-search-logs"
               />
             </div>
 
             <Select value={filterAction} onValueChange={setFilterAction}>
-              <SelectTrigger>
+              <SelectTrigger data-testid="select-filter-action">
                 <SelectValue placeholder="All Actions" />
               </SelectTrigger>
               <SelectContent>
@@ -115,7 +116,7 @@ export function AuditLogs() {
             </Select>
 
             <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger>
+              <SelectTrigger data-testid="select-filter-status">
                 <SelectValue placeholder="All Status" />
               </SelectTrigger>
               <SelectContent>
@@ -154,7 +155,7 @@ export function AuditLogs() {
           </div>
 
           <div className="flex justify-between mt-4">
-            <Button variant="outline" size="sm" onClick={() => {
+            <Button variant="outline" size="sm" data-testid="button-clear-filters" onClick={() => {
               setSearchTerm('');
               setFilterAction('all');
               setFilterStatus('all');
@@ -163,7 +164,7 @@ export function AuditLogs() {
               <Filter className="mr-2 h-4 w-4" />
               Clear Filters
             </Button>
-            <Button variant="outline" size="sm" onClick={exportLogs}>
+            <Button variant="outline" size="sm" data-testid="button-export-logs" onClick={exportLogs}>
               <Download className="mr-2 h-4 w-4" />
               Export Logs
             </Button>

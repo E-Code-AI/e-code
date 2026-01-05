@@ -12,7 +12,7 @@ export default function PitchDeck() {
 
   // Redirect if not admin
   useEffect(() => {
-    if (user && user.username !== 'admin') {
+    if (user && !user.isAdmin) {
       setLocation('/');
     }
   }, [user, setLocation]);
@@ -1282,7 +1282,7 @@ export default function PitchDeck() {
               <span className="text-sm text-gray-500">
                 Slide {currentSlide + 1} of {slides.length}
               </span>
-              <Button onClick={handlePrint} variant="outline" size="sm">
+              <Button onClick={handlePrint} variant="outline" size="sm" data-testid="button-export-pdf">
                 <Download className="w-4 h-4 mr-2" />
                 Export PDF
               </Button>
@@ -1306,6 +1306,7 @@ export default function PitchDeck() {
               variant="outline"
               size="icon"
               disabled={currentSlide === 0}
+              data-testid="button-prev-slide"
             >
               <ChevronLeft className="w-4 h-4" />
             </Button>
@@ -1320,6 +1321,7 @@ export default function PitchDeck() {
                       ? 'bg-blue-600 w-8'
                       : 'bg-gray-300 hover:bg-gray-400'
                   }`}
+                  data-testid={`button-slide-${index}`}
                 />
               ))}
             </div>
@@ -1329,6 +1331,7 @@ export default function PitchDeck() {
               variant="outline"
               size="icon"
               disabled={currentSlide === slides.length - 1}
+              data-testid="button-next-slide"
             >
               <ChevronRight className="w-4 h-4" />
             </Button>

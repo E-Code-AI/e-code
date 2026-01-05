@@ -120,22 +120,22 @@ export default function Contact() {
 
         {/* Quick Contact Options */}
         <div className="grid sm:grid-cols-3 gap-4 mb-16 max-w-4xl mx-auto">
-          <Link href="/contact-sales">
-            <Card className="p-6 hover:shadow-lg transition-all duration-300 cursor-pointer group text-center">
+          <Link href="/contact-sales" data-testid="link-contact-sales">
+            <Card className="p-6 hover:shadow-lg transition-all duration-300 cursor-pointer group text-center" data-testid="card-contact-sales">
               <Building2 className="h-8 w-8 mx-auto mb-3 text-blue-600 group-hover:scale-110 transition-transform" />
               <h3 className="font-semibold mb-1">Sales</h3>
               <p className="text-sm text-muted-foreground">Enterprise pricing & demos</p>
             </Card>
           </Link>
-          <Link href="/help-center">
-            <Card className="p-6 hover:shadow-lg transition-all duration-300 cursor-pointer group text-center">
+          <Link href="/help-center" data-testid="link-contact-support">
+            <Card className="p-6 hover:shadow-lg transition-all duration-300 cursor-pointer group text-center" data-testid="card-contact-support">
               <HelpCircle className="h-8 w-8 mx-auto mb-3 text-purple-600 group-hover:scale-110 transition-transform" />
               <h3 className="font-semibold mb-1">Support</h3>
               <p className="text-sm text-muted-foreground">Help center & documentation</p>
             </Card>
           </Link>
-          <Link href="/partners">
-            <Card className="p-6 hover:shadow-lg transition-all duration-300 cursor-pointer group text-center">
+          <Link href="/partners" data-testid="link-contact-partners">
+            <Card className="p-6 hover:shadow-lg transition-all duration-300 cursor-pointer group text-center" data-testid="card-contact-partners">
               <Users className="h-8 w-8 mx-auto mb-3 text-green-600 group-hover:scale-110 transition-transform" />
               <h3 className="font-semibold mb-1">Partnerships</h3>
               <p className="text-sm text-muted-foreground">Become a partner</p>
@@ -149,13 +149,13 @@ export default function Contact() {
             <h2 className="text-2xl font-bold mb-6">Send us a message</h2>
 
             {isSubmitted ? (
-              <Card className="p-12 text-center">
+              <Card className="p-12 text-center" data-testid="card-contact-success">
                 <CheckCircle className="h-16 w-16 mx-auto text-green-500 mb-6" />
                 <h3 className="text-2xl font-bold mb-2">Message Sent!</h3>
                 <p className="text-muted-foreground mb-6">
                   Thank you for reaching out. We'll get back to you within 24 hours.
                 </p>
-                <Button variant="outline" onClick={() => setIsSubmitted(false)}>
+                <Button variant="outline" onClick={() => setIsSubmitted(false)} data-testid="button-send-another">
                   Send Another Message
                 </Button>
               </Card>
@@ -205,12 +205,12 @@ export default function Contact() {
                         value={formData.reason}
                         onValueChange={(value) => setFormData({ ...formData, reason: value })}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger data-testid="select-contact-reason">
                           <SelectValue placeholder="Select a reason" />
                         </SelectTrigger>
                         <SelectContent>
                           {contactReasons.map((reason) => (
-                            <SelectItem key={reason.value} value={reason.value}>
+                            <SelectItem key={reason.value} value={reason.value} data-testid={`select-option-${reason.value}`}>
                               {reason.label}
                             </SelectItem>
                           ))}

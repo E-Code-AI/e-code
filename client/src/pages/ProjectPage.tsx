@@ -64,7 +64,7 @@ export default function ProjectPage() {
             {slugError.message || "We couldn’t load this project. Check the project visibility or try again."}
           </AlertDescription>
         </Alert>
-        <Button onClick={() => window.history.back()} variant="outline">
+        <Button onClick={() => window.history.back()} variant="outline" data-testid="button-go-back">
           Go back
         </Button>
       </div>
@@ -82,7 +82,7 @@ export default function ProjectPage() {
             Choose a project from your dashboard to open it in the workspace.
           </AlertDescription>
         </Alert>
-        <Button onClick={() => (window.location.href = "/projects")}>
+        <Button onClick={() => (window.location.href = "/projects")} data-testid="button-browse-projects">
           Browse projects
         </Button>
       </div>

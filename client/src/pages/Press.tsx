@@ -202,7 +202,7 @@ export default function Press() {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background" data-testid="page-press">
       <PublicNavbar />
 
       {/* Hero Section */}
@@ -213,7 +213,7 @@ export default function Press() {
             <Badge className="mx-auto w-fit" variant="secondary">
               Beta launched 3 months ago
             </Badge>
-            <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
+            <h1 className="text-4xl md:text-6xl font-bold tracking-tight" data-testid="heading-press">
               Press Center
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground">
@@ -221,13 +221,13 @@ export default function Press() {
               platform helping small teams feel like crews of 50.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" asChild>
+              <Button size="lg" className="min-h-[44px]" asChild data-testid="button-press-contact">
                 <a href="mailto:press@e-code.ai">
                   <Mail className="mr-2 h-5 w-5" />
                   Contact Press Team
                 </a>
               </Button>
-              <Button size="lg" variant="outline" asChild>
+              <Button size="lg" variant="outline" className="min-h-[44px]" asChild data-testid="button-press-media-kit">
                 <Link href="#media-kit">
                   <Download className="mr-2 h-5 w-5" />
                   Download Media Kit

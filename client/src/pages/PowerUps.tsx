@@ -104,9 +104,9 @@ export default function PowerUps() {
   ];
 
   return (
-    <div className="container mx-auto py-8 px-4 max-w-7xl">
+    <div className="container mx-auto py-8 px-4 max-w-7xl" data-testid="page-powerups">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2 flex items-center gap-2">
+        <h1 className="text-3xl font-bold mb-2 flex items-center gap-2" data-testid="heading-powerups">
           <Zap className="h-8 w-8 text-yellow-500" />
           PowerUps
         </h1>
@@ -153,7 +153,7 @@ export default function PowerUps() {
         {availablePowerUps.map((powerUp) => {
           const Icon = powerUp.icon;
           return (
-            <Card key={powerUp.id} className={powerUp.active ? 'border-primary opacity-60' : ''}>
+            <Card key={powerUp.id} className={powerUp.active ? 'border-primary opacity-60' : ''} data-testid={`card-powerup-${powerUp.id}`}>
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <Icon className="h-8 w-8 text-primary" />
@@ -187,6 +187,7 @@ export default function PowerUps() {
                       onClick={() => handleActivate(powerUp.id)}
                       disabled={powerUp.active}
                       variant={powerUp.active ? "secondary" : "default"}
+                      data-testid={`button-activate-${powerUp.id}`}
                     >
                       {powerUp.active ? 'Already Active' : 'Activate'}
                     </Button>

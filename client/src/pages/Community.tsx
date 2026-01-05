@@ -424,9 +424,10 @@ export default function Community() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full sm:w-[240px] md:w-[280px] lg:w-[320px]"
+              data-testid="input-search-community"
             />
             <Link href="/community/new">
-              <Button className="w-full sm:w-auto whitespace-nowrap">
+              <Button className="w-full sm:w-auto whitespace-nowrap" data-testid="button-new-post">
                 <Plus className="h-4 w-4 mr-2" />
                 <span className="sm:inline">New Post</span>
               </Button>
