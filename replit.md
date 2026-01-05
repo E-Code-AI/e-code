@@ -11,7 +11,7 @@ E-Code is an AI-assisted web-based IDE for rapid prototyping, education, and ent
 - **E2E Testing:** Fortune 500-grade Playwright config with tiered timeouts (120s critical, 60s navigation, 30s actions), multi-browser coverage (Chrome, Mobile, Tablet), 3 retries in CI
 - **Server Warmup:** Use `npx tsx scripts/warmup-server.ts` to pre-warm server endpoints before E2E tests
 - **Test User:** testuser@test.com / testpass123 (seeded for testing)
-- **Language Support:** 29 languages supported for code execution via `/api/execute`
+- **Language Support:** 29 languages with staged runtime warmup via `/api/health/runtimes`. Docker execution in production with process fallback for Replit Cloud Run. Languages: JavaScript, TypeScript, Python, Java, Go, C, C++, Rust, Ruby, PHP, Perl, Lua, Bash, C#, F#, Kotlin, Scala, Clojure, Haskell, OCaml, Elixir, Erlang, R, Julia, Fortran, Deno, Zig, Dart, Nix
 - **Production Serving:** Fixed static file serving in `vite-loader.ts` to correctly use `dist/public` path with ES module imports (`expressModule.default.static`)
 - **Theme System:** Comprehensive CSS variable system for dark/light modes using `color-mix` for transparent variants
 - **UI/UX Audit:** Complete data-testid attributes on all interactive elements across Landing, Pricing, Auth, Dashboard, IDE, and Admin pages
