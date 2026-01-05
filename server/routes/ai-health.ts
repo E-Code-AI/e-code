@@ -9,6 +9,8 @@ import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { AI_MODELS } from '../ai/ai-provider-manager';
+import { ensureAuthenticated } from '../middleware/auth';
+import { ensureAdmin } from '../middleware/admin-auth';
 
 const router = Router();
 
@@ -252,7 +254,7 @@ router.get('/:provider', async (req: Request, res: Response) => {
   }
 });
 
-router.post('/clear-cache', (req: Request, res: Response) => {
+router.post('/clear-cache', ensureAuthenticated, ensureAdmin, (req: Request, res: Response) => {
   healthCache = null;
   res.json({ message: 'Cache cleared', timestamp: new Date().toISOString() });
 });

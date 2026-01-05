@@ -15,6 +15,7 @@ E-Code is an AI-assisted web-based IDE for rapid prototyping, education, and ent
 - **Production Serving:** Fixed static file serving in `vite-loader.ts` to correctly use `dist/public` path with ES module imports (`expressModule.default.static`)
 - **Theme System:** Comprehensive CSS variable system for dark/light modes using `color-mix` for transparent variants
 - **UI/UX Audit:** Complete data-testid attributes on all interactive elements across Landing, Pricing, Auth, Dashboard, IDE, and Admin pages
+- **Security Audit (January 2026):** 247 items reviewed. Critical fixes applied: (1) secrets-manager now uses crypto.randomBytes for cryptographic randomness, (2) /api/health/clear-cache requires admin authentication, (3) Docker containers have resource limits. Already implemented: Stripe webhook signature verification, rate limiter consistency, auto-save queue system. User action required: run `git rm --cached .env` to untrack .env from git
 
 ## User Preferences
 - **Communication:** Simple, everyday language

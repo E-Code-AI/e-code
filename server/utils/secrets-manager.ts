@@ -15,6 +15,7 @@
  */
 
 import { createLogger } from './logger';
+import crypto from 'crypto';
 
 const logger = createLogger('secrets-manager');
 
@@ -42,26 +43,10 @@ const DEV_FALLBACKS: Record<string, string> = {
 // These are generated once per instance and persist for the session
 const REPLIT_AUTO_SECRETS: Record<string, string> = {};
 
-function generateDeterministicSecret(seed: string): string {
-  // Generate a deterministic secret based on REPL_ID to ensure consistency across restarts
-  const replId = process.env.REPL_ID || 'default-repl';
-  const base = `${replId}-${seed}-e-code-platform-v1`;
-  // Simple hash-like transformation for deterministic output
-  let hash = 0;
-  for (let i = 0; i < base.length; i++) {
-    const char = base.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash;
-  }
-  // Convert to base64-like string
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let result = '';
-  let value = Math.abs(hash);
-  for (let i = 0; i < 64; i++) {
-    result += chars.charAt((value + i * 7) % chars.length);
-    value = ((value << 3) + i) & 0x7FFFFFFF;
-  }
-  return result;
+function generateSecureSecret(): string {
+  // Generate cryptographically secure random secret using crypto.randomBytes
+  // This is the industry standard for production secrets
+  return crypto.randomBytes(32).toString('base64');
 }
 
 function isReplitEnvironment(): boolean {
@@ -123,8 +108,8 @@ class SecretsManager {
       if (isReplitEnvironment()) {
         logger.warn(`[Secrets] Auto-generating ${missing.length} missing secrets for Replit deployment`);
         for (const secretName of missing) {
-          REPLIT_AUTO_SECRETS[secretName] = generateDeterministicSecret(secretName);
-          logger.info(`[Secrets] Auto-generated ${secretName} for this session (based on REPL_ID)`);
+          REPLIT_AUTO_SECRETS[secretName] = generateSecureSecret();
+          logger.info(`[Secrets] Auto-generated cryptographically secure ${secretName} for this session`);
         }
       } else {
         const errorMessage = `CRITICAL SECURITY ERROR: Missing required secrets in production: ${missing.join(', ')}`;
@@ -175,10 +160,10 @@ class SecretsManager {
 
     // No value - check if we're in production
     if (this.isProduction) {
-      // On Replit, generate deterministic secret instead of crashing
+      // On Replit, generate cryptographically secure secret instead of crashing
       if (isReplitEnvironment()) {
-        REPLIT_AUTO_SECRETS[name] = generateDeterministicSecret(name);
-        logger.warn(`[Secrets] Auto-generated ${name} on-demand for Replit`);
+        REPLIT_AUTO_SECRETS[name] = generateSecureSecret();
+        logger.warn(`[Secrets] Auto-generated cryptographically secure ${name} on-demand for Replit`);
         return REPLIT_AUTO_SECRETS[name];
       }
       throw new Error(`CRITICAL: ${name} environment variable must be set in production`);

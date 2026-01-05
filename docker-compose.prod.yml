@@ -77,7 +77,9 @@ services:
     image: docker:24-dind
     container_name: ecode-docker
     restart: unless-stopped
-    privileged: true
+    privileged: true  # Required for Docker-in-Docker
+    security_opt:
+      - seccomp:unconfined
     environment:
       - DOCKER_TLS_CERTDIR=/certs
     volumes:
@@ -86,6 +88,11 @@ services:
       - docker-data:/var/lib/docker
     networks:
       - ecode-network
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
 
 volumes:
   postgres-data:
