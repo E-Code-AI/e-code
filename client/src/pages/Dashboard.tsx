@@ -453,11 +453,11 @@ export default function Dashboard() {
               ))}
             </div>
           ) : filteredProjects.length === 0 ? (
-            <Card className="p-12 text-center border-dashed border-[var(--ecode-border)] bg-[var(--ecode-surface)]">
+            <Card className="p-12 text-center border-dashed border-[var(--ecode-border)] bg-[var(--ecode-surface)]" data-testid="card-empty-state">
               <div className="p-4 rounded-2xl bg-[var(--ecode-accent)]/10 w-fit mx-auto mb-4">
                 <Code2 className="h-10 w-10 text-[var(--ecode-accent)]" />
               </div>
-              <p className="text-[var(--ecode-text-muted)]">
+              <p className="text-[var(--ecode-text-muted)]" data-testid="text-empty-message">
                 {searchQuery ? 'No projects found matching your search.' : 'No projects yet. Create your first one!'}
               </p>
             </Card>
@@ -491,15 +491,15 @@ export default function Dashboard() {
                     </div>
 
                     <CardContent className="p-4">
-                      <h3 className="font-semibold truncate mb-1 text-[var(--ecode-text)] group-hover:text-[var(--ecode-accent)] transition-colors">
+                      <h3 className="font-semibold truncate mb-1 text-[var(--ecode-text)] group-hover:text-[var(--ecode-accent)] transition-colors" data-testid={`project-name-${project.id}`}>
                         {project.name}
                       </h3>
-                      <p className="text-sm text-[var(--ecode-text-muted)] mb-3 line-clamp-2">
+                      <p className="text-sm text-[var(--ecode-text-muted)] mb-3 line-clamp-2" data-testid={`project-description-${project.id}`}>
                         {project.description || 'No description'}
                       </p>
 
                       <div className="flex items-center justify-between">
-                        <span className="text-xs text-[var(--ecode-text-muted)] flex items-center gap-1">
+                        <span className="text-xs text-[var(--ecode-text-muted)] flex items-center gap-1" data-testid={`project-updated-${project.id}`}>
                           <Clock className="h-3 w-3" />
                           {getTimeAgo(project.updatedAt)}
                         </span>
@@ -508,7 +508,7 @@ export default function Dashboard() {
                             size="sm" 
                             variant="ghost" 
                             className="h-8 w-8 p-0 hover:bg-[var(--ecode-accent)]/10 hover:text-[var(--ecode-accent)]" 
-                            data-testid={`button-open-${project.id}`}
+                            data-testid={`button-open-ide-${project.id}`}
                             onClick={(e) => {
                               e.stopPropagation();
                               navigate(`/ide/${project.id}`);
@@ -520,6 +520,7 @@ export default function Dashboard() {
                             size="sm" 
                             variant="ghost" 
                             className="h-8 w-8 p-0 hover:bg-[var(--ecode-accent)]/10 hover:text-[var(--ecode-accent)]"
+                            data-testid={`button-edit-project-${project.id}`}
                             onClick={(e) => {
                               e.stopPropagation();
                               const projectUrl = getProjectUrl(project, user?.username);

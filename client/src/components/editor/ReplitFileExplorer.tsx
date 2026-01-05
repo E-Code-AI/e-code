@@ -397,6 +397,7 @@ export function ReplitFileExplorer({
                 onDragLeave={handleDragLeave}
                 onDrop={(e) => handleDrop(e, node)}
                 draggable
+                data-testid={`file-item-${node.id}`}
               >
                 {node.type === "folder" ? (
                   <>
@@ -475,7 +476,7 @@ export function ReplitFileExplorer({
 
   return (
     <TooltipProvider>
-      <div className="flex flex-col h-full bg-[var(--ecode-sidebar-bg)]">
+      <div className="flex flex-col h-full bg-[var(--ecode-sidebar-bg)]" data-testid="file-explorer">
         {/* Header */}
         <div className="p-3 border-b border-[var(--ecode-border)]">
           <div className="flex items-center justify-between mb-2">
@@ -488,6 +489,7 @@ export function ReplitFileExplorer({
                     size="icon"
                     className="h-6 w-6"
                     onClick={() => setNewItemDialog({ parentId: null, type: "file", name: "" })}
+                    data-testid="button-new-file"
                   >
                     <FilePlus className="h-3 w-3" />
                   </Button>
@@ -502,6 +504,7 @@ export function ReplitFileExplorer({
                     size="icon"
                     className="h-6 w-6"
                     onClick={() => setNewItemDialog({ parentId: null, type: "folder", name: "" })}
+                    data-testid="button-new-folder"
                   >
                     <FolderPlus className="h-3 w-3" />
                   </Button>
@@ -516,6 +519,7 @@ export function ReplitFileExplorer({
                     size="icon"
                     className="h-6 w-6"
                     onClick={() => fileInputRef.current?.click()}
+                    data-testid="button-upload-files"
                   >
                     <Upload className="h-3 w-3" />
                   </Button>
@@ -530,6 +534,7 @@ export function ReplitFileExplorer({
                     size="icon"
                     className="h-6 w-6"
                     onClick={() => setShowHidden(!showHidden)}
+                    data-testid="button-toggle-hidden"
                   >
                     {showHidden ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
                   </Button>
@@ -544,6 +549,7 @@ export function ReplitFileExplorer({
                     size="icon"
                     className="h-6 w-6"
                     onClick={() => refetch()}
+                    data-testid="button-refresh-files"
                   >
                     <RefreshCw className="h-3 w-3" />
                   </Button>
@@ -562,6 +568,7 @@ export function ReplitFileExplorer({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="h-7 pl-7 pr-7 text-xs bg-[var(--ecode-bg)] border-[var(--ecode-border)]"
+              data-testid="input-search-files"
             />
             {searchQuery && (
               <Button
@@ -569,6 +576,7 @@ export function ReplitFileExplorer({
                 size="icon"
                 className="absolute right-1 top-1/2 transform -translate-y-1/2 h-5 w-5"
                 onClick={() => setSearchQuery("")}
+                data-testid="button-clear-search"
               >
                 <X className="h-3 w-3" />
               </Button>
@@ -577,14 +585,14 @@ export function ReplitFileExplorer({
         </div>
 
         {/* File Tree */}
-        <ScrollArea className="flex-1">
-          <div className="p-2">
+        <ScrollArea className="flex-1" data-testid="file-tree-scroll">
+          <div className="p-2" data-testid="file-tree-container">
             {isLoading ? (
-              <div className="text-center py-4">
+              <div className="text-center py-4" data-testid="file-tree-loading">
                 <RefreshCw className="h-4 w-4 animate-spin mx-auto text-[var(--ecode-text-secondary)]" />
               </div>
             ) : filteredTree.length === 0 ? (
-              <div className="text-center py-4 text-[var(--ecode-text-secondary)] text-sm">
+              <div className="text-center py-4 text-[var(--ecode-text-secondary)] text-sm" data-testid="file-tree-empty">
                 {searchQuery ? "No files found" : "No files in this project"}
               </div>
             ) : (
