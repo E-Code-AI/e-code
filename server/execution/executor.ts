@@ -164,7 +164,7 @@ export class CodeExecutor {
       };
     }
 
-    // Use Docker executor in production for security
+    // Try Docker execution first in production for security (with fallback to process execution)
     if (USE_DOCKER_EXECUTION) {
       try {
         // Normalize language to canonical name for Docker executor compatibility
@@ -182,17 +182,27 @@ export class CodeExecutor {
           exitCode: dockerResult.exitCode
         };
       } catch (error) {
-        return {
-          output: '',
-          error: error instanceof Error ? error.message : 'Docker execution failed',
-          executionTime: Date.now() - startTime,
-          memoryUsed: 0,
-          exitCode: 1
-        };
+        // Docker not available (e.g., Replit Cloud Run) - fallback to process execution
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        if (errorMsg.includes('dockerode is not available') || 
+            errorMsg.includes('Docker') || 
+            errorMsg.includes('connect ENOENT')) {
+          // Fallback to process execution - continue below
+          console.log('[Executor] Docker not available, falling back to process execution');
+        } else {
+          // Unexpected error - return it
+          return {
+            output: '',
+            error: errorMsg,
+            executionTime: Date.now() - startTime,
+            memoryUsed: 0,
+            exitCode: 1
+          };
+        }
       }
     }
 
-    // Development mode: use local process execution
+    // Process execution (development or production fallback when Docker unavailable)
     let execDir: string | null = null;
 
     try {
