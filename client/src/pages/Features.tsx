@@ -348,7 +348,7 @@ export default function Features() {
                     <Cpu className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                   </div>
                   <div>
-                    <h3 className="font-semibold">Instant Environments</h3>
+                    <h3 className="font-semibold" data-testid="text-feature-overview-environments">Instant Environments</h3>
                     <p className="text-sm text-muted-foreground">
                       Spin up development environments in seconds, not hours
                     </p>
@@ -359,7 +359,7 @@ export default function Features() {
                     <Network className="h-5 w-5 text-green-600 dark:text-green-400" />
                   </div>
                   <div>
-                    <h3 className="font-semibold">Connected Ecosystem</h3>
+                    <h3 className="font-semibold" data-testid="text-feature-overview-ecosystem">Connected Ecosystem</h3>
                     <p className="text-sm text-muted-foreground">
                       All tools and services work together out of the box
                     </p>
@@ -370,7 +370,7 @@ export default function Features() {
                     <Settings className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                   </div>
                   <div>
-                    <h3 className="font-semibold">Zero Configuration</h3>
+                    <h3 className="font-semibold" data-testid="text-feature-overview-config">Zero Configuration</h3>
                     <p className="text-sm text-muted-foreground">
                       Focus on coding, we handle the infrastructure
                     </p>
@@ -422,11 +422,20 @@ export default function Features() {
             Join developers worldwide who are building faster with E-Code
           </p>
           <div className="flex gap-4 justify-center">
-            <Button size="lg" onClick={() => navigate(user ? '/dashboard' : '/login')}>
+            <Button 
+              size="lg" 
+              onClick={() => navigate(user ? '/dashboard' : '/login')}
+              data-testid="button-features-get-started"
+            >
               Get started free
               <ChevronRight className="ml-2 h-4 w-4" />
             </Button>
-            <Button size="lg" variant="outline" onClick={() => navigate('/contact-sales')}>
+            <Button 
+              size="lg" 
+              variant="outline" 
+              onClick={() => navigate('/contact-sales')}
+              data-testid="button-features-contact-sales"
+            >
               Contact sales
             </Button>
           </div>

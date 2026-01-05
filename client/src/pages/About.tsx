@@ -116,7 +116,7 @@ export default function About() {
               resilient software, govern responsibly, and scale talent with confidence.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
-              <Button size="lg" onClick={() => navigate('/ai-agent')}>
+              <Button size="lg" onClick={() => navigate('/ai-agent')} data-testid="button-about-discover-platform">
                 Discover the Vibe platform
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
@@ -125,6 +125,7 @@ export default function About() {
                 variant="outline"
                 onClick={() => navigate('/contact-sales')}
                 className="w-full sm:w-auto"
+                data-testid="button-about-talk-team"
               >
                 Talk with our team
               </Button>
@@ -281,6 +282,7 @@ export default function About() {
                 size="lg"
                 className="bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 text-white"
                 onClick={() => navigate('/solutions/app-builder')}
+                data-testid="button-about-solution-suites"
               >
                 <Sparkles className="h-4 w-4 mr-2" />
                 See solution suites
@@ -289,6 +291,7 @@ export default function About() {
                 size="lg"
                 variant="outline"
                 onClick={() => (user ? navigate('/dashboard') : window.location.href = '/login')}
+                data-testid="button-about-start-building"
               >
                 Start building now
               </Button>
@@ -409,7 +412,7 @@ export default function About() {
             ))}
           </div>
           <div className="text-center mt-8">
-            <Button variant="outline" onClick={() => navigate('/careers')}>
+            <Button variant="outline" onClick={() => navigate('/careers')} data-testid="button-about-careers">
               Explore careers at E-Code
               <ChevronRight className="ml-2 h-4 w-4" />
             </Button>
@@ -428,11 +431,11 @@ export default function About() {
             whiteboard sketch to global deployment.
           </p>
           <div className="flex gap-4 justify-center flex-col sm:flex-row">
-            <Button size="lg" onClick={() => navigate(user ? '/dashboard' : '/login')}>
+            <Button size="lg" onClick={() => navigate(user ? '/dashboard' : '/login')} data-testid="button-about-launch-workspace">
               Launch your workspace
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
-            <Button size="lg" variant="outline" onClick={() => navigate('/contact-sales')}>
+            <Button size="lg" variant="outline" onClick={() => navigate('/contact-sales')} data-testid="button-about-executive-briefing">
               Request an executive briefing
             </Button>
           </div>

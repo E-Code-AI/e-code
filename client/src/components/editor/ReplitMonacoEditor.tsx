@@ -266,16 +266,16 @@ export function ReplitMonacoEditor({
 
   return (
     <TooltipProvider>
-      <div className={`flex flex-col bg-[var(--ecode-editor-bg)] ${isFullscreen ? 'fixed inset-0 z-50' : 'flex-1'}`}>
-        <div className="h-12 bg-[var(--ecode-surface)] border-b border-[var(--ecode-border)] flex items-center justify-between px-4">
+      <div className={`flex flex-col bg-[var(--ecode-editor-bg)] ${isFullscreen ? 'fixed inset-0 z-50' : 'flex-1'}`} data-testid="monaco-editor-container">
+        <div className="h-12 bg-[var(--ecode-surface)] border-b border-[var(--ecode-border)] flex items-center justify-between px-4" data-testid="editor-toolbar">
           <div className="flex items-center space-x-3">
             <div className="flex items-center space-x-2">
               <FileText className="h-4 w-4 text-[var(--ecode-text-secondary)]" />
-              <span className="text-sm font-medium text-[var(--ecode-text)]">{activeFile.name}</span>
+              <span className="text-sm font-medium text-[var(--ecode-text)]" data-testid="text-filename">{activeFile.name}</span>
               {hasUnsavedChanges && (
-                <div className="h-2 w-2 bg-[var(--ecode-warning)] rounded-full"></div>
+                <div className="h-2 w-2 bg-[var(--ecode-warning)] rounded-full" data-testid="indicator-unsaved"></div>
               )}
-              <Badge variant="outline" className="text-xs">
+              <Badge variant="outline" className="text-xs" data-testid="badge-language">
                 {language}
               </Badge>
             </div>
@@ -289,6 +289,7 @@ export function ReplitMonacoEditor({
                     onClick={handleSave}
                     disabled={saveFileMutation.isPending || !hasUnsavedChanges}
                     className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
+                    data-testid="button-save-file"
                   >
                     <Save className="h-4 w-4" />
                   </Button>
@@ -303,6 +304,7 @@ export function ReplitMonacoEditor({
                     size="sm"
                     onClick={isRunning ? onStopCode : onRunCode}
                     className="text-[var(--ecode-green)] hover:bg-[var(--ecode-green)]/10"
+                    data-testid="button-run-code"
                   >
                     {isRunning ? <Square className="h-4 w-4" /> : <Play className="h-4 w-4" />}
                   </Button>
@@ -350,13 +352,14 @@ export function ReplitMonacoEditor({
                   variant="ghost"
                   size="sm"
                   className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
+                  data-testid="button-editor-settings"
                 >
                   <Settings className="h-4 w-4" />
                   <ChevronDown className="h-3 w-3 ml-1" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-48 bg-[var(--ecode-surface)] border-[var(--ecode-border)]">
-                <DropdownMenuItem onClick={toggleFullscreen} className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
+                <DropdownMenuItem onClick={toggleFullscreen} className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]" data-testid="button-toggle-fullscreen">
                   {isFullscreen ? (
                     <>
                       <Minimize2 className="mr-2 h-4 w-4" />
@@ -374,7 +377,7 @@ export function ReplitMonacoEditor({
           </div>
         </div>
 
-        <div className="flex-1 relative overflow-hidden">
+        <div className="flex-1 relative overflow-hidden" data-testid="editor-content">
           <CM6Editor
             value={editorContent}
             language={language}
@@ -389,7 +392,7 @@ export function ReplitMonacoEditor({
           />
           
           {isRunning && (
-            <div className="absolute top-2 right-2 flex items-center space-x-2 bg-[var(--ecode-green)] text-white px-3 py-1 rounded-md text-sm">
+            <div className="absolute top-2 right-2 flex items-center space-x-2 bg-[var(--ecode-green)] text-white px-3 py-1 rounded-md text-sm" data-testid="indicator-running">
               <Zap className="h-3 w-3 animate-pulse" />
               <span>Running</span>
             </div>
