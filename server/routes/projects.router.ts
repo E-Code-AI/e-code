@@ -208,8 +208,29 @@ export class ProjectsRouter {
         const requestedLimit = parseInt(req.query.limit as string) || 50;
         const limit = Math.min(Math.max(1, requestedLimit), 100); // Clamp between 1 and 100
         const offset = Math.max(0, parseInt(req.query.offset as string) || 0);
+        const search = req.query.search as string | undefined;
+        const language = req.query.language as string | undefined;
+        const visibility = req.query.visibility as string | undefined;
         
-        const { projects, total } = await this.storage.getProjectsByUserIdPaginated(String(userId), limit, offset);
+        let projects, total;
+        if (search || language || visibility) {
+          const allProjects = await this.storage.getProjectsByUserId(String(userId));
+          const filtered = allProjects.filter(p => {
+            const matchesSearch = !search || (
+              p.name.toLowerCase().includes(search.toLowerCase()) || 
+              (p.description?.toLowerCase().includes(search.toLowerCase()))
+            );
+            const matchesLanguage = !language || p.language === language;
+            const matchesVisibility = !visibility || p.visibility === visibility;
+            return matchesSearch && matchesLanguage && matchesVisibility;
+          });
+          total = filtered.length;
+          projects = filtered.slice(offset, offset + limit);
+        } else {
+          const result = await this.storage.getProjectsByUserIdPaginated(String(userId), limit, offset);
+          projects = result.projects;
+          total = result.total;
+        }
         
         const enrichedProjects = await Promise.all(projects.map(async (project) => {
           const owner = await this.storage.getUser(String(project.ownerId));

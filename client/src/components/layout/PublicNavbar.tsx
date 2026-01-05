@@ -199,7 +199,7 @@ export function PublicNavbar() {
     <Button
       onClick={() => window.location.href = '/register'}
       className="hidden sm:inline-flex shrink-0 bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 text-white hover:from-sky-300 hover:via-blue-400 hover:to-indigo-400 shadow-lg shadow-blue-500/30 min-h-[44px] px-3 sm:px-4 text-sm whitespace-nowrap"
-      data-testid="button-get-started"
+      data-testid="link-get-started"
     >
       Get started
     </Button>
@@ -248,7 +248,7 @@ export function PublicNavbar() {
                 variant="ghost"
                 className="text-[var(--ecode-text)] dark:text-slate-200 hover:text-[var(--ecode-accent)] dark:hover:text-white min-h-[44px] px-3 sm:px-4"
                 onClick={() => window.location.href = '/login'}
-                data-testid="button-login"
+                data-testid="link-login"
               >
                 <LogIn className="mr-1 sm:mr-2 h-4 w-4" />
                 <span className="hidden xs:inline">Log in</span>

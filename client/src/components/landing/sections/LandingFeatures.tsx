@@ -53,16 +53,16 @@ export default function LandingFeatures() {
               key={index}
               className="group bg-[var(--ecode-surface)] border-[var(--ecode-border)] hover:border-ecode-accent/50 transition-all duration-300 hover:shadow-[0_8px_32px_-8px_rgba(242,98,7,0.2)] animate-fade-in"
               style={{ animationDelay: `${index * 100}ms` }}
-              data-testid={`feature-${feature.title.toLowerCase().replace(/\s/g, '-')}`}
+              data-testid={`card-feature-${index}`}
             >
               <CardHeader>
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-ecode-accent/20 to-ecode-secondary-accent/20 flex items-center justify-center mb-4 transition-all duration-300 group-hover:scale-110 group-hover:from-ecode-accent/30 group-hover:to-ecode-secondary-accent/30">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-ecode-accent/20 to-ecode-secondary-accent/20 flex items-center justify-center mb-4 transition-all duration-300 group-hover:scale-110 group-hover:from-ecode-accent/30 group-hover:to-ecode-secondary-accent/30" data-testid={`icon-feature-${index}`}>
                   <div className="text-ecode-accent">{feature.icon}</div>
                 </div>
-                <CardTitle className="text-xl text-[var(--ecode-text)]">{feature.title}</CardTitle>
+                <CardTitle className="text-xl text-[var(--ecode-text)]" data-testid={`text-feature-title-${index}`}>{feature.title}</CardTitle>
               </CardHeader>
               <CardContent>
-                <CardDescription className="text-[var(--ecode-text-muted)] text-base">
+                <CardDescription className="text-[var(--ecode-text-muted)] text-base" data-testid={`text-feature-description-${index}`}>
                   {feature.description}
                 </CardDescription>
               </CardContent>

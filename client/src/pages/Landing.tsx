@@ -370,21 +370,21 @@ export default function Landing() {
                         data-testid="input-app-description"
                       />
                     </div>
-                    <Button 
-                      size="lg"
-                      className="bg-ecode-accent hover:bg-ecode-accent-hover text-white shadow-lg px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg font-semibold h-auto min-h-[44px] rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-[0_8px_32px_-8px_rgba(242,98,7,0.4)]"
-                      onClick={() => {
-                        if (appDescription.trim()) {
-                          handleStartBuilding(appDescription);
-                        }
-                      }}
-                      disabled={!appDescription.trim()}
-                      data-testid="button-build-now"
-                    >
-                      <Sparkles className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
-                      <span className="hidden xs:inline">Build Now</span>
-                      <span className="xs:hidden">Build</span>
-                    </Button>
+              <Button 
+                size="lg"
+                className="bg-ecode-accent hover:bg-ecode-accent-hover text-white shadow-lg px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg font-semibold h-auto min-h-[44px] rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-[0_8px_32px_-8px_rgba(242,98,7,0.4)]"
+                onClick={() => {
+                  if (appDescription.trim()) {
+                    handleStartBuilding(appDescription);
+                  }
+                }}
+                disabled={!appDescription.trim()}
+                data-testid="button-hero-build-now"
+              >
+                <Sparkles className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
+                <span className="hidden xs:inline">Build Now</span>
+                <span className="xs:hidden">Build</span>
+              </Button>
                   </div>
                 </div>
               </div>
@@ -501,7 +501,7 @@ export default function Landing() {
                   const demoSection = document.getElementById('video-demo');
                   demoSection?.scrollIntoView({ behavior: 'smooth' });
                 }}
-                data-testid="button-watch-demo"
+                data-testid="button-hero-watch-demo"
               >
                 <PlayCircle className="h-4 w-4 sm:h-5 sm:w-5 text-ecode-accent" />
                 Watch Demo (2 min)
@@ -511,7 +511,7 @@ export default function Landing() {
                 variant="ghost"
                 className="gap-2 px-6 sm:px-8 py-4 sm:py-6 text-base sm:text-lg w-full sm:w-auto min-h-[48px] text-[var(--ecode-text)] hover:text-ecode-accent transition-all duration-300"
                 onClick={() => navigate('/pricing')}
-                data-testid="button-view-pricing"
+                data-testid="button-hero-view-pricing"
               >
                 View Pricing
                 <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5" />

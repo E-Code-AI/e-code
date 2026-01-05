@@ -90,9 +90,20 @@ export default function Dashboard() {
   const greeting = getGreeting();
   const isMobile = useMediaQuery("(max-width: 768px)");
 
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+
   // Fetch recent projects
   const { data: recentProjects = [], isLoading, error: projectsError } = useQuery<ProjectWithDeployment[]>({
-    queryKey: ['/api/projects'],
+    queryKey: ['/api/projects', { limit: 12, search: debouncedSearchQuery }],
+    queryFn: async () => {
+      let url = '/api/projects?limit=12';
+      if (debouncedSearchQuery) {
+        url += `&search=${encodeURIComponent(debouncedSearchQuery)}`;
+      }
+      const res = await apiRequest('GET', url);
+      // Handle both paginated and direct array formats
+      return (res.projects && Array.isArray(res.projects)) ? res.projects : res;
+    },
     enabled: !!user,
     staleTime: 30000, // 30 seconds - prevent excessive refetches
     retry: (failureCount, error: any) => {
@@ -100,22 +111,6 @@ export default function Dashboard() {
       if (error?.status === 401 || error?.status === 403) return false;
       // Limit retries for other errors
       return failureCount < 2;
-    },
-    select: (data: unknown) => {
-      // Handle paginated response format: { projects: [...], pagination: {...} }
-      const projects = (data as { projects?: ProjectWithDeployment[] })?.projects ?? data;
-      
-      // Safety check - ensure we have an array
-      if (!projects || !Array.isArray(projects)) {
-        throw new Error('Invalid response: expected an array of projects');
-      }
-      // Sort by most recent first (updatedAt descending)
-      const sorted = [...projects].sort((a, b) => {
-        const dateA = new Date(b.updatedAt).getTime();
-        const dateB = new Date(a.updatedAt).getTime();
-        return dateA - dateB;
-      });
-      return sorted.slice(0, 12); // Show up to 12 recent projects
     },
   });
 
@@ -262,12 +257,7 @@ export default function Dashboard() {
     },
   ];
 
-  const filteredProjects = useMemo(() => {
-    if (!searchQuery) return recentProjects;
-    return recentProjects.filter(project =>
-      project.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [recentProjects, searchQuery]);
+  const filteredProjects = recentProjects;
 
   if (isLoading) {
     return (
