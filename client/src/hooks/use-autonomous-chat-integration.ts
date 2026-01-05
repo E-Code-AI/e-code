@@ -193,17 +193,23 @@ export function useAutonomousChatIntegration({
   const isMountedRef = useRef(true);
   const connectFnRef = useRef<(() => void) | null>(null);
   
-  // ✅ FIX (Jan 2026): Stable connection during bootstrap
-  // Track if we're in an active bootstrap build to protect against transient enabled toggles
+  // ✅ FIX (Jan 2026): Fortune 500-grade WebSocket stability for mobile bootstrap
+  // Problem: On iOS WebView (Replit-Bonsai), inlineMode toggles cause transient `enabled` changes
+  // that trigger React cleanup, disconnecting WebSocket at ~35% progress
+  
+  // Track if we're in an active bootstrap build
   const bootstrapActiveRef = useRef(false);
   
-  // Track if build reached a terminal state (complete, error) - then stop protecting
+  // Track if build reached a terminal state (complete, error)
   const buildCompletedRef = useRef(false);
   
-  // ✅ FIX (Jan 2026): Debounced cleanup for transient toggles
-  // When cleanup is triggered during active bootstrap, wait briefly before closing
-  // If enabled returns to true within the delay, cancel the close
-  const pendingCleanupRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // ✅ CRITICAL: Intentional teardown flag - set by unmount useLayoutEffect at end of hook
+  // React cleanup runs in REVERSE order, so the last useLayoutEffect cleanup runs FIRST
+  // This ensures intentionalTeardownRef is true before other cleanups check it
+  const intentionalTeardownRef = useRef(false);
+  
+  // Previous enabled value to detect transitions
+  const prevEnabledRef = useRef(enabled);
   
   const [connectionState, setConnectionState] = useState<{
     isConnected: boolean;
@@ -285,6 +291,9 @@ export function useAutonomousChatIntegration({
       isMountedRef.current = false;
       console.warn('[AutonomousChatIntegration] 🧪 DIAGNOSTIC: useLayoutEffect cleanup on unmount');
       
+      // Note: intentionalTeardownRef is set by the LAST useLayoutEffect (at end of hook)
+      // which runs FIRST during unmount due to React's reverse cleanup order
+      
       // 🆘 CLEANUP: Cancel any pending fallback timer on unmount
       if (fallbackTimeoutRef.current) {
         clearTimeout(fallbackTimeoutRef.current);
@@ -329,15 +338,28 @@ export function useAutonomousChatIntegration({
   // This runs BEFORE useEffect, ensuring connection happens even if useEffect is delayed
   // Critical for mobile WebView where useEffect may not run reliably
   useLayoutEffect(() => {
-    // ✅ FIX (Jan 2026): Cancel any pending debounced cleanup
-    // This happens when enabled toggles back to true quickly (transient toggle)
-    if (pendingCleanupRef.current) {
-      console.log('[AutonomousChatIntegration] 🔒 Cancelling pending cleanup - enabled returned to true');
-      clearTimeout(pendingCleanupRef.current);
-      pendingCleanupRef.current = null;
+    // ✅ FIX (Jan 2026): Track enabled transitions for cleanup decisions
+    const wasEnabled = prevEnabledRef.current;
+    prevEnabledRef.current = enabled;
+    
+    // Note: We no longer use debounced cleanup - instead we skip cleanup entirely during active bootstrap
+    // The socket is only closed by: genuine disable (below), component unmount, or build completion
+    
+    // ✅ FIX (Jan 2026): Handle genuine disable BEFORE early return
+    // This runs AFTER the previous effect's cleanup (which skipped during active bootstrap)
+    // If enabled=false but socket is still open, this is a genuine disable - close now
+    if (!enabled && wsRef.current) {
+      console.log('[AutonomousChatIntegration] ⚠️ Genuine disable detected - closing WebSocket immediately');
+      // Close WebSocket synchronously
+      wsRef.current.close(1000, 'genuine-disable');
+      wsRef.current = null;
+      layoutEffectConnectedRef.current = false;
+      hasConnectedRef.current = false;
+      bootstrapActiveRef.current = false;
+      intentionalTeardownRef.current = false;
     }
     
-    // Only attempt if all conditions are met
+    // Only attempt connection if all conditions are met
     if (!enabled || !conversationId || !projectId) {
       return; // No cleanup needed if we never connected in this effect run
     }
@@ -473,17 +495,26 @@ export function useAutonomousChatIntegration({
     };
     
     return () => {
-      // ✅ FIX (Jan 2026): Use debounced cleanup during active bootstrap
-      // This allows transient toggles (enabled briefly false then true again) to be detected
-      // The next effect run will cancel the pending cleanup if enabled returns to true
+      // ✅ FIX (Jan 2026): Fortune 500-grade cleanup - NO TIMEOUT during active bootstrap
+      // Problem: Any fixed timeout can be exceeded by iOS WebView stalls
+      // Solution: NEVER close socket in cleanup during active bootstrap
+      // Socket is ONLY closed by:
+      //   1. Genuine disable (detected at start of new effect)
+      //   2. Component unmount (intentionalTeardownRef=true)
+      //   3. Build completion (buildCompletedRef=true)
+      
       const isBootstrapActive = bootstrapActiveRef.current && 
         !buildCompletedRef.current && 
         bootstrapToken &&
         wsRef.current?.readyState === WebSocket.OPEN;
       
-      console.warn('[AutonomousChatIntegration] 🧪 DIAGNOSTIC: useLayoutEffect cleanup', 
-        { isBootstrapActive, bootstrapActive: bootstrapActiveRef.current, buildCompleted: buildCompletedRef.current, enabled, hasBootstrapToken: !!bootstrapToken }
-      );
+      // Telemetry for debugging
+      console.warn('[AutonomousChatIntegration] 🧪 TELEMETRY: Cleanup triggered', {
+        isBootstrapActive,
+        intentionalTeardown: intentionalTeardownRef.current,
+        buildCompleted: buildCompletedRef.current,
+        wsState: wsRef.current?.readyState
+      });
       
       // Always cleanup reconnect timeout
       if (reconnectTimeoutRef.current) {
@@ -491,32 +522,35 @@ export function useAutonomousChatIntegration({
         reconnectTimeoutRef.current = null;
       }
       
-      // Cancel any existing pending cleanup
-      if (pendingCleanupRef.current) {
-        clearTimeout(pendingCleanupRef.current);
-        pendingCleanupRef.current = null;
-      }
-      
-      const doCleanup = () => {
-        console.log('[AutonomousChatIntegration] 🔓 Executing cleanup');
+      const doCleanup = (reason: string) => {
+        console.log(`[AutonomousChatIntegration] 🔓 Executing cleanup (reason: ${reason})`);
         layoutEffectConnectedRef.current = false;
         if (wsRef.current) {
-          wsRef.current.close(1000, 'useLayoutEffect cleanup');
+          wsRef.current.close(1000, `cleanup: ${reason}`);
           wsRef.current = null;
         }
         hasConnectedRef.current = false;
         bootstrapActiveRef.current = false;
-        pendingCleanupRef.current = null;
+        intentionalTeardownRef.current = false;
       };
       
-      if (isBootstrapActive) {
-        // ✅ Debounce: Wait 150ms before closing
-        // If enabled returns to true within this time, the new effect will cancel this
-        console.log('[AutonomousChatIntegration] 🕐 Scheduling debounced cleanup (150ms) - may be cancelled if enabled toggles back');
-        pendingCleanupRef.current = setTimeout(doCleanup, 150);
+      // ✅ CRITICAL: During active bootstrap, NEVER close socket from cleanup
+      // The socket will be closed by the new effect if it detects a genuine disable
+      // This approach survives any main thread stall duration
+      if (isBootstrapActive && !intentionalTeardownRef.current) {
+        // DO NOTHING - socket stays open
+        // The new effect will close it if enabled=false (genuine disable)
+        // Or build completion handlers will reset bootstrapActiveRef
+        console.log('[AutonomousChatIntegration] 🔒 Cleanup skipped - active bootstrap protected (stall-resilient)');
+        return;
+      }
+      
+      if (intentionalTeardownRef.current) {
+        // Component unmount - cleanup immediately
+        doCleanup('component-unmount');
       } else {
         // Not in active bootstrap - cleanup immediately
-        doCleanup();
+        doCleanup('bootstrap-inactive');
       }
     };
   }, [enabled, conversationId, projectId, sessionId, bootstrapToken, decodeTokenFn, maxReconnectAttempts, baseReconnectDelayMs]);
@@ -1695,6 +1729,18 @@ export function useAutonomousChatIntegration({
     if (connectFnRef.current) {
       connectFnRef.current();
     }
+  }, []);
+
+  // ✅ FIX (Jan 2026): This MUST be the LAST useLayoutEffect in the hook
+  // React cleanup runs in REVERSE declaration order, so this cleanup runs FIRST
+  // This ensures intentionalTeardownRef is set BEFORE other cleanups check it
+  useLayoutEffect(() => {
+    return () => {
+      // This cleanup runs FIRST during unmount (reverse order)
+      // Set the flag so other cleanups know this is an intentional teardown
+      console.log('[AutonomousChatIntegration] 🚨 Component unmounting - setting intentionalTeardownRef');
+      intentionalTeardownRef.current = true;
+    };
   }, []);
 
   return {
