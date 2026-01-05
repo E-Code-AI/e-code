@@ -592,8 +592,10 @@ function UnifiedIDELayout({
   }
 
   const renderMobileContent = () => {
-    // Show loading state if project is still loading
-    if (isLoadingProject) {
+    // ✅ FIX (Jan 2026): During bootstrap, keep agent panel mounted even if project is loading
+    // This prevents WebSocket disconnection when isLoadingProject oscillates
+    // The agent panel handles its own loading state during bootstrap
+    if (isLoadingProject && !(mobileActiveTab === 'agent' && bootstrapToken)) {
       return (
         <div className="flex items-center justify-center h-full">
           <ECodeLoading size="md" text="Loading workspace..." />
