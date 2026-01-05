@@ -360,15 +360,6 @@ export function ReplitAgentPanelV3({
   onExternalInput,
   onBootstrapFailure
 }: ReplitAgentPanelV3Props) {
-  // DEBUG: Log component render (dev only)
-  devLog('[ReplitAgentPanelV3] Component render:', {
-    projectId,
-    mode,
-    isBootstrapping,
-    hasBootstrapToken: !!bootstrapToken,
-    tokenPreview: bootstrapToken ? bootstrapToken.substring(0, 30) + '...' : null
-  });
-  
   // Convert projectId to number early for consistent usage throughout component
   const projectIdNum = typeof projectId === 'string' ? parseInt(projectId) : projectId;
   
@@ -390,6 +381,17 @@ export function ReplitAgentPanelV3({
   // This prevents mobile users from being stuck on "Initializing Agent" forever
   const { bootstrapTimedOut, startBootstrapTimer, setBootstrapTimedOut } = useAutonomousBuildStore();
   const bootstrapFailed = bootstrapTimedOut;
+  
+  // DEBUG: Log component render with all initialization state (dev only)
+  devLog('[ReplitAgentPanelV3] Component render:', {
+    projectId,
+    mode,
+    isBootstrapping,
+    hasBootstrapToken: !!bootstrapToken,
+    bootstrapTimedOut,
+    conversationId,
+    isInitializing: isBootstrapping && !conversationId && !bootstrapFailed
+  });
   
   // Zustand store for message persistence across tab switches
   const { 
