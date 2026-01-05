@@ -23,6 +23,7 @@ import {
   ArrowDown,
   Clock,
   Shield,
+  ShieldCheck,
   Star,
   GitBranch,
   Users,
@@ -214,11 +215,12 @@ export default function Dependencies() {
             variant="outline"
             onClick={() => updateAllMutation.mutate()}
             disabled={updateAllMutation.isPending || outdatedDependencies.length === 0}
+            data-testid="button-update-all"
           >
             <ArrowUp className="mr-2 h-4 w-4" />
             Update All ({outdatedDependencies.length})
           </Button>
-          <Button>
+          <Button data-testid="button-install-package">
             <Download className="mr-2 h-4 w-4" />
             Install Package
           </Button>
@@ -281,7 +283,7 @@ export default function Dependencies() {
           </CardHeader>
           <CardContent>
             <div className="text-sm font-medium">{stats?.lastUpdated}</div>
-            <Button variant="ghost" size="sm" className="h-6 px-2 mt-1">
+            <Button variant="ghost" size="sm" className="h-6 px-2 mt-1" data-testid="button-check-now">
               <RefreshCw className="h-3 w-3 mr-1" />
               Check Now
             </Button>
@@ -298,17 +300,18 @@ export default function Dependencies() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10"
+            data-testid="input-search-dependencies"
           />
         </div>
       </div>
 
       {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <Tabs value={activeTab} onValueChange={setActiveTab} data-testid="tabs-dependencies">
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="installed">
+          <TabsTrigger value="installed" data-testid="tab-installed">
             Installed ({dependencies.length})
           </TabsTrigger>
-          <TabsTrigger value="outdated" className="flex items-center gap-2">
+          <TabsTrigger value="outdated" className="flex items-center gap-2" data-testid="tab-outdated">
             Outdated
             {outdatedDependencies.length > 0 && (
               <Badge variant="secondary" className="ml-1">
@@ -316,7 +319,7 @@ export default function Dependencies() {
               </Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="vulnerabilities" className="flex items-center gap-2">
+          <TabsTrigger value="vulnerabilities" className="flex items-center gap-2" data-testid="tab-vulnerabilities">
             Vulnerabilities
             {vulnerableDependencies.length > 0 && (
               <Badge variant="destructive" className="ml-1">
@@ -363,6 +366,7 @@ export default function Dependencies() {
                       size="icon"
                       onClick={() => removeDependencyMutation.mutate(dep.name)}
                       disabled={removeDependencyMutation.isPending}
+                      data-testid={`button-remove-${dep.name}`}
                     >
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
@@ -413,7 +417,7 @@ export default function Dependencies() {
                   <div className="flex items-center justify-between pt-2">
                     <div className="flex gap-2 text-sm">
                       {dep.repository && (
-                        <Button variant="ghost" size="sm" asChild>
+                        <Button variant="ghost" size="sm" asChild data-testid={`link-repository-${dep.name}`}>
                           <a href={dep.repository} target="_blank" rel="noopener noreferrer">
                             <GitBranch className="h-3 w-3 mr-1" />
                             Repository
@@ -421,7 +425,7 @@ export default function Dependencies() {
                         </Button>
                       )}
                       {dep.homepage && (
-                        <Button variant="ghost" size="sm" asChild>
+                        <Button variant="ghost" size="sm" asChild data-testid={`link-homepage-${dep.name}`}>
                           <a href={dep.homepage} target="_blank" rel="noopener noreferrer">
                             <ExternalLink className="h-3 w-3 mr-1" />
                             Homepage
@@ -437,6 +441,7 @@ export default function Dependencies() {
                           version: dep.latestVersion
                         })}
                         disabled={updateDependencyMutation.isPending}
+                        data-testid={`button-update-${dep.name}`}
                       >
                         <ArrowUp className="h-3 w-3 mr-1" />
                         Update
@@ -478,6 +483,7 @@ export default function Dependencies() {
                           version: dep.latestVersion
                         })}
                         disabled={updateDependencyMutation.isPending}
+                        data-testid={`button-update-outdated-${dep.name}`}
                       >
                         <ArrowUp className="h-4 w-4 mr-2" />
                         Update
@@ -557,6 +563,7 @@ export default function Dependencies() {
                             name: dep.name,
                             version: dep.latestVersion
                           })}
+                          data-testid={`button-fix-vulnerability-${dep.name}`}
                         >
                           <Shield className="h-4 w-4 mr-2" />
                           Update to {dep.latestVersion} to fix

@@ -219,12 +219,12 @@ export default function AdminFormRequests() {
       <div className="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 lg:space-y-8">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white">Customer Requests</h1>
-            <p className="text-xs sm:text-sm text-zinc-400">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white" data-testid="heading-customer-requests">Customer Requests</h1>
+            <p className="text-xs sm:text-sm text-zinc-400" data-testid="text-requests-description">
               Track every form submission from marketing pages, trust &amp; safety, and support.
             </p>
           </div>
-          <Button variant="outline" onClick={() => refetch()} disabled={isFetching} className="text-white border-zinc-700 w-full sm:w-auto">
+          <Button variant="outline" onClick={() => refetch()} disabled={isFetching} className="text-white border-zinc-700 w-full sm:w-auto" data-testid="button-refresh-requests">
             {isFetching ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -276,6 +276,7 @@ export default function AdminFormRequests() {
                       onChange={(event) => setSearchTerm(event.target.value)}
                       placeholder="Search by sender, company, or message"
                       className="w-full bg-zinc-800 border-zinc-700 text-white pl-9"
+                      data-testid="input-search-requests"
                     />
                   </div>
                   {searchTerm ? (
@@ -319,7 +320,7 @@ export default function AdminFormRequests() {
                 </div>
 
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-full sm:w-48 bg-zinc-800 border-zinc-700 text-white">
+                  <SelectTrigger className="w-full sm:w-48 bg-zinc-800 border-zinc-700 text-white" data-testid="select-status-filter">
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
                   <SelectContent className="bg-zinc-900 border-zinc-700 text-white">
@@ -368,7 +369,7 @@ export default function AdminFormRequests() {
                       const statusClass = STATUS_STYLES[request.status] || STATUS_STYLES.new;
                       const createdAt = request.createdAt ? new Date(request.createdAt) : null;
                       return (
-                        <TableRow key={request.id} className="border-zinc-900 hover:bg-zinc-800/50">
+                        <TableRow key={request.id} className="border-zinc-900 hover:bg-zinc-800/50" data-testid={`row-request-${request.id}`}>
                           <TableCell className="text-sm text-zinc-300">
                             {createdAt ? formatDistanceToNow(createdAt, { addSuffix: true }) : '—'}
                           </TableCell>

@@ -76,6 +76,7 @@ export default function NewsletterUnsubscribe() {
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     className="mt-1"
+                    data-testid="input-unsubscribe-email"
                   />
                 </div>
                 
@@ -84,6 +85,7 @@ export default function NewsletterUnsubscribe() {
                   className="w-full" 
                   variant="destructive"
                   disabled={isSubmitting}
+                  data-testid="button-unsubscribe"
                 >
                   {isSubmitting ? 'Processing...' : 'Unsubscribe'}
                 </Button>
@@ -93,6 +95,7 @@ export default function NewsletterUnsubscribe() {
                   variant="outline"
                   className="w-full"
                   onClick={() => navigate('/')}
+                  data-testid="button-back-home"
                 >
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Back to Homepage

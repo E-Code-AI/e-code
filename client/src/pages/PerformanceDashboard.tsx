@@ -240,7 +240,7 @@ export default function PerformanceDashboard() {
         actions={
           <div className="flex items-center gap-2">
             <Select value={timeRange} onValueChange={setTimeRange}>
-              <SelectTrigger className="w-40">
+              <SelectTrigger className="w-40" data-testid="select-time-range">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -256,7 +256,8 @@ export default function PerformanceDashboard() {
               variant="outline"
               size="sm"
               onClick={() => setAutoRefresh(!autoRefresh)}
-              className={cn(autoRefresh && "bg-green-50 border-green-500")}
+              className={cn(autoRefresh && "bg-green-50 border-green-500 dark:bg-green-900/30 dark:border-green-700")}
+              data-testid="button-auto-refresh"
             >
               <RefreshCw className={cn("h-4 w-4 mr-2", autoRefresh && "animate-spin")} />
               {autoRefresh ? 'Auto' : 'Manual'}
@@ -266,6 +267,7 @@ export default function PerformanceDashboard() {
               variant="outline"
               size="sm"
               onClick={() => exportMetrics.mutate({ format: 'csv' })}
+              data-testid="button-export-metrics"
             >
               <Download className="h-4 w-4 mr-2" />
               Export
@@ -275,6 +277,7 @@ export default function PerformanceDashboard() {
               variant="outline"
               size="sm"
               onClick={toggleFullScreen}
+              data-testid="button-fullscreen"
             >
               <Maximize2 className="h-4 w-4" />
             </Button>
@@ -352,12 +355,12 @@ export default function PerformanceDashboard() {
       {/* Main Dashboard Tabs */}
       <Tabs value={selectedMetric} onValueChange={setSelectedMetric} className="space-y-4">
         <TabsList className="grid grid-cols-6 w-full">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="performance">Performance</TabsTrigger>
-          <TabsTrigger value="resources">Resources</TabsTrigger>
-          <TabsTrigger value="errors">Errors</TabsTrigger>
-          <TabsTrigger value="alerts">Alerts</TabsTrigger>
-          <TabsTrigger value="custom">Custom</TabsTrigger>
+          <TabsTrigger value="overview" data-testid="tab-overview">Overview</TabsTrigger>
+          <TabsTrigger value="performance" data-testid="tab-performance">Performance</TabsTrigger>
+          <TabsTrigger value="resources" data-testid="tab-resources">Resources</TabsTrigger>
+          <TabsTrigger value="errors" data-testid="tab-errors">Errors</TabsTrigger>
+          <TabsTrigger value="alerts" data-testid="tab-alerts">Alerts</TabsTrigger>
+          <TabsTrigger value="custom" data-testid="tab-custom">Custom</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">

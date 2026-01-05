@@ -420,34 +420,34 @@ export function ReplitFileExplorer({
                 <span className="truncate text-sm">{node.name}</span>
               </div>
             </ContextMenuTrigger>
-            <ContextMenuContent className="w-48">
+            <ContextMenuContent className="w-48" data-testid={`file-context-menu-${node.id}`}>
               {node.type === "folder" && (
                 <>
-                  <ContextMenuItem onClick={() => setNewItemDialog({ parentId: node.id, type: "file", name: "" })}>
+                  <ContextMenuItem onClick={() => setNewItemDialog({ parentId: node.id, type: "file", name: "" })} data-testid={`menu-new-file-${node.id}`}>
                     <FilePlus className="h-4 w-4 mr-2" />
                     New File
                   </ContextMenuItem>
-                  <ContextMenuItem onClick={() => setNewItemDialog({ parentId: node.id, type: "folder", name: "" })}>
+                  <ContextMenuItem onClick={() => setNewItemDialog({ parentId: node.id, type: "folder", name: "" })} data-testid={`menu-new-folder-${node.id}`}>
                     <FolderPlus className="h-4 w-4 mr-2" />
                     New Folder
                   </ContextMenuItem>
                   <ContextMenuSeparator />
                 </>
               )}
-              <ContextMenuItem onClick={() => setRenameDialog({ file: node, newName: node.name })}>
+              <ContextMenuItem onClick={() => setRenameDialog({ file: node, newName: node.name })} data-testid={`menu-rename-${node.id}`}>
                 <Edit2 className="h-4 w-4 mr-2" />
                 Rename
               </ContextMenuItem>
-              <ContextMenuItem onClick={() => handleCopy(node)}>
+              <ContextMenuItem onClick={() => handleCopy(node)} data-testid={`menu-copy-${node.id}`}>
                 <Copy className="h-4 w-4 mr-2" />
                 Copy
               </ContextMenuItem>
-              <ContextMenuItem onClick={() => handleCut(node)}>
+              <ContextMenuItem onClick={() => handleCut(node)} data-testid={`menu-cut-${node.id}`}>
                 <Scissors className="h-4 w-4 mr-2" />
                 Cut
               </ContextMenuItem>
               {clipboard && (
-                <ContextMenuItem onClick={() => handlePaste(node.type === "folder" ? node.id : node.parentId)}>
+                <ContextMenuItem onClick={() => handlePaste(node.type === "folder" ? node.id : node.parentId)} data-testid={`menu-paste-${node.id}`}>
                   <Clipboard className="h-4 w-4 mr-2" />
                   Paste
                 </ContextMenuItem>
@@ -456,6 +456,7 @@ export function ReplitFileExplorer({
               <ContextMenuItem 
                 onClick={() => setDeleteConfirmDialog(node)} 
                 className="text-status-critical focus:text-status-critical"
+                data-testid={`menu-delete-${node.id}`}
               >
                 <Trash2 className="h-4 w-4 mr-2" />
                 Delete
@@ -626,6 +627,7 @@ export function ReplitFileExplorer({
               onChange={(e) => setNewItemDialog(prev => prev ? { ...prev, name: e.target.value } : null)}
               placeholder={newItemDialog?.type === "folder" ? "folder-name" : "filename.js"}
               autoFocus
+              data-testid="input-new-item-name"
               onKeyDown={(e) => {
                 if (e.key === "Enter" && newItemDialog?.name) {
                   createFileMutation.mutate({
@@ -638,7 +640,7 @@ export function ReplitFileExplorer({
               }}
             />
             <DialogFooter>
-              <Button variant="outline" onClick={() => setNewItemDialog(null)}>
+              <Button variant="outline" onClick={() => setNewItemDialog(null)} data-testid="button-dialog-create-cancel">
                 Cancel
               </Button>
               <Button
@@ -653,6 +655,7 @@ export function ReplitFileExplorer({
                   }
                 }}
                 disabled={!newItemDialog?.name || createFileMutation.isPending}
+                data-testid="button-dialog-create-confirm"
               >
                 Create
               </Button>
@@ -673,6 +676,7 @@ export function ReplitFileExplorer({
               value={renameDialog?.newName || ""}
               onChange={(e) => setRenameDialog(prev => prev ? { ...prev, newName: e.target.value } : null)}
               autoFocus
+              data-testid="input-rename-item"
               onKeyDown={(e) => {
                 if (e.key === "Enter" && renameDialog?.newName) {
                   updateFileMutation.mutate({
@@ -683,7 +687,7 @@ export function ReplitFileExplorer({
               }}
             />
             <DialogFooter>
-              <Button variant="outline" onClick={() => setRenameDialog(null)}>
+              <Button variant="outline" onClick={() => setRenameDialog(null)} data-testid="button-dialog-rename-cancel">
                 Cancel
               </Button>
               <Button
@@ -696,6 +700,7 @@ export function ReplitFileExplorer({
                   }
                 }}
                 disabled={!renameDialog?.newName || updateFileMutation.isPending}
+                data-testid="button-dialog-rename-confirm"
               >
                 Rename
               </Button>
@@ -715,7 +720,7 @@ export function ReplitFileExplorer({
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setDeleteConfirmDialog(null)}>
+              <Button variant="outline" onClick={() => setDeleteConfirmDialog(null)} data-testid="button-dialog-delete-cancel">
                 Cancel
               </Button>
               <Button
@@ -726,6 +731,7 @@ export function ReplitFileExplorer({
                   }
                 }}
                 disabled={deleteFileMutation.isPending}
+                data-testid="button-dialog-delete-confirm"
               >
                 Delete
               </Button>

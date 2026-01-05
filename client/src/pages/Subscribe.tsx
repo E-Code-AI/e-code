@@ -66,6 +66,7 @@ const SubscribeForm = () => {
           type="submit" 
           disabled={!stripe || !elements || isProcessing}
           className="flex-1"
+          data-testid="button-subscribe-submit"
         >
           {isProcessing ? "Processing..." : "Subscribe Now"}
         </Button>
@@ -74,6 +75,7 @@ const SubscribeForm = () => {
           variant="outline"
           onClick={() => setLocation('/usage')}
           disabled={isProcessing}
+          data-testid="button-subscribe-cancel"
         >
           Cancel
         </Button>

@@ -43,8 +43,8 @@ export default function RuntimesPage() {
   const showDependencyWarning = !isLoadingDependencies && !dockerAvailable && !nixAvailable;
 
   return (
-    <div className="container py-6">
-      <h1 className="text-3xl font-bold mb-6">Language Runtimes</h1>
+    <div className="container py-6" data-testid="page-runtimes">
+      <h1 className="text-3xl font-bold mb-6" data-testid="heading-runtimes">Language Runtimes</h1>
       
       {showDependencyWarning && (
         <Alert variant="destructive" className="mb-6">
@@ -85,10 +85,10 @@ export default function RuntimesPage() {
         </div>
         
         <div className="lg:col-span-3">
-          <Tabs defaultValue="info" className="h-full">
+          <Tabs defaultValue="info" className="h-full" data-testid="tabs-runtimes">
             <TabsList>
-              <TabsTrigger value="info">Language Info</TabsTrigger>
-              <TabsTrigger value="runtime">Runtime</TabsTrigger>
+              <TabsTrigger value="info" data-testid="tab-language-info">Language Info</TabsTrigger>
+              <TabsTrigger value="runtime" data-testid="tab-runtime">Runtime</TabsTrigger>
             </TabsList>
             
             <TabsContent value="info" className="h-[calc(100%-2rem)]">

@@ -48,14 +48,15 @@ export default function BlogDetail() {
 
   return (
     <ReplitLayout>
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background" data-testid="page-blog-detail">
         {/* Header */}
         <div className="border-b">
           <div className="container max-w-4xl mx-auto px-4 py-4">
             <Button
               variant="ghost"
               onClick={() => setLocation("/blog")}
-              className="mb-4"
+              className="mb-4 min-h-[44px]"
+              data-testid="button-blog-back"
             >
               <ChevronLeft className="h-4 w-4 mr-2" />
               Back to Blog

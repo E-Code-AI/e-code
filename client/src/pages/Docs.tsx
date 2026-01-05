@@ -1166,7 +1166,7 @@ export default function DocsPage(): JSX.Element {
       ];
 
   return (
-    <div className="flex flex-1 flex-col">
+    <div className="flex flex-1 flex-col" data-testid="page-docs">
       <div className="border-b bg-background">
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-6 py-12">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -1175,7 +1175,7 @@ export default function DocsPage(): JSX.Element {
                 <Book className="h-3.5 w-3.5" />
                 Updated documentation hub
               </Badge>
-              <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">E-Code product documentation</h1>
+              <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl" data-testid="heading-docs">E-Code product documentation</h1>
               <p className="max-w-2xl text-muted-foreground">
                 Explore how our Replit-grade cloud development platform works under the hood. These guides stay in lockstep with the
                 private E-Code codebase so your team can build, ship, and operate reliably.
@@ -1208,6 +1208,7 @@ export default function DocsPage(): JSX.Element {
                       onKeyDown={handleKeyDown}
                       placeholder="Search articles, features, or services"
                       className="pl-9"
+                      data-testid="input-docs-search"
                     />
                   </div>
                 </CardContent>

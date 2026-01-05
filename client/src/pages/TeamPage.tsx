@@ -276,6 +276,7 @@ export default function TeamPage() {
               variant="outline"
               size="sm"
               onClick={() => setLocation(`/teams/${id}/settings`)}
+              data-testid="button-team-settings"
             >
               <Settings className="h-4 w-4 mr-2" />
               Settings
@@ -286,11 +287,11 @@ export default function TeamPage() {
 
       {/* Tabs */}
       <Tabs defaultValue="projects" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
-          <TabsTrigger value="projects">Projects</TabsTrigger>
-          <TabsTrigger value="members">Members</TabsTrigger>
-          <TabsTrigger value="workspaces">Workspaces</TabsTrigger>
-          <TabsTrigger value="activity">Activity</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid" data-testid="tabs-team">
+          <TabsTrigger value="projects" data-testid="tab-projects">Projects</TabsTrigger>
+          <TabsTrigger value="members" data-testid="tab-members">Members</TabsTrigger>
+          <TabsTrigger value="workspaces" data-testid="tab-workspaces">Workspaces</TabsTrigger>
+          <TabsTrigger value="activity" data-testid="tab-activity">Activity</TabsTrigger>
         </TabsList>
 
         {/* Projects Tab */}
@@ -298,7 +299,7 @@ export default function TeamPage() {
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold">Team Projects</h2>
             {canManageTeam && (
-              <Button size="sm">
+              <Button size="sm" data-testid="button-create-project">
                 <Plus className="h-4 w-4 mr-2" />
                 Create Project
               </Button>
@@ -370,7 +371,7 @@ export default function TeamPage() {
             {canManageTeam && (
               <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
                 <DialogTrigger asChild>
-                  <Button size="sm">
+                  <Button size="sm" data-testid="button-invite-member">
                     <UserPlus className="h-4 w-4 mr-2" />
                     Invite Member
                   </Button>
@@ -391,6 +392,7 @@ export default function TeamPage() {
                         placeholder="colleague@example.com"
                         value={inviteEmail}
                         onChange={(e) => setInviteEmail(e.target.value)}
+                        data-testid="input-invite-email"
                       />
                     </div>
                     <div>
@@ -411,6 +413,7 @@ export default function TeamPage() {
                     <Button
                       onClick={() => inviteMemberMutation.mutate()}
                       disabled={!inviteEmail || inviteMemberMutation.isPending}
+                      data-testid="button-send-invitation"
                     >
                       Send Invitation
                     </Button>
@@ -507,7 +510,7 @@ export default function TeamPage() {
             {canManageTeam && (
               <Dialog open={showCreateWorkspaceDialog} onOpenChange={setShowCreateWorkspaceDialog}>
                 <DialogTrigger asChild>
-                  <Button size="sm">
+                  <Button size="sm" data-testid="button-create-workspace">
                     <Plus className="h-4 w-4 mr-2" />
                     Create Workspace
                   </Button>
@@ -527,6 +530,7 @@ export default function TeamPage() {
                         placeholder="Frontend Projects"
                         value={workspaceName}
                         onChange={(e) => setWorkspaceName(e.target.value)}
+                        data-testid="input-workspace-name"
                       />
                     </div>
                     <div>
@@ -536,6 +540,7 @@ export default function TeamPage() {
                         placeholder="All frontend related projects"
                         value={workspaceDescription}
                         onChange={(e) => setWorkspaceDescription(e.target.value)}
+                        data-testid="input-workspace-description"
                       />
                     </div>
                   </div>
@@ -543,6 +548,7 @@ export default function TeamPage() {
                     <Button
                       onClick={() => createWorkspaceMutation.mutate()}
                       disabled={!workspaceName || createWorkspaceMutation.isPending}
+                      data-testid="button-submit-workspace"
                     >
                       Create Workspace
                     </Button>

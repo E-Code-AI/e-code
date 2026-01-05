@@ -179,7 +179,7 @@ export default function AdminMonitoring() {
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-white">System Monitoring</h1>
+            <h1 className="text-2xl font-bold text-white" data-testid="heading-system-monitoring">System Monitoring</h1>
             <p className="text-zinc-400 mt-1">E-Code Platform Health & Metrics Dashboard</p>
           </div>
           <div className="flex items-center gap-3">

@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
+import { AdminLayout } from "./admin/AdminLayout";
 
 interface UserUsage {
   userId: number;
@@ -160,13 +161,14 @@ export default function AdminUsage() {
   }
 
   return (
-    <div className="container mx-auto py-8 space-y-6">
+    <AdminLayout>
+      <div className="p-4 sm:p-6 lg:p-8 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Usage Analytics</h1>
-          <p className="text-muted-foreground">Monitor platform usage and billing</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-white" data-testid="heading-usage-analytics">Usage Analytics</h1>
+          <p className="text-zinc-400" data-testid="text-usage-description">Monitor platform usage and billing</p>
         </div>
-        <Button onClick={exportUsageData} variant="outline">
+        <Button onClick={exportUsageData} variant="outline" data-testid="button-export-data">
           <Download className="h-4 w-4 mr-2" />
           Export Data
         </Button>
@@ -174,55 +176,55 @@ export default function AdminUsage() {
 
       {/* Platform Overview */}
       <div className="grid gap-4 md:grid-cols-4">
-        <Card>
+        <Card className="bg-zinc-800 border-zinc-700" data-testid="card-total-users">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-zinc-300">Total Users</CardTitle>
+            <Users className="h-4 w-4 text-zinc-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{platformStats?.totalUsers || 0}</div>
-            <p className="text-xs text-muted-foreground">
+            <div className="text-2xl font-bold text-white" data-testid="text-total-users">{platformStats?.totalUsers || 0}</div>
+            <p className="text-xs text-zinc-500">
               {platformStats?.activeUsers || 0} active this month
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-zinc-800 border-zinc-700" data-testid="card-monthly-revenue">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Monthly Revenue</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-zinc-300">Monthly Revenue</CardTitle>
+            <DollarSign className="h-4 w-4 text-zinc-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-bold text-white" data-testid="text-monthly-revenue">
               {formatCost(platformStats?.totalRevenue || 0)}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-zinc-500">
               From subscriptions and usage
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-zinc-800 border-zinc-700" data-testid="card-usage-growth">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Usage Growth</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-zinc-300">Usage Growth</CardTitle>
+            <TrendingUp className="h-4 w-4 text-zinc-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+12.5%</div>
-            <p className="text-xs text-muted-foreground">
+            <div className="text-2xl font-bold text-white" data-testid="text-usage-growth">+12.5%</div>
+            <p className="text-xs text-zinc-500">
               vs last month
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-zinc-800 border-zinc-700" data-testid="card-top-service">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Top Service</CardTitle>
-            <BarChart3 className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-zinc-300">Top Service</CardTitle>
+            <BarChart3 className="h-4 w-4 text-zinc-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">AI Agent</div>
-            <p className="text-xs text-muted-foreground">
+            <div className="text-2xl font-bold text-white" data-testid="text-top-service">AI Agent</div>
+            <p className="text-xs text-zinc-500">
               Most used service
             </p>
           </CardContent>
@@ -230,24 +232,24 @@ export default function AdminUsage() {
       </div>
 
       {/* Usage by Service */}
-      <Card>
+      <Card className="bg-zinc-800 border-zinc-700" data-testid="card-usage-by-service">
         <CardHeader>
-          <CardTitle>Usage by Service</CardTitle>
-          <CardDescription>Platform-wide resource consumption</CardDescription>
+          <CardTitle className="text-white">Usage by Service</CardTitle>
+          <CardDescription className="text-zinc-400">Platform-wide resource consumption</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-3">
             {Object.entries(platformStats?.usageByService || {}).map(([service, data]) => (
-              <div key={service} className="flex items-center space-x-4">
+              <div key={service} className="flex items-center space-x-4" data-testid={`service-${service}`}>
                 {getUsageIcon(service)}
                 <div className="flex-1">
                   <div className="flex items-center justify-between">
-                    <span className="capitalize text-sm font-medium">{service.replace(/([A-Z])/g, ' $1')}</span>
-                    <span className="text-sm text-muted-foreground">
+                    <span className="capitalize text-sm font-medium text-white">{service.replace(/([A-Z])/g, ' $1')}</span>
+                    <span className="text-sm text-zinc-400">
                       {formatCost(data.cost)}
                     </span>
                   </div>
-                  <div className="text-xs text-muted-foreground">
+                  <div className="text-xs text-zinc-500">
                     {formatUsage(data.total, service === 'agentRequests' ? 'requests' : 
                                service === 'deployments' ? 'deployments' :
                                service === 'databases' ? 'operations' : 'GB')}
@@ -260,27 +262,29 @@ export default function AdminUsage() {
       </Card>
 
       {/* User Usage Table */}
-      <Card>
+      <Card className="bg-zinc-800 border-zinc-700" data-testid="card-user-usage">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>User Usage Details</CardTitle>
-              <CardDescription>Individual user consumption and costs</CardDescription>
+              <CardTitle className="text-white">User Usage Details</CardTitle>
+              <CardDescription className="text-zinc-400">Individual user consumption and costs</CardDescription>
             </div>
             <div className="flex gap-2">
               <div className="relative">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-zinc-400" />
                 <Input
                   placeholder="Search users..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-8 w-64"
+                  className="pl-8 w-64 bg-zinc-900 border-zinc-700 text-white"
+                  data-testid="input-search-users"
                 />
               </div>
               <select
                 value={selectedPlan}
                 onChange={(e) => setSelectedPlan(e.target.value)}
-                className="px-3 py-2 border rounded-md text-sm"
+                className="px-3 py-2 border rounded-md text-sm bg-zinc-900 border-zinc-700 text-white"
+                data-testid="select-plan-filter"
               >
                 <option value="all">All Plans</option>
                 <option value="starter">Starter</option>
@@ -306,11 +310,11 @@ export default function AdminUsage() {
             </TableHeader>
             <TableBody>
               {filteredUsers.map((user) => (
-                <TableRow key={user.userId}>
+                <TableRow key={user.userId} data-testid={`row-user-${user.userId}`}>
                   <TableCell>
                     <div>
-                      <div className="font-medium">{user.username}</div>
-                      <div className="text-sm text-muted-foreground">{user.email}</div>
+                      <div className="font-medium text-white">{user.username}</div>
+                      <div className="text-sm text-zinc-400">{user.email}</div>
                     </div>
                   </TableCell>
                   <TableCell>
@@ -361,6 +365,7 @@ export default function AdminUsage() {
           </Table>
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </AdminLayout>
   );
 }

@@ -192,34 +192,34 @@ export default function Account() {
         icon={User}
         actions={(
           <div className="flex flex-col gap-2 sm:flex-row">
-            <Button className="gap-2" onClick={handleSaveProfile}>
+            <Button className="gap-2" onClick={handleSaveProfile} data-testid="button-save-changes">
               <Check className="h-4 w-4" />
               Save changes
             </Button>
-            <Button variant="outline" className="gap-2" onClick={() => navigate('/settings')}>
+            <Button variant="outline" className="gap-2" onClick={() => navigate('/settings')} data-testid="button-security-center">
               <Shield className="h-4 w-4" />
               Security center
             </Button>
           </div>
         )}
       />
-      <div className="space-y-6">
+      <div className="space-y-6" data-testid="account-page">
 
-      <Tabs defaultValue="profile" className="space-y-4">
+      <Tabs defaultValue="profile" className="space-y-4" data-testid="account-tabs">
         <div className="overflow-x-auto max-w-full">
           <TabsList className="inline-flex h-10 items-center justify-start rounded-md bg-muted p-1 text-muted-foreground w-max min-w-full md:w-full">
-            <TabsTrigger value="profile" className="whitespace-nowrap">Profile</TabsTrigger>
-            <TabsTrigger value="account" className="whitespace-nowrap">Account</TabsTrigger>
-            <TabsTrigger value="security" className="whitespace-nowrap">Security</TabsTrigger>
-            <TabsTrigger value="billing" className="whitespace-nowrap">Billing</TabsTrigger>
-            <TabsTrigger value="notifications" className="whitespace-nowrap">Notifications</TabsTrigger>
-            <TabsTrigger value="developer" className="whitespace-nowrap">Developer</TabsTrigger>
+            <TabsTrigger value="profile" className="whitespace-nowrap" data-testid="tab-profile">Profile</TabsTrigger>
+            <TabsTrigger value="account" className="whitespace-nowrap" data-testid="tab-account">Account</TabsTrigger>
+            <TabsTrigger value="security" className="whitespace-nowrap" data-testid="tab-security">Security</TabsTrigger>
+            <TabsTrigger value="billing" className="whitespace-nowrap" data-testid="tab-billing">Billing</TabsTrigger>
+            <TabsTrigger value="notifications" className="whitespace-nowrap" data-testid="tab-notifications">Notifications</TabsTrigger>
+            <TabsTrigger value="developer" className="whitespace-nowrap" data-testid="tab-developer">Developer</TabsTrigger>
           </TabsList>
         </div>
 
         {/* Profile Tab */}
-        <TabsContent value="profile" className="space-y-4">
-          <Card>
+        <TabsContent value="profile" className="space-y-4" data-testid="content-profile">
+          <Card data-testid="card-public-profile">
             <CardHeader>
               <CardTitle>Public Profile</CardTitle>
               <CardDescription>
@@ -236,6 +236,7 @@ export default function Account() {
                       value={profile.username}
                       onChange={(e) => setProfile({ ...profile, username: e.target.value })}
                       disabled
+                      data-testid="input-username"
                     />
                     <p className="text-xs text-muted-foreground">
                       Your username cannot be changed
@@ -248,6 +249,7 @@ export default function Account() {
                       value={profile.displayName}
                       onChange={(e) => setProfile({ ...profile, displayName: e.target.value })}
                       placeholder="John Doe"
+                      data-testid="input-display-name"
                     />
                   </div>
                 </div>
@@ -260,6 +262,7 @@ export default function Account() {
                     value={profile.bio}
                     onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
                     placeholder="Tell us about yourself..."
+                    data-testid="input-bio"
                   />
                 </div>
 
@@ -273,11 +276,12 @@ export default function Account() {
                       placeholder="https://yourwebsite.com"
                       value={profile.website}
                       onChange={(e) => setProfile({ ...profile, website: e.target.value })}
+                      data-testid="input-website"
                     />
                   </div>
                 </div>
 
-                <Button onClick={handleSaveProfile} disabled={isLoading}>
+                <Button onClick={handleSaveProfile} disabled={isLoading} data-testid="button-save-profile">
                   {isLoading && <ECodeSpinner className="mr-2" size={16} />}
                   {isLoading ? "Saving" : "Save Changes"}
                 </Button>
@@ -287,8 +291,8 @@ export default function Account() {
         </TabsContent>
 
         {/* Account Tab */}
-        <TabsContent value="account" className="space-y-4">
-          <Card>
+        <TabsContent value="account" className="space-y-4" data-testid="content-account">
+          <Card data-testid="card-account-info">
             <CardHeader>
               <CardTitle>Account Information</CardTitle>
               <CardDescription>
@@ -305,11 +309,13 @@ export default function Account() {
                     value={profile.email}
                     onChange={(e) => setProfile({ ...profile, email: e.target.value })}
                     className="flex-1"
+                    data-testid="input-email"
                   />
                   <Button 
                     variant="outline" 
                     onClick={handleUpdateEmail}
                     disabled={profile.email === user?.email}
+                    data-testid="button-update-email"
                   >
                     Update Email
                   </Button>
@@ -323,7 +329,7 @@ export default function Account() {
 
               <div className="space-y-4">
                 <h3 className="text-sm font-medium">Password</h3>
-                <Button variant="outline" onClick={handleChangePassword}>
+                <Button variant="outline" onClick={handleChangePassword} data-testid="button-change-password">
                   <Key className="mr-2 h-4 w-4" />
                   Change Password
                 </Button>
@@ -333,7 +339,7 @@ export default function Account() {
 
               <div className="space-y-4">
                 <h3 className="text-sm font-medium text-destructive">Danger Zone</h3>
-                <Button variant="destructive" onClick={handleDeleteAccount}>
+                <Button variant="destructive" onClick={handleDeleteAccount} data-testid="button-delete-account">
                   <Trash2 className="mr-2 h-4 w-4" />
                   Delete Account
                 </Button>
@@ -346,8 +352,8 @@ export default function Account() {
         </TabsContent>
 
         {/* Security Tab */}
-        <TabsContent value="security" className="space-y-4">
-          <Card>
+        <TabsContent value="security" className="space-y-4" data-testid="content-security">
+          <Card data-testid="card-security-settings">
             <CardHeader>
               <CardTitle>Security Settings</CardTitle>
               <CardDescription>
@@ -365,6 +371,7 @@ export default function Account() {
                 <Switch
                   checked={security.twoFactor}
                   onCheckedChange={handleEnable2FA}
+                  data-testid="switch-2fa"
                 />
               </div>
 
@@ -373,7 +380,7 @@ export default function Account() {
               <div className="space-y-4">
                 <h3 className="text-sm font-medium">Active Sessions</h3>
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between p-3 border rounded-lg">
+                  <div className="flex items-center justify-between p-3 border rounded-lg" data-testid="session-current">
                     <div className="flex items-center gap-3">
                       <Chrome className="h-5 w-5" />
                       <div>
@@ -383,7 +390,7 @@ export default function Account() {
                     </div>
                     <Badge variant="secondary">Active</Badge>
                   </div>
-                  <div className="flex items-center justify-between p-3 border rounded-lg">
+                  <div className="flex items-center justify-between p-3 border rounded-lg" data-testid="session-iphone">
                     <div className="flex items-center gap-3">
                       <Smartphone className="h-5 w-5" />
                       <div>
@@ -391,7 +398,7 @@ export default function Account() {
                         <p className="text-xs text-muted-foreground">Last active 2 hours ago</p>
                       </div>
                     </div>
-                    <Button variant="ghost" size="sm">Revoke</Button>
+                    <Button variant="ghost" size="sm" data-testid="button-revoke-session">Revoke</Button>
                   </div>
                 </div>
               </div>
@@ -401,7 +408,7 @@ export default function Account() {
               <div className="space-y-4">
                 <h3 className="text-sm font-medium">Connected Apps</h3>
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between p-3 border rounded-lg">
+                  <div className="flex items-center justify-between p-3 border rounded-lg" data-testid="app-github">
                     <div className="flex items-center gap-3">
                       <Github className="h-5 w-5" />
                       <div>
@@ -409,7 +416,7 @@ export default function Account() {
                         <p className="text-xs text-muted-foreground">Read access to repos</p>
                       </div>
                     </div>
-                    <Button variant="ghost" size="sm">Disconnect</Button>
+                    <Button variant="ghost" size="sm" data-testid="button-disconnect-github">Disconnect</Button>
                   </div>
                 </div>
               </div>
@@ -418,8 +425,8 @@ export default function Account() {
         </TabsContent>
 
         {/* Billing Tab */}
-        <TabsContent value="billing" className="space-y-4">
-          <Card>
+        <TabsContent value="billing" className="space-y-4" data-testid="content-billing">
+          <Card data-testid="card-billing">
             <CardHeader>
               <CardTitle>Billing & Subscription</CardTitle>
               <CardDescription>
@@ -427,7 +434,7 @@ export default function Account() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="p-4 border rounded-lg bg-muted/50">
+              <div className="p-4 border rounded-lg bg-muted/50" data-testid="current-plan">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <Crown className="h-5 w-5 text-yellow-600" />
@@ -438,14 +445,14 @@ export default function Account() {
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <p className="text-muted-foreground">Monthly Cost</p>
-                    <p className="font-medium">$7.00</p>
+                    <p className="font-medium" data-testid="text-monthly-cost">$7.00</p>
                   </div>
                   <div>
                     <p className="text-muted-foreground">Next Billing</p>
-                    <p className="font-medium">Feb 1, 2024</p>
+                    <p className="font-medium" data-testid="text-next-billing">Feb 1, 2024</p>
                   </div>
                 </div>
-                <Button className="w-full mt-4" variant="outline">
+                <Button className="w-full mt-4" variant="outline" data-testid="button-manage-subscription">
                   Manage Subscription
                 </Button>
               </div>
@@ -489,15 +496,15 @@ export default function Account() {
 
               <div className="space-y-4">
                 <h3 className="text-sm font-medium">Payment Method</h3>
-                <div className="flex items-center justify-between p-3 border rounded-lg">
+                <div className="flex items-center justify-between p-3 border rounded-lg" data-testid="payment-method">
                   <div className="flex items-center gap-3">
                     <CreditCard className="h-5 w-5" />
                     <div>
-                      <p className="text-sm font-medium">•••• •••• •••• 4242</p>
+                      <p className="text-sm font-medium" data-testid="text-card-number">•••• •••• •••• 4242</p>
                       <p className="text-xs text-muted-foreground">Expires 12/25</p>
                     </div>
                   </div>
-                  <Button variant="ghost" size="sm">Update</Button>
+                  <Button variant="ghost" size="sm" data-testid="button-update-payment">Update</Button>
                 </div>
               </div>
             </CardContent>
@@ -505,8 +512,8 @@ export default function Account() {
         </TabsContent>
 
         {/* Notifications Tab */}
-        <TabsContent value="notifications" className="space-y-4">
-          <Card>
+        <TabsContent value="notifications" className="space-y-4" data-testid="content-notifications">
+          <Card data-testid="card-email-notifications">
             <CardHeader>
               <CardTitle>Email Notifications</CardTitle>
               <CardDescription>
@@ -527,6 +534,7 @@ export default function Account() {
                     onCheckedChange={(checked) => 
                       setEmailPreferences({ ...emailPreferences, marketing: checked })
                     }
+                    data-testid="switch-marketing"
                   />
                 </div>
 
@@ -542,6 +550,7 @@ export default function Account() {
                     onCheckedChange={(checked) => 
                       setEmailPreferences({ ...emailPreferences, updates: checked })
                     }
+                    data-testid="switch-updates"
                   />
                 </div>
 
@@ -557,6 +566,7 @@ export default function Account() {
                     onCheckedChange={(checked) => 
                       setEmailPreferences({ ...emailPreferences, tips: checked })
                     }
+                    data-testid="switch-tips"
                   />
                 </div>
 
@@ -572,13 +582,14 @@ export default function Account() {
                     onCheckedChange={(checked) => 
                       setEmailPreferences({ ...emailPreferences, community: checked })
                     }
+                    data-testid="switch-community"
                   />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card data-testid="card-inapp-notifications">
             <CardHeader>
               <CardTitle>In-App Notifications</CardTitle>
               <CardDescription>
@@ -594,7 +605,7 @@ export default function Account() {
                       When someone comments on your Repl or mentions you
                     </p>
                   </div>
-                  <Switch defaultChecked />
+                  <Switch defaultChecked data-testid="switch-comments" />
                 </div>
 
                 <div className="flex items-center justify-between">
@@ -604,7 +615,7 @@ export default function Account() {
                       When someone follows you
                     </p>
                   </div>
-                  <Switch defaultChecked />
+                  <Switch defaultChecked data-testid="switch-follows" />
                 </div>
 
                 <div className="flex items-center justify-between">
@@ -614,7 +625,7 @@ export default function Account() {
                       Updates about your Repls (forks, likes, etc.)
                     </p>
                   </div>
-                  <Switch defaultChecked />
+                  <Switch defaultChecked data-testid="switch-repl-activity" />
                 </div>
               </div>
             </CardContent>
@@ -622,8 +633,8 @@ export default function Account() {
         </TabsContent>
 
         {/* Developer Tab */}
-        <TabsContent value="developer" className="space-y-4">
-          <Card>
+        <TabsContent value="developer" className="space-y-4" data-testid="content-developer">
+          <Card data-testid="card-api-keys">
             <CardHeader>
               <CardTitle>API Keys</CardTitle>
               <CardDescription>
@@ -632,7 +643,7 @@ export default function Account() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <div className="flex items-center justify-between p-3 border rounded-lg">
+                <div className="flex items-center justify-between p-3 border rounded-lg" data-testid="api-key-item">
                   <div className="flex items-center gap-3">
                     <Key className="h-5 w-5" />
                     <div>
@@ -644,18 +655,18 @@ export default function Account() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge variant="secondary">Never expires</Badge>
-                    <Button variant="ghost" size="sm">Revoke</Button>
+                    <Button variant="ghost" size="sm" data-testid="button-revoke-api-key">Revoke</Button>
                   </div>
                 </div>
               </div>
-              <Button variant="outline" className="w-full">
+              <Button variant="outline" className="w-full" data-testid="button-generate-api-key">
                 <Key className="mr-2 h-4 w-4" />
                 Generate New API Key
               </Button>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card data-testid="card-ssh-keys">
             <CardHeader>
               <CardTitle>SSH Keys</CardTitle>
               <CardDescription>
@@ -664,7 +675,7 @@ export default function Account() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <div className="flex items-center justify-between p-3 border rounded-lg">
+                <div className="flex items-center justify-between p-3 border rounded-lg" data-testid="ssh-key-item">
                   <div className="flex items-center gap-3">
                     <Lock className="h-5 w-5" />
                     <div>
@@ -674,17 +685,17 @@ export default function Account() {
                       </p>
                     </div>
                   </div>
-                  <Button variant="ghost" size="sm">Remove</Button>
+                  <Button variant="ghost" size="sm" data-testid="button-remove-ssh-key">Remove</Button>
                 </div>
               </div>
-              <Button variant="outline" className="w-full">
+              <Button variant="outline" className="w-full" data-testid="button-add-ssh-key">
                 <Lock className="mr-2 h-4 w-4" />
                 Add SSH Key
               </Button>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card data-testid="card-webhooks">
             <CardHeader>
               <CardTitle>Webhooks</CardTitle>
               <CardDescription>
@@ -692,7 +703,7 @@ export default function Account() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button variant="outline" className="w-full">
+              <Button variant="outline" className="w-full" data-testid="button-configure-webhooks">
                 <Link className="mr-2 h-4 w-4" />
                 Configure Webhooks
               </Button>

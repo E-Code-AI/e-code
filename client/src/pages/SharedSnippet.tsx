@@ -159,13 +159,13 @@ export default function SharedSnippet() {
             </p>
             <div className="flex gap-4 justify-center">
               <Link href="/">
-                <Button variant="default">
+                <Button variant="default" data-testid="button-go-home">
                   <Home className="mr-2 h-4 w-4" />
                   Go to Homepage
                 </Button>
               </Link>
               <Link href="/login">
-                <Button variant="outline">
+                <Button variant="outline" data-testid="button-start-building-error">
                   Start Building
                 </Button>
               </Link>
@@ -239,6 +239,7 @@ export default function SharedSnippet() {
                   variant="outline"
                   onClick={handleCopy}
                   disabled={copied}
+                  data-testid="button-copy-code"
                 >
                   <Copy className="h-4 w-4 mr-2" />
                   {copied ? "Copied!" : "Copy Code"}
@@ -280,12 +281,12 @@ export default function SharedSnippet() {
             </p>
             <div className="flex gap-4 justify-center">
               <Link href="/login">
-                <Button size="lg">
+                <Button size="lg" data-testid="button-start-building">
                   Start Building
                 </Button>
               </Link>
               <Link href="/features">
-                <Button size="lg" variant="outline">
+                <Button size="lg" variant="outline" data-testid="button-learn-more">
                   Learn More
                 </Button>
               </Link>

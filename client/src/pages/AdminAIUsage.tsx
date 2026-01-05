@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useAuth } from '@/hooks/use-auth';
+import { AdminLayout } from './admin/AdminLayout';
 
 interface PlatformStats {
   period: string;
@@ -134,11 +135,12 @@ export default function AdminAIUsage() {
   };
 
   return (
-    <div className="container mx-auto py-8 space-y-6">
+    <AdminLayout>
+      <div className="p-4 sm:p-6 lg:p-8 space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">AI Usage Analytics</h1>
-          <p className="text-muted-foreground">Platform-wide AI usage monitoring and billing</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-white" data-testid="heading-ai-usage-analytics">AI Usage Analytics</h1>
+          <p className="text-zinc-400" data-testid="text-ai-usage-description">Platform-wide AI usage monitoring and billing</p>
         </div>
         <Button onClick={exportData} data-testid="button-export">
           <Download className="mr-2 h-4 w-4" />
@@ -469,6 +471,7 @@ export default function AdminAIUsage() {
           )}
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </AdminLayout>
   );
 }

@@ -855,6 +855,7 @@ export const teams = pgTable("teams", {
   slug: varchar("slug", { length: 255 }).notNull().unique(),
   description: text("description"),
   logo: text("logo"),
+  visibility: varchar("visibility", { length: 50 }).notNull().default('private'),
   ownerId: integer("owner_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
   plan: varchar("plan", { length: 50 }).notNull().default('free'),
   settings: jsonb("settings").default({}),
@@ -875,6 +876,28 @@ export const teamMembers = pgTable("team_members", {
   joinedAt: timestamp("joined_at").notNull().defaultNow(),
   invitedBy: integer("invited_by"),
   isActive: boolean("is_active").notNull().default(true),
+});
+
+export const teamInvitations = pgTable("team_invitations", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  teamId: integer("team_id").notNull().references(() => teams.id, { onDelete: 'cascade' }),
+  email: varchar("email", { length: 255 }).notNull(),
+  role: varchar("role", { length: 50 }).notNull().default('member'),
+  status: varchar("status", { length: 50 }).notNull().default('pending'),
+  invitedBy: integer("invited_by").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  token: varchar("token", { length: 255 }),
+  expiresAt: timestamp("expires_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  acceptedAt: timestamp("accepted_at"),
+});
+
+export const teamWorkspaces = pgTable("team_workspaces", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  teamId: integer("team_id").notNull().references(() => teams.id, { onDelete: 'cascade' }),
+  name: varchar("name", { length: 255 }).notNull(),
+  description: text("description"),
+  settings: jsonb("settings").default({}),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
 // Comments system for projects and files

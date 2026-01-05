@@ -135,6 +135,7 @@ export default function Plans() {
           <Switch
             checked={billingInterval === "yearly"}
             onCheckedChange={(checked) => setBillingInterval(checked ? "yearly" : "monthly")}
+            data-testid="switch-billing-interval"
           />
           <span className={billingInterval === "yearly" ? "font-semibold" : "text-muted-foreground"}>
             Yearly
@@ -208,6 +209,7 @@ export default function Plans() {
                   variant={isCurrentPlan ? "outline" : plan.popular ? "default" : "outline"}
                   disabled={isCurrentPlan && planId !== 'enterprise'}
                   onClick={() => handleSelectPlan(planId)}
+                  data-testid={`button-select-plan-${planId}`}
                 >
                   {isCurrentPlan ? "Current Plan" : plan.cta}
                 </Button>
@@ -255,7 +257,7 @@ export default function Plans() {
         <div className="mt-8 text-center text-sm text-muted-foreground">
           <p>All prices exclude VAT where applicable.</p>
           <p className="mt-2">
-            Need more? <Button variant="link" className="px-1" onClick={() => window.open('mailto:sales@e-code.ai', '_blank')}>Contact us</Button> for volume discounts.
+            Need more? <Button variant="link" className="px-1" onClick={() => window.open('mailto:sales@e-code.ai', '_blank')} data-testid="button-contact-sales">Contact us</Button> for volume discounts.
           </p>
         </div>
       </div>

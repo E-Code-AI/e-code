@@ -92,15 +92,42 @@ export default function Profile() {
     enabled: !!(username || currentUser?.username),
   });
 
+  // Loading state
+  if (profileLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center" data-testid="profile-loading">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Profile not found
+  if (!profile) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center" data-testid="profile-not-found">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-2">Profile not found</h1>
+          <p className="text-muted-foreground">The user you're looking for doesn't exist.</p>
+          <Button onClick={() => navigate('/')} className="mt-4" data-testid="button-go-home">
+            Go Home
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background" data-testid="profile-page">
       {/* Profile Header */}
       <div className="border-b">
         <div className="container mx-auto px-4 py-8">
           <div className="flex flex-col md:flex-row gap-6">
             {/* Avatar and basic info */}
             <div className="flex items-start gap-4">
-              <Avatar className="h-24 w-24">
+              <Avatar className="h-24 w-24" data-testid="avatar-profile">
                 <AvatarImage src={profile.avatarUrl || undefined} />
                 <AvatarFallback className="text-3xl">
                   {profile.username[0].toUpperCase()}
@@ -108,7 +135,7 @@ export default function Profile() {
               </Avatar>
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
-                  <h1 className="text-2xl font-bold">{profile.displayName}</h1>
+                  <h1 className="text-2xl font-bold" data-testid="text-display-name">{profile.displayName}</h1>
                   {profile.badges.slice(0, 2).map((badge: { id: string; icon: any; name: string; color: string }) => {
                     const Icon = badge.icon;
                     return (
@@ -120,8 +147,8 @@ export default function Profile() {
                     );
                   })}
                 </div>
-                <p className="text-muted-foreground mb-3">@{profile.username}</p>
-                <p className="mb-4">{profile.bio}</p>
+                <p className="text-muted-foreground mb-3" data-testid="text-username">@{profile.username}</p>
+                <p className="mb-4" data-testid="text-bio">{profile.bio}</p>
                 
                 {/* Contact and social */}
                 <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mb-4">
@@ -169,13 +196,13 @@ export default function Profile() {
                 {/* Actions */}
                 <div className="flex items-center gap-2">
                   {isOwnProfile ? (
-                    <Button onClick={() => navigate('/settings')}>
+                    <Button onClick={() => navigate('/settings')} data-testid="button-edit-profile">
                       Edit Profile
                     </Button>
                   ) : (
                     <>
-                      <Button>Follow</Button>
-                      <Button variant="outline">Message</Button>
+                      <Button data-testid="button-follow">Follow</Button>
+                      <Button variant="outline" data-testid="button-message">Message</Button>
                     </>
                   )}
                 </div>
@@ -183,21 +210,21 @@ export default function Profile() {
             </div>
 
             {/* Stats */}
-            <div className="flex gap-6 md:ml-auto">
+            <div className="flex gap-6 md:ml-auto" data-testid="profile-stats">
               <div className="text-center">
-                <div className="text-2xl font-bold">{profile.stats.repls}</div>
+                <div className="text-2xl font-bold" data-testid="stat-repls">{profile.stats?.repls || 0}</div>
                 <div className="text-sm text-muted-foreground">Repls</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold">{profile.stats.followers}</div>
+                <div className="text-2xl font-bold" data-testid="stat-followers">{profile.stats?.followers || 0}</div>
                 <div className="text-sm text-muted-foreground">Followers</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold">{profile.stats.following}</div>
+                <div className="text-2xl font-bold" data-testid="stat-following">{profile.stats?.following || 0}</div>
                 <div className="text-sm text-muted-foreground">Following</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold">{profile.stats.stars}</div>
+                <div className="text-2xl font-bold" data-testid="stat-stars">{profile.stats?.stars || 0}</div>
                 <div className="text-sm text-muted-foreground">Stars</div>
               </div>
             </div>
@@ -207,12 +234,12 @@ export default function Profile() {
 
       {/* Profile Content */}
       <div className="container mx-auto px-4 py-6">
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <Tabs value={activeTab} onValueChange={setActiveTab} data-testid="profile-tabs">
           <TabsList>
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="repls">Repls</TabsTrigger>
-            <TabsTrigger value="activity">Activity</TabsTrigger>
-            <TabsTrigger value="achievements">Achievements</TabsTrigger>
+            <TabsTrigger value="overview" data-testid="tab-overview">Overview</TabsTrigger>
+            <TabsTrigger value="repls" data-testid="tab-repls">Repls</TabsTrigger>
+            <TabsTrigger value="activity" data-testid="tab-activity">Activity</TabsTrigger>
+            <TabsTrigger value="achievements" data-testid="tab-achievements">Achievements</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="mt-6">

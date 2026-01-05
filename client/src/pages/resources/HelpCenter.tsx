@@ -111,13 +111,13 @@ export default function HelpCenter() {
         structuredData={structuredData.faqPage(faqs)}
       />
 
-      <div className="container mx-auto px-4 py-12 sm:py-16 md:py-20">
+      <div className="container mx-auto px-4 py-12 sm:py-16 md:py-20" data-testid="page-help-center">
         {/* Hero Section */}
         <div className="text-center max-w-4xl mx-auto mb-12 sm:mb-16">
           <Badge className="mb-4 px-4 py-1.5 text-sm font-medium bg-gradient-to-r from-indigo-500 to-purple-500 text-white border-0">
             Support
           </Badge>
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400 bg-clip-text text-transparent">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400 bg-clip-text text-transparent" data-testid="heading-help-center">
             Help Center
           </h1>
           <p className="text-lg sm:text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
@@ -133,6 +133,7 @@ export default function HelpCenter() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-12 h-14 text-lg"
+              data-testid="input-help-search"
             />
           </div>
         </div>
@@ -196,8 +197,9 @@ export default function HelpCenter() {
                 className={`overflow-hidden transition-all duration-300 ${expandedFaq === index ? 'ring-2 ring-indigo-500' : ''}`}
               >
                 <button
-                  className="w-full p-6 text-left flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-900/50"
+                  className="w-full p-6 text-left flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-900/50 min-h-[44px]"
                   onClick={() => setExpandedFaq(expandedFaq === index ? null : index)}
+                  data-testid={`button-faq-${index}`}
                 >
                   <span className="font-semibold pr-4">{faq.question}</span>
                   <ChevronDown className={`h-5 w-5 text-muted-foreground flex-shrink-0 transition-transform ${expandedFaq === index ? 'rotate-180' : ''}`} />
@@ -216,7 +218,7 @@ export default function HelpCenter() {
               <HelpCircle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
               <h3 className="text-xl font-semibold mb-2">No results found</h3>
               <p className="text-muted-foreground mb-4">Try different keywords or contact support.</p>
-              <Button variant="outline" onClick={() => setSearchQuery("")}>
+              <Button variant="outline" onClick={() => setSearchQuery("")} className="min-h-[44px]" data-testid="button-help-clear-search">
                 Clear Search
               </Button>
             </Card>
@@ -233,13 +235,13 @@ export default function HelpCenter() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/contact">
-                <Button size="lg" className="gap-2 min-h-[48px] bg-white text-indigo-600 hover:bg-indigo-50">
+                <Button size="lg" className="gap-2 min-h-[48px] bg-white text-indigo-600 hover:bg-indigo-50" data-testid="button-help-contact-support">
                   <Mail className="h-5 w-5" />
                   Contact Support
                 </Button>
               </Link>
               <Link href="/forum">
-                <Button size="lg" variant="outline" className="gap-2 min-h-[48px] border-white/30 text-white hover:bg-white/10">
+                <Button size="lg" variant="outline" className="gap-2 min-h-[48px] border-white/30 text-white hover:bg-white/10" data-testid="button-help-ask-community">
                   <Users className="h-5 w-5" />
                   Ask the Community
                 </Button>

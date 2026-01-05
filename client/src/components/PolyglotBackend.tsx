@@ -134,12 +134,12 @@ export function PolyglotBackend() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-testid="page-polyglot">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Polyglot Backend Architecture</h1>
-          <p className="text-muted-foreground">Multi-language backend services (TypeScript, Go, Python)</p>
+          <h1 className="text-2xl font-bold" data-testid="text-polyglot-title">Polyglot Backend Architecture</h1>
+          <p className="text-muted-foreground" data-testid="text-polyglot-subtitle">Multi-language backend services (TypeScript, Go, Python)</p>
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -147,6 +147,7 @@ export function PolyglotBackend() {
             disabled={benchmarkMutation.isPending}
             variant="outline"
             size="sm"
+            data-testid="button-run-benchmark"
           >
             <Gauge className="h-4 w-4 mr-2" />
             {benchmarkMutation.isPending ? 'Benchmarking...' : 'Run Benchmark'}
@@ -170,32 +171,32 @@ export function PolyglotBackend() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid grid-cols-4 w-full">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="services">Services</TabsTrigger>
-          <TabsTrigger value="capabilities">Capabilities</TabsTrigger>
-          <TabsTrigger value="performance">Performance</TabsTrigger>
+          <TabsTrigger value="overview" data-testid="tab-polyglot-overview">Overview</TabsTrigger>
+          <TabsTrigger value="services" data-testid="tab-polyglot-services">Services</TabsTrigger>
+          <TabsTrigger value="capabilities" data-testid="tab-polyglot-capabilities">Capabilities</TabsTrigger>
+          <TabsTrigger value="performance" data-testid="tab-polyglot-performance">Performance</TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {healthData?.services.map((service: ServiceHealth) => (
-              <Card key={service.service}>
+            {healthData?.services.map((service: ServiceHealth, index: number) => (
+              <Card key={service.service} data-testid={`card-service-${service.service}`}>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <CardTitle className="text-sm font-medium flex items-center gap-2" data-testid={`text-service-name-${index}`}>
                     {getServiceIcon(service.service)}
                     {service.service.replace('-', ' ').toUpperCase()}
                   </CardTitle>
                   {getStatusIcon(service.status)}
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold capitalize">{service.status}</div>
+                  <div className="text-2xl font-bold capitalize" data-testid={`text-service-status-${index}`}>{service.status}</div>
                   {service.responseTime && (
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-muted-foreground" data-testid={`text-service-response-time-${index}`}>
                       Response time: {service.responseTime}ms
                     </p>
                   )}
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-muted-foreground" data-testid={`text-service-last-check-${index}`}>
                     Last check: {new Date(service.lastCheck).toLocaleTimeString()}
                   </p>
                 </CardContent>

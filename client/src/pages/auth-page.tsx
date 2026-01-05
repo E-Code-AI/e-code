@@ -27,7 +27,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, Code2, Users, Zap, Sparkles, Shield, Github } from "lucide-react";
 
 const loginSchema = z.object({
-  email: z.string().min(1, "Email is required"),
+  email: z.string().min(1, "Email is required").email("Invalid email address"),
   password: z.string().min(1, "Password is required"),
 });
 
@@ -107,7 +107,7 @@ export default function AuthPage() {
               Sign in to your account or create a new one to get started.
             </CardDescription>
             
-            <div className="mt-4 p-3 sm:p-4 bg-muted dark:bg-muted rounded-xl border border-border transition-colors duration-200">
+            <div className="mt-4 p-3 sm:p-4 bg-muted dark:bg-muted rounded-xl border border-border transition-colors duration-200" data-testid="section-quick-access">
               <div className="flex items-center gap-2 mb-2">
                 <Shield className="h-4 w-4 text-primary" />
                 <p className="text-sm font-medium text-foreground">Quick Access</p>
@@ -173,7 +173,7 @@ export default function AuthPage() {
                               {...field} 
                             />
                           </FormControl>
-                          <FormMessage className="text-xs" />
+                          <FormMessage className="text-xs" data-testid="error-login-email" />
                         </FormItem>
                       )}
                     />
@@ -192,7 +192,7 @@ export default function AuthPage() {
                               {...field} 
                             />
                           </FormControl>
-                          <FormMessage className="text-xs" />
+                          <FormMessage className="text-xs" data-testid="error-login-password" />
                         </FormItem>
                       )}
                     />
@@ -315,7 +315,7 @@ export default function AuthPage() {
                               {...field} 
                             />
                           </FormControl>
-                          <FormMessage className="text-xs" />
+                          <FormMessage className="text-xs" data-testid="error-register-username" />
                         </FormItem>
                       )}
                     />
@@ -334,7 +334,7 @@ export default function AuthPage() {
                               {...field} 
                             />
                           </FormControl>
-                          <FormMessage className="text-xs" />
+                          <FormMessage className="text-xs" data-testid="error-register-password" />
                         </FormItem>
                       )}
                     />
@@ -353,7 +353,7 @@ export default function AuthPage() {
                               {...field} 
                             />
                           </FormControl>
-                          <FormMessage className="text-xs" />
+                          <FormMessage className="text-xs" data-testid="error-register-email" />
                         </FormItem>
                       )}
                     />
@@ -371,7 +371,7 @@ export default function AuthPage() {
                               {...field} 
                             />
                           </FormControl>
-                          <FormMessage className="text-xs" />
+                          <FormMessage className="text-xs" data-testid="error-register-displayname" />
                         </FormItem>
                       )}
                     />

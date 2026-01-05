@@ -144,7 +144,7 @@ export default function UserProfile() {
               <p className="text-muted-foreground mb-4">
                 The user @{username} could not be found.
               </p>
-              <Button onClick={() => navigate('/')}>
+              <Button onClick={() => navigate('/')} data-testid="button-go-home">
                 Go to Homepage
               </Button>
             </CardContent>
@@ -171,7 +171,7 @@ export default function UserProfile() {
           <CardContent className="p-4 sm:p-6 lg:p-8">
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-4 sm:mb-6">
               <div className="flex flex-col sm:flex-row items-start sm:space-x-6 mb-4 md:mb-0">
-                <Avatar className="h-32 w-32">
+                <Avatar className="h-32 w-32" data-testid="avatar-user-profile">
                   <AvatarImage src={profile.avatarUrl} alt={profile.displayName} />
                   <AvatarFallback className="text-3xl">
                     {profile.displayName.slice(0, 2).toUpperCase()}
@@ -221,7 +221,7 @@ export default function UserProfile() {
               
               <div className="flex items-center space-x-3">
                 {isOwnProfile ? (
-                  <Button onClick={() => navigate('/settings')}>
+                  <Button onClick={() => navigate('/settings')} data-testid="button-edit-profile">
                     <Settings className="h-4 w-4 mr-2" />
                     Edit Profile
                   </Button>
@@ -230,21 +230,22 @@ export default function UserProfile() {
                     <Button 
                       variant={isFollowing ? 'outline' : 'default'}
                       onClick={() => followMutation.mutate(isFollowing ? 'unfollow' : 'follow')}
+                      data-testid="button-follow"
                     >
                       {isFollowing ? 'Following' : 'Follow'}
                     </Button>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="icon">
+                        <Button variant="outline" size="icon" data-testid="button-share-menu">
                           <Share2 className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent>
-                        <DropdownMenuItem>
+                        <DropdownMenuItem data-testid="menu-item-copy-link">
                           <LinkIcon className="h-4 w-4 mr-2" />
                           Copy profile link
                         </DropdownMenuItem>
-                        <DropdownMenuItem>
+                        <DropdownMenuItem data-testid="menu-item-send-message">
                           <MessageSquare className="h-4 w-4 mr-2" />
                           Send message
                         </DropdownMenuItem>
@@ -286,14 +287,14 @@ export default function UserProfile() {
         </Card>
 
         {/* Main Content */}
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <Tabs value={activeTab} onValueChange={setActiveTab} data-testid="tabs-user-profile">
           {/* Scrollable tabs on mobile */}
           <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 pb-2 sm:pb-0 mb-4 sm:mb-6">
             <TabsList className="inline-flex w-auto min-w-full sm:grid sm:w-full sm:grid-cols-4 gap-1 bg-muted/50 p-1 rounded-lg">
-              <TabsTrigger value="overview" className="flex-shrink-0 px-4 sm:px-3 text-sm whitespace-nowrap">Overview</TabsTrigger>
-              <TabsTrigger value="projects" className="flex-shrink-0 px-4 sm:px-3 text-sm whitespace-nowrap">Projects</TabsTrigger>
-              <TabsTrigger value="activity" className="flex-shrink-0 px-4 sm:px-3 text-sm whitespace-nowrap">Activity</TabsTrigger>
-              <TabsTrigger value="achievements" className="flex-shrink-0 px-4 sm:px-3 text-sm whitespace-nowrap">Achievements</TabsTrigger>
+              <TabsTrigger value="overview" className="flex-shrink-0 px-4 sm:px-3 text-sm whitespace-nowrap" data-testid="tab-overview">Overview</TabsTrigger>
+              <TabsTrigger value="projects" className="flex-shrink-0 px-4 sm:px-3 text-sm whitespace-nowrap" data-testid="tab-projects">Projects</TabsTrigger>
+              <TabsTrigger value="activity" className="flex-shrink-0 px-4 sm:px-3 text-sm whitespace-nowrap" data-testid="tab-activity">Activity</TabsTrigger>
+              <TabsTrigger value="achievements" className="flex-shrink-0 px-4 sm:px-3 text-sm whitespace-nowrap" data-testid="tab-achievements">Achievements</TabsTrigger>
             </TabsList>
           </div>
 

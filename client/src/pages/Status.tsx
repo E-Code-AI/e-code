@@ -199,6 +199,7 @@ export default function Status() {
               size="sm"
               onClick={refresh}
               className={refreshing ? 'animate-spin' : ''}
+              data-testid="button-refresh-status"
             >
               <RefreshCw className="h-4 w-4 mr-2" />
               Refresh
@@ -507,8 +508,8 @@ export default function Status() {
                 Get notified about incidents, scheduled maintenance, and status changes
               </p>
               <div className="flex gap-4 justify-center">
-                <Button>Subscribe via Email</Button>
-                <Button variant="outline">RSS Feed</Button>
+                <Button data-testid="button-subscribe-email">Subscribe via Email</Button>
+                <Button variant="outline" data-testid="button-rss-feed">RSS Feed</Button>
               </div>
             </CardContent>
           </Card>

@@ -3,13 +3,13 @@ import { PublicFooter } from '@/components/layout/PublicFooter';
 
 export default function Terms() {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col" data-testid="page-terms">
       <PublicNavbar />
       
       <main className="flex-1">
         <div className="container-responsive py-responsive">
           <div className="max-w-4xl mx-auto">
-            <h1 className="text-4xl font-bold mb-8">Terms of Service</h1>
+            <h1 className="text-4xl font-bold mb-8" data-testid="heading-terms">Terms of Service</h1>
             
             <div className="prose prose-gray dark:prose-invert max-w-none space-y-8">
               <section>

@@ -210,11 +210,11 @@ export default function MobileAppsPage() {
             </p>
           </div>
           <div className="flex gap-3">
-            <Button variant="outline">
+            <Button variant="outline" data-testid="button-download-ios">
               <Download className="h-4 w-4 mr-2" />
               Download iOS App
             </Button>
-            <Button variant="outline">
+            <Button variant="outline" data-testid="button-download-android">
               <Download className="h-4 w-4 mr-2" />
               Download Android App
             </Button>
@@ -271,13 +271,13 @@ export default function MobileAppsPage() {
           </div>
         )}
 
-        <Tabs defaultValue="overview" className="space-y-6">
+        <Tabs defaultValue="overview" className="space-y-6" data-testid="tabs-mobile-apps">
           <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="apps">My Apps</TabsTrigger>
-            <TabsTrigger value="features">Features</TabsTrigger>
-            <TabsTrigger value="notifications">Notifications</TabsTrigger>
-            <TabsTrigger value="settings">Settings</TabsTrigger>
+            <TabsTrigger value="overview" data-testid="tab-overview">Overview</TabsTrigger>
+            <TabsTrigger value="apps" data-testid="tab-apps">My Apps</TabsTrigger>
+            <TabsTrigger value="features" data-testid="tab-features">Features</TabsTrigger>
+            <TabsTrigger value="notifications" data-testid="tab-notifications">Notifications</TabsTrigger>
+            <TabsTrigger value="settings" data-testid="tab-settings">Settings</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
@@ -376,7 +376,7 @@ export default function MobileAppsPage() {
                         <Badge className={getStatusColor(app.status)}>
                           {app.status}
                         </Badge>
-                        <Button variant="outline" size="sm">
+                        <Button variant="outline" size="sm" data-testid={`button-manage-app-${app.id}`}>
                           <Settings className="h-4 w-4 mr-2" />
                           Manage
                         </Button>
@@ -458,6 +458,7 @@ export default function MobileAppsPage() {
                       onCheckedChange={(checked) => 
                         updateSettingsMutation.mutate({ setting: 'notifications.push', value: checked })
                       }
+                      data-testid="switch-push-notifications"
                     />
                   </div>
                   <div className="flex items-center justify-between">
@@ -470,6 +471,7 @@ export default function MobileAppsPage() {
                       onCheckedChange={(checked) => 
                         updateSettingsMutation.mutate({ setting: 'notifications.updates', value: checked })
                       }
+                      data-testid="switch-project-updates"
                     />
                   </div>
                   <div className="flex items-center justify-between">
@@ -482,6 +484,7 @@ export default function MobileAppsPage() {
                       onCheckedChange={(checked) => 
                         updateSettingsMutation.mutate({ setting: 'notifications.mentions', value: checked })
                       }
+                      data-testid="switch-mentions"
                     />
                   </div>
                 </div>
@@ -494,6 +497,7 @@ export default function MobileAppsPage() {
                       message: "This is a test notification from E-Code mobile app."
                     })}
                     disabled={sendNotificationMutation.isPending}
+                    data-testid="button-send-test-notification"
                   >
                     <Bell className="h-4 w-4 mr-2" />
                     {sendNotificationMutation.isPending ? "Sending..." : "Send Test Notification"}
@@ -520,6 +524,7 @@ export default function MobileAppsPage() {
                       onCheckedChange={(checked) => 
                         updateSettingsMutation.mutate({ setting: 'autoSync', value: checked })
                       }
+                      data-testid="switch-auto-sync"
                     />
                   </div>
                   <div className="flex items-center justify-between">
@@ -532,6 +537,7 @@ export default function MobileAppsPage() {
                       onCheckedChange={(checked) => 
                         updateSettingsMutation.mutate({ setting: 'offlineMode', value: checked })
                       }
+                      data-testid="switch-offline-mode"
                     />
                   </div>
                   <div className="flex items-center justify-between">
@@ -544,6 +550,7 @@ export default function MobileAppsPage() {
                       onCheckedChange={(checked) => 
                         updateSettingsMutation.mutate({ setting: 'mobileDataSync', value: checked })
                       }
+                      data-testid="switch-mobile-data-sync"
                     />
                   </div>
                 </div>
@@ -556,7 +563,7 @@ export default function MobileAppsPage() {
                       <span>250 MB / 1 GB</span>
                     </div>
                     <Progress value={25} className="h-2" />
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" data-testid="button-clear-cache">
                       Clear Cache
                     </Button>
                   </div>

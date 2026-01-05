@@ -192,6 +192,7 @@ export function AdvancedSearch({ initialQuery = '' }: { initialQuery?: string })
             placeholder="Search projects, files, code, users..."
             className="pl-10 pr-24 h-12 text-lg"
             autoFocus
+            data-testid="input-search"
           />
           <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-2">
             <Button
@@ -200,6 +201,7 @@ export function AdvancedSearch({ initialQuery = '' }: { initialQuery?: string })
               size="sm"
               onClick={() => setShowFilters(!showFilters)}
               className="h-8"
+              data-testid="button-toggle-filters"
             >
               <Filter className="h-4 w-4 mr-1" />
               Filters
@@ -217,13 +219,14 @@ export function AdvancedSearch({ initialQuery = '' }: { initialQuery?: string })
         </form>
 
         {/* Search Type Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <Tabs value={activeTab} onValueChange={setActiveTab} data-testid="tabs-search-type">
           <TabsList className="h-auto p-1 bg-muted/50">
             {SEARCH_TYPES.map(type => (
               <TabsTrigger
                 key={type.id}
                 value={type.id}
                 className="flex items-center gap-2 data-[state=active]:bg-background"
+                data-testid={`tab-search-${type.id}`}
               >
                 <type.icon className="h-4 w-4" />
                 {type.name}
@@ -253,6 +256,7 @@ export function AdvancedSearch({ initialQuery = '' }: { initialQuery?: string })
                 size="sm"
                 onClick={clearFilters}
                 className="h-8 text-xs"
+                data-testid="button-clear-filters"
               >
                 Clear all
               </Button>
@@ -269,6 +273,7 @@ export function AdvancedSearch({ initialQuery = '' }: { initialQuery?: string })
                       variant="outline"
                       size="sm"
                       className="w-full justify-between"
+                      data-testid="button-language-filter"
                     >
                       {filters.language.length > 0 
                         ? `${filters.language.length} selected`
@@ -310,7 +315,7 @@ export function AdvancedSearch({ initialQuery = '' }: { initialQuery?: string })
                   value={filters.visibility.join(',')}
                   onValueChange={(value) => updateFilter('visibility', value.split(','))}
                 >
-                  <SelectTrigger className="h-9">
+                  <SelectTrigger className="h-9" data-testid="select-visibility">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -329,7 +334,7 @@ export function AdvancedSearch({ initialQuery = '' }: { initialQuery?: string })
                   value={filters.dateRange}
                   onValueChange={(value) => updateFilter('dateRange', value)}
                 >
-                  <SelectTrigger className="h-9">
+                  <SelectTrigger className="h-9" data-testid="select-date-range">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -349,7 +354,7 @@ export function AdvancedSearch({ initialQuery = '' }: { initialQuery?: string })
                   value={filters.sortBy}
                   onValueChange={(value) => updateFilter('sortBy', value)}
                 >
-                  <SelectTrigger className="h-9">
+                  <SelectTrigger className="h-9" data-testid="select-sort-by">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -404,6 +409,7 @@ export function AdvancedSearch({ initialQuery = '' }: { initialQuery?: string })
             key={result.id}
             className="hover:shadow-md transition-shadow cursor-pointer"
             onClick={() => navigate(result.url)}
+            data-testid={`card-result-${result.id}`}
           >
             <CardContent className="p-4">
               <div className="flex items-start gap-4">

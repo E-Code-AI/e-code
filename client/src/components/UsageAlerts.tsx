@@ -429,7 +429,7 @@ export function UsageAlerts() {
             </div>
             <Dialog open={isAlertDialogOpen} onOpenChange={setIsAlertDialogOpen}>
               <DialogTrigger asChild>
-                <Button>
+                <Button data-testid="button-create-alert">
                   <Plus className="w-4 h-4 mr-2" />
                   Create Alert
                 </Button>
@@ -506,7 +506,7 @@ export function UsageAlerts() {
             </div>
             <Dialog open={isBudgetDialogOpen} onOpenChange={setIsBudgetDialogOpen}>
               <DialogTrigger asChild>
-                <Button>
+                <Button data-testid="button-create-budget">
                   <Plus className="w-4 h-4 mr-2" />
                   Create Budget
                 </Button>

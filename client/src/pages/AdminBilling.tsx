@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { AdminLayout } from "./admin/AdminLayout";
 import { 
   CreditCard, Settings, Users, Plus, Edit, 
   Trash2, Ban, CheckCircle, AlertCircle, Shield,
@@ -163,39 +164,40 @@ export default function AdminBilling() {
   }
 
   return (
-    <div className="container mx-auto py-8 space-y-6">
+    <AdminLayout>
+      <div className="p-4 sm:p-6 lg:p-8 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Billing Management</h1>
-          <p className="text-muted-foreground">Configure pricing plans and billing settings</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-white" data-testid="heading-billing-management">Billing Management</h1>
+          <p className="text-zinc-400" data-testid="text-billing-description">Configure pricing plans and billing settings</p>
         </div>
       </div>
 
       <Tabs defaultValue="plans" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="plans">Pricing Plans</TabsTrigger>
-          <TabsTrigger value="limits">Resource Limits</TabsTrigger>
-          <TabsTrigger value="settings">Billing Settings</TabsTrigger>
+        <TabsList data-testid="tabs-billing">
+          <TabsTrigger value="plans" data-testid="tab-pricing-plans">Pricing Plans</TabsTrigger>
+          <TabsTrigger value="limits" data-testid="tab-resource-limits">Resource Limits</TabsTrigger>
+          <TabsTrigger value="settings" data-testid="tab-billing-settings">Billing Settings</TabsTrigger>
         </TabsList>
 
         {/* Pricing Plans Tab */}
         <TabsContent value="plans">
-          <Card>
+          <Card className="bg-zinc-800 border-zinc-700" data-testid="card-pricing-plans">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle>Pricing Plans</CardTitle>
-                  <CardDescription>Manage subscription tiers and pricing</CardDescription>
+                  <CardTitle className="text-white">Pricing Plans</CardTitle>
+                  <CardDescription className="text-zinc-400">Manage subscription tiers and pricing</CardDescription>
                 </div>
               </div>
             </CardHeader>
             <CardContent>
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 {pricingPlans.map((plan) => (
-                  <Card key={plan.id} className="relative">
+                  <Card key={plan.id} className="relative bg-zinc-900 border-zinc-700" data-testid={`card-plan-${plan.id}`}>
                     <CardHeader>
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-lg">{plan.name}</CardTitle>
+                        <CardTitle className="text-lg text-white">{plan.name}</CardTitle>
                         <Button
                           size="icon"
                           variant="ghost"
@@ -203,6 +205,7 @@ export default function AdminBilling() {
                             setEditingPlan(plan);
                             setShowPlanDialog(true);
                           }}
+                          data-testid={`button-edit-plan-${plan.id}`}
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
@@ -211,18 +214,18 @@ export default function AdminBilling() {
                     <CardContent>
                       <div className="space-y-4">
                         <div>
-                          <p className="text-2xl font-bold">€{plan.monthlyPrice}</p>
-                          <p className="text-sm text-muted-foreground">per month</p>
+                          <p className="text-2xl font-bold text-white">€{plan.monthlyPrice}</p>
+                          <p className="text-sm text-zinc-400">per month</p>
                         </div>
                         <div>
-                          <p className="text-sm">Yearly: €{plan.yearlyPrice}</p>
-                          <p className="text-xs text-green-600">
+                          <p className="text-sm text-zinc-300">Yearly: €{plan.yearlyPrice}</p>
+                          <p className="text-xs text-green-500">
                             Save €{(plan.monthlyPrice * 12 - plan.yearlyPrice).toFixed(2)}
                           </p>
                         </div>
                         <div className="space-y-1">
-                          <p className="text-sm font-medium">Features:</p>
-                          <ul className="text-sm text-muted-foreground space-y-1">
+                          <p className="text-sm font-medium text-white">Features:</p>
+                          <ul className="text-sm text-zinc-400 space-y-1">
                             {plan.features.slice(0, 3).map((feature, i) => (
                               <li key={i} className="truncate">• {feature}</li>
                             ))}
@@ -242,15 +245,15 @@ export default function AdminBilling() {
 
         {/* Resource Limits Tab */}
         <TabsContent value="limits">
-          <Card>
+          <Card className="bg-zinc-800 border-zinc-700" data-testid="card-resource-limits">
             <CardHeader>
-              <CardTitle>Resource Limits</CardTitle>
-              <CardDescription>Configure usage limits and overage rates for each plan</CardDescription>
+              <CardTitle className="text-white">Resource Limits</CardTitle>
+              <CardDescription className="text-zinc-400">Configure usage limits and overage rates for each plan</CardDescription>
             </CardHeader>
             <CardContent>
               {pricingPlans.map((plan) => (
-                <div key={plan.id} className="mb-6">
-                  <h3 className="text-lg font-semibold mb-3">{plan.name}</h3>
+                <div key={plan.id} className="mb-6" data-testid={`limits-plan-${plan.id}`}>
+                  <h3 className="text-lg font-semibold mb-3 text-white">{plan.name}</h3>
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -263,15 +266,15 @@ export default function AdminBilling() {
                     </TableHeader>
                     <TableBody>
                       {plan.limits.map((limit) => (
-                        <TableRow key={limit.id}>
-                          <TableCell className="capitalize">
+                        <TableRow key={limit.id} data-testid={`row-limit-${limit.id}`}>
+                          <TableCell className="capitalize text-white">
                             {limit.resourceType.replace(/_/g, ' ')}
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="text-zinc-300">
                             {limit.limit === -1 ? 'Unlimited' : limit.limit}
                           </TableCell>
-                          <TableCell>{limit.unit}</TableCell>
-                          <TableCell>
+                          <TableCell className="text-zinc-300">{limit.unit}</TableCell>
+                          <TableCell className="text-zinc-300">
                             {limit.overage_rate ? `€${limit.overage_rate}/${limit.unit}` : 'N/A'}
                           </TableCell>
                           <TableCell>
@@ -283,6 +286,7 @@ export default function AdminBilling() {
                                 setEditingLimit(limit);
                                 setShowLimitDialog(true);
                               }}
+                              data-testid={`button-edit-limit-${limit.id}`}
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
@@ -299,41 +303,45 @@ export default function AdminBilling() {
 
         {/* Billing Settings Tab */}
         <TabsContent value="settings">
-          <Card>
+          <Card className="bg-zinc-800 border-zinc-700" data-testid="card-billing-settings">
             <CardHeader>
-              <CardTitle>Billing Settings</CardTitle>
-              <CardDescription>Configure global billing parameters</CardDescription>
+              <CardTitle className="text-white">Billing Settings</CardTitle>
+              <CardDescription className="text-zinc-400">Configure global billing parameters</CardDescription>
             </CardHeader>
             <CardContent>
               {billingSettings && (
-                <form onSubmit={handleSettingsSubmit} className="space-y-4">
+                <form onSubmit={handleSettingsSubmit} className="space-y-4" data-testid="form-billing-settings">
                   <div className="grid gap-4 md:grid-cols-2">
                     <div>
-                      <Label htmlFor="stripe-webhook">Stripe Webhook Endpoint</Label>
+                      <Label htmlFor="stripe-webhook" className="text-zinc-300">Stripe Webhook Endpoint</Label>
                       <Input
                         id="stripe-webhook"
                         value={billingSettings.stripeWebhookEndpoint}
                         onChange={(e) => billingSettings.stripeWebhookEndpoint = e.target.value}
                         placeholder="https://e-code.ai/webhooks/stripe"
+                        className="bg-zinc-900 border-zinc-700 text-white"
+                        data-testid="input-stripe-webhook"
                       />
                     </div>
                     <div>
-                      <Label htmlFor="tax-rate">Tax Rate (%)</Label>
+                      <Label htmlFor="tax-rate" className="text-zinc-300">Tax Rate (%)</Label>
                       <Input
                         id="tax-rate"
                         type="number"
                         step="0.01"
                         value={billingSettings.taxRate}
                         onChange={(e) => billingSettings.taxRate = parseFloat(e.target.value)}
+                        className="bg-zinc-900 border-zinc-700 text-white"
+                        data-testid="input-tax-rate"
                       />
                     </div>
                     <div>
-                      <Label htmlFor="currency">Currency</Label>
+                      <Label htmlFor="currency" className="text-zinc-300">Currency</Label>
                       <Select 
                         value={billingSettings.currency}
                         onValueChange={(value) => billingSettings.currency = value}
                       >
-                        <SelectTrigger id="currency">
+                        <SelectTrigger id="currency" className="bg-zinc-900 border-zinc-700 text-white" data-testid="select-currency">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -344,25 +352,29 @@ export default function AdminBilling() {
                       </Select>
                     </div>
                     <div>
-                      <Label htmlFor="invoice-prefix">Invoice Prefix</Label>
+                      <Label htmlFor="invoice-prefix" className="text-zinc-300">Invoice Prefix</Label>
                       <Input
                         id="invoice-prefix"
                         value={billingSettings.invoicePrefix}
                         onChange={(e) => billingSettings.invoicePrefix = e.target.value}
                         placeholder="INV-"
+                        className="bg-zinc-900 border-zinc-700 text-white"
+                        data-testid="input-invoice-prefix"
                       />
                     </div>
                     <div>
-                      <Label htmlFor="grace-period">Grace Period (days)</Label>
+                      <Label htmlFor="grace-period" className="text-zinc-300">Grace Period (days)</Label>
                       <Input
                         id="grace-period"
                         type="number"
                         value={billingSettings.gracePeriodDays}
                         onChange={(e) => billingSettings.gracePeriodDays = parseInt(e.target.value)}
+                        className="bg-zinc-900 border-zinc-700 text-white"
+                        data-testid="input-grace-period"
                       />
                     </div>
                   </div>
-                  <Button type="submit" disabled={updateSettingsMutation.isPending}>
+                  <Button type="submit" disabled={updateSettingsMutation.isPending} data-testid="button-save-settings">
                     Save Settings
                   </Button>
                 </form>
@@ -476,6 +488,7 @@ export default function AdminBilling() {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+    </AdminLayout>
   );
 }

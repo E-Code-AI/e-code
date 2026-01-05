@@ -207,7 +207,7 @@ export default function Secrets() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background" data-testid="secrets-page">
       {/* Header */}
       <div className="border-b">
         <div className="container mx-auto px-4 py-6">
@@ -217,13 +217,14 @@ export default function Secrets() {
                 <Lock className="h-6 w-6 text-primary" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold">Secrets</h1>
+                <h1 className="text-2xl font-bold" data-testid="text-secrets-title">Secrets</h1>
                 <p className="text-muted-foreground">Manage your secure environment variables</p>
               </div>
             </div>
             <Button 
               onClick={() => setCreateDialogOpen(true)}
               className="gap-2"
+              data-testid="button-new-secret"
             >
               <Plus className="h-4 w-4" />
               New Secret
@@ -238,7 +239,7 @@ export default function Secrets() {
           {/* Main content */}
           <div className="lg:col-span-2 space-y-6">
             {/* Search and filters */}
-            <Card>
+            <Card data-testid="card-search">
               <CardContent className="p-4">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -247,29 +248,30 @@ export default function Secrets() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-9"
+                    data-testid="input-search-secrets"
                   />
                 </div>
               </CardContent>
             </Card>
 
             {/* Secrets list */}
-            <Card>
+            <Card data-testid="card-secrets-list">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle>Your Secrets</CardTitle>
-                  <Badge variant="secondary">{filteredSecrets.length} secrets</Badge>
+                  <Badge variant="secondary" data-testid="badge-secrets-count">{filteredSecrets.length} secrets</Badge>
                 </div>
               </CardHeader>
               <CardContent>
                 {filteredSecrets.length === 0 ? (
-                  <div className="text-center py-12">
+                  <div className="text-center py-12" data-testid="empty-secrets">
                     <Key className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
                     <h3 className="text-lg font-semibold mb-2">No secrets yet</h3>
                     <p className="text-muted-foreground mb-4">
                       {searchQuery ? 'No secrets match your search.' : 'Create your first secret to get started.'}
                     </p>
                     {!searchQuery && (
-                      <Button onClick={() => setCreateDialogOpen(true)} variant="outline">
+                      <Button onClick={() => setCreateDialogOpen(true)} variant="outline" data-testid="button-create-first-secret">
                         <Plus className="h-4 w-4 mr-2" />
                         Create Secret
                       </Button>
@@ -281,11 +283,12 @@ export default function Secrets() {
                       <div
                         key={secret.id}
                         className="border rounded-lg p-4 hover:bg-muted/50 transition-colors"
+                        data-testid={`secret-item-${secret.id}`}
                       >
                         <div className="flex items-start justify-between mb-2">
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">
-                              <code className="text-sm font-mono font-semibold">{secret.key}</code>
+                              <code className="text-sm font-mono font-semibold" data-testid={`secret-key-${secret.id}`}>{secret.key}</code>
                               <Badge variant="outline" className="text-xs">
                                 Secure
                               </Badge>
@@ -300,6 +303,7 @@ export default function Secrets() {
                               size="icon"
                               className="h-8 w-8"
                               onClick={() => toggleShowValue(secret.id)}
+                              data-testid={`button-toggle-value-${secret.id}`}
                             >
                               {showValues[secret.id] ? (
                                 <EyeOff className="h-4 w-4" />
@@ -312,6 +316,7 @@ export default function Secrets() {
                               size="icon"
                               className="h-8 w-8"
                               onClick={() => copyToClipboard(secret.value, secret.key)}
+                              data-testid={`button-copy-secret-${secret.id}`}
                             >
                               <Copy className="h-4 w-4" />
                             </Button>
@@ -320,6 +325,7 @@ export default function Secrets() {
                               size="icon"
                               className="h-8 w-8 text-destructive"
                               onClick={() => setDeleteSecretId(secret.id)}
+                              data-testid={`button-delete-secret-${secret.id}`}
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -331,6 +337,7 @@ export default function Secrets() {
                             value={secret.value}
                             readOnly
                             className="font-mono text-sm"
+                            data-testid={`input-secret-value-${secret.id}`}
                           />
                         </div>
                         <div className="mt-2 text-xs text-muted-foreground">
@@ -417,7 +424,7 @@ api_key = os.environ.get('API_KEY')`}</code>
 
       {/* Create Secret Dialog */}
       <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-        <DialogContent>
+        <DialogContent data-testid="dialog-create-secret">
           <DialogHeader>
             <DialogTitle>Create New Secret</DialogTitle>
             <DialogDescription>
@@ -433,6 +440,7 @@ api_key = os.environ.get('API_KEY')`}</code>
                 value={newSecret.key}
                 onChange={(e) => setNewSecret({ ...newSecret, key: e.target.value.toUpperCase() })}
                 className="font-mono"
+                data-testid="input-secret-key"
               />
               <p className="text-xs text-muted-foreground">
                 Use UPPER_CASE with underscores
@@ -447,6 +455,7 @@ api_key = os.environ.get('API_KEY')`}</code>
                 value={newSecret.value}
                 onChange={(e) => setNewSecret({ ...newSecret, value: e.target.value })}
                 className="font-mono"
+                data-testid="input-secret-value"
               />
             </div>
             <div className="space-y-2">
@@ -456,14 +465,15 @@ api_key = os.environ.get('API_KEY')`}</code>
                 placeholder="What is this secret used for?"
                 value={newSecret.description}
                 onChange={(e) => setNewSecret({ ...newSecret, description: e.target.value })}
+                data-testid="input-secret-description"
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
+            <Button variant="outline" onClick={() => setCreateDialogOpen(false)} data-testid="button-cancel-create-secret">
               Cancel
             </Button>
-            <Button onClick={handleCreateSecret} disabled={createSecretMutation.isPending}>
+            <Button onClick={handleCreateSecret} disabled={createSecretMutation.isPending} data-testid="button-confirm-create-secret">
               {createSecretMutation.isPending ? 'Creating...' : 'Create Secret'}
             </Button>
           </DialogFooter>
@@ -472,7 +482,7 @@ api_key = os.environ.get('API_KEY')`}</code>
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!deleteSecretId} onOpenChange={(open) => !open && setDeleteSecretId(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent data-testid="dialog-delete-secret">
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Secret</AlertDialogTitle>
             <AlertDialogDescription>
@@ -480,10 +490,11 @@ api_key = os.environ.get('API_KEY')`}</code>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel data-testid="button-cancel-delete-secret">Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => deleteSecretId && deleteSecretMutation.mutate(deleteSecretId)}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              data-testid="button-confirm-delete-secret"
             >
               Delete
             </AlertDialogAction>

@@ -260,6 +260,7 @@ export default function TeamSettings() {
           size="sm"
           className="mb-4"
           onClick={() => setLocation(`/teams/${id}`)}
+          data-testid="button-back-to-team"
         >
           <ChevronLeft className="h-4 w-4 mr-2" />
           Back to Team
@@ -270,11 +271,11 @@ export default function TeamSettings() {
 
       {/* Tabs */}
       <Tabs defaultValue="general" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
-          <TabsTrigger value="general">General</TabsTrigger>
-          <TabsTrigger value="security">Security</TabsTrigger>
-          <TabsTrigger value="billing">Billing</TabsTrigger>
-          <TabsTrigger value="danger">Danger Zone</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid" data-testid="tabs-settings">
+          <TabsTrigger value="general" data-testid="tab-general">General</TabsTrigger>
+          <TabsTrigger value="security" data-testid="tab-security">Security</TabsTrigger>
+          <TabsTrigger value="billing" data-testid="tab-billing">Billing</TabsTrigger>
+          <TabsTrigger value="danger" data-testid="tab-danger">Danger Zone</TabsTrigger>
         </TabsList>
 
         {/* General Tab */}
@@ -384,6 +385,7 @@ export default function TeamSettings() {
                 <Switch
                   checked={notifyOnNewMembers}
                   onCheckedChange={setNotifyOnNewMembers}
+                  data-testid="switch-notify-members"
                 />
               </div>
 
@@ -397,6 +399,7 @@ export default function TeamSettings() {
                 <Switch
                   checked={notifyOnNewProjects}
                   onCheckedChange={setNotifyOnNewProjects}
+                  data-testid="switch-notify-projects"
                 />
               </div>
             </CardContent>
@@ -421,6 +424,7 @@ export default function TeamSettings() {
                 <Switch
                   checked={requireApproval}
                   onCheckedChange={setRequireApproval}
+                  data-testid="switch-require-approval"
                 />
               </div>
 
@@ -429,7 +433,7 @@ export default function TeamSettings() {
                 <p className="text-sm text-muted-foreground mb-4">
                   Manage API keys for team integrations
                 </p>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" data-testid="button-manage-api-keys">
                   <Key className="h-4 w-4 mr-2" />
                   Manage API Keys
                 </Button>
@@ -443,7 +447,7 @@ export default function TeamSettings() {
               <CardDescription>View team activity and security events</CardDescription>
             </CardHeader>
             <CardContent>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" data-testid="button-download-audit-logs">
                 <Download className="h-4 w-4 mr-2" />
                 Download Audit Logs
               </Button>
@@ -477,12 +481,12 @@ export default function TeamSettings() {
 
                 <div className="flex gap-2">
                   {team.plan !== 'enterprise' && (
-                    <Button>
+                    <Button data-testid="button-upgrade-plan">
                       <Zap className="h-4 w-4 mr-2" />
                       Upgrade Plan
                     </Button>
                   )}
-                  <Button variant="outline">
+                  <Button variant="outline" data-testid="button-manage-billing">
                     <CreditCard className="h-4 w-4 mr-2" />
                     Manage Billing
                   </Button>
@@ -535,7 +539,7 @@ export default function TeamSettings() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Button variant="outline" className="text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground">
+                  <Button variant="outline" className="text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground" data-testid="button-archive-team">
                     <Archive className="h-4 w-4 mr-2" />
                     Archive Team
                   </Button>
@@ -552,7 +556,7 @@ export default function TeamSettings() {
                 <CardContent>
                   <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
                     <DialogTrigger asChild>
-                      <Button variant="destructive">
+                      <Button variant="destructive" data-testid="button-delete-team">
                         <Trash2 className="h-4 w-4 mr-2" />
                         Delete Team
                       </Button>
@@ -579,17 +583,19 @@ export default function TeamSettings() {
                             value={deleteConfirmation}
                             onChange={(e) => setDeleteConfirmation(e.target.value)}
                             placeholder={team.name}
+                            data-testid="input-delete-confirm"
                           />
                         </div>
                       </div>
                       <DialogFooter>
-                        <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
+                        <Button variant="outline" onClick={() => setShowDeleteDialog(false)} data-testid="button-cancel-delete">
                           Cancel
                         </Button>
                         <Button
                           variant="destructive"
                           onClick={() => deleteTeamMutation.mutate()}
                           disabled={deleteConfirmation !== team.name || deleteTeamMutation.isPending}
+                          data-testid="button-confirm-delete"
                         >
                           Delete Team
                         </Button>

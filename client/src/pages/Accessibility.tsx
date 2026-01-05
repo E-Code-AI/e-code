@@ -58,13 +58,13 @@ export default function Accessibility() {
     <PublicLayout>
       <SEOHead {...seo} />
 
-      <div className="container mx-auto px-4 py-12 sm:py-16 md:py-20">
+      <div className="container mx-auto px-4 py-12 sm:py-16 md:py-20" data-testid="page-accessibility">
         {/* Hero Section */}
         <div className="text-center max-w-4xl mx-auto mb-12 sm:mb-16">
           <Badge className="mb-4 px-4 py-1.5 text-sm font-medium bg-gradient-to-r from-teal-500 to-cyan-500 text-white border-0">
             Inclusive by Design
           </Badge>
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-teal-600 to-cyan-600 dark:from-teal-400 dark:to-cyan-400 bg-clip-text text-transparent">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-teal-600 to-cyan-600 dark:from-teal-400 dark:to-cyan-400 bg-clip-text text-transparent" data-testid="heading-accessibility">
             Accessibility Statement
           </h1>
           <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto">
@@ -237,7 +237,7 @@ export default function Accessibility() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/contact">
-                <Button size="lg" className="gap-2 min-h-[48px] bg-white text-teal-600 hover:bg-teal-50">
+                <Button size="lg" className="gap-2 min-h-[48px] bg-white text-teal-600 hover:bg-teal-50" data-testid="button-accessibility-contact">
                   <Mail className="h-5 w-5" />
                   Contact Accessibility Team
                 </Button>

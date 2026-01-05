@@ -72,15 +72,15 @@ export default function RuntimeDiagnosticsPage() {
   const memoryPercentage = parseFloat(systemHealth.memoryUsage?.replace('%', '') || '0');
 
   return (
-    <div className="container py-6">
-      <h1 className="text-3xl font-bold mb-6">Runtime Diagnostics</h1>
+    <div className="container py-6" data-testid="page-runtime-diagnostics">
+      <h1 className="text-3xl font-bold mb-6" data-testid="heading-runtime-diagnostics">Runtime Diagnostics</h1>
       
-      <Tabs defaultValue="overview" className="mb-6">
+      <Tabs defaultValue="overview" className="mb-6" data-testid="tabs-diagnostics">
         <TabsList className="mb-4">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="languages">Languages</TabsTrigger>
-          <TabsTrigger value="system">System Resources</TabsTrigger>
-          <TabsTrigger value="projects">Active Projects</TabsTrigger>
+          <TabsTrigger value="overview" data-testid="tab-overview">Overview</TabsTrigger>
+          <TabsTrigger value="languages" data-testid="tab-languages">Languages</TabsTrigger>
+          <TabsTrigger value="system" data-testid="tab-system">System Resources</TabsTrigger>
+          <TabsTrigger value="projects" data-testid="tab-projects">Active Projects</TabsTrigger>
         </TabsList>
         
         {/* Overview Tab */}

@@ -334,4 +334,143 @@ router.post('/posts/:postId/bookmark', async (req: Request, res: Response) => {
   }
 });
 
+router.get('/posts/:postId', async (req: Request, res: Response) => {
+  try {
+    const { postId } = req.params;
+    const postIdNum = parseInt(postId, 10);
+
+    if (isNaN(postIdNum)) {
+      return res.status(400).json({ error: 'Invalid post ID' });
+    }
+
+    const [post] = await db.select({
+      id: communityPosts.id,
+      title: communityPosts.title,
+      content: communityPosts.content,
+      authorId: communityPosts.authorId,
+      category: communityPosts.categoryId,
+      tags: communityPosts.tags,
+      projectUrl: communityPosts.projectUrl,
+      imageUrl: communityPosts.imageUrl,
+      views: communityPosts.viewCount,
+      createdAt: communityPosts.createdAt,
+      authorUsername: users.username,
+      authorDisplayName: users.displayName,
+      authorAvatarUrl: users.avatarUrl,
+    })
+    .from(communityPosts)
+    .leftJoin(users, eq(communityPosts.authorId, users.id))
+    .where(eq(communityPosts.id, postIdNum));
+
+    if (!post) {
+      return res.status(404).json({ error: 'Post not found' });
+    }
+
+    const [likeCount] = await db.select({
+      count: sql<number>`COUNT(*)`,
+    }).from(communityPostLikes)
+      .where(eq(communityPostLikes.postId, postIdNum));
+
+    const [commentCount] = await db.select({
+      count: sql<number>`COUNT(*)`,
+    }).from(communityComments)
+      .where(eq(communityComments.postId, postIdNum));
+
+    const comments = await db.select({
+      id: communityComments.id,
+      content: communityComments.content,
+      authorId: communityComments.authorId,
+      createdAt: communityComments.createdAt,
+      authorUsername: users.username,
+      authorDisplayName: users.displayName,
+      authorAvatarUrl: users.avatarUrl,
+    })
+    .from(communityComments)
+    .leftJoin(users, eq(communityComments.authorId, users.id))
+    .where(eq(communityComments.postId, postIdNum))
+    .orderBy(desc(communityComments.createdAt))
+    .limit(50);
+
+    await db.update(communityPosts)
+      .set({ viewCount: sql`${communityPosts.viewCount} + 1` })
+      .where(eq(communityPosts.id, postIdNum));
+
+    res.json({
+      id: String(post.id),
+      title: post.title,
+      content: post.content,
+      author: {
+        id: String(post.authorId),
+        username: post.authorUsername || 'anonymous',
+        displayName: post.authorDisplayName || post.authorUsername || 'Anonymous',
+        avatarUrl: post.authorAvatarUrl,
+        reputation: 0,
+      },
+      category: post.category,
+      tags: post.tags || [],
+      likes: Number(likeCount?.count || 0),
+      comments: Number(commentCount?.count || 0),
+      views: (post.views || 0) + 1,
+      isLiked: false,
+      isBookmarked: false,
+      createdAt: post.createdAt?.toISOString(),
+      projectUrl: post.projectUrl,
+      imageUrl: post.imageUrl,
+      commentsData: comments.map(c => ({
+        id: String(c.id),
+        author: {
+          id: String(c.authorId),
+          username: c.authorUsername || 'anonymous',
+          displayName: c.authorDisplayName || c.authorUsername || 'Anonymous',
+          avatarUrl: c.authorAvatarUrl,
+          reputation: 0,
+        },
+        content: c.content,
+        likes: 0,
+        isLiked: false,
+        createdAt: c.createdAt?.toISOString(),
+      })),
+    });
+  } catch (error) {
+    console.error('[Community] Failed to fetch post:', error);
+    res.status(500).json({ error: 'Failed to fetch post' });
+  }
+});
+
+router.post('/posts/:postId/comments', async (req: Request, res: Response) => {
+  try {
+    const { postId } = req.params;
+    const userId = (req as any).user?.id;
+    const { content } = req.body;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    if (!content?.trim()) {
+      return res.status(400).json({ error: 'Comment content is required' });
+    }
+
+    const postIdNum = parseInt(postId, 10);
+
+    const [comment] = await db.insert(communityComments).values({
+      postId: postIdNum,
+      authorId: userId,
+      content: content.trim(),
+    }).returning();
+
+    res.json({
+      success: true,
+      comment: {
+        id: String(comment.id),
+        content: comment.content,
+        createdAt: comment.createdAt?.toISOString(),
+      },
+    });
+  } catch (error) {
+    console.error('[Community] Failed to add comment:', error);
+    res.status(500).json({ error: 'Failed to add comment' });
+  }
+});
+
 export default router;

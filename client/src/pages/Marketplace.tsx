@@ -135,7 +135,7 @@ export default function Marketplace() {
   });
 
   const ExtensionCard = ({ extension }: { extension: any }) => (
-    <Card className="group hover:shadow-md transition-shadow">
+    <Card className="group hover:shadow-md transition-shadow" data-testid={`card-extension-${extension.id}`}>
       <CardContent className="p-6">
         <div className="flex items-start gap-4">
           <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-semibold">
@@ -145,21 +145,21 @@ export default function Marketplace() {
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between mb-2">
               <div>
-                <h3 className="font-semibold text-lg group-hover:text-primary transition-colors">
+                <h3 className="font-semibold text-lg group-hover:text-primary transition-colors" data-testid={`text-extension-name-${extension.id}`}>
                   {extension.name}
                 </h3>
-                <p className="text-sm text-muted-foreground">by {extension.author}</p>
+                <p className="text-sm text-muted-foreground" data-testid={`text-extension-author-${extension.id}`}>by {extension.author}</p>
               </div>
               
               <div className="flex items-center gap-2">
                 {extension.featured && (
-                  <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500">
+                  <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500" data-testid={`badge-extension-featured-${extension.id}`}>
                     <Crown className="h-3 w-3 mr-1" />
                     Featured
                   </Badge>
                 )}
                 {extension.installed && (
-                  <Badge variant="outline" className="text-green-600 border-green-600">
+                  <Badge variant="outline" className="text-green-600 border-green-600" data-testid={`badge-extension-installed-${extension.id}`}>
                     <CheckCircle2 className="h-3 w-3 mr-1" />
                     Installed
                   </Badge>
@@ -167,13 +167,13 @@ export default function Marketplace() {
               </div>
             </div>
             
-            <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+            <p className="text-sm text-muted-foreground mb-3 line-clamp-2" data-testid={`text-extension-description-${extension.id}`}>
               {extension.description}
             </p>
             
             <div className="flex flex-wrap gap-1 mb-3">
               {extension.tags.map((tag: string, index: number) => (
-                <Badge key={index} variant="secondary" className="text-xs">
+                <Badge key={index} variant="secondary" className="text-xs" data-testid={`badge-extension-tag-${extension.id}-${index}`}>
                   {tag}
                 </Badge>
               ))}
@@ -181,20 +181,20 @@ export default function Marketplace() {
             
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1" data-testid={`text-extension-rating-${extension.id}`}>
                   <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                   <span>{extension.rating}</span>
                   <span>({extension.reviews.toLocaleString()})</span>
                 </div>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1" data-testid={`text-extension-downloads-${extension.id}`}>
                   <Download className="h-4 w-4" />
                   <span>{extension.downloads.toLocaleString()}</span>
                 </div>
               </div>
               
               <div className="flex items-center gap-2">
-                <span className="font-semibold text-lg">{extension.price}</span>
-                <Button size="sm" variant={extension.installed ? "outline" : "default"}>
+                <span className="font-semibold text-lg" data-testid={`text-extension-price-${extension.id}`}>{extension.price}</span>
+                <Button size="sm" variant={extension.installed ? "outline" : "default"} data-testid={`button-extension-install-${extension.id}`}>
                   {extension.installed ? 'Uninstall' : 'Install'}
                 </Button>
               </div>
@@ -206,7 +206,7 @@ export default function Marketplace() {
   );
 
   const TemplateCard = ({ template }: { template: any }) => (
-    <Card className="group hover:shadow-md transition-shadow">
+    <Card className="group hover:shadow-md transition-shadow" data-testid={`card-template-${template.id}`}>
       <CardContent className="p-6">
         <div className="flex items-start gap-4">
           <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-blue-600 rounded-lg flex items-center justify-center text-white font-semibold text-lg">
@@ -216,27 +216,27 @@ export default function Marketplace() {
           <div className="flex-1">
             <div className="flex items-start justify-between mb-2">
               <div>
-                <h3 className="font-semibold text-lg group-hover:text-primary transition-colors">
+                <h3 className="font-semibold text-lg group-hover:text-primary transition-colors" data-testid={`text-template-name-${template.id}`}>
                   {template.name}
                 </h3>
-                <p className="text-sm text-muted-foreground">by {template.author}</p>
+                <p className="text-sm text-muted-foreground" data-testid={`text-template-author-${template.id}`}>by {template.author}</p>
               </div>
               
               {template.featured && (
-                <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500">
+                <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500" data-testid={`badge-template-featured-${template.id}`}>
                   <Crown className="h-3 w-3 mr-1" />
                   Featured
                 </Badge>
               )}
             </div>
             
-            <p className="text-sm text-muted-foreground mb-3">
+            <p className="text-sm text-muted-foreground mb-3" data-testid={`text-template-description-${template.id}`}>
               {template.description}
             </p>
             
             <div className="flex flex-wrap gap-1 mb-3">
               {template.tags.map((tag: string, index: number) => (
-                <Badge key={index} variant="secondary" className="text-xs">
+                <Badge key={index} variant="secondary" className="text-xs" data-testid={`badge-template-tag-${template.id}-${index}`}>
                   {tag}
                 </Badge>
               ))}
@@ -244,18 +244,18 @@ export default function Marketplace() {
             
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1" data-testid={`text-template-rating-${template.id}`}>
                   <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                   <span>{template.rating}</span>
                 </div>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1" data-testid={`text-template-downloads-${template.id}`}>
                   <Download className="h-4 w-4" />
                   <span>{template.downloads.toLocaleString()}</span>
                 </div>
-                <Badge variant="outline">{template.category}</Badge>
+                <Badge variant="outline" data-testid={`badge-template-category-${template.id}`}>{template.category}</Badge>
               </div>
               
-              <Button size="sm">
+              <Button size="sm" data-testid={`button-use-template-${template.id}`}>
                 Use Template
               </Button>
             </div>
@@ -266,21 +266,21 @@ export default function Marketplace() {
   );
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background" data-testid="page-marketplace">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-2xl font-bold">Marketplace</h1>
-            <p className="text-muted-foreground">Discover extensions, themes, and templates for E-Code</p>
+            <h1 className="text-2xl font-bold" data-testid="text-marketplace-title">Marketplace</h1>
+            <p className="text-muted-foreground" data-testid="text-marketplace-subtitle">Discover extensions, themes, and templates for E-Code</p>
           </div>
           
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" data-testid="button-my-extensions">
               <Package className="h-4 w-4 mr-2" />
               My Extensions
             </Button>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" data-testid="button-publish">
               <Settings className="h-4 w-4 mr-2" />
               Publish
             </Button>
@@ -297,13 +297,14 @@ export default function Marketplace() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
+                data-testid="input-marketplace-search"
               />
             </div>
           </div>
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline">
+              <Button variant="outline" data-testid="button-category-filter">
                 <Filter className="h-4 w-4 mr-2" />
                 Category
               </Button>
@@ -313,6 +314,7 @@ export default function Marketplace() {
                 <DropdownMenuItem 
                   key={category.id}
                   onClick={() => setSelectedCategory(category.id)}
+                  data-testid={`menu-item-category-${category.id}`}
                 >
                   <category.icon className="h-4 w-4 mr-2" />
                   {category.name} ({category.count})
@@ -324,16 +326,16 @@ export default function Marketplace() {
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="extensions">
+            <TabsTrigger value="extensions" data-testid="tab-extensions">
               Extensions ({extensions.length})
             </TabsTrigger>
-            <TabsTrigger value="themes">
+            <TabsTrigger value="themes" data-testid="tab-themes">
               Themes
             </TabsTrigger>
-            <TabsTrigger value="templates">
+            <TabsTrigger value="templates" data-testid="tab-templates">
               Templates ({templates.length})
             </TabsTrigger>
-            <TabsTrigger value="publishers">
+            <TabsTrigger value="publishers" data-testid="tab-publishers">
               Publishers
             </TabsTrigger>
           </TabsList>
@@ -370,15 +372,15 @@ export default function Marketplace() {
                 { name: 'Nord', preview: 'dark', downloads: 98765 },
                 { name: 'Solarized Light', preview: 'light', downloads: 87654 }
               ].map((theme, index) => (
-                <Card key={index}>
+                <Card key={index} data-testid={`card-theme-${index}`}>
                   <CardContent className="p-4">
                     <div className={`h-32 rounded-lg mb-3 ${theme.preview === 'dark' ? 'bg-gray-900' : 'bg-gray-100'} flex items-center justify-center`}>
                       <Code className={`h-8 w-8 ${theme.preview === 'dark' ? 'text-white' : 'text-gray-600'}`} />
                     </div>
-                    <h3 className="font-semibold mb-1">{theme.name}</h3>
+                    <h3 className="font-semibold mb-1" data-testid={`text-theme-name-${index}`}>{theme.name}</h3>
                     <div className="flex items-center justify-between text-sm text-muted-foreground">
-                      <span>{theme.downloads.toLocaleString()} downloads</span>
-                      <Button size="sm">Apply</Button>
+                      <span data-testid={`text-theme-downloads-${index}`}>{theme.downloads.toLocaleString()} downloads</span>
+                      <Button size="sm" data-testid={`button-apply-theme-${index}`}>Apply</Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -397,18 +399,18 @@ export default function Marketplace() {
           <TabsContent value="publishers" className="space-y-6">
             <div className="grid gap-4">
               {publishers.map((publisher) => (
-                <Card key={publisher.id}>
+                <Card key={publisher.id} data-testid={`card-publisher-${publisher.id}`}>
                   <CardContent className="p-6">
                     <div className="flex items-center gap-4">
-                      <Avatar className="h-16 w-16">
+                      <Avatar className="h-16 w-16" data-testid={`avatar-publisher-${publisher.id}`}>
                         <AvatarFallback>{publisher.avatar}</AvatarFallback>
                       </Avatar>
                       
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <h3 className="text-lg font-semibold">{publisher.name}</h3>
+                          <h3 className="text-lg font-semibold" data-testid={`text-publisher-name-${publisher.id}`}>{publisher.name}</h3>
                           {publisher.verified && (
-                            <Badge variant="outline" className="text-blue-600 border-blue-600">
+                            <Badge variant="outline" className="text-blue-600 border-blue-600" data-testid={`badge-publisher-verified-${publisher.id}`}>
                               <CheckCircle2 className="h-3 w-3 mr-1" />
                               Verified
                             </Badge>
@@ -416,12 +418,12 @@ export default function Marketplace() {
                         </div>
                         
                         <div className="flex items-center gap-6 text-sm text-muted-foreground">
-                          <span>{publisher.extensions} extensions</span>
-                          <span>{publisher.downloads.toLocaleString()} total downloads</span>
+                          <span data-testid={`text-publisher-extensions-${publisher.id}`}>{publisher.extensions} extensions</span>
+                          <span data-testid={`text-publisher-downloads-${publisher.id}`}>{publisher.downloads.toLocaleString()} total downloads</span>
                         </div>
                       </div>
                       
-                      <Button variant="outline">
+                      <Button variant="outline" data-testid={`button-view-extensions-${publisher.id}`}>
                         View Extensions
                       </Button>
                     </div>

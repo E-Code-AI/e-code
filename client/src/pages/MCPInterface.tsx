@@ -230,7 +230,7 @@ export default function MCPInterface() {
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-4">
-            <Button onClick={checkHealth} disabled={isLoading}>
+            <Button onClick={checkHealth} disabled={isLoading} data-testid="button-check-health">
               {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Zap className="h-4 w-4 mr-2" />}
               Check Health
             </Button>
@@ -258,11 +258,11 @@ export default function MCPInterface() {
       </Card>
 
       {/* Main Interface */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <Tabs value={activeTab} onValueChange={setActiveTab} data-testid="tabs-mcp">
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="tools">Tools</TabsTrigger>
-          <TabsTrigger value="resources">Resources</TabsTrigger>
-          <TabsTrigger value="execute">Execute</TabsTrigger>
+          <TabsTrigger value="tools" data-testid="tab-mcp-tools">Tools</TabsTrigger>
+          <TabsTrigger value="resources" data-testid="tab-mcp-resources">Resources</TabsTrigger>
+          <TabsTrigger value="execute" data-testid="tab-mcp-execute">Execute</TabsTrigger>
         </TabsList>
 
         {/* Tools Tab */}
@@ -275,7 +275,7 @@ export default function MCPInterface() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button onClick={loadTools} disabled={isLoading} className="mb-4">
+              <Button onClick={loadTools} disabled={isLoading} className="mb-4" data-testid="button-load-tools">
                 {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                 Load Tools
               </Button>
@@ -291,6 +291,7 @@ export default function MCPInterface() {
                         setToolArgs(getQuickExample(tool.name));
                         setActiveTab('execute');
                       }}
+                      data-testid={`card-tool-${tool.name}`}
                     >
                       <div className="flex items-center gap-2 mb-1">
                         {getToolIcon(tool.name)}
@@ -315,7 +316,7 @@ export default function MCPInterface() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button onClick={loadResources} disabled={isLoading} className="mb-4">
+              <Button onClick={loadResources} disabled={isLoading} className="mb-4" data-testid="button-load-resources">
                 {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                 Load Resources
               </Button>
@@ -357,7 +358,7 @@ export default function MCPInterface() {
                   setSelectedTool(value);
                   setToolArgs(getQuickExample(value));
                 }}>
-                  <SelectTrigger>
+                  <SelectTrigger data-testid="select-tool">
                     <SelectValue placeholder="Choose a tool to execute" />
                   </SelectTrigger>
                   <SelectContent>
@@ -380,10 +381,11 @@ export default function MCPInterface() {
                   onChange={(e) => setToolArgs(e.target.value)}
                   placeholder='{"key": "value"}'
                   className="font-mono h-32"
+                  data-testid="textarea-tool-args"
                 />
               </div>
 
-              <Button onClick={executeTool} disabled={isLoading || !selectedTool}>
+              <Button onClick={executeTool} disabled={isLoading || !selectedTool} data-testid="button-execute-tool">
                 {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Play className="h-4 w-4 mr-2" />}
                 Execute
               </Button>
@@ -435,6 +437,7 @@ export default function MCPInterface() {
                 setToolArgs('{"path": "."}');
                 setActiveTab('execute');
               }}
+              data-testid="button-quick-list-files"
             >
               <FileText className="h-4 w-4 mr-2" />
               List Files
@@ -446,6 +449,7 @@ export default function MCPInterface() {
                 setToolArgs('{"command": "echo Test"}');
                 setActiveTab('execute');
               }}
+              data-testid="button-quick-run-command"
             >
               <Terminal className="h-4 w-4 mr-2" />
               Run Command
@@ -457,6 +461,7 @@ export default function MCPInterface() {
                 setToolArgs('{"type": "all"}');
                 setActiveTab('execute');
               }}
+              data-testid="button-quick-system-info"
             >
               <Cpu className="h-4 w-4 mr-2" />
               System Info
@@ -468,6 +473,7 @@ export default function MCPInterface() {
                 setToolArgs('{"repo": "."}');
                 setActiveTab('execute');
               }}
+              data-testid="button-quick-git-status"
             >
               <GitBranch className="h-4 w-4 mr-2" />
               Git Status

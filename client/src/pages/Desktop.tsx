@@ -165,14 +165,14 @@ export default function Desktop() {
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button size="lg" className="text-lg px-8" onClick={() => {
+                <Button size="lg" className="text-lg px-8" data-testid="button-download-hero" onClick={() => {
                   const os = osOptions[selectedOS];
                   window.location.href = os.downloadUrl;
                 }}>
                   <Download className="mr-2 h-5 w-5" />
                   Download for {osOptions[selectedOS].name}
                 </Button>
-                <Button size="lg" variant="outline" asChild className="text-lg px-8">
+                <Button size="lg" variant="outline" asChild className="text-lg px-8" data-testid="button-learn-more">
                   <Link href="#features">
                     Learn More
                   </Link>
@@ -196,6 +196,7 @@ export default function Desktop() {
                 <button
                   key={key}
                   onClick={() => setSelectedOS(key as any)}
+                  data-testid={`button-os-${key}`}
                   className={`p-4 rounded-lg border-2 transition-all ${
                     selectedOS === key
                       ? 'border-primary bg-primary/10'
@@ -496,14 +497,14 @@ export default function Desktop() {
               Download E-Code Desktop and experience the future of development
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" onClick={() => {
+              <Button size="lg" data-testid="button-download-cta" onClick={() => {
                 const os = osOptions[selectedOS];
                 window.location.href = os.downloadUrl;
               }}>
                 <Download className="mr-2 h-5 w-5" />
                 Download for {osOptions[selectedOS].name}
               </Button>
-              <Button size="lg" variant="outline" asChild>
+              <Button size="lg" variant="outline" asChild data-testid="button-view-docs">
                 <Link href="/docs/desktop">
                   View Documentation
                 </Link>

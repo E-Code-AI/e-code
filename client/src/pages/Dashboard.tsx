@@ -18,6 +18,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ECodeLoading } from '@/components/ECodeLoading';
 import { getProjectUrl, cn } from '@/lib/utils';
 import { useMediaQuery } from '@/hooks/use-media-query';
+import { useDebounce } from '@/hooks/use-debounce';
 import { TABLET_GRID_CLASSES } from '@shared/responsive-config';
 import { apiRequest } from '@/lib/queryClient';
 import { AIModelSelector } from '@/components/ai/AIModelSelector';

@@ -46,11 +46,11 @@ export default function Forum() {
             Learn from engineers building at enterprise scale, share feedback with our product teams, and stay ahead with curated best practices.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-4">
-            <Button className="bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 text-white shadow-blue-500/30" onClick={() => (window.location.href = '/register')}>
+            <Button className="bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 text-white shadow-blue-500/30" onClick={() => (window.location.href = '/register')} data-testid="button-join-forum">
               Join the forum
               <ArrowUpRight className="ml-2 h-4 w-4" />
             </Button>
-            <Button variant="outline" className="border-white/20 text-slate-100 hover:text-white" onClick={() => (window.location.href = '/contact-sales')}>
+            <Button variant="outline" className="border-white/20 text-slate-100 hover:text-white" onClick={() => (window.location.href = '/contact-sales')} data-testid="button-request-workshop">
               Request a tailored workshop
             </Button>
           </div>
@@ -112,10 +112,10 @@ export default function Forum() {
                 Partner with our enterprise architects for tailored onboarding, SOC2 compliant deployments, and on-site enablement programs.
               </p>
               <div className="flex flex-wrap justify-center gap-4">
-                <Button className="bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 text-white" onClick={() => (window.location.href = '/contact-sales')}>
+                <Button className="bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 text-white" onClick={() => (window.location.href = '/contact-sales')} data-testid="button-schedule-briefing">
                   Schedule a briefing
                 </Button>
-                <Button variant="outline" className="border-white/20 text-slate-100 hover:text-white" onClick={() => (window.location.href = '/pricing')}>
+                <Button variant="outline" className="border-white/20 text-slate-100 hover:text-white" onClick={() => (window.location.href = '/pricing')} data-testid="button-explore-pricing">
                   Explore pricing
                 </Button>
               </div>

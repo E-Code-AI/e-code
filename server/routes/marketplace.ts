@@ -182,6 +182,141 @@ router.get('/stats', async (req: Request, res: Response) => {
   }
 });
 
+// GET /api/marketplace/tags - Get popular tags for templates
+router.get('/tags', async (req: Request, res: Response) => {
+  try {
+    const tags = await templateMarketplace.getPopularTags();
+    res.json(tags);
+  } catch (error) {
+    console.error('[marketplace] Error fetching tags:', error);
+    res.status(500).json({ error: 'Failed to fetch tags' });
+  }
+});
+
+// GET /api/marketplace/extensions - Get marketplace extensions
+router.get('/extensions', async (req: Request, res: Response) => {
+  try {
+    const extensions = [
+      {
+        id: 1,
+        name: 'Prettier',
+        description: 'Code formatter using prettier for consistent style',
+        author: 'Prettier',
+        category: 'formatters',
+        tags: ['formatting', 'code-style', 'prettier'],
+        downloads: 2847593,
+        rating: 4.9,
+        reviews: 15847,
+        price: 'Free',
+        featured: true,
+        installed: false
+      },
+      {
+        id: 2,
+        name: 'ESLint',
+        description: 'Find and fix problems in JavaScript/TypeScript code',
+        author: 'ESLint',
+        category: 'linters',
+        tags: ['linting', 'javascript', 'typescript'],
+        downloads: 3256847,
+        rating: 4.8,
+        reviews: 18563,
+        price: 'Free',
+        featured: true,
+        installed: true
+      },
+      {
+        id: 3,
+        name: 'GitLens',
+        description: 'Supercharge Git inside your IDE',
+        author: 'GitKraken',
+        category: 'tools',
+        tags: ['git', 'version-control', 'history'],
+        downloads: 1956832,
+        rating: 4.7,
+        reviews: 12456,
+        price: 'Free',
+        featured: true,
+        installed: false
+      },
+      {
+        id: 4,
+        name: 'AI Code Assistant',
+        description: 'AI-powered code completion and suggestions',
+        author: 'E-Code',
+        category: 'ai',
+        tags: ['ai', 'code-completion', 'productivity'],
+        downloads: 894567,
+        rating: 4.6,
+        reviews: 8934,
+        price: 'Pro',
+        featured: true,
+        installed: true
+      },
+      {
+        id: 5,
+        name: 'Docker',
+        description: 'Docker container management and debugging',
+        author: 'Docker',
+        category: 'tools',
+        tags: ['docker', 'containers', 'devops'],
+        downloads: 1234567,
+        rating: 4.5,
+        reviews: 7856,
+        price: 'Free',
+        featured: false,
+        installed: false
+      },
+      {
+        id: 6,
+        name: 'Tailwind CSS IntelliSense',
+        description: 'Tailwind CSS class autocomplete and highlighting',
+        author: 'Tailwind Labs',
+        category: 'languages',
+        tags: ['css', 'tailwind', 'styling'],
+        downloads: 1567890,
+        rating: 4.8,
+        reviews: 9234,
+        price: 'Free',
+        featured: false,
+        installed: true
+      },
+      {
+        id: 7,
+        name: 'Material Theme',
+        description: 'Beautiful material design theme with multiple variants',
+        author: 'Theme Authors',
+        category: 'themes',
+        tags: ['theme', 'material-design', 'dark-mode'],
+        downloads: 2345678,
+        rating: 4.7,
+        reviews: 11234,
+        price: 'Free',
+        featured: false,
+        installed: false
+      },
+      {
+        id: 8,
+        name: 'REST Client',
+        description: 'Send HTTP requests and view responses directly in the editor',
+        author: 'Huachao Mao',
+        category: 'tools',
+        tags: ['api', 'rest', 'http'],
+        downloads: 987654,
+        rating: 4.6,
+        reviews: 6543,
+        price: 'Free',
+        featured: false,
+        installed: false
+      }
+    ];
+    res.json(extensions);
+  } catch (error) {
+    console.error('[marketplace] Error fetching extensions:', error);
+    res.status(500).json({ error: 'Failed to fetch extensions' });
+  }
+});
+
 // POST /api/marketplace/template/:id/fork - Fork a template
 router.post('/template/:id/fork', ensureAuthenticated, async (req: Request, res: Response) => {
   try {

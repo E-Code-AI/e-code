@@ -75,12 +75,12 @@ export default function NewsletterConfirm() {
               {status === 'success' && (
                 <>
                   <CheckCircle className="h-12 w-12 mx-auto mb-4 text-green-600" />
-                  <h2 className="text-2xl font-bold mb-2">Success!</h2>
-                  <p className="text-muted-foreground mb-6">{message}</p>
+                  <h2 className="text-2xl font-bold mb-2" data-testid="text-success-title">Success!</h2>
+                  <p className="text-muted-foreground mb-6" data-testid="text-success-message">{message}</p>
                   <p className="text-sm text-muted-foreground mb-6">
                     You'll now receive our newsletter with the latest updates, tutorials, and community stories.
                   </p>
-                  <Button onClick={() => navigate('/')} className="w-full">
+                  <Button onClick={() => navigate('/')} className="w-full" data-testid="button-go-home-success">
                     Go to Homepage
                   </Button>
                 </>
@@ -89,9 +89,9 @@ export default function NewsletterConfirm() {
               {status === 'error' && (
                 <>
                   <XCircle className="h-12 w-12 mx-auto mb-4 text-red-600" />
-                  <h2 className="text-2xl font-bold mb-2">Oops!</h2>
-                  <p className="text-muted-foreground mb-6">{message}</p>
-                  <Button onClick={() => navigate('/')} variant="outline" className="w-full">
+                  <h2 className="text-2xl font-bold mb-2" data-testid="text-error-title">Oops!</h2>
+                  <p className="text-muted-foreground mb-6" data-testid="text-error-message">{message}</p>
+                  <Button onClick={() => navigate('/')} variant="outline" className="w-full" data-testid="button-go-home-error">
                     Back to Homepage
                   </Button>
                 </>

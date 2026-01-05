@@ -403,8 +403,10 @@ export default function Settings() {
                   <Button 
                     className="min-h-[44px] bg-primary hover:bg-primary/90 text-primary-foreground transition-all duration-200"
                     data-testid="button-save-preferences"
+                    onClick={handleSaveProfile}
+                    disabled={isSaving}
                   >
-                    Save Preferences
+                    {isSaving ? 'Saving...' : 'Save Preferences'}
                   </Button>
                 </CardContent>
               </Card>
@@ -603,8 +605,10 @@ export default function Settings() {
                   <Button 
                     className="bg-primary hover:bg-primary/90 text-primary-foreground transition-all duration-200"
                     data-testid="button-save-editor-settings"
+                    onClick={handleSaveProfile}
+                    disabled={isSaving}
                   >
-                    Save Editor Settings
+                    {isSaving ? 'Saving...' : 'Save Editor Settings'}
                   </Button>
                 </CardContent>
               </Card>

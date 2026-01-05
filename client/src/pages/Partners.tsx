@@ -145,7 +145,7 @@ const successStories: SuccessStory[] = [
 
 export default function Partners() {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col" data-testid="page-partners">
       <PublicNavbar />
 
       <main className="flex-1 bg-background">
@@ -157,18 +157,18 @@ export default function Partners() {
                 <Users className="h-3 w-3 mr-1" />
                 Partner Ecosystem
               </Badge>
-              <h1 className="text-4xl md:text-6xl font-bold leading-tight bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent">
+              <h1 className="text-4xl md:text-6xl font-bold leading-tight bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent" data-testid="heading-partners">
                 Build the future together
               </h1>
               <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
                 Join our thriving partner ecosystem and help developers build, ship, and scale their ideas faster than ever before.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button size="lg">
+                <Button size="lg" className="min-h-[44px]" data-testid="button-partners-become">
                   Become a Partner
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
-                <Button size="lg" variant="outline">
+                <Button size="lg" variant="outline" className="min-h-[44px]" data-testid="button-partners-portal">
                   Partner Portal
                 </Button>
               </div>
@@ -325,11 +325,11 @@ export default function Partners() {
                 Join thousands of partners who are already transforming the developer experience. Let's build something amazing together.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button size="lg" variant="secondary">
+                <Button size="lg" variant="secondary" className="min-h-[44px]" data-testid="button-partners-apply">
                   Apply Now
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
-                <Button size="lg" variant="outline" className="text-primary-foreground border-primary-foreground/30 hover:bg-primary-foreground/10">
+                <Button size="lg" variant="outline" className="text-primary-foreground border-primary-foreground/30 hover:bg-primary-foreground/10 min-h-[44px]" data-testid="button-partners-contact">
                   Contact Us
                 </Button>
               </div>

@@ -197,7 +197,7 @@ export const ScalabilityDashboard: React.FC = () => {
           <h1 className="text-3xl font-bold">Scalability Dashboard</h1>
           <p className="text-muted-foreground">Fortune 500-grade infrastructure management</p>
         </div>
-        <Button onClick={() => refetchCluster()} variant="outline">
+        <Button onClick={() => refetchCluster()} variant="outline" data-testid="button-refresh-cluster">
           <RefreshCw className="h-4 w-4 mr-2" />
           Refresh
         </Button>
@@ -337,6 +337,7 @@ export const ScalabilityDashboard: React.FC = () => {
               <Button 
                 onClick={() => scaleCluster.mutate('up')}
                 disabled={scaleCluster.isPending}
+                data-testid="button-scale-up"
               >
                 <Zap className="h-4 w-4 mr-2" />
                 Scale Up
@@ -345,6 +346,7 @@ export const ScalabilityDashboard: React.FC = () => {
                 onClick={() => scaleCluster.mutate('down')}
                 disabled={scaleCluster.isPending}
                 variant="outline"
+                data-testid="button-scale-down"
               >
                 Scale Down
               </Button>
@@ -352,6 +354,7 @@ export const ScalabilityDashboard: React.FC = () => {
                 onClick={() => createContainer.mutate('new-project')}
                 disabled={createContainer.isPending}
                 variant="outline"
+                data-testid="button-create-container"
               >
                 <Server className="h-4 w-4 mr-2" />
                 Create Container
@@ -474,7 +477,7 @@ export const ScalabilityDashboard: React.FC = () => {
                         {cdnStatus.enabled ? 'Enabled and serving content' : 'Disabled'}
                       </p>
                     </div>
-                    <Badge variant={cdnStatus.enabled ? 'success' : 'secondary'}>
+                    <Badge variant={cdnStatus.enabled ? 'default' : 'secondary'} className={cdnStatus.enabled ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : ''}>
                       {cdnStatus.enabled ? 'Active' : 'Inactive'}
                     </Badge>
                   </div>
@@ -484,19 +487,19 @@ export const ScalabilityDashboard: React.FC = () => {
                     <div className="grid grid-cols-3 gap-4">
                       <div className="border rounded p-3">
                         <p className="font-medium">Cloudflare</p>
-                        <Badge variant={cdnStatus.providers.cloudflare ? 'success' : 'secondary'}>
+                        <Badge variant={cdnStatus.providers.cloudflare ? 'default' : 'secondary'} className={cdnStatus.providers.cloudflare ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : ''}>
                           {cdnStatus.providers.cloudflare ? 'Active' : 'Inactive'}
                         </Badge>
                       </div>
                       <div className="border rounded p-3">
                         <p className="font-medium">CloudFront</p>
-                        <Badge variant={cdnStatus.providers.cloudfront ? 'success' : 'secondary'}>
+                        <Badge variant={cdnStatus.providers.cloudfront ? 'default' : 'secondary'} className={cdnStatus.providers.cloudfront ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : ''}>
                           {cdnStatus.providers.cloudfront ? 'Active' : 'Inactive'}
                         </Badge>
                       </div>
                       <div className="border rounded p-3">
                         <p className="font-medium">Fastly</p>
-                        <Badge variant={cdnStatus.providers.fastly ? 'success' : 'secondary'}>
+                        <Badge variant={cdnStatus.providers.fastly ? 'default' : 'secondary'} className={cdnStatus.providers.fastly ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : ''}>
                           {cdnStatus.providers.fastly ? 'Active' : 'Inactive'}
                         </Badge>
                       </div>
@@ -527,6 +530,7 @@ export const ScalabilityDashboard: React.FC = () => {
                       disabled={purgeCDN.isPending}
                       className="mt-4"
                       variant="outline"
+                      data-testid="button-purge-cdn"
                     >
                       <RefreshCw className="h-4 w-4 mr-2" />
                       Purge Cache

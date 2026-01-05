@@ -99,7 +99,7 @@ export default function StudentDPA() {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background" data-testid="page-student-dpa">
       <PublicNavbar />
 
       {/* Hero Section */}
@@ -111,7 +111,7 @@ export default function StudentDPA() {
               EDUCATION PRIVACY
             </Badge>
             
-            <h1 className="text-4xl md:text-6xl font-bold mb-6">
+            <h1 className="text-4xl md:text-6xl font-bold mb-6" data-testid="heading-student-dpa">
               Student Data Processing Agreement
             </h1>
             
@@ -121,13 +121,13 @@ export default function StudentDPA() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" asChild>
+              <Button size="lg" className="min-h-[44px]" asChild data-testid="button-student-dpa-download">
                 <a href="#download">
                   <Download className="mr-2 h-5 w-5" />
                   Download Full Agreement
                 </a>
               </Button>
-              <Button size="lg" variant="outline" asChild>
+              <Button size="lg" variant="outline" className="min-h-[44px]" asChild data-testid="button-student-dpa-contact">
                 <a href="mailto:education@e-code.ai">
                   <Mail className="mr-2 h-5 w-5" />
                   Contact Education Team

@@ -6,7 +6,7 @@ import { FileText, Download, Mail, Building2 } from "lucide-react";
 
 export default function CommercialAgreement() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background" data-testid="page-commercial-agreement">
       <PublicNavbar />
       
       <section className="py-responsive">
@@ -17,7 +17,7 @@ export default function CommercialAgreement() {
               <span className="text-sm text-muted-foreground">Enterprise</span>
             </div>
 
-            <h1 className="text-responsive-2xl font-bold tracking-tight mb-4">
+            <h1 className="text-responsive-2xl font-bold tracking-tight mb-4" data-testid="heading-commercial-agreement">
               E-Code Commercial Agreement
             </h1>
             
@@ -187,11 +187,11 @@ export default function CommercialAgreement() {
             </Card>
 
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button size="lg" className="flex items-center gap-2">
+              <Button size="lg" className="flex items-center gap-2 min-h-[44px]" data-testid="button-commercial-download">
                 <Download className="h-4 w-4" />
                 Download Agreement
               </Button>
-              <Button size="lg" variant="outline" className="flex items-center gap-2">
+              <Button size="lg" variant="outline" className="flex items-center gap-2 min-h-[44px]" data-testid="button-commercial-contact">
                 <Mail className="h-4 w-4" />
                 Contact Sales
               </Button>

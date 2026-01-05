@@ -198,11 +198,11 @@ export default function Teams() {
         icon={Users}
         actions={(
           <div className="flex flex-col gap-2 sm:flex-row">
-            <Button variant="outline" className="gap-2" onClick={() => setShowCreateDialog(true)}>
+            <Button variant="outline" className="gap-2" onClick={() => setShowCreateDialog(true)} data-testid="button-create-team">
               <Plus className="h-4 w-4" />
               Create team
             </Button>
-            <Button className="gap-2" onClick={() => navigate('/teams/new')}>
+            <Button className="gap-2" onClick={() => navigate('/teams/new')} data-testid="button-invite-members">
               <UserPlus className="h-4 w-4" />
               Invite members
             </Button>
@@ -239,6 +239,7 @@ export default function Teams() {
                     size="sm" 
                     onClick={() => handleJoinTeam(invitation)}
                     disabled={joinTeamMutation.isPending}
+                    data-testid={`button-accept-invitation-${invitation.id}`}
                   >
                     Accept
                   </Button>
@@ -247,6 +248,7 @@ export default function Teams() {
                     variant="outline"
                     onClick={() => handleDeclineInvitation(invitation)}
                     disabled={declineInvitationMutation.isPending}
+                    data-testid={`button-decline-invitation-${invitation.id}`}
                   >
                     Decline
                   </Button>
@@ -266,11 +268,12 @@ export default function Teams() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10"
+            data-testid="input-search-teams"
           />
         </div>
         <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
           <DialogTrigger asChild>
-            <Button className="flex items-center gap-2">
+            <Button className="flex items-center gap-2" data-testid="button-create-team-dialog">
               <Plus className="h-4 w-4" />
               Create Team
             </Button>
@@ -290,6 +293,7 @@ export default function Teams() {
                   value={newTeamName}
                   onChange={(e) => setNewTeamName(e.target.value)}
                   placeholder="My Awesome Team"
+                  data-testid="input-new-team-name"
                 />
               </div>
               <div>
@@ -299,6 +303,7 @@ export default function Teams() {
                   value={newTeamDescription}
                   onChange={(e) => setNewTeamDescription(e.target.value)}
                   placeholder="What does your team work on?"
+                  data-testid="input-new-team-description"
                 />
               </div>
               <div>
@@ -309,6 +314,7 @@ export default function Teams() {
                     size="sm"
                     onClick={() => setNewTeamVisibility('private')}
                     className="flex items-center gap-2"
+                    data-testid="button-visibility-private"
                   >
                     <Lock className="h-4 w-4" />
                     Private
@@ -318,6 +324,7 @@ export default function Teams() {
                     size="sm"
                     onClick={() => setNewTeamVisibility('public')}
                     className="flex items-center gap-2"
+                    data-testid="button-visibility-public"
                   >
                     <Globe className="h-4 w-4" />
                     Public
@@ -328,12 +335,14 @@ export default function Teams() {
                 <Button 
                   variant="outline" 
                   onClick={() => setShowCreateDialog(false)}
+                  data-testid="button-cancel-create-team"
                 >
                   Cancel
                 </Button>
                 <Button 
                   onClick={handleCreateTeam}
                   disabled={!newTeamName.trim() || createTeamMutation.isPending}
+                  data-testid="button-submit-create-team"
                 >
                   {createTeamMutation.isPending ? 'Creating...' : 'Create Team'}
                 </Button>
@@ -353,7 +362,7 @@ export default function Teams() {
               {searchQuery ? 'No teams match your search.' : 'Create your first team to get started.'}
             </p>
             {!searchQuery && (
-              <Button onClick={() => setShowCreateDialog(true)}>
+              <Button onClick={() => setShowCreateDialog(true)} data-testid="button-create-first-team">
                 <Plus className="h-4 w-4 mr-2" />
                 Create Team
               </Button>
@@ -363,7 +372,7 @@ export default function Teams() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredTeams.map((team) => (
-            <Card key={team.id} className="hover:shadow-md transition-shadow cursor-pointer">
+            <Card key={team.id} className="hover:shadow-md transition-shadow cursor-pointer" data-testid={`card-team-${team.id}`}>
               <CardHeader className="pb-4">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
@@ -418,6 +427,7 @@ export default function Teams() {
                     size="sm" 
                     className="flex-1"
                     onClick={() => window.location.href = `/teams/${team.id}`}
+                    data-testid={`button-open-team-${team.id}`}
                   >
                     <ExternalLink className="h-4 w-4 mr-2" />
                     Open
@@ -427,6 +437,7 @@ export default function Teams() {
                       size="sm" 
                       variant="outline"
                       onClick={() => window.location.href = `/teams/${team.id}/settings`}
+                      data-testid={`button-settings-team-${team.id}`}
                     >
                       <Settings className="h-4 w-4" />
                     </Button>

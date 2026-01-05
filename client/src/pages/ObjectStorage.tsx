@@ -34,7 +34,8 @@ import {
   ChevronRight,
   Cloud,
   RefreshCw,
-  ExternalLink
+  ExternalLink,
+  Key
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -241,7 +242,7 @@ export default function ObjectStorage() {
         <div className="space-x-2">
           <Dialog open={createFolderDialogOpen} onOpenChange={setCreateFolderDialogOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline">
+              <Button variant="outline" data-testid="button-new-folder">
                 <FolderPlus className="mr-2 h-4 w-4" />
                 New Folder
               </Button>
@@ -261,15 +262,17 @@ export default function ObjectStorage() {
                   onChange={(e) => setNewFolderName(e.target.value)}
                   placeholder="My Folder"
                   className="mt-2"
+                  data-testid="input-folder-name"
                 />
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setCreateFolderDialogOpen(false)}>
+                <Button variant="outline" onClick={() => setCreateFolderDialogOpen(false)} data-testid="button-cancel-folder">
                   Cancel
                 </Button>
                 <Button 
                   onClick={() => createFolderMutation.mutate(newFolderName)}
                   disabled={!newFolderName || createFolderMutation.isPending}
+                  data-testid="button-create-folder"
                 >
                   Create
                 </Button>
@@ -279,7 +282,7 @@ export default function ObjectStorage() {
 
           <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <Button data-testid="button-upload-files">
                 <Upload className="mr-2 h-4 w-4" />
                 Upload Files
               </Button>
@@ -302,12 +305,13 @@ export default function ObjectStorage() {
                     multiple
                     className="hidden"
                     id="file-upload"
+                    data-testid="input-file-upload"
                     onChange={(e) => {
                       const file = e.target.files?.[0];
                       if (file) uploadFileMutation.mutate(file);
                     }}
                   />
-                  <Button variant="outline" size="sm" asChild>
+                  <Button variant="outline" size="sm" asChild data-testid="button-browse-files">
                     <label htmlFor="file-upload" className="cursor-pointer">
                       Browse Files
                     </label>
@@ -393,15 +397,16 @@ export default function ObjectStorage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10"
+            data-testid="input-search-files"
           />
         </div>
       </div>
 
       {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <Tabs value={activeTab} onValueChange={setActiveTab} data-testid="tabs-storage">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="files">Files & Folders</TabsTrigger>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
+          <TabsTrigger value="files" data-testid="tab-files">Files & Folders</TabsTrigger>
+          <TabsTrigger value="settings" data-testid="tab-settings">Settings</TabsTrigger>
         </TabsList>
 
         {/* Files Tab */}
@@ -426,6 +431,7 @@ export default function ObjectStorage() {
                   key={folder.id} 
                   className="hover:shadow-md transition-shadow cursor-pointer"
                   onClick={() => setCurrentPath(folder.path)}
+                  data-testid={`card-folder-${folder.id}`}
                 >
                   <CardHeader>
                     <CardTitle className="text-base flex items-center gap-2">
@@ -447,7 +453,7 @@ export default function ObjectStorage() {
           {/* Files */}
           <div className="grid gap-4">
             {filteredFiles.map((file) => (
-              <Card key={file.id}>
+              <Card key={file.id} data-testid={`card-file-${file.id}`}>
                 <CardHeader>
                   <div className="flex justify-between items-start">
                     <div className="flex items-center gap-3">
@@ -470,17 +476,17 @@ export default function ObjectStorage() {
                       </Badge>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
+                          <Button variant="ghost" size="icon" data-testid={`button-file-menu-${file.id}`}>
                             <MoreVertical className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem>
+                          <DropdownMenuItem data-testid={`menu-download-${file.id}`}>
                             <Download className="mr-2 h-4 w-4" />
                             Download
                           </DropdownMenuItem>
                           {file.url && (
-                            <DropdownMenuItem onClick={() => copyToClipboard(file.url!)}>
+                            <DropdownMenuItem onClick={() => copyToClipboard(file.url!)} data-testid={`menu-copy-url-${file.id}`}>
                               <Copy className="mr-2 h-4 w-4" />
                               Copy URL
                             </DropdownMenuItem>
@@ -490,6 +496,7 @@ export default function ObjectStorage() {
                               fileId: file.id,
                               isPublic: !file.isPublic
                             })}
+                            data-testid={`menu-toggle-visibility-${file.id}`}
                           >
                             {file.isPublic ? (
                               <>
@@ -503,7 +510,7 @@ export default function ObjectStorage() {
                               </>
                             )}
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
+                          <DropdownMenuItem data-testid={`menu-share-${file.id}`}>
                             <Share2 className="mr-2 h-4 w-4" />
                             Share
                           </DropdownMenuItem>
@@ -511,6 +518,7 @@ export default function ObjectStorage() {
                           <DropdownMenuItem
                             className="text-destructive"
                             onClick={() => deleteFileMutation.mutate(file.id)}
+                            data-testid={`menu-delete-${file.id}`}
                           >
                             <Trash2 className="mr-2 h-4 w-4" />
                             Delete
@@ -530,6 +538,7 @@ export default function ObjectStorage() {
                         variant="ghost"
                         className="h-6 px-2"
                         onClick={() => copyToClipboard(file.url!)}
+                        data-testid={`button-copy-url-${file.id}`}
                       >
                         Copy
                       </Button>
@@ -548,7 +557,7 @@ export default function ObjectStorage() {
                 <p className="text-muted-foreground mb-4">
                   Upload your first file to get started
                 </p>
-                <Button onClick={() => setUploadDialogOpen(true)}>
+                <Button onClick={() => setUploadDialogOpen(true)} data-testid="button-upload-empty">
                   <Upload className="mr-2 h-4 w-4" />
                   Upload Files
                 </Button>
@@ -572,7 +581,7 @@ export default function ObjectStorage() {
                 <p className="text-sm text-muted-foreground mb-3">
                   Choose whether new files are public or private by default
                 </p>
-                <select className="w-full p-2 rounded-md border bg-background">
+                <select className="w-full p-2 rounded-md border bg-background" data-testid="select-default-visibility">
                   <option value="private">Private (Recommended)</option>
                   <option value="public">Public</option>
                 </select>
@@ -596,7 +605,7 @@ export default function ObjectStorage() {
                 <p className="text-sm text-muted-foreground mb-3">
                   Generate API keys for programmatic access
                 </p>
-                <Button variant="outline">
+                <Button variant="outline" data-testid="button-generate-key">
                   <Key className="mr-2 h-4 w-4" />
                   Generate Access Key
                 </Button>

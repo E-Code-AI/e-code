@@ -164,10 +164,10 @@ export default function SSH() {
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-6xl">
+    <div className="container mx-auto p-6 max-w-6xl" data-testid="ssh-page">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-3xl font-bold mb-2">SSH Access</h1>
+        <h1 className="text-3xl font-bold mb-2" data-testid="text-ssh-title">SSH Access</h1>
         <p className="text-muted-foreground">
           Manage SSH keys and active sessions for secure remote access
         </p>
@@ -193,25 +193,25 @@ export default function SSH() {
       </Alert>
 
       {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <Tabs value={activeTab} onValueChange={setActiveTab} data-testid="ssh-tabs">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="keys">SSH Keys</TabsTrigger>
-          <TabsTrigger value="sessions">Active Sessions</TabsTrigger>
+          <TabsTrigger value="keys" data-testid="tab-ssh-keys">SSH Keys</TabsTrigger>
+          <TabsTrigger value="sessions" data-testid="tab-ssh-sessions">Active Sessions</TabsTrigger>
         </TabsList>
 
         {/* SSH Keys Tab */}
-        <TabsContent value="keys" className="space-y-4">
+        <TabsContent value="keys" className="space-y-4" data-testid="content-ssh-keys">
           <div className="flex justify-between items-center">
             <h2 className="text-xl font-semibold">Your SSH Keys</h2>
             <div className="space-x-2">
               <Dialog open={addKeyDialogOpen} onOpenChange={setAddKeyDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button variant="outline">
+                  <Button variant="outline" data-testid="button-add-existing-key">
                     <Upload className="mr-2 h-4 w-4" />
                     Add Existing Key
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent data-testid="dialog-add-ssh-key">
                   <DialogHeader>
                     <DialogTitle>Add SSH Key</DialogTitle>
                     <DialogDescription>
@@ -226,6 +226,7 @@ export default function SSH() {
                         value={newKey.name}
                         onChange={(e) => setNewKey({ ...newKey, name: e.target.value })}
                         placeholder="MacBook Pro"
+                        data-testid="input-ssh-key-name"
                       />
                     </div>
                     <div className="space-y-2">
@@ -236,6 +237,7 @@ export default function SSH() {
                         value={newKey.publicKey}
                         onChange={(e) => setNewKey({ ...newKey, publicKey: e.target.value })}
                         placeholder="ssh-rsa AAAAB3NzaC1yc2..."
+                        data-testid="input-ssh-public-key"
                       />
                     </div>
                     <div className="space-y-2">
@@ -245,16 +247,18 @@ export default function SSH() {
                         value={newKey.comment}
                         onChange={(e) => setNewKey({ ...newKey, comment: e.target.value })}
                         placeholder="Personal laptop"
+                        data-testid="input-ssh-comment"
                       />
                     </div>
                   </div>
                   <DialogFooter>
-                    <Button variant="outline" onClick={() => setAddKeyDialogOpen(false)}>
+                    <Button variant="outline" onClick={() => setAddKeyDialogOpen(false)} data-testid="button-cancel-add-key">
                       Cancel
                     </Button>
                     <Button 
                       onClick={() => addKeyMutation.mutate(newKey)}
                       disabled={!newKey.name || !newKey.publicKey || addKeyMutation.isPending}
+                      data-testid="button-confirm-add-key"
                     >
                       Add Key
                     </Button>
@@ -264,12 +268,12 @@ export default function SSH() {
 
               <Dialog open={generateKeyDialogOpen} onOpenChange={setGenerateKeyDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button>
+                  <Button data-testid="button-generate-new-key">
                     <Plus className="mr-2 h-4 w-4" />
                     Generate New Key
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent data-testid="dialog-generate-ssh-key">
                   <DialogHeader>
                     <DialogTitle>Generate SSH Key</DialogTitle>
                     <DialogDescription>
@@ -284,6 +288,7 @@ export default function SSH() {
                         value={keyGeneration.name}
                         onChange={(e) => setKeyGeneration({ ...keyGeneration, name: e.target.value })}
                         placeholder="Development Key"
+                        data-testid="input-gen-key-name"
                       />
                     </div>
                     <div className="space-y-2">
@@ -293,6 +298,7 @@ export default function SSH() {
                         className="w-full p-2 rounded-md border bg-background"
                         value={keyGeneration.type}
                         onChange={(e) => setKeyGeneration({ ...keyGeneration, type: e.target.value as any })}
+                        data-testid="select-key-type"
                       >
                         <option value="ed25519">ED25519 (Recommended)</option>
                         <option value="rsa">RSA 4096</option>
@@ -306,16 +312,18 @@ export default function SSH() {
                         value={keyGeneration.comment}
                         onChange={(e) => setKeyGeneration({ ...keyGeneration, comment: e.target.value })}
                         placeholder="user@hostname"
+                        data-testid="input-gen-comment"
                       />
                     </div>
                   </div>
                   <DialogFooter>
-                    <Button variant="outline" onClick={() => setGenerateKeyDialogOpen(false)}>
+                    <Button variant="outline" onClick={() => setGenerateKeyDialogOpen(false)} data-testid="button-cancel-generate">
                       Cancel
                     </Button>
                     <Button 
                       onClick={() => generateKeyMutation.mutate(keyGeneration)}
                       disabled={!keyGeneration.name || generateKeyMutation.isPending}
+                      data-testid="button-confirm-generate"
                     >
                       Generate Key
                     </Button>
@@ -328,13 +336,13 @@ export default function SSH() {
           {/* SSH Keys List */}
           <div className="grid gap-4">
             {sshKeys.map((key) => (
-              <Card key={key.id}>
+              <Card key={key.id} data-testid={`ssh-key-card-${key.id}`}>
                 <CardHeader>
                   <div className="flex justify-between items-start">
                     <div>
                       <CardTitle className="text-lg flex items-center gap-2">
                         <Key className="h-4 w-4" />
-                        {key.name}
+                        <span data-testid={`ssh-key-name-${key.id}`}>{key.name}</span>
                       </CardTitle>
                       <CardDescription className="mt-1">
                         {key.comment || 'No description'}
@@ -345,6 +353,7 @@ export default function SSH() {
                       size="icon"
                       onClick={() => deleteKeyMutation.mutate(key.id)}
                       disabled={deleteKeyMutation.isPending}
+                      data-testid={`button-delete-ssh-key-${key.id}`}
                     >
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
@@ -374,6 +383,7 @@ export default function SSH() {
                         variant="ghost"
                         size="icon"
                         onClick={() => copyToClipboard(key.fingerprint)}
+                        data-testid={`button-copy-fingerprint-${key.id}`}
                       >
                         <Copy className="h-3 w-3" />
                       </Button>
@@ -390,6 +400,7 @@ export default function SSH() {
                         variant="ghost"
                         size="icon"
                         onClick={() => copyToClipboard(key.publicKey)}
+                        data-testid={`button-copy-pubkey-${key.id}`}
                       >
                         <Copy className="h-3 w-3" />
                       </Button>
@@ -407,14 +418,14 @@ export default function SSH() {
             ))}
 
             {sshKeys.length === 0 && (
-              <Card>
+              <Card data-testid="empty-ssh-keys">
                 <CardContent className="text-center py-12">
                   <Key className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                   <h3 className="text-lg font-semibold mb-2">No SSH keys yet</h3>
                   <p className="text-muted-foreground mb-4">
                     Add an SSH key to enable secure remote access
                   </p>
-                  <Button onClick={() => setGenerateKeyDialogOpen(true)}>
+                  <Button onClick={() => setGenerateKeyDialogOpen(true)} data-testid="button-generate-first-key">
                     <Plus className="mr-2 h-4 w-4" />
                     Generate New Key
                   </Button>
@@ -425,10 +436,10 @@ export default function SSH() {
         </TabsContent>
 
         {/* Active Sessions Tab */}
-        <TabsContent value="sessions" className="space-y-4">
+        <TabsContent value="sessions" className="space-y-4" data-testid="content-ssh-sessions">
           <div className="flex justify-between items-center">
             <h2 className="text-xl font-semibold">Active SSH Sessions</h2>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" data-testid="button-refresh-sessions">
               <RefreshCw className="mr-2 h-4 w-4" />
               Refresh
             </Button>
@@ -436,13 +447,13 @@ export default function SSH() {
 
           <div className="grid gap-4">
             {sshSessions.map((session) => (
-              <Card key={session.id}>
+              <Card key={session.id} data-testid={`ssh-session-card-${session.id}`}>
                 <CardHeader>
                   <div className="flex justify-between items-start">
                     <div>
                       <CardTitle className="text-lg flex items-center gap-2">
                         <Server className="h-4 w-4" />
-                        {session.host}
+                        <span data-testid={`session-host-${session.id}`}>{session.host}</span>
                       </CardTitle>
                       <CardDescription className="mt-1">
                         Connected as <span className="font-medium">{session.user}</span>
@@ -451,6 +462,7 @@ export default function SSH() {
                     <Badge 
                       variant={session.status === 'active' ? 'default' : 'secondary'}
                       className="flex items-center gap-1"
+                      data-testid={`session-status-${session.id}`}
                     >
                       {session.status === 'active' ? (
                         <Unlock className="h-3 w-3" />
@@ -479,7 +491,7 @@ export default function SSH() {
                   
                   {session.status === 'active' && (
                     <div className="mt-4">
-                      <Button variant="outline" size="sm" className="w-full">
+                      <Button variant="outline" size="sm" className="w-full" data-testid={`button-open-terminal-${session.id}`}>
                         <Terminal className="mr-2 h-4 w-4" />
                         Open Terminal
                       </Button>
@@ -490,7 +502,7 @@ export default function SSH() {
             ))}
 
             {sshSessions.length === 0 && (
-              <Card>
+              <Card data-testid="empty-ssh-sessions">
                 <CardContent className="text-center py-12">
                   <Server className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                   <h3 className="text-lg font-semibold mb-2">No active sessions</h3>

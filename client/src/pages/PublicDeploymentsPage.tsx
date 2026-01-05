@@ -184,12 +184,12 @@ export default function PublicDeploymentsPage() {
             </p>
             <div className="mt-8 flex flex-wrap gap-4">
               <Link href="/contact-sales">
-                <Button size="lg" className="bg-white text-slate-900 hover:bg-slate-200">
+                <Button size="lg" className="bg-white text-slate-900 hover:bg-slate-200" data-testid="button-contact-sales">
                   Talk to an expert
                 </Button>
               </Link>
               <Link href="/docs/deployments">
-                <Button size="lg" variant="outline" className="bg-transparent border-white/40 text-white hover:bg-white/10">
+                <Button size="lg" variant="outline" className="bg-transparent border-white/40 text-white hover:bg-white/10" data-testid="button-explore-docs">
                   Explore deployment docs
                 </Button>
               </Link>

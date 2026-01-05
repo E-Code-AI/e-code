@@ -363,6 +363,7 @@ export default function Notifications() {
               variant="outline" 
               onClick={() => setShowSettings(true)}
               className="flex items-center gap-2"
+              data-testid="button-notification-settings"
             >
               <Settings className="h-4 w-4" />
               Settings
@@ -372,6 +373,7 @@ export default function Notifications() {
                 onClick={handleMarkAllRead}
                 disabled={markAllReadMutation.isPending}
                 className="flex items-center gap-2"
+                data-testid="button-mark-all-read"
               >
                 <Check className="h-4 w-4" />
                 Mark All Read
@@ -381,9 +383,9 @@ export default function Notifications() {
         </div>
       </div>
 
-      <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-4">
+      <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-4" data-testid="tabs-notifications">
         <TabsList className="grid grid-cols-7 w-full">
-          <TabsTrigger value="all" className="flex items-center gap-2">
+          <TabsTrigger value="all" className="flex items-center gap-2" data-testid="tab-all">
             All
             {notifications.length > 0 && (
               <Badge variant="secondary" className="ml-1">
@@ -391,7 +393,7 @@ export default function Notifications() {
               </Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="unread" className="flex items-center gap-2">
+          <TabsTrigger value="unread" className="flex items-center gap-2" data-testid="tab-unread">
             Unread
             {unreadCount > 0 && (
               <Badge variant="destructive" className="ml-1">
@@ -399,11 +401,11 @@ export default function Notifications() {
               </Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="comment">Comments</TabsTrigger>
-          <TabsTrigger value="team_invite">Teams</TabsTrigger>
-          <TabsTrigger value="deployment">Deployments</TabsTrigger>
-          <TabsTrigger value="security">Security</TabsTrigger>
-          <TabsTrigger value="system">System</TabsTrigger>
+          <TabsTrigger value="comment" data-testid="tab-comments">Comments</TabsTrigger>
+          <TabsTrigger value="team_invite" data-testid="tab-teams">Teams</TabsTrigger>
+          <TabsTrigger value="deployment" data-testid="tab-deployments">Deployments</TabsTrigger>
+          <TabsTrigger value="security" data-testid="tab-security">Security</TabsTrigger>
+          <TabsTrigger value="system" data-testid="tab-system">System</TabsTrigger>
         </TabsList>
 
         <TabsContent value={selectedTab} className="space-y-4">

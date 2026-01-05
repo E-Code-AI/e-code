@@ -55,7 +55,7 @@ export default function ReportAbuse() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background" data-testid="page-report-abuse">
       <PublicNavbar />
       
       <section className="py-responsive">
@@ -66,7 +66,7 @@ export default function ReportAbuse() {
               <span className="text-sm text-muted-foreground">Trust & Safety</span>
             </div>
 
-            <h1 className="text-responsive-2xl font-bold tracking-tight mb-4">
+            <h1 className="text-responsive-2xl font-bold tracking-tight mb-4" data-testid="heading-report-abuse">
               Report Abuse
             </h1>
             
@@ -197,10 +197,12 @@ export default function ReportAbuse() {
                     <Label htmlFor="url">URL of the content</Label>
                     <Input 
                       id="url" 
+                      name="url"
                       type="url" 
                       placeholder="https://e-code.ai/..."
                       required
-                      className="mt-2"
+                      className="mt-2 min-h-[44px]"
+                      data-testid="input-abuse-url"
                     />
                     <p className="text-xs text-muted-foreground mt-1">
                       Please provide the direct link to the Repl, profile, or comment
@@ -211,8 +213,10 @@ export default function ReportAbuse() {
                     <Label htmlFor="username">Username of the violator (if applicable)</Label>
                     <Input 
                       id="username" 
+                      name="username"
                       placeholder="@username"
-                      className="mt-2"
+                      className="mt-2 min-h-[44px]"
+                      data-testid="input-abuse-username"
                     />
                   </div>
 
@@ -220,10 +224,12 @@ export default function ReportAbuse() {
                     <Label htmlFor="description">Description of the issue</Label>
                     <Textarea 
                       id="description"
+                      name="description"
                       placeholder="Please describe the issue in detail. Include any relevant context, such as when the incident occurred, what specifically violates our policies, and any evidence you can provide."
                       rows={6}
                       required
                       className="mt-2"
+                      data-testid="input-abuse-description"
                     />
                   </div>
 
@@ -231,9 +237,11 @@ export default function ReportAbuse() {
                     <Label htmlFor="email">Your email (optional)</Label>
                     <Input 
                       id="email" 
+                      name="email"
                       type="email" 
                       placeholder="your@email.com"
-                      className="mt-2"
+                      className="mt-2 min-h-[44px]"
+                      data-testid="input-abuse-email"
                     />
                     <p className="text-xs text-muted-foreground mt-1">
                       Provide your email if you'd like us to follow up on this report
@@ -241,13 +249,13 @@ export default function ReportAbuse() {
                   </div>
 
                   <div className="flex items-center space-x-2">
-                    <Checkbox id="terms" required />
+                    <Checkbox id="terms" required data-testid="checkbox-abuse-terms" />
                     <Label htmlFor="terms" className="text-sm font-normal">
                       I confirm that this report is made in good faith and the information provided is accurate
                     </Label>
                   </div>
 
-                  <Button type="submit" size="lg" disabled={isSubmitting} className="w-full sm:w-auto">
+                  <Button type="submit" size="lg" disabled={isSubmitting} className="w-full sm:w-auto min-h-[44px]" data-testid="button-abuse-submit">
                     {isSubmitting ? (
                       <>Submitting...</>
                     ) : (
@@ -270,7 +278,7 @@ export default function ReportAbuse() {
                   <p className="text-sm text-muted-foreground mb-4">
                     For copyright infringement claims, please submit a formal DMCA takedown notice.
                   </p>
-                  <Button variant="outline" size="sm" className="w-full">
+                  <Button variant="outline" size="sm" className="w-full min-h-[44px]" data-testid="button-abuse-dmca">
                     <FileText className="h-4 w-4 mr-2" />
                     DMCA Process
                   </Button>
@@ -285,7 +293,7 @@ export default function ReportAbuse() {
                   <p className="text-sm text-muted-foreground mb-4">
                     For urgent safety concerns or illegal activity, contact us immediately.
                   </p>
-                  <Button variant="outline" size="sm" className="w-full">
+                  <Button variant="outline" size="sm" className="w-full min-h-[44px]" data-testid="button-abuse-emergency">
                     <ExternalLink className="h-4 w-4 mr-2" />
                     abuse@e-code.ai
                   </Button>

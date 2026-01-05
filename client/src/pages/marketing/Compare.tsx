@@ -48,31 +48,31 @@ export default function Compare() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
-      <div className="container mx-auto px-4 py-12 max-w-7xl">
+      <div className="container mx-auto px-4 py-8 sm:py-12 max-w-7xl">
         {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
+        <div className="text-center mb-8 sm:mb-12">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-3 sm:mb-4">
             Compare E-Code Platform
           </h1>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+          <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto px-4 sm:px-0">
             See how E-Code Platform stacks up against other development platforms
           </p>
         </div>
 
         {/* Key Advantages */}
-        <Card className="mb-12">
-          <CardHeader>
-            <CardTitle className="text-2xl">Why Choose E-Code Platform?</CardTitle>
-            <CardDescription>
+        <Card className="mb-8 sm:mb-12" data-testid="card-advantages">
+          <CardHeader className="p-4 sm:p-6">
+            <CardTitle className="text-xl sm:text-2xl">Why Choose E-Code Platform?</CardTitle>
+            <CardDescription className="text-sm sm:text-base">
               Our platform offers unique advantages that set us apart
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="grid md:grid-cols-2 gap-4">
+          <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
+            <div className="grid sm:grid-cols-2 gap-3 sm:gap-4">
               {advantages.map((advantage, index) => (
-                <div key={index} className="flex items-start gap-3">
-                  <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <p className="text-sm">{advantage}</p>
+                <div key={index} className="flex items-start gap-2 sm:gap-3" data-testid={`advantage-${index}`}>
+                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-primary mt-0.5 flex-shrink-0" />
+                  <p className="text-xs sm:text-sm">{advantage}</p>
                 </div>
               ))}
             </div>
@@ -80,27 +80,27 @@ export default function Compare() {
         </Card>
 
         {/* Competitor Comparisons */}
-        <div className="mb-12">
-          <h2 className="text-3xl font-bold mb-6 text-center">
+        <div className="mb-8 sm:mb-12">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 text-center">
             Detailed Comparisons
           </h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {competitors.map((competitor) => {
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            {competitors.map((competitor, index) => {
               const Icon = competitor.icon;
               return (
-                <Card key={competitor.path} className="hover:shadow-lg transition-shadow">
-                  <CardHeader>
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="p-2 bg-primary/10 rounded-lg">
-                        <Icon className="h-6 w-6 text-primary" />
+                <Card key={competitor.path} className="hover:shadow-lg transition-shadow" data-testid={`card-competitor-${index}`}>
+                  <CardHeader className="p-4 sm:p-6">
+                    <div className="flex items-center gap-2 sm:gap-3 mb-2">
+                      <div className="p-1.5 sm:p-2 bg-primary/10 rounded-lg">
+                        <Icon className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
                       </div>
-                      <CardTitle className="text-lg">{competitor.name}</CardTitle>
+                      <CardTitle className="text-base sm:text-lg">{competitor.name}</CardTitle>
                     </div>
-                    <CardDescription>{competitor.description}</CardDescription>
+                    <CardDescription className="text-xs sm:text-sm">{competitor.description}</CardDescription>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
                     <Link href={competitor.path}>
-                      <Button variant="outline" className="w-full" data-testid={`button-compare-${competitor.name.toLowerCase().replace(/\s+/g, '-')}`}>
+                      <Button variant="outline" className="w-full min-h-[44px] text-sm" data-testid={`button-compare-${competitor.name.toLowerCase().replace(/\s+/g, '-')}`}>
                         View Comparison
                         <ArrowRight className="ml-2 h-4 w-4" />
                       </Button>
@@ -114,13 +114,13 @@ export default function Compare() {
 
         {/* CTA */}
         <Card className="bg-primary/5 border-primary/20">
-          <CardContent className="pt-6 text-center">
-            <h2 className="text-2xl font-bold mb-2">Ready to Experience the Difference?</h2>
-            <p className="text-muted-foreground mb-4">
+          <CardContent className="p-4 sm:p-6 pt-4 sm:pt-6 text-center">
+            <h2 className="text-xl sm:text-2xl font-bold mb-2">Ready to Experience the Difference?</h2>
+            <p className="text-sm sm:text-base text-muted-foreground mb-3 sm:mb-4">
               Start building faster with E-Code Platform today
             </p>
             <Link href="/register">
-              <Button size="lg" data-testid="button-get-started">
+              <Button size="lg" className="min-h-[44px]" data-testid="button-get-started">
                 Get Started Free
               </Button>
             </Link>

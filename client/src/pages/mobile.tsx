@@ -827,6 +827,7 @@ session.share({ team: "Field Ops" });
                       target="_blank"
                       rel="noopener noreferrer"
                       className="group relative overflow-hidden rounded-lg bg-black p-[1px] transition-all hover:scale-105"
+                      data-testid="link-download-ios-hero"
                     >
                       <div className="relative flex items-center gap-3 bg-black px-6 py-3 rounded-lg">
                         <Apple className="h-8 w-8 text-white" />
@@ -842,6 +843,7 @@ session.share({ team: "Field Ops" });
                       target="_blank"
                       rel="noopener noreferrer"
                       className="group relative overflow-hidden rounded-lg bg-black p-[1px] transition-all hover:scale-105"
+                      data-testid="link-download-android-hero"
                     >
                       <div className="relative flex items-center gap-3 bg-black px-6 py-3 rounded-lg">
                         <Chrome className="h-8 w-8 text-white" />
@@ -1160,6 +1162,7 @@ session.share({ team: "Field Ops" });
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group relative overflow-hidden rounded-lg bg-black p-[1px] transition-all hover:scale-105"
+                data-testid="link-download-ios-cta"
               >
                 <div className="relative flex items-center gap-3 bg-black px-8 py-4 rounded-lg">
                   <Apple className="h-10 w-10 text-white" />
@@ -1175,6 +1178,7 @@ session.share({ team: "Field Ops" });
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group relative overflow-hidden rounded-lg bg-black p-[1px] transition-all hover:scale-105"
+                data-testid="link-download-android-cta"
               >
                 <div className="relative flex items-center gap-3 bg-black px-8 py-4 rounded-lg">
                   <Chrome className="h-10 w-10 text-white" />
@@ -1191,6 +1195,7 @@ session.share({ team: "Field Ops" });
               size="lg"
               onClick={() => navigate('/features')}
               className="gap-2"
+              data-testid="button-explore-features"
             >
               Explore all features
               <ArrowRight className="h-4 w-4" />
