@@ -252,6 +252,7 @@ export const projects = pgTable("projects", {
   visibility: visibilityEnum("visibility").notNull().default('private'),
   language: languageEnum("language").default('javascript'),
   ownerId: integer("owner_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  tenantId: integer("tenant_id"), // 🏢 TENANT ISOLATION: FK to teams.id (added via migration), nullable for backward compatibility
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
   forkedFromId: integer("forked_from_id"), // ✅ Changed to integer for serial FK
@@ -266,6 +267,7 @@ export const projects = pgTable("projects", {
   currentCheckpointId: integer("current_checkpoint_id"), // FK to checkpoints.id (nullable - no checkpoint until first one created)
 }, (table) => ({
   ownerIdIdx: index("projects_owner_id_idx").on(table.ownerId),
+  tenantIdIdx: index("projects_tenant_id_idx").on(table.tenantId),
 }));
 
 export const files = pgTable("files", {

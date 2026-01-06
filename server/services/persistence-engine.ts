@@ -116,28 +116,16 @@ class PersistenceEngine {
     timeout: number,
     transactionId: string
   ): Promise<T> {
-    return new Promise<T>(async (resolve, reject) => {
-      const timeoutId = setTimeout(() => {
-        reject(new Error(`Transaction ${transactionId} timed out after ${timeout}ms`));
-      }, timeout);
+    return db.transaction(async (tx) => {
+      await tx.execute(sql.raw(`SET TRANSACTION ISOLATION LEVEL ${isolationLevel}`));
+      
+      await tx.execute(sql.raw(`SET LOCAL statement_timeout = '${timeout}ms'`));
+      
+      await tx.execute(sql.raw(`SET LOCAL app.tenant_id = '${tenantContext.tenantId ?? 0}'`));
+      await tx.execute(sql.raw(`SET LOCAL app.user_id = '${tenantContext.userId}'`));
+      await tx.execute(sql.raw(`SET LOCAL app.transaction_id = '${transactionId}'`));
 
-      try {
-        const result = await db.transaction(async (tx) => {
-          await tx.execute(sql.raw(`SET TRANSACTION ISOLATION LEVEL ${isolationLevel}`));
-          
-          await tx.execute(sql.raw(`SET LOCAL app.tenant_id = '${tenantContext.tenantId ?? 0}'`));
-          await tx.execute(sql.raw(`SET LOCAL app.user_id = '${tenantContext.userId}'`));
-          await tx.execute(sql.raw(`SET LOCAL app.transaction_id = '${transactionId}'`));
-
-          return await callback(tx, tenantContext);
-        });
-
-        clearTimeout(timeoutId);
-        resolve(result);
-      } catch (error) {
-        clearTimeout(timeoutId);
-        reject(error);
-      }
+      return await callback(tx, tenantContext);
     });
   }
 
@@ -173,8 +161,8 @@ class PersistenceEngine {
       const results: any[] = [];
 
       for (const op of operations) {
-        if (context.tenantId !== null && op.data && !op.data.tenantId) {
-          op.data.tenantId = context.tenantId;
+        if (op.data) {
+          op.data = this.enforceTenantPredicate(op.data, context.tenantId);
         }
 
         let result: any;
@@ -310,15 +298,32 @@ class PersistenceEngine {
 
   async createTenantIsolatedQuery<T>(
     tenantId: number,
-    queryFn: () => Promise<T>
+    queryFn: (tenantId: number) => Promise<T>
   ): Promise<T> {
-    await client.unsafe(`SET LOCAL app.tenant_id = '${tenantId}'`);
-    
-    try {
-      return await queryFn();
-    } finally {
-      await client.unsafe(`RESET app.tenant_id`);
+    return db.transaction(async (tx) => {
+      await tx.execute(sql.raw(`SET LOCAL app.tenant_id = '${tenantId}'`));
+      return queryFn(tenantId);
+    });
+  }
+
+  enforceTenantPredicate<T extends { tenantId?: number | null }>(
+    data: T,
+    tenantId: number | null
+  ): T {
+    if (tenantId !== null) {
+      return { ...data, tenantId };
     }
+    return data;
+  }
+
+  validateTenantMatch(
+    recordTenantId: number | null | undefined,
+    contextTenantId: number | null
+  ): boolean {
+    if (contextTenantId === null) {
+      return true;
+    }
+    return recordTenantId === contextTenantId;
   }
 
   getTransactionStats(): {
