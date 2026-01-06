@@ -32,6 +32,13 @@ E-Code is an AI-assisted web-based IDE for rapid prototyping, education, and ent
 - **PGPASSWORD**: Automatically managed by Replit in production
 - **Console logs**: Development mode only, tree-shaking removes in production build
 
+### Transactional Persistence & Tenant Isolation (Fortune 500)
+- **PersistenceEngine** (`server/services/persistence-engine.ts`): Enterprise-grade transaction manager with configurable isolation levels (READ COMMITTED, REPEATABLE READ, SERIALIZABLE), automatic retry with exponential backoff for deadlocks, and database-level timeout via `SET LOCAL statement_timeout`.
+- **Tenant Context Middleware** (`server/middleware/tenant-context.ts`): Extracts tenant ID from `X-Tenant-Id` header, verifies user access via team membership, injects `TenantContext` into requests.
+- **Frontend Tenant Hook** (`client/src/hooks/use-tenant-context.ts`): Zustand store with localStorage persistence, tenant-scoped React Query keys via `createTenantQueryKey()`, automatic cache invalidation on tenant switch.
+- **Schema**: `projects.tenantId` column added (nullable for migration), uses `teams.id` as tenant identifier.
+- **Migration Path**: Phase 1 (nullable columns) → Phase 2 (backfill data) → Phase 3 (NOT NULL constraints + RLS policies).
+
 ## User Preferences
 - **Communication:** Simple, everyday language
 - **Code Style:** TypeScript with strict typing
