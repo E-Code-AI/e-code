@@ -157,6 +157,8 @@ export default function Login() {
           <button
             onClick={() => navigate('/')}
             className="inline-flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+            aria-label="Back to home page"
+            data-testid="button-back-home"
           >
             <ChevronLeft className="h-4 w-4" />
             <span className="text-sm">Back to home</span>
@@ -227,6 +229,8 @@ export default function Login() {
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-1 min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 -mr-2 sm:mr-0 flex items-center justify-center"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    data-testid="button-toggle-password"
                   >
                     {showPassword ? <EyeOff className="h-5 w-5 sm:h-4 sm:w-4" /> : <Eye className="h-5 w-5 sm:h-4 sm:w-4" />}
                   </button>
