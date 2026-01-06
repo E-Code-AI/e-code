@@ -78,6 +78,8 @@ const CodeEditor = ({ file, onChange, onSelectionChange, collaboration }: CodeEd
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const saveQueueRef = useRef<string | null>(null);
+  const isSavingRef = useRef(false);
   
   const toggleFullscreen = () => {
     setIsFullscreen(!isFullscreen);
@@ -119,12 +121,20 @@ const CodeEditor = ({ file, onChange, onSelectionChange, collaboration }: CodeEd
   }, [editorSettings.autoSave, editorSettings.autoSaveDelay]);
   
   const saveFile = async (content?: string) => {
-    if (!file.id || isSaving) return;
+    if (!file.id) return;
     
+    const fileContent = content ?? editorViewRef.current?.state.doc.toString() ?? file.content;
+    
+    // If already saving, queue this content for later
+    if (isSavingRef.current) {
+      saveQueueRef.current = fileContent;
+      return;
+    }
+    
+    isSavingRef.current = true;
     setIsSaving(true);
+    
     try {
-      const fileContent = content ?? editorViewRef.current?.state.doc.toString() ?? file.content;
-      
       const response = await apiRequest('PATCH', `/api/files/${file.id}`, {
         content: fileContent,
       });
@@ -139,7 +149,15 @@ const CodeEditor = ({ file, onChange, onSelectionChange, collaboration }: CodeEd
     } catch (error) {
       console.error('Failed to save file:', error);
     } finally {
+      isSavingRef.current = false;
       setIsSaving(false);
+      
+      // Process queued save if any
+      if (saveQueueRef.current !== null) {
+        const queuedContent = saveQueueRef.current;
+        saveQueueRef.current = null;
+        saveFile(queuedContent);
+      }
     }
   };
 
