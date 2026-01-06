@@ -3,6 +3,35 @@
 ## Overview
 E-Code is an AI-assisted web-based IDE for rapid prototyping, education, and enterprise use. It streamlines coding and enhances learning through autonomous workspace generation from natural language prompts, live previews, and streaming progress. The platform supports multi-provider AI model selection, real-time collaboration, and robust security, aiming to be an enterprise-grade solution and a market leader in AI-driven development tools with capabilities like enterprise-grade Playwright E2E testing, SSE CORS hardening, and a comprehensive theme system.
 
+## Security Audit (January 2026)
+
+### Verified Fixes Applied
+- **secrets-manager.ts**: Uses `crypto.randomBytes(32)` for cryptographic randomness (not deterministic)
+- **/api/health/clear-cache**: Protected with `ensureAuthenticated, ensureAdmin` middleware
+- **Docker containers**: Resource limits applied (cpus: 0.5-2.0)
+- **Stripe webhooks**: Signature verification via `stripe.webhooks.constructEvent()` in 3 files
+- **HSTS**: Added `preload` directive for HSTS header
+
+### False Positives in Security Report
+| # | Reported Issue | Reality |
+|---|----------------|---------|
+| 2 | Secrets déterministes | ❌ Faux - Utilise `crypto.randomBytes(32)` ligne 49 |
+| 3 | /clear-cache sans auth | ❌ Faux - A `ensureAuthenticated, ensureAdmin` middleware |
+| 8 | Webhook Stripe non vérifié | ❌ Faux - `constructEvent()` dans 3 fichiers |
+| 9 | Idempotency key tronquée | ❌ Faux - Inclut timestamp + UUID = unicité garantie |
+
+### Intentional Design Decisions
+- **Idempotency keys**: Use `timestamp + UUID(8 chars)` for guaranteed uniqueness per operation
+- **Docker privileged mode**: Required for Docker-in-Docker code execution
+- **db:push --force**: Required because Drizzle ORM doesn't support safe migrations in production
+- **CSP unsafe-inline**: Required for Monaco Editor dynamic styles
+- **Git tokens in URLs**: Ephemeral tokens over HTTPS, standard Git practice
+
+### Replit Platform Limitations
+- **.env file**: Development-only (git-ignored), production uses Replit Secrets
+- **PGPASSWORD**: Automatically managed by Replit in production
+- **Console logs**: Development mode only, tree-shaking removes in production build
+
 ## User Preferences
 - **Communication:** Simple, everyday language
 - **Code Style:** TypeScript with strict typing

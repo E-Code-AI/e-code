@@ -37,7 +37,7 @@ const COLORS = [
 export function useYjsCollaboration({
   projectId,
   fileId,
-  editorView
+  editorView: initialEditorView
 }: UseYjsCollaborationOptions) {
   const { user } = useAuth();
   const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
@@ -45,6 +45,7 @@ export function useYjsCollaboration({
   const [followingUserId, setFollowingUserId] = useState<number | null>(null);
   const providerRef = useRef<CollaborationProvider | null>(null);
   const bindingRef = useRef<any>(null);
+  const editorViewRef = useRef<EditorView | null>(initialEditorView ?? null);
 
   useEffect(() => {
     if (!user || !projectId || !fileId) return;
@@ -82,15 +83,16 @@ export function useYjsCollaboration({
   }, [user, projectId, fileId]);
 
   useEffect(() => {
-    if (!editorView || !providerRef.current) return;
+    const currentEditorView = editorViewRef.current;
+    if (!currentEditorView || !providerRef.current) return;
 
-    bindingRef.current = providerRef.current.bindCM6(editorView);
+    bindingRef.current = providerRef.current.bindCM6(currentEditorView);
 
     if (followingUserId !== null) {
       const collaborator = collaborators.find(c => c.userId === followingUserId);
       if (collaborator?.cursor) {
         const pos = collaborator.cursor.head;
-        editorView.dispatch({
+        currentEditorView.dispatch({
           effects: [],
           selection: { anchor: pos, head: pos },
           scrollIntoView: true
@@ -104,7 +106,7 @@ export function useYjsCollaboration({
         bindingRef.current = null;
       }
     };
-  }, [editorView, followingUserId, collaborators]);
+  }, [editorViewRef.current, followingUserId, collaborators]);
 
   const followUser = (userId: number) => {
     if (followingUserId === userId) {
@@ -115,7 +117,7 @@ export function useYjsCollaboration({
   };
 
   const setEditorView = (newEditorView: EditorView | null) => {
-    editorView = newEditorView;
+    editorViewRef.current = newEditorView;
   };
 
   return {
@@ -123,6 +125,7 @@ export function useYjsCollaboration({
     isConnected,
     followingUserId,
     followUser,
-    setEditorView
+    setEditorView,
+    editorViewRef
   };
 }
