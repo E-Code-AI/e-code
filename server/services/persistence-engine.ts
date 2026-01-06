@@ -6,6 +6,8 @@ import * as schema from '@shared/schema';
 
 export type IsolationLevel = 'READ COMMITTED' | 'REPEATABLE READ' | 'SERIALIZABLE';
 
+export type TransactionHandle = PgTransaction<PostgresJsQueryResultHKT, typeof schema, any>;
+
 export interface TenantContext {
   tenantId: number | null;
   userId: number;
@@ -298,11 +300,11 @@ class PersistenceEngine {
 
   async createTenantIsolatedQuery<T>(
     tenantId: number,
-    queryFn: (tenantId: number) => Promise<T>
+    queryFn: (tenantId: number, tx: TransactionHandle) => Promise<T>
   ): Promise<T> {
     return db.transaction(async (tx) => {
       await tx.execute(sql.raw(`SET LOCAL app.tenant_id = '${tenantId}'`));
-      return queryFn(tenantId);
+      return queryFn(tenantId, tx);
     });
   }
 
