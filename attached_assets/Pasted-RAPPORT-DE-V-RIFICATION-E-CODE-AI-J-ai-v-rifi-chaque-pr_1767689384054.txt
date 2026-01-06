@@ -1,0 +1,65 @@
+RAPPORT DE VÉRIFICATION - E-CODE.AI
+J'ai vérifié chaque problème identifié. Voici le résultat :
+
+✅ PROBLÈMES CORRIGÉS (3 sur 66)
+#	Problème	Statut
+43	Electron sans context isolation	✅ CORRIGÉ - contextIsolation: true, sandbox: true, nodeIntegration: false
+23*	Manifest categories manquant	✅ CORRIGÉ - "categories": ["developer-tools", "productivity"]
+-	.gitignore inclut .env	✅ OK - Ligne 9 : .env est ignoré
+❌ PROBLÈMES NON CORRIGÉS (63 restants)
+🔴 CRITIQUES - SÉCURITÉ
+#	Problème	Fichier	Ligne	Ce qu'il faut corriger
+1	Secrets en clair dans .env	.env	10-11	Fichier existe toujours avec SESSION_SECRET=development-session-secret...
+2	Secrets déterministes faibles	server/utils/secrets-manager.ts	45-65	Toujours generateDeterministicSecret() basé sur REPL_ID
+3	Endpoint sans authentification	server/routes/ai-health.ts	255	router.post('/clear-cache' sans middleware auth
+4	Git token dans URL	server/git/git-backend.ts	61-62	cloneUrl = repoUrl.replace('https://', \https://${token}@`)`
+8	Webhook Stripe non vérifié	server/services/stripe-billing-service.ts	378+	handleWebhook() ne vérifie pas la signature
+9	Idempotency key tronquée	server/services/stripe-billing-service.ts	10	crypto.randomUUID().slice(0, 8) au lieu du UUID complet
+🔴 CRITIQUES - DOCKER/PRODUCTION
+#	Problème	Fichier	Ligne	Ce qu'il faut corriger
+5	Migrations forcées	docker-entrypoint.sh	16	Toujours npm run db:push --force
+6	Container privileged	docker-compose.production.yml	128	Toujours privileged: true
+7	PGPASSWORD optionnel	docker-compose.production.yml	98	POSTGRES_PASSWORD=${PGPASSWORD} sans :?
+🔴 CRITIQUES - COLLABORATION
+#	Problème	Fichier	Ligne	Ce qu'il faut corriger
+10	Bug closure curseur	client/src/hooks/useYjsCollaboration.ts	117-119	editorView = newEditorView assigne au paramètre, pas à un ref
+11	Pas de reconnexion WebSocket	client/src/components/Collaboration.tsx	170-178	ws.close() sans reconnexion automatique
+12	Race condition auto-save	client/src/components/CodeEditor.tsx	109-119	setTimeout sans queue de sauvegarde
+🟠 HAUTS - SSL/NGINX
+#	Problème	Fichier	Ligne	Ce qu'il faut corriger
+57	CSP unsafe-inline	nginx.conf	75	'unsafe-inline' toujours présent dans style-src
+58	HSTS sans preload	nginx.conf	50	Manque ; preload dans HSTS header
+🟠 HAUTS - MOBILE
+#	Problème	Fichier	Ligne	Ce qu'il faut corriger
+39	Plugins Capacitor manquants	capacitor.config.ts	10-18	Seulement Keyboard et StatusBar configurés
+41	Manifest incomplet	client/public/manifest.json	-	Manque screenshots, shortcuts, share_target
+🟠 HAUTS - ACCESSIBILITÉ
+#	Problème	Fichier	Statut
+25	Manque a11y	client/src/pages/*	Seulement 11 attributs aria trouvés dans les pages
+28	Console logs en production	client/src/*	492 console.log/warn/error toujours présents
+🟠 HAUTS - VALIDATION
+#	Problème	Fichier	Ligne	Ce qu'il faut corriger
+29	Regex email faible	client/src/pages/Register.tsx	85	/^[^\s@]+@[^\s@]+\.[^\s@]+$/ trop permissif
+📊 RÉSUMÉ
+Catégorie	Total	Corrigés	Non corrigés
+Critiques Sécurité	9	0	9
+Critiques Docker	3	0	3
+Critiques Collaboration	3	0	3
+Hauts SSL/Nginx	2	0	2
+Hauts Mobile	2	0	2
+Hauts Accessibilité	2	0	2
+Desktop Electron	1	1	0
+Autres	44	2	42
+TOTAL	66	3 (4.5%)	63 (95.5%)
+🚨 TOP 10 À CORRIGER EN PRIORITÉ
+server/routes/ai-health.ts:255 - Ajouter requireAuth middleware
+server/git/git-backend.ts:61-62 - Utiliser credential helper
+docker-entrypoint.sh:16 - Retirer --force
+docker-compose.production.yml:98 - Ajouter :?PGPASSWORD required
+client/src/hooks/useYjsCollaboration.ts:117-119 - Utiliser useRef
+client/src/components/Collaboration.tsx:170 - Ajouter reconnexion auto
+stripe-billing-service.ts:10 - UUID complet
+nginx.conf:50 - Ajouter preload
+Supprimer les 492 console.log du client
+Ajouter aria-labels aux composants
+Conclusion: La grande majorité des problèmes identifiés n'ont PAS été corrigés. Seule la configuration Electron a été mise à jour. 
