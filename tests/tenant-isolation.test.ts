@@ -163,5 +163,92 @@ describe('Tenant Isolation', () => {
       expect(typeof queries.createCheckpoint).toBe('function');
       expect(typeof queries.deleteCheckpoint).toBe('function');
     });
+
+    it('has Phase 3 file CRUD methods (Jan 2026)', () => {
+      const mockTx = {} as TransactionHandle;
+      const queries = createTenantScopedQueries(mockTx, 123);
+      
+      expect(typeof queries.getFileById).toBe('function');
+      expect(typeof queries.createFile).toBe('function');
+      expect(typeof queries.updateFile).toBe('function');
+      expect(typeof queries.deleteFile).toBe('function');
+    });
+
+    it('has Phase 3 secrets CRUD methods (CRITICAL SECURITY - Jan 2026)', () => {
+      const mockTx = {} as TransactionHandle;
+      const queries = createTenantScopedQueries(mockTx, 123);
+      
+      expect(typeof queries.getSecretsByProject).toBe('function');
+      expect(typeof queries.getSecretByKey).toBe('function');
+      expect(typeof queries.createSecret).toBe('function');
+      expect(typeof queries.updateSecret).toBe('function');
+      expect(typeof queries.deleteSecret).toBe('function');
+    });
+
+    it('has Phase 3 agent session methods (Jan 2026)', () => {
+      const mockTx = {} as TransactionHandle;
+      const queries = createTenantScopedQueries(mockTx, 123);
+      
+      expect(typeof queries.getAgentSessionsByProject).toBe('function');
+      expect(typeof queries.getAgentSessionById).toBe('function');
+    });
+  });
+
+  describe('Phase 3 Security Controls (Jan 2026)', () => {
+    it('secrets methods require project ownership verification', async () => {
+      await withScopedTransaction(999, 1, async (scopedQueries) => {
+        const secrets = await scopedQueries.getSecretsByProject(99999);
+        expect(secrets).toEqual([]);
+        
+        const secret = await scopedQueries.getSecretByKey(99999, 'API_KEY');
+        expect(secret).toBeNull();
+        
+        return 'done';
+      });
+    });
+
+    it('file methods require project ownership verification', async () => {
+      await withScopedTransaction(999, 1, async (scopedQueries) => {
+        const file = await scopedQueries.getFileById(99999, 1);
+        expect(file).toBeNull();
+        
+        const files = await scopedQueries.getFilesByProject(99999);
+        expect(files).toEqual([]);
+        
+        return 'done';
+      });
+    });
+
+    it('agent session methods require project ownership verification', async () => {
+      await withScopedTransaction(999, 1, async (scopedQueries) => {
+        const sessions = await scopedQueries.getAgentSessionsByProject(99999);
+        expect(sessions).toEqual([]);
+        
+        const session = await scopedQueries.getAgentSessionById(99999, 'fake-session-id');
+        expect(session).toBeNull();
+        
+        return 'done';
+      });
+    });
+
+    it('createFile throws for non-owned project', async () => {
+      await withScopedTransaction(999, 1, async (scopedQueries) => {
+        await expect(
+          scopedQueries.createFile(99999, { filename: 'test.ts', content: '' })
+        ).rejects.toThrow('not found or access denied');
+        
+        return 'done';
+      });
+    });
+
+    it('createSecret throws for non-owned project', async () => {
+      await withScopedTransaction(999, 1, async (scopedQueries) => {
+        await expect(
+          scopedQueries.createSecret(99999, { key: 'API_KEY', encryptedValue: 'encrypted', createdBy: 1 })
+        ).rejects.toThrow('not found or access denied');
+        
+        return 'done';
+      });
+    });
   });
 });
