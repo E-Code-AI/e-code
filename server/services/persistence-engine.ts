@@ -17,6 +17,10 @@ export interface TenantScopedQueries {
   deleteProject(projectId: number): Promise<typeof schema.projects.$inferSelect | null>;
   getFilesByProject(projectId: number): Promise<(typeof schema.files.$inferSelect)[]>;
   getDeploymentsByProject(projectId: number): Promise<(typeof schema.deployments.$inferSelect)[]>;
+  getCheckpointsByProject(projectId: number): Promise<(typeof schema.checkpoints.$inferSelect)[]>;
+  getCheckpointById(projectId: number, checkpointId: number): Promise<typeof schema.checkpoints.$inferSelect | null>;
+  createCheckpoint(projectId: number, data: Omit<typeof schema.checkpoints.$inferInsert, 'projectId'>): Promise<typeof schema.checkpoints.$inferSelect>;
+  deleteCheckpoint(projectId: number, checkpointId: number): Promise<typeof schema.checkpoints.$inferSelect | null>;
 }
 
 export function createTenantScopedQueries(tx: TransactionHandle, tenantId: number): TenantScopedQueries {
@@ -99,6 +103,62 @@ export function createTenantScopedQueries(tx: TransactionHandle, tenantId: numbe
         .select()
         .from(schema.deployments)
         .where(eq(schema.deployments.projectId, projectId));
+    },
+
+    async getCheckpointsByProject(projectId) {
+      const project = await getProjectById(projectId);
+      if (!project) return [];
+      
+      return await tx
+        .select()
+        .from(schema.checkpoints)
+        .where(eq(schema.checkpoints.projectId, projectId));
+    },
+
+    async getCheckpointById(projectId, checkpointId) {
+      const project = await getProjectById(projectId);
+      if (!project) return null;
+      
+      const results = await tx
+        .select()
+        .from(schema.checkpoints)
+        .where(
+          and(
+            eq(schema.checkpoints.id, checkpointId),
+            eq(schema.checkpoints.projectId, projectId)
+          )
+        )
+        .limit(1);
+      return results[0] ?? null;
+    },
+
+    async createCheckpoint(projectId, data) {
+      const project = await getProjectById(projectId);
+      if (!project) {
+        throw new Error(`Project ${projectId} not found or access denied`);
+      }
+      
+      const results = await tx
+        .insert(schema.checkpoints)
+        .values({ ...data, projectId })
+        .returning();
+      return results[0];
+    },
+
+    async deleteCheckpoint(projectId, checkpointId) {
+      const project = await getProjectById(projectId);
+      if (!project) return null;
+      
+      const results = await tx
+        .delete(schema.checkpoints)
+        .where(
+          and(
+            eq(schema.checkpoints.id, checkpointId),
+            eq(schema.checkpoints.projectId, projectId)
+          )
+        )
+        .returning();
+      return results[0] ?? null;
     }
   };
 
@@ -116,6 +176,15 @@ export interface TransactionOptions {
   timeout?: number;
   retries?: number;
   tenantContext: TenantContext;
+  /**
+   * SECURITY: Set to true to access raw transaction handle.
+   * This bypasses tenant isolation and should only be used for:
+   * - Admin/system operations that need cross-tenant access
+   * - Migrations and data cleanup scripts
+   * - Explicitly audited code paths
+   * All usages are logged for security audit.
+   */
+  unsafeRawAccess?: boolean;
 }
 
 export interface CommitResult<T> {
@@ -160,8 +229,20 @@ class PersistenceEngine {
       isolationLevel = 'REPEATABLE READ',
       timeout = 30000,
       retries = 3,
-      tenantContext
+      tenantContext,
+      unsafeRawAccess = false
     } = options;
+
+    if (unsafeRawAccess && tenantContext.tenantId !== null) {
+      console.warn(`[PersistenceEngine] SECURITY AUDIT: unsafeRawAccess used with tenantId=${tenantContext.tenantId}, userId=${tenantContext.userId}`);
+    }
+
+    if (!unsafeRawAccess && tenantContext.tenantId !== null) {
+      throw new Error(
+        '[PersistenceEngine] Tenant-scoped operations must use withScopedTransaction(). ' +
+        'Set unsafeRawAccess: true only for audited admin operations.'
+      );
+    }
 
     const transactionId = this.generateTransactionId();
     const startTime = Date.now();
@@ -453,36 +534,47 @@ export function createTenantContext(
  * @deprecated Use `withScopedTransaction` for tenant-isolated operations.
  * This function exposes raw transaction handle which can bypass tenant isolation.
  * Only use for internal/admin operations that need cross-tenant access.
+ * @param options.unsafeRawAccess - Must be explicitly set to true to bypass tenant isolation
  */
 export async function withTenantTransaction<T>(
   tenantId: number | null,
   userId: number,
   callback: TransactionCallback<T>,
-  options: Partial<Omit<TransactionOptions, 'tenantContext'>> = {}
+  options: Partial<Omit<TransactionOptions, 'tenantContext'>> & { unsafeRawAccess?: boolean } = {}
 ): Promise<CommitResult<T>> {
-  if (tenantId !== null) {
-    console.warn('[PersistenceEngine] DEPRECATED: withTenantTransaction used with tenantId. Use withScopedTransaction for tenant isolation.');
+  const { unsafeRawAccess = false, ...restOptions } = options;
+  
+  if (tenantId !== null && !unsafeRawAccess) {
+    throw new Error(
+      '[PersistenceEngine] withTenantTransaction with tenantId requires explicit unsafeRawAccess: true. ' +
+      'Migrate to withScopedTransaction() for tenant-isolated operations, or set unsafeRawAccess: true for audited admin operations.'
+    );
   }
+  
   const tenantContext = createTenantContext(userId, tenantId);
   
   return persistenceEngine.withTransaction(callback, {
-    ...options,
-    tenantContext
+    ...restOptions,
+    tenantContext,
+    unsafeRawAccess: true
   });
 }
 
 /**
  * @deprecated Use `withScopedTransaction` with isolationLevel: 'SERIALIZABLE' instead.
  * This function exposes raw transaction handle which can bypass tenant isolation.
+ * @param options.unsafeRawAccess - Must be explicitly set to true to bypass tenant isolation
  */
 export async function withSerializableTransaction<T>(
   tenantId: number | null,
   userId: number,
-  callback: TransactionCallback<T>
+  callback: TransactionCallback<T>,
+  options: { unsafeRawAccess?: boolean } = {}
 ): Promise<CommitResult<T>> {
   return withTenantTransaction(tenantId, userId, callback, {
     isolationLevel: 'SERIALIZABLE',
-    retries: 5
+    retries: 5,
+    unsafeRawAccess: options.unsafeRawAccess
   });
 }
 
