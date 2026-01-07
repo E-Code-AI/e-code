@@ -1,12 +1,10 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { createLogger } from '../utils/logger';
-import { db } from '../db';
-import { environmentVariables, projects } from '@shared/schema';
-import { eq, and, ilike } from 'drizzle-orm';
 import { RealSecretManagementService } from '../services/real-secret-management';
 import { ensureAuthenticated } from '../middleware/auth';
 import { csrfProtection } from '../middleware/csrf';
+import { withScopedTransaction } from '../services/persistence-engine';
 
 const router = Router({ mergeParams: true });
 const logger = createLogger('secrets');
@@ -20,62 +18,6 @@ router.use((req, res, next) => {
   }
   return next();
 });
-
-async function verifyProjectOwnership(userId: number | string, projectId: number | string): Promise<boolean> {
-  try {
-    const userIdNum = typeof userId === 'number' ? userId : parseInt(String(userId), 10);
-    const projectIdNum = typeof projectId === 'number' ? projectId : parseInt(String(projectId), 10);
-    
-    if (isNaN(userIdNum) || isNaN(projectIdNum) || userIdNum <= 0 || projectIdNum <= 0) {
-      return false;
-    }
-    
-    const project = await db.query.projects.findFirst({
-      where: and(
-        eq(projects.id, projectIdNum),
-        eq(projects.ownerId, userIdNum)
-      )
-    });
-    return !!project;
-  } catch (error) {
-    logger.error('Project ownership verification failed', { userId, projectId, error });
-    return false;
-  }
-}
-
-async function verifySecretAccess(userId: number | string, secretId: string): Promise<{ allowed: boolean; secret?: any }> {
-  try {
-    const userIdNum = typeof userId === 'number' ? userId : parseInt(String(userId), 10);
-    
-    if (isNaN(userIdNum) || userIdNum <= 0) {
-      return { allowed: false };
-    }
-    
-    const secret = await db.query.environmentVariables.findFirst({
-      where: eq(environmentVariables.id, secretId)
-    });
-    
-    if (!secret) {
-      return { allowed: false };
-    }
-    
-    const project = await db.query.projects.findFirst({
-      where: and(
-        eq(projects.id, secret.projectId),
-        eq(projects.ownerId, userIdNum)
-      )
-    });
-    
-    if (!project) {
-      return { allowed: false };
-    }
-    
-    return { allowed: true, secret };
-  } catch (error) {
-    logger.error('Secret access verification failed', { userId, secretId, error });
-    return { allowed: false };
-  }
-}
 
 const createSecretSchema = z.object({
   key: z.string().min(1).max(255).regex(/^[A-Z][A-Z0-9_]*$/, 'Must be UPPERCASE with underscores'),
@@ -92,7 +34,7 @@ const updateSecretSchema = z.object({
 
 router.get('/', async (req, res) => {
   try {
-    const projectId = req.params.projectId;
+    const projectId = parseInt(req.params.projectId, 10);
     const userId = req.user?.id;
     const environment = req.query.environment as string | undefined;
     const search = req.query.search as string | undefined;
@@ -101,31 +43,31 @@ router.get('/', async (req, res) => {
       return res.status(401).json({ error: 'Authentication required' });
     }
     
-    const isOwner = await verifyProjectOwnership(userId, projectId);
-    if (!isOwner) {
-      return res.status(403).json({ error: 'Access denied' });
-    }
-    
-    const projectIdNum = parseInt(projectId, 10);
-    
-    let conditions = [eq(environmentVariables.projectId, projectIdNum)];
-    
-    if (environment && environment !== 'all') {
-      conditions.push(eq(environmentVariables.environment, environment));
-    }
-    
-    const secrets = await db.query.environmentVariables.findMany({
-      where: and(...conditions),
-      orderBy: (vars, { asc }) => [asc(vars.key)]
-    });
-    
-    let filteredSecrets = secrets;
-    if (search) {
-      const searchLower = search.toLowerCase();
-      filteredSecrets = secrets.filter(s => s.key.toLowerCase().includes(searchLower));
+    if (isNaN(projectId) || projectId <= 0) {
+      return res.status(400).json({ error: 'Invalid project ID' });
     }
 
-    const maskedSecrets = filteredSecrets.map(secret => ({
+    const result = await withScopedTransaction(userId, userId, async (scopedQueries) => {
+      const envVars = await scopedQueries.getEnvVarsByProject(
+        projectId,
+        environment && environment !== 'all' ? environment : undefined
+      );
+      return envVars;
+    });
+
+    if (!result.success) {
+      logger.error('Failed to get secrets', { error: result.error });
+      return res.status(500).json({ error: 'Failed to retrieve secrets' });
+    }
+
+    let secrets = result.data || [];
+    
+    if (search) {
+      const searchLower = search.toLowerCase();
+      secrets = secrets.filter(s => s.key.toLowerCase().includes(searchLower));
+    }
+
+    const maskedSecrets = secrets.map(secret => ({
       ...secret,
       value: secret.isSecret ? '********' : secret.value
     }));
@@ -139,7 +81,7 @@ router.get('/', async (req, res) => {
 
 router.post('/', async (req, res) => {
   try {
-    const projectId = req.params.projectId;
+    const projectId = parseInt(req.params.projectId, 10);
     const userId = req.user?.id;
     const data = createSecretSchema.parse(req.body);
     
@@ -147,42 +89,46 @@ router.post('/', async (req, res) => {
       return res.status(401).json({ error: 'Authentication required' });
     }
     
-    const isOwner = await verifyProjectOwnership(userId, projectId);
-    if (!isOwner) {
-      return res.status(403).json({ error: 'Access denied' });
+    if (isNaN(projectId) || projectId <= 0) {
+      return res.status(400).json({ error: 'Invalid project ID' });
     }
 
-    const projectIdNum = parseInt(projectId, 10);
-    
-    const existing = await db.query.environmentVariables.findFirst({
-      where: and(
-        eq(environmentVariables.projectId, projectIdNum),
-        eq(environmentVariables.key, data.key),
-        eq(environmentVariables.environment, data.environment)
-      )
+    const result = await withScopedTransaction(userId, userId, async (scopedQueries) => {
+      const existing = await scopedQueries.getEnvVarByKey(projectId, data.key, data.environment);
+      if (existing) {
+        throw new Error('SECRET_EXISTS');
+      }
+
+      let valueToStore = data.value;
+      if (data.isSecret) {
+        const encrypted = (secretService as any).encrypt(data.value);
+        valueToStore = JSON.stringify(encrypted);
+      }
+
+      const secret = await scopedQueries.createEnvVar(projectId, {
+        key: data.key,
+        value: valueToStore,
+        environment: data.environment,
+        isSecret: data.isSecret
+      });
+      
+      return secret;
     });
 
-    if (existing) {
-      return res.status(409).json({ error: 'Secret already exists for this environment' });
+    if (!result.success) {
+      if (result.error?.message === 'SECRET_EXISTS') {
+        return res.status(409).json({ error: 'Secret already exists for this environment' });
+      }
+      if (result.error?.message?.includes('not found or access denied')) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+      logger.error('Failed to create secret', { error: result.error });
+      return res.status(500).json({ error: 'Failed to create secret' });
     }
-
-    let valueToStore = data.value;
-    if (data.isSecret) {
-      const encrypted = (secretService as any).encrypt(data.value);
-      valueToStore = JSON.stringify(encrypted);
-    }
-
-    const [secret] = await db.insert(environmentVariables).values({
-      projectId: projectIdNum,
-      key: data.key,
-      value: valueToStore,
-      environment: data.environment,
-      isSecret: data.isSecret
-    }).returning();
 
     const response = {
-      ...secret,
-      value: secret.isSecret ? '********' : secret.value
+      ...result.data,
+      value: result.data!.isSecret ? '********' : result.data!.value
     };
 
     res.status(201).json(response);
@@ -198,6 +144,7 @@ router.post('/', async (req, res) => {
 router.patch('/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    const projectId = parseInt(req.params.projectId, 10);
     const userId = req.user?.id;
     const updates = updateSecretSchema.parse(req.body);
     
@@ -205,45 +152,62 @@ router.patch('/:id', async (req, res) => {
       return res.status(401).json({ error: 'Authentication required' });
     }
 
-    const { allowed, secret } = await verifySecretAccess(userId, id);
-    if (!allowed || !secret) {
-      return res.status(404).json({ error: 'Secret not found' });
+    if (isNaN(projectId) || projectId <= 0) {
+      return res.status(400).json({ error: 'Invalid project ID' });
     }
 
-    const isSecretFlag = updates.isSecret ?? secret.isSecret;
-    let valueToStore = updates.value;
-    const valueProvided = updates.value !== undefined;
-    
-    if (secret.isSecret && updates.isSecret === false && !valueProvided) {
-      try {
-        const encryptedData = JSON.parse(secret.value);
-        valueToStore = (secretService as any).decrypt(encryptedData);
-      } catch (error) {
-        return res.status(500).json({ error: 'Failed to downgrade secret' });
+    const result = await withScopedTransaction(userId, userId, async (scopedQueries) => {
+      const envVars = await scopedQueries.getEnvVarsByProject(projectId);
+      const secret = envVars.find(v => v.id === id);
+      
+      if (!secret) {
+        throw new Error('SECRET_NOT_FOUND');
       }
-    } else if (!secret.isSecret && updates.isSecret === true && !valueProvided) {
-      const encrypted = (secretService as any).encrypt(secret.value);
-      valueToStore = JSON.stringify(encrypted);
-    } else if (valueProvided && isSecretFlag) {
-      const encrypted = (secretService as any).encrypt(valueToStore!);
-      valueToStore = JSON.stringify(encrypted);
-    } else if (!valueProvided) {
-      valueToStore = secret.value;
-    }
 
-    const [updated] = await db.update(environmentVariables)
-      .set({
+      const isSecretFlag = updates.isSecret ?? secret.isSecret;
+      let valueToStore = updates.value;
+      const valueProvided = updates.value !== undefined;
+      
+      if (secret.isSecret && updates.isSecret === false && !valueProvided) {
+        try {
+          const encryptedData = JSON.parse(secret.value);
+          valueToStore = (secretService as any).decrypt(encryptedData);
+        } catch {
+          throw new Error('DECRYPT_FAILED');
+        }
+      } else if (!secret.isSecret && updates.isSecret === true && !valueProvided) {
+        const encrypted = (secretService as any).encrypt(secret.value);
+        valueToStore = JSON.stringify(encrypted);
+      } else if (valueProvided && isSecretFlag) {
+        const encrypted = (secretService as any).encrypt(valueToStore!);
+        valueToStore = JSON.stringify(encrypted);
+      } else if (!valueProvided) {
+        valueToStore = secret.value;
+      }
+
+      const updated = await scopedQueries.updateEnvVar(projectId, id, {
         value: valueToStore,
         environment: updates.environment ?? secret.environment,
-        isSecret: isSecretFlag,
-        updatedAt: new Date()
-      })
-      .where(eq(environmentVariables.id, id))
-      .returning();
+        isSecret: isSecretFlag
+      });
+      
+      return updated;
+    });
+
+    if (!result.success) {
+      if (result.error?.message === 'SECRET_NOT_FOUND') {
+        return res.status(404).json({ error: 'Secret not found' });
+      }
+      if (result.error?.message === 'DECRYPT_FAILED') {
+        return res.status(500).json({ error: 'Failed to downgrade secret' });
+      }
+      logger.error('Failed to update secret', { error: result.error });
+      return res.status(500).json({ error: 'Failed to update secret' });
+    }
 
     const response = {
-      ...updated,
-      value: updated.isSecret ? '********' : updated.value
+      ...result.data,
+      value: result.data!.isSecret ? '********' : result.data!.value
     };
 
     res.json(response);
@@ -259,19 +223,36 @@ router.patch('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    const projectId = parseInt(req.params.projectId, 10);
     const userId = req.user?.id;
     
     if (!userId) {
       return res.status(401).json({ error: 'Authentication required' });
     }
 
-    const { allowed, secret } = await verifySecretAccess(userId, id);
-    if (!allowed || !secret) {
-      return res.status(404).json({ error: 'Secret not found' });
+    if (isNaN(projectId) || projectId <= 0) {
+      return res.status(400).json({ error: 'Invalid project ID' });
     }
 
-    await db.delete(environmentVariables)
-      .where(eq(environmentVariables.id, id));
+    const result = await withScopedTransaction(userId, userId, async (scopedQueries) => {
+      const envVars = await scopedQueries.getEnvVarsByProject(projectId);
+      const secret = envVars.find(v => v.id === id);
+      
+      if (!secret) {
+        throw new Error('SECRET_NOT_FOUND');
+      }
+
+      await scopedQueries.deleteEnvVar(projectId, id);
+      return true;
+    });
+
+    if (!result.success) {
+      if (result.error?.message === 'SECRET_NOT_FOUND') {
+        return res.status(404).json({ error: 'Secret not found' });
+      }
+      logger.error('Failed to delete secret', { error: result.error });
+      return res.status(500).json({ error: 'Failed to delete secret' });
+    }
 
     res.json({ message: 'Secret deleted' });
   } catch (error: any) {
@@ -283,36 +264,58 @@ router.delete('/:id', async (req, res) => {
 router.post('/:id/reveal', async (req, res) => {
   try {
     const { id } = req.params;
+    const projectId = parseInt(req.params.projectId, 10);
     const userId = req.user?.id;
 
     if (!userId) {
       return res.status(401).json({ error: 'Authentication required' });
     }
 
-    const { allowed, secret } = await verifySecretAccess(userId, id);
-    if (!allowed || !secret) {
-      return res.status(404).json({ error: 'Secret not found' });
+    if (isNaN(projectId) || projectId <= 0) {
+      return res.status(400).json({ error: 'Invalid project ID' });
     }
 
-    let value = secret.value;
-    if (secret.isSecret) {
-      try {
-        const encryptedData = JSON.parse(secret.value);
-        value = (secretService as any).decrypt(encryptedData);
-      } catch (error) {
-        return res.status(500).json({ error: 'Failed to decrypt secret' });
+    const result = await withScopedTransaction(userId, userId, async (scopedQueries) => {
+      const envVars = await scopedQueries.getEnvVarsByProject(projectId);
+      const secret = envVars.find(v => v.id === id);
+      
+      if (!secret) {
+        throw new Error('SECRET_NOT_FOUND');
       }
-    }
 
-    logger.warn('Secret revealed', {
-      userId,
-      secretId: id,
-      key: secret.key,
-      projectId: secret.projectId
+      let value = secret.value;
+      if (secret.isSecret) {
+        try {
+          const encryptedData = JSON.parse(secret.value);
+          value = (secretService as any).decrypt(encryptedData);
+        } catch {
+          throw new Error('DECRYPT_FAILED');
+        }
+      }
+
+      logger.warn('Secret revealed', {
+        userId,
+        secretId: id,
+        key: secret.key,
+        projectId: secret.projectId
+      });
+
+      return { value, secret };
     });
 
+    if (!result.success) {
+      if (result.error?.message === 'SECRET_NOT_FOUND') {
+        return res.status(404).json({ error: 'Secret not found' });
+      }
+      if (result.error?.message === 'DECRYPT_FAILED') {
+        return res.status(500).json({ error: 'Failed to decrypt secret' });
+      }
+      logger.error('Failed to reveal secret', { error: result.error });
+      return res.status(500).json({ error: 'Failed to reveal secret' });
+    }
+
     res.json({ 
-      value,
+      value: result.data!.value,
       expiresIn: 60
     });
   } catch (error: any) {

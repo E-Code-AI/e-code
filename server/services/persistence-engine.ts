@@ -44,9 +44,32 @@ export interface TenantScopedQueries {
   // ✅ PHASE 3 (Jan 2026): Agent Sessions (project-scoped)
   getAgentSessionsByProject(projectId: number): Promise<(typeof schema.agentSessions.$inferSelect)[]>;
   getAgentSessionById(projectId: number, sessionId: string): Promise<typeof schema.agentSessions.$inferSelect | null>;
+  
+  // ✅ PHASE 3 (Jan 2026): Environment Variables (project-scoped, runtime secrets)
+  getEnvVarsByProject(projectId: number, environment?: string): Promise<(typeof schema.environmentVariables.$inferSelect)[]>;
+  getEnvVarByKey(projectId: number, key: string, environment: string): Promise<typeof schema.environmentVariables.$inferSelect | null>;
+  createEnvVar(projectId: number, data: Omit<typeof schema.environmentVariables.$inferInsert, 'projectId'>): Promise<typeof schema.environmentVariables.$inferSelect>;
+  updateEnvVar(projectId: number, envVarId: string, data: Partial<Omit<typeof schema.environmentVariables.$inferInsert, 'projectId'>>): Promise<typeof schema.environmentVariables.$inferSelect | null>;
+  deleteEnvVar(projectId: number, envVarId: string): Promise<typeof schema.environmentVariables.$inferSelect | null>;
 }
 
+/**
+ * ✅ PHASE 3 COMPLETE (Jan 2026): Unified tenant isolation
+ * 
+ * ARCHITECTURE DECISION: All projects use tenantId for isolation.
+ * - Personal projects: tenantId = ownerId (user's ID)
+ * - Team projects: tenantId = team's ID
+ * 
+ * MIGRATION APPLIED: All existing projects with NULL tenantId were
+ * backfilled with tenantId = ownerId via SQL migration.
+ * 
+ * This enables Fortune 500-grade centralized isolation with PostgreSQL RLS.
+ */
 export function createTenantScopedQueries(tx: TransactionHandle, tenantId: number): TenantScopedQueries {
+  /**
+   * CRITICAL SECURITY: Project access check via tenantId
+   * After migration, ALL projects have tenantId set (personal = ownerId, team = teamId)
+   */
   const getProjectById = async (projectId: number): Promise<typeof schema.projects.$inferSelect | null> => {
     const results = await tx
       .select()
@@ -74,6 +97,7 @@ export function createTenantScopedQueries(tx: TransactionHandle, tenantId: numbe
     getProjectById,
 
     async createProject(data) {
+      // tenantId is set for all projects (personal = userId, team = teamId)
       const results = await tx
         .insert(schema.projects)
         .values({ ...data, tenantId })
@@ -347,6 +371,93 @@ export function createTenantScopedQueries(tx: TransactionHandle, tenantId: numbe
           )
         )
         .limit(1);
+      return results[0] ?? null;
+    },
+
+    // ✅ PHASE 3 (Jan 2026): Environment Variables CRUD (CRITICAL for secrets.router.ts)
+    async getEnvVarsByProject(projectId, environment) {
+      const project = await getProjectById(projectId);
+      if (!project) return [];
+      
+      if (environment) {
+        return await tx
+          .select()
+          .from(schema.environmentVariables)
+          .where(
+            and(
+              eq(schema.environmentVariables.projectId, projectId),
+              eq(schema.environmentVariables.environment, environment)
+            )
+          );
+      }
+      
+      return await tx
+        .select()
+        .from(schema.environmentVariables)
+        .where(eq(schema.environmentVariables.projectId, projectId));
+    },
+
+    async getEnvVarByKey(projectId, key, environment) {
+      const project = await getProjectById(projectId);
+      if (!project) return null;
+      
+      const results = await tx
+        .select()
+        .from(schema.environmentVariables)
+        .where(
+          and(
+            eq(schema.environmentVariables.projectId, projectId),
+            eq(schema.environmentVariables.key, key),
+            eq(schema.environmentVariables.environment, environment)
+          )
+        )
+        .limit(1);
+      return results[0] ?? null;
+    },
+
+    async createEnvVar(projectId, data) {
+      const project = await getProjectById(projectId);
+      if (!project) {
+        throw new Error(`Project ${projectId} not found or access denied`);
+      }
+      
+      const results = await tx
+        .insert(schema.environmentVariables)
+        .values({ ...data, projectId })
+        .returning();
+      return results[0];
+    },
+
+    async updateEnvVar(projectId, envVarId, data) {
+      const project = await getProjectById(projectId);
+      if (!project) return null;
+      
+      const results = await tx
+        .update(schema.environmentVariables)
+        .set({ ...data, updatedAt: new Date() })
+        .where(
+          and(
+            eq(schema.environmentVariables.id, envVarId),
+            eq(schema.environmentVariables.projectId, projectId)
+          )
+        )
+        .returning();
+      return results[0] ?? null;
+    },
+
+    async deleteEnvVar(projectId, envVarId) {
+      const project = await getProjectById(projectId);
+      if (!project) return null;
+      
+      const results = await tx
+        .delete(schema.environmentVariables)
+        .where(
+          and(
+            eq(schema.environmentVariables.id, envVarId),
+            eq(schema.environmentVariables.projectId, projectId)
+          )
+        )
+        .returning();
       return results[0] ?? null;
     }
   };
