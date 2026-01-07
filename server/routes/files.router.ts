@@ -6,6 +6,7 @@ import { csrfProtection } from "../middleware/csrf";
 import type { User } from "@shared/schema";
 import path from 'path';
 import { previewEvents } from '../preview/preview-websocket';
+import { withScopedTransaction, TenantScopedQueries } from '../services/persistence-engine';
 
 export class FilesRouter {
   private router: Router;
@@ -17,14 +18,6 @@ export class FilesRouter {
     this.initializeRoutes();
   }
 
-  // ✅ 40-YEAR SENIOR FIX: Helper method to find file by path
-  // Storage only has getFile(id), not getFile(projectId, path)
-  private async getFileByPath(projectId: string, filePath: string): Promise<any | undefined> {
-    const allFiles = await this.storage.getFilesByProjectId(projectId);
-    return allFiles.find(f => f.path === filePath);
-  }
-
-  // Helper to emit file change events for hot-reload
   private emitFileChange(projectId: string, filePath: string, changeType: 'create' | 'update' | 'delete') {
     previewEvents.emit('preview:file-change', {
       projectId: parseInt(projectId, 10),
@@ -35,18 +28,11 @@ export class FilesRouter {
   }
 
   private ensureAuthenticated = (req: Request, res: Response, next: NextFunction) => {
-    // ✅ 40-YEAR SENIOR SECURITY FIX: Aligned with dev-auth-bypass.ts
-    // NEVER bypass auth with just NODE_ENV - always require token validation
-    // This prevents accidental auth bypass if NODE_ENV is misconfigured
-    
-    // Apply auth bypass middleware (requires token even in development)
     devAuthBypass(req, res, () => {
-      // Check if already authenticated via Passport
       if (req.isAuthenticated()) {
         return next();
       }
       
-      // Check if user was injected by devAuthBypass (with valid token)
       if (req.user) {
         return next();
       }
@@ -59,74 +45,39 @@ export class FilesRouter {
     });
   };
 
-  private ensureProjectAccess = async (req: Request, res: Response, next: NextFunction) => {
-    // ✅ 40-YEAR SENIOR FIX: Remove unconditional user injection
-    // Previous code ALWAYS added test user in development, causing unauthenticated
-    // requests to skip 401 check and return 403 instead
-    
-    // Check authentication FIRST, before any user injection
-    if (!req.isAuthenticated() && !req.user) {
-      return res.status(401).json({ 
-        message: "Unauthorized",
-        code: "AUTH_REQUIRED" 
-      });
-    }
-    
-    const userId = req.user!.id;
-    const projectId = (req.params.projectId || req.params.id || '').toString();
-
-    if (!projectId) {
-      return res.status(400).json({
-        message: "Invalid project ID",
-        code: "INVALID_PROJECT_ID"
-      });
-    }
-
-    // Get the project
-    const project = await this.storage.getProject(projectId);
-    if (!project) {
-      return res.status(404).json({
-        message: "Project not found",
-        code: "PROJECT_NOT_FOUND",
-        projectId
-      });
-    }
-    
-    // Check if user is owner
-    if (project.ownerId === userId) {
-      return next();
-    }
-    
-    // Check if user is collaborator
-    const collaborators = await this.storage.getProjectCollaborators(projectId);
-    const isCollaborator = collaborators.some(c => c.userId === userId);
-    
-    if (isCollaborator) {
-      return next();
-    }
-    
-    // Check if project is public
-    if (project.visibility === 'public') {
-      return next();
-    }
-    
-    return res.status(403).json({
-      message: "Access denied",
-      code: "ACCESS_DENIED",
-      projectId,
-      userId
-    });
-  };
-
   private initializeRoutes() {
-    // Get project files
-    this.router.get("/api/projects/:projectId/files", this.ensureAuthenticated, this.ensureProjectAccess, async (req: Request, res: Response) => {
+    this.router.get("/api/projects/:projectId/files", this.ensureAuthenticated, async (req: Request, res: Response) => {
       try {
-        const projectId = req.params.projectId;
-        const files = await this.storage.getProjectFiles(projectId);
-        // Transform files to include 'type' field for frontend compatibility
-        // Frontend expects type: "file" | "folder", but DB stores isDirectory: boolean
-        const transformedFiles = files.map(file => ({
+        const projectId = parseInt(req.params.projectId, 10);
+        const userId = req.user!.id;
+
+        if (isNaN(projectId) || projectId <= 0) {
+          return res.status(400).json({
+            message: "Invalid project ID",
+            code: "INVALID_PROJECT_ID"
+          });
+        }
+
+        const result = await withScopedTransaction(userId, userId, async (scopedQueries) => {
+          const files = await scopedQueries.getFilesByProject(projectId);
+          return files;
+        });
+
+        if (!result.success) {
+          if (result.error?.message?.includes('not found or access denied')) {
+            return res.status(403).json({
+              message: "Access denied",
+              code: "ACCESS_DENIED"
+            });
+          }
+          console.error('Failed to fetch files:', result.error);
+          return res.status(500).json({ 
+            message: "Failed to fetch files",
+            code: "FETCH_ERROR"
+          });
+        }
+
+        const transformedFiles = (result.data || []).map(file => ({
           ...file,
           type: file.isDirectory ? "folder" : "file"
         }));
@@ -140,10 +91,10 @@ export class FilesRouter {
       }
     });
 
-    // Get file content (supports both file ID and file path)
-    this.router.get("/api/projects/:projectId/files/*", this.ensureAuthenticated, this.ensureProjectAccess, async (req: Request, res: Response) => {
+    this.router.get("/api/projects/:projectId/files/*", this.ensureAuthenticated, async (req: Request, res: Response) => {
       try {
-        const projectId = req.params.projectId;
+        const projectId = parseInt(req.params.projectId, 10);
+        const userId = req.user!.id;
         let fileIdentifier = req.params[0];
         
         if (!fileIdentifier) {
@@ -153,31 +104,48 @@ export class FilesRouter {
           });
         }
 
-        let file;
-        
-        // ✅ 40-YEAR SENIOR FIX: Support both file ID (625) and file path (/symbol-test.ts)
-        // Frontend uses file ID for queries, check if identifier is numeric
-        if (/^\d+$/.test(fileIdentifier)) {
-          // Numeric ID - fetch directly by ID
-          const fileId = parseInt(fileIdentifier, 10);
-          file = await this.storage.getFile(fileId);
+        if (isNaN(projectId) || projectId <= 0) {
+          return res.status(400).json({
+            message: "Invalid project ID",
+            code: "INVALID_PROJECT_ID"
+          });
+        }
+
+        const result = await withScopedTransaction(userId, userId, async (scopedQueries) => {
+          let file;
           
-          // Verify file belongs to this project (compare as strings for type safety)
-          if (file && String(file.projectId) !== projectId) {
-            file = null; // Security: don't leak files from other projects
-          }
-        } else {
-          // File path - sanitize and lookup by path
-          const { aiSecurityService } = await import('../services/ai-security.service');
-          const pathValidation = aiSecurityService.validatePath(fileIdentifier);
-          if (pathValidation.valid && pathValidation.sanitized) {
-            fileIdentifier = pathValidation.sanitized;
+          if (/^\d+$/.test(fileIdentifier)) {
+            const fileId = parseInt(fileIdentifier, 10);
+            file = await scopedQueries.getFileById(projectId, fileId);
+          } else {
+            const { aiSecurityService } = await import('../services/ai-security.service');
+            const pathValidation = aiSecurityService.validatePath(fileIdentifier);
+            if (pathValidation.valid && pathValidation.sanitized) {
+              fileIdentifier = pathValidation.sanitized;
+            }
+            
+            const allFiles = await scopedQueries.getFilesByProject(projectId);
+            file = allFiles.find(f => f.path === fileIdentifier);
           }
           
-          file = await this.getFileByPath(projectId, fileIdentifier);
+          return file;
+        });
+
+        if (!result.success) {
+          if (result.error?.message?.includes('not found or access denied')) {
+            return res.status(403).json({
+              message: "Access denied",
+              code: "ACCESS_DENIED"
+            });
+          }
+          console.error('Failed to fetch file:', result.error);
+          return res.status(500).json({ 
+            message: "Failed to fetch file",
+            code: "FETCH_ERROR"
+          });
         }
         
-        if (!file) {
+        if (!result.data) {
           return res.status(404).json({
             message: "File not found",
             code: "FILE_NOT_FOUND",
@@ -185,8 +153,7 @@ export class FilesRouter {
           });
         }
         
-        // Return file object (already has content field)
-        res.json(file);
+        res.json(result.data);
       } catch (error) {
         console.error('Error fetching file:', error);
         res.status(500).json({ 
@@ -196,13 +163,19 @@ export class FilesRouter {
       }
     });
 
-    // Create or update file - FORTUNE 500 SECURITY APPLIED
-    this.router.post("/api/projects/:projectId/files", this.ensureAuthenticated, this.ensureProjectAccess, csrfProtection, async (req: Request, res: Response) => {
+    this.router.post("/api/projects/:projectId/files", this.ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
       try {
-        const projectId = req.params.projectId;
+        const projectId = parseInt(req.params.projectId, 10);
+        const userId = req.user!.id;
         
-        // ✅ File size validation (DoS prevention) - 5MB limit
-        const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+        if (isNaN(projectId) || projectId <= 0) {
+          return res.status(400).json({
+            message: "Invalid project ID",
+            code: "INVALID_PROJECT_ID"
+          });
+        }
+        
+        const MAX_FILE_SIZE = 5 * 1024 * 1024;
         if (req.body.content && req.body.content.length > MAX_FILE_SIZE) {
           return res.status(413).json({
             error: "File too large",
@@ -211,28 +184,22 @@ export class FilesRouter {
           });
         }
         
-        // ✅ 40-YEAR SENIOR FIX: Auto-derive 'name' from 'path' if not provided
-        // Tests send { path, content, language } but schema requires 'name' field
         const requestData = { ...req.body, projectId };
         if (!requestData.name && requestData.path) {
-          // Extract filename from path (e.g., 'src/components/Button.tsx' → 'Button.tsx')
           requestData.name = requestData.path.split('/').pop() || requestData.path;
         }
         
         const validatedData = insertFileSchema.parse(requestData);
         
-        // SECURITY: Fortune 500 path validation (blocks ../, .env, server/, etc.)
         const { aiSecurityService } = await import('../services/ai-security.service');
         const pathValidation = aiSecurityService.validatePath(validatedData.path);
         
         if (!pathValidation.valid) {
           console.warn(`[FILES-SECURITY] Blocked: ${validatedData.path} - ${pathValidation.reason}`);
           
-          // AUDIT: Log blocked attempt
-          const userId = (req.user as any)?.id || 'unknown';
           await aiSecurityService.logAction(
             userId,
-            projectId,
+            String(projectId),
             { type: 'create_file', path: validatedData.path, content: validatedData.content || '' },
             { success: false, error: `Path blocked: ${pathValidation.reason}` }
           );
@@ -243,54 +210,49 @@ export class FilesRouter {
           });
         }
         
-        // Use sanitized path
         validatedData.path = pathValidation.sanitized!;
 
-        // Check if file exists
-        const existingFile = await this.getFileByPath(projectId, validatedData.path);
-        
-        if (existingFile) {
-          // Update file content
-          await this.storage.updateFile(existingFile.id, {
-            content: validatedData.content || ''
+        const result = await withScopedTransaction(userId, userId, async (scopedQueries) => {
+          const allFiles = await scopedQueries.getFilesByProject(projectId);
+          const existingFile = allFiles.find(f => f.path === validatedData.path);
+          
+          if (existingFile) {
+            const updated = await scopedQueries.updateFile(projectId, existingFile.id, {
+              content: validatedData.content || ''
+            });
+            return { file: updated, isUpdate: true };
+          } else {
+            const { projectId: _, ...fileData } = validatedData;
+            const created = await scopedQueries.createFile(projectId, fileData);
+            return { file: created, isUpdate: false };
+          }
+        });
+
+        if (!result.success) {
+          if (result.error?.message?.includes('not found or access denied')) {
+            return res.status(403).json({
+              message: "Access denied",
+              code: "ACCESS_DENIED"
+            });
+          }
+          console.error('Failed to save file:', result.error);
+          return res.status(500).json({ 
+            error: "Failed to save file",
+            message: "Failed to save file",
+            code: "SAVE_ERROR"
           });
-          
-          // Get updated file for response
-          const updatedFile = await this.storage.getFile(existingFile.id);
-          
-          // AUDIT: Log successful update
-          const userId = (req.user as any)?.id || 'unknown';
-          await aiSecurityService.logAction(
-            userId,
-            projectId,
-            { type: 'edit_file', path: validatedData.path, content: validatedData.content || '' },
-            { success: true, fileId: String(existingFile.id) }
-          );
-          
-          // ✅ 40-YEAR SENIOR FIX: Wrap response in { file } envelope (test contract)
-          res.json({ file: updatedFile });
-          
-          // Emit file change event for hot-reload
-          this.emitFileChange(projectId, validatedData.path, 'update');
-        } else {
-          // Create new file
-          const file = await this.storage.createFile(validatedData);
-          
-          // AUDIT: Log successful creation
-          const userId = (req.user as any)?.id || 'unknown';
-          await aiSecurityService.logAction(
-            userId,
-            projectId,
-            { type: 'create_file', path: validatedData.path, content: validatedData.content || '' },
-            { success: true, fileId: String(file.id) }
-          );
-          
-          // ✅ 40-YEAR SENIOR FIX: Wrap response in { file } envelope (test contract)
-          res.json({ file });
-          
-          // Emit file change event for hot-reload
-          this.emitFileChange(projectId, validatedData.path, 'create');
         }
+
+        await aiSecurityService.logAction(
+          userId,
+          String(projectId),
+          { type: result.data!.isUpdate ? 'edit_file' : 'create_file', path: validatedData.path, content: validatedData.content || '' },
+          { success: true, fileId: String(result.data!.file?.id) }
+        );
+
+        res.json({ file: result.data!.file });
+        
+        this.emitFileChange(String(projectId), validatedData.path, result.data!.isUpdate ? 'update' : 'create');
       } catch (error: any) {
         console.error('Error saving file:', error);
         if (error.name === 'ZodError') {
@@ -309,10 +271,10 @@ export class FilesRouter {
       }
     });
 
-    // Update file content
-    this.router.put("/api/projects/:projectId/files/*", this.ensureAuthenticated, this.ensureProjectAccess, csrfProtection, async (req: Request, res: Response) => {
+    this.router.put("/api/projects/:projectId/files/*", this.ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
       try {
-        const projectId = req.params.projectId;
+        const projectId = parseInt(req.params.projectId, 10);
+        const userId = req.user!.id;
         let filePath = req.params[0];
         const { content } = req.body;
         
@@ -323,32 +285,54 @@ export class FilesRouter {
           });
         }
 
-        // ✅ 40-YEAR SENIOR FIX: Sanitize path for consistency with POST
+        if (isNaN(projectId) || projectId <= 0) {
+          return res.status(400).json({
+            message: "Invalid project ID",
+            code: "INVALID_PROJECT_ID"
+          });
+        }
+
         const { aiSecurityService } = await import('../services/ai-security.service');
         const pathValidation = aiSecurityService.validatePath(filePath);
         if (pathValidation.valid && pathValidation.sanitized) {
           filePath = pathValidation.sanitized;
         }
 
-        // ✅ FIX: Use helper method
-        const file = await this.getFileByPath(projectId, filePath);
-        
-        if (!file) {
-          return res.status(404).json({
-            message: "File not found",
-            code: "FILE_NOT_FOUND"
+        const result = await withScopedTransaction(userId, userId, async (scopedQueries) => {
+          const allFiles = await scopedQueries.getFilesByProject(projectId);
+          const file = allFiles.find(f => f.path === filePath);
+          
+          if (!file) {
+            throw new Error('FILE_NOT_FOUND');
+          }
+          
+          const updated = await scopedQueries.updateFile(projectId, file.id, { content });
+          return updated;
+        });
+
+        if (!result.success) {
+          if (result.error?.message === 'FILE_NOT_FOUND') {
+            return res.status(404).json({
+              message: "File not found",
+              code: "FILE_NOT_FOUND"
+            });
+          }
+          if (result.error?.message?.includes('not found or access denied')) {
+            return res.status(403).json({
+              message: "Access denied",
+              code: "ACCESS_DENIED"
+            });
+          }
+          console.error('Failed to update file:', result.error);
+          return res.status(500).json({ 
+            message: "Failed to update file",
+            code: "UPDATE_ERROR"
           });
         }
         
-        // ✅ FIX: Files table has no 'language' field
-        const updatedFile = await this.storage.updateFile(file.id, {
-          content
-        });
+        res.json(result.data);
         
-        res.json(updatedFile);
-        
-        // Emit file change event for hot-reload
-        this.emitFileChange(projectId, filePath, 'update');
+        this.emitFileChange(String(projectId), filePath, 'update');
       } catch (error) {
         console.error('Error updating file:', error);
         res.status(500).json({ 
@@ -358,10 +342,10 @@ export class FilesRouter {
       }
     });
 
-    // Delete file
-    this.router.delete("/api/projects/:projectId/files/*", this.ensureAuthenticated, this.ensureProjectAccess, csrfProtection, async (req: Request, res: Response) => {
+    this.router.delete("/api/projects/:projectId/files/*", this.ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
       try {
-        const projectId = req.params.projectId;
+        const projectId = parseInt(req.params.projectId, 10);
+        const userId = req.user!.id;
         let filePath = req.params[0];
         
         if (!filePath) {
@@ -371,28 +355,54 @@ export class FilesRouter {
           });
         }
 
-        // ✅ 40-YEAR SENIOR FIX: Sanitize path for consistency with POST
+        if (isNaN(projectId) || projectId <= 0) {
+          return res.status(400).json({
+            message: "Invalid project ID",
+            code: "INVALID_PROJECT_ID"
+          });
+        }
+
         const { aiSecurityService } = await import('../services/ai-security.service');
         const pathValidation = aiSecurityService.validatePath(filePath);
         if (pathValidation.valid && pathValidation.sanitized) {
           filePath = pathValidation.sanitized;
         }
 
-        // ✅ FIX: Use helper method
-        const file = await this.getFileByPath(projectId, filePath);
-        
-        if (!file) {
-          return res.status(404).json({
-            message: "File not found",
-            code: "FILE_NOT_FOUND"
+        const result = await withScopedTransaction(userId, userId, async (scopedQueries) => {
+          const allFiles = await scopedQueries.getFilesByProject(projectId);
+          const file = allFiles.find(f => f.path === filePath);
+          
+          if (!file) {
+            throw new Error('FILE_NOT_FOUND');
+          }
+          
+          await scopedQueries.deleteFile(projectId, file.id);
+          return true;
+        });
+
+        if (!result.success) {
+          if (result.error?.message === 'FILE_NOT_FOUND') {
+            return res.status(404).json({
+              message: "File not found",
+              code: "FILE_NOT_FOUND"
+            });
+          }
+          if (result.error?.message?.includes('not found or access denied')) {
+            return res.status(403).json({
+              message: "Access denied",
+              code: "ACCESS_DENIED"
+            });
+          }
+          console.error('Failed to delete file:', result.error);
+          return res.status(500).json({ 
+            message: "Failed to delete file",
+            code: "DELETE_ERROR"
           });
         }
-        
-        await this.storage.deleteFile(file.id);
+
         res.json({ message: "File deleted successfully" });
         
-        // Emit file change event for hot-reload
-        this.emitFileChange(projectId, filePath, 'delete');
+        this.emitFileChange(String(projectId), filePath, 'delete');
       } catch (error) {
         console.error('Error deleting file:', error);
         res.status(500).json({ 
@@ -402,41 +412,50 @@ export class FilesRouter {
       }
     });
 
-    // Update file by ID (for backwards compatibility with Editor)
     this.router.patch("/api/files/:fileId", this.ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
       try {
-        const fileId = parseInt(req.params.fileId);
+        const fileId = parseInt(req.params.fileId, 10);
+        const userId = req.user!.id;
         const { content, name } = req.body;
         
-        // Get the file to check access
-        const file = await this.storage.getFileById(fileId);
-        if (!file) {
-          return res.status(404).json({
-            message: "File not found",
-            code: "FILE_NOT_FOUND"
+        if (isNaN(fileId) || fileId <= 0) {
+          return res.status(400).json({
+            message: "Invalid file ID",
+            code: "INVALID_FILE_ID"
           });
         }
-        
-        // Check project access
-        const userId = req.user!.id;
-        const project = await this.storage.getProject(file.projectId);
-        if (!project || (project.ownerId !== userId && project.visibility !== 'public')) {
-          return res.status(403).json({
-            message: "Access denied",
-            code: "ACCESS_DENIED"
-          });
-        }
-        
-        // ✅ FIX: Files table has no 'language' field
-        const updatedFile = await this.storage.updateFile(fileId, {
-          content,
-          name
+
+        const result = await withScopedTransaction(userId, userId, async (scopedQueries) => {
+          const projects = await scopedQueries.getProjects();
+          
+          for (const project of projects) {
+            const file = await scopedQueries.getFileById(project.id, fileId);
+            if (file) {
+              const updated = await scopedQueries.updateFile(project.id, fileId, { content, name });
+              return { file: updated, projectId: project.id, originalPath: file.path || file.name };
+            }
+          }
+          
+          throw new Error('FILE_NOT_FOUND');
         });
+
+        if (!result.success) {
+          if (result.error?.message === 'FILE_NOT_FOUND') {
+            return res.status(404).json({
+              message: "File not found",
+              code: "FILE_NOT_FOUND"
+            });
+          }
+          console.error('Failed to update file:', result.error);
+          return res.status(500).json({ 
+            message: "Failed to update file",
+            code: "UPDATE_ERROR"
+          });
+        }
         
-        res.json(updatedFile);
+        res.json(result.data!.file);
         
-        // Emit file change event for hot-reload
-        this.emitFileChange(String(file.projectId), file.path || file.name, 'update');
+        this.emitFileChange(String(result.data!.projectId), result.data!.originalPath, 'update');
       } catch (error) {
         console.error('Error updating file:', error);
         res.status(500).json({ 
@@ -446,35 +465,49 @@ export class FilesRouter {
       }
     });
 
-    // Delete file by ID (for backwards compatibility with Editor)
     this.router.delete("/api/files/:fileId", this.ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
       try {
-        const fileId = parseInt(req.params.fileId);
-        
-        // Get the file to check access
-        const file = await this.storage.getFileById(fileId);
-        if (!file) {
-          return res.status(404).json({
-            message: "File not found",
-            code: "FILE_NOT_FOUND"
-          });
-        }
-        
-        // Check project access
+        const fileId = parseInt(req.params.fileId, 10);
         const userId = req.user!.id;
-        const project = await this.storage.getProject(file.projectId);
-        if (!project || (project.ownerId !== userId && project.visibility !== 'public')) {
-          return res.status(403).json({
-            message: "Access denied",
-            code: "ACCESS_DENIED"
+        
+        if (isNaN(fileId) || fileId <= 0) {
+          return res.status(400).json({
+            message: "Invalid file ID",
+            code: "INVALID_FILE_ID"
           });
         }
-        
-        await this.storage.deleteFile(fileId);
+
+        const result = await withScopedTransaction(userId, userId, async (scopedQueries) => {
+          const projects = await scopedQueries.getProjects();
+          
+          for (const project of projects) {
+            const file = await scopedQueries.getFileById(project.id, fileId);
+            if (file) {
+              await scopedQueries.deleteFile(project.id, fileId);
+              return { projectId: project.id, path: file.path || file.name };
+            }
+          }
+          
+          throw new Error('FILE_NOT_FOUND');
+        });
+
+        if (!result.success) {
+          if (result.error?.message === 'FILE_NOT_FOUND') {
+            return res.status(404).json({
+              message: "File not found",
+              code: "FILE_NOT_FOUND"
+            });
+          }
+          console.error('Failed to delete file:', result.error);
+          return res.status(500).json({ 
+            message: "Failed to delete file",
+            code: "DELETE_ERROR"
+          });
+        }
+
         res.json({ message: "File deleted successfully" });
         
-        // Emit file change event for hot-reload
-        this.emitFileChange(String(file.projectId), file.path || file.name, 'delete');
+        this.emitFileChange(String(result.data!.projectId), result.data!.path, 'delete');
       } catch (error) {
         console.error('Error deleting file:', error);
         res.status(500).json({ 
@@ -484,21 +517,24 @@ export class FilesRouter {
       }
     });
 
-    // Create file by project ID (for backwards compatibility) - FORTUNE 500 SECURITY
-    this.router.post("/api/files/:projectId", this.ensureAuthenticated, this.ensureProjectAccess, csrfProtection, async (req: Request, res: Response) => {
+    this.router.post("/api/files/:projectId", this.ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
       try {
-        const projectId = req.params.projectId;
+        const projectId = parseInt(req.params.projectId, 10);
+        const userId = req.user!.id;
         
-        // FORTUNE 500: Server-side path derivation
-        // Accept both legacy (explicit path) and new (name + parentId) payloads
+        if (isNaN(projectId) || projectId <= 0) {
+          return res.status(400).json({
+            message: "Invalid project ID",
+            code: "INVALID_PROJECT_ID"
+          });
+        }
+        
         let filePath = req.body.path;
         
         if (!filePath && req.body.name) {
-          // Derive path from parent hierarchy (single source of truth)
           const { name, parentId } = req.body;
           
           if (parentId) {
-            // Fetch parent to build canonical path
             const parent = await this.storage.getFile(parentId);
             if (!parent) {
               return res.status(400).json({
@@ -506,31 +542,27 @@ export class FilesRouter {
                 code: "PARENT_NOT_FOUND"
               });
             }
-            // Normalize path separators
             filePath = parent.path.endsWith('/') ? `${parent.path}${name}` : `${parent.path}/${name}`;
           } else {
-            // Root level file
             filePath = name;
           }
         }
         
         const validatedData = insertFileSchema.parse({
           ...req.body,
-          path: filePath,  // Use derived or explicit path
+          path: filePath,
           projectId
         });
         
-        // SECURITY: Fortune 500 path validation
         const { aiSecurityService } = await import('../services/ai-security.service');
         const pathValidation = aiSecurityService.validatePath(validatedData.path);
         
         if (!pathValidation.valid) {
           console.warn(`[FILES-SECURITY] Blocked (compat): ${validatedData.path} - ${pathValidation.reason}`);
           
-          const userId = (req.user as any)?.id || 'unknown';
           await aiSecurityService.logAction(
             userId,
-            projectId,
+            String(projectId),
             { type: 'create_file', path: validatedData.path, content: validatedData.content || '' },
             { success: false, error: `Path blocked: ${pathValidation.reason}` }
           );
@@ -541,42 +573,47 @@ export class FilesRouter {
           });
         }
         
-        // Use sanitized path
         validatedData.path = pathValidation.sanitized!;
 
-        // Check if file exists
-        const existingFile = await this.getFileByPath(projectId, validatedData.path);
-        const userId = (req.user as any)?.id || 'unknown';
-        
-        if (existingFile) {
-          // ✅ FIX: Files table has no 'language' field
-          const updatedFile = await this.storage.updateFile(existingFile.id, {
-            content: validatedData.content
+        const result = await withScopedTransaction(userId, userId, async (scopedQueries) => {
+          const allFiles = await scopedQueries.getFilesByProject(projectId);
+          const existingFile = allFiles.find(f => f.path === validatedData.path);
+          
+          if (existingFile) {
+            const updated = await scopedQueries.updateFile(projectId, existingFile.id, {
+              content: validatedData.content
+            });
+            return { file: updated, isUpdate: true };
+          } else {
+            const { projectId: _, ...fileData } = validatedData;
+            const created = await scopedQueries.createFile(projectId, fileData);
+            return { file: created, isUpdate: false };
+          }
+        });
+
+        if (!result.success) {
+          if (result.error?.message?.includes('not found or access denied')) {
+            return res.status(403).json({
+              message: "Access denied",
+              code: "ACCESS_DENIED"
+            });
+          }
+          console.error('Failed to save file:', result.error);
+          return res.status(500).json({ 
+            error: "Failed to save file",
+            message: "Failed to save file",
+            code: "SAVE_ERROR"
           });
-          
-          // AUDIT: Log update
-          await aiSecurityService.logAction(
-            userId,
-            projectId,
-            { type: 'edit_file', path: validatedData.path, content: validatedData.content || '' },
-            { success: true, fileId: updatedFile?.id ? String(updatedFile.id) : undefined }
-          );
-          
-          res.json(updatedFile);
-        } else {
-          // Create new file
-          const file = await this.storage.createFile(validatedData);
-          
-          // AUDIT: Log creation
-          await aiSecurityService.logAction(
-            userId,
-            projectId,
-            { type: 'create_file', path: validatedData.path, content: validatedData.content || '' },
-            { success: true, fileId: String(file.id) }
-          );
-          
-          res.json(file);
         }
+
+        await aiSecurityService.logAction(
+          userId,
+          String(projectId),
+          { type: result.data!.isUpdate ? 'edit_file' : 'create_file', path: validatedData.path, content: validatedData.content || '' },
+          { success: true, fileId: result.data!.file?.id ? String(result.data!.file.id) : undefined }
+        );
+
+        res.json(result.data!.file);
       } catch (error: any) {
         console.error('Error saving file:', error);
         if (error.name === 'ZodError') {
@@ -595,13 +632,13 @@ export class FilesRouter {
       }
     });
 
-    // Create folder
-    this.router.post("/api/projects/:projectId/folders", this.ensureAuthenticated, this.ensureProjectAccess, csrfProtection, async (req: Request, res: Response) => {
+    this.router.post("/api/projects/:projectId/folders", this.ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
       try {
         const projectId = parseInt(req.params.projectId, 10);
+        const userId = req.user!.id;
         const { path: folderPath } = req.body;
         
-        if (isNaN(projectId)) {
+        if (isNaN(projectId) || projectId <= 0) {
           return res.status(400).json({
             message: "Invalid project ID",
             code: "INVALID_PROJECT_ID"
@@ -615,77 +652,42 @@ export class FilesRouter {
           });
         }
 
-        // Create placeholder file to represent the folder
-        const file = await this.storage.createFile({
-          projectId,
-          name: '.gitkeep',
-          path: path.join(folderPath, '.gitkeep'),
-          content: '',
-          isDirectory: false
+        const result = await withScopedTransaction(userId, userId, async (scopedQueries) => {
+          const file = await scopedQueries.createFile(projectId, {
+            name: '.gitkeep',
+            path: path.join(folderPath, '.gitkeep'),
+            content: '',
+            isDirectory: false
+          });
+          return file;
+        });
+
+        if (!result.success) {
+          if (result.error?.message?.includes('not found or access denied')) {
+            return res.status(403).json({
+              message: "Access denied",
+              code: "ACCESS_DENIED"
+            });
+          }
+          console.error('Failed to create folder:', result.error);
+          return res.status(500).json({ 
+            message: "Failed to create folder",
+            code: "CREATE_ERROR"
+          });
+        }
+
+        res.json({ 
+          success: true, 
+          path: folderPath,
+          file: result.data
         });
         
-        res.json({ message: "Folder created successfully", file });
+        this.emitFileChange(String(projectId), folderPath, 'create');
       } catch (error) {
         console.error('Error creating folder:', error);
         res.status(500).json({ 
           message: "Failed to create folder",
           code: "CREATE_ERROR"
-        });
-      }
-    });
-
-    // Rename file/folder
-    this.router.patch("/api/projects/:projectId/files/rename", this.ensureAuthenticated, this.ensureProjectAccess, csrfProtection, async (req: Request, res: Response) => {
-      try {
-        const projectId = req.params.projectId;
-        const { oldPath, newPath } = req.body;
-        
-        if (!oldPath || !newPath) {
-          return res.status(400).json({
-            message: "Both oldPath and newPath are required",
-            code: "MISSING_PATHS"
-          });
-        }
-        
-        // Security: validate paths
-        const { aiSecurityService } = await import('../services/ai-security.service');
-        const oldPathValidation = aiSecurityService.validatePath(oldPath);
-        const newPathValidation = aiSecurityService.validatePath(newPath);
-        
-        if (!oldPathValidation.valid || !newPathValidation.valid) {
-          return res.status(400).json({
-            message: "Invalid path",
-            code: "SECURITY_PATH_BLOCKED"
-          });
-        }
-        
-        // Get the file to rename
-        const file = await this.getFileByPath(projectId, oldPathValidation.sanitized!);
-        if (!file) {
-          return res.status(404).json({
-            message: "File not found",
-            code: "FILE_NOT_FOUND"
-          });
-        }
-        
-        // Extract new name from new path
-        const newName = newPathValidation.sanitized!.split('/').pop() || newPathValidation.sanitized!;
-        
-        // Update the file with new path and name
-        await this.storage.updateFile(file.id, {
-          path: newPathValidation.sanitized!,
-          name: newName
-        });
-        
-        // Get updated file for response
-        const updatedFile = await this.storage.getFile(file.id);
-        
-        res.json({ message: "File renamed successfully", file: updatedFile });
-      } catch (error) {
-        console.error('Error renaming file:', error);
-        res.status(500).json({ 
-          message: "Failed to rename file",
-          code: "RENAME_ERROR"
         });
       }
     });
