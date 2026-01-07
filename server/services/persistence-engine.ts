@@ -8,6 +8,103 @@ export type IsolationLevel = 'READ COMMITTED' | 'REPEATABLE READ' | 'SERIALIZABL
 
 export type TransactionHandle = PgTransaction<PostgresJsQueryResultHKT, typeof schema, any>;
 
+export interface TenantScopedQueries {
+  readonly tenantId: number;
+  getProjects(): Promise<(typeof schema.projects.$inferSelect)[]>;
+  getProjectById(projectId: number): Promise<typeof schema.projects.$inferSelect | null>;
+  createProject(data: Omit<typeof schema.projects.$inferInsert, 'tenantId'>): Promise<typeof schema.projects.$inferSelect>;
+  updateProject(projectId: number, data: Partial<Omit<typeof schema.projects.$inferInsert, 'tenantId'>>): Promise<typeof schema.projects.$inferSelect | null>;
+  deleteProject(projectId: number): Promise<typeof schema.projects.$inferSelect | null>;
+  getFilesByProject(projectId: number): Promise<(typeof schema.files.$inferSelect)[]>;
+  getDeploymentsByProject(projectId: number): Promise<(typeof schema.deployments.$inferSelect)[]>;
+}
+
+export function createTenantScopedQueries(tx: TransactionHandle, tenantId: number): TenantScopedQueries {
+  const getProjectById = async (projectId: number): Promise<typeof schema.projects.$inferSelect | null> => {
+    const results = await tx
+      .select()
+      .from(schema.projects)
+      .where(
+        and(
+          eq(schema.projects.id, projectId),
+          eq(schema.projects.tenantId, tenantId)
+        )
+      )
+      .limit(1);
+    return results[0] ?? null;
+  };
+
+  const api: TenantScopedQueries = {
+    tenantId,
+
+    async getProjects() {
+      return await tx
+        .select()
+        .from(schema.projects)
+        .where(eq(schema.projects.tenantId, tenantId));
+    },
+
+    getProjectById,
+
+    async createProject(data) {
+      const results = await tx
+        .insert(schema.projects)
+        .values({ ...data, tenantId })
+        .returning();
+      return results[0];
+    },
+
+    async updateProject(projectId, data) {
+      const results = await tx
+        .update(schema.projects)
+        .set(data)
+        .where(
+          and(
+            eq(schema.projects.id, projectId),
+            eq(schema.projects.tenantId, tenantId)
+          )
+        )
+        .returning();
+      return results[0] ?? null;
+    },
+
+    async deleteProject(projectId) {
+      const results = await tx
+        .delete(schema.projects)
+        .where(
+          and(
+            eq(schema.projects.id, projectId),
+            eq(schema.projects.tenantId, tenantId)
+          )
+        )
+        .returning();
+      return results[0] ?? null;
+    },
+
+    async getFilesByProject(projectId) {
+      const project = await getProjectById(projectId);
+      if (!project) return [];
+      
+      return await tx
+        .select()
+        .from(schema.files)
+        .where(eq(schema.files.projectId, projectId));
+    },
+
+    async getDeploymentsByProject(projectId) {
+      const project = await getProjectById(projectId);
+      if (!project) return [];
+      
+      return await tx
+        .select()
+        .from(schema.deployments)
+        .where(eq(schema.deployments.projectId, projectId));
+    }
+  };
+
+  return Object.freeze(api);
+}
+
 export interface TenantContext {
   tenantId: number | null;
   userId: number;
@@ -300,11 +397,12 @@ class PersistenceEngine {
 
   async createTenantIsolatedQuery<T>(
     tenantId: number,
-    queryFn: (tenantId: number, tx: TransactionHandle) => Promise<T>
+    queryFn: (scopedQueries: TenantScopedQueries) => Promise<T>
   ): Promise<T> {
     return db.transaction(async (tx) => {
       await tx.execute(sql.raw(`SET LOCAL app.tenant_id = '${tenantId}'`));
-      return queryFn(tenantId, tx);
+      const scopedQueries = createTenantScopedQueries(tx, tenantId);
+      return queryFn(scopedQueries);
     });
   }
 
@@ -351,12 +449,20 @@ export function createTenantContext(
   };
 }
 
+/**
+ * @deprecated Use `withScopedTransaction` for tenant-isolated operations.
+ * This function exposes raw transaction handle which can bypass tenant isolation.
+ * Only use for internal/admin operations that need cross-tenant access.
+ */
 export async function withTenantTransaction<T>(
   tenantId: number | null,
   userId: number,
   callback: TransactionCallback<T>,
   options: Partial<Omit<TransactionOptions, 'tenantContext'>> = {}
 ): Promise<CommitResult<T>> {
+  if (tenantId !== null) {
+    console.warn('[PersistenceEngine] DEPRECATED: withTenantTransaction used with tenantId. Use withScopedTransaction for tenant isolation.');
+  }
   const tenantContext = createTenantContext(userId, tenantId);
   
   return persistenceEngine.withTransaction(callback, {
@@ -365,6 +471,10 @@ export async function withTenantTransaction<T>(
   });
 }
 
+/**
+ * @deprecated Use `withScopedTransaction` with isolationLevel: 'SERIALIZABLE' instead.
+ * This function exposes raw transaction handle which can bypass tenant isolation.
+ */
 export async function withSerializableTransaction<T>(
   tenantId: number | null,
   userId: number,
@@ -374,4 +484,70 @@ export async function withSerializableTransaction<T>(
     isolationLevel: 'SERIALIZABLE',
     retries: 5
   });
+}
+
+export type ScopedTransactionCallback<T> = (
+  scopedQueries: TenantScopedQueries,
+  context: TenantContext
+) => Promise<T>;
+
+export async function withScopedTransaction<T>(
+  tenantId: number,
+  userId: number,
+  callback: ScopedTransactionCallback<T>,
+  options: { isolationLevel?: IsolationLevel; timeout?: number; retries?: number } = {}
+): Promise<CommitResult<T>> {
+  const { isolationLevel = 'REPEATABLE READ', timeout = 30000, retries = 3 } = options;
+  const tenantContext = createTenantContext(userId, tenantId);
+  const transactionId = `txn_scoped_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 8)}`;
+  const startTime = Date.now();
+  let lastError: Error | undefined;
+  let retryCount = 0;
+
+  for (let attempt = 0; attempt < retries; attempt++) {
+    try {
+      const result = await db.transaction(async (tx) => {
+        await tx.execute(sql.raw(`SET TRANSACTION ISOLATION LEVEL ${isolationLevel}`));
+        await tx.execute(sql.raw(`SET LOCAL statement_timeout = '${timeout}ms'`));
+        await tx.execute(sql.raw(`SET LOCAL app.tenant_id = '${tenantId}'`));
+        
+        const scopedQueries = createTenantScopedQueries(tx, tenantId);
+        return await callback(scopedQueries, tenantContext);
+      });
+
+      return {
+        success: true,
+        data: result,
+        transactionId,
+        duration: Date.now() - startTime,
+        retryCount
+      };
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      retryCount = attempt + 1;
+
+      const errorMessage = lastError.message.toLowerCase();
+      const isRetryable = 
+        errorMessage.includes('deadlock') ||
+        errorMessage.includes('serialization') ||
+        errorMessage.includes('could not serialize') ||
+        errorMessage.includes('40001') ||
+        errorMessage.includes('40p01');
+
+      if (!isRetryable || attempt === retries - 1) {
+        break;
+      }
+
+      const backoffMs = Math.min(100 * Math.pow(2, attempt), 2000);
+      await new Promise(resolve => setTimeout(resolve, backoffMs));
+    }
+  }
+
+  return {
+    success: false,
+    error: lastError,
+    transactionId,
+    duration: Date.now() - startTime,
+    retryCount
+  };
 }
