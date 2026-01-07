@@ -380,46 +380,79 @@ export class AgentOrchestratorService extends EventEmitter {
   }
 
   // Create a new agent session
+  // ✅ FORTUNE 500-GRADE (Jan 2026): Enhanced error handling with full context
   async createSession(
     userId: string,
     projectId?: string,
     model: string = 'gpt-5.1',
     autonomousMode: boolean = false
   ): Promise<AgentSession> {
+    const startTime = Date.now();
     const sessionToken = this.generateSessionToken();
     const workingDirectory = projectId ? 
       path.join(process.cwd(), 'projects', projectId) : 
       process.cwd();
 
-    const insertData: Record<string, any> = {
-      userId: Number(userId),
-      sessionToken,
-      model,
-      context: {
-        files: [],
-        workingDirectory,
-        environment: {},
-        capabilities: Object.keys(AGENT_FUNCTIONS),
-        projectId: projectId ? Number(projectId) : undefined
-      },
-      isActive: true,
-      autonomousMode
-    };
-    
-    if (projectId) {
-      insertData.projectId = Number(projectId);
+    try {
+      const insertData: Record<string, any> = {
+        userId: Number(userId),
+        sessionToken,
+        model,
+        context: {
+          files: [],
+          workingDirectory,
+          environment: {},
+          capabilities: Object.keys(AGENT_FUNCTIONS),
+          projectId: projectId ? Number(projectId) : undefined
+        },
+        isActive: true,
+        autonomousMode
+      };
+      
+      if (projectId) {
+        insertData.projectId = Number(projectId);
+      }
+
+      const [session] = await db.insert(agentSessions)
+        .values(insertData as any)
+        .returning();
+
+      this.activeSessions.set(session.id, session);
+      
+      // Initialize file watcher (non-blocking failure)
+      try {
+        await agentFileOperations.initializeWatcher(workingDirectory);
+      } catch (watcherError: any) {
+        console.warn(`[AgentOrchestrator] File watcher init failed (non-blocking): ${watcherError.message}`);
+      }
+
+      console.log(`[AgentOrchestrator] ✅ Session created in ${Date.now() - startTime}ms`, {
+        sessionId: session.id,
+        userId,
+        projectId,
+        model
+      });
+
+      return session;
+    } catch (error: any) {
+      const elapsed = Date.now() - startTime;
+      console.error(`[AgentOrchestrator] ❌ createSession FAILED after ${elapsed}ms`, {
+        userId,
+        projectId,
+        model,
+        errorName: error.name,
+        errorMessage: error.message,
+        errorCode: error.code,
+        errorStack: error.stack?.split('\n').slice(0, 5).join('\n')
+      });
+      
+      // Re-throw with enhanced context for upstream handling
+      const enhancedError = new Error(`Failed to create agent session: ${error.message}`);
+      (enhancedError as any).code = error.code || 'SESSION_CREATE_FAILED';
+      (enhancedError as any).originalError = error;
+      (enhancedError as any).context = { userId, projectId, model, elapsed };
+      throw enhancedError;
     }
-
-    const [session] = await db.insert(agentSessions)
-      .values(insertData as any)
-      .returning();
-
-    this.activeSessions.set(session.id, session);
-    
-    // Initialize file watcher
-    await agentFileOperations.initializeWatcher(workingDirectory);
-
-    return session;
   }
 
   // Execute agent with autonomous capabilities
