@@ -10,17 +10,40 @@ export type TransactionHandle = PgTransaction<PostgresJsQueryResultHKT, typeof s
 
 export interface TenantScopedQueries {
   readonly tenantId: number;
+  
+  // Project CRUD
   getProjects(): Promise<(typeof schema.projects.$inferSelect)[]>;
   getProjectById(projectId: number): Promise<typeof schema.projects.$inferSelect | null>;
   createProject(data: Omit<typeof schema.projects.$inferInsert, 'tenantId'>): Promise<typeof schema.projects.$inferSelect>;
   updateProject(projectId: number, data: Partial<Omit<typeof schema.projects.$inferInsert, 'tenantId'>>): Promise<typeof schema.projects.$inferSelect | null>;
   deleteProject(projectId: number): Promise<typeof schema.projects.$inferSelect | null>;
+  
+  // Files (project-scoped)
   getFilesByProject(projectId: number): Promise<(typeof schema.files.$inferSelect)[]>;
+  getFileById(projectId: number, fileId: number): Promise<typeof schema.files.$inferSelect | null>;
+  createFile(projectId: number, data: Omit<typeof schema.files.$inferInsert, 'projectId'>): Promise<typeof schema.files.$inferSelect>;
+  updateFile(projectId: number, fileId: number, data: Partial<Omit<typeof schema.files.$inferInsert, 'projectId'>>): Promise<typeof schema.files.$inferSelect | null>;
+  deleteFile(projectId: number, fileId: number): Promise<typeof schema.files.$inferSelect | null>;
+  
+  // Deployments (project-scoped)
   getDeploymentsByProject(projectId: number): Promise<(typeof schema.deployments.$inferSelect)[]>;
+  
+  // Checkpoints (project-scoped)
   getCheckpointsByProject(projectId: number): Promise<(typeof schema.checkpoints.$inferSelect)[]>;
   getCheckpointById(projectId: number, checkpointId: number): Promise<typeof schema.checkpoints.$inferSelect | null>;
   createCheckpoint(projectId: number, data: Omit<typeof schema.checkpoints.$inferInsert, 'projectId'>): Promise<typeof schema.checkpoints.$inferSelect>;
   deleteCheckpoint(projectId: number, checkpointId: number): Promise<typeof schema.checkpoints.$inferSelect | null>;
+  
+  // ✅ PHASE 3 (Jan 2026): Secrets (project-scoped, CRITICAL security)
+  getSecretsByProject(projectId: number): Promise<(typeof schema.secrets.$inferSelect)[]>;
+  getSecretByKey(projectId: number, key: string): Promise<typeof schema.secrets.$inferSelect | null>;
+  createSecret(projectId: number, data: Omit<typeof schema.secrets.$inferInsert, 'projectId'>): Promise<typeof schema.secrets.$inferSelect>;
+  updateSecret(projectId: number, key: string, data: Partial<Omit<typeof schema.secrets.$inferInsert, 'projectId' | 'key'>>): Promise<typeof schema.secrets.$inferSelect | null>;
+  deleteSecret(projectId: number, key: string): Promise<typeof schema.secrets.$inferSelect | null>;
+  
+  // ✅ PHASE 3 (Jan 2026): Agent Sessions (project-scoped)
+  getAgentSessionsByProject(projectId: number): Promise<(typeof schema.agentSessions.$inferSelect)[]>;
+  getAgentSessionById(projectId: number, sessionId: string): Promise<typeof schema.agentSessions.$inferSelect | null>;
 }
 
 export function createTenantScopedQueries(tx: TransactionHandle, tenantId: number): TenantScopedQueries {
@@ -158,6 +181,172 @@ export function createTenantScopedQueries(tx: TransactionHandle, tenantId: numbe
           )
         )
         .returning();
+      return results[0] ?? null;
+    },
+
+    // ✅ PHASE 3 (Jan 2026): File CRUD operations
+    async getFileById(projectId, fileId) {
+      const project = await getProjectById(projectId);
+      if (!project) return null;
+      
+      const results = await tx
+        .select()
+        .from(schema.files)
+        .where(
+          and(
+            eq(schema.files.id, fileId),
+            eq(schema.files.projectId, projectId)
+          )
+        )
+        .limit(1);
+      return results[0] ?? null;
+    },
+
+    async createFile(projectId, data) {
+      const project = await getProjectById(projectId);
+      if (!project) {
+        throw new Error(`Project ${projectId} not found or access denied`);
+      }
+      
+      const results = await tx
+        .insert(schema.files)
+        .values({ ...data, projectId })
+        .returning();
+      return results[0];
+    },
+
+    async updateFile(projectId, fileId, data) {
+      const project = await getProjectById(projectId);
+      if (!project) return null;
+      
+      const results = await tx
+        .update(schema.files)
+        .set(data)
+        .where(
+          and(
+            eq(schema.files.id, fileId),
+            eq(schema.files.projectId, projectId)
+          )
+        )
+        .returning();
+      return results[0] ?? null;
+    },
+
+    async deleteFile(projectId, fileId) {
+      const project = await getProjectById(projectId);
+      if (!project) return null;
+      
+      const results = await tx
+        .delete(schema.files)
+        .where(
+          and(
+            eq(schema.files.id, fileId),
+            eq(schema.files.projectId, projectId)
+          )
+        )
+        .returning();
+      return results[0] ?? null;
+    },
+
+    // ✅ PHASE 3 (Jan 2026): Secrets CRUD (CRITICAL SECURITY)
+    async getSecretsByProject(projectId) {
+      const project = await getProjectById(projectId);
+      if (!project) return [];
+      
+      return await tx
+        .select()
+        .from(schema.secrets)
+        .where(eq(schema.secrets.projectId, projectId));
+    },
+
+    async getSecretByKey(projectId, key) {
+      const project = await getProjectById(projectId);
+      if (!project) return null;
+      
+      const results = await tx
+        .select()
+        .from(schema.secrets)
+        .where(
+          and(
+            eq(schema.secrets.projectId, projectId),
+            eq(schema.secrets.key, key)
+          )
+        )
+        .limit(1);
+      return results[0] ?? null;
+    },
+
+    async createSecret(projectId, data) {
+      const project = await getProjectById(projectId);
+      if (!project) {
+        throw new Error(`Project ${projectId} not found or access denied`);
+      }
+      
+      const results = await tx
+        .insert(schema.secrets)
+        .values({ ...data, projectId })
+        .returning();
+      return results[0];
+    },
+
+    async updateSecret(projectId, key, data) {
+      const project = await getProjectById(projectId);
+      if (!project) return null;
+      
+      const results = await tx
+        .update(schema.secrets)
+        .set({ ...data, updatedAt: new Date() })
+        .where(
+          and(
+            eq(schema.secrets.projectId, projectId),
+            eq(schema.secrets.key, key)
+          )
+        )
+        .returning();
+      return results[0] ?? null;
+    },
+
+    async deleteSecret(projectId, key) {
+      const project = await getProjectById(projectId);
+      if (!project) return null;
+      
+      const results = await tx
+        .delete(schema.secrets)
+        .where(
+          and(
+            eq(schema.secrets.projectId, projectId),
+            eq(schema.secrets.key, key)
+          )
+        )
+        .returning();
+      return results[0] ?? null;
+    },
+
+    // ✅ PHASE 3 (Jan 2026): Agent Sessions (project-scoped)
+    async getAgentSessionsByProject(projectId) {
+      const project = await getProjectById(projectId);
+      if (!project) return [];
+      
+      return await tx
+        .select()
+        .from(schema.agentSessions)
+        .where(eq(schema.agentSessions.projectId, projectId));
+    },
+
+    async getAgentSessionById(projectId, sessionId) {
+      const project = await getProjectById(projectId);
+      if (!project) return null;
+      
+      const results = await tx
+        .select()
+        .from(schema.agentSessions)
+        .where(
+          and(
+            eq(schema.agentSessions.id, sessionId),
+            eq(schema.agentSessions.projectId, projectId)
+          )
+        )
+        .limit(1);
       return results[0] ?? null;
     }
   };
