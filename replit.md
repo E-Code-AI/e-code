@@ -1,43 +1,7 @@
 # E-Code Platform
 
 ## Overview
-E-Code is an AI-assisted web-based IDE for rapid prototyping, education, and enterprise use. It streamlines coding and enhances learning through autonomous workspace generation from natural language prompts, live previews, and streaming progress. The platform supports multi-provider AI model selection, real-time collaboration, and robust security, aiming to be an enterprise-grade solution and a market leader in AI-driven development tools with capabilities like enterprise-grade Playwright E2E testing, SSE CORS hardening, and a comprehensive theme system.
-
-## Security Audit (January 2026)
-
-### Verified Fixes Applied
-- **secrets-manager.ts**: Uses `crypto.randomBytes(32)` for cryptographic randomness (not deterministic)
-- **/api/health/clear-cache**: Protected with `ensureAuthenticated, ensureAdmin` middleware
-- **Docker containers**: Resource limits applied (cpus: 0.5-2.0)
-- **Stripe webhooks**: Signature verification via `stripe.webhooks.constructEvent()` in 3 files
-- **HSTS**: Added `preload` directive for HSTS header
-
-### False Positives in Security Report
-| # | Reported Issue | Reality |
-|---|----------------|---------|
-| 2 | Secrets déterministes | ❌ Faux - Utilise `crypto.randomBytes(32)` ligne 49 |
-| 3 | /clear-cache sans auth | ❌ Faux - A `ensureAuthenticated, ensureAdmin` middleware |
-| 8 | Webhook Stripe non vérifié | ❌ Faux - `constructEvent()` dans 3 fichiers |
-| 9 | Idempotency key tronquée | ❌ Faux - Inclut timestamp + UUID = unicité garantie |
-
-### Intentional Design Decisions
-- **Idempotency keys**: Use `timestamp + UUID(8 chars)` for guaranteed uniqueness per operation
-- **Docker privileged mode**: Required for Docker-in-Docker code execution
-- **db:push --force**: Required because Drizzle ORM doesn't support safe migrations in production
-- **CSP unsafe-inline**: Required for Monaco Editor dynamic styles
-- **Git tokens in URLs**: Ephemeral tokens over HTTPS, standard Git practice
-
-### Replit Platform Limitations
-- **.env file**: Development-only (git-ignored), production uses Replit Secrets
-- **PGPASSWORD**: Automatically managed by Replit in production
-- **Console logs**: Development mode only, tree-shaking removes in production build
-
-### Transactional Persistence & Tenant Isolation (Fortune 500)
-- **PersistenceEngine** (`server/services/persistence-engine.ts`): Enterprise-grade transaction manager with configurable isolation levels (READ COMMITTED, REPEATABLE READ, SERIALIZABLE), automatic retry with exponential backoff for deadlocks, and database-level timeout via `SET LOCAL statement_timeout`.
-- **Tenant Context Middleware** (`server/middleware/tenant-context.ts`): Extracts tenant ID from `X-Tenant-Id` header, verifies user access via team membership, injects `TenantContext` into requests.
-- **Frontend Tenant Hook** (`client/src/hooks/use-tenant-context.ts`): Zustand store with localStorage persistence, tenant-scoped React Query keys via `createTenantQueryKey()`, automatic cache invalidation on tenant switch.
-- **Schema**: `projects.tenantId` column added (nullable for migration), uses `teams.id` as tenant identifier.
-- **Migration Path**: Phase 1 (nullable columns) → Phase 2 (backfill data) → Phase 3 (NOT NULL constraints + RLS policies).
+E-Code is an AI-assisted web-based IDE designed for rapid prototyping, education, and enterprise use. Its core purpose is to streamline coding and enhance learning by autonomously generating workspaces from natural language prompts, providing live previews, and offering real-time progress streaming. The platform supports multi-provider AI model selection, real-time collaboration, and robust security features, aiming to be an enterprise-grade solution and a market leader in AI-driven development tools. Key ambitions include enterprise-grade Playwright E2E testing, SSE CORS hardening, and a comprehensive theme system.
 
 ## User Preferences
 - **Communication:** Simple, everyday language
@@ -71,13 +35,13 @@ E-Code is an AI-assisted web-based IDE for rapid prototyping, education, and ent
 ## System Architecture
 
 ### UI/UX Decisions
-The frontend utilizes Shadcn/UI with Tailwind CSS and Monaco Editor, adhering to the Replit RUI Design System. It features a mobile-first, responsive design with light/dark modes, touch targets, a unified IDE layout (Activity Bar, Tab Bar, Status Bar), spring animations, loading skeletons, and touch enhancements.
+The frontend uses Shadcn/UI with Tailwind CSS and Monaco Editor, adhering to the Replit RUI Design System. It features a mobile-first, responsive design with light/dark modes, touch targets, a unified IDE layout (Activity Bar, Tab Bar, Status Bar), spring animations, loading skeletons, and touch enhancements.
 
 ### Technical Implementations
 The frontend is built with React 18, TypeScript, Vite, TanStack Query, and Wouter. The backend is a Node.js/Express.js application in TypeScript, using Drizzle ORM for PostgreSQL and Passport.js for authentication, with RESTful APIs and WebSockets. AI optimizations include Task Classifier, Circuit Breaker, Priority Queue, Intelligent Caching, and Observability. Environment variables are AES-256-GCM encrypted, and SSE streaming is used for code generation. Anonymous bootstrap authentication provides ephemeral guest users. AI Agent enhancements include structured XML-based system prompts, a repository overview service, a context window manager, a unified AI provider system, and AI-powered inline code actions. A Checkpoints & Rollback System ensures atomic transactions, and a Background Auto-Testing System uses Playwright. Max Autonomy Mode provides extended autonomous sessions with AI task decomposition, auto-execution, ETA estimation, and cost tracking. Process-based code execution leverages native Nix-managed language runtimes. A centralized Winston-based logging system with correlation IDs and multi-transport support is implemented. An Agent Step Cache system provides database-backed intermediate step caching. Persistent chat history uses a dual-layer architecture: Zustand store with localStorage for instant local loading, plus PostgreSQL for server backup and cross-device sync. Fast Bootstrap Optimization provides intelligent fast model recommendations, parallel session+scaffold execution, and background npm install.
 
 ### System Design Choices
-A PostgreSQL database stores user data, project hierarchies, AI agent sessions, deployment history, and subscription management. Security features include CSRF protection, input sanitization, tier-based rate limiting, API versioning, session-based authentication, and encrypted environment variables. The AI agent system offers server-sent event streaming, multi-provider AI model selection, database-backed conversation history, circuit breakers, and retry logic. Health monitoring integrates Kubernetes probes and a Provider Health API with Prometheus metrics. A two-tier database API architecture (Admin and Project Data APIs) is used with integrated security. Docker builds are optimized for small image sizes. Stripe payment integration supports a Replit-style hybrid pricing model. Support for 29 programming languages is provided via CodeMirror 6 for syntax highlighting and a robust runtime system with PID tracking, tree-kill for process termination, and language-specific timeouts. The platform supports `single-vm` (default) and `kubernetes` deployment modes. `DockerExecutor` provides enterprise-grade sandboxed code execution using ephemeral containers. A Memory Bank System stores AI-generated contextual markdown files. Core systems include a WebSocket Resilience System, an Intersection Observer Animation System, and a Native Motion Library. A ReplDB-Compatible Key-Value Database provides a Replit-compatible key-value store accessible from container code.
+A PostgreSQL database stores user data, project hierarchies, AI agent sessions, deployment history, and subscription management. Security features include CSRF protection, input sanitization, tier-based rate limiting, API versioning, session-based authentication, and encrypted environment variables. The AI agent system offers server-sent event streaming, multi-provider AI model selection, database-backed conversation history, circuit breakers, and retry logic. Health monitoring integrates Kubernetes probes and a Provider Health API with Prometheus metrics. A two-tier database API architecture (Admin and Project Data APIs) is used with integrated security. Docker builds are optimized for small image sizes. Stripe payment integration supports a Replit-style hybrid pricing model. Support for 29 programming languages is provided via CodeMirror 6 for syntax highlighting and a robust runtime system with PID tracking, tree-kill for process termination, and language-specific timeouts. The platform supports `single-vm` (default) and `kubernetes` deployment modes. `DockerExecutor` provides enterprise-grade sandboxed code execution using ephemeral containers. A Memory Bank System stores AI-generated contextual markdown files. Core systems include a WebSocket Resilience System, an Intersection Observer Animation System, and a Native Motion Library. A ReplDB-Compatible Key-Value Database provides a Replit-compatible key-value store accessible from container code. Tenant isolation is implemented with `PersistenceEngine` for transactional persistence, `TenantContextMiddleware` for tenant ID extraction and verification, and `TenantScopedQueries` for secure, tenant-scoped database access.
 
 ## External Dependencies
 
