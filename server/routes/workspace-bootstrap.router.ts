@@ -692,25 +692,83 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
     
   } catch (error: any) {
     const elapsed = Date.now() - startTime;
-    logger.error(`[Bootstrap] Failed after ${elapsed}ms:`, error);
+    
+    // ✅ FORTUNE 500-GRADE ERROR HANDLING (Jan 2026)
+    // Full context logging for rapid incident response
+    const errorContext = {
+      elapsed,
+      userId: req.user ? (req.user as User).id : 'unknown',
+      prompt: req.body?.prompt?.substring(0, 100) || 'none',
+      buildMode: req.body?.buildMode || 'unknown',
+      errorName: error.name || 'UnknownError',
+      errorMessage: error.message || 'No message',
+      errorCode: error.code || 'UNKNOWN',
+      errorStack: error.stack?.split('\n').slice(0, 10).join('\n') || 'No stack trace',
+      correlationId: (req as any).correlationId || crypto.randomUUID()
+    };
+    
+    // Classify error for appropriate response
+    let statusCode = 500;
+    let errorType = 'INTERNAL_ERROR';
+    let userMessage = 'An unexpected error occurred while creating your workspace. Please try again.';
+    
+    if (error.name === 'ZodError') {
+      statusCode = 400;
+      errorType = 'VALIDATION_ERROR';
+      userMessage = 'Invalid request data. Please check your input.';
+      logger.warn(`[Bootstrap] Validation failed after ${elapsed}ms`, { 
+        ...errorContext,
+        validationErrors: error.errors 
+      });
+    } else if (error.message?.includes('No AI models available')) {
+      statusCode = 503;
+      errorType = 'AI_PROVIDER_UNAVAILABLE';
+      userMessage = 'AI services are temporarily unavailable. Please try again in a few moments.';
+      logger.error(`[Bootstrap] ❌ AI PROVIDER FAILURE after ${elapsed}ms`, errorContext);
+    } else if (error.message?.includes('duplicate key') || error.code === '23505') {
+      statusCode = 409;
+      errorType = 'DUPLICATE_PROJECT';
+      userMessage = 'A project with this name already exists. Please try a different name.';
+      logger.warn(`[Bootstrap] Duplicate project after ${elapsed}ms`, errorContext);
+    } else if (error.message?.includes('connection') || error.code === 'ECONNREFUSED') {
+      statusCode = 503;
+      errorType = 'DATABASE_UNAVAILABLE';
+      userMessage = 'Database connection failed. Please try again.';
+      logger.error(`[Bootstrap] ❌ DATABASE FAILURE after ${elapsed}ms`, errorContext);
+    } else if (error.message?.includes('timeout') || error.code === 'ETIMEDOUT') {
+      statusCode = 504;
+      errorType = 'TIMEOUT';
+      userMessage = 'Request timed out. Please try again.';
+      logger.error(`[Bootstrap] ❌ TIMEOUT after ${elapsed}ms`, errorContext);
+    } else {
+      // Unknown error - log with full details for investigation
+      logger.error(`[Bootstrap] ❌ UNEXPECTED ERROR after ${elapsed}ms`, errorContext);
+    }
     
     // ✅ Release Redis lock and cleanup on error
     if (idempotencyKey && lockId) {
-      await redisIdempotency.fail(idempotencyKey, lockId);
+      try {
+        await redisIdempotency.fail(idempotencyKey, lockId);
+      } catch (lockError: any) {
+        logger.warn(`[Bootstrap] Failed to release Redis lock: ${lockError.message}`);
+      }
     }
     
     if (error.name === 'ZodError') {
-      return res.status(400).json({
+      return res.status(statusCode).json({
         success: false,
-        error: 'Invalid request',
-        details: error.errors
+        error: errorType,
+        message: userMessage,
+        details: error.errors,
+        correlationId: errorContext.correlationId
       });
     }
     
-    res.status(500).json({
+    res.status(statusCode).json({
       success: false,
-      error: 'Workspace bootstrap failed',
-      message: error.message
+      error: errorType,
+      message: userMessage,
+      correlationId: errorContext.correlationId
     });
   }
 });
