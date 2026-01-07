@@ -8,6 +8,7 @@ import { agentToolFramework } from '../services/agent-tool-framework.service';
 import { agentWorkflowEngine } from '../services/agent-workflow-engine.service';
 import { AgentPreferencesService } from '../services/agent-preferences.service';
 import { schemaWarming } from '../services/schema-warming.service';
+import { withScopedTransaction } from '../services/persistence-engine';
 import { db } from '../db';
 import { agentSessions, fileOperations, commandExecutions, toolExecutions, agentWorkflows, AI_MODELS } from '@shared/schema';
 import { eq, desc } from 'drizzle-orm';
@@ -135,25 +136,44 @@ router.get('/conversation', async (req, res) => {
     const { aiConversations } = await import('@shared/schema');
     const { eq, and, desc } = await import('drizzle-orm');
 
-    const [conversation] = await db
-      .select()
-      .from(aiConversations)
-      .where(and(
-        eq(aiConversations.projectId, projectId),
-        eq(aiConversations.userId, userId)
-      ))
-      .orderBy(desc(aiConversations.createdAt))
-      .limit(1);
+    // Use withScopedTransaction to verify project ownership via tenant isolation
+    const result = await withScopedTransaction(userId, userId, async (scopedQueries, context) => {
+      // Verify project ownership - returns null if user doesn't own this project
+      const project = await scopedQueries.getProjectById(projectId);
+      if (!project) {
+        return { error: 'Project not found or access denied', status: 403 };
+      }
 
-    if (!conversation) {
-      return res.status(404).json({ error: 'No conversation found for this project' });
+      // Project ownership verified, now query for conversation
+      const [conversation] = await db
+        .select()
+        .from(aiConversations)
+        .where(and(
+          eq(aiConversations.projectId, projectId),
+          eq(aiConversations.userId, userId)
+        ))
+        .orderBy(desc(aiConversations.createdAt))
+        .limit(1);
+
+      if (!conversation) {
+        return { error: 'No conversation found for this project', status: 404 };
+      }
+
+      return {
+        conversationId: conversation.id,
+        agentMode: conversation.agentMode,
+        projectId: conversation.projectId,
+      };
+    });
+
+    if (!result.success) {
+      return res.status(500).json({ error: result.error?.message || 'Transaction failed' });
+    }
+    if (result.data?.error) {
+      return res.status(result.data.status).json({ error: result.data.error });
     }
 
-    res.json({
-      conversationId: conversation.id,
-      agentMode: conversation.agentMode,
-      projectId: conversation.projectId,
-    });
+    res.json(result.data);
   } catch (error: any) {
     logger.error('[AgentRouter] Error fetching conversation:', error);
     res.status(500).json({ error: 'Failed to fetch conversation' });
@@ -175,8 +195,15 @@ router.post('/conversation', async (req, res) => {
       return res.status(400).json({ error: 'Invalid projectId - must be a number' });
     }
 
-    // If projectId provided, try to find existing conversation
-    if (projectId) {
+    // projectId is required per schema
+    if (!projectId) {
+      return res.status(400).json({ error: 'projectId is required to create a conversation' });
+    }
+
+    // Use withScopedTransaction to verify project ownership via tenant isolation
+    // Skip ownership check for negative projectIds (temp/bootstrap mode)
+    if (projectId < 0) {
+      // Temp mode: allow creating conversations without project ownership check
       const [existingConversation] = await db
         .select()
         .from(aiConversations)
@@ -194,29 +221,79 @@ router.post('/conversation', async (req, res) => {
           existing: true,
         });
       }
+
+      const [newConversation] = await db
+        .insert(aiConversations)
+        .values({
+          projectId: projectId,
+          userId: userId,
+          messages: [],
+          agentMode: 'build',
+          model: 'claude-sonnet-4-5-20250929',
+        })
+        .returning();
+
+      return res.json({
+        conversationId: newConversation.id,
+        agentMode: newConversation.agentMode,
+        existing: false,
+      });
     }
 
-    // Create new conversation (projectId is required per schema)
-    if (!projectId) {
-      return res.status(400).json({ error: 'projectId is required to create a conversation' });
-    }
+    // Positive projectId: verify project ownership via tenant isolation
+    const result = await withScopedTransaction(userId, userId, async (scopedQueries, context) => {
+      // Verify project ownership - returns null if user doesn't own this project
+      const project = await scopedQueries.getProjectById(projectId);
+      if (!project) {
+        return { error: 'Project not found or access denied', status: 403 };
+      }
 
-    const [newConversation] = await db
-      .insert(aiConversations)
-      .values({
-        projectId: projectId,
-        userId: userId,
-        messages: [],
-        agentMode: 'build', // Default to build mode
-        model: 'claude-sonnet-4-5-20250929',
-      })
-      .returning();
+      // Project ownership verified, check for existing conversation
+      const [existingConversation] = await db
+        .select()
+        .from(aiConversations)
+        .where(and(
+          eq(aiConversations.projectId, projectId),
+          eq(aiConversations.userId, userId)
+        ))
+        .orderBy(desc(aiConversations.createdAt))
+        .limit(1);
 
-    res.json({
-      conversationId: newConversation.id,
-      agentMode: newConversation.agentMode,
-      existing: false,
+      if (existingConversation) {
+        return {
+          conversationId: existingConversation.id,
+          agentMode: existingConversation.agentMode,
+          existing: true,
+        };
+      }
+
+      // Create new conversation
+      const [newConversation] = await db
+        .insert(aiConversations)
+        .values({
+          projectId: projectId,
+          userId: userId,
+          messages: [],
+          agentMode: 'build',
+          model: 'claude-sonnet-4-5-20250929',
+        })
+        .returning();
+
+      return {
+        conversationId: newConversation.id,
+        agentMode: newConversation.agentMode,
+        existing: false,
+      };
     });
+
+    if (!result.success) {
+      return res.status(500).json({ error: result.error?.message || 'Transaction failed' });
+    }
+    if (result.data?.error) {
+      return res.status(result.data.status).json({ error: result.data.error });
+    }
+
+    res.json(result.data);
   } catch (error: any) {
     logger.error('[AgentRouter] Error creating conversation:', error);
     res.status(500).json({ error: 'Failed to create conversation' });
@@ -245,11 +322,10 @@ router.post('/conversation/:id/mode', async (req, res) => {
       });
     }
 
-    // Update conversation mode in database
     const { aiConversations } = await import('@shared/schema');
     const { eq, and } = await import('drizzle-orm');
 
-    // Verify conversation belongs to user
+    // First get the conversation to find its projectId
     const [conversation] = await db
       .select()
       .from(aiConversations)
@@ -265,18 +341,52 @@ router.post('/conversation/:id/mode', async (req, res) => {
       });
     }
 
-    // Update mode
-    await db
-      .update(aiConversations)
-      .set({ agentMode: mode })
-      .where(eq(aiConversations.id, conversationId));
+    const projectId = conversation.projectId;
 
-    res.json({
-      success: true,
-      conversationId,
-      mode,
-      message: `Conversation mode updated to ${mode.toUpperCase()}`,
+    // Skip project ownership check for negative projectIds (temp/bootstrap mode)
+    if (projectId < 0) {
+      await db
+        .update(aiConversations)
+        .set({ agentMode: mode })
+        .where(eq(aiConversations.id, conversationId));
+
+      return res.json({
+        success: true,
+        conversationId,
+        mode,
+        message: `Conversation mode updated to ${mode.toUpperCase()}`,
+      });
+    }
+
+    // Verify project ownership via tenant isolation
+    const result = await withScopedTransaction(userId, userId, async (scopedQueries, context) => {
+      const project = await scopedQueries.getProjectById(projectId);
+      if (!project) {
+        return { error: 'Project not found or access denied', status: 403 };
+      }
+
+      // Project ownership verified, update mode
+      await db
+        .update(aiConversations)
+        .set({ agentMode: mode })
+        .where(eq(aiConversations.id, conversationId));
+
+      return {
+        success: true,
+        conversationId,
+        mode,
+        message: `Conversation mode updated to ${mode.toUpperCase()}`,
+      };
     });
+
+    if (!result.success) {
+      return res.status(500).json({ error: result.error?.message || 'Transaction failed' });
+    }
+    if (result.data?.error) {
+      return res.status(result.data.status).json({ error: result.data.error });
+    }
+
+    res.json(result.data);
   } catch (error: any) {
     logger.error('[AgentRouter] Error updating conversation mode:', error);
     res.status(500).json({ error: 'Failed to update conversation mode' });
@@ -299,6 +409,7 @@ router.get('/conversation/:id/messages', async (req, res) => {
     const { aiConversations, agentMessages } = await import('@shared/schema');
     const { eq, and, desc } = await import('drizzle-orm');
 
+    // First get the conversation to find its projectId
     const [conversation] = await db
       .select()
       .from(aiConversations)
@@ -314,47 +425,78 @@ router.get('/conversation/:id/messages', async (req, res) => {
       });
     }
 
-    const dbMessages = await db
-      .select()
-      .from(agentMessages)
-      .where(eq(agentMessages.conversationId, conversationId))
-      .orderBy(agentMessages.createdAt);
+    const projectId = conversation.projectId;
 
-    if (dbMessages.length > 0) {
-      const messages = dbMessages.map(msg => ({
-        id: msg.id,
-        role: msg.role as 'user' | 'assistant' | 'system',
-        content: msg.content,
-        timestamp: msg.createdAt,
-        type: (msg.metadata as any)?.type || 'text',
-        thinking: msg.extendedThinking?.steps || undefined,
-        toolExecutions: (msg.metadata as any)?.toolExecutions || undefined,
-        metadata: msg.metadata || undefined,
-      }));
+    // Helper function to get messages
+    const getMessages = async () => {
+      const dbMessages = await db
+        .select()
+        .from(agentMessages)
+        .where(eq(agentMessages.conversationId, conversationId))
+        .orderBy(agentMessages.createdAt);
 
-      return res.json({
+      if (dbMessages.length > 0) {
+        const messages = dbMessages.map(msg => ({
+          id: msg.id,
+          role: msg.role as 'user' | 'assistant' | 'system',
+          content: msg.content,
+          timestamp: msg.createdAt,
+          type: (msg.metadata as any)?.type || 'text',
+          thinking: msg.extendedThinking?.steps || undefined,
+          toolExecutions: (msg.metadata as any)?.toolExecutions || undefined,
+          metadata: msg.metadata || undefined,
+        }));
+
+        return {
+          conversationId,
+          messages,
+          source: 'agentMessages',
+          count: messages.length,
+        };
+      }
+
+      if (conversation.messages && Array.isArray(conversation.messages) && conversation.messages.length > 0) {
+        return {
+          conversationId,
+          messages: conversation.messages,
+          source: 'aiConversations',
+          count: conversation.messages.length,
+        };
+      }
+
+      return {
         conversationId,
-        messages,
-        source: 'agentMessages',
-        count: messages.length,
-      });
+        messages: [],
+        source: 'none',
+        count: 0,
+      };
+    };
+
+    // Skip project ownership check for negative projectIds (temp/bootstrap mode)
+    if (projectId < 0) {
+      const messagesData = await getMessages();
+      return res.json(messagesData);
     }
 
-    if (conversation.messages && Array.isArray(conversation.messages) && conversation.messages.length > 0) {
-      return res.json({
-        conversationId,
-        messages: conversation.messages,
-        source: 'aiConversations',
-        count: conversation.messages.length,
-      });
-    }
+    // Verify project ownership via tenant isolation
+    const result = await withScopedTransaction(userId, userId, async (scopedQueries, context) => {
+      const project = await scopedQueries.getProjectById(projectId);
+      if (!project) {
+        return { error: 'Project not found or access denied', status: 403 };
+      }
 
-    res.json({
-      conversationId,
-      messages: [],
-      source: 'none',
-      count: 0,
+      // Project ownership verified, get messages
+      return await getMessages();
     });
+
+    if (!result.success) {
+      return res.status(500).json({ error: result.error?.message || 'Transaction failed' });
+    }
+    if (result.data?.error) {
+      return res.status(result.data.status).json({ error: result.data.error });
+    }
+
+    res.json(result.data);
   } catch (error: any) {
     logger.error('[AgentRouter] Error fetching conversation messages:', error);
     res.status(500).json({ error: 'Failed to fetch conversation messages' });
@@ -393,7 +535,7 @@ router.post('/conversation/:id/messages', async (req, res) => {
     const { aiConversations, agentMessages } = await import('@shared/schema');
     const { eq, and } = await import('drizzle-orm');
 
-    // Verify conversation exists and belongs to user
+    // First get the conversation to find its projectId
     const [conversation] = await db
       .select()
       .from(aiConversations)
@@ -409,35 +551,62 @@ router.post('/conversation/:id/messages', async (req, res) => {
       });
     }
 
-    // Get projectId from conversation - it's an integer column now
     const projectId = conversation.projectId;
 
-    // Insert message into agentMessages table (projectId can be null for non-project conversations)
-    const [savedMessage] = await db
-      .insert(agentMessages)
-      .values({
+    // Helper function to save message
+    const saveMessage = async () => {
+      const [savedMessage] = await db
+        .insert(agentMessages)
+        .values({
+          conversationId,
+          projectId: projectId,
+          userId,
+          role,
+          content,
+          metadata: metadata || null,
+          extendedThinking: extendedThinking || null,
+          model: metadata?.model || null,
+        })
+        .returning();
+
+      logger.info('[AgentRouter] Message persisted:', {
+        id: savedMessage.id,
         conversationId,
-        projectId: projectId,
-        userId,
         role,
-        content,
-        metadata: metadata || null,
-        extendedThinking: extendedThinking || null,
-        model: metadata?.model || null,
-      })
-      .returning();
+        contentLength: content.length,
+      });
 
-    logger.info('[AgentRouter] Message persisted:', {
-      id: savedMessage.id,
-      conversationId,
-      role,
-      contentLength: content.length,
+      return {
+        success: true,
+        message: savedMessage,
+      };
+    };
+
+    // Skip project ownership check for negative projectIds (temp/bootstrap mode)
+    if (projectId < 0) {
+      const savedData = await saveMessage();
+      return res.json(savedData);
+    }
+
+    // Verify project ownership via tenant isolation
+    const result = await withScopedTransaction(userId, userId, async (scopedQueries, context) => {
+      const project = await scopedQueries.getProjectById(projectId);
+      if (!project) {
+        return { error: 'Project not found or access denied', status: 403 };
+      }
+
+      // Project ownership verified, save message
+      return await saveMessage();
     });
 
-    res.json({
-      success: true,
-      message: savedMessage,
-    });
+    if (!result.success) {
+      return res.status(500).json({ error: result.error?.message || 'Transaction failed' });
+    }
+    if (result.data?.error) {
+      return res.status(result.data.status).json({ error: result.data.error });
+    }
+
+    res.json(result.data);
   } catch (error: any) {
     logger.error('[AgentRouter] Error persisting message:', error);
     res.status(500).json({ error: 'Failed to persist message' });
