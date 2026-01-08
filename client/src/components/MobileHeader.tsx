@@ -59,7 +59,7 @@ export function MobileHeader() {
             <User className="h-4 w-4" />
           )}
           <span className="absolute -top-1 -right-1 bg-primary text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-            SE
+            {user?.username ? user.username.slice(0, 2).toUpperCase() : user?.email ? user.email.slice(0, 2).toUpperCase() : 'U'}
           </span>
         </Button>
       </div>
@@ -70,7 +70,7 @@ export function MobileHeader() {
   const renderNavigationHeader = () => (
     <div className="flex items-center justify-between w-full">
       <div className="flex items-center">
-        <span className="font-medium text-sm mx-2">henri45</span>
+        <span className="font-medium text-sm mx-2">{user?.username || 'User'}</span>
         <Button variant="ghost" size="sm" className="h-6">
           <X className="h-4 w-4 mr-1" />
         </Button>

@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/use-auth';
 import { LazyMotionDiv, LazyAnimatePresence } from '@/lib/motion';
 import {
   GitBranch,
@@ -129,6 +130,7 @@ function EmptyState({ onRefresh }: { onRefresh: () => void }) {
 
 export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [viewMode, setViewMode] = useState<ViewMode>('main');
   const [showBranchDropdown, setShowBranchDropdown] = useState(false);
   const [branchSearch, setBranchSearch] = useState('');
@@ -500,35 +502,25 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
               <h3 className="text-[15px] font-medium leading-tight text-foreground">Commit author</h3>
               
               <div className="space-y-2">
-                <div className="flex items-center justify-between min-h-[44px] p-3 bg-card border border-border rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center text-[15px] font-medium text-muted-foreground">
-                      HB
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[15px] font-medium leading-tight text-foreground">henri45</span>
-                        <span className="text-[13px] text-muted-foreground">Default Profile</span>
-                      </div>
-                      <span className="text-[13px] text-muted-foreground">Henri Ben &lt;user@example.com&gt;</span>
-                    </div>
-                  </div>
-                  <div className="w-[18px] h-[18px] border-2 border-border rounded-full" />
-                </div>
-
                 <div className="flex items-center justify-between min-h-[44px] p-3 bg-card border-2 border-blue-500 rounded-lg">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
-                      <User className="w-[18px] h-[18px] text-white" />
-                    </div>
+                    {user?.avatarUrl ? (
+                      <img 
+                        src={user.avatarUrl} 
+                        alt={user.username || 'User'} 
+                        className="w-10 h-10 rounded-full"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
+                        <User className="w-[18px] h-[18px] text-white" />
+                      </div>
+                    )}
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="text-[15px] font-medium leading-tight text-foreground">openaxcloud</span>
-                        <a href="#" className="text-[13px] text-blue-500 flex items-center gap-1">
-                          GitHub Settings <ExternalLink className="w-[18px] h-[18px]" />
-                        </a>
+                        <span className="text-[15px] font-medium leading-tight text-foreground">{user?.username || 'User'}</span>
+                        <span className="text-[13px] text-muted-foreground">Default Profile</span>
                       </div>
-                      <span className="text-[13px] text-muted-foreground">openaxcloud &lt;simon@openax.com&gt;</span>
+                      <span className="text-[13px] text-muted-foreground">{user?.username || 'User'} &lt;{user?.email || 'user@example.com'}&gt;</span>
                     </div>
                   </div>
                   <div className="w-[18px] h-[18px] bg-blue-500 rounded-full flex items-center justify-center">
