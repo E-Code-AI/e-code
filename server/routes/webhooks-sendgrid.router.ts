@@ -100,12 +100,11 @@ router.post('/sendgrid', async (req: Request, res: Response) => {
     const events: SendGridEvent[] = Array.isArray(req.body) ? req.body : JSON.parse(req.body);
 
     if (!Array.isArray(events)) {
-      logger.warn('Invalid SendGrid webhook payload');
-      console.error('❌ Invalid payload - not an array');
+      logger.warn('Invalid SendGrid webhook payload - not an array');
       return res.status(400).json({ error: 'Invalid payload' });
     }
     
-    console.log(`✅ Processing ${events.length} SendGrid events`);
+    logger.info(`Processing ${events.length} SendGrid events`);
 
     for (const event of events) {
       logger.info(`SendGrid event: ${event.event}`, {
