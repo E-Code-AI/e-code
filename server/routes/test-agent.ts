@@ -1,14 +1,33 @@
 import { Router } from 'express';
 import { agentOrchestrator } from '../services/agent-orchestrator.service';
+import { ensureAuthenticated } from '../middleware/auth';
 
 const router = Router();
 
-// Test endpoint for agent functionality (no auth required for testing)
-router.post('/api/test/agent', async (req, res) => {
+// SECURITY FIX: Test endpoint now requires authentication and uses authenticated user's ID
+// Only available in development mode
+router.post('/api/test/agent', ensureAuthenticated, async (req, res) => {
+  // Block in production for security
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(403).json({
+      success: false,
+      error: 'Test endpoints are disabled in production',
+      code: 'PRODUCTION_BLOCKED'
+    });
+  }
+
   try {
-    // Create a test session
-    const testUserId = '30711e48-281e-4dcd-9372-d0941ddf8a1e'; // Admin user ID from database
-    const session = await agentOrchestrator.createSession(testUserId, undefined, 'gpt-5');
+    // Use authenticated user's ID instead of hardcoded admin ID
+    const userId = req.user?.id?.toString();
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        error: 'Authentication required',
+        code: 'AUTH_REQUIRED'
+      });
+    }
+
+    const session = await agentOrchestrator.createSession(userId, undefined, 'gpt-5');
     
     // Execute agent with test message
     const messages = req.body.messages || [{
@@ -19,7 +38,7 @@ router.post('/api/test/agent', async (req, res) => {
     const result = await agentOrchestrator.executeAgent(
       session.id,
       messages,
-      testUserId
+      userId
     );
     
     res.json({
@@ -33,7 +52,8 @@ router.post('/api/test/agent', async (req, res) => {
     res.status(500).json({
       success: false,
       error: error.message,
-      stack: error.stack
+      // Don't expose stack trace in production
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 });

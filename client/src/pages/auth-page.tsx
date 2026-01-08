@@ -107,33 +107,36 @@ export default function AuthPage() {
               Sign in to your account or create a new one to get started.
             </CardDescription>
             
-            <div className="mt-4 p-3 sm:p-4 bg-muted dark:bg-muted rounded-xl border border-border transition-colors duration-200" data-testid="section-quick-access">
-              <div className="flex items-center gap-2 mb-2">
-                <Shield className="h-4 w-4 text-primary" />
-                <p className="text-sm font-medium text-foreground">Quick Access</p>
-              </div>
-              <div className="flex flex-col gap-2 mt-2">
-                <div className="flex flex-col xs:flex-row justify-between items-start xs:items-center gap-2">
-                  <div className="text-xs sm:text-sm text-muted-foreground">
-                    <span>Email: <code className="bg-primary/10 dark:bg-primary/20 text-primary px-1.5 py-0.5 rounded font-mono text-xs">admin@test.com</code></span><br/>
-                    <span>Password: <code className="bg-primary/10 dark:bg-primary/20 text-primary px-1.5 py-0.5 rounded font-mono text-xs">adminpass123</code></span>
+            {/* SECURITY FIX: Only show test credentials in development mode */}
+            {import.meta.env.DEV && (
+              <div className="mt-4 p-3 sm:p-4 bg-muted dark:bg-muted rounded-xl border border-border transition-colors duration-200" data-testid="section-quick-access">
+                <div className="flex items-center gap-2 mb-2">
+                  <Shield className="h-4 w-4 text-primary" />
+                  <p className="text-sm font-medium text-foreground">Development Quick Access</p>
+                </div>
+                <div className="flex flex-col gap-2 mt-2">
+                  <div className="flex flex-col xs:flex-row justify-between items-start xs:items-center gap-2">
+                    <div className="text-xs sm:text-sm text-muted-foreground">
+                      <span>Email: <code className="bg-primary/10 dark:bg-primary/20 text-primary px-1.5 py-0.5 rounded font-mono text-xs">admin@test.com</code></span><br/>
+                      <span>Password: <code className="bg-primary/10 dark:bg-primary/20 text-primary px-1.5 py-0.5 rounded font-mono text-xs">adminpass123</code></span>
+                    </div>
+                    <Button 
+                      variant="secondary" 
+                      size="sm" 
+                      className="min-h-[40px] text-xs sm:text-sm px-4 bg-primary/10 hover:bg-primary/20 text-primary border-0 font-medium transition-all duration-200"
+                      onClick={() => {
+                        loginForm.setValue('email', 'admin@test.com');
+                        loginForm.setValue('password', 'adminpass123');
+                        setActiveTab('login');
+                      }}
+                      data-testid="button-use-admin"
+                    >
+                      Use Admin
+                    </Button>
                   </div>
-                  <Button 
-                    variant="secondary" 
-                    size="sm" 
-                    className="min-h-[40px] text-xs sm:text-sm px-4 bg-primary/10 hover:bg-primary/20 text-primary border-0 font-medium transition-all duration-200"
-                    onClick={() => {
-                      loginForm.setValue('email', 'admin@test.com');
-                      loginForm.setValue('password', 'adminpass123');
-                      setActiveTab('login');
-                    }}
-                    data-testid="button-use-admin"
-                  >
-                    Use Admin
-                  </Button>
                 </div>
               </div>
-            </div>
+            )}
           </CardHeader>
           
           <CardContent className="p-5 sm:p-6 pt-4">

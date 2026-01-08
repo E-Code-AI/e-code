@@ -36,7 +36,7 @@ import runtimeRouter from "./runtime.router";
 import packagesRouter from "./packages.router";
 import { createWorkspaceRoutes } from "./workspace";
 import { mobileRouter } from "../api/mobile";
-import { setupAuthBypass } from "../dev-auth-bypass";
+// SECURITY FIX: Auth bypass removed - all authentication goes through Passport sessions
 import { csrfTokenEndpoint } from "../middleware/csrf";
 import { GitRouter } from "./git.router";
 import debugRouter from "./debug.router";
@@ -142,8 +142,7 @@ export class MainRouter {
     // CSRF token endpoint alias (RESTful compatibility)
     app.get('/api/auth/csrf-token', csrfTokenEndpoint);
 
-    // Setup auth bypass for development
-    setupAuthBypass(app);
+    // SECURITY FIX: Auth bypass endpoints removed - authentication via Passport sessions only
 
     // API Versioning (Fortune 500 requirement)
     app.use('/api', apiVersionMiddleware);

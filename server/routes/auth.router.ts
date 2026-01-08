@@ -3,7 +3,7 @@ import bcrypt from "../utils/bcrypt-compat";
 import passport from "passport";
 import { userRegistrationSchema, securityLogs, emailVerificationTokens, passwordResetTokens } from "@shared/schema";
 import { type IStorage } from "../storage";
-import { devAuthBypass, isAuthBypassEnabled } from "../dev-auth-bypass";
+import { ensureAuthenticated as sharedEnsureAuth } from "../middleware/auth";
 import { csrfProtection } from "../middleware/csrf";
 import type { User } from "@shared/schema";
 import { randomBytes } from "crypto";
@@ -70,21 +70,8 @@ export class AuthRouter {
     };
   }
 
-  private ensureAuthenticated = (req: Request, res: Response, next: NextFunction) => {
-    // Apply auth bypass middleware ONLY if explicitly enabled via bypass token
-    // DO NOT auto-inject testauth user - this prevents E2E testing
-    devAuthBypass(req, res, () => {
-      if (req.isAuthenticated()) {
-        return next();
-      }
-      
-      res.status(401).json({ 
-        message: "Unauthorized",
-        code: "AUTH_REQUIRED",
-        path: req.path 
-      });
-    });
-  };
+  // Use the shared ensureAuthenticated middleware for consistent authentication
+  private ensureAuthenticated = sharedEnsureAuth;
 
   private initializeRoutes() {
     // Fortune 500 Auth Rate Limiter - Apply to all auth routes

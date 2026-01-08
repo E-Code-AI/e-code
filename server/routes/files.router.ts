@@ -1,7 +1,7 @@
 import { Router, Request, Response, NextFunction } from "express";
 import { insertFileSchema } from "@shared/schema";
 import { type IStorage } from "../storage";
-import { devAuthBypass, isAuthBypassEnabled } from "../dev-auth-bypass";
+import { ensureAuthenticated } from "../middleware/auth";
 import { csrfProtection } from "../middleware/csrf";
 import type { User } from "@shared/schema";
 import path from 'path';
@@ -27,23 +27,8 @@ export class FilesRouter {
     });
   }
 
-  private ensureAuthenticated = (req: Request, res: Response, next: NextFunction) => {
-    devAuthBypass(req, res, () => {
-      if (req.isAuthenticated()) {
-        return next();
-      }
-      
-      if (req.user) {
-        return next();
-      }
-      
-      res.status(401).json({ 
-        message: "Unauthorized",
-        code: "AUTH_REQUIRED",
-        path: req.path 
-      });
-    });
-  };
+  // Use the shared ensureAuthenticated middleware for consistent authentication
+  private ensureAuthenticated = ensureAuthenticated;
 
   private initializeRoutes() {
     this.router.get("/api/projects/:projectId/files", this.ensureAuthenticated, async (req: Request, res: Response) => {

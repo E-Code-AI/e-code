@@ -1,6 +1,6 @@
 import { Router, Request, Response, NextFunction } from "express";
 import { type IStorage } from "../storage";
-import { devAuthBypass, isAuthBypassEnabled } from "../dev-auth-bypass";
+import { ensureAuthenticated } from "../middleware/auth";
 import { csrfProtection } from "../middleware/csrf";
 import type { User } from "@shared/schema";
 import bcrypt from "../utils/bcrypt-compat";
@@ -15,28 +15,8 @@ export class UsersRouter {
     this.initializeRoutes();
   }
 
-  private ensureAuthenticated = (req: Request, res: Response, next: NextFunction) => {
-    // Always allow in development mode for testing
-    if (process.env.NODE_ENV === 'development' || isAuthBypassEnabled()) {
-      if (!req.user) {
-        req.user = { id: 2, username: 'demo', email: 'demo@plot.local' } as User;
-      }
-      return next();
-    }
-    
-    // Apply auth bypass middleware
-    devAuthBypass(req, res, () => {
-      if (req.isAuthenticated()) {
-        return next();
-      }
-      
-      res.status(401).json({ 
-        message: "Unauthorized",
-        code: "AUTH_REQUIRED",
-        path: req.path 
-      });
-    });
-  };
+  // Use the shared ensureAuthenticated middleware for consistent authentication
+  private ensureAuth = ensureAuthenticated;
 
   private initializeRoutes() {
     // Get user profile by ID
@@ -108,7 +88,7 @@ export class UsersRouter {
     });
 
     // Update user profile
-    this.router.put("/api/users/:id", this.ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
+    this.router.put("/api/users/:id", this.ensureAuth, csrfProtection, async (req: Request, res: Response) => {
       try {
         const userId = req.params.id;
         
@@ -162,7 +142,7 @@ export class UsersRouter {
     });
 
     // Delete user account
-    this.router.delete("/api/users/:id", this.ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
+    this.router.delete("/api/users/:id", this.ensureAuth, csrfProtection, async (req: Request, res: Response) => {
       try {
         const userId = req.params.id;
         
@@ -224,7 +204,7 @@ export class UsersRouter {
       }
     });
     // Get user usage (resource consumption metrics)
-    this.router.get("/api/user/usage", this.ensureAuthenticated, async (req: Request, res: Response) => {
+    this.router.get("/api/user/usage", this.ensureAuth, async (req: Request, res: Response) => {
       try {
         const userId = req.user!.id;
         const user = await this.storage.getUser(String(userId));
@@ -308,7 +288,7 @@ export class UsersRouter {
     });
 
     // Get user billing information
-    this.router.get("/api/user/billing", this.ensureAuthenticated, async (req: Request, res: Response) => {
+    this.router.get("/api/user/billing", this.ensureAuth, async (req: Request, res: Response) => {
       try {
         const userId = req.user!.id;
         const user = await this.storage.getUser(String(userId));
