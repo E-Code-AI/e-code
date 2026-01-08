@@ -233,12 +233,41 @@ export class GitHubOAuthService {
     }
   }
 
+  private static readonly TOKEN_WARNING_AGE_DAYS = 30;
+
+  async isTokenExpired(userId: number): Promise<boolean> {
+    try {
+      const user = await storage.getUser(String(userId));
+      if (!user?.githubTokenCreatedAt) {
+        return true;
+      }
+      
+      const tokenAge = Date.now() - new Date(user.githubTokenCreatedAt).getTime();
+      const thirtyDaysMs = GitHubOAuthService.TOKEN_WARNING_AGE_DAYS * 24 * 60 * 60 * 1000;
+      
+      return tokenAge > thirtyDaysMs;
+    } catch (error) {
+      logger.error('[GitHubOAuthService] Failed to check token expiration:', error);
+      return true;
+    }
+  }
+
   // Get stored GitHub token (decrypted)
   async getUserToken(userId: number): Promise<string | null> {
     try {
       const user = await storage.getUser(String(userId));
       if (!user?.githubTokenCiphertext || !user?.githubTokenIv) {
         return null;
+      }
+      
+      if (user.githubTokenCreatedAt) {
+        const tokenAge = Date.now() - new Date(user.githubTokenCreatedAt).getTime();
+        const thirtyDaysMs = GitHubOAuthService.TOKEN_WARNING_AGE_DAYS * 24 * 60 * 60 * 1000;
+        
+        if (tokenAge > thirtyDaysMs) {
+          const daysOld = Math.floor(tokenAge / (24 * 60 * 60 * 1000));
+          logger.warn(`[GitHubOAuthService] Token for user ${userId} is ${daysOld} days old (>30 days). Consider re-authenticating to ensure token validity.`);
+        }
       }
       
       const { decryptToken } = await import('./credential-encryption');

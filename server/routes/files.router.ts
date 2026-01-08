@@ -7,6 +7,14 @@ import type { User } from "@shared/schema";
 import path from 'path';
 import { previewEvents } from '../preview/preview-websocket';
 import { withScopedTransaction, TenantScopedQueries } from '../services/persistence-engine';
+import { z } from 'zod';
+
+const projectIdSchema = z.coerce.number().int().positive();
+const fileIdSchema = z.coerce.number().int().positive();
+const filePathSchema = z.string().min(1).max(500).refine(
+  (path) => !path.includes('..') && !path.startsWith('/'),
+  { message: 'Invalid file path - path traversal not allowed' }
+);
 
 export class FilesRouter {
   private router: Router;
@@ -33,15 +41,16 @@ export class FilesRouter {
   private initializeRoutes() {
     this.router.get("/api/projects/:projectId/files", this.ensureAuthenticated, async (req: Request, res: Response) => {
       try {
-        const projectId = parseInt(req.params.projectId, 10);
-        const userId = req.user!.id;
-
-        if (isNaN(projectId) || projectId <= 0) {
+        const projectIdResult = projectIdSchema.safeParse(req.params.projectId);
+        if (!projectIdResult.success) {
           return res.status(400).json({
             message: "Invalid project ID",
-            code: "INVALID_PROJECT_ID"
+            code: "INVALID_PROJECT_ID",
+            errors: projectIdResult.error.errors
           });
         }
+        const projectId = projectIdResult.data;
+        const userId = req.user!.id;
 
         const result = await withScopedTransaction(userId, userId, async (scopedQueries) => {
           const files = await scopedQueries.getFilesByProject(projectId);
@@ -78,7 +87,15 @@ export class FilesRouter {
 
     this.router.get("/api/projects/:projectId/files/*", this.ensureAuthenticated, async (req: Request, res: Response) => {
       try {
-        const projectId = parseInt(req.params.projectId, 10);
+        const projectIdResult = projectIdSchema.safeParse(req.params.projectId);
+        if (!projectIdResult.success) {
+          return res.status(400).json({
+            message: "Invalid project ID",
+            code: "INVALID_PROJECT_ID",
+            errors: projectIdResult.error.errors
+          });
+        }
+        const projectId = projectIdResult.data;
         const userId = req.user!.id;
         let fileIdentifier = req.params[0];
         
@@ -86,13 +103,6 @@ export class FilesRouter {
           return res.status(400).json({
             message: "File identifier is required",
             code: "IDENTIFIER_REQUIRED"
-          });
-        }
-
-        if (isNaN(projectId) || projectId <= 0) {
-          return res.status(400).json({
-            message: "Invalid project ID",
-            code: "INVALID_PROJECT_ID"
           });
         }
 
@@ -150,15 +160,16 @@ export class FilesRouter {
 
     this.router.post("/api/projects/:projectId/files", this.ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
       try {
-        const projectId = parseInt(req.params.projectId, 10);
-        const userId = req.user!.id;
-        
-        if (isNaN(projectId) || projectId <= 0) {
+        const projectIdResult = projectIdSchema.safeParse(req.params.projectId);
+        if (!projectIdResult.success) {
           return res.status(400).json({
             message: "Invalid project ID",
-            code: "INVALID_PROJECT_ID"
+            code: "INVALID_PROJECT_ID",
+            errors: projectIdResult.error.errors
           });
         }
+        const projectId = projectIdResult.data;
+        const userId = req.user!.id;
         
         const MAX_FILE_SIZE = 5 * 1024 * 1024;
         if (req.body.content && req.body.content.length > MAX_FILE_SIZE) {
@@ -258,7 +269,15 @@ export class FilesRouter {
 
     this.router.put("/api/projects/:projectId/files/*", this.ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
       try {
-        const projectId = parseInt(req.params.projectId, 10);
+        const projectIdResult = projectIdSchema.safeParse(req.params.projectId);
+        if (!projectIdResult.success) {
+          return res.status(400).json({
+            message: "Invalid project ID",
+            code: "INVALID_PROJECT_ID",
+            errors: projectIdResult.error.errors
+          });
+        }
+        const projectId = projectIdResult.data;
         const userId = req.user!.id;
         let filePath = req.params[0];
         const { content } = req.body;
@@ -267,13 +286,6 @@ export class FilesRouter {
           return res.status(400).json({
             message: "File path is required",
             code: "PATH_REQUIRED"
-          });
-        }
-
-        if (isNaN(projectId) || projectId <= 0) {
-          return res.status(400).json({
-            message: "Invalid project ID",
-            code: "INVALID_PROJECT_ID"
           });
         }
 
@@ -329,7 +341,15 @@ export class FilesRouter {
 
     this.router.delete("/api/projects/:projectId/files/*", this.ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
       try {
-        const projectId = parseInt(req.params.projectId, 10);
+        const projectIdResult = projectIdSchema.safeParse(req.params.projectId);
+        if (!projectIdResult.success) {
+          return res.status(400).json({
+            message: "Invalid project ID",
+            code: "INVALID_PROJECT_ID",
+            errors: projectIdResult.error.errors
+          });
+        }
+        const projectId = projectIdResult.data;
         const userId = req.user!.id;
         let filePath = req.params[0];
         
@@ -337,13 +357,6 @@ export class FilesRouter {
           return res.status(400).json({
             message: "File path is required",
             code: "PATH_REQUIRED"
-          });
-        }
-
-        if (isNaN(projectId) || projectId <= 0) {
-          return res.status(400).json({
-            message: "Invalid project ID",
-            code: "INVALID_PROJECT_ID"
           });
         }
 
@@ -399,16 +412,17 @@ export class FilesRouter {
 
     this.router.patch("/api/files/:fileId", this.ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
       try {
-        const fileId = parseInt(req.params.fileId, 10);
-        const userId = req.user!.id;
-        const { content, name } = req.body;
-        
-        if (isNaN(fileId) || fileId <= 0) {
+        const fileIdResult = fileIdSchema.safeParse(req.params.fileId);
+        if (!fileIdResult.success) {
           return res.status(400).json({
             message: "Invalid file ID",
-            code: "INVALID_FILE_ID"
+            code: "INVALID_FILE_ID",
+            errors: fileIdResult.error.errors
           });
         }
+        const fileId = fileIdResult.data;
+        const userId = req.user!.id;
+        const { content, name } = req.body;
 
         const result = await withScopedTransaction(userId, userId, async (scopedQueries) => {
           const projects = await scopedQueries.getProjects();
@@ -452,15 +466,16 @@ export class FilesRouter {
 
     this.router.delete("/api/files/:fileId", this.ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
       try {
-        const fileId = parseInt(req.params.fileId, 10);
-        const userId = req.user!.id;
-        
-        if (isNaN(fileId) || fileId <= 0) {
+        const fileIdResult = fileIdSchema.safeParse(req.params.fileId);
+        if (!fileIdResult.success) {
           return res.status(400).json({
             message: "Invalid file ID",
-            code: "INVALID_FILE_ID"
+            code: "INVALID_FILE_ID",
+            errors: fileIdResult.error.errors
           });
         }
+        const fileId = fileIdResult.data;
+        const userId = req.user!.id;
 
         const result = await withScopedTransaction(userId, userId, async (scopedQueries) => {
           const projects = await scopedQueries.getProjects();
@@ -504,15 +519,16 @@ export class FilesRouter {
 
     this.router.post("/api/files/:projectId", this.ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
       try {
-        const projectId = parseInt(req.params.projectId, 10);
-        const userId = req.user!.id;
-        
-        if (isNaN(projectId) || projectId <= 0) {
+        const projectIdResult = projectIdSchema.safeParse(req.params.projectId);
+        if (!projectIdResult.success) {
           return res.status(400).json({
             message: "Invalid project ID",
-            code: "INVALID_PROJECT_ID"
+            code: "INVALID_PROJECT_ID",
+            errors: projectIdResult.error.errors
           });
         }
+        const projectId = projectIdResult.data;
+        const userId = req.user!.id;
         
         let filePath = req.body.path;
         
@@ -619,16 +635,17 @@ export class FilesRouter {
 
     this.router.post("/api/projects/:projectId/folders", this.ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
       try {
-        const projectId = parseInt(req.params.projectId, 10);
-        const userId = req.user!.id;
-        const { path: folderPath } = req.body;
-        
-        if (isNaN(projectId) || projectId <= 0) {
+        const projectIdResult = projectIdSchema.safeParse(req.params.projectId);
+        if (!projectIdResult.success) {
           return res.status(400).json({
             message: "Invalid project ID",
-            code: "INVALID_PROJECT_ID"
+            code: "INVALID_PROJECT_ID",
+            errors: projectIdResult.error.errors
           });
         }
+        const projectId = projectIdResult.data;
+        const userId = req.user!.id;
+        const { path: folderPath } = req.body;
         
         if (!folderPath || folderPath.includes('..')) {
           return res.status(400).json({
