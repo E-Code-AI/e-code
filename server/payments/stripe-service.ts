@@ -545,6 +545,23 @@ export class StripePaymentService {
       throw new Error(`Webhook signature verification failed: ${error.message}`);
     }
 
+    // API-1 SECURITY FIX: Idempotency check - prevent duplicate event processing
+    const { db } = await import('../db');
+    const { stripeWebhookEvents } = await import('../../shared/schema');
+    const { eq } = await import('drizzle-orm');
+
+    // Check if event was already processed
+    const existingEvent = await db
+      .select({ id: stripeWebhookEvents.id })
+      .from(stripeWebhookEvents)
+      .where(eq(stripeWebhookEvents.stripeEventId, event.id))
+      .limit(1);
+
+    if (existingEvent.length > 0) {
+      logger.info(`[Stripe] Duplicate webhook event detected, skipping: ${event.id}`);
+      return; // Return early - event already processed
+    }
+
     // Handle different event types
     switch (event.type) {
       case 'customer.subscription.created':
@@ -576,6 +593,15 @@ export class StripePaymentService {
         // Unhandled webhook event type
         break;
     }
+
+    // API-1 SECURITY FIX: Record event as processed after successful handling
+    await db.insert(stripeWebhookEvents).values({
+      stripeEventId: event.id,
+      eventType: event.type,
+      processedAt: new Date(),
+    });
+
+    logger.info(`[Stripe] Webhook event processed and recorded: ${event.id} (${event.type})`);
   }
 
   private async handleSubscriptionUpdate(subscription: Stripe.Subscription) {

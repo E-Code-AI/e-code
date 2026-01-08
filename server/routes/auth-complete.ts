@@ -304,8 +304,12 @@ router.get('/github', (req, res) => {
     return res.status(501).json({ error: 'GitHub OAuth not configured' });
   }
   
+  // API-2 SECURITY FIX: Generate CSRF state parameter
+  const state = randomBytes(32).toString('hex');
+  (req.session as any).oauthState = state;
+  
   const redirectUri = `${process.env.APP_URL || 'http://localhost:5000'}/api/auth/github/callback`;
-  const authUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=user:email`;
+  const authUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=user:email&state=${state}`;
   
   res.redirect(authUrl);
 });
@@ -319,6 +323,22 @@ router.get('/github/callback', async (req, res) => {
     if (!clientId || !clientSecret) {
       throw new Error('GitHub OAuth not configured');
     }
+    
+    // API-2 SECURITY FIX: Validate CSRF state parameter
+    const expectedState = (req.session as any).oauthState;
+    
+    // Special case: 'git_connect' state is allowed for authenticated users connecting GitHub
+    const isGitConnectFlow = state === 'git_connect' && req.isAuthenticated?.() && req.user;
+    
+    if (!isGitConnectFlow) {
+      if (!state || !expectedState || state !== expectedState) {
+        console.error('GitHub OAuth state mismatch - potential CSRF attack');
+        return res.redirect('/login?error=csrf_validation_failed');
+      }
+    }
+    
+    // Clear the state from session after validation
+    delete (req.session as any).oauthState;
     
     // Exchange code for token
     const tokenResponse = await fetch('https://github.com/login/oauth/access_token', {
