@@ -31,10 +31,11 @@ export function TwoFactorVerify({ challengeId, onSuccess, onCancel, email }: Two
   const { toast } = useToast();
 
   const verifyMutation = useMutation({
-    mutationFn: (verifyToken: string) => 
+    mutationFn: ({ verifyToken, type }: { verifyToken: string; type: 'totp' | 'backup' | 'emergency' }) => 
       apiRequest('POST', '/api/2fa/challenge/verify', { 
         challengeId, 
-        token: verifyToken 
+        token: verifyToken,
+        type
       }),
     onSuccess: (data: { success: boolean; pendingSessionToken: string }) => {
       if (data.success && data.pendingSessionToken) {
@@ -88,7 +89,7 @@ export function TwoFactorVerify({ challengeId, onSuccess, onCancel, email }: Two
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (token.length >= 6) {
-      verifyMutation.mutate(token);
+      verifyMutation.mutate({ verifyToken: token, type: activeTab });
     }
   };
 
