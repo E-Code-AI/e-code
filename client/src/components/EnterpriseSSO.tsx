@@ -100,6 +100,32 @@ export function EnterpriseSSO() {
     staleTime: 30000
   });
 
+  // Fetch SSO audit logs
+  interface AuditLogEntry {
+    id: string;
+    event: string;
+    user: string;
+    provider: string;
+    time: string;
+    status: 'success' | 'error' | 'info';
+  }
+  const { data: auditLogsData, isLoading: auditLogsLoading } = useQuery<{ logs: AuditLogEntry[] }>({
+    queryKey: ['/api/sso/audit-logs'],
+    staleTime: 30000,
+    refetchInterval: 60000
+  });
+  const auditLogs = auditLogsData?.logs || [];
+
+  // Fetch SSO health stats
+  interface SSOHealthStats {
+    securityScore: number;
+    uptime: number;
+  }
+  const { data: ssoHealthData } = useQuery<SSOHealthStats>({
+    queryKey: ['/api/sso/health'],
+    staleTime: 60000
+  });
+
   // Create SSO provider mutation
   const createProviderMutation = useMutation({
     mutationFn: async (providerData: any) => {
@@ -401,7 +427,7 @@ export function EnterpriseSSO() {
             <CheckCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">95%</div>
+            <div className="text-2xl font-bold">{ssoHealthData?.securityScore ?? '--'}%</div>
             <p className="text-xs text-muted-foreground">
               Enterprise security compliance
             </p>
@@ -414,7 +440,7 @@ export function EnterpriseSSO() {
             <Globe className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">99.9%</div>
+            <div className="text-2xl font-bold">{ssoHealthData?.uptime ?? '--'}%</div>
             <p className="text-xs text-muted-foreground">
               SSO service availability
             </p>
@@ -720,54 +746,31 @@ export function EnterpriseSSO() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {[
-                  {
-                    event: 'SAML authentication successful',
-                    user: 'john.doe@company.com',
-                    provider: 'Okta',
-                    time: '2 minutes ago',
-                    status: 'success'
-                  },
-                  {
-                    event: 'SCIM user provisioned',
-                    user: 'jane.smith@company.com',
-                    provider: 'Azure AD',
-                    time: '15 minutes ago',
-                    status: 'success'
-                  },
-                  {
-                    event: 'SSO provider configuration updated',
-                    user: 'admin@company.com',
-                    provider: 'Google Workspace',
-                    time: '1 hour ago',
-                    status: 'info'
-                  },
-                  {
-                    event: 'Failed SAML authentication',
-                    user: 'unknown@company.com',
-                    provider: 'Okta',
-                    time: '2 hours ago',
-                    status: 'error'
-                  }
-                ].map((log, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <div className={`h-2 w-2 rounded-full ${
-                        log.status === 'success' ? 'bg-green-500' :
-                        log.status === 'error' ? 'bg-red-500' : 'bg-blue-500'
-                      }`} />
-                      <div>
-                        <div className="text-sm font-medium">{log.event}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {log.user} via {log.provider}
+                {auditLogsLoading ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">Loading audit logs...</p>
+                ) : auditLogs && auditLogs.length > 0 ? (
+                  auditLogs.slice(0, 5).map((log, index) => (
+                    <div key={log.id || index} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <div className={`h-2 w-2 rounded-full ${
+                          log.status === 'success' ? 'bg-green-500' :
+                          log.status === 'error' ? 'bg-red-500' : 'bg-blue-500'
+                        }`} />
+                        <div>
+                          <div className="text-sm font-medium">{log.event}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {log.user} via {log.provider}
+                          </div>
                         </div>
                       </div>
+                      <div className="text-xs text-muted-foreground">
+                        {log.time}
+                      </div>
                     </div>
-                    <div className="text-xs text-muted-foreground">
-                      {log.time}
-                    </div>
-                  </div>
-                ))}
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-4">No audit log entries</p>
+                )}
               </div>
             </CardContent>
           </Card>

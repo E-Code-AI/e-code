@@ -1,4 +1,5 @@
 import { memo, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -16,14 +17,6 @@ interface ActivityItem {
   status?: 'success' | 'error' | 'pending';
   message?: string;
 }
-
-const activityFeed: ActivityItem[] = [
-  { id: 1, type: 'deploy', user: 'John Doe', avatar: '👤', project: 'E-Commerce Store', time: '2 minutes ago', status: 'success' },
-  { id: 2, type: 'commit', user: 'Jane Smith', avatar: '👩', project: 'Mobile App', time: '5 minutes ago', message: 'Fixed navigation bug' },
-  { id: 3, type: 'build', user: 'Mike Johnson', avatar: '👨', project: 'API Gateway', time: '10 minutes ago', status: 'success' },
-  { id: 4, type: 'error', user: 'System', avatar: '🤖', project: 'Data Pipeline', time: '15 minutes ago', status: 'error', message: 'Build failed' },
-  { id: 5, type: 'deploy', user: 'Sarah Wilson', avatar: '👱‍♀️', project: 'Admin Dashboard', time: '20 minutes ago', status: 'pending' },
-];
 
 const ActivityIcon = memo(({ type }: { type: ActivityItem['type'] }) => {
   switch (type) {
@@ -44,6 +37,15 @@ const ActivityIcon = memo(({ type }: { type: ActivityItem['type'] }) => {
 
 const ActivityFeed = memo(function ActivityFeed() {
   const prefersReducedMotion = usePrefersReducedMotion();
+
+  // Fetch activity feed from API
+  const { data: activityData, isLoading } = useQuery<{ activities: ActivityItem[] }>({
+    queryKey: ['/api/activity/feed'],
+    staleTime: 30000,
+    refetchInterval: 60000
+  });
+
+  const activityFeed = activityData?.activities || [];
   
   const itemVariants = useMemo(() => ({
     hidden: prefersReducedMotion ? {} : { opacity: 0, x: -20 },
@@ -68,7 +70,11 @@ const ActivityFeed = memo(function ActivityFeed() {
         <ScrollArea className="h-64 pr-4">
           <LazyAnimatePresence mode="popLayout">
             <div className="space-y-4">
-              {activityFeed.map((item) => (
+              {isLoading ? (
+                <p className="text-sm text-muted-foreground text-center py-4">Loading activity...</p>
+              ) : activityFeed.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">No recent activity</p>
+              ) : activityFeed.map((item) => (
                 <LazyMotionDiv
                   key={item.id}
                   variants={itemVariants}

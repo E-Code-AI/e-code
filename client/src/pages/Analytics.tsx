@@ -69,6 +69,13 @@ interface AnalyticsData {
   realtimeUsers: number;
 }
 
+interface RealtimeActivity {
+  action: string;
+  page: string;
+  time: string;
+  user: string;
+}
+
 export default function Analytics() {
   const [timeRange, setTimeRange] = useState('7d');
   
@@ -76,6 +83,14 @@ export default function Analytics() {
   const { data: analyticsData, isLoading } = useQuery<AnalyticsData>({
     queryKey: ['/api/analytics', timeRange]
   });
+
+  // Fetch real-time activity data
+  const { data: realtimeActivityData, isLoading: realtimeLoading } = useQuery<{ activities: RealtimeActivity[] }>({
+    queryKey: ['/api/analytics/realtime-activity'],
+    staleTime: 10000,
+    refetchInterval: 15000
+  });
+  const realtimeActivities = realtimeActivityData?.activities || [];
   
   const overviewStats = analyticsData?.overview || [
     { label: 'Total Views', value: '0', change: '0%', trend: 'up' as const },
@@ -392,24 +407,24 @@ export default function Analytics() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {[
-                      { action: 'Page View', page: '/projects', time: 'Just now', user: 'Anonymous' },
-                      { action: 'Sign Up', page: '/auth/register', time: '12 seconds ago', user: 'New User' },
-                      { action: 'Project Created', page: '/new', time: '45 seconds ago', user: 'john_doe' },
-                      { action: 'Deploy Started', page: '/deployments', time: '1 minute ago', user: 'sarah_dev' },
-                      { action: 'File Edit', page: '/projects/123', time: '2 minutes ago', user: 'alex_coder' }
-                    ].map((activity, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                        <div className="flex items-center gap-3">
-                          <div className="h-2 w-2 bg-green-500 rounded-full"></div>
-                          <div>
-                            <p className="text-sm font-medium">{activity.action}</p>
-                            <p className="text-xs text-muted-foreground">{activity.user} • {activity.page}</p>
+                    {realtimeLoading ? (
+                      <p className="text-sm text-muted-foreground text-center py-4">Loading activity...</p>
+                    ) : realtimeActivities.length > 0 ? (
+                      realtimeActivities.slice(0, 5).map((activity, index) => (
+                        <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                          <div className="flex items-center gap-3">
+                            <div className="h-2 w-2 bg-green-500 rounded-full"></div>
+                            <div>
+                              <p className="text-sm font-medium">{activity.action}</p>
+                              <p className="text-xs text-muted-foreground">{activity.user} • {activity.page}</p>
+                            </div>
                           </div>
+                          <span className="text-xs text-muted-foreground">{activity.time}</span>
                         </div>
-                        <span className="text-xs text-muted-foreground">{activity.time}</span>
-                      </div>
-                    ))}
+                      ))
+                    ) : (
+                      <p className="text-sm text-muted-foreground text-center py-4">No recent activity</p>
+                    )}
                   </div>
                 </CardContent>
                 <CardContent>
