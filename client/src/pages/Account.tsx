@@ -19,6 +19,7 @@ import {
   Chrome, Apple, Zap, Crown, Database, Server
 } from 'lucide-react';
 import { ECodeSpinner } from '@/components/ECodeLoading';
+import { TwoFactorSetup } from '@/components/security/TwoFactorSetup';
 
 export default function Account() {
   const { user } = useAuth();
@@ -353,6 +354,8 @@ export default function Account() {
 
         {/* Security Tab */}
         <TabsContent value="security" className="space-y-4" data-testid="content-security">
+          <TwoFactorSetup />
+          
           <Card data-testid="card-security-settings">
             <CardHeader>
               <CardTitle>Security Settings</CardTitle>
@@ -361,21 +364,6 @@ export default function Account() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Two-Factor Authentication</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Add an extra layer of security to your account
-                  </p>
-                </div>
-                <Switch
-                  checked={security.twoFactor}
-                  onCheckedChange={handleEnable2FA}
-                  data-testid="switch-2fa"
-                />
-              </div>
-
-              <Separator />
 
               <div className="space-y-4">
                 <h3 className="text-sm font-medium">Active Sessions</h3>
