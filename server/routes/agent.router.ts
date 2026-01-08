@@ -492,7 +492,7 @@ router.get('/conversation/:id/messages', async (req, res) => {
     if (!result.success) {
       return res.status(500).json({ error: result.error?.message || 'Transaction failed' });
     }
-    if (result.data?.error) {
+    if (result.data && 'error' in result.data) {
       return res.status(result.data.status).json({ error: result.data.error });
     }
 
@@ -602,7 +602,7 @@ router.post('/conversation/:id/messages', async (req, res) => {
     if (!result.success) {
       return res.status(500).json({ error: result.error?.message || 'Transaction failed' });
     }
-    if (result.data?.error) {
+    if (result.data && 'error' in result.data) {
       return res.status(result.data.status).json({ error: result.data.error });
     }
 
@@ -808,6 +808,7 @@ router.post('/tools/execute', ensureAdmin, async (req, res) => {
     const context = {
       sessionId,
       userId,
+      projectId: 0,
       projectPath: process.cwd(),
       environment: {}
     };
