@@ -96,6 +96,7 @@ import extensionsRouter from './extensions.router';
 import workflowsRouter from './workflows.router';
 import teamsRouter from './teams.router';
 import polyglotRouter from '../polyglot-routes';
+import twoFactorRouter from './2fa.router';
 
 export class MainRouter {
   private authRouter: AuthRouter;
@@ -153,6 +154,9 @@ export class MainRouter {
 
     // OAuth authentication routes (GitHub, Google, etc.)
     app.use('/api/auth', tierRateLimiters.auth, authCompleteRouter);
+
+    // Two-Factor Authentication routes (TOTP, backup codes, emergency access)
+    app.use('/api/2fa', tierRateLimiters.auth, twoFactorRouter);
 
     // Apply tier-based rate limiting to all API routes (Fortune 500 requirement)
     // Free: 100 req/min, Pro: 1000 req/min, Enterprise: 10000 req/min
