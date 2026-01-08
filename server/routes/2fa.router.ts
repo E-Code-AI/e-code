@@ -212,8 +212,10 @@ router.post('/challenge/verify', async (req: Request, res: Response) => {
     let result;
     if (type === 'emergency') {
       result = await real2FAService.verifyEmergencyToken(challenge.userId, token);
+    } else if (type === 'backup') {
+      result = await real2FAService.verifyBackupCode(challenge.userId, token);
     } else {
-      result = await real2FAService.verifyTwoFactorToken(challenge.userId, token);
+      result = await real2FAService.verifyTOTPOnly(challenge.userId, token);
     }
     
     if (!result.verified) {
