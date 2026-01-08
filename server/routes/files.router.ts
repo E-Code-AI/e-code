@@ -106,12 +106,24 @@ export class FilesRouter {
           });
         }
 
+        let validatedFileId: number | null = null;
+        if (/^\d+$/.test(fileIdentifier)) {
+          const fileIdResult = fileIdSchema.safeParse(fileIdentifier);
+          if (!fileIdResult.success) {
+            return res.status(400).json({
+              message: "Invalid file ID",
+              code: "INVALID_FILE_ID",
+              errors: fileIdResult.error.errors
+            });
+          }
+          validatedFileId = fileIdResult.data;
+        }
+
         const result = await withScopedTransaction(userId, userId, async (scopedQueries) => {
           let file;
           
-          if (/^\d+$/.test(fileIdentifier)) {
-            const fileId = parseInt(fileIdentifier, 10);
-            file = await scopedQueries.getFileById(projectId, fileId);
+          if (validatedFileId !== null) {
+            file = await scopedQueries.getFileById(projectId, validatedFileId);
           } else {
             const { aiSecurityService } = await import('../services/ai-security.service');
             const pathValidation = aiSecurityService.validatePath(fileIdentifier);
