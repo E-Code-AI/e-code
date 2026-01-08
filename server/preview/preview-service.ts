@@ -10,6 +10,65 @@ import fetch from 'node-fetch';
 
 const logger = createLogger('preview-service');
 
+/**
+ * SECURITY FIX: Whitelist of safe environment variables for preview processes
+ * Only these variables will be passed to child processes to prevent API key exposure
+ * IMPORTANT: Never include DATABASE_URL, API keys, or secrets in this list
+ */
+const SAFE_ENV_WHITELIST = [
+  // System paths and shell
+  'PATH',
+  'HOME',
+  'USER',
+  'SHELL',
+  'LANG',
+  'LC_ALL',
+  'TERM',
+  'TMPDIR',
+  'TMP',
+  'TEMP',
+  // Node.js configuration
+  'NODE_ENV',
+  'NODE_PATH',
+  'NPM_CONFIG_PREFIX',
+  'npm_config_prefix',
+  'npm_config_cache',
+  // Preview-specific (safe, non-secret)
+  'REPLIT_DB_URL',  // Public Replit DB for user code (not our admin DB)
+  'REPL_ID',
+  'REPL_SLUG',
+  'REPL_OWNER',
+  // Python paths
+  'PYTHONPATH',
+  'PYTHONHOME',
+  // Go paths
+  'GOPATH',
+  'GOROOT',
+  // Rust paths
+  'CARGO_HOME',
+  'RUSTUP_HOME',
+];
+
+/**
+ * Creates a safe environment object with only whitelisted variables
+ * Prevents accidental exposure of API keys, database credentials, etc.
+ */
+function createSafeEnv(additionalVars: Record<string, string> = {}): Record<string, string> {
+  const safeEnv: Record<string, string> = {};
+  
+  for (const key of SAFE_ENV_WHITELIST) {
+    if (globalThis.process.env[key]) {
+      safeEnv[key] = globalThis.process.env[key]!;
+    }
+  }
+  
+  // Preserve NODE_ENV from parent but default to development for previews
+  safeEnv['NODE_ENV'] = globalThis.process.env['NODE_ENV'] || 'development';
+  
+  // Merge additional safe variables (PORT, VITE_PORT, etc.)
+  return { ...safeEnv, ...additionalVars };
+}
+
 interface PreviewInstance {
   projectId: string;
   runId: string;
@@ -372,12 +431,11 @@ export class PreviewService {
 
     const childProcess = spawn(startCommand[0], startCommand.slice(1), {
       cwd: previewPath,
-      env: { 
-        ...globalThis.process.env, 
+      env: createSafeEnv({ 
         PORT: port.toString(),
         VITE_PORT: port.toString(),
         DEV_SERVER_PORT: port.toString()
-      }
+      })
     });
 
     this.setupProcessHandlers(preview, childProcess, port, `${frameworkInfo.type} dev server`);
@@ -396,7 +454,7 @@ export class PreviewService {
       const apiPort = port + 1000; // API on different port
       const apiProcess = spawn('npm', ['run', frameworkInfo.packageJson.scripts?.api ? 'api' : 'server'], {
         cwd: previewPath,
-        env: { ...globalThis.process.env, PORT: apiPort.toString() }
+        env: createSafeEnv({ PORT: apiPort.toString() })
       });
 
       this.setupProcessHandlers(preview, apiProcess, apiPort, 'API Server');
@@ -432,7 +490,7 @@ export class PreviewService {
 
     const nodeProcess = spawn(startCommand[0], startCommand.slice(1), {
       cwd: previewPath,
-      env: { ...globalThis.process.env, PORT: port.toString() }
+      env: createSafeEnv({ PORT: port.toString() })
     });
 
     this.setupProcessHandlers(preview, nodeProcess, port, 'Node.js Server');
@@ -464,7 +522,7 @@ export class PreviewService {
 
     const pythonProcess = spawn('python', [mainFile.name], {
       cwd: previewPath,
-      env: { ...globalThis.process.env, PORT: port.toString() }
+      env: createSafeEnv({ PORT: port.toString() })
     });
 
     this.setupProcessHandlers(preview, pythonProcess, port, 'Python Server');

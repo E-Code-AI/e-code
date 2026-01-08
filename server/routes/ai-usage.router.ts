@@ -18,27 +18,12 @@ const router = Router();
  */
 router.get('/current', async (req, res) => {
   try {
-    // Return default usage for non-authenticated users
+    // SECURITY FIX: Return 401 for non-authenticated users instead of mock data
     if (!req.user) {
-      return res.json({
-        credits: {
-          remaining: 1000,
-          used: 0,
-          total: 1000,
-          percentUsed: 0,
-        },
-        currentPeriod: {
-          startDate: new Date().toISOString(),
-          endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-          daysRemaining: 30,
-        },
-        breakdown: {
-          agentMessages: 0,
-          thinkingTokens: 0,
-          highPowerUsage: 0,
-          webSearches: 0,
-        },
-        tier: 'free' as const,
+      return res.status(401).json({
+        error: 'Authentication required',
+        code: 'AUTH_REQUIRED',
+        message: 'Please log in to view your usage data'
       });
     }
 

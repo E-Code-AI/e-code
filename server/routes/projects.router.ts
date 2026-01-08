@@ -1,7 +1,7 @@
 import { Router, Request, Response, NextFunction } from "express";
 import { insertProjectSchema } from "@shared/schema";
 import { type IStorage } from "../storage";
-import { devAuthBypass, isAuthBypassEnabled } from "../dev-auth-bypass";
+import { ensureAuthenticated as sharedEnsureAuth } from "../middleware/auth";
 import { csrfProtection } from "../middleware/csrf";
 import type { User, Project } from "@shared/schema";
 import crypto from 'crypto';
@@ -26,37 +26,17 @@ export class ProjectsRouter {
     this.initializeRoutes();
   }
 
-  private restoreSessionUser(req: Request): boolean {
-    // Standard Passport authentication check (production path)
-    if (req.isAuthenticated()) {
-      return true;
-    }
-    
-    // Development fallback: Passport deserializeUser populates req.user
-    // but isAuthenticated() may return false due to timing or session state
-    // This allows tests with valid session cookies to proceed
-    if ((process.env.NODE_ENV === 'development' || isAuthBypassEnabled()) && req.user) {
-      return true;
-    }
-    
-    return false;
-  }
+  // Use the shared ensureAuthenticated middleware for consistent authentication
+  private ensureAuthenticated = sharedEnsureAuth;
 
-  private ensureAuthenticated = (req: Request, res: Response, next: NextFunction) => {
-    if (this.restoreSessionUser(req)) {
-      return next();
-    }
-    
-    res.status(401).json({ 
-      message: "Unauthorized",
-      code: "AUTH_REQUIRED",
-      path: req.path 
-    });
-  };
+  // Helper to check if user has a valid session (Passport session only - no bypasses)
+  private hasValidSession(req: Request): boolean {
+    return typeof req.isAuthenticated === 'function' && req.isAuthenticated() && !!req.user;
+  }
 
   private ensureProjectAccess = async (req: Request, res: Response, next: NextFunction) => {
     // ✅ FIX (Nov 24, 2025): Allow anonymous access with bootstrap token for autonomous workspace creation
-    const hasSession = this.restoreSessionUser(req);
+    const hasSession = this.hasValidSession(req);
     const bootstrapToken = req.query.bootstrap || req.headers['x-bootstrap-token'];
     
     // Require either session OR bootstrap token

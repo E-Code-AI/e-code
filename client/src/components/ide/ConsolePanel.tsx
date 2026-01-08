@@ -331,8 +331,19 @@ export function ConsolePanel({ projectId, userId, isRunning, executionId, classN
     }
   };
 
+  // SECURITY FIX: Escape HTML before ANSI parsing to prevent XSS attacks
+  const escapeHtml = (text: string): string => {
+    return text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  };
+
   const parseAnsiToHtml = (text: string, highlightQuery?: string): string => {
-    let parsed = text
+    // First escape HTML to prevent XSS, then parse ANSI codes
+    let parsed = escapeHtml(text)
       .replace(/\x1b\[32m/g, '<span style="color: hsl(var(--chart-2))">')
       .replace(/\x1b\[31m/g, '<span style="color: hsl(var(--destructive))">')
       .replace(/\x1b\[33m/g, '<span style="color: hsl(var(--chart-4))">')
