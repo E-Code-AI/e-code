@@ -108,8 +108,7 @@ export class HealthRouter {
     return {
       cors: this.getCorsHealth(),
       authentication: {
-        bypassEnabled: process.env.ENABLE_DEV_AUTH_BYPASS === 'true' && 
-                      process.env.NODE_ENV !== 'production',
+        bypassEnabled: false, // Fortune 500 grade: All auth via Passport sessions only
         csrfProtection: true,
         sessionStore: 'PostgreSQL'
       },
