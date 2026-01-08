@@ -260,13 +260,16 @@ export class GitHubOAuthService {
         return null;
       }
       
+      // SECURITY POLICY: Tokens older than 30 days are denied for security.
+      // Users must re-authenticate to get a fresh token.
       if (user.githubTokenCreatedAt) {
         const tokenAge = Date.now() - new Date(user.githubTokenCreatedAt).getTime();
         const thirtyDaysMs = GitHubOAuthService.TOKEN_WARNING_AGE_DAYS * 24 * 60 * 60 * 1000;
         
         if (tokenAge > thirtyDaysMs) {
           const daysOld = Math.floor(tokenAge / (24 * 60 * 60 * 1000));
-          logger.warn(`[GitHubOAuthService] Token for user ${userId} is ${daysOld} days old (>30 days). Consider re-authenticating to ensure token validity.`);
+          logger.warn(`[GitHubOAuthService] Token for user ${userId} is ${daysOld} days old (>${GitHubOAuthService.TOKEN_WARNING_AGE_DAYS} days). Re-authentication required for security.`);
+          return null; // SECURITY: Deny usage of stale tokens
         }
       }
       
