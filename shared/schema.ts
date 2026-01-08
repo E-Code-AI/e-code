@@ -172,6 +172,9 @@ export const users = pgTable("users", {
   accountLockedUntil: timestamp("account_locked_until"), // ✅ DB uses account_locked_until
   twoFactorEnabled: boolean("two_factor_enabled").default(false).notNull(),
   twoFactorSecret: text("two_factor_secret"),
+  twoFactorBackupCodes: text("two_factor_backup_codes").array(),
+  twoFactorEmergencyCode: text("two_factor_emergency_code"),
+  twoFactorEmergencyExpiry: timestamp("two_factor_emergency_expiry"),
   lastLoginAt: timestamp("last_login_at"), // ✅ DB uses last_login_at
   lastLoginIp: text("last_login_ip"), // ✅ Added from DB
   firstName: varchar("first_name"),

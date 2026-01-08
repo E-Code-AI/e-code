@@ -130,6 +130,7 @@ router.post('/setup', ensureAuthenticated, async (req: Request, res: Response) =
     const userId = getUserId(req);
     const result = await real2FAService.setupTwoFactor(userId);
     res.json({
+      secret: result.secret,
       qrCodeUrl: result.qrCodeUrl,
       backupCodes: result.backupCodes
     });
@@ -190,12 +191,13 @@ router.post('/verify', ensureAuthenticated, async (req: Request, res: Response) 
 
 const challengeVerifySchema = z.object({
   challengeId: z.string().length(64, 'Invalid challenge ID'),
-  token: z.string().min(6, 'Token required')
+  token: z.string().min(6, 'Token required'),
+  type: z.enum(['totp', 'backup', 'emergency']).optional().default('totp')
 });
 
 router.post('/challenge/verify', async (req: Request, res: Response) => {
   try {
-    const { challengeId, token } = challengeVerifySchema.parse(req.body);
+    const { challengeId, token, type } = challengeVerifySchema.parse(req.body);
     
     const challenge = pendingChallenges.get(challengeId);
     if (!challenge) {
@@ -207,7 +209,12 @@ router.post('/challenge/verify', async (req: Request, res: Response) => {
       return res.status(429).json({ error: 'Too many failed attempts' });
     }
     
-    const result = await real2FAService.verifyTwoFactorToken(challenge.userId, token);
+    let result;
+    if (type === 'emergency') {
+      result = await real2FAService.verifyEmergencyToken(challenge.userId, token);
+    } else {
+      result = await real2FAService.verifyTwoFactorToken(challenge.userId, token);
+    }
     
     if (!result.verified) {
       challenge.attempts++;

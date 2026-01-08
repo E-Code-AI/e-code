@@ -9,6 +9,9 @@ import { createLogger } from '../utils/logger';
 import { storage } from '../storage';
 import { realEmailService } from './real-email-service';
 import * as crypto from 'crypto';
+import { db } from '../db';
+import { users } from '@shared/schema';
+import { eq } from 'drizzle-orm';
 
 const logger = createLogger('real-2fa-service');
 
@@ -26,6 +29,7 @@ export interface TwoFactorVerificationResult {
 export class Real2FAService {
   private tempSecrets: Map<number, {
     secret: string;
+    backupCodes: string[];
     timestamp: number;
     attempts: number;
   }> = new Map();
@@ -48,9 +52,13 @@ export class Real2FAService {
       length: 32
     });
 
+    // Generate backup codes
+    const backupCodes = this.generateBackupCodes(8);
+
     // Store temporarily until user confirms
     this.tempSecrets.set(userId, {
       secret: secret.base32,
+      backupCodes,
       timestamp: Date.now(),
       attempts: 0
     });
@@ -64,9 +72,6 @@ export class Real2FAService {
     });
 
     const qrCodeUrl = await QRCode.toDataURL(otpauthUrl);
-
-    // Generate backup codes
-    const backupCodes = this.generateBackupCodes(8);
 
     logger.info(`2FA setup initiated for user ${userId}`);
 
@@ -118,7 +123,7 @@ export class Real2FAService {
     await this.updateUser2FASettings(userId, {
       twoFactorEnabled: true,
       twoFactorSecret: encryptedSecret,
-      backupCodes: this.generateBackupCodes(8)
+      backupCodes: tempData.backupCodes
     });
 
     this.tempSecrets.delete(userId);
@@ -322,7 +327,6 @@ export class Real2FAService {
     }
   }
 
-  // Database operations (these would use actual storage methods)
   private async updateUser2FASettings(
     userId: number, 
     settings: {
@@ -331,39 +335,82 @@ export class Real2FAService {
       backupCodes: string[];
     }
   ) {
-    // In production, this would update the user record in the database
-    // For now, we'll simulate it
+    await db.update(users)
+      .set({
+        twoFactorEnabled: settings.twoFactorEnabled,
+        twoFactorSecret: settings.twoFactorSecret,
+        twoFactorBackupCodes: settings.backupCodes,
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, userId));
+    
     logger.info(`Updated 2FA settings for user ${userId}`);
   }
 
   private async getUser2FASettings(userId: number): Promise<any> {
-    // In production, this would fetch from database
     const user = await storage.getUser(userId);
     return user;
   }
 
   private async updateUserBackupCodes(userId: number, codes: string[]) {
-    // Update backup codes in database
+    await db.update(users)
+      .set({
+        twoFactorBackupCodes: codes,
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, userId));
+    
     logger.info(`Updated backup codes for user ${userId}`);
   }
 
   private async getUserBackupCodes(userId: number): Promise<string[]> {
-    // Fetch backup codes from database
-    return [];
+    const [user] = await db.select({ backupCodes: users.twoFactorBackupCodes })
+      .from(users)
+      .where(eq(users.id, userId));
+    
+    return user?.backupCodes || [];
   }
 
   private async storeEmergencyCode(userId: number, code: string) {
-    // Store with 10-minute expiration
-    // In production, use Redis or similar
+    const expiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    
+    await db.update(users)
+      .set({
+        twoFactorEmergencyCode: code,
+        twoFactorEmergencyExpiry: expiry,
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, userId));
   }
 
   private async getEmergencyCode(userId: number): Promise<string | null> {
-    // Retrieve emergency code
-    return null;
+    const [user] = await db.select({
+      code: users.twoFactorEmergencyCode,
+      expiry: users.twoFactorEmergencyExpiry
+    })
+      .from(users)
+      .where(eq(users.id, userId));
+    
+    if (!user?.code || !user?.expiry) {
+      return null;
+    }
+    
+    if (new Date() > user.expiry) {
+      await this.clearEmergencyCode(userId);
+      return null;
+    }
+    
+    return user.code;
   }
 
   private async clearEmergencyCode(userId: number) {
-    // Clear emergency code
+    await db.update(users)
+      .set({
+        twoFactorEmergencyCode: null,
+        twoFactorEmergencyExpiry: null,
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, userId));
   }
 
   private async logFailedAttempt(userId: number) {
