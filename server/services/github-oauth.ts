@@ -314,17 +314,21 @@ export class GitHubOAuthService {
   }
 
   // Get Git credentials for push/pull operations (uses cached username, no API call)
+  // SECURITY: Uses getUserToken() to enforce 30-day token expiration policy
   async getGitCredentials(userId: number): Promise<{ username: string; password: string } | null> {
     try {
       const user = await storage.getUser(String(userId));
-      if (!user?.githubTokenCiphertext || !user?.githubTokenIv || !user?.githubUsername) {
+      if (!user?.githubUsername) {
         return null;
       }
       
-      const { decryptToken } = await import('./credential-encryption');
-      const token = decryptToken(user.githubTokenCiphertext, user.githubTokenIv);
+      // SECURITY: Reuse getUserToken() to enforce expiration policy
+      const token = await this.getUserToken(userId);
+      if (!token) {
+        logger.warn(`[GitHubOAuthService] Git credentials denied for user ${userId} - token expired or missing`);
+        return null;
+      }
       
-      // Use cached username instead of making GitHub API call
       return {
         username: user.githubUsername,
         password: token
