@@ -174,6 +174,47 @@ export class Real2FAService {
     return { verified: true };
   }
 
+  async verifyTOTPOnly(
+    userId: number, 
+    token: string
+  ): Promise<TwoFactorVerificationResult> {
+    const user = await this.getUser2FASettings(userId);
+    if (!user || !user.twoFactorEnabled || !user.twoFactorSecret) {
+      return {
+        verified: false,
+        error: '2FA not enabled for this user'
+      };
+    }
+
+    const secret = this.decryptSecret(user.twoFactorSecret);
+
+    // Verify TOTP token only - reject non-TOTP format
+    if (!/^\d{6}$/.test(token)) {
+      return {
+        verified: false,
+        error: 'Invalid TOTP format. Must be 6 digits.'
+      };
+    }
+
+    const verified = speakeasy.totp.verify({
+      secret,
+      encoding: 'base32',
+      token,
+      window: 2
+    });
+
+    if (!verified) {
+      await this.logFailedAttempt(userId);
+      return {
+        verified: false,
+        error: 'Invalid verification code'
+      };
+    }
+
+    logger.info(`TOTP verification successful for user ${userId}`);
+    return { verified: true };
+  }
+
   async generateEmergencyToken(userId: number): Promise<string> {
     const user = await storage.getUser(userId);
     if (!user) {
@@ -262,7 +303,7 @@ export class Real2FAService {
     return codes;
   }
 
-  private async verifyBackupCode(
+  async verifyBackupCode(
     userId: number, 
     code: string
   ): Promise<TwoFactorVerificationResult> {
