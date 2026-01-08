@@ -116,11 +116,11 @@ export function AdvancedCollaboration() {
     lastActivity: new Date().toISOString()
   };
 
-  // Simulate real-time updates
+  // Simulate real-time updates using actual collaborators
   useEffect(() => {
     const interval = setInterval(() => {
-      // Add random chat message
-      if (Math.random() < 0.1) {
+      // Add random chat message using actual collaborator usernames
+      if (Math.random() < 0.1 && collaborators.length > 0) {
         const messages = [
           'Working on the login component',
           'Fixed the CSS bug in the header',
@@ -128,11 +128,11 @@ export function AdvancedCollaboration() {
           'Let\'s discuss the API changes',
           'Great work on the UI updates!'
         ];
-        const usernames = ['alice_dev', 'bob_designer', 'carol_pm'];
+        const randomCollaborator = collaborators[Math.floor(Math.random() * collaborators.length)];
         
         setChatMessages(prev => [...prev, {
           id: `msg-${Date.now()}`,
-          username: usernames[Math.floor(Math.random() * usernames.length)],
+          username: randomCollaborator.username,
           message: messages[Math.floor(Math.random() * messages.length)],
           timestamp: new Date().toISOString()
         }].slice(-10)); // Keep only last 10 messages
@@ -140,7 +140,7 @@ export function AdvancedCollaboration() {
     }, 5000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [collaborators]);
 
   const handleJoinVoice = () => {
     setVoiceConnected(!voiceConnected);

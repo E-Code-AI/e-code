@@ -82,6 +82,16 @@ export function ObjectStorage() {
 
   const { data: filesData, isLoading: filesLoading } = useQuery<{ files: StorageFile[] }>({
     queryKey: ['/api/storage/files', selectedBucket, currentPath],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (selectedBucket) params.set('bucketId', selectedBucket);
+      if (currentPath) params.set('path', currentPath);
+      const res = await fetch(`/api/storage/files?${params.toString()}`, {
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('Failed to fetch files');
+      return res.json();
+    },
   });
 
   const files = filesData?.files || [];
