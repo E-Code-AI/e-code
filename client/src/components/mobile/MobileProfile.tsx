@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 
 interface ProfileStat {
   label: string;
@@ -27,17 +28,19 @@ interface SettingItem {
 export function MobileProfile() {
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
+  const { user: authUser } = useAuth();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   
+  // Use authenticated user data with fallbacks
   const user = {
-    name: "John Developer",
-    username: "@johnddev",
-    email: "john@example.com",
-    avatar: "/api/avatar/John%20Developer/100",
+    name: authUser?.username || authUser?.email?.split('@')[0] || 'User',
+    username: authUser?.username ? `@${authUser.username}` : '',
+    email: authUser?.email || '',
+    avatar: authUser?.avatarUrl || `/api/avatar/${encodeURIComponent(authUser?.username || 'User')}/100`,
     coverImage: null,
     bio: "Full-stack developer passionate about creating amazing web experiences",
-    joinedDate: "January 2024",
+    joinedDate: authUser?.createdAt ? new Date(authUser.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : '',
   };
 
   const stats: ProfileStat[] = [

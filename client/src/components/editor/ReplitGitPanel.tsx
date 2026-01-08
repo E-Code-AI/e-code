@@ -12,6 +12,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/use-auth';
 import { LazyMotionDiv } from '@/lib/motion';
 import {
   GitBranch,
@@ -198,6 +199,7 @@ function NoChangesEmptyState() {
 
 export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: ReplitGitPanelProps & { mode?: 'desktop' | 'tablet' | 'mobile' }) {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [viewMode, setViewMode] = useState<ViewMode>('main');
   const [showBranchDropdown, setShowBranchDropdown] = useState(false);
   const [branchSearch, setBranchSearch] = useState('');
@@ -586,12 +588,12 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-[15px] font-medium leading-tight text-foreground">developer</span>
+                      <span className="text-[15px] font-medium leading-tight text-foreground">{user?.username || 'User'}</span>
                       <a href="#" className="text-[13px] text-primary flex items-center gap-1">
                         GitHub Settings <ExternalLink className="w-3 h-3" />
                       </a>
                     </div>
-                    <span className="text-[13px] text-muted-foreground">developer@example.com</span>
+                    <span className="text-[13px] text-muted-foreground">{user?.email || ''}</span>
                   </div>
                   <div className="w-[18px] h-[18px] bg-primary rounded-full flex items-center justify-center">
                     <Check className="w-3 h-3 text-primary-foreground" />
