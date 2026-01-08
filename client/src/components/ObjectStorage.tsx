@@ -76,103 +76,30 @@ export function ObjectStorage() {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  // Mock data for cross-app object storage
-  const buckets: StorageBucket[] = [
-    {
-      id: 'repl-default-bucket',
-      name: 'Default Bucket',
-      region: 'us-east-1',
-      size: 1024 * 1024 * 256, // 256MB
-      fileCount: 42,
-      isPublic: false,
-      createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
-    },
-    {
-      id: 'public-assets-bucket',
-      name: 'Public Assets',
-      region: 'us-west-2',
-      size: 1024 * 1024 * 512, // 512MB
-      fileCount: 128,
-      isPublic: true,
-      createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString()
-    },
-    {
-      id: 'backup-bucket',
-      name: 'Project Backups',
-      region: 'eu-west-1',
-      size: 1024 * 1024 * 1024 * 2, // 2GB
-      fileCount: 256,
-      isPublic: false,
-      createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
-    }
-  ];
+  const { data: buckets = [], isLoading: bucketsLoading } = useQuery<StorageBucket[]>({
+    queryKey: ['/api/storage/buckets'],
+  });
 
-  const files: StorageFile[] = [
-    {
-      id: 'file-1',
-      name: 'profile-images',
-      type: 'folder',
-      size: 0,
-      url: '',
-      isPublic: true,
-      createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-      updatedAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-      owner: 'system',
-      accessCount: 234,
-      path: '/profile-images'
-    },
-    {
-      id: 'file-2',
-      name: 'app-logo.png',
-      type: 'file',
-      size: 1024 * 45, // 45KB
-      mimeType: 'image/png',
-      url: 'https://storage.googleapis.com/bucket/app-logo.png',
-      isPublic: true,
-      createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-      updatedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-      owner: 'alice_dev',
-      accessCount: 1456,
-      path: '/app-logo.png'
-    },
-    {
-      id: 'file-3',
-      name: 'user-data-backup.json',
-      type: 'file',
-      size: 1024 * 1024 * 2.5, // 2.5MB
-      mimeType: 'application/json',
-      url: 'https://storage.googleapis.com/bucket/user-data-backup.json',
-      isPublic: false,
-      createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-      updatedAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-      owner: 'system',
-      accessCount: 12,
-      path: '/user-data-backup.json'
-    },
-    {
-      id: 'file-4',
-      name: 'demo-video.mp4',
-      type: 'file',
-      size: 1024 * 1024 * 15, // 15MB
-      mimeType: 'video/mp4',
-      url: 'https://storage.googleapis.com/bucket/demo-video.mp4',
-      isPublic: true,
-      createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-      updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-      owner: 'bob_designer',
-      accessCount: 567,
-      path: '/demo-video.mp4'
-    }
-  ];
+  const { data: filesData, isLoading: filesLoading } = useQuery<{ files: StorageFile[] }>({
+    queryKey: ['/api/storage/files', selectedBucket, currentPath],
+  });
 
-  const storageStats: StorageStats = {
-    totalStorage: 1024 * 1024 * 1024 * 10, // 10GB
-    usedStorage: 1024 * 1024 * 1024 * 2.8, // 2.8GB
-    totalFiles: files.length,
-    publicFiles: files.filter(f => f.isPublic).length,
-    privateFiles: files.filter(f => !f.isPublic).length,
-    totalBandwidth: 1024 * 1024 * 1024 * 5.2 // 5.2GB this month
+  const files = filesData?.files || [];
+
+  const { data: storageStatsData, isLoading: statsLoading } = useQuery<StorageStats>({
+    queryKey: ['/api/storage/stats'],
+  });
+
+  const storageStats: StorageStats = storageStatsData || {
+    totalStorage: 0,
+    usedStorage: 0,
+    totalFiles: 0,
+    publicFiles: 0,
+    privateFiles: 0,
+    totalBandwidth: 0,
   };
+
+  const isLoading = bucketsLoading || filesLoading || statsLoading;
 
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return '0 B';
