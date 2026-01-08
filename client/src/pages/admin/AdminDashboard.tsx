@@ -36,6 +36,14 @@ interface ProviderHealth {
   recommendation?: string;
 }
 
+interface ActivityEvent {
+  id: string;
+  type: 'user_registration' | 'project_created' | 'support_ticket';
+  title: string;
+  description: string;
+  timestamp: string;
+}
+
 export function AdminDashboard() {
   const { data: stats, isLoading } = useQuery<DashboardStats>({
     queryKey: ['/api/admin/dashboard/stats']
@@ -44,6 +52,11 @@ export function AdminDashboard() {
   const { data: providerHealth, isLoading: isLoadingHealth } = useQuery<{ providers: ProviderHealth[] }>({
     queryKey: ['/api/health/providers'],
     refetchInterval: 60000
+  });
+
+  const { data: activityData, isLoading: isLoadingActivity } = useQuery<{ events: ActivityEvent[] }>({
+    queryKey: ['/api/admin/dashboard/activity'],
+    refetchInterval: 30000
   });
 
   const statCards = [
@@ -198,33 +211,27 @@ export function AdminDashboard() {
           <Card className="bg-zinc-800 border-zinc-700">
             <CardContent className="p-3 sm:p-4 lg:p-6">
               <div className="space-y-4">
-                <div className="flex items-center space-x-4">
-                  <div className="flex-shrink-0">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-white">New user registration</p>
-                    <p className="text-xs text-zinc-500">user@example.com joined 5 minutes ago</p>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-4">
-                  <div className="flex-shrink-0">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-white">New project created</p>
-                    <p className="text-xs text-zinc-500">AI Chat App by john_doe</p>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-4">
-                  <div className="flex-shrink-0">
-                    <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-white">Support ticket opened</p>
-                    <p className="text-xs text-zinc-500">Billing inquiry - Priority: High</p>
-                  </div>
-                </div>
+                {isLoadingActivity ? (
+                  <p className="text-sm text-zinc-500">Loading activity...</p>
+                ) : activityData?.events && activityData.events.length > 0 ? (
+                  activityData.events.slice(0, 5).map((event) => (
+                    <div key={event.id} className="flex items-center space-x-4">
+                      <div className="flex-shrink-0">
+                        <div className={`w-2 h-2 rounded-full ${
+                          event.type === 'user_registration' ? 'bg-green-500' :
+                          event.type === 'project_created' ? 'bg-blue-500' :
+                          'bg-orange-500'
+                        }`}></div>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-white">{event.title}</p>
+                        <p className="text-xs text-zinc-500">{event.description}</p>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-zinc-500">No recent activity</p>
+                )}
               </div>
             </CardContent>
           </Card>
