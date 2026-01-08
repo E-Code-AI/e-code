@@ -34,7 +34,8 @@ import {
   Globe,
   Github,
   Twitter,
-  ExternalLink
+  ExternalLink,
+  Clock
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
@@ -133,6 +134,23 @@ export function CommunityFeatures() {
 
   const { data: statsData } = useQuery({
     queryKey: ['/api/community/stats'],
+    staleTime: 60000
+  });
+
+  // Fetch leaderboard data
+  interface LeaderboardEntry {
+    id: string;
+    username: string;
+    displayName: string;
+    avatarUrl?: string;
+    score: number;
+    rank: number;
+    badges: string[];
+    streakDays: number;
+  }
+
+  const { data: leaderboardData, isLoading: leaderboardLoading } = useQuery<LeaderboardEntry[]>({
+    queryKey: ['/api/community/leaderboard'],
     staleTime: 60000
   });
 
@@ -646,37 +664,39 @@ export function CommunityFeatures() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {[
-                    { rank: 1, username: 'alice_dev', reputation: 2840, badge: 'Expert' },
-                    { rank: 2, username: 'bob_designer', reputation: 2340, badge: 'Mentor' },
-                    { rank: 3, username: 'carol_pm', reputation: 1890, badge: 'Helper' },
-                    { rank: 4, username: 'dave_ops', reputation: 1650, badge: 'Contributor' },
-                    { rank: 5, username: 'eve_mobile', reputation: 1420, badge: 'Rising Star' }
-                  ].map((user) => (
-                    <div key={user.username} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        <div className={`flex items-center justify-center w-8 h-8 rounded-full text-white font-bold ${
-                          user.rank === 1 ? 'bg-yellow-500' :
-                          user.rank === 2 ? 'bg-gray-400' :
-                          user.rank === 3 ? 'bg-orange-600' : 'bg-gray-300'
-                        }`}>
-                          {user.rank}
+                  {leaderboardLoading ? (
+                    <div className="text-center text-muted-foreground py-4">Loading leaderboard...</div>
+                  ) : leaderboardData && leaderboardData.length > 0 ? (
+                    leaderboardData.slice(0, 5).map((user) => (
+                      <div key={user.id} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div className="flex items-center space-x-3">
+                          <div className={`flex items-center justify-center w-8 h-8 rounded-full text-white font-bold ${
+                            user.rank === 1 ? 'bg-yellow-500' :
+                            user.rank === 2 ? 'bg-gray-400' :
+                            user.rank === 3 ? 'bg-orange-600' : 'bg-gray-300'
+                          }`}>
+                            {user.rank}
+                          </div>
+                          <Avatar>
+                            <AvatarImage src={user.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}`} />
+                            <AvatarFallback>{user.username.slice(0, 2).toUpperCase()}</AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <div className="font-medium">{user.displayName || user.username}</div>
+                            {user.badges && user.badges[0] && (
+                              <Badge variant="outline" className="text-xs">{user.badges[0]}</Badge>
+                            )}
+                          </div>
                         </div>
-                        <Avatar>
-                          <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}`} />
-                          <AvatarFallback>{user.username.slice(0, 2).toUpperCase()}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <div className="font-medium">{user.username}</div>
-                          <Badge variant="outline" className="text-xs">{user.badge}</Badge>
+                        <div className="text-right">
+                          <div className="font-medium">{user.score}</div>
+                          <div className="text-xs text-muted-foreground">score</div>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <div className="font-medium">{user.reputation}</div>
-                        <div className="text-xs text-muted-foreground">reputation</div>
-                      </div>
-                    </div>
-                  ))}
+                    ))
+                  ) : (
+                    <div className="text-center text-muted-foreground py-4">No leaderboard data yet</div>
+                  )}
                 </div>
               </CardContent>
             </Card>
