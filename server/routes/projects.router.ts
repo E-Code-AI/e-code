@@ -537,10 +537,7 @@ export class ProjectsRouter {
           });
         }
         
-        // Restore session user (session-aware auth)
-        this.restoreSessionUser(req);
-        
-        // Check access for private projects
+        // Check access for private projects (req.user is set by Passport session middleware)
         if (project.visibility === 'private') {
           // Private projects require authentication
           if (!req.user) {
