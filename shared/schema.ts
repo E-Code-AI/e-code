@@ -557,6 +557,22 @@ export const usageAlerts = pgTable("usage_alerts", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// API-1 SECURITY FIX: Stripe Webhook Idempotency Table
+// Tracks processed Stripe webhook events to prevent duplicate processing
+export const stripeWebhookEvents = pgTable("stripe_webhook_events", {
+  id: serial("id").primaryKey(),
+  stripeEventId: varchar("stripe_event_id", { length: 255 }).notNull().unique(), // Stripe event ID (evt_xxx)
+  eventType: varchar("event_type", { length: 100 }).notNull(), // customer.subscription.updated, etc.
+  processedAt: timestamp("processed_at").notNull().defaultNow(),
+  payload: jsonb("payload").$type<Record<string, any>>(), // Optional: store event payload for debugging
+}, (table) => [
+  index("idx_stripe_webhook_events_event_id").on(table.stripeEventId),
+  index("idx_stripe_webhook_events_processed_at").on(table.processedAt),
+]);
+
+export type StripeWebhookEvent = typeof stripeWebhookEvents.$inferSelect;
+export type InsertStripeWebhookEvent = typeof stripeWebhookEvents.$inferInsert;
+
 // Code Review Tables (moved to line 606)
 
 // Mentorship Tables
