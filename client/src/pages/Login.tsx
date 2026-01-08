@@ -17,7 +17,8 @@ import {
 import { Link } from 'wouter';
 import { getProjectUrl } from '@/lib/utils';
 import { ECodeLogo } from '@/components/ECodeLogo';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, queryClient, resetCSRFToken } from '@/lib/queryClient';
+import { TwoFactorVerify } from '@/components/security/TwoFactorVerify';
 
 // Import stock images
 import modernSoftwareImg from '@assets/stock_images/modern_software_deve_ff7f5fd4.jpg';
@@ -38,6 +39,11 @@ export default function Login() {
     email: '',
     password: ''
   });
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [twoFactorChallenge, setTwoFactorChallenge] = useState<{
+    challengeId: string;
+    email: string;
+  } | null>(null);
 
   // Function to create project and navigate
   const createProjectAndNavigate = async (description: string) => {
@@ -109,10 +115,66 @@ export default function Login() {
       return;
     }
 
+    setIsLoggingIn(true);
     try {
-      await loginMutation.mutateAsync(formData);
-    } catch (error) {
+      const response = await apiRequest<any>('POST', '/api/login', formData);
+      
+      if (response.requires2FA && response.challengeId) {
+        setTwoFactorChallenge({
+          challengeId: response.challengeId,
+          email: response.email || formData.email
+        });
+        setIsLoggingIn(false);
+        return;
+      }
+      
+      resetCSRFToken();
+      queryClient.setQueryData(['/api/me'], response.user || response);
+      await queryClient.invalidateQueries();
+      
+      const displayName = response.user?.displayName || response.user?.username || 'User';
+      toast({
+        title: 'Login successful',
+        description: `Welcome back, ${displayName}!`
+      });
+    } catch (error: any) {
       console.error('Login error:', error);
+      toast({
+        title: 'Login failed',
+        description: error.message || 'Invalid credentials',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+
+  const handle2FASuccess = async (pendingSessionToken: string) => {
+    setIsLoggingIn(true);
+    try {
+      const response = await apiRequest<any>('POST', '/api/login/2fa-complete', { pendingSessionToken });
+      
+      resetCSRFToken();
+      queryClient.setQueryData(['/api/me'], response.user || response);
+      await queryClient.invalidateQueries();
+      
+      setTwoFactorChallenge(null);
+      
+      const displayName = response.user?.displayName || response.user?.username || 'User';
+      toast({
+        title: 'Login successful',
+        description: `Welcome back, ${displayName}!`
+      });
+    } catch (error: any) {
+      console.error('2FA complete error:', error);
+      toast({
+        title: 'Login failed',
+        description: error.message || 'Session expired. Please try again.',
+        variant: 'destructive'
+      });
+      setTwoFactorChallenge(null);
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
@@ -142,6 +204,26 @@ export default function Login() {
       });
     }
   };
+
+  if (twoFactorChallenge) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-gray-50/50 to-background dark:from-background dark:via-gray-900/50 dark:to-background flex items-center justify-center p-4 sm:p-6 md:p-8">
+        <LazyMotionDiv
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3 }}
+          className="w-full max-w-md"
+        >
+          <TwoFactorVerify
+            challengeId={twoFactorChallenge.challengeId}
+            email={twoFactorChallenge.email}
+            onSuccess={handle2FASuccess}
+            onCancel={() => setTwoFactorChallenge(null)}
+          />
+        </LazyMotionDiv>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-gray-50/50 to-background dark:from-background dark:via-gray-900/50 dark:to-background flex">
@@ -195,7 +277,7 @@ export default function Login() {
                     className="pl-10 h-12 sm:h-11 text-base sm:text-sm"
                     value={formData.email}
                     onChange={handleInputChange}
-                    disabled={loginMutation.isPending}
+                    disabled={isLoggingIn}
                     required
                     data-testid="input-email"
                   />
@@ -221,7 +303,7 @@ export default function Login() {
                     className="pl-10 pr-12 h-12 sm:h-11 text-base sm:text-sm"
                     value={formData.password}
                     onChange={handleInputChange}
-                    disabled={loginMutation.isPending}
+                    disabled={isLoggingIn}
                     required
                     data-testid="input-password"
                   />
@@ -266,10 +348,10 @@ export default function Login() {
               onMouseLeave={(e) => {
                 e.currentTarget.style.background = 'linear-gradient(135deg, #F26207 0%, #F99D25 100%)';
               }}
-              disabled={loginMutation.isPending}
+              disabled={isLoggingIn}
               data-testid="button-login"
             >
-              {loginMutation.isPending ? (
+              {isLoggingIn ? (
                 <>
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                   Signing in...

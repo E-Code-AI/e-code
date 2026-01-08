@@ -30,6 +30,11 @@ const pendingChallenges = new Map<string, {
   attempts: number;
 }>();
 
+const verifiedChallenges = new Map<string, {
+  userId: number;
+  timestamp: number;
+}>();
+
 setInterval(() => {
   const now = Date.now();
   const expireTime = 5 * 60 * 1000;
@@ -38,7 +43,32 @@ setInterval(() => {
       pendingChallenges.delete(id);
     }
   }
+  for (const [token, verified] of verifiedChallenges) {
+    if (now - verified.timestamp > 60 * 1000) {
+      verifiedChallenges.delete(token);
+    }
+  }
 }, 60 * 1000);
+
+function createSignedProof(userId: number): string {
+  const token = crypto.randomBytes(32).toString('hex');
+  verifiedChallenges.set(token, {
+    userId,
+    timestamp: Date.now()
+  });
+  return token;
+}
+
+export function consumeVerifiedChallenge(token: string): number | null {
+  const verified = verifiedChallenges.get(token);
+  if (!verified) return null;
+  if (Date.now() - verified.timestamp > 60 * 1000) {
+    verifiedChallenges.delete(token);
+    return null;
+  }
+  verifiedChallenges.delete(token);
+  return verified.userId;
+}
 
 const ensureAuthenticated = (req: Request, res: Response, next: NextFunction) => {
   if (!req.isAuthenticated || !req.isAuthenticated()) {
@@ -189,9 +219,11 @@ router.post('/challenge/verify', async (req: Request, res: Response) => {
     
     pendingChallenges.delete(challengeId);
     
+    const pendingSessionToken = createSignedProof(challenge.userId);
+    
     res.json({ 
       success: true,
-      userId: challenge.userId
+      pendingSessionToken
     });
   } catch (error) {
     if (error instanceof z.ZodError) {

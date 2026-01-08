@@ -17,6 +17,7 @@ import { users } from "@shared/schema";
 import { sessionManager } from "../auth/session-manager";
 import { createLogger } from "../utils/logger";
 import { tierRateLimiters } from "../middleware/tier-rate-limiter";
+import { createTwoFactorChallenge, consumeVerifiedChallenge } from "./2fa.router";
 
 const logger = createLogger('auth-router');
 
@@ -293,6 +294,18 @@ export class AuthRouter {
           });
         }
         
+        // Check if 2FA is enabled - require verification before completing login
+        if (user.twoFactorEnabled && user.twoFactorSecret) {
+          const challengeId = createTwoFactorChallenge(user.id);
+          logger.info(`2FA challenge created for user ${user.id}`);
+          return res.status(200).json({
+            requires2FA: true,
+            challengeId,
+            email: user.email,
+            message: "Two-factor authentication required"
+          });
+        }
+        
         // SECURITY: Regenerate session BEFORE login to prevent session fixation
         req.session.regenerate((regenErr: any) => {
           if (regenErr) {
@@ -354,6 +367,75 @@ export class AuthRouter {
           });
         });
       });
+    });
+
+    // Complete login after 2FA verification
+    // SECURITY: Uses signed proof token from challenge/verify to prevent session fixation
+    this.router.post("/api/login/2fa-complete", csrfProtection, async (req: Request, res: Response) => {
+      try {
+        const { pendingSessionToken } = req.body;
+        
+        if (!pendingSessionToken || typeof pendingSessionToken !== 'string') {
+          return res.status(400).json({
+            message: "Invalid session token",
+            code: "INVALID_TOKEN"
+          });
+        }
+        
+        const userId = consumeVerifiedChallenge(pendingSessionToken);
+        if (!userId) {
+          return res.status(401).json({
+            message: "Session token expired or invalid",
+            code: "TOKEN_EXPIRED"
+          });
+        }
+        
+        const user = await this.storage.getUser(userId);
+        if (!user) {
+          return res.status(401).json({
+            message: "User not found",
+            code: "USER_NOT_FOUND"
+          });
+        }
+        
+        req.session.regenerate((regenErr: any) => {
+          if (regenErr) {
+            logger.error('Session regeneration failed:', regenErr.message);
+            return res.status(500).json({ 
+              message: "Session security error",
+              code: "SESSION_ERROR"
+            });
+          }
+          
+          req.login(user, (loginErr: any) => {
+            if (loginErr) {
+              logger.error('Session creation failed:', loginErr.message);
+              return res.status(500).json({ 
+                message: "Session creation failed",
+                code: "SESSION_ERROR"
+              });
+            }
+            
+            req.session.save((saveErr: any) => {
+              if (saveErr) {
+                logger.warn('Session save warning:', saveErr.message);
+              }
+              
+              logger.info(`User ${user.id} completed 2FA login`);
+              res.json({ 
+                message: "Login successful",
+                user: this.sanitizeUser(user)
+              });
+            });
+          });
+        });
+      } catch (error) {
+        logger.error('2FA complete error:', sanitizeError(error));
+        res.status(500).json({
+          message: "Login failed",
+          code: "LOGIN_ERROR"
+        });
+      }
     });
 
     // ===== COMPATIBILITY LAYER: /api/auth/* aliases =====
@@ -553,6 +635,18 @@ export class AuthRouter {
             error: info?.message || "Invalid credentials",
             message: info?.message || "Invalid credentials",
             code: "INVALID_CREDENTIALS"
+          });
+        }
+        
+        // Check if 2FA is enabled - require verification before completing login
+        if (user.twoFactorEnabled && user.twoFactorSecret) {
+          const challengeId = createTwoFactorChallenge(user.id);
+          logger.info(`2FA challenge created for user ${user.id}`);
+          return res.status(200).json({
+            requires2FA: true,
+            challengeId,
+            email: user.email,
+            message: "Two-factor authentication required"
           });
         }
         
