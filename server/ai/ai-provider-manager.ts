@@ -922,6 +922,12 @@ export class AIProviderManager {
    * Moonshot AI (Kimi-K2) streaming implementation with robust error handling
    * ✅ ROBUST PARSING: Handle stream errors and JSON parsing failures
    * ✅ 40-YEAR FIX (Nov 21, 2025): Detect error payloads BEFORE iterating
+   * 
+   * KIMI K2 CONFIGURATION (per official docs):
+   * 1. Temperature = 1.0 - Required for optimal thinking quality
+   * 2. Streaming = true - Prevents timeouts, delivers reasoning_content before final answer
+   * 3. max_tokens >= 16000 - Thinking is token-intensive
+   * 4. Preserve reasoning_content - Automatic server-side handling
    */
   /**
    * ✅ PROMPT CACHING: Moonshot AI system prompt caching for cost optimization
@@ -932,6 +938,17 @@ export class AIProviderManager {
     const startTime = Date.now();
     let tokensGenerated = 0;
     let success = false;
+    
+    // ✅ KIMI K2 OPTIMIZATION: Detect thinking models for special configuration
+    const isThinkingModel = modelId.includes('thinking') || modelId.includes('kimi-k2');
+    
+    // ✅ KIMI REQUIREMENT 1: Temperature = 1.0 for thinking models
+    const temperature = isThinkingModel ? 1.0 : (options?.temperature ?? 0.7);
+    
+    // ✅ KIMI REQUIREMENT 4: max_tokens >= 16000 for thinking models
+    const maxTokens = isThinkingModel 
+      ? Math.max(options?.max_tokens || 16384, 16384)
+      : (options?.max_tokens || 4000);
     
     // ✅ PROMPT CACHING: Cache system prompt for Moonshot
     const systemPrompt = options?.system || messages.find(m => m.role === 'system')?.content;
@@ -947,13 +964,16 @@ export class AIProviderManager {
       ];
     }
     
+    logger.info(`[Moonshot Provider] Using model: ${modelId}, thinking: ${isThinkingModel}, temp: ${temperature}, maxTokens: ${maxTokens}`);
+    
     try {
+      // ✅ KIMI REQUIREMENT 3: Enable Streaming (stream = true)
       const stream = await this.moonshotClient.chat.completions.create({
         model: modelId,
         messages: moonshotMessages,
         stream: true,
-        max_tokens: options?.max_tokens || 4000,
-        temperature: options?.temperature || 0.7,
+        max_tokens: maxTokens,
+        temperature,
       }) as unknown as AsyncIterable<any>;
       
       // ✅ CRITICAL FIX (Nov 21, 2025): Check if response is an error object instead of stream
@@ -968,6 +988,7 @@ export class AIProviderManager {
       }
       
       let buffer = '';
+      let reasoningBuffer = '';
       let chunkCount = 0;
       for await (const chunk of stream) {
         chunkCount++;
@@ -977,7 +998,18 @@ export class AIProviderManager {
             throw new Error(`Moonshot stream error: ${chunk.error.message || JSON.stringify(chunk.error)}`);
           }
           
-          const content = chunk.choices?.[0]?.delta?.content;
+          const delta = chunk.choices?.[0]?.delta as any;
+          
+          // ✅ KIMI REQUIREMENT 2: Handle reasoning_content for thinking models
+          // reasoning_content appears in streaming before the final answer
+          if (delta?.reasoning_content) {
+            reasoningBuffer += delta.reasoning_content;
+            tokensGenerated += Math.ceil(delta.reasoning_content.length / 4);
+            // Yield thinking content with special marker for client handling
+            yield `<thinking>${delta.reasoning_content}</thinking>`;
+          }
+          
+          const content = delta?.content;
           if (content) {
             buffer += content;
             tokensGenerated += Math.ceil(content.length / 4);
@@ -990,12 +1022,12 @@ export class AIProviderManager {
       }
       
       // ✅ ENHANCED ERROR: Log chunk count for debugging
-      if (!buffer) {
+      if (!buffer && !reasoningBuffer) {
         throw new Error(`Moonshot stream produced no content (received ${chunkCount} chunks)`);
       }
       
       success = true;
-      logger.info(`Moonshot stream completed successfully: ${buffer.length} chars from ${chunkCount} chunks`);
+      logger.info(`Moonshot stream completed successfully: ${buffer.length} chars content, ${reasoningBuffer.length} chars reasoning from ${chunkCount} chunks`);
     } catch (error: any) {
       // ✅ ENHANCED LOGGING: Include status code, error details for diagnostics
       logger.error('Moonshot stream error:', {
