@@ -13,35 +13,43 @@
 export type { UserId } from './schema';
 export { normalizeUserId, isValidUserId } from './schema';
 
-// AI Models enum values (for mobile model selector) - UPDATED January 2025
-// Source: Official provider documentation verified January 2025
+// AI Models enum values (for mobile model selector) - UPDATED JANUARY 2026
+// Source: Official provider documentation verified January 2026
 export const AI_MODELS = [
-  // OpenAI Models (Dec 2025)
+  // OpenAI Models (Jan 2026)
   'gpt-5.2',
   'gpt-5.2-codex',
   'gpt-5.1',
   'gpt-5',
+  'gpt-5-mini',
+  'gpt-5-nano',
+  'gpt-4.1',
+  'gpt-4.1-mini',
+  'gpt-4.1-nano',
   'gpt-4o',
   'gpt-4o-mini', 
   'o3',
   'o4-mini',
-  // Anthropic Models (Nov 2025)
-  'claude-opus-4-5-20251124',
+  // Anthropic Models (Jan 2026)
+  'claude-opus-4-5-20251101',
+  'claude-opus-4-1-20250805',
   'claude-sonnet-4-5-20250929',
-  'claude-haiku-4-5-20251015',
-  // Google Gemini Models (Nov 2025) - Gemini 1.5 RETIRED April 2025
+  'claude-sonnet-4-20250514',
+  'claude-haiku-4-5',
+  // Google Gemini Models (Jan 2026)
   'gemini-2.5-pro',
   'gemini-2.5-flash',
   'gemini-2.0-flash',
-  // xAI Models (Jan 2025) - grok-beta/grok-2 DEPRECATED
-  'grok-4-1-fast',
-  'grok-4-fast',
+  // xAI Models (Jan 2026)
+  'grok-4-1-fast-reasoning',
+  'grok-4-1-fast-non-reasoning',
   'grok-4',
-  // Moonshot/Kimi Models (Sept 2025) - K2 = thinking models with temp=1.0 requirement
-  'kimi-k2-0905-preview',
+  'grok-3',
+  // Moonshot/Kimi Models (Jan 2026) - K2 = thinking models with temp=1.0 requirement
   'kimi-k2-thinking',
-  'moonshot-v1-32k',
-  'moonshot-v1-128k',
+  'kimi-k2-thinking-turbo',
+  'kimi-k2-turbo-preview',
+  'kimi-k2-0905-preview',
 ] as const;
 
 export type AIModel = typeof AI_MODELS[number];

@@ -91,6 +91,56 @@ export function AllModelsSelector() {
       available: true
     },
     {
+      id: 'gpt-5-mini',
+      name: 'GPT-5 Mini',
+      description: 'Cost-optimized reasoning - balances speed, cost, capability',
+      provider: 'OpenAI',
+      contextWindow: 400000,
+      capabilities: ['Chat', 'Code', 'Reasoning'],
+      pricing: { input: 0.5, output: 2, currency: 'USD', unit: '1M tokens' },
+      available: true
+    },
+    {
+      id: 'gpt-5-nano',
+      name: 'GPT-5 Nano',
+      description: 'High-throughput for simple tasks - most affordable',
+      provider: 'OpenAI',
+      contextWindow: 400000,
+      capabilities: ['Chat', 'Code'],
+      pricing: { input: 0.25, output: 1, currency: 'USD', unit: '1M tokens' },
+      available: true
+    },
+    {
+      id: 'gpt-4.1',
+      name: 'GPT-4.1',
+      description: 'Excellent for coding, instruction-following, web development (April 2025)',
+      provider: 'OpenAI',
+      contextWindow: 1000000,
+      capabilities: ['Chat', 'Code', 'Vision', 'Tools'],
+      pricing: { input: 2, output: 8, currency: 'USD', unit: '1M tokens' },
+      available: true
+    },
+    {
+      id: 'gpt-4.1-mini',
+      name: 'GPT-4.1 Mini',
+      description: '83% cost reduction vs GPT-4o - significant upgrade',
+      provider: 'OpenAI',
+      contextWindow: 1000000,
+      capabilities: ['Chat', 'Code', 'Vision'],
+      pricing: { input: 0.4, output: 1.6, currency: 'USD', unit: '1M tokens' },
+      available: true
+    },
+    {
+      id: 'gpt-4.1-nano',
+      name: 'GPT-4.1 Nano',
+      description: 'Ultra-fast, 1M context, 80.1% MMLU - cheapest option',
+      provider: 'OpenAI',
+      contextWindow: 1000000,
+      capabilities: ['Chat', 'Code'],
+      pricing: { input: 0.1, output: 0.4, currency: 'USD', unit: '1M tokens' },
+      available: true
+    },
+    {
       id: 'gpt-4o',
       name: 'GPT-4o',
       description: 'Multimodal flagship - text, vision, audio',
@@ -131,11 +181,31 @@ export function AllModelsSelector() {
       available: true
     },
     
-    // Anthropic - Latest Models (Sept-Oct 2025)
+    // Anthropic - UPDATED JANUARY 2026
+    {
+      id: 'claude-opus-4-5-20251101',
+      name: 'Claude Opus 4.5',
+      description: 'Most intelligent - 80.9% SWE-bench, 66% cheaper than Opus 4 (Nov 1, 2025)',
+      provider: 'Anthropic',
+      contextWindow: 200000,
+      capabilities: ['Chat', 'Code', 'Vision', 'Agents'],
+      pricing: { input: 5, output: 25, currency: 'USD', unit: '1M tokens' },
+      available: true
+    },
+    {
+      id: 'claude-opus-4-1-20250805',
+      name: 'Claude Opus 4.1',
+      description: 'Advanced reasoning - software engineering workflows (Aug 5, 2025)',
+      provider: 'Anthropic',
+      contextWindow: 200000,
+      capabilities: ['Chat', 'Code', 'Vision', 'Reasoning'],
+      pricing: { input: 15, output: 75, currency: 'USD', unit: '1M tokens' },
+      available: true
+    },
     {
       id: 'claude-sonnet-4-5-20250929',
       name: 'Claude Sonnet 4.5',
-      description: 'Best coding model in the world - strongest at agents & computer use (Sept 29, 2025)',
+      description: 'Production agents - coding, balanced performance, 1M context beta (Sept 29, 2025)',
       provider: 'Anthropic',
       contextWindow: 200000,
       capabilities: ['Chat', 'Code', 'Agents', 'Computer Use'],
@@ -143,23 +213,23 @@ export function AllModelsSelector() {
       available: true
     },
     {
-      id: 'claude-opus-4-5-20251124',
-      name: 'Claude Opus 4.5',
-      description: 'Most capable frontier model - >80% SWE-bench, vision, computer use & agents (Nov 24, 2025)',
+      id: 'claude-sonnet-4-20250514',
+      name: 'Claude Sonnet 4',
+      description: 'Agentic workflows - high-quality reasoning (May 14, 2025)',
       provider: 'Anthropic',
       contextWindow: 200000,
-      capabilities: ['Chat', 'Code', 'Vision', 'Computer Use', 'Agents'],
-      pricing: { input: 15, output: 75, currency: 'USD', unit: '1M tokens' },
+      capabilities: ['Chat', 'Code', 'Agents'],
+      pricing: { input: 3, output: 15, currency: 'USD', unit: '1M tokens' },
       available: true
     },
     {
-      id: 'claude-haiku-4-5-20251015',
+      id: 'claude-haiku-4-5',
       name: 'Claude Haiku 4.5',
-      description: 'Fastest - matches Sonnet 4 on coding at 1/3 cost (Oct 15, 2025)',
+      description: 'Fast, lightweight tasks - $0.80/$4 per MTok',
       provider: 'Anthropic',
       contextWindow: 200000,
       capabilities: ['Chat', 'Code', 'Fast Response'],
-      pricing: { input: 1, output: 5, currency: 'USD', unit: '1M tokens' },
+      pricing: { input: 0.8, output: 4, currency: 'USD', unit: '1M tokens' },
       available: true
     },
     
@@ -195,21 +265,31 @@ export function AllModelsSelector() {
       available: true
     },
     
-    // xAI - Latest Models (UPDATED January 2025)
+    // xAI - UPDATED JANUARY 2026
     {
-      id: 'grok-4-1-fast',
-      name: 'Grok 4.1 Fast',
-      description: 'Latest flagship - 2M context, 25× cheaper than GPT-4o (Jan 2025)',
+      id: 'grok-4-1-fast-reasoning',
+      name: 'Grok 4.1 Fast (Reasoning)',
+      description: '#1 LMArena - 1483 Elo, 2M context, thinking capabilities (Jan 2026)',
       provider: 'xAI',
       contextWindow: 2000000,
-      capabilities: ['Chat', 'Code', 'Reasoning', 'Fast Response'],
-      pricing: { input: 0.20, output: 0.50, currency: 'USD', unit: '1M tokens' },
+      capabilities: ['Chat', 'Code', 'Reasoning', 'Tools'],
+      pricing: { input: 6, output: 30, currency: 'USD', unit: '1M tokens' },
+      available: true
+    },
+    {
+      id: 'grok-4-1-fast-non-reasoning',
+      name: 'Grok 4.1 Fast (Non-Reasoning)',
+      description: '#2 LMArena - 1465 Elo, faster without thinking tokens (Jan 2026)',
+      provider: 'xAI',
+      contextWindow: 2000000,
+      capabilities: ['Chat', 'Code', 'Fast Response'],
+      pricing: { input: 3, output: 15, currency: 'USD', unit: '1M tokens' },
       available: true
     },
     {
       id: 'grok-4',
       name: 'Grok 4',
-      description: 'Previous flagship - post-graduate reasoning with 256K context (July 2025)',
+      description: 'Flagship reasoning model - post-graduate level reasoning',
       provider: 'xAI',
       contextWindow: 256000,
       capabilities: ['Chat', 'Code', 'Reasoning', 'Live Search'],
@@ -217,35 +297,55 @@ export function AllModelsSelector() {
       available: true
     },
     {
-      id: 'grok-4-fast',
-      name: 'Grok 4 Fast',
-      description: 'Enterprise - 40% fewer tokens, 2M context, 64× cheaper than o3 (Sept 2025)',
+      id: 'grok-3',
+      name: 'Grok 3',
+      description: 'Previous flagship - cost-effective for most workloads',
       provider: 'xAI',
-      contextWindow: 2000000,
-      capabilities: ['Chat', 'Code', 'Fast Response', 'Enterprise'],
-      pricing: { input: 0.5, output: 1.5, currency: 'USD', unit: '1M tokens' },
+      contextWindow: 131072,
+      capabilities: ['Chat', 'Code', 'Reasoning'],
+      pricing: { input: 1, output: 3, currency: 'USD', unit: '1M tokens' },
       available: true
     },
     
-    // Moonshot AI - UPDATED January 2025 (10-100× cheaper than GPT-4)
-    {
-      id: 'kimi-k2-0905-preview',
-      name: 'Kimi K2 (Sept 2025)',
-      description: 'September 2025 upgrade - 1T param MoE model with improved grounding, optimized for agentic tasks',
-      provider: 'Moonshot AI',
-      contextWindow: 128000,
-      capabilities: ['Chat', 'Code', 'Analysis', 'Agents'],
-      pricing: { input: 0.60, output: 2.50, currency: 'USD', unit: '1M tokens' },
-      available: true
-    },
+    // Moonshot AI - UPDATED JANUARY 2026
     {
       id: 'kimi-k2-thinking',
       name: 'Kimi K2 Thinking',
-      description: 'Advanced reasoning & agentic model - 256K context with 200-300 sequential tool calls',
+      description: 'Multi-step reasoning + tool use - 256K context, 200-300 sequential tool calls',
       provider: 'Moonshot AI',
       contextWindow: 256000,
-      capabilities: ['Chat', 'Code', 'Reasoning', 'Analysis'],
-      pricing: { input: 0.60, output: 2.50, currency: 'USD', unit: '1M tokens' },
+      capabilities: ['Chat', 'Code', 'Reasoning', 'Tools'],
+      pricing: { input: 0.15, output: 2.50, currency: 'USD', unit: '1M tokens' },
+      available: true
+    },
+    {
+      id: 'kimi-k2-thinking-turbo',
+      name: 'Kimi K2 Thinking Turbo',
+      description: 'Fast reasoning + tool use - 256K context, faster inference',
+      provider: 'Moonshot AI',
+      contextWindow: 256000,
+      capabilities: ['Chat', 'Code', 'Reasoning', 'Fast Response'],
+      pricing: { input: 0.15, output: 2.50, currency: 'USD', unit: '1M tokens' },
+      available: true
+    },
+    {
+      id: 'kimi-k2-turbo-preview',
+      name: 'Kimi K2 Turbo Preview',
+      description: 'General purpose, high-speed - 60-100 tokens/sec, 256K context',
+      provider: 'Moonshot AI',
+      contextWindow: 256000,
+      capabilities: ['Chat', 'Code', 'Fast Response'],
+      pricing: { input: 0.15, output: 2.50, currency: 'USD', unit: '1M tokens' },
+      available: true
+    },
+    {
+      id: 'kimi-k2-0905-preview',
+      name: 'Kimi K2 (Sept 2025)',
+      description: 'Stable version - 1T param MoE, 256K context, 10-100× cheaper than GPT-4',
+      provider: 'Moonshot AI',
+      contextWindow: 256000,
+      capabilities: ['Chat', 'Code', 'Agents'],
+      pricing: { input: 0.15, output: 2.50, currency: 'USD', unit: '1M tokens' },
       available: true
     }
   ];

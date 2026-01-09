@@ -17,23 +17,23 @@ export const AI_PROVIDERS: AIProviderConfig[] = [
     name: 'OpenAI',
     icon: '🤖',
     color: '#10A37F',
-    // Updated Dec 2025 - o1/o1-mini replaced by o3/o4-mini
-    models: ['gpt-5.2', 'gpt-5.2-codex', 'gpt-5.1', 'gpt-5', 'gpt-4o', 'gpt-4o-mini', 'o3', 'o4-mini'],
+    // Updated Jan 2026 - Official OpenAI documentation
+    models: ['gpt-5.2', 'gpt-5.2-codex', 'gpt-5.1', 'gpt-5', 'gpt-5-mini', 'gpt-5-nano', 'gpt-4.1', 'gpt-4.1-mini', 'gpt-4.1-nano', 'gpt-4o', 'gpt-4o-mini', 'o3', 'o4-mini'],
   },
   {
     id: 'anthropic',
     name: 'Anthropic',
     icon: '🧠',
     color: '#D97757',
-    // Updated Nov 2025 - Claude 4.5 series (3.5 deprecated June 2025)
-    models: ['claude-opus-4-5-20251124', 'claude-sonnet-4-5-20250929', 'claude-haiku-4-5-20251015'],
+    // Updated Jan 2026 - Official Anthropic documentation
+    models: ['claude-opus-4-5-20251101', 'claude-opus-4-1-20250805', 'claude-sonnet-4-5-20250929', 'claude-sonnet-4-20250514', 'claude-haiku-4-5'],
   },
   {
     id: 'gemini',
     name: 'Google Gemini',
     icon: '✨',
     color: '#4285F4',
-    // Updated Nov 2025 - Gemini 1.5 RETIRED April 2025, only 2.5/2.0 available
+    // Updated Jan 2026 - Official Gemini documentation
     models: ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.0-flash'],
   },
   {
@@ -41,16 +41,16 @@ export const AI_PROVIDERS: AIProviderConfig[] = [
     name: 'xAI',
     icon: '⚡',
     color: '#1DA1F2',
-    // Updated Jan 2025 - grok-beta/grok-2 DEPRECATED, use Grok 4.x family
-    models: ['grok-4-1-fast', 'grok-4-fast', 'grok-4'],
+    // Updated Jan 2026 - Official xAI documentation
+    models: ['grok-4-1-fast-reasoning', 'grok-4-1-fast-non-reasoning', 'grok-4', 'grok-3'],
   },
   {
     id: 'moonshot',
     name: 'Moonshot AI',
     icon: '🌙',
     color: '#9333EA',
-    // ✅ KIMI K2 MODELS: Backend enforces temperature=1.0 and max_tokens>=16384
-    models: ['kimi-k2-0905-preview', 'kimi-k2-thinking', 'moonshot-v1-32k', 'moonshot-v1-128k'],
+    // Updated Jan 2026 - Backend enforces temperature=1.0 and max_tokens>=16384 for K2
+    models: ['kimi-k2-thinking', 'kimi-k2-thinking-turbo', 'kimi-k2-turbo-preview', 'kimi-k2-0905-preview'],
   },
 ];
 
@@ -68,34 +68,42 @@ export function getProviderConfig(providerId: AIProvider): AIProviderConfig | un
 }
 
 export function getModelDisplayName(model: AIModel): string {
-  // Updated January 2025 - Official provider documentation
+  // Updated January 2026 - Official provider documentation
   const displayNames: Partial<Record<AIModel, string>> = {
-    // OpenAI (Dec 2025)
+    // OpenAI (Jan 2026)
     'gpt-5.2': 'GPT-5.2',
     'gpt-5.2-codex': 'GPT-5.2 Codex',
     'gpt-5.1': 'GPT-5.1',
     'gpt-5': 'GPT-5',
+    'gpt-5-mini': 'GPT-5 Mini',
+    'gpt-5-nano': 'GPT-5 Nano',
+    'gpt-4.1': 'GPT-4.1',
+    'gpt-4.1-mini': 'GPT-4.1 Mini',
+    'gpt-4.1-nano': 'GPT-4.1 Nano',
     'gpt-4o': 'GPT-4o',
     'gpt-4o-mini': 'GPT-4o Mini',
     'o3': 'O3',
     'o4-mini': 'O4 Mini',
-    // Anthropic (Nov 2025)
-    'claude-opus-4-5-20251124': 'Claude Opus 4.5',
+    // Anthropic (Jan 2026)
+    'claude-opus-4-5-20251101': 'Claude Opus 4.5',
+    'claude-opus-4-1-20250805': 'Claude Opus 4.1',
     'claude-sonnet-4-5-20250929': 'Claude Sonnet 4.5',
-    'claude-haiku-4-5-20251015': 'Claude Haiku 4.5',
-    // Gemini (Nov 2025)
+    'claude-sonnet-4-20250514': 'Claude Sonnet 4',
+    'claude-haiku-4-5': 'Claude Haiku 4.5',
+    // Gemini (Jan 2026)
     'gemini-2.5-pro': 'Gemini 2.5 Pro',
     'gemini-2.5-flash': 'Gemini 2.5 Flash',
     'gemini-2.0-flash': 'Gemini 2.0 Flash',
-    // xAI (Jan 2025)
-    'grok-4-1-fast': 'Grok 4.1 Fast',
-    'grok-4-fast': 'Grok 4 Fast',
+    // xAI (Jan 2026)
+    'grok-4-1-fast-reasoning': 'Grok 4.1 Fast (Reasoning)',
+    'grok-4-1-fast-non-reasoning': 'Grok 4.1 Fast (Non-Reasoning)',
     'grok-4': 'Grok 4',
-    // Moonshot (Sept 2025)
-    'kimi-k2-0905-preview': 'Kimi K2 (Sept 2025)',
+    'grok-3': 'Grok 3',
+    // Moonshot (Jan 2026)
     'kimi-k2-thinking': 'Kimi K2 Thinking',
-    'moonshot-v1-32k': 'Moonshot 32K',
-    'moonshot-v1-128k': 'Moonshot 128K',
+    'kimi-k2-thinking-turbo': 'Kimi K2 Thinking Turbo',
+    'kimi-k2-turbo-preview': 'Kimi K2 Turbo Preview',
+    'kimi-k2-0905-preview': 'Kimi K2 (Sept 2025)',
   };
   return displayNames[model] || model;
 }
