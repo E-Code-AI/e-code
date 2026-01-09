@@ -1363,6 +1363,12 @@ async function streamXAI(res: any, messages: any[], options: any) {
 /**
  * Stream from Moonshot AI (Kimi) API - OpenAI-compatible
  * Uses Moonshot's OpenAI-compatible API at https://api.moonshot.ai/v1
+ * 
+ * KIMI K2 CONFIGURATION (per official docs):
+ * 1. Temperature = 1.0 - Required for optimal thinking quality
+ * 2. Streaming = true - Prevents timeouts, delivers reasoning_content before final answer
+ * 3. max_tokens >= 16000 - Thinking is token-intensive
+ * 4. Preserve reasoning_content - Automatic server-side handling
  */
 async function streamMoonshot(res: any, messages: any[], options: any) {
   const apiKey = process.env.MOONSHOT_API_KEY;
@@ -1383,19 +1389,36 @@ async function streamMoonshot(res: any, messages: any[], options: any) {
   
   // Use provided model or default to moonshot-v1-32k
   const modelToUse = options.model || 'moonshot-v1-32k';
-  logger.info(`[Moonshot Stream] Using model: ${modelToUse}`);
+  
+  // ✅ KIMI K2 OPTIMIZATION: Detect thinking models for special configuration
+  const isThinkingModel = modelToUse.includes('thinking') || modelToUse.includes('kimi-k2');
+  
+  // ✅ KIMI REQUIREMENT 1: Temperature = 1.0 for thinking models (optimal performance)
+  // Per Moonshot docs: "Set Temperature = 1.0 - Deviating from this value can impact thinking quality"
+  const temperature = isThinkingModel ? 1.0 : (options.temperature ?? 0.7);
+  
+  // ✅ KIMI REQUIREMENT 4: max_tokens >= 16000 for thinking models
+  // Thinking content + final answer must fit within limit
+  const maxTokens = isThinkingModel 
+    ? Math.max(options.maxTokens || 16384, 16384)  // Minimum 16k for thinking
+    : (options.maxTokens || 4096);
+  
+  logger.info(`[Moonshot Stream] Using model: ${modelToUse}, thinking: ${isThinkingModel}, temp: ${temperature}, maxTokens: ${maxTokens}`);
   
   try {
+    // ✅ KIMI REQUIREMENT 3: Enable Streaming (stream = true)
+    // Prevents network timeouts and delivers reasoning_content before final answer
     const stream = await moonshotClient.chat.completions.create({
       model: modelToUse,
       messages,
-      temperature: options.temperature,
-      max_tokens: options.maxTokens,
+      temperature,
+      max_tokens: maxTokens,
       stream: true,
       stream_options: { include_usage: true }
     });
     
     let fullContent = '';
+    let fullReasoningContent = '';
     let tokensInput = 0;
     let tokensOutput = 0;
     
@@ -1406,12 +1429,20 @@ async function streamMoonshot(res: any, messages: any[], options: any) {
         break;
       }
       
-      const delta = chunk.choices[0]?.delta;
+      const delta = chunk.choices[0]?.delta as any;
       
       // Capture token usage from final chunk
       if (chunk.usage) {
         tokensInput = chunk.usage.prompt_tokens || 0;
         tokensOutput = chunk.usage.completion_tokens || 0;
+      }
+      
+      // ✅ KIMI REQUIREMENT 2: Handle reasoning_content for thinking models
+      // reasoning_content appears in streaming before the final answer
+      if (delta?.reasoning_content) {
+        fullReasoningContent += delta.reasoning_content;
+        // Send thinking content to client for transparency
+        sendSSE(res, 'thinking', { content: delta.reasoning_content });
       }
       
       if (delta?.content) {
@@ -1425,10 +1456,11 @@ async function streamMoonshot(res: any, messages: any[], options: any) {
       return { tokensInput, tokensOutput };
     }
     
-    // Send final message
+    // Send final message with optional reasoning context
     sendSSE(res, 'message', { 
       content: fullContent,
-      model: modelToUse
+      model: modelToUse,
+      ...(fullReasoningContent && { reasoning: fullReasoningContent })
     });
     
     return { tokensInput, tokensOutput };

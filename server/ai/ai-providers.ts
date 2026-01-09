@@ -548,18 +548,39 @@ export class MoonshotProvider implements AIProvider {
       apiKey,
       baseURL: 'https://api.moonshot.ai/v1',
       maxRetries: 3,
-      timeout: 60000,
+      timeout: 120000, // Extended timeout for thinking models
     });
   }
   
   async generateChat(messages: any[], options?: any): Promise<string> {
+    const model = options?.model || 'kimi-k2-0711-preview';
+    
+    // ✅ KIMI K2 OPTIMIZATION: Detect thinking models for special configuration
+    const isThinkingModel = model.includes('thinking') || model.includes('kimi-k2');
+    
+    // ✅ KIMI REQUIREMENT 1: Temperature = 1.0 for thinking models
+    const temperature = isThinkingModel ? 1.0 : (options?.temperature ?? 0.7);
+    
+    // ✅ KIMI REQUIREMENT 4: max_tokens >= 16000 for thinking models
+    const max_tokens = isThinkingModel 
+      ? Math.max(options?.max_tokens || 16384, 16384)
+      : (options?.max_tokens || 4096);
+    
     const response = await this.client.chat.completions.create({
-      model: options?.model || 'kimi-k2-0711-preview',  // ✅ FIXED: Production-recommended model
+      model,
       messages,
-      ...options
+      temperature,
+      max_tokens,
+      stream: false, // Non-streaming mode for generateChat
     });
     
-    return response.choices[0].message.content || '';
+    // ✅ KIMI: Extract reasoning_content if available (for thinking models)
+    const message = response.choices[0].message as any;
+    const reasoning = message.reasoning_content || '';
+    const content = message.content || '';
+    
+    // Return reasoning + content for thinking models
+    return reasoning ? `<thinking>\n${reasoning}\n</thinking>\n\n${content}` : content;
   }
   
   async generateCodeWithUnderstanding(messages: any[], codeAnalysis: any, options?: any): Promise<string> {
@@ -574,8 +595,12 @@ export class MoonshotProvider implements AIProvider {
     return this.generateChat(enhancedMessages, options);
   }
   
-  // Note: Streaming is handled via streamMoonshot() in ai-provider-manager.ts
-  // generateChatStream() is optional in AIProvider interface
+  // Note: Streaming is handled via streamMoonshot() in ai-streaming.ts
+  // ✅ KIMI REQUIREMENTS implemented:
+  // 1. Temperature = 1.0 for thinking models
+  // 2. Streaming = true (in ai-streaming.ts)
+  // 3. max_tokens >= 16000 for thinking models
+  // 4. reasoning_content preservation (automatic)
 }
 
 export class AIProviderFactory {
