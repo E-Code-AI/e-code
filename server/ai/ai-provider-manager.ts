@@ -312,23 +312,35 @@ export const AI_MODELS: AIModel[] = [
   // Groq Models - REAL models only
   // Note: provider='groq' indicates the serving infrastructure (Groq API)
   // Model IDs follow Groq's API naming convention
+  // Groq Models - UPDATED JANUARY 2026
+  // Source: https://console.groq.com/docs/models
+  // Note: mixtral-8x7b-32768 deprecated March 2025, llama3-70b-8192 deprecated May 2025
   {
-    id: 'mixtral-8x7b-32768',
-    name: 'Mixtral 8x7B',
+    id: 'llama-3.3-70b-versatile',
+    name: 'Llama 3.3 70B Versatile',
     provider: 'groq',
-    description: 'Open-source mixture of experts model served by Groq',
-    maxTokens: 32768,
-    supportsStreaming: false,
+    description: 'Latest Llama with 128K context, tool use, JSON mode - replaces deprecated models',
+    maxTokens: 128000,
+    supportsStreaming: true,
     costPer1kTokens: 0.0006
   },
   {
-    id: 'llama3-70b-8192',
-    name: 'Llama 3 70B',
+    id: 'llama-3.1-8b-instant',
+    name: 'Llama 3.1 8B Instant',
     provider: 'groq',
-    description: 'Meta open-source model served by Groq',
+    description: 'Fast inference for simple tasks - 8K context',
     maxTokens: 8192,
-    supportsStreaming: false,
-    costPer1kTokens: 0.0009
+    supportsStreaming: true,
+    costPer1kTokens: 0.0002
+  },
+  {
+    id: 'gemma2-9b-it',
+    name: 'Gemma 2 9B',
+    provider: 'groq',
+    description: 'Google open-source model - 8K context, efficient',
+    maxTokens: 8192,
+    supportsStreaming: true,
+    costPer1kTokens: 0.0002
   }
 ];
 
@@ -1260,7 +1272,7 @@ export class AIProviderManager {
       'Gemini': ['gemini-2.0-flash', 'gemini-2.5-flash', 'gemini-2.5-pro'],
       'Moonshot': ['kimi-k2-thinking', 'kimi-k2-thinking-turbo', 'kimi-k2-turbo-preview', 'kimi-k2-0905-preview'],
       'xAI': ['grok-4-1-fast-reasoning', 'grok-4-1-fast-non-reasoning', 'grok-4', 'grok-3'],
-      'Groq': ['mixtral-8x7b-32768']
+      'Groq': ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'gemma2-9b-it']
     };
     
     return Object.entries(providerMap).map(([name, modelIds]) => ({
@@ -1284,7 +1296,7 @@ export class AIProviderManager {
       'Gemini': 'gemini-2.0-flash',
       'Moonshot': 'kimi-k2-turbo-preview',
       'xAI': 'grok-4-1-fast-reasoning',
-      'Groq': 'mixtral-8x7b-32768'
+      'Groq': 'llama-3.3-70b-versatile'
     };
     
     const modelId = providerToModelMap[providerName];
