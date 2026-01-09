@@ -32,8 +32,9 @@ export const AI_MODELS = [
   // xAI Models
   'grok-beta',
   'grok-2-1212',
-  // Moonshot Models
-  'moonshot-v1-8k',
+  // Moonshot/Kimi Models (K2 = thinking models with temp=1.0 requirement)
+  'kimi-k2-0711-preview',
+  'kimi-k2-thinking',
   'moonshot-v1-32k',
   'moonshot-v1-128k',
 ] as const;

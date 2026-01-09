@@ -42,10 +42,11 @@ export const AI_PROVIDERS: AIProviderConfig[] = [
   },
   {
     id: 'moonshot',
-    name: 'Moonshot',
+    name: 'Moonshot AI',
     icon: '🌙',
     color: '#9333EA',
-    models: ['moonshot-v1-8k', 'moonshot-v1-32k', 'moonshot-v1-128k'],
+    // ✅ KIMI K2 MODELS: Backend enforces temperature=1.0 and max_tokens>=16384
+    models: ['kimi-k2-0711-preview', 'kimi-k2-thinking', 'moonshot-v1-32k', 'moonshot-v1-128k'],
   },
 ];
 
@@ -77,7 +78,8 @@ export function getModelDisplayName(model: AIModel): string {
     'gemini-1.5-flash': 'Gemini 1.5 Flash',
     'grok-beta': 'Grok Beta',
     'grok-2-1212': 'Grok 2',
-    'moonshot-v1-8k': 'Moonshot 8K',
+    'kimi-k2-0711-preview': 'Kimi K2 (July 2025)',
+    'kimi-k2-thinking': 'Kimi K2 Thinking',
     'moonshot-v1-32k': 'Moonshot 32K',
     'moonshot-v1-128k': 'Moonshot 128K',
   };
