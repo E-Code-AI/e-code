@@ -178,16 +178,7 @@ export function AllModelsSelector() {
       pricing: { input: 0.60, output: 2.50, currency: 'USD', unit: '1M tokens' },
       available: true
     },
-    {
-      id: 'kimi-k2-0904-preview',
-      name: 'Kimi K2 (Sept 4, 2025)',
-      description: 'Latest stable - improved coding performance with 256K context window',
-      provider: 'Moonshot AI',
-      contextWindow: 256000,
-      capabilities: ['Chat', 'Code', 'Analysis', 'Agents'],
-      pricing: { input: 0.60, output: 2.50, currency: 'USD', unit: '1M tokens' },
-      available: true
-    },
+    // NOTE: kimi-k2-0904-preview removed - model does not exist on Moonshot API (verified Jan 2026)
     {
       id: 'kimi-k2-thinking',
       name: 'Kimi K2 Thinking',
@@ -235,12 +226,14 @@ export function AllModelsSelector() {
         };
       } else if (selectedModel.includes('kimi')) {
         // Moonshot AI Kimi models
+        // ✅ KIMI K2 REQUIREMENTS: temperature=1.0, max_tokens>=16384 for thinking models
+        const isThinkingModel = selectedModel.includes('thinking') || selectedModel.includes('kimi-k2');
         endpoint = '/api/ai/generate';
         payload = {
           model: selectedModel,
           prompt: testPrompt,
-          temperature: 0.7,
-          max_tokens: 500
+          temperature: isThinkingModel ? 1.0 : 0.7,  // KIMI REQUIREMENT 1
+          max_tokens: isThinkingModel ? 16384 : 4096  // KIMI REQUIREMENT 4
         };
       } else if (selectedModel.includes('gemini')) {
         // Google Gemini models
