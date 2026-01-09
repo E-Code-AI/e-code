@@ -307,25 +307,36 @@ export function AllModelsSelector() {
       available: true
     },
     
-    // Groq Models (Open-source hosted)
+    // Groq Models - UPDATED JANUARY 2026
+    // Source: https://console.groq.com/docs/models
     {
-      id: 'mixtral-8x7b-32768',
-      name: 'Mixtral 8x7B',
-      description: 'Open-source mixture of experts model served by Groq',
+      id: 'llama-3.3-70b-versatile',
+      name: 'Llama 3.3 70B Versatile',
+      description: 'Latest Llama with 128K context, tool use, JSON mode',
       provider: 'Groq',
-      contextWindow: 32768,
-      capabilities: ['Chat', 'Code'],
+      contextWindow: 128000,
+      capabilities: ['Chat', 'Code', 'Tools'],
       pricing: { input: 0.6, output: 0.6, currency: 'USD', unit: '1M tokens' },
       available: true
     },
     {
-      id: 'llama3-70b-8192',
-      name: 'Llama 3 70B',
-      description: 'Meta open-source model served by Groq',
+      id: 'llama-3.1-8b-instant',
+      name: 'Llama 3.1 8B Instant',
+      description: 'Fast inference for simple tasks - 8K context',
+      provider: 'Groq',
+      contextWindow: 8192,
+      capabilities: ['Chat', 'Fast Response'],
+      pricing: { input: 0.2, output: 0.2, currency: 'USD', unit: '1M tokens' },
+      available: true
+    },
+    {
+      id: 'gemma2-9b-it',
+      name: 'Gemma 2 9B',
+      description: 'Google open-source model - 8K context, efficient',
       provider: 'Groq',
       contextWindow: 8192,
       capabilities: ['Chat', 'Code'],
-      pricing: { input: 0.9, output: 0.9, currency: 'USD', unit: '1M tokens' },
+      pricing: { input: 0.2, output: 0.2, currency: 'USD', unit: '1M tokens' },
       available: true
     },
     

@@ -49,7 +49,8 @@ export const AI_PROVIDERS: AIProviderConfig[] = [
     name: 'Groq',
     icon: '⚡',
     color: '#FF6B35',
-    models: ['mixtral-8x7b-32768', 'llama3-70b-8192'],
+    // Updated Jan 2026 - deprecated models replaced
+    models: ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'gemma2-9b-it'],
   },
   {
     id: 'moonshot',
@@ -106,9 +107,10 @@ export function getModelDisplayName(model: AIModel): string {
     'grok-4-1-fast-non-reasoning': 'Grok 4.1 Fast (Non-Reasoning)',
     'grok-4': 'Grok 4',
     'grok-3': 'Grok 3',
-    // Groq (Open-source hosted)
-    'mixtral-8x7b-32768': 'Mixtral 8x7B',
-    'llama3-70b-8192': 'Llama 3 70B',
+    // Groq (Jan 2026)
+    'llama-3.3-70b-versatile': 'Llama 3.3 70B Versatile',
+    'llama-3.1-8b-instant': 'Llama 3.1 8B Instant',
+    'gemma2-9b-it': 'Gemma 2 9B',
     // Moonshot (Jan 2026)
     'kimi-k2-thinking': 'Kimi K2 Thinking',
     'kimi-k2-thinking-turbo': 'Kimi K2 Thinking Turbo',

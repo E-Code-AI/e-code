@@ -45,9 +45,10 @@ export const AI_MODELS = [
   'grok-4-1-fast-non-reasoning',
   'grok-4',
   'grok-3',
-  // Groq Models (Open-source hosted)
-  'mixtral-8x7b-32768',
-  'llama3-70b-8192',
+  // Groq Models - UPDATED JANUARY 2026
+  'llama-3.3-70b-versatile',
+  'llama-3.1-8b-instant',
+  'gemma2-9b-it',
   // Moonshot/Kimi Models (Jan 2026) - K2 = thinking models with temp=1.0 requirement
   'kimi-k2-thinking',
   'kimi-k2-thinking-turbo',
