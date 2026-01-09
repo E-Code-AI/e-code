@@ -49,40 +49,80 @@ export function AllModelsSelector() {
     ...(openaiModels?.models || []),
     ...(opensourceData?.models || []),
     
-    // OpenAI - Latest Models (Nov 12-14, 2025)
+    // OpenAI - Latest Models (UPDATED January 2025)
     {
-      id: 'gpt-5.1',
-      name: 'GPT-5.1 Instant',
-      description: 'Latest flagship - warmer, more intelligent with adaptive reasoning (Nov 12, 2025)',
+      id: 'gpt-5.2',
+      name: 'GPT-5.2',
+      description: 'Newest flagship - advanced reasoning with 400K context (Dec 2025)',
       provider: 'OpenAI',
       contextWindow: 400000,
       capabilities: ['Chat', 'Code', 'Reasoning', 'Tools'],
-      pricing: { input: 8, output: 24, currency: 'USD', unit: '1M tokens' },
+      pricing: { input: 1.75, output: 14, currency: 'USD', unit: '1M tokens' },
       available: true
     },
     {
-      id: 'gpt-5.1-thinking',
-      name: 'GPT-5.1 Thinking',
-      description: 'Extended reasoning - 50% faster than GPT-5 with fewer tokens (Nov 12, 2025)',
+      id: 'gpt-5.2-codex',
+      name: 'GPT-5.2 Codex',
+      description: 'Coding optimized variant - enhanced code generation & debugging (Dec 2025)',
       provider: 'OpenAI',
       contextWindow: 400000,
-      capabilities: ['Chat', 'Code', 'Deep Reasoning', 'Math'],
-      pricing: { input: 12, output: 36, currency: 'USD', unit: '1M tokens' },
+      capabilities: ['Chat', 'Code', 'Debugging', 'Tools'],
+      pricing: { input: 1.75, output: 14, currency: 'USD', unit: '1M tokens' },
       available: true
     },
     {
-      id: 'gpt-4.1',
-      name: 'GPT-4.1',
-      description: 'Smartest non-reasoning multimodal LLM - Swiss Army knife',
+      id: 'gpt-5.1',
+      name: 'GPT-5.1',
+      description: 'Previous flagship - adaptive reasoning with apply_patch & shell tools (Nov 2025)',
+      provider: 'OpenAI',
+      contextWindow: 400000,
+      capabilities: ['Chat', 'Code', 'Reasoning', 'Tools'],
+      pricing: { input: 1.25, output: 5, currency: 'USD', unit: '1M tokens' },
+      available: true
+    },
+    {
+      id: 'gpt-5',
+      name: 'GPT-5',
+      description: 'Previous generation flagship - legacy but available (Aug 2025)',
+      provider: 'OpenAI',
+      contextWindow: 400000,
+      capabilities: ['Chat', 'Code', 'Reasoning', 'Tools'],
+      pricing: { input: 1.0, output: 4, currency: 'USD', unit: '1M tokens' },
+      available: true
+    },
+    {
+      id: 'gpt-4o',
+      name: 'GPT-4o',
+      description: 'Multimodal flagship - text, vision, audio',
       provider: 'OpenAI',
       contextWindow: 128000,
-      capabilities: ['Chat', 'Code', 'Vision', 'Tools'],
-      pricing: { input: 6, output: 18, currency: 'USD', unit: '1M tokens' },
+      capabilities: ['Chat', 'Code', 'Vision', 'Audio'],
+      pricing: { input: 2.5, output: 10, currency: 'USD', unit: '1M tokens' },
+      available: true
+    },
+    {
+      id: 'gpt-4o-mini',
+      name: 'GPT-4o Mini',
+      description: 'Cost-effective multimodal - fast and affordable for everyday tasks',
+      provider: 'OpenAI',
+      contextWindow: 128000,
+      capabilities: ['Chat', 'Code', 'Vision'],
+      pricing: { input: 0.15, output: 0.6, currency: 'USD', unit: '1M tokens' },
+      available: true
+    },
+    {
+      id: 'o3',
+      name: 'O3',
+      description: 'Advanced reasoning for complex problem solving',
+      provider: 'OpenAI',
+      contextWindow: 128000,
+      capabilities: ['Reasoning', 'Code', 'Math'],
+      pricing: { input: 15, output: 60, currency: 'USD', unit: '1M tokens' },
       available: true
     },
     {
       id: 'o4-mini',
-      name: 'o4 Mini',
+      name: 'O4 Mini',
       description: 'Budget-friendly reasoning for math, coding, visual tasks',
       provider: 'OpenAI',
       contextWindow: 128000,
@@ -123,7 +163,7 @@ export function AllModelsSelector() {
       available: true
     },
     
-    // Google Gemini - Latest Models (Nov 2025)
+    // Google Gemini - Latest Models (UPDATED January 2025)
     {
       id: 'gemini-2.5-pro',
       name: 'Gemini 2.5 Pro',
@@ -144,12 +184,32 @@ export function AllModelsSelector() {
       pricing: { input: 0.075, output: 0.3, currency: 'USD', unit: '1M tokens' },
       available: true
     },
+    {
+      id: 'gemini-2.0-flash',
+      name: 'Gemini 2.0 Flash',
+      description: 'Next-gen features - 1M context with native tool use (Jan 2025)',
+      provider: 'Google',
+      contextWindow: 1000000,
+      capabilities: ['Chat', 'Code', 'Tools', 'Multimodal'],
+      pricing: { input: 0.1, output: 0.4, currency: 'USD', unit: '1M tokens' },
+      available: true
+    },
     
-    // xAI - Latest Models (July-Sept 2025)
+    // xAI - Latest Models (UPDATED January 2025)
+    {
+      id: 'grok-4-1-fast',
+      name: 'Grok 4.1 Fast',
+      description: 'Latest flagship - 2M context, 25× cheaper than GPT-4o (Jan 2025)',
+      provider: 'xAI',
+      contextWindow: 2000000,
+      capabilities: ['Chat', 'Code', 'Reasoning', 'Fast Response'],
+      pricing: { input: 0.20, output: 0.50, currency: 'USD', unit: '1M tokens' },
+      available: true
+    },
     {
       id: 'grok-4',
       name: 'Grok 4',
-      description: 'Current flagship - post-graduate reasoning with 256K context (July 2025)',
+      description: 'Previous flagship - post-graduate reasoning with 256K context (July 2025)',
       provider: 'xAI',
       contextWindow: 256000,
       capabilities: ['Chat', 'Code', 'Reasoning', 'Live Search'],
@@ -167,18 +227,17 @@ export function AllModelsSelector() {
       available: true
     },
     
-    // ✅ 40-YEAR FIX: Moonshot AI - Production-recommended model IDs (10-100× cheaper than GPT-4)
+    // Moonshot AI - UPDATED January 2025 (10-100× cheaper than GPT-4)
     {
-      id: 'kimi-k2-0711-preview',
-      name: 'Kimi K2 (July 2025)',
-      description: 'Production-recommended - 1T param MoE model optimized for agentic tasks, 10-100× cheaper than GPT-4',
+      id: 'kimi-k2-0905-preview',
+      name: 'Kimi K2 (Sept 2025)',
+      description: 'September 2025 upgrade - 1T param MoE model with improved grounding, optimized for agentic tasks',
       provider: 'Moonshot AI',
       contextWindow: 128000,
       capabilities: ['Chat', 'Code', 'Analysis', 'Agents'],
       pricing: { input: 0.60, output: 2.50, currency: 'USD', unit: '1M tokens' },
       available: true
     },
-    // NOTE: kimi-k2-0904-preview removed - model does not exist on Moonshot API (verified Jan 2026)
     {
       id: 'kimi-k2-thinking',
       name: 'Kimi K2 Thinking',
@@ -208,7 +267,7 @@ export function AllModelsSelector() {
       let endpoint = '';
       let payload = {};
       
-      if (selectedModel.includes('gpt') || selectedModel.includes('o1') || selectedModel.includes('o4')) {
+      if (selectedModel.includes('gpt') || selectedModel.includes('o3') || selectedModel.includes('o4')) {
         endpoint = '/api/openai/generate';
         payload = {
           model: selectedModel,
@@ -227,7 +286,7 @@ export function AllModelsSelector() {
       } else if (selectedModel.includes('kimi')) {
         // Moonshot AI Kimi models
         // ✅ KIMI K2 REQUIREMENTS: temperature=1.0, max_tokens>=16384 for thinking models
-        const isThinkingModel = selectedModel.includes('thinking') || selectedModel.includes('kimi-k2');
+        const isThinkingModel = selectedModel.includes('thinking') || selectedModel.includes('kimi-k2-0905') || selectedModel.includes('kimi-k2');
         endpoint = '/api/ai/generate';
         payload = {
           model: selectedModel,
