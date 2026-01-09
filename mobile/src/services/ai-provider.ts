@@ -45,6 +45,13 @@ export const AI_PROVIDERS: AIProviderConfig[] = [
     models: ['grok-4-1-fast-reasoning', 'grok-4-1-fast-non-reasoning', 'grok-4', 'grok-3'],
   },
   {
+    id: 'groq',
+    name: 'Groq',
+    icon: '⚡',
+    color: '#FF6B35',
+    models: ['mixtral-8x7b-32768', 'llama3-70b-8192'],
+  },
+  {
     id: 'moonshot',
     name: 'Moonshot AI',
     icon: '🌙',
@@ -99,6 +106,9 @@ export function getModelDisplayName(model: AIModel): string {
     'grok-4-1-fast-non-reasoning': 'Grok 4.1 Fast (Non-Reasoning)',
     'grok-4': 'Grok 4',
     'grok-3': 'Grok 3',
+    // Groq (Open-source hosted)
+    'mixtral-8x7b-32768': 'Mixtral 8x7B',
+    'llama3-70b-8192': 'Llama 3 70B',
     // Moonshot (Jan 2026)
     'kimi-k2-thinking': 'Kimi K2 Thinking',
     'kimi-k2-thinking-turbo': 'Kimi K2 Thinking Turbo',

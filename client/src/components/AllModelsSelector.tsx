@@ -307,6 +307,28 @@ export function AllModelsSelector() {
       available: true
     },
     
+    // Groq Models (Open-source hosted)
+    {
+      id: 'mixtral-8x7b-32768',
+      name: 'Mixtral 8x7B',
+      description: 'Open-source mixture of experts model served by Groq',
+      provider: 'Groq',
+      contextWindow: 32768,
+      capabilities: ['Chat', 'Code'],
+      pricing: { input: 0.6, output: 0.6, currency: 'USD', unit: '1M tokens' },
+      available: true
+    },
+    {
+      id: 'llama3-70b-8192',
+      name: 'Llama 3 70B',
+      description: 'Meta open-source model served by Groq',
+      provider: 'Groq',
+      contextWindow: 8192,
+      capabilities: ['Chat', 'Code'],
+      pricing: { input: 0.9, output: 0.9, currency: 'USD', unit: '1M tokens' },
+      available: true
+    },
+    
     // Moonshot AI - UPDATED JANUARY 2026
     {
       id: 'kimi-k2-thinking',
