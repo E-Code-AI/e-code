@@ -4,6 +4,7 @@ import { db } from '../db';
 import { projects, files } from '@shared/schema';
 import { eq, desc } from 'drizzle-orm';
 import { aiService } from '../ai/ai-service';
+import { aiProviderManager } from '../ai/ai-provider-manager';
 import { mobileContainerService } from '../services/mobile-container-service';
 import bcrypt from '../utils/bcrypt-compat';
 import * as jwt from 'jsonwebtoken';
@@ -400,27 +401,77 @@ router.post('/mobile/projects/:projectId/run', mobileEnsureAuthenticated, async 
   }
 });
 
-// AI chat for mobile
+// AI chat for mobile (non-streaming)
+// ✅ Uses client-specified model - backend enforces correct Kimi K2 params (temp=1.0, max>=16384)
 router.post('/mobile/ai/chat', mobileEnsureAuthenticated, async (req, res) => {
   try {
-    const { projectId, message, context } = req.body;
+    const { projectId, message, model, messages, context } = req.body;
     
-    const response = await aiService.generateResponse(
-      [{ role: 'user', content: message }],
+    // Use client-specified model or fallback to gpt-4o
+    const modelId = model || 'gpt-4o';
+    const chatMessages = messages || [{ role: 'user', content: message }];
+    
+    // ✅ Route through aiProviderManager which enforces Kimi K2 requirements
+    const response = await aiProviderManager.generateChat(
+      modelId,
+      chatMessages,
       {
-        model: 'gpt-5',
-        projectContext: {
-          id: projectId,
-          language: context?.language,
-          files: context?.files || []
-        }
+        system: context?.systemPrompt,
+        max_tokens: 4096,
+        temperature: 0.7
       }
     );
     
-    res.json({ response });
+    res.json({ content: response, response });
   } catch (error) {
     logger.error('AI chat error:', error);
     res.status(500).json({ message: 'AI service unavailable' });
+  }
+});
+
+// AI chat streaming for mobile
+// ✅ Uses aiProviderManager.streamChat which enforces Kimi K2 requirements (temp=1.0, max>=16384)
+router.post('/mobile/ai/chat/stream', mobileEnsureAuthenticated, async (req, res) => {
+  try {
+    const { model, messages, projectId } = req.body;
+    
+    // Use client-specified model or fallback to gpt-4o
+    const modelId = model || 'gpt-4o';
+    
+    // Set SSE headers
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no');
+    res.flushHeaders();
+    
+    logger.info(`[Mobile AI Stream] Starting stream for model: ${modelId}, projectId: ${projectId}`);
+    
+    // ✅ CRITICAL: aiProviderManager.streamChat enforces Kimi K2 requirements:
+    // - temperature = 1.0 for kimi-k2-* models
+    // - max_tokens >= 16384 for kimi-k2-* models  
+    // - reasoning_content preserved in response
+    const stream = aiProviderManager.streamChat(
+      modelId,
+      messages,
+      {
+        max_tokens: 4096,
+        temperature: 0.7
+      }
+    );
+    
+    for await (const chunk of stream) {
+      if (chunk) {
+        res.write(`data: ${JSON.stringify({ content: chunk })}\n\n`);
+      }
+    }
+    
+    res.write('data: [DONE]\n\n');
+    res.end();
+  } catch (error: any) {
+    logger.error('AI streaming error:', error);
+    res.write(`data: ${JSON.stringify({ error: error.message || 'AI service unavailable' })}\n\n`);
+    res.end();
   }
 });
 
