@@ -51,7 +51,7 @@ A PostgreSQL database stores user data, project hierarchies, AI agent sessions, 
 ### AI/ML Services
 - **OpenAI:** GPT-5.2, GPT-5.2-Codex, GPT-5.1, GPT-5, GPT-5-mini, GPT-5-nano, GPT-4.1, GPT-4.1-mini, GPT-4.1-nano, GPT-4o, GPT-4o-mini, o3, o4-mini
 - **Anthropic:** Claude Opus 4.5-20251101, Claude Opus 4.1-20250805, Claude Sonnet 4.5-20250929, Claude Sonnet 4-20250514, Claude Haiku 4.5
-- **Google Gemini:** Gemini 2.5 Pro, Gemini 2.5 Flash, Gemini 2.0 Flash
+- **Google Gemini:** Gemini 3 Flash, Gemini 3 Pro, Gemini 2.5 Pro, Gemini 2.5 Flash, Gemini 2.0 Flash
 - **Moonshot AI (Kimi):** kimi-k2-thinking, kimi-k2-thinking-turbo, kimi-k2-turbo-preview, kimi-k2-0905-preview
 - **xAI:** Grok 4.1 Fast (Reasoning), Grok 4.1 Fast (Non-Reasoning), Grok 4, Grok 3
 
