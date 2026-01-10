@@ -26,8 +26,6 @@ export const AI_MODELS = [
   'gpt-4.1',
   'gpt-4.1-mini',
   'gpt-4.1-nano',
-  'gpt-4o',
-  'gpt-4o-mini', 
   'o3',
   'o4-mini',
   // Anthropic Models (Jan 2026)
@@ -39,7 +37,6 @@ export const AI_MODELS = [
   // Google Gemini Models (Jan 2026)
   'gemini-2.5-pro',
   'gemini-2.5-flash',
-  'gemini-2.0-flash',
   // xAI Models (Jan 2026)
   'grok-4-1-fast-reasoning',
   'grok-4-1-fast-non-reasoning',

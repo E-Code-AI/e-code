@@ -116,24 +116,6 @@ export const AI_MODELS: AIModel[] = [
     costPer1kTokens: 0.0001
   },
   {
-    id: 'gpt-4o',
-    name: 'GPT-4o',
-    provider: 'openai',
-    description: 'Multimodal flagship - text, vision, audio',
-    maxTokens: 128000,
-    supportsStreaming: true,
-    costPer1kTokens: 0.0025
-  },
-  {
-    id: 'gpt-4o-mini',
-    name: 'GPT-4o Mini',
-    provider: 'openai',
-    description: 'Cost-effective multimodal - fast and affordable for everyday tasks',
-    maxTokens: 128000,
-    supportsStreaming: true,
-    costPer1kTokens: 0.00015
-  },
-  {
     id: 'o3',
     name: 'o3',
     provider: 'openai',
@@ -219,15 +201,6 @@ export const AI_MODELS: AIModel[] = [
     maxTokens: 1000000,
     supportsStreaming: true,
     costPer1kTokens: 0.000075
-  },
-  {
-    id: 'gemini-2.0-flash',
-    name: 'Gemini 2.0 Flash',
-    provider: 'gemini',
-    description: 'Next-gen features - 1M context with native tool use (Jan 2025)',
-    maxTokens: 1000000,
-    supportsStreaming: true,
-    costPer1kTokens: 0.0001
   },
   
   // Moonshot AI - UPDATED JANUARY 2026
@@ -356,7 +329,7 @@ export const AI_MODELS: AIModel[] = [
 const PROVIDER_FALLBACK_CHAIN = [
   'gpt-5.2',                        // OpenAI newest flagship (Dec 2025)
   'kimi-k2-turbo-preview',          // Moonshot high-speed (Jan 2026)
-  'gemini-2.0-flash',               // Google next-gen with native tool use
+  'gemini-2.5-flash',               // Google latest with hybrid reasoning
   'grok-4-1-fast-non-reasoning',    // xAI fastest (Jan 2026)
   'claude-haiku-4-5'                // Anthropic fastest
 ];
@@ -1266,10 +1239,10 @@ export class AIProviderManager {
    */
   getAvailableProviders(): Array<{ name: string; isAvailable: boolean }> {
     const providerMap: Record<string, string[]> = {
-      'OpenAI': ['gpt-5.2', 'gpt-5.2-codex', 'gpt-5.1', 'gpt-5', 'gpt-5-mini', 'gpt-5-nano', 'gpt-4.1', 'gpt-4.1-mini', 'gpt-4.1-nano', 'gpt-4o', 'gpt-4o-mini', 'o3', 'o4-mini'],
+      'OpenAI': ['gpt-5.2', 'gpt-5.2-codex', 'gpt-5.1', 'gpt-5', 'gpt-5-mini', 'gpt-5-nano', 'gpt-4.1', 'gpt-4.1-mini', 'gpt-4.1-nano', 'o3', 'o4-mini'],
       'Claude': ['claude-opus-4-5-20251101', 'claude-opus-4-1-20250805', 'claude-sonnet-4-5-20250929', 'claude-sonnet-4-20250514', 'claude-haiku-4-5'],
       'Anthropic': ['claude-sonnet-4-5-20250929'],
-      'Gemini': ['gemini-2.0-flash', 'gemini-2.5-flash', 'gemini-2.5-pro'],
+      'Gemini': ['gemini-2.5-flash', 'gemini-2.5-pro'],
       'Moonshot': ['kimi-k2-thinking', 'kimi-k2-thinking-turbo', 'kimi-k2-turbo-preview', 'kimi-k2-0905-preview'],
       'xAI': ['grok-4-1-fast-reasoning', 'grok-4-1-fast-non-reasoning', 'grok-4', 'grok-3'],
       'Groq': ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'gemma2-9b-it']
@@ -1293,7 +1266,7 @@ export class AIProviderManager {
       'Claude': 'claude-sonnet-4-5-20250929',
       'Claude 3.5 Sonnet': 'claude-sonnet-4-5-20250929',
       'Anthropic': 'claude-sonnet-4-5-20250929',
-      'Gemini': 'gemini-2.0-flash',
+      'Gemini': 'gemini-2.5-flash',
       'Moonshot': 'kimi-k2-turbo-preview',
       'xAI': 'grok-4-1-fast-reasoning',
       'Groq': 'llama-3.3-70b-versatile'
@@ -1316,7 +1289,7 @@ export class AIProviderManager {
     const preferredModels = [
       'claude-sonnet-4-5-20250929', // Best coding model
       'gpt-5.2',                        // Newest GPT flagship (Dec 2025)
-      'gemini-2.0-flash',               // Next-gen with native tool use
+      'gemini-2.5-flash',               // Google latest with hybrid reasoning
       'kimi-k2-turbo-preview',          // Moonshot high-speed (Jan 2026)
       'grok-4-1-fast-reasoning'         // xAI top-ranked (Jan 2026)
     ];
