@@ -29,32 +29,33 @@ export class AgentPreferencesService {
       cost: 'low' | 'medium' | 'high';
     };
   }> {
+    // ✅ CONSOLIDATED Jan 2026: Only gpt-5.2 is current
     return [
       // OpenAI Models
       {
-        id: 'gpt-5.1',
-        name: 'GPT-5.1',
+        id: 'gpt-5.2',
+        name: 'GPT-5.2',
         description: 'Latest and most advanced OpenAI model',
         category: 'openai',
         tier: 'high-power',
         capabilities: {
           extendedThinking: true,
           codeGeneration: true,
-          maxTokens: 256000,
+          maxTokens: 400000,
           speed: 'medium',
           cost: 'high',
         },
       },
       {
-        id: 'gpt-5',
-        name: 'GPT-5',
-        description: 'Advanced reasoning and generation',
+        id: 'gpt-5.2-codex',
+        name: 'GPT-5.2 Codex',
+        description: 'Coding optimized variant with enhanced code generation',
         category: 'openai',
         tier: 'high-power',
         capabilities: {
           extendedThinking: true,
           codeGeneration: true,
-          maxTokens: 128000,
+          maxTokens: 400000,
           speed: 'medium',
           cost: 'high',
         },
@@ -314,7 +315,7 @@ export class AgentPreferencesService {
       if (requiresExtendedThinking || complexity === 'complex') {
         return 'claude-opus-4-5-20251124';
       }
-      return 'gpt-5.1';
+      return 'gpt-5.2';  // ✅ CONSOLIDATED Jan 2026
     }
 
     // Extended thinking required
@@ -326,7 +327,7 @@ export class AgentPreferencesService {
 
     // Complex tasks
     if (complexity === 'complex') {
-      if (speedPriority === 'quality') return 'gpt-5';
+      if (speedPriority === 'quality') return 'gpt-5.2';  // ✅ CONSOLIDATED Jan 2026
       return 'claude-sonnet-4-5-20250929';
     }
 
@@ -360,7 +361,7 @@ export class AgentPreferencesService {
         return preferredModel;
       }
       // Default high power model
-      return 'gpt-5.1';
+      return 'gpt-5.2';  // ✅ CONSOLIDATED Jan 2026
     }
 
     // If extended thinking is on, ensure model supports it

@@ -363,10 +363,11 @@ router.post('/search', ensureAuthenticated, async (req, res) => {
  */
 router.get('/models', ensureAuthenticated, async (req, res) => {
   try {
+    // ✅ CONSOLIDATED Jan 2026: Only gpt-5.2 is current
     const ragCapableModels = [
       {
-        id: 'gpt-5.1',
-        name: 'GPT-5.1',
+        id: 'gpt-5.2',
+        name: 'GPT-5.2',
         provider: 'openai',
         ragSupport: true,
         embeddingModel: 'text-embedding-3-small',
@@ -374,13 +375,13 @@ router.get('/models', ensureAuthenticated, async (req, res) => {
         features: ['embeddings', 'function_calling', 'structured_outputs']
       },
       {
-        id: 'gpt-5',
-        name: 'GPT-5',
+        id: 'gpt-5.2-codex',
+        name: 'GPT-5.2 Codex',
         provider: 'openai',
         ragSupport: true,
         embeddingModel: 'text-embedding-3-small',
         contextWindow: 400000,
-        features: ['embeddings', 'function_calling']
+        features: ['embeddings', 'function_calling', 'code_generation']
       },
       {
         id: 'gpt-5-mini',

@@ -112,8 +112,9 @@ export class PromptCacheManager {
   ]);
 
   private costPerToken: Record<string, { input: number; output: number }> = {
-    'gpt-5.1': { input: 0.00001, output: 0.00003 },
-    'gpt-5': { input: 0.00001, output: 0.00003 },
+    // ✅ CONSOLIDATED Jan 2026: Only gpt-5.2 is current
+    'gpt-5.2': { input: 0.00000175, output: 0.000014 },
+    'gpt-5.2-codex': { input: 0.00000175, output: 0.000014 },
     'gpt-5-mini': { input: 0.000003, output: 0.000012 },
     'gpt-5-nano': { input: 0.0000015, output: 0.000006 },
     'gpt-4.1': { input: 0.000002, output: 0.000008 },
