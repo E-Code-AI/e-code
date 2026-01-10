@@ -383,13 +383,13 @@ router.get('/models', ensureAuthenticated, async (req, res) => {
         features: ['embeddings', 'function_calling']
       },
       {
-        id: 'gpt-4o',
-        name: 'GPT-4o',
+        id: 'gpt-5-mini',
+        name: 'GPT-5 Mini',
         provider: 'openai',
         ragSupport: true,
         embeddingModel: 'text-embedding-3-small',
-        contextWindow: 128000,
-        features: ['embeddings', 'vision', 'function_calling']
+        contextWindow: 400000,
+        features: ['embeddings', 'function_calling']
       },
       {
         id: 'claude-sonnet-4-5-20250929',

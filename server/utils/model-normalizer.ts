@@ -16,9 +16,9 @@ const MODEL_NORMALIZATION_MAP: Record<string, string> = {
   // OpenAI aliases & legacy names (COMPLETE COVERAGE)
   'gpt-4-turbo-preview': 'gpt-5',
   'gpt-4-turbo': 'gpt-4.1',
-  'gpt-4': 'gpt-4o',
-  'gpt-4o': 'gpt-4o',  // Identity mapping
-  'gpt-4o-mini': 'gpt-4o-mini',  // ✅ NEW: Production model
+  'gpt-4': 'gpt-5',  // Upgrade to GPT-5
+  'gpt-4o': 'gpt-5',  // ❌ DEPRECATED Feb 2026 → upgrade to GPT-5
+  'gpt-4o-mini': 'gpt-5-mini',  // ❌ DEPRECATED Feb 2026 → upgrade to GPT-5-mini
   'gpt-3.5-turbo': 'gpt-5-mini',
   'gpt-3.5': 'gpt-5-nano',
   'o3': 'o3',  // Identity mapping
@@ -47,8 +47,8 @@ const MODEL_NORMALIZATION_MAP: Record<string, string> = {
   'gemini-flash': 'gemini-2.5-flash',
   'gemini-1.5-pro': 'gemini-2.5-pro',
   'gemini-1.5-flash': 'gemini-2.5-flash',
-  'gemini-2.0-flash': 'gemini-2.0-flash',  // ✅ NEW: Current model (identity)
-  'gemini-2.0-flash-exp': 'gemini-2.0-flash',  // Experimental alias
+  'gemini-2.0-flash': 'gemini-2.5-flash',  // ❌ DEPRECATED Mar 2026 → upgrade to 2.5
+  'gemini-2.0-flash-exp': 'gemini-2.5-flash',  // ❌ DEPRECATED → upgrade to 2.5
   'gemini-2.5-pro': 'gemini-2.5-pro',  // Identity mapping
   'gemini-2.5-flash': 'gemini-2.5-flash',  // Identity mapping
   
@@ -115,10 +115,10 @@ export function normalizeModelName(modelName: string | any | undefined, provider
   // Step 3: Provider-specific fallback defaults (MUST be defined BEFORE use)
   // ✅ ALIGNED Dec 5, 2025: Defaults MUST match ai-streaming.ts getDefaultModel()
   const providerDefaults: Record<string, string> = {
-    'openai': 'gpt-4o-mini',  // ✅ ALIGNED with ai-streaming default
+    'openai': 'gpt-5-mini',  // ✅ UPDATED Jan 2026: gpt-4o-mini deprecated
     'anthropic': 'claude-sonnet-4-5-20250929',
-    'gemini': 'gemini-2.0-flash',  // ✅ ALIGNED with ai-streaming default
-    'google': 'gemini-2.0-flash',
+    'gemini': 'gemini-2.5-flash',  // ✅ UPDATED Jan 2026: gemini-2.0-flash deprecated
+    'google': 'gemini-2.5-flash',
     'xai': 'grok-4-fast',
     'moonshot': 'moonshot-v1-32k',  // ✅ ALIGNED with ai-streaming default
   };
@@ -131,14 +131,14 @@ export function normalizeModelName(modelName: string | any | undefined, provider
     'claude-3-opus', 'claude-3-sonnet', 'claude-3-5-sonnet', 'claude-3-haiku',
     'gemini-pro', 'gemini-ultra',
     
-    // OpenAI current models
-    'gpt-5.1', 'gpt-5', 'gpt-5-mini', 'gpt-5-nano', 'gpt-4.1', 'gpt-4o', 'gpt-4o-mini', 'o3', 'o4-mini',
+    // OpenAI current models (Jan 2026 - gpt-4o/gpt-4o-mini deprecated)
+    'gpt-5.2', 'gpt-5.2-codex', 'gpt-5.1', 'gpt-5', 'gpt-5-mini', 'gpt-5-nano', 'gpt-4.1', 'gpt-4.1-mini', 'gpt-4.1-nano', 'o3', 'o4-mini',
     
     // Anthropic current models (Dec 2025) - Only Opus 4.5, Sonnet 4.5, Haiku 4.5
     'claude-opus-4-5-20251124', 'claude-sonnet-4-5-20250929', 'claude-haiku-4-5-20251015',
     
-    // Gemini current models
-    'gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.0-flash',
+    // Gemini current models (Jan 2026 - gemini-2.0-flash deprecated Mar 2026)
+    'gemini-2.5-pro', 'gemini-2.5-flash',
     
     // xAI Grok current models
     'grok-4', 'grok-4-fast',
@@ -158,7 +158,7 @@ export function normalizeModelName(modelName: string | any | undefined, provider
     logger.warn(`ACTION REQUIRED: Add "${normalizedInput}" to MODEL_NORMALIZATION_MAP in server/utils/model-normalizer.ts`);
     
     // ✅ Send automated alert to Slack/Sentry
-    const fallback = providerDefaults[provider.toLowerCase()] || 'gpt-4o';
+    const fallback = providerDefaults[provider.toLowerCase()] || 'gpt-5-mini';
     AlertService.unknownModel(normalizedInput, provider, fallback).catch((error) => {
       logger.error('Failed to send unknown model alert', { error });
     });
@@ -173,7 +173,7 @@ export function normalizeModelName(modelName: string | any | undefined, provider
     return fallback;
   }
   
-  // Step 6: Ultimate fallback (OpenAI GPT-4o - most common)
-  logger.warn(`⚠️ Unknown provider "${provider}", using ultimate fallback: gpt-4o`);
-  return 'gpt-4o';
+  // Step 6: Ultimate fallback (OpenAI GPT-5-mini - most common, gpt-4o deprecated)
+  logger.warn(`⚠️ Unknown provider "${provider}", using ultimate fallback: gpt-5-mini`);
+  return 'gpt-5-mini';
 }

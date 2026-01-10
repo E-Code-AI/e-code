@@ -409,7 +409,7 @@ Provide 1-3 actionable fix suggestions:`;
       ];
 
       // Use fast model for quick suggestions
-      const response = await aiProviderManager.generateChat('gpt-4o', messages, {
+      const response = await aiProviderManager.generateChat('gpt-5-mini', messages, {  // ✅ UPDATED Jan 2026: gpt-4o deprecated
         max_tokens: 500,
         temperature: 0.3
       });

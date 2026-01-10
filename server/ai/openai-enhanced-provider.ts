@@ -79,13 +79,29 @@ export const OPENAI_MODELS: Record<string, OpenAIModelConfig> = {
     capabilities: ['chat', 'vision', 'function_calling', 'json_mode', 'structured_outputs'],
     pricing: { input: 0.01, output: 0.03 }
   },
-  'gpt-4o': {
-    id: 'gpt-4o',
-    name: 'GPT-4 Optimized',
-    contextWindow: 128000,
-    maxOutput: 4096,
+  'gpt-4.1': {
+    id: 'gpt-4.1',
+    name: 'GPT-4.1',
+    contextWindow: 1000000,
+    maxOutput: 16384,
     capabilities: ['chat', 'vision', 'function_calling', 'json_mode', 'structured_outputs'],
-    pricing: { input: 0.005, output: 0.015 }
+    pricing: { input: 0.002, output: 0.008 }
+  },
+  'gpt-4.1-mini': {
+    id: 'gpt-4.1-mini',
+    name: 'GPT-4.1 Mini',
+    contextWindow: 1000000,
+    maxOutput: 16384,
+    capabilities: ['chat', 'vision', 'function_calling', 'json_mode'],
+    pricing: { input: 0.0004, output: 0.0016 }
+  },
+  'gpt-4.1-nano': {
+    id: 'gpt-4.1-nano',
+    name: 'GPT-4.1 Nano',
+    contextWindow: 1000000,
+    maxOutput: 16384,
+    capabilities: ['chat', 'function_calling', 'json_mode'],
+    pricing: { input: 0.0001, output: 0.0004 }
   },
   'gpt-4': {
     id: 'gpt-4',

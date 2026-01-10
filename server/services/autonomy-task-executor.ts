@@ -604,11 +604,11 @@ Generate the task breakdown (aim for ${complexityAnalysis.suggestedTaskCount} ta
       Math.round(overallComplexity * 1.5) + categories.length
     ));
     
-    let recommendedModel = 'gpt-4o';
+    let recommendedModel = 'gpt-5-mini';  // ✅ UPDATED Jan 2026: gpt-4o deprecated
     if (overallComplexity >= 8) {
       recommendedModel = 'gpt-5.1';
     } else if (overallComplexity <= 3) {
-      recommendedModel = 'gpt-4o-mini';
+      recommendedModel = 'gpt-5-nano';
     }
     
     let riskLevel: 'low' | 'medium' | 'high' = 'low';
