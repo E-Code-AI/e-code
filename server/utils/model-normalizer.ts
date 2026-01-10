@@ -29,33 +29,37 @@ const MODEL_NORMALIZATION_MAP: Record<string, string> = {
   'o3': 'o3',  // Identity mapping
   'o4-mini': 'o4-mini',  // Identity mapping
   
-  // Anthropic aliases & version dates (COMPLETE COVERAGE - Dec 2025)
-  // ✅ UPDATED Dec 5, 2025: Added Claude Opus 4.5 (released Nov 24, 2025)
+  // Anthropic aliases & version dates (COMPLETE COVERAGE - Jan 2026 Consolidated to 4.5)
+  // ✅ UPDATED Jan 2026: Only Claude 4.5 family (opus, sonnet, haiku)
   'claude-3-5-sonnet-20241022': 'claude-sonnet-4-5-20250929',
   'claude-3-5-sonnet': 'claude-sonnet-4-5-20250929',
-  'claude-3-opus-20240229': 'claude-opus-4-5-20251124',  // Upgrade to latest Opus
+  'claude-3-opus-20240229': 'claude-opus-4-5-20251101',  // Upgrade to Opus 4.5
   'claude-3-haiku-20240307': 'claude-haiku-4-5-20251015',
-  'claude-3-opus': 'claude-opus-4-5-20251124',  // Upgrade to latest Opus
+  'claude-3-opus': 'claude-opus-4-5-20251101',  // Upgrade to Opus 4.5
   'claude-3-haiku': 'claude-haiku-4-5-20251015',
   'claude-sonnet': 'claude-sonnet-4-5-20250929',
-  'claude-opus': 'claude-opus-4-5-20251124',  // ✅ NEW: Points to latest Opus 4.5
+  'claude-opus': 'claude-opus-4-5-20251101',  // Points to Opus 4.5
   'claude-haiku': 'claude-haiku-4-5-20251015',
-  'claude-opus-4-5': 'claude-opus-4-5-20251124',  // ✅ NEW: Short alias
-  'claude-opus-4.5': 'claude-opus-4-5-20251124',  // ✅ NEW: Dot notation alias
-  'claude-opus-4-5-20251124': 'claude-opus-4-5-20251124',  // ✅ NEW: Identity mapping
-  'claude-sonnet-4-5-20250929': 'claude-sonnet-4-5-20250929',  // Identity mapping
-  'claude-opus-4-1-20250805': 'claude-opus-4-5-20251124',  // Legacy alias → upgrade to Opus 4.5
-  'claude-haiku-4-5-20251015': 'claude-haiku-4-5-20251015',  // Identity mapping
+  'claude-opus-4-5': 'claude-opus-4-5-20251101',  // Short alias
+  'claude-opus-4.5': 'claude-opus-4-5-20251101',  // Dot notation alias
+  'claude-opus-4-5-20251101': 'claude-opus-4-5-20251101',  // Identity mapping (current)
+  'claude-opus-4-5-20251124': 'claude-opus-4-5-20251101',  // ❌ DEPRECATED → upgrade to Nov 01
+  'claude-sonnet-4-5-20250929': 'claude-sonnet-4-5-20250929',  // Identity mapping (current)
+  'claude-opus-4-1-20250805': 'claude-opus-4-5-20251101',  // ❌ DEPRECATED → upgrade to Opus 4.5
+  'claude-sonnet-4-20250514': 'claude-sonnet-4-5-20250929',  // ❌ DEPRECATED → upgrade to Sonnet 4.5
+  'claude-haiku-4-5-20251015': 'claude-haiku-4-5-20251015',  // Identity mapping (current)
   
-  // Gemini aliases (COMPLETE COVERAGE)
-  'gemini-pro': 'gemini-2.5-pro',
-  'gemini-flash': 'gemini-2.5-flash',
-  'gemini-1.5-pro': 'gemini-2.5-pro',
-  'gemini-1.5-flash': 'gemini-2.5-flash',
-  'gemini-2.0-flash': 'gemini-2.5-flash',  // ❌ DEPRECATED Mar 2026 → upgrade to 2.5
-  'gemini-2.0-flash-exp': 'gemini-2.5-flash',  // ❌ DEPRECATED → upgrade to 2.5
-  'gemini-2.5-pro': 'gemini-2.5-pro',  // Identity mapping
-  'gemini-2.5-flash': 'gemini-2.5-flash',  // Identity mapping
+  // Gemini aliases (COMPLETE COVERAGE - Jan 2026 Consolidated to Gemini 3)
+  'gemini-pro': 'gemini-3-pro',
+  'gemini-flash': 'gemini-3-flash',
+  'gemini-1.5-pro': 'gemini-3-pro',
+  'gemini-1.5-flash': 'gemini-3-flash',
+  'gemini-2.0-flash': 'gemini-3-flash',  // ❌ DEPRECATED → upgrade to Gemini 3
+  'gemini-2.0-flash-exp': 'gemini-3-flash',  // ❌ DEPRECATED → upgrade to Gemini 3
+  'gemini-2.5-pro': 'gemini-3-pro',  // ❌ DEPRECATED Jan 2026 → upgrade to Gemini 3
+  'gemini-2.5-flash': 'gemini-3-flash',  // ❌ DEPRECATED Jan 2026 → upgrade to Gemini 3
+  'gemini-3-flash': 'gemini-3-flash',  // Identity mapping (current)
+  'gemini-3-pro': 'gemini-3-pro',  // Identity mapping (current)
   
   // xAI Grok aliases (COMPLETE COVERAGE)
   'grok': 'grok-4',

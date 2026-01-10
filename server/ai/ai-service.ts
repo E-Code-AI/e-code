@@ -60,7 +60,7 @@ export class AIService {
         available: !!anthropic,
         configured: !!anthropicKey,
         keyPresent: !!process.env.ANTHROPIC_API_KEY,
-        models: anthropic ? ['claude-opus-4-5-20251124', 'claude-sonnet-4-5-20250929', 'claude-haiku-4-5-20251015'] : []
+        models: anthropic ? ['claude-opus-4-5-20251101', 'claude-sonnet-4-5-20250929', 'claude-haiku-4-5-20251015'] : []  // ✅ CONSOLIDATED Jan 2026
       },
       anyAvailable: !!openai || !!anthropic,
       missingKeys: [
@@ -89,7 +89,7 @@ export class AIService {
     }
     
     if (!isOpenAIModel && !isAnthropicModel) {
-      throw new Error(`Unsupported model: ${model}. Available models: gpt-5.2, gpt-5.2-codex, gpt-5-mini, claude-opus-4-5-20251124, claude-sonnet-4-5-20250929, claude-haiku-4-5-20251015`);
+      throw new Error(`Unsupported model: ${model}. Available models: gpt-5.2, gpt-5.2-codex, gpt-5-mini, claude-opus-4-5-20251101, claude-sonnet-4-5-20250929, claude-haiku-4-5-20251015`);
     }
   }
 
@@ -233,10 +233,10 @@ export class AIService {
       'claude-haiku-4': 'claude-haiku-4-5-20251015',
       'claude-haiku-4-5': 'claude-haiku-4-5-20251015',
       'claude-haiku-4-5-20251015': 'claude-haiku-4-5-20251015',
-      'claude-opus': 'claude-opus-4-5-20251124',
-      'claude-opus-4': 'claude-opus-4-5-20251124',
-      'claude-opus-4-5': 'claude-opus-4-5-20251124',
-      'claude-opus-4-5-20251124': 'claude-opus-4-5-20251124',
+      'claude-opus': 'claude-opus-4-5-20251101',  // ✅ CONSOLIDATED Jan 2026
+      'claude-opus-4': 'claude-opus-4-5-20251101',
+      'claude-opus-4-5': 'claude-opus-4-5-20251101',
+      'claude-opus-4-5-20251101': 'claude-opus-4-5-20251101',
     };
     
     const resolvedModel = ANTHROPIC_MODEL_MAP[model] || 'claude-sonnet-4-5-20250929';

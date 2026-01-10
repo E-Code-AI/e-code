@@ -417,10 +417,10 @@ Output valid JSON only, no markdown code blocks.`;
   private selectBestAvailableModel(): string {
     const preferredModels = [
       'claude-sonnet-4-5-20250929',    // Anthropic Claude Sonnet 4.5
-      'gpt-5-mini',                    // OpenAI GPT-5 Mini (gpt-4o deprecated)
+      'gpt-5-mini',                    // OpenAI GPT-5 Mini
       'gpt-4.1',                       // OpenAI GPT-4.1
-      'gemini-2.5-flash',              // Google Gemini 2.5 Flash
-      'gemini-2.5-pro',                // Google Gemini 2.5 Pro
+      'gemini-3-flash',                // Google Gemini 3 Flash (Jan 2026)
+      'gemini-3-pro',                  // Google Gemini 3 Pro (Jan 2026)
       'grok-4',                        // xAI Grok 4
     ];
     

@@ -130,28 +130,10 @@ export const AI_MODELS: AIModel[] = [
     costPer1kTokens: 0.005
   },
   {
-    id: 'claude-opus-4-1-20250805',
-    name: 'Claude Opus 4.1',
-    provider: 'anthropic',
-    description: 'Advanced reasoning - software engineering workflows (Aug 5, 2025)',
-    maxTokens: 200000,
-    supportsStreaming: true,
-    costPer1kTokens: 0.015
-  },
-  {
     id: 'claude-sonnet-4-5-20250929',
     name: 'Claude Sonnet 4.5',
     provider: 'anthropic',
     description: 'Production agents - coding, balanced performance, 1M context beta (Sept 29, 2025)',
-    maxTokens: 200000,
-    supportsStreaming: true,
-    costPer1kTokens: 0.003
-  },
-  {
-    id: 'claude-sonnet-4-20250514',
-    name: 'Claude Sonnet 4',
-    provider: 'anthropic',
-    description: 'Agentic workflows - high-quality reasoning (May 14, 2025)',
     maxTokens: 200000,
     supportsStreaming: true,
     costPer1kTokens: 0.003
@@ -185,33 +167,6 @@ export const AI_MODELS: AIModel[] = [
     maxTokens: 1000000,
     supportsStreaming: true,
     costPer1kTokens: 0.00125
-  },
-  {
-    id: 'gemini-2.5-pro',
-    name: 'Gemini 2.5 Pro',
-    provider: 'gemini',
-    description: 'Stable release with adaptive thinking - LMArena leader 6+ months',
-    maxTokens: 1000000,
-    supportsStreaming: true,
-    costPer1kTokens: 0.00125
-  },
-  {
-    id: 'gemini-2.5-flash',
-    name: 'Gemini 2.5 Flash',
-    provider: 'gemini',
-    description: 'Hybrid reasoning - thinks before it speaks with low latency',
-    maxTokens: 1000000,
-    supportsStreaming: true,
-    costPer1kTokens: 0.000075
-  },
-  {
-    id: 'gemini-2.0-flash',
-    name: 'Gemini 2.0 Flash',
-    provider: 'gemini',
-    description: 'Stable - 1M context, native tool use, superior speed',
-    maxTokens: 1000000,
-    supportsStreaming: true,
-    costPer1kTokens: 0.000075
   },
   
   // Moonshot AI - UPDATED JANUARY 2026
@@ -338,9 +293,9 @@ export const AI_MODELS: AIModel[] = [
  * UPDATED January 2025: kimi-k2-0711-preview → kimi-k2-0905-preview (September 2025 upgrade)
  */
 const PROVIDER_FALLBACK_CHAIN = [
-  'gpt-5.2',                        // OpenAI newest flagship (Dec 2025)
+  'gpt-5.2',                        // OpenAI newest flagship (Jan 2026)
   'kimi-k2-turbo-preview',          // Moonshot high-speed (Jan 2026)
-  'gemini-2.5-flash',               // Google latest with hybrid reasoning
+  'gemini-3-flash',                 // Google latest flagship (Jan 2026)
   'grok-4-1-fast-non-reasoning',    // xAI fastest (Jan 2026)
   'claude-haiku-4-5'                // Anthropic fastest
 ];
@@ -1251,9 +1206,9 @@ export class AIProviderManager {
   getAvailableProviders(): Array<{ name: string; isAvailable: boolean }> {
     const providerMap: Record<string, string[]> = {
       'OpenAI': ['gpt-5.2', 'gpt-5.2-codex', 'gpt-5-mini', 'gpt-5-nano', 'gpt-4.1', 'gpt-4.1-mini', 'gpt-4.1-nano', 'o3', 'o4-mini'],  // ✅ CONSOLIDATED Jan 2026
-      'Claude': ['claude-opus-4-5-20251101', 'claude-opus-4-1-20250805', 'claude-sonnet-4-5-20250929', 'claude-sonnet-4-20250514', 'claude-haiku-4-5'],
+      'Claude': ['claude-opus-4-5-20251101', 'claude-sonnet-4-5-20250929', 'claude-haiku-4-5'],  // ✅ CONSOLIDATED Jan 2026: Only 4.5 family
       'Anthropic': ['claude-sonnet-4-5-20250929'],
-      'Gemini': ['gemini-2.5-flash', 'gemini-2.5-pro'],
+      'Gemini': ['gemini-3-flash', 'gemini-3-pro'],  // ✅ CONSOLIDATED Jan 2026: Only Gemini 3
       'Moonshot': ['kimi-k2-thinking', 'kimi-k2-thinking-turbo', 'kimi-k2-turbo-preview', 'kimi-k2-0905-preview'],
       'xAI': ['grok-4-1-fast-reasoning', 'grok-4-1-fast-non-reasoning', 'grok-4', 'grok-3'],
       'Groq': ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'gemma2-9b-it']
@@ -1277,7 +1232,7 @@ export class AIProviderManager {
       'Claude': 'claude-sonnet-4-5-20250929',
       'Claude 3.5 Sonnet': 'claude-sonnet-4-5-20250929',
       'Anthropic': 'claude-sonnet-4-5-20250929',
-      'Gemini': 'gemini-2.5-flash',
+      'Gemini': 'gemini-3-flash',  // ✅ CONSOLIDATED Jan 2026
       'Moonshot': 'kimi-k2-turbo-preview',
       'xAI': 'grok-4-1-fast-reasoning',
       'Groq': 'llama-3.3-70b-versatile'
@@ -1299,8 +1254,8 @@ export class AIProviderManager {
     // Try providers in order of preference - UPDATED January 2025
     const preferredModels = [
       'claude-sonnet-4-5-20250929', // Best coding model
-      'gpt-5.2',                        // Newest GPT flagship (Dec 2025)
-      'gemini-2.5-flash',               // Google latest with hybrid reasoning
+      'gpt-5.2',                        // Newest GPT flagship (Jan 2026)
+      'gemini-3-flash',                 // Google latest flagship (Jan 2026)
       'kimi-k2-turbo-preview',          // Moonshot high-speed (Jan 2026)
       'grok-4-1-fast-reasoning'         // xAI top-ranked (Jan 2026)
     ];

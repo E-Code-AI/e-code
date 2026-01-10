@@ -467,7 +467,7 @@ export class GeminiProvider implements AIProvider {
     // SDK does NOT auto-convert strings - must pass { parts: [{ text: '...' }] }
     // Reference: https://ai.google.dev/gemini-api/docs/system-instructions
     const modelConfig: any = {
-      model: options?.model || 'gemini-2.5-flash'
+      model: options?.model || 'gemini-3-flash'
     };
     if (systemMessage && systemMessage.trim()) {
       modelConfig.systemInstruction = {
@@ -497,7 +497,7 @@ export class GeminiProvider implements AIProvider {
     // SDK does NOT auto-convert strings - must pass { parts: [{ text: '...' }] }
     // Reference: https://ai.google.dev/gemini-api/docs/system-instructions
     const modelConfig: any = {
-      model: options?.model || 'gemini-2.5-flash'
+      model: options?.model || 'gemini-3-flash'
     };
     if (systemMessage && systemMessage.trim()) {
       modelConfig.systemInstruction = {
