@@ -102,21 +102,24 @@ export const aiModelEnum = pgEnum('ai_model', [
   'claude-opus-4-1-20250805',
   'claude-haiku-4-5-20251015',
   
-  // Google Gemini (Dec 2025) - 3 models
+  // Google Gemini (Jan 2026) - 5 models with Gemini 3
+  'gemini-3-flash',
+  'gemini-3-pro',
   'gemini-2.5-pro',
   'gemini-2.5-flash',
   'gemini-2.0-flash',
   
-  // xAI (Dec 2025) - 2 models
+  // xAI (Jan 2026) - 4 models
+  'grok-4-1-fast-reasoning',
+  'grok-4-1-fast',
   'grok-4',
-  'grok-4-fast',
+  'grok-3',
   
-  // Moonshot AI (Dec 2025) - 5 models
-  'kimi-k2-0711-preview',
-  'kimi-k2-0904-preview',
+  // Moonshot AI (Jan 2026) - 4 Kimi K2 models
   'kimi-k2-thinking',
-  'moonshot-v1-32k',
-  'moonshot-v1-128k',
+  'kimi-k2-thinking-turbo',
+  'kimi-k2-turbo-preview',
+  'kimi-k2-0905-preview',
   
   // Groq (Dec 2025) - 2 models
   'mixtral-8x7b-32768',
@@ -1984,7 +1987,9 @@ export const AI_MODELS = [
   'claude-sonnet-4-5-20250929',
   'claude-sonnet-4-20250514',
   'claude-haiku-4-5-20251015',
-  // Google Gemini (Jan 2026)
+  // Google Gemini (Jan 2026) - UPDATED with Gemini 3
+  'gemini-3-flash',
+  'gemini-3-pro',
   'gemini-2.5-pro',
   'gemini-2.5-flash',
   'gemini-2.0-flash',

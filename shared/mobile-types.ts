@@ -33,9 +33,12 @@ export const AI_MODELS = [
   'claude-sonnet-4-5-20250929',
   'claude-sonnet-4-20250514',
   'claude-haiku-4-5',
-  // Google Gemini Models (Jan 2026)
+  // Google Gemini Models (Jan 2026) - UPDATED with Gemini 3
+  'gemini-3-flash',
+  'gemini-3-pro',
   'gemini-2.5-pro',
   'gemini-2.5-flash',
+  'gemini-2.0-flash',
   // xAI Models (Jan 2026)
   'grok-4-1-fast-reasoning',
   'grok-4-1-fast-non-reasoning',
