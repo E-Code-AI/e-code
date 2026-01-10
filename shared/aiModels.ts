@@ -230,13 +230,46 @@ export const AI_MODELS_REGISTRY: Record<string, AIModel> = {
   },
 
   // ========================================
-  // Google Gemini Models (Nov 2025)
+  // Google Gemini Models - UPDATED JANUARY 2026
+  // Source: https://ai.google.dev/gemini-api/docs/models
   // ========================================
+  'gemini-3-flash': {
+    id: 'gemini-3-flash',
+    name: 'Gemini 3 Flash',
+    provider: 'gemini',
+    description: 'Latest flagship - frontier-class, agentic coding, 90.4% GPQA Diamond (Jan 2026)',
+    capabilities: {
+      extendedThinking: true,
+      toolUse: true,
+      contextWindow: 1000000,
+      codeGeneration: true,
+      multimodal: true
+    },
+    pricing: { input: 0.075, output: 0.3 },
+    releaseDate: '2026-01-08',
+    available: true
+  },
+  'gemini-3-pro': {
+    id: 'gemini-3-pro',
+    name: 'Gemini 3 Pro',
+    provider: 'gemini',
+    description: 'State-of-the-art reasoning - best multimodal, vibe coding (Dec 2025)',
+    capabilities: {
+      extendedThinking: true,
+      toolUse: true,
+      contextWindow: 1000000,
+      codeGeneration: true,
+      multimodal: true
+    },
+    pricing: { input: 1.25, output: 5 },
+    releaseDate: '2025-12-01',
+    available: true
+  },
   'gemini-2.5-pro': {
     id: 'gemini-2.5-pro',
     name: 'Gemini 2.5 Pro',
     provider: 'gemini',
-    description: 'Stable with adaptive thinking - 2M token context coming soon',
+    description: 'Stable with adaptive thinking - LMArena leader 6+ months',
     capabilities: {
       extendedThinking: true,
       toolUse: true,
@@ -262,6 +295,22 @@ export const AI_MODELS_REGISTRY: Record<string, AIModel> = {
     },
     pricing: { input: 0.075, output: 0.3 },
     releaseDate: '2025-11-01',
+    available: true
+  },
+  'gemini-2.0-flash': {
+    id: 'gemini-2.0-flash',
+    name: 'Gemini 2.0 Flash',
+    provider: 'gemini',
+    description: 'Stable - 1M context, native tool use, superior speed',
+    capabilities: {
+      extendedThinking: false,
+      toolUse: true,
+      contextWindow: 1000000,
+      codeGeneration: true,
+      multimodal: true
+    },
+    pricing: { input: 0.075, output: 0.3 },
+    releaseDate: '2025-06-01',
     available: true
   },
 

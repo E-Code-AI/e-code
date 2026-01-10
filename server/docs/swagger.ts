@@ -204,6 +204,8 @@ const swaggerDefinition = {
           'claude-sonnet-4-5-20250929',
           'claude-sonnet-4-20250514',
           'claude-haiku-4-5-20251015',
+          'gemini-3-flash',
+          'gemini-3-pro',
           'gemini-2.5-pro',
           'gemini-2.5-flash',
           'gemini-2.0-flash',

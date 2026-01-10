@@ -193,11 +193,31 @@ export function AllModelsSelector() {
       available: true
     },
     
-    // Google Gemini - Latest Models (UPDATED January 2025)
+    // Google Gemini - UPDATED JANUARY 2026 with Gemini 3
+    {
+      id: 'gemini-3-flash',
+      name: 'Gemini 3 Flash',
+      description: 'Latest flagship - frontier-class, agentic coding, 90.4% GPQA Diamond (Jan 2026)',
+      provider: 'Google',
+      contextWindow: 1000000,
+      capabilities: ['Chat', 'Code', 'Agentic', 'Multimodal'],
+      pricing: { input: 0.075, output: 0.3, currency: 'USD', unit: '1M tokens' },
+      available: true
+    },
+    {
+      id: 'gemini-3-pro',
+      name: 'Gemini 3 Pro',
+      description: 'State-of-the-art reasoning - best multimodal, vibe coding (Dec 2025)',
+      provider: 'Google',
+      contextWindow: 1000000,
+      capabilities: ['Chat', 'Code', 'Reasoning', 'Multimodal'],
+      pricing: { input: 1.25, output: 5, currency: 'USD', unit: '1M tokens' },
+      available: true
+    },
     {
       id: 'gemini-2.5-pro',
       name: 'Gemini 2.5 Pro',
-      description: 'Stable with adaptive thinking - 2M token context coming soon (Nov 2025)',
+      description: 'Stable with adaptive thinking - LMArena leader 6+ months',
       provider: 'Google',
       contextWindow: 1000000,
       capabilities: ['Chat', 'Code', 'Adaptive Thinking', 'Multimodal'],
@@ -207,10 +227,20 @@ export function AllModelsSelector() {
     {
       id: 'gemini-2.5-flash',
       name: 'Gemini 2.5 Flash',
-      description: 'Hybrid reasoning - thinks before it speaks with low latency (Nov 2025)',
+      description: 'Hybrid reasoning - thinks before it speaks with low latency',
       provider: 'Google',
       contextWindow: 1000000,
       capabilities: ['Chat', 'Code', 'Fast Reasoning', 'Audio'],
+      pricing: { input: 0.075, output: 0.3, currency: 'USD', unit: '1M tokens' },
+      available: true
+    },
+    {
+      id: 'gemini-2.0-flash',
+      name: 'Gemini 2.0 Flash',
+      description: 'Stable - 1M context, native tool use, superior speed',
+      provider: 'Google',
+      contextWindow: 1000000,
+      capabilities: ['Chat', 'Code', 'Tools', 'Fast Response'],
       pricing: { input: 0.075, output: 0.3, currency: 'USD', unit: '1M tokens' },
       available: true
     },

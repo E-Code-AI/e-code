@@ -166,13 +166,31 @@ export const AI_MODELS: AIModel[] = [
     costPer1kTokens: 0.0008
   },
   
-  // Google Gemini Models - UPDATED JANUARY 2025
+  // Google Gemini Models - UPDATED JANUARY 2026
   // Source: https://ai.google.dev/gemini-api/docs/models
+  {
+    id: 'gemini-3-flash',
+    name: 'Gemini 3 Flash',
+    provider: 'gemini',
+    description: 'Latest flagship - frontier-class, agentic coding, 90.4% GPQA Diamond (Jan 2026)',
+    maxTokens: 1000000,
+    supportsStreaming: true,
+    costPer1kTokens: 0.000075
+  },
+  {
+    id: 'gemini-3-pro',
+    name: 'Gemini 3 Pro',
+    provider: 'gemini',
+    description: 'State-of-the-art reasoning - best multimodal, vibe coding (Dec 2025)',
+    maxTokens: 1000000,
+    supportsStreaming: true,
+    costPer1kTokens: 0.00125
+  },
   {
     id: 'gemini-2.5-pro',
     name: 'Gemini 2.5 Pro',
     provider: 'gemini',
-    description: 'Stable release with adaptive thinking - 2M token context coming soon (Nov 2025)',
+    description: 'Stable release with adaptive thinking - LMArena leader 6+ months',
     maxTokens: 1000000,
     supportsStreaming: true,
     costPer1kTokens: 0.00125
@@ -181,7 +199,16 @@ export const AI_MODELS: AIModel[] = [
     id: 'gemini-2.5-flash',
     name: 'Gemini 2.5 Flash',
     provider: 'gemini',
-    description: 'Hybrid reasoning - thinks before it speaks with low latency (Nov 2025)',
+    description: 'Hybrid reasoning - thinks before it speaks with low latency',
+    maxTokens: 1000000,
+    supportsStreaming: true,
+    costPer1kTokens: 0.000075
+  },
+  {
+    id: 'gemini-2.0-flash',
+    name: 'Gemini 2.0 Flash',
+    provider: 'gemini',
+    description: 'Stable - 1M context, native tool use, superior speed',
     maxTokens: 1000000,
     supportsStreaming: true,
     costPer1kTokens: 0.000075
