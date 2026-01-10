@@ -1300,7 +1300,7 @@ export const aiConversations = pgTable('ai_conversations', {
   messages: jsonb('messages').notNull().default([]),
   context: jsonb('context').default({}),
   totalTokensUsed: integer('total_tokens_used').default(0),
-  model: varchar('model').notNull().default('claude-3-sonnet'),
+  model: varchar('model').notNull().default('claude-sonnet-4-5-20250929'),
   agentMode: agentModeEnum('agent_mode').notNull().default('build'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -1315,7 +1315,7 @@ export const dynamicIntelligence = pgTable('dynamic_intelligence', {
   extendedThinking: boolean('extended_thinking').default(false),
   highPowerMode: boolean('high_power_mode').default(false),
   autoWebSearch: boolean('auto_web_search').default(true),
-  preferredModel: varchar('preferred_model').default('claude-3-sonnet'),
+  preferredModel: varchar('preferred_model').default('claude-sonnet-4-5-20250929'),
   customInstructions: text('custom_instructions'),
   // AI UX Feature preferences
   improvePromptEnabled: boolean('improve_prompt_enabled').default(false),

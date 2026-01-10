@@ -159,11 +159,39 @@ export class AgentPreferencesService {
           cost: 'low',
         },
       },
-      // Google Gemini Models
+      // Google Gemini Models - UPDATED JAN 2026 with Gemini 3
+      {
+        id: 'gemini-3-flash',
+        name: 'Gemini 3 Flash',
+        description: 'Latest flagship - 90.4% GPQA Diamond, agentic coding',
+        category: 'google',
+        tier: 'high-power',
+        capabilities: {
+          extendedThinking: true,
+          codeGeneration: true,
+          maxTokens: 1000000,
+          speed: 'fast',
+          cost: 'low',
+        },
+      },
+      {
+        id: 'gemini-3-pro',
+        name: 'Gemini 3 Pro',
+        description: 'State-of-the-art reasoning and multimodal',
+        category: 'google',
+        tier: 'high-power',
+        capabilities: {
+          extendedThinking: true,
+          codeGeneration: true,
+          maxTokens: 1000000,
+          speed: 'medium',
+          cost: 'high',
+        },
+      },
       {
         id: 'gemini-2.5-pro',
         name: 'Gemini 2.5 Pro',
-        description: 'Google\'s most capable model',
+        description: 'Stable with adaptive thinking',
         category: 'google',
         tier: 'high-power',
         capabilities: {
@@ -177,11 +205,11 @@ export class AgentPreferencesService {
       {
         id: 'gemini-2.5-flash',
         name: 'Gemini 2.5 Flash',
-        description: 'Fast multimodal model',
+        description: 'Hybrid reasoning, low latency',
         category: 'google',
         tier: 'standard',
         capabilities: {
-          extendedThinking: false,
+          extendedThinking: true,
           codeGeneration: true,
           maxTokens: 1000000,
           speed: 'fast',
@@ -217,15 +245,15 @@ export class AgentPreferencesService {
           cost: 'medium',
         },
       },
-      // Moonshot AI Models
+      // Moonshot AI / Kimi K2 Models - UPDATED JAN 2026
       {
-        id: 'kimi-k2-0711-preview',
-        name: 'Kimi K2 Preview',
-        description: 'Moonshot AI Kimi K2 July preview',
+        id: 'kimi-k2-thinking',
+        name: 'Kimi K2 Thinking',
+        description: '1T params, 256K context, temp=1.0 required',
         category: 'moonshot',
-        tier: 'standard',
+        tier: 'high-power',
         capabilities: {
-          extendedThinking: false,
+          extendedThinking: true,
           codeGeneration: true,
           maxTokens: 128000,
           speed: 'fast',
