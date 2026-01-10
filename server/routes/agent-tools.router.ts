@@ -907,12 +907,12 @@ export default function createAgentToolsRouter(): Router {
         extendedThinking: {
           enabled: true,
           status: 'operational',
-          models: ['claude-opus-4-5-20251124', 'claude-sonnet-4-5-20250929', 'o3', 'gpt-5.2']  // ✅ Jan 2026
+          models: ['claude-opus-4-5-20251101', 'claude-sonnet-4-5-20250929', 'o3', 'gpt-5.2']  // ✅ CONSOLIDATED Jan 2026
         },
         highPowerModels: {
           enabled: true,
           status: 'operational',
-          models: ['gpt-5.2', 'claude-opus-4-5-20251124', 'gemini-2.5-pro', 'grok-4']  // ✅ Jan 2026
+          models: ['gpt-5.2', 'claude-opus-4-5-20251101', 'gemini-3-pro', 'grok-4']  // ✅ CONSOLIDATED Jan 2026
         },
         maxAutonomy: {
           enabled: true,

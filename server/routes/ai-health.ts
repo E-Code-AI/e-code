@@ -93,7 +93,7 @@ async function pingProvider(
       }
       case 'gemini': {
         const client = new GoogleGenerativeAI(apiKey);
-        const model = client.getGenerativeModel({ model: 'gemini-2.5-flash' });
+        const model = client.getGenerativeModel({ model: 'gemini-3-flash' });
         testPromise = model.generateContent('ping').then(() => true);
         break;
       }

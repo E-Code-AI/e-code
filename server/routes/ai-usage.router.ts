@@ -67,8 +67,8 @@ router.get('/current', async (req, res) => {
       if (record.model.includes('thinking') || record.model.includes('opus')) {
         thinkingTokens += record.tokensTotal;
       }
-      if (record.model.includes('opus') || record.model.includes('gpt-5') || record.model.includes('gemini-2.5-pro')) {
-        highPowerUsage += 1;
+      if (record.model.includes('opus') || record.model.includes('gpt-5') || record.model.includes('gemini-3-pro') || record.model.includes('gemini-2.5-pro')) {
+        highPowerUsage += 1;  // ✅ UPDATED Jan 2026: Includes Gemini 3 Pro + legacy Gemini 2.5 Pro
       }
     });
 

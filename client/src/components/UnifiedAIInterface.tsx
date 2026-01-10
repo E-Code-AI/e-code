@@ -297,7 +297,7 @@ The implementation is complete and ready for use.`;
                     Claude Sonnet 4.5
                   </SelectItem>
                   <SelectItem value="gpt-5.2">GPT-5.2</SelectItem>
-                  <SelectItem value="gemini-2.5-pro">Gemini 2.5 Pro</SelectItem>
+                  <SelectItem value="gemini-3-pro">Gemini 3 Pro</SelectItem>
                   <SelectItem value="grok-4">Grok 4</SelectItem>
                 </SelectContent>
               </Select>

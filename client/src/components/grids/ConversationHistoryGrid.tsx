@@ -211,7 +211,7 @@ export function ConversationHistoryGrid({
               <SelectItem value="all">All Models</SelectItem>
               <SelectItem value="gpt-5.2">GPT-5.2</SelectItem>
               <SelectItem value="claude-sonnet-4.5">Claude 4.5</SelectItem>
-              <SelectItem value="gemini-2.5-flash">Gemini 2.5</SelectItem>
+              <SelectItem value="gemini-3-flash">Gemini 3 Flash</SelectItem>
             </SelectContent>
           </Select>
 

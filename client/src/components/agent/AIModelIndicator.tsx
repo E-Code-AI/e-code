@@ -93,8 +93,10 @@ function getModelDisplayName(model: string): string {
   if (model.includes('claude-opus')) return 'Claude Opus';
   if (model.includes('claude-sonnet')) return 'Claude Sonnet';
   if (model.includes('claude-haiku')) return 'Claude Haiku';
-  if (model.includes('gemini-2.5-pro')) return 'Gemini 2.5 Pro';
-  if (model.includes('gemini-2.5-flash')) return 'Gemini 2.5 Flash';
+  if (model.includes('gemini-3-pro')) return 'Gemini 3 Pro';
+  if (model.includes('gemini-3-flash')) return 'Gemini 3 Flash';
+  if (model.includes('gemini-2.5-pro')) return 'Gemini 2.5 Pro';  // Legacy
+  if (model.includes('gemini-2.5-flash')) return 'Gemini 2.5 Flash';  // Legacy
   if (model.includes('grok-4')) return 'Grok 4';
   if (model.includes('kimi-k2')) return 'Kimi K2';
   return model;

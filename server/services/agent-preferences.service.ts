@@ -132,7 +132,7 @@ export class AgentPreferencesService {
         },
       },
       {
-        id: 'claude-opus-4-5-20251124',
+        id: 'claude-opus-4-5-20251101',
         name: 'Claude Opus 4.5',
         description: 'Most powerful Claude model',
         category: 'anthropic',
@@ -186,34 +186,6 @@ export class AgentPreferencesService {
           maxTokens: 1000000,
           speed: 'medium',
           cost: 'high',
-        },
-      },
-      {
-        id: 'gemini-2.5-pro',
-        name: 'Gemini 2.5 Pro',
-        description: 'Stable with adaptive thinking',
-        category: 'google',
-        tier: 'high-power',
-        capabilities: {
-          extendedThinking: true,
-          codeGeneration: true,
-          maxTokens: 1000000,
-          speed: 'medium',
-          cost: 'high',
-        },
-      },
-      {
-        id: 'gemini-2.5-flash',
-        name: 'Gemini 2.5 Flash',
-        description: 'Hybrid reasoning, low latency',
-        category: 'google',
-        tier: 'standard',
-        capabilities: {
-          extendedThinking: true,
-          codeGeneration: true,
-          maxTokens: 1000000,
-          speed: 'fast',
-          cost: 'medium',
         },
       },
       // xAI Models
@@ -341,7 +313,7 @@ export class AgentPreferencesService {
     // High power mode always uses premium models
     if (highPowerMode) {
       if (requiresExtendedThinking || complexity === 'complex') {
-        return 'claude-opus-4-5-20251124';
+        return 'claude-opus-4-5-20251101';  // ✅ CONSOLIDATED Jan 2026
       }
       return 'gpt-5.2';  // ✅ CONSOLIDATED Jan 2026
     }
@@ -349,7 +321,7 @@ export class AgentPreferencesService {
     // Extended thinking required
     if (requiresExtendedThinking) {
       if (speedPriority === 'fast') return 'o4-mini';
-      if (speedPriority === 'quality') return 'claude-opus-4-5-20251124';
+      if (speedPriority === 'quality') return 'claude-opus-4-5-20251101';  // ✅ CONSOLIDATED Jan 2026
       return 'claude-sonnet-4-5-20250929';
     }
 

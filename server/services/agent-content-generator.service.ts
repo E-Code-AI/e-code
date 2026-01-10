@@ -152,9 +152,9 @@ Generate the complete ${fileName} file:`;
       // Try multiple models with fallback for code generation
       // Use actual model IDs from provider configuration
       const fallbackModels = [
-        'gpt-5-mini',                     // OpenAI fast, reliable (gpt-4o deprecated Jan 2026)
+        'gpt-5-mini',                     // OpenAI fast, reliable
         'claude-sonnet-4-5-20250929',     // Anthropic balanced
-        'gemini-2.5-flash',               // Google fast
+        'gemini-3-flash',                 // ✅ CONSOLIDATED Jan 2026: Google fast
         'gpt-5.2',                        // ✅ CONSOLIDATED Jan 2026: OpenAI flagship
       ];
       let result: string | null = null;
