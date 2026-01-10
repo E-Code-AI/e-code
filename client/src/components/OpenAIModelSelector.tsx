@@ -29,7 +29,7 @@ interface ModelPricing {
 
 export function OpenAIModelSelector({ 
   onModelSelect,
-  selectedModel = 'gpt-5'
+  selectedModel = 'gpt-5.2'
 }: { 
   onModelSelect: (model: string) => void;
   selectedModel?: string;
@@ -194,7 +194,7 @@ export function OpenAIModelSelector({
             </div>
           )}
           
-          {localSelectedModel.includes('vision') || localSelectedModel === 'gpt-5' && (
+          {localSelectedModel.includes('vision') || localSelectedModel === 'gpt-5.2' && (
             <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
               <div className="flex items-center gap-2 text-purple-800">
                 <Eye className="h-4 w-4" />
@@ -213,29 +213,29 @@ export function OpenAIModelSelector({
         <Button
           variant="outline"
           size="sm"
-          onClick={() => handleModelChange('gpt-5')}
-          className={localSelectedModel === 'gpt-5' ? 'border-blue-500' : ''}
+          onClick={() => handleModelChange('gpt-5.2')}
+          className={localSelectedModel === 'gpt-5.2' ? 'border-blue-500' : ''}
         >
           <Sparkles className="h-3 w-3 mr-1" />
-          GPT-5
+          GPT-5.2
         </Button>
         <Button
           variant="outline"
           size="sm"
-          onClick={() => handleModelChange('gpt-5')}
-          className={localSelectedModel === 'gpt-5' ? 'border-blue-500' : ''}
+          onClick={() => handleModelChange('o3')}
+          className={localSelectedModel === 'o3' ? 'border-blue-500' : ''}
         >
           <Brain className="h-3 w-3 mr-1" />
-          O1 Preview
+          O3
         </Button>
         <Button
           variant="outline"
           size="sm"
-          onClick={() => handleModelChange('gpt-5')}
-          className={localSelectedModel === 'gpt-5' ? 'border-blue-500' : ''}
+          onClick={() => handleModelChange('gpt-5-mini')}
+          className={localSelectedModel === 'gpt-5-mini' ? 'border-blue-500' : ''}
         >
           <Zap className="h-3 w-3 mr-1" />
-          GPT-5
+          GPT-5 Mini
         </Button>
       </div>
     </div>
