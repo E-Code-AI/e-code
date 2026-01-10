@@ -1,6 +1,12 @@
 /**
- * Centralized AI Models Registry - November 2025
+ * Centralized AI Models Registry - January 2026 CONSOLIDATED
  * Single source of truth for all AI models across backend and frontend
+ * 
+ * CONSOLIDATION NOTICE (Jan 2026):
+ * - gpt-5 → DEPRECATED (use gpt-5.2)
+ * - gpt-5.1 → DEPRECATED (use gpt-5.2)
+ * - gpt-5.2 → CURRENT flagship
+ * - gpt-5.2-codex → CURRENT coding optimized
  * 
  * Key Capabilities tracked:
  * 1. Extended Thinking - Raisonnement approfondi
@@ -33,18 +39,18 @@ export interface AIModel {
 }
 
 /**
- * All available AI models - Latest November 2025
+ * All available AI models - January 2026 CONSOLIDATED
  */
 export const AI_MODELS_REGISTRY: Record<string, AIModel> = {
   // ========================================
-  // OpenAI Models (VRAIS modèles Nov 2025)
+  // OpenAI Models - January 2026 CONSOLIDATED
   // Source: https://platform.openai.com/docs/models
   // ========================================
-  'gpt-5.1': {
-    id: 'gpt-5.1',
-    name: 'GPT-5.1',
+  'gpt-5.2': {
+    id: 'gpt-5.2',
+    name: 'GPT-5.2',
     provider: 'openai',
-    description: 'Current flagship - warmer, more intelligent with adaptive reasoning (Nov 12, 2025)',
+    description: 'Current flagship - advanced reasoning with 400K context (Jan 2026)',
     capabilities: {
       extendedThinking: true,  // reasoning.effort: none/minimal/medium/high
       toolUse: true,           // apply_patch, shell tools
@@ -52,24 +58,24 @@ export const AI_MODELS_REGISTRY: Record<string, AIModel> = {
       codeGeneration: true,
       multimodal: true
     },
-    pricing: { input: 5, output: 15 },  // Prix approximatifs
-    releaseDate: '2025-11-12',
+    pricing: { input: 1.75, output: 14 },  // $1.75 input / $14 output per 1M tokens
+    releaseDate: '2025-12-15',
     available: true
   },
-  'gpt-5': {
-    id: 'gpt-5',
-    name: 'GPT-5',
+  'gpt-5.2-codex': {
+    id: 'gpt-5.2-codex',
+    name: 'GPT-5.2 Codex',
     provider: 'openai',
-    description: 'Previous flagship - still available as legacy model (Aug 2025)',
+    description: 'Coding optimized - enhanced code generation & debugging (Jan 2026)',
     capabilities: {
       extendedThinking: true,
       toolUse: true,
       contextWindow: 400000,
       codeGeneration: true,
-      multimodal: true
+      multimodal: false
     },
-    pricing: { input: 5, output: 15 },
-    releaseDate: '2025-08-07',
+    pricing: { input: 1.75, output: 14 },
+    releaseDate: '2025-12-15',
     available: true
   },
   'gpt-5-mini': {
