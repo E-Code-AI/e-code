@@ -36,23 +36,24 @@ export interface OpenAIModelConfig {
 }
 
 // Complete list of OpenAI models with configurations
+// ✅ CONSOLIDATED Jan 2026: Only gpt-5.2 is current, older versions use model-normalizer
 export const OPENAI_MODELS: Record<string, OpenAIModelConfig> = {
-  // GPT-5.x models (Nov 2025) - Latest flagship with adaptive reasoning
-  'gpt-5.1': {
-    id: 'gpt-5.1',
-    name: 'GPT-5.1',
+  // GPT-5.2 models (Dec 2025) - Latest flagship with advanced reasoning
+  'gpt-5.2': {
+    id: 'gpt-5.2',
+    name: 'GPT-5.2',
     contextWindow: 400000,
     maxOutput: 16384,
     capabilities: ['chat', 'vision', 'function_calling', 'json_mode', 'structured_outputs', 'adaptive_reasoning', 'apply_patch', 'shell'],
-    pricing: { input: 0.015, output: 0.06 }
+    pricing: { input: 0.00175, output: 0.014 }
   },
-  'gpt-5': {
-    id: 'gpt-5',
-    name: 'GPT-5',
+  'gpt-5.2-codex': {
+    id: 'gpt-5.2-codex',
+    name: 'GPT-5.2 Codex',
     contextWindow: 400000,
     maxOutput: 16384,
-    capabilities: ['chat', 'vision', 'function_calling', 'json_mode', 'structured_outputs', 'reasoning'],
-    pricing: { input: 0.01, output: 0.04 }
+    capabilities: ['chat', 'vision', 'function_calling', 'json_mode', 'structured_outputs', 'reasoning', 'code_generation'],
+    pricing: { input: 0.00175, output: 0.014 }
   },
   'gpt-5-mini': {
     id: 'gpt-5-mini',
@@ -147,7 +148,7 @@ export interface OpenAIOptions {
 export class EnhancedOpenAIProvider implements AIProvider {
   name = 'OpenAI Enhanced';
   private client: OpenAI;
-  private defaultModel = 'gpt-5.1';
+  private defaultModel = 'gpt-5.2';  // ✅ CONSOLIDATED Jan 2026
   
   constructor(apiKey?: string) {
     this.client = new OpenAI({
@@ -473,7 +474,7 @@ export class EnhancedOpenAIProvider implements AIProvider {
     userId?: number,
     options?: OpenAIOptions
   ): Promise<string> {
-    const model = options?.model || 'gpt-5';
+    const model = options?.model || 'gpt-5.2';  // ✅ CONSOLIDATED Jan 2026
     const modelConfig = OPENAI_MODELS[model];
     
     if (!modelConfig.capabilities.includes('vision')) {

@@ -18,11 +18,10 @@ export const AI_MODEL_PRICING: Record<string, { input: number; output: number }>
   'gemini-ultra': { input: 5.00, output: 15.00 },
 
   // ============================================
-  // OpenAI (Dec 2025) - 9 models
+  // OpenAI (Jan 2026) - ✅ CONSOLIDATED: Only gpt-5.2 is current
   // ============================================
-  'gpt-5.1': { input: 2.50, output: 10.00 },
-  'gpt-5.1-thinking': { input: 5.00, output: 20.00 },
-  'gpt-5': { input: 5.00, output: 15.00 },
+  'gpt-5.2': { input: 1.75, output: 14.00 },
+  'gpt-5.2-codex': { input: 1.75, output: 14.00 },
   'gpt-5-mini': { input: 0.30, output: 1.20 },
   'gpt-5-nano': { input: 0.10, output: 0.40 },
   'gpt-4.1': { input: 2.00, output: 8.00 },

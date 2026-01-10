@@ -54,7 +54,7 @@ export class AIService {
         available: !!openai,
         configured: !!openaiKey,
         keyPresent: !!process.env.OPENAI_API_KEY,
-        models: openai ? ['gpt-5.1', 'gpt-5', 'gpt-5-mini', 'gpt-5-nano'] : []
+        models: openai ? ['gpt-5.2', 'gpt-5.2-codex', 'gpt-5-mini', 'gpt-5-nano'] : []  // ✅ CONSOLIDATED Jan 2026
       },
       anthropic: {
         available: !!anthropic,
@@ -89,7 +89,7 @@ export class AIService {
     }
     
     if (!isOpenAIModel && !isAnthropicModel) {
-      throw new Error(`Unsupported model: ${model}. Available models: gpt-5.1, gpt-5, gpt-5-mini, claude-opus-4-5-20251124, claude-sonnet-4-5-20250929, claude-haiku-4-5-20251015`);
+      throw new Error(`Unsupported model: ${model}. Available models: gpt-5.2, gpt-5.2-codex, gpt-5-mini, claude-opus-4-5-20251124, claude-sonnet-4-5-20250929, claude-haiku-4-5-20251015`);
     }
   }
 
@@ -152,7 +152,7 @@ export class AIService {
     const isNewGenModel = model.startsWith('gpt-5') || /^o[1-9]/.test(model);
 
     const completionParams: any = {
-      model: model === 'gpt-5' ? 'gpt-5' : 'gpt-5',
+      model: model.startsWith('gpt-5') ? model : 'gpt-5.2',  // ✅ CONSOLIDATED Jan 2026
       messages: messagesWithSystem,
       tools: toolDefinitions,
       tool_choice: tools ? 'auto' : undefined,

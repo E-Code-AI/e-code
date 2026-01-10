@@ -155,7 +155,7 @@ Generate the complete ${fileName} file:`;
         'gpt-5-mini',                     // OpenAI fast, reliable (gpt-4o deprecated Jan 2026)
         'claude-sonnet-4-5-20250929',     // Anthropic balanced
         'gemini-2.5-flash',               // Google fast
-        'gpt-5.1',                        // OpenAI latest
+        'gpt-5.2',                        // ✅ CONSOLIDATED Jan 2026: OpenAI flagship
       ];
       let result: string | null = null;
       let lastError: string | null = null;

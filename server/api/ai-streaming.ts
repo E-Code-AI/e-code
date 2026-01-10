@@ -42,9 +42,9 @@ interface OpenAIModelCapabilities {
 
 const OPENAI_MODEL_CAPABILITIES: Record<string, OpenAIModelCapabilities> = {
   // GPT-5.x family - requires max_completion_tokens, no temperature
-  'gpt-5.1': { requiresMaxCompletionTokens: true, supportsTemperature: false },
-  'gpt-5.1-thinking': { requiresMaxCompletionTokens: true, supportsTemperature: false },
-  'gpt-5': { requiresMaxCompletionTokens: true, supportsTemperature: false },
+  // ✅ CONSOLIDATED Jan 2026: Only gpt-5.2 is current, older versions use model-normalizer
+  'gpt-5.2': { requiresMaxCompletionTokens: true, supportsTemperature: false },
+  'gpt-5.2-codex': { requiresMaxCompletionTokens: true, supportsTemperature: false },
   'gpt-5-mini': { requiresMaxCompletionTokens: true, supportsTemperature: false },
   'gpt-5-nano': { requiresMaxCompletionTokens: true, supportsTemperature: false },
   // O-series - requires max_completion_tokens, no temperature
@@ -1008,7 +1008,7 @@ async function streamOpenAI(res: any, messages: any[], options: any) {
     content: fullContent,
     tool_calls: toolCalls,
     tool_results: toolResults,
-    model: options.model || 'gpt-5'
+    model: options.model || 'gpt-5.2'  // ✅ CONSOLIDATED Jan 2026
   });
   
   // ✅ Return token usage for billing
@@ -1493,11 +1493,12 @@ router.post('/api/agent/chat/stop', ensureAuthenticated, (req, res) => {
  */
 router.get('/api/agent/models', ensureAuthenticated, (req, res) => {
   const models = [
-    // OpenAI Models (December 2025)
-    { provider: 'openai', model: 'gpt-5.1', name: 'GPT-5.1', context: 400000, available: !!process.env.OPENAI_API_KEY },
-    { provider: 'openai', model: 'gpt-5', name: 'GPT-5', context: 400000, available: !!process.env.OPENAI_API_KEY },
+    // OpenAI Models (January 2026) - ✅ CONSOLIDATED: Only gpt-5.2 is current
+    { provider: 'openai', model: 'gpt-5.2', name: 'GPT-5.2', context: 400000, available: !!process.env.OPENAI_API_KEY },
+    { provider: 'openai', model: 'gpt-5.2-codex', name: 'GPT-5.2 Codex', context: 400000, available: !!process.env.OPENAI_API_KEY },
     { provider: 'openai', model: 'gpt-5-mini', name: 'GPT-5 Mini', context: 400000, available: !!process.env.OPENAI_API_KEY },
     { provider: 'openai', model: 'gpt-5-nano', name: 'GPT-5 Nano', context: 400000, available: !!process.env.OPENAI_API_KEY },
+    { provider: 'openai', model: 'gpt-4.1', name: 'GPT-4.1', context: 1000000, available: !!process.env.OPENAI_API_KEY },
     { provider: 'openai', model: 'o3', name: 'o3 (Reasoning)', context: 128000, available: !!process.env.OPENAI_API_KEY },
     { provider: 'openai', model: 'o4-mini', name: 'o4 Mini', context: 128000, available: !!process.env.OPENAI_API_KEY },
     

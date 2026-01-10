@@ -231,7 +231,7 @@ const MODEL_TIERS: Record<string, Record<string, string | null>> = {
     xai: null
   },
   quality: {
-    openai: 'gpt-5.1',
+    openai: 'gpt-5.2',  // ✅ CONSOLIDATED Jan 2026
     anthropic: 'claude-opus-4-5-20251124',
     google: 'gemini-2.5-pro',
     xai: 'grok-4'
@@ -384,7 +384,7 @@ export class AgentOrchestratorService extends EventEmitter {
   async createSession(
     userId: string,
     projectId?: string,
-    model: string = 'gpt-5.1',
+    model: string = 'gpt-5.2',  // ✅ CONSOLIDATED Jan 2026
     autonomousMode: boolean = false
   ): Promise<AgentSession> {
     const startTime = Date.now();
@@ -478,14 +478,14 @@ export class AgentOrchestratorService extends EventEmitter {
       // Add system prompt with capabilities
       const systemMessage: AgentMessage = {
         role: 'system',
-        content: `You are GPT-5.1, an advanced AI assistant running on the E-Code Platform with adaptive reasoning. You are capable of helping users with programming, architecture design, and building applications. Respond helpfully and concisely.`
+        content: `You are GPT-5.2, an advanced AI assistant running on the E-Code Platform with adaptive reasoning. You are capable of helping users with programming, architecture design, and building applications. Respond helpfully and concisely.`
       };
 
       const allMessages = [systemMessage, ...messages];
 
       try {
         const completion = await this.openai.chat.completions.create({
-          model: 'gpt-5.1',  // ✅ GPT-5.1 UPGRADE (Nov 17, 2025): Latest flagship with adaptive reasoning
+          model: 'gpt-5.2',  // ✅ CONSOLIDATED Jan 2026: Latest flagship with adaptive reasoning
           messages: allMessages.map(m => ({
             role: m.role as any,
             content: m.content || ''
@@ -826,7 +826,7 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
         logger.warn(`[makeIntelligentDelegationDecision] ⚠️ No ${mode} tier providers available, using session model ${sessionModel}`);
       } else {
         // Absolute fallback: default to openai (may fail)
-        selectedModel = tierModels['openai'] || 'gpt-5.1';
+        selectedModel = tierModels['openai'] || 'gpt-5.2';  // ✅ CONSOLIDATED Jan 2026
         selectedProvider = 'openai';
         logger.warn(`[makeIntelligentDelegationDecision] ⚠️ No providers available, defaulting to openai with ${selectedModel} (may fail)`);
       }
@@ -937,7 +937,7 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
     // ✅ INTELLIGENT DELEGATION (Dec 15, 2025): Make complexity-based model routing decision
     const delegationDecision = this.makeIntelligentDelegationDecision(
       taskClassification,
-      session.model || 'gpt-5.1',
+      session.model || 'gpt-5.2',  // ✅ CONSOLIDATED Jan 2026
       prompt.length
     );
     
@@ -1263,9 +1263,8 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
   private calculateCost(provider: string, model: string, tokens: number): string {
     const rates: Record<string, Record<string, number>> = {
       openai: {
-        'gpt-5': 0.00003,
-        'gpt-5.1': 0.00004,
-        'gpt-5.2': 0.00005,
+        'gpt-5.2': 0.000035,  // ✅ CONSOLIDATED Jan 2026: $1.75 input, $14 output
+        'gpt-5.2-codex': 0.000035,
         'gpt-5-mini': 0.000015,
         'gpt-5-nano': 0.00001,
         'gpt-4.1': 0.00002,
@@ -2024,7 +2023,7 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
             userId: userIdNum,
             messages: [],
             context: { workspaceCreation: true },
-            model: 'gpt-5.1',
+            model: 'gpt-5.2',  // ✅ CONSOLIDATED Jan 2026
             agentMode: 'build'
           })
           .returning();
@@ -2040,7 +2039,7 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
         userId: userIdNum,
         role: 'assistant',
         content,
-        model: 'gpt-5.1',
+        model: 'gpt-5.2',  // ✅ CONSOLIDATED Jan 2026
         metadata: {
           tokensUsed: metadata?.tokensUsed ?? 0,
           processingTimeMs: metadata?.processingTimeMs,

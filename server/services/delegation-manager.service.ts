@@ -58,7 +58,7 @@ const MODEL_TIERS: Record<ModelTier, Record<Provider, { model: string; costPer1k
     moonshot: { model: 'kimi-k2-0711-preview', costPer1kTokens: 0.0025, avgLatencyMs: 1500 }
   },
   quality: {
-    openai: { model: 'gpt-5.1', costPer1kTokens: 0.005, avgLatencyMs: 2000 },
+    openai: { model: 'gpt-5.2', costPer1kTokens: 0.005, avgLatencyMs: 2000 },  // ✅ CONSOLIDATED Jan 2026
     anthropic: { model: 'claude-opus-4-5-20251124', costPer1kTokens: 0.015, avgLatencyMs: 3000 },
     google: { model: 'gemini-2.5-pro', costPer1kTokens: 0.00125, avgLatencyMs: 2500 },
     xai: { model: 'grok-4', costPer1kTokens: 0.01, avgLatencyMs: 2000 },

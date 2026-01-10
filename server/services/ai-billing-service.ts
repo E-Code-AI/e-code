@@ -13,16 +13,17 @@ const logger = createLogger('ai-billing-service');
 
 // Pricing per 1K tokens (similar to Replit's pricing model)
 export const AI_MODEL_PRICING = {
-  // OpenAI Models - Latest pricing as of December 2025
-  'gpt-5.1': {
-    input: 0.005,   // $5 per 1M input tokens
-    output: 0.015,  // $15 per 1M output tokens  
-    creditsPerThousand: 0.02 // Latest flagship with adaptive reasoning
+  // ✅ CONSOLIDATED Jan 2026: Only gpt-5.2 is current
+  // OpenAI Models - Latest pricing as of January 2026
+  'gpt-5.2': {
+    input: 0.00175,   // $1.75 per 1M input tokens
+    output: 0.014,    // $14 per 1M output tokens  
+    creditsPerThousand: 0.0157 // Latest flagship with advanced reasoning
   },
-  'gpt-5': {
-    input: 0.0025,  // $2.50 per 1M input tokens
-    output: 0.01,   // $10 per 1M output tokens  
-    creditsPerThousand: 0.0125 // Updated pricing for GPT-5
+  'gpt-5.2-codex': {
+    input: 0.00175,   // $1.75 per 1M input tokens
+    output: 0.014,    // $14 per 1M output tokens  
+    creditsPerThousand: 0.0157 // Coding optimized variant
   },
   'gpt-5-mini': {
     input: 0.00015, // $0.15 per 1M input tokens

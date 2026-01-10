@@ -13,11 +13,16 @@ const logger = createLogger('model-normalizer');
 // Comprehensive model mapping: alias → official enum value
 // ✅ UPDATED Dec 5, 2025: Added all current provider models for complete coverage
 const MODEL_NORMALIZATION_MAP: Record<string, string> = {
-  // OpenAI aliases & legacy names (COMPLETE COVERAGE)
-  'gpt-4-turbo-preview': 'gpt-5',
+  // OpenAI aliases & legacy names (COMPLETE COVERAGE - Jan 2026)
+  // ✅ CONSOLIDATED: Only gpt-5.2 family is current - older versions mapped for backward compatibility
+  'gpt-5': 'gpt-5.2',  // ❌ DEPRECATED Jan 2026 → upgrade to GPT-5.2
+  'gpt-5.1': 'gpt-5.2',  // ❌ DEPRECATED Jan 2026 → upgrade to GPT-5.2
+  'gpt-5.2': 'gpt-5.2',  // Identity mapping (current)
+  'gpt-5.2-codex': 'gpt-5.2-codex',  // Identity mapping (current)
+  'gpt-4-turbo-preview': 'gpt-5.2',
   'gpt-4-turbo': 'gpt-4.1',
-  'gpt-4': 'gpt-5',  // Upgrade to GPT-5
-  'gpt-4o': 'gpt-5',  // ❌ DEPRECATED Feb 2026 → upgrade to GPT-5
+  'gpt-4': 'gpt-5.2',  // Upgrade to GPT-5.2
+  'gpt-4o': 'gpt-5.2',  // ❌ DEPRECATED Feb 2026 → upgrade to GPT-5.2
   'gpt-4o-mini': 'gpt-5-mini',  // ❌ DEPRECATED Feb 2026 → upgrade to GPT-5-mini
   'gpt-3.5-turbo': 'gpt-5-mini',
   'gpt-3.5': 'gpt-5-nano',

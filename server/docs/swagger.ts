@@ -188,19 +188,32 @@ const swaggerDefinition = {
       },
       AIModel: {
         type: 'string',
-        description: 'Supported AI models - December 2025 catalog',
+        description: 'Supported AI models - January 2026 catalog (CONSOLIDATED)',
         enum: [
-          'gpt-5.1',
-          'gpt-5',
+          'gpt-5.2',
+          'gpt-5.2-codex',
           'gpt-5-mini',
           'gpt-5-nano',
+          'gpt-4.1',
+          'gpt-4.1-mini',
+          'gpt-4.1-nano',
+          'o3',
+          'o4-mini',
           'claude-opus-4-5-20251124',
+          'claude-opus-4-1-20250805',
           'claude-sonnet-4-5-20250929',
+          'claude-sonnet-4-20250514',
           'claude-haiku-4-5-20251015',
           'gemini-2.5-pro',
           'gemini-2.5-flash',
-          'grok-4-fast',
-          'grok-4'
+          'gemini-2.0-flash',
+          'grok-4-1-fast-reasoning',
+          'grok-4-1-fast',
+          'grok-4',
+          'kimi-k2-thinking',
+          'kimi-k2-thinking-turbo',
+          'kimi-k2-turbo-preview',
+          'kimi-k2-0905-preview'
         ]
       },
       AgentPlan: {

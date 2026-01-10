@@ -52,24 +52,8 @@ export const AI_MODELS: AIModel[] = [
     supportsStreaming: true,
     costPer1kTokens: 0.014  // $14 output per 1M tokens
   },
-  {
-    id: 'gpt-5.1',
-    name: 'GPT-5.1',
-    provider: 'openai',
-    description: 'Previous flagship - adaptive reasoning with apply_patch & shell tools (Nov 12, 2025)',
-    maxTokens: 400000,
-    supportsStreaming: true,
-    costPer1kTokens: 0.005
-  },
-  {
-    id: 'gpt-5',
-    name: 'GPT-5',
-    provider: 'openai',
-    description: 'Previous flagship - legacy but available (Aug 2025)',
-    maxTokens: 400000,
-    supportsStreaming: true,
-    costPer1kTokens: 0.005
-  },
+  // ❌ gpt-5.1 and gpt-5 REMOVED (Jan 2026) - consolidated to gpt-5.2
+  // Use model-normalizer.ts for backward compatibility mappings
   {
     id: 'gpt-5-mini',
     name: 'GPT-5 Mini',
@@ -1239,7 +1223,7 @@ export class AIProviderManager {
    */
   getAvailableProviders(): Array<{ name: string; isAvailable: boolean }> {
     const providerMap: Record<string, string[]> = {
-      'OpenAI': ['gpt-5.2', 'gpt-5.2-codex', 'gpt-5.1', 'gpt-5', 'gpt-5-mini', 'gpt-5-nano', 'gpt-4.1', 'gpt-4.1-mini', 'gpt-4.1-nano', 'o3', 'o4-mini'],
+      'OpenAI': ['gpt-5.2', 'gpt-5.2-codex', 'gpt-5-mini', 'gpt-5-nano', 'gpt-4.1', 'gpt-4.1-mini', 'gpt-4.1-nano', 'o3', 'o4-mini'],  // ✅ CONSOLIDATED Jan 2026
       'Claude': ['claude-opus-4-5-20251101', 'claude-opus-4-1-20250805', 'claude-sonnet-4-5-20250929', 'claude-sonnet-4-20250514', 'claude-haiku-4-5'],
       'Anthropic': ['claude-sonnet-4-5-20250929'],
       'Gemini': ['gemini-2.5-flash', 'gemini-2.5-pro'],
