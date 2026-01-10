@@ -141,26 +141,6 @@ export function AllModelsSelector() {
       available: true
     },
     {
-      id: 'gpt-4o',
-      name: 'GPT-4o',
-      description: 'Multimodal flagship - text, vision, audio',
-      provider: 'OpenAI',
-      contextWindow: 128000,
-      capabilities: ['Chat', 'Code', 'Vision', 'Audio'],
-      pricing: { input: 2.5, output: 10, currency: 'USD', unit: '1M tokens' },
-      available: true
-    },
-    {
-      id: 'gpt-4o-mini',
-      name: 'GPT-4o Mini',
-      description: 'Cost-effective multimodal - fast and affordable for everyday tasks',
-      provider: 'OpenAI',
-      contextWindow: 128000,
-      capabilities: ['Chat', 'Code', 'Vision'],
-      pricing: { input: 0.15, output: 0.6, currency: 'USD', unit: '1M tokens' },
-      available: true
-    },
-    {
       id: 'o3',
       name: 'O3',
       description: 'Advanced reasoning for complex problem solving',
@@ -252,16 +232,6 @@ export function AllModelsSelector() {
       contextWindow: 1000000,
       capabilities: ['Chat', 'Code', 'Fast Reasoning', 'Audio'],
       pricing: { input: 0.075, output: 0.3, currency: 'USD', unit: '1M tokens' },
-      available: true
-    },
-    {
-      id: 'gemini-2.0-flash',
-      name: 'Gemini 2.0 Flash',
-      description: 'Next-gen features - 1M context with native tool use (Jan 2025)',
-      provider: 'Google',
-      contextWindow: 1000000,
-      capabilities: ['Chat', 'Code', 'Tools', 'Multimodal'],
-      pricing: { input: 0.1, output: 0.4, currency: 'USD', unit: '1M tokens' },
       available: true
     },
     
