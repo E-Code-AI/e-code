@@ -1999,7 +1999,7 @@ Provide specific code changes to fix these issues.`;
     sessionId: string
   ): Promise<WorkflowStep[]> {
     const completion = await this.openai.chat.completions.create({
-      model: 'gpt-5',
+      model: 'gpt-5.2',
       messages: [
         {
           role: 'system',

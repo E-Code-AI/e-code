@@ -92,7 +92,7 @@ export default function ChatGPTAdmin() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
-  const [selectedModel, setSelectedModel] = useState('gpt-5');
+  const [selectedModel, setSelectedModel] = useState('gpt-5.2');
   const [extendedThinking, setExtendedThinking] = useState(true);
   const [highPower, setHighPower] = useState(true);
   const [activeTab, setActiveTab] = useState('chat');

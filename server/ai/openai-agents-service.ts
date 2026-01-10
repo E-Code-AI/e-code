@@ -307,7 +307,7 @@ export class OpenAIAgentsService {
       // Track usage for billing
       if (runStatus.usage) {
         await aiBillingService.trackAIUsage(userId, {
-          model: runStatus.model || 'gpt-5',
+          model: runStatus.model || 'gpt-5.2',
           provider: 'OpenAI',
           inputTokens: runStatus.usage.prompt_tokens || 0,
           outputTokens: runStatus.usage.completion_tokens || 0,
@@ -419,8 +419,8 @@ export class OpenAIAgentsService {
   }>> {
     return [
       {
-        id: 'gpt-5',
-        name: 'GPT-5 (Latest)',
+        id: 'gpt-5.2',
+        name: 'GPT-5.2 (Latest)',
         capabilities: ['chat', 'vision', 'function_calling', 'code_interpreter', 'file_search', 'reasoning', 'complex_analysis'],
         contextWindow: 256000,
         maxOutput: 32768,
