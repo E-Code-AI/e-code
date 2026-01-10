@@ -66,18 +66,17 @@ const MODEL_NORMALIZATION_MAP: Record<string, string> = {
   'grok-4': 'grok-4',  // Identity mapping
   'grok-4-fast': 'grok-4-fast',  // Identity mapping
   
-  // Moonshot AI aliases (COMPLETE COVERAGE)
-  'kimi': 'kimi-k2-0711-preview',
+  // Moonshot AI / Kimi K2 aliases (Jan 2026 - 4 models)
+  'kimi': 'kimi-k2-thinking',
   'kimi-thinking': 'kimi-k2-thinking',
-  'kimi-k2': 'kimi-k2-0711-preview',  // Legacy fallback
-  'kimi-k2-turbo': 'kimi-k2-0711-preview',  // Turbo doesn't exist
-  'moonshot-v1-8k': 'kimi-k2-0711-preview',  // ✅ NEW: Moonshot model alias
-  'moonshot-v1-32k': 'moonshot-v1-32k',  // ✅ NEW: Current model (identity)
-  'moonshot-v1-128k': 'moonshot-v1-128k',  // ✅ NEW: Large context model
-  'kimi-k2-0711-preview': 'kimi-k2-0711-preview',  // Identity mapping
-  'kimi-k2-0904-preview': 'kimi-k2-0711-preview',  // ⚠️ REMOVED: Model doesn't exist, alias to 0711
-  'kimi-k2-0905-preview': 'kimi-k2-0711-preview',  // Legacy alias → valid model
+  'kimi-k2': 'kimi-k2-thinking',
+  'moonshot-v1-8k': 'kimi-k2-turbo-preview',  // ✅ Legacy → new turbo
+  'moonshot-v1-32k': 'kimi-k2-turbo-preview',  // ✅ Legacy → new turbo
+  'moonshot-v1-128k': 'kimi-k2-thinking',  // ✅ Legacy → new thinking (large context)
   'kimi-k2-thinking': 'kimi-k2-thinking',  // Identity mapping
+  'kimi-k2-thinking-turbo': 'kimi-k2-thinking-turbo',  // Identity mapping
+  'kimi-k2-turbo-preview': 'kimi-k2-turbo-preview',  // Identity mapping
+  'kimi-k2-0905-preview': 'kimi-k2-0905-preview',  // Identity mapping
 };
 
 /**
@@ -118,39 +117,38 @@ export function normalizeModelName(modelName: string | any | undefined, provider
   }
   
   // Step 3: Provider-specific fallback defaults (MUST be defined BEFORE use)
-  // ✅ ALIGNED Dec 5, 2025: Defaults MUST match ai-streaming.ts getDefaultModel()
+  // ✅ UPDATED Jan 2026: All defaults aligned with current production models
   const providerDefaults: Record<string, string> = {
-    'openai': 'gpt-5-mini',  // ✅ UPDATED Jan 2026: gpt-4o-mini deprecated
+    'openai': 'gpt-5-mini',
     'anthropic': 'claude-sonnet-4-5-20250929',
-    'gemini': 'gemini-2.5-flash',  // ✅ UPDATED Jan 2026: gemini-2.0-flash deprecated
-    'google': 'gemini-2.5-flash',
-    'xai': 'grok-4-fast',
-    'moonshot': 'moonshot-v1-32k',  // ✅ ALIGNED with ai-streaming default
+    'gemini': 'gemini-3-flash',  // ✅ UPDATED Jan 2026: New flagship
+    'google': 'gemini-3-flash',
+    'xai': 'grok-4',
+    'moonshot': 'kimi-k2-thinking',  // ✅ UPDATED Jan 2026: Kimi K2 default
   };
   
   // Step 4: Try exact match (already valid enum value - COMPLETE LIST)
-  // ✅ UPDATED Dec 5, 2025: Added all current production models
+  // ✅ UPDATED Jan 2026: All production models
   const validEnumValues = [
-    // Legacy models (backward compat)
+    // Legacy models (backward compat - kept in DB enum)
     'gpt-4', 'gpt-4-turbo',
     'claude-3-opus', 'claude-3-sonnet', 'claude-3-5-sonnet', 'claude-3-haiku',
-    'gemini-pro', 'gemini-ultra',
+    'gemini-pro', 'gemini-ultra', 'gpt-5.1', 'gpt-5',
     
-    // OpenAI current models (Jan 2026 - gpt-4o/gpt-4o-mini deprecated)
-    'gpt-5.2', 'gpt-5.2-codex', 'gpt-5.1', 'gpt-5', 'gpt-5-mini', 'gpt-5-nano', 'gpt-4.1', 'gpt-4.1-mini', 'gpt-4.1-nano', 'o3', 'o4-mini',
+    // OpenAI (Jan 2026 - 10 models)
+    'gpt-5.2', 'gpt-5.2-codex', 'gpt-5-mini', 'gpt-5-nano', 'gpt-4.1', 'gpt-4.1-mini', 'gpt-4.1-nano', 'gpt-4o', 'gpt-4o-mini', 'o3', 'o4-mini',
     
-    // Anthropic current models (Dec 2025) - Only Opus 4.5, Sonnet 4.5, Haiku 4.5
-    'claude-opus-4-5-20251124', 'claude-sonnet-4-5-20250929', 'claude-haiku-4-5-20251015',
+    // Anthropic (Jan 2026 - 5 models)
+    'claude-opus-4-5-20251101', 'claude-opus-4-1-20250805', 'claude-sonnet-4-5-20250929', 'claude-sonnet-4-20250514', 'claude-haiku-4-5-20251015',
     
-    // Gemini current models (Jan 2026 - gemini-2.0-flash deprecated Mar 2026)
-    'gemini-2.5-pro', 'gemini-2.5-flash',
+    // Google Gemini (Jan 2026 - 5 models with Gemini 3)
+    'gemini-3-flash', 'gemini-3-pro', 'gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.0-flash',
     
-    // xAI Grok current models
-    'grok-4', 'grok-4-fast',
+    // xAI Grok (Jan 2026 - 4 models)
+    'grok-4-1-fast-reasoning', 'grok-4-1-fast', 'grok-4', 'grok-3',
     
-    // Moonshot AI current models - ✅ VERIFIED Dec 5, 2025: Only 4 models exist
-    'kimi-k2-0711-preview', 'kimi-k2-thinking',
-    'moonshot-v1-32k', 'moonshot-v1-128k'
+    // Moonshot AI / Kimi K2 (Jan 2026 - 4 models)
+    'kimi-k2-thinking', 'kimi-k2-thinking-turbo', 'kimi-k2-turbo-preview', 'kimi-k2-0905-preview'
   ];
   
   if (normalizedInput && validEnumValues.includes(normalizedInput)) {

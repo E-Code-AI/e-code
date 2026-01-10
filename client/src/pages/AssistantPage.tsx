@@ -53,11 +53,17 @@ interface AIModel {
 }
 
 const AI_MODELS: AIModel[] = [
-  { id: 'gpt-4', name: 'GPT-4 Turbo', provider: 'OpenAI', description: 'Most capable model for complex tasks', speed: 'medium', capability: 'expert' },
-  { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', provider: 'OpenAI', description: 'Fast and cost-effective', speed: 'fast', capability: 'advanced' },
-  { id: 'claude-3-opus', name: 'Claude 3 Opus', provider: 'Anthropic', description: 'Advanced reasoning and analysis', speed: 'medium', capability: 'expert' },
-  { id: 'claude-3-sonnet', name: 'Claude 3 Sonnet', provider: 'Anthropic', description: 'Balanced performance', speed: 'fast', capability: 'advanced' },
-  { id: 'gemini-pro', name: 'Gemini Pro', provider: 'Google', description: 'Multi-modal capabilities', speed: 'fast', capability: 'advanced' },
+  // OpenAI - Jan 2026
+  { id: 'gpt-5.2', name: 'GPT-5.2', provider: 'OpenAI', description: 'Flagship - 90% SWE-bench, PhD-level reasoning', speed: 'medium', capability: 'expert' },
+  { id: 'gpt-5.2-codex', name: 'GPT-5.2 Codex', provider: 'OpenAI', description: 'Coding optimized with 2M context', speed: 'medium', capability: 'expert' },
+  { id: 'gpt-4.1', name: 'GPT-4.1', provider: 'OpenAI', description: '1M context, 21% better coding', speed: 'fast', capability: 'advanced' },
+  // Anthropic - Jan 2026
+  { id: 'claude-opus-4-5-20251101', name: 'Claude Opus 4.5', provider: 'Anthropic', description: '80.9% SWE-bench, best reasoning', speed: 'medium', capability: 'expert' },
+  { id: 'claude-sonnet-4-5-20250929', name: 'Claude Sonnet 4.5', provider: 'Anthropic', description: 'Production agents, balanced', speed: 'fast', capability: 'advanced' },
+  // Google Gemini - Jan 2026
+  { id: 'gemini-3-flash', name: 'Gemini 3 Flash', provider: 'Google', description: '90.4% GPQA Diamond, agentic coding', speed: 'fast', capability: 'expert' },
+  { id: 'gemini-3-pro', name: 'Gemini 3 Pro', provider: 'Google', description: 'State-of-art reasoning', speed: 'medium', capability: 'expert' },
+  { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', provider: 'Google', description: 'Hybrid reasoning, low latency', speed: 'fast', capability: 'advanced' },
 ];
 
 export default function AssistantPage() {
@@ -68,7 +74,7 @@ export default function AssistantPage() {
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showStarredOnly, setShowStarredOnly] = useState(false);
-  const [selectedModel, setSelectedModel] = useState('gpt-4');
+  const [selectedModel, setSelectedModel] = useState('gpt-5.2');
   const [temperature, setTemperature] = useState([0.7]);
   const [maxTokens, setMaxTokens] = useState([2048]);
   const [streamResponse, setStreamResponse] = useState(true);
