@@ -107,7 +107,7 @@ export default function ChatGPTAdmin() {
 
   // Check admin status
   useEffect(() => {
-    if (!user?.isAdmin) {
+    if (user && user.role !== 'admin') {
       window.location.href = '/';
     }
   }, [user]);
@@ -158,12 +158,7 @@ export default function ChatGPTAdmin() {
   // Create session mutation
   const createSessionMutation = useMutation({
     mutationFn: async (data: { model: string }) => {
-      const res = await apiRequest('/api/admin/agent/sessions', {
-        method: 'POST',
-        body: JSON.stringify(data)
-      });
-      if (!res.ok) throw new Error('Failed to create session');
-      return await res.json();
+      return await apiRequest('POST', '/api/admin/agent/sessions', data);
     },
     onSuccess: (data) => {
       setActiveSession(data.session);
@@ -185,13 +180,7 @@ export default function ChatGPTAdmin() {
   const executeAgentMutation = useMutation({
     mutationFn: async (data: { messages: Message[] }) => {
       if (!activeSession) throw new Error('No active session');
-      
-      const res = await apiRequest(`/api/admin/agent/sessions/${activeSession.id}/execute`, {
-        method: 'POST',
-        body: JSON.stringify(data)
-      });
-      if (!res.ok) throw new Error('Failed to execute agent');
-      return await res.json();
+      return await apiRequest('POST', `/api/admin/agent/sessions/${activeSession.id}/execute`, data);
     },
     onSuccess: (data) => {
       if (data.message) {
@@ -334,18 +323,12 @@ export default function ChatGPTAdmin() {
     if (!activeSession) return;
     
     try {
-      const res = await apiRequest('/api/admin/agent/files/list', {
-        method: 'POST',
-        body: JSON.stringify({
-          sessionId: activeSession.id,
-          path: '.',
-          recursive: false
-        })
+      const data = await apiRequest('POST', '/api/admin/agent/files/list', {
+        sessionId: activeSession.id,
+        path: '.',
+        recursive: false
       });
-      if (res.ok) {
-        const data = await res.json();
-        setFileExplorer(data.files || []);
-      }
+      setFileExplorer(data.files || []);
     } catch (error) {
       console.error('Error refreshing file explorer:', error);
     }
@@ -356,18 +339,12 @@ export default function ChatGPTAdmin() {
     if (!activeSession) return;
     
     try {
-      const res = await apiRequest('/api/admin/agent/files/read', {
-        method: 'POST',
-        body: JSON.stringify({
-          sessionId: activeSession.id,
-          path
-        })
+      const data = await apiRequest('POST', '/api/admin/agent/files/read', {
+        sessionId: activeSession.id,
+        path
       });
-      if (res.ok) {
-        const data = await res.json();
-        setSelectedFile(path);
-        setFileContent(data.content || '');
-      }
+      setSelectedFile(path);
+      setFileContent(data.content || '');
     } catch (error) {
       console.error('Error loading file:', error);
     }
@@ -378,23 +355,15 @@ export default function ChatGPTAdmin() {
     if (!activeSession || !selectedFile) return;
     
     try {
-      const res = await apiRequest('/api/admin/agent/files/write', {
-        method: 'POST',
-        body: JSON.stringify({
-          sessionId: activeSession.id,
-          path: selectedFile,
-          content: fileContent
-        })
+      await apiRequest('POST', '/api/admin/agent/files/write', {
+        sessionId: activeSession.id,
+        path: selectedFile,
+        content: fileContent
       });
-      
-      if (res.ok) {
-        toast({
-          title: 'File Saved',
-          description: `${selectedFile} has been updated`,
-        });
-      } else {
-        throw new Error('Failed to save file');
-      }
+      toast({
+        title: 'File Saved',
+        description: `${selectedFile} has been updated`,
+      });
     } catch (error: any) {
       toast({
         title: 'Save Error',
@@ -412,21 +381,12 @@ export default function ChatGPTAdmin() {
     setIsExecuting(true);
     
     try {
-      const res = await apiRequest('/api/admin/agent/commands/execute', {
-        method: 'POST',
-        body: JSON.stringify({
-          sessionId: activeSession.id,
-          command: command.split(' ')[0],
-          args: command.split(' ').slice(1)
-        })
+      const data = await apiRequest('POST', '/api/admin/agent/commands/execute', {
+        sessionId: activeSession.id,
+        command: command.split(' ')[0],
+        args: command.split(' ').slice(1)
       });
-      
-      if (res.ok) {
-        const data = await res.json();
-        setCommandOutput(data.stdout || data.stderr || '');
-      } else {
-        throw new Error('Failed to execute command');
-      }
+      setCommandOutput(data.stdout || data.stderr || '');
     } catch (error: any) {
       setCommandOutput(`Error: ${error.message}`);
     } finally {
@@ -438,7 +398,7 @@ export default function ChatGPTAdmin() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  if (!user?.isAdmin) {
+  if (user?.role !== 'admin') {
     return <div>Access denied</div>;
   }
 
