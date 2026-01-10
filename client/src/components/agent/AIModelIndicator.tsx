@@ -84,10 +84,12 @@ function getProviderDisplayName(provider: string): string {
 }
 
 function getModelDisplayName(model: string): string {
-  if (model.includes('gpt-5.1')) return 'GPT-5.1';
+  // ✅ CONSOLIDATED Jan 2026: gpt-5.2 is current flagship
+  if (model.includes('gpt-5.2-codex')) return 'GPT-5.2 Codex';
+  if (model.includes('gpt-5.2')) return 'GPT-5.2';
   if (model.includes('gpt-5-nano')) return 'GPT-5 Nano';
   if (model.includes('gpt-5-mini')) return 'GPT-5 Mini';
-  if (model.includes('gpt-5')) return 'GPT-5';
+  if (model.includes('gpt-5')) return 'GPT-5';  // Legacy fallback
   if (model.includes('claude-opus')) return 'Claude Opus';
   if (model.includes('claude-sonnet')) return 'Claude Sonnet';
   if (model.includes('claude-haiku')) return 'Claude Haiku';

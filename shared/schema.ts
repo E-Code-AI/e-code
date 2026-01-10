@@ -69,7 +69,7 @@ export const mentorshipStatusEnum = pgEnum('mentorship_status', ['active', 'comp
 export const challengeStatusEnum = pgEnum('challenge_status', ['draft', 'published', 'archived']);
 export const submissionStatusEnum = pgEnum('submission_status', ['pending', 'accepted', 'rejected']);
 export const subscriptionTierEnum = pgEnum('subscription_tier', ['free', 'core', 'teams', 'enterprise']);
-// AI Models - Production enum (Dec 2025) - 32 values: 8 legacy + 24 current
+// AI Models - Production enum (Jan 2026) - CONSOLIDATED: gpt-5/gpt-5.1 → gpt-5.2
 export const aiModelEnum = pgEnum('ai_model', [
   // Legacy models (kept for backward compatibility with existing data)
   'gpt-4',
@@ -80,13 +80,17 @@ export const aiModelEnum = pgEnum('ai_model', [
   'claude-3-haiku',
   'gemini-pro',
   'gemini-ultra',
+  'gpt-5.1',  // DEPRECATED - maps to gpt-5.2 in normalizer
+  'gpt-5',    // DEPRECATED - maps to gpt-5.2 in normalizer
   
-  // OpenAI (Dec 2025) - 8 models
-  'gpt-5.1',
-  'gpt-5',
+  // OpenAI (Jan 2026) - 10 models CONSOLIDATED
+  'gpt-5.2',
+  'gpt-5.2-codex',
   'gpt-5-mini',
   'gpt-5-nano',
   'gpt-4.1',
+  'gpt-4.1-mini',
+  'gpt-4.1-nano',
   'gpt-4o',
   'gpt-4o-mini',
   'o3',
@@ -1961,31 +1965,38 @@ export type InsertAuditLog = z.infer<typeof insertAuditLogSchema>;
 export type AgentMessage = typeof agentMessages.$inferSelect;
 export type InsertAgentMessage = z.infer<typeof insertAgentMessageSchema>;
 
-// AI Model Enum Values - VRAIS modèles
+// AI Model Enum Values - CONSOLIDATED January 2026
+// NOTE: gpt-5 and gpt-5.1 are DEPRECATED - use gpt-5.2
 export const AI_MODELS = [
-  // OpenAI (vrais selon platform.openai.com/docs/models)
-  'gpt-5.1',
-  'gpt-5',
+  // OpenAI (Jan 2026) - CONSOLIDATED
+  'gpt-5.2',
+  'gpt-5.2-codex',
   'gpt-5-mini',
   'gpt-5-nano',
   'gpt-4.1',
-  'gpt-4o',
+  'gpt-4.1-mini',
+  'gpt-4.1-nano',
   'o3',
   'o4-mini',
-  // Anthropic (Sept-Oct 2025)
-  'claude-sonnet-4-5-20250929',
+  // Anthropic (Jan 2026)
+  'claude-opus-4-5-20251124',
   'claude-opus-4-1-20250805',
+  'claude-sonnet-4-5-20250929',
+  'claude-sonnet-4-20250514',
   'claude-haiku-4-5-20251015',
-  // Google Gemini (Nov 2025)
+  // Google Gemini (Jan 2026)
   'gemini-2.5-pro',
   'gemini-2.5-flash',
-  // xAI (July-Sept 2025)
+  'gemini-2.0-flash',
+  // xAI (Jan 2026)
+  'grok-4-1-fast-reasoning',
+  'grok-4-1-fast',
   'grok-4',
-  'grok-4-fast',
-  // Moonshot AI (Nov 2025) - ✅ ALIGNED with aiModelEnum
-  'kimi-k2-0711-preview',
-  'kimi-k2-0904-preview',
-  'kimi-k2-thinking'
+  // Moonshot AI (Jan 2026)
+  'kimi-k2-thinking',
+  'kimi-k2-thinking-turbo',
+  'kimi-k2-turbo-preview',
+  'kimi-k2-0905-preview'
 ] as const;
 export type AiModel = typeof AI_MODELS[number];
 

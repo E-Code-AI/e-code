@@ -13,14 +13,13 @@
 export type { UserId } from './schema';
 export { normalizeUserId, isValidUserId } from './schema';
 
-// AI Models enum values (for mobile model selector) - UPDATED JANUARY 2026
+// AI Models enum values (for mobile model selector) - CONSOLIDATED JANUARY 2026
 // Source: Official provider documentation verified January 2026
+// NOTE: gpt-5 and gpt-5.1 are DEPRECATED - use gpt-5.2
 export const AI_MODELS = [
-  // OpenAI Models (Jan 2026)
+  // OpenAI Models (Jan 2026) - CONSOLIDATED
   'gpt-5.2',
   'gpt-5.2-codex',
-  'gpt-5.1',
-  'gpt-5',
   'gpt-5-mini',
   'gpt-5-nano',
   'gpt-4.1',

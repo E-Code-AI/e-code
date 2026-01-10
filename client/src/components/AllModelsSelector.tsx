@@ -49,11 +49,11 @@ export function AllModelsSelector() {
     ...(openaiModels?.models || []),
     ...(opensourceData?.models || []),
     
-    // OpenAI - Latest Models (UPDATED January 2025)
+    // OpenAI - January 2026 CONSOLIDATED (gpt-5/gpt-5.1 → gpt-5.2)
     {
       id: 'gpt-5.2',
       name: 'GPT-5.2',
-      description: 'Newest flagship - advanced reasoning with 400K context (Dec 2025)',
+      description: 'Current flagship - advanced reasoning with 400K context (Jan 2026)',
       provider: 'OpenAI',
       contextWindow: 400000,
       capabilities: ['Chat', 'Code', 'Reasoning', 'Tools'],
@@ -63,31 +63,11 @@ export function AllModelsSelector() {
     {
       id: 'gpt-5.2-codex',
       name: 'GPT-5.2 Codex',
-      description: 'Coding optimized variant - enhanced code generation & debugging (Dec 2025)',
+      description: 'Coding optimized - enhanced code generation & debugging (Jan 2026)',
       provider: 'OpenAI',
       contextWindow: 400000,
       capabilities: ['Chat', 'Code', 'Debugging', 'Tools'],
       pricing: { input: 1.75, output: 14, currency: 'USD', unit: '1M tokens' },
-      available: true
-    },
-    {
-      id: 'gpt-5.1',
-      name: 'GPT-5.1',
-      description: 'Previous flagship - adaptive reasoning with apply_patch & shell tools (Nov 2025)',
-      provider: 'OpenAI',
-      contextWindow: 400000,
-      capabilities: ['Chat', 'Code', 'Reasoning', 'Tools'],
-      pricing: { input: 1.25, output: 5, currency: 'USD', unit: '1M tokens' },
-      available: true
-    },
-    {
-      id: 'gpt-5',
-      name: 'GPT-5',
-      description: 'Previous generation flagship - legacy but available (Aug 2025)',
-      provider: 'OpenAI',
-      contextWindow: 400000,
-      capabilities: ['Chat', 'Code', 'Reasoning', 'Tools'],
-      pricing: { input: 1.0, output: 4, currency: 'USD', unit: '1M tokens' },
       available: true
     },
     {
