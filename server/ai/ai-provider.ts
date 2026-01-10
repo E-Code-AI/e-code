@@ -65,11 +65,11 @@ export class OpenAIProvider implements AIProvider {
   // Get default model from AI_MODELS catalog
   private static getDefaultModel(): string {
     const openaiModels = AI_MODELS.filter(m => m.provider === 'openai');
-    // Prefer gpt-5.1 (flagship), fallback to gpt-5, then gpt-4o
-    return openaiModels.find(m => m.id === 'gpt-5.1')?.id 
-        || openaiModels.find(m => m.id === 'gpt-5')?.id
-        || openaiModels.find(m => m.id === 'gpt-4o')?.id
-        || 'gpt-4o';
+    // Prefer gpt-5.2 (flagship), fallback to gpt-5.1, then gpt-5-mini (gpt-4o deprecated Feb 2026)
+    return openaiModels.find(m => m.id === 'gpt-5.2')?.id 
+        || openaiModels.find(m => m.id === 'gpt-5.1')?.id
+        || openaiModels.find(m => m.id === 'gpt-5-mini')?.id
+        || 'gpt-5-mini';
   }
 
   constructor(apiKey?: string) {

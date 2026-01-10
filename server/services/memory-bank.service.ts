@@ -416,13 +416,12 @@ Output valid JSON only, no markdown code blocks.`;
    */
   private selectBestAvailableModel(): string {
     const preferredModels = [
-      'claude-sonnet-4-20250514',      // Anthropic Claude Sonnet 4
-      'claude-3-5-sonnet-20241022',    // Anthropic Claude 3.5 Sonnet
-      'gpt-4o',                        // OpenAI GPT-4o
-      'gpt-4-turbo',                   // OpenAI GPT-4 Turbo
-      'gemini-2.0-flash',              // Google Gemini 2.0 Flash
-      'gemini-1.5-pro',                // Google Gemini 1.5 Pro
-      'grok-3',                        // xAI Grok 3
+      'claude-sonnet-4-5-20250929',    // Anthropic Claude Sonnet 4.5
+      'gpt-5-mini',                    // OpenAI GPT-5 Mini (gpt-4o deprecated)
+      'gpt-4.1',                       // OpenAI GPT-4.1
+      'gemini-2.5-flash',              // Google Gemini 2.5 Flash
+      'gemini-2.5-pro',                // Google Gemini 2.5 Pro
+      'grok-4',                        // xAI Grok 4
     ];
     
     // Return first available model or fallback
@@ -439,7 +438,7 @@ Output valid JSON only, no markdown code blocks.`;
     }
     
     // Ultimate fallback
-    return 'claude-sonnet-4-20250514';
+    return 'claude-sonnet-4-5-20250929';
   }
 
   /**

@@ -221,7 +221,7 @@ const MODEL_TIERS: Record<string, Record<string, string | null>> = {
   fast: {
     openai: 'gpt-5-nano',
     anthropic: 'claude-haiku-4-5-20251015',
-    google: 'gemini-2.0-flash',
+    google: 'gemini-2.5-flash',  // ✅ UPDATED Jan 2026: gemini-2.0-flash deprecated
     xai: null
   },
   balanced: {
@@ -1265,9 +1265,12 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
       openai: {
         'gpt-5': 0.00003,
         'gpt-5.1': 0.00004,
+        'gpt-5.2': 0.00005,
         'gpt-5-mini': 0.000015,
         'gpt-5-nano': 0.00001,
-        'gpt-4o': 0.000025,
+        'gpt-4.1': 0.00002,
+        'gpt-4.1-mini': 0.000016,
+        'gpt-4.1-nano': 0.0000004,
         'o3': 0.00006,
         'o4-mini': 0.00002,
         default: 0.00002
@@ -1281,7 +1284,6 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
       google: {
         'gemini-2.5-pro': 0.00003,
         'gemini-2.5-flash': 0.00001,
-        'gemini-2.0-flash': 0.000008,
         default: 0.00001
       },
       xai: {

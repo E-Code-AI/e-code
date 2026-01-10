@@ -46,7 +46,7 @@ const MODEL_TIERS: Record<ModelTier, Record<Provider, { model: string; costPer1k
   fast: {
     openai: { model: 'gpt-5-nano', costPer1kTokens: 0.0005, avgLatencyMs: 500 },
     anthropic: { model: 'claude-haiku-4-5-20251015', costPer1kTokens: 0.001, avgLatencyMs: 600 },
-    google: { model: 'gemini-2.0-flash', costPer1kTokens: 0.000075, avgLatencyMs: 400 },
+    google: { model: 'gemini-2.5-flash', costPer1kTokens: 0.000075, avgLatencyMs: 400 },  // ✅ UPDATED Jan 2026: gemini-2.0-flash deprecated
     xai: null,
     moonshot: { model: 'moonshot-v1-32k', costPer1kTokens: 0.0012, avgLatencyMs: 700 }
   },

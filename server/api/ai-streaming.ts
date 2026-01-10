@@ -54,9 +54,10 @@ const OPENAI_MODEL_CAPABILITIES: Record<string, OpenAIModelCapabilities> = {
   'o3': { requiresMaxCompletionTokens: true, supportsTemperature: false },
   'o3-mini': { requiresMaxCompletionTokens: true, supportsTemperature: false },
   'o4-mini': { requiresMaxCompletionTokens: true, supportsTemperature: false },
-  // GPT-4o family - legacy parameters supported
-  'gpt-4o': { requiresMaxCompletionTokens: false, supportsTemperature: true },
-  'gpt-4o-mini': { requiresMaxCompletionTokens: false, supportsTemperature: true },
+  // GPT-4.1 family - legacy parameters supported
+  'gpt-4.1': { requiresMaxCompletionTokens: false, supportsTemperature: true },
+  'gpt-4.1-mini': { requiresMaxCompletionTokens: false, supportsTemperature: true },
+  'gpt-4.1-nano': { requiresMaxCompletionTokens: false, supportsTemperature: true },
   'gpt-4-turbo': { requiresMaxCompletionTokens: false, supportsTemperature: true },
   'gpt-4': { requiresMaxCompletionTokens: false, supportsTemperature: true },
   // GPT-3.5 family - legacy parameters supported
@@ -229,12 +230,12 @@ router.post('/api/agent/chat/stream', ensureAuthenticated, async (req, res) => {
   // ✅ ALIGNED Dec 5, 2025: Defaults MUST match AI_MODELS catalog IDs
   const getDefaultModel = (prov: string): string => {
     switch (prov) {
-      case 'openai': return 'gpt-4o-mini';
+      case 'openai': return 'gpt-5-mini';  // ✅ UPDATED Jan 2026: gpt-4o-mini deprecated
       case 'anthropic': return 'claude-sonnet-4-5-20250929';
-      case 'gemini': return 'gemini-2.0-flash';
-      case 'xai': return 'grok-4-fast';  // ✅ FIXED: Use catalog ID (was grok-3-fast-latest)
+      case 'gemini': return 'gemini-2.5-flash';  // ✅ UPDATED Jan 2026: gemini-2.0-flash deprecated
+      case 'xai': return 'grok-4-fast';
       case 'moonshot': return 'moonshot-v1-32k';
-      default: return 'gpt-4o-mini';
+      default: return 'gpt-5-mini';
     }
   };
   
@@ -888,8 +889,8 @@ async function streamOpenAI(res: any, messages: any[], options: any) {
   const requestedTools = options.tools !== undefined ? options.tools : allTools;
   const tools = toOpenAITools(requestedTools);
   
-  // Use provided model or fallback to gpt-4o-mini (reliable, cost-effective default)
-  const modelToUse = options.model || 'gpt-4o-mini';
+  // Use provided model or fallback to gpt-5-mini (reliable, cost-effective default - gpt-4o-mini deprecated)
+  const modelToUse = options.model || 'gpt-5-mini';
   logger.info(`[OpenAI Stream] Using model: ${modelToUse}`);
   
   // Get model capabilities for correct parameter usage
@@ -1217,8 +1218,8 @@ async function streamGemini(res: any, messages: any[], options: any) {
     return;
   }
   
-  // Use provided model or default to gemini-2.0-flash (fast, latest)
-  const modelToUse = options.model || 'gemini-2.0-flash';
+  // Use provided model or default to gemini-2.5-flash (fast, latest - gemini-2.0-flash deprecated)
+  const modelToUse = options.model || 'gemini-2.5-flash';
   logger.info(`[Gemini Stream] Using model: ${modelToUse}`);
   
   const genAI = new GoogleGenerativeAI(apiKey);
@@ -1507,7 +1508,7 @@ router.get('/api/agent/models', ensureAuthenticated, (req, res) => {
     
     // Google Gemini Models
     { provider: 'gemini', model: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', context: 1000000, available: !!process.env.GEMINI_API_KEY },
-    { provider: 'gemini', model: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash', context: 1000000, available: !!process.env.GEMINI_API_KEY },
+    { provider: 'gemini', model: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', context: 1000000, available: !!process.env.GEMINI_API_KEY },
     
     // xAI Grok Models
     { provider: 'xai', model: 'grok-4', name: 'Grok 4', context: 256000, available: !!process.env.XAI_API_KEY },

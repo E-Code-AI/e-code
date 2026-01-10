@@ -407,8 +407,8 @@ router.post('/mobile/ai/chat', mobileEnsureAuthenticated, async (req, res) => {
   try {
     const { projectId, message, model, messages, context } = req.body;
     
-    // Use client-specified model or fallback to gpt-4o
-    const modelId = model || 'gpt-4o';
+    // Use client-specified model or fallback to gpt-5-mini (gpt-4o deprecated Feb 2026)
+    const modelId = model || 'gpt-5-mini';
     const chatMessages = messages || [{ role: 'user', content: message }];
     
     // ✅ Route through aiProviderManager which enforces Kimi K2 requirements
@@ -435,8 +435,8 @@ router.post('/mobile/ai/chat/stream', mobileEnsureAuthenticated, async (req, res
   try {
     const { model, messages, projectId } = req.body;
     
-    // Use client-specified model or fallback to gpt-4o
-    const modelId = model || 'gpt-4o';
+    // Use client-specified model or fallback to gpt-5-mini (gpt-4o deprecated Feb 2026)
+    const modelId = model || 'gpt-5-mini';
     
     // Set SSE headers
     res.setHeader('Content-Type', 'text/event-stream');

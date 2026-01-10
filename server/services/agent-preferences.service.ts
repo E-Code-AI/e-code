@@ -74,15 +74,15 @@ export class AgentPreferencesService {
         },
       },
       {
-        id: 'gpt-4o',
-        name: 'GPT-4o',
-        description: 'Optimized GPT-4 model',
+        id: 'gpt-4.1',
+        name: 'GPT-4.1',
+        description: 'Excellent for coding with 1M context (April 2025)',
         category: 'openai',
         tier: 'standard',
         capabilities: {
           extendedThinking: false,
           codeGeneration: true,
-          maxTokens: 128000,
+          maxTokens: 1000000,
           speed: 'fast',
           cost: 'medium',
         },
@@ -337,7 +337,7 @@ export class AgentPreferencesService {
     }
 
     // Medium complexity
-    if (speedPriority === 'fast') return 'gpt-4o';
+    if (speedPriority === 'fast') return 'gpt-5-mini';  // ✅ UPDATED Jan 2026: gpt-4o deprecated
     if (speedPriority === 'quality') return 'claude-sonnet-4-5-20250929';
     return 'gpt-5-mini';
   }
