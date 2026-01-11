@@ -512,17 +512,17 @@ export function ReplitMultiplayers({
     removeCollaboratorMutation.mutate(collaboratorId);
   };
 
-  const fallbackCollaborators: Collaborator[] = [
-    {
-      id: 'current-user',
-      username: user?.username || 'You',
-      email: user?.email || 'you@example.com',
-      status: 'online',
-      role: 'owner',
-      currentFile: 'index.js',
-      cursor: { line: 1, col: 1, color: CURSOR_COLORS[0] }
-    }
-  ];
+  // Build current user as fallback collaborator
+  const currentUserCollaborator: Collaborator | null = user ? {
+    id: user.id?.toString() || 'current-user',
+    username: user.username || 'You',
+    displayName: user.displayName || user.username || 'You',
+    email: user.email || undefined,
+    avatarUrl: user.avatarUrl || undefined,
+    status: 'online',
+    role: 'owner',
+    cursor: { line: 0, col: 0, color: CURSOR_COLORS[0] }
+  } : null;
 
   const apiCollaborators = data?.collaborators || [];
   const displayCollaborators: Collaborator[] = 
@@ -530,10 +530,10 @@ export function ReplitMultiplayers({
       ? liveCollaborators 
       : propCollaborators.length > 0 
         ? propCollaborators 
-        : apiCollaborators.length > 0 
-          ? apiCollaborators 
-          : (isError || !projectId) 
-            ? fallbackCollaborators 
+        : apiCollaborators.length > 0
+          ? apiCollaborators
+          : currentUserCollaborator
+            ? [currentUserCollaborator]
             : [];
 
   const onlineCount = displayCollaborators.filter(c => c.status === 'online').length;
@@ -709,7 +709,7 @@ export function ReplitMultiplayers({
             </div>
           )}
 
-          {!isLoading && displayCollaborators.length <= 1 && (
+          {!isLoading && !projectId && displayCollaborators.length <= 1 && (
             <div className="px-4 py-3 bg-muted border-b border-border">
               <p className="text-sm font-medium text-foreground" data-testid="text-no-collaborators">
                 No one else is here
@@ -734,7 +734,7 @@ export function ReplitMultiplayers({
                   <div className="relative">
                     <Avatar 
                       className="h-8 w-8 ring-2 transition-all"
-                      style={{ ringColor: collaborator.cursor?.color || 'transparent' }}
+                      style={{ borderColor: collaborator.cursor?.color || 'transparent' }}
                     >
                       <AvatarImage src={collaborator.avatarUrl} />
                       <AvatarFallback 

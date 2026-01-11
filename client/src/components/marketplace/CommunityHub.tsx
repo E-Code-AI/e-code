@@ -17,117 +17,85 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
 import { Link } from 'wouter';
 
+interface Developer {
+  id: number;
+  name: string;
+  avatar: string | null;
+  templates: number;
+  downloads: number;
+  rating: number;
+  badge?: string;
+}
+
+interface Collection {
+  id: number;
+  name: string;
+  description: string;
+  templates: number;
+  iconName: string;
+  color: string;
+}
+
+interface Activity {
+  user: string;
+  action: string;
+  template: string;
+  time: string;
+}
+
+interface CommunityStats {
+  totalTemplates: number;
+  totalDevelopers: number;
+  totalDownloads: number;
+  monthlyActive: number;
+}
+
+const COLLECTION_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  trophy: Trophy,
+  award: Award,
+  sparkles: Sparkles,
+};
+
 export function CommunityHub() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
 
-  // Mock data - in real app, these would be API calls
-  const topDevelopers = [
-    {
-      id: 1,
-      name: 'Sarah Chen',
-      avatar: null,
-      templates: 15,
-      downloads: 45000,
-      rating: 4.9,
-      badge: 'gold',
-    },
-    {
-      id: 2,
-      name: 'Alex Rodriguez',
-      avatar: null,
-      templates: 12,
-      downloads: 38000,
-      rating: 4.8,
-      badge: 'silver',
-    },
-    {
-      id: 3,
-      name: 'Jamie Park',
-      avatar: null,
-      templates: 10,
-      downloads: 28000,
-      rating: 4.7,
-      badge: 'bronze',
-    },
-    {
-      id: 4,
-      name: 'Morgan Lee',
-      avatar: null,
-      templates: 8,
-      downloads: 18000,
-      rating: 4.6,
-    },
-    {
-      id: 5,
-      name: 'Chris Taylor',
-      avatar: null,
-      templates: 7,
-      downloads: 15000,
-      rating: 4.5,
-    },
-  ];
+  // Real API calls - no mock data
+  const { data: topDevelopers = [], isLoading: developersLoading, error: developersError } = useQuery<Developer[]>({
+    queryKey: ['/api/community/top-developers'],
+    queryFn: async () => {
+      const response = await fetch('/api/community/top-developers', { credentials: 'include' });
+      if (!response.ok) throw new Error('Failed to fetch top developers');
+      return response.json();
+    }
+  });
 
-  const collections = [
-    {
-      id: 1,
-      name: 'Best of 2024',
-      description: 'Top-rated templates from this year',
-      templates: 24,
-      icon: Trophy,
-      color: 'text-yellow-500',
-    },
-    {
-      id: 2,
-      name: 'Beginner Friendly',
-      description: 'Perfect for getting started',
-      templates: 18,
-      icon: Award,
-      color: 'text-green-500',
-    },
-    {
-      id: 3,
-      name: 'Production Ready',
-      description: 'Enterprise-grade templates',
-      templates: 15,
-      icon: Sparkles,
-      color: 'text-purple-500',
-    },
-  ];
+  const { data: collections = [], isLoading: collectionsLoading, error: collectionsError } = useQuery<Collection[]>({
+    queryKey: ['/api/community/collections'],
+    queryFn: async () => {
+      const response = await fetch('/api/community/collections', { credentials: 'include' });
+      if (!response.ok) throw new Error('Failed to fetch collections');
+      return response.json();
+    }
+  });
 
-  const recentActivity = [
-    {
-      user: 'Sarah Chen',
-      action: 'submitted',
-      template: 'Next.js E-commerce',
-      time: '2 hours ago',
-    },
-    {
-      user: 'Alex Rodriguez',
-      action: 'updated',
-      template: 'React Dashboard Pro',
-      time: '5 hours ago',
-    },
-    {
-      user: 'Jamie Park',
-      action: 'published',
-      template: 'Vue.js Admin Panel',
-      time: '1 day ago',
-    },
-    {
-      user: 'Morgan Lee',
-      action: 'forked',
-      template: 'Node.js API Starter',
-      time: '2 days ago',
-    },
-  ];
+  const { data: recentActivity = [], isLoading: activityLoading, error: activityError } = useQuery<Activity[]>({
+    queryKey: ['/api/community/activity'],
+    queryFn: async () => {
+      const response = await fetch('/api/community/activity', { credentials: 'include' });
+      if (!response.ok) throw new Error('Failed to fetch recent activity');
+      return response.json();
+    }
+  });
 
-  const communityStats = {
-    totalTemplates: 1234,
-    totalDevelopers: 456,
-    totalDownloads: 890000,
-    monthlyActive: 234,
-  };
+  const { data: communityStats, isLoading: statsLoading, error: statsError } = useQuery<CommunityStats>({
+    queryKey: ['/api/community/stats'],
+    queryFn: async () => {
+      const response = await fetch('/api/community/stats', { credentials: 'include' });
+      if (!response.ok) throw new Error('Failed to fetch community stats');
+      return response.json();
+    }
+  });
 
   const getBadgeColor = (badge?: string) => {
     switch (badge) {
@@ -153,32 +121,42 @@ export function CommunityHub() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="text-center p-3 bg-muted rounded-lg">
-              <p className="text-2xl font-bold text-orange-500">
-                {communityStats.totalTemplates.toLocaleString()}
-              </p>
-              <p className="text-xs text-muted-foreground">Templates</p>
+          {statsLoading ? (
+            <div className="grid grid-cols-2 gap-3">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="text-center p-3 bg-muted rounded-lg animate-pulse h-16" />
+              ))}
             </div>
-            <div className="text-center p-3 bg-muted rounded-lg">
-              <p className="text-2xl font-bold text-blue-500">
-                {communityStats.totalDevelopers}
-              </p>
-              <p className="text-xs text-muted-foreground">Developers</p>
+          ) : statsError ? (
+            <p className="text-sm text-destructive">Failed to load community stats</p>
+          ) : communityStats ? (
+            <div className="grid grid-cols-2 gap-3">
+              <div className="text-center p-3 bg-muted rounded-lg">
+                <p className="text-2xl font-bold text-orange-500">
+                  {communityStats.totalTemplates.toLocaleString()}
+                </p>
+                <p className="text-xs text-muted-foreground">Templates</p>
+              </div>
+              <div className="text-center p-3 bg-muted rounded-lg">
+                <p className="text-2xl font-bold text-blue-500">
+                  {communityStats.totalDevelopers}
+                </p>
+                <p className="text-xs text-muted-foreground">Developers</p>
+              </div>
+              <div className="text-center p-3 bg-muted rounded-lg">
+                <p className="text-2xl font-bold text-green-500">
+                  {(communityStats.totalDownloads / 1000).toFixed(0)}K
+                </p>
+                <p className="text-xs text-muted-foreground">Downloads</p>
+              </div>
+              <div className="text-center p-3 bg-muted rounded-lg">
+                <p className="text-2xl font-bold text-purple-500">
+                  {communityStats.monthlyActive}
+                </p>
+                <p className="text-xs text-muted-foreground">Active/mo</p>
+              </div>
             </div>
-            <div className="text-center p-3 bg-muted rounded-lg">
-              <p className="text-2xl font-bold text-green-500">
-                {(communityStats.totalDownloads / 1000).toFixed(0)}K
-              </p>
-              <p className="text-xs text-muted-foreground">Downloads</p>
-            </div>
-            <div className="text-center p-3 bg-muted rounded-lg">
-              <p className="text-2xl font-bold text-purple-500">
-                {communityStats.monthlyActive}
-              </p>
-              <p className="text-xs text-muted-foreground">Active/mo</p>
-            </div>
-          </div>
+          ) : null}
         </CardContent>
       </Card>
 
@@ -221,8 +199,16 @@ export function CommunityHub() {
               <CardTitle className="text-base">Featured Collections</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              {collections.map((collection) => {
-                const Icon = collection.icon;
+              {collectionsLoading ? (
+                <div className="space-y-2">
+                  {[...Array(3)].map((_, i) => (
+                    <div key={i} className="h-14 bg-muted rounded-lg animate-pulse" />
+                  ))}
+                </div>
+              ) : collectionsError ? (
+                <p className="text-sm text-destructive">Failed to load collections</p>
+              ) : collections.map((collection) => {
+                const Icon = COLLECTION_ICONS[collection.iconName] || Sparkles;
                 return (
                   <div
                     key={collection.id}
@@ -296,41 +282,59 @@ export function CommunityHub() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {topDevelopers.map((dev, index) => (
-                  <div
-                    key={dev.id}
-                    className="flex items-center justify-between p-2 rounded-lg hover:bg-accent cursor-pointer transition-colors"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="relative">
-                        <Avatar className="h-8 w-8">
-                          <AvatarImage src={dev.avatar} />
-                          <AvatarFallback>
-                            {dev.name.split(' ').map(n => n[0]).join('')}
-                          </AvatarFallback>
-                        </Avatar>
-                        {dev.badge && (
-                          <div className={cn(
-                            "absolute -bottom-1 -right-1 h-4 w-4 rounded-full",
-                            getBadgeColor(dev.badge)
-                          )} />
-                        )}
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">{dev.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {dev.templates} templates • {(dev.downloads / 1000).toFixed(0)}k downloads
-                        </p>
+              {developersLoading ? (
+                <div className="space-y-3">
+                  {[...Array(3)].map((_, i) => (
+                    <div key={i} className="flex items-center gap-3 p-2">
+                      <div className="h-8 w-8 rounded-full bg-muted animate-pulse" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 bg-muted rounded animate-pulse w-24" />
+                        <div className="h-3 bg-muted rounded animate-pulse w-32" />
                       </div>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <Star className="h-3 w-3 fill-current text-yellow-500" />
-                      <span className="text-xs font-medium">{dev.rating}</span>
+                  ))}
+                </div>
+              ) : developersError ? (
+                <p className="text-sm text-destructive">Failed to load top developers</p>
+              ) : topDevelopers.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-8">No developers yet</p>
+              ) : (
+                <div className="space-y-3">
+                  {topDevelopers.map((dev, index) => (
+                    <div
+                      key={dev.id}
+                      className="flex items-center justify-between p-2 rounded-lg hover:bg-accent cursor-pointer transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="relative">
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage src={dev.avatar || undefined} />
+                            <AvatarFallback>
+                              {dev.name.split(' ').map(n => n[0]).join('')}
+                            </AvatarFallback>
+                          </Avatar>
+                          {dev.badge && (
+                            <div className={cn(
+                              "absolute -bottom-1 -right-1 h-4 w-4 rounded-full",
+                              getBadgeColor(dev.badge)
+                            )} />
+                          )}
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">{dev.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {dev.templates} templates • {(dev.downloads / 1000).toFixed(0)}k downloads
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Star className="h-3 w-3 fill-current text-yellow-500" />
+                        <span className="text-xs font-medium">{dev.rating}</span>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
               <Button variant="outline" className="w-full mt-3" size="sm">
                 View All Developers
               </Button>
@@ -374,35 +378,57 @@ export function CommunityHub() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <ScrollArea className="h-[400px]">
-                <div className="space-y-3">
-                  {recentActivity.map((activity, index) => (
-                    <div
-                      key={index}
-                      className="flex items-start gap-3 pb-3 border-b last:border-0"
-                    >
-                      <Avatar className="h-6 w-6 mt-0.5">
-                        <AvatarFallback>
-                          {activity.user.split(' ').map(n => n[0]).join('')}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <p className="text-sm">
-                          <span className="font-medium">{activity.user}</span>
-                          {' '}
-                          <span className="text-muted-foreground">{activity.action}</span>
-                          {' '}
-                          <span className="font-medium">{activity.template}</span>
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          <Calendar className="h-3 w-3 inline mr-1" />
-                          {activity.time}
-                        </p>
+              {activityLoading ? (
+                <div className="space-y-3 h-[400px]">
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className="flex items-start gap-3 pb-3 border-b">
+                      <div className="h-6 w-6 rounded-full bg-muted animate-pulse" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 bg-muted rounded animate-pulse w-3/4" />
+                        <div className="h-3 bg-muted rounded animate-pulse w-1/2" />
                       </div>
                     </div>
                   ))}
                 </div>
-              </ScrollArea>
+              ) : activityError ? (
+                <div className="h-[400px] flex items-center justify-center text-destructive">
+                  Failed to load recent activity
+                </div>
+              ) : recentActivity.length === 0 ? (
+                <div className="h-[400px] flex items-center justify-center text-muted-foreground">
+                  No recent activity
+                </div>
+              ) : (
+                <ScrollArea className="h-[400px]">
+                  <div className="space-y-3">
+                    {recentActivity.map((activity, index) => (
+                      <div
+                        key={index}
+                        className="flex items-start gap-3 pb-3 border-b last:border-0"
+                      >
+                        <Avatar className="h-6 w-6 mt-0.5">
+                          <AvatarFallback>
+                            {activity.user.split(' ').map(n => n[0]).join('')}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <p className="text-sm">
+                            <span className="font-medium">{activity.user}</span>
+                            {' '}
+                            <span className="text-muted-foreground">{activity.action}</span>
+                            {' '}
+                            <span className="font-medium">{activity.template}</span>
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            <Calendar className="h-3 w-3 inline mr-1" />
+                            {activity.time}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              )}
             </CardContent>
           </Card>
 
