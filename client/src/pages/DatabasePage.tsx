@@ -184,10 +184,10 @@ export default function DatabasePage() {
         description="Browse schemas, execute queries, and manage your PostgreSQL database with enterprise-grade tools."
         icon={Database}
         actions={
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1 sm:gap-2">
             <Badge
               variant="outline"
-              className={`${
+              className={`text-xs sm:text-sm ${
                 connectionStatus === 'connected'
                   ? 'bg-green-50 text-green-700 border-green-200'
                   : connectionStatus === 'connecting'
@@ -203,30 +203,32 @@ export default function DatabasePage() {
               ) : (
                 <XCircle className="h-3 w-3 mr-1" />
               )}
-              {connectionStatus.charAt(0).toUpperCase() + connectionStatus.slice(1)}
+              <span className="hidden sm:inline">{connectionStatus.charAt(0).toUpperCase() + connectionStatus.slice(1)}</span>
             </Badge>
             <Button
               variant="outline"
               size="sm"
+              className="min-h-[44px] sm:min-h-0"
               onClick={() => setShowConnectionSettings(true)}
               data-testid="button-connection-settings"
             >
-              <Settings className="h-4 w-4 mr-2" />
-              Connection
+              <Settings className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Connection</span>
             </Button>
             <Button
               variant="outline"
               size="sm"
+              className="min-h-[44px] sm:min-h-0"
               onClick={() => setShowImportDialog(true)}
               data-testid="button-import-data"
             >
-              <Upload className="h-4 w-4 mr-2" />
-              Import
+              <Upload className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Import</span>
             </Button>
             <Select onValueChange={(v) => exportData(v as 'json' | 'csv' | 'sql')}>
-              <SelectTrigger className="w-[120px]" data-testid="select-export-format">
-                <Download className="h-4 w-4 mr-2" />
-                Export
+              <SelectTrigger className="w-[44px] sm:w-[120px] min-h-[44px] sm:min-h-0" data-testid="select-export-format">
+                <Download className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Export</span>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="json">JSON</SelectItem>
@@ -238,7 +240,7 @@ export default function DatabasePage() {
         }
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6">
         <div className="lg:col-span-1">
           <Card data-testid="card-schema-browser">
             <CardHeader className="pb-3">
@@ -253,7 +255,7 @@ export default function DatabasePage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              <ScrollArea className="h-[500px]">
+              <ScrollArea className="h-[300px] sm:h-[400px] lg:h-[500px]">
                 <div className="px-4 pb-4">
                   {schemas.map((table) => (
                     <Collapsible
@@ -341,18 +343,18 @@ export default function DatabasePage() {
 
         <div className="lg:col-span-3">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="mb-4" data-testid="tabs-database-main">
-              <TabsTrigger value="explorer" data-testid="tab-explorer">
-                <Table className="h-4 w-4 mr-2" />
-                Table View
+            <TabsList className="mb-4 w-full grid grid-cols-3 sm:w-auto sm:inline-flex" data-testid="tabs-database-main">
+              <TabsTrigger value="explorer" className="text-xs sm:text-sm min-h-[44px] sm:min-h-0" data-testid="tab-explorer">
+                <Table className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Table View</span>
               </TabsTrigger>
-              <TabsTrigger value="query" data-testid="tab-query">
-                <Code className="h-4 w-4 mr-2" />
-                Query Editor
+              <TabsTrigger value="query" className="text-xs sm:text-sm min-h-[44px] sm:min-h-0" data-testid="tab-query">
+                <Code className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Query Editor</span>
               </TabsTrigger>
-              <TabsTrigger value="kv" data-testid="tab-kv">
-                <Database className="h-4 w-4 mr-2" />
-                Key-Value Store
+              <TabsTrigger value="kv" className="text-xs sm:text-sm min-h-[44px] sm:min-h-0" data-testid="tab-kv">
+                <Database className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Key-Value Store</span>
               </TabsTrigger>
             </TabsList>
 
@@ -369,14 +371,14 @@ export default function DatabasePage() {
                       </CardDescription>
                     </div>
                     {selectedTable && (
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm" data-testid="button-add-row">
-                          <Plus className="h-4 w-4 mr-2" />
-                          Add Row
+                      <div className="flex gap-1 sm:gap-2">
+                        <Button variant="outline" size="sm" className="min-h-[44px] sm:min-h-0" data-testid="button-add-row">
+                          <Plus className="h-4 w-4 sm:mr-2" />
+                          <span className="hidden sm:inline">Add Row</span>
                         </Button>
-                        <Button variant="outline" size="sm" data-testid="button-filter">
-                          <Search className="h-4 w-4 mr-2" />
-                          Filter
+                        <Button variant="outline" size="sm" className="min-h-[44px] sm:min-h-0" data-testid="button-filter">
+                          <Search className="h-4 w-4 sm:mr-2" />
+                          <span className="hidden sm:inline">Filter</span>
                         </Button>
                       </div>
                     )}
@@ -432,17 +434,17 @@ export default function DatabasePage() {
                           </tbody>
                         </table>
                       </div>
-                      <div className="flex items-center justify-between px-4 py-3 bg-muted/50 border-t">
-                        <span className="text-sm text-muted-foreground">
+                      <div className="flex flex-col sm:flex-row items-center justify-between px-3 sm:px-4 py-3 bg-muted/50 border-t gap-2">
+                        <span className="text-xs sm:text-sm text-muted-foreground text-center sm:text-left">
                           Showing 1-5 of{' '}
                           {schemas.find((s) => s.name === selectedTable)?.rowCount.toLocaleString()}{' '}
                           rows
                         </span>
-                        <div className="flex gap-2">
-                          <Button variant="outline" size="sm" disabled>
+                        <div className="flex gap-2 w-full sm:w-auto">
+                          <Button variant="outline" size="sm" disabled className="flex-1 sm:flex-none min-h-[44px] sm:min-h-0">
                             Previous
                           </Button>
-                          <Button variant="outline" size="sm">
+                          <Button variant="outline" size="sm" className="flex-1 sm:flex-none min-h-[44px] sm:min-h-0">
                             Next
                           </Button>
                         </div>

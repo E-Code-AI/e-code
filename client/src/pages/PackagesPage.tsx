@@ -294,33 +294,38 @@ export default function PackagesPage() {
         description="Install, update, and manage your project dependencies across NPM and Pip registries"
         icon={Package}
         actions={
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1 sm:gap-2">
             <Button 
               variant="outline" 
-              onClick={() => runSecurityScanMutation.mutate()}
+              size="sm"
+              className="min-h-[44px] sm:min-h-0"
+              onClick={() => runSecurityScanMutation.mutate(undefined)}
               disabled={runSecurityScanMutation.isPending}
               data-testid="button-security-scan"
             >
-              <Shield className="mr-2 h-4 w-4" />
-              Security Scan
+              <Shield className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Security Scan</span>
             </Button>
             <Button 
               variant="outline"
-              onClick={() => updateAllMutation.mutate()}
+              size="sm"
+              className="min-h-[44px] sm:min-h-0"
+              onClick={() => updateAllMutation.mutate(undefined)}
               disabled={updateAllMutation.isPending || outdatedPackages.length === 0}
               data-testid="button-update-all"
             >
-              <ArrowUp className="mr-2 h-4 w-4" />
-              Update All ({outdatedPackages.length})
+              <ArrowUp className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Update All</span>
+              <span className="ml-1">({outdatedPackages.length})</span>
             </Button>
             <Dialog open={showInstallDialog} onOpenChange={setShowInstallDialog}>
               <DialogTrigger asChild>
-                <Button data-testid="button-install-package">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Install Package
+                <Button size="sm" className="min-h-[44px] sm:min-h-0" data-testid="button-install-package">
+                  <Plus className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Install Package</span>
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl">
+              <DialogContent className="w-[95vw] max-w-2xl sm:w-full">
                 <DialogHeader>
                   <DialogTitle>Install Package</DialogTitle>
                   <DialogDescription>
@@ -426,70 +431,74 @@ export default function PackagesPage() {
         }
       />
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-3 sm:gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
         <Card data-testid="card-stat-total">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Package className="h-4 w-4" />
-              Total Packages
+          <CardHeader className="pb-2 p-3 sm:p-6 sm:pb-2">
+            <CardTitle className="text-xs sm:text-sm font-medium flex items-center gap-1 sm:gap-2">
+              <Package className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">Total Packages</span>
+              <span className="sm:hidden">Total</span>
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats?.total || packages.length}</div>
-            <p className="text-xs text-muted-foreground">
+          <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+            <div className="text-xl sm:text-2xl font-bold">{stats?.total || packages.length}</div>
+            <p className="text-xs text-muted-foreground truncate">
               {stats?.npm || 0} NPM · {stats?.pip || 0} Pip
             </p>
           </CardContent>
         </Card>
 
         <Card data-testid="card-stat-npm">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Terminal className="h-4 w-4 text-red-500" />
-              NPM Packages
+          <CardHeader className="pb-2 p-3 sm:p-6 sm:pb-2">
+            <CardTitle className="text-xs sm:text-sm font-medium flex items-center gap-1 sm:gap-2">
+              <Terminal className="h-3 w-3 sm:h-4 sm:w-4 text-red-500" />
+              <span className="hidden sm:inline">NPM Packages</span>
+              <span className="sm:hidden">NPM</span>
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-500">{stats?.npm || 0}</div>
-            <p className="text-xs text-muted-foreground">JavaScript/TypeScript</p>
+          <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+            <div className="text-xl sm:text-2xl font-bold text-red-500">{stats?.npm || 0}</div>
+            <p className="text-xs text-muted-foreground truncate">JavaScript/TypeScript</p>
           </CardContent>
         </Card>
 
         <Card data-testid="card-stat-pip">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Code className="h-4 w-4 text-blue-500" />
-              Pip Packages
+          <CardHeader className="pb-2 p-3 sm:p-6 sm:pb-2">
+            <CardTitle className="text-xs sm:text-sm font-medium flex items-center gap-1 sm:gap-2">
+              <Code className="h-3 w-3 sm:h-4 sm:w-4 text-blue-500" />
+              <span className="hidden sm:inline">Pip Packages</span>
+              <span className="sm:hidden">Pip</span>
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-500">{stats?.pip || 0}</div>
+          <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+            <div className="text-xl sm:text-2xl font-bold text-blue-500">{stats?.pip || 0}</div>
             <p className="text-xs text-muted-foreground">Python</p>
           </CardContent>
         </Card>
 
         <Card data-testid="card-stat-outdated">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <ArrowUp className="h-4 w-4 text-yellow-500" />
+          <CardHeader className="pb-2 p-3 sm:p-6 sm:pb-2">
+            <CardTitle className="text-xs sm:text-sm font-medium flex items-center gap-1 sm:gap-2">
+              <ArrowUp className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-500" />
               Outdated
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-yellow-500">{stats?.outdated || outdatedPackages.length}</div>
-            <p className="text-xs text-muted-foreground">Updates available</p>
+          <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+            <div className="text-xl sm:text-2xl font-bold text-yellow-500">{stats?.outdated || outdatedPackages.length}</div>
+            <p className="text-xs text-muted-foreground truncate">Updates available</p>
           </CardContent>
         </Card>
 
-        <Card data-testid="card-stat-vulnerabilities">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <ShieldAlert className="h-4 w-4 text-red-500" />
-              Vulnerabilities
+        <Card className="col-span-2 sm:col-span-1" data-testid="card-stat-vulnerabilities">
+          <CardHeader className="pb-2 p-3 sm:p-6 sm:pb-2">
+            <CardTitle className="text-xs sm:text-sm font-medium flex items-center gap-1 sm:gap-2">
+              <ShieldAlert className="h-3 w-3 sm:h-4 sm:w-4 text-red-500" />
+              <span className="hidden sm:inline">Vulnerabilities</span>
+              <span className="sm:hidden">Issues</span>
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-500">{stats?.vulnerabilities || vulnerablePackages.length}</div>
+          <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+            <div className="text-xl sm:text-2xl font-bold text-red-500">{stats?.vulnerabilities || vulnerablePackages.length}</div>
             <p className="text-xs text-muted-foreground">Security issues</p>
           </CardContent>
         </Card>
@@ -521,29 +530,35 @@ export default function PackagesPage() {
         </div>
         <Button 
           variant="outline" 
+          size="sm"
+          className="min-h-[44px] sm:min-h-0 w-full sm:w-auto"
           onClick={() => setShowLockFileDialog(true)}
           data-testid="button-view-lockfile"
         >
-          <Lock className="h-4 w-4 mr-2" />
-          View Lock File
+          <Lock className="h-4 w-4 sm:mr-2" />
+          <span className="hidden sm:inline">View Lock File</span>
+          <span className="sm:hidden">Lock File</span>
         </Button>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="installed" data-testid="tab-installed">
-            Installed ({filteredPackages.length})
+          <TabsTrigger value="installed" className="text-xs sm:text-sm min-h-[44px] sm:min-h-0" data-testid="tab-installed">
+            <span className="hidden sm:inline">Installed</span>
+            <span className="sm:hidden">All</span>
+            <span className="ml-1">({filteredPackages.length})</span>
           </TabsTrigger>
-          <TabsTrigger value="outdated" className="flex items-center gap-2" data-testid="tab-outdated">
+          <TabsTrigger value="outdated" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm min-h-[44px] sm:min-h-0" data-testid="tab-outdated">
             Outdated
             {outdatedPackages.length > 0 && (
-              <Badge variant="secondary">{outdatedPackages.length}</Badge>
+              <Badge variant="secondary" className="text-xs">{outdatedPackages.length}</Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="vulnerabilities" className="flex items-center gap-2" data-testid="tab-vulnerabilities">
-            Vulnerabilities
+          <TabsTrigger value="vulnerabilities" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm min-h-[44px] sm:min-h-0" data-testid="tab-vulnerabilities">
+            <span className="hidden sm:inline">Vulnerabilities</span>
+            <span className="sm:hidden">Vuln</span>
             {vulnerablePackages.length > 0 && (
-              <Badge variant="destructive">{vulnerablePackages.length}</Badge>
+              <Badge variant="destructive" className="text-xs">{vulnerablePackages.length}</Badge>
             )}
           </TabsTrigger>
         </TabsList>
@@ -723,7 +738,7 @@ export default function PackagesPage() {
                 </p>
                 <Button 
                   variant="outline" 
-                  onClick={() => runSecurityScanMutation.mutate()}
+                  onClick={() => runSecurityScanMutation.mutate(undefined)}
                   disabled={runSecurityScanMutation.isPending}
                   data-testid="button-rescan"
                 >
