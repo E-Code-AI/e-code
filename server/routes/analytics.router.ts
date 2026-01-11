@@ -477,4 +477,118 @@ router.get('/api/analytics/deployment/:deploymentId', ensureAuthenticated, async
   }
 });
 
+/**
+ * Weekly Activity Data for Dashboard Charts
+ * GET /api/analytics/weekly-activity
+ */
+router.get('/api/analytics/weekly-activity', ensureAuthenticated, async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    
+    // Get the last 7 days
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const now = new Date();
+    const weekStart = new Date(now);
+    weekStart.setDate(now.getDate() - 7);
+
+    // Get user's projects
+    const userProjects = await db.select({ id: projects.id })
+      .from(projects)
+      .where(eq(projects.ownerId, userId!));
+    
+    const projectIds = userProjects.map(p => p.id);
+
+    // Generate activity data per day
+    const activityData = await Promise.all(
+      days.map(async (day, index) => {
+        const dayStart = new Date(weekStart);
+        dayStart.setDate(weekStart.getDate() + index);
+        const dayEnd = new Date(dayStart);
+        dayEnd.setDate(dayStart.getDate() + 1);
+
+        // Count agent sessions (as commits proxy)
+        const [sessionsCount] = await db.select({
+          count: count()
+        }).from(agentSessions)
+          .where(and(
+            eq(agentSessions.userId, userId!),
+            gte(agentSessions.startedAt, dayStart),
+            sql`${agentSessions.startedAt} < ${dayEnd}`
+          ));
+
+        // Count deployments
+        let deploysCount = { count: 0 };
+        if (projectIds.length > 0) {
+          const [result] = await db.select({
+            count: count()
+          }).from(deployments)
+            .where(and(
+              sql`${deployments.projectId} IN (${projectIds.join(',')})`,
+              gte(deployments.createdAt, dayStart),
+              sql`${deployments.createdAt} < ${dayEnd}`
+            ));
+          deploysCount = result || { count: 0 };
+        }
+
+        return {
+          day,
+          commits: Number(sessionsCount?.count || 0),
+          deploys: Number(deploysCount?.count || 0),
+          builds: Math.floor(Number(sessionsCount?.count || 0) * 0.6),
+        };
+      })
+    );
+
+    res.json(activityData);
+  } catch (error) {
+    logger.error('Failed to fetch weekly activity', { error });
+    res.status(500).json({ error: 'Failed to fetch weekly activity data' });
+  }
+});
+
+/**
+ * Storage Breakdown Data for Dashboard Charts
+ * GET /api/analytics/storage
+ */
+router.get('/api/analytics/storage', ensureAuthenticated, async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.id;
+
+    // Get user's projects count
+    const [projectsResult] = await db.select({
+      count: count()
+    }).from(projects)
+      .where(eq(projects.ownerId, userId!));
+
+    // Get agent sessions count (as proxy for AI usage)
+    const [sessionsResult] = await db.select({
+      count: count()
+    }).from(agentSessions)
+      .where(eq(agentSessions.userId, userId!));
+
+    const projectCount = Number(projectsResult?.count || 0);
+    const sessionCount = Number(sessionsResult?.count || 0);
+
+    // Calculate storage breakdown (simulated based on activity)
+    const codeStorage = projectCount * 15; // ~15MB per project
+    const databaseStorage = projectCount * 5; // ~5MB per project
+    const mediaStorage = projectCount * 10; // ~10MB per project
+    const cacheStorage = sessionCount * 2; // ~2MB per session
+
+    const total = codeStorage + databaseStorage + mediaStorage + cacheStorage || 1;
+
+    const storageData = [
+      { name: 'Code', value: Math.round((codeStorage / total) * 100), color: '#3b82f6' },
+      { name: 'Database', value: Math.round((databaseStorage / total) * 100), color: '#10b981' },
+      { name: 'Media', value: Math.round((mediaStorage / total) * 100), color: '#f59e0b' },
+      { name: 'Cache', value: Math.round((cacheStorage / total) * 100), color: '#6b7280' },
+    ];
+
+    res.json(storageData);
+  } catch (error) {
+    logger.error('Failed to fetch storage data', { error });
+    res.status(500).json({ error: 'Failed to fetch storage data' });
+  }
+});
+
 export default router;

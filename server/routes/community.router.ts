@@ -473,4 +473,173 @@ router.post('/posts/:postId/comments', async (req: Request, res: Response) => {
   }
 });
 
+// Top developers endpoint - returns users with most published templates
+router.get('/top-developers', async (_req: Request, res: Response) => {
+  try {
+    // Get top developers with real metrics from database using raw SQL for correct column names
+    const developers = await db.select({
+      id: users.id,
+      name: users.displayName,
+      username: users.username,
+      avatar: users.avatarUrl,
+      postCount: sql<number>`COUNT(*)`,
+      totalViews: sql<number>`COALESCE(SUM(views), 0)`,
+      totalLikes: sql<number>`COALESCE(SUM(likes), 0)`,
+    })
+    .from(users)
+    .innerJoin(communityPosts, eq(users.id, communityPosts.authorId))
+    .groupBy(users.id, users.displayName, users.username, users.avatarUrl)
+    .orderBy(sql`COUNT(*) DESC`)
+    .limit(10);
+
+    const result = developers.map((dev, index) => {
+      // Calculate rating from real engagement data (views + likes)
+      const engagement = Number(dev.totalViews || 0) + Number(dev.totalLikes || 0) * 10;
+      const calculatedRating = Math.min(5, Math.max(1, 3 + (engagement / 100)));
+      
+      return {
+        id: dev.id,
+        name: dev.name || dev.username || 'Developer',
+        avatar: dev.avatar,
+        templates: Number(dev.postCount || 0),
+        downloads: Number(dev.totalViews || 0),
+        rating: Number(calculatedRating.toFixed(1)),
+        badge: index === 0 ? 'gold' : index === 1 ? 'silver' : index === 2 ? 'bronze' : undefined,
+      };
+    });
+
+    res.json(result);
+  } catch (error) {
+    console.error('[Community] Failed to fetch top developers:', error);
+    res.status(500).json({ error: 'Failed to fetch top developers' });
+  }
+});
+
+// Collections endpoint - returns template collections
+router.get('/collections', async (_req: Request, res: Response) => {
+  try {
+    // Use raw SQL to avoid schema/DB column name mismatches
+    const categories = await db.select({
+      id: communityCategories.id,
+      name: communityCategories.name,
+      description: communityCategories.description,
+      icon: communityCategories.icon,
+    }).from(communityCategories)
+      .orderBy(sql`sort_order`)
+      .limit(10);
+
+    const collections = await Promise.all(
+      categories.map(async (cat) => {
+        // Use raw SQL with actual column name 'category' (not 'category_id')
+        const [countResult] = await db.select({
+          count: sql<number>`COUNT(*)`,
+        }).from(communityPosts)
+          .where(sql`category = ${cat.id}`);
+
+        return {
+          id: parseInt(cat.id, 10) || 0,
+          name: cat.name,
+          description: cat.description || `Collection of ${cat.name} templates`,
+          templates: Number(countResult?.count || 0),
+          iconName: cat.icon?.toLowerCase() || 'sparkles',
+          color: 'bg-primary/10',
+        };
+      })
+    );
+
+    res.json(collections);
+  } catch (error) {
+    console.error('[Community] Failed to fetch collections:', error);
+    res.status(500).json({ error: 'Failed to fetch collections' });
+  }
+});
+
+// Activity endpoint - returns recent community activity
+router.get('/activity', async (_req: Request, res: Response) => {
+  try {
+    const recentPosts = await db.select({
+      title: communityPosts.title,
+      createdAt: communityPosts.createdAt,
+      authorUsername: users.username,
+      authorDisplayName: users.displayName,
+    })
+    .from(communityPosts)
+    .leftJoin(users, eq(communityPosts.authorId, users.id))
+    .orderBy(desc(communityPosts.createdAt))
+    .limit(10);
+
+    const activity = recentPosts.map((post) => {
+      const timeAgo = post.createdAt 
+        ? formatTimeAgo(post.createdAt)
+        : 'recently';
+
+      return {
+        user: post.authorDisplayName || post.authorUsername || 'Anonymous',
+        action: 'published',
+        template: post.title || 'Untitled',
+        time: timeAgo,
+      };
+    });
+
+    res.json(activity);
+  } catch (error) {
+    console.error('[Community] Failed to fetch activity:', error);
+    res.status(500).json({ error: 'Failed to fetch activity' });
+  }
+});
+
+// Stats endpoint - returns community-wide statistics
+router.get('/stats', async (_req: Request, res: Response) => {
+  try {
+    // Use raw SQL to avoid column name mismatches between schema and actual DB
+    const [postsCount] = await db.select({
+      count: sql<number>`COUNT(*)`,
+    }).from(communityPosts);
+
+    const [usersCount] = await db.select({
+      count: sql<number>`COUNT(DISTINCT author_id)`,
+    }).from(communityPosts);
+
+    // Use raw SQL with actual column name 'views' (not 'view_count')
+    const [viewsSum] = await db.select({
+      total: sql<number>`COALESCE(SUM(views), 0)`,
+    }).from(communityPosts);
+
+    // Monthly active = users who posted in last 30 days
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const thirtyDaysAgoStr = thirtyDaysAgo.toISOString();
+    
+    const [monthlyActive] = await db.select({
+      count: sql<number>`COUNT(DISTINCT author_id)`,
+    }).from(communityPosts)
+      .where(sql`created_at > ${thirtyDaysAgoStr}::timestamp`);
+
+    res.json({
+      totalTemplates: Number(postsCount?.count || 0),
+      totalDevelopers: Number(usersCount?.count || 0),
+      totalDownloads: Number(viewsSum?.total || 0),
+      monthlyActive: Number(monthlyActive?.count || 0),
+    });
+  } catch (error) {
+    console.error('[Community] Failed to fetch stats:', error);
+    res.status(500).json({ error: 'Failed to fetch stats' });
+  }
+});
+
+// Helper function to format time ago
+function formatTimeAgo(date: Date): string {
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / (1000 * 60));
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffMins < 1) return 'just now';
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays < 7) return `${diffDays}d ago`;
+  return date.toLocaleDateString();
+}
+
 export default router;
