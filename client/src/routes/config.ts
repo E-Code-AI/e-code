@@ -160,6 +160,7 @@ export const protectedRoutes: RouteConfig[] = [
   { path: "/account", component: Pages.Account, layout: "replit" },
   { path: "/deployments", component: Pages.Deployments, layout: "replit" },
   { path: "/usage", component: Pages.Usage, layout: "replit" },
+  { path: "/billing", component: Pages.Billing, layout: "replit" },
   { path: "/cycles", component: Pages.Cycles, layout: "replit" },
   { path: "/bounties", component: Pages.Bounties, layout: "replit" },
   { path: "/powerups", component: Pages.PowerUps, layout: "replit" },

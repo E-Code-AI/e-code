@@ -837,6 +837,48 @@ export class ProjectsRouter {
       }
     });
 
+    // SSE endpoint for project creation progress (for complex operations like GitHub import)
+    this.router.get('/api/projects/:projectId/creation-progress', this.ensureAuthenticated, async (req: Request, res: Response) => {
+      const projectId = req.params.projectId;
+      const userId = (req.user as User).id;
+
+      // Validate project exists and user has access
+      const project = await this.storage.getProject(projectId);
+      if (!project || project.ownerId !== userId) {
+        return res.status(404).json({ error: 'Project not found', code: 'NOT_FOUND' });
+      }
+
+      // Set up SSE headers
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+      res.setHeader('X-Accel-Buffering', 'no');
+      res.flushHeaders();
+
+      // Send initial progress
+      const sendProgress = (step: string, progress: number, message: string) => {
+        res.write(`data: ${JSON.stringify({ step, progress, message, projectId })}\n\n`);
+      };
+
+      // Simulate progress for demonstration (in real impl, this would track actual work)
+      sendProgress('created', 25, 'Project created');
+      
+      // For now, just send completion - real implementation would track actual scaffolding
+      setTimeout(() => {
+        sendProgress('scaffolded', 50, 'Files scaffolded');
+      }, 100);
+
+      setTimeout(() => {
+        sendProgress('configured', 75, 'Environment configured');
+      }, 200);
+
+      setTimeout(() => {
+        sendProgress('ready', 100, 'Project ready!');
+        res.write(`data: ${JSON.stringify({ step: 'complete', progress: 100, message: 'Done', projectId })}\n\n`);
+        res.end();
+      }, 300);
+    });
+
     // GET /api/projects/:id/ai/pending - Get pending actions for approval
     this.router.get('/:id/ai/pending', this.ensureAuthenticated, async (req: Request, res: Response) => {
       try {

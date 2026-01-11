@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { LazyMotionDiv } from '@/lib/motion';
 import { Button } from '@/components/ui/button';
@@ -7,6 +7,14 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Shield,
   Plus,
@@ -23,7 +31,12 @@ import {
   RefreshCw,
   Loader2,
   Save,
-  X
+  X,
+  Upload,
+  Download,
+  Clock,
+  AlertTriangle,
+  FileText
 } from 'lucide-react';
 import {
   Dialog,
@@ -33,6 +46,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
@@ -43,6 +66,7 @@ interface EnvVar {
   key: string;
   value: string;
   isSecret: boolean;
+  environment: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -50,6 +74,14 @@ interface EnvVar {
 interface EnvVarsResponse {
   variables: EnvVar[];
 }
+
+type Environment = 'development' | 'production' | 'shared';
+
+const ENVIRONMENT_OPTIONS: { value: Environment; label: string; color: string }[] = [
+  { value: 'shared', label: 'All Environments', color: 'bg-blue-500' },
+  { value: 'development', label: 'Development', color: 'bg-green-500' },
+  { value: 'production', label: 'Production', color: 'bg-red-500' },
+];
 
 function ShimmerSkeleton({ className }: { className?: string }) {
   return (
@@ -67,6 +99,35 @@ function ShimmerSkeleton({ className }: { className?: string }) {
   );
 }
 
+function formatRelativeTime(dateString?: string): string {
+  if (!dateString) return 'Unknown';
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffSecs = Math.floor(diffMs / 1000);
+  const diffMins = Math.floor(diffSecs / 60);
+  const diffHours = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffSecs < 60) return 'Just now';
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays < 7) return `${diffDays}d ago`;
+  return date.toLocaleDateString();
+}
+
+function getEnvironmentBadge(env: string) {
+  const config = ENVIRONMENT_OPTIONS.find(e => e.value === env) || ENVIRONMENT_OPTIONS[0];
+  return (
+    <Badge className={cn(
+      "text-[10px] uppercase tracking-wider px-1.5 py-0 rounded text-white border-none",
+      config.color
+    )}>
+      {env === 'shared' ? 'all' : env === 'development' ? 'dev' : 'prod'}
+    </Badge>
+  );
+}
+
 export function ReplitSecretsPanel({ projectId }: { projectId?: string | number }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddDialog, setShowAddDialog] = useState(false);
@@ -74,8 +135,15 @@ export function ReplitSecretsPanel({ projectId }: { projectId?: string | number 
   const [newKey, setNewKey] = useState('');
   const [newValue, setNewValue] = useState('');
   const [isSecretToggle, setIsSecretToggle] = useState(true);
+  const [selectedEnvironment, setSelectedEnvironment] = useState<Environment>('shared');
   const [revealedSecrets, setRevealedSecrets] = useState<Record<string, string>>({});
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [revealConfirmSecret, setRevealConfirmSecret] = useState<EnvVar | null>(null);
+  const [showImportDialog, setShowImportDialog] = useState(false);
+  const [showExportWarning, setShowExportWarning] = useState(false);
+  const [importContent, setImportContent] = useState('');
+  const [filterEnvironment, setFilterEnvironment] = useState<string>('all');
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   const { data: envVarsData, isLoading, error, refetch } = useQuery<EnvVarsResponse>({
@@ -95,13 +163,14 @@ export function ReplitSecretsPanel({ projectId }: { projectId?: string | number 
   });
 
   const createMutation = useMutation({
-    mutationFn: async (data: { key: string; value: string; isSecret: boolean }) => {
+    mutationFn: async (data: { key: string; value: string; isSecret: boolean; environment: string }) => {
       if (!projectId) throw new Error('Project ID required');
       const response = await apiRequest('POST', '/api/env-vars', {
         projectId: projectId.toString(),
         key: data.key.toUpperCase().replace(/\s+/g, '_'),
         value: data.value,
-        isSecret: data.isSecret
+        isSecret: data.isSecret,
+        environment: data.environment
       });
       return response.json();
     },
@@ -121,10 +190,11 @@ export function ReplitSecretsPanel({ projectId }: { projectId?: string | number 
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, value, isSecret }: { id: string; value?: string; isSecret?: boolean }) => {
+    mutationFn: async ({ id, value, isSecret, environment }: { id: string; value?: string; isSecret?: boolean; environment?: string }) => {
       const response = await apiRequest('PATCH', `/api/env-vars/${id}`, {
         ...(value !== undefined && { value }),
-        ...(isSecret !== undefined && { isSecret })
+        ...(isSecret !== undefined && { isSecret }),
+        ...(environment !== undefined && { environment })
       });
       return response.json();
     },
@@ -168,6 +238,10 @@ export function ReplitSecretsPanel({ projectId }: { projectId?: string | number 
     },
     onSuccess: (data, id) => {
       setRevealedSecrets(prev => ({ ...prev, [id]: data.value }));
+      toast({
+        title: 'Secret Revealed',
+        description: 'Value will auto-hide in 60 seconds'
+      });
       setTimeout(() => {
         setRevealedSecrets(prev => {
           const newState = { ...prev };
@@ -185,10 +259,38 @@ export function ReplitSecretsPanel({ projectId }: { projectId?: string | number 
     }
   });
 
+  const importMutation = useMutation({
+    mutationFn: async (data: { content: string; environment: string }) => {
+      if (!projectId) throw new Error('Project ID required');
+      const response = await apiRequest('POST', `/api/env-vars/${projectId}/import`, {
+        content: data.content,
+        environment: data.environment
+      });
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({ 
+        title: 'Import Complete', 
+        description: `Imported ${data.imported} variables, ${data.skipped} skipped` 
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/env-vars', projectId] });
+      setShowImportDialog(false);
+      setImportContent('');
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Import Failed',
+        description: error.message || 'Failed to import environment variables',
+        variant: 'destructive'
+      });
+    }
+  });
+
   const resetForm = useCallback(() => {
     setNewKey('');
     setNewValue('');
     setIsSecretToggle(true);
+    setSelectedEnvironment('shared');
   }, []);
 
   const handleCopyValue = useCallback((secret: EnvVar) => {
@@ -215,14 +317,82 @@ export function ReplitSecretsPanel({ projectId }: { projectId?: string | number 
         return newState;
       });
     } else if (secret.isSecret) {
-      revealMutation.mutate(secret.id);
+      setRevealConfirmSecret(secret);
     }
-  }, [revealedSecrets, revealMutation]);
+  }, [revealedSecrets]);
+
+  const confirmReveal = useCallback(() => {
+    if (revealConfirmSecret) {
+      revealMutation.mutate(revealConfirmSecret.id);
+      setRevealConfirmSecret(null);
+    }
+  }, [revealConfirmSecret, revealMutation]);
+
+  const handleExport = useCallback(async () => {
+    if (!projectId) return;
+    try {
+      const response = await fetch(`/api/env-vars/${projectId}/export`, {
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Export failed');
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = '.env';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast({ title: 'Exported', description: 'Environment file downloaded' });
+      setShowExportWarning(false);
+    } catch (error: any) {
+      toast({
+        title: 'Export Failed',
+        description: error.message || 'Failed to export environment variables',
+        variant: 'destructive'
+      });
+    }
+  }, [projectId, toast]);
+
+  const handleFileUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const content = event.target?.result as string;
+      setImportContent(content);
+    };
+    reader.readAsText(file);
+  }, []);
+
+  const parseEnvContent = (content: string): { key: string; value: string }[] => {
+    return content
+      .split('\n')
+      .filter(line => line.trim() && !line.trim().startsWith('#'))
+      .map(line => {
+        const eqIndex = line.indexOf('=');
+        if (eqIndex === -1) return null;
+        const key = line.substring(0, eqIndex).trim();
+        let value = line.substring(eqIndex + 1).trim();
+        if ((value.startsWith('"') && value.endsWith('"')) || 
+            (value.startsWith("'") && value.endsWith("'"))) {
+          value = value.slice(1, -1);
+        }
+        return { key, value };
+      })
+      .filter((item): item is { key: string; value: string } => item !== null);
+  };
 
   const variables = envVarsData?.variables || [];
-  const filteredVariables = variables.filter(v =>
-    v.key.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredVariables = variables.filter(v => {
+    const matchesSearch = v.key.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesEnv = filterEnvironment === 'all' || v.environment === filterEnvironment;
+    return matchesSearch && matchesEnv;
+  });
 
   if (!projectId) {
     return (
@@ -260,6 +430,24 @@ export function ReplitSecretsPanel({ projectId }: { projectId?: string | number 
             <Button
               variant="ghost"
               className="h-8 w-8 rounded-lg p-0 text-gray-500 dark:text-[#9da2a6] hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-[#242b3d]"
+              onClick={() => setShowImportDialog(true)}
+              title="Import from .env file"
+              data-testid="button-import-secrets"
+            >
+              <Upload className="w-[18px] h-[18px]" />
+            </Button>
+            <Button
+              variant="ghost"
+              className="h-8 w-8 rounded-lg p-0 text-gray-500 dark:text-[#9da2a6] hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-[#242b3d]"
+              onClick={() => setShowExportWarning(true)}
+              title="Export to .env file"
+              data-testid="button-export-secrets"
+            >
+              <Download className="w-[18px] h-[18px]" />
+            </Button>
+            <Button
+              variant="ghost"
+              className="h-8 w-8 rounded-lg p-0 text-gray-500 dark:text-[#9da2a6] hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-[#242b3d]"
               onClick={() => refetch()}
               disabled={isLoading}
               data-testid="button-refresh-secrets"
@@ -277,17 +465,30 @@ export function ReplitSecretsPanel({ projectId }: { projectId?: string | number 
           </div>
         </div>
 
-        <div className="relative">
-          <Search 
-            className="absolute left-3 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-gray-400 dark:text-[#5c6670]" 
-          />
-          <Input
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search secrets..."
-            className="pl-10 h-8 rounded-lg text-[13px] border bg-white dark:bg-[#1c2333] border-gray-300 dark:border-[#3d4452] text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-[#5c6670]"
-            data-testid="input-search-secrets"
-          />
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Search 
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-gray-400 dark:text-[#5c6670]" 
+            />
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search secrets..."
+              className="pl-10 h-8 rounded-lg text-[13px] border bg-white dark:bg-[#1c2333] border-gray-300 dark:border-[#3d4452] text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-[#5c6670]"
+              data-testid="input-search-secrets"
+            />
+          </div>
+          <Select value={filterEnvironment} onValueChange={setFilterEnvironment}>
+            <SelectTrigger className="w-[120px] h-8 text-[13px] bg-white dark:bg-[#1c2333] border-gray-300 dark:border-[#3d4452]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Envs</SelectItem>
+              <SelectItem value="shared">Shared</SelectItem>
+              <SelectItem value="development">Dev</SelectItem>
+              <SelectItem value="production">Prod</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -296,7 +497,7 @@ export function ReplitSecretsPanel({ projectId }: { projectId?: string | number 
           {isLoading ? (
             <div className="space-y-2">
               {[1, 2, 3].map(i => (
-                <ShimmerSkeleton key={i} className="h-16 w-full" />
+                <ShimmerSkeleton key={i} className="h-20 w-full" />
               ))}
             </div>
           ) : error ? (
@@ -345,31 +546,44 @@ export function ReplitSecretsPanel({ projectId }: { projectId?: string | number 
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       {secret.isSecret ? (
-                        <Lock className="w-[18px] h-[18px] shrink-0 text-amber-500" />
+                        <Lock className="w-[16px] h-[16px] shrink-0 text-amber-500" />
                       ) : (
-                        <Key className="w-[18px] h-[18px] shrink-0 text-gray-500 dark:text-[#9da2a6]" />
+                        <Key className="w-[16px] h-[16px] shrink-0 text-gray-500 dark:text-[#9da2a6]" />
                       )}
                       <span 
-                        className="font-mono text-[15px] leading-[20px] font-medium truncate text-gray-900 dark:text-white"
+                        className="font-mono text-[14px] leading-[18px] font-medium truncate text-gray-900 dark:text-white"
                       >
                         {secret.key}
                       </span>
                       {secret.isSecret && (
                         <Badge 
-                          className="text-[11px] uppercase tracking-wider px-1.5 py-0 rounded bg-transparent text-amber-500 border border-amber-500"
+                          className="text-[10px] uppercase tracking-wider px-1.5 py-0 rounded bg-transparent text-amber-500 border border-amber-500"
                         >
                           encrypted
                         </Badge>
                       )}
+                      {getEnvironmentBadge(secret.environment || 'shared')}
                     </div>
                     <div className="mt-2 flex items-center gap-2">
                       <code 
-                        className="text-[13px] font-mono px-2 py-1 rounded max-w-[200px] truncate bg-gray-100 dark:bg-[#242b3d] text-gray-600 dark:text-[#9da2a6]"
+                        className="text-[12px] font-mono px-2 py-1 rounded max-w-[180px] truncate bg-gray-100 dark:bg-[#242b3d] text-gray-600 dark:text-[#9da2a6]"
                       >
                         {revealedSecrets[secret.id] || secret.value}
                       </code>
+                    </div>
+                    <div className="mt-2 flex items-center gap-3 text-[11px] text-gray-500 dark:text-[#5c6670]">
+                      <span className="flex items-center gap-1">
+                        <Clock className="w-[12px] h-[12px]" />
+                        Created {formatRelativeTime(secret.createdAt)}
+                      </span>
+                      {secret.updatedAt && secret.updatedAt !== secret.createdAt && (
+                        <span className="flex items-center gap-1">
+                          <Edit className="w-[12px] h-[12px]" />
+                          Modified {formatRelativeTime(secret.updatedAt)}
+                        </span>
+                      )}
                     </div>
                   </div>
 
@@ -411,6 +625,7 @@ export function ReplitSecretsPanel({ projectId }: { projectId?: string | number 
                         setNewKey(secret.key);
                         setNewValue('');
                         setIsSecretToggle(secret.isSecret);
+                        setSelectedEnvironment((secret.environment || 'shared') as Environment);
                       }}
                       data-testid={`button-edit-${secret.key}`}
                     >
@@ -478,6 +693,24 @@ export function ReplitSecretsPanel({ projectId }: { projectId?: string | number 
                 data-testid="input-new-value"
               />
             </div>
+            <div className="space-y-2">
+              <Label className="text-[11px] uppercase tracking-wider text-gray-600 dark:text-[#9da2a6]">
+                Environment
+              </Label>
+              <Select value={selectedEnvironment} onValueChange={(v) => setSelectedEnvironment(v as Environment)}>
+                <SelectTrigger className="h-8 text-[13px] bg-gray-100 dark:bg-[#242b3d] border-gray-300 dark:border-[#3d4452]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ENVIRONMENT_OPTIONS.map(opt => (
+                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[13px] text-gray-500 dark:text-[#5c6670]">
+                Shared applies to all environments
+              </p>
+            </div>
             <div className="flex items-center justify-between">
               <Label className="text-[15px] leading-[20px] text-gray-900 dark:text-white">
                 Encrypt as secret
@@ -500,7 +733,7 @@ export function ReplitSecretsPanel({ projectId }: { projectId?: string | number 
             </Button>
             <Button
               className="h-8 rounded-lg text-[13px] bg-blue-600 hover:bg-blue-700 text-white"
-              onClick={() => createMutation.mutate({ key: newKey, value: newValue, isSecret: isSecretToggle })}
+              onClick={() => createMutation.mutate({ key: newKey, value: newValue, isSecret: isSecretToggle, environment: selectedEnvironment })}
               disabled={!newKey || !newValue || createMutation.isPending}
               data-testid="button-save-secret"
             >
@@ -552,6 +785,21 @@ export function ReplitSecretsPanel({ projectId }: { projectId?: string | number 
                 Leave empty to keep current value
               </p>
             </div>
+            <div className="space-y-2">
+              <Label className="text-[11px] uppercase tracking-wider text-gray-600 dark:text-[#9da2a6]">
+                Environment
+              </Label>
+              <Select value={selectedEnvironment} onValueChange={(v) => setSelectedEnvironment(v as Environment)}>
+                <SelectTrigger className="h-8 text-[13px] bg-gray-100 dark:bg-[#242b3d] border-gray-300 dark:border-[#3d4452]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ENVIRONMENT_OPTIONS.map(opt => (
+                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="flex items-center justify-between">
               <Label className="text-[15px] leading-[20px] text-gray-900 dark:text-white">
                 Encrypt as secret
@@ -579,7 +827,8 @@ export function ReplitSecretsPanel({ projectId }: { projectId?: string | number 
                   updateMutation.mutate({
                     id: editingSecret.id,
                     ...(newValue && { value: newValue }),
-                    isSecret: isSecretToggle
+                    isSecret: isSecretToggle,
+                    environment: selectedEnvironment
                   });
                 }
               }}
@@ -595,6 +844,150 @@ export function ReplitSecretsPanel({ projectId }: { projectId?: string | number 
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!revealConfirmSecret} onOpenChange={(open) => !open && setRevealConfirmSecret(null)}>
+        <AlertDialogContent className="bg-white dark:bg-[#1c2333] border-gray-200 dark:border-[#3d4452]">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-gray-900 dark:text-white">
+              <AlertTriangle className="w-5 h-5 text-amber-500" />
+              Reveal Secret Value?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-600 dark:text-[#9da2a6]">
+              You are about to reveal the encrypted value for <strong className="text-gray-900 dark:text-white">{revealConfirmSecret?.key}</strong>.
+              <br /><br />
+              This action will be logged for security purposes. The value will auto-hide after 60 seconds.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="h-8 text-[13px]">Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmReveal}
+              className="h-8 text-[13px] bg-amber-600 hover:bg-amber-700"
+            >
+              <Eye className="w-4 h-4 mr-1" />
+              Reveal Secret
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
+        <DialogContent className="bg-white dark:bg-[#1c2333] border-gray-200 dark:border-[#3d4452] max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-gray-900 dark:text-white">
+              <Upload className="w-5 h-5" />
+              Import Environment Variables
+            </DialogTitle>
+            <DialogDescription className="text-gray-600 dark:text-[#9da2a6]">
+              Import variables from a .env file. Each line should be KEY=VALUE format.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  className="h-8 text-[13px]"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <FileText className="w-4 h-4 mr-1" />
+                  Choose File
+                </Button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".env,.txt"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+                <span className="text-[13px] text-gray-500">or paste content below</span>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-[11px] uppercase tracking-wider text-gray-600 dark:text-[#9da2a6]">
+                .env Content
+              </Label>
+              <Textarea
+                value={importContent}
+                onChange={(e) => setImportContent(e.target.value)}
+                placeholder="API_KEY=your-api-key&#10;DATABASE_URL=postgres://..."
+                className="h-40 font-mono text-[13px] bg-gray-100 dark:bg-[#242b3d] border-gray-300 dark:border-[#3d4452]"
+              />
+              {importContent && (
+                <p className="text-[12px] text-gray-500">
+                  {parseEnvContent(importContent).length} variables detected
+                </p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label className="text-[11px] uppercase tracking-wider text-gray-600 dark:text-[#9da2a6]">
+                Import to Environment
+              </Label>
+              <Select value={selectedEnvironment} onValueChange={(v) => setSelectedEnvironment(v as Environment)}>
+                <SelectTrigger className="h-8 text-[13px] bg-gray-100 dark:bg-[#242b3d] border-gray-300 dark:border-[#3d4452]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ENVIRONMENT_OPTIONS.map(opt => (
+                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              className="h-8 text-[13px]"
+              onClick={() => { setShowImportDialog(false); setImportContent(''); }}
+            >
+              Cancel
+            </Button>
+            <Button
+              className="h-8 text-[13px] bg-blue-600 hover:bg-blue-700 text-white"
+              onClick={() => importMutation.mutate({ content: importContent, environment: selectedEnvironment })}
+              disabled={!importContent.trim() || importMutation.isPending}
+            >
+              {importMutation.isPending ? (
+                <><Loader2 className="w-4 h-4 mr-1 animate-spin" /> Importing...</>
+              ) : (
+                <><Upload className="w-4 h-4 mr-1" /> Import</>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={showExportWarning} onOpenChange={setShowExportWarning}>
+        <AlertDialogContent className="bg-white dark:bg-[#1c2333] border-gray-200 dark:border-[#3d4452]">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-gray-900 dark:text-white">
+              <AlertTriangle className="w-5 h-5 text-amber-500" />
+              Export Security Warning
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-600 dark:text-[#9da2a6]">
+              <strong className="text-amber-600">Warning:</strong> Exporting will download a .env file containing <strong>all secrets in plain text</strong>.
+              <br /><br />
+              This file should:
+              <ul className="list-disc ml-5 mt-2 space-y-1">
+                <li>Never be committed to version control</li>
+                <li>Never be shared over insecure channels</li>
+                <li>Be deleted after use</li>
+              </ul>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="h-8 text-[13px]">Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleExport}
+              className="h-8 text-[13px] bg-amber-600 hover:bg-amber-700"
+            >
+              <Download className="w-4 h-4 mr-1" />
+              Export Anyway
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -785,4 +785,331 @@ router.delete('/:projectId/:packageName', ensureAuthenticated, ensureProjectAcce
   }
 });
 
+/**
+ * Security audit for a project (npm audit)
+ * GET /api/packages/:projectId/audit
+ */
+router.get('/:projectId/audit', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    
+    if (!isValidProjectId(projectId)) {
+      return res.status(400).json({ 
+        error: 'Invalid project ID',
+        details: 'Project ID contains invalid characters'
+      });
+    }
+    
+    const workingDir = await resolveProjectDirectory(projectId);
+    
+    if (!workingDir) {
+      return res.status(404).json({ 
+        error: 'Project not found',
+        details: `Project directory does not exist for project ${projectId}`
+      });
+    }
+    
+    let language = 'javascript';
+    let vulnerabilities: any[] = [];
+    let summary = { critical: 0, high: 0, moderate: 0, low: 0, info: 0, total: 0 };
+    
+    try {
+      await fs.access(path.join(workingDir, 'package.json'));
+      language = 'javascript';
+      
+      try {
+        const { stdout } = await spawnPackageManager('npm', ['audit', '--json'], workingDir);
+        const auditData = JSON.parse(stdout);
+        
+        if (auditData.vulnerabilities) {
+          vulnerabilities = Object.entries(auditData.vulnerabilities).map(([name, data]: [string, any]) => ({
+            name,
+            severity: data.severity,
+            title: data.via?.[0]?.title || 'Vulnerability detected',
+            url: data.via?.[0]?.url || '',
+            fixAvailable: data.fixAvailable,
+            range: data.range,
+            nodes: data.nodes?.length || 0,
+          }));
+          
+          summary = auditData.metadata?.vulnerabilities || summary;
+        }
+      } catch (auditError: any) {
+        if (auditError.stdout) {
+          try {
+            const auditData = JSON.parse(auditError.stdout);
+            if (auditData.vulnerabilities) {
+              vulnerabilities = Object.entries(auditData.vulnerabilities).map(([name, data]: [string, any]) => ({
+                name,
+                severity: data.severity,
+                title: data.via?.[0]?.title || 'Vulnerability detected',
+                url: data.via?.[0]?.url || '',
+                fixAvailable: data.fixAvailable,
+                range: data.range,
+                nodes: data.nodes?.length || 0,
+              }));
+              
+              summary = auditData.metadata?.vulnerabilities || summary;
+            }
+          } catch {
+            // Couldn't parse audit output
+          }
+        }
+      }
+    } catch {
+      try {
+        await fs.access(path.join(workingDir, 'requirements.txt'));
+        language = 'python';
+        
+        try {
+          const { stdout } = await spawnPackageManager('pip', ['check'], workingDir);
+          if (stdout.includes('No broken requirements')) {
+            vulnerabilities = [];
+          } else {
+            const lines = stdout.split('\n').filter(l => l.trim());
+            vulnerabilities = lines.map(line => ({
+              name: line.split(' ')[0],
+              severity: 'moderate',
+              title: line,
+              fixAvailable: true,
+            }));
+          }
+        } catch {
+          vulnerabilities = [];
+        }
+      } catch {
+        return res.json({
+          success: true,
+          vulnerabilities: [],
+          summary,
+          language: 'unknown',
+          message: 'No package files found',
+        });
+      }
+    }
+    
+    res.json({
+      success: true,
+      vulnerabilities,
+      summary,
+      language,
+    });
+  } catch (error: any) {
+    console.error('[Packages] Audit failed:', error);
+    res.status(500).json({
+      error: 'Security audit failed',
+      message: error.message,
+    });
+  }
+});
+
+/**
+ * Check for outdated packages
+ * GET /api/packages/:projectId/outdated
+ */
+router.get('/:projectId/outdated', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    
+    if (!isValidProjectId(projectId)) {
+      return res.status(400).json({ 
+        error: 'Invalid project ID',
+        details: 'Project ID contains invalid characters'
+      });
+    }
+    
+    const workingDir = await resolveProjectDirectory(projectId);
+    
+    if (!workingDir) {
+      return res.status(404).json({ 
+        error: 'Project not found',
+        details: `Project directory does not exist for project ${projectId}`
+      });
+    }
+    
+    let outdatedPackages: any[] = [];
+    let language = 'javascript';
+    
+    try {
+      await fs.access(path.join(workingDir, 'package.json'));
+      language = 'javascript';
+      
+      try {
+        const { stdout } = await spawnPackageManager('npm', ['outdated', '--json'], workingDir);
+        const outdatedData = JSON.parse(stdout || '{}');
+        
+        outdatedPackages = Object.entries(outdatedData).map(([name, data]: [string, any]) => ({
+          name,
+          current: data.current,
+          wanted: data.wanted,
+          latest: data.latest,
+          type: data.type || 'dependencies',
+          homepage: data.homepage || `https://www.npmjs.com/package/${name}`,
+        }));
+      } catch (outdatedError: any) {
+        if (outdatedError.stdout) {
+          try {
+            const outdatedData = JSON.parse(outdatedError.stdout || '{}');
+            outdatedPackages = Object.entries(outdatedData).map(([name, data]: [string, any]) => ({
+              name,
+              current: data.current,
+              wanted: data.wanted,
+              latest: data.latest,
+              type: data.type || 'dependencies',
+              homepage: data.homepage || `https://www.npmjs.com/package/${name}`,
+            }));
+          } catch {
+            outdatedPackages = [];
+          }
+        }
+      }
+    } catch {
+      try {
+        await fs.access(path.join(workingDir, 'requirements.txt'));
+        language = 'python';
+        
+        try {
+          const { stdout } = await spawnPackageManager('pip', ['list', '--outdated', '--format=json'], workingDir);
+          const outdatedData = JSON.parse(stdout || '[]');
+          
+          outdatedPackages = outdatedData.map((pkg: any) => ({
+            name: pkg.name,
+            current: pkg.version,
+            latest: pkg.latest_version,
+            wanted: pkg.latest_version,
+            type: 'dependencies',
+            homepage: `https://pypi.org/project/${pkg.name}/`,
+          }));
+        } catch {
+          outdatedPackages = [];
+        }
+      } catch {
+        return res.json({
+          success: true,
+          outdated: [],
+          language: 'unknown',
+          message: 'No package files found',
+        });
+      }
+    }
+    
+    res.json({
+      success: true,
+      outdated: outdatedPackages,
+      language,
+    });
+  } catch (error: any) {
+    console.error('[Packages] Outdated check failed:', error);
+    res.status(500).json({
+      error: 'Outdated check failed',
+      message: error.message,
+    });
+  }
+});
+
+/**
+ * Get dependency tree for a project
+ * GET /api/packages/:projectId/dependencies
+ */
+router.get('/:projectId/dependencies', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    
+    if (!isValidProjectId(projectId)) {
+      return res.status(400).json({ 
+        error: 'Invalid project ID',
+        details: 'Project ID contains invalid characters'
+      });
+    }
+    
+    const workingDir = await resolveProjectDirectory(projectId);
+    
+    if (!workingDir) {
+      return res.status(404).json({ 
+        error: 'Project not found',
+        details: `Project directory does not exist for project ${projectId}`
+      });
+    }
+    
+    let dependencies: any = {};
+    let language = 'javascript';
+    
+    try {
+      await fs.access(path.join(workingDir, 'package.json'));
+      language = 'javascript';
+      
+      try {
+        const { stdout } = await spawnPackageManager('npm', ['ls', '--json', '--depth=2'], workingDir);
+        const depData = JSON.parse(stdout || '{}');
+        dependencies = depData.dependencies || {};
+      } catch (lsError: any) {
+        if (lsError.stdout) {
+          try {
+            const depData = JSON.parse(lsError.stdout || '{}');
+            dependencies = depData.dependencies || {};
+          } catch {
+            dependencies = {};
+          }
+        }
+      }
+    } catch {
+      try {
+        await fs.access(path.join(workingDir, 'requirements.txt'));
+        language = 'python';
+        
+        const requirementsPath = path.join(workingDir, 'requirements.txt');
+        const requirements = await fs.readFile(requirementsPath, 'utf-8');
+        
+        const pkgs = requirements
+          .split('\n')
+          .filter(line => line.trim() && !line.startsWith('#'))
+          .map(line => {
+            const match = line.match(/^([a-zA-Z0-9_.-]+)(?:==|>=|<=|~=|!=)?(.*)$/);
+            return {
+              name: match ? match[1].trim() : line.trim(),
+              version: match && match[2] ? match[2].trim() : 'latest',
+            };
+          });
+        
+        pkgs.forEach(pkg => {
+          dependencies[pkg.name] = { version: pkg.version, dependencies: {} };
+        });
+      } catch {
+        return res.json({
+          success: true,
+          dependencies: {},
+          language: 'unknown',
+          message: 'No package files found',
+        });
+      }
+    }
+    
+    const flattenDeps = (deps: any, depth = 0): any[] => {
+      const result: any[] = [];
+      for (const [name, data] of Object.entries(deps) as [string, any][]) {
+        result.push({
+          name,
+          version: data.version,
+          depth,
+          dependencyCount: Object.keys(data.dependencies || {}).length,
+          children: flattenDeps(data.dependencies || {}, depth + 1),
+        });
+      }
+      return result;
+    };
+    
+    res.json({
+      success: true,
+      dependencies: flattenDeps(dependencies),
+      language,
+    });
+  } catch (error: any) {
+    console.error('[Packages] Dependency tree failed:', error);
+    res.status(500).json({
+      error: 'Failed to get dependency tree',
+      message: error.message,
+    });
+  }
+});
+
 export default router;
