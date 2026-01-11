@@ -67,6 +67,7 @@ import {
   resourceMetrics, paneConfigurations,
   aiApprovalQueue, aiAuditLogs,
   bounties, bountySubmissions, bountyReviews,
+  agentSessions,
   alerts, insertAlertSchema,
   insertAiApprovalQueueSchema, insertAiAuditLogSchema,
   insertUserCreditsSchema, insertBudgetLimitSchema, insertUsageAlertSchema,
@@ -404,6 +405,10 @@ export interface IStorage {
   trackAIUsage(userId: string, tokens: number, mode: string): Promise<void>;
   createAiUsageRecord(record: any): Promise<any>;
   updateUserAiTokens(userId: string, tokensUsed: number): Promise<void>;
+
+  // Agent Session operations (for admin monitoring)
+  getActiveAgentSessions?(): Promise<any[]>;
+  terminateAgentSession?(sessionId: string, data: { terminatedBy: number; reason: string }): Promise<void>;
 
   // AI Usage Tracking for billing
   createAIUsageRecord(record: {
@@ -1823,6 +1828,69 @@ export class DatabaseStorage implements IStorage {
   async updateUserAiTokens(userId: string, tokensUsed: number): Promise<void> {
     // For now, just log the token usage
     // Updated AI tokens for user
+  }
+
+  // Agent Session operations (for admin monitoring)
+  async getActiveAgentSessions(): Promise<any[]> {
+    try {
+      const sessions = await this.db
+        .select({
+          id: agentSessions.id,
+          userId: agentSessions.userId,
+          projectId: agentSessions.projectId,
+          model: agentSessions.model,
+          isActive: agentSessions.isActive,
+          totalTokensUsed: agentSessions.totalTokensUsed,
+          totalOperations: agentSessions.totalOperations,
+          autonomousMode: agentSessions.autonomousMode,
+          workflowStatus: agentSessions.workflowStatus,
+          startedAt: agentSessions.startedAt,
+          endedAt: agentSessions.endedAt,
+        })
+        .from(agentSessions)
+        .where(eq(agentSessions.isActive, true))
+        .orderBy(desc(agentSessions.startedAt));
+      
+      // Enrich with user and project info
+      const enrichedSessions = await Promise.all(
+        sessions.map(async (session) => {
+          const user = await this.getUser(session.userId);
+          const project = session.projectId ? await this.getProject(String(session.projectId)) : null;
+          return {
+            ...session,
+            userEmail: user?.email,
+            username: user?.username,
+            projectName: project?.name,
+            projectSlug: project?.slug,
+          };
+        })
+      );
+      
+      return enrichedSessions;
+    } catch (error) {
+      console.error('Error fetching active agent sessions:', error);
+      return [];
+    }
+  }
+
+  async terminateAgentSession(sessionId: string, data: { terminatedBy: number; reason: string }): Promise<void> {
+    try {
+      await this.db
+        .update(agentSessions)
+        .set({
+          isActive: false,
+          endedAt: new Date(),
+          metadata: sql`COALESCE(${agentSessions.metadata}, '{}')::jsonb || ${JSON.stringify({
+            terminatedBy: data.terminatedBy,
+            terminationReason: data.reason,
+            terminatedAt: new Date().toISOString()
+          })}::jsonb`
+        })
+        .where(eq(agentSessions.id, sessionId));
+    } catch (error) {
+      console.error('Error terminating agent session:', error);
+      throw error;
+    }
   }
 
   // Deployment operations
