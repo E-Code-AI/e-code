@@ -265,6 +265,115 @@ export class ChatGPTRouter {
         }
       }
     });
+
+    // ===== ADMIN PROJECT MANAGEMENT ENDPOINTS =====
+    
+    // Get ALL projects (admin can see all users' projects)
+    this.router.get('/api/admin/chatgpt/all-projects', async (req: Request, res: Response) => {
+      try {
+        const projects = await this.storage.getAllProjects();
+        res.json(projects);
+      } catch (error) {
+        logger.error('Failed to get all projects:', error);
+        res.status(500).json({ message: 'Failed to retrieve projects' });
+      }
+    });
+
+    // Get project details with owner info
+    this.router.get('/api/admin/chatgpt/projects/:projectId', async (req: Request, res: Response) => {
+      try {
+        const project = await this.storage.getProject(req.params.projectId);
+        if (!project) {
+          return res.status(404).json({ message: 'Project not found' });
+        }
+        const owner = await this.storage.getUser(project.ownerId);
+        res.json({ 
+          ...project, 
+          ownerEmail: owner?.email,
+          ownerUsername: owner?.username 
+        });
+      } catch (error) {
+        logger.error('Failed to get project:', error);
+        res.status(500).json({ message: 'Failed to retrieve project' });
+      }
+    });
+
+    // List files in a project
+    this.router.get('/api/admin/chatgpt/projects/:projectId/files', async (req: Request, res: Response) => {
+      try {
+        const files = await this.storage.getFilesByProjectId(req.params.projectId);
+        res.json(files);
+      } catch (error) {
+        logger.error('Failed to get project files:', error);
+        res.status(500).json({ message: 'Failed to retrieve files' });
+      }
+    });
+
+    // Read a specific file
+    this.router.get('/api/admin/chatgpt/projects/:projectId/files/:fileId', async (req: Request, res: Response) => {
+      try {
+        const file = await this.storage.getFile(parseInt(req.params.fileId));
+        if (!file || file.projectId !== req.params.projectId) {
+          return res.status(404).json({ message: 'File not found' });
+        }
+        res.json(file);
+      } catch (error) {
+        logger.error('Failed to get file:', error);
+        res.status(500).json({ message: 'Failed to retrieve file' });
+      }
+    });
+
+    // Update a file (admin can modify any project's files)
+    this.router.put('/api/admin/chatgpt/projects/:projectId/files/:fileId', async (req: Request, res: Response) => {
+      try {
+        const { content } = req.body;
+        if (content === undefined) {
+          return res.status(400).json({ message: 'Content is required' });
+        }
+        
+        const file = await this.storage.getFile(parseInt(req.params.fileId));
+        if (!file || file.projectId !== req.params.projectId) {
+          return res.status(404).json({ message: 'File not found' });
+        }
+        
+        const updatedFile = await this.storage.updateFile(parseInt(req.params.fileId), { content });
+        
+        logger.info(`[Admin] File ${file.path} updated by admin ${req.user!.id} in project ${req.params.projectId}`);
+        res.json(updatedFile);
+      } catch (error) {
+        logger.error('Failed to update file:', error);
+        res.status(500).json({ message: 'Failed to update file' });
+      }
+    });
+
+    // Get all active agent sessions across all users
+    this.router.get('/api/admin/chatgpt/agent-sessions', async (req: Request, res: Response) => {
+      try {
+        const sessions = await this.storage.getActiveAgentSessions?.() || [];
+        res.json(sessions);
+      } catch (error) {
+        logger.error('Failed to get agent sessions:', error);
+        res.status(500).json({ message: 'Failed to retrieve agent sessions' });
+      }
+    });
+
+    // Terminate an agent session (admin intervention)
+    this.router.post('/api/admin/chatgpt/agent-sessions/:sessionId/terminate', async (req: Request, res: Response) => {
+      try {
+        const { reason } = req.body;
+        logger.warn(`[Admin] Session ${req.params.sessionId} terminated by admin ${req.user!.id}. Reason: ${reason || 'No reason provided'}`);
+        
+        await this.storage.terminateAgentSession?.(req.params.sessionId, {
+          terminatedBy: req.user!.id,
+          reason: reason || 'Admin intervention'
+        });
+        
+        res.json({ message: 'Session terminated' });
+      } catch (error) {
+        logger.error('Failed to terminate session:', error);
+        res.status(500).json({ message: 'Failed to terminate session' });
+      }
+    });
   }
 
   getRouter(): Router {
