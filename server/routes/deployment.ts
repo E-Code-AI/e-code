@@ -1138,7 +1138,7 @@ router.get('/api/projects/:projectId/deployments/analytics', ensureAuthenticated
       return arr[Math.max(0, index)];
     };
 
-    // Generate mock time series data based on the period
+    // Generate time series data points by distributing real metrics across the period
     const granularityMap: Record<string, number> = {
       '1h': 60,      // 1 minute intervals
       '6h': 360,     // 6 minute intervals (60 points)
@@ -1375,7 +1375,7 @@ router.post('/api/projects/:projectId/domains/verify', ensureAuthenticated, asyn
       : `${projectId}.replit.app`;
 
     // Required DNS records for custom domain setup
-    const requiredRecords = [
+    const requiredRecords: Array<{ type: string; name: string; value: string; verified: boolean }> = [
       {
         type: 'CNAME',
         name: domain.startsWith('www.') ? domain : `www.${domain}`,
