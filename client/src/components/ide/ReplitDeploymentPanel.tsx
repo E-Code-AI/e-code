@@ -58,6 +58,11 @@ import {
   FileText,
   Terminal,
   Info,
+  History,
+  ArrowLeft,
+  Shield,
+  Link2,
+  CheckCircle2,
 } from 'lucide-react';
 
 interface ReplitDeploymentPanelProps {
@@ -186,6 +191,10 @@ export function ReplitDeploymentPanel({
   
   const [timePeriod, setTimePeriod] = useState<TimePeriod>('24h');
   
+  const [showHistory, setShowHistory] = useState(false);
+  const [dnsVerificationStatus, setDnsVerificationStatus] = useState<'idle' | 'verifying' | 'verified' | 'failed'>('idle');
+  const [dnsRecords, setDnsRecords] = useState<{ type: string; name: string; value: string; verified: boolean }[]>([]);
+  
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectAttempts = useRef(0);
   const logsEndRef = useRef<HTMLDivElement>(null);
@@ -213,7 +222,16 @@ export function ReplitDeploymentPanel({
     analytics: DeploymentAnalytics;
     period: string;
   }>({
-    queryKey: ['/api/projects', projectId, 'deployments', 'analytics', timePeriod],
+    queryKey: ['/api/projects', projectId, 'deployments', 'analytics', { period: timePeriod }],
+    queryFn: async () => {
+      const response = await fetch(`/api/projects/${projectId}/deployments/analytics?period=${timePeriod}`, {
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch analytics');
+      }
+      return response.json();
+    },
     enabled: !!projectId && activeTab === 'analytics',
   });
 
@@ -426,6 +444,61 @@ export function ReplitDeploymentPanel({
     },
     onError: (error: Error) => {
       toast({ title: 'Failed to restart deployment', description: error.message, variant: 'destructive' });
+    },
+  });
+
+  const rollbackMutation = useMutation({
+    mutationFn: async ({ deploymentId, version }: { deploymentId: string; version: string }) => {
+      return apiRequest('POST', `/api/deployments/${deploymentId}/rollback`, {
+        version,
+        reason: `Rollback initiated from deployment panel`,
+      });
+    },
+    onSuccess: () => {
+      setIsDeploying(true);
+      setLogs([]);
+      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId] });
+      toast({ title: 'Rollback initiated', description: 'Rolling back to previous version...' });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Rollback failed', description: error.message, variant: 'destructive' });
+    },
+  });
+
+  const verifyDomainMutation = useMutation({
+    mutationFn: async (domain: string) => {
+      return apiRequest('POST', `/api/projects/${projectId}/domains/verify`, { domain });
+    },
+    onMutate: () => {
+      setDnsVerificationStatus('verifying');
+    },
+    onSuccess: (data: any) => {
+      if (data.verified) {
+        setDnsVerificationStatus('verified');
+        setDnsRecords(data.records || []);
+        toast({ title: 'Domain verified', description: 'Your custom domain is configured correctly!' });
+      } else {
+        setDnsVerificationStatus('failed');
+        setDnsRecords(data.records || []);
+        toast({ title: 'Domain verification failed', description: 'Please check your DNS settings', variant: 'destructive' });
+      }
+    },
+    onError: (error: Error) => {
+      setDnsVerificationStatus('failed');
+      toast({ title: 'Verification failed', description: error.message, variant: 'destructive' });
+    },
+  });
+
+  const updateDomainMutation = useMutation({
+    mutationFn: async (domain: string) => {
+      return apiRequest('POST', `/api/projects/${projectId}/domains`, { customDomain: domain });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId] });
+      toast({ title: 'Domain updated', description: 'Custom domain configuration saved' });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Failed to update domain', description: error.message, variant: 'destructive' });
     },
   });
 
@@ -811,16 +884,221 @@ export function ReplitDeploymentPanel({
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="custom-domain">Custom Domain (Optional)</Label>
-                    <Input
-                      id="custom-domain"
-                      placeholder="myapp.example.com"
-                      value={customDomain}
-                      onChange={(e) => setCustomDomain(e.target.value)}
-                      data-testid="input-custom-domain"
-                    />
+                  <div className="space-y-3">
+                    <Label className="flex items-center gap-2">
+                      <Link2 className="h-4 w-4" />
+                      Domain Settings
+                    </Label>
+                    
+                    {deployment?.url && (
+                      <div className="p-3 bg-muted/50 rounded-md border">
+                        <div className="text-xs text-muted-foreground mb-1">Generated URL</div>
+                        <div className="flex items-center gap-2">
+                          <code className="text-sm font-mono text-primary break-all flex-1">
+                            {deployment.url}
+                          </code>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 shrink-0"
+                            onClick={() => copyToClipboard(deployment.url!)}
+                          >
+                            <Copy className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div className="flex gap-2">
+                      <Input
+                        id="custom-domain"
+                        placeholder="myapp.example.com"
+                        value={customDomain}
+                        onChange={(e) => setCustomDomain(e.target.value)}
+                        className="flex-1"
+                        data-testid="input-custom-domain"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          if (customDomain) {
+                            verifyDomainMutation.mutate(customDomain);
+                          }
+                        }}
+                        disabled={!customDomain || verifyDomainMutation.isPending}
+                        data-testid="button-verify-domain"
+                      >
+                        {verifyDomainMutation.isPending ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <>
+                            <Shield className="h-4 w-4 mr-1" />
+                            Verify
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                    
+                    {dnsVerificationStatus !== 'idle' && (
+                      <div className={cn(
+                        'p-3 rounded-md border text-sm',
+                        dnsVerificationStatus === 'verified' && 'bg-green-500/10 border-green-500/20 text-green-600',
+                        dnsVerificationStatus === 'verifying' && 'bg-blue-500/10 border-blue-500/20 text-blue-600',
+                        dnsVerificationStatus === 'failed' && 'bg-red-500/10 border-red-500/20 text-red-600'
+                      )}>
+                        <div className="flex items-center gap-2 mb-2">
+                          {dnsVerificationStatus === 'verified' && <CheckCircle2 className="h-4 w-4" />}
+                          {dnsVerificationStatus === 'verifying' && <Loader2 className="h-4 w-4 animate-spin" />}
+                          {dnsVerificationStatus === 'failed' && <XCircle className="h-4 w-4" />}
+                          <span className="font-medium">
+                            {dnsVerificationStatus === 'verified' && 'Domain Verified'}
+                            {dnsVerificationStatus === 'verifying' && 'Verifying DNS...'}
+                            {dnsVerificationStatus === 'failed' && 'Verification Failed'}
+                          </span>
+                        </div>
+                        
+                        {dnsRecords.length > 0 && (
+                          <div className="space-y-2 mt-2">
+                            <div className="text-xs font-medium text-muted-foreground">Required DNS Records:</div>
+                            {dnsRecords.map((record, idx) => (
+                              <div key={idx} className="p-2 bg-background rounded text-xs font-mono">
+                                <div className="flex items-center gap-2">
+                                  {record.verified ? (
+                                    <CheckCircle className="h-3 w-3 text-green-500" />
+                                  ) : (
+                                    <XCircle className="h-3 w-3 text-red-500" />
+                                  )}
+                                  <span>{record.type}</span>
+                                  <span className="text-muted-foreground">{record.name}</span>
+                                  <span className="text-primary break-all">{record.value}</span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        
+                        {dnsVerificationStatus === 'verified' && customDomain && (
+                          <Button
+                            size="sm"
+                            className="mt-2 w-full"
+                            onClick={() => updateDomainMutation.mutate(customDomain)}
+                            disabled={updateDomainMutation.isPending}
+                          >
+                            {updateDomainMutation.isPending ? (
+                              <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                            ) : null}
+                            Save Domain Configuration
+                          </Button>
+                        )}
+                      </div>
+                    )}
                   </div>
+
+                  <Separator />
+
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label className="flex items-center gap-2">
+                        <History className="h-4 w-4" />
+                        Deployment History
+                      </Label>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowHistory(!showHistory)}
+                        data-testid="button-toggle-history"
+                      >
+                        {showHistory ? 'Hide' : 'Show'}
+                      </Button>
+                    </div>
+                    
+                    {showHistory && (
+                      <div className="space-y-2" data-testid="deployment-history">
+                        {isLoadingHistory ? (
+                          <div className="space-y-2">
+                            {[...Array(3)].map((_, i) => (
+                              <Skeleton key={i} className="h-16 w-full" />
+                            ))}
+                          </div>
+                        ) : deploymentHistory?.deployments && deploymentHistory.deployments.length > 0 ? (
+                          <ScrollArea className="max-h-[200px]">
+                            <div className="space-y-2 pr-3">
+                              {deploymentHistory.deployments.map((dep, idx) => {
+                                const depStatus = getDisplayStatus(dep);
+                                const depId = dep.deploymentId || dep.id;
+                                const isCurrentDeployment = depId === deploymentId;
+                                
+                                return (
+                                  <div
+                                    key={dep.id}
+                                    className={cn(
+                                      'p-3 rounded-md border flex items-center justify-between gap-2',
+                                      isCurrentDeployment && 'border-primary/40 bg-primary/5'
+                                    )}
+                                    data-testid={`deployment-history-item-${idx}`}
+                                  >
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center gap-2 mb-1">
+                                        {getStatusIcon(depStatus)}
+                                        <span className="text-xs font-mono truncate">
+                                          {depId?.substring(0, 12)}...
+                                        </span>
+                                        <Badge variant="outline" className={cn('text-[10px] shrink-0', getStatusBadgeClass(depStatus))}>
+                                          {depStatus}
+                                        </Badge>
+                                        {isCurrentDeployment && (
+                                          <Badge variant="secondary" className="text-[10px] shrink-0">
+                                            Current
+                                          </Badge>
+                                        )}
+                                      </div>
+                                      <div className="text-xs text-muted-foreground">
+                                        {dep.createdAt ? new Date(dep.createdAt).toLocaleString() : 'Unknown date'}
+                                      </div>
+                                    </div>
+                                    
+                                    {!isCurrentDeployment && depStatus !== 'failed' && depId && (
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="shrink-0"
+                                        onClick={() => {
+                                          if (confirm(`Are you sure you want to rollback to deployment ${depId.substring(0, 8)}?`)) {
+                                            rollbackMutation.mutate({ 
+                                              deploymentId: deploymentId || depId, 
+                                              version: depId 
+                                            });
+                                          }
+                                        }}
+                                        disabled={rollbackMutation.isPending}
+                                        data-testid={`button-rollback-${idx}`}
+                                      >
+                                        {rollbackMutation.isPending ? (
+                                          <Loader2 className="h-3 w-3 animate-spin" />
+                                        ) : (
+                                          <>
+                                            <ArrowLeft className="h-3 w-3 mr-1" />
+                                            Rollback
+                                          </>
+                                        )}
+                                      </Button>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </ScrollArea>
+                        ) : (
+                          <div className="text-center py-4 text-muted-foreground text-sm">
+                            No deployment history yet
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  <Separator />
 
                   <div className="flex flex-col sm:flex-row gap-2">
                     <Button

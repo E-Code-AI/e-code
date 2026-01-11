@@ -103,12 +103,19 @@ const createEnvVarSchema = z.object({
   projectId: z.string(),
   key: z.string().min(1).max(255).regex(/^[A-Z][A-Z0-9_]*$/, 'Must be UPPERCASE with underscores'),
   value: z.string().max(10000),
-  isSecret: z.boolean().default(false)
+  isSecret: z.boolean().default(false),
+  environment: z.enum(['development', 'production', 'shared']).default('development')
 });
 
 const updateEnvVarSchema = z.object({
   value: z.string().max(10000).optional(),
-  isSecret: z.boolean().optional()
+  isSecret: z.boolean().optional(),
+  environment: z.enum(['development', 'production', 'shared']).optional()
+});
+
+const importEnvVarsSchema = z.object({
+  content: z.string().min(1),
+  environment: z.enum(['development', 'production', 'shared']).default('development')
 });
 
 /**
@@ -195,7 +202,8 @@ router.post('/', async (req, res) => {
       projectId: parseInt(data.projectId, 10),
       key: data.key,
       value: valueToStore,
-      isSecret: data.isSecret
+      isSecret: data.isSecret,
+      environment: data.environment
     }).returning();
 
     // Mask secret value in response
@@ -277,6 +285,7 @@ router.patch('/:id', async (req, res) => {
       .set({
         value: valueToStore,
         isSecret: isSecretFlag,
+        ...(updates.environment && { environment: updates.environment }),
         updatedAt: new Date()
       })
       .where(eq(environmentVariables.id, id))
@@ -413,12 +422,31 @@ router.get('/:projectId/export', async (req, res) => {
       orderBy: (envVars, { asc }) => [asc(envVars.key)]
     });
 
-    // Generate .env file content
+    // Generate .env file content with decrypted secrets
     let envContent = '# Environment Variables\n';
-    envContent += `# Generated: ${new Date().toISOString()}\n\n`;
+    envContent += `# Generated: ${new Date().toISOString()}\n`;
+    envContent += '# WARNING: This file contains sensitive secrets in plain text!\n\n';
 
     for (const envVar of envVars) {
-      envContent += `${envVar.key}=${envVar.value}\n`;
+      let value = envVar.value;
+      
+      // Decrypt secret values for export
+      if (envVar.isSecret) {
+        try {
+          const encryptedData = JSON.parse(envVar.value);
+          value = (secretService as any).decrypt(encryptedData);
+        } catch (error) {
+          logger.error(`Failed to decrypt secret ${envVar.key} for export:`, error);
+          // Skip this secret if decryption fails
+          continue;
+        }
+      }
+      
+      // Add environment comment if not shared
+      if (envVar.environment && envVar.environment !== 'shared') {
+        envContent += `# Environment: ${envVar.environment}\n`;
+      }
+      envContent += `${envVar.key}=${value}\n`;
     }
     
     // Audit log for sensitive operation
@@ -429,6 +457,121 @@ router.get('/:projectId/export', async (req, res) => {
     res.send(envContent);
   } catch (error: any) {
     logger.error('Failed to export env vars:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * Import environment variables from .env file content
+ * POST /api/env-vars/:projectId/import
+ * SECURITY: Only project owner can import env vars
+ */
+router.post('/:projectId/import', async (req, res) => {
+  try {
+    const projectId = req.params.projectId;
+    const userId = req.user?.id;
+    const data = importEnvVarsSchema.parse(req.body);
+    
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    
+    // SECURITY: Verify project ownership before importing
+    const isOwner = await verifyProjectOwnership(userId, projectId);
+    if (!isOwner) {
+      logger.warn('Unauthorized env vars import attempt', { userId, projectId });
+      return res.status(403).json({ error: 'Access denied: not project owner' });
+    }
+    
+    const projectIdNum = parseInt(projectId, 10);
+    
+    // Parse .env content
+    const lines = data.content.split('\n');
+    let imported = 0;
+    let skipped = 0;
+    const errors: string[] = [];
+    
+    for (const line of lines) {
+      const trimmedLine = line.trim();
+      
+      // Skip empty lines and comments
+      if (!trimmedLine || trimmedLine.startsWith('#')) {
+        continue;
+      }
+      
+      // Parse KEY=VALUE
+      const eqIndex = trimmedLine.indexOf('=');
+      if (eqIndex === -1) {
+        skipped++;
+        continue;
+      }
+      
+      let key = trimmedLine.substring(0, eqIndex).trim();
+      let value = trimmedLine.substring(eqIndex + 1).trim();
+      
+      // Remove surrounding quotes from value
+      if ((value.startsWith('"') && value.endsWith('"')) || 
+          (value.startsWith("'") && value.endsWith("'"))) {
+        value = value.slice(1, -1);
+      }
+      
+      // Normalize key to uppercase with underscores
+      key = key.toUpperCase().replace(/[^A-Z0-9_]/g, '_');
+      
+      // Validate key format
+      if (!/^[A-Z][A-Z0-9_]*$/.test(key)) {
+        errors.push(`Invalid key format: ${key}`);
+        skipped++;
+        continue;
+      }
+      
+      try {
+        // Check if key already exists for this project and environment
+        const existing = await db.query.environmentVariables.findFirst({
+          where: and(
+            eq(environmentVariables.projectId, projectIdNum),
+            eq(environmentVariables.key, key),
+            eq(environmentVariables.environment, data.environment)
+          )
+        });
+        
+        if (existing) {
+          // Update existing variable
+          await db.update(environmentVariables)
+            .set({ value, updatedAt: new Date() })
+            .where(eq(environmentVariables.id, existing.id));
+          imported++;
+        } else {
+          // Create new variable (default to non-secret for imports)
+          await db.insert(environmentVariables).values({
+            projectId: projectIdNum,
+            key,
+            value,
+            isSecret: false,
+            environment: data.environment
+          });
+          imported++;
+        }
+      } catch (err: any) {
+        logger.error(`Failed to import env var ${key}:`, err);
+        errors.push(`Failed to import: ${key}`);
+        skipped++;
+      }
+    }
+    
+    logger.info('Env vars imported', { userId, projectId, imported, skipped, environment: data.environment });
+    
+    res.json({ 
+      imported, 
+      skipped,
+      errors: errors.length > 0 ? errors : undefined,
+      message: `Successfully imported ${imported} variables`
+    });
+  } catch (error: any) {
+    logger.error('Failed to import env vars:', error);
+    if (error.name === 'ZodError') {
+      return res.status(400).json({ error: error.errors });
+    }
     res.status(500).json({ error: error.message });
   }
 });

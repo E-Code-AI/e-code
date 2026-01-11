@@ -99,6 +99,7 @@ export const Learn = instrumentedLazy(() => import("@/pages/Learn"), "Learn");
 export const Support = instrumentedLazy(() => import("@/pages/Support"), "Support");
 export const Themes = instrumentedLazy(() => import("@/pages/Themes"), "Themes");
 export const Usage = instrumentedLazy(() => import("@/pages/Usage"), "Usage");
+export const Billing = instrumentedLazy(() => import("@/pages/Billing"), "Billing");
 export const Subscribe = instrumentedLazy(() => import("@/pages/Subscribe"), "Subscribe");
 export const Plans = instrumentedLazy(() => import("@/pages/Plans"), "Plans");
 export const Cycles = instrumentedLazy(() => import("@/pages/Cycles"), "Cycles");
