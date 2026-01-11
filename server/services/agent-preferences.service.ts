@@ -344,6 +344,49 @@ export class AgentPreferencesService {
   }
 
   /**
+   * Get recommended fast model for Fast Mode (10-60s targeted changes)
+   * Fast Mode prioritizes speed over quality for quick single-file edits
+   */
+  getFastModel(): AiModel {
+    // Priority order for fast models (by speed and availability)
+    const fastModels: AiModel[] = [
+      'claude-haiku-4-5-20251015',  // Fastest Claude model
+      'gpt-5-mini',                  // Fast GPT model
+      'gemini-3-flash',              // Fast Gemini model
+      'grok-4-fast',                 // Fast xAI model
+    ];
+    
+    // Return first available fast model
+    const availableModels = this.getAvailableModels();
+    const availableIds = availableModels.map(m => m.id);
+    
+    for (const fastModel of fastModels) {
+      if (availableIds.includes(fastModel)) {
+        return fastModel;
+      }
+    }
+    
+    // Fallback to first model with 'fast' speed rating
+    const fastBySpeed = availableModels.find(m => m.capabilities.speed === 'fast');
+    return fastBySpeed?.id || 'gpt-5-mini';
+  }
+
+  /**
+   * Get estimated time range for Fast Mode based on model
+   */
+  getFastModeEstimate(model: AiModel): { min: number; max: number; label: string } {
+    const modelInfo = this.getAvailableModels().find(m => m.id === model);
+    
+    if (modelInfo?.capabilities.speed === 'fast') {
+      return { min: 10, max: 30, label: '~20s' };
+    }
+    if (modelInfo?.capabilities.speed === 'medium') {
+      return { min: 30, max: 60, label: '~45s' };
+    }
+    return { min: 45, max: 90, label: '~60s' };
+  }
+
+  /**
    * Get the effective model based on user preferences and tool settings
    */
   getEffectiveModel(settings: {

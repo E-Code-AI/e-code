@@ -63,12 +63,12 @@ export default function KVStorePage() {
   });
   const [importData, setImportData] = useState('');
 
-  const { data: entries = [], isLoading } = useQuery<KVEntry[]>({
+  const { data: entries = [], isLoading, error: entriesError } = useQuery<KVEntry[]>({
     queryKey: ['/api/kv-store'],
     queryFn: async () => {
       const response = await fetch('/api/kv-store', { credentials: 'include' });
       if (!response.ok) {
-        return getMockEntries();
+        throw new Error('Failed to fetch KV entries');
       }
       return response.json();
     }
@@ -79,14 +79,7 @@ export default function KVStorePage() {
     queryFn: async () => {
       const response = await fetch('/api/kv-store/stats', { credentials: 'include' });
       if (!response.ok) {
-        return {
-          totalKeys: entries.length || 24,
-          totalSize: 125000,
-          maxSize: 50000000,
-          avgKeySize: 18,
-          avgValueSize: 512,
-          expiringKeys: 5
-        };
+        throw new Error('Failed to fetch KV stats');
       }
       return response.json();
     }
@@ -100,6 +93,7 @@ export default function KVStorePage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/kv-store'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/kv-store/stats'] });
       toast({
         title: "Entry added",
         description: `Key "${newEntry.key}" has been added successfully`,
@@ -124,6 +118,7 @@ export default function KVStorePage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/kv-store'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/kv-store/stats'] });
       toast({
         title: "Entry updated",
         description: "The key-value pair has been updated",
@@ -141,6 +136,7 @@ export default function KVStorePage() {
     },
     onSuccess: (_, key) => {
       queryClient.invalidateQueries({ queryKey: ['/api/kv-store'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/kv-store/stats'] });
       toast({
         title: "Entry deleted",
         description: `Key "${key}" has been removed`,
@@ -156,6 +152,7 @@ export default function KVStorePage() {
     },
     onSuccess: (_, keys) => {
       queryClient.invalidateQueries({ queryKey: ['/api/kv-store'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/kv-store/stats'] });
       toast({
         title: "Entries deleted",
         description: `${keys.length} entries have been removed`,
@@ -171,6 +168,7 @@ export default function KVStorePage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/kv-store'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/kv-store/stats'] });
       toast({
         title: "Import successful",
         description: "Data has been imported successfully",
@@ -833,15 +831,3 @@ export default function KVStorePage() {
   );
 }
 
-function getMockEntries(): KVEntry[] {
-  return [
-    { key: 'user:settings:1234', value: { theme: 'dark', notifications: true, language: 'en' }, type: 'json', size: 128, createdAt: '2024-01-15T10:30:00Z', updatedAt: '2024-01-20T14:22:00Z' },
-    { key: 'session:abc123', value: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...', type: 'string', size: 256, ttl: 3600, expiresAt: '2024-01-21T15:30:00Z', createdAt: '2024-01-21T14:30:00Z', updatedAt: '2024-01-21T14:30:00Z' },
-    { key: 'counter:pageviews', value: 15847, type: 'number', size: 8, createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-21T12:00:00Z' },
-    { key: 'feature:darkmode', value: true, type: 'boolean', size: 4, createdAt: '2024-01-10T09:00:00Z', updatedAt: '2024-01-10T09:00:00Z' },
-    { key: 'cache:products', value: [{ id: 1, name: 'Widget' }, { id: 2, name: 'Gadget' }], type: 'json', size: 512, ttl: 300, expiresAt: '2024-01-21T15:05:00Z', createdAt: '2024-01-21T15:00:00Z', updatedAt: '2024-01-21T15:00:00Z' },
-    { key: 'config:api:ratelimit', value: 1000, type: 'number', size: 8, createdAt: '2024-01-05T08:00:00Z', updatedAt: '2024-01-18T16:30:00Z' },
-    { key: 'user:profile:5678', value: { name: 'Jane Doe', avatar: 'https://example.com/avatar.jpg', bio: 'Software developer' }, type: 'json', size: 256, createdAt: '2024-01-12T11:00:00Z', updatedAt: '2024-01-19T09:15:00Z' },
-    { key: 'maintenance:enabled', value: false, type: 'boolean', size: 4, createdAt: '2024-01-08T07:00:00Z', updatedAt: '2024-01-20T18:00:00Z' },
-  ];
-}

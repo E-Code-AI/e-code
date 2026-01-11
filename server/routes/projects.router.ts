@@ -178,6 +178,30 @@ export class ProjectsRouter {
     return `${baseSlug}-${randomSuffix}`;
   }
 
+  private generateCodeSuggestion(elementPath: string, styles?: Record<string, string>, text?: string): string {
+    const parts: string[] = [];
+    
+    if (styles && Object.keys(styles).length > 0) {
+      const cssProperties = Object.entries(styles)
+        .map(([key, value]) => {
+          const cssKey = key.replace(/([A-Z])/g, '-$1').toLowerCase();
+          return `  ${cssKey}: ${value};`;
+        })
+        .join('\n');
+      parts.push(`/* Suggested CSS for ${elementPath} */\n${cssProperties}`);
+    }
+    
+    if (text) {
+      parts.push(`/* Text content: "${text.substring(0, 100)}${text.length > 100 ? '...' : ''}" */`);
+    }
+    
+    if (parts.length === 0) {
+      return `/* No changes detected for ${elementPath} */`;
+    }
+    
+    return parts.join('\n\n');
+  }
+
   private initializeRoutes() {
     // Get user's projects with pagination
     this.router.get("/api/projects", this.ensureAuthenticated, async (req: Request, res: Response) => {
@@ -833,6 +857,55 @@ export class ProjectsRouter {
         return res.status(500).json({ 
           error: error.message || 'Failed to reject action',
           code: 'REJECTION_ERROR' 
+        });
+      }
+    });
+
+    // POST /api/projects/:projectId/visual-edit - Apply visual edits to source code
+    this.router.post('/api/projects/:projectId/visual-edit', this.ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
+      try {
+        const projectId = req.params.projectId;
+        const userId = (req.user as User).id;
+        const { elementPath, styles, text, sessionId } = req.body;
+
+        if (!elementPath) {
+          return res.status(400).json({ 
+            error: 'Element path is required',
+            code: 'MISSING_ELEMENT_PATH' 
+          });
+        }
+
+        const project = await this.storage.getProject(projectId);
+        if (!project || project.ownerId !== userId) {
+          return res.status(404).json({ error: 'Project not found', code: 'NOT_FOUND' });
+        }
+
+        const visualEditResult = {
+          success: true,
+          projectId,
+          elementPath,
+          appliedStyles: styles || {},
+          appliedText: text,
+          timestamp: new Date().toISOString(),
+          message: 'Visual edit recorded. Use AI agent to apply changes to source code.',
+          suggestion: this.generateCodeSuggestion(elementPath, styles, text)
+        };
+
+        projectLogger.info('[VisualEdit] Visual edit recorded:', {
+          projectId,
+          userId,
+          elementPath,
+          stylesApplied: Object.keys(styles || {}).length,
+          textChanged: !!text
+        });
+
+        return res.json(visualEditResult);
+
+      } catch (error: any) {
+        projectLogger.error('[VisualEdit] Error applying visual edit:', error);
+        return res.status(500).json({ 
+          error: error.message || 'Failed to apply visual edit',
+          code: 'VISUAL_EDIT_ERROR' 
         });
       }
     });
