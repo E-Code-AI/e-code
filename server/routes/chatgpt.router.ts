@@ -47,8 +47,8 @@ export class ChatGPTRouter {
     // Check if user is admin
     this.router.get('/api/admin/check', ensureAuthenticated, async (req: Request, res: Response) => {
       try {
-        const user = await this.storage.getUser(req.user!.id);
-        res.json({ isAdmin: user?.isAdmin || false });
+        const user = await this.storage.getUser(String(req.user!.id));
+        res.json({ isAdmin: user?.role === 'admin' });
       } catch (error) {
         res.status(500).json({ message: 'Failed to check admin status' });
       }
@@ -67,7 +67,7 @@ export class ChatGPTRouter {
         }
         
         const { projectId } = validation.data;
-        const session = await this.chatgptService.createSession(req.user!.id, projectId);
+        const session = await this.chatgptService.createSession(String(req.user!.id), projectId ? String(projectId) : undefined);
         res.json(session);
       } catch (error: any) {
         logger.error('Failed to create session:', { error: error.message });
@@ -78,7 +78,7 @@ export class ChatGPTRouter {
     // Get all sessions for the current user
     this.router.get('/api/admin/chatgpt/sessions', async (req: Request, res: Response) => {
       try {
-        const sessions = await this.chatgptService.getUserSessions(req.user!.id);
+        const sessions = await this.chatgptService.getUserSessions(String(req.user!.id));
         res.json(sessions);
       } catch (error) {
         console.error('Failed to get sessions:', error);
@@ -91,7 +91,7 @@ export class ChatGPTRouter {
       try {
         const session = await this.chatgptService.getSession(
           req.params.sessionId,
-          req.user!.id
+          String(req.user!.id)
         );
         
         if (!session) {
@@ -121,7 +121,7 @@ export class ChatGPTRouter {
 
         const response = await this.chatgptService.sendMessage(
           req.params.sessionId,
-          req.user!.id,
+          String(req.user!.id),
           message,
           includeProjectContext
         );
@@ -149,7 +149,7 @@ export class ChatGPTRouter {
 
         const result = await this.chatgptService.generateCode(
           sessionId,
-          req.user!.id,
+          String(req.user!.id),
           request,
           language
         );
@@ -164,7 +164,7 @@ export class ChatGPTRouter {
     // Clear session messages
     this.router.delete('/api/admin/chatgpt/sessions/:sessionId/messages', async (req: Request, res: Response) => {
       try {
-        await this.chatgptService.clearSession(req.params.sessionId, req.user!.id);
+        await this.chatgptService.clearSession(req.params.sessionId, String(req.user!.id));
         res.json({ message: 'Session cleared' });
       } catch (error) {
         console.error('Failed to clear session:', error);
@@ -175,7 +175,7 @@ export class ChatGPTRouter {
     // Delete a session
     this.router.delete('/api/admin/chatgpt/sessions/:sessionId', async (req: Request, res: Response) => {
       try {
-        await this.chatgptService.deleteSession(req.params.sessionId, req.user!.id);
+        await this.chatgptService.deleteSession(req.params.sessionId, String(req.user!.id));
         res.json({ message: 'Session deleted' });
       } catch (error) {
         console.error('Failed to delete session:', error);
@@ -186,7 +186,7 @@ export class ChatGPTRouter {
     // Get projects for context selection
     this.router.get('/api/admin/chatgpt/projects', async (req: Request, res: Response) => {
       try {
-        const projects = await this.storage.getProjectsByUserId(req.user!.id);
+        const projects = await this.storage.getProjectsByUserId(String(req.user!.id));
         res.json(projects);
       } catch (error) {
         console.error('Failed to get projects:', error);
@@ -223,7 +223,7 @@ export class ChatGPTRouter {
         try {
           const stream = this.chatgptService.sendStreamingMessage(
             req.params.sessionId,
-            req.user!.id,
+            String(req.user!.id),
             message,
             includeProjectContext
           );
@@ -286,7 +286,7 @@ export class ChatGPTRouter {
         if (!project) {
           return res.status(404).json({ message: 'Project not found' });
         }
-        const owner = await this.storage.getUser(project.ownerId);
+        const owner = await this.storage.getUser(String(project.ownerId));
         res.json({ 
           ...project, 
           ownerEmail: owner?.email,
@@ -313,7 +313,7 @@ export class ChatGPTRouter {
     this.router.get('/api/admin/chatgpt/projects/:projectId/files/:fileId', async (req: Request, res: Response) => {
       try {
         const file = await this.storage.getFile(parseInt(req.params.fileId));
-        if (!file || file.projectId !== req.params.projectId) {
+        if (!file || String(file.projectId) !== req.params.projectId) {
           return res.status(404).json({ message: 'File not found' });
         }
         res.json(file);
@@ -332,7 +332,7 @@ export class ChatGPTRouter {
         }
         
         const file = await this.storage.getFile(parseInt(req.params.fileId));
-        if (!file || file.projectId !== req.params.projectId) {
+        if (!file || String(file.projectId) !== req.params.projectId) {
           return res.status(404).json({ message: 'File not found' });
         }
         
