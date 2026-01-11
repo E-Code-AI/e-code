@@ -379,4 +379,16 @@ router.post('/template/:id/deploy', ensureAuthenticated, async (req: Request, re
   }
 });
 
+// GET /api/marketplace/publishers - Get top publishers/authors
+router.get('/publishers', async (req: Request, res: Response) => {
+  try {
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
+    const publishers = await templateMarketplace.getTopPublishers(limit);
+    res.json(publishers);
+  } catch (error) {
+    console.error('[marketplace] Error fetching publishers:', error);
+    res.status(500).json({ error: 'Failed to fetch publishers' });
+  }
+});
+
 export default router;

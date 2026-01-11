@@ -39,7 +39,7 @@ export default function Marketplace() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
 
-  // Fetch real marketplace data
+  // Fetch real marketplace data from APIs
   const { data: extensions = [], isLoading } = useQuery({
     queryKey: ['/api/marketplace/extensions'],
     queryFn: async () => {
@@ -49,82 +49,57 @@ export default function Marketplace() {
     }
   });
 
-  const templates = [
-    {
-      id: 1,
-      name: 'React TypeScript Starter',
-      description: 'Complete React app with TypeScript, Tailwind CSS, and routing',
-      author: 'E-Code Templates',
-      downloads: 45672,
-      rating: 4.8,
-      category: 'Frontend',
-      framework: 'React',
-      tags: ['React', 'TypeScript', 'Tailwind CSS'],
-      featured: true
-    },
-    {
-      id: 2,
-      name: 'Node.js REST API',
-      description: 'Express.js API with authentication and database integration',
-      author: 'Backend Masters',
-      downloads: 32847,
-      rating: 4.7,
-      category: 'Backend',
-      framework: 'Node.js',
-      tags: ['Node.js', 'Express', 'REST API'],
-      featured: false
-    },
-    {
-      id: 3,
-      name: 'Python Flask Blog',
-      description: 'Full-featured blog application with admin panel',
-      author: 'Python Community',
-      downloads: 28439,
-      rating: 4.6,
-      category: 'Full Stack',
-      framework: 'Flask',
-      tags: ['Python', 'Flask', 'Blog'],
-      featured: true
+  const { data: templatesData } = useQuery({
+    queryKey: ['/api/marketplace/templates'],
+    queryFn: async () => {
+      const response = await fetch('/api/marketplace/templates');
+      if (!response.ok) throw new Error('Failed to fetch templates');
+      return response.json();
     }
-  ];
+  });
+  const templates = templatesData?.templates || [];
 
+  const { data: categoriesData = [] } = useQuery({
+    queryKey: ['/api/marketplace/categories'],
+    queryFn: async () => {
+      const response = await fetch('/api/marketplace/categories');
+      if (!response.ok) throw new Error('Failed to fetch categories');
+      return response.json();
+    }
+  });
+  
+  const iconMap: Record<string, any> = {
+    ai: Zap,
+    themes: Paintbrush,
+    languages: Code,
+    formatters: FileText,
+    security: Shield,
+    tools: Package,
+    snippets: MessageSquare,
+    frontend: Globe,
+    backend: Database,
+    mobile: Smartphone,
+    fullstack: BarChart3,
+  };
+  
   const categories = [
-    { id: 'all', name: 'All Categories', icon: Store, count: 245 },
-    { id: 'ai', name: 'AI & ML', icon: Zap, count: 32 },
-    { id: 'themes', name: 'Themes', icon: Paintbrush, count: 56 },
-    { id: 'languages', name: 'Languages', icon: Code, count: 28 },
-    { id: 'formatters', name: 'Formatters', icon: FileText, count: 18 },
-    { id: 'security', name: 'Security', icon: Shield, count: 15 },
-    { id: 'tools', name: 'Tools', icon: Package, count: 67 },
-    { id: 'snippets', name: 'Snippets', icon: MessageSquare, count: 29 }
+    { id: 'all', name: 'All Categories', icon: Store, count: categoriesData.reduce((sum: number, c: any) => sum + (c.count || 0), 0) || 0 },
+    ...categoriesData.map((cat: any) => ({
+      id: cat.slug || cat.id,
+      name: cat.name,
+      icon: iconMap[cat.slug?.toLowerCase()] || Package,
+      count: cat.count || 0
+    }))
   ];
 
-  const publishers = [
-    {
-      id: 1,
-      name: 'Microsoft',
-      extensions: 45,
-      downloads: 15847293,
-      verified: true,
-      avatar: 'MS'
-    },
-    {
-      id: 2,
-      name: 'Google',
-      extensions: 28,
-      downloads: 8394751,
-      verified: true,
-      avatar: 'GO'
-    },
-    {
-      id: 3,
-      name: 'GitHub',
-      extensions: 22,
-      downloads: 6743821,
-      verified: true,
-      avatar: 'GH'
+  const { data: publishers = [] } = useQuery({
+    queryKey: ['/api/marketplace/publishers'],
+    queryFn: async () => {
+      const response = await fetch('/api/marketplace/publishers');
+      if (!response.ok) throw new Error('Failed to fetch publishers');
+      return response.json();
     }
-  ];
+  });
 
   const filteredExtensions = extensions.filter((ext: any) => {
     const matchesSearch = ext.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
