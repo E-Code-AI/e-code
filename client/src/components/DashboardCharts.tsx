@@ -1,37 +1,52 @@
 import { memo, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
-  LineChart, Line, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
+  AreaChart, Area, PieChart, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
 import { usePrefersReducedMotion } from '@/lib/performance';
+import { Skeleton } from '@/components/ui/skeleton';
 
-// Mock data for charts
-const weeklyActivityData = [
-  { day: 'Mon', commits: 12, deploys: 3, builds: 8 },
-  { day: 'Tue', commits: 19, deploys: 5, builds: 12 },
-  { day: 'Wed', commits: 15, deploys: 2, builds: 10 },
-  { day: 'Thu', commits: 25, deploys: 7, builds: 15 },
-  { day: 'Fri', commits: 22, deploys: 6, builds: 18 },
-  { day: 'Sat', commits: 8, deploys: 1, builds: 5 },
-  { day: 'Sun', commits: 5, deploys: 0, builds: 3 },
-];
+interface ActivityData {
+  day: string;
+  commits: number;
+  deploys: number;
+  builds: number;
+}
 
-const storageData = [
-  { name: 'Code', value: 35, color: '#3b82f6' },
-  { name: 'Assets', value: 25, color: '#10b981' },
-  { name: 'Databases', value: 20, color: '#f59e0b' },
-  { name: 'Logs', value: 10, color: '#ef4444' },
-  { name: 'Free', value: 10, color: '#9ca3af' },
-];
+interface StorageData {
+  name: string;
+  value: number;
+  color: string;
+}
 
 const DashboardCharts = memo(function DashboardCharts({ projects }: { projects: any[] }) {
   const prefersReducedMotion = usePrefersReducedMotion();
   
+  // Real API calls - no mock data
+  const { data: weeklyActivityData = [], isLoading: activityLoading, error: activityError } = useQuery<ActivityData[]>({
+    queryKey: ['/api/analytics/weekly-activity'],
+    queryFn: async () => {
+      const response = await fetch('/api/analytics/weekly-activity', { credentials: 'include' });
+      if (!response.ok) throw new Error('Failed to fetch activity data');
+      return response.json();
+    }
+  });
+
+  const { data: storageData = [], isLoading: storageLoading, error: storageError } = useQuery<StorageData[]>({
+    queryKey: ['/api/analytics/storage'],
+    queryFn: async () => {
+      const response = await fetch('/api/analytics/storage', { credentials: 'include' });
+      if (!response.ok) throw new Error('Failed to fetch storage data');
+      return response.json();
+    }
+  });
+  
   const chartAnimation = useMemo(() => ({
     animationBegin: prefersReducedMotion ? 0 : 0,
     animationDuration: prefersReducedMotion ? 0 : 800,
-    animationEasing: 'ease-out'
+    animationEasing: 'ease-out' as const
   }), [prefersReducedMotion]);
   
   return (
@@ -42,6 +57,17 @@ const DashboardCharts = memo(function DashboardCharts({ projects }: { projects: 
           <CardTitle>Weekly Activity</CardTitle>
         </CardHeader>
         <CardContent>
+          {activityLoading ? (
+            <Skeleton className="w-full h-[300px]" />
+          ) : activityError ? (
+            <div className="w-full h-[300px] flex items-center justify-center text-destructive">
+              Failed to load activity data
+            </div>
+          ) : weeklyActivityData.length === 0 ? (
+            <div className="w-full h-[300px] flex items-center justify-center text-muted-foreground">
+              No activity data available
+            </div>
+          ) : (
           <ResponsiveContainer width="100%" height={300}>
             <AreaChart data={weeklyActivityData}>
               <defs>
@@ -78,6 +104,7 @@ const DashboardCharts = memo(function DashboardCharts({ projects }: { projects: 
               />
             </AreaChart>
           </ResponsiveContainer>
+          )}
         </CardContent>
       </Card>
       
@@ -87,6 +114,17 @@ const DashboardCharts = memo(function DashboardCharts({ projects }: { projects: 
           <CardTitle>Storage Usage</CardTitle>
         </CardHeader>
         <CardContent>
+          {storageLoading ? (
+            <Skeleton className="w-full h-[300px]" />
+          ) : storageError ? (
+            <div className="w-full h-[300px] flex items-center justify-center text-destructive">
+              Failed to load storage data
+            </div>
+          ) : storageData.length === 0 ? (
+            <div className="w-full h-[300px] flex items-center justify-center text-muted-foreground">
+              No storage data available
+            </div>
+          ) : (
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
               <Pie
@@ -97,7 +135,7 @@ const DashboardCharts = memo(function DashboardCharts({ projects }: { projects: 
                 outerRadius={80}
                 fill="#8884d8"
                 dataKey="value"
-                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                label={({ name, percent }) => `${name} ${percent != null ? (percent * 100).toFixed(0) : 0}%`}
                 {...chartAnimation}
               >
                 {storageData.map((entry, index) => (
@@ -107,6 +145,7 @@ const DashboardCharts = memo(function DashboardCharts({ projects }: { projects: 
               <Tooltip />
             </PieChart>
           </ResponsiveContainer>
+          )}
         </CardContent>
       </Card>
     </div>

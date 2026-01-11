@@ -523,12 +523,12 @@ export function DatabaseManagement({ projectId }: DatabaseManagementProps) {
                       <div className="space-y-2 text-sm">
                         <div className="flex items-center justify-between">
                           <span className="text-muted-foreground">Total Tables</span>
-                          <span className="font-medium">{mockTables.length}</span>
+                          <span className="font-medium">{tables.length}</span>
                         </div>
                         <div className="flex items-center justify-between">
                           <span className="text-muted-foreground">Total Rows</span>
                           <span className="font-medium">
-                            {mockTables.reduce((acc, t) => acc + t.rowCount, 0).toLocaleString()}
+                            {tables.reduce((acc: number, t: { rowCount?: number }) => acc + (t.rowCount || 0), 0).toLocaleString()}
                           </span>
                         </div>
                         <div className="flex items-center justify-between">
@@ -579,7 +579,7 @@ export function DatabaseManagement({ projectId }: DatabaseManagementProps) {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {mockTables.map((table) => (
+                    {tables.map((table: { name: string; rowCount?: number; size?: string; indexes?: number }) => (
                       <TableRow key={table.name}>
                         <TableCell className="font-medium">
                           <button
@@ -590,9 +590,9 @@ export function DatabaseManagement({ projectId }: DatabaseManagementProps) {
                             {table.name}
                           </button>
                         </TableCell>
-                        <TableCell>{table.rowCount.toLocaleString()}</TableCell>
-                        <TableCell>{table.size}</TableCell>
-                        <TableCell>{table.indexes}</TableCell>
+                        <TableCell>{(table.rowCount || 0).toLocaleString()}</TableCell>
+                        <TableCell>{table.size || '-'}</TableCell>
+                        <TableCell>{table.indexes || 0}</TableCell>
                         <TableCell>
                           <div className="flex gap-2">
                             <Button variant="ghost" size="sm">
