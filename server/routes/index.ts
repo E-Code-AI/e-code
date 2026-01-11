@@ -93,6 +93,7 @@ import globalThemesRouter from './global-themes.router';
 import settingsRouter from './settings.router';
 import projectShellRouter from './shell.router';
 import storageRouter from './storage.router';
+import kvStoreRouter from './kv-store.router';
 import extensionsRouter from './extensions.router';
 import workflowsRouter from './workflows.router';
 import teamsRouter from './teams.router';
@@ -356,6 +357,9 @@ export class MainRouter {
 
     // ReplitDB-compatible Key-Value Database API (for container code)
     app.use('/api/db', replitdbRouter);
+
+    // KV Store UI routes (for the KV Store panel in the IDE)
+    app.use('/api/kv-store', tierRateLimiters.api, kvStoreRouter);
 
     // Project Data routes (Project-scoped data for regular users)
     app.use('/api/projects', tierRateLimiters.api, projectDataRouter);

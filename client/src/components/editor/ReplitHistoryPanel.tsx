@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   History,
   GitCommit,
@@ -16,6 +17,10 @@ import {
   CheckCircle,
   FileText,
   Loader2,
+  ChevronRight,
+  FolderOpen,
+  FileDiff,
+  X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -62,9 +67,54 @@ interface Checkpoint {
   }>;
 }
 
+interface FileVersion {
+  id: number;
+  fileId: number;
+  projectId: number;
+  content: string;
+  version: number;
+  changeType: string;
+  changeSummary?: string;
+  userId?: number;
+  checkpointId?: number;
+  additions?: number;
+  deletions?: number;
+  createdAt: string;
+  fileName?: string;
+  filePath?: string;
+}
+
+interface FileWithHistory {
+  id: number;
+  name: string;
+  path: string;
+  updatedAt: string;
+  versionCount: number;
+  latestChange?: string;
+}
+
 interface CheckpointsAPIResponse {
   success: boolean;
   checkpoints: APICheckpoint[];
+  count: number;
+}
+
+interface FileHistoryAPIResponse {
+  success: boolean;
+  history: FileVersion[];
+  groupedByFile: Record<string, FileVersion[]>;
+  count: number;
+}
+
+interface FilesWithHistoryAPIResponse {
+  success: boolean;
+  files: FileWithHistory[];
+  count: number;
+}
+
+interface FileVersionsAPIResponse {
+  success: boolean;
+  versions: FileVersion[];
   count: number;
 }
 
@@ -134,7 +184,7 @@ function LoadingSkeleton() {
   );
 }
 
-function EmptyState() {
+function EmptyState({ message = "No History Yet", description = "Your project checkpoints and version history will appear here as you work." }: { message?: string; description?: string }) {
   return (
     <div className="flex flex-col items-center justify-center h-full p-6 text-center" data-testid="history-empty-state">
       <History 
@@ -143,13 +193,95 @@ function EmptyState() {
       <h3 
         className="text-[17px] font-medium leading-tight mb-2 text-gray-900 dark:text-white"
       >
-        No History Yet
+        {message}
       </h3>
       <p 
         className="text-[15px] leading-[20px] max-w-[240px] text-gray-600 dark:text-[#9da2a6]"
       >
-        Your project checkpoints and version history will appear here as you work.
+        {description}
       </p>
+    </div>
+  );
+}
+
+function DiffViewer({ oldContent, newContent, fileName }: { oldContent: string; newContent: string; fileName: string }) {
+  const diffLines = useMemo(() => {
+    const oldLines = oldContent.split('\n');
+    const newLines = newContent.split('\n');
+    const result: Array<{ type: 'unchanged' | 'added' | 'removed'; line: string; lineNumber: number }> = [];
+    
+    const maxLen = Math.max(oldLines.length, newLines.length);
+    let oldIdx = 0;
+    let newIdx = 0;
+    
+    while (oldIdx < oldLines.length || newIdx < newLines.length) {
+      const oldLine = oldLines[oldIdx];
+      const newLine = newLines[newIdx];
+      
+      if (oldLine === newLine) {
+        result.push({ type: 'unchanged', line: oldLine || '', lineNumber: newIdx + 1 });
+        oldIdx++;
+        newIdx++;
+      } else if (oldLine !== undefined && (newLine === undefined || !newLines.slice(newIdx).includes(oldLine))) {
+        result.push({ type: 'removed', line: oldLine, lineNumber: oldIdx + 1 });
+        oldIdx++;
+      } else {
+        result.push({ type: 'added', line: newLine || '', lineNumber: newIdx + 1 });
+        newIdx++;
+      }
+    }
+    
+    return result;
+  }, [oldContent, newContent]);
+
+  const additions = diffLines.filter(l => l.type === 'added').length;
+  const deletions = diffLines.filter(l => l.type === 'removed').length;
+
+  return (
+    <div className="flex flex-col h-full">
+      <div className="flex items-center justify-between p-3 border-b border-gray-200 dark:border-[#3d4452]">
+        <div className="flex items-center gap-2">
+          <FileDiff className="w-4 h-4 text-gray-500" />
+          <span className="text-sm font-medium text-gray-900 dark:text-white">{fileName}</span>
+        </div>
+        <div className="flex items-center gap-3 text-xs">
+          <span className="text-green-600">+{additions}</span>
+          <span className="text-red-500">-{deletions}</span>
+        </div>
+      </div>
+      <ScrollArea className="flex-1">
+        <div className="font-mono text-xs">
+          {diffLines.map((line, idx) => (
+            <div 
+              key={idx}
+              className={cn(
+                "flex px-2 py-0.5",
+                line.type === 'added' && "bg-green-50 dark:bg-green-900/20",
+                line.type === 'removed' && "bg-red-50 dark:bg-red-900/20"
+              )}
+            >
+              <span className="w-10 text-right pr-3 select-none text-gray-400 dark:text-gray-600">
+                {line.lineNumber}
+              </span>
+              <span className={cn(
+                "w-4 select-none",
+                line.type === 'added' && "text-green-600",
+                line.type === 'removed' && "text-red-500"
+              )}>
+                {line.type === 'added' ? '+' : line.type === 'removed' ? '-' : ' '}
+              </span>
+              <pre className={cn(
+                "flex-1 whitespace-pre-wrap break-all",
+                line.type === 'added' && "text-green-700 dark:text-green-400",
+                line.type === 'removed' && "text-red-600 dark:text-red-400",
+                line.type === 'unchanged' && "text-gray-700 dark:text-gray-300"
+              )}>
+                {line.line}
+              </pre>
+            </div>
+          ))}
+        </div>
+      </ScrollArea>
     </div>
   );
 }
@@ -160,11 +292,18 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
   const [showRestoreDialog, setShowRestoreDialog] = useState(false);
   const [restoreTarget, setRestoreTarget] = useState<Checkpoint | null>(null);
   const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
+  const [activeTab, setActiveTab] = useState<'checkpoints' | 'files'>('files');
+  const [selectedFile, setSelectedFile] = useState<FileWithHistory | null>(null);
+  const [selectedVersion, setSelectedVersion] = useState<FileVersion | null>(null);
+  const [compareVersion, setCompareVersion] = useState<FileVersion | null>(null);
+  const [showDiffDialog, setShowDiffDialog] = useState(false);
+  const [restoreVersionTarget, setRestoreVersionTarget] = useState<FileVersion | null>(null);
+  const [showVersionRestoreDialog, setShowVersionRestoreDialog] = useState(false);
   const { toast } = useToast();
 
   const numericProjectId = projectId ? parseInt(projectId, 10) : null;
 
-  const { data, isLoading, error } = useQuery<CheckpointsAPIResponse>({
+  const { data: checkpointsData, isLoading: checkpointsLoading } = useQuery<CheckpointsAPIResponse>({
     queryKey: ['/api/projects', numericProjectId, 'checkpoints'],
     queryFn: async () => {
       const response = await fetch(`/api/projects/${numericProjectId}/checkpoints`, {
@@ -178,7 +317,37 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
     enabled: !!numericProjectId,
   });
 
-  const checkpoints: Checkpoint[] = data?.checkpoints?.map(mapAPICheckpointToUI) || [];
+  const { data: filesWithHistoryData, isLoading: filesLoading } = useQuery<FilesWithHistoryAPIResponse>({
+    queryKey: ['/api/projects', numericProjectId, 'files-with-history'],
+    queryFn: async () => {
+      const response = await fetch(`/api/projects/${numericProjectId}/files-with-history`, {
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch files with history');
+      }
+      return response.json();
+    },
+    enabled: !!numericProjectId && activeTab === 'files',
+  });
+
+  const { data: fileVersionsData, isLoading: versionsLoading } = useQuery<FileVersionsAPIResponse>({
+    queryKey: ['/api/projects', numericProjectId, 'files', selectedFile?.id, 'history'],
+    queryFn: async () => {
+      const response = await fetch(`/api/projects/${numericProjectId}/files/${selectedFile!.id}/history`, {
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch file versions');
+      }
+      return response.json();
+    },
+    enabled: !!numericProjectId && !!selectedFile?.id,
+  });
+
+  const checkpoints: Checkpoint[] = checkpointsData?.checkpoints?.map(mapAPICheckpointToUI) || [];
+  const filesWithHistory: FileWithHistory[] = filesWithHistoryData?.files || [];
+  const fileVersions: FileVersion[] = fileVersionsData?.versions || [];
 
   const createCheckpointMutation = useMutation({
     mutationFn: async (checkpointData: { name: string; description?: string }) => {
@@ -231,6 +400,29 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
     },
   });
 
+  const restoreVersionMutation = useMutation({
+    mutationFn: async ({ fileId, versionId }: { fileId: number; versionId: number }) => {
+      return apiRequest<{ success: boolean }>('POST', `/api/projects/${numericProjectId}/files/${fileId}/versions/${versionId}/restore`, {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/projects', numericProjectId, 'files', selectedFile?.id, 'history'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/projects', numericProjectId, 'files-with-history'] });
+      toast({
+        title: 'Version restored',
+        description: 'The file has been restored to the selected version.',
+      });
+      setShowVersionRestoreDialog(false);
+      setRestoreVersionTarget(null);
+    },
+    onError: (err) => {
+      toast({
+        title: 'Failed to restore version',
+        description: err instanceof Error ? err.message : 'An error occurred',
+        variant: 'destructive',
+      });
+    },
+  });
+
   const handleSaveCheckpoint = () => {
     createCheckpointMutation.mutate({
       name: `Manual checkpoint - ${new Date().toLocaleString()}`,
@@ -259,17 +451,40 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
     }
   };
 
-  const getTimeAgo = (date: Date) => {
+  const handleVersionRestore = (version: FileVersion) => {
+    setRestoreVersionTarget(version);
+    setShowVersionRestoreDialog(true);
+  };
+
+  const confirmVersionRestore = () => {
+    if (restoreVersionTarget && selectedFile) {
+      restoreVersionMutation.mutate({ 
+        fileId: selectedFile.id, 
+        versionId: restoreVersionTarget.id 
+      });
+    }
+  };
+
+  const handleViewDiff = useCallback((version: FileVersion) => {
+    setSelectedVersion(version);
+    const versionIndex = fileVersions.findIndex(v => v.id === version.id);
+    const previousVersion = fileVersions[versionIndex + 1];
+    setCompareVersion(previousVersion || null);
+    setShowDiffDialog(true);
+  }, [fileVersions]);
+
+  const getTimeAgo = (date: Date | string) => {
     const now = new Date();
-    const diff = now.getTime() - date.getTime();
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    const diff = now.getTime() - dateObj.getTime();
     const minutes = Math.floor(diff / (1000 * 60));
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
 
     if (minutes < 1) return 'just now';
-    if (minutes < 60) return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
-    if (hours < 24) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
-    return `${days} day${days > 1 ? 's' : ''} ago`;
+    if (minutes < 60) return `${minutes}m ago`;
+    if (hours < 24) return `${hours}h ago`;
+    return `${days}d ago`;
   };
 
   const getCheckpointIcon = (type: string) => {
@@ -286,18 +501,30 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'added':
-        return 'text-green-500';
-      case 'modified':
-        return 'text-blue-600 dark:text-[#0079f2]';
+  const getChangeTypeIcon = (changeType: string) => {
+    switch (changeType) {
+      case 'created':
+        return <span className="text-green-500 font-bold">+</span>;
       case 'deleted':
-        return 'text-red-500';
+        return <span className="text-red-500 font-bold">−</span>;
+      case 'restored':
+        return <RotateCcw className="w-3 h-3 text-blue-500" />;
       default:
-        return 'text-gray-500 dark:text-[#9da2a6]';
+        return <span className="text-blue-500 font-bold">~</span>;
     }
   };
+
+  const getChangeTypeBadge = (changeType: string) => {
+    const styles: Record<string, string> = {
+      created: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+      modified: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+      deleted: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+      restored: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
+    };
+    return styles[changeType] || styles.modified;
+  };
+
+  const isLoading = activeTab === 'checkpoints' ? checkpointsLoading : filesLoading;
 
   if (isLoading) {
     return (
@@ -315,25 +542,8 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
     );
   }
 
-  if (checkpoints.length === 0) {
-    return (
-      <div className="h-full flex flex-col bg-gray-50 dark:bg-[#0e1525]" data-testid="history-panel">
-        <div className="p-3 min-h-[48px] flex items-center border-b border-gray-200 dark:border-[#3d4452]">
-          <div className="flex items-center gap-2">
-            <History className="w-[18px] h-[18px] text-gray-500 dark:text-[#9da2a6]" />
-            <h3 className="text-[17px] font-medium leading-tight text-gray-900 dark:text-white">
-              History
-            </h3>
-          </div>
-        </div>
-        <EmptyState />
-      </div>
-    );
-  }
-
   return (
     <div className="h-full flex flex-col bg-gray-50 dark:bg-[#0e1525]" data-testid="history-panel">
-      {/* Header */}
       <div className="p-3 min-h-[48px] border-b border-gray-200 dark:border-[#3d4452]">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
@@ -355,237 +565,319 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
             ) : (
               <Save className="w-[18px] h-[18px] mr-1.5" />
             )}
-            {createCheckpointMutation.isPending ? 'Saving...' : 'Save Checkpoint'}
+            {createCheckpointMutation.isPending ? 'Saving...' : 'Save'}
           </Button>
         </div>
 
-        {/* Auto-save Status */}
-        <div 
-          className="flex items-center justify-between p-2 rounded-lg bg-white dark:bg-[#1c2333]"
-        >
-          <div className="flex items-center gap-2">
-            {autoSaveEnabled ? (
-              <CheckCircle className="w-[18px] h-[18px] text-green-500" />
-            ) : (
-              <AlertCircle className="w-[18px] h-[18px] text-amber-500" />
-            )}
-            <span className="text-[15px] leading-[20px] text-gray-900 dark:text-white">
-              Auto-save {autoSaveEnabled ? 'enabled' : 'disabled'}
-            </span>
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 rounded-lg text-[13px] text-blue-600 dark:text-[#0079f2]"
-            onClick={() => setAutoSaveEnabled(!autoSaveEnabled)}
-            data-testid="button-toggle-autosave"
-          >
-            {autoSaveEnabled ? 'Disable' : 'Enable'}
-          </Button>
-        </div>
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'checkpoints' | 'files')} className="w-full">
+          <TabsList className="w-full grid grid-cols-2 h-9 bg-gray-100 dark:bg-[#1c2333]">
+            <TabsTrigger value="files" className="text-xs data-[state=active]:bg-white dark:data-[state=active]:bg-[#242b3d]">
+              <FileText className="w-3.5 h-3.5 mr-1.5" />
+              Files
+            </TabsTrigger>
+            <TabsTrigger value="checkpoints" className="text-xs data-[state=active]:bg-white dark:data-[state=active]:bg-[#242b3d]">
+              <GitCommit className="w-3.5 h-3.5 mr-1.5" />
+              Checkpoints
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
       </div>
 
-      {/* Checkpoints List */}
-      <ScrollArea className="flex-1">
-        <div className="p-3 space-y-3">
-          {/* Timeline */}
-          <div className="relative">
-            {/* Timeline line */}
-            <div 
-              className="absolute left-5 top-0 bottom-0 w-px bg-gray-300 dark:bg-[#3d4452]" 
-            />
-
-            {checkpoints.map((checkpoint, index) => (
-              <div key={checkpoint.id} className="relative mb-3" data-testid={`checkpoint-item-${checkpoint.id}`}>
-                {/* Timeline dot */}
-                <div 
-                  className="absolute left-3.5 w-3 h-3 rounded-full bg-gray-50 dark:bg-[#0e1525] border-2 border-gray-300 dark:border-[#3d4452]"
-                />
-
-                <div className="ml-10">
-                  <div
-                    className={cn(
-                      "p-3 rounded-lg cursor-pointer transition-all",
-                      selectedCheckpoint === checkpoint.id 
-                        ? "bg-gray-100 dark:bg-[#242b3d] border border-blue-500 dark:border-[#0079f2]"
-                        : "bg-white dark:bg-[#1c2333] border border-gray-200 dark:border-[#3d4452]"
-                    )}
-                    onClick={() => {
-                      setSelectedCheckpoint(checkpoint.id);
-                      if (checkpoint.files) {
-                        toggleCheckpointExpansion(checkpoint.id);
-                      }
-                    }}
-                    data-testid={`checkpoint-card-${checkpoint.id}`}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start gap-2">
-                        {getCheckpointIcon(checkpoint.type)}
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <h4 
-                              className="text-[15px] font-medium leading-[20px] text-gray-900 dark:text-white"
-                            >
-                              {checkpoint.title}
-                            </h4>
-                            {checkpoint.type === 'auto' && (
-                              <Badge 
-                                variant="outline" 
-                                className="text-[11px] uppercase tracking-wider px-1.5 py-0 rounded border-gray-300 dark:border-[#3d4452] text-gray-500 dark:text-[#9da2a6]"
-                              >
-                                Auto
-                              </Badge>
-                            )}
-                            {index === 0 && (
-                              <Badge 
-                                className="text-[11px] uppercase tracking-wider px-1.5 py-0 rounded bg-amber-100 dark:bg-[#2B3245] text-amber-600 dark:text-[#f59e0b]"
-                              >
-                                Current
-                              </Badge>
-                            )}
-                          </div>
-                          {checkpoint.description && (
-                            <p 
-                              className="text-[13px] mt-0.5 text-gray-600 dark:text-[#9da2a6]"
-                            >
-                              {checkpoint.description}
-                            </p>
-                          )}
-                          <div 
-                            className="flex items-center gap-3 mt-1 text-[13px] text-gray-500 dark:text-[#5c6670]"
-                          >
-                            <span>{checkpoint.author}</span>
-                            <span>•</span>
-                            <span>{getTimeAgo(checkpoint.timestamp)}</span>
-                          </div>
-                        </div>
+      {activeTab === 'files' && (
+        <div className="flex-1 flex overflow-hidden">
+          <div className={cn(
+            "border-r border-gray-200 dark:border-[#3d4452] transition-all overflow-hidden",
+            selectedFile ? "w-1/3" : "w-full"
+          )}>
+            <ScrollArea className="h-full">
+              <div className="p-2 space-y-1">
+                {filesWithHistory.length === 0 ? (
+                  <EmptyState 
+                    message="No File History" 
+                    description="File versions will appear here as you make changes."
+                  />
+                ) : (
+                  filesWithHistory.map((file) => (
+                    <button
+                      key={file.id}
+                      onClick={() => setSelectedFile(selectedFile?.id === file.id ? null : file)}
+                      className={cn(
+                        "w-full flex items-center gap-2 p-2 rounded-lg text-left transition-colors",
+                        selectedFile?.id === file.id
+                          ? "bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800"
+                          : "hover:bg-gray-100 dark:hover:bg-[#242b3d]"
+                      )}
+                    >
+                      <FileText className="w-4 h-4 text-gray-500 dark:text-[#9da2a6] flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                          {file.name}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-[#9da2a6] truncate">
+                          {file.path}
+                        </p>
                       </div>
-
-                      <div className="text-[13px] text-right ml-2">
-                        <div className="flex items-center gap-2">
-                          <span className="text-green-500">+{checkpoint.changes.additions}</span>
-                          <span className="text-red-500">-{checkpoint.changes.deletions}</span>
-                        </div>
-                        <div className="mt-0.5 text-gray-500 dark:text-[#5c6670]">
-                          {checkpoint.changes.files} file{checkpoint.changes.files !== 1 ? 's' : ''}
-                        </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <Badge variant="secondary" className="text-xs px-1.5">
+                          {file.versionCount}
+                        </Badge>
+                        <ChevronRight className={cn(
+                          "w-4 h-4 text-gray-400 transition-transform",
+                          selectedFile?.id === file.id && "rotate-90"
+                        )} />
                       </div>
-                    </div>
+                    </button>
+                  ))
+                )}
+              </div>
+            </ScrollArea>
+          </div>
 
-                    {/* File Changes */}
-                    {checkpoint.files && (
-                      <div 
-                        className={`collapsible-content ${expandedCheckpoints.has(checkpoint.id) ? 'expanded' : ''}`}
+          {selectedFile && (
+            <div className="flex-1 flex flex-col overflow-hidden">
+              <div className="p-2 border-b border-gray-200 dark:border-[#3d4452] flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <FolderOpen className="w-4 h-4 text-gray-500" />
+                  <span className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                    {selectedFile.name}
+                  </span>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-6 w-6 p-0"
+                  onClick={() => setSelectedFile(null)}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+              
+              <ScrollArea className="flex-1">
+                {versionsLoading ? (
+                  <LoadingSkeleton />
+                ) : fileVersions.length === 0 ? (
+                  <EmptyState 
+                    message="No Versions" 
+                    description="No version history for this file yet."
+                  />
+                ) : (
+                  <div className="p-2 space-y-1">
+                    {fileVersions.map((version, idx) => (
+                      <div
+                        key={version.id}
+                        className="p-2 rounded-lg bg-white dark:bg-[#1c2333] border border-gray-200 dark:border-[#3d4452]"
                       >
-                        <div className="mt-3 pt-3 space-y-1 border-t border-gray-200 dark:border-[#3d4452]">
-                          {checkpoint.files.map((file, fileIndex) => (
-                            <div
-                              key={fileIndex}
-                              className="flex items-center justify-between py-1 px-2 rounded-lg text-[13px] bg-gray-100 dark:bg-[#242b3d]"
-                              data-testid={`file-change-${checkpoint.id}-${fileIndex}`}
-                            >
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-start gap-2">
+                            {getChangeTypeIcon(version.changeType)}
+                            <div>
                               <div className="flex items-center gap-2">
-                                <FileText className="w-[18px] h-[18px] text-gray-500 dark:text-[#9da2a6]" />
-                                <span className={getStatusColor(file.status)}>
-                                  {file.name}
+                                <span className="text-sm font-medium text-gray-900 dark:text-white">
+                                  v{version.version}
                                 </span>
+                                <Badge className={cn("text-[10px] px-1.5 py-0", getChangeTypeBadge(version.changeType))}>
+                                  {version.changeType}
+                                </Badge>
                               </div>
-                              <div className="flex items-center gap-2 text-[13px]">
-                                <span className="text-green-500">+{file.additions}</span>
-                                <span className="text-red-500">-{file.deletions}</span>
+                              {version.changeSummary && (
+                                <p className="text-xs text-gray-500 dark:text-[#9da2a6] mt-0.5">
+                                  {version.changeSummary}
+                                </p>
+                              )}
+                              <p className="text-xs text-gray-400 dark:text-[#5c6670] mt-1">
+                                {getTimeAgo(version.createdAt)}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="flex gap-1 mt-2">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 text-xs px-2"
+                            onClick={() => handleViewDiff(version)}
+                          >
+                            <Eye className="w-3 h-3 mr-1" />
+                            Diff
+                          </Button>
+                          {idx < fileVersions.length - 1 && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 text-xs px-2"
+                              onClick={() => handleVersionRestore(version)}
+                            >
+                              <RotateCcw className="w-3 h-3 mr-1" />
+                              Restore
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </ScrollArea>
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'checkpoints' && (
+        <ScrollArea className="flex-1">
+          {checkpoints.length === 0 ? (
+            <EmptyState />
+          ) : (
+            <div className="p-3 space-y-3">
+              <div className="relative">
+                <div className="absolute left-5 top-0 bottom-0 w-px bg-gray-300 dark:bg-[#3d4452]" />
+
+                {checkpoints.map((checkpoint, index) => (
+                  <div key={checkpoint.id} className="relative mb-3" data-testid={`checkpoint-item-${checkpoint.id}`}>
+                    <div className="absolute left-3.5 w-3 h-3 rounded-full bg-gray-50 dark:bg-[#0e1525] border-2 border-gray-300 dark:border-[#3d4452]" />
+
+                    <div className="ml-10">
+                      <div
+                        className={cn(
+                          "p-3 rounded-lg cursor-pointer transition-all",
+                          selectedCheckpoint === checkpoint.id 
+                            ? "bg-gray-100 dark:bg-[#242b3d] border border-blue-500 dark:border-[#0079f2]"
+                            : "bg-white dark:bg-[#1c2333] border border-gray-200 dark:border-[#3d4452]"
+                        )}
+                        onClick={() => {
+                          setSelectedCheckpoint(checkpoint.id);
+                          if (checkpoint.files) {
+                            toggleCheckpointExpansion(checkpoint.id);
+                          }
+                        }}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-start gap-2">
+                            {getCheckpointIcon(checkpoint.type)}
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <h4 className="text-[15px] font-medium leading-[20px] text-gray-900 dark:text-white">
+                                  {checkpoint.title}
+                                </h4>
+                                {checkpoint.type === 'auto' && (
+                                  <Badge variant="outline" className="text-[11px] uppercase tracking-wider px-1.5 py-0 rounded">
+                                    Auto
+                                  </Badge>
+                                )}
+                                {index === 0 && (
+                                  <Badge className="text-[11px] uppercase tracking-wider px-1.5 py-0 rounded bg-amber-100 dark:bg-[#2B3245] text-amber-600 dark:text-[#f59e0b]">
+                                    Current
+                                  </Badge>
+                                )}
+                              </div>
+                              {checkpoint.description && (
+                                <p className="text-[13px] mt-0.5 text-gray-600 dark:text-[#9da2a6]">
+                                  {checkpoint.description}
+                                </p>
+                              )}
+                              <div className="flex items-center gap-3 mt-1 text-[13px] text-gray-500 dark:text-[#5c6670]">
+                                <span>{checkpoint.author}</span>
+                                <span>•</span>
+                                <span>{getTimeAgo(checkpoint.timestamp)}</span>
                               </div>
                             </div>
-                          ))}
+                          </div>
+
+                          <div className="text-[13px] text-right ml-2">
+                            <div className="flex items-center gap-2">
+                              <span className="text-green-500">+{checkpoint.changes.additions}</span>
+                              <span className="text-red-500">-{checkpoint.changes.deletions}</span>
+                            </div>
+                            <div className="mt-0.5 text-gray-500 dark:text-[#5c6670]">
+                              {checkpoint.changes.files} file{checkpoint.changes.files !== 1 ? 's' : ''}
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    )}
 
-                    {/* Actions */}
-                    {index > 0 && (
-                      <div 
-                        className="flex gap-2 mt-3 pt-3 border-t border-gray-200 dark:border-[#3d4452]"
-                      >
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-8 rounded-lg text-[13px] border-gray-300 dark:border-[#3d4452] text-gray-700 dark:text-[#d4d8dd] bg-transparent hover:bg-gray-100 dark:hover:bg-[#242b3d]"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleRestore(checkpoint);
-                          }}
-                          data-testid={`button-restore-${checkpoint.id}`}
-                        >
-                          <RotateCcw className="w-[18px] h-[18px] mr-1.5" />
-                          Restore
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-8 rounded-lg text-[13px] text-gray-500 dark:text-[#9da2a6] hover:text-gray-700 dark:hover:text-white"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                          }}
-                          data-testid={`button-view-diff-${checkpoint.id}`}
-                        >
-                          <Eye className="w-[18px] h-[18px] mr-1.5" />
-                          View Diff
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-8 rounded-lg text-[13px] text-gray-500 dark:text-[#9da2a6] hover:text-gray-700 dark:hover:text-white"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                          }}
-                          data-testid={`button-download-${checkpoint.id}`}
-                        >
-                          <Download className="w-[18px] h-[18px] mr-1.5" />
-                          Download
-                        </Button>
+                        {checkpoint.files && expandedCheckpoints.has(checkpoint.id) && (
+                          <div className="mt-3 pt-3 space-y-1 border-t border-gray-200 dark:border-[#3d4452]">
+                            {checkpoint.files.map((file, fileIndex) => (
+                              <div
+                                key={fileIndex}
+                                className="flex items-center justify-between py-1 px-2 rounded-lg text-[13px] bg-gray-100 dark:bg-[#242b3d]"
+                              >
+                                <div className="flex items-center gap-2">
+                                  <FileText className="w-[18px] h-[18px] text-gray-500 dark:text-[#9da2a6]" />
+                                  <span className={cn(
+                                    file.status === 'added' && 'text-green-500',
+                                    file.status === 'modified' && 'text-blue-600 dark:text-[#0079f2]',
+                                    file.status === 'deleted' && 'text-red-500'
+                                  )}>
+                                    {file.name}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2 text-[13px]">
+                                  <span className="text-green-500">+{file.additions}</span>
+                                  <span className="text-red-500">-{file.deletions}</span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {index > 0 && (
+                          <div className="flex gap-2 mt-3 pt-3 border-t border-gray-200 dark:border-[#3d4452]">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-8 rounded-lg text-[13px]"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRestore(checkpoint);
+                              }}
+                            >
+                              <RotateCcw className="w-[18px] h-[18px] mr-1.5" />
+                              Restore
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-8 rounded-lg text-[13px]"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                              }}
+                            >
+                              <Eye className="w-[18px] h-[18px] mr-1.5" />
+                              View Diff
+                            </Button>
+                          </div>
+                        )}
                       </div>
-                    )}
+                    </div>
                   </div>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </div>
-      </ScrollArea>
+            </div>
+          )}
+        </ScrollArea>
+      )}
 
-      {/* Restore Confirmation Dialog */}
       <Dialog open={showRestoreDialog} onOpenChange={setShowRestoreDialog}>
-        <DialogContent 
-          className="bg-white dark:bg-[#1c2333] border border-gray-200 dark:border-[#3d4452]"
-        >
+        <DialogContent className="bg-white dark:bg-[#1c2333] border border-gray-200 dark:border-[#3d4452]">
           <DialogHeader>
-            <DialogTitle 
-              className="text-[17px] font-medium leading-tight text-gray-900 dark:text-white"
-            >
+            <DialogTitle className="text-[17px] font-medium leading-tight text-gray-900 dark:text-white">
               Restore Checkpoint
             </DialogTitle>
-            <DialogDescription 
-              className="text-[15px] leading-[20px] text-gray-600 dark:text-[#9da2a6]"
-            >
+            <DialogDescription className="text-[15px] leading-[20px] text-gray-600 dark:text-[#9da2a6]">
               Are you sure you want to restore to "{restoreTarget?.title}"? This will replace your current workspace with the selected checkpoint.
             </DialogDescription>
           </DialogHeader>
           
           {restoreTarget && (
             <div className="py-3">
-              <div 
-                className="p-3 rounded-lg bg-amber-50 dark:bg-[#2B3245] border border-amber-500"
-              >
+              <div className="p-3 rounded-lg bg-amber-50 dark:bg-[#2B3245] border border-amber-500">
                 <div className="flex items-start gap-2">
                   <AlertCircle className="w-[18px] h-[18px] mt-0.5 text-amber-500" />
                   <div>
-                    <p 
-                      className="text-[15px] font-medium leading-[20px] text-amber-600 dark:text-[#f59e0b]"
-                    >
+                    <p className="text-[15px] font-medium leading-[20px] text-amber-600 dark:text-[#f59e0b]">
                       Warning
                     </p>
-                    <p 
-                      className="text-[13px] mt-1 text-amber-600 dark:text-[#f59e0b]"
-                    >
+                    <p className="text-[13px] mt-1 text-amber-600 dark:text-[#f59e0b]">
                       Your current unsaved changes will be lost. Consider saving a checkpoint first.
                     </p>
                   </div>
@@ -595,18 +887,11 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
           )}
 
           <DialogFooter>
-            <Button 
-              variant="outline" 
-              className="h-8 rounded-lg text-[13px] border-gray-300 dark:border-[#3d4452] text-gray-700 dark:text-[#d4d8dd] bg-transparent hover:bg-gray-100 dark:hover:bg-[#242b3d]"
-              onClick={() => setShowRestoreDialog(false)}
-              data-testid="button-cancel-restore"
-            >
+            <Button variant="outline" onClick={() => setShowRestoreDialog(false)}>
               Cancel
             </Button>
             <Button 
-              className="h-8 rounded-lg text-[13px] bg-blue-600 hover:bg-blue-700 text-white"
               onClick={confirmRestore}
-              data-testid="button-confirm-restore"
               disabled={restoreCheckpointMutation.isPending}
             >
               {restoreCheckpointMutation.isPending ? (
@@ -619,6 +904,68 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
               )}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showVersionRestoreDialog} onOpenChange={setShowVersionRestoreDialog}>
+        <DialogContent className="bg-white dark:bg-[#1c2333] border border-gray-200 dark:border-[#3d4452]">
+          <DialogHeader>
+            <DialogTitle className="text-[17px] font-medium leading-tight text-gray-900 dark:text-white">
+              Restore Version
+            </DialogTitle>
+            <DialogDescription className="text-[15px] leading-[20px] text-gray-600 dark:text-[#9da2a6]">
+              Restore {selectedFile?.name} to version {restoreVersionTarget?.version}?
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-3">
+            <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+              <p className="text-sm text-blue-700 dark:text-blue-300">
+                This will replace the current file content with the selected version. A new version entry will be created to track this restore.
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowVersionRestoreDialog(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={confirmVersionRestore}
+              disabled={restoreVersionMutation.isPending}
+            >
+              {restoreVersionMutation.isPending ? (
+                <>
+                  <Loader2 className="w-[18px] h-[18px] mr-1.5 animate-spin" />
+                  Restoring...
+                </>
+              ) : (
+                'Restore Version'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showDiffDialog} onOpenChange={setShowDiffDialog}>
+        <DialogContent className="max-w-4xl h-[80vh] p-0 bg-white dark:bg-[#1c2333] border border-gray-200 dark:border-[#3d4452]">
+          <DialogHeader className="p-4 border-b border-gray-200 dark:border-[#3d4452]">
+            <DialogTitle className="flex items-center gap-2 text-[17px] font-medium text-gray-900 dark:text-white">
+              <FileDiff className="w-5 h-5" />
+              {selectedFile?.name} - Version {selectedVersion?.version}
+              {compareVersion && ` vs Version ${compareVersion.version}`}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="flex-1 overflow-hidden">
+            {selectedVersion && (
+              <DiffViewer
+                oldContent={compareVersion?.content || ''}
+                newContent={selectedVersion.content}
+                fileName={selectedFile?.name || 'file'}
+              />
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>

@@ -204,6 +204,7 @@ router.post('/api/agent/chat/stream', ensureAuthenticated, async (req, res) => {
     provider = 'openai',
     model: rawModel,
     modelId, // Frontend sends modelId, map to model
+    fastMode = false, // Fast Mode for quick 10-60s targeted changes
     context = [],
     temperature = 0.7,
     maxTokens = 4096,
@@ -239,7 +240,26 @@ router.post('/api/agent/chat/stream', ensureAuthenticated, async (req, res) => {
     }
   };
   
-  const model = rawModel || modelId || getDefaultModel(provider);
+  // Fast Mode model selection - use smaller/faster models for quick edits
+  const getFastModel = (prov: string): string => {
+    switch (prov) {
+      case 'anthropic': return 'claude-haiku-4-5-20251015';  // Fastest Claude
+      case 'openai': return 'gpt-5-mini';  // Fast GPT
+      case 'gemini': return 'gemini-3-flash';  // Fast Gemini
+      case 'xai': return 'grok-4-fast';  // Fast xAI
+      default: return 'gpt-5-mini';
+    }
+  };
+  
+  // Select model: Fast Mode overrides user selection with fast model
+  const model = fastMode 
+    ? getFastModel(provider) 
+    : (rawModel || modelId || getDefaultModel(provider));
+  
+  // Log Fast Mode activation for debugging
+  if (fastMode) {
+    logger.info('[AI Stream] Fast Mode activated', { fastModel: model, provider });
+  }
   
   const userId = (req as any).user?.id;
   const requestStartTime = Date.now();

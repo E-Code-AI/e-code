@@ -705,6 +705,364 @@ export class FilesRouter {
         });
       }
     });
+
+    // File History Endpoints
+    this.router.get("/api/projects/:projectId/file-history", this.ensureAuthenticated, async (req: Request, res: Response) => {
+      try {
+        const projectIdResult = projectIdSchema.safeParse(req.params.projectId);
+        if (!projectIdResult.success) {
+          return res.status(400).json({
+            message: "Invalid project ID",
+            code: "INVALID_PROJECT_ID"
+          });
+        }
+        const projectId = projectIdResult.data;
+        const userId = req.user!.id;
+
+        const result = await withScopedTransaction(userId, userId, async (scopedQueries) => {
+          const { fileVersions, files } = await import('@shared/schema');
+          const { db } = await import('../db');
+          const { eq, desc } = await import('drizzle-orm');
+          
+          const versions = await db
+            .select({
+              id: fileVersions.id,
+              fileId: fileVersions.fileId,
+              projectId: fileVersions.projectId,
+              content: fileVersions.content,
+              version: fileVersions.version,
+              changeType: fileVersions.changeType,
+              changeSummary: fileVersions.changeSummary,
+              userId: fileVersions.userId,
+              checkpointId: fileVersions.checkpointId,
+              additions: fileVersions.additions,
+              deletions: fileVersions.deletions,
+              createdAt: fileVersions.createdAt,
+              fileName: files.name,
+              filePath: files.path,
+            })
+            .from(fileVersions)
+            .leftJoin(files, eq(fileVersions.fileId, files.id))
+            .where(eq(fileVersions.projectId, projectId))
+            .orderBy(desc(fileVersions.createdAt))
+            .limit(100);
+          
+          return versions;
+        });
+
+        if (!result.success) {
+          return res.status(500).json({ 
+            message: "Failed to fetch file history",
+            code: "FETCH_ERROR"
+          });
+        }
+
+        const groupedByFile = (result.data || []).reduce((acc: Record<string, any[]>, version) => {
+          const filePath = version.filePath || 'unknown';
+          if (!acc[filePath]) {
+            acc[filePath] = [];
+          }
+          acc[filePath].push(version);
+          return acc;
+        }, {});
+
+        res.json({
+          success: true,
+          history: result.data,
+          groupedByFile,
+          count: result.data?.length || 0
+        });
+      } catch (error) {
+        console.error('Error fetching file history:', error);
+        res.status(500).json({ 
+          message: "Failed to fetch file history",
+          code: "FETCH_ERROR"
+        });
+      }
+    });
+
+    this.router.get("/api/projects/:projectId/files/:fileId/history", this.ensureAuthenticated, async (req: Request, res: Response) => {
+      try {
+        const projectIdResult = projectIdSchema.safeParse(req.params.projectId);
+        const fileIdResult = fileIdSchema.safeParse(req.params.fileId);
+        
+        if (!projectIdResult.success || !fileIdResult.success) {
+          return res.status(400).json({
+            message: "Invalid project or file ID",
+            code: "INVALID_ID"
+          });
+        }
+        
+        const projectId = projectIdResult.data;
+        const fileId = fileIdResult.data;
+        const userId = req.user!.id;
+
+        const result = await withScopedTransaction(userId, userId, async (scopedQueries) => {
+          const { fileVersions } = await import('@shared/schema');
+          const { db } = await import('../db');
+          const { eq, and, desc } = await import('drizzle-orm');
+          
+          const versions = await db
+            .select()
+            .from(fileVersions)
+            .where(and(
+              eq(fileVersions.projectId, projectId),
+              eq(fileVersions.fileId, fileId)
+            ))
+            .orderBy(desc(fileVersions.createdAt))
+            .limit(50);
+          
+          return versions;
+        });
+
+        if (!result.success) {
+          return res.status(500).json({ 
+            message: "Failed to fetch file history",
+            code: "FETCH_ERROR"
+          });
+        }
+
+        res.json({
+          success: true,
+          versions: result.data,
+          count: result.data?.length || 0
+        });
+      } catch (error) {
+        console.error('Error fetching file history:', error);
+        res.status(500).json({ 
+          message: "Failed to fetch file history",
+          code: "FETCH_ERROR"
+        });
+      }
+    });
+
+    this.router.post("/api/projects/:projectId/files/:fileId/versions", this.ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
+      try {
+        const projectIdResult = projectIdSchema.safeParse(req.params.projectId);
+        const fileIdResult = fileIdSchema.safeParse(req.params.fileId);
+        
+        if (!projectIdResult.success || !fileIdResult.success) {
+          return res.status(400).json({
+            message: "Invalid project or file ID",
+            code: "INVALID_ID"
+          });
+        }
+        
+        const projectId = projectIdResult.data;
+        const fileId = fileIdResult.data;
+        const userId = req.user!.id;
+        const { content, changeSummary, changeType = 'modified' } = req.body;
+
+        const result = await withScopedTransaction(userId, userId, async (scopedQueries) => {
+          const { fileVersions } = await import('@shared/schema');
+          const { db } = await import('../db');
+          const { eq, and, desc } = await import('drizzle-orm');
+          
+          const existingVersions = await db
+            .select({ version: fileVersions.version })
+            .from(fileVersions)
+            .where(and(
+              eq(fileVersions.projectId, projectId),
+              eq(fileVersions.fileId, fileId)
+            ))
+            .orderBy(desc(fileVersions.version))
+            .limit(1);
+          
+          const nextVersion = (existingVersions[0]?.version || 0) + 1;
+          
+          const [newVersion] = await db
+            .insert(fileVersions)
+            .values({
+              fileId,
+              projectId,
+              content,
+              version: nextVersion,
+              changeType,
+              changeSummary,
+              userId,
+            })
+            .returning();
+          
+          return newVersion;
+        });
+
+        if (!result.success) {
+          return res.status(500).json({ 
+            message: "Failed to save file version",
+            code: "SAVE_ERROR"
+          });
+        }
+
+        res.json({
+          success: true,
+          version: result.data
+        });
+      } catch (error) {
+        console.error('Error saving file version:', error);
+        res.status(500).json({ 
+          message: "Failed to save file version",
+          code: "SAVE_ERROR"
+        });
+      }
+    });
+
+    this.router.post("/api/projects/:projectId/files/:fileId/versions/:versionId/restore", this.ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
+      try {
+        const projectIdResult = projectIdSchema.safeParse(req.params.projectId);
+        const fileIdResult = fileIdSchema.safeParse(req.params.fileId);
+        const versionIdResult = fileIdSchema.safeParse(req.params.versionId);
+        
+        if (!projectIdResult.success || !fileIdResult.success || !versionIdResult.success) {
+          return res.status(400).json({
+            message: "Invalid IDs",
+            code: "INVALID_ID"
+          });
+        }
+        
+        const projectId = projectIdResult.data;
+        const fileId = fileIdResult.data;
+        const versionId = versionIdResult.data;
+        const userId = req.user!.id;
+
+        const result = await withScopedTransaction(userId, userId, async (scopedQueries) => {
+          const { fileVersions, files } = await import('@shared/schema');
+          const { db } = await import('../db');
+          const { eq, and, desc } = await import('drizzle-orm');
+          
+          const [version] = await db
+            .select()
+            .from(fileVersions)
+            .where(and(
+              eq(fileVersions.id, versionId),
+              eq(fileVersions.projectId, projectId),
+              eq(fileVersions.fileId, fileId)
+            ))
+            .limit(1);
+          
+          if (!version) {
+            throw new Error('VERSION_NOT_FOUND');
+          }
+          
+          await db
+            .update(files)
+            .set({ 
+              content: version.content,
+              updatedAt: new Date()
+            })
+            .where(eq(files.id, fileId));
+          
+          const existingVersions = await db
+            .select({ version: fileVersions.version })
+            .from(fileVersions)
+            .where(and(
+              eq(fileVersions.projectId, projectId),
+              eq(fileVersions.fileId, fileId)
+            ))
+            .orderBy(desc(fileVersions.version))
+            .limit(1);
+          
+          const nextVersion = (existingVersions[0]?.version || 0) + 1;
+          
+          await db
+            .insert(fileVersions)
+            .values({
+              fileId,
+              projectId,
+              content: version.content,
+              version: nextVersion,
+              changeType: 'restored',
+              changeSummary: `Restored from version ${version.version}`,
+              userId,
+            });
+          
+          return { restored: true, fromVersion: version.version };
+        });
+
+        if (!result.success) {
+          if (result.error?.message === 'VERSION_NOT_FOUND') {
+            return res.status(404).json({
+              message: "Version not found",
+              code: "VERSION_NOT_FOUND"
+            });
+          }
+          return res.status(500).json({ 
+            message: "Failed to restore version",
+            code: "RESTORE_ERROR"
+          });
+        }
+
+        res.json({
+          success: true,
+          ...result.data
+        });
+        
+        const allFiles = await this.storage.getFilesByProjectId(projectId);
+        const file = allFiles.find(f => f.id === fileId);
+        if (file) {
+          this.emitFileChange(String(projectId), file.path, 'update');
+        }
+      } catch (error) {
+        console.error('Error restoring file version:', error);
+        res.status(500).json({ 
+          message: "Failed to restore version",
+          code: "RESTORE_ERROR"
+        });
+      }
+    });
+
+    this.router.get("/api/projects/:projectId/files-with-history", this.ensureAuthenticated, async (req: Request, res: Response) => {
+      try {
+        const projectIdResult = projectIdSchema.safeParse(req.params.projectId);
+        if (!projectIdResult.success) {
+          return res.status(400).json({
+            message: "Invalid project ID",
+            code: "INVALID_PROJECT_ID"
+          });
+        }
+        const projectId = projectIdResult.data;
+        const userId = req.user!.id;
+
+        const result = await withScopedTransaction(userId, userId, async (scopedQueries) => {
+          const { fileVersions, files } = await import('@shared/schema');
+          const { db } = await import('../db');
+          const { eq, sql, desc } = await import('drizzle-orm');
+          
+          const filesWithVersionCount = await db
+            .select({
+              id: files.id,
+              name: files.name,
+              path: files.path,
+              updatedAt: files.updatedAt,
+              versionCount: sql<number>`COALESCE((SELECT COUNT(*) FROM file_versions WHERE file_id = ${files.id})::int, 0)`,
+              latestChange: sql<string>`(SELECT change_type FROM file_versions WHERE file_id = ${files.id} ORDER BY created_at DESC LIMIT 1)`,
+            })
+            .from(files)
+            .where(eq(files.projectId, projectId))
+            .orderBy(desc(files.updatedAt));
+          
+          return filesWithVersionCount.filter(f => (f.versionCount as number) > 0);
+        });
+
+        if (!result.success) {
+          return res.status(500).json({ 
+            message: "Failed to fetch files with history",
+            code: "FETCH_ERROR"
+          });
+        }
+
+        res.json({
+          success: true,
+          files: result.data,
+          count: result.data?.length || 0
+        });
+      } catch (error) {
+        console.error('Error fetching files with history:', error);
+        res.status(500).json({ 
+          message: "Failed to fetch files with history",
+          code: "FETCH_ERROR"
+        });
+      }
+    });
   }
 
   getRouter(): Router {

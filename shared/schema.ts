@@ -295,6 +295,31 @@ export const files = pgTable("files", {
   // Note: DB also has is_folder, but is_directory is the canonical boolean
 }, (table) => [index("files_project_id_idx").on(table.projectId)]);
 
+// File Versions table - tracks per-file version history
+export const fileVersions = pgTable("file_versions", {
+  id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+  fileId: integer("file_id").notNull().references(() => files.id, { onDelete: 'cascade' }),
+  projectId: integer("project_id").notNull().references(() => projects.id, { onDelete: 'cascade' }),
+  content: text("content").notNull(),
+  version: integer("version").notNull().default(1),
+  changeType: varchar("change_type", { length: 20 }).notNull().default('modified'), // 'created', 'modified', 'deleted'
+  changeSummary: text("change_summary"),
+  userId: integer("user_id").references(() => users.id, { onDelete: 'set null' }),
+  checkpointId: integer("checkpoint_id"), // Optional link to checkpoint
+  additions: integer("additions").default(0),
+  deletions: integer("deletions").default(0),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  metadata: jsonb("metadata").$type<Record<string, any>>(),
+}, (table) => [
+  index("file_versions_file_id_idx").on(table.fileId),
+  index("file_versions_project_id_idx").on(table.projectId),
+  index("file_versions_created_at_idx").on(table.createdAt),
+]);
+
+export const insertFileVersionSchema = createInsertSchema(fileVersions).omit({ id: true, createdAt: true });
+export type InsertFileVersion = z.infer<typeof insertFileVersionSchema>;
+export type FileVersion = typeof fileVersions.$inferSelect;
+
 // API SDK Tables - S-C1 FIXED: Secure API key storage with hash
 export const apiKeys = pgTable("api_keys", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),

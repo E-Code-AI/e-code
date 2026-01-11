@@ -9,7 +9,11 @@ import {
   Bell,
   Wifi,
   WifiOff,
-  Zap
+  Zap,
+  Check,
+  Loader2,
+  Circle,
+  Cloud
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -18,6 +22,14 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from '@/components/ui/hover-card';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+
+export type SaveStatus = 'saved' | 'saving' | 'unsaved';
 
 interface ReplitStatusBarProps {
   // File/Editor info
@@ -37,6 +49,10 @@ interface ReplitStatusBarProps {
   
   // Connection status
   isConnected?: boolean;
+  
+  // Save status
+  saveStatus?: SaveStatus;
+  lastSavedAt?: Date | null;
   
   // Callbacks
   onProblemsClick?: () => void;
@@ -58,6 +74,8 @@ export function ReplitStatusBar({
   warningCount = 0,
   infoCount = 0,
   isConnected = true,
+  saveStatus = 'saved',
+  lastSavedAt = null,
   onProblemsClick,
   onGitClick,
   onSettingsClick,
@@ -65,6 +83,49 @@ export function ReplitStatusBar({
   className,
 }: ReplitStatusBarProps) {
   const [time, setTime] = useState(new Date());
+
+  const formatLastSaved = (date: Date | null): string => {
+    if (!date) return 'Never saved';
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffSecs = Math.floor(diffMs / 1000);
+    const diffMins = Math.floor(diffSecs / 60);
+    const diffHours = Math.floor(diffMins / 60);
+    
+    if (diffSecs < 5) return 'Just now';
+    if (diffSecs < 60) return `${diffSecs} seconds ago`;
+    if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
+    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    return date.toLocaleString();
+  };
+
+  const getSaveStatusDisplay = () => {
+    switch (saveStatus) {
+      case 'saved':
+        return {
+          icon: <Check className="h-3.5 w-3.5 text-status-success" />,
+          text: 'Saved',
+          textColor: 'text-status-success',
+          bgColor: 'bg-status-success/10'
+        };
+      case 'saving':
+        return {
+          icon: <Loader2 className="h-3.5 w-3.5 text-[var(--ecode-text-secondary)] animate-spin" />,
+          text: 'Saving...',
+          textColor: 'text-[var(--ecode-text-secondary)]',
+          bgColor: 'bg-[var(--ecode-sidebar-hover)]'
+        };
+      case 'unsaved':
+        return {
+          icon: <Circle className="h-2.5 w-2.5 fill-status-warning text-status-warning" />,
+          text: 'Unsaved',
+          textColor: 'text-status-warning',
+          bgColor: 'bg-status-warning/10'
+        };
+    }
+  };
+
+  const saveStatusDisplay = getSaveStatusDisplay();
 
   useEffect(() => {
     const timer = setInterval(() => setTime(new Date()), 1000);
@@ -152,6 +213,37 @@ export function ReplitStatusBar({
             </div>
           </HoverCardContent>
         </HoverCard>
+
+        {/* Auto-save Status Indicator */}
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div 
+                className={cn(
+                  "flex items-center gap-1.5 px-2 py-0.5 rounded cursor-default transition-colors",
+                  saveStatusDisplay.bgColor
+                )}
+                data-testid="status-bar-save-indicator"
+              >
+                <Cloud className="h-3.5 w-3.5 text-[var(--ecode-text-secondary)]" />
+                {saveStatusDisplay.icon}
+                <span className={cn("text-xs font-medium", saveStatusDisplay.textColor)}>
+                  {saveStatusDisplay.text}
+                </span>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="max-w-xs">
+              <div className="text-xs space-y-1">
+                <p className="font-semibold">Auto-save Status</p>
+                <p className="text-muted-foreground">
+                  {saveStatus === 'saved' && `Last saved: ${formatLastSaved(lastSavedAt)}`}
+                  {saveStatus === 'saving' && 'Syncing your changes to the cloud...'}
+                  {saveStatus === 'unsaved' && 'You have unsaved changes that will be synced automatically'}
+                </p>
+              </div>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
 
       {/* Right Section */}
