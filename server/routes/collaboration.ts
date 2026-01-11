@@ -647,8 +647,8 @@ router.post('/sessions/:sessionId/messages', requireAuth, async (req: Request, r
     try {
       const collabService = getCollaborationService();
       if (collabService) {
-        collabService.sendChat(`project-${session.projectId}`, {
-          odUserId: userId,
+        collabService.broadcastToProject(session.projectId, 'chat', {
+          userId,
           username,
           message: content,
           timestamp: newMessage.createdAt.toISOString(),
@@ -791,8 +791,8 @@ router.post('/:projectId/messages', requireAuth, async (req: Request, res: Respo
     try {
       const collabService = getCollaborationService();
       if (collabService) {
-        collabService.sendChat(`project-${projectIdNum}`, {
-          odUserId: userId,
+        collabService.broadcastToProject(projectIdNum, 'chat', {
+          userId,
           username,
           message: content,
           timestamp: newMessage.createdAt.toISOString(),
