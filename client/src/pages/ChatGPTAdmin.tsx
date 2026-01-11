@@ -21,11 +21,12 @@ import {
   Search, PlayCircle, StopCircle, AlertCircle, CheckCircle,
   Code2, FolderTree, Cpu, Zap, Activity, Clock, Loader2,
   Settings, Bot, Sparkles, RefreshCw, Save, Download, Upload,
-  FileText, FolderOpen, Trash2, Edit, Eye, Copy, ChevronRight
+  FileText, FolderOpen, Trash2, Edit, Eye, Copy, ChevronRight,
+  Users, Monitor, XCircle
 } from 'lucide-react';
 import { LazyMotionDiv, LazyAnimatePresence } from '@/lib/motion';
 import { io, Socket } from 'socket.io-client';
-import { format } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
 import { CM6Editor } from '@/components/editor/CM6Editor';
 
 const EditorFallback = () => (
@@ -49,6 +50,42 @@ interface AgentSession {
   totalOperations: number;
   startedAt: Date;
   endedAt?: Date;
+}
+
+interface AdminAgentSession {
+  id: string;
+  userId: number;
+  userEmail?: string;
+  username?: string;
+  projectId?: number;
+  projectName?: string;
+  model: string;
+  tokensUsed: number;
+  status: string;
+  startedAt: string;
+  lastActivityAt?: string;
+}
+
+interface Project {
+  id: number;
+  name: string;
+  description?: string;
+  ownerId: number;
+  ownerEmail?: string;
+  ownerUsername?: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+interface ProjectFile {
+  id: number;
+  projectId: number;
+  name: string;
+  path: string;
+  content?: string;
+  isDirectory?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 interface Message {
@@ -98,8 +135,8 @@ export default function ChatGPTAdmin() {
   const [activeTab, setActiveTab] = useState('chat');
   const [socket, setSocket] = useState<Socket | null>(null);
   const [workflowSteps, setWorkflowSteps] = useState<WorkflowStep[]>([]);
-  const [fileExplorer, setFileExplorer] = useState<any[]>([]);
-  const [selectedFile, setSelectedFile] = useState<string | null>(null);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [selectedFile, setSelectedFile] = useState<ProjectFile | null>(null);
   const [fileContent, setFileContent] = useState('');
   const [commandOutput, setCommandOutput] = useState('');
   const [isExecuting, setIsExecuting] = useState(false);
@@ -112,6 +149,33 @@ export default function ChatGPTAdmin() {
     }
   }, [user]);
 
+  // Fetch ALL projects from all users
+  const { data: allProjects, isLoading: projectsLoading } = useQuery<Project[]>({
+    queryKey: ['/api/admin/chatgpt/all-projects'],
+    queryFn: async () => {
+      return await apiRequest('GET', '/api/admin/chatgpt/all-projects');
+    }
+  });
+
+  // Fetch files for selected project
+  const { data: projectFiles, isLoading: filesLoading, refetch: refetchFiles } = useQuery<ProjectFile[]>({
+    queryKey: ['/api/admin/chatgpt/projects', selectedProject?.id, 'files'],
+    queryFn: async () => {
+      if (!selectedProject) return [];
+      return await apiRequest('GET', `/api/admin/chatgpt/projects/${selectedProject.id}/files`);
+    },
+    enabled: !!selectedProject
+  });
+
+  // Fetch all active agent sessions across all users
+  const { data: agentSessions, isLoading: sessionsLoading, refetch: refetchSessions } = useQuery<AdminAgentSession[]>({
+    queryKey: ['/api/admin/chatgpt/agent-sessions'],
+    queryFn: async () => {
+      return await apiRequest('GET', '/api/admin/chatgpt/agent-sessions');
+    },
+    refetchInterval: 10000
+  });
+
   // Initialize WebSocket connection
   useEffect(() => {
     const newSocket = io('/agent', {
@@ -119,11 +183,12 @@ export default function ChatGPTAdmin() {
     });
 
     newSocket.on('connect', () => {
-      // Connected to agent WebSocket
     });
 
     newSocket.on('file:operation', (event) => {
-      refreshFileExplorer();
+      if (selectedProject) {
+        refetchFiles();
+      }
     });
 
     newSocket.on('command:event', (event) => {
@@ -133,7 +198,6 @@ export default function ChatGPTAdmin() {
     });
 
     newSocket.on('tool:event', (event) => {
-      // Tool event received
     });
 
     newSocket.on('workflow:event', (event) => {
@@ -145,7 +209,6 @@ export default function ChatGPTAdmin() {
     });
 
     newSocket.on('agent:function', (event) => {
-      // Agent function event
     });
 
     setSocket(newSocket);
@@ -153,18 +216,18 @@ export default function ChatGPTAdmin() {
     return () => {
       newSocket.close();
     };
-  }, [user?.id]);
+  }, [user?.id, selectedProject]);
 
-  // Create session mutation
+  // Create session mutation - now uses /api/admin/chatgpt/sessions with projectId
   const createSessionMutation = useMutation({
-    mutationFn: async (data: { model: string }) => {
-      return await apiRequest('POST', '/api/admin/agent/sessions', data);
+    mutationFn: async (data: { model: string; projectId?: number }) => {
+      return await apiRequest('POST', '/api/admin/chatgpt/sessions', data);
     },
     onSuccess: (data) => {
-      setActiveSession(data.session);
+      setActiveSession(data);
       toast({
         title: 'Session Created',
-        description: 'Agent session is ready',
+        description: 'Chat session is ready',
       });
     },
     onError: (error: any) => {
@@ -176,25 +239,43 @@ export default function ChatGPTAdmin() {
     }
   });
 
-  // Execute agent mutation
-  const executeAgentMutation = useMutation({
-    mutationFn: async (data: { messages: Message[] }) => {
-      if (!activeSession) throw new Error('No active session');
-      return await apiRequest('POST', `/api/admin/agent/sessions/${activeSession.id}/execute`, data);
+  // Terminate session mutation
+  const terminateSessionMutation = useMutation({
+    mutationFn: async (sessionId: string) => {
+      return await apiRequest('POST', `/api/admin/chatgpt/agent-sessions/${sessionId}/terminate`);
     },
-    onSuccess: (data) => {
-      if (data.message) {
-        setMessages(prev => [...prev, {
-          id: Date.now().toString(),
-          role: 'assistant',
-          content: data.message,
-          timestamp: new Date()
-        }]);
-      }
+    onSuccess: () => {
+      toast({
+        title: 'Session Terminated',
+        description: 'Agent session has been terminated',
+      });
+      refetchSessions();
     },
     onError: (error: any) => {
       toast({
-        title: 'Execution Error',
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
+  });
+
+  // Save file mutation - uses real project endpoint
+  const saveFileMutation = useMutation({
+    mutationFn: async ({ fileId, content }: { fileId: number; content: string }) => {
+      if (!selectedProject) throw new Error('No project selected');
+      return await apiRequest('PUT', `/api/admin/chatgpt/projects/${selectedProject.id}/files/${fileId}`, { content });
+    },
+    onSuccess: () => {
+      toast({
+        title: 'File Saved',
+        description: `${selectedFile?.name} has been updated`,
+      });
+      refetchFiles();
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Save Error',
         description: error.message,
         variant: 'destructive',
       });
@@ -209,12 +290,13 @@ export default function ChatGPTAdmin() {
     setIsExecuting(true);
     
     try {
-      const response = await fetch(`/api/admin/agent/sessions/${activeSession.id}/stream`, {
+      const response = await fetch(`/api/admin/chatgpt/sessions/${activeSession.id}/stream`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ prompt }),
+        credentials: 'include',
+        body: JSON.stringify({ message: prompt, includeProjectContext: !!selectedProject }),
       });
 
       const reader = response.body?.getReader();
@@ -242,11 +324,11 @@ export default function ChatGPTAdmin() {
                 if (parsed.type === 'content') {
                   assistantMessage += parsed.content;
                   updateLastMessage(assistantMessage);
-                } else if (parsed.type === 'function_result') {
-                  // Function executed
+                } else if (parsed.type === 'done') {
+                  setIsStreaming(false);
+                  setIsExecuting(false);
                 }
               } catch (e) {
-                console.error('Error parsing SSE data:', e);
               }
             }
           }
@@ -289,7 +371,7 @@ export default function ChatGPTAdmin() {
 
   // Get session stats
   const { data: stats } = useQuery({
-    queryKey: [`/api/admin/agent/stats/${activeSession?.id}`],
+    queryKey: ['/api/admin/agent/stats', activeSession?.id],
     enabled: !!activeSession,
     refetchInterval: 5000
   });
@@ -309,68 +391,48 @@ export default function ChatGPTAdmin() {
     setMessages(prev => [...prev, userMessage]);
     setInput('');
 
-    // Stream the execution
     await streamExecution(input);
   };
 
-  // Start new session
+  // Start new session with selected project
   const startNewSession = () => {
-    createSessionMutation.mutate({ model: selectedModel });
+    createSessionMutation.mutate({ 
+      model: selectedModel,
+      projectId: selectedProject?.id 
+    });
   };
 
-  // Refresh file explorer
-  const refreshFileExplorer = async () => {
-    if (!activeSession) return;
-    
-    try {
-      const data = await apiRequest('POST', '/api/admin/agent/files/list', {
-        sessionId: activeSession.id,
-        path: '.',
-        recursive: false
-      });
-      setFileExplorer(data.files || []);
-    } catch (error) {
-      console.error('Error refreshing file explorer:', error);
+  // Handle project selection
+  const handleProjectSelect = (projectId: string) => {
+    const project = allProjects?.find(p => p.id === parseInt(projectId));
+    if (project) {
+      setSelectedProject(project);
+      setSelectedFile(null);
+      setFileContent('');
     }
   };
 
-  // Load file content
-  const loadFile = async (path: string) => {
-    if (!activeSession) return;
+  // Load file content from real project
+  const loadFile = async (file: ProjectFile) => {
+    if (!selectedProject || file.isDirectory) return;
     
     try {
-      const data = await apiRequest('POST', '/api/admin/agent/files/read', {
-        sessionId: activeSession.id,
-        path
-      });
-      setSelectedFile(path);
+      const data = await apiRequest('GET', `/api/admin/chatgpt/projects/${selectedProject.id}/files/${file.id}`);
+      setSelectedFile(data);
       setFileContent(data.content || '');
-    } catch (error) {
-      console.error('Error loading file:', error);
-    }
-  };
-
-  // Save file content
-  const saveFile = async () => {
-    if (!activeSession || !selectedFile) return;
-    
-    try {
-      await apiRequest('POST', '/api/admin/agent/files/write', {
-        sessionId: activeSession.id,
-        path: selectedFile,
-        content: fileContent
-      });
-      toast({
-        title: 'File Saved',
-        description: `${selectedFile} has been updated`,
-      });
     } catch (error: any) {
       toast({
-        title: 'Save Error',
+        title: 'Error Loading File',
         description: error.message,
         variant: 'destructive',
       });
     }
+  };
+
+  // Save file content to real project
+  const saveFile = async () => {
+    if (!selectedProject || !selectedFile) return;
+    saveFileMutation.mutate({ fileId: selectedFile.id, content: fileContent });
   };
 
   // Execute command
@@ -405,19 +467,57 @@ export default function ChatGPTAdmin() {
   return (
     <div className="flex h-screen bg-background">
       {/* Left Sidebar - Session & Tools */}
-      <div className="w-80 border-r bg-card/50">
+      <div className="w-80 border-r bg-card/50 flex flex-col">
         <div className="p-4 border-b">
           <div className="flex items-center gap-2 mb-4">
             <Bot className="h-6 w-6 text-primary" />
-            <h1 className="text-xl font-bold">GPT-5 Agent</h1>
+            <h1 className="text-xl font-bold">Admin Control</h1>
             <Badge variant="outline">Enterprise</Badge>
+          </div>
+          
+          {/* Project Selector */}
+          <div className="mb-4">
+            <Label className="text-sm font-medium mb-2 block">Select Project (All Users)</Label>
+            <Select 
+              value={selectedProject?.id?.toString() || ''} 
+              onValueChange={handleProjectSelect}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select a project..." />
+              </SelectTrigger>
+              <SelectContent>
+                {projectsLoading ? (
+                  <div className="p-2 text-center text-sm text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin inline mr-2" />
+                    Loading projects...
+                  </div>
+                ) : (
+                  allProjects?.map((project) => (
+                    <SelectItem key={project.id} value={project.id.toString()}>
+                      <div className="flex flex-col">
+                        <span>{project.name}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {project.ownerEmail || project.ownerUsername || `User #${project.ownerId}`}
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
+            {selectedProject && (
+              <div className="mt-2 p-2 bg-muted/50 rounded text-xs">
+                <div><strong>Owner:</strong> {selectedProject.ownerEmail || selectedProject.ownerUsername}</div>
+                <div><strong>ID:</strong> {selectedProject.id}</div>
+              </div>
+            )}
           </div>
           
           {!activeSession ? (
             <Card>
-              <CardHeader>
-                <CardTitle>Start Agent Session</CardTitle>
-                <CardDescription>Configure and launch autonomous agent</CardDescription>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">Start Chat Session</CardTitle>
+                <CardDescription className="text-xs">Configure and launch GPT session</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
@@ -463,7 +563,7 @@ export default function ChatGPTAdmin() {
                   ) : (
                     <Zap className="h-4 w-4 mr-2" />
                   )}
-                  Initialize Agent
+                  Start Session
                 </Button>
               </CardContent>
             </Card>
@@ -486,6 +586,12 @@ export default function ChatGPTAdmin() {
                       <span className="text-muted-foreground">Status</span>
                       <Badge variant="default">Active</Badge>
                     </div>
+                    {selectedProject && (
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">Project</span>
+                        <span className="font-medium truncate max-w-[120px]">{selectedProject.name}</span>
+                      </div>
+                    )}
                     <Separator className="my-2" />
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
@@ -507,7 +613,7 @@ export default function ChatGPTAdmin() {
                   <CardTitle className="text-base">Available Tools</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <ScrollArea className="h-64">
+                  <ScrollArea className="h-48">
                     <div className="space-y-2">
                       {tools?.tools?.map((tool: Tool) => (
                         <div key={tool.id} className="flex items-center gap-2 p-2 rounded hover:bg-accent">
@@ -570,6 +676,10 @@ export default function ChatGPTAdmin() {
                   <TabsTrigger value="files" className="gap-2">
                     <FileCode className="h-4 w-4" />
                     Files
+                  </TabsTrigger>
+                  <TabsTrigger value="sessions" className="gap-2">
+                    <Monitor className="h-4 w-4" />
+                    Sessions
                   </TabsTrigger>
                   <TabsTrigger value="terminal" className="gap-2">
                     <Terminal className="h-4 w-4" />
@@ -648,47 +758,73 @@ export default function ChatGPTAdmin() {
                 </form>
               </TabsContent>
 
-              {/* Files Tab */}
+              {/* Files Tab - Now shows REAL project files */}
               <TabsContent value="files" className="flex-1 flex p-0">
                 <div className="w-64 border-r bg-card/50">
-                  <div className="p-2 border-b">
+                  <div className="p-2 border-b flex gap-2">
                     <Button 
                       variant="outline" 
                       size="sm" 
-                      className="w-full"
-                      onClick={refreshFileExplorer}
+                      className="flex-1"
+                      onClick={() => refetchFiles()}
+                      disabled={!selectedProject}
                     >
                       <RefreshCw className="h-3 w-3 mr-2" />
                       Refresh
                     </Button>
                   </div>
-                  <ScrollArea className="h-full">
-                    <div className="p-2 space-y-1">
-                      {fileExplorer.map((item: any) => (
-                        <button
-                          key={item.path}
-                          onClick={() => !item.isDirectory && loadFile(item.path)}
-                          className={`w-full flex items-center gap-2 p-2 rounded text-sm hover:bg-accent text-left ${selectedFile === item.path ? 'bg-accent' : ''}`}
-                        >
-                          {item.isDirectory ? (
-                            <FolderOpen className="h-4 w-4 text-muted-foreground" />
-                          ) : (
-                            <FileText className="h-4 w-4 text-muted-foreground" />
-                          )}
-                          <span className="truncate">{item.name}</span>
-                        </button>
-                      ))}
+                  {!selectedProject ? (
+                    <div className="p-4 text-center text-sm text-muted-foreground">
+                      Select a project to view files
                     </div>
-                  </ScrollArea>
+                  ) : filesLoading ? (
+                    <div className="p-4 text-center">
+                      <Loader2 className="h-4 w-4 animate-spin inline mr-2" />
+                      Loading files...
+                    </div>
+                  ) : (
+                    <ScrollArea className="h-full">
+                      <div className="p-2 space-y-1">
+                        {projectFiles?.map((file: ProjectFile) => (
+                          <button
+                            key={file.id}
+                            onClick={() => loadFile(file)}
+                            className={`w-full flex items-center gap-2 p-2 rounded text-sm hover:bg-accent text-left ${selectedFile?.id === file.id ? 'bg-accent' : ''}`}
+                          >
+                            {file.isDirectory ? (
+                              <FolderOpen className="h-4 w-4 text-muted-foreground" />
+                            ) : (
+                              <FileText className="h-4 w-4 text-muted-foreground" />
+                            )}
+                            <span className="truncate">{file.name || file.path}</span>
+                          </button>
+                        ))}
+                        {projectFiles?.length === 0 && (
+                          <div className="text-sm text-muted-foreground p-2">No files found</div>
+                        )}
+                      </div>
+                    </ScrollArea>
+                  )}
                 </div>
                 
                 <div className="flex-1 flex flex-col">
                   {selectedFile ? (
                     <>
                       <div className="p-2 border-b flex items-center justify-between">
-                        <span className="text-sm font-mono">{selectedFile}</span>
-                        <Button size="sm" onClick={saveFile}>
-                          <Save className="h-3 w-3 mr-2" />
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-mono">{selectedFile.name || selectedFile.path}</span>
+                          <Badge variant="outline" className="text-xs">ID: {selectedFile.id}</Badge>
+                        </div>
+                        <Button 
+                          size="sm" 
+                          onClick={saveFile}
+                          disabled={saveFileMutation.isPending}
+                        >
+                          {saveFileMutation.isPending ? (
+                            <Loader2 className="h-3 w-3 mr-2 animate-spin" />
+                          ) : (
+                            <Save className="h-3 w-3 mr-2" />
+                          )}
                           Save
                         </Button>
                       </div>
@@ -704,10 +840,113 @@ export default function ChatGPTAdmin() {
                     </>
                   ) : (
                     <div className="flex-1 flex items-center justify-center text-muted-foreground">
-                      Select a file to edit
+                      {selectedProject ? 'Select a file to edit' : 'Select a project first'}
                     </div>
                   )}
                 </div>
+              </TabsContent>
+
+              {/* Sessions Tab - Monitor all active agent sessions */}
+              <TabsContent value="sessions" className="flex-1 flex flex-col p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h2 className="text-lg font-semibold">Active Agent Sessions</h2>
+                    <p className="text-sm text-muted-foreground">Monitor and manage all user sessions</p>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => refetchSessions()}>
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Refresh
+                  </Button>
+                </div>
+                
+                {sessionsLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                  </div>
+                ) : !agentSessions || agentSessions.length === 0 ? (
+                  <Card>
+                    <CardContent className="py-8 text-center text-muted-foreground">
+                      <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>No active agent sessions</p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <ScrollArea className="flex-1">
+                    <div className="space-y-3">
+                      {agentSessions.map((session) => (
+                        <Card key={session.id}>
+                          <CardContent className="p-4">
+                            <div className="flex items-start justify-between">
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-2">
+                                  <Badge variant={session.status === 'active' ? 'default' : 'secondary'}>
+                                    {session.status}
+                                  </Badge>
+                                  <span className="font-mono text-sm">{session.id.slice(0, 12)}...</span>
+                                </div>
+                                <div className="grid grid-cols-2 gap-x-8 gap-y-1 text-sm mt-2">
+                                  <div className="flex items-center gap-2">
+                                    <Users className="h-3 w-3 text-muted-foreground" />
+                                    <span className="text-muted-foreground">User:</span>
+                                    <span>{session.userEmail || session.username || `#${session.userId}`}</span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <FolderOpen className="h-3 w-3 text-muted-foreground" />
+                                    <span className="text-muted-foreground">Project:</span>
+                                    <span>{session.projectName || session.projectId || 'N/A'}</span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <Bot className="h-3 w-3 text-muted-foreground" />
+                                    <span className="text-muted-foreground">Model:</span>
+                                    <span>{session.model}</span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <Zap className="h-3 w-3 text-muted-foreground" />
+                                    <span className="text-muted-foreground">Tokens:</span>
+                                    <span>{session.tokensUsed?.toLocaleString() || 0}</span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <Clock className="h-3 w-3 text-muted-foreground" />
+                                    <span className="text-muted-foreground">Started:</span>
+                                    <span>
+                                      {session.startedAt 
+                                        ? formatDistanceToNow(new Date(session.startedAt), { addSuffix: true })
+                                        : 'Unknown'}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <Activity className="h-3 w-3 text-muted-foreground" />
+                                    <span className="text-muted-foreground">Last Activity:</span>
+                                    <span>
+                                      {session.lastActivityAt 
+                                        ? formatDistanceToNow(new Date(session.lastActivityAt), { addSuffix: true })
+                                        : 'N/A'}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                              <Button 
+                                variant="destructive" 
+                                size="sm"
+                                onClick={() => terminateSessionMutation.mutate(session.id)}
+                                disabled={terminateSessionMutation.isPending}
+                              >
+                                {terminateSessionMutation.isPending ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <>
+                                    <XCircle className="h-4 w-4 mr-1" />
+                                    Terminate
+                                  </>
+                                )}
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                )}
               </TabsContent>
 
               {/* Terminal Tab */}
@@ -738,19 +977,38 @@ export default function ChatGPTAdmin() {
                 </form>
               </TabsContent>
 
-              {/* Other tabs can be implemented similarly */}
+              {/* Git Tab (Placeholder) */}
+              <TabsContent value="git" className="flex-1 flex items-center justify-center">
+                <div className="text-center text-muted-foreground">
+                  <GitBranch className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>Git integration coming soon</p>
+                </div>
+              </TabsContent>
+
+              {/* Database Tab (Placeholder) */}
+              <TabsContent value="database" className="flex-1 flex items-center justify-center">
+                <div className="text-center text-muted-foreground">
+                  <Database className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>Database panel coming soon</p>
+                </div>
+              </TabsContent>
             </Tabs>
           </>
         ) : (
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center space-y-4">
               <Bot className="h-16 w-16 mx-auto text-muted-foreground" />
-              <h2 className="text-2xl font-bold">GPT-5 Autonomous Agent</h2>
+              <h2 className="text-2xl font-bold">Admin Control Panel</h2>
               <p className="text-muted-foreground max-w-md">
-                Start a new session to access the full autonomous app-building capabilities.
-                The agent can create complete applications, manage files, execute commands,
-                handle databases, and deploy to production.
+                Select a project from any user and start a session to access the full admin capabilities.
+                You can view and edit files, monitor active sessions, and intervene when needed.
               </p>
+              {selectedProject && (
+                <div className="mt-4 p-4 bg-muted/50 rounded-lg">
+                  <p className="text-sm font-medium">Selected Project: {selectedProject.name}</p>
+                  <p className="text-xs text-muted-foreground">Owner: {selectedProject.ownerEmail || selectedProject.ownerUsername}</p>
+                </div>
+              )}
             </div>
           </div>
         )}
