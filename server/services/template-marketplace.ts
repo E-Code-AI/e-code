@@ -685,6 +685,46 @@ export class TemplateMarketplaceService {
   }
 
   /**
+   * Get top publishers with their statistics
+   */
+  async getTopPublishers(limit: number = 10): Promise<Array<{
+    id: string;
+    name: string;
+    extensions: number;
+    downloads: number;
+    verified: boolean;
+    avatar: string;
+  }>> {
+    try {
+      const publishers = await db.select({
+        id: users.id,
+        name: sql<string>`COALESCE(${users.displayName}, ${users.username}, 'Publisher')`,
+        avatar: sql<string>`COALESCE(LEFT(COALESCE(${users.displayName}, ${users.username}), 2), 'PB')`,
+        extensions: sql<number>`COUNT(${templates.id})`,
+        downloads: sql<number>`COALESCE(SUM(${templates.downloads}), 0)`,
+      })
+      .from(users)
+      .innerJoin(templates, eq(templates.authorId, users.id))
+      .where(eq(templates.published, true))
+      .groupBy(users.id, users.displayName, users.username)
+      .orderBy(desc(sql`SUM(${templates.downloads})`))
+      .limit(limit);
+
+      return publishers.map((p, index) => ({
+        id: String(p.id),
+        name: String(p.name),
+        extensions: Number(p.extensions || 0),
+        downloads: Number(p.downloads || 0),
+        verified: index < 3,
+        avatar: String(p.avatar || 'PB'),
+      }));
+    } catch (error) {
+      logger.error('Failed to get top publishers:', error);
+      return [];
+    }
+  }
+
+  /**
    * Clear search cache
    */
   clearCache() {
