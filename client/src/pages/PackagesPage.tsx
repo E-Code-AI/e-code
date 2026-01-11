@@ -111,12 +111,12 @@ export default function PackagesPage() {
   const [installProgress, setInstallProgress] = useState(0);
   const [copiedText, setCopiedText] = useState<string | null>(null);
 
-  const { data: packages = [], isLoading } = useQuery<PackageInfo[]>({
+  const { data: packages = [], isLoading, error: packagesError } = useQuery<PackageInfo[]>({
     queryKey: ['/api/packages'],
     queryFn: async () => {
       const response = await fetch('/api/packages', { credentials: 'include' });
       if (!response.ok) {
-        return getMockPackages();
+        throw new Error('Failed to fetch packages');
       }
       return response.json();
     }
@@ -127,14 +127,7 @@ export default function PackagesPage() {
     queryFn: async () => {
       const response = await fetch('/api/packages/stats', { credentials: 'include' });
       if (!response.ok) {
-        return {
-          total: packages.length || 156,
-          npm: 142,
-          pip: 14,
-          outdated: 12,
-          vulnerabilities: 3,
-          lastScan: '2 hours ago'
-        };
+        throw new Error('Failed to fetch package stats');
       }
       return response.json();
     }
@@ -145,7 +138,7 @@ export default function PackagesPage() {
     queryFn: async () => {
       const response = await fetch('/api/packages/lockfile', { credentials: 'include' });
       if (!response.ok) {
-        return getMockLockFile();
+        throw new Error('Failed to fetch lockfile');
       }
       return response.json();
     },
@@ -158,7 +151,7 @@ export default function PackagesPage() {
       if (!registrySearch) return [];
       const response = await fetch(`/api/packages/search?query=${encodeURIComponent(registrySearch)}`, { credentials: 'include' });
       if (!response.ok) {
-        return getMockSearchResults(registrySearch);
+        throw new Error('Failed to search packages');
       }
       return response.json();
     },
@@ -764,16 +757,19 @@ export default function PackagesPage() {
           </DialogHeader>
           <ScrollArea className="h-[500px] rounded-lg border bg-muted/50 p-4">
             <pre className="text-sm font-mono">
-              {JSON.stringify(lockFile.length > 0 ? lockFile : getMockLockFile(), null, 2)}
+              {lockFile.length > 0 ? JSON.stringify(lockFile, null, 2) : 'No lock file data available'}
             </pre>
           </ScrollArea>
           <DialogFooter>
             <Button 
               variant="outline" 
               onClick={() => {
-                copyToClipboard(JSON.stringify(lockFile.length > 0 ? lockFile : getMockLockFile(), null, 2));
-                toast({ title: "Copied", description: "Lock file copied to clipboard" });
+                if (lockFile.length > 0) {
+                  copyToClipboard(JSON.stringify(lockFile, null, 2));
+                  toast({ title: "Copied", description: "Lock file copied to clipboard" });
+                }
               }}
+              disabled={lockFile.length === 0}
               data-testid="button-copy-lockfile"
             >
               {copiedText ? <Check className="h-4 w-4 mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
@@ -938,44 +934,4 @@ function formatNumber(num: number): string {
   if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
   if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
   return num.toString();
-}
-
-function getMockPackages(): PackageInfo[] {
-  return [
-    { name: 'react', version: '18.2.0', installedVersion: '18.2.0', latestVersion: '18.2.0', hasUpdate: false, type: 'npm', description: 'A JavaScript library for building user interfaces', license: 'MIT', size: '2.5KB', downloads: 15000000 },
-    { name: 'typescript', version: '5.3.3', installedVersion: '5.2.2', latestVersion: '5.3.3', hasUpdate: true, type: 'npm', description: 'TypeScript is a language for application scale JavaScript development', license: 'Apache-2.0', size: '22.1MB' },
-    { name: 'express', version: '4.18.2', installedVersion: '4.17.1', latestVersion: '4.18.2', hasUpdate: true, type: 'npm', description: 'Fast, unopinionated, minimalist web framework', license: 'MIT', size: '205KB', vulnerabilities: { critical: 0, high: 1, medium: 2, low: 0 } },
-    { name: 'lodash', version: '4.17.21', installedVersion: '4.17.21', latestVersion: '4.17.21', hasUpdate: false, type: 'npm', description: 'A modern JavaScript utility library', license: 'MIT', size: '531KB' },
-    { name: 'flask', version: '3.0.0', installedVersion: '2.3.3', latestVersion: '3.0.0', hasUpdate: true, type: 'pip', description: 'A lightweight WSGI web application framework', license: 'BSD-3-Clause', size: '1.2MB' },
-    { name: 'requests', version: '2.31.0', installedVersion: '2.31.0', latestVersion: '2.31.0', hasUpdate: false, type: 'pip', description: 'Python HTTP for Humans', license: 'Apache-2.0', size: '62KB' },
-    { name: 'numpy', version: '1.26.2', installedVersion: '1.24.0', latestVersion: '1.26.2', hasUpdate: true, type: 'pip', description: 'Fundamental package for scientific computing', license: 'BSD', size: '18.2MB' },
-    { name: 'axios', version: '1.6.2', installedVersion: '1.6.2', latestVersion: '1.6.2', hasUpdate: false, type: 'npm', description: 'Promise based HTTP client for the browser and node.js', license: 'MIT', size: '101KB' },
-  ];
-}
-
-function getMockSearchResults(query: string): SearchResult[] {
-  const allPackages: SearchResult[] = [
-    { name: 'react', version: '18.2.0', description: 'A JavaScript library for building user interfaces', downloads: 15000000, type: 'npm', author: 'Facebook', license: 'MIT' },
-    { name: 'react-dom', version: '18.2.0', description: 'React package for working with the DOM', downloads: 14500000, type: 'npm', author: 'Facebook', license: 'MIT' },
-    { name: 'react-router', version: '6.20.0', description: 'Declarative routing for React', downloads: 8000000, type: 'npm', author: 'Remix', license: 'MIT' },
-    { name: 'express', version: '4.18.2', description: 'Fast, unopinionated, minimalist web framework', downloads: 25000000, type: 'npm', author: 'TJ Holowaychuk', license: 'MIT' },
-    { name: 'flask', version: '3.0.0', description: 'A lightweight WSGI web application framework', downloads: 5000000, type: 'pip', author: 'Pallets', license: 'BSD' },
-    { name: 'fastapi', version: '0.104.1', description: 'FastAPI framework, high performance, easy to learn', downloads: 3000000, type: 'pip', author: 'Sebastián Ramírez', license: 'MIT' },
-    { name: 'django', version: '5.0', description: 'The Web framework for perfectionists with deadlines', downloads: 4000000, type: 'pip', author: 'Django Software Foundation', license: 'BSD' },
-    { name: 'pandas', version: '2.1.3', description: 'Powerful data structures for data analysis', downloads: 8000000, type: 'pip', author: 'Wes McKinney', license: 'BSD' },
-  ];
-  
-  return allPackages.filter(pkg => 
-    pkg.name.toLowerCase().includes(query.toLowerCase()) ||
-    pkg.description?.toLowerCase().includes(query.toLowerCase())
-  );
-}
-
-function getMockLockFile(): LockFileEntry[] {
-  return [
-    { name: 'react', version: '18.2.0', resolved: 'https://registry.npmjs.org/react/-/react-18.2.0.tgz', integrity: 'sha512-xxx...' },
-    { name: 'react-dom', version: '18.2.0', resolved: 'https://registry.npmjs.org/react-dom/-/react-dom-18.2.0.tgz', integrity: 'sha512-yyy...', dependencies: { 'react': '^18.2.0' } },
-    { name: 'typescript', version: '5.2.2', resolved: 'https://registry.npmjs.org/typescript/-/typescript-5.2.2.tgz', integrity: 'sha512-zzz...' },
-    { name: 'express', version: '4.17.1', resolved: 'https://registry.npmjs.org/express/-/express-4.17.1.tgz', integrity: 'sha512-aaa...', dependencies: { 'body-parser': '^1.19.0', 'cookie': '0.4.0' } },
-  ];
 }
