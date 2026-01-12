@@ -159,11 +159,11 @@ export class AgentPreferencesService {
           cost: 'low',
         },
       },
-      // Google Gemini Models - UPDATED JAN 2026 with Gemini 3
+      // Google Gemini Models - UPDATED JAN 2026 (production-stable)
       {
-        id: 'gemini-3-flash',
-        name: 'Gemini 3 Flash',
-        description: 'Latest flagship - 90.4% GPQA Diamond, agentic coding',
+        id: 'gemini-2.5-flash',
+        name: 'Gemini 2.5 Flash',
+        description: 'Production-stable flagship - high performance, reliable for production use',
         category: 'google',
         tier: 'high-power',
         capabilities: {
@@ -177,7 +177,7 @@ export class AgentPreferencesService {
       {
         id: 'gemini-3-pro',
         name: 'Gemini 3 Pro',
-        description: 'State-of-the-art reasoning and multimodal',
+        description: 'State-of-the-art reasoning and multimodal (fallback for high-complexity tasks)',
         category: 'google',
         tier: 'high-power',
         capabilities: {
@@ -352,7 +352,7 @@ export class AgentPreferencesService {
     const fastModels: AiModel[] = [
       'claude-haiku-4-5-20251015',  // Fastest Claude model
       'gpt-5-mini',                  // Fast GPT model
-      'gemini-3-flash',              // Fast Gemini model
+      'gemini-2.5-flash',            // Fast Gemini model (production-stable)
       'grok-4-fast',                 // Fast xAI model
     ];
     

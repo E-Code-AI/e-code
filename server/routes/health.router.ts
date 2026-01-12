@@ -165,8 +165,23 @@ export class HealthRouter {
         }
         case 'gemini': {
           const client = new GoogleGenerativeAI(apiKey);
-          const model = client.getGenerativeModel({ model: 'gemini-3-flash' });
-          testPromise = model.generateContent('test').then(() => true);
+          // Gemini 3 → 2.5 → 2.0 fallback chain for maximum compatibility
+          const geminiModels = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+          testPromise = (async () => {
+            for (const modelName of geminiModels) {
+              try {
+                const model = client.getGenerativeModel({ model: modelName });
+                await model.generateContent('test');
+                return true;
+              } catch (e: any) {
+                if (e.message?.includes('not found') || e.status === 404) {
+                  continue; // Try next model
+                }
+                throw e; // Re-throw other errors
+              }
+            }
+            throw new Error('No Gemini models available');
+          })();
           break;
         }
         case 'xai': {

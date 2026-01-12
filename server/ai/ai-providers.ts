@@ -75,16 +75,32 @@ export class AnthropicProvider implements AIProvider {
     
     const systemMessage = messages.find(m => m.role === 'system')?.content;
     
-    const response = await this.client.messages.create({
-      // Use latest AVAILABLE Claude model (validated working)
-      model: options?.model || 'claude-haiku-4-5-20251015',
-      messages: anthropicMessages,
-      system: systemMessage,
-      max_tokens: options?.max_tokens || 1024,
-      ...options
-    });
-    
-    return response.content[0].type === 'text' ? response.content[0].text : '';
+    try {
+      const response = await this.client.messages.create({
+        // Use latest AVAILABLE Claude model (validated working)
+        model: options?.model || 'claude-haiku-4-5-20251015',
+        messages: anthropicMessages,
+        system: systemMessage,
+        max_tokens: options?.max_tokens || 1024,
+        ...options
+      });
+      
+      return response.content[0].type === 'text' ? response.content[0].text : '';
+    } catch (error: any) {
+      // Handle Anthropic credit/billing errors gracefully
+      if (error.message?.includes('credit balance') || error.message?.includes('billing') || 
+          error.status === 400 && error.message?.includes('credit')) {
+        console.error('[AnthropicProvider] Credit balance error - falling back to error message');
+        throw new Error('ANTHROPIC_CREDIT_ERROR: Your Anthropic credit balance is too low. Please add credits at console.anthropic.com/settings/billing');
+      }
+      // Handle rate limits
+      if (error.status === 429) {
+        console.warn('[AnthropicProvider] Rate limited, retrying after delay...');
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        return this.generateChat(messages, options);
+      }
+      throw error;
+    }
   }
   
   async generateCodeWithUnderstanding(messages: any[], codeAnalysis: any, options?: any): Promise<string> {
@@ -454,9 +470,33 @@ export class MistralProvider implements AIProvider {
 export class GeminiProvider implements AIProvider {
   name = 'gemini';
   private client: GoogleGenerativeAI;
+  // Fallback chain: prefer stable models over preview
+  private static readonly MODEL_FALLBACK_CHAIN = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
   
   constructor(apiKey: string) {
     this.client = new GoogleGenerativeAI(apiKey);
+  }
+  
+  private async getAvailableModel(requestedModel: string): Promise<string> {
+    // Try requested model first, then fallback chain
+    const modelsToTry = [requestedModel, ...GeminiProvider.MODEL_FALLBACK_CHAIN.filter(m => m !== requestedModel)];
+    
+    for (const modelName of modelsToTry) {
+      try {
+        const model = this.client.getGenerativeModel({ model: modelName });
+        await model.generateContent('test'); // Quick availability check
+        return modelName;
+      } catch (e: any) {
+        if (e.message?.includes('not found') || e.status === 404) {
+          console.warn(`[GeminiProvider] Model ${modelName} not available, trying fallback...`);
+          continue;
+        }
+        // For other errors, still try to use the model (might be rate limit, etc.)
+        return modelName;
+      }
+    }
+    // Default to most stable model if all checks fail
+    return 'gemini-2.0-flash';
   }
   
   async generateChat(messages: any[], options?: any): Promise<string> {
@@ -466,8 +506,9 @@ export class GeminiProvider implements AIProvider {
     // ✅ GEMINI FIX: systemInstruction MUST be Content object, not string
     // SDK does NOT auto-convert strings - must pass { parts: [{ text: '...' }] }
     // Reference: https://ai.google.dev/gemini-api/docs/system-instructions
+    const requestedModel = options?.model || 'gemini-2.5-flash';
     const modelConfig: any = {
-      model: options?.model || 'gemini-3-flash'
+      model: requestedModel
     };
     if (systemMessage && systemMessage.trim()) {
       modelConfig.systemInstruction = {
@@ -496,8 +537,9 @@ export class GeminiProvider implements AIProvider {
     // ✅ GEMINI FIX: systemInstruction MUST be Content object, not string
     // SDK does NOT auto-convert strings - must pass { parts: [{ text: '...' }] }
     // Reference: https://ai.google.dev/gemini-api/docs/system-instructions
+    const requestedModel = options?.model || 'gemini-2.5-flash';
     const modelConfig: any = {
-      model: options?.model || 'gemini-3-flash'
+      model: requestedModel
     };
     if (systemMessage && systemMessage.trim()) {
       modelConfig.systemInstruction = {

@@ -154,7 +154,7 @@ Generate the complete ${fileName} file:`;
       const fallbackModels = [
         'gpt-5-mini',                     // OpenAI fast, reliable
         'claude-sonnet-4-5-20250929',     // Anthropic balanced
-        'gemini-3-flash',                 // ✅ CONSOLIDATED Jan 2026: Google fast
+        'gemini-2.5-flash',               // ✅ CONSOLIDATED Jan 2026: Google fast (stable production model)
         'gpt-5.2',                        // ✅ CONSOLIDATED Jan 2026: OpenAI flagship
       ];
       let result: string | null = null;

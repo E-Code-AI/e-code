@@ -419,8 +419,8 @@ Output valid JSON only, no markdown code blocks.`;
       'claude-sonnet-4-5-20250929',    // Anthropic Claude Sonnet 4.5
       'gpt-5-mini',                    // OpenAI GPT-5 Mini
       'gpt-4.1',                       // OpenAI GPT-4.1
-      'gemini-3-flash',                // Google Gemini 3 Flash (Jan 2026)
-      'gemini-3-pro',                  // Google Gemini 3 Pro (Jan 2026)
+      'gemini-2.5-flash',              // Google Gemini 2.5 Flash (production-stable)
+      'gemini-3-pro',                  // Google Gemini 3 Pro (fallback for complex reasoning)
       'grok-4',                        // xAI Grok 4
     ];
     
