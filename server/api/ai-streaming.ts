@@ -1238,8 +1238,8 @@ async function streamGemini(res: any, messages: any[], options: any) {
     return;
   }
   
-  // Use provided model or default to gemini-3-flash (Jan 2026 current)
-  const modelToUse = options.model || 'gemini-3-flash';
+  // Use provided model or default to gemini-2.5-flash (stable production model)
+  const modelToUse = options.model || 'gemini-2.5-flash';
   logger.info(`[Gemini Stream] Using model: ${modelToUse}`);
   
   const genAI = new GoogleGenerativeAI(apiKey);
@@ -1527,9 +1527,9 @@ router.get('/api/agent/models', ensureAuthenticated, (req, res) => {
     { provider: 'anthropic', model: 'claude-sonnet-4-5-20250929', name: 'Claude Sonnet 4.5', context: 200000, available: !!process.env.ANTHROPIC_API_KEY },
     { provider: 'anthropic', model: 'claude-haiku-4-5-20251015', name: 'Claude Haiku 4.5', context: 200000, available: !!process.env.ANTHROPIC_API_KEY },
     
-    // Google Gemini Models (January 2026) - ✅ CONSOLIDATED: Only Gemini 3 is current
-    { provider: 'gemini', model: 'gemini-3-pro', name: 'Gemini 3 Pro', context: 1000000, available: !!process.env.GEMINI_API_KEY },
-    { provider: 'gemini', model: 'gemini-3-flash', name: 'Gemini 3 Flash', context: 1000000, available: !!process.env.GEMINI_API_KEY },
+    // Google Gemini Models (January 2026) - ✅ STABLE: Gemini 2.5 is production-ready
+    { provider: 'gemini', model: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', context: 1000000, available: !!process.env.GEMINI_API_KEY },
+    { provider: 'gemini', model: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', context: 1000000, available: !!process.env.GEMINI_API_KEY },
     
     // xAI Grok Models
     { provider: 'xai', model: 'grok-4', name: 'Grok 4', context: 256000, available: !!process.env.XAI_API_KEY },

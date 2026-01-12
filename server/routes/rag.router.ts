@@ -411,8 +411,8 @@ router.get('/models', ensureAuthenticated, async (req, res) => {
         features: ['long_context', 'function_calling', 'extended_thinking']
       },
       {
-        id: 'gemini-3-flash',
-        name: 'Gemini 3 Flash',
+        id: 'gemini-2.5-flash',
+        name: 'Gemini 2.5 Flash',
         provider: 'gemini',
         ragSupport: true,
         embeddingModel: 'text-embedding-004',
@@ -420,8 +420,8 @@ router.get('/models', ensureAuthenticated, async (req, res) => {
         features: ['embeddings', 'multimodal', 'function_calling']
       },
       {
-        id: 'gemini-3-pro',
-        name: 'Gemini 3 Pro',
+        id: 'gemini-2.5-pro',
+        name: 'Gemini 2.5 Pro',
         provider: 'gemini',
         ragSupport: true,
         embeddingModel: 'text-embedding-004',
