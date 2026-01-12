@@ -89,43 +89,43 @@ export default function Usage() {
     collaborators: UsageMetric;
   }
 
-  // Use real data from API or fallback to default structure
+  // Use real data from API or fallback to zero values (no mock data)
   const usage: UsageData = (usageData as UsageData) || {
     compute: {
-      used: 72,
-      limit: 100,
+      used: 0,
+      limit: 0,
       unit: 'hours',
-      percentage: 72
+      percentage: 0
     },
     storage: {
-      used: 4.2,
-      limit: 10,
+      used: 0,
+      limit: 0,
       unit: 'GB',
-      percentage: 42
+      percentage: 0
     },
     bandwidth: {
-      used: 15.8,
-      limit: 100,
+      used: 0,
+      limit: 0,
       unit: 'GB',
-      percentage: 15.8
+      percentage: 0
     },
     privateProjects: {
-      used: 3,
-      limit: 5,
+      used: 0,
+      limit: 0,
       unit: 'projects',
-      percentage: 60
+      percentage: 0
     },
     deployments: {
-      used: 8,
-      limit: 10,
+      used: 0,
+      limit: 0,
       unit: 'deployments',
-      percentage: 80
+      percentage: 0
     },
     collaborators: {
-      used: 2,
-      limit: 3,
+      used: 0,
+      limit: 0,
       unit: 'users',
-      percentage: 66.7
+      percentage: 0
     }
   };
 
@@ -548,30 +548,27 @@ export default function Usage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="flex items-center justify-between p-3 border rounded-lg">
-                  <div>
-                    <p className="font-medium">June 2025</p>
-                    <p className="text-sm text-muted-foreground">
-                      Jun 1 - Jun 30, 2025
-                    </p>
+                {billingData?.previousCycles && billingData.previousCycles.length > 0 ? (
+                  billingData.previousCycles.map((cycle, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div>
+                        <p className="font-medium">{cycle.month}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {cycle.period}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-medium">{cycle.amount}</p>
+                        <p className="text-sm text-muted-foreground">{cycle.plan}</p>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-4 text-muted-foreground">
+                    <Clock className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <p>No previous billing cycles available</p>
                   </div>
-                  <div className="text-right">
-                    <p className="font-medium">$19.00</p>
-                    <p className="text-sm text-muted-foreground">Pro Plan</p>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between p-3 border rounded-lg">
-                  <div>
-                    <p className="font-medium">May 2025</p>
-                    <p className="text-sm text-muted-foreground">
-                      May 1 - May 31, 2025
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-medium">$19.00</p>
-                    <p className="text-sm text-muted-foreground">Pro Plan</p>
-                  </div>
-                </div>
+                )}
               </div>
             </CardContent>
           </Card>

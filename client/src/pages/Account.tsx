@@ -11,12 +11,13 @@ import { PageHeader, PageShell } from '@/components/layout/PageShell';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
+import { useQuery } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
 import { 
   User, Mail, Key, Shield, CreditCard, Bell, 
   Globe, Download, Trash2, AlertTriangle, Check,
   Smartphone, Monitor, Lock, Link, Github, Twitter,
-  Chrome, Apple, Zap, Crown, Database, Server
+  Chrome, Apple, Zap, Crown, Database, Server, Loader2
 } from 'lucide-react';
 import { ECodeSpinner } from '@/components/ECodeLoading';
 import { TwoFactorSetup } from '@/components/security/TwoFactorSetup';
@@ -45,6 +46,26 @@ export default function Account() {
   const [security, setSecurity] = useState({
     twoFactor: false,
     sessions: []
+  });
+
+  // Fetch billing data from real API
+  const { data: billingData, isLoading: isBillingLoading } = useQuery<{
+    plan: string;
+    monthlyCost: number;
+    nextBillingDate: string;
+    usage: {
+      compute: { used: number; limit: number };
+      storage: { used: number; limit: number };
+      privateRepls: { used: number; limit: string };
+    };
+    paymentMethod: {
+      last4: string;
+      expiryMonth: number;
+      expiryYear: number;
+    } | null;
+  }>({
+    queryKey: ['/api/user/billing-summary'],
+    enabled: !!user
   });
 
   // Load user data when component mounts
@@ -422,79 +443,115 @@ export default function Account() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="p-4 border rounded-lg bg-muted/50" data-testid="current-plan">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <Crown className="h-5 w-5 text-yellow-600" />
-                    <h3 className="font-semibold">Hacker Plan</h3>
-                  </div>
-                  <Badge>Active</Badge>
+              {isBillingLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                 </div>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <p className="text-muted-foreground">Monthly Cost</p>
-                    <p className="font-medium" data-testid="text-monthly-cost">$7.00</p>
+              ) : (
+                <>
+                  <div className="p-4 border rounded-lg bg-muted/50" data-testid="current-plan">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        <Crown className="h-5 w-5 text-yellow-600" />
+                        <h3 className="font-semibold">{billingData?.plan || user?.subscriptionTier || 'Free'} Plan</h3>
+                      </div>
+                      <Badge>Active</Badge>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <p className="text-muted-foreground">Monthly Cost</p>
+                        <p className="font-medium" data-testid="text-monthly-cost">
+                          ${billingData?.monthlyCost?.toFixed(2) || '0.00'}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Next Billing</p>
+                        <p className="font-medium" data-testid="text-next-billing">
+                          {billingData?.nextBillingDate 
+                            ? new Date(billingData.nextBillingDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                            : 'N/A'}
+                        </p>
+                      </div>
+                    </div>
+                    <Button className="w-full mt-4" variant="outline" data-testid="button-manage-subscription">
+                      Manage Subscription
+                    </Button>
                   </div>
-                  <div>
-                    <p className="text-muted-foreground">Next Billing</p>
-                    <p className="font-medium" data-testid="text-next-billing">Feb 1, 2024</p>
-                  </div>
-                </div>
-                <Button className="w-full mt-4" variant="outline" data-testid="button-manage-subscription">
-                  Manage Subscription
-                </Button>
-              </div>
 
-              <Separator />
+                  <Separator />
 
-              <div className="space-y-4">
-                <h3 className="text-sm font-medium">Usage This Month</h3>
-                <div className="space-y-3">
-                  <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm">Compute Hours</span>
-                      <span className="text-sm font-medium">45 / 100</span>
-                    </div>
-                    <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                      <div className="h-full bg-primary" style={{ width: '45%' }} />
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-medium">Usage This Month</h3>
+                    <div className="space-y-3">
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm">Compute Hours</span>
+                          <span className="text-sm font-medium">
+                            {billingData?.usage?.compute?.used ?? 0} / {billingData?.usage?.compute?.limit ?? 0}
+                          </span>
+                        </div>
+                        <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-primary" 
+                            style={{ width: `${billingData?.usage?.compute ? Math.min(100, (billingData.usage.compute.used / billingData.usage.compute.limit) * 100) : 0}%` }} 
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm">Storage</span>
+                          <span className="text-sm font-medium">
+                            {billingData?.usage?.storage?.used?.toFixed(1) ?? 0}GB / {billingData?.usage?.storage?.limit ?? 0}GB
+                          </span>
+                        </div>
+                        <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-primary" 
+                            style={{ width: `${billingData?.usage?.storage ? Math.min(100, (billingData.usage.storage.used / billingData.usage.storage.limit) * 100) : 0}%` }} 
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm">Private Repls</span>
+                          <span className="text-sm font-medium">
+                            {billingData?.usage?.privateRepls?.used ?? 0} / {billingData?.usage?.privateRepls?.limit ?? 'Unlimited'}
+                          </span>
+                        </div>
+                        <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                          <div className="h-full bg-green-600" style={{ width: '100%' }} />
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm">Storage</span>
-                      <span className="text-sm font-medium">3.2GB / 10GB</span>
-                    </div>
-                    <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                      <div className="h-full bg-primary" style={{ width: '32%' }} />
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm">Private Repls</span>
-                      <span className="text-sm font-medium">8 / Unlimited</span>
-                    </div>
-                    <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                      <div className="h-full bg-green-600" style={{ width: '100%' }} />
-                    </div>
-                  </div>
-                </div>
-              </div>
 
-              <Separator />
+                  <Separator />
 
-              <div className="space-y-4">
-                <h3 className="text-sm font-medium">Payment Method</h3>
-                <div className="flex items-center justify-between p-3 border rounded-lg" data-testid="payment-method">
-                  <div className="flex items-center gap-3">
-                    <CreditCard className="h-5 w-5" />
-                    <div>
-                      <p className="text-sm font-medium" data-testid="text-card-number">•••• •••• •••• 4242</p>
-                      <p className="text-xs text-muted-foreground">Expires 12/25</p>
-                    </div>
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-medium">Payment Method</h3>
+                    {billingData?.paymentMethod ? (
+                      <div className="flex items-center justify-between p-3 border rounded-lg" data-testid="payment-method">
+                        <div className="flex items-center gap-3">
+                          <CreditCard className="h-5 w-5" />
+                          <div>
+                            <p className="text-sm font-medium" data-testid="text-card-number">•••• •••• •••• {billingData.paymentMethod.last4}</p>
+                            <p className="text-xs text-muted-foreground">
+                              Expires {billingData.paymentMethod.expiryMonth}/{billingData.paymentMethod.expiryYear}
+                            </p>
+                          </div>
+                        </div>
+                        <Button variant="ghost" size="sm" data-testid="button-update-payment">Update</Button>
+                      </div>
+                    ) : (
+                      <div className="text-center py-4 text-muted-foreground">
+                        <CreditCard className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                        <p>No payment method on file</p>
+                        <Button variant="outline" size="sm" className="mt-2">Add Payment Method</Button>
+                      </div>
+                    )}
                   </div>
-                  <Button variant="ghost" size="sm" data-testid="button-update-payment">Update</Button>
-                </div>
-              </div>
+                </>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

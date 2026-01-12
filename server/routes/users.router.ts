@@ -315,18 +315,9 @@ export class UsersRouter {
         
         const tier = user.subscriptionTier || 'free';
         
-        // Generate previous billing cycles (last 6 months)
-        const previousCycles = [];
-        for (let i = 1; i <= 6; i++) {
-          const cycleDate = new Date(today.getFullYear(), today.getMonth() - i, 1);
-          const cycleEnd = new Date(cycleDate.getFullYear(), cycleDate.getMonth() + 1, 0);
-          previousCycles.push({
-            month: cycleDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
-            period: `${cycleDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${cycleEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
-            amount: tier === 'free' ? '$0.00' : `$${tier === 'core' ? '25' : tier === 'teams' ? '40' : '200'}.00`,
-            plan: planNames[tier] || 'Free'
-          });
-        }
+        // Previous billing cycles - empty array until real Stripe billing history integration
+        // Real billing history would be fetched from Stripe invoices or stored payment records
+        const previousCycles: Array<{ month: string; period: string; amount: string; plan: string }> = [];
         
         res.json({
           currentCycle: {
@@ -342,6 +333,73 @@ export class UsersRouter {
       } catch (error) {
         console.error('Error fetching billing info:', error);
         res.status(500).json({ error: 'Failed to fetch billing information' });
+      }
+    });
+
+    // Get user billing summary (for Account page)
+    this.router.get("/api/user/billing-summary", this.ensureAuth, async (req: Request, res: Response) => {
+      try {
+        const userId = req.user!.id;
+        const user = await this.storage.getUser(String(userId));
+        
+        if (!user) {
+          return res.status(404).json({ error: 'User not found' });
+        }
+        
+        const tier = user.subscriptionTier || 'free';
+        
+        // Plan pricing (monthly)
+        const planPricing: Record<string, number> = {
+          free: 0,
+          core: 25,
+          teams: 40,
+          enterprise: 200
+        };
+        
+        // Plan names
+        const planNames: Record<string, string> = {
+          free: 'Starter (Free)',
+          core: 'Core',
+          teams: 'Teams',
+          enterprise: 'Enterprise'
+        };
+        
+        // Plan usage limits
+        const planLimits: Record<string, { compute: number; storage: number; privateRepls: string }> = {
+          free: { compute: 50, storage: 5, privateRepls: '3' },
+          core: { compute: 200, storage: 20, privateRepls: 'Unlimited' },
+          teams: { compute: 500, storage: 50, privateRepls: 'Unlimited' },
+          enterprise: { compute: 2000, storage: 200, privateRepls: 'Unlimited' }
+        };
+        
+        const limits = planLimits[tier] || planLimits.free;
+        
+        // Get actual usage from user record
+        const computeUsed = parseFloat(user.usageComputeHours?.toString() || '0');
+        const storageUsed = parseFloat(user.usageStorageGb?.toString() || '0');
+        
+        // Get project count for private repls
+        const projects = await this.storage.getProjectsByUserId(String(userId));
+        const projectCount = projects.length;
+        
+        // Calculate next billing date
+        const today = new Date();
+        const nextBillingDate = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+        
+        res.json({
+          plan: planNames[tier] || 'Free',
+          monthlyCost: planPricing[tier] || 0,
+          nextBillingDate: nextBillingDate.toISOString(),
+          usage: {
+            compute: { used: computeUsed, limit: limits.compute },
+            storage: { used: storageUsed, limit: parseInt(limits.storage.toString()) },
+            privateRepls: { used: projectCount, limit: limits.privateRepls }
+          },
+          paymentMethod: null // Real payment method data fetched from Stripe when available
+        });
+      } catch (error) {
+        console.error('Error fetching billing summary:', error);
+        res.status(500).json({ error: 'Failed to fetch billing summary' });
       }
     });
   }
