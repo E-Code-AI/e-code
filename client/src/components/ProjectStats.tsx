@@ -1,21 +1,22 @@
-import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Skeleton } from '@/components/ui/skeleton';
 import { 
-  FileText, 
-  Code2, 
   GitBranch,
   Clock,
-  TrendingUp,
   Package,
   Users,
   Activity,
   BarChart3,
-  Zap
+  Zap,
+  AlertCircle,
+  RefreshCw
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useQuery } from '@tanstack/react-query';
+import { Button } from '@/components/ui/button';
 
 interface ProjectStatsProps {
   projectId: number;
@@ -44,50 +45,62 @@ interface ProjectMetrics {
   testCoverage: number;
 }
 
-const LANGUAGE_COLORS: Record<string, string> = {
-  'TypeScript': '#3178c6',
-  'JavaScript': '#f7df1e',
-  'React': '#61dafb',
-  'CSS': '#1572b6',
-  'HTML': '#e34c26',
-  'Python': '#3776ab',
-  'Go': '#00add8',
-  'Rust': '#dea584',
-  'Other': '#6b7280'
-};
-
 export function ProjectStats({ projectId, className }: ProjectStatsProps) {
-  const [metrics, setMetrics] = useState<ProjectMetrics>({
-    totalFiles: 48,
-    totalLines: 12453,
-    totalSize: '2.4 MB',
-    languages: [
-      { language: 'TypeScript', percentage: 45, lines: 5604, color: LANGUAGE_COLORS.TypeScript },
-      { language: 'React', percentage: 30, lines: 3736, color: LANGUAGE_COLORS.React },
-      { language: 'CSS', percentage: 15, lines: 1868, color: LANGUAGE_COLORS.CSS },
-      { language: 'JavaScript', percentage: 8, lines: 996, color: LANGUAGE_COLORS.JavaScript },
-      { language: 'Other', percentage: 2, lines: 249, color: LANGUAGE_COLORS.Other }
-    ],
-    commits: 147,
-    branches: 3,
-    contributors: 4,
-    lastUpdated: '2 hours ago',
-    dependencies: 32,
-    devDependencies: 15,
-    buildTime: 45,
-    testCoverage: 78
+  const { data: metrics, isLoading, isError, refetch } = useQuery<ProjectMetrics>({
+    queryKey: ['/api/projects', projectId, 'stats'],
+    queryFn: async () => {
+      const response = await fetch(`/api/projects/${projectId}/stats`, {
+        credentials: 'include'
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch project stats');
+      }
+      return response.json();
+    },
+    enabled: !!projectId,
+    staleTime: 30000, // Cache for 30 seconds
   });
 
-  useEffect(() => {
-    // Simulate fetching project stats
-    const fetchStats = async () => {
-      // In real implementation, fetch from API
-      // const response = await apiRequest('GET', `/api/projects/${projectId}/stats`);
-      // setMetrics(await response.json());
-    };
+  // Loading state
+  if (isLoading) {
+    return (
+      <Card className={cn("", className)}>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="h-5 w-5" />
+            Project Statistics
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-3/4" />
+          <Skeleton className="h-20 w-full" />
+        </CardContent>
+      </Card>
+    );
+  }
 
-    fetchStats();
-  }, [projectId]);
+  // Error state
+  if (isError || !metrics) {
+    return (
+      <Card className={cn("", className)}>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="h-5 w-5" />
+            Project Statistics
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col items-center justify-center py-8 text-center">
+          <AlertCircle className="h-8 w-8 text-muted-foreground mb-2" />
+          <p className="text-sm text-muted-foreground mb-3">Unable to load project statistics</p>
+          <Button variant="outline" size="sm" onClick={() => refetch()}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Retry
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className={cn("", className)}>
@@ -269,22 +282,17 @@ export function ProjectStats({ projectId, className }: ProjectStatsProps) {
               </div>
             </div>
 
-            {/* Recent Activity */}
+            {/* Recent Activity - Git integration required */}
             <div className="pt-4 border-t">
               <h4 className="text-sm font-medium mb-2">Recent Activity</h4>
-              <div className="space-y-2 text-sm">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <div className="w-2 h-2 bg-green-500 rounded-full" />
-                  <span>3 commits pushed today</span>
-                </div>
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full" />
-                  <span>2 pull requests merged</span>
-                </div>
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <div className="w-2 h-2 bg-yellow-500 rounded-full" />
-                  <span>5 issues closed</span>
-                </div>
+              <div className="flex flex-col items-center justify-center py-4 text-center">
+                <GitBranch className="h-6 w-6 text-muted-foreground mb-2" />
+                <p className="text-sm text-muted-foreground">
+                  Connect a Git repository to see activity
+                </p>
+                <Badge variant="outline" className="mt-2 text-xs">
+                  Git integration required
+                </Badge>
               </div>
             </div>
           </TabsContent>
