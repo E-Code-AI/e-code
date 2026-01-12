@@ -125,8 +125,8 @@ export function normalizeModelName(modelName: string | any | undefined, provider
   const providerDefaults: Record<string, string> = {
     'openai': 'gpt-5-mini',
     'anthropic': 'claude-sonnet-4-5-20250929',
-    'gemini': 'gemini-3-flash',  // ✅ UPDATED Jan 2026: New flagship
-    'google': 'gemini-3-flash',
+    'gemini': 'gemini-2.5-flash',  // ✅ STABLE: Production-ready Gemini
+    'google': 'gemini-2.5-flash',
     'xai': 'grok-4',
     'moonshot': 'kimi-k2-thinking',  // ✅ UPDATED Jan 2026: Kimi K2 default
   };

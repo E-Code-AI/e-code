@@ -233,7 +233,7 @@ router.post('/api/agent/chat/stream', ensureAuthenticated, async (req, res) => {
     switch (prov) {
       case 'openai': return 'gpt-5-mini';  // ✅ UPDATED Jan 2026: gpt-4o-mini deprecated
       case 'anthropic': return 'claude-sonnet-4-5-20250929';
-      case 'gemini': return 'gemini-3-flash';  // ✅ UPDATED Jan 2026: Gemini 3 is current
+      case 'gemini': return 'gemini-2.5-flash';  // ✅ STABLE: Gemini 2.5 Flash (production-ready)
       case 'xai': return 'grok-4-fast';
       case 'moonshot': return 'moonshot-v1-32k';
       default: return 'gpt-5-mini';
@@ -245,7 +245,7 @@ router.post('/api/agent/chat/stream', ensureAuthenticated, async (req, res) => {
     switch (prov) {
       case 'anthropic': return 'claude-haiku-4-5-20251015';  // Fastest Claude
       case 'openai': return 'gpt-5-mini';  // Fast GPT
-      case 'gemini': return 'gemini-3-flash';  // Fast Gemini
+      case 'gemini': return 'gemini-2.5-flash';  // Fast Gemini (stable)
       case 'xai': return 'grok-4-fast';  // Fast xAI
       default: return 'gpt-5-mini';
     }

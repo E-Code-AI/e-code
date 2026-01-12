@@ -221,19 +221,19 @@ const MODEL_TIERS: Record<string, Record<string, string | null>> = {
   fast: {
     openai: 'gpt-5-nano',
     anthropic: 'claude-haiku-4-5-20251015',
-    google: 'gemini-3-flash',  // ✅ CONSOLIDATED Jan 2026: Only Gemini 3
+    google: 'gemini-2.5-flash',  // ✅ STABLE: Gemini 2.5 Flash (production-ready, gemini-3-flash is preview)
     xai: null
   },
   balanced: {
     openai: 'gpt-5-mini',
     anthropic: 'claude-sonnet-4-5-20250929',
-    google: 'gemini-3-flash',
+    google: 'gemini-2.5-flash',  // ✅ STABLE: Gemini 2.5 Flash for balanced performance
     xai: null
   },
   quality: {
     openai: 'gpt-5.2',  // ✅ CONSOLIDATED Jan 2026
     anthropic: 'claude-opus-4-5-20251101',  // ✅ CONSOLIDATED Jan 2026: Only Opus 4.5
-    google: 'gemini-3-pro',  // ✅ CONSOLIDATED Jan 2026: Only Gemini 3
+    google: 'gemini-3-pro',  // ✅ HIGH-COMPLEXITY: Gemini 3 Pro for best reasoning (fallback if gemini-2.5-flash unavailable)
     xai: 'grok-4'
   }
 };
@@ -1281,10 +1281,9 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
         default: 0.00002
       },
       google: {
-        'gemini-3-pro': 0.00003,  // ✅ CONSOLIDATED Jan 2026
-        'gemini-3-flash': 0.00001,  // ✅ CONSOLIDATED Jan 2026
+        'gemini-3-pro': 0.00003,  // ✅ CONSOLIDATED Jan 2026: fallback for high-complexity
+        'gemini-2.5-flash': 0.00001,  // ✅ CONSOLIDATED Jan 2026: production-stable primary model
         'gemini-2.5-pro': 0.00003,  // Legacy pricing
-        'gemini-2.5-flash': 0.00001,  // Legacy pricing
         default: 0.00001
       },
       xai: {

@@ -55,11 +55,11 @@ export class AIPlanGeneratorService {
   private storage: IStorage;
   
   // ✅ 40-YEAR ENGINEERING FIX: Provider fallback chain - WORKING MODELS FIRST
-  // ✅ STRATEGY FIX (Nov 21, 2025): Test with Gemini/GPT first, debug Moonshot after
+  // ✅ STABILITY FIX (Jan 12, 2026): Using production-stable Gemini 2.5 Flash instead of preview Gemini 3
+  // Gemini 3 Flash is in preview and may return 404 errors - using Gemini 2.5 Flash for reliability
   // Moonshot API has timeout/error issues, using proven models as primary
-  // Once Gemini works, we'll debug Moonshot separately
   private readonly PROVIDER_FALLBACK_CHAIN = [
-    'gemini-3-flash',               // ✅ PRIMARY: Google Gemini 3 Flash (Jan 2026 flagship)
+    'gemini-2.5-flash',             // ✅ PRIMARY: Google Gemini 2.5 Flash (production-stable)
     'gpt-5.2',                      // ✅ CONSOLIDATED Jan 2026: OpenAI GPT-5.2 (flagship)
     'claude-haiku-4-5-20251015',    // Anthropic Claude Haiku 4.5 (fastest Claude model)
     'grok-4-fast',                  // xAI Grok 4 Fast (2M context, 64× cheaper than o3)
