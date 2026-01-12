@@ -115,15 +115,15 @@ const ProjectCard = optimizedMemo(({
             <div className="flex items-center space-x-4 text-xs text-muted-foreground">
               <span className="flex items-center">
                 <Eye className="h-3 w-3 mr-1" />
-                {Math.floor(Math.random() * 1000)}
+                {project.views ?? 0}
               </span>
               <span className="flex items-center">
                 <GitBranch className="h-3 w-3 mr-1" />
-                {Math.floor(Math.random() * 50)}
+                {project.forks ?? 0}
               </span>
               <span className="flex items-center">
                 <Star className="h-3 w-3 mr-1" />
-                {Math.floor(Math.random() * 100)}
+                {project.likes ?? 0}
               </span>
             </div>
             <Badge variant="secondary" className="text-xs">

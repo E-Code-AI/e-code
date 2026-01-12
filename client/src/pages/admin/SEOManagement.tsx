@@ -43,12 +43,12 @@ import {
   Edit, Eye, RefreshCw, Download, Image, FileText, Globe, BarChart3,
   Target, Zap, Sparkles, ArrowUpRight, ArrowDownRight, Activity,
   PieChart, LineChart, Award, Shield, Clock, Users, MousePointer,
-  Gauge, Brain, Lightbulb, ChevronRight, Copy, Check
+  Gauge, Brain, Lightbulb, ChevronRight, Copy, Check, Loader2
 } from "lucide-react";
 import { LazyMotionDiv, LazyAnimatePresence } from "@/lib/motion";
 import { AdminLayout } from "./AdminLayout";
-import { seoConfig } from "@/config/seo.config";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
 
 // Types
 interface PageSEO {
@@ -63,53 +63,14 @@ interface PageSEO {
   impressions: number;
   clicks: number;
   ctr: number;
+  hasRealData: boolean;
 }
 
-// SEO Score calculation
-const calculateSEOScore = (config: any): { score: number; issues: string[] } => {
-  const issues: string[] = [];
-  let score = 100;
-
-  if (!config.title) { issues.push("Missing title"); score -= 25; }
-  else if (config.title.length < 30) { issues.push("Title too short (< 30 chars)"); score -= 10; }
-  else if (config.title.length > 60) { issues.push("Title too long (> 60 chars)"); score -= 5; }
-
-  if (!config.description) { issues.push("Missing meta description"); score -= 25; }
-  else if (config.description.length < 120) { issues.push("Description too short (< 120 chars)"); score -= 10; }
-  else if (config.description.length > 160) { issues.push("Description too long (> 160 chars)"); score -= 5; }
-
-  if (!config.keywords || config.keywords.length < 3) { issues.push("Needs more keywords (< 3)"); score -= 10; }
-  if (!config.ogImage) { issues.push("Missing Open Graph image"); score -= 15; }
-  if (!config.canonicalUrl) { issues.push("Missing canonical URL"); score -= 5; }
-
-  return { score: Math.max(0, score), issues };
-};
-
-// Generate mock data
-const generatePageData = (): PageSEO[] => {
-  return Object.entries(seoConfig).map(([key, config]) => {
-    const { score, issues } = calculateSEOScore(config);
-    let status: 'excellent' | 'good' | 'needs-work' | 'critical';
-    if (score >= 90) status = 'excellent';
-    else if (score >= 70) status = 'good';
-    else if (score >= 50) status = 'needs-work';
-    else status = 'critical';
-
-    return {
-      path: key === 'landing' ? '/' : `/${key}`,
-      title: config.title,
-      description: config.description,
-      score,
-      status,
-      issues,
-      lastUpdated: new Date().toISOString().split('T')[0],
-      trend: Math.floor(Math.random() * 20) - 10,
-      impressions: Math.floor(Math.random() * 50000) + 1000,
-      clicks: Math.floor(Math.random() * 5000) + 100,
-      ctr: parseFloat((Math.random() * 10 + 1).toFixed(2))
-    };
-  });
-};
+interface SEOAnalyticsResponse {
+  pages: PageSEO[];
+  hasRealAnalytics: boolean;
+  lastSyncedAt: string | null;
+}
 
 // Radial Progress Component
 function RadialProgress({ value, size = 120, strokeWidth = 10, color = "hsl(var(--primary))" }: {
@@ -256,7 +217,12 @@ export default function SEOManagement() {
   const [selectedPage, setSelectedPage] = useState<PageSEO | null>(null);
   const [copied, setCopied] = useState(false);
 
-  const pages = useMemo(() => generatePageData(), []);
+  const { data: analyticsData, isLoading, error } = useQuery<SEOAnalyticsResponse>({
+    queryKey: ['/api/admin/seo/analytics'],
+  });
+
+  const pages = analyticsData?.pages ?? [];
+  const hasRealAnalytics = analyticsData?.hasRealAnalytics ?? false;
 
   const filteredPages = pages.filter(page => {
     const matchesSearch = page.path.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -265,21 +231,19 @@ export default function SEOManagement() {
     return matchesSearch && matchesStatus;
   });
 
-  // Calculate stats
   const stats = useMemo(() => ({
     total: pages.length,
     excellent: pages.filter(p => p.status === 'excellent').length,
     good: pages.filter(p => p.status === 'good').length,
     needsWork: pages.filter(p => p.status === 'needs-work').length,
     critical: pages.filter(p => p.status === 'critical').length,
-    averageScore: Math.round(pages.reduce((acc, p) => acc + p.score, 0) / pages.length),
+    averageScore: pages.length > 0 ? Math.round(pages.reduce((acc, p) => acc + p.score, 0) / pages.length) : 0,
     totalImpressions: pages.reduce((acc, p) => acc + p.impressions, 0),
     totalClicks: pages.reduce((acc, p) => acc + p.clicks, 0),
-    avgCTR: parseFloat((pages.reduce((acc, p) => acc + p.ctr, 0) / pages.length).toFixed(2)),
+    avgCTR: pages.length > 0 ? parseFloat((pages.reduce((acc, p) => acc + p.ctr, 0) / pages.length).toFixed(2)) : 0,
     issuesCount: pages.reduce((acc, p) => acc + p.issues.length, 0)
   }), [pages]);
 
-  // Mock trend data
   const trendData = [65, 72, 68, 80, 75, 82, 78, 85, 88, 92, 89, stats.averageScore];
 
   const getStatusColor = (status: string) => {
@@ -298,6 +262,33 @@ export default function SEOManagement() {
     setTimeout(() => setCopied(false), 2000);
     toast({ title: "Copied!", description: "URL copied to clipboard" });
   };
+
+  if (isLoading) {
+    return (
+      <AdminLayout>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-muted-foreground">Loading SEO analytics...</p>
+          </div>
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <AdminLayout>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <AlertTriangle className="h-12 w-12 text-destructive mx-auto mb-4" />
+            <h2 className="text-xl font-semibold mb-2">Failed to load SEO analytics</h2>
+            <p className="text-muted-foreground">Please try again later.</p>
+          </div>
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout>
@@ -623,16 +614,28 @@ export default function SEOManagement() {
                                   <ScoreBadge score={page.score} size="sm" />
                                 </TableCell>
                                 <TableCell className="hidden md:table-cell">
-                                  <div className="font-medium">{(page.impressions / 1000).toFixed(1)}K</div>
+                                  {page.hasRealData ? (
+                                    <div className="font-medium">{(page.impressions / 1000).toFixed(1)}K</div>
+                                  ) : (
+                                    <Badge variant="outline" className="text-xs text-muted-foreground">No data yet</Badge>
+                                  )}
                                 </TableCell>
                                 <TableCell className="hidden md:table-cell">
-                                  <div className="font-medium">{page.ctr}%</div>
+                                  {page.hasRealData ? (
+                                    <div className="font-medium">{page.ctr}%</div>
+                                  ) : (
+                                    <Badge variant="outline" className="text-xs text-muted-foreground">No data yet</Badge>
+                                  )}
                                 </TableCell>
                                 <TableCell className="hidden lg:table-cell">
-                                  <div className={`flex items-center gap-1 ${page.trend >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                                    {page.trend >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
-                                    <span className="text-sm">{Math.abs(page.trend)}%</span>
-                                  </div>
+                                  {page.hasRealData ? (
+                                    <div className={`flex items-center gap-1 ${page.trend >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                                      {page.trend >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+                                      <span className="text-sm">{Math.abs(page.trend)}%</span>
+                                    </div>
+                                  ) : (
+                                    <Badge variant="outline" className="text-xs text-muted-foreground">No data yet</Badge>
+                                  )}
                                 </TableCell>
                                 <TableCell>
                                   {page.issues.length > 0 ? (

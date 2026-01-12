@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { 
   Activity, 
   Shield, 
@@ -13,7 +14,8 @@ import {
   TrendingUp, 
   AlertTriangle,
   CheckCircle2,
-  XCircle
+  XCircle,
+  Info
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 
@@ -24,6 +26,7 @@ interface HealthMetric {
   icon: React.ElementType;
   description: string;
   trend: 'up' | 'down' | 'stable';
+  isEstimated?: boolean;
 }
 
 interface RadarPoint {
@@ -32,79 +35,149 @@ interface RadarPoint {
   metric: HealthMetric;
 }
 
-export function CodeHealthRadar() {
-  const [refreshing, setRefreshing] = useState(false);
-  
-  // Fetch health metrics from real API
-  const { data: healthData, isLoading, refetch } = useQuery({
-    queryKey: ['/api/monitoring/health'],
-    refetchInterval: 30000 // Refresh every 30 seconds
-  });
-
-  // Generate realistic health metrics with some variation
-  const generateHealthValue = (base: number, variance: number = 10): number => {
-    return Math.min(100, Math.max(0, base + (Math.random() - 0.5) * variance));
+interface HealthApiResponse {
+  status: 'healthy' | 'degraded';
+  metrics: {
+    system: {
+      cpu: { usage: number; loadAverage: number[] };
+      memory: { used: number; total: number; percentage: number };
+      uptime: number;
+    };
+    api: {
+      requestCount: number;
+      errorCount: number;
+      averageLatency: number;
+      p95Latency: number;
+      p99Latency: number;
+    };
+    websocket: {
+      activeConnections: number;
+      totalMessages: number;
+      messageRate: number;
+    };
+    timestamp: number;
   };
+  checks: {
+    memory: boolean;
+    cpu: boolean;
+    errorRate: boolean;
+  };
+}
 
-  // Transform API data into health metrics
+const BASELINE_VALUE = 85;
+
+function computeHealthMetrics(data: HealthApiResponse | undefined): HealthMetric[] {
+  const metrics = data?.metrics;
+  const checks = data?.checks;
+  
+  const errorRate = metrics?.api?.requestCount && metrics.api.requestCount > 0
+    ? (metrics.api.errorCount / metrics.api.requestCount) * 100
+    : 0;
+  const codeQualityValue = metrics?.api
+    ? Math.round(Math.max(0, Math.min(100, 100 - errorRate * 10)))
+    : BASELINE_VALUE;
+  
+  const avgLatency = metrics?.api?.averageLatency ?? 0;
+  const performanceValue = metrics?.api
+    ? Math.round(Math.max(0, Math.min(100, 100 - (avgLatency / 10))))
+    : BASELINE_VALUE;
+  
+  const reliabilityValue = checks
+    ? (checks.memory && checks.cpu && checks.errorRate ? 95 : 
+       (checks.memory && checks.cpu ? 80 : 
+        (checks.errorRate ? 70 : 60)))
+    : BASELINE_VALUE;
+  
+  const cpuUsage = metrics?.system?.cpu?.usage ?? 50;
+  const memUsage = metrics?.system?.memory?.percentage ?? 50;
+  const scalabilityValue = Math.round(Math.max(0, Math.min(100, 100 - ((cpuUsage + memUsage) / 2))));
+  
+  const hasRealData = !!data?.metrics;
+  
   const healthMetrics: HealthMetric[] = [
     {
       name: 'Code Quality',
-      value: Math.round(generateHealthValue(85, 8)),
+      value: hasRealData ? codeQualityValue : BASELINE_VALUE,
       status: 'good',
       icon: Shield,
-      description: 'Static analysis, complexity, maintainability',
-      trend: 'up'
+      description: hasRealData 
+        ? `Based on error rate: ${errorRate.toFixed(1)}%`
+        : 'Estimated value - real analysis pending',
+      trend: 'stable',
+      isEstimated: !hasRealData
     },
     {
       name: 'Performance',
-      value: Math.round(generateHealthValue(92, 6)),
+      value: hasRealData ? performanceValue : BASELINE_VALUE,
       status: 'excellent',
       icon: Zap,
-      description: 'Response times, memory usage, CPU efficiency',
-      trend: 'stable'
+      description: hasRealData
+        ? `Avg latency: ${avgLatency.toFixed(0)}ms, P95: ${metrics?.api?.p95Latency?.toFixed(0) ?? 0}ms`
+        : 'Estimated value - real analysis pending',
+      trend: 'stable',
+      isEstimated: !hasRealData
     },
     {
       name: 'Security',
-      value: Math.round(generateHealthValue(78, 12)),
+      value: BASELINE_VALUE,
       status: 'good',
       icon: Shield,
-      description: 'Vulnerability scanning, dependency checks',
-      trend: 'up'
+      description: 'Estimated value - real analysis pending',
+      trend: 'stable',
+      isEstimated: true
     },
     {
       name: 'Reliability',
-      value: Math.round(generateHealthValue(96, 4)),
+      value: hasRealData ? reliabilityValue : BASELINE_VALUE,
       status: 'excellent',
       icon: Activity,
-      description: 'Uptime, error rates, fault tolerance',
-      trend: 'stable'
+      description: hasRealData
+        ? `System uptime: ${Math.floor((metrics?.system?.uptime ?? 0) / 3600)}h ${Math.floor(((metrics?.system?.uptime ?? 0) % 3600) / 60)}m`
+        : 'Estimated value - real analysis pending',
+      trend: 'stable',
+      isEstimated: !hasRealData
     },
     {
       name: 'Scalability',
-      value: Math.round(generateHealthValue(73, 15)),
+      value: hasRealData ? scalabilityValue : BASELINE_VALUE,
       status: 'warning',
       icon: TrendingUp,
-      description: 'Load handling, resource optimization',
-      trend: 'up'
+      description: hasRealData
+        ? `CPU: ${cpuUsage.toFixed(1)}%, Memory: ${memUsage.toFixed(1)}%`
+        : 'Estimated value - real analysis pending',
+      trend: 'stable',
+      isEstimated: !hasRealData
     },
     {
       name: 'Database',
-      value: Math.round(generateHealthValue(89, 7)),
+      value: BASELINE_VALUE,
       status: 'excellent',
       icon: Database,
-      description: 'Query performance, connection health',
-      trend: 'stable'
+      description: 'Estimated value - real analysis pending',
+      trend: 'stable',
+      isEstimated: true
     }
   ];
 
-  // Update status based on actual values
   healthMetrics.forEach(metric => {
     if (metric.value >= 90) metric.status = 'excellent';
     else if (metric.value >= 75) metric.status = 'good';
     else if (metric.value >= 60) metric.status = 'warning';
     else metric.status = 'critical';
   });
+
+  return healthMetrics;
+}
+
+export function CodeHealthRadar() {
+  const [refreshing, setRefreshing] = useState(false);
+  
+  const { data: healthData, isLoading, refetch } = useQuery<HealthApiResponse>({
+    queryKey: ['/api/monitoring/health'],
+    refetchInterval: 30000
+  });
+
+  const healthMetrics = useMemo(() => computeHealthMetrics(healthData), [healthData]);
 
   const refresh = async () => {
     setRefreshing(true);
@@ -319,51 +392,63 @@ export function CodeHealthRadar() {
         </div>
 
         {/* Metric Details */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {healthMetrics.map((metric) => {
-            const Icon = metric.icon;
-            return (
-              <Card key={metric.name} className="p-4">
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <Icon className="h-4 w-4" />
-                    <h4 className="font-medium text-sm">{metric.name}</h4>
-                  </div>
-                  {getStatusBadge(metric.status)}
-                </div>
-                
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-lg font-bold">{metric.value}%</span>
-                    <div className={`flex items-center gap-1 text-xs ${
-                      metric.trend === 'up' ? 'text-green-500' : 
-                      metric.trend === 'down' ? 'text-red-500' : 
-                      'text-muted-foreground'
-                    }`}>
-                      <TrendingUp className={`h-3 w-3 ${
-                        metric.trend === 'down' ? 'rotate-180' : 
-                        metric.trend === 'stable' ? 'rotate-90' : ''
-                      }`} />
-                      {metric.trend}
+        <TooltipProvider>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {healthMetrics.map((metric) => {
+              const Icon = metric.icon;
+              return (
+                <Card key={metric.name} className="p-4">
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <Icon className="h-4 w-4" />
+                      <h4 className="font-medium text-sm">{metric.name}</h4>
+                      {metric.isEstimated && (
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <Info className="h-3 w-3 text-muted-foreground" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Estimated value - real analysis pending</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
                     </div>
+                    {getStatusBadge(metric.status)}
                   </div>
                   
-                  <Progress 
-                    value={metric.value} 
-                    className="h-2"
-                    style={{
-                      '--progress-background': getStatusColor(metric.status)
-                    } as React.CSSProperties}
-                  />
-                  
-                  <p className="text-xs text-muted-foreground">
-                    {metric.description}
-                  </p>
-                </div>
-              </Card>
-            );
-          })}
-        </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-lg font-bold">{metric.value}%</span>
+                      <div className={`flex items-center gap-1 text-xs ${
+                        metric.trend === 'up' ? 'text-green-500' : 
+                        metric.trend === 'down' ? 'text-red-500' : 
+                        'text-muted-foreground'
+                      }`}>
+                        <TrendingUp className={`h-3 w-3 ${
+                          metric.trend === 'down' ? 'rotate-180' : 
+                          metric.trend === 'stable' ? 'rotate-90' : ''
+                        }`} />
+                        {metric.trend}
+                      </div>
+                    </div>
+                    
+                    <Progress 
+                      value={metric.value} 
+                      className="h-2"
+                      style={{
+                        '--progress-background': getStatusColor(metric.status)
+                      } as React.CSSProperties}
+                    />
+                    
+                    <p className="text-xs text-muted-foreground">
+                      {metric.description}
+                    </p>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        </TooltipProvider>
 
         {/* Action Items */}
         {healthMetrics.some(m => m.status === 'warning' || m.status === 'critical') && (

@@ -115,118 +115,119 @@ export function UnifiedAIInterface({
     setIsLoading(true);
 
     try {
-      // Simulate AI response with different behaviors based on mode
-      setTimeout(() => {
-        const effort = Math.floor(Math.random() * 50) + 10;
-        const assistantMessage: Message = {
-          id: (Date.now() + 1).toString(),
+      const response = await fetch("/api/agent/chat/stream", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          message: userMessage.content,
+          projectId,
+          model,
+          provider: model.includes("claude") ? "anthropic" : 
+                   model.includes("gpt") ? "openai" : 
+                   model.includes("gemini") ? "gemini" : 
+                   model.includes("grok") ? "xai" : "openai",
+          context: selectedCode ? [{ type: "code", content: selectedCode, file: currentFile }] : [],
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error("No response body");
+      }
+
+      const decoder = new TextDecoder();
+      let accumulatedContent = "";
+      let tokenCount: number | undefined;
+      const messageId = (Date.now() + 1).toString();
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: messageId,
           role: "assistant",
-          content: getAIResponse(userMessage.content, mode),
+          content: "",
           timestamp: new Date(),
-          model: model,
-          tokens: Math.floor(Math.random() * 1000) + 200,
-          effort: mode === "agent" ? effort : undefined,
-        };
+          model,
+        },
+      ]);
 
-        setMessages((prev) => [...prev, assistantMessage]);
-        setTotalEffort((prev) => prev + (effort || 0));
-        setIsLoading(false);
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
 
-        // Show preview if mentioned
-        if (
-          userMessage.content.toLowerCase().includes("preview") ||
-          userMessage.content.toLowerCase().includes("show") ||
-          userMessage.content.toLowerCase().includes("display")
-        ) {
-          window.postMessage({ type: "show-preview" }, "*");
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split("\n");
+
+        for (const line of lines) {
+          if (line.startsWith("event: ")) {
+            const eventType = line.slice(7).trim();
+            continue;
+          }
+          if (line.startsWith("data: ")) {
+            try {
+              const data = JSON.parse(line.slice(6));
+              
+              if (data.content) {
+                accumulatedContent += data.content;
+                setMessages((prev) =>
+                  prev.map((msg) =>
+                    msg.id === messageId
+                      ? { ...msg, content: accumulatedContent }
+                      : msg
+                  )
+                );
+              }
+              
+              if (data.totalTokens !== undefined) {
+                tokenCount = data.totalTokens;
+                setMessages((prev) =>
+                  prev.map((msg) =>
+                    msg.id === messageId
+                      ? { ...msg, tokens: tokenCount }
+                      : msg
+                  )
+                );
+                if (mode === "agent") {
+                  setTotalEffort((prev) => prev + (tokenCount || 0));
+                }
+              }
+            } catch {
+            }
+          }
         }
+      }
 
-        // Auto-run if enabled and in agent mode
-        if (autoRun && mode === "agent") {
-          toast({
-            title: "Running project",
-            description:
-              "Your changes are being applied and the project is running",
-          });
-        }
-      }, 1500);
+      setIsLoading(false);
+
+      if (
+        userMessage.content.toLowerCase().includes("preview") ||
+        userMessage.content.toLowerCase().includes("show") ||
+        userMessage.content.toLowerCase().includes("display")
+      ) {
+        window.postMessage({ type: "show-preview" }, "*");
+      }
+
+      if (autoRun && mode === "agent") {
+        toast({
+          title: "Running project",
+          description:
+            "Your changes are being applied and the project is running",
+        });
+      }
     } catch (error) {
       setIsLoading(false);
       toast({
         title: "Error",
-        description: "Failed to get AI response",
+        description: error instanceof Error ? error.message : "Failed to get AI response",
         variant: "destructive",
       });
-    }
-  };
-
-  const getAIResponse = (query: string, currentMode: string): string => {
-    if (currentMode === "agent") {
-      return `I'll help you build that! Let me analyze your requirements and create the implementation.
-
-🔨 **Building your application:**
-- Setting up the project structure
-- Creating the necessary components
-- Implementing the core functionality
-- Adding responsive design
-- Setting up state management
-
-✅ **Completed tasks:**
-- Created main application layout
-- Implemented user interface components
-- Added interactive features
-- Set up routing
-- Applied styling and animations
-
-📱 **Your app is now ready!** The preview is available in the preview panel.`;
-    } else if (currentMode === "assistant") {
-      if (selectedCode) {
-        return `I can see you've selected some code. Here's my analysis:
-
-**Code Review:**
-- The selected code appears to be well-structured
-- Consider adding error handling for edge cases
-- You might want to optimize the performance by memoizing expensive computations
-
-**Suggested improvements:**
-\`\`\`typescript
-// Add error boundary
-try {
-  ${selectedCode}
-} catch (error) {
-  console.error('Error:', error);
-  // Handle error appropriately
-}
-\`\`\`
-
-Would you like me to apply these changes?`;
-      }
-      return `I'm here to help with your code! I can:
-- Review and improve your code
-- Explain complex concepts
-- Debug issues
-- Suggest optimizations
-- Write documentation
-
-What would you like assistance with?`;
-    } else {
-      return `Using ${model} for advanced AI capabilities.
-
-**Analysis Complete:**
-- Processed your request with enhanced reasoning
-- Generated optimized solution
-- Applied best practices
-- Considered edge cases
-
-**Implementation Details:**
-Your request has been processed using our most advanced AI model. The solution incorporates industry best practices and has been optimized for performance and maintainability.
-
-**Next Steps:**
-1. Review the generated code
-2. Test the implementation
-3. Deploy when ready
-
-The implementation is complete and ready for use.`;
     }
   };
 
