@@ -178,6 +178,21 @@ export class ProjectsRouter {
     return `${baseSlug}-${randomSuffix}`;
   }
 
+  private formatTimeAgo(date: Date): string {
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffSecs = Math.floor(diffMs / 1000);
+    const diffMins = Math.floor(diffSecs / 60);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffSecs < 60) return 'just now';
+    if (diffMins < 60) return `${diffMins} minute${diffMins !== 1 ? 's' : ''} ago`;
+    if (diffHours < 24) return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
+    if (diffDays < 7) return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
+    return date.toLocaleDateString();
+  }
+
   private generateCodeSuggestion(elementPath: string, styles?: Record<string, string>, text?: string): string {
     const parts: string[] = [];
     
@@ -950,6 +965,128 @@ export class ProjectsRouter {
         res.write(`data: ${JSON.stringify({ step: 'complete', progress: 100, message: 'Done', projectId })}\n\n`);
         res.end();
       }, 300);
+    });
+
+    // GET /api/projects/:id/stats - Get real project statistics
+    this.router.get('/api/projects/:id/stats', this.ensureAuthenticated, this.ensureProjectAccess, async (req: Request, res: Response) => {
+      try {
+        const projectId = req.params.id;
+        const project = await this.storage.getProject(projectId);
+        
+        if (!project) {
+          return res.status(404).json({ error: 'Project not found', code: 'NOT_FOUND' });
+        }
+
+        // Get all files for this project
+        const files = await this.storage.getFilesByProjectId(projectId);
+        
+        // Language detection based on file extensions
+        const LANGUAGE_MAP: Record<string, { name: string; color: string }> = {
+          '.ts': { name: 'TypeScript', color: '#3178c6' },
+          '.tsx': { name: 'TypeScript', color: '#3178c6' },
+          '.js': { name: 'JavaScript', color: '#f7df1e' },
+          '.jsx': { name: 'JavaScript', color: '#f7df1e' },
+          '.py': { name: 'Python', color: '#3776ab' },
+          '.go': { name: 'Go', color: '#00add8' },
+          '.rs': { name: 'Rust', color: '#dea584' },
+          '.css': { name: 'CSS', color: '#1572b6' },
+          '.scss': { name: 'CSS', color: '#1572b6' },
+          '.html': { name: 'HTML', color: '#e34c26' },
+          '.json': { name: 'JSON', color: '#6b7280' },
+          '.md': { name: 'Markdown', color: '#083fa1' },
+          '.sql': { name: 'SQL', color: '#336791' },
+          '.java': { name: 'Java', color: '#007396' },
+          '.cpp': { name: 'C++', color: '#00599C' },
+          '.c': { name: 'C', color: '#A8B9CC' },
+          '.php': { name: 'PHP', color: '#777BB4' },
+          '.rb': { name: 'Ruby', color: '#CC342D' },
+        };
+
+        // Calculate metrics from real files
+        let totalLines = 0;
+        let totalSize = 0;
+        const languageStats: Record<string, { lines: number; files: number; color: string }> = {};
+
+        for (const file of files) {
+          const content = file.content || '';
+          const lines = content.split('\n').length;
+          const size = Buffer.byteLength(content, 'utf8');
+          
+          totalLines += lines;
+          totalSize += size;
+
+          // Detect language from extension
+          const ext = file.path?.match(/\.[^.]+$/)?.[0]?.toLowerCase() || '';
+          const langInfo = LANGUAGE_MAP[ext] || { name: 'Other', color: '#6b7280' };
+          
+          if (!languageStats[langInfo.name]) {
+            languageStats[langInfo.name] = { lines: 0, files: 0, color: langInfo.color };
+          }
+          languageStats[langInfo.name].lines += lines;
+          languageStats[langInfo.name].files += 1;
+        }
+
+        // Convert to percentage-based format
+        const languages = Object.entries(languageStats)
+          .map(([language, stats]) => ({
+            language,
+            lines: stats.lines,
+            percentage: totalLines > 0 ? Math.round((stats.lines / totalLines) * 100) : 0,
+            color: stats.color,
+          }))
+          .sort((a, b) => b.lines - a.lines)
+          .slice(0, 6); // Top 6 languages
+
+        // Parse package.json for dependencies if it exists
+        let dependencies = 0;
+        let devDependencies = 0;
+        const packageJsonFile = files.find(f => f.path === 'package.json' || f.path?.endsWith('/package.json'));
+        if (packageJsonFile?.content) {
+          try {
+            const pkg = JSON.parse(packageJsonFile.content);
+            dependencies = Object.keys(pkg.dependencies || {}).length;
+            devDependencies = Object.keys(pkg.devDependencies || {}).length;
+          } catch (e) {
+            // Invalid JSON, ignore
+          }
+        }
+
+        // Format size
+        const formatSize = (bytes: number): string => {
+          if (bytes < 1024) return `${bytes} B`;
+          if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+          return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+        };
+
+        // Calculate time since last update
+        const lastUpdated = project.updatedAt 
+          ? this.formatTimeAgo(new Date(project.updatedAt))
+          : 'Unknown';
+
+        const stats = {
+          totalFiles: files.length,
+          totalLines,
+          totalSize: formatSize(totalSize),
+          languages,
+          commits: 0, // Would require git integration
+          branches: 1, // Default branch
+          contributors: 1, // Project owner
+          lastUpdated,
+          dependencies,
+          devDependencies,
+          buildTime: 0, // Would require build metrics
+          testCoverage: 0, // Would require test runner integration
+        };
+
+        return res.json(stats);
+
+      } catch (error: any) {
+        projectLogger.error('[ProjectStats] Error getting project stats:', error);
+        return res.status(500).json({ 
+          error: error.message || 'Failed to get project stats',
+          code: 'STATS_ERROR' 
+        });
+      }
     });
 
     // GET /api/projects/:id/ai/pending - Get pending actions for approval
