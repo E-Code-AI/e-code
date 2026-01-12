@@ -13,12 +13,18 @@ export function ResponseTimeChart({ data, realTime, detailed }: ResponseTimeChar
   const chartData = useMemo(() => {
     if (!data) return [];
     
-    return data.slice(-100).map((item: any) => ({
-      time: new Date(item.timestamp).toLocaleTimeString(),
-      avg: item.metric_name === 'avg_response_time' ? parseFloat(item.metric_value) : 0,
-      p95: Math.random() * 50 + parseFloat(item.metric_value || 0) * 1.5,
-      p99: Math.random() * 100 + parseFloat(item.metric_value || 0) * 2,
-    }));
+    return data.slice(-100).map((item: any) => {
+      const avg = item.metric_name === 'avg_response_time' ? parseFloat(item.metric_value) : 0;
+      const p95Value = item.p95 !== undefined ? parseFloat(item.p95) : avg * 1.5;
+      const p99Value = item.p99 !== undefined ? parseFloat(item.p99) : avg * 2;
+      
+      return {
+        time: new Date(item.timestamp).toLocaleTimeString(),
+        avg,
+        p95: p95Value,
+        p99: p99Value,
+      };
+    });
   }, [data]);
 
   const currentValue = realTime?.application?.avgResponseTime || 0;

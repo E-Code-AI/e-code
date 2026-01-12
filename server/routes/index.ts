@@ -99,6 +99,7 @@ import workflowsRouter from './workflows.router';
 import teamsRouter from './teams.router';
 import polyglotRouter from '../polyglot-routes';
 import twoFactorRouter from './2fa.router';
+import resourcesRouter from './resources.router';
 
 export class MainRouter {
   private authRouter: AuthRouter;
@@ -241,6 +242,9 @@ export class MainRouter {
 
     // Scalability routes
     app.use('/api/scalability', tierRateLimiters.api, scalabilityRouter);
+
+    // Resources routes (real-time system metrics - CPU, memory, storage, network)
+    app.use(tierRateLimiters.api, resourcesRouter);
 
     // Marketplace routes
     app.use('/api/marketplace', tierRateLimiters.api, marketplaceRouter);

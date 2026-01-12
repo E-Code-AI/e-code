@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
@@ -10,10 +9,11 @@ import {
   AlertTriangle,
   Activity,
   Zap,
-  TrendingUp,
-  Timer
+  Timer,
+  Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useQuery } from '@tanstack/react-query';
 
 interface ResourceMonitorProps {
   projectId: number;
@@ -46,42 +46,54 @@ interface ResourceUsage {
 }
 
 export function ResourceMonitor({ projectId, className }: ResourceMonitorProps) {
-  const [resources, setResources] = useState<ResourceUsage>({
+  const { data: apiResources, isLoading, isError } = useQuery<any>({
+    queryKey: ['/api/resources', projectId],
+    queryFn: async () => {
+      const response = await fetch(`/api/resources?projectId=${projectId}`, {
+        credentials: 'include'
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to fetch resources: ${response.statusText}`);
+      }
+      return response.json();
+    },
+    enabled: !!projectId,
+    refetchInterval: 30000,
+    refetchIntervalInBackground: false,
+    retry: 2,
+  });
+
+  const resources: ResourceUsage = apiResources ? {
+    cpu: { 
+      usage: apiResources.cpu?.usage ?? 0, 
+      limit: 100, 
+      unit: '%' 
+    },
+    memory: { 
+      usage: apiResources.memory?.used ? apiResources.memory.used / (1024 * 1024) : 0, 
+      limit: apiResources.memory?.total ? apiResources.memory.total / (1024 * 1024) : 2048, 
+      unit: 'MB' 
+    },
+    storage: { 
+      usage: apiResources.storage?.used ? apiResources.storage.used / (1024 * 1024) : 0, 
+      limit: apiResources.storage?.total ? apiResources.storage.total / (1024 * 1024) : 10240, 
+      unit: 'MB' 
+    },
+    bandwidth: { 
+      usage: ((apiResources.network?.bytesIn ?? 0) + (apiResources.network?.bytesOut ?? 0)) / (1024 * 1024), 
+      limit: 1024, 
+      unit: 'MB' 
+    },
+    uptime: apiResources.uptime ?? 0,
+    status: 'running'
+  } : {
     cpu: { usage: 0, limit: 100, unit: '%' },
     memory: { usage: 0, limit: 2048, unit: 'MB' },
     storage: { usage: 0, limit: 10240, unit: 'MB' },
     bandwidth: { usage: 0, limit: 1024, unit: 'MB' },
     uptime: 0,
     status: 'idle'
-  });
-
-  useEffect(() => {
-    // Simulate resource usage updates
-    const interval = setInterval(() => {
-      setResources(prev => ({
-        cpu: {
-          ...prev.cpu,
-          usage: Math.min(prev.cpu.limit, Math.max(0, prev.cpu.usage + (Math.random() - 0.5) * 10))
-        },
-        memory: {
-          ...prev.memory,
-          usage: Math.min(prev.memory.limit, Math.max(100, prev.memory.usage + (Math.random() - 0.5) * 50))
-        },
-        storage: {
-          ...prev.storage,
-          usage: Math.min(prev.storage.limit, prev.storage.usage + Math.random() * 0.1)
-        },
-        bandwidth: {
-          ...prev.bandwidth,
-          usage: Math.min(prev.bandwidth.limit, prev.bandwidth.usage + Math.random() * 0.5)
-        },
-        uptime: prev.uptime + 1,
-        status: 'running'
-      }));
-    }, 2000);
-
-    return () => clearInterval(interval);
-  }, [projectId]);
+  };
 
   const getPercentage = (usage: number, limit: number) => {
     return Math.round((usage / limit) * 100);
@@ -99,6 +111,43 @@ export function ResourceMonitor({ projectId, className }: ResourceMonitorProps) 
     const secs = seconds % 60;
     return `${hours}h ${minutes}m ${secs}s`;
   };
+
+  if (isLoading) {
+    return (
+      <Card className={cn("", className)}>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2">
+            <Activity className="h-5 w-5" />
+            Resource Monitor
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center py-8">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (isError) {
+    return (
+      <Card className={cn("", className)}>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2">
+            <Activity className="h-5 w-5" />
+            Resource Monitor
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              Failed to load resource data. Please try again later.
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className={cn("", className)}>
