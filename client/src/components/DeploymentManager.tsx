@@ -156,16 +156,37 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
     if (!actualProjectId) return;
     
     try {
-      // Stats endpoint doesn't exist yet, set mock data
-      setStats({
-        totalDeployments: 0,
-        activeDeployments: 0,
-        totalRequests: 0,
-        averageResponseTime: 0,
-        errorRate: 0,
-        bandwidth: '0 MB',
-        uptime: 0
+      const response = await fetch(`/api/projects/${actualProjectId}/deployments/stats`, {
+        credentials: 'include'
       });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.stats) {
+          setStats(data.stats);
+        } else {
+          setStats({
+            totalDeployments: 0,
+            activeDeployments: 0,
+            totalRequests: 0,
+            averageResponseTime: 0,
+            errorRate: 0,
+            bandwidth: '0 MB',
+            uptime: 0
+          });
+        }
+      } else {
+        console.error('Failed to load stats:', response.status);
+        setStats({
+          totalDeployments: 0,
+          activeDeployments: 0,
+          totalRequests: 0,
+          averageResponseTime: 0,
+          errorRate: 0,
+          bandwidth: '0 MB',
+          uptime: 0
+        });
+      }
     } catch (error) {
       console.error('Failed to load stats:', error);
       setStats(null);

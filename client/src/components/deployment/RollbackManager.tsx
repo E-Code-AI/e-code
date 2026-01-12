@@ -137,6 +137,16 @@ export function RollbackManager({ deploymentId, className }: RollbackManagerProp
     enabled: !!compareVersions,
   });
 
+  // Fetch rollback history
+  const { data: rollbackHistory = [], isLoading: isLoadingHistory } = useQuery<RollbackStatus[]>({
+    queryKey: ['/api/deployments', deploymentId, 'rollback', 'history'],
+    queryFn: async () => {
+      const response = await fetch(`/api/deployments/${deploymentId}/rollback/history`);
+      const data = await response.json();
+      return data.history || [];
+    },
+  });
+
   // Rollback mutation
   const rollbackMutation = useMutation({
     mutationFn: async ({ version, options }: { version: string; options: typeof rollbackOptions }) => {
@@ -192,11 +202,13 @@ export function RollbackManager({ deploymentId, className }: RollbackManagerProp
       
       if (status.status === 'completed') {
         queryClient.invalidateQueries({ queryKey: ['/api/deployments', deploymentId] });
+        queryClient.invalidateQueries({ queryKey: ['/api/deployments', deploymentId, 'rollback', 'history'] });
         toast({
           title: 'Rollback Completed',
           description: `Successfully rolled back to version ${status.toVersion}`,
         });
       } else if (status.status === 'failed') {
+        queryClient.invalidateQueries({ queryKey: ['/api/deployments', deploymentId, 'rollback', 'history'] });
         toast({
           title: 'Rollback Failed',
           description: status.error || 'The rollback process encountered an error.',
@@ -506,29 +518,45 @@ export function RollbackManager({ deploymentId, className }: RollbackManagerProp
               <CardTitle>Recent Rollback Activity</CardTitle>
             </CardHeader>
             <CardContent>
-              <ScrollArea className="h-96">
-                <div className="space-y-3">
-                  {/* Mock rollback history */}
-                  <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50">
-                    <CheckCircle className="h-5 w-5 text-green-500" />
-                    <div className="flex-1">
-                      <p className="font-medium">Rollback to v2.1.0 completed</p>
-                      <p className="text-sm text-muted-foreground">
-                        Rolled back from v2.2.0 • 2 hours ago
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50">
-                    <XCircle className="h-5 w-5 text-red-500" />
-                    <div className="flex-1">
-                      <p className="font-medium">Rollback to v2.0.5 failed</p>
-                      <p className="text-sm text-muted-foreground">
-                        Database migration incompatible • 1 day ago
-                      </p>
-                    </div>
-                  </div>
+              {isLoadingHistory ? (
+                <div className="flex items-center justify-center h-64">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-ecode-primary"></div>
                 </div>
-              </ScrollArea>
+              ) : rollbackHistory.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12">
+                  <History className="h-12 w-12 text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">No Rollback Activity</h3>
+                  <p className="text-muted-foreground text-center">
+                    No rollback activity yet. Rollbacks will appear here once performed.
+                  </p>
+                </div>
+              ) : (
+                <ScrollArea className="h-96">
+                  <div className="space-y-3">
+                    {rollbackHistory.map((activity) => (
+                      <div key={activity.id} className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50">
+                        {activity.status === 'completed' ? (
+                          <CheckCircle className="h-5 w-5 text-green-500" />
+                        ) : activity.status === 'failed' ? (
+                          <XCircle className="h-5 w-5 text-red-500" />
+                        ) : activity.status === 'cancelled' ? (
+                          <XCircle className="h-5 w-5 text-yellow-500" />
+                        ) : (
+                          <Clock className="h-5 w-5 text-blue-500" />
+                        )}
+                        <div className="flex-1">
+                          <p className="font-medium">
+                            Rollback to {activity.toVersion} {activity.status}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {activity.error ? activity.error : `Rolled back from ${activity.fromVersion}`} • {formatDate(activity.startedAt)}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
