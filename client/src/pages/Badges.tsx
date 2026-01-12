@@ -26,7 +26,12 @@ export default function Badges() {
   const totalBadges = allBadges?.length || 0;
   const earnedCount = earnedBadges.length;
 
-  // Badge categories with their icons
+  const getProgress = (badgeId: string): number => {
+    if (earnedBadges.some((b: any) => b.id === badgeId)) return 100;
+    const inProgress = inProgressBadges.find((b: any) => b.id === badgeId);
+    return inProgress?.progress ?? 0;
+  };
+
   const badgeCategories = [
     {
       id: 'achievement',
@@ -40,7 +45,7 @@ export default function Badges() {
           icon: Star,
           rarity: 'common',
           earned: earnedBadges.some((b: any) => b.id === 'first-project'),
-          progress: 100
+          progress: getProgress('first-project')
         },
         {
           id: 'speed-coder',
@@ -49,7 +54,7 @@ export default function Badges() {
           icon: Zap,
           rarity: 'rare',
           earned: earnedBadges.some((b: any) => b.id === 'speed-coder'),
-          progress: 60
+          progress: getProgress('speed-coder')
         },
         {
           id: 'master-builder',
@@ -58,7 +63,7 @@ export default function Badges() {
           icon: Shield,
           rarity: 'legendary',
           earned: earnedBadges.some((b: any) => b.id === 'master-builder'),
-          progress: 35
+          progress: getProgress('master-builder')
         }
       ]
     },
@@ -74,7 +79,7 @@ export default function Badges() {
           icon: Users,
           rarity: 'common',
           earned: earnedBadges.some((b: any) => b.id === 'team-player'),
-          progress: 80
+          progress: getProgress('team-player')
         },
         {
           id: 'mentor',
@@ -83,7 +88,7 @@ export default function Badges() {
           icon: Medal,
           rarity: 'rare',
           earned: earnedBadges.some((b: any) => b.id === 'mentor'),
-          progress: 45
+          progress: getProgress('mentor')
         }
       ]
     },
@@ -99,7 +104,7 @@ export default function Badges() {
           icon: Code,
           rarity: 'rare',
           earned: earnedBadges.some((b: any) => b.id === 'polyglot'),
-          progress: 60
+          progress: getProgress('polyglot')
         },
         {
           id: 'git-master',
@@ -108,7 +113,7 @@ export default function Badges() {
           icon: GitBranch,
           rarity: 'epic',
           earned: earnedBadges.some((b: any) => b.id === 'git-master'),
-          progress: 25
+          progress: getProgress('git-master')
         },
         {
           id: 'ai-pioneer',
@@ -117,7 +122,7 @@ export default function Badges() {
           icon: Target,
           rarity: 'legendary',
           earned: earnedBadges.some((b: any) => b.id === 'ai-pioneer'),
-          progress: 15
+          progress: getProgress('ai-pioneer')
         }
       ]
     }
