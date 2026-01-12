@@ -35,7 +35,7 @@ import {
   Zap
 } from 'lucide-react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, queryClient } from '@/lib/queryClient';
 
 interface Collaborator {
   userId: number;
@@ -73,6 +73,13 @@ interface CollaborationStats {
   lastActivity: string;
 }
 
+interface ChatMessage {
+  id: string;
+  username: string;
+  content: string;
+  createdAt: string;
+}
+
 export function AdvancedCollaboration() {
   const [selectedProject, setSelectedProject] = useState<number | null>(1);
   const [voiceConnected, setVoiceConnected] = useState(false);
@@ -80,12 +87,6 @@ export function AdvancedCollaboration() {
   const [isDeafened, setIsDeafened] = useState(false);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [chatInput, setChatInput] = useState('');
-  const [chatMessages, setChatMessages] = useState<Array<{
-    id: string;
-    username: string;
-    message: string;
-    timestamp: string;
-  }>>([]);
 
   // Fetch collaborators from API
   const { data: collaboratorsData, isLoading: isLoadingCollaborators } = useQuery<{ collaborators: Collaborator[] }>({
@@ -116,31 +117,27 @@ export function AdvancedCollaboration() {
     lastActivity: new Date().toISOString()
   };
 
-  // Simulate real-time updates using actual collaborators
-  useEffect(() => {
-    const interval = setInterval(() => {
-      // Add random chat message using actual collaborator usernames
-      if (Math.random() < 0.1 && collaborators.length > 0) {
-        const messages = [
-          'Working on the login component',
-          'Fixed the CSS bug in the header',
-          'Ready for code review',
-          'Let\'s discuss the API changes',
-          'Great work on the UI updates!'
-        ];
-        const randomCollaborator = collaborators[Math.floor(Math.random() * collaborators.length)];
-        
-        setChatMessages(prev => [...prev, {
-          id: `msg-${Date.now()}`,
-          username: randomCollaborator.username,
-          message: messages[Math.floor(Math.random() * messages.length)],
-          timestamp: new Date().toISOString()
-        }].slice(-10)); // Keep only last 10 messages
-      }
-    }, 5000);
+  // Fetch chat messages from API
+  const { data: chatMessagesData } = useQuery<ChatMessage[]>({
+    queryKey: ['/api/collaboration', selectedProject, 'messages'],
+    enabled: !!selectedProject,
+    refetchInterval: 5000,
+  });
+  const chatMessages = chatMessagesData || [];
 
-    return () => clearInterval(interval);
-  }, [collaborators]);
+  // Mutation to send a new chat message
+  const sendMessageMutation = useMutation({
+    mutationFn: async (content: string) => {
+      const response = await apiRequest('POST', `/api/collaboration/${selectedProject}/messages`, {
+        content,
+        type: 'text',
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/collaboration', selectedProject, 'messages'] });
+    },
+  });
 
   const handleJoinVoice = () => {
     setVoiceConnected(!voiceConnected);
@@ -517,11 +514,11 @@ export function AdvancedCollaboration() {
                       <div className="flex items-center space-x-2">
                         <span className="text-xs font-medium">{message.username}</span>
                         <span className="text-xs text-muted-foreground">
-                          {new Date(message.timestamp).toLocaleTimeString()}
+                          {new Date(message.createdAt).toLocaleTimeString()}
                         </span>
                       </div>
                       <div className="text-sm bg-white p-2 rounded border">
-                        {message.message}
+                        {message.content}
                       </div>
                     </div>
                   ))
@@ -535,13 +532,8 @@ export function AdvancedCollaboration() {
                   value={chatInput}
                   onChange={(e) => setChatInput(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter' && chatInput.trim()) {
-                      setChatMessages(prev => [...prev, {
-                        id: `msg-${Date.now()}`,
-                        username: 'You',
-                        message: chatInput.trim(),
-                        timestamp: new Date().toISOString()
-                      }]);
+                    if (e.key === 'Enter' && chatInput.trim() && !sendMessageMutation.isPending) {
+                      sendMessageMutation.mutate(chatInput.trim());
                       setChatInput('');
                     }
                   }}
@@ -549,20 +541,16 @@ export function AdvancedCollaboration() {
                 />
                 <Button 
                   size="sm"
+                  disabled={sendMessageMutation.isPending || !chatInput.trim()}
                   onClick={() => {
                     if (chatInput.trim()) {
-                      setChatMessages(prev => [...prev, {
-                        id: `msg-${Date.now()}`,
-                        username: 'You',
-                        message: chatInput.trim(),
-                        timestamp: new Date().toISOString()
-                      }]);
+                      sendMessageMutation.mutate(chatInput.trim());
                       setChatInput('');
                     }
                   }}
                   data-testid="button-send-chat"
                 >
-                  Send
+                  {sendMessageMutation.isPending ? 'Sending...' : 'Send'}
                 </Button>
               </div>
             </CardContent>
