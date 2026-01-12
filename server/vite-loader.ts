@@ -82,10 +82,9 @@ export async function safeSetupVite(app: Application, server: Server): Promise<b
     //           This completely isolates Vite HMR from our WebSocket services
     const VITE_HMR_PORT = 24678;
     
-    // Import vite module - Vite/Rollup handle their own platform detection
-    const viteModule = await import('./vite');
-    
     if (process.env.NODE_ENV === 'development') {
+      // Import vite module ONLY in development - importing in production causes package.json errors
+      const viteModule = await import('./vite');
       // 🔥 Create separate HTTP server for Vite HMR (completely isolated from our WebSocket services)
       const { createServer: createHttpServer } = await import('http');
       const viteHmrServer = createHttpServer();
@@ -149,7 +148,7 @@ export async function safeSetupVite(app: Application, server: Server): Promise<b
       
       // 🔥 Setup Vite with SEPARATE HMR server (not main HTTP server!)
       // This completely prevents Vite HMR from interfering with /ws/agent connections
-      await viteModule.setupVite(app, viteHmrServer);
+      await viteModule.setupVite(app as any, viteHmrServer);
       
       // Restore original app.use method after Vite setup
       app.use = originalAppUse;
