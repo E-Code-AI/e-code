@@ -119,6 +119,17 @@ interface ToolExecution {
   error?: string;
 }
 
+interface FileAttachment {
+  id: string;
+  name: string;
+  type: 'text' | 'image' | 'binary';
+  mimeType: string;
+  size: number;
+  content?: string;
+  base64?: string;
+  preview?: string;
+}
+
 type WorkflowPhase = 
   | 'generating_features'
   | 'selecting_build_option'
@@ -476,6 +487,8 @@ export function ReplitAgentPanelV3({
   }, [conversationId, messages, setStoreMessages]);
   const [input, setInput] = useState('');
   const [isRecording, setIsRecording] = useState(false);
+  const [pendingAttachments, setPendingAttachments] = useState<FileAttachment[]>([]);
+  const [isUploadingFiles, setIsUploadingFiles] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   const [isWorking, setIsWorking] = useState(false);
@@ -985,18 +998,57 @@ export function ReplitAgentPanelV3({
     fileInputRef.current?.click();
   }, []);
 
-  // Handler for file selection
-  const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  // Handler for file selection - uploads to backend and adds to pending attachments
+  const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (files && files.length > 0) {
-      toast({
-        title: "File Attachment",
-        description: "File attachment coming soon. This feature is under development.",
+    if (!files || files.length === 0) return;
+    
+    setIsUploadingFiles(true);
+    
+    try {
+      const formData = new FormData();
+      Array.from(files).forEach(file => {
+        formData.append('files', file);
       });
+      
+      const response = await fetch('/api/agent/attachments', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to upload files');
+      }
+      
+      const data = await response.json();
+      
+      if (data.attachments && data.attachments.length > 0) {
+        setPendingAttachments(prev => [...prev, ...data.attachments]);
+        toast({
+          title: "Files Attached",
+          description: `${data.attachments.length} file(s) ready to send with your message.`,
+        });
+      }
+    } catch (error: any) {
+      console.error('File upload error:', error);
+      toast({
+        title: "Upload Failed",
+        description: error.message || "Could not upload files. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsUploadingFiles(false);
       // Reset the input so the same file can be selected again
       e.target.value = '';
     }
   }, [toast]);
+
+  // Handler to remove a pending attachment
+  const handleRemoveAttachment = useCallback((attachmentId: string) => {
+    setPendingAttachments(prev => prev.filter(a => a.id !== attachmentId));
+  }, []);
 
   // Handler for voice input button click
   const handleVoiceClick = useCallback(() => {
@@ -1636,6 +1688,24 @@ export function ReplitAgentPanelV3({
 
     const userContent = input.trim();
     
+    // Build message content with attachments context
+    let messageWithAttachments = userContent;
+    const currentAttachments = [...pendingAttachments];
+    
+    if (currentAttachments.length > 0) {
+      const attachmentContext = currentAttachments.map(att => {
+        if (att.type === 'text' && att.content) {
+          return `\n\n--- File: ${att.name} ---\n${att.content}\n--- End of ${att.name} ---`;
+        } else if (att.type === 'image') {
+          return `\n\n[Attached image: ${att.name}]`;
+        } else {
+          return `\n\n[Attached file: ${att.name} (${(att.size / 1024).toFixed(1)} KB)]`;
+        }
+      }).join('');
+      
+      messageWithAttachments = userContent + attachmentContext;
+    }
+    
     // Trigger schema warming on first message for faster deploy (background process)
     // Uses proper Zustand hook subscription for reactive updates
     if (projectId && messages.length <= 1 && !isSchemaWarming && !isSchemaReady) {
@@ -1645,17 +1715,21 @@ export function ReplitAgentPanelV3({
     // Use optimistic updates for faster perceived response
     const optimisticResult = addOptimisticMessage({
       role: 'user',
-      content: userContent,
+      content: currentAttachments.length > 0 
+        ? `${userContent}\n\n📎 ${currentAttachments.length} file(s) attached`
+        : userContent,
     });
     
     // Persist user message immediately (fire-and-forget)
     persistMessageToBackend({
       role: 'user',
-      content: userContent,
+      content: messageWithAttachments,
       timestamp: new Date(),
     });
     
+    // Clear input and attachments
     setInput('');
+    setPendingAttachments([]);
     setIsWorking(true);
     setIsPendingResponse(true); // Show skeleton until first chunk
     setStreamingContent('');
@@ -1678,13 +1752,23 @@ export function ReplitAgentPanelV3({
       // Use actual conversationId for RAG session alignment
       const chatConversationId = conversationId ? String(conversationId) : `conv-${Date.now()}`;
       
+      // Prepare image attachments for vision-capable models
+      const imageAttachments = currentAttachments
+        .filter(att => att.type === 'image' && att.base64)
+        .map(att => ({
+          type: 'image' as const,
+          mimeType: att.mimeType,
+          base64: att.base64,
+          name: att.name
+        }));
+      
       // Use raw fetch for SSE streaming - apiRequest consumes the body
       const response = await fetch('/api/agent/chat/stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
-          message: userContent,
+          message: messageWithAttachments,
           projectId: projectId,
           conversationId: chatConversationId,
           provider: selectedProvider,
@@ -1698,7 +1782,8 @@ export function ReplitAgentPanelV3({
             extendedThinking: capabilities.find(c => c.id === 'extended_thinking')?.enabled,
             webSearch: capabilities.find(c => c.id === 'web_search')?.enabled,
             highPower: capabilities.find(c => c.id === 'high_power')?.enabled,
-          }
+          },
+          images: imageAttachments.length > 0 ? imageAttachments : undefined
         })
       });
 
@@ -2656,9 +2741,54 @@ export function ReplitAgentPanelV3({
               onChange={handleFileChange}
               className="hidden"
               multiple
-              accept="image/*,.pdf,.txt,.md,.json,.js,.ts,.jsx,.tsx,.py,.html,.css"
+              accept="image/*,.pdf,.txt,.md,.json,.js,.ts,.jsx,.tsx,.py,.html,.css,.sql,.sh,.go,.rs,.java,.cpp,.c,.rb,.php"
               data-testid="input-file-hidden"
             />
+            
+            {/* Pending attachments display */}
+            {pendingAttachments.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-2 p-2 bg-muted/30 rounded-lg border border-border/50">
+                {pendingAttachments.map((attachment) => (
+                  <div
+                    key={attachment.id}
+                    className="flex items-center gap-1.5 px-2 py-1 bg-background rounded-md border border-border text-xs"
+                  >
+                    {attachment.type === 'image' ? (
+                      <div className="w-6 h-6 rounded overflow-hidden bg-muted flex-shrink-0">
+                        <img 
+                          src={`data:${attachment.mimeType};base64,${attachment.base64}`}
+                          alt={attachment.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <Paperclip className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                    )}
+                    <span className="truncate max-w-[120px]" title={attachment.name}>
+                      {attachment.name}
+                    </span>
+                    <span className="text-muted-foreground">
+                      ({(attachment.size / 1024).toFixed(1)}KB)
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-4 w-4 hover:bg-destructive/10 hover:text-destructive"
+                      onClick={() => handleRemoveAttachment(attachment.id)}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ))}
+                {isUploadingFiles && (
+                  <div className="flex items-center gap-1.5 px-2 py-1 text-xs text-muted-foreground">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    <span>Uploading...</span>
+                  </div>
+                )}
+              </div>
+            )}
+            
             <Textarea
               ref={textareaRef}
               value={input}

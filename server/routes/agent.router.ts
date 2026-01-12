@@ -15,6 +15,7 @@ import { eq, desc } from 'drizzle-orm';
 import type { IStorage } from '../storage';
 import { createLogger } from '../utils/logger';
 import { validateAndSetSSEHeaders } from '../utils/sse-headers';
+import { createSecureUpload, validateUpload, sanitizeFilename } from '../middleware/upload-validation';
 
 const logger = createLogger('agent-router');
 const router = Router();
@@ -1103,6 +1104,114 @@ router.get('/schema/stream/:projectId', async (req, res) => {
   } catch (error: any) {
     logger.error('[AgentRouter] Error in schema stream:', error);
     res.status(500).json({ error: error.message || 'Failed to create schema stream' });
+  }
+});
+
+// ============================================================================
+// Agent File Attachments API
+// ============================================================================
+
+const agentUpload = createSecureUpload({
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB max for agent attachments
+    files: 5 // Max 5 files at once
+  }
+});
+
+// Supported text-based file types for AI context
+const TEXT_EXTENSIONS = [
+  '.txt', '.md', '.json', '.js', '.jsx', '.ts', '.tsx', '.css', '.scss', '.html',
+  '.xml', '.yaml', '.yml', '.py', '.rb', '.java', '.c', '.cpp', '.h', '.hpp',
+  '.go', '.rs', '.swift', '.kt', '.sql', '.sh', '.bash', '.zsh', '.ps1',
+  '.csv', '.env', '.gitignore', '.dockerfile', '.toml', '.ini', '.cfg',
+  '.vue', '.svelte', '.astro', '.php', '.pl', '.lua', '.r', '.scala'
+];
+
+// Image types that can be processed (for vision-capable models)
+const IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.gif', '.webp'];
+
+// POST /api/agent/attachments - Upload files for agent context
+router.post('/attachments', agentUpload.array('files', 5), async (req, res) => {
+  try {
+    const files = req.files as Express.Multer.File[];
+    
+    if (!files || files.length === 0) {
+      return res.status(400).json({ error: 'No files provided' });
+    }
+    
+    const attachments: Array<{
+      id: string;
+      name: string;
+      type: 'text' | 'image' | 'binary';
+      mimeType: string;
+      size: number;
+      content?: string;
+      base64?: string;
+      preview?: string;
+    }> = [];
+    
+    for (const file of files) {
+      const ext = file.originalname.toLowerCase().substring(file.originalname.lastIndexOf('.'));
+      const safeName = sanitizeFilename(file.originalname);
+      const id = `attachment-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+      
+      // Validate upload
+      const validation = await validateUpload(file.buffer, file.mimetype);
+      if (!validation.valid) {
+        logger.warn(`[AgentRouter] File rejected: ${safeName} - ${validation.error}`);
+        continue; // Skip invalid files but continue with others
+      }
+      
+      if (TEXT_EXTENSIONS.includes(ext)) {
+        // Text file - include content directly
+        const content = file.buffer.toString('utf-8');
+        const preview = content.length > 500 ? content.substring(0, 500) + '...' : content;
+        
+        attachments.push({
+          id,
+          name: safeName,
+          type: 'text',
+          mimeType: file.mimetype || 'text/plain',
+          size: file.size,
+          content,
+          preview
+        });
+      } else if (IMAGE_EXTENSIONS.includes(ext)) {
+        // Image file - include as base64 for vision models
+        const base64 = file.buffer.toString('base64');
+        
+        attachments.push({
+          id,
+          name: safeName,
+          type: 'image',
+          mimeType: file.mimetype || 'image/png',
+          size: file.size,
+          base64,
+          preview: `[Image: ${safeName}]`
+        });
+      } else {
+        // Binary file - just include metadata
+        attachments.push({
+          id,
+          name: safeName,
+          type: 'binary',
+          mimeType: file.mimetype || 'application/octet-stream',
+          size: file.size,
+          preview: `[Binary file: ${safeName} (${(file.size / 1024).toFixed(1)} KB)]`
+        });
+      }
+    }
+    
+    if (attachments.length === 0) {
+      return res.status(400).json({ error: 'No valid files could be processed' });
+    }
+    
+    logger.info(`[AgentRouter] Processed ${attachments.length} file attachments`);
+    res.json({ attachments });
+    
+  } catch (error: any) {
+    logger.error('[AgentRouter] Error processing attachments:', error);
+    res.status(500).json({ error: 'Failed to process file attachments' });
   }
 });
 
