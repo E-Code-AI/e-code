@@ -445,7 +445,7 @@ export function MobilePreviewPanel({
       projectId
     ) {
       hasAttemptedAutoStart.current = true;
-      startPreviewMutation.mutate();
+      startPreviewMutation.mutate(undefined);
     }
   }, [previewStatus?.status, projectId]);
 
@@ -511,7 +511,7 @@ export function MobilePreviewPanel({
   };
 
   const handleRun = () => {
-    startPreviewMutation.mutate();
+    startPreviewMutation.mutate(undefined);
   };
 
   const handleShareDevLink = () => {
