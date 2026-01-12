@@ -56,6 +56,7 @@ import { GitPanel } from '@/components/ide/GitPanel';
 import { ReplitPackagesPanel } from '@/components/editor/ReplitPackagesPanel';
 import { ReplitSettingsPanel } from '@/components/editor/ReplitSettingsPanel';
 import { ReplitSecretsPanel } from '@/components/editor/ReplitSecretsPanel';
+import { ReplitDebuggerPanel } from '@/components/editor/ReplitDebuggerPanel';
 import { useConnectionStatus } from '@/hooks/use-connection-status';
 import { useProblemsCount } from '@/hooks/use-problems-count';
 
@@ -76,7 +77,7 @@ const TerminalFallback = () => (
   </div>
 );
 
-export type TabletPanel = 'editor' | 'terminal' | 'preview' | 'agent' | 'deploy' | 'git' | 'packages' | 'secrets' | 'settings';
+export type TabletPanel = 'editor' | 'terminal' | 'preview' | 'agent' | 'deploy' | 'git' | 'packages' | 'secrets' | 'settings' | 'debug';
 
 interface TabletIDEViewProps {
   projectId: string; // UUID string from route params
@@ -278,11 +279,14 @@ export function TabletIDEView({ projectId, className, bootstrapToken, onWorkspac
   
   const handleOpenDebugger = useCallback(() => {
     setDrawerOpen(false);
-    toast({
-      title: 'Debugger',
-      description: 'Debug panel coming soon',
-      duration: 2000,
-    });
+    setTimeout(() => {
+      setRightPanel('debug');
+      toast({
+        title: 'Debugger',
+        description: 'Debug your application',
+        duration: 2000,
+      });
+    }, 100);
   }, [toast]);
   
   const handleOpenSettings = useCallback(() => {
@@ -609,6 +613,8 @@ export function TabletIDEView({ projectId, className, bootstrapToken, onWorkspac
                       <ReplitSecretsPanel />
                     ) : rightPanel === 'settings' ? (
                       <ReplitSettingsPanel />
+                    ) : rightPanel === 'debug' ? (
+                      <ReplitDebuggerPanel projectId={projectId} />
                     ) : null}
                   </div>
                 </div>
@@ -650,6 +656,8 @@ export function TabletIDEView({ projectId, className, bootstrapToken, onWorkspac
                   <ReplitSecretsPanel />
                 ) : rightPanel === 'settings' ? (
                   <ReplitSettingsPanel />
+                ) : rightPanel === 'debug' ? (
+                  <ReplitDebuggerPanel projectId={projectId} />
                 ) : null}
               </div>
             </div>

@@ -30,6 +30,7 @@ import { ReplitTestingPanel } from './ReplitTestingPanel';
 import { ReplitHistoryPanel } from './ReplitHistoryPanel';
 import { ShellPanel } from './ShellPanel';
 import { AppStoragePanel } from './AppStoragePanel';
+import { ResponsiveWebPreview } from './ResponsiveWebPreview';
 
 const ReplitTerminalPanel = instrumentedLazy(() => 
   import('./ReplitTerminalPanel').then(module => ({ default: module.ReplitTerminalPanel })), 'ReplitTerminalPanel'
@@ -206,9 +207,11 @@ export function ReplitEditorLayout({
         );
       case 'preview':
         return (
-          <div className="p-4 text-center text-muted-foreground">
-            <p className="text-sm">Webview preview coming soon...</p>
-          </div>
+          <ResponsiveWebPreview 
+            projectId={projectId || '1'} 
+            isRunning={true}
+            className="h-full"
+          />
         );
       case 'secrets':
         return <ReplitSecretsPanel projectId={projectId} />;
