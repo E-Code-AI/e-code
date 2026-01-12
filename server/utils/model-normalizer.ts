@@ -49,17 +49,18 @@ const MODEL_NORMALIZATION_MAP: Record<string, string> = {
   'claude-sonnet-4-20250514': 'claude-sonnet-4-5-20250929',  // ❌ DEPRECATED → upgrade to Sonnet 4.5
   'claude-haiku-4-5-20251015': 'claude-haiku-4-5-20251015',  // Identity mapping (current)
   
-  // Gemini aliases (COMPLETE COVERAGE - Jan 2026 Consolidated to Gemini 3)
-  'gemini-pro': 'gemini-3-pro',
-  'gemini-flash': 'gemini-3-flash',
-  'gemini-1.5-pro': 'gemini-3-pro',
-  'gemini-1.5-flash': 'gemini-3-flash',
-  'gemini-2.0-flash': 'gemini-3-flash',  // ❌ DEPRECATED → upgrade to Gemini 3
-  'gemini-2.0-flash-exp': 'gemini-3-flash',  // ❌ DEPRECATED → upgrade to Gemini 3
-  'gemini-2.5-pro': 'gemini-3-pro',  // ❌ DEPRECATED Jan 2026 → upgrade to Gemini 3
-  'gemini-2.5-flash': 'gemini-3-flash',  // ❌ DEPRECATED Jan 2026 → upgrade to Gemini 3
-  'gemini-3-flash': 'gemini-3-flash',  // Identity mapping (current)
-  'gemini-3-pro': 'gemini-3-pro',  // Identity mapping (current)
+  // Gemini aliases (COMPLETE COVERAGE - Jan 2026 Production-stable defaults)
+  // ✅ PRODUCTION FIX: Default to stable gemini-2.5-flash (gemini-3-flash is preview, may 404)
+  'gemini-pro': 'gemini-2.5-pro',
+  'gemini-flash': 'gemini-2.5-flash',
+  'gemini-1.5-pro': 'gemini-2.5-pro',
+  'gemini-1.5-flash': 'gemini-2.5-flash',
+  'gemini-2.0-flash': 'gemini-2.5-flash',  // ✅ STABLE upgrade
+  'gemini-2.0-flash-exp': 'gemini-2.5-flash',  // ✅ STABLE upgrade
+  'gemini-2.5-pro': 'gemini-2.5-pro',  // Identity mapping (stable)
+  'gemini-2.5-flash': 'gemini-2.5-flash',  // Identity mapping (stable)
+  'gemini-3-flash': 'gemini-2.5-flash',  // ⚠️ PREVIEW model → fallback to stable
+  'gemini-3-pro': 'gemini-2.5-pro',  // ⚠️ PREVIEW model → fallback to stable
   
   // xAI Grok aliases (COMPLETE COVERAGE)
   'grok': 'grok-4',
