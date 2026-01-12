@@ -128,7 +128,7 @@ export function UsageAlerts() {
   });
 
   // Fetch current usage
-  const { data: currentUsage } = useQuery({
+  const { data: currentUsage, isLoading: isLoadingUsage, isError: isUsageError } = useQuery({
     queryKey: ['/api/usage/current'],
   });
 
@@ -322,53 +322,74 @@ export function UsageAlerts() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Cpu className="w-4 h-4" />
-                Compute
+          {isLoadingUsage ? (
+            <div className="animate-pulse space-y-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {[1,2,3,4].map(i => (
+                  <div key={i} className="space-y-2">
+                    <div className="h-4 bg-muted rounded w-20" />
+                    <div className="h-8 bg-muted rounded w-16" />
+                    <div className="h-2 bg-muted rounded" />
+                  </div>
+                ))}
               </div>
-              <div className="text-2xl font-bold">$12.45</div>
-              <Progress value={65} className="h-2" />
             </div>
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Zap className="w-4 h-4" />
-                AI Usage
+          ) : isUsageError ? (
+            <div className="text-center py-4 text-muted-foreground">
+              <Info className="h-8 w-8 mx-auto mb-2" />
+              <p>Unable to load usage data. Please try again later.</p>
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Cpu className="w-4 h-4" />
+                    Compute
+                  </div>
+                  <div className="text-2xl font-bold">${((currentUsage as any)?.compute ?? 0).toFixed(2)}</div>
+                  <Progress value={((currentUsage as any)?.computePercent ?? 0)} className="h-2" />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Zap className="w-4 h-4" />
+                    AI Usage
+                  </div>
+                  <div className="text-2xl font-bold">${((currentUsage as any)?.ai ?? 0).toFixed(2)}</div>
+                  <Progress value={((currentUsage as any)?.aiPercent ?? 0)} className="h-2" />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Database className="w-4 h-4" />
+                    Database
+                  </div>
+                  <div className="text-2xl font-bold">${((currentUsage as any)?.database ?? 0).toFixed(2)}</div>
+                  <Progress value={((currentUsage as any)?.databasePercent ?? 0)} className="h-2" />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Wifi className="w-4 h-4" />
+                    Bandwidth
+                  </div>
+                  <div className="text-2xl font-bold">${((currentUsage as any)?.bandwidth ?? 0).toFixed(2)}</div>
+                  <Progress value={((currentUsage as any)?.bandwidthPercent ?? 0)} className="h-2" />
+                </div>
               </div>
-              <div className="text-2xl font-bold">$28.90</div>
-              <Progress value={85} className="h-2" />
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Database className="w-4 h-4" />
-                Database
-              </div>
-              <div className="text-2xl font-bold">$5.20</div>
-              <Progress value={25} className="h-2" />
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Wifi className="w-4 h-4" />
-                Bandwidth
-              </div>
-              <div className="text-2xl font-bold">$3.15</div>
-              <Progress value={15} className="h-2" />
-            </div>
-          </div>
 
-          <Separator className="my-6" />
+              <Separator className="my-6" />
 
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-sm text-muted-foreground">Total Spent</div>
-              <div className="text-3xl font-bold">$49.70</div>
-            </div>
-            <div className="text-right">
-              <div className="text-sm text-muted-foreground">Monthly Credits Remaining</div>
-              <div className="text-xl font-semibold text-green-600">$25.30</div>
-            </div>
-          </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-sm text-muted-foreground">Total Spent</div>
+                  <div className="text-3xl font-bold">${((currentUsage as any)?.totalSpent ?? 0).toFixed(2)}</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-sm text-muted-foreground">Monthly Credits Remaining</div>
+                  <div className="text-xl font-semibold text-green-600">${((currentUsage as any)?.creditsRemaining ?? 0).toFixed(2)}</div>
+                </div>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
 

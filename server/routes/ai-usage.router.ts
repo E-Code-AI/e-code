@@ -90,6 +90,17 @@ router.get('/current', async (req, res) => {
     const remainingCredits = Math.max(0, totalCredits - usedCredits);
     const percentUsed = Math.min(100, Math.floor((usedCredits / totalCredits) * 100));
 
+    // Calculate monetized costs (enterprise rate: $0.001 per token)
+    const aiCost = (totalTokens * 0.001);
+    const computeCost = (highPowerUsage * 0.05); // $0.05 per high-power request
+    const databaseCost = 0; // Tracked separately when database integration added
+    const bandwidthCost = 0; // Tracked separately when bandwidth monitoring added
+    const totalSpent = aiCost + computeCost + databaseCost + bandwidthCost;
+    
+    // Monthly budget (based on tier)
+    const monthlyBudget = tier === 'enterprise' ? 500 : tier === 'pro' ? 75 : 10;
+    const creditsRemaining = Math.max(0, monthlyBudget - totalSpent);
+
     res.json({
       credits: {
         remaining: remainingCredits,
@@ -109,6 +120,17 @@ router.get('/current', async (req, res) => {
         webSearches,
       },
       tier,
+      // Monetized fields for UsageAlerts component
+      compute: computeCost,
+      computePercent: Math.min(100, (computeCost / (monthlyBudget * 0.3)) * 100),
+      ai: aiCost,
+      aiPercent: Math.min(100, (aiCost / (monthlyBudget * 0.5)) * 100),
+      database: databaseCost,
+      databasePercent: 0,
+      bandwidth: bandwidthCost,
+      bandwidthPercent: 0,
+      totalSpent,
+      creditsRemaining,
     });
   } catch (error) {
     logger.error('Failed to fetch current usage', { error });
