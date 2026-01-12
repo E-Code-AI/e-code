@@ -100,6 +100,7 @@ import teamsRouter from './teams.router';
 import polyglotRouter from '../polyglot-routes';
 import twoFactorRouter from './2fa.router';
 import resourcesRouter from './resources.router';
+import seoRouter from './seo.router';
 
 export class MainRouter {
   private authRouter: AuthRouter;
@@ -266,6 +267,9 @@ export class MainRouter {
 
     // Admin Billing routes (Stripe integration, pricing plans, invoices)
     app.use('/api/admin/billing', tierRateLimiters.api, adminBillingRouter);
+
+    // SEO Analytics routes (admin only - SEO management dashboard)
+    app.use('/api/admin/seo', tierRateLimiters.api, seoRouter);
 
     // Generation Metrics routes (App generation performance monitoring)
     app.use('/api/metrics/generation', tierRateLimiters.api, generationMetricsRouter);
