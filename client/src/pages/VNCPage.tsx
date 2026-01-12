@@ -84,6 +84,7 @@ interface VNCSessionState {
   latency: number;
   bandwidth: number;
   fps: number;
+  isSimulated: boolean;
 }
 
 interface KeyboardShortcut {
@@ -171,6 +172,22 @@ export default function VNCPage() {
     latency: 0,
     bandwidth: 0,
     fps: 0,
+    isSimulated: true,
+  });
+
+  const wsRef = useRef<WebSocket | null>(null);
+  const metricsRef = useRef<{
+    lastPingTime: number;
+    frameCount: number;
+    lastFpsUpdate: number;
+    bytesReceived: number;
+    lastBandwidthUpdate: number;
+  }>({
+    lastPingTime: 0,
+    frameCount: 0,
+    lastFpsUpdate: performance.now(),
+    bytesReceived: 0,
+    lastBandwidthUpdate: performance.now(),
   });
 
   const [showPassword, setShowPassword] = useState(false);
@@ -191,14 +208,82 @@ export default function VNCPage() {
 
     setSessionState(prev => ({ ...prev, isConnecting: true }));
 
-    setTimeout(() => {
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${wsProtocol}//${config.host}:${config.port}`;
+    
+    let connectionTimeout: ReturnType<typeof setTimeout>;
+    let metricsInterval: ReturnType<typeof setInterval>;
+    
+    const startSimulatedConnection = () => {
       setSessionState(prev => ({
         ...prev,
         isConnecting: false,
         isConnected: true,
-        latency: Math.floor(Math.random() * 50) + 10,
-        bandwidth: Math.floor(Math.random() * 5000) + 1000,
-        fps: Math.floor(Math.random() * 30) + 30,
+        isSimulated: true,
+        latency: 0,
+        bandwidth: 0,
+        fps: 60,
+      }));
+      
+      const connectionString = `${config.host}:${config.port}`;
+      if (!connectionHistory.includes(connectionString)) {
+        setConnectionHistory(prev => [connectionString, ...prev.slice(0, 9)]);
+      }
+
+      toast({
+        title: 'Connected (Simulated)',
+        description: `Simulated connection to ${config.host}:${config.port}`,
+      });
+    };
+
+    const startRealConnection = (ws: WebSocket) => {
+      metricsRef.current = {
+        lastPingTime: 0,
+        frameCount: 0,
+        lastFpsUpdate: performance.now(),
+        bytesReceived: 0,
+        lastBandwidthUpdate: performance.now(),
+      };
+
+      const measureLatency = () => {
+        if (ws.readyState === WebSocket.OPEN) {
+          metricsRef.current.lastPingTime = performance.now();
+          ws.send(JSON.stringify({ type: 'ping' }));
+        }
+      };
+
+      measureLatency();
+
+      metricsInterval = setInterval(() => {
+        const now = performance.now();
+        
+        const fpsTimeDelta = (now - metricsRef.current.lastFpsUpdate) / 1000;
+        if (fpsTimeDelta >= 1) {
+          const fps = Math.round(metricsRef.current.frameCount / fpsTimeDelta);
+          metricsRef.current.frameCount = 0;
+          metricsRef.current.lastFpsUpdate = now;
+          setSessionState(prev => ({ ...prev, fps }));
+        }
+
+        const bandwidthTimeDelta = (now - metricsRef.current.lastBandwidthUpdate) / 1000;
+        if (bandwidthTimeDelta >= 1) {
+          const bandwidth = Math.round((metricsRef.current.bytesReceived * 8) / bandwidthTimeDelta / 1000);
+          metricsRef.current.bytesReceived = 0;
+          metricsRef.current.lastBandwidthUpdate = now;
+          setSessionState(prev => ({ ...prev, bandwidth }));
+        }
+
+        measureLatency();
+      }, 1000);
+
+      setSessionState(prev => ({
+        ...prev,
+        isConnecting: false,
+        isConnected: true,
+        isSimulated: false,
+        latency: 0,
+        bandwidth: 0,
+        fps: 0,
       }));
       
       const connectionString = `${config.host}:${config.port}`;
@@ -210,10 +295,69 @@ export default function VNCPage() {
         title: 'Connected',
         description: `Successfully connected to ${config.host}:${config.port}`,
       });
-    }, 2000);
+    };
+
+    try {
+      const ws = new WebSocket(wsUrl);
+      wsRef.current = ws;
+
+      connectionTimeout = setTimeout(() => {
+        if (ws.readyState !== WebSocket.OPEN) {
+          ws.close();
+          startSimulatedConnection();
+        }
+      }, 5000);
+
+      ws.onopen = () => {
+        clearTimeout(connectionTimeout);
+        startRealConnection(ws);
+      };
+
+      ws.onmessage = (event) => {
+        const now = performance.now();
+        
+        if (typeof event.data === 'string') {
+          try {
+            const message = JSON.parse(event.data);
+            if (message.type === 'pong' && metricsRef.current.lastPingTime > 0) {
+              const latency = Math.round(now - metricsRef.current.lastPingTime);
+              setSessionState(prev => ({ ...prev, latency }));
+            } else if (message.type === 'frame') {
+              metricsRef.current.frameCount++;
+            }
+          } catch {
+            metricsRef.current.frameCount++;
+          }
+          metricsRef.current.bytesReceived += event.data.length;
+        } else if (event.data instanceof Blob) {
+          metricsRef.current.frameCount++;
+          metricsRef.current.bytesReceived += event.data.size;
+        } else if (event.data instanceof ArrayBuffer) {
+          metricsRef.current.frameCount++;
+          metricsRef.current.bytesReceived += event.data.byteLength;
+        }
+      };
+
+      ws.onerror = () => {
+        clearTimeout(connectionTimeout);
+        if (metricsInterval) clearInterval(metricsInterval);
+        startSimulatedConnection();
+      };
+
+      ws.onclose = () => {
+        if (metricsInterval) clearInterval(metricsInterval);
+      };
+    } catch {
+      startSimulatedConnection();
+    }
   }, [config.host, config.port, connectionHistory, toast]);
 
   const handleDisconnect = useCallback(() => {
+    if (wsRef.current) {
+      wsRef.current.close();
+      wsRef.current = null;
+    }
+    
     setSessionState(prev => ({
       ...prev,
       isConnected: false,
@@ -221,6 +365,7 @@ export default function VNCPage() {
       latency: 0,
       bandwidth: 0,
       fps: 0,
+      isSimulated: true,
     }));
     
     toast({
@@ -403,6 +548,19 @@ export default function VNCPage() {
                       Disconnected
                     </Badge>
                   )}
+                  {sessionState.isConnected && sessionState.isSimulated && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Badge variant="outline" className="gap-1 border-amber-500/50 text-amber-500" data-testid="badge-simulated">
+                            <AlertCircle className="h-3 w-3" />
+                            Simulated
+                          </Badge>
+                        </TooltipTrigger>
+                        <TooltipContent>No real WebSocket connection - using simulated metrics</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
                   {sessionState.isRecording && (
                     <Badge variant="destructive" className="gap-1 animate-pulse" data-testid="badge-recording">
                       <Circle className="h-2 w-2 fill-current" />
@@ -417,10 +575,12 @@ export default function VNCPage() {
                         <TooltipTrigger asChild>
                           <span className="flex items-center gap-1" data-testid="stat-latency">
                             <Gauge className="h-3 w-3" />
-                            {sessionState.latency}ms
+                            {sessionState.isSimulated ? '—' : `${sessionState.latency}ms`}
                           </span>
                         </TooltipTrigger>
-                        <TooltipContent>Network Latency</TooltipContent>
+                        <TooltipContent>
+                          {sessionState.isSimulated ? 'Simulated connection - no real latency data' : 'Network Latency'}
+                        </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
                     <TooltipProvider>
@@ -428,10 +588,12 @@ export default function VNCPage() {
                         <TooltipTrigger asChild>
                           <span className="flex items-center gap-1" data-testid="stat-bandwidth">
                             <Zap className="h-3 w-3" />
-                            {(sessionState.bandwidth / 1000).toFixed(1)} Mbps
+                            {sessionState.isSimulated ? '—' : `${(sessionState.bandwidth / 1000).toFixed(1)} Mbps`}
                           </span>
                         </TooltipTrigger>
-                        <TooltipContent>Bandwidth Usage</TooltipContent>
+                        <TooltipContent>
+                          {sessionState.isSimulated ? 'Simulated connection - no real bandwidth data' : 'Bandwidth Usage'}
+                        </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
                     <TooltipProvider>
@@ -439,10 +601,12 @@ export default function VNCPage() {
                         <TooltipTrigger asChild>
                           <span className="flex items-center gap-1" data-testid="stat-fps">
                             <MonitorPlay className="h-3 w-3" />
-                            {sessionState.fps} FPS
+                            {sessionState.fps} FPS{sessionState.isSimulated ? ' (static)' : ''}
                           </span>
                         </TooltipTrigger>
-                        <TooltipContent>Frame Rate</TooltipContent>
+                        <TooltipContent>
+                          {sessionState.isSimulated ? 'Simulated connection - static frame rate' : 'Frame Rate'}
+                        </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
                   </div>

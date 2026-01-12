@@ -91,44 +91,21 @@ const getTrendIcon = (current: number, previous: number) => {
 export function ResourcesPanel({ projectId, className }: ResourcesPanelProps) {
   const [previousMetrics, setPreviousMetrics] = useState<ResourceMetrics | null>(null);
 
-  const { data: metrics, isLoading, refetch } = useQuery<ResourceMetrics>({
+  const { data: metrics, isLoading, isError, refetch } = useQuery<ResourceMetrics>({
     queryKey: ['/api/resources', projectId],
     queryFn: async () => {
       const response = await fetch(`/api/resources?projectId=${projectId}`, {
         credentials: 'include'
       });
       if (!response.ok) {
-        return {
-          cpu: { usage: Math.random() * 30 + 10, cores: 2 },
-          memory: { 
-            used: Math.random() * 300000000 + 200000000, 
-            total: 1073741824, 
-            percentage: Math.random() * 30 + 20 
-          },
-          storage: { 
-            used: Math.random() * 500000000 + 100000000, 
-            total: 10737418240, 
-            percentage: Math.random() * 10 + 5 
-          },
-          network: { 
-            bytesIn: Math.random() * 10000000, 
-            bytesOut: Math.random() * 5000000, 
-            latency: Math.random() * 50 + 10 
-          },
-          processes: [
-            { name: 'node', pid: 1234, cpu: 12.5, memory: 150000000, status: 'running' },
-            { name: 'vite', pid: 1235, cpu: 5.2, memory: 80000000, status: 'running' },
-            { name: 'esbuild', pid: 1236, cpu: 0.5, memory: 20000000, status: 'sleeping' },
-          ],
-          uptime: Math.floor(Math.random() * 86400) + 3600,
-          timestamp: new Date().toISOString()
-        } as ResourceMetrics;
+        throw new Error(`Failed to fetch resources: ${response.statusText}`);
       }
       return response.json();
     },
     enabled: !!projectId,
-    refetchInterval: 30000, // RATE LIMIT FIX: Increased from 5s to 30s
+    refetchInterval: 30000,
     refetchIntervalInBackground: false,
+    retry: 2,
   });
 
   useEffect(() => {
@@ -338,6 +315,18 @@ export function ResourcesPanel({ projectId, className }: ResourcesPanelProps) {
                 </div>
               </>
             )}
+          </div>
+        ) : isError ? (
+          <div className="flex flex-col items-center justify-center h-48 p-4 text-center">
+            <AlertTriangle className="h-12 w-12 text-destructive mb-4 opacity-50" />
+            <p className="text-sm font-medium mb-1">Failed to load resources</p>
+            <p className="text-xs text-muted-foreground mb-3">
+              Unable to connect to the resources API
+            </p>
+            <Button variant="outline" size="sm" onClick={() => refetch()}>
+              <RefreshCw className="h-3.5 w-3.5 mr-2" />
+              Retry
+            </Button>
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center h-48 p-4 text-center">
