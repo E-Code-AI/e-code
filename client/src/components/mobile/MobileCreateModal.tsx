@@ -67,7 +67,7 @@ const templates: Template[] = [
 
 const categories = ['All', 'Popular', 'Web', 'Backend', 'AI', 'Database', 'Games', 'Templates'];
 
-// Recent templates mock data
+// Suggested templates (first 4 from catalog)
 const recentTemplates = templates.slice(0, 4);
 
 export function MobileCreateModal({
