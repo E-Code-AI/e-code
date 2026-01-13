@@ -28,4 +28,4 @@ mobile/ios/*.mobileprovision
 
 # SECURITY: Desktop Certificates
 desktop/*.p12
-desktop/*.pfx
+desktop/*.pfxdesktop/dist/

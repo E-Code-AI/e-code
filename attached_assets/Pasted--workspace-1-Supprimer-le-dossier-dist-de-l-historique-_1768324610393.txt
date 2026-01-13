@@ -1,0 +1,38 @@
+~/workspace$ # 1. Supprimer le dossier dist de l'historique Git
+git filter-branch --force --index-filter 'git rm -rf --cached --ignore-unmatch desktop/dist' --prune-empty HEAD
+
+# 2. Vérifier que desktop/dist est bien dans .gitignore
+echo "desktop/dist/" >> .gitignore
+
+# 3. Forcer le push
+git push origin main --force
+WARNING: git-filter-branch has a glut of gotchas generating mangled history
+     rewrites.  Hit Ctrl-C before proceeding to abort, then use an
+     alternative filtering tool such as 'git filter-repo'
+     (https://github.com/newren/git-filter-repo/) instead.  See the
+     filter-branch manual page for more details; to squelch this warning,
+     set FILTER_BRANCH_SQUELCH_WARNING=1.
+Proceeding with filter-branch...
+
+Rewrite 8cf294bcbb0074a3e37e88d000ead205fd8fa2fa (4120/4127) (411 seconds passed, remaining 0 predicted)      
+Ref 'refs/heads/main' was rewritten
+Enumerating objects: 35399, done.
+Counting objects: 100% (35399/35399), done.
+Delta compression using up to 8 threads
+Compressing objects: 100% (16870/16870), done.
+Writing objects: 100% (35398/35398), 186.59 MiB | 5.17 MiB/s, done.
+Total 35398 (delta 24765), reused 23741 (delta 17767), pack-reused 0 (from 0)
+remote: Resolving deltas: 100% (24765/24765), done.
+remote: warning: See https://gh.io/lfs for more information.
+remote: warning: File .checkpoints/29/database.sql is 59.24 MB; this is larger than GitHub's recommended maximum file size of 50.00 MB
+remote: warning: File backups/backup_2025-12-26_03-23-37.sql is 69.19 MB; this is larger than GitHub's recommended maximum file size of 50.00 MB
+remote: warning: File .checkpoints/25/database.sql is 58.18 MB; this is larger than GitHub's recommended maximum file size of 50.00 MB
+remote: warning: File backups/backup_2025-12-25_20-58-32.sql is 73.03 MB; this is larger than GitHub's recommended maximum file size of 50.00 MB
+remote: warning: GH001: Large files detected. You may want to try Git Large File Storage - https://git-lfs.github.com.
+remote: 
+remote: GitHub found 324 vulnerabilities on E-Code-AI/e-code's default branch (74 high, 176 moderate, 74 low). To find out more, visit:
+remote:      https://github.com/E-Code-AI/e-code/security/dependabot
+remote: 
+To https://github.com/E-Code-AI/e-code.git
+ + 8cf294bc...aeb0df6b main -> main (forced update)
+~/workspace$ 
