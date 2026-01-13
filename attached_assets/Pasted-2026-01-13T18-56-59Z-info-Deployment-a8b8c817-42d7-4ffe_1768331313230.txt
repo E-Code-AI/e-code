@@ -1,0 +1,113 @@
+2026-01-13T18:56:59Z info: Deployment: a8b8c817-42d7-4ffe-92f6-a5bbc521f026
+2026-01-13T18:56:59Z info: Running Security Scan
+2026-01-13T19:03:52Z info: Security Scan Complete
+2026-01-13T19:03:52Z info: Builder connected
+2026-01-13T19:03:52Z info: Installing packages
+--> npm install
+
+npm warn config optional Use `--omit=optional` to exclude optional dependencies, or
+npm warn config `--include=optional` to include them.
+npm warn config
+npm warn config       Default value does install optional deps unless otherwise omitted.
+
+npm warn config production Use `--omit=dev` instead.
+
+
+added 4 packages, removed 2 packages, and audited 2423 packages in 19s
+
+
+13 vulnerabilities (4 moderate, 9 high)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+
+2026-01-13T19:04:12Z info: Starting Build
+npm warn config optional Use `--omit=optional` to exclude optional dependencies, or
+npm warn config `--include=optional` to include them.
+npm warn config
+npm warn config       Default value does install optional deps unless otherwise omitted.
+
+npm warn config production Use `--omit=dev` instead.
+
+npm warn deprecated sudo-prompt@9.1.1: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
+
+npm warn deprecated xterm-addon-fit@0.8.0: This package is now deprecated. Move to @xterm/addon-fit instead.
+
+npm warn deprecated xterm-addon-web-links@0.9.0: This package is now deprecated. Move to @xterm/addon-web-links instead.
+
+npm warn deprecated lodash.get@4.4.2: This package is deprecated. Use the optional chaining (?.) operator instead.
+
+npm warn deprecated lodash.isequal@4.5.0: This package is deprecated. Use require('node:util').isDeepStrictEqual instead.
+
+npm warn deprecated node-domexception@1.0.0: Use your platform's native DOMException instead
+
+npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+
+npm warn deprecated @oclif/screen@3.0.8: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
+
+npm warn deprecated @esbuild-kit/esm-loader@2.6.5: Merged into tsx: https://tsx.is
+
+npm warn deprecated @esbuild-kit/core-utils@3.3.2: Merged into tsx: https://tsx.is
+
+npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+
+npm warn deprecated glob@7.1.6: Glob versions prior to v9 are no longer supported
+
+npm warn deprecated xterm@5.3.0: This package is now deprecated. Move to @xterm/xterm instead.
+
+npm warn deprecated superagent@8.1.2: Please upgrade to superagent v10.2.2+, see release notes at https://github.com/forwardemail/superagent/releases/tag/v10.2.2 - maintenance is supported by Forward Email @ https://forwardemail.net
+
+npm warn deprecated @xmldom/xmldom@0.7.13: this version is no longer supported, please update to at least 0.8.*
+
+
+added 2422 packages, and audited 2423 packages in 1m
+
+
+13 vulnerabilities (4 moderate, 9 high)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+
+External modules: node-pty, dockerode, playwright, playwright-core, @playwright/test, sharp, bcrypt, cpu-features, ssh2, pg-cloudflare, lightningcss, @babel/preset-typescript, @babel/core, jsdom, isomorphic-dompurify, canvas
+
+✅ Server bundle built successfully
+
+   Output size: 13.87 MB
+
+✅ Build complete!
+
+npm warn config production Use `--omit=dev` instead.
+
+
+removed 2 packages, and audited 2423 packages in 5s
+
+
+13 vulnerabilities (4 moderate, 9 high)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+
+2026-01-13T19:05:35Z info: Pushing pid1 binary layer...
+2026-01-13T19:05:39Z info: Pushing hosting layer...
+2026-01-13T19:05:39Z info: Pushing Repl layer...
+2026-01-13T19:05:39Z info: Nix layers for this Repl are uncached.
+2026-01-13T19:05:39Z info: Pushing nix-0 layer...
+2026-01-13T19:05:39Z info: Retrieved cached nix layer
+2026-01-13T19:05:39Z info: Created hosting layer
+2026-01-13T19:05:40Z info: Created pid1 binary layer
+Deployment timed out. Check the Logs tab for more details. - 2026-01-13T19:05:59.768Z
