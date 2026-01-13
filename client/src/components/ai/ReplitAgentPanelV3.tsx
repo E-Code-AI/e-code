@@ -374,6 +374,9 @@ export function ReplitAgentPanelV3({
   // Convert projectId to number early for consistent usage throughout component
   const projectIdNum = typeof projectId === 'string' ? parseInt(projectId) : projectId;
   
+  // Toast notifications - must be declared early before any callbacks that use it
+  const { toast } = useToast();
+  
   // AI Model preference hook
   const { modelId, provider, supportsExtendedThinking: modelSupportsExtendedThinking, model, setPreferredModel } = useAgentModelPreference();
   
@@ -649,7 +652,6 @@ export function ReplitAgentPanelV3({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const isUserNearBottomRef = useRef(true);
   const lastScrollTimeRef = useRef(0);
-  const { toast } = useToast();
 
   // Bootstrap conversation on mount
   // ✅ FIX (Dec 10, 2025): Always call POST /api/agent/conversation to get proper integer ID
@@ -746,7 +748,7 @@ export function ReplitAgentPanelV3({
         id: `system-bootstrap-timeout-${Date.now()}`,
         role: 'assistant',
         content: "I'm ready to help! The connection took a moment, but you can start chatting now. Type your request below.",
-        timestamp: new Date().toISOString(),
+        timestamp: new Date(),
       };
       
       // Only add if we don't already have messages
