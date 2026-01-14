@@ -60,22 +60,24 @@ const LANGUAGE_TO_PISTON: Record<string, { language: string; version?: string; e
   'php': { language: 'php', entryFile: 'main.php' },
   'perl': { language: 'perl', entryFile: 'main.pl' },
   'lua': { language: 'lua', entryFile: 'main.lua' },
-  'r': { language: 'r', entryFile: 'main.r' },
+  'r': { language: 'rscript', entryFile: 'main.r' },
   'bash': { language: 'bash', entryFile: 'main.sh' },
   'haskell': { language: 'haskell', entryFile: 'main.hs' },
   'elixir': { language: 'elixir', entryFile: 'main.exs' },
   'clojure': { language: 'clojure', entryFile: 'main.clj' },
-  'fsharp': { language: 'fsharp', entryFile: 'main.fs' },
-  'csharp': { language: 'csharp', entryFile: 'main.cs' },
+  'fsharp': { language: 'fsharp.net', entryFile: 'main.fs' },
+  'csharp': { language: 'csharp.net', entryFile: 'main.cs' },
   'dart': { language: 'dart', entryFile: 'main.dart' },
   'julia': { language: 'julia', entryFile: 'main.jl' },
   'ocaml': { language: 'ocaml', entryFile: 'main.ml' },
   'fortran': { language: 'fortran', entryFile: 'main.f90' },
   'zig': { language: 'zig', entryFile: 'main.zig' },
-  'deno': { language: 'deno', entryFile: 'main.ts' },
-  'nix': { language: 'nix', entryFile: 'main.nix' },
   'erlang': { language: 'erlang', entryFile: 'main.erl' },
 };
+
+// Languages that require local execution (not available in Piston)
+// These will fall back to local process execution
+export const LOCAL_ONLY_LANGUAGES = new Set(['deno', 'nix']);
 
 let cachedRuntimes: PistonRuntime[] | null = null;
 let runtimesCacheTime = 0;

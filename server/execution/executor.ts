@@ -3,7 +3,7 @@ import { writeFileSync, mkdirSync, existsSync, rmSync } from 'fs';
 import path from 'path';
 import os from 'os';
 import { dockerExecutor } from './docker-executor';
-import { remoteExecutor } from './remote-executor';
+import { remoteExecutor, LOCAL_ONLY_LANGUAGES } from './remote-executor';
 
 export interface ExecutionOptions {
   timeout?: number;
@@ -213,9 +213,12 @@ export class CodeExecutor {
     }
 
     // Try remote execution (Piston API) - ideal for production without local runtimes
-    if (USE_REMOTE_EXECUTION) {
+    // Skip remote for languages that require local execution (deno, nix)
+    const normalizedLang = normalizeLanguage(language);
+    const requiresLocalExecution = LOCAL_ONLY_LANGUAGES.has(normalizedLang);
+    
+    if (USE_REMOTE_EXECUTION && !requiresLocalExecution) {
       try {
-        const normalizedLang = normalizeLanguage(language);
         const remoteResult = await remoteExecutor.execute(normalizedLang, code, options);
         if (!remoteResult.error?.includes('Unsupported language') && 
             !remoteResult.error?.includes('Runtime not available')) {
@@ -226,6 +229,8 @@ export class CodeExecutor {
         const errorMsg = error instanceof Error ? error.message : String(error);
         console.log('[Executor] Remote execution error, falling back to local:', errorMsg);
       }
+    } else if (requiresLocalExecution) {
+      console.log(`[Executor] ${normalizedLang} requires local execution (not available in Piston)`);
     }
 
     // Process execution (development or production fallback when Docker unavailable)
