@@ -186,13 +186,23 @@ export class EdgeFunctionsService extends EventEmitter {
       Headers: global.Headers,
     };
 
-    // Execute function code (in production, use V8 isolates)
+    // SECURITY: Execute function code using vm2 sandbox for isolation
     try {
-      const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
-      const handler = new AsyncFunction('context', func.code);
-      return await handler.call(null, context);
+      const { VM } = require('vm2');
+      const vm = new VM({
+        timeout: 5000,
+        sandbox: { context },
+        eval: false,
+        wasm: false,
+      });
+      const asyncWrapper = `
+        (async function(context) {
+          ${func.code}
+        })(context)
+      `;
+      return await vm.run(asyncWrapper);
     } catch (error) {
-      throw new Error(`Function execution failed: ${error}`);
+      throw new Error(`Sandboxed function execution failed: ${error}`);
     }
   }
 

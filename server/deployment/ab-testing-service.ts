@@ -315,8 +315,8 @@ export class ABTestingService extends EventEmitter {
         }
     }
 
-    // SECURITY: Condition evaluator with critical pattern blocking
-    // Blocks code injection while preserving backward compatibility with legacy formats
+    // SECURITY: Sandboxed condition evaluator using vm2
+    // Provides complete isolation for dynamic expression evaluation
     private safeEvaluateCondition(condition: any, context: any): boolean {
         // Handle structured object format (preferred for new rules)
         if (typeof condition === 'object' && condition.property && condition.operator) {
@@ -337,26 +337,22 @@ export class ABTestingService extends EventEmitter {
             }
         }
         
-        // Handle legacy string/function conditions
+        // Handle legacy string/function conditions using vm2 sandbox
         if (typeof condition === 'string' || typeof condition === 'function') {
             const conditionStr = typeof condition === 'function' ? condition.toString() : condition;
             
-            // SECURITY: Block critical injection patterns - comprehensive blocking
-            const criticalPatterns = /\b(require|import|eval|child_process|exec|spawn|Function)\s*\(|process\b|globalThis\b|global\b|__proto__|constructor|prototype\b|\bfs\b/i;
-            if (criticalPatterns.test(conditionStr)) {
-                console.warn('[ABTesting] Blocked critical injection pattern');
-                return false;
-            }
-            
-            // Execute the condition
-            // Note: Conditions are admin-defined targeting rules, not user input
             try {
-                if (typeof condition === 'function') {
-                    return !!condition(context);
-                }
-                const fn = new Function('context', `"use strict"; return !!(${condition})`); // eslint-disable-line no-new-func
-                return fn(context);
-            } catch {
+                const { VM } = require('vm2');
+                const vm = new VM({
+                    timeout: 1000,
+                    sandbox: { context },
+                    eval: false,
+                    wasm: false,
+                });
+                const wrappedCondition = `(function(context) { return !!(${conditionStr}) })(context)`;
+                return vm.run(wrappedCondition);
+            } catch (error) {
+                console.warn('[ABTesting] Sandbox condition evaluation failed:', error);
                 return false;
             }
         }

@@ -331,22 +331,20 @@ export class DataProvisioningService {
     return null;
   }
 
-  // Safe faker method execution with critical pattern blocking
-  // Preserves backward compatibility with existing generator expressions
+  // SECURITY: Sandboxed faker method execution using vm2
+  // Provides complete isolation for dynamic generator expressions
   private safeExecuteFakerMethod(generatorString: string, fakerInstance: any): any {
-    // SECURITY: Block critical injection patterns - comprehensive blocking
-    const criticalPatterns = /\b(require|import|eval|child_process|exec|spawn|Function)\s*\(|process\b|globalThis\b|global\b|__proto__|constructor|prototype\b|\bfs\b/i;
-    if (criticalPatterns.test(generatorString)) {
-      throw new Error('Blocked critical injection pattern in generator');
-    }
-    
-    // Execute the generator expression
-    // Note: Generators are admin-defined data provisioning rules, not user input
     try {
-      const fn = new Function('faker', `"use strict"; return (${generatorString})`); // eslint-disable-line no-new-func
-      return fn(fakerInstance);
+      const { VM } = require('vm2');
+      const vm = new VM({
+        timeout: 1000,
+        sandbox: { faker: fakerInstance },
+        eval: false,
+        wasm: false,
+      });
+      return vm.run(generatorString);
     } catch (error) {
-      throw new Error(`Generator execution failed: ${error}`);
+      throw new Error(`Sandboxed generator execution failed: ${error}`);
     }
   }
 

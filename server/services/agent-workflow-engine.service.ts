@@ -1746,24 +1746,21 @@ Provide specific code changes to fix these issues.`;
     return false;
   }
 
-  // SECURITY: Expression evaluator with comprehensive pattern blocking
-  // Blocks code injection vectors while preserving backward compatibility
+  // SECURITY: Sandboxed expression evaluator using vm2
+  // Provides complete isolation for dynamic expression evaluation
   private safeEvaluateExpression(expression: string, state: WorkflowState): boolean {
-    // SECURITY: Block critical injection patterns that could execute arbitrary code
-    // Covers dot notation, bracket notation, and various escape attempts
-    const criticalPatterns = /\b(require|import|eval|child_process|exec|spawn|Function)\s*\(|process\b|globalThis\b|global\b|__proto__|constructor|prototype\b|\bfs\b/i;
-    if (criticalPatterns.test(expression)) {
-      logger.warn('[WorkflowEngine] Blocked critical injection pattern', { expression: expression.substring(0, 100) });
-      return false;
-    }
-    
-    // Execute expression with state context
-    // Note: Expressions are admin-controlled workflow definitions, not user input
     try {
-      const func = new Function('state', `"use strict"; return !!(${expression})`); // eslint-disable-line no-new-func
-      return func(state);
+      const { VM } = require('vm2');
+      const vm = new VM({
+        timeout: 1000,
+        sandbox: { state },
+        eval: false,
+        wasm: false,
+      });
+      const wrappedExpression = `(function(state) { return !!(${expression}) })(state)`;
+      return vm.run(wrappedExpression);
     } catch (err) {
-      logger.warn('[WorkflowEngine] Expression evaluation failed', { expression: expression.substring(0, 100), error: err });
+      logger.warn('[WorkflowEngine] Sandbox expression evaluation failed', { expression: expression.substring(0, 100), error: err });
       return false;
     }
   }
