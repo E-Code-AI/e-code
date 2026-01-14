@@ -1,6 +1,6 @@
 #!/bin/bash
-# Smart build script that skips frontend build if dist/public already exists
-# This allows pre-building locally to avoid deployment timeouts
+# Smart build script optimized for <8 GiB deployment images
+# Skips frontend build if dist/public already exists
 
 set -e
 
@@ -15,5 +15,12 @@ fi
 
 echo "📦 Building server bundle..."
 node scripts/build-server.mjs
+
+# Run aggressive cleanup if the script exists
+if [ -f "scripts/cleanup-for-deploy.sh" ]; then
+    echo "🧹 Running deployment cleanup..."
+    chmod +x scripts/cleanup-for-deploy.sh
+    bash scripts/cleanup-for-deploy.sh
+fi
 
 echo "✅ Build complete!"
