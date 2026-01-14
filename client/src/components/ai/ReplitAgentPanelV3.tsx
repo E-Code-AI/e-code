@@ -86,6 +86,8 @@ import { useSchemaWarmingStore } from '@/stores/schemaWarmingStore';
 // Context is auto-injected into AI prompts via server/api/ai-streaming.ts
 import { EffortPricingDisplay } from '@/components/EffortPricingDisplay';
 import { UnifiedCheckpointsPanel } from '@/components/UnifiedCheckpointsPanel';
+import { InlineCheckpointAction } from './InlineCheckpointAction';
+import { InlinePricingDisplay } from './InlinePricingDisplay';
 import { TaskDecompositionDisplay, type DecomposedTask } from '@/components/agent/TaskDecompositionDisplay';
 import { SlashCommandMenu, useSlashCommand, DEFAULT_MCP_SERVERS, type MCPServer } from './SlashCommandMenu';
 import { AIModelIndicator, AIModelBadge, type DelegationInfo } from '@/components/agent/AIModelIndicator';
@@ -2463,14 +2465,13 @@ export function ReplitAgentPanelV3({
           </div>
         )}
         
-        {/* Effort-based Pricing Display - OUTSIDE ScrollArea to prevent virtualization issues */}
-        {/* ✅ FIX (Dec 14, 2025): Moved outside ScrollArea so panel stays open on conversation changes */}
+        {/* Effort-based Pricing Display - Inline Replit-style */}
         <div
           className={cn("collapsible-content", showPricing && "expanded")}
           data-testid="pricing-panel"
         >
-          <div className="px-3 sm:px-4 py-2 border-b border-border/50">
-            <EffortPricingDisplay projectId={projectIdNum} onClose={() => setShowPricing(false)} />
+          <div className="px-3 sm:px-4 py-2">
+            <InlinePricingDisplay projectId={projectIdNum} onClose={() => setShowPricing(false)} />
           </div>
         </div>
         
@@ -2479,14 +2480,12 @@ export function ReplitAgentPanelV3({
           {/* ✅ Memory Bank is 100% TRANSPARENT - no visible UI like Replit */}
           {/* Context is auto-injected into AI prompts via server/api/ai-streaming.ts */}
           
-          {/* Checkpoints Panel with Rollback UI */}
+          {/* Checkpoints - Inline Replit-style */}
           <div
-            className={cn("collapsible-content", showCheckpoints && "expanded", "mb-4")}
+            className={cn("collapsible-content", showCheckpoints && "expanded", "mb-2")}
             data-testid="checkpoints-panel"
           >
-            <div>
-              <UnifiedCheckpointsPanel projectId={projectIdNum} showCreateForm={true} />
-            </div>
+            <InlineCheckpointAction projectId={projectIdNum} onClose={() => setShowCheckpoints(false)} />
           </div>
           
           {/* Build/Install/QA Validation Progress (Task 6) */}
