@@ -4,7 +4,7 @@ hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 
 [nix]
 channel = "stable-24_05"
-packages = ["glibcLocales", "jq", "libxcrypt", "python3", "jdk", "go", "gcc", "gnumake", "rustc", "cargo", "ruby", "php", "lua", "kotlin", "scala", "clojure", "ghc", "ocaml", "elixir", "erlang", "R", "julia-bin", "gfortran", "deno", "zig", "dart", "dotnet-sdk_8", "perl"]
+packages = ["glibcLocales", "jq", "libxcrypt"]
 
 [deployment]
 deploymentTarget = "gce"
@@ -88,3 +88,7 @@ NODE_ENV = "production"
 [[ports]]
 localPort = 5000
 externalPort = 80
+
+[[ports]]
+localPort = 24678
+externalPort = 3000
