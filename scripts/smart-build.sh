@@ -23,9 +23,13 @@ else
   npx vite build
 fi
 
-# Build server bundle
-echo "📦 Building server bundle..."
-node scripts/build-server.mjs
+# Build server bundle if needed
+if [ -f "dist/index.js" ]; then
+  echo "✅ Pre-built server bundle found, skipping esbuild"
+else
+  echo "📦 Building server bundle..."
+  node scripts/build-server.mjs
+fi
 
 # Run cleanup ONLY in deployment mode
 if [ "$REPLIT_DEPLOYMENT" = "1" ] || [ "$NODE_ENV" = "production" ]; then
