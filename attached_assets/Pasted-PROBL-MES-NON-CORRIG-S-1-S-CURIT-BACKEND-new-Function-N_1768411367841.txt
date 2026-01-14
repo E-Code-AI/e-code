@@ -1,0 +1,108 @@
+PROBLÈMES NON CORRIGÉS
+1. SÉCURITÉ BACKEND - new Function() ❌ NON CORRIGÉ
+Fichier	Ligne	Code actuel
+server/deployment/ab-testing-service.ts	307	new Function('context', rule.condition)
+server/data/data-provisioning-service.ts	325	new Function('faker', ...)
+server/edge/edge-functions.ts	192	new AsyncFunction('context', func.code)
+server/services/agent-testing-orchestrator.service.ts	477	new Function('page', testScript)
+server/services/agent-workflow-engine.service.ts	1739	new Function('state', ...)
+Solution:
+
+npm install vm2
+
+Puis remplacer:
+
+// Avant
+const fn = new Function('context', rule.condition);
+
+// Après
+import { VM } from 'vm2';
+const vm = new VM({ timeout: 1000, sandbox: { context } });
+const result = vm.run(`(function(context) { return ${rule.condition} })(context)`);
+
+2. DOCKER - Mot de passe Redis par défaut ❌ NON CORRIGÉ
+Fichier: docker-compose.replit-vm.yml:27
+
+# Actuel ❌
+REDIS_URL=redis://:${REDIS_PASSWORD:-changeme}@redis:6379
+
+# Corrigé ✅
+REDIS_URL=redis://:${REDIS_PASSWORD:?REDIS_PASSWORD est requis}@redis:6379
+
+3. DOCKER - Application tourne en root ❌ NON CORRIGÉ
+Fichier: docker-compose.replit-vm.yml:63
+
+# Actuel ❌
+user: root
+
+# Corrigé ✅ (supprimer ou changer)
+user: "1000:1000"
+
+4. MOBILE - Dossier assets manquant ❌ NON CORRIGÉ
+Action requise:
+
+mkdir -p /home/user/e-code/mobile/assets
+
+Puis ajouter:
+
+icon.png (1024x1024)
+adaptive-icon.png (1024x1024)
+splash.png (1284x2778)
+5. MOBILE - Firebase manquant ❌ NON CORRIGÉ
+Fichiers requis:
+
+mobile/google-services.json → Télécharger depuis Firebase Console (Android)
+mobile/GoogleService-Info.plist → Télécharger depuis Firebase Console (iOS)
+6. DEEP LINKING - .well-known manquant ❌ NON CORRIGÉ
+Actions requises:
+
+mkdir -p /home/user/e-code/.well-known
+
+Créer /.well-known/apple-app-site-association:
+
+{
+  "applinks": {
+    "apps": [],
+    "details": [{
+      "appID": "TEAMID.com.ecode.app",
+      "paths": ["*"]
+    }]
+  }
+}
+
+Créer /.well-known/assetlinks.json:
+
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "com.ecode.app",
+    "sha256_cert_fingerprints": ["SHA256_FINGERPRINT"]
+  }
+}]
+
+7. CI/CD - Mauvais port ❌ NON CORRIGÉ
+Fichier: .github/workflows/ci-cd-production.yml
+
+Ligne	Actuel ❌	Corrigé ✅
+258	http://localhost:3000/health	http://localhost:5000/health
+364	http://localhost:3000	http://localhost:5000
+8. MIGRATIONS - Noms dupliqués ❌ NON CORRIGÉ
+Problème actuel:
+
+0001_add_ai_models.sql       ← Conflit
+0001_newsletter_system.sql   ← Conflit
+0002_community_system.sql    ← Conflit
+0002_notifications_system.sql ← Conflit
+0003_align_notification_preferences_user_id.sql ← Conflit
+0003_notification_preferences_fk_fix.sql ← Conflit
+
+Solution: Renommer avec timestamps:
+
+cd /home/user/e-code/migrations
+mv 0001_add_ai_models.sql 20250101000001_add_ai_models.sql
+mv 0001_newsletter_system.sql 20250101000002_newsletter_system.sql
+mv 0002_community_system.sql 20250102000001_community_system.sql
+mv 0002_notifications_system.sql 20250102000002_notifications_system.sql
+# etc.
+
