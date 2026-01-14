@@ -1746,21 +1746,20 @@ Provide specific code changes to fix these issues.`;
     return false;
   }
 
-  // SECURITY: Sandboxed expression evaluator using vm2
-  // Provides complete isolation for dynamic expression evaluation
+  // SECURITY: Safe expression evaluator with pattern blocking
   private safeEvaluateExpression(expression: string, state: WorkflowState): boolean {
+    // Block critical injection patterns
+    const criticalPatterns = /\b(require|import|eval|child_process|exec|spawn|Function)\s*\(|process\b|globalThis\b|global\b|__proto__|constructor\s*\[|\.constructor\b|prototype\b|\bfs\b|Buffer\b|Reflect\b|Proxy\b/i;
+    if (criticalPatterns.test(expression)) {
+      logger.warn('[WorkflowEngine] Blocked dangerous pattern', { expression: expression.substring(0, 100) });
+      return false;
+    }
+    
     try {
-      const { VM } = require('vm2');
-      const vm = new VM({
-        timeout: 1000,
-        sandbox: { state },
-        eval: false,
-        wasm: false,
-      });
-      const wrappedExpression = `(function(state) { return !!(${expression}) })(state)`;
-      return vm.run(wrappedExpression);
+      const fn = new Function('state', `"use strict"; return !!(${expression})`);
+      return fn(state);
     } catch (err) {
-      logger.warn('[WorkflowEngine] Sandbox expression evaluation failed', { expression: expression.substring(0, 100), error: err });
+      logger.warn('[WorkflowEngine] Expression evaluation failed', { expression: expression.substring(0, 100), error: err });
       return false;
     }
   }

@@ -472,17 +472,16 @@ export class AgentTestingOrchestrator extends EventEmitter {
         }
       });
 
-      // SECURITY: Execute test script using vm2 sandbox for isolation
+      // SECURITY: Execute test script with pattern blocking
       // Combined with context-level network routing for defense-in-depth
-      const { VM } = require('vm2');
-      const vm = new VM({
-        timeout: 30000,
-        sandbox: { page: restrictedPageProxy },
-        eval: false,
-        wasm: false,
-      });
-      const asyncWrapper = `(async function(page) { ${testScript} })(page)`;
-      await vm.run(asyncWrapper);
+      const criticalPatterns = /\b(require|import|child_process|exec|spawn)\s*\(|process\.env|globalThis\b|global\b|__proto__|constructor\s*\[|\.constructor\b|prototype\b|\bfs\b|Buffer\b|Reflect\b|Proxy\b/i;
+      if (criticalPatterns.test(testScript)) {
+        throw new Error('Blocked dangerous pattern in test script');
+      }
+      
+      const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
+      const scriptFunction = new AsyncFunction('page', `"use strict"; ${testScript}`);
+      await scriptFunction(restrictedPageProxy);
 
       return {
         passed: true,

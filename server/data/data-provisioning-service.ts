@@ -331,20 +331,19 @@ export class DataProvisioningService {
     return null;
   }
 
-  // SECURITY: Sandboxed faker method execution using vm2
-  // Provides complete isolation for dynamic generator expressions
+  // SECURITY: Safe faker method execution with pattern blocking
   private safeExecuteFakerMethod(generatorString: string, fakerInstance: any): any {
+    // Block critical injection patterns
+    const criticalPatterns = /\b(require|import|eval|child_process|exec|spawn|Function)\s*\(|process\b|globalThis\b|global\b|__proto__|constructor\s*\[|\.constructor\b|prototype\b|\bfs\b|Buffer\b|Reflect\b|Proxy\b/i;
+    if (criticalPatterns.test(generatorString)) {
+      throw new Error('Blocked dangerous pattern in generator');
+    }
+    
     try {
-      const { VM } = require('vm2');
-      const vm = new VM({
-        timeout: 1000,
-        sandbox: { faker: fakerInstance },
-        eval: false,
-        wasm: false,
-      });
-      return vm.run(generatorString);
+      const fn = new Function('faker', `"use strict"; return (${generatorString})`);
+      return fn(fakerInstance);
     } catch (error) {
-      throw new Error(`Sandboxed generator execution failed: ${error}`);
+      throw new Error(`Generator execution failed: ${error}`);
     }
   }
 

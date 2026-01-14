@@ -337,22 +337,22 @@ export class ABTestingService extends EventEmitter {
             }
         }
         
-        // Handle legacy string/function conditions using vm2 sandbox
+        // Handle legacy string/function conditions with pattern blocking
         if (typeof condition === 'string' || typeof condition === 'function') {
             const conditionStr = typeof condition === 'function' ? condition.toString() : condition;
             
+            // SECURITY: Block critical injection patterns
+            const criticalPatterns = /\b(require|import|eval|child_process|exec|spawn|Function)\s*\(|process\b|globalThis\b|global\b|__proto__|constructor\s*\[|\.constructor\b|prototype\b|\bfs\b|Buffer\b|Reflect\b|Proxy\b/i;
+            if (criticalPatterns.test(conditionStr)) {
+                console.warn('[ABTesting] Blocked dangerous pattern in condition');
+                return false;
+            }
+            
             try {
-                const { VM } = require('vm2');
-                const vm = new VM({
-                    timeout: 1000,
-                    sandbox: { context },
-                    eval: false,
-                    wasm: false,
-                });
-                const wrappedCondition = `(function(context) { return !!(${conditionStr}) })(context)`;
-                return vm.run(wrappedCondition);
+                const fn = new Function('context', `"use strict"; return !!(${conditionStr})`);
+                return fn(context);
             } catch (error) {
-                console.warn('[ABTesting] Sandbox condition evaluation failed:', error);
+                console.warn('[ABTesting] Condition evaluation failed:', error);
                 return false;
             }
         }

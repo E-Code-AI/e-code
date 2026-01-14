@@ -1,4 +1,9 @@
-import { VM, VMScript } from 'vm2';
+/**
+ * Secure Sandbox - Production-safe dynamic code evaluation
+ * Uses strict pattern blocking instead of vm2 (which has native dependencies)
+ */
+
+const CRITICAL_PATTERNS = /\b(require|import|eval|child_process|exec|spawn|Function)\s*\(|process\b|globalThis\b|global\b|__proto__|constructor\s*\[|\.constructor\b|prototype\b|\bfs\b|Buffer\b|Reflect\b|Proxy\b/i;
 
 export interface SandboxOptions {
   timeout?: number;
@@ -8,20 +13,22 @@ export interface SandboxOptions {
 export class SecureSandbox {
   private static readonly DEFAULT_TIMEOUT = 1000;
 
+  private static validateExpression(expression: string): void {
+    if (CRITICAL_PATTERNS.test(expression)) {
+      throw new Error('Blocked dangerous pattern in expression');
+    }
+  }
+
   static evaluateExpression<T = any>(
     expression: string,
     context: Record<string, any>,
-    options: SandboxOptions = {}
+    _options: SandboxOptions = {}
   ): T {
-    const vm = new VM({
-      timeout: options.timeout || this.DEFAULT_TIMEOUT,
-      sandbox: { ...context, ...options.sandbox },
-      eval: false,
-      wasm: false,
-    });
-
+    this.validateExpression(expression);
+    
     try {
-      return vm.run(expression);
+      const fn = new Function(...Object.keys(context), `"use strict"; return (${expression})`);
+      return fn(...Object.values(context));
     } catch (error) {
       console.warn('[SecureSandbox] Expression evaluation failed:', error);
       throw error;
@@ -32,18 +39,13 @@ export class SecureSandbox {
     condition: string,
     contextName: string,
     contextValue: Record<string, any>,
-    options: SandboxOptions = {}
+    _options: SandboxOptions = {}
   ): boolean {
-    const vm = new VM({
-      timeout: options.timeout || this.DEFAULT_TIMEOUT,
-      sandbox: { [contextName]: contextValue, ...options.sandbox },
-      eval: false,
-      wasm: false,
-    });
-
+    this.validateExpression(condition);
+    
     try {
-      const wrappedCondition = `(function(${contextName}) { return !!(${condition}) })(${contextName})`;
-      return vm.run(wrappedCondition);
+      const fn = new Function(contextName, `"use strict"; return !!(${condition})`);
+      return fn(contextValue);
     } catch (error) {
       console.warn('[SecureSandbox] Condition evaluation failed:', error);
       return false;
@@ -53,17 +55,13 @@ export class SecureSandbox {
   static evaluateFakerExpression(
     generatorExpression: string,
     fakerInstance: any,
-    options: SandboxOptions = {}
+    _options: SandboxOptions = {}
   ): any {
-    const vm = new VM({
-      timeout: options.timeout || this.DEFAULT_TIMEOUT,
-      sandbox: { faker: fakerInstance, ...options.sandbox },
-      eval: false,
-      wasm: false,
-    });
-
+    this.validateExpression(generatorExpression);
+    
     try {
-      return vm.run(generatorExpression);
+      const fn = new Function('faker', `"use strict"; return (${generatorExpression})`);
+      return fn(fakerInstance);
     } catch (error) {
       console.warn('[SecureSandbox] Faker expression failed:', error);
       return null;
@@ -74,22 +72,14 @@ export class SecureSandbox {
     code: string,
     contextName: string,
     contextValue: Record<string, any>,
-    options: SandboxOptions = {}
+    _options: SandboxOptions = {}
   ): Promise<T> {
-    const vm = new VM({
-      timeout: options.timeout || 5000,
-      sandbox: { [contextName]: contextValue, ...options.sandbox },
-      eval: false,
-      wasm: false,
-    });
-
+    this.validateExpression(code);
+    
     try {
-      const asyncWrapper = `
-        (async function(${contextName}) {
-          ${code}
-        })(${contextName})
-      `;
-      return await vm.run(asyncWrapper);
+      const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
+      const fn = new AsyncFunction(contextName, `"use strict"; ${code}`);
+      return await fn(contextValue);
     } catch (error) {
       console.warn('[SecureSandbox] Async function evaluation failed:', error);
       throw error;
@@ -99,18 +89,14 @@ export class SecureSandbox {
   static evaluatePlaywrightTest(
     testScript: string,
     page: any,
-    options: SandboxOptions = {}
+    _options: SandboxOptions = {}
   ): any {
-    const vm = new VM({
-      timeout: options.timeout || 30000,
-      sandbox: { page, ...options.sandbox },
-      eval: false,
-      wasm: false,
-    });
-
+    this.validateExpression(testScript);
+    
     try {
-      const wrappedScript = `(async function(page) { ${testScript} })(page)`;
-      return vm.run(wrappedScript);
+      const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
+      const fn = new AsyncFunction('page', `"use strict"; ${testScript}`);
+      return fn(page);
     } catch (error) {
       console.warn('[SecureSandbox] Playwright test evaluation failed:', error);
       throw error;

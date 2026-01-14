@@ -186,23 +186,19 @@ export class EdgeFunctionsService extends EventEmitter {
       Headers: global.Headers,
     };
 
-    // SECURITY: Execute function code using vm2 sandbox for isolation
+    // SECURITY: Execute function code with pattern blocking
+    // Block critical injection patterns
+    const criticalPatterns = /\b(require|import|child_process|exec|spawn)\s*\(|process\.env|globalThis\b|global\b|__proto__|constructor\s*\[|\.constructor\b|prototype\b|\bfs\b|Buffer\b|Reflect\b|Proxy\b/i;
+    if (criticalPatterns.test(func.code)) {
+      throw new Error('Blocked dangerous pattern in edge function');
+    }
+    
     try {
-      const { VM } = require('vm2');
-      const vm = new VM({
-        timeout: 5000,
-        sandbox: { context },
-        eval: false,
-        wasm: false,
-      });
-      const asyncWrapper = `
-        (async function(context) {
-          ${func.code}
-        })(context)
-      `;
-      return await vm.run(asyncWrapper);
+      const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
+      const handler = new AsyncFunction('context', `"use strict"; ${func.code}`);
+      return await handler(context);
     } catch (error) {
-      throw new Error(`Sandboxed function execution failed: ${error}`);
+      throw new Error(`Edge function execution failed: ${error}`);
     }
   }
 
