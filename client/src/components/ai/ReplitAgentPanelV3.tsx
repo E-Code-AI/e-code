@@ -86,8 +86,7 @@ import { useSchemaWarmingStore } from '@/stores/schemaWarmingStore';
 // Context is auto-injected into AI prompts via server/api/ai-streaming.ts
 import { EffortPricingDisplay } from '@/components/EffortPricingDisplay';
 import { UnifiedCheckpointsPanel } from '@/components/UnifiedCheckpointsPanel';
-import { InlineCheckpointAction } from './InlineCheckpointAction';
-import { InlinePricingDisplay } from './InlinePricingDisplay';
+import { InlineCheckpointMarker, CheckpointDivider } from './InlineCheckpointMarker';
 import { TaskDecompositionDisplay, type DecomposedTask } from '@/components/agent/TaskDecompositionDisplay';
 import { SlashCommandMenu, useSlashCommand, DEFAULT_MCP_SERVERS, type MCPServer } from './SlashCommandMenu';
 import { AIModelIndicator, AIModelBadge, type DelegationInfo } from '@/components/agent/AIModelIndicator';
@@ -2341,42 +2340,6 @@ export function ReplitAgentPanelV3({
             {/* Usage Tracking - Replit Agent 3 style credits icon */}
             <UsageTrackingIcon />
 
-            {/* Pricing Display Toggle - Replit Agent 3 effort-based pricing */}
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant={showPricing ? "secondary" : "ghost"}
-                    size="icon"
-                    className="h-7 w-7"
-                    onClick={() => setShowPricing(!showPricing)}
-                    data-testid="button-pricing"
-                  >
-                    <DollarSign className="h-3.5 w-3.5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Session pricing</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-
-            {/* Checkpoints & Rollback Toggle */}
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant={showCheckpoints ? "secondary" : "ghost"}
-                    size="icon"
-                    className="h-7 w-7"
-                    onClick={() => setShowCheckpoints(!showCheckpoints)}
-                    data-testid="button-checkpoints"
-                  >
-                    <RotateCcw className="h-3.5 w-3.5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Checkpoints & Rollback</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-
             {/* History & New Chat - Only show on desktop (mobile has these in ReplitMobileHeader) */}
             {!isCompactMode && (
               <>
@@ -2465,28 +2428,8 @@ export function ReplitAgentPanelV3({
           </div>
         )}
         
-        {/* Effort-based Pricing Display - Inline Replit-style */}
-        <div
-          className={cn("collapsible-content", showPricing && "expanded")}
-          data-testid="pricing-panel"
-        >
-          <div className="px-3 sm:px-4 py-2">
-            <InlinePricingDisplay projectId={projectIdNum} onClose={() => setShowPricing(false)} />
-          </div>
-        </div>
-        
         <ScrollArea ref={scrollRef} className="flex-1 min-h-0 px-3 sm:px-4 py-3">
           <div className="space-y-4 sm:space-y-5">
-          {/* ✅ Memory Bank is 100% TRANSPARENT - no visible UI like Replit */}
-          {/* Context is auto-injected into AI prompts via server/api/ai-streaming.ts */}
-          
-          {/* Checkpoints - Inline Replit-style */}
-          <div
-            className={cn("collapsible-content", showCheckpoints && "expanded", "mb-2")}
-            data-testid="checkpoints-panel"
-          >
-            <InlineCheckpointAction projectId={projectIdNum} onClose={() => setShowCheckpoints(false)} />
-          </div>
           
           {/* Build/Install/QA Validation Progress (Task 6) */}
           <LazyAnimatePresence>
@@ -2517,17 +2460,25 @@ export function ReplitAgentPanelV3({
             />
           ) : (
             <LazyAnimatePresence mode="popLayout">
-              {messages.map((message) => (
-                <EnhancedChatMessage
-                  key={message.id}
-                  message={message}
-                  isCompactMode={isCompactMode}
-                  onCopy={handleCopyMessage}
-                  onApproveAction={handleApproveAction}
-                  onRejectAction={handleRejectAction}
-                  onRestoreCheckpoint={handleRestoreCheckpoint}
-                  isRestoringCheckpoint={isRestoringCheckpoint}
-                />
+              {messages.map((message, index) => (
+                <div key={message.id}>
+                  <EnhancedChatMessage
+                    message={message}
+                    isCompactMode={isCompactMode}
+                    onCopy={handleCopyMessage}
+                    onApproveAction={handleApproveAction}
+                    onRejectAction={handleRejectAction}
+                    onRestoreCheckpoint={handleRestoreCheckpoint}
+                    isRestoringCheckpoint={isRestoringCheckpoint}
+                  />
+                  {/* Replit-style: Checkpoint marker after each assistant message */}
+                  {message.role === 'assistant' && !isPendingResponse && (
+                    <CheckpointDivider 
+                      cost={message.metadata?.cost}
+                      tokens={message.metadata?.tokens}
+                    />
+                  )}
+                </div>
               ))}
             </LazyAnimatePresence>
           )}
