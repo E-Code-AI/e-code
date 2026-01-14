@@ -181,15 +181,20 @@ export function CheckpointDivider({
   tokens,
   label = "Checkpoint saved"
 }: { 
-  cost?: number; 
+  cost?: string | number; 
   tokens?: number;
   label?: string;
 }) {
-  const formatCost = (amount: number) => {
-    if (amount === 0) return 'Free';
-    if (amount < 0.01) return '<$0.01';
-    return `$${amount.toFixed(2)}`;
+  const formatCost = (amount: string | number | undefined) => {
+    if (amount === undefined) return null;
+    const num = typeof amount === 'string' ? parseFloat(amount) : amount;
+    if (isNaN(num) || num === 0) return 'Free';
+    if (num < 0.01) return '<$0.01';
+    return `$${num.toFixed(2)}`;
   };
+
+  const formattedCost = formatCost(cost);
+  const hasUsageData = formattedCost || tokens;
 
   return (
     <div className="flex items-center justify-center py-2 my-1">
@@ -198,16 +203,18 @@ export function CheckpointDivider({
         <TooltipProvider delayDuration={200}>
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="flex items-center gap-1 cursor-default">
+              <div className="flex items-center gap-1 cursor-default hover:text-muted-foreground transition-colors">
                 <Check className="w-3 h-3 text-emerald-500/70" />
                 <span>{label}</span>
               </div>
             </TooltipTrigger>
-            {(cost !== undefined || tokens !== undefined) && (
+            {hasUsageData && (
               <TooltipContent side="top" className="text-xs">
                 <div className="flex items-center gap-2">
-                  {cost !== undefined && <span>{formatCost(cost)}</span>}
-                  {tokens !== undefined && <span>• {tokens.toLocaleString()} tokens</span>}
+                  {formattedCost && <span>{formattedCost}</span>}
+                  {tokens !== undefined && tokens > 0 && (
+                    <span>{formattedCost ? '•' : ''} {tokens.toLocaleString()} tokens</span>
+                  )}
                 </div>
               </TooltipContent>
             )}
