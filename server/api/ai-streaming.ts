@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { ensureAuthenticated } from '../middleware/auth';
 import { aiUsageTracker } from '../middleware/ai-usage-tracker';
 import { normalizeModelName } from '../utils/model-normalizer';
+import { calculateRequestCost } from '../config/ai-pricing';
 import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
 import { GoogleGenerativeAI } from '@google/generative-ai';
@@ -803,13 +804,20 @@ ${historyItems}
       return;
     }
     
-    // Send completion event
+    // Calculate cost for this request
+    const normalizedModel = normalizeModelName(model, provider);
+    const requestCost = calculateRequestCost(normalizedModel, tokensInput, tokensOutput);
+    
+    // Send completion event with cost and token data
     sendSSE(res, 'done', { 
       conversationId,
       projectId,
       totalTokens: tokensInput + tokensOutput,
       tokensInput,
-      tokensOutput
+      tokensOutput,
+      cost: requestCost.toFixed(6),
+      model: normalizedModel,
+      provider
     });
     
     res.end();
