@@ -22,21 +22,24 @@ import { RateLimiterMemory } from 'rate-limiter-flexible';
 
 const logger = createLogger('ai-usage-tracker');
 
-type SubscriptionTier = 'free' | 'pro' | 'enterprise';
+type SubscriptionTier = 'free' | 'core' | 'teams' | 'enterprise';
 
 // Monthly included quotas (requests)
 const MONTHLY_INCLUDED_REQUESTS: Record<SubscriptionTier, number> = {
   free: 100,
-  pro: 10_000,
+  core: 10_000,
+  teams: 50_000,
   enterprise: 100_000,
 };
 
 // ✅ Issue #38 FIX: Rate limiting per tier
 // Limits are requests per minute to prevent abuse while allowing normal usage
+// ✅ CRITICAL FIX (Jan 14, 2026): Aligned tiers with Replit pricing model (free/core/teams/enterprise)
 const RATE_LIMITS_PER_MINUTE: Record<SubscriptionTier, number> = {
-  free: 10,       // 10 requests/min for free tier
-  pro: 60,        // 60 requests/min for pro tier  
-  enterprise: 300 // 300 requests/min for enterprise tier
+  free: 10,        // 10 requests/min for free tier
+  core: 60,        // 60 requests/min for core tier (was pro)
+  teams: 150,      // 150 requests/min for teams tier
+  enterprise: 300  // 300 requests/min for enterprise tier
 };
 
 // Create rate limiters per tier
@@ -46,10 +49,15 @@ const rateLimiters: Record<SubscriptionTier, RateLimiterMemory> = {
     duration: 60, // 1 minute
     keyPrefix: 'ai_rate_free'
   }),
-  pro: new RateLimiterMemory({
-    points: RATE_LIMITS_PER_MINUTE.pro,
+  core: new RateLimiterMemory({
+    points: RATE_LIMITS_PER_MINUTE.core,
     duration: 60,
-    keyPrefix: 'ai_rate_pro'
+    keyPrefix: 'ai_rate_core'
+  }),
+  teams: new RateLimiterMemory({
+    points: RATE_LIMITS_PER_MINUTE.teams,
+    duration: 60,
+    keyPrefix: 'ai_rate_teams'
   }),
   enterprise: new RateLimiterMemory({
     points: RATE_LIMITS_PER_MINUTE.enterprise,
@@ -76,19 +84,25 @@ const DEV_MULTIPLIER =
   1;
 
 // ✅ CRITICAL FIX (Dec 19, 2025): Create dev-mode-aware rate limiters with harmonized multiplier
+// ✅ CRITICAL FIX (Jan 14, 2026): Aligned with Replit pricing tiers (free/core/teams/enterprise)
 const devAwareRateLimiters: Record<SubscriptionTier, RateLimiterMemory> = {
   free: new RateLimiterMemory({
-    points: RATE_LIMITS_PER_MINUTE.free * DEV_MULTIPLIER,  // 10000 in dev, 10 in prod
+    points: RATE_LIMITS_PER_MINUTE.free * DEV_MULTIPLIER,
     duration: 60,
     keyPrefix: 'ai_rate_free'
   }),
-  pro: new RateLimiterMemory({
-    points: RATE_LIMITS_PER_MINUTE.pro * DEV_MULTIPLIER,   // 60000 in dev, 60 in prod
+  core: new RateLimiterMemory({
+    points: RATE_LIMITS_PER_MINUTE.core * DEV_MULTIPLIER,
     duration: 60,
-    keyPrefix: 'ai_rate_pro'
+    keyPrefix: 'ai_rate_core'
+  }),
+  teams: new RateLimiterMemory({
+    points: RATE_LIMITS_PER_MINUTE.teams * DEV_MULTIPLIER,
+    duration: 60,
+    keyPrefix: 'ai_rate_teams'
   }),
   enterprise: new RateLimiterMemory({
-    points: RATE_LIMITS_PER_MINUTE.enterprise * DEV_MULTIPLIER, // 300000 in dev, 300 in prod
+    points: RATE_LIMITS_PER_MINUTE.enterprise * DEV_MULTIPLIER,
     duration: 60,
     keyPrefix: 'ai_rate_enterprise'
   })
@@ -132,7 +146,11 @@ export async function aiUsageTracker(req: Request, res: Response, next: NextFunc
     return next();
   }
 
-  const tier: SubscriptionTier = user.subscriptionTier || 'free';
+  // ✅ CRITICAL FIX (Jan 14, 2026): Normalize tier to valid values, fallback to 'free' for unknown tiers
+  const rawTier = user.subscriptionTier || 'free';
+  const validTiers: SubscriptionTier[] = ['free', 'core', 'teams', 'enterprise'];
+  const tier: SubscriptionTier = validTiers.includes(rawTier) ? rawTier : 'free';
+  
   // ✅ CRITICAL FIX (Dec 19, 2025): Use dev-aware rate limiters with 1000x multiplier
   const rateLimiter = devAwareRateLimiters[tier];
   const effectiveLimit = RATE_LIMITS_PER_MINUTE[tier] * DEV_MULTIPLIER;
@@ -228,7 +246,10 @@ async function trackAiUsage(req: Request, context: AiUsageContext) {
     return;
   }
 
-  const tier: SubscriptionTier = user.subscriptionTier || 'free';
+  // ✅ CRITICAL FIX (Jan 14, 2026): Normalize tier to valid values
+  const rawTier = user.subscriptionTier || 'free';
+  const validTiers: SubscriptionTier[] = ['free', 'core', 'teams', 'enterprise'];
+  const tier: SubscriptionTier = validTiers.includes(rawTier) ? rawTier : 'free';
   const requestDurationMs = context.startTime ? Date.now() - context.startTime : undefined;
 
   try {
