@@ -1814,6 +1814,7 @@ export function ReplitAgentPanelV3({
       const thinkingSteps: ThinkingStep[] = [];
       const toolExecutions: ToolExecution[] = [];
       const warningMessages: Message[] = []; // Accumulate warnings during streaming
+      let messageMetadata: { cost?: string; tokens?: number; model?: string; provider?: string } = {};
       
       // Add assistant message to state BEFORE streaming to support live tool/thinking updates
       setMessages(prev => [...prev, assistantMessage]);
@@ -1886,6 +1887,16 @@ export function ReplitAgentPanelV3({
                 // This event is for UI feedback only
               }
               
+              // Handle 'done' event with cost and token data (Replit-style)
+              if (data.totalTokens !== undefined || data.cost !== undefined) {
+                messageMetadata = {
+                  cost: data.cost,
+                  tokens: data.totalTokens,
+                  model: data.model,
+                  provider: data.provider
+                };
+              }
+              
               // Handle tool execution events
               if (data.toolCallId) {
                 const toolId = data.toolCallId;
@@ -1951,11 +1962,20 @@ export function ReplitAgentPanelV3({
       // Confirm optimistic user message on successful stream completion
       optimisticResult.confirm();
       
-      // Update existing assistant message and append any accumulated warnings
+      // Update existing assistant message with content, metadata, and append any accumulated warnings
       setMessages(prev => [
         ...prev.map(msg => 
           msg.id === assistantMessage.id 
-            ? { ...msg, content: assistantMessage.content, isStreaming: false }
+            ? { 
+                ...msg, 
+                content: assistantMessage.content, 
+                isStreaming: false,
+                metadata: {
+                  ...msg.metadata,
+                  ...messageMetadata,
+                  extendedThinking: extendedThinkingEnabled
+                }
+              }
             : msg
         ),
         ...warningMessages
