@@ -1,0 +1,23 @@
+login:469 [WebSocket] Interceptor installed | Dev: true | Replit: true
+login:450 [WebSocket] Connection: wss://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev:/?to | HMR: true | Essential: false
+chunk-E22KYI7D.js?v=aceffe43:21609 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+query-persister.ts:107 [QueryPersister] Cache restored (age: 2421s)
+cache-reconciliation.ts:37 [CacheReconciliation] Service initialized
+query-persister.ts:74 [QueryPersister] Cache persisted to IndexedDB
+service-worker-registration.ts:14 [SW] Skipping in development mode
+telemetry.ts:125 [Telemetry] Object
+telemetry.ts:125 [Telemetry] Object
+telemetry.ts:125 [Telemetry] Object
+telemetry.ts:125 [Telemetry] Object
+telemetry.ts:125 [Telemetry] Object
+telemetry.ts:125 [Telemetry] Object
+query-persister.ts:74 [QueryPersister] Cache persisted to IndexedDB
+login:1 Banner not shown: beforeinstallpromptevent.preventDefault() called. The page must call beforeinstallpromptevent.prompt() to show the banner.
+api/me:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)
+telemetry.ts:125 [Telemetry] Object
+query-persister.ts:74 [QueryPersister] Cache persisted to IndexedDB
+api/logs/ingest:1  Failed to load resource: the server responded with a status of 400 (Bad Request)
+login:1 The resource https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev/src/main.tsx was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.
+login:1 The resource https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev/src/index.css was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.
+login:1 The resource https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev/src/main.tsx was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.
+login:1 The resource https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.riker.replit.dev/src/index.css was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.
