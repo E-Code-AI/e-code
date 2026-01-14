@@ -3,6 +3,7 @@ import { writeFileSync, mkdirSync, existsSync, rmSync } from 'fs';
 import path from 'path';
 import os from 'os';
 import { dockerExecutor } from './docker-executor';
+import { remoteExecutor } from './remote-executor';
 
 export interface ExecutionOptions {
   timeout?: number;
@@ -19,8 +20,16 @@ export interface ExecutionResult {
   exitCode: number;
 }
 
+// Execution mode: 'local' | 'docker' | 'remote' | 'auto'
+// - local: Use local process execution (requires language runtimes installed)
+// - docker: Use Docker containers (requires Docker)
+// - remote: Use Piston API (no local runtimes needed)
+// - auto: Try Docker -> Remote -> Local fallback chain
+const EXECUTION_MODE = process.env.EXECUTION_MODE || (process.env.NODE_ENV === 'production' ? 'remote' : 'local');
+
 // Check if Docker execution mode is enabled (production)
-const USE_DOCKER_EXECUTION = process.env.EXECUTION_MODE === 'docker' || process.env.NODE_ENV === 'production';
+const USE_DOCKER_EXECUTION = EXECUTION_MODE === 'docker' || EXECUTION_MODE === 'auto';
+const USE_REMOTE_EXECUTION = EXECUTION_MODE === 'remote' || EXECUTION_MODE === 'auto';
 
 // Normalize language aliases to canonical names
 // Full 29-language support for Fortune 500 production parity with Replit
@@ -169,10 +178,9 @@ export class CodeExecutor {
       };
     }
 
-    // Try Docker execution first in production for security (with fallback to process execution)
+    // Try Docker execution first in production for security
     if (USE_DOCKER_EXECUTION) {
       try {
-        // Normalize language to canonical name for Docker executor compatibility
         const normalizedLang = normalizeLanguage(language);
         const dockerResult = await dockerExecutor.executeCode(
           normalizedLang,
@@ -183,19 +191,16 @@ export class CodeExecutor {
           output: dockerResult.output,
           error: dockerResult.error || undefined,
           executionTime: Date.now() - startTime,
-          memoryUsed: 0, // Docker doesn't expose this easily
+          memoryUsed: 0,
           exitCode: dockerResult.exitCode
         };
       } catch (error) {
-        // Docker not available (e.g., Replit Cloud Run) - fallback to process execution
         const errorMsg = error instanceof Error ? error.message : String(error);
         if (errorMsg.includes('dockerode is not available') || 
             errorMsg.includes('Docker') || 
             errorMsg.includes('connect ENOENT')) {
-          // Fallback to process execution - continue below
-          console.log('[Executor] Docker not available, falling back to process execution');
+          console.log('[Executor] Docker not available, trying remote execution');
         } else {
-          // Unexpected error - return it
           return {
             output: '',
             error: errorMsg,
@@ -204,6 +209,22 @@ export class CodeExecutor {
             exitCode: 1
           };
         }
+      }
+    }
+
+    // Try remote execution (Piston API) - ideal for production without local runtimes
+    if (USE_REMOTE_EXECUTION) {
+      try {
+        const normalizedLang = normalizeLanguage(language);
+        const remoteResult = await remoteExecutor.execute(normalizedLang, code, options);
+        if (!remoteResult.error?.includes('Unsupported language') && 
+            !remoteResult.error?.includes('Runtime not available')) {
+          return remoteResult;
+        }
+        console.log('[Executor] Remote execution failed, falling back to local:', remoteResult.error);
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        console.log('[Executor] Remote execution error, falling back to local:', errorMsg);
       }
     }
 
