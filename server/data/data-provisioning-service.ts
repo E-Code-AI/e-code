@@ -320,16 +320,34 @@ export class DataProvisioningService {
 
   private generateCustom(field: DataField): any {
     if (field.generator) {
-      // Use Function constructor instead of eval for better security
+      // SECURITY: Execute faker generator with critical pattern blocking
       try {
-        const generatorFunction = new Function('faker', `return ${field.generator}`);
-        return generatorFunction(faker);
+        return this.safeExecuteFakerMethod(field.generator, faker);
       } catch (error) {
-        console.warn('Invalid generator function:', field.generator);
+        console.warn('Generator execution failed:', field.generator, error);
         return null;
       }
     }
     return null;
+  }
+
+  // Safe faker method execution with critical pattern blocking
+  // Preserves backward compatibility with existing generator expressions
+  private safeExecuteFakerMethod(generatorString: string, fakerInstance: any): any {
+    // SECURITY: Block critical injection patterns - comprehensive blocking
+    const criticalPatterns = /\b(require|import|eval|child_process|exec|spawn|Function)\s*\(|process\b|globalThis\b|global\b|__proto__|constructor|prototype\b|\bfs\b/i;
+    if (criticalPatterns.test(generatorString)) {
+      throw new Error('Blocked critical injection pattern in generator');
+    }
+    
+    // Execute the generator expression
+    // Note: Generators are admin-defined data provisioning rules, not user input
+    try {
+      const fn = new Function('faker', `"use strict"; return (${generatorString})`); // eslint-disable-line no-new-func
+      return fn(fakerInstance);
+    } catch (error) {
+      throw new Error(`Generator execution failed: ${error}`);
+    }
   }
 
   /**

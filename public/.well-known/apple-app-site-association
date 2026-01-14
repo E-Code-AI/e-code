@@ -1,0 +1,26 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "TEAM_ID.com.ecode.app",
+        "paths": [
+          "/ide/*",
+          "/editor/*",
+          "/project/*",
+          "/workspace/*",
+          "/@*",
+          "/invite/*"
+        ]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": [
+      "TEAM_ID.com.ecode.app"
+    ]
+  },
+  "appclips": {
+    "apps": []
+  }
+}

@@ -10,10 +10,11 @@ import { retryFailedQueueItems, getQueueHealthMetrics } from '../workflows/payg-
 const router = Router();
 const startupLogger = createLogger('payments-router-startup');
 
-// B-3 SECURITY FIX: Validate Stripe webhook secret at module load in production
+// B-3 SECURITY FIX: Block startup if Stripe webhook secret missing in production
 if (process.env.NODE_ENV === 'production' && !process.env.STRIPE_WEBHOOK_SECRET) {
-  startupLogger.warn('⚠️  CRITICAL SECURITY WARNING: STRIPE_WEBHOOK_SECRET is not configured in production!');
-  startupLogger.warn('⚠️  Stripe webhooks will fail signature verification and payments may not be processed correctly.');
+  startupLogger.error('🚨 FATAL: STRIPE_WEBHOOK_SECRET is not configured in production!');
+  startupLogger.error('🚨 Payment webhooks will fail. Application startup blocked for security.');
+  throw new Error('STRIPE_WEBHOOK_SECRET is required in production. Configure it in Replit Secrets.');
 }
 
 const adminPaymentRateLimiter = rateLimit({

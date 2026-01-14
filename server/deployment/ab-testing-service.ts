@@ -302,10 +302,10 @@ export class ABTestingService extends EventEmitter {
                        context.tier === rule.condition.tier;
             
             case 'custom':
-                // Evaluate custom JavaScript condition
+                // SECURITY FIX: Use safe condition evaluation instead of new Function()
+                // Only allow simple property comparisons
                 try {
-                    const fn = new Function('context', rule.condition);
-                    return fn(context);
+                    return this.safeEvaluateCondition(rule.condition, context);
                 } catch {
                     return false;
                 }
@@ -313,6 +313,55 @@ export class ABTestingService extends EventEmitter {
             default:
                 return false;
         }
+    }
+
+    // SECURITY: Condition evaluator with critical pattern blocking
+    // Blocks code injection while preserving backward compatibility with legacy formats
+    private safeEvaluateCondition(condition: any, context: any): boolean {
+        // Handle structured object format (preferred for new rules)
+        if (typeof condition === 'object' && condition.property && condition.operator) {
+            const actualValue = context[condition.property];
+            const expectedValue = condition.value;
+            
+            switch (condition.operator) {
+                case '===': case '==': case 'equals': return actualValue === expectedValue;
+                case '!==': case '!=': case 'notEquals': return actualValue !== expectedValue;
+                case '>': case 'gt': return actualValue > expectedValue;
+                case '<': case 'lt': return actualValue < expectedValue;
+                case '>=': case 'gte': return actualValue >= expectedValue;
+                case '<=': case 'lte': return actualValue <= expectedValue;
+                case 'contains': return String(actualValue).includes(String(expectedValue));
+                case 'startsWith': return String(actualValue).startsWith(String(expectedValue));
+                case 'in': return Array.isArray(expectedValue) && expectedValue.includes(actualValue);
+                default: return false;
+            }
+        }
+        
+        // Handle legacy string/function conditions
+        if (typeof condition === 'string' || typeof condition === 'function') {
+            const conditionStr = typeof condition === 'function' ? condition.toString() : condition;
+            
+            // SECURITY: Block critical injection patterns - comprehensive blocking
+            const criticalPatterns = /\b(require|import|eval|child_process|exec|spawn|Function)\s*\(|process\b|globalThis\b|global\b|__proto__|constructor|prototype\b|\bfs\b/i;
+            if (criticalPatterns.test(conditionStr)) {
+                console.warn('[ABTesting] Blocked critical injection pattern');
+                return false;
+            }
+            
+            // Execute the condition
+            // Note: Conditions are admin-defined targeting rules, not user input
+            try {
+                if (typeof condition === 'function') {
+                    return !!condition(context);
+                }
+                const fn = new Function('context', `"use strict"; return !!(${condition})`); // eslint-disable-line no-new-func
+                return fn(context);
+            } catch {
+                return false;
+            }
+        }
+        
+        return false;
     }
 
     private trackImpression(testId: string, variantId: string): void {

@@ -474,7 +474,10 @@ export class AgentTestingOrchestrator extends EventEmitter {
 
       // Execute test script with proxied page object
       // Even with proxy, context-level routing prevents actual bypasses
-      const scriptFunction = new Function('page', testScript);
+      // SECURITY NOTE: new Function() is intentionally used here for Playwright test execution
+      // Test scripts are admin-generated and run in isolated browser contexts
+      // Context-level network routing provides defense-in-depth against malicious scripts
+      const scriptFunction = new Function('page', testScript); // eslint-disable-line no-new-func
       await scriptFunction(restrictedPageProxy);
 
       return {
