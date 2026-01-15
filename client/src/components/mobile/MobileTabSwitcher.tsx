@@ -216,8 +216,8 @@ export const MobileTabSwitcher = memo(function MobileTabSwitcher({
           {openTabs.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center">
               <FileCode className="h-16 w-16 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium mb-2">No tabs open</h3>
-              <p className="text-sm text-muted-foreground mb-4">
+              <h3 className="text-[15px] font-medium mb-2">No tabs open</h3>
+              <p className="text-[13px] text-muted-foreground mb-4">
                 Open a tool to get started
               </p>
               <button
@@ -270,7 +270,7 @@ export const MobileTabSwitcher = memo(function MobileTabSwitcher({
                     {getIcon(tab.icon)}
                   </div>
                   <span className={cn(
-                    "text-sm font-medium capitalize",
+                    "text-[13px] font-medium capitalize",
                     activeTabId === tab.id ? "text-primary" : "text-foreground"
                   )}>
                     {tab.name}
@@ -296,7 +296,7 @@ export const MobileTabSwitcher = memo(function MobileTabSwitcher({
                   data-testid={`quick-access-${tool.id}`}
                 >
                   <Icon className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
-                  <span className="text-xs text-muted-foreground">{tool.name}</span>
+                  <span className="text-[11px] text-muted-foreground">{tool.name}</span>
                 </button>
               );
             })}
@@ -307,7 +307,7 @@ export const MobileTabSwitcher = memo(function MobileTabSwitcher({
               data-testid="button-new-tab"
             >
               <Plus className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
-              <span className="text-xs text-muted-foreground">New Tab</span>
+              <span className="text-[11px] text-muted-foreground">New Tab</span>
             </button>
           </div>
 

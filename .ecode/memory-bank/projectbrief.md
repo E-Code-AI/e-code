@@ -1,7 +1,7 @@
 # Project Brief
 
 ## Overview
-Test project
+Created by automated test
 
 ## Core Requirements
 [To be extracted from requirements]

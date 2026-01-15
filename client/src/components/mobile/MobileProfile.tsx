@@ -130,7 +130,7 @@ export function MobileProfile() {
             {!isEditing && (
               <button
                 onClick={() => setIsEditing(true)}
-                className="ml-auto mb-2 px-4 py-2 bg-secondary rounded-full text-sm font-medium active:scale-95 transition-transform"
+                className="ml-auto mb-2 px-4 py-2 bg-secondary rounded-full text-[13px] font-medium active:scale-95 transition-transform"
               >
                 Edit Profile
               </button>
