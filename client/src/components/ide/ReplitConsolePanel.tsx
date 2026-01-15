@@ -343,7 +343,7 @@ export function ReplitConsolePanel({
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-muted border border-border">
             <Terminal className="w-4 h-4 text-primary" />
-            <span className="text-[13px] font-medium">Console</span>
+            <span className="text-[11px] font-medium">Console</span>
           </div>
           
           {isServerLogsConnected && (
@@ -381,7 +381,7 @@ export function ReplitConsolePanel({
               ) : (
                 <XCircle className="h-3.5 w-3.5 text-red-500" />
               )}
-              <span className={cn("text-xs", exitCode === 0 ? "text-green-500" : "text-red-500")}>
+              <span className={cn("text-[11px]", exitCode === 0 ? "text-green-500" : "text-red-500")}>
                 Exit: {exitCode}
               </span>
             </div>
@@ -405,7 +405,7 @@ export function ReplitConsolePanel({
       <div className="h-9 flex items-center gap-1 sm:gap-2 px-1 sm:px-2 border-b bg-muted/30 overflow-x-auto">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="h-7 text-xs gap-1 shrink-0" data-testid="workflows-dropdown">
+            <Button variant="outline" size="sm" className="h-7 text-[11px] gap-1 shrink-0" data-testid="workflows-dropdown">
               <Zap className="h-3 w-3" />
               <span className="hidden sm:inline">Workflows</span>
               <ChevronDown className="h-3 w-3" />
@@ -422,7 +422,7 @@ export function ReplitConsolePanel({
                 >
                   <div className="flex items-center gap-2 flex-1 min-w-0">
                     <Terminal className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                    <span className="text-sm truncate">{workflow.name}</span>
+                    <span className="text-[13px] truncate">{workflow.name}</span>
                     {workflow.isDefault && (
                       <Badge variant="outline" className="text-[10px] h-4 shrink-0">Default</Badge>
                     )}
@@ -470,7 +470,7 @@ export function ReplitConsolePanel({
             className="scale-75"
             data-testid="show-latest-toggle"
           />
-          <Label htmlFor="show-latest" className="text-[10px] sm:text-xs text-muted-foreground cursor-pointer whitespace-nowrap">
+          <Label htmlFor="show-latest" className="text-[10px] sm:text-[11px] text-muted-foreground cursor-pointer whitespace-nowrap">
             <span className="hidden sm:inline">Latest Only</span>
             <span className="sm:hidden">Latest</span>
           </Label>
@@ -492,7 +492,7 @@ export function ReplitConsolePanel({
         <Button
           variant="ghost"
           size="sm"
-          className="h-7 text-xs gap-1 text-primary shrink-0"
+          className="h-7 text-[11px] gap-1 text-primary shrink-0"
           onClick={onAskAgent}
           data-testid="ask-agent"
         >
@@ -517,7 +517,7 @@ export function ReplitConsolePanel({
       </div>
 
       <ScrollArea 
-        className="flex-1 font-mono text-xs"
+        className="flex-1 font-mono text-[11px]"
         onScroll={(e) => {
           const target = e.target as HTMLElement;
           const isAtBottom = target.scrollHeight - target.scrollTop === target.clientHeight;
@@ -535,13 +535,13 @@ export function ReplitConsolePanel({
               ) : (
                 <>
                   <Terminal className="h-12 w-12 text-muted-foreground/30 mb-4" />
-                  <p className="text-muted-foreground text-sm text-center mb-6">
+                  <p className="text-muted-foreground text-[13px] text-center mb-6">
                     Results of your code will appear here when you run
                   </p>
                   
                   <div className="w-full max-w-sm space-y-4">
                     <div>
-                      <h4 className="text-xs font-medium text-muted-foreground mb-2">Default</h4>
+                      <h4 className="text-[11px] font-medium text-muted-foreground mb-2">Default</h4>
                       <Button
                         variant="outline"
                         className="w-full justify-start gap-2 h-10"
@@ -555,14 +555,14 @@ export function ReplitConsolePanel({
                         <div className="h-6 w-6 rounded bg-green-500 flex items-center justify-center">
                           <Play className="h-3 w-3 text-white fill-current" />
                         </div>
-                        <span className="text-sm">Project</span>
+                        <span className="text-[13px]">Project</span>
                       </Button>
                     </div>
                     
                     <div>
                       <div className="flex items-center gap-1.5 mb-2">
                         <Settings className="h-3 w-3 text-muted-foreground" />
-                        <h4 className="text-xs font-medium text-muted-foreground">Workflows</h4>
+                        <h4 className="text-[11px] font-medium text-muted-foreground">Workflows</h4>
                       </div>
                       <div className="space-y-1.5">
                         {allWorkflows.slice(0, 3).map((workflow) => (
@@ -577,7 +577,7 @@ export function ReplitConsolePanel({
                             <div className="h-6 w-6 rounded bg-green-500 flex items-center justify-center">
                               <Play className="h-3 w-3 text-white fill-current" />
                             </div>
-                            <span className="text-sm">{workflow.name}</span>
+                            <span className="text-[13px]">{workflow.name}</span>
                           </Button>
                         ))}
                       </div>
@@ -636,7 +636,7 @@ export function ReplitConsolePanel({
       </ScrollArea>
 
       {displayedLogs.length > 0 && (
-        <div className="h-7 flex items-center justify-between px-2 border-t bg-muted/30 text-xs text-muted-foreground">
+        <div className="h-7 flex items-center justify-between px-2 border-t bg-muted/30 text-[11px] text-muted-foreground">
           <div className="flex items-center gap-2">
             <span>{displayedLogs.length} entries</span>
             {errorCount > 0 && (
@@ -672,7 +672,7 @@ export function ReplitConsolePanel({
           </SheetHeader>
           <div className="py-4 space-y-1">
             <div className="flex items-center justify-between py-3 px-3 rounded-lg hover:bg-muted">
-              <Label htmlFor="mobile-show-latest" className="text-sm cursor-pointer">
+              <Label htmlFor="mobile-show-latest" className="text-[13px] cursor-pointer">
                 Show Only Latest Run
               </Label>
               <Switch

@@ -478,7 +478,7 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
           </DropdownMenu>
         </div>
         <div className="flex items-center justify-between">
-          <span className="text-sm text-muted-foreground">All Databases</span>
+          <span className="text-[13px] text-muted-foreground">All Databases</span>
           <Button
             variant="ghost"
             size="sm"
@@ -506,7 +506,7 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
                   <Table className="h-5 w-5 text-muted-foreground" />
                   <div className="text-left">
                     <div className="font-medium text-foreground">Development Database</div>
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-[13px] text-muted-foreground">
                       {formatStorage(storageUsedMb, storageLimitMb)}
                     </div>
                   </div>
@@ -523,7 +523,7 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
                   <Table className="h-5 w-5 text-muted-foreground" />
                   <div className="text-left">
                     <div className="font-medium text-foreground">Production Database</div>
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-[13px] text-muted-foreground">
                       {formatStorage(64.93, 102400)}
                     </div>
                   </div>
@@ -534,13 +534,13 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
           </div>
 
           <div>
-            <h4 className="text-sm font-semibold text-foreground mb-2">Billing Period</h4>
-            <p className="text-sm text-muted-foreground">Renews monthly, 1 janv.</p>
+            <h4 className="text-[13px] font-semibold text-foreground mb-2">Billing Period</h4>
+            <p className="text-[13px] text-muted-foreground">Renews monthly, 1 janv.</p>
           </div>
 
           <div>
-            <h4 className="text-sm font-semibold text-foreground mb-2">Hours of Compute Used</h4>
-            <p className="text-sm text-muted-foreground">{computeHours.toFixed(2)} hours</p>
+            <h4 className="text-[13px] font-semibold text-foreground mb-2">Hours of Compute Used</h4>
+            <p className="text-[13px] text-muted-foreground">{computeHours.toFixed(2)} hours</p>
           </div>
         </div>
       </ScrollArea>
@@ -550,7 +550,7 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
   const OverviewTab = () => (
     <ScrollArea className="flex-1">
       <div className="p-4">
-        <h4 className="text-sm font-semibold text-foreground mb-3">Tables</h4>
+        <h4 className="text-[13px] font-semibold text-foreground mb-3">Tables</h4>
         {tablesLoading ? (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -569,16 +569,16 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
               >
                 <div className="flex items-center gap-3">
                   <Table className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium text-foreground">{table.name}</span>
+                  <span className="text-[13px] font-medium text-foreground">{table.name}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">{table.rowCount} rows</span>
+                  <span className="text-[13px] text-muted-foreground">{table.rowCount} rows</span>
                   <ChevronRight className="h-4 w-4 text-muted-foreground" />
                 </div>
               </button>
             ))}
             {filteredTables.length === 0 && !tablesLoading && (
-              <p className="text-sm text-muted-foreground text-center py-4">No tables found</p>
+              <p className="text-[13px] text-muted-foreground text-center py-4">No tables found</p>
             )}
           </div>
         )}
@@ -625,7 +625,7 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
             <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
             <Input
               placeholder="Search..."
-              className="h-8 pl-7 text-xs"
+              className="h-8 pl-7 text-[11px]"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               data-testid="input-search-tables"
@@ -649,7 +649,7 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
                 key={table.name}
                 onClick={() => setSelectedTable(table.name)}
                 className={cn(
-                  "w-full flex items-center gap-2 px-2 py-1.5 rounded text-left text-sm hover:bg-muted",
+                  "w-full flex items-center gap-2 px-2 py-1.5 rounded text-left text-[13px] hover:bg-muted",
                   selectedTable === table.name && "bg-primary/10 text-primary"
                 )}
                 data-testid={`button-select-${table.name}`}
@@ -665,11 +665,11 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
       <div className="flex-1 flex flex-col overflow-hidden">
         {currentView === 'production' && (
           <div className="px-4 py-2 bg-amber-500/10 border-b border-amber-500/30 flex items-center justify-between">
-            <span className="text-sm text-amber-600 dark:text-amber-400">
+            <span className="text-[13px] text-amber-600 dark:text-amber-400">
               You're viewing your database in read-only.
             </span>
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Enable Editing</span>
+              <span className="text-[13px] text-muted-foreground">Enable Editing</span>
               <Switch
                 checked={!readOnlyMode}
                 onCheckedChange={(checked) => setReadOnlyMode(!checked)}
@@ -701,7 +701,7 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
             <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
           </Button>
           <div className="flex-1 min-w-0" />
-          <div className="flex items-center gap-1 text-sm text-muted-foreground">
+          <div className="flex items-center gap-1 text-[13px] text-muted-foreground">
             <Button
               variant="ghost"
               size="icon"
@@ -739,7 +739,7 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
         {showSqlConsole && (
           <div className="p-4 border-b border-border">
             <textarea
-              className="w-full h-24 p-2 text-sm font-mono bg-muted border border-border rounded-md resize-none"
+              className="w-full h-24 p-2 text-[13px] font-mono bg-muted border border-border rounded-md resize-none"
               placeholder="Enter SQL query..."
               value={sqlQuery}
               onChange={(e) => setSqlQuery(e.target.value)}
@@ -759,7 +759,7 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
               </Button>
             </div>
             {sqlError && (
-              <div className="mt-2 p-2 bg-red-500/10 border border-red-500/30 rounded text-red-500 text-xs" data-testid="sql-error">
+              <div className="mt-2 p-2 bg-red-500/10 border border-red-500/30 rounded text-red-500 text-[11px]" data-testid="sql-error">
                 <div>{sqlError}</div>
                 {sqlError.includes('not provisioned') && (
                   <Button
@@ -789,12 +789,12 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
             )}
             {sqlResults && (
               <div className="mt-2" data-testid="sql-results-container">
-                <div className="p-2 bg-green-500/10 border border-green-500/30 rounded text-green-600 text-xs mb-2" data-testid="sql-results-summary">
+                <div className="p-2 bg-green-500/10 border border-green-500/30 rounded text-green-600 text-[11px] mb-2" data-testid="sql-results-summary">
                   Query executed successfully. {sqlResults.rowCount !== undefined ? `${sqlResults.rowCount} row(s)` : 'No rows'} affected/returned.
                 </div>
                 {sqlResults.rows && sqlResults.rows.length > 0 && (
                   <div className="max-h-48 overflow-auto border border-border rounded" data-testid="sql-results-table">
-                    <table className="w-full text-xs">
+                    <table className="w-full text-[11px]">
                       <thead>
                         <tr className="bg-muted border-b border-border">
                           {Object.keys(sqlResults.rows[0] || {}).map((key) => (
@@ -836,7 +836,7 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
                   {tableSchema.columns.map((col) => (
                     <div
                       key={col.name}
-                      className="flex-1 min-w-[150px] p-2 border-r border-border text-xs"
+                      className="flex-1 min-w-[150px] p-2 border-r border-border text-[11px]"
                     >
                       <div className="font-medium text-foreground">{col.name}</div>
                       <div className="text-muted-foreground">{col.type}</div>
@@ -848,13 +848,13 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
               {tableData?.data && tableData.data.length > 0 ? (
                 tableData.data.map((row, index) => (
                   <div key={index} className="flex border-b border-border hover:bg-muted/50">
-                    <div className="w-8 p-2 border-r border-border text-xs text-muted-foreground">
+                    <div className="w-8 p-2 border-r border-border text-[11px] text-muted-foreground">
                       {(currentPage - 1) * 50 + index + 1}
                     </div>
                     {tableSchema?.columns?.map((col) => (
                       <div
                         key={col.name}
-                        className="flex-1 min-w-[150px] p-2 border-r border-border text-xs truncate"
+                        className="flex-1 min-w-[150px] p-2 border-r border-border text-[11px] truncate"
                       >
                         {row[col.name] !== null && row[col.name] !== undefined
                           ? String(row[col.name])
@@ -866,8 +866,8 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
                 ))
               ) : (
                 <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
-                  <p className="text-sm">No rows</p>
-                  <p className="text-xs mt-1">limit 50 offset {(currentPage - 1) * 50}</p>
+                  <p className="text-[13px]">No rows</p>
+                  <p className="text-[11px] mt-1">limit 50 offset {(currentPage - 1) * 50}</p>
                 </div>
               )}
             </div>
@@ -878,20 +878,20 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
           <div className="absolute right-0 top-0 w-72 h-full bg-background border-l border-border shadow-lg z-10 overflow-auto">
             <div className="p-4 space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Table rows count</span>
+                <span className="text-[13px] font-medium">Table rows count</span>
                 <Switch
                   checked={tableRowsCount}
                   onCheckedChange={setTableRowsCount}
                 />
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-[11px] text-muted-foreground">
                 Beware count(*) operation performs light scan of the table which can be both slow and billed by serverless databases for row reads
               </p>
 
               <div className="flex items-center justify-between">
                 <div>
-                  <span className="text-sm font-medium">Expand subviews</span>
-                  <p className="text-xs text-muted-foreground">Always keep subviews visible</p>
+                  <span className="text-[13px] font-medium">Expand subviews</span>
+                  <p className="text-[11px] text-muted-foreground">Always keep subviews visible</p>
                 </div>
                 <Switch
                   checked={expandSubviews}
@@ -900,9 +900,9 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
               </div>
 
               <div>
-                <span className="text-sm font-medium">Pagination type</span>
+                <span className="text-[13px] font-medium">Pagination type</span>
                 <div className="mt-2 space-y-1">
-                  <label className="flex items-center gap-2 text-sm">
+                  <label className="flex items-center gap-2 text-[13px]">
                     <input
                       type="radio"
                       checked={paginationType === 'limit'}
@@ -910,7 +910,7 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
                     />
                     LIMIT OFFSET
                   </label>
-                  <label className="flex items-center gap-2 text-sm">
+                  <label className="flex items-center gap-2 text-[13px]">
                     <input
                       type="radio"
                       checked={paginationType === 'pages'}
@@ -923,8 +923,8 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
 
               <div className="flex items-center justify-between">
                 <div>
-                  <span className="text-sm font-medium">Flat schemas</span>
-                  <p className="text-xs text-muted-foreground">Show tables without grouping by schema</p>
+                  <span className="text-[13px] font-medium">Flat schemas</span>
+                  <p className="text-[11px] text-muted-foreground">Show tables without grouping by schema</p>
                 </div>
                 <Switch
                   checked={flatSchemas}
@@ -933,23 +933,23 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
               </div>
 
               <div>
-                <span className="text-sm font-medium">Show bytea as</span>
+                <span className="text-[13px] font-medium">Show bytea as</span>
                 <div className="mt-2 space-y-1">
-                  <label className="flex items-center gap-2 text-sm">
+                  <label className="flex items-center gap-2 text-[13px]">
                     <input
                       type="radio"
                       checked={showByteaAs === 'hex'}
                       onChange={() => setShowByteaAs('hex')}
                     />
-                    HEX <code className="text-xs bg-muted px-1 rounded">\x69643A3130303031</code>
+                    HEX <code className="text-[11px] bg-muted px-1 rounded">\x69643A3130303031</code>
                   </label>
-                  <label className="flex items-center gap-2 text-sm">
+                  <label className="flex items-center gap-2 text-[13px]">
                     <input
                       type="radio"
                       checked={showByteaAs === 'utf8'}
                       onChange={() => setShowByteaAs('utf8')}
                     />
-                    UTF8 <code className="text-xs bg-muted px-1 rounded">id:10001</code>
+                    UTF8 <code className="text-[11px] bg-muted px-1 rounded">id:10001</code>
                   </label>
                 </div>
               </div>
@@ -973,12 +973,12 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
     <ScrollArea className="flex-1">
       <div className="p-4 space-y-6">
         <div>
-          <h4 className="text-sm font-semibold text-foreground mb-2">History Retention</h4>
-          <p className="text-sm text-muted-foreground mb-3">
+          <h4 className="text-[13px] font-semibold text-foreground mb-2">History Retention</h4>
+          <p className="text-[13px] text-muted-foreground mb-3">
             Maintain a history of changes for a period of time, enabling features like point-in-time restore and restoring a database back to an agent checkpoint.
           </p>
           <div>
-            <label className="text-sm text-muted-foreground mb-1 block">History Retention Period</label>
+            <label className="text-[13px] text-muted-foreground mb-1 block">History Retention Period</label>
             <Select value={historyRetention} onValueChange={setHistoryRetention}>
               <SelectTrigger className="w-full" data-testid="select-retention">
                 <SelectValue />
@@ -995,13 +995,13 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
         </div>
 
         <div>
-          <h4 className="text-sm font-semibold text-foreground mb-2">Restore</h4>
-          <p className="text-sm text-muted-foreground mb-3">
+          <h4 className="text-[13px] font-semibold text-foreground mb-2">Restore</h4>
+          <p className="text-[13px] text-muted-foreground mb-3">
             Quickly restore a branch to a point within it's history retention period.
           </p>
           <div className="space-y-3">
             <div>
-              <label className="text-sm text-muted-foreground mb-1 block">Timestamp</label>
+              <label className="text-[13px] text-muted-foreground mb-1 block">Timestamp</label>
               <div className="flex flex-col sm:flex-row gap-2">
                 <Input
                   type="date"

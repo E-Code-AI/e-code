@@ -96,7 +96,7 @@ export function StatusBar({
                 <span className="font-medium">{gitBranch}</span>
               </button>
             </TooltipTrigger>
-            <TooltipContent side="top" className="text-xs">
+            <TooltipContent side="top" className="text-[11px]">
               Current branch: {gitBranch}
             </TooltipContent>
           </Tooltip>
@@ -117,7 +117,7 @@ export function StatusBar({
                 )}
               </div>
             </TooltipTrigger>
-            <TooltipContent side="top" className="text-xs">
+            <TooltipContent side="top" className="text-[11px]">
               {isConnected ? 'Connected' : 'Disconnected'}
             </TooltipContent>
           </Tooltip>
@@ -145,7 +145,7 @@ export function StatusBar({
                 )}
               </div>
             </TooltipTrigger>
-            <TooltipContent side="top" className="text-xs">
+            <TooltipContent side="top" className="text-[11px]">
               {isRunning ? 'Server is running' : 'Server is stopped'}
             </TooltipContent>
           </Tooltip>
@@ -175,7 +175,7 @@ export function StatusBar({
                   )}
                 </button>
               </TooltipTrigger>
-              <TooltipContent side="top" className="text-xs">
+              <TooltipContent side="top" className="text-[11px]">
                 {problems.errors} errors, {problems.warnings} warnings
               </TooltipContent>
             </Tooltip>
@@ -213,7 +213,7 @@ export function StatusBar({
                   )}
                 </button>
               </TooltipTrigger>
-              <TooltipContent side="top" className="text-xs">
+              <TooltipContent side="top" className="text-[11px]">
                 {deploymentStatus === 'deploying' && 'Deployment in progress...'}
                 {deploymentStatus === 'live' && (deploymentUrl ? `Live at ${deploymentUrl}` : 'Deployment is live')}
                 {deploymentStatus === 'failed' && 'Deployment failed - click to view logs'}
@@ -242,7 +242,7 @@ export function StatusBar({
                   <span>{formatTime(lastSaved)}</span>
                 </div>
               </TooltipTrigger>
-              <TooltipContent side="top" className="text-xs">
+              <TooltipContent side="top" className="text-[11px]">
                 Last saved: {lastSaved.toLocaleString()}
               </TooltipContent>
             </Tooltip>
@@ -259,7 +259,7 @@ export function StatusBar({
                       {cpuUsage}%
                     </span>
                   </TooltipTrigger>
-                  <TooltipContent side="top" className="text-xs">
+                  <TooltipContent side="top" className="text-[11px]">
                     CPU Usage: {cpuUsage}%
                   </TooltipContent>
                 </Tooltip>
@@ -272,7 +272,7 @@ export function StatusBar({
                       {memoryUsage}%
                     </span>
                   </TooltipTrigger>
-                  <TooltipContent side="top" className="text-xs">
+                  <TooltipContent side="top" className="text-[11px]">
                     Memory Usage: {memoryUsage}%
                   </TooltipContent>
                 </Tooltip>
@@ -295,7 +295,7 @@ export function StatusBar({
                 <span>Ln {cursorPosition.line}, Col {cursorPosition.column}</span>
               </button>
             </TooltipTrigger>
-            <TooltipContent side="top" className="text-xs">
+            <TooltipContent side="top" className="text-[11px]">
               Go to Line
             </TooltipContent>
           </Tooltip>
@@ -314,7 +314,7 @@ export function StatusBar({
                 {language}
               </button>
             </TooltipTrigger>
-            <TooltipContent side="top" className="text-xs">
+            <TooltipContent side="top" className="text-[11px]">
               Select Language Mode
             </TooltipContent>
           </Tooltip>
@@ -333,7 +333,7 @@ export function StatusBar({
                 {encoding}
               </button>
             </TooltipTrigger>
-            <TooltipContent side="top" className="text-xs">
+            <TooltipContent side="top" className="text-[11px]">
               Select Encoding
             </TooltipContent>
           </Tooltip>
@@ -353,7 +353,7 @@ export function StatusBar({
                   <span className="font-medium">{notifications}</span>
                 </button>
               </TooltipTrigger>
-              <TooltipContent side="top" className="text-xs">
+              <TooltipContent side="top" className="text-[11px]">
                 {notifications} notification{notifications > 1 ? 's' : ''}
               </TooltipContent>
             </Tooltip>
@@ -376,7 +376,7 @@ export function StatusBar({
                 <Command className="h-3 w-3" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent side="top" className="text-xs">
+            <TooltipContent side="top" className="text-[11px]">
               Keyboard Shortcuts
             </TooltipContent>
           </Tooltip>

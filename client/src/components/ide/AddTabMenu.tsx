@@ -56,7 +56,7 @@ export function AddTabMenu({ onAddTool, availableTools = [], onOpenToolsSheet }:
           className="h-7 px-2 hover:bg-surface-hover-solid border border-transparent transition-all duration-200"
         >
           <Plus className="w-3.5 h-3.5 mr-1" />
-          <span className="text-xs">Add Tab</span>
+          <span className="text-[11px]">Add Tab</span>
           <ChevronDown className="w-2.5 h-2.5 ml-1 transition-transform duration-200" />
         </Button>
       </PopoverTrigger>
@@ -79,7 +79,7 @@ export function AddTabMenu({ onAddTool, availableTools = [], onOpenToolsSheet }:
             {search === "" && (
               <>
                 {/* Files Section - Always visible at top */}
-                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                <div className="px-2 py-1.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
                   Files
                 </div>
                 
@@ -90,8 +90,8 @@ export function AddTabMenu({ onAddTool, availableTools = [], onOpenToolsSheet }:
                 >
                   <FolderOpen className="w-4 h-4 flex-shrink-0 text-blue-500" />
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium">Open files</div>
-                    <div className="text-xs text-muted-foreground">Browse project files</div>
+                    <div className="text-[13px] font-medium">Open files</div>
+                    <div className="text-[11px] text-muted-foreground">Browse project files</div>
                   </div>
                   <ChevronRight className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                 </button>
@@ -106,7 +106,7 @@ export function AddTabMenu({ onAddTool, availableTools = [], onOpenToolsSheet }:
               return (
                 <div key={category} className="mb-2">
                   {search === "" && (
-                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                    <div className="px-2 py-1.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
                       {category}
                     </div>
                   )}
@@ -121,15 +121,15 @@ export function AddTabMenu({ onAddTool, availableTools = [], onOpenToolsSheet }:
                       >
                         <IconComponent className="w-4 h-4 flex-shrink-0 text-blue-600 dark:text-blue-400 transition-transform duration-200 group-hover:scale-110" />
                         <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium flex items-center gap-2">
+                          <div className="text-[13px] font-medium flex items-center gap-2">
                             {feature.label}
                             {feature.badge && (
-                              <Badge variant="secondary" className="h-4 text-xs px-1.5">
+                              <Badge variant="secondary" className="h-4 text-[11px] px-1.5">
                                 {feature.badge}
                               </Badge>
                             )}
                           </div>
-                          <div className="text-xs text-muted-foreground truncate">
+                          <div className="text-[11px] text-muted-foreground truncate">
                             {feature.description}
                           </div>
                         </div>
@@ -145,8 +145,8 @@ export function AddTabMenu({ onAddTool, availableTools = [], onOpenToolsSheet }:
             {filteredFeatures.length === 0 && search !== "" && (
               <div className="p-8 text-center text-muted-foreground">
                 <Sparkles className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                <p className="text-sm font-medium">No features found</p>
-                <p className="text-xs mt-1">Try a different search term</p>
+                <p className="text-[13px] font-medium">No features found</p>
+                <p className="text-[11px] mt-1">Try a different search term</p>
               </div>
             )}
           </div>
@@ -161,14 +161,14 @@ export function AddTabMenu({ onAddTool, availableTools = [], onOpenToolsSheet }:
                 setSearch("");
                 onOpenToolsSheet();
               }}
-              className="w-full flex items-center justify-center gap-2 px-3 py-2 mb-2 rounded-md text-sm font-medium text-primary hover:bg-surface-hover-solid transition-colors"
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 mb-2 rounded-md text-[13px] font-medium text-primary hover:bg-surface-hover-solid transition-colors"
               data-testid="button-see-all-tools"
             >
               <ExternalLink className="w-4 h-4" />
               See All Tools
             </button>
           )}
-          <div className="text-xs text-muted-foreground text-center">
+          <div className="text-[11px] text-muted-foreground text-center">
             {filteredFeatures.length} feature{filteredFeatures.length !== 1 ? 's' : ''} available
             {search && ` matching "${search}"`}
           </div>

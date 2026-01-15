@@ -84,7 +84,7 @@ export function ToolsPanel({
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-[var(--ecode-accent)]" />
-            <h2 className="text-sm font-semibold text-[var(--ecode-text)]">Tools</h2>
+            <h2 className="text-[13px] font-semibold text-[var(--ecode-text)]">Tools</h2>
           </div>
           {onClose && (
             <Button
@@ -106,7 +106,7 @@ export function ToolsPanel({
             placeholder="Search tools..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="h-8 pl-8 pr-8 text-sm"
+            className="h-8 pl-8 pr-8 text-[13px]"
             data-testid="input-search-tools"
           />
           {search && (
@@ -128,8 +128,8 @@ export function ToolsPanel({
           {Object.entries(groupedTools).length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-[var(--ecode-text-muted)]">
               <Sparkles className="w-12 h-12 mb-3 opacity-20" />
-              <p className="text-sm font-medium">No tools found</p>
-              <p className="text-xs mt-1">Try a different search</p>
+              <p className="text-[13px] font-medium">No tools found</p>
+              <p className="text-[11px] mt-1">Try a different search</p>
             </div>
           ) : (
             Object.entries(groupedTools).map(([category, tools]) => (
@@ -140,7 +140,7 @@ export function ToolsPanel({
                 className="mb-2"
               >
                 <CollapsibleTrigger className="flex items-center justify-between w-full px-2 py-1.5 rounded-md hover:bg-[var(--ecode-sidebar-hover)] transition-colors">
-                  <span className="text-xs font-semibold text-[var(--ecode-text-muted)] uppercase tracking-wide">
+                  <span className="text-[11px] font-semibold text-[var(--ecode-text-muted)] uppercase tracking-wide">
                     {category}
                   </span>
                   <div className="flex items-center gap-2">
@@ -183,7 +183,7 @@ export function ToolsPanel({
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-0.5">
                             <span className={cn(
-                              "text-sm font-medium truncate",
+                              "text-[13px] font-medium truncate",
                               isActive && "font-semibold"
                             )}>
                               {tool.label}
@@ -197,7 +197,7 @@ export function ToolsPanel({
                               </Badge>
                             )}
                           </div>
-                          <p className="text-xs text-[var(--ecode-text-muted)] line-clamp-2">
+                          <p className="text-[11px] text-[var(--ecode-text-muted)] line-clamp-2">
                             {tool.description}
                           </p>
                         </div>

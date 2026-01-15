@@ -157,7 +157,7 @@ export function TopNavBar({
                 <span className="font-medium">Admin Dashboard</span>
                 <Badge 
                   variant="default"
-                  className="ml-auto text-xs h-5"
+                  className="ml-auto text-[11px] h-5"
                 >
                   ADMIN
                 </Badge>
@@ -169,10 +169,10 @@ export function TopNavBar({
       
       {/* Logo & Project Name */}
       <div className="flex items-center gap-2">
-        <span className="text-xs text-[var(--ecode-accent)] font-semibold">E-Code</span>
+        <span className="text-[11px] text-[var(--ecode-accent)] font-semibold">E-Code</span>
         
         {/* Project Name */}
-        <span className="text-xs font-medium truncate max-w-[150px]">{projectName}</span>
+        <span className="text-[11px] font-medium truncate max-w-[150px]">{projectName}</span>
       </div>
       
       {/* Tabs with Drag-and-Drop Reorder - All tabs visible with scroll */}
@@ -206,7 +206,7 @@ export function TopNavBar({
                 onClick={() => onTabChange(tab.id)}
                 data-testid={`tab-${tab.id}`}
                 className={cn(
-                  "flex-shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-md transition-all duration-200 cursor-grab active:cursor-grabbing",
+                  "flex-shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 text-[11px] rounded-md transition-all duration-200 cursor-grab active:cursor-grabbing",
                   "hover:bg-[var(--ecode-sidebar-hover)] hover:shadow-sm",
                   activeTab === tab.id 
                     ? "bg-[var(--ecode-sidebar-bg)] shadow-sm border border-[var(--ecode-border)]" 
@@ -276,7 +276,7 @@ export function TopNavBar({
           onClick={onRun}
           data-testid="button-run-stop"
           className={cn(
-            "h-7 px-2.5 gap-1.5 text-xs transition-all shadow-sm",
+            "h-7 px-2.5 gap-1.5 text-[11px] transition-all shadow-sm",
             isRunning 
               ? "bg-[hsl(var(--ecode-danger))] hover:bg-[hsl(var(--ecode-danger))]" 
               : "bg-[var(--ecode-accent)] hover:bg-[var(--ecode-accent-hover)]"

@@ -36,7 +36,7 @@ export function FileExplorerPanel({
     <div className="h-full flex flex-col border-l">
       {/* Header */}
       <div className="h-10 border-b flex items-center justify-between px-3">
-        <h3 className="font-semibold text-sm">Files</h3>
+        <h3 className="font-semibold text-[13px]">Files</h3>
         <Button
           variant="ghost"
           size="sm"

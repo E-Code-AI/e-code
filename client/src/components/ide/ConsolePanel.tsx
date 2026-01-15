@@ -372,7 +372,7 @@ export function ConsolePanel({ projectId, userId, isRunning, executionId, classN
             <TabsList className="h-7 bg-muted">
               <TabsTrigger 
                 value="output" 
-                className="text-xs px-3 h-6 gap-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                className="text-[11px] px-3 h-6 gap-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
                 data-testid="console-tab-output"
               >
                 <Play className="h-3 w-3" />
@@ -381,7 +381,7 @@ export function ConsolePanel({ projectId, userId, isRunning, executionId, classN
               </TabsTrigger>
               <TabsTrigger 
                 value="shell" 
-                className="text-xs px-3 h-6 gap-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                className="text-[11px] px-3 h-6 gap-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
                 onClick={() => {
                   if (shellSessions.length === 0) {
                     createNewShell();
@@ -397,7 +397,7 @@ export function ConsolePanel({ projectId, userId, isRunning, executionId, classN
           </Tabs>
           
           {activeTab === 'output' && isRunning && (
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
               <div className={cn(
                 "w-2 h-2 rounded-full animate-pulse",
                 isConnected ? "bg-green-500" : "bg-yellow-500"
@@ -413,7 +413,7 @@ export function ConsolePanel({ projectId, userId, isRunning, executionId, classN
               ) : (
                 <XCircle className="h-3.5 w-3.5 text-red-500" />
               )}
-              <span className={cn("text-xs", exitCode === 0 ? "text-green-500" : "text-red-500")}>
+              <span className={cn("text-[11px]", exitCode === 0 ? "text-green-500" : "text-red-500")}>
                 Exit: {exitCode}
               </span>
             </div>
@@ -426,7 +426,7 @@ export function ConsolePanel({ projectId, userId, isRunning, executionId, classN
               <Button
                 variant={filter === 'all' ? 'secondary' : 'ghost'}
                 size="sm"
-                className="h-6 px-2 text-xs"
+                className="h-6 px-2 text-[11px]"
                 onClick={() => setFilter('all')}
                 data-testid="console-filter-all"
               >
@@ -435,7 +435,7 @@ export function ConsolePanel({ projectId, userId, isRunning, executionId, classN
               <Button
                 variant={filter === 'error' ? 'secondary' : 'ghost'}
                 size="sm"
-                className="h-6 px-2 text-xs"
+                className="h-6 px-2 text-[11px]"
                 onClick={() => setFilter('error')}
                 data-testid="console-filter-error"
               >
@@ -463,7 +463,7 @@ export function ConsolePanel({ projectId, userId, isRunning, executionId, classN
                       key={s.id}
                       variant={s.id === activeShellId ? 'secondary' : 'ghost'}
                       size="sm"
-                      className="h-6 px-2 text-xs gap-1"
+                      className="h-6 px-2 text-[11px] gap-1"
                       onClick={() => setActiveShellId(s.id)}
                       data-testid={`shell-session-${s.id}`}
                     >
@@ -509,12 +509,12 @@ export function ConsolePanel({ projectId, userId, isRunning, executionId, classN
             value={findQuery}
             onChange={(e) => handleFindChange(e.target.value)}
             placeholder="Find in shell..."
-            className="h-7 text-xs flex-1 max-w-xs"
+            className="h-7 text-[11px] flex-1 max-w-xs"
             autoFocus
             data-testid="shell-find-input"
           />
           {findMatches.length > 0 && (
-            <span className="text-xs text-muted-foreground">{currentMatchIndex + 1}/{findMatches.length}</span>
+            <span className="text-[11px] text-muted-foreground">{currentMatchIndex + 1}/{findMatches.length}</span>
           )}
           <Button 
             variant="ghost" 
@@ -536,7 +536,7 @@ export function ConsolePanel({ projectId, userId, isRunning, executionId, classN
           >
             <ChevronUp className="h-3 w-3" />
           </Button>
-          <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => { setIsFindMode(false); setFindQuery(''); }} data-testid="shell-find-close">
+          <Button variant="ghost" size="sm" className="h-6 text-[11px]" onClick={() => { setIsFindMode(false); setFindQuery(''); }} data-testid="shell-find-close">
             Close
           </Button>
         </div>
@@ -549,7 +549,7 @@ export function ConsolePanel({ projectId, userId, isRunning, executionId, classN
             value={generatePrompt}
             onChange={(e) => setGeneratePrompt(e.target.value)}
             placeholder="Describe the command you want..."
-            className="h-7 text-xs flex-1"
+            className="h-7 text-[11px] flex-1"
             onKeyDown={(e) => {
               if (e.key === 'Enter' && generatePrompt.trim()) {
                 generateCommandMutation.mutate(generatePrompt);
@@ -563,7 +563,7 @@ export function ConsolePanel({ projectId, userId, isRunning, executionId, classN
           />
           <Button 
             size="sm" 
-            className="h-7 text-xs gap-1"
+            className="h-7 text-[11px] gap-1"
             onClick={() => generateCommandMutation.mutate(generatePrompt)}
             disabled={!generatePrompt.trim() || generateCommandMutation.isPending}
             data-testid="shell-generate-submit"
@@ -574,7 +574,7 @@ export function ConsolePanel({ projectId, userId, isRunning, executionId, classN
           <Button 
             variant="ghost" 
             size="sm" 
-            className="h-7 text-xs"
+            className="h-7 text-[11px]"
             onClick={() => { setIsGenerateMode(false); setGeneratePrompt(''); }}
             data-testid="shell-generate-cancel"
           >
@@ -585,7 +585,7 @@ export function ConsolePanel({ projectId, userId, isRunning, executionId, classN
 
       {activeTab === 'output' ? (
         <ScrollArea 
-          className="flex-1 font-mono text-xs"
+          className="flex-1 font-mono text-[11px]"
           onScroll={(e) => {
             const target = e.target as HTMLElement;
             const isAtBottom = target.scrollHeight - target.scrollTop === target.clientHeight;
@@ -624,7 +624,7 @@ export function ConsolePanel({ projectId, userId, isRunning, executionId, classN
         <div className="flex-1 flex flex-col overflow-hidden">
           <div 
             ref={shellScrollRef}
-            className="flex-1 overflow-auto p-2 font-mono text-xs bg-card text-card-foreground"
+            className="flex-1 overflow-auto p-2 font-mono text-[11px] bg-card text-card-foreground"
             onClick={() => inputRef.current?.focus()}
             data-testid="shell-output"
           >
@@ -651,14 +651,14 @@ export function ConsolePanel({ projectId, userId, isRunning, executionId, classN
           {activeShell && (
             <div className="border-t bg-card px-2 py-1.5">
               <div className="flex items-center gap-2">
-                <span className="text-green-500 text-xs font-mono">$</span>
+                <span className="text-green-500 text-[11px] font-mono">$</span>
                 <Input
                   ref={inputRef}
                   value={currentCommand}
                   onChange={(e) => setCurrentCommand(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder="Enter command..."
-                  className="h-7 text-xs font-mono flex-1 bg-transparent border-none focus-visible:ring-0"
+                  className="h-7 text-[11px] font-mono flex-1 bg-transparent border-none focus-visible:ring-0"
                   data-testid="shell-input"
                 />
                 <Button

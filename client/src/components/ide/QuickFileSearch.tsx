@@ -103,7 +103,7 @@ export function QuickFileSearch({
                   <FileIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
                   <div className="flex-1 min-w-0">
                     <div className="font-medium truncate">{file.name}</div>
-                    <div className="text-xs text-muted-foreground truncate">{file.path}</div>
+                    <div className="text-[11px] text-muted-foreground truncate">{file.path}</div>
                   </div>
                 </button>
               ))}

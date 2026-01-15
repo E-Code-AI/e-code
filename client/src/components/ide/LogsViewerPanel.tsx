@@ -117,7 +117,7 @@ export function LogsViewerPanel({ deploymentId, buildId, projectId }: LogsViewer
       {/* Header */}
       <div className="p-4 border-b space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold flex items-center gap-2">
+          <h3 className="text-[13px] font-semibold flex items-center gap-2">
             <FileText className="h-4 w-4" />
             Deployment Logs
           </h3>
@@ -179,7 +179,7 @@ export function LogsViewerPanel({ deploymentId, buildId, projectId }: LogsViewer
 
         {/* Stats */}
         {data && (
-          <div className="flex gap-4 text-xs text-muted-foreground">
+          <div className="flex gap-4 text-[11px] text-muted-foreground">
             <span>Total: {data.pagination.total}</span>
             <span>Showing: {logs.length}</span>
           </div>
@@ -195,10 +195,10 @@ export function LogsViewerPanel({ deploymentId, buildId, projectId }: LogsViewer
         ) : logs.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
             <FileText className="h-12 w-12 mb-4 opacity-20" />
-            <p className="text-sm">No logs found</p>
+            <p className="text-[13px]">No logs found</p>
           </div>
         ) : (
-          <div className="p-2 space-y-1 font-mono text-xs" data-testid="logs-list">
+          <div className="p-2 space-y-1 font-mono text-[11px]" data-testid="logs-list">
             {logs.map((log: LogEntry, index: number) => (
               <LazyMotionDiv
                 key={index}
@@ -222,7 +222,7 @@ export function LogsViewerPanel({ deploymentId, buildId, projectId }: LogsViewer
                           <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
                             Metadata
                           </summary>
-                          <pre className="mt-2 p-2 bg-muted rounded text-xs overflow-auto">
+                          <pre className="mt-2 p-2 bg-muted rounded text-[11px] overflow-auto">
                             {JSON.stringify(log.metadata, null, 2)}
                           </pre>
                         </details>

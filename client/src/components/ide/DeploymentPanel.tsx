@@ -164,7 +164,7 @@ export function DeploymentPanel({ projectId, className }: DeploymentPanelProps) 
                         href={latestDeployment.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-sm text-primary hover:underline flex items-center gap-1"
+                        className="text-[13px] text-primary hover:underline flex items-center gap-1"
                         data-testid="link-deployment-url"
                       >
                         {latestDeployment.url}
@@ -317,13 +317,13 @@ export function DeploymentPanel({ projectId, className }: DeploymentPanelProps) 
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           {getStatusIcon(deployment.status)}
-                          <span className="text-sm font-medium">{deployment.environment}</span>
+                          <span className="text-[13px] font-medium">{deployment.environment}</span>
                         </div>
                         <Badge className={getStatusBadge(deployment.status)}>
                           {deployment.status}
                         </Badge>
                       </div>
-                      <div className="mt-2 text-xs text-muted-foreground">
+                      <div className="mt-2 text-[11px] text-muted-foreground">
                         <div className="flex items-center gap-1">
                           <Clock className="h-3 w-3" />
                           {new Date(deployment.createdAt).toLocaleString()}
@@ -347,7 +347,7 @@ export function DeploymentPanel({ projectId, className }: DeploymentPanelProps) 
                 <div className="text-center py-8 text-muted-foreground">
                   <Rocket className="h-8 w-8 mx-auto mb-2 opacity-50" />
                   <p>No deployments yet</p>
-                  <p className="text-xs mt-1">Deploy your app to see history</p>
+                  <p className="text-[11px] mt-1">Deploy your app to see history</p>
                 </div>
               )}
             </ScrollArea>
@@ -358,7 +358,7 @@ export function DeploymentPanel({ projectId, className }: DeploymentPanelProps) 
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label>Auto-deploy on push</Label>
-                  <p className="text-xs text-muted-foreground">Deploy automatically when you push to main</p>
+                  <p className="text-[11px] text-muted-foreground">Deploy automatically when you push to main</p>
                 </div>
                 <Switch data-testid="switch-auto-deploy" />
               </div>
@@ -368,7 +368,7 @@ export function DeploymentPanel({ projectId, className }: DeploymentPanelProps) 
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label>SSL/HTTPS</Label>
-                  <p className="text-xs text-muted-foreground">Enable secure connections</p>
+                  <p className="text-[11px] text-muted-foreground">Enable secure connections</p>
                 </div>
                 <Switch defaultChecked data-testid="switch-ssl" />
               </div>
@@ -378,7 +378,7 @@ export function DeploymentPanel({ projectId, className }: DeploymentPanelProps) 
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label>Health Checks</Label>
-                  <p className="text-xs text-muted-foreground">Monitor deployment health</p>
+                  <p className="text-[11px] text-muted-foreground">Monitor deployment health</p>
                 </div>
                 <Switch defaultChecked data-testid="switch-health-checks" />
               </div>

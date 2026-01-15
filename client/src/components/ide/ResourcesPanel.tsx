@@ -145,11 +145,11 @@ export function ResourcesPanel({ projectId, className }: ResourcesPanelProps) {
             <div className={cn("p-1.5 rounded", getUsageColor(percentage).replace('text-', 'bg-').replace('500', '100'))}>
               <Icon className={cn("h-3.5 w-3.5", getUsageColor(percentage))} />
             </div>
-            <span className="text-xs font-medium">{title}</span>
+            <span className="text-[11px] font-medium">{title}</span>
           </div>
           <div className="flex items-center gap-1">
             {trend !== undefined && previousMetrics && getTrendIcon(percentage, trend)}
-            <span className={cn("text-sm font-bold", getUsageColor(percentage))}>
+            <span className={cn("text-[13px] font-bold", getUsageColor(percentage))}>
               {percentage.toFixed(1)}%
             </span>
           </div>
@@ -171,7 +171,7 @@ export function ResourcesPanel({ projectId, className }: ResourcesPanelProps) {
       <div className="h-10 border-b flex items-center justify-between px-3">
         <div className="flex items-center gap-2">
           <Activity className="h-4 w-4" />
-          <span className="text-sm font-medium">Resources</span>
+          <span className="text-[13px] font-medium">Resources</span>
           {metrics && (
             <Badge variant="outline" className="text-[10px]">
               <Clock className="h-2.5 w-2.5 mr-1" />
@@ -230,7 +230,7 @@ export function ResourcesPanel({ projectId, className }: ResourcesPanelProps) {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Wifi className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span className="text-xs font-medium">Network</span>
+                  <span className="text-[11px] font-medium">Network</span>
                 </div>
                 <TooltipProvider>
                   <Tooltip>
@@ -240,7 +240,7 @@ export function ResourcesPanel({ projectId, className }: ResourcesPanelProps) {
                       </Badge>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p className="text-xs">Network latency</p>
+                      <p className="text-[11px]">Network latency</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -251,14 +251,14 @@ export function ResourcesPanel({ projectId, className }: ResourcesPanelProps) {
                     <TrendingDown className="h-3 w-3 text-green-500" />
                     <span className="text-[10px] text-muted-foreground">IN</span>
                   </div>
-                  <span className="text-xs font-medium">{formatBytes(metrics.network.bytesIn)}</span>
+                  <span className="text-[11px] font-medium">{formatBytes(metrics.network.bytesIn)}</span>
                 </div>
                 <div className="p-2 bg-surface-tertiary-solid rounded text-center">
                   <div className="flex items-center justify-center gap-1 mb-1">
                     <TrendingUp className="h-3 w-3 text-blue-500" />
                     <span className="text-[10px] text-muted-foreground">OUT</span>
                   </div>
-                  <span className="text-xs font-medium">{formatBytes(metrics.network.bytesOut)}</span>
+                  <span className="text-[11px] font-medium">{formatBytes(metrics.network.bytesOut)}</span>
                 </div>
               </div>
             </div>
@@ -268,7 +268,7 @@ export function ResourcesPanel({ projectId, className }: ResourcesPanelProps) {
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <Terminal className="h-3.5 w-3.5 text-muted-foreground" />
-                <span className="text-xs font-medium">Processes</span>
+                <span className="text-[11px] font-medium">Processes</span>
                 <Badge variant="outline" className="text-[10px]">
                   {metrics.processes.filter(p => p.status === 'running').length} active
                 </Badge>
@@ -306,7 +306,7 @@ export function ResourcesPanel({ projectId, className }: ResourcesPanelProps) {
                   <div className="flex items-center gap-2 text-yellow-800 dark:text-yellow-200">
                     <AlertTriangle className="h-4 w-4" />
                     <div>
-                      <p className="text-xs font-medium">High Resource Usage</p>
+                      <p className="text-[11px] font-medium">High Resource Usage</p>
                       <p className="text-[10px] opacity-80">
                         Consider upgrading your plan for better performance
                       </p>
@@ -319,8 +319,8 @@ export function ResourcesPanel({ projectId, className }: ResourcesPanelProps) {
         ) : isError ? (
           <div className="flex flex-col items-center justify-center h-48 p-4 text-center">
             <AlertTriangle className="h-12 w-12 text-destructive mb-4 opacity-50" />
-            <p className="text-sm font-medium mb-1">Failed to load resources</p>
-            <p className="text-xs text-muted-foreground mb-3">
+            <p className="text-[13px] font-medium mb-1">Failed to load resources</p>
+            <p className="text-[11px] text-muted-foreground mb-3">
               Unable to connect to the resources API
             </p>
             <Button variant="outline" size="sm" onClick={() => refetch()}>
@@ -331,8 +331,8 @@ export function ResourcesPanel({ projectId, className }: ResourcesPanelProps) {
         ) : (
           <div className="flex flex-col items-center justify-center h-48 p-4 text-center">
             <Activity className="h-12 w-12 text-muted-foreground mb-4 opacity-50" />
-            <p className="text-sm font-medium mb-1">Resource monitoring unavailable</p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[13px] font-medium mb-1">Resource monitoring unavailable</p>
+            <p className="text-[11px] text-muted-foreground">
               Start your project to see resource usage
             </p>
           </div>

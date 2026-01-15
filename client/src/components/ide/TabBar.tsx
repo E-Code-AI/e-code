@@ -21,7 +21,7 @@ export function TabBar({ tabs, activeTab, onTabChange, onTabClose }: TabBarProps
   return (
     <div className="h-10 bg-background border-b flex items-center">
       {tabs.length === 1 && (
-        <div className="flex items-center gap-2 px-3 py-1 text-xs text-muted-foreground bg-surface-solid border border-[var(--ecode-surface-tertiary)] rounded-md ml-2 mr-2 flex-shrink-0">
+        <div className="flex items-center gap-2 px-3 py-1 text-[11px] text-muted-foreground bg-surface-solid border border-[var(--ecode-surface-tertiary)] rounded-md ml-2 mr-2 flex-shrink-0">
           <span>💡 Tip: Multiple tabs help you work efficiently</span>
         </div>
       )}
@@ -32,7 +32,7 @@ export function TabBar({ tabs, activeTab, onTabChange, onTabClose }: TabBarProps
             onClick={() => onTabChange(tab.id)}
             className={`
               group flex items-center gap-2 px-4 py-2 border-r border-border
-              transition-colors text-sm font-medium min-w-[120px] max-w-[200px]
+              transition-colors text-[13px] font-medium min-w-[120px] max-w-[200px]
               ${
                 activeTab === tab.id
                   ? 'bg-background text-foreground'

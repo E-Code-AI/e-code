@@ -171,7 +171,7 @@ export function WorkflowsPanel({ projectId, onRunWorkflow, className }: Workflow
             
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <span className="text-sm font-medium truncate">{workflow.name}</span>
+                <span className="text-[13px] font-medium truncate">{workflow.name}</span>
                 {workflow.isDefault && (
                   <Badge variant="outline" className="text-[10px] h-4">
                     <Star className="h-2.5 w-2.5 mr-0.5" />
@@ -183,7 +183,7 @@ export function WorkflowsPanel({ projectId, onRunWorkflow, className }: Workflow
                 )}
               </div>
               {workflow.description && (
-                <p className="text-xs text-muted-foreground truncate mt-0.5">
+                <p className="text-[11px] text-muted-foreground truncate mt-0.5">
                   {workflow.description}
                 </p>
               )}
@@ -258,7 +258,7 @@ export function WorkflowsPanel({ projectId, onRunWorkflow, className }: Workflow
   }) => (
     <div className="space-y-4">
       <div className="space-y-2">
-        <Label className="text-xs">Workflow Name</Label>
+        <Label className="text-[11px]">Workflow Name</Label>
         <Input
           value={formData.name}
           onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
@@ -268,7 +268,7 @@ export function WorkflowsPanel({ projectId, onRunWorkflow, className }: Workflow
       </div>
 
       <div className="space-y-2">
-        <Label className="text-xs">Command</Label>
+        <Label className="text-[11px]">Command</Label>
         <Input
           value={formData.command}
           onChange={(e) => setFormData(prev => ({ ...prev, command: e.target.value }))}
@@ -278,7 +278,7 @@ export function WorkflowsPanel({ projectId, onRunWorkflow, className }: Workflow
       </div>
 
       <div className="space-y-2">
-        <Label className="text-xs">Description (optional)</Label>
+        <Label className="text-[11px]">Description (optional)</Label>
         <Input
           value={formData.description}
           onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
@@ -288,7 +288,7 @@ export function WorkflowsPanel({ projectId, onRunWorkflow, className }: Workflow
       </div>
 
       <div className="space-y-2">
-        <Label className="text-xs">Icon</Label>
+        <Label className="text-[11px]">Icon</Label>
         <div className="flex gap-1">
           {ICON_OPTIONS.map(option => {
             const Icon = option.icon;
@@ -327,14 +327,14 @@ export function WorkflowsPanel({ projectId, onRunWorkflow, className }: Workflow
       <div className="h-10 border-b flex items-center justify-between px-3">
         <div className="flex items-center gap-2">
           <Zap className="h-4 w-4" />
-          <span className="text-sm font-medium">Workflows</span>
+          <span className="text-[13px] font-medium">Workflows</span>
           <Badge variant="secondary" className="text-xs">
             {allWorkflows.length}
           </Badge>
         </div>
         <Dialog open={isCreating} onOpenChange={setIsCreating}>
           <DialogTrigger asChild>
-            <Button variant="outline" size="sm" className="h-7 text-xs">
+            <Button variant="outline" size="sm" className="h-7 text-[11px]">
               <Plus className="h-3.5 w-3.5 mr-1" />
               New
             </Button>
@@ -370,7 +370,7 @@ export function WorkflowsPanel({ projectId, onRunWorkflow, className }: Workflow
         ) : (
           <div className="p-3 space-y-2">
             <div className="space-y-1">
-              <h3 className="text-xs font-medium text-muted-foreground px-1">System Workflows</h3>
+              <h3 className="text-[11px] font-medium text-muted-foreground px-1">System Workflows</h3>
               {SYSTEM_WORKFLOWS.map(workflow => (
                 <WorkflowCard key={workflow.id} workflow={workflow} />
               ))}
@@ -380,7 +380,7 @@ export function WorkflowsPanel({ projectId, onRunWorkflow, className }: Workflow
               <>
                 <Separator className="my-3" />
                 <div className="space-y-1">
-                  <h3 className="text-xs font-medium text-muted-foreground px-1">Custom Workflows</h3>
+                  <h3 className="text-[11px] font-medium text-muted-foreground px-1">Custom Workflows</h3>
                   {customWorkflows.map(workflow => (
                     <WorkflowCard key={workflow.id} workflow={workflow} />
                   ))}
@@ -391,7 +391,7 @@ export function WorkflowsPanel({ projectId, onRunWorkflow, className }: Workflow
             {(!customWorkflows || customWorkflows.length === 0) && (
               <div className="py-8 text-center text-muted-foreground">
                 <Zap className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                <p className="text-xs">No custom workflows yet</p>
+                <p className="text-[11px]">No custom workflows yet</p>
                 <p className="text-[10px] mt-1">Create a workflow to automate your tasks</p>
               </div>
             )}

@@ -164,19 +164,19 @@ export function PreviewPanel({
       <div className="h-10 border-b flex items-center justify-between px-3 gap-2">
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <Globe className="h-4 w-4 shrink-0" />
-          <span className="text-sm font-medium">Preview</span>
+          <span className="text-[13px] font-medium">Preview</span>
           {isPreviewRunning && (
-            <Badge variant="secondary" className="text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">
+            <Badge variant="secondary" className="text-[11px] bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">
               Running
             </Badge>
           )}
           {isPreviewStarting && (
-            <Badge variant="secondary" className="text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100">
+            <Badge variant="secondary" className="text-[11px] bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100">
               Starting...
             </Badge>
           )}
           {previewStatus?.frameworkType && (
-            <Badge variant="outline" className="text-xs">
+            <Badge variant="outline" className="text-[11px]">
               {previewStatus.frameworkType}
             </Badge>
           )}
@@ -194,7 +194,7 @@ export function PreviewPanel({
               className="h-7 px-2 gap-1"
             >
               <Play className="h-3.5 w-3.5" />
-              <span className="text-xs">Run</span>
+              <span className="text-[11px]">Run</span>
             </Button>
           )}
           
@@ -208,13 +208,13 @@ export function PreviewPanel({
               className="h-7 px-2 gap-1"
             >
               <Square className="h-3.5 w-3.5" />
-              <span className="text-xs">Stop</span>
+              <span className="text-[11px]">Stop</span>
             </Button>
           )}
           
           {canShowPreview && (
             <>
-              <div className="text-xs text-muted-foreground truncate max-w-[150px] hidden sm:block">
+              <div className="text-[11px] text-muted-foreground truncate max-w-[150px] hidden sm:block">
                 {displayUrl}
               </div>
               <Button
@@ -259,8 +259,8 @@ export function PreviewPanel({
           <div className="h-full flex items-center justify-center text-center p-8">
             <div>
               <Loader2 className="h-16 w-16 mx-auto mb-4 animate-spin text-primary" />
-              <h3 className="text-lg font-semibold mb-2">Starting preview...</h3>
-              <p className="text-sm text-muted-foreground">
+              <h3 className="text-[15px] font-semibold mb-2">Starting preview...</h3>
+              <p className="text-[13px] text-muted-foreground">
                 Building and starting your application. This may take a moment.
               </p>
             </div>
@@ -269,8 +269,8 @@ export function PreviewPanel({
           <div className="h-full flex items-center justify-center text-center p-8">
             <div>
               <Globe className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
-              <h3 className="text-lg font-semibold mb-2">No preview available</h3>
-              <p className="text-sm text-muted-foreground">
+              <h3 className="text-[15px] font-semibold mb-2">No preview available</h3>
+              <p className="text-[13px] text-muted-foreground">
                 Add an HTML file or package.json to preview your project.
               </p>
             </div>
@@ -279,8 +279,8 @@ export function PreviewPanel({
           <div className="h-full flex items-center justify-center text-center p-8">
             <div>
               <Globe className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
-              <h3 className="text-lg font-semibold mb-2">Preview not running</h3>
-              <p className="text-sm text-muted-foreground mb-4">
+              <h3 className="text-[15px] font-semibold mb-2">Preview not running</h3>
+              <p className="text-[13px] text-muted-foreground mb-4">
                 Click the Run button to start your project and see a live preview.
               </p>
               <Button onClick={handleStartPreview} disabled={startPreviewMutation.isPending}>
@@ -302,7 +302,7 @@ export function PreviewPanel({
           <div className="h-full flex items-center justify-center text-center p-8">
             <div>
               <Loader2 className="h-16 w-16 mx-auto mb-4 animate-spin text-primary" />
-              <h3 className="text-lg font-semibold mb-2">Loading preview...</h3>
+              <h3 className="text-[15px] font-semibold mb-2">Loading preview...</h3>
             </div>
           </div>
         )}

@@ -83,7 +83,7 @@ export function SecretsPanel({ projectId }: SecretsPanelProps) {
       <div className="h-full flex items-center justify-center p-4">
         <div className="text-center space-y-2">
           <AlertCircle className="h-8 w-8 text-destructive mx-auto" />
-          <p className="text-sm text-muted-foreground">
+          <p className="text-[13px] text-muted-foreground">
             {(error as any).message || 'Failed to load secrets'}
           </p>
           <Button onClick={() => refetch()} size="sm" variant="outline">
@@ -102,7 +102,7 @@ export function SecretsPanel({ projectId }: SecretsPanelProps) {
           <div className="flex items-center gap-2">
             <Shield className="h-5 w-5 text-muted-foreground" />
             <h3 className="font-semibold text-foreground">Secrets</h3>
-            <Badge variant="secondary" className="text-xs">
+            <Badge variant="secondary" className="text-[11px]">
               {secrets.length}
             </Badge>
           </div>
@@ -124,7 +124,7 @@ export function SecretsPanel({ projectId }: SecretsPanelProps) {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search secrets..."
-            className="pl-9 text-sm"
+            className="pl-9 text-[13px]"
             data-testid="input-search-secrets"
           />
         </div>
@@ -132,7 +132,7 @@ export function SecretsPanel({ projectId }: SecretsPanelProps) {
         {/* Warning */}
         <div className="mt-3 p-2 bg-status-warning/10 border border-status-warning rounded flex items-start gap-2">
           <AlertCircle className="h-4 w-4 text-status-warning mt-0.5" />
-          <div className="text-xs text-status-warning">
+          <div className="text-[11px] text-status-warning">
             <p className="font-medium">Secure read-only access</p>
             <p className="mt-0.5">Secret values are encrypted and never exposed. Only secret keys are visible. Use Environment Variables Manager to manage secrets.</p>
           </div>
@@ -157,7 +157,7 @@ export function SecretsPanel({ projectId }: SecretsPanelProps) {
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <Key className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-mono text-sm font-medium text-foreground">
+                      <span className="font-mono text-[13px] font-medium text-foreground">
                         {secret.key}
                       </span>
                       <Badge variant="outline" className="text-xs px-1 py-0">
@@ -166,7 +166,7 @@ export function SecretsPanel({ projectId }: SecretsPanelProps) {
                     </div>
                     
                     <div className="mt-2 flex items-center gap-2">
-                      <code className="flex-1 px-2 py-1 bg-muted rounded text-xs font-mono text-muted-foreground">
+                      <code className="flex-1 px-2 py-1 bg-muted rounded text-[11px] font-mono text-muted-foreground">
                         {renderMaskedValue()}
                       </code>
                       <Badge variant="outline" className="text-[10px] px-1 py-0">
@@ -184,7 +184,7 @@ export function SecretsPanel({ projectId }: SecretsPanelProps) {
                       data-testid={`button-copy-${secret.key}`}
                     >
                       {copiedKey === secret.key ? (
-                        <span className="text-xs text-status-success">✓</span>
+                        <span className="text-[11px] text-status-success">✓</span>
                       ) : (
                         <Copy className="h-3 w-3" />
                       )}
@@ -197,10 +197,10 @@ export function SecretsPanel({ projectId }: SecretsPanelProps) {
         ) : (
           <div className="flex flex-col items-center justify-center py-8 text-center">
             <Shield className="h-12 w-12 text-muted-foreground mb-3" />
-            <p className="text-sm text-muted-foreground">
+            <p className="text-[13px] text-muted-foreground">
               {searchQuery ? 'No secrets match your search' : 'No secrets configured'}
             </p>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-[11px] text-muted-foreground mt-1">
               Use Environment Variables Manager to add secrets
             </p>
           </div>
