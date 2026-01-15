@@ -37,7 +37,8 @@ export type ActivityItem =
   | 'preview'
   | 'workflows'
   | 'extensions'
-  | 'settings';
+  | 'settings'
+  | 'history';
 
 interface ActivityBarItem {
   id: ActivityItem;

@@ -193,6 +193,12 @@ export function CheckpointDivider({
     return `$${num.toFixed(2)}`;
   };
 
+  const formatTokens = (count: number) => {
+    if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
+    if (count >= 1000) return `${(count / 1000).toFixed(1)}K`;
+    return count.toString();
+  };
+
   const formattedCost = formatCost(cost);
   const hasUsageData = formattedCost || tokens;
 
@@ -213,7 +219,7 @@ export function CheckpointDivider({
                 <div className="flex items-center gap-2">
                   {formattedCost && <span>{formattedCost}</span>}
                   {tokens !== undefined && tokens > 0 && (
-                    <span>{formattedCost ? '•' : ''} {tokens.toLocaleString()} tokens</span>
+                    <span>{formattedCost ? '•' : ''} {formatTokens(tokens)} tokens</span>
                   )}
                 </div>
               </TooltipContent>
