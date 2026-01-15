@@ -140,10 +140,10 @@ export function MobileProfile() {
       </div>
 
       <div className="px-4 mt-4">
-        <h1 className="text-2xl font-bold">{user.name}</h1>
-        <p className="text-muted-foreground">{user.username}</p>
-        <p className="text-sm text-muted-foreground mt-2">{user.bio}</p>
-        <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
+        <h1 className="text-[15px] font-bold">{user.name}</h1>
+        <p className="text-[13px] text-muted-foreground">{user.username}</p>
+        <p className="text-[13px] text-muted-foreground mt-2">{user.bio}</p>
+        <p className="text-[11px] text-muted-foreground mt-2 flex items-center gap-1">
           <span>Joined {user.joinedDate}</span>
         </p>
       </div>
@@ -161,8 +161,8 @@ export function MobileProfile() {
             >
               <Card className="p-4 text-center hover:shadow-md transition-shadow">
                 <Icon className="h-5 w-5 text-primary mx-auto mb-2" />
-                <div className="text-2xl font-bold">{stat.value}</div>
-                <div className="text-xs text-muted-foreground">{stat.label}</div>
+                <div className="text-[15px] font-bold">{stat.value}</div>
+                <div className="text-[11px] text-muted-foreground">{stat.label}</div>
               </Card>
             </div>
           );
@@ -170,7 +170,7 @@ export function MobileProfile() {
       </div>
 
       <div className="mt-6 px-4">
-        <h2 className="text-sm font-medium text-muted-foreground mb-3 px-1">
+        <h2 className="text-[13px] font-medium text-muted-foreground mb-3 px-1">
           Settings
         </h2>
         
@@ -198,11 +198,12 @@ export function MobileProfile() {
                   <div className="p-2 bg-secondary rounded-lg group-hover:bg-primary/10 transition-colors">
                     <Icon className="h-4 w-4 group-hover:text-primary transition-colors" />
                   </div>
-                  <span className="text-sm font-medium">{setting.label}</span>
+                  <span className="text-[13px] font-medium">{setting.label}</span>
                 </div>
                 
                 {setting.hasToggle ? (
                   <Switch
+                    size="sm"
                     checked={setting.toggleValue}
                     onCheckedChange={setting.onToggle}
                     onClick={(e) => e.stopPropagation()}
@@ -217,7 +218,7 @@ export function MobileProfile() {
       </div>
 
       <div className="mt-6 px-4">
-        <h2 className="text-sm font-medium text-muted-foreground mb-3 px-1">
+        <h2 className="text-[13px] font-medium text-muted-foreground mb-3 px-1">
           Appearance
         </h2>
         
@@ -230,8 +231,8 @@ export function MobileProfile() {
                 <Sun className="h-5 w-5 text-primary" />
               )}
               <div>
-                <div className="text-sm font-medium">Theme</div>
-                <div className="text-xs text-muted-foreground">
+                <div className="text-[13px] font-medium">Theme</div>
+                <div className="text-[11px] text-muted-foreground">
                   {theme === 'dark' ? 'Dark mode' : 'Light mode'}
                 </div>
               </div>

@@ -69,7 +69,7 @@ function SimulatedStatusBar({ isLandscape }: { isLandscape: boolean }) {
     <div 
       className={cn(
         "absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-6 py-1",
-        "text-[13px] font-medium text-white",
+        "text-[11px] font-medium text-white",
         isLandscape ? "h-5" : "h-6"
       )}
       style={{ 
@@ -82,10 +82,10 @@ function SimulatedStatusBar({ isLandscape }: { isLandscape: boolean }) {
         <span>{formattedTime}</span>
       </div>
       <div className="flex items-center gap-1">
-        <Signal className="w-[18px] h-[18px]" />
-        <Wifi className="w-[18px] h-[18px]" />
-        <BatteryFull className="w-[18px] h-[18px]" />
-        <span className="text-[13px]">100%</span>
+        <Signal className="w-4 h-4" />
+        <Wifi className="w-4 h-4" />
+        <BatteryFull className="w-4 h-4" />
+        <span className="text-[11px]">100%</span>
       </div>
     </div>
   );
@@ -221,20 +221,20 @@ function AppNotRunningState({ onRun }: { onRun: () => void }) {
         className="mb-4 w-12 h-12 text-gray-400 dark:text-[#5c6670]"
       />
       <h3 
-        className="text-[17px] font-semibold leading-tight mb-2 text-gray-900 dark:text-white"
+        className="text-[15px] font-semibold leading-tight mb-2 text-gray-900 dark:text-white"
         data-testid="text-not-running-title"
       >
         Your app is not running
       </h3>
       <p 
-        className="text-[15px] leading-[20px] text-center max-w-[200px] mb-6 text-gray-500 dark:text-[#5c6670]"
+        className="text-[13px] leading-[18px] text-center max-w-[200px] mb-6 text-gray-500 dark:text-[#5c6670]"
         data-testid="text-not-running-description"
       >
         Run to preview your app.
       </p>
       <Button
         onClick={onRun}
-        className="h-11 px-6 text-[15px] font-medium rounded-lg gap-2 bg-green-500 hover:bg-green-600 text-white"
+        className="h-11 px-6 text-[13px] font-medium rounded-lg gap-2 bg-green-500 hover:bg-green-600 text-white"
         data-testid="button-run-app"
       >
         <Play className="w-4 h-4" />
@@ -261,7 +261,7 @@ function PreviewOptionsSheet({
   onRepublish,
   onCloseTab,
 }: PreviewOptionsSheetProps) {
-  const optionButtonClass = "flex items-center gap-3 w-full p-4 text-left hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors min-h-[56px]";
+  const optionButtonClass = "flex items-center gap-3 w-full p-4 text-left hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors min-h-[44px]";
   
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -272,13 +272,13 @@ function PreviewOptionsSheet({
       >
         <SheetHeader className="p-4 pb-2 border-b border-gray-100 dark:border-gray-800">
           <SheetTitle 
-            className="text-[17px] font-semibold text-gray-900 dark:text-white"
+            className="text-[15px] font-semibold text-gray-900 dark:text-white"
             data-testid="text-sheet-title"
           >
             Preview
           </SheetTitle>
           <SheetDescription 
-            className="text-[15px] text-gray-500 dark:text-gray-400"
+            className="text-[13px] text-gray-500 dark:text-gray-400"
             data-testid="text-sheet-description"
           >
             Preview your App.
@@ -295,7 +295,7 @@ function PreviewOptionsSheet({
             data-testid="button-share-dev-link"
           >
             <Code className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-            <span className="text-[15px] font-medium text-gray-900 dark:text-white">Share development link</span>
+            <span className="text-[13px] font-medium text-gray-900 dark:text-white">Share development link</span>
           </button>
           
           <button
@@ -307,7 +307,7 @@ function PreviewOptionsSheet({
             data-testid="button-share-published-link"
           >
             <Globe className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-            <span className="text-[15px] font-medium text-gray-900 dark:text-white">Share published link</span>
+            <span className="text-[13px] font-medium text-gray-900 dark:text-white">Share published link</span>
           </button>
           
           <button
@@ -319,7 +319,7 @@ function PreviewOptionsSheet({
             data-testid="button-republish"
           >
             <Trees className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-            <span className="text-[15px] font-medium text-gray-900 dark:text-white">Republish</span>
+            <span className="text-[13px] font-medium text-gray-900 dark:text-white">Republish</span>
           </button>
           
           <button
@@ -331,7 +331,7 @@ function PreviewOptionsSheet({
             data-testid="button-close-tab"
           >
             <X className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-            <span className="text-[15px] font-medium text-gray-900 dark:text-white">Close tab</span>
+            <span className="text-[13px] font-medium text-gray-900 dark:text-white">Close tab</span>
           </button>
         </div>
       </SheetContent>

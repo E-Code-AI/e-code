@@ -199,12 +199,12 @@ export function MobileCreateModal({
             {/* Header */}
             <div className="px-4 pb-3">
               <div className="flex items-center justify-between mb-3">
-                <h2 className="text-xl font-semibold">Create New Project</h2>
+                <h2 className="text-[15px] font-semibold">Create New Project</h2>
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={onClose}
-                  className="h-8 w-8"
+                  className="h-11 w-11"
                 >
                   <X className="h-4 w-4" />
                 </Button>
@@ -274,7 +274,7 @@ export function MobileCreateModal({
                 {/* Recent Templates */}
                 {!searchQuery && selectedCategory === 'All' && (
                   <div className="mb-6">
-                    <h3 className="text-sm font-medium mb-3 text-muted-foreground">Recent</h3>
+                    <h3 className="text-[13px] font-medium mb-3 text-muted-foreground">Recent</h3>
                     <div className="grid grid-cols-2 gap-3">
                       {recentTemplates.map((template) => (
                         <LazyMotionButton
@@ -288,8 +288,8 @@ export function MobileCreateModal({
                               <template.icon className="h-4 w-4" />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="font-medium text-sm truncate">{template.name}</p>
-                              <p className="text-xs text-muted-foreground">Used 2 days ago</p>
+                              <p className="font-medium text-[13px] truncate">{template.name}</p>
+                              <p className="text-[11px] text-muted-foreground">Used 2 days ago</p>
                             </div>
                           </div>
                         </LazyMotionButton>
@@ -300,7 +300,7 @@ export function MobileCreateModal({
                 
                 {/* Template Grid */}
                 <div>
-                  <h3 className="text-sm font-medium mb-3 text-muted-foreground">
+                  <h3 className="text-[13px] font-medium mb-3 text-muted-foreground">
                     {searchQuery ? 'Search Results' : 'Templates'}
                   </h3>
                   <div className="grid grid-cols-2 gap-3">
@@ -315,12 +315,12 @@ export function MobileCreateModal({
                         {/* Badges */}
                         <div className="absolute top-2 right-2 flex gap-1">
                           {template.isPopular && (
-                            <span className="text-xs px-1.5 py-0.5 bg-surface-tertiary-solid text-amber-500 rounded-full">
+                            <span className="text-[11px] px-1.5 py-0.5 bg-surface-tertiary-solid text-amber-500 rounded-full">
                               Popular
                             </span>
                           )}
                           {template.isNew && (
-                            <span className="text-xs px-1.5 py-0.5 bg-surface-tertiary-solid text-green-500 rounded-full">
+                            <span className="text-[11px] px-1.5 py-0.5 bg-surface-tertiary-solid text-green-500 rounded-full">
                               New
                             </span>
                           )}
@@ -332,12 +332,12 @@ export function MobileCreateModal({
                             <template.icon className="h-5 w-5 text-primary" />
                           </div>
                           <div>
-                            <p className="font-medium text-sm">{template.name}</p>
-                            <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
+                            <p className="font-medium text-[13px]">{template.name}</p>
+                            <p className="text-[11px] text-muted-foreground line-clamp-2 mt-0.5">
                               {template.description}
                             </p>
                             {template.language && (
-                              <p className="text-xs text-muted-foreground mt-1">
+                              <p className="text-[11px] text-muted-foreground mt-1">
                                 {template.language}
                               </p>
                             )}
@@ -349,8 +349,8 @@ export function MobileCreateModal({
                   
                   {filteredTemplates.length === 0 && (
                     <div className="text-center py-8">
-                      <p className="text-muted-foreground text-sm">No templates found</p>
-                      <p className="text-xs text-muted-foreground mt-1">
+                      <p className="text-muted-foreground text-[13px]">No templates found</p>
+                      <p className="text-[11px] text-muted-foreground mt-1">
                         Try adjusting your search or filters
                       </p>
                     </div>

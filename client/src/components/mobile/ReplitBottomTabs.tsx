@@ -250,7 +250,7 @@ export const ReplitBottomTabs = memo(function ReplitBottomTabs({
                   isActive && "transform -translate-y-px scale-[1.02]"
                 )}
                 style={{
-                  fontSize: '11px', // WCAG-compliant minimum for readability
+                  fontSize: 'var(--mobile-nav-label-size)',
                   fontFamily: 'var(--ecode-font-sans)',
                   color: isActive ? 'var(--ecode-accent)' : 'var(--ecode-text-muted)',
                   opacity: isActive ? 1 : 'var(--mobile-nav-inactive-opacity)',
