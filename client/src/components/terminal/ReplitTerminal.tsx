@@ -394,10 +394,10 @@ export function ReplitTerminal({
         <div className="flex items-center justify-between p-2">
           <div className="flex items-center space-x-2">
             <TerminalIcon className="h-4 w-4 text-[var(--ecode-text-secondary)]" />
-            <span className="text-sm font-medium text-[var(--ecode-text)]">Terminal</span>
+            <span className="text-[13px] font-medium text-[var(--ecode-text)]">Terminal</span>
             <Badge 
               variant="outline" 
-              className={`text-xs ${isConnected ? 'border-green-500 text-green-500' : 'border-red-500 text-red-500'}`}
+              className={`text-[11px] ${isConnected ? 'border-green-500 text-green-500' : 'border-red-500 text-red-500'}`}
             >
               {isConnected ? 'Connected' : 'Disconnected'}
             </Badge>
@@ -429,7 +429,7 @@ export function ReplitTerminal({
                     variant={session.id === activeSessionId ? "default" : "ghost"}
                     size="sm"
                     onClick={() => setActiveSessionId(session.id)}
-                    className={`h-6 px-2 text-xs ${
+                    className={`h-6 px-2 text-[11px] ${
                       session.id === activeSessionId
                         ? "bg-[var(--ecode-accent)] text-white"
                         : "text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
@@ -471,7 +471,7 @@ export function ReplitTerminal({
             {/* Status de connexion */}
             <Badge 
               variant="outline" 
-              className={`text-xs ${isConnected ? 'border-green-500 text-green-500' : 'border-red-500 text-red-500'}`}
+              className={`text-[11px] ${isConnected ? 'border-green-500 text-green-500' : 'border-red-500 text-red-500'}`}
             >
               {isConnected ? (
                 <>
@@ -582,7 +582,7 @@ export function ReplitTerminal({
 
         {/* Footer avec informations de session */}
         {activeSession && (
-          <div className="flex items-center justify-between px-3 py-1 bg-[var(--ecode-surface-secondary)] border-t border-[var(--ecode-border)] text-xs text-[var(--ecode-text-secondary)]">
+          <div className="flex items-center justify-between px-3 py-1 bg-[var(--ecode-surface-secondary)] border-t border-[var(--ecode-border)] text-[11px] text-[var(--ecode-text-secondary)]">
             <div className="flex items-center space-x-4">
               <span>
                 <Clock className="h-3 w-3 inline mr-1" />
@@ -594,7 +594,7 @@ export function ReplitTerminal({
             </div>
             <div className="flex items-center space-x-2">
               {activeSession.process && (
-                <Badge variant="outline" className="text-xs">
+                <Badge variant="outline" className="text-[11px]">
                   {activeSession.process}
                 </Badge>
               )}

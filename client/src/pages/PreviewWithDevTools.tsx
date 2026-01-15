@@ -85,7 +85,7 @@ export default function PreviewWithDevTools() {
           <CardHeader className="py-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <CardTitle className="text-lg flex items-center gap-2">
+                <CardTitle className="text-[15px] flex items-center gap-2">
                   <Globe className="h-5 w-5" />
                   Preview: {(project as any)?.name || 'Loading...'}
                 </CardTitle>
@@ -107,7 +107,7 @@ export default function PreviewWithDevTools() {
                         <div className="flex items-center gap-2">
                           {device.icon}
                           <span>{device.name}</span>
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-[11px] text-muted-foreground">
                             {device.width}x{device.height}
                           </span>
                         </div>
@@ -177,7 +177,7 @@ export default function PreviewWithDevTools() {
           </div>
 
           {/* Device frame indicators */}
-          <div className="absolute bottom-4 left-4 text-xs text-muted-foreground bg-background/80 px-2 py-1 rounded">
+          <div className="absolute bottom-4 left-4 text-[11px] text-muted-foreground bg-background/80 px-2 py-1 rounded">
             {customWidth} × {customHeight}
           </div>
         </div>

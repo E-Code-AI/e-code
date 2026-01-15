@@ -150,15 +150,15 @@ export function DebuggerPanel({ projectId }: { projectId: string }) {
           )}
           {!variable.expandable && <div className="w-3" />}
           
-          <span className="font-mono text-sm font-medium">{variable.name}</span>
-          <span className="font-mono text-sm text-muted-foreground">:</span>
-          <span className="font-mono text-sm truncate flex-1">
+          <span className="font-mono text-[13px] font-medium">{variable.name}</span>
+          <span className="font-mono text-[13px] text-muted-foreground">:</span>
+          <span className="font-mono text-[13px] truncate flex-1">
             {typeof variable.value === 'object' 
               ? variable.type 
               : String(variable.value)
             }
           </span>
-          <Badge variant="outline" className="text-xs">{variable.type}</Badge>
+          <Badge variant="outline" className="text-[11px]">{variable.type}</Badge>
         </div>
         
         {isExpanded && variable.children?.map(child => 
@@ -175,7 +175,7 @@ export function DebuggerPanel({ projectId }: { projectId: string }) {
           <div className="flex items-center gap-2">
             <Bug className="h-5 w-5" />
             <div>
-              <CardTitle className="text-lg">Debugger</CardTitle>
+              <CardTitle className="text-[15px]">Debugger</CardTitle>
               <CardDescription>
                 {debugSession?.status === 'running' 
                   ? 'Debug session active' 
@@ -277,7 +277,7 @@ export function DebuggerPanel({ projectId }: { projectId: string }) {
                 ) : (
                   <div className="text-center py-8 text-muted-foreground">
                     <Variable className="h-8 w-8 mx-auto mb-2" />
-                    <p className="text-sm">No variables in scope</p>
+                    <p className="text-[13px]">No variables in scope</p>
                   </div>
                 )}
               </div>
@@ -301,11 +301,11 @@ export function DebuggerPanel({ projectId }: { projectId: string }) {
                       >
                         <div className="flex items-center justify-between">
                           <span className="font-medium">{frame.name}</span>
-                          <Badge variant="outline" className="text-xs">
+                          <Badge variant="outline" className="text-[11px]">
                             Frame {index}
                           </Badge>
                         </div>
-                        <p className="text-xs mt-1 opacity-80">
+                        <p className="text-[11px] mt-1 opacity-80">
                           {frame.file}:{frame.line}:{frame.column}
                         </p>
                       </button>
@@ -314,7 +314,7 @@ export function DebuggerPanel({ projectId }: { projectId: string }) {
                 ) : (
                   <div className="text-center py-8 text-muted-foreground">
                     <Layers className="h-8 w-8 mx-auto mb-2" />
-                    <p className="text-sm">No stack frames</p>
+                    <p className="text-[13px]">No stack frames</p>
                   </div>
                 )}
               </div>
@@ -343,9 +343,9 @@ export function DebuggerPanel({ projectId }: { projectId: string }) {
                             }`}
                           />
                           <div>
-                            <p className="text-sm font-medium">{bp.file}:{bp.line}</p>
+                            <p className="text-[13px] font-medium">{bp.file}:{bp.line}</p>
                             {bp.condition && (
-                              <p className="text-xs text-muted-foreground">
+                              <p className="text-[11px] text-muted-foreground">
                                 Condition: {bp.condition}
                               </p>
                             )}
@@ -365,8 +365,8 @@ export function DebuggerPanel({ projectId }: { projectId: string }) {
                 ) : (
                   <div className="text-center py-8 text-muted-foreground">
                     <Circle className="h-8 w-8 mx-auto mb-2" />
-                    <p className="text-sm">No breakpoints set</p>
-                    <p className="text-xs mt-1">Click on line numbers to add breakpoints</p>
+                    <p className="text-[13px]">No breakpoints set</p>
+                    <p className="text-[11px] mt-1">Click on line numbers to add breakpoints</p>
                   </div>
                 )}
               </div>
@@ -375,7 +375,7 @@ export function DebuggerPanel({ projectId }: { projectId: string }) {
 
           <TabsContent value="console" className="flex-1 m-0">
             <ScrollArea className="h-[calc(100%-60px)]">
-              <div className="p-4 font-mono text-sm space-y-1">
+              <div className="p-4 font-mono text-[13px] space-y-1">
                 {consoleOutput.length > 0 ? (
                   consoleOutput.map((line, index) => (
                     <div key={index} className="py-1">
@@ -385,7 +385,7 @@ export function DebuggerPanel({ projectId }: { projectId: string }) {
                 ) : (
                   <div className="text-center py-8 text-muted-foreground">
                     <Terminal className="h-8 w-8 mx-auto mb-2" />
-                    <p className="text-sm font-sans">Console output will appear here</p>
+                    <p className="text-[13px] font-sans">Console output will appear here</p>
                   </div>
                 )}
               </div>

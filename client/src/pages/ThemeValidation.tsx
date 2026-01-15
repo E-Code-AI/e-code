@@ -57,7 +57,7 @@ export default function ThemeValidation() {
           <h2 className="text-2xl font-semibold text-foreground">Color Tokens</h2>
           {colorGroups.map((group) => (
             <Card key={group.title} className="p-6">
-              <h3 className="text-lg font-medium mb-4">{group.title}</h3>
+              <h3 className="text-[15px] font-medium mb-4">{group.title}</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {group.colors.map((color) => (
                   <div key={color.name} className="space-y-2">
@@ -66,10 +66,10 @@ export default function ThemeValidation() {
                       style={{ backgroundColor: color.value }}
                       data-testid={`color-swatch-${color.name.toLowerCase().replace(/\s+/g, '-')}`}
                     />
-                    <div className="space-y-1 text-sm">
+                    <div className="space-y-1 text-[13px]">
                       <p className="font-medium">{color.name}</p>
                       <p className="text-muted-foreground font-mono">{color.value}</p>
-                      <p className="text-xs text-muted-foreground">var({color.cssVar})</p>
+                      <p className="text-[11px] text-muted-foreground">var({color.cssVar})</p>
                     </div>
                   </div>
                 ))}
@@ -85,7 +85,7 @@ export default function ThemeValidation() {
             <div className="space-y-4">
               {spacingExamples.map(([key, value]) => (
                 <div key={key} className="flex items-center gap-4">
-                  <div className="w-24 text-sm font-medium">
+                  <div className="w-24 text-[13px] font-medium">
                     space-{key}
                   </div>
                   <div
@@ -93,7 +93,7 @@ export default function ThemeValidation() {
                     style={{ width: value }}
                     data-testid={`spacing-${key}`}
                   />
-                  <div className="text-sm text-muted-foreground font-mono">
+                  <div className="text-[13px] text-muted-foreground font-mono">
                     {value}
                   </div>
                 </div>
@@ -107,14 +107,14 @@ export default function ThemeValidation() {
           <h2 className="text-2xl font-semibold text-foreground">Typography</h2>
           <Card className="p-6 space-y-4">
             <div>
-              <p className="text-sm text-muted-foreground mb-2">Sans Serif (IBM Plex Sans)</p>
-              <p className="font-sans text-lg" data-testid="text-sample-sans">
+              <p className="text-[13px] text-muted-foreground mb-2">Sans Serif (IBM Plex Sans)</p>
+              <p className="font-sans text-[15px]" data-testid="text-sample-sans">
                 The quick brown fox jumps over the lazy dog
               </p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground mb-2">Monospace (IBM Plex Mono)</p>
-              <p className="font-mono text-lg" data-testid="text-sample-mono">
+              <p className="text-[13px] text-muted-foreground mb-2">Monospace (IBM Plex Mono)</p>
+              <p className="font-mono text-[15px]" data-testid="text-sample-mono">
                 const greeting = "Hello, World!";
               </p>
             </div>
@@ -135,7 +135,7 @@ export default function ThemeValidation() {
                   >
                     {key}
                   </div>
-                  <p className="text-sm text-center text-muted-foreground font-mono">{value}</p>
+                  <p className="text-[13px] text-center text-muted-foreground font-mono">{value}</p>
                 </div>
               ))}
             </div>
@@ -149,7 +149,7 @@ export default function ThemeValidation() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Primary Button */}
               <div className="space-y-2">
-                <p className="text-sm font-medium">Primary Button</p>
+                <p className="text-[13px] font-medium">Primary Button</p>
                 <button
                   className="replit-button-primary"
                   data-testid="button-primary"
@@ -160,7 +160,7 @@ export default function ThemeValidation() {
               
               {/* Secondary Button */}
               <div className="space-y-2">
-                <p className="text-sm font-medium">Secondary Button</p>
+                <p className="text-[13px] font-medium">Secondary Button</p>
                 <button
                   className="replit-button-secondary"
                   data-testid="button-secondary"
@@ -171,21 +171,21 @@ export default function ThemeValidation() {
 
               {/* Card with Surface Colors */}
               <div className="space-y-2">
-                <p className="text-sm font-medium">Surface Card</p>
+                <p className="text-[13px] font-medium">Surface Card</p>
                 <div className="replit-card" data-testid="card-surface">
-                  <p className="text-sm">Card with surface background</p>
+                  <p className="text-[13px]">Card with surface background</p>
                 </div>
               </div>
 
               {/* Sidebar-like Element */}
               <div className="space-y-2">
-                <p className="text-sm font-medium">Sidebar Item</p>
+                <p className="text-[13px] font-medium">Sidebar Item</p>
                 <div
                   className="p-ecode-3 rounded-ecode-md replit-hover cursor-pointer"
                   style={{ backgroundColor: 'var(--ecode-sidebar-bg)' }}
                   data-testid="sidebar-item"
                 >
-                  <p className="text-sm">Hover me</p>
+                  <p className="text-[13px]">Hover me</p>
                 </div>
               </div>
             </div>
@@ -197,7 +197,7 @@ export default function ThemeValidation() {
           <h2 className="text-2xl font-semibold text-foreground">Cross-Platform Consistency</h2>
           <Card className="p-6 space-y-4">
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="w-full text-[13px]">
                 <thead>
                   <tr className="border-b">
                     <th className="text-left py-2">Token</th>
@@ -206,7 +206,7 @@ export default function ThemeValidation() {
                     <th className="text-left py-2">Value</th>
                   </tr>
                 </thead>
-                <tbody className="font-mono text-xs">
+                <tbody className="font-mono text-[11px]">
                   <tr className="border-b">
                     <td className="py-2">Background</td>
                     <td className="text-muted-foreground">var(--ecode-background)</td>
@@ -235,13 +235,13 @@ export default function ThemeValidation() {
               </table>
             </div>
             <div className="bg-muted p-4 rounded-ecode-md">
-              <p className="text-sm">
+              <p className="text-[13px]">
                 ✅ All design tokens are centralized in <code className="text-ecode-orange">shared/theme/tokens.ts</code>
               </p>
-              <p className="text-sm mt-2">
+              <p className="text-[13px] mt-2">
                 ✅ Web platform uses CSS variables generated from tokens
               </p>
-              <p className="text-sm mt-2">
+              <p className="text-[13px] mt-2">
                 ✅ Mobile platform imports theme objects from the same source
               </p>
             </div>

@@ -311,17 +311,17 @@ export function ExtensionsMarketplace({ projectId, className }: ExtensionsMarket
                           </div>
                           <div className="flex-1 space-y-1">
                             <div className="flex items-center gap-2">
-                              <h4 className="text-sm font-medium">{extension.name}</h4>
+                              <h4 className="text-[13px] font-medium">{extension.name}</h4>
                               {isInstalled && (
-                                <Badge variant="secondary" className="text-xs">
+                                <Badge variant="secondary" className="text-[11px]">
                                   Installed
                                 </Badge>
                               )}
                             </div>
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-[11px] text-muted-foreground">
                               {extension.description}
                             </p>
-                            <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                            <div className="flex items-center gap-4 text-[11px] text-muted-foreground">
                               <div className="flex items-center gap-1">
                                 <User className="h-3 w-3" />
                                 {extension.author}
@@ -373,7 +373,7 @@ export function ExtensionsMarketplace({ projectId, className }: ExtensionsMarket
 
           {!isLoading && !marketplaceError && extensions.length > 0 && (
             <div className="mt-4">
-              <h3 className="text-sm font-medium mb-3 flex items-center gap-2">
+              <h3 className="text-[13px] font-medium mb-3 flex items-center gap-2">
                 <TrendingUp className="h-4 w-4" />
                 Featured Extensions
               </h3>
@@ -387,14 +387,14 @@ export function ExtensionsMarketplace({ projectId, className }: ExtensionsMarket
                       data-testid={`featured-extension-${extension.extensionId}`}
                     >
                       <div className="flex items-center gap-2">
-                        <span className="text-lg">
+                        <span className="text-[15px]">
                           {extension.icon === 'palette' && '🎨'}
                           {extension.icon === 'code' && '💻'}
                           {extension.icon === 'git-branch' && '🔀'}
                         </span>
                         <div>
-                          <p className="text-sm font-medium">{extension.name}</p>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-[13px] font-medium">{extension.name}</p>
+                          <p className="text-[11px] text-muted-foreground">
                             by {extension.author}
                           </p>
                         </div>

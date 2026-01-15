@@ -36,7 +36,7 @@ export default function Cycles() {
       <div className="grid gap-6 md:grid-cols-3 mb-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Current Cycle</CardTitle>
+            <CardTitle className="text-[13px] font-medium">Current Cycle</CardTitle>
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -48,7 +48,7 @@ export default function Cycles() {
                 : 'N/A'
               }
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-[11px] text-muted-foreground mt-1">
               {billingData?.currentCycle?.daysRemaining} days remaining
             </p>
           </CardContent>
@@ -56,7 +56,7 @@ export default function Cycles() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Current Plan</CardTitle>
+            <CardTitle className="text-[13px] font-medium">Current Plan</CardTitle>
             <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -69,18 +69,18 @@ export default function Cycles() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Usage This Cycle</CardTitle>
+            <CardTitle className="text-[13px] font-medium">Usage This Cycle</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="space-y-1">
-              <div className="flex justify-between text-sm">
+              <div className="flex justify-between text-[13px]">
                 <span>Compute</span>
                 <span className="font-medium">
                   {usageData?.compute?.used || 0}/{usageData?.compute?.limit || 0} {usageData?.compute?.unit}
                 </span>
               </div>
-              <div className="flex justify-between text-sm">
+              <div className="flex justify-between text-[13px]">
                 <span>Storage</span>
                 <span className="font-medium">
                   {usageData?.storage?.used || 0}/{usageData?.storage?.limit || 0} {usageData?.storage?.unit}
@@ -108,12 +108,12 @@ export default function Cycles() {
                     <Clock className="h-5 w-5 text-muted-foreground" />
                     <div>
                       <p className="font-medium">{cycle.month}</p>
-                      <p className="text-sm text-muted-foreground">{cycle.period}</p>
+                      <p className="text-[13px] text-muted-foreground">{cycle.period}</p>
                     </div>
                   </div>
                   <div className="text-right">
                     <p className="font-medium">{cycle.amount}</p>
-                    <p className="text-sm text-muted-foreground">{cycle.plan}</p>
+                    <p className="text-[13px] text-muted-foreground">{cycle.plan}</p>
                   </div>
                 </div>
               ))}
@@ -122,7 +122,7 @@ export default function Cycles() {
             <div className="text-center py-8 text-muted-foreground">
               <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p>No previous billing cycles</p>
-              <p className="text-sm mt-2">Your billing history will appear here</p>
+              <p className="text-[13px] mt-2">Your billing history will appear here</p>
             </div>
           )}
         </CardContent>

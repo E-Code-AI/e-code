@@ -124,7 +124,7 @@ export function ReplitProblemsPanel({ projectId, onFileNavigate }: ReplitProblem
             variant="ghost"
             size="sm"
             onClick={() => setGroupByFile(!groupByFile)}
-            className="text-xs"
+            className="text-[11px]"
           >
             <Filter className="h-3.5 w-3.5 mr-1" />
             {groupByFile ? 'Ungroup' : 'Group by File'}
@@ -174,11 +174,11 @@ export function ReplitProblemsPanel({ projectId, onFileNavigate }: ReplitProblem
       <ScrollArea className="flex-1">
         <div className="p-2">
           {isLoading ? (
-            <div className="text-center py-8 text-[var(--ecode-text-secondary)] text-sm">
+            <div className="text-center py-8 text-[var(--ecode-text-secondary)] text-[13px]">
               Loading problems...
             </div>
           ) : filteredProblems.length === 0 ? (
-            <div className="text-center py-8 text-[var(--ecode-text-secondary)] text-sm">
+            <div className="text-center py-8 text-[var(--ecode-text-secondary)] text-[13px]">
               No problems found 🎉
             </div>
           ) : (
@@ -187,7 +187,7 @@ export function ReplitProblemsPanel({ projectId, onFileNavigate }: ReplitProblem
                 {groupByFile && (
                   <button
                     onClick={() => toggleFileExpansion(file)}
-                    className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-[var(--ecode-sidebar-hover)] rounded text-sm font-[family-name:var(--ecode-font-sans)]"
+                    className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-[var(--ecode-sidebar-hover)] rounded text-[13px] font-[family-name:var(--ecode-font-sans)]"
                     data-testid={`problems-file-${file}`}
                   >
                     {expandedFiles.has(file) ? (
@@ -199,7 +199,7 @@ export function ReplitProblemsPanel({ projectId, onFileNavigate }: ReplitProblem
                     <span className="text-[var(--ecode-text)] truncate flex-1 text-left">
                       {file}
                     </span>
-                    <Badge variant="secondary" className="text-xs">
+                    <Badge variant="secondary" className="text-[11px]">
                       {fileProblems.length}
                     </Badge>
                   </button>
@@ -218,10 +218,10 @@ export function ReplitProblemsPanel({ projectId, onFileNavigate }: ReplitProblem
                           {getSeverityIcon(problem.severity)}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm text-[var(--ecode-text)] font-[family-name:var(--ecode-font-sans)] leading-tight">
+                          <p className="text-[13px] text-[var(--ecode-text)] font-[family-name:var(--ecode-font-sans)] leading-tight">
                             {problem.message}
                           </p>
-                          <p className="text-xs text-[var(--ecode-text-secondary)] mt-1 font-[family-name:var(--ecode-font-mono)]">
+                          <p className="text-[11px] text-[var(--ecode-text-secondary)] mt-1 font-[family-name:var(--ecode-font-mono)]">
                             {!groupByFile && `${problem.file} `}
                             [{problem.line}, {problem.column}]
                             <span className="ml-2 opacity-70">{problem.source}</span>

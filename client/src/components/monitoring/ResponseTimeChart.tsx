@@ -46,11 +46,11 @@ export function ResponseTimeChart({ data, realTime, detailed }: ResponseTimeChar
             <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
             <XAxis 
               dataKey="time" 
-              className="text-xs"
+              className="text-[11px]"
               tick={{ fill: 'currentColor' }}
             />
             <YAxis 
-              className="text-xs"
+              className="text-[11px]"
               tick={{ fill: 'currentColor' }}
               label={{ value: 'Response Time (ms)', angle: -90, position: 'insideLeft' }}
             />

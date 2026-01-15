@@ -127,7 +127,7 @@ export function CollaborationPresence({
                 <TooltipContent>
                   <p>{collaborator.displayName || collaborator.username}</p>
                   {collaborator.cursor?.file && (
-                    <p className="text-xs text-[var(--ecode-text-muted)]">
+                    <p className="text-[11px] text-[var(--ecode-text-muted)]">
                       Editing: {collaborator.cursor.file}
                     </p>
                   )}
@@ -137,7 +137,7 @@ export function CollaborationPresence({
           ))}
         </div>
         {onlineCollaborators.length > 3 && (
-          <span className="ml-2 text-xs text-[var(--ecode-text-muted)]">
+          <span className="ml-2 text-[11px] text-[var(--ecode-text-muted)]">
             +{onlineCollaborators.length - 3}
           </span>
         )}
@@ -147,10 +147,10 @@ export function CollaborationPresence({
 
   return (
     <div className={cn("space-y-2", className)}>
-      <h3 className="text-sm font-medium">Active Collaborators</h3>
+      <h3 className="text-[13px] font-medium">Active Collaborators</h3>
       <div className="space-y-2">
         {onlineCollaborators.length === 0 ? (
-          <p className="text-sm text-[var(--ecode-text-muted)]">
+          <p className="text-[13px] text-[var(--ecode-text-muted)]">
             No one else is currently editing
           </p>
         ) : (
@@ -169,11 +169,11 @@ export function CollaborationPresence({
                 />
               </div>
               <div className="flex-1">
-                <p className="text-sm font-medium">
+                <p className="text-[13px] font-medium">
                   {collaborator.displayName || collaborator.username}
                 </p>
                 {collaborator.cursor?.file && (
-                  <p className="text-xs text-[var(--ecode-text-muted)]">
+                  <p className="text-[11px] text-[var(--ecode-text-muted)]">
                     {collaborator.cursor.file}
                     {collaborator.cursor.line && ` • Line ${collaborator.cursor.line}`}
                   </p>

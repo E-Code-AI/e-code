@@ -314,7 +314,7 @@ export default function CodeSearchPage() {
                       onCheckedChange={setIsRegexMode}
                       data-testid="switch-regex-mode"
                     />
-                    <Label className="text-sm whitespace-nowrap">Regex</Label>
+                    <Label className="text-[13px] whitespace-nowrap">Regex</Label>
                   </div>
                   <Button
                     onClick={performSearch}
@@ -339,7 +339,7 @@ export default function CodeSearchPage() {
               <div className="lg:col-span-1 space-y-4">
                 <Card className={cardClassName} data-testid="card-language-filters">
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-sm flex items-center gap-2">
+                    <CardTitle className="text-[13px] flex items-center gap-2">
                       <Code className="h-4 w-4" />
                       Languages
                     </CardTitle>
@@ -359,7 +359,7 @@ export default function CodeSearchPage() {
                           }}
                           data-testid={`checkbox-lang-${lang.id}`}
                         />
-                        <Label htmlFor={lang.id} className="text-sm cursor-pointer flex items-center gap-2">
+                        <Label htmlFor={lang.id} className="text-[13px] cursor-pointer flex items-center gap-2">
                           <span className={`w-2 h-2 rounded-full ${getLanguageColor(lang.id)}`} />
                           {lang.label}
                         </Label>
@@ -370,7 +370,7 @@ export default function CodeSearchPage() {
 
                 <Card className={cardClassName} data-testid="card-file-type-filters">
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-sm flex items-center gap-2">
+                    <CardTitle className="text-[13px] flex items-center gap-2">
                       <Folder className="h-4 w-4" />
                       File Types
                     </CardTitle>
@@ -390,7 +390,7 @@ export default function CodeSearchPage() {
                           }}
                           data-testid={`checkbox-type-${type.id}`}
                         />
-                        <Label htmlFor={type.id} className="text-sm cursor-pointer">
+                        <Label htmlFor={type.id} className="text-[13px] cursor-pointer">
                           {type.label}
                         </Label>
                       </div>
@@ -400,14 +400,14 @@ export default function CodeSearchPage() {
 
                 <Card className={cardClassName} data-testid="card-saved-searches">
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-sm flex items-center gap-2">
+                    <CardTitle className="text-[13px] flex items-center gap-2">
                       <Star className="h-4 w-4" />
                       Saved Searches
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-2">
                     {savedSearches.length === 0 ? (
-                      <p className="text-xs text-muted-foreground">No saved searches</p>
+                      <p className="text-[11px] text-muted-foreground">No saved searches</p>
                     ) : (
                       savedSearches.map((saved) => (
                         <button
@@ -418,7 +418,7 @@ export default function CodeSearchPage() {
                         >
                           <div className="flex items-center gap-2">
                             {saved.isRegex ? <Regex className="h-3 w-3" /> : <Search className="h-3 w-3" />}
-                            <span className="text-sm font-mono truncate">{saved.query}</span>
+                            <span className="text-[13px] font-mono truncate">{saved.query}</span>
                           </div>
                         </button>
                       ))
@@ -428,7 +428,7 @@ export default function CodeSearchPage() {
 
                 <Card className={cardClassName} data-testid="card-recent-searches">
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-sm flex items-center gap-2">
+                    <CardTitle className="text-[13px] flex items-center gap-2">
                       <History className="h-4 w-4" />
                       Recent Searches
                     </CardTitle>
@@ -442,12 +442,12 @@ export default function CodeSearchPage() {
                         data-testid={`button-recent-${recent.id}`}
                       >
                         <div className="flex items-center justify-between">
-                          <span className="text-sm font-mono truncate">{recent.query}</span>
-                          <Badge variant="secondary" className="text-xs">
+                          <span className="text-[13px] font-mono truncate">{recent.query}</span>
+                          <Badge variant="secondary" className="text-[11px]">
                             {recent.resultCount}
                           </Badge>
                         </div>
-                        <div className="text-xs text-muted-foreground mt-1">
+                        <div className="text-[11px] text-muted-foreground mt-1">
                           {formatTimestamp(recent.timestamp)}
                         </div>
                       </button>
@@ -462,11 +462,11 @@ export default function CodeSearchPage() {
                 <Card className={cardClassName} data-testid="card-search-results">
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
-                      <CardTitle className="text-sm">
+                      <CardTitle className="text-[13px]">
                         Results {results.length > 0 && `(${results.length})`}
                       </CardTitle>
                       {results.length > 0 && (
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="outline" className="text-[11px]">
                           {isRegexMode ? 'Regex' : 'Fuzzy'} Match
                         </Badge>
                       )}
@@ -478,7 +478,7 @@ export default function CodeSearchPage() {
                         <div className="text-center py-12 text-muted-foreground">
                           <Search className="h-12 w-12 mx-auto mb-3 opacity-50" />
                           <p>No results found</p>
-                          <p className="text-xs mt-1">Try a different search query</p>
+                          <p className="text-[11px] mt-1">Try a different search query</p>
                         </div>
                       ) : (
                         <div className="space-y-2">
@@ -496,17 +496,17 @@ export default function CodeSearchPage() {
                               <div className="flex items-start justify-between gap-2">
                                 <div className="flex items-center gap-2 min-w-0">
                                   <File className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
-                                  <span className="font-medium text-sm truncate">{result.file}</span>
-                                  <Badge variant="secondary" className="text-xs">
+                                  <span className="font-medium text-[13px] truncate">{result.file}</span>
+                                  <Badge variant="secondary" className="text-[11px]">
                                     L{result.line}
                                   </Badge>
                                 </div>
                                 <div className={`w-2 h-2 rounded-full flex-shrink-0 ${getLanguageColor(result.language)}`} />
                               </div>
-                              <div className="mt-2 text-xs text-muted-foreground truncate">
+                              <div className="mt-2 text-[11px] text-muted-foreground truncate">
                                 {result.path}
                               </div>
-                              <pre className="mt-2 text-xs font-mono bg-muted p-2 rounded overflow-x-auto">
+                              <pre className="mt-2 text-[11px] font-mono bg-muted p-2 rounded overflow-x-auto">
                                 <code>{result.content}</code>
                               </pre>
                             </div>
@@ -520,7 +520,7 @@ export default function CodeSearchPage() {
                 <Card className={cardClassName} data-testid="card-preview-pane">
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
-                      <CardTitle className="text-sm">Preview</CardTitle>
+                      <CardTitle className="text-[13px]">Preview</CardTitle>
                       {selectedResult && (
                         <Button
                           variant="ghost"
@@ -541,8 +541,8 @@ export default function CodeSearchPage() {
                           <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
                             <File className="h-4 w-4" />
                             <div>
-                              <div className="font-medium text-sm">{selectedResult.file}</div>
-                              <div className="text-xs text-muted-foreground">{selectedResult.path}</div>
+                              <div className="font-medium text-[13px]">{selectedResult.file}</div>
+                              <div className="text-[11px] text-muted-foreground">{selectedResult.path}</div>
                             </div>
                           </div>
 
@@ -559,8 +559,8 @@ export default function CodeSearchPage() {
                           <Separator />
 
                           <div className="space-y-1">
-                            <div className="text-xs text-muted-foreground mb-2">Code Context:</div>
-                            <div className="font-mono text-sm bg-muted rounded-lg overflow-hidden">
+                            <div className="text-[11px] text-muted-foreground mb-2">Code Context:</div>
+                            <div className="font-mono text-[13px] bg-muted rounded-lg overflow-hidden">
                               {selectedResult.context.map((line, index) => (
                                 <div
                                   key={index}

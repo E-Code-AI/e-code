@@ -116,10 +116,10 @@ export function TemplateCard({
             <div className="flex-1 p-6">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1">
-                  <h3 className="font-semibold text-lg mb-1" onClick={onClick}>
+                  <h3 className="font-semibold text-[15px] mb-1" onClick={onClick}>
                     {template.name}
                   </h3>
-                  <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+                  <p className="text-[13px] text-muted-foreground line-clamp-2 mb-3">
                     {template.description}
                   </p>
                 </div>
@@ -161,11 +161,11 @@ export function TemplateCard({
                       {template.author?.name?.charAt(0) || 'U'}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-[13px] text-muted-foreground">
                     by {template.author?.name || 'Anonymous'}
                   </span>
                 </div>
-                <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                <div className="flex items-center gap-3 text-[13px] text-muted-foreground">
                   <span className="flex items-center gap-1">
                     <Star className="h-4 w-4 fill-current text-yellow-500" />
                     {template.stats?.rating?.toFixed(1) || '0.0'}
@@ -284,7 +284,7 @@ export function TemplateCard({
                 <Heart className={cn("h-4 w-4", isFavorite && "fill-current text-red-500")} />
               </Button>
             </div>
-            <p className="text-sm text-muted-foreground line-clamp-2" title={template.description}>
+            <p className="text-[13px] text-muted-foreground line-clamp-2" title={template.description}>
               {template.description}
             </p>
           </div>
@@ -297,11 +297,11 @@ export function TemplateCard({
                 {template.author?.name?.charAt(0) || 'U'}
               </AvatarFallback>
             </Avatar>
-            <span className="text-xs text-muted-foreground">
+            <span className="text-[11px] text-muted-foreground">
               {template.author?.name || 'Anonymous'}
             </span>
             {template.author?.verified && (
-              <Badge variant="secondary" className="h-4 text-xs px-1">
+              <Badge variant="secondary" className="h-4 text-[11px] px-1">
                 Verified
               </Badge>
             )}
@@ -309,7 +309,7 @@ export function TemplateCard({
 
           {/* Stats */}
           <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger className="flex items-center gap-1">
@@ -331,7 +331,7 @@ export function TemplateCard({
               </span>
             </div>
             {template.updatedAt && (
-              <span className="text-xs text-muted-foreground flex items-center gap-1">
+              <span className="text-[11px] text-muted-foreground flex items-center gap-1">
                 <Clock className="h-3 w-3" />
                 {new Date(template.updatedAt).toLocaleDateString()}
               </span>
@@ -340,16 +340,16 @@ export function TemplateCard({
 
           {/* Tags */}
           <div className="flex gap-1 flex-wrap mb-3">
-            <Badge variant="secondary" className="text-xs">
+            <Badge variant="secondary" className="text-[11px]">
               {template.category}
             </Badge>
             {template.tags?.slice(0, 2).map((tag: string) => (
-              <Badge key={tag} variant="outline" className="text-xs">
+              <Badge key={tag} variant="outline" className="text-[11px]">
                 {tag}
               </Badge>
             ))}
             {template.tags?.length > 2 && (
-              <Badge variant="outline" className="text-xs">
+              <Badge variant="outline" className="text-[11px]">
                 +{template.tags.length - 2}
               </Badge>
             )}

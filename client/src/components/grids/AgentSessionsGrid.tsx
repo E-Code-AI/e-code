@@ -68,21 +68,21 @@ function SessionCard({
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-2">
-              <Badge className={cn("text-xs", statusColors[session.status] || 'bg-gray-100')}>
+              <Badge className={cn("text-[11px]", statusColors[session.status] || 'bg-gray-100')}>
                 {session.status}
               </Badge>
-              <span className="text-xs text-muted-foreground font-mono truncate">
+              <span className="text-[11px] text-muted-foreground font-mono truncate">
                 {session.id.slice(0, 8)}...
               </span>
             </div>
-            <div className="text-sm font-medium truncate mb-1">
+            <div className="text-[13px] font-medium truncate mb-1">
               {session.projectName || 'Unknown Project'}
             </div>
-            <div className="flex items-center gap-1 text-xs text-muted-foreground mb-2">
+            <div className="flex items-center gap-1 text-[11px] text-muted-foreground mb-2">
               <User className="h-3 w-3" />
               {session.userName || 'Unknown User'}
             </div>
-            <div className="grid grid-cols-3 gap-2 text-xs">
+            <div className="grid grid-cols-3 gap-2 text-[11px]">
               <div className="flex items-center gap-1 text-muted-foreground">
                 <Clock className="h-3 w-3" />
                 <span>{session.duration ? `${Math.round(session.duration / 1000)}s` : '-'}</span>
@@ -100,7 +100,7 @@ function SessionCard({
           <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0 mt-1" />
         </div>
         <div className="mt-2 pt-2 border-t">
-          <div className="flex items-center justify-between text-xs">
+          <div className="flex items-center justify-between text-[11px]">
             <span className="text-muted-foreground">{session.model}</span>
             <span className="text-muted-foreground">
               {session.startedAt ? format(new Date(session.startedAt), 'MMM d, HH:mm') : '-'}
@@ -398,7 +398,7 @@ export function AgentSessionsGrid({
 
       {/* Pagination */}
       {data && data.totalPages > 1 && (
-        <div className="flex items-center justify-between text-sm text-muted-foreground">
+        <div className="flex items-center justify-between text-[13px] text-muted-foreground">
           <span>
             Showing {((page - 1) * pageSize) + 1} - {Math.min(page * pageSize, data.totalCount)} of {data.totalCount}
           </span>

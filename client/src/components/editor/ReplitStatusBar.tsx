@@ -135,7 +135,7 @@ export function ReplitStatusBar({
   return (
     <div
       className={cn(
-        "h-7 bg-[var(--ecode-surface)] border-t border-[var(--ecode-border)] flex items-center justify-between px-3 flex-shrink-0 text-xs font-[family-name:var(--ecode-font-sans)]",
+        "h-7 bg-[var(--ecode-surface)] border-t border-[var(--ecode-border)] flex items-center justify-between px-3 flex-shrink-0 text-[11px] font-[family-name:var(--ecode-font-sans)]",
         className
       )}
       data-testid="status-bar"
@@ -203,7 +203,7 @@ export function ReplitStatusBar({
             </div>
           </HoverCardTrigger>
           <HoverCardContent side="top" className="w-60">
-            <div className="text-xs space-y-1">
+            <div className="text-[11px] space-y-1">
               <p className="font-semibold">Connection Status</p>
               <p className="text-[var(--ecode-text-secondary)]">
                 {isConnected
@@ -227,13 +227,13 @@ export function ReplitStatusBar({
               >
                 <Cloud className="h-3.5 w-3.5 text-[var(--ecode-text-secondary)]" />
                 {saveStatusDisplay.icon}
-                <span className={cn("text-xs font-medium", saveStatusDisplay.textColor)}>
+                <span className={cn("text-[11px] font-medium", saveStatusDisplay.textColor)}>
                   {saveStatusDisplay.text}
                 </span>
               </div>
             </TooltipTrigger>
             <TooltipContent side="top" className="max-w-xs">
-              <div className="text-xs space-y-1">
+              <div className="text-[11px] space-y-1">
                 <p className="font-semibold">Auto-save Status</p>
                 <p className="text-muted-foreground">
                   {saveStatus === 'saved' && `Last saved: ${formatLastSaved(lastSavedAt)}`}
@@ -263,7 +263,7 @@ export function ReplitStatusBar({
             </div>
           </HoverCardTrigger>
           <HoverCardContent side="top" className="w-48">
-            <div className="text-xs space-y-1">
+            <div className="text-[11px] space-y-1">
               <p className="font-semibold">Performance</p>
               <p className="text-[var(--ecode-text-secondary)]">
                 Editor is running smoothly

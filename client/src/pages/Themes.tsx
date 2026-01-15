@@ -303,7 +303,7 @@ export default function Themes() {
                               </Badge>
                             )}
                           </h3>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-[13px] text-muted-foreground">
                             by {theme.author}
                           </p>
                         </div>
@@ -314,7 +314,7 @@ export default function Themes() {
                       
                       {/* Theme Preview */}
                       <div 
-                        className="rounded-md p-3 mb-3 font-mono text-xs"
+                        className="rounded-md p-3 mb-3 font-mono text-[11px]"
                         style={{ 
                           backgroundColor: theme.preview.bg,
                           color: theme.preview.fg 
@@ -325,11 +325,11 @@ export default function Themes() {
                         <div>{'}'}</div>
                       </div>
                       
-                      <p className="text-sm text-muted-foreground mb-3">
+                      <p className="text-[13px] text-muted-foreground mb-3">
                         {theme.description}
                       </p>
                       
-                      <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center justify-between text-[13px]">
                         <div className="flex items-center gap-3 text-muted-foreground">
                           <span className="flex items-center gap-1">
                             <Download className="h-3 w-3" />
@@ -381,7 +381,7 @@ export default function Themes() {
                   <Card key={theme.id} className="cursor-pointer">
                     <CardContent className="pt-6">
                       <h3 className="font-semibold mb-2">{theme.name}</h3>
-                      <p className="text-sm text-muted-foreground mb-3">
+                      <p className="text-[13px] text-muted-foreground mb-3">
                         {theme.description}
                       </p>
                       
@@ -443,7 +443,7 @@ export default function Themes() {
                             <Badge variant="secondary">Active</Badge>
                           )}
                         </p>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-[13px] text-muted-foreground">
                           {theme.description}
                         </p>
                       </div>
@@ -492,8 +492,8 @@ export default function Themes() {
             <CardContent>
               <div className="text-center py-12">
                 <Sparkles className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Theme Creator</h3>
-                <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">
+                <h3 className="text-[15px] font-semibold mb-2">Theme Creator</h3>
+                <p className="text-[13px] text-muted-foreground mb-6 max-w-md mx-auto">
                   Create beautiful, personalized themes with our visual theme editor. 
                   Customize colors, fonts, and more.
                 </p>
@@ -525,7 +525,7 @@ export default function Themes() {
                         {template.icon}
                         <span className="font-medium">{template.name}</span>
                       </div>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-[11px] text-muted-foreground">
                         {template.description}
                       </p>
                     </div>
@@ -585,7 +585,7 @@ export default function Themes() {
                         id={setting.id}
                         type="text"
                         defaultValue={setting.value}
-                        className="w-24 px-2 py-1 text-sm rounded border bg-background"
+                        className="w-24 px-2 py-1 text-[13px] rounded border bg-background"
                       />
                     </div>
                   ))}
@@ -598,15 +598,15 @@ export default function Themes() {
                 <div className="space-y-2">
                   <label className="flex items-center gap-2">
                     <input type="checkbox" className="rounded" defaultChecked />
-                    <span className="text-sm">Sync theme across devices</span>
+                    <span className="text-[13px]">Sync theme across devices</span>
                   </label>
                   <label className="flex items-center gap-2">
                     <input type="checkbox" className="rounded" defaultChecked />
-                    <span className="text-sm">Enable theme animations</span>
+                    <span className="text-[13px]">Enable theme animations</span>
                   </label>
                   <label className="flex items-center gap-2">
                     <input type="checkbox" className="rounded" />
-                    <span className="text-sm">Use high contrast mode</span>
+                    <span className="text-[13px]">Use high contrast mode</span>
                   </label>
                 </div>
               </div>

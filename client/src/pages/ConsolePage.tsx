@@ -458,7 +458,7 @@ export default function ConsolePage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center justify-between text-[13px]">
                     <span className="flex items-center gap-2 text-muted-foreground">
                       <Cpu className="h-4 w-4" />
                       CPU Usage
@@ -470,7 +470,7 @@ export default function ConsolePage() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center justify-between text-[13px]">
                     <span className="flex items-center gap-2 text-muted-foreground">
                       <MemoryStick className="h-4 w-4" />
                       Memory
@@ -482,7 +482,7 @@ export default function ConsolePage() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center justify-between text-[13px]">
                     <span className="flex items-center gap-2 text-muted-foreground">
                       <HardDrive className="h-4 w-4" />
                       Storage
@@ -493,12 +493,12 @@ export default function ConsolePage() {
                     <div className="h-full bg-green-500 rounded-full" style={{ width: '42.5%' }} />
                   </div>
                 </div>
-                <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center justify-between text-[13px]">
                   <span className="flex items-center gap-2 text-muted-foreground">
                     <Wifi className="h-4 w-4" />
                     Network
                   </span>
-                  <Badge variant="secondary" className="text-xs">Connected</Badge>
+                  <Badge variant="secondary" className="text-[11px]">Connected</Badge>
                 </div>
               </CardContent>
             </Card>
@@ -522,7 +522,7 @@ export default function ConsolePage() {
                       >
                         <div className="flex items-center gap-2 flex-1 min-w-0">
                           <ChevronRight className="h-3 w-3 text-muted-foreground shrink-0" />
-                          <code className="text-xs truncate">{item.command}</code>
+                          <code className="text-[11px] truncate">{item.command}</code>
                         </div>
                         <Badge
                           variant={item.exitCode === 0 ? 'secondary' : 'destructive'}
@@ -555,7 +555,7 @@ export default function ConsolePage() {
                     data-testid={`session-tab-${session.id}`}
                   >
                     <Terminal className="h-3 w-3" />
-                    <span className="text-xs font-medium">{session.name}</span>
+                    <span className="text-[11px] font-medium">{session.name}</span>
                     {session.status === 'connected' && (
                       <span className="h-1.5 w-1.5 bg-green-500 rounded-full" />
                     )}
@@ -626,7 +626,7 @@ export default function ConsolePage() {
                 Application Logs
               </CardTitle>
               <div className="flex items-center gap-2">
-                <Badge variant="secondary" className="text-xs">
+                <Badge variant="secondary" className="text-[11px]">
                   {logs.length} entries
                 </Badge>
                 <Button variant="ghost" size="icon" className="h-7 w-7" onClick={exportLogs}>
@@ -647,12 +647,12 @@ export default function ConsolePage() {
                     {getLogIcon(log.level)}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-medium">{log.source}</span>
+                        <span className="text-[11px] font-medium">{log.source}</span>
                         <span className="text-[10px] text-muted-foreground">
                           {log.timestamp.toLocaleTimeString()}
                         </span>
                       </div>
-                      <p className="text-sm text-muted-foreground truncate">{log.message}</p>
+                      <p className="text-[13px] text-muted-foreground truncate">{log.message}</p>
                     </div>
                   </div>
                 ))}
@@ -688,7 +688,7 @@ export default function ConsolePage() {
               <div className="space-y-4">
                 {Object.entries(groupedCommands).map(([category, commands]) => (
                   <div key={category}>
-                    <h4 className="text-xs font-semibold text-muted-foreground mb-2">{category}</h4>
+                    <h4 className="text-[11px] font-semibold text-muted-foreground mb-2">{category}</h4>
                     <div className="space-y-1">
                       {commands.map((cmd) => (
                         <div
@@ -698,8 +698,8 @@ export default function ConsolePage() {
                           data-testid={`quick-command-${cmd.name.replace(/\s+/g, '-').toLowerCase()}`}
                         >
                           <div>
-                            <p className="text-sm font-medium">{cmd.name}</p>
-                            <code className="text-xs text-muted-foreground">{cmd.command}</code>
+                            <p className="text-[13px] font-medium">{cmd.name}</p>
+                            <code className="text-[11px] text-muted-foreground">{cmd.command}</code>
                           </div>
                           <Play className="h-4 w-4 text-muted-foreground" />
                         </div>
@@ -737,8 +737,8 @@ export default function ConsolePage() {
                   data-testid={`history-item-${index}`}
                 >
                   <div className="flex-1 min-w-0">
-                    <code className="text-sm block truncate">{item.command}</code>
-                    <span className="text-xs text-muted-foreground">
+                    <code className="text-[13px] block truncate">{item.command}</code>
+                    <span className="text-[11px] text-muted-foreground">
                       {item.timestamp.toLocaleString()}
                     </span>
                   </div>

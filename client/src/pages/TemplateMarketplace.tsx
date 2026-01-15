@@ -367,7 +367,7 @@ export default function TemplateMarketplace() {
             <div className="mb-8" data-testid="trending-section">
               <div className="flex items-center gap-2 mb-4">
                 <TrendingUp className="h-5 w-5 text-orange-500" />
-                <h2 className="text-lg font-semibold">Trending This Week</h2>
+                <h2 className="text-[15px] font-semibold">Trending This Week</h2>
               </div>
               <div className="flex gap-4 overflow-x-auto pb-2">
                 {trendingTemplates.slice(0, 5).map((template: any) => (
@@ -379,16 +379,16 @@ export default function TemplateMarketplace() {
                   >
                     <CardContent className="p-4">
                       <div className="flex items-center gap-2 mb-2">
-                        <Badge variant="secondary" className="text-xs">
+                        <Badge variant="secondary" className="text-[11px]">
                           {template.category}
                         </Badge>
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="outline" className="text-[11px]">
                           <Star className="h-3 w-3 mr-1 fill-current" />
                           {template.stats.rating.toFixed(1)}
                         </Badge>
                       </div>
                       <h4 className="font-medium line-clamp-1">{template.name}</h4>
-                      <p className="text-xs text-muted-foreground mt-1">
+                      <p className="text-[11px] text-muted-foreground mt-1">
                         {template.stats.downloads} downloads
                       </p>
                     </CardContent>

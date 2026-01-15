@@ -189,7 +189,7 @@ export default function Support() {
                   {channel.icon}
                 </div>
                 <h3 className="font-semibold mb-1">{channel.title}</h3>
-                <p className="text-sm text-muted-foreground mb-3">
+                <p className="text-[13px] text-muted-foreground mb-3">
                   {channel.description}
                 </p>
                 <Badge variant="secondary" className="mb-3">
@@ -251,7 +251,7 @@ export default function Support() {
                           <h4 className="font-semibold mb-2">{issue.title}</h4>
                           <ul className="space-y-1">
                             {issue.solutions.map((solution, idx) => (
-                              <li key={idx} className="text-sm text-muted-foreground flex items-start gap-2">
+                              <li key={idx} className="text-[13px] text-muted-foreground flex items-start gap-2">
                                 <CheckCircle className="h-3 w-3 text-green-500 mt-0.5" />
                                 <span>{solution}</span>
                               </li>
@@ -320,7 +320,7 @@ export default function Support() {
                   </button>
                   {expandedFaq === faq.id && (
                     <div className="px-4 pb-3">
-                      <p className="text-sm text-muted-foreground">{faq.answer}</p>
+                      <p className="text-[13px] text-muted-foreground">{faq.answer}</p>
                     </div>
                   )}
                 </div>
@@ -344,7 +344,7 @@ export default function Support() {
                   <Label htmlFor="ticket-type">Issue Type</Label>
                   <select
                     id="ticket-type"
-                    className="w-full px-3 py-2 text-sm rounded-md border bg-background"
+                    className="w-full px-3 py-2 text-[13px] rounded-md border bg-background"
                     value={ticketType}
                     onChange={(e) => setTicketType(e.target.value)}
                     required
@@ -400,7 +400,7 @@ export default function Support() {
                   <Label htmlFor="description">Description</Label>
                   <textarea
                     id="description"
-                    className="w-full min-h-[150px] px-3 py-2 text-sm rounded-md border bg-background"
+                    className="w-full min-h-[150px] px-3 py-2 text-[13px] rounded-md border bg-background"
                     value={ticketDescription}
                     onChange={(e) => setTicketDescription(e.target.value)}
                     placeholder="Please provide as much detail as possible..."
@@ -410,7 +410,7 @@ export default function Support() {
 
                 <div className="bg-muted/50 p-4 rounded-lg">
                   <h4 className="font-semibold mb-2">Before submitting:</h4>
-                  <ul className="text-sm text-muted-foreground space-y-1">
+                  <ul className="text-[13px] text-muted-foreground space-y-1">
                     <li>• Check our FAQ section for quick answers</li>
                     <li>• Search our documentation for guides</li>
                     <li>• Include error messages or screenshots if applicable</li>
@@ -434,7 +434,7 @@ export default function Support() {
                   <MessageSquare className="h-5 w-5" />
                   <div>
                     <p className="font-medium">Community Discord</p>
-                    <p className="text-sm text-muted-foreground">Get help from the community</p>
+                    <p className="text-[13px] text-muted-foreground">Get help from the community</p>
                   </div>
                 </div>
                 <Button size="sm" variant="outline">
@@ -447,7 +447,7 @@ export default function Support() {
                   <Video className="h-5 w-5" />
                   <div>
                     <p className="font-medium">Video Tutorials</p>
-                    <p className="text-sm text-muted-foreground">Learn with video guides</p>
+                    <p className="text-[13px] text-muted-foreground">Learn with video guides</p>
                   </div>
                 </div>
                 <Button size="sm" variant="outline">
@@ -473,7 +473,7 @@ export default function Support() {
                 <CheckCircle className="h-6 w-6 text-green-600" />
                 <div>
                   <p className="font-semibold text-green-800">All Systems Operational</p>
-                  <p className="text-sm text-green-700">Last updated 2 minutes ago</p>
+                  <p className="text-[13px] text-green-700">Last updated 2 minutes ago</p>
                 </div>
               </div>
 
@@ -503,7 +503,7 @@ export default function Support() {
 
               <div className="border-t pt-4">
                 <h4 className="font-semibold mb-3">Recent Incidents</h4>
-                <div className="space-y-2 text-sm">
+                <div className="space-y-2 text-[13px]">
                   <div className="flex items-start gap-3">
                     <Clock className="h-4 w-4 text-muted-foreground mt-0.5" />
                     <div>

@@ -71,7 +71,7 @@ export function MobileEditorTabs({
       {(activeTab === 'code' || activeTab === 'terminal') && onRun && (
         <div className="flex items-center justify-between px-4 py-2 border-b border-[var(--ecode-border)] bg-[var(--ecode-surface)]">
           <div className="flex items-center gap-2">
-            <h3 className="text-sm font-medium capitalize">{activeTab}</h3>
+            <h3 className="text-[13px] font-medium capitalize">{activeTab}</h3>
           </div>
           <div className="flex items-center gap-2">
             {activeTab === 'code' && (
@@ -79,7 +79,7 @@ export function MobileEditorTabs({
                 size="sm"
                 onClick={onRun}
                 disabled={isRunning}
-                className="h-8 px-3 text-xs"
+                className="h-8 px-3 text-[11px]"
               >
                 {isRunning ? (
                   <>
@@ -225,7 +225,7 @@ export function MobileEditorTabs({
                   <GitBranch className="h-5 w-5 text-[var(--ecode-accent)]" />
                   <div className="flex-1 text-left">
                     <div className="font-medium">Git</div>
-                    <div className="text-xs text-[var(--ecode-text-muted)]">Version control</div>
+                    <div className="text-[11px] text-[var(--ecode-text-muted)]">Version control</div>
                   </div>
                 </button>
                 
@@ -241,7 +241,7 @@ export function MobileEditorTabs({
                   <Bug className="h-5 w-5 text-status-success" />
                   <div className="flex-1 text-left">
                     <div className="font-medium">Debug</div>
-                    <div className="text-xs text-[var(--ecode-text-muted)]">Debugger panel</div>
+                    <div className="text-[11px] text-[var(--ecode-text-muted)]">Debugger panel</div>
                   </div>
                 </button>
                 
@@ -257,7 +257,7 @@ export function MobileEditorTabs({
                   <AlertCircle className="h-5 w-5 text-status-warning" />
                   <div className="flex-1 text-left">
                     <div className="font-medium">Problems</div>
-                    <div className="text-xs text-[var(--ecode-text-muted)]">Code diagnostics</div>
+                    <div className="text-[11px] text-[var(--ecode-text-muted)]">Code diagnostics</div>
                   </div>
                 </button>
                 
@@ -273,7 +273,7 @@ export function MobileEditorTabs({
                   <SettingsIcon className="h-5 w-5 text-status-info" />
                   <div className="flex-1 text-left">
                     <div className="font-medium">Settings</div>
-                    <div className="text-xs text-[var(--ecode-text-muted)]">Project settings</div>
+                    <div className="text-[11px] text-[var(--ecode-text-muted)]">Project settings</div>
                   </div>
                 </button>
                 
@@ -289,7 +289,7 @@ export function MobileEditorTabs({
                   <Share2 className="h-5 w-5 text-primary" />
                   <div className="flex-1 text-left">
                     <div className="font-medium">Share</div>
-                    <div className="text-xs text-[var(--ecode-text-muted)]">Share project</div>
+                    <div className="text-[11px] text-[var(--ecode-text-muted)]">Share project</div>
                   </div>
                 </button>
                 

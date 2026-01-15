@@ -91,8 +91,8 @@ export default function LandingVideo() {
           </div>
 
           <div className="mt-8 text-center">
-            <h3 className="text-lg font-semibold mb-2">Live Platform Demo</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <h3 className="text-[15px] font-semibold mb-2">Live Platform Demo</h3>
+            <p className="text-[13px] text-gray-600 dark:text-gray-400">
               Watch how E-Code Platform's AI agent builds a complete full-stack application
             </p>
             <div className="flex flex-wrap justify-center gap-4 mt-4">

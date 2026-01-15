@@ -200,7 +200,7 @@ export default function LovableImport() {
                       <Loader2 className="h-5 w-5 animate-spin text-blue-500" />
                       <div>
                         <p className="font-medium">Analyzing project structure...</p>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-[13px] text-muted-foreground">
                           Detecting pages and components
                         </p>
                       </div>
@@ -209,7 +209,7 @@ export default function LovableImport() {
                       <Loader2 className="h-5 w-5 animate-spin text-blue-500" />
                       <div>
                         <p className="font-medium">Generating code...</p>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-[13px] text-muted-foreground">
                           Creating React components and API routes
                         </p>
                       </div>
@@ -226,7 +226,7 @@ export default function LovableImport() {
                       </div>
                     </div>
                     {importDetails.metadata && (
-                      <div className="pl-8 space-y-1 text-sm text-muted-foreground">
+                      <div className="pl-8 space-y-1 text-[13px] text-muted-foreground">
                         <p>• {importDetails.metadata.pagesCreated} pages created</p>
                         <p>• {importDetails.metadata.componentsCreated} components generated</p>
                         <p>• {importDetails.metadata.apiEndpoints} API endpoints configured</p>
@@ -240,7 +240,7 @@ export default function LovableImport() {
                     <div className="h-5 w-5 rounded-full bg-red-500" />
                     <div>
                       <p className="font-medium">Import failed</p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-[13px] text-muted-foreground">
                         Please check your input and try again
                       </p>
                     </div>
@@ -257,7 +257,7 @@ export default function LovableImport() {
               <CardTitle>What gets imported?</CardTitle>
             </CardHeader>
             <CardContent>
-              <ul className="space-y-2 text-sm">
+              <ul className="space-y-2 text-[13px]">
                 <li className="flex items-start gap-2">
                   <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
                   <span>All pages with routing</span>
@@ -283,7 +283,7 @@ export default function LovableImport() {
               <CardTitle>Enhanced Features</CardTitle>
             </CardHeader>
             <CardContent>
-              <ul className="space-y-2 text-sm">
+              <ul className="space-y-2 text-[13px]">
                 <li className="flex items-start gap-2">
                   <CheckCircle className="h-4 w-4 text-blue-500 mt-0.5" />
                   <span>Full TypeScript support</span>

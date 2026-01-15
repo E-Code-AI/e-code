@@ -261,7 +261,7 @@ export function TemplateGallery({ onSelectTemplate, className }: TemplateGallery
           <select
             value={selectedDifficulty}
             onChange={(e) => setSelectedDifficulty(e.target.value)}
-            className="px-3 py-2 border rounded-md text-sm"
+            className="px-3 py-2 border rounded-md text-[13px]"
             aria-label="Filter by difficulty level"
           >
             <option value="all">All Levels</option>
@@ -306,19 +306,19 @@ export function TemplateGallery({ onSelectTemplate, className }: TemplateGallery
                       {template.difficulty}
                     </Badge>
                   </div>
-                  <CardDescription className="text-sm mt-1">
+                  <CardDescription className="text-[13px] mt-1">
                     {template.description}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="pt-0">
                   <div className="flex flex-wrap gap-1 mb-3">
                     {template.tags.map(tag => (
-                      <Badge key={tag} variant="secondary" className="text-xs">
+                      <Badge key={tag} variant="secondary" className="text-[11px]">
                         {tag}
                       </Badge>
                     ))}
                   </div>
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <div className="flex items-center justify-between text-[11px] text-muted-foreground">
                     <span className="flex items-center gap-1">
                       <Clock className="h-3 w-3" />
                       {template.estimatedTime} min

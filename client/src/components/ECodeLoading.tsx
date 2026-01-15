@@ -26,9 +26,9 @@ export function ECodeLoading({
   };
 
   const textSizes = {
-    sm: 'text-sm',
+    sm: 'text-[13px]',
     md: 'text-base',
-    lg: 'text-lg',
+    lg: 'text-[15px]',
     xl: 'text-xl'
   };
 

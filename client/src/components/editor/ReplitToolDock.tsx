@@ -87,7 +87,7 @@ export function ReplitToolDock({
             )} />
           </button>
         </TooltipTrigger>
-        <TooltipContent side="right" className="text-xs">
+        <TooltipContent side="right" className="text-[11px]">
           {tool.name}
         </TooltipContent>
       </Tooltip>

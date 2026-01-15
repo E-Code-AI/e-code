@@ -51,7 +51,7 @@ export default function LandingTestimonials() {
                     <Star key={star} className="h-5 w-5 fill-ecode-accent text-ecode-accent" />
                   ))}
                 </div>
-                <blockquote className="text-[var(--ecode-text)] mb-6 text-lg italic">
+                <blockquote className="text-[var(--ecode-text)] mb-6 text-[15px] italic">
                   "{testimonial.quote}"
                 </blockquote>
                 <div className="flex items-center gap-4">
@@ -60,8 +60,8 @@ export default function LandingTestimonials() {
                   </div>
                   <div>
                     <div className="font-semibold text-[var(--ecode-text)]">{testimonial.author}</div>
-                    <div className="text-sm text-[var(--ecode-text-muted)]">{testimonial.role}</div>
-                    <div className="text-xs text-[var(--ecode-text-muted)]">{testimonial.company}</div>
+                    <div className="text-[13px] text-[var(--ecode-text-muted)]">{testimonial.role}</div>
+                    <div className="text-[11px] text-[var(--ecode-text-muted)]">{testimonial.company}</div>
                   </div>
                 </div>
               </CardContent>

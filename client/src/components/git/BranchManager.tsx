@@ -258,7 +258,7 @@ export function BranchManager({
     <Card className={cn("h-full flex flex-col", className)}>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-medium flex items-center gap-2">
+          <CardTitle className="text-[13px] font-medium flex items-center gap-2">
             <GitBranch className="h-4 w-4" />
             Branches
           </CardTitle>
@@ -276,7 +276,7 @@ export function BranchManager({
 
             <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
               <DialogTrigger asChild>
-                <Button size="sm" variant="outline" className="h-7 text-xs" data-testid="button-new-branch">
+                <Button size="sm" variant="outline" className="h-7 text-[11px]" data-testid="button-new-branch">
                   <Plus className="h-3.5 w-3.5 mr-1" />
                   New Branch
                 </Button>
@@ -286,14 +286,14 @@ export function BranchManager({
                   <DialogTitle>Create New Branch</DialogTitle>
                   <DialogDescription>
                     Branch will be created from{' '}
-                    <code className="px-1 py-0.5 rounded bg-muted text-xs">
+                    <code className="px-1 py-0.5 rounded bg-muted text-[11px]">
                       {currentBranch?.name || 'current branch'}
                     </code>
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Branch name</label>
+                    <label className="text-[13px] font-medium">Branch name</label>
                     <Input
                       placeholder="feature/new-feature"
                       value={newBranchName}
@@ -334,11 +334,11 @@ export function BranchManager({
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1 flex-1">
                 <Check className="h-3.5 w-3.5 text-[var(--ecode-orange)]" />
-                <span className="text-sm font-medium">{currentBranch.name}</span>
+                <span className="text-[13px] font-medium">{currentBranch.name}</span>
                 {currentBranch.trackingBranch && (
                   <>
                     <ArrowRight className="h-3 w-3 text-muted-foreground" />
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-[11px] text-muted-foreground">
                       {currentBranch.trackingBranch}
                     </span>
                   </>
@@ -346,7 +346,7 @@ export function BranchManager({
               </div>
 
               {(currentBranch.ahead > 0 || currentBranch.behind > 0) && (
-                <div className="flex items-center gap-1 text-xs">
+                <div className="flex items-center gap-1 text-[11px]">
                   {currentBranch.ahead > 0 && (
                     <Badge variant="outline" className="h-5 px-1 text-[10px] bg-green-500/10 text-green-600">
                       ↑{currentBranch.ahead}
@@ -369,7 +369,7 @@ export function BranchManager({
             placeholder="Search branches..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 h-8 text-xs"
+            className="pl-9 h-8 text-[11px]"
             data-testid="input-search-branches"
           />
         </div>
@@ -377,12 +377,12 @@ export function BranchManager({
 
       <CardContent className="flex-1 p-0 overflow-hidden">
         {isLoading ? (
-          <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
+          <div className="flex items-center justify-center h-full text-[13px] text-muted-foreground">
             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
             Loading branches...
           </div>
         ) : error ? (
-          <div className="flex flex-col items-center justify-center h-full text-sm text-muted-foreground">
+          <div className="flex flex-col items-center justify-center h-full text-[13px] text-muted-foreground">
             <GitBranch className="h-8 w-8 mb-2 opacity-50" />
             <p>Failed to load branches</p>
             <Button size="sm" variant="outline" className="mt-2" onClick={() => refetch()}>
@@ -390,7 +390,7 @@ export function BranchManager({
             </Button>
           </div>
         ) : filteredBranches.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-sm text-muted-foreground">
+          <div className="flex flex-col items-center justify-center h-full text-[13px] text-muted-foreground">
             <GitBranch className="h-8 w-8 mb-2 opacity-50" />
             <p>No branches found</p>
           </div>
@@ -418,7 +418,7 @@ export function BranchManager({
                           <GitBranch className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
                         )}
                         <span className={cn(
-                          "text-sm truncate",
+                          "text-[13px] truncate",
                           branch.current && "font-medium"
                         )}>
                           {branch.name}
@@ -426,7 +426,7 @@ export function BranchManager({
                       </div>
 
                       <div className="ml-5 space-y-1">
-                        <p className="text-xs text-muted-foreground line-clamp-1">
+                        <p className="text-[11px] text-muted-foreground line-clamp-1">
                           {branch.lastCommit.message}
                         </p>
                         <div className="flex items-center gap-3 text-[10px] text-muted-foreground">

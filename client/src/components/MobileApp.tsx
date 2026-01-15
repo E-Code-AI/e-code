@@ -141,12 +141,12 @@ export function MobileApp() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Projects</CardTitle>
+            <CardTitle className="text-[13px] font-medium">Total Projects</CardTitle>
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{mobileStats.totalProjects}</div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[11px] text-muted-foreground">
               {mobileStats.runnableProjects} runnable on mobile
             </p>
           </CardContent>
@@ -154,12 +154,12 @@ export function MobileApp() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Connected Devices</CardTitle>
+            <CardTitle className="text-[13px] font-medium">Connected Devices</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{mobileStats.totalDevices}</div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[11px] text-muted-foreground">
               {mobileStats.activeDevices} currently active
             </p>
           </CardContent>
@@ -167,12 +167,12 @@ export function MobileApp() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Execution Speed</CardTitle>
+            <CardTitle className="text-[13px] font-medium">Execution Speed</CardTitle>
             <Zap className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">~2.3s</div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[11px] text-muted-foreground">
               Average mobile execution time
             </p>
           </CardContent>
@@ -180,12 +180,12 @@ export function MobileApp() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">App Performance</CardTitle>
+            <CardTitle className="text-[13px] font-medium">App Performance</CardTitle>
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">98.5%</div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[11px] text-muted-foreground">
               Mobile execution success rate
             </p>
           </CardContent>
@@ -244,7 +244,7 @@ export function MobileApp() {
                             </Badge>
                           )}
                         </div>
-                        <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                        <div className="flex items-center space-x-2 text-[13px] text-muted-foreground">
                           <FileText className="h-4 w-4" />
                           <span>{project.fileCount} files</span>
                           {project.lastOpened && (
@@ -258,7 +258,7 @@ export function MobileApp() {
                         </div>
                       </div>
                       {project.description && (
-                        <p className="mt-2 text-sm text-muted-foreground">
+                        <p className="mt-2 text-[13px] text-muted-foreground">
                           {project.description}
                         </p>
                       )}
@@ -297,7 +297,7 @@ export function MobileApp() {
                             <div className="h-2 w-2 bg-green-500 rounded-full" />
                           )}
                         </div>
-                        <div className="text-sm text-muted-foreground">
+                        <div className="text-[13px] text-muted-foreground">
                           {device.platform.toUpperCase()} {device.osVersion} • App v{device.appVersion}
                         </div>
                       </div>
@@ -306,7 +306,7 @@ export function MobileApp() {
                       <Badge variant={device.isActive ? 'default' : 'secondary'}>
                         {device.isActive ? 'Active' : 'Offline'}
                       </Badge>
-                      <div className="text-xs text-muted-foreground mt-1">
+                      <div className="text-[11px] text-muted-foreground mt-1">
                         Last seen: {new Date(device.lastActive).toLocaleString()}
                       </div>
                     </div>
@@ -382,7 +382,7 @@ export function MobileApp() {
                 </Button>
 
                 {selectedProject && (
-                  <div className="p-3 bg-gray-50 rounded-lg text-sm">
+                  <div className="p-3 bg-gray-50 rounded-lg text-[13px]">
                     <div className="font-medium">Execution Settings:</div>
                     <div className="text-muted-foreground mt-1">
                       • Timeout: 10 seconds
@@ -411,7 +411,7 @@ export function MobileApp() {
                       <Badge variant={executionResult.success ? 'default' : 'destructive'}>
                         {executionResult.success ? 'Success' : 'Failed'}
                       </Badge>
-                      <div className="text-sm text-muted-foreground">
+                      <div className="text-[13px] text-muted-foreground">
                         {executionResult.executionTime}ms • {Math.round(executionResult.memoryUsed / 1024)}KB
                       </div>
                     </div>
@@ -419,7 +419,7 @@ export function MobileApp() {
                     {executionResult.output && (
                       <div>
                         <Label>Output</Label>
-                        <div className="mt-1 p-3 bg-black text-green-400 rounded-lg font-mono text-sm max-h-40 overflow-y-auto">
+                        <div className="mt-1 p-3 bg-black text-green-400 rounded-lg font-mono text-[13px] max-h-40 overflow-y-auto">
                           <pre className="whitespace-pre-wrap">{executionResult.output}</pre>
                         </div>
                       </div>
@@ -428,13 +428,13 @@ export function MobileApp() {
                     {executionResult.error && (
                       <div>
                         <Label>Error</Label>
-                        <div className="mt-1 p-3 bg-red-50 text-red-700 rounded-lg font-mono text-sm max-h-40 overflow-y-auto">
+                        <div className="mt-1 p-3 bg-red-50 text-red-700 rounded-lg font-mono text-[13px] max-h-40 overflow-y-auto">
                           <pre className="whitespace-pre-wrap">{executionResult.error}</pre>
                         </div>
                       </div>
                     )}
 
-                    <div className="text-xs text-muted-foreground">
+                    <div className="text-[11px] text-muted-foreground">
                       Exit Code: {executionResult.exitCode}
                     </div>
                   </div>
@@ -464,7 +464,7 @@ export function MobileApp() {
                 <div className="space-y-4">
                   {Object.entries(languageStats).map(([language, count]) => (
                     <div key={language} className="space-y-2">
-                      <div className="flex justify-between text-sm">
+                      <div className="flex justify-between text-[13px]">
                         <span className="capitalize">{language}</span>
                         <span>{count} projects</span>
                       </div>
@@ -489,34 +489,34 @@ export function MobileApp() {
               <CardContent>
                 <div className="space-y-6">
                   <div>
-                    <div className="flex justify-between text-sm mb-2">
+                    <div className="flex justify-between text-[13px] mb-2">
                       <span>Average Execution Time</span>
                       <span>2.3s</span>
                     </div>
                     <Progress value={77} className="h-2" />
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="text-[11px] text-muted-foreground mt-1">
                       23% faster than desktop execution
                     </p>
                   </div>
 
                   <div>
-                    <div className="flex justify-between text-sm mb-2">
+                    <div className="flex justify-between text-[13px] mb-2">
                       <span>Memory Efficiency</span>
                       <span>45MB avg</span>
                     </div>
                     <Progress value={85} className="h-2" />
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="text-[11px] text-muted-foreground mt-1">
                       Well within 64MB mobile limit
                     </p>
                   </div>
 
                   <div>
-                    <div className="flex justify-between text-sm mb-2">
+                    <div className="flex justify-between text-[13px] mb-2">
                       <span>Success Rate</span>
                       <span>98.5%</span>
                     </div>
                     <Progress value={98} className="h-2" />
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="text-[11px] text-muted-foreground mt-1">
                       Excellent mobile compatibility
                     </p>
                   </div>
@@ -540,21 +540,21 @@ export function MobileApp() {
                   <div className="text-2xl font-bold">
                     {devices.filter((d: MobileDevice) => d.platform === 'ios').length}
                   </div>
-                  <div className="text-sm text-muted-foreground">iOS Devices</div>
+                  <div className="text-[13px] text-muted-foreground">iOS Devices</div>
                 </div>
                 <div className="text-center p-4 border rounded-lg">
                   <div className="text-3xl mb-2">🤖</div>
                   <div className="text-2xl font-bold">
                     {devices.filter((d: MobileDevice) => d.platform === 'android').length}
                   </div>
-                  <div className="text-sm text-muted-foreground">Android Devices</div>
+                  <div className="text-[13px] text-muted-foreground">Android Devices</div>
                 </div>
                 <div className="text-center p-4 border rounded-lg">
                   <div className="text-3xl mb-2">📊</div>
                   <div className="text-2xl font-bold">
                     {((mobileStats.activeDevices / mobileStats.totalDevices) * 100).toFixed(1)}%
                   </div>
-                  <div className="text-sm text-muted-foreground">Active Rate</div>
+                  <div className="text-[13px] text-muted-foreground">Active Rate</div>
                 </div>
               </div>
             </CardContent>

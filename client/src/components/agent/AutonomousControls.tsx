@@ -165,7 +165,7 @@ export function AutonomousControls({ sessionId, onModeChange }: AutonomousContro
       <CardContent className="space-y-4">
         {/* Risk Threshold Selector */}
         <div className="space-y-2">
-          <label className="text-sm font-medium flex items-center gap-2">
+          <label className="text-[13px] font-medium flex items-center gap-2">
             <Shield className="h-4 w-4" />
             Risk Threshold
           </label>
@@ -193,11 +193,11 @@ export function AutonomousControls({ sessionId, onModeChange }: AutonomousContro
             </SelectContent>
           </Select>
           
-          <p className={`text-xs ${currentThresholdInfo.color}`}>
+          <p className={`text-[11px] ${currentThresholdInfo.color}`}>
             {currentThresholdInfo.description}
           </p>
           
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
             <AlertCircle className="h-3 w-3" />
             <span>Auto-approves actions with risk score below {currentThresholdInfo.autoApproveBelow}/100</span>
           </div>
@@ -206,10 +206,10 @@ export function AutonomousControls({ sessionId, onModeChange }: AutonomousContro
         {/* Status Information */}
         {isEnabled && (
           <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 space-y-2">
-            <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+            <p className="text-[13px] font-medium text-blue-900 dark:text-blue-100">
               🤖 Autonomous Mode Active
             </p>
-            <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-1 list-disc list-inside">
+            <ul className="text-[11px] text-blue-800 dark:text-blue-200 space-y-1 list-disc list-inside">
               <li>Low-risk actions execute automatically</li>
               <li>High-risk actions require approval</li>
               <li>All actions are logged and auditable</li>
@@ -220,7 +220,7 @@ export function AutonomousControls({ sessionId, onModeChange }: AutonomousContro
 
         {!isEnabled && (
           <div className="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 rounded-lg p-3">
-            <p className="text-sm text-gray-700 dark:text-gray-300">
+            <p className="text-[13px] text-gray-700 dark:text-gray-300">
               Manual mode: Every action requires your approval before execution.
             </p>
           </div>

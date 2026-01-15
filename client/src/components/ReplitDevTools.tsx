@@ -311,7 +311,7 @@ export function ReplitDevTools({ projectId }: ReplitDevToolsProps) {
                   </Badge>
                   
                   {debugSession.currentFile && (
-                    <span className="text-sm text-muted-foreground">
+                    <span className="text-[13px] text-muted-foreground">
                       {debugSession.currentFile}:{debugSession.currentLine}
                     </span>
                   )}
@@ -330,7 +330,7 @@ export function ReplitDevTools({ projectId }: ReplitDevToolsProps) {
             </CardHeader>
             <CardContent>
               {breakpoints.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-4">
+                <p className="text-[13px] text-muted-foreground text-center py-4">
                   No breakpoints set. Click in the gutter next to line numbers to add breakpoints.
                 </p>
               ) : (
@@ -339,9 +339,9 @@ export function ReplitDevTools({ projectId }: ReplitDevToolsProps) {
                     <div key={bp.id} className="flex items-center justify-between p-2 border rounded">
                       <div className="flex items-center gap-2">
                         <div className={`w-3 h-3 rounded-full ${bp.enabled ? 'bg-red-500' : 'bg-gray-400'}`} />
-                        <span className="font-mono text-sm">{bp.file}:{bp.line}</span>
+                        <span className="font-mono text-[13px]">{bp.file}:{bp.line}</span>
                         {bp.condition && (
-                          <Badge variant="outline" className="text-xs">
+                          <Badge variant="outline" className="text-[11px]">
                             {bp.condition}
                           </Badge>
                         )}
@@ -374,9 +374,9 @@ export function ReplitDevTools({ projectId }: ReplitDevToolsProps) {
                 <CardContent>
                   <div className="space-y-1">
                     {debugSession.callStack.map((frame, index) => (
-                      <div key={index} className="p-2 border rounded font-mono text-sm">
+                      <div key={index} className="p-2 border rounded font-mono text-[13px]">
                         <div className="font-medium">{frame.function}</div>
-                        <div className="text-xs text-muted-foreground">
+                        <div className="text-[11px] text-muted-foreground">
                           {frame.file}:{frame.line}
                         </div>
                       </div>
@@ -393,8 +393,8 @@ export function ReplitDevTools({ projectId }: ReplitDevToolsProps) {
                   <div className="space-y-1">
                     {Object.entries(debugSession.variables).map(([name, value]) => (
                       <div key={name} className="flex justify-between p-2 border rounded">
-                        <span className="font-mono text-sm font-medium">{name}</span>
-                        <span className="font-mono text-sm text-muted-foreground">
+                        <span className="font-mono text-[13px] font-medium">{name}</span>
+                        <span className="font-mono text-[13px] text-muted-foreground">
                           {JSON.stringify(value)}
                         </span>
                       </div>
@@ -446,7 +446,7 @@ export function ReplitDevTools({ projectId }: ReplitDevToolsProps) {
                 <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
                   <div className="flex items-center gap-2">
                     <Activity className="h-4 w-4 text-yellow-600 animate-pulse" />
-                    <span className="text-sm text-yellow-800">
+                    <span className="text-[13px] text-yellow-800">
                       Profiling in progress... Performance data is being collected.
                     </span>
                   </div>
@@ -464,7 +464,7 @@ export function ReplitDevTools({ projectId }: ReplitDevToolsProps) {
                 <div className="flex items-center gap-2">
                   <Cpu className="h-5 w-5 text-blue-600" />
                   <div>
-                    <p className="text-sm text-muted-foreground">CPU Usage</p>
+                    <p className="text-[13px] text-muted-foreground">CPU Usage</p>
                     <p className={`text-2xl font-bold ${getMetricColor(metrics.cpu)}`}>
                       {metrics.cpu.toFixed(1)}%
                     </p>
@@ -478,11 +478,11 @@ export function ReplitDevTools({ projectId }: ReplitDevToolsProps) {
                 <div className="flex items-center gap-2">
                   <MemoryStick className="h-5 w-5 text-green-600" />
                   <div>
-                    <p className="text-sm text-muted-foreground">Memory</p>
+                    <p className="text-[13px] text-muted-foreground">Memory</p>
                     <p className="text-2xl font-bold">
                       {formatBytes(metrics.memory.used)}
                     </p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-[11px] text-muted-foreground">
                       of {formatBytes(metrics.memory.total)}
                     </p>
                   </div>
@@ -495,11 +495,11 @@ export function ReplitDevTools({ projectId }: ReplitDevToolsProps) {
                 <div className="flex items-center gap-2">
                   <Layers className="h-5 w-5 text-purple-600" />
                   <div>
-                    <p className="text-sm text-muted-foreground">Heap</p>
+                    <p className="text-[13px] text-muted-foreground">Heap</p>
                     <p className="text-2xl font-bold">
                       {formatBytes(metrics.heap.used)}
                     </p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-[11px] text-muted-foreground">
                       of {formatBytes(metrics.heap.total)}
                     </p>
                   </div>
@@ -512,11 +512,11 @@ export function ReplitDevTools({ projectId }: ReplitDevToolsProps) {
                 <div className="flex items-center gap-2">
                   <Activity className="h-5 w-5 text-orange-600" />
                   <div>
-                    <p className="text-sm text-muted-foreground">Event Loop</p>
+                    <p className="text-[13px] text-muted-foreground">Event Loop</p>
                     <p className="text-2xl font-bold">
                       {metrics.eventLoop.delay.toFixed(1)}ms
                     </p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-[11px] text-muted-foreground">
                       {metrics.eventLoop.utilization.toFixed(1)}% utilized
                     </p>
                   </div>
@@ -538,7 +538,7 @@ export function ReplitDevTools({ projectId }: ReplitDevToolsProps) {
                 {metrics.cpu > 80 && (
                   <div className="flex items-center gap-2 p-2 bg-red-50 border border-red-200 rounded">
                     <AlertTriangle className="h-4 w-4 text-red-600" />
-                    <span className="text-sm text-red-800">
+                    <span className="text-[13px] text-red-800">
                       High CPU usage detected. Consider optimizing computationally intensive operations.
                     </span>
                   </div>
@@ -547,7 +547,7 @@ export function ReplitDevTools({ projectId }: ReplitDevToolsProps) {
                 {(metrics.memory.used / metrics.memory.total) > 0.8 && (
                   <div className="flex items-center gap-2 p-2 bg-yellow-50 border border-yellow-200 rounded">
                     <AlertTriangle className="h-4 w-4 text-yellow-600" />
-                    <span className="text-sm text-yellow-800">
+                    <span className="text-[13px] text-yellow-800">
                       Memory usage is high. Check for memory leaks or consider optimizing data structures.
                     </span>
                   </div>
@@ -556,7 +556,7 @@ export function ReplitDevTools({ projectId }: ReplitDevToolsProps) {
                 {metrics.eventLoop.delay > 50 && (
                   <div className="flex items-center gap-2 p-2 bg-orange-50 border border-orange-200 rounded">
                     <AlertTriangle className="h-4 w-4 text-orange-600" />
-                    <span className="text-sm text-orange-800">
+                    <span className="text-[13px] text-orange-800">
                       Event loop delay is high. This may cause slow response times.
                     </span>
                   </div>
@@ -576,7 +576,7 @@ export function ReplitDevTools({ projectId }: ReplitDevToolsProps) {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="bg-black text-green-400 p-4 rounded-lg font-mono text-sm h-64 overflow-y-auto">
+                <div className="bg-black text-green-400 p-4 rounded-lg font-mono text-[13px] h-64 overflow-y-auto">
                   <div>E-Code Developer Console</div>
                   <div>Type commands to interact with your application</div>
                   <div className="mt-2">

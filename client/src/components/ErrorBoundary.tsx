@@ -46,7 +46,7 @@ class ErrorBoundary extends React.Component<
               We encountered an unexpected error. Please try refreshing the page.
             </p>
             {this.state.error && (
-              <pre className="text-xs text-left bg-muted p-3 rounded-md mb-4 overflow-auto max-h-32" aria-label="Error details">
+              <pre className="text-[11px] text-left bg-muted p-3 rounded-md mb-4 overflow-auto max-h-32" aria-label="Error details">
                 {this.state.error.message}
               </pre>
             )}

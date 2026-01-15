@@ -67,13 +67,13 @@ export default function AgentActivity() {
               <div className="hidden sm:block h-6 w-px bg-border" />
               <div className="flex items-center gap-2">
                 <Activity className="h-5 w-5 text-primary" />
-                <h1 className="text-lg sm:text-xl font-semibold">Agent Activity</h1>
+                <h1 className="text-[15px] sm:text-xl font-semibold">Agent Activity</h1>
               </div>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
               {selectedSession && (
                 <>
-                  <Badge variant="secondary" className="font-mono text-xs">
+                  <Badge variant="secondary" className="font-mono text-[11px]">
                     Session: {selectedSession.id.slice(0, 8)}
                   </Badge>
                   <Button
@@ -106,7 +106,7 @@ export default function AgentActivity() {
               data-testid="tab-dashboard"
             >
               <BarChart3 className="h-4 w-4" />
-              <span className="text-[10px] sm:text-sm">Dashboard</span>
+              <span className="text-[10px] sm:text-[13px]">Dashboard</span>
             </TabsTrigger>
             <TabsTrigger 
               value="tools" 
@@ -114,7 +114,7 @@ export default function AgentActivity() {
               data-testid="tab-tools"
             >
               <Wrench className="h-4 w-4" />
-              <span className="text-[10px] sm:text-sm">Tools</span>
+              <span className="text-[10px] sm:text-[13px]">Tools</span>
             </TabsTrigger>
             <TabsTrigger 
               value="workflows" 
@@ -122,7 +122,7 @@ export default function AgentActivity() {
               data-testid="tab-workflows"
             >
               <Workflow className="h-4 w-4" />
-              <span className="text-[10px] sm:text-sm">Workflows</span>
+              <span className="text-[10px] sm:text-[13px]">Workflows</span>
             </TabsTrigger>
             <TabsTrigger 
               value="sessions" 
@@ -130,7 +130,7 @@ export default function AgentActivity() {
               data-testid="tab-sessions"
             >
               <Clock className="h-4 w-4" />
-              <span className="text-[10px] sm:text-sm">Sessions</span>
+              <span className="text-[10px] sm:text-[13px]">Sessions</span>
             </TabsTrigger>
             <TabsTrigger 
               value="actions" 
@@ -138,7 +138,7 @@ export default function AgentActivity() {
               data-testid="tab-actions"
             >
               <Zap className="h-4 w-4" />
-              <span className="text-[10px] sm:text-sm">Actions</span>
+              <span className="text-[10px] sm:text-[13px]">Actions</span>
             </TabsTrigger>
             <TabsTrigger 
               value="files" 
@@ -146,7 +146,7 @@ export default function AgentActivity() {
               data-testid="tab-files"
             >
               <FileCode className="h-4 w-4" />
-              <span className="text-[10px] sm:text-sm">Files</span>
+              <span className="text-[10px] sm:text-[13px]">Files</span>
             </TabsTrigger>
             <TabsTrigger 
               value="messages" 
@@ -154,7 +154,7 @@ export default function AgentActivity() {
               data-testid="tab-messages"
             >
               <MessageSquare className="h-4 w-4" />
-              <span className="text-[10px] sm:text-sm">Messages</span>
+              <span className="text-[10px] sm:text-[13px]">Messages</span>
             </TabsTrigger>
           </TabsList>
 

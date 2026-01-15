@@ -242,7 +242,7 @@ export function ReplitMonitoring({ projectId }: ReplitMonitoringProps) {
             <div className="flex items-center gap-2">
               <Cpu className="h-5 w-5 text-blue-600" />
               <div>
-                <p className="text-sm text-muted-foreground">CPU Usage</p>
+                <p className="text-[13px] text-muted-foreground">CPU Usage</p>
                 <p className={`text-2xl font-bold ${systemMetrics.cpu.usage > 80 ? 'text-red-600' : 'text-green-600'}`}>
                   {systemMetrics.cpu.usage.toFixed(1)}%
                 </p>
@@ -256,11 +256,11 @@ export function ReplitMonitoring({ projectId }: ReplitMonitoringProps) {
             <div className="flex items-center gap-2">
               <MemoryStick className="h-5 w-5 text-green-600" />
               <div>
-                <p className="text-sm text-muted-foreground">Memory</p>
+                <p className="text-[13px] text-muted-foreground">Memory</p>
                 <p className={`text-2xl font-bold ${systemMetrics.memory.percentage > 85 ? 'text-red-600' : 'text-green-600'}`}>
                   {systemMetrics.memory.percentage.toFixed(1)}%
                 </p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-[11px] text-muted-foreground">
                   {formatBytes(systemMetrics.memory.used)} / {formatBytes(systemMetrics.memory.total)}
                 </p>
               </div>
@@ -273,9 +273,9 @@ export function ReplitMonitoring({ projectId }: ReplitMonitoringProps) {
             <div className="flex items-center gap-2">
               <Zap className="h-5 w-5 text-purple-600" />
               <div>
-                <p className="text-sm text-muted-foreground">Requests/sec</p>
+                <p className="text-[13px] text-muted-foreground">Requests/sec</p>
                 <p className="text-2xl font-bold">{appMetrics.requests.rate.toFixed(1)}</p>
-                <div className="flex items-center gap-1 text-xs">
+                <div className="flex items-center gap-1 text-[11px]">
                   {appMetrics.requests.rate > 0 ? (
                     <TrendingUp className="h-3 w-3 text-green-600" />
                   ) : (
@@ -295,9 +295,9 @@ export function ReplitMonitoring({ projectId }: ReplitMonitoringProps) {
             <div className="flex items-center gap-2">
               <Clock className="h-5 w-5 text-orange-600" />
               <div>
-                <p className="text-sm text-muted-foreground">Response Time</p>
+                <p className="text-[13px] text-muted-foreground">Response Time</p>
                 <p className="text-2xl font-bold">{appMetrics.response.average.toFixed(0)}ms</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-[11px] text-muted-foreground">
                   p95: {appMetrics.response.p95.toFixed(0)}ms
                 </p>
               </div>
@@ -326,7 +326,7 @@ export function ReplitMonitoring({ projectId }: ReplitMonitoringProps) {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <div className="flex justify-between text-sm mb-1">
+                  <div className="flex justify-between text-[13px] mb-1">
                     <span>Usage</span>
                     <span>{systemMetrics.cpu.usage.toFixed(1)}%</span>
                   </div>
@@ -341,7 +341,7 @@ export function ReplitMonitoring({ projectId }: ReplitMonitoringProps) {
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="grid grid-cols-2 gap-4 text-[13px]">
                   <div>
                     <p className="text-muted-foreground">Cores</p>
                     <p className="font-medium">{systemMetrics.cpu.cores}</p>
@@ -364,7 +364,7 @@ export function ReplitMonitoring({ projectId }: ReplitMonitoringProps) {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <div className="flex justify-between text-sm mb-1">
+                  <div className="flex justify-between text-[13px] mb-1">
                     <span>Used</span>
                     <span>{systemMetrics.memory.percentage.toFixed(1)}%</span>
                   </div>
@@ -379,7 +379,7 @@ export function ReplitMonitoring({ projectId }: ReplitMonitoringProps) {
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="grid grid-cols-2 gap-4 text-[13px]">
                   <div>
                     <p className="text-muted-foreground">Used</p>
                     <p className="font-medium">{formatBytes(systemMetrics.memory.used)}</p>
@@ -402,7 +402,7 @@ export function ReplitMonitoring({ projectId }: ReplitMonitoringProps) {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <div className="flex justify-between text-sm mb-1">
+                  <div className="flex justify-between text-[13px] mb-1">
                     <span>Used</span>
                     <span>{systemMetrics.disk.percentage.toFixed(1)}%</span>
                   </div>
@@ -417,7 +417,7 @@ export function ReplitMonitoring({ projectId }: ReplitMonitoringProps) {
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="grid grid-cols-2 gap-4 text-[13px]">
                   <div>
                     <p className="text-muted-foreground">Used</p>
                     <p className="font-medium">{formatBytes(systemMetrics.disk.used)}</p>
@@ -439,7 +439,7 @@ export function ReplitMonitoring({ projectId }: ReplitMonitoringProps) {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="grid grid-cols-2 gap-4 text-[13px]">
                   <div>
                     <p className="text-muted-foreground">Bytes In</p>
                     <p className="font-medium">{formatBytes(systemMetrics.network.bytesIn)}</p>
@@ -477,20 +477,20 @@ export function ReplitMonitoring({ projectId }: ReplitMonitoringProps) {
                   <div className="grid grid-cols-3 gap-4 text-center">
                     <div>
                       <p className="text-2xl font-bold text-blue-600">{appMetrics.requests.total}</p>
-                      <p className="text-xs text-muted-foreground">Total</p>
+                      <p className="text-[11px] text-muted-foreground">Total</p>
                     </div>
                     <div>
                       <p className="text-2xl font-bold text-green-600">{appMetrics.requests.success}</p>
-                      <p className="text-xs text-muted-foreground">Success</p>
+                      <p className="text-[11px] text-muted-foreground">Success</p>
                     </div>
                     <div>
                       <p className="text-2xl font-bold text-red-600">{appMetrics.requests.errors}</p>
-                      <p className="text-xs text-muted-foreground">Errors</p>
+                      <p className="text-[11px] text-muted-foreground">Errors</p>
                     </div>
                   </div>
                   
                   <div>
-                    <div className="flex justify-between text-sm mb-1">
+                    <div className="flex justify-between text-[13px] mb-1">
                       <span>Success Rate</span>
                       <span>{((appMetrics.requests.success / appMetrics.requests.total) * 100 || 0).toFixed(1)}%</span>
                     </div>
@@ -516,15 +516,15 @@ export function ReplitMonitoring({ projectId }: ReplitMonitoringProps) {
               <CardContent>
                 <div className="space-y-3">
                   <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Average</span>
+                    <span className="text-[13px] text-muted-foreground">Average</span>
                     <span className="font-medium">{appMetrics.response.average.toFixed(0)}ms</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">95th Percentile</span>
+                    <span className="text-[13px] text-muted-foreground">95th Percentile</span>
                     <span className="font-medium">{appMetrics.response.p95.toFixed(0)}ms</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">99th Percentile</span>
+                    <span className="text-[13px] text-muted-foreground">99th Percentile</span>
                     <span className="font-medium">{appMetrics.response.p99.toFixed(0)}ms</span>
                   </div>
                 </div>
@@ -543,15 +543,15 @@ export function ReplitMonitoring({ projectId }: ReplitMonitoringProps) {
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-green-600" />
-                    <span className="text-sm">Application Running</span>
+                    <span className="text-[13px]">Application Running</span>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Uptime</p>
+                    <p className="text-[13px] text-muted-foreground">Uptime</p>
                     <p className="text-2xl font-bold">{formatUptime(appMetrics.uptime)}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Started</p>
-                    <p className="text-sm">{new Date(Date.now() - appMetrics.uptime * 1000).toLocaleString()}</p>
+                    <p className="text-[13px] text-muted-foreground">Started</p>
+                    <p className="text-[13px]">{new Date(Date.now() - appMetrics.uptime * 1000).toLocaleString()}</p>
                   </div>
                 </div>
               </CardContent>
@@ -571,19 +571,19 @@ export function ReplitMonitoring({ projectId }: ReplitMonitoringProps) {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="text-center p-4 border rounded-lg">
                   <p className="text-2xl font-bold text-blue-600">{appMetrics.database.connections}</p>
-                  <p className="text-sm text-muted-foreground">Active Connections</p>
+                  <p className="text-[13px] text-muted-foreground">Active Connections</p>
                 </div>
                 <div className="text-center p-4 border rounded-lg">
                   <p className="text-2xl font-bold text-green-600">{appMetrics.database.queries}</p>
-                  <p className="text-sm text-muted-foreground">Queries/sec</p>
+                  <p className="text-[13px] text-muted-foreground">Queries/sec</p>
                 </div>
                 <div className="text-center p-4 border rounded-lg">
                   <p className="text-2xl font-bold text-orange-600">{appMetrics.database.slowQueries}</p>
-                  <p className="text-sm text-muted-foreground">Slow Queries</p>
+                  <p className="text-[13px] text-muted-foreground">Slow Queries</p>
                 </div>
                 <div className="text-center p-4 border rounded-lg">
                   <p className="text-2xl font-bold text-purple-600">{appMetrics.database.queryTime.toFixed(1)}ms</p>
-                  <p className="text-sm text-muted-foreground">Avg Query Time</p>
+                  <p className="text-[13px] text-muted-foreground">Avg Query Time</p>
                 </div>
               </div>
             </CardContent>
@@ -614,8 +614,8 @@ export function ReplitMonitoring({ projectId }: ReplitMonitoringProps) {
                         
                         <div>
                           <h3 className="font-medium">{alert.title}</h3>
-                          <p className="text-sm text-muted-foreground mt-1">{alert.message}</p>
-                          <p className="text-xs text-muted-foreground mt-2">
+                          <p className="text-[13px] text-muted-foreground mt-1">{alert.message}</p>
+                          <p className="text-[11px] text-muted-foreground mt-2">
                             {new Date(alert.timestamp).toLocaleString()}
                           </p>
                         </div>

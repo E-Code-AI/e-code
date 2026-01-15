@@ -49,13 +49,13 @@ export function CustomMetricChart({ data, customMetrics }: CustomMetricChartProp
             <PolarGrid strokeDasharray="3 3" className="stroke-muted" />
             <PolarAngleAxis 
               dataKey="metric" 
-              className="text-xs"
+              className="text-[11px]"
               tick={{ fill: 'currentColor' }}
             />
             <PolarRadiusAxis 
               angle={90} 
               domain={[0, 100]}
-              className="text-xs"
+              className="text-[11px]"
               tick={{ fill: 'currentColor' }}
             />
             <Radar 
@@ -69,10 +69,10 @@ export function CustomMetricChart({ data, customMetrics }: CustomMetricChartProp
         </ResponsiveContainer>
         
         <div className="mt-4 space-y-2">
-          <p className="text-sm font-semibold">Metric Values</p>
+          <p className="text-[13px] font-semibold">Metric Values</p>
           <div className="grid grid-cols-2 gap-2">
             {Object.entries(customMetrics || {}).slice(0, 8).map(([key, value]) => (
-              <div key={key} className="flex justify-between text-xs p-2 rounded-lg bg-muted/50">
+              <div key={key} className="flex justify-between text-[11px] p-2 rounded-lg bg-muted/50">
                 <span className="text-muted-foreground truncate mr-2">
                   {key.replace(/_/g, ' ')}
                 </span>

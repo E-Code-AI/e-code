@@ -160,7 +160,7 @@ export default function Partners() {
               <h1 className="text-4xl md:text-6xl font-bold leading-tight bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent" data-testid="heading-partners">
                 Build the future together
               </h1>
-              <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
+              <p className="text-[15px] md:text-xl text-muted-foreground max-w-2xl mx-auto">
                 Join our thriving partner ecosystem and help developers build, ship, and scale their ideas faster than ever before.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -181,7 +181,7 @@ export default function Partners() {
           <div className="container mx-auto px-6 lg:px-8">
             <div className="text-center max-w-3xl mx-auto mb-12 space-y-4">
               <h2 className="text-3xl md:text-4xl font-bold">Trusted by industry leaders</h2>
-              <p className="text-muted-foreground text-base md:text-lg">
+              <p className="text-muted-foreground text-base md:text-[15px]">
                 We're proud to partner with the world's most innovative companies to deliver exceptional developer experiences.
               </p>
             </div>
@@ -197,8 +197,8 @@ export default function Partners() {
                       loading="lazy"
                     />
                   </div>
-                  <span className="text-sm font-medium text-center">{partner.name}</span>
-                  <Badge variant="outline" className="text-xs mt-1">
+                  <span className="text-[13px] font-medium text-center">{partner.name}</span>
+                  <Badge variant="outline" className="text-[11px] mt-1">
                     {partner.tier}
                   </Badge>
                 </div>
@@ -212,7 +212,7 @@ export default function Partners() {
           <div className="container mx-auto px-6 lg:px-8">
             <div className="text-center max-w-3xl mx-auto mb-12 space-y-4">
               <h2 className="text-3xl md:text-4xl font-bold">Partnership opportunities</h2>
-              <p className="text-muted-foreground text-base md:text-lg">
+              <p className="text-muted-foreground text-base md:text-[15px]">
                 Whether you're a technology provider, solution implementer, or channel partner, we have programs designed for your success.
               </p>
             </div>
@@ -233,7 +233,7 @@ export default function Partners() {
                     <p className="text-muted-foreground mb-6">{type.description}</p>
                     <ul className="space-y-2">
                       {type.benefits.map((benefit, idx) => (
-                        <li key={idx} className="flex items-start gap-2 text-sm">
+                        <li key={idx} className="flex items-start gap-2 text-[13px]">
                           <Star className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
                           {benefit}
                         </li>
@@ -251,7 +251,7 @@ export default function Partners() {
           <div className="container mx-auto px-6 lg:px-8">
             <div className="text-center max-w-3xl mx-auto mb-12 space-y-4">
               <h2 className="text-3xl md:text-4xl font-bold">Why partner with E-Code?</h2>
-              <p className="text-muted-foreground text-base md:text-lg">
+              <p className="text-muted-foreground text-base md:text-[15px]">
                 Join a thriving ecosystem that's transforming how software is built and deployed worldwide.
               </p>
             </div>
@@ -264,7 +264,7 @@ export default function Partners() {
                       {benefit.icon}
                     </div>
                     <h3 className="font-semibold mb-2">{benefit.title}</h3>
-                    <p className="text-sm text-muted-foreground">{benefit.description}</p>
+                    <p className="text-[13px] text-muted-foreground">{benefit.description}</p>
                   </CardContent>
                 </Card>
               ))}
@@ -277,7 +277,7 @@ export default function Partners() {
           <div className="container mx-auto px-6 lg:px-8">
             <div className="text-center max-w-3xl mx-auto mb-12 space-y-4">
               <h2 className="text-3xl md:text-4xl font-bold">Partner success stories</h2>
-              <p className="text-muted-foreground text-base md:text-lg">
+              <p className="text-muted-foreground text-base md:text-[15px]">
                 See how our partners are achieving remarkable results and driving innovation with E-Code.
               </p>
             </div>
@@ -297,16 +297,16 @@ export default function Partners() {
                       </div>
                       <div>
                         <h3 className="font-semibold">{story.partner}</h3>
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="outline" className="text-[11px]">
                           {story.metrics}
                         </Badge>
                       </div>
                     </div>
-                    <CardTitle className="text-lg">{story.title}</CardTitle>
+                    <CardTitle className="text-[15px]">{story.title}</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <p className="text-muted-foreground mb-4">{story.description}</p>
-                    <blockquote className="text-sm italic border-l-4 border-primary/20 pl-4">
+                    <blockquote className="text-[13px] italic border-l-4 border-primary/20 pl-4">
                       "{story.quote}"
                     </blockquote>
                   </CardContent>
@@ -321,7 +321,7 @@ export default function Partners() {
           <div className="container mx-auto px-6 lg:px-8">
             <div className="text-center max-w-3xl mx-auto">
               <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to partner with us?</h2>
-              <p className="text-lg md:text-xl opacity-90 mb-8">
+              <p className="text-[15px] md:text-xl opacity-90 mb-8">
                 Join thousands of partners who are already transforming the developer experience. Let's build something amazing together.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">

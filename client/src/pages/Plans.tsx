@@ -194,7 +194,7 @@ export default function Plans() {
                         <X className="h-5 w-5 text-muted-foreground/50 mt-0.5 flex-shrink-0" />
                       )}
                       <span
-                        className={`text-sm ${
+                        className={`text-[13px] ${
                           feature.included ? "" : "text-muted-foreground/50"
                         }`}
                       >
@@ -243,7 +243,7 @@ export default function Plans() {
               {USAGE_BASED_PRICING.map((item, i) => (
                 <div key={i} className="flex justify-between items-center p-3 rounded-lg bg-muted/50">
                   <span className="font-medium">{item.name}</span>
-                  <span className="text-sm">
+                  <span className="text-[13px]">
                     <span className="font-semibold">{item.price}</span>
                     <span className="text-muted-foreground"> {item.unit}</span>
                   </span>
@@ -254,7 +254,7 @@ export default function Plans() {
         </Card>
 
         {/* Additional Info */}
-        <div className="mt-8 text-center text-sm text-muted-foreground">
+        <div className="mt-8 text-center text-[13px] text-muted-foreground">
           <p>All prices exclude VAT where applicable.</p>
           <p className="mt-2">
             Need more? <Button variant="link" className="px-1" onClick={() => window.open('mailto:sales@e-code.ai', '_blank')} data-testid="button-contact-sales">Contact us</Button> for volume discounts.

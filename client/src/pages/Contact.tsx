@@ -107,13 +107,13 @@ export default function Contact() {
       <div className="container mx-auto px-4 py-12 sm:py-16 md:py-20">
         {/* Hero Section */}
         <div className="text-center max-w-4xl mx-auto mb-12 sm:mb-16">
-          <Badge className="mb-4 px-4 py-1.5 text-sm font-medium bg-gradient-to-r from-blue-500 to-indigo-500 text-white border-0">
+          <Badge className="mb-4 px-4 py-1.5 text-[13px] font-medium bg-gradient-to-r from-blue-500 to-indigo-500 text-white border-0">
             {t('common.contactUs')}
           </Badge>
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">
             {t('contact.title')}
           </h1>
-          <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto">
+          <p className="text-[15px] sm:text-xl text-muted-foreground max-w-3xl mx-auto">
             {t('contact.subtitle')}
           </p>
         </div>
@@ -124,21 +124,21 @@ export default function Contact() {
             <Card className="p-6 hover:shadow-lg transition-all duration-300 cursor-pointer group text-center" data-testid="card-contact-sales">
               <Building2 className="h-8 w-8 mx-auto mb-3 text-blue-600 group-hover:scale-110 transition-transform" />
               <h3 className="font-semibold mb-1">Sales</h3>
-              <p className="text-sm text-muted-foreground">Enterprise pricing & demos</p>
+              <p className="text-[13px] text-muted-foreground">Enterprise pricing & demos</p>
             </Card>
           </Link>
           <Link href="/help-center" data-testid="link-contact-support">
             <Card className="p-6 hover:shadow-lg transition-all duration-300 cursor-pointer group text-center" data-testid="card-contact-support">
               <HelpCircle className="h-8 w-8 mx-auto mb-3 text-purple-600 group-hover:scale-110 transition-transform" />
               <h3 className="font-semibold mb-1">Support</h3>
-              <p className="text-sm text-muted-foreground">Help center & documentation</p>
+              <p className="text-[13px] text-muted-foreground">Help center & documentation</p>
             </Card>
           </Link>
           <Link href="/partners" data-testid="link-contact-partners">
             <Card className="p-6 hover:shadow-lg transition-all duration-300 cursor-pointer group text-center" data-testid="card-contact-partners">
               <Users className="h-8 w-8 mx-auto mb-3 text-green-600 group-hover:scale-110 transition-transform" />
               <h3 className="font-semibold mb-1">Partnerships</h3>
-              <p className="text-sm text-muted-foreground">Become a partner</p>
+              <p className="text-[13px] text-muted-foreground">Become a partner</p>
             </Card>
           </Link>
         </div>
@@ -307,9 +307,9 @@ export default function Contact() {
                       <div>
                         <div className="flex items-center gap-2 mb-1">
                           <span className="font-semibold">{office.city}</span>
-                          <Badge variant="outline" className="text-xs">{office.type}</Badge>
+                          <Badge variant="outline" className="text-[11px]">{office.type}</Badge>
                         </div>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-[13px] text-muted-foreground">
                           {office.address}<br />
                           {office.region}<br />
                           {office.country}

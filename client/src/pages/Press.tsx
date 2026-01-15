@@ -216,7 +216,7 @@ export default function Press() {
             <h1 className="text-4xl md:text-6xl font-bold tracking-tight" data-testid="heading-press">
               Press Center
             </h1>
-            <p className="text-lg md:text-xl text-muted-foreground">
+            <p className="text-[15px] md:text-xl text-muted-foreground">
               Explore the latest stories, milestones, and resources from E-Code — the vibe coding
               platform helping small teams feel like crews of 50.
             </p>
@@ -251,8 +251,8 @@ export default function Press() {
                       <Icon className="h-5 w-5" />
                     </div>
                     <div className="space-y-2">
-                      <h3 className="text-lg font-semibold">{item.title}</h3>
-                      <p className="text-sm text-muted-foreground leading-relaxed">{item.description}</p>
+                      <h3 className="text-[15px] font-semibold">{item.title}</h3>
+                      <p className="text-[13px] text-muted-foreground leading-relaxed">{item.description}</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -276,15 +276,15 @@ export default function Press() {
                       <div className="rounded-full bg-primary/10 p-3 text-primary">
                         <Icon className="h-5 w-5" />
                       </div>
-                      <Badge variant="outline" className="uppercase tracking-wide text-xs font-medium">
+                      <Badge variant="outline" className="uppercase tracking-wide text-[11px] font-medium">
                         Beta metric
                       </Badge>
                     </div>
                     <div>
                       <p className="text-3xl font-bold">{stat.value}</p>
-                      <p className="text-sm font-medium text-muted-foreground">{stat.label}</p>
+                      <p className="text-[13px] font-medium text-muted-foreground">{stat.label}</p>
                     </div>
-                    <p className="text-sm text-muted-foreground leading-relaxed">{stat.description}</p>
+                    <p className="text-[13px] text-muted-foreground leading-relaxed">{stat.description}</p>
                   </CardContent>
                 </Card>
               );
@@ -300,7 +300,7 @@ export default function Press() {
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
               Latest Press Releases
             </h2>
-            <p className="text-lg text-muted-foreground">
+            <p className="text-[15px] text-muted-foreground">
               Official announcements and company news
             </p>
           </div>
@@ -353,7 +353,7 @@ export default function Press() {
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
               In the News
             </h2>
-            <p className="text-lg text-muted-foreground">
+            <p className="text-[15px] text-muted-foreground">
               What the media is saying about E-Code
             </p>
           </div>
@@ -364,11 +364,11 @@ export default function Press() {
                 <CardHeader>
                   <div className="flex items-center gap-2 mb-2">
                     <Badge variant="secondary">{article.outlet}</Badge>
-                    <span className="text-sm text-muted-foreground">
+                    <span className="text-[13px] text-muted-foreground">
                       {new Date(article.date).toLocaleDateString()}
                     </span>
                   </div>
-                  <CardTitle className="text-lg">{article.title}</CardTitle>
+                  <CardTitle className="text-[15px]">{article.title}</CardTitle>
                   {article.quote && (
                     <div className="mt-3 flex gap-2">
                       <Quote className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-1" />
@@ -419,7 +419,7 @@ export default function Press() {
               <div className="grid md:grid-cols-2 gap-6 mt-6">
                 <div>
                   <h4 className="font-semibold mb-2">Key Features</h4>
-                  <ul className="space-y-1 text-sm text-muted-foreground">
+                  <ul className="space-y-1 text-[13px] text-muted-foreground">
                     <li>• Guided vibe prompts tuned for each team ritual</li>
                     <li>• Live co-building with clear diff reviews</li>
                     <li>• Instant previews and hosted sandboxes</li>
@@ -429,7 +429,7 @@ export default function Press() {
                 </div>
                 <div>
                   <h4 className="font-semibold mb-2">Company Facts</h4>
-                  <ul className="space-y-1 text-sm text-muted-foreground">
+                  <ul className="space-y-1 text-[13px] text-muted-foreground">
                     <li>• Founded: 2025</li>
                     <li>• Headquarters: Remote-first (SF + NYC hubs)</li>
                     <li>• Team: 18 humans & a very opinionated AI</li>
@@ -450,7 +450,7 @@ export default function Press() {
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
               Media Kit
             </h2>
-            <p className="text-lg text-muted-foreground">
+            <p className="text-[15px] text-muted-foreground">
               Download our brand assets and media resources
             </p>
           </div>
@@ -466,7 +466,7 @@ export default function Press() {
                         <Icon className="h-6 w-6" />
                       </div>
                       <div className="flex-1">
-                        <CardTitle className="text-lg">{item.title}</CardTitle>
+                        <CardTitle className="text-[15px]">{item.title}</CardTitle>
                         <CardDescription>{item.description}</CardDescription>
                       </div>
                     </div>
@@ -485,7 +485,7 @@ export default function Press() {
           </div>
 
           <div className="text-center mt-8">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-[13px] text-muted-foreground">
               For custom assets or additional resources, please contact{' '}
               <a href="mailto:press@e-code.ai" className="text-primary hover:underline">
                 press@e-code.ai
@@ -515,7 +515,7 @@ export default function Press() {
                 </div>
                 <div>
                   <p className="font-semibold">Press Kit Password</p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-[13px] text-muted-foreground">
                     Contact us for access to password-protected resources
                   </p>
                 </div>

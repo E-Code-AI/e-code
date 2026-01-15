@@ -343,21 +343,21 @@ export function CommentsPanel({ fileId, projectId, className }: CommentsPanelPro
                     <div className="flex-1 space-y-1">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium">
+                          <span className="text-[13px] font-medium">
                             {comment.author.name}
                           </span>
-                          <Badge variant={getTypeColor(comment.type)} className="text-xs">
+                          <Badge variant={getTypeColor(comment.type)} className="text-[11px]">
                             {getTypeIcon(comment.type)}
                             {comment.type}
                           </Badge>
                           {comment.resolved && (
-                            <Badge variant="outline" className="text-xs">
+                            <Badge variant="outline" className="text-[11px]">
                               Resolved
                             </Badge>
                           )}
                         </div>
                         <div className="flex items-center gap-1">
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-[11px] text-muted-foreground">
                             {formatTime(comment.timestamp)}
                           </span>
                           <DropdownMenu>
@@ -388,7 +388,7 @@ export function CommentsPanel({ fileId, projectId, className }: CommentsPanelPro
                       </div>
 
                       {comment.file && (
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
                           <Code className="h-3 w-3" />
                           {comment.file}
                           {comment.line && ` • Line ${comment.line}`}
@@ -423,9 +423,9 @@ export function CommentsPanel({ fileId, projectId, className }: CommentsPanelPro
                         </div>
                       ) : (
                         <>
-                          <p className="text-sm">{comment.text}</p>
+                          <p className="text-[13px]">{comment.text}</p>
                           {comment.codeSnippet && (
-                            <pre className="text-xs bg-muted p-2 rounded mt-2 overflow-x-auto">
+                            <pre className="text-[11px] bg-muted p-2 rounded mt-2 overflow-x-auto">
                               <code>{comment.codeSnippet}</code>
                             </pre>
                           )}
@@ -460,20 +460,20 @@ export function CommentsPanel({ fileId, projectId, className }: CommentsPanelPro
                             <div key={reply.id} className="flex items-start gap-2">
                               <Avatar className="h-6 w-6">
                                 <AvatarImage src={reply.author.avatar} />
-                                <AvatarFallback className="text-xs">
+                                <AvatarFallback className="text-[11px]">
                                   {reply.author.name.charAt(0)}
                                 </AvatarFallback>
                               </Avatar>
                               <div className="flex-1">
                                 <div className="flex items-center gap-2">
-                                  <span className="text-xs font-medium">
+                                  <span className="text-[11px] font-medium">
                                     {reply.author.name}
                                   </span>
-                                  <span className="text-xs text-muted-foreground">
+                                  <span className="text-[11px] text-muted-foreground">
                                     {formatTime(reply.timestamp)}
                                   </span>
                                 </div>
-                                <p className="text-xs mt-1">{reply.text}</p>
+                                <p className="text-[11px] mt-1">{reply.text}</p>
                               </div>
                             </div>
                           ))}

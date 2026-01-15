@@ -304,11 +304,11 @@ export function ReplitDeploymentPipeline({ projectId, className }: DeploymentPip
                                   'secondary'}>
                       {currentPipeline.status}
                     </Badge>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-2 text-[13px] text-muted-foreground">
                       <GitBranch className="h-4 w-4" />
                       {currentPipeline.branch}
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-2 text-[13px] text-muted-foreground">
                       <FileCode className="h-4 w-4" />
                       {currentPipeline.commit.id.slice(0, 7)}
                     </div>
@@ -322,8 +322,8 @@ export function ReplitDeploymentPipeline({ projectId, className }: DeploymentPip
                     </Button>
                   )}
                 </div>
-                <p className="text-sm">{currentPipeline.commit.message}</p>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-[13px]">{currentPipeline.commit.message}</p>
+                <p className="text-[11px] text-muted-foreground mt-1">
                   by {currentPipeline.commit.author} • {new Date(currentPipeline.startTime).toLocaleString()}
                   {currentPipeline.endTime && ` • ${formatDuration(new Date(currentPipeline.endTime).getTime() - new Date(currentPipeline.startTime).getTime())}`}
                 </p>
@@ -371,7 +371,7 @@ export function ReplitDeploymentPipeline({ projectId, className }: DeploymentPip
                               <h3 className="font-medium">{stage.name}</h3>
                             </div>
                             {stage.duration && (
-                              <span className="text-sm text-muted-foreground">
+                              <span className="text-[13px] text-muted-foreground">
                                 {formatDuration(stage.duration)}
                               </span>
                             )}
@@ -385,7 +385,7 @@ export function ReplitDeploymentPipeline({ projectId, className }: DeploymentPip
                             {stage.steps.map((step) => (
                               <div
                                 key={step.id}
-                                className="flex items-center justify-between text-sm"
+                                className="flex items-center justify-between text-[13px]"
                               >
                                 <div className="flex items-center gap-2">
                                   {getStatusIcon(step.status)}
@@ -394,7 +394,7 @@ export function ReplitDeploymentPipeline({ projectId, className }: DeploymentPip
                                   </span>
                                 </div>
                                 {step.command && (
-                                  <code className="text-xs bg-muted px-2 py-1 rounded">
+                                  <code className="text-[11px] bg-muted px-2 py-1 rounded">
                                     {step.command}
                                   </code>
                                 )}
@@ -409,7 +409,7 @@ export function ReplitDeploymentPipeline({ projectId, className }: DeploymentPip
 
                 <TabsContent value="logs" className="flex-1">
                   <ScrollArea className="h-full">
-                    <div className="bg-[var(--ecode-terminal-bg)] p-4 rounded-lg font-mono text-xs text-green-400">
+                    <div className="bg-[var(--ecode-terminal-bg)] p-4 rounded-lg font-mono text-[11px] text-green-400">
                       {selectedStage ? (
                         selectedStage.logs?.map((log, index) => (
                           <div key={index}>{log}</div>
@@ -432,7 +432,7 @@ export function ReplitDeploymentPipeline({ projectId, className }: DeploymentPip
                           <div className="flex items-center gap-2">
                             <Package className="h-4 w-4" />
                             <span className="font-medium">{artifact.name}</span>
-                            <span className="text-sm text-muted-foreground">
+                            <span className="text-[13px] text-muted-foreground">
                               {(artifact.size / 1024 / 1024).toFixed(2)} MB
                             </span>
                           </div>
@@ -467,7 +467,7 @@ export function ReplitDeploymentPipeline({ projectId, className }: DeploymentPip
                               {pipeline.commit.id.slice(0, 7)}
                             </Badge>
                           </div>
-                          <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                          <div className="flex items-center gap-4 mt-2 text-[11px] text-muted-foreground">
                             <span>{new Date(pipeline.startTime).toLocaleString()}</span>
                             {pipeline.endTime && (
                               <span>{formatDuration(new Date(pipeline.endTime).getTime() - new Date(pipeline.startTime).getTime())}</span>
@@ -485,8 +485,8 @@ export function ReplitDeploymentPipeline({ projectId, className }: DeploymentPip
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center">
                 <Rocket className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-lg font-medium">No active deployment</p>
-                <p className="text-sm text-muted-foreground mb-4">
+                <p className="text-[15px] font-medium">No active deployment</p>
+                <p className="text-[13px] text-muted-foreground mb-4">
                   Click Deploy to start a new deployment
                 </p>
                 <Button onClick={() => deployMutation.mutate()}>

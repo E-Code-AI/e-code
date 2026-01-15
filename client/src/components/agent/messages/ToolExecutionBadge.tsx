@@ -53,7 +53,7 @@ export function ToolExecutionBadge({ tool, status, duration, details }: ToolExec
     >
       <div className={cn("flex items-center gap-1.5")}>
         <Icon className={cn("h-3.5 w-3.5", config.color)} />
-        <span className="text-xs font-medium text-[var(--ecode-text)]">
+        <span className="text-[11px] font-medium text-[var(--ecode-text)]">
           {config.label}
         </span>
       </div>
@@ -67,14 +67,14 @@ export function ToolExecutionBadge({ tool, status, duration, details }: ToolExec
           )} 
         />
         {duration !== undefined && (
-          <span className="text-xs text-[var(--ecode-text-secondary)]">
+          <span className="text-[11px] text-[var(--ecode-text-secondary)]">
             {duration}ms
           </span>
         )}
       </div>
       
       {details && (
-        <span className="text-xs text-[var(--ecode-text-secondary)] max-w-[200px] truncate">
+        <span className="text-[11px] text-[var(--ecode-text-secondary)] max-w-[200px] truncate">
           {details}
         </span>
       )}

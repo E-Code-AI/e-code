@@ -138,7 +138,7 @@ export function ExtendedThinkingDisplay({
                         <Badge 
                           variant="outline" 
                           className={cn(
-                            "text-xs",
+                            "text-[11px]",
                             step.type === 'reasoning' && "border-purple-300 text-purple-700 dark:border-purple-700 dark:text-purple-300",
                             step.type === 'analysis' && "border-blue-300 text-blue-700 dark:border-blue-700 dark:text-blue-300",
                             step.type === 'planning' && "border-green-300 text-green-700 dark:border-green-700 dark:text-green-300"
@@ -147,7 +147,7 @@ export function ExtendedThinkingDisplay({
                           {step.type}
                         </Badge>
                       </div>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
                         <Clock className="h-3 w-3" />
                         <span>
                           {new Date(step.timestamp).toLocaleTimeString()}
@@ -171,7 +171,7 @@ export function ExtendedThinkingDisplay({
               </CollapsibleTrigger>
 
               <CollapsibleContent>
-                <div className="mt-3 ml-9 text-sm">
+                <div className="mt-3 ml-9 text-[13px]">
                   {step.isStreaming && step.content.length === 0 ? (
                     <div className="space-y-2">
                       <Skeleton className="h-4 w-full bg-purple-200 dark:bg-purple-800" />

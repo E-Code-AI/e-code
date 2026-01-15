@@ -202,11 +202,11 @@ function FileTreeItem({
                 {getFileIcon(node.contentType, node.name)}
               </>
             )}
-            <span className="text-sm truncate flex-1" data-testid={`text-filename-${node.name}`}>
+            <span className="text-[13px] truncate flex-1" data-testid={`text-filename-${node.name}`}>
               {node.name}
             </span>
             {node.type === 'file' && node.size && (
-              <span className="text-xs text-muted-foreground shrink-0">
+              <span className="text-[11px] text-muted-foreground shrink-0">
                 {formatSize(node.size)}
               </span>
             )}
@@ -425,7 +425,7 @@ export function AppStoragePanel({ projectId, className }: AppStoragePanelProps) 
         data-testid="storage-panel-no-project"
       >
         <HardDrive className="w-12 h-12 mb-4 text-muted-foreground opacity-40" />
-        <p className="text-sm text-muted-foreground">Select a project to manage storage</p>
+        <p className="text-[13px] text-muted-foreground">Select a project to manage storage</p>
       </div>
     );
   }
@@ -442,11 +442,11 @@ export function AppStoragePanel({ projectId, className }: AppStoragePanelProps) 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
           <div className="flex items-center gap-2">
             <HardDrive className="w-5 h-5 text-muted-foreground" />
-            <h3 className="text-base sm:text-lg font-semibold" data-testid="text-storage-title">
+            <h3 className="text-base sm:text-[15px] font-semibold" data-testid="text-storage-title">
               App Storage
             </h3>
             {storageData?.stats && (
-              <Badge variant="secondary" className="text-xs" data-testid="text-file-count">
+              <Badge variant="secondary" className="text-[11px]" data-testid="text-file-count">
                 {storageData.stats.fileCount} files
               </Badge>
             )}
@@ -486,7 +486,7 @@ export function AppStoragePanel({ projectId, className }: AppStoragePanelProps) 
 
         {storageData?.stats && (
           <div className="space-y-1">
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <div className="flex items-center justify-between text-[11px] text-muted-foreground">
               <span data-testid="text-storage-used">{storageData.stats.totalSizeFormatted} used</span>
               <span data-testid="text-storage-max">{storageData.stats.maxStorageFormatted}</span>
             </div>
@@ -506,7 +506,7 @@ export function AppStoragePanel({ projectId, className }: AppStoragePanelProps) 
               <div className="absolute inset-0 z-10 flex items-center justify-center bg-primary/10 border-2 border-dashed border-primary rounded-lg">
                 <div className="text-center">
                   <Upload className="w-12 h-12 mx-auto mb-2 text-primary" />
-                  <p className="text-sm font-medium">Drop files here to upload</p>
+                  <p className="text-[13px] font-medium">Drop files here to upload</p>
                 </div>
               </div>
             )}
@@ -514,7 +514,7 @@ export function AppStoragePanel({ projectId, className }: AppStoragePanelProps) 
             {uploadingFiles.length > 0 && (
               <div className="mb-2 p-2 bg-muted rounded-lg">
                 {uploadingFiles.map(fileName => (
-                  <div key={fileName} className="flex items-center gap-2 text-sm">
+                  <div key={fileName} className="flex items-center gap-2 text-[13px]">
                     <Loader2 className="w-4 h-4 animate-spin text-primary" />
                     <span className="truncate">Uploading {fileName}...</span>
                   </div>
@@ -531,7 +531,7 @@ export function AppStoragePanel({ projectId, className }: AppStoragePanelProps) 
             ) : error ? (
               <div className="flex flex-col items-center justify-center py-8 text-center">
                 <AlertCircle className="w-12 h-12 mb-3 text-destructive opacity-40" />
-                <p className="text-sm text-muted-foreground">Failed to load storage</p>
+                <p className="text-[13px] text-muted-foreground">Failed to load storage</p>
                 <Button variant="link" className="mt-2" onClick={() => refetch()}>
                   Try again
                 </Button>
@@ -543,7 +543,7 @@ export function AppStoragePanel({ projectId, className }: AppStoragePanelProps) 
               >
                 <HardDrive className="w-12 h-12 mb-4 text-muted-foreground opacity-40" />
                 <h4 className="text-base font-medium mb-2">No files uploaded</h4>
-                <p className="text-sm text-muted-foreground mb-4">
+                <p className="text-[13px] text-muted-foreground mb-4">
                   Drag & drop files or click to upload
                 </p>
                 <Button onClick={open} data-testid="button-upload-empty">
@@ -599,7 +599,7 @@ export function AppStoragePanel({ projectId, className }: AppStoragePanelProps) 
                 </div>
               )}
 
-              <div className="space-y-2 text-sm">
+              <div className="space-y-2 text-[13px]">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Size</span>
                   <span data-testid="text-file-size">{formatSize(selectedFileData.size)}</span>
@@ -661,7 +661,7 @@ export function AppStoragePanel({ projectId, className }: AppStoragePanelProps) 
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center text-center p-4 text-muted-foreground">
               <File className="w-12 h-12 mb-4 opacity-40" />
-              <p className="text-sm">Select a file to view details</p>
+              <p className="text-[13px]">Select a file to view details</p>
             </div>
           )}
         </div>

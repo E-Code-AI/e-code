@@ -193,7 +193,7 @@ export function MemoryMCPPanel({ projectId }: { projectId?: number }) {
                 <div className="text-center py-12 text-[var(--ecode-muted)]">
                   <Brain className="w-12 h-12 mx-auto mb-2 opacity-50" />
                   <p>No memories found</p>
-                  <p className="text-sm mt-1">Try searching for different keywords</p>
+                  <p className="text-[13px] mt-1">Try searching for different keywords</p>
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -211,19 +211,19 @@ export function MemoryMCPPanel({ projectId }: { projectId?: number }) {
                           {node.type === 'fact' && <FileText className="w-4 h-4 text-green-500" />}
                           {node.type === 'experience' && <Clock className="w-4 h-4 text-yellow-500" />}
                           {node.type === 'conversation' && <MessageSquare className="w-4 h-4 text-purple-500" />}
-                          <Badge variant="outline" className="text-xs">
+                          <Badge variant="outline" className="text-[11px]">
                             {node.type}
                           </Badge>
                         </div>
-                        <div className="flex items-center gap-2 text-xs text-[var(--ecode-muted)]">
+                        <div className="flex items-center gap-2 text-[11px] text-[var(--ecode-muted)]">
                           <Link className="w-3 h-3" />
                           {node.connections} connections
                         </div>
                       </div>
-                      <p className="text-sm text-[var(--ecode-text)] mb-2">{node.content}</p>
+                      <p className="text-[13px] text-[var(--ecode-text)] mb-2">{node.content}</p>
                       <div className="flex flex-wrap gap-1">
                         {Object.entries(node.metadata).slice(0, 3).map(([key, value]) => (
-                          <Badge key={key} variant="secondary" className="text-xs">
+                          <Badge key={key} variant="secondary" className="text-[11px]">
                             {key}: {String(value)}
                           </Badge>
                         ))}
@@ -323,14 +323,14 @@ export function MemoryMCPPanel({ projectId }: { projectId?: number }) {
                     >
                       <div className="flex items-start justify-between mb-2">
                         <h4 className="font-medium text-[var(--ecode-text)]">{conv.title}</h4>
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="outline" className="text-[11px]">
                           {conv.messages} messages
                         </Badge>
                       </div>
-                      <p className="text-sm text-[var(--ecode-muted)] mb-2 line-clamp-2">
+                      <p className="text-[13px] text-[var(--ecode-muted)] mb-2 line-clamp-2">
                         {conv.lastMessage}
                       </p>
-                      <div className="flex items-center gap-2 text-xs text-[var(--ecode-muted)]">
+                      <div className="flex items-center gap-2 text-[11px] text-[var(--ecode-muted)]">
                         <Clock className="w-3 h-3" />
                         {new Date(conv.createdAt).toLocaleDateString()}
                       </div>
@@ -389,8 +389,8 @@ export function MemoryMCPPanel({ projectId }: { projectId?: number }) {
               {selectedNode && (
                 <div className="mt-6 p-4 rounded-lg bg-[var(--ecode-sidebar)] border border-[var(--ecode-border)]">
                   <h4 className="font-medium text-[var(--ecode-text)] mb-2">Selected Node</h4>
-                  <p className="text-sm text-[var(--ecode-muted)] mb-1">ID: {selectedNode.id}</p>
-                  <p className="text-sm text-[var(--ecode-text)]">{selectedNode.content}</p>
+                  <p className="text-[13px] text-[var(--ecode-muted)] mb-1">ID: {selectedNode.id}</p>
+                  <p className="text-[13px] text-[var(--ecode-text)]">{selectedNode.content}</p>
                 </div>
               )}
             </div>

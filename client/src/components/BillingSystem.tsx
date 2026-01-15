@@ -364,7 +364,7 @@ export function BillingSystem({ userId, className }: BillingSystemProps) {
                 <div className="space-y-2">
                   <p className="text-2xl font-bold capitalize">{subscription?.plan || 'Free'}</p>
                   {subscription && subscription.plan !== 'free' && (
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-[13px] text-muted-foreground">
                       {subscription.cancelAtPeriodEnd 
                         ? `Ends on ${new Date(subscription.currentPeriodEnd).toLocaleDateString()}`
                         : `Renews on ${new Date(subscription.currentPeriodEnd).toLocaleDateString()}`
@@ -411,7 +411,7 @@ export function BillingSystem({ userId, className }: BillingSystemProps) {
                   <div className="space-y-2">
                     {Object.entries(usage).slice(0, 3).map(([key, value]) => (
                       <div key={key} className="space-y-1">
-                        <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-center justify-between text-[13px]">
                           <span className="capitalize">{key}</span>
                           <span className="text-muted-foreground">
                             {value.used} / {value.limit === -1 ? '∞' : value.limit} {value.unit}
@@ -486,7 +486,7 @@ export function BillingSystem({ userId, className }: BillingSystemProps) {
                         {plan.features.map((feature, i) => (
                           <li key={i} className="flex items-start">
                             <Check className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                            <span className="text-sm">{feature}</span>
+                            <span className="text-[13px]">{feature}</span>
                           </li>
                         ))}
                       </ul>
@@ -534,7 +534,7 @@ export function BillingSystem({ userId, className }: BillingSystemProps) {
                             {key.replace(/([A-Z])/g, ' $1').trim()}
                           </span>
                         </div>
-                        <span className="text-sm text-muted-foreground">
+                        <span className="text-[13px] text-muted-foreground">
                           {value.used} / {value.limit === -1 ? 'Unlimited' : value.limit} {value.unit}
                         </span>
                       </div>
@@ -543,7 +543,7 @@ export function BillingSystem({ userId, className }: BillingSystemProps) {
                         className="h-2"
                       />
                       {getUsagePercentage(value.used, value.limit) > 80 && (
-                        <p className="text-xs text-yellow-600">
+                        <p className="text-[11px] text-yellow-600">
                           Approaching limit. Consider upgrading for more {key}.
                         </p>
                       )}
@@ -556,7 +556,7 @@ export function BillingSystem({ userId, className }: BillingSystemProps) {
 
               <div className="space-y-2">
                 <h3 className="font-medium">Need More Resources?</h3>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-[13px] text-muted-foreground">
                   Upgrade your plan to get more compute power, storage, and features.
                 </p>
                 <Button 
@@ -595,15 +595,15 @@ export function BillingSystem({ userId, className }: BillingSystemProps) {
                 >
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg">{plan.name}</CardTitle>
+                      <CardTitle className="text-[15px]">{plan.name}</CardTitle>
                       <div className="text-right">
                         <p className="text-2xl font-bold">${getPlanPrice(plan)}</p>
-                        <p className="text-xs text-muted-foreground">per {billingInterval}</p>
+                        <p className="text-[11px] text-muted-foreground">per {billingInterval}</p>
                       </div>
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <ul className="text-sm space-y-1">
+                    <ul className="text-[13px] space-y-1">
                       {plan.features.slice(0, 3).map((feature, i) => (
                         <li key={i} className="flex items-center">
                           <Check className="h-3 w-3 text-green-500 mr-2" />

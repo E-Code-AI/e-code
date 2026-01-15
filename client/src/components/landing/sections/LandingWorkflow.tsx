@@ -48,7 +48,7 @@ export default function LandingWorkflow() {
               )}
               <div className="relative z-10 inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-ecode-accent/20 to-ecode-secondary-accent/20 border-2 border-ecode-accent/30 mb-6">
                 <div className="text-ecode-accent">{step.icon}</div>
-                <div className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-ecode-accent text-white flex items-center justify-center font-bold text-sm">
+                <div className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-ecode-accent text-white flex items-center justify-center font-bold text-[13px]">
                   {index + 1}
                 </div>
               </div>

@@ -89,7 +89,7 @@ const TopNavbar = ({
     <div className="h-9 border-b border-border bg-background flex items-center justify-between px-2">
       {/* Left Section - Just Project Name */}
       <div className="flex items-center gap-2">
-        <span className="text-sm font-medium text-foreground" aria-label={`Project: ${projectTitle}`}>
+        <span className="text-[13px] font-medium text-foreground" aria-label={`Project: ${projectTitle}`}>
           {projectTitle}
         </span>
       </div>
@@ -104,7 +104,7 @@ const TopNavbar = ({
           <Button
             size="sm"
             onClick={handleStop}
-            className="h-7 px-3 bg-red-500 hover:bg-red-600 text-white text-xs font-medium rounded"
+            className="h-7 px-3 bg-red-500 hover:bg-red-600 text-white text-[11px] font-medium rounded"
           >
             <Square className="h-3 w-3 mr-1" />
             Stop
@@ -113,7 +113,7 @@ const TopNavbar = ({
           <Button
             size="sm"
             onClick={handleRun}
-            className="h-7 px-3 bg-green-600 hover:bg-green-700 text-white text-xs font-medium rounded"
+            className="h-7 px-3 bg-green-600 hover:bg-green-700 text-white text-[11px] font-medium rounded"
           >
             <Play className="h-3 w-3 mr-1" />
             Run
@@ -124,7 +124,7 @@ const TopNavbar = ({
         <Button
           variant="outline"
           size="sm"
-          className="h-7 px-3 text-xs font-medium rounded border-border"
+          className="h-7 px-3 text-[11px] font-medium rounded border-border"
         >
           Invite
         </Button>
@@ -133,7 +133,7 @@ const TopNavbar = ({
         <Button
           variant="outline"
           size="sm"
-          className="h-7 px-3 text-xs font-medium rounded border-border"
+          className="h-7 px-3 text-[11px] font-medium rounded border-border"
         >
           Share
         </Button>

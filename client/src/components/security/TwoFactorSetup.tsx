@@ -186,7 +186,7 @@ export function TwoFactorSetup() {
                 <Shield className="h-6 w-6 text-muted-foreground" />
               )}
               <div>
-                <CardTitle className="text-lg">Authentification à deux facteurs</CardTitle>
+                <CardTitle className="text-[15px]">Authentification à deux facteurs</CardTitle>
                 <CardDescription>
                   Ajoutez une couche de sécurité supplémentaire à votre compte
                 </CardDescription>
@@ -200,7 +200,7 @@ export function TwoFactorSetup() {
         <CardContent className="space-y-4">
           {status?.enabled ? (
             <>
-              <div className="flex flex-col sm:flex-row gap-4 text-sm text-muted-foreground">
+              <div className="flex flex-col sm:flex-row gap-4 text-[13px] text-muted-foreground">
                 <div className="flex items-center gap-2">
                   <Shield className="h-4 w-4" />
                   <span>Codes de secours restants: <strong>{status.backupCodesRemaining}</strong></span>
@@ -214,7 +214,7 @@ export function TwoFactorSetup() {
               </div>
               
               {status.backupCodesRemaining < 3 && (
-                <div className="flex items-center gap-2 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg text-sm">
+                <div className="flex items-center gap-2 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg text-[13px]">
                   <AlertTriangle className="h-4 w-4 text-yellow-500 flex-shrink-0" />
                   <span>Il vous reste peu de codes de secours. Pensez à en régénérer.</span>
                 </div>
@@ -250,7 +250,7 @@ export function TwoFactorSetup() {
             </>
           ) : (
             <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">
+              <p className="text-[13px] text-muted-foreground">
                 Protégez votre compte avec une application d'authentification comme Google Authenticator, 
                 Authy ou 1Password. Vous devrez entrer un code à 6 chiffres à chaque connexion.
               </p>
@@ -297,7 +297,7 @@ export function TwoFactorSetup() {
                   data-testid="img-2fa-qrcode"
                 />
               </div>
-              <p className="text-sm text-center text-muted-foreground">
+              <p className="text-[13px] text-center text-muted-foreground">
                 Impossible de scanner ? Entrez le code manuellement dans votre application.
               </p>
               <DialogFooter>
@@ -354,7 +354,7 @@ export function TwoFactorSetup() {
                   {setupData.backupCodes.map((code, index) => (
                     <div
                       key={index}
-                      className="flex items-center justify-between p-2 bg-background rounded font-mono text-sm"
+                      className="flex items-center justify-between p-2 bg-background rounded font-mono text-[13px]"
                     >
                       <span>{code}</span>
                       <button
@@ -373,7 +373,7 @@ export function TwoFactorSetup() {
                   ))}
                 </div>
               </div>
-              <div className="flex items-center gap-2 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg text-sm">
+              <div className="flex items-center gap-2 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg text-[13px]">
                 <AlertTriangle className="h-4 w-4 text-yellow-500 flex-shrink-0" />
                 <span>Chaque code ne peut être utilisé qu'une seule fois. Conservez-les en lieu sûr.</span>
               </div>
@@ -454,7 +454,7 @@ export function TwoFactorSetup() {
                   {setupData.backupCodes.map((code, index) => (
                     <div
                       key={index}
-                      className="flex items-center justify-between p-2 bg-background rounded font-mono text-sm"
+                      className="flex items-center justify-between p-2 bg-background rounded font-mono text-[13px]"
                     >
                       <span>{code}</span>
                       <button

@@ -72,7 +72,7 @@ export function WebSearchResultItem({
             }}
           />
         )}
-        <span className="text-sm text-blue-600 dark:text-blue-400 group-hover:underline truncate flex-1">
+        <span className="text-[13px] text-blue-600 dark:text-blue-400 group-hover:underline truncate flex-1">
           {result.title}
         </span>
         <ExternalLink className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
@@ -100,11 +100,11 @@ export function WebSearchResultItem({
                 href={result.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline line-clamp-1"
+                className="text-[13px] font-medium text-blue-600 dark:text-blue-400 hover:underline line-clamp-1"
               >
                 {result.title}
               </a>
-              <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+              <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">
                 {result.snippet}
               </p>
               <div className="flex items-center gap-2 mt-1.5">
@@ -153,12 +153,12 @@ export function WebSearchResultItem({
           href={result.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline line-clamp-1 inline-flex items-center gap-1"
+          className="text-[13px] font-medium text-blue-600 dark:text-blue-400 hover:underline line-clamp-1 inline-flex items-center gap-1"
         >
           {result.title}
           <ExternalLink className="h-3 w-3 shrink-0" />
         </a>
-        <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+        <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">
           {result.snippet}
         </p>
         <span className="text-[10px] text-muted-foreground/70 mt-1 inline-block">
@@ -197,7 +197,7 @@ export function WebSearchResultsDisplay({
             <Search className="h-4 w-4 text-blue-400 opacity-50" />
           </LazyMotionDiv>
         </div>
-        <span className="text-sm text-blue-700 dark:text-blue-300">
+        <span className="text-[13px] text-blue-700 dark:text-blue-300">
           Searching the web{query ? ` for "${query}"` : ''}...
         </span>
       </div>
@@ -211,7 +211,7 @@ export function WebSearchResultsDisplay({
   if (variant === 'compact') {
     return (
       <div className={cn("space-y-1", className)} data-testid="web-search-results-compact">
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+        <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mb-1">
           <Globe className="h-3 w-3" />
           <span>Web sources</span>
           <Badge variant="secondary" className="text-[10px] px-1 py-0">
@@ -225,7 +225,7 @@ export function WebSearchResultsDisplay({
           <Button
             variant="ghost"
             size="sm"
-            className="w-full h-7 text-xs"
+            className="w-full h-7 text-[11px]"
             onClick={() => setExpanded(!expanded)}
             data-testid="web-search-expand"
           >
@@ -250,7 +250,7 @@ export function WebSearchResultsDisplay({
     return (
       <Card className={cn("overflow-hidden", className)} data-testid="web-search-results-card">
         <CardHeader className="py-2 px-3 bg-blue-50 dark:bg-blue-950/30 border-b border-blue-100 dark:border-blue-900">
-          <CardTitle className="text-xs font-medium flex items-center gap-2 text-blue-700 dark:text-blue-300">
+          <CardTitle className="text-[11px] font-medium flex items-center gap-2 text-blue-700 dark:text-blue-300">
             <Globe className="h-3.5 w-3.5" />
             Web Search Results
             {query && <span className="text-muted-foreground">for "{query}"</span>}
@@ -267,7 +267,7 @@ export function WebSearchResultsDisplay({
             <Button
               variant="ghost"
               size="sm"
-              className="w-full h-8 text-xs"
+              className="w-full h-8 text-[11px]"
               onClick={() => setExpanded(!expanded)}
               data-testid="web-search-expand-card"
             >
@@ -296,11 +296,11 @@ export function WebSearchResultsDisplay({
     >
       <div className="flex items-center gap-2 px-3 py-2 bg-blue-50/50 dark:bg-blue-950/20 border-b">
         <Globe className="h-3.5 w-3.5 text-blue-500" />
-        <span className="text-xs font-medium text-foreground">
+        <span className="text-[11px] font-medium text-foreground">
           Web Sources
         </span>
         {query && (
-          <span className="text-xs text-muted-foreground">
+          <span className="text-[11px] text-muted-foreground">
             for "{query}"
           </span>
         )}
@@ -328,7 +328,7 @@ export function WebSearchResultsDisplay({
           <Button
             variant="ghost"
             size="sm"
-            className="w-full h-7 text-xs text-muted-foreground hover:text-foreground"
+            className="w-full h-7 text-[11px] text-muted-foreground hover:text-foreground"
             onClick={() => setExpanded(!expanded)}
             data-testid="web-search-expand-inline"
           >

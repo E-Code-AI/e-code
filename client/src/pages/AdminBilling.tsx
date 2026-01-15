@@ -257,40 +257,40 @@ export default function AdminBilling() {
         <div className="grid gap-4 md:grid-cols-4">
           <Card className="bg-zinc-800 border-zinc-700">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-zinc-400">Total Revenue (12mo)</CardTitle>
+              <CardTitle className="text-[13px] font-medium text-zinc-400">Total Revenue (12mo)</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-white">${totalRevenue.toLocaleString()}</div>
-              <p className="text-xs text-green-500 flex items-center gap-1">
+              <p className="text-[11px] text-green-500 flex items-center gap-1">
                 <TrendingUp className="h-3 w-3" /> From Stripe charges
               </p>
             </CardContent>
           </Card>
           <Card className="bg-zinc-800 border-zinc-700">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-zinc-400">Active Subscribers</CardTitle>
+              <CardTitle className="text-[13px] font-medium text-zinc-400">Active Subscribers</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-white">{activeSubscribers}</div>
-              <p className="text-xs text-zinc-500">of {subscribers.length} total</p>
+              <p className="text-[11px] text-zinc-500">of {subscribers.length} total</p>
             </CardContent>
           </Card>
           <Card className="bg-zinc-800 border-zinc-700">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-zinc-400">Total Users</CardTitle>
+              <CardTitle className="text-[13px] font-medium text-zinc-400">Total Users</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-white">{usageSummary?.totalUsers || 0}</div>
-              <p className="text-xs text-zinc-500">Platform-wide</p>
+              <p className="text-[11px] text-zinc-500">Platform-wide</p>
             </CardContent>
           </Card>
           <Card className="bg-zinc-800 border-zinc-700">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-zinc-400">Billing Period</CardTitle>
+              <CardTitle className="text-[13px] font-medium text-zinc-400">Billing Period</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-white">{usageSummary?.billingPeriod || 'N/A'}</div>
-              <p className="text-xs text-zinc-500">Current cycle</p>
+              <p className="text-[11px] text-zinc-500">Current cycle</p>
             </CardContent>
           </Card>
         </div>
@@ -353,11 +353,11 @@ export default function AdminBilling() {
                     <div className="space-y-4">
                       {usageSummary?.usageByMetric?.map((metric) => (
                         <div key={metric.metric} className="space-y-2">
-                          <div className="flex justify-between text-sm">
+                          <div className="flex justify-between text-[13px]">
                             <span className="text-zinc-300 capitalize">{metric.metric.replace('_', ' ')}</span>
                             <span className="text-zinc-400">{metric.eventCount} events</span>
                           </div>
-                          <div className="grid grid-cols-3 gap-2 text-xs">
+                          <div className="grid grid-cols-3 gap-2 text-[11px]">
                             <div className="bg-zinc-900 rounded p-2">
                               <p className="text-zinc-500">Billed</p>
                               <p className="text-white font-medium">${parseFloat(metric.totalBilled || '0').toFixed(2)}</p>
@@ -413,7 +413,7 @@ export default function AdminBilling() {
                           <TableCell className="text-white">
                             <div>
                               <p className="font-medium">{sub.username}</p>
-                              <p className="text-xs text-zinc-500">{sub.email}</p>
+                              <p className="text-[11px] text-zinc-500">{sub.email}</p>
                             </div>
                           </TableCell>
                           <TableCell className="text-zinc-300 capitalize">{sub.subscriptionTier || 'free'}</TableCell>
@@ -469,7 +469,7 @@ export default function AdminBilling() {
                     <TableBody>
                       {invoices.map((inv) => (
                         <TableRow key={inv.id} className="border-zinc-700">
-                          <TableCell className="text-white font-mono text-sm">
+                          <TableCell className="text-white font-mono text-[13px]">
                             {inv.number || inv.id.slice(0, 12)}
                           </TableCell>
                           <TableCell className="text-white font-medium">
@@ -556,7 +556,7 @@ export default function AdminBilling() {
                     <Card key={plan.id} className="relative bg-zinc-900 border-zinc-700" data-testid={`card-plan-${plan.id}`}>
                       <CardHeader>
                         <div className="flex items-center justify-between">
-                          <CardTitle className="text-lg text-white">{plan.name}</CardTitle>
+                          <CardTitle className="text-[15px] text-white">{plan.name}</CardTitle>
                           <Button
                             size="icon"
                             variant="ghost"
@@ -574,26 +574,26 @@ export default function AdminBilling() {
                         <div className="space-y-4">
                           <div>
                             <p className="text-2xl font-bold text-white">${plan.monthlyPrice}</p>
-                            <p className="text-sm text-zinc-400">per month</p>
+                            <p className="text-[13px] text-zinc-400">per month</p>
                           </div>
                           <div>
-                            <p className="text-sm text-zinc-300">Yearly: ${plan.yearlyPrice}</p>
-                            <p className="text-xs text-green-500">
+                            <p className="text-[13px] text-zinc-300">Yearly: ${plan.yearlyPrice}</p>
+                            <p className="text-[11px] text-green-500">
                               Save ${(plan.monthlyPrice * 12 - plan.yearlyPrice).toFixed(2)}
                             </p>
                           </div>
-                          <div className="text-sm text-zinc-400">
+                          <div className="text-[13px] text-zinc-400">
                             <Zap className="h-4 w-4 inline mr-1 text-yellow-500" />
                             ${plan.creditsMonthly} credits/mo
                           </div>
                           <div className="space-y-1">
-                            <p className="text-sm font-medium text-white">Features:</p>
-                            <ul className="text-sm text-zinc-400 space-y-1">
+                            <p className="text-[13px] font-medium text-white">Features:</p>
+                            <ul className="text-[13px] text-zinc-400 space-y-1">
                               {plan.features.slice(0, 3).map((feature, i) => (
                                 <li key={i} className="truncate">• {feature}</li>
                               ))}
                               {plan.features.length > 3 && (
-                                <li className="text-xs">+{plan.features.length - 3} more</li>
+                                <li className="text-[11px]">+{plan.features.length - 3} more</li>
                               )}
                             </ul>
                           </div>
@@ -604,7 +604,7 @@ export default function AdminBilling() {
                 </div>
 
                 <div className="mt-8">
-                  <h3 className="text-lg font-semibold text-white mb-4">Resource Limits by Plan</h3>
+                  <h3 className="text-[15px] font-semibold text-white mb-4">Resource Limits by Plan</h3>
                   {pricingPlans.map((plan) => (
                     <div key={plan.id} className="mb-6" data-testid={`limits-plan-${plan.id}`}>
                       <h4 className="text-md font-medium mb-3 text-zinc-300">{plan.name}</h4>
@@ -823,7 +823,7 @@ export default function AdminBilling() {
                       onChange={(e) => setEditingLimit({...editingLimit, limit: parseInt(e.target.value)})}
                       placeholder="-1 for unlimited"
                     />
-                    <p className="text-sm text-muted-foreground mt-1">Use -1 for unlimited</p>
+                    <p className="text-[13px] text-muted-foreground mt-1">Use -1 for unlimited</p>
                   </div>
                   <div>
                     <Label htmlFor="overage-rate">Overage Rate ($ per {editingLimit.unit})</Label>

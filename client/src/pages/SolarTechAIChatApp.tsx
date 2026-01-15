@@ -194,17 +194,17 @@ export default function SolarTechAIChatApp() {
                 <CardContent className="p-3">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <h3 className="font-medium text-sm mb-1">{conversation.title}</h3>
-                      <p className="text-xs text-muted-foreground line-clamp-2">
+                      <h3 className="font-medium text-[13px] mb-1">{conversation.title}</h3>
+                      <p className="text-[11px] text-muted-foreground line-clamp-2">
                         {conversation.lastMessage || 'Start a new conversation...'}
                       </p>
                     </div>
                     <div className="flex flex-col items-end gap-1">
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-[11px] text-muted-foreground">
                         {formatTime(conversation.timestamp)}
                       </span>
                       {conversation.messages.length > 0 && (
-                        <Badge variant="secondary" className="text-xs">
+                        <Badge variant="secondary" className="text-[11px]">
                           {conversation.messages.length}
                         </Badge>
                       )}
@@ -230,11 +230,11 @@ export default function SolarTechAIChatApp() {
               </Avatar>
               <div>
                 <h3 className="font-semibold">{getCurrentConversation()?.title}</h3>
-                <p className="text-sm text-muted-foreground">Solar Energy Consultant AI</p>
+                <p className="text-[13px] text-muted-foreground">Solar Energy Consultant AI</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Badge variant="outline" className="text-xs">
+              <Badge variant="outline" className="text-[11px]">
                 <Star className="h-3 w-3 mr-1" />
                 Premium AI
               </Badge>
@@ -264,10 +264,10 @@ export default function SolarTechAIChatApp() {
                 <div className={`max-w-[70%] ${message.sender === 'user' ? 'order-first' : ''}`}>
                   <Card className={message.sender === 'user' ? 'bg-primary text-primary-foreground' : ''}>
                     <CardContent className="p-3">
-                      <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                      <p className="text-[13px] whitespace-pre-wrap">{message.content}</p>
                       <div className="flex items-center gap-2 mt-2">
                         <Clock className="h-3 w-3 opacity-60" />
-                        <span className="text-xs opacity-60">{formatTime(message.timestamp)}</span>
+                        <span className="text-[11px] opacity-60">{formatTime(message.timestamp)}</span>
                       </div>
                     </CardContent>
                   </Card>
@@ -294,7 +294,7 @@ export default function SolarTechAIChatApp() {
                   <CardContent className="p-3">
                     <div className="flex items-center gap-2">
                       <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full"></div>
-                      <span className="text-sm">AI is analyzing...</span>
+                      <span className="text-[13px]">AI is analyzing...</span>
                     </div>
                   </CardContent>
                 </Card>
@@ -318,7 +318,7 @@ export default function SolarTechAIChatApp() {
               <Send className="h-4 w-4" />
             </Button>
           </div>
-          <p className="text-xs text-muted-foreground mt-2">
+          <p className="text-[11px] text-muted-foreground mt-2">
             Get expert advice on solar energy solutions, cost analysis, and installation guidance.
           </p>
         </div>

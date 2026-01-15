@@ -200,7 +200,7 @@ export function GitGraph({
     <Card className={cn("h-full flex flex-col", className)}>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-medium flex items-center gap-2">
+          <CardTitle className="text-[13px] font-medium flex items-center gap-2">
             <GitBranch className="h-4 w-4" />
             Git Graph
           </CardTitle>
@@ -215,7 +215,7 @@ export function GitGraph({
             >
               <RefreshCw className={cn("h-3.5 w-3.5", isLoading && "animate-spin")} />
             </Button>
-            <Badge variant="outline" className="text-xs">
+            <Badge variant="outline" className="text-[11px]">
               {filteredCommits.length} commits
             </Badge>
           </div>
@@ -227,7 +227,7 @@ export function GitGraph({
             placeholder="Search commits, authors, hashes..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 h-8 text-xs"
+            className="pl-9 h-8 text-[11px]"
             data-testid="input-search-commits"
           />
         </div>
@@ -235,12 +235,12 @@ export function GitGraph({
 
       <CardContent className="flex-1 p-0 overflow-hidden">
         {isLoading ? (
-          <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
+          <div className="flex items-center justify-center h-full text-[13px] text-muted-foreground">
             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
             Loading git history...
           </div>
         ) : error ? (
-          <div className="flex flex-col items-center justify-center h-full text-sm text-muted-foreground">
+          <div className="flex flex-col items-center justify-center h-full text-[13px] text-muted-foreground">
             <GitCommit className="h-8 w-8 mb-2 opacity-50" />
             <p>Failed to load git history</p>
             <Button size="sm" variant="outline" className="mt-2" onClick={() => refetch()}>
@@ -248,7 +248,7 @@ export function GitGraph({
             </Button>
           </div>
         ) : filteredCommits.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-sm text-muted-foreground">
+          <div className="flex flex-col items-center justify-center h-full text-[13px] text-muted-foreground">
             <GitCommit className="h-8 w-8 mb-2 opacity-50" />
             <p>No commits found</p>
           </div>
@@ -276,7 +276,7 @@ export function GitGraph({
                       {commit.isMerge && (
                         <GitMerge className="h-3.5 w-3.5 mt-0.5 text-[var(--ecode-yellow)] flex-shrink-0" />
                       )}
-                      <p className="text-xs font-medium line-clamp-2 flex-1">
+                      <p className="text-[11px] font-medium line-clamp-2 flex-1">
                         {commit.message}
                       </p>
                     </div>

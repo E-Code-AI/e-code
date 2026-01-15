@@ -241,13 +241,13 @@ export default function Usage() {
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-lg">Current Billing Cycle</CardTitle>
+                <CardTitle className="text-[15px]">Current Billing Cycle</CardTitle>
                 <CardDescription>
                   {billingCycle.start.toLocaleDateString()} - {billingCycle.end.toLocaleDateString()}
                 </CardDescription>
               </div>
               <div className="text-right">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2 text-[13px] text-muted-foreground">
                   <Clock className="h-4 w-4" />
                   <span>{billingCycle.daysRemaining} days remaining</span>
                 </div>
@@ -262,7 +262,7 @@ export default function Usage() {
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-lg">Credits Balance</CardTitle>
+                <CardTitle className="text-[15px]">Credits Balance</CardTitle>
                 <CardDescription>
                   Monthly allowance: ${creditsData?.creditsMonthlyAllowance?.toFixed(2) || '0.00'}
                 </CardDescription>
@@ -274,7 +274,7 @@ export default function Usage() {
             <div className="space-y-3">
               <div className="text-3xl font-bold">
                 ${creditsData?.creditsBalance?.toFixed(2) || '0.00'}
-                <span className="text-sm font-normal text-muted-foreground ml-2">remaining</span>
+                <span className="text-[13px] font-normal text-muted-foreground ml-2">remaining</span>
               </div>
               <Progress 
                 value={
@@ -284,7 +284,7 @@ export default function Usage() {
                 } 
                 className="h-2" 
               />
-              <div className="flex justify-between text-sm text-muted-foreground">
+              <div className="flex justify-between text-[13px] text-muted-foreground">
                 <span>
                   ${((creditsData?.creditsMonthlyAllowance || 0) - (creditsData?.creditsBalance || 0)).toFixed(2)} used
                 </span>
@@ -336,14 +336,14 @@ export default function Usage() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         {getUsageIcon(key)}
-                        <CardTitle className="text-sm font-medium">
+                        <CardTitle className="text-[13px] font-medium">
                           {getUsageLabel(key)}
                         </CardTitle>
                       </div>
                       <Badge 
                         variant={value.percentage >= 90 ? "destructive" : 
                                 value.percentage >= 75 ? "secondary" : "outline"}
-                        className="text-xs"
+                        className="text-[11px]"
                         data-testid={`badge-usage-percentage-${key}`}
                       >
                         {value.percentage}%
@@ -357,7 +357,7 @@ export default function Usage() {
                         className="h-2" 
                         data-testid={`progress-usage-${key}`}
                       />
-                      <div className="flex justify-between text-sm">
+                      <div className="flex justify-between text-[13px]">
                         <span className={getUsageColor(value.percentage)} data-testid={`text-used-${key}`}>
                           {value.used} {value.unit}
                         </span>
@@ -413,7 +413,7 @@ export default function Usage() {
                     <Cpu className="h-4 w-4" />
                     Compute Time Details
                   </h3>
-                  <div className="pl-6 space-y-1 text-sm">
+                  <div className="pl-6 space-y-1 text-[13px]">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Development VMs</span>
                       <span>45 hours</span>
@@ -431,7 +431,7 @@ export default function Usage() {
                     <HardDrive className="h-4 w-4" />
                     Storage Breakdown
                   </h3>
-                  <div className="pl-6 space-y-1 text-sm">
+                  <div className="pl-6 space-y-1 text-[13px]">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Project Files</span>
                       <span>2.8 GB</span>
@@ -453,7 +453,7 @@ export default function Usage() {
                     <Globe className="h-4 w-4" />
                     Bandwidth Usage
                   </h3>
-                  <div className="pl-6 space-y-1 text-sm">
+                  <div className="pl-6 space-y-1 text-[13px]">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Deployments</span>
                       <span>12.5 GB</span>
@@ -478,27 +478,27 @@ export default function Usage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm">
+                <div className="flex items-center gap-2 text-[13px]">
                   <Check className="h-4 w-4 text-green-600" />
                   <span>100 hours of compute time per month</span>
                 </div>
-                <div className="flex items-center gap-2 text-sm">
+                <div className="flex items-center gap-2 text-[13px]">
                   <Check className="h-4 w-4 text-green-600" />
                   <span>10 GB storage</span>
                 </div>
-                <div className="flex items-center gap-2 text-sm">
+                <div className="flex items-center gap-2 text-[13px]">
                   <Check className="h-4 w-4 text-green-600" />
                   <span>100 GB bandwidth</span>
                 </div>
-                <div className="flex items-center gap-2 text-sm">
+                <div className="flex items-center gap-2 text-[13px]">
                   <Check className="h-4 w-4 text-green-600" />
                   <span>5 private projects</span>
                 </div>
-                <div className="flex items-center gap-2 text-sm">
+                <div className="flex items-center gap-2 text-[13px]">
                   <Check className="h-4 w-4 text-green-600" />
                   <span>10 active deployments</span>
                 </div>
-                <div className="flex items-center gap-2 text-sm">
+                <div className="flex items-center gap-2 text-[13px]">
                   <Check className="h-4 w-4 text-green-600" />
                   <span>3 team members</span>
                 </div>
@@ -553,13 +553,13 @@ export default function Usage() {
                     <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
                       <div>
                         <p className="font-medium">{cycle.month}</p>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-[13px] text-muted-foreground">
                           {cycle.period}
                         </p>
                       </div>
                       <div className="text-right">
                         <p className="font-medium">{cycle.amount}</p>
-                        <p className="text-sm text-muted-foreground">{cycle.plan}</p>
+                        <p className="text-[13px] text-muted-foreground">{cycle.plan}</p>
                       </div>
                     </div>
                   ))

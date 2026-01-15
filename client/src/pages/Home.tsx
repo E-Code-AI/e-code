@@ -250,7 +250,7 @@ export default function Home() {
                   {searchQuery.trim() ? <Sparkles className="h-4 w-4 sm:ml-2" /> : <Plus className="h-4 w-4 sm:ml-2" />}
                 </Button>
               </div>
-              <div className="flex flex-wrap gap-2 px-2 pt-3 text-sm text-white/80">
+              <div className="flex flex-wrap gap-2 px-2 pt-3 text-[13px] text-white/80">
                 <span>Exemples:</span>
                 <Button 
                   variant="link" 
@@ -303,10 +303,10 @@ export default function Home() {
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <Bot className="h-5 w-5 text-primary" />
-                <h2 className="text-lg font-semibold">Agents & Automations</h2>
+                <h2 className="text-[15px] font-semibold">Agents & Automations</h2>
                 <Badge variant="secondary" className="text-[10px]">New</Badge>
               </div>
-              <Button variant="ghost" size="sm" className="text-xs" data-testid="view-all-agents">
+              <Button variant="ghost" size="sm" className="text-[11px]" data-testid="view-all-agents">
                 View all <ArrowRight className="h-3 w-3 ml-1" />
               </Button>
             </div>
@@ -322,7 +322,7 @@ export default function Home() {
                       <MessageSquare className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                     </div>
                     <div>
-                      <h3 className="font-medium text-sm">Slack Agent</h3>
+                      <h3 className="font-medium text-[13px]">Slack Agent</h3>
                       <p className="text-[11px] text-muted-foreground">Q&A, research, codebase help</p>
                     </div>
                   </div>
@@ -343,7 +343,7 @@ export default function Home() {
                       <Bot className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                     </div>
                     <div>
-                      <h3 className="font-medium text-sm">Telegram Bot</h3>
+                      <h3 className="font-medium text-[13px]">Telegram Bot</h3>
                       <p className="text-[11px] text-muted-foreground">Support, scheduling, FAQs</p>
                     </div>
                   </div>
@@ -364,7 +364,7 @@ export default function Home() {
                       <Timer className="h-5 w-5 text-amber-600 dark:text-amber-400" />
                     </div>
                     <div>
-                      <h3 className="font-medium text-sm">Timed Automation</h3>
+                      <h3 className="font-medium text-[13px]">Timed Automation</h3>
                       <p className="text-[11px] text-muted-foreground">Scheduled workflows, reports</p>
                     </div>
                   </div>
@@ -385,7 +385,7 @@ export default function Home() {
                       <Zap className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                     </div>
                     <div>
-                      <h3 className="font-medium text-sm">Meeting Prep</h3>
+                      <h3 className="font-medium text-[13px]">Meeting Prep</h3>
                       <p className="text-[11px] text-muted-foreground">Web research, AI summaries</p>
                     </div>
                   </div>
@@ -469,7 +469,7 @@ export default function Home() {
                       data-testid={`card-project-${project.id}`}
                     >
                       <CardHeader className="pb-2">
-                        <CardTitle className="flex items-center justify-between text-lg">
+                        <CardTitle className="flex items-center justify-between text-[15px]">
                           <div className="flex items-center gap-2 truncate">
                             <Code className="h-4 w-4 flex-shrink-0 text-primary" />
                             <span className="truncate">{project.name}</span>
@@ -503,15 +503,15 @@ export default function Home() {
                             <AvatarImage src={`https://avatar.vercel.sh/${user?.username || 'user'}.png`} />
                             <AvatarFallback className="text-[10px]">{user?.username?.substring(0, 2).toUpperCase() || 'U'}</AvatarFallback>
                           </Avatar>
-                          <span className="text-xs text-muted-foreground truncate">{user?.username || 'user'}</span>
+                          <span className="text-[11px] text-muted-foreground truncate">{user?.username || 'user'}</span>
                         </div>
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
                           <Clock className="h-3 w-3 flex-shrink-0" />
                           <span className="truncate">Updated {new Date(project.updatedAt).toLocaleDateString()}</span>
                         </div>
                       </CardContent>
                       <CardFooter className="border-t border-border pt-3 flex justify-between">
-                        <Badge variant="outline" className="text-xs flex items-center gap-1 h-5">
+                        <Badge variant="outline" className="text-[11px] flex items-center gap-1 h-5">
                           {project.language ? (
                             <>
                               <span className="h-2 w-2 rounded-full bg-primary"></span>
@@ -524,7 +524,7 @@ export default function Home() {
                             </>
                           )}
                         </Badge>
-                        <div className="text-xs text-muted-foreground flex items-center">
+                        <div className="text-[11px] text-muted-foreground flex items-center">
                           {project.visibility === 'public' ? (
                             <Globe className="h-3 w-3 mr-1" />
                           ) : (
@@ -549,11 +549,11 @@ export default function Home() {
                         <div className="flex items-center gap-2">
                           <Code className="h-4 w-4 text-primary" />
                           <span className="font-medium">{project.name}</span>
-                          <Badge variant="outline" className="text-xs flex items-center gap-1 h-5">
+                          <Badge variant="outline" className="text-[11px] flex items-center gap-1 h-5">
                             {project.language || 'misc'}
                           </Badge>
                         </div>
-                        <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-2 mt-1 text-[11px] text-muted-foreground">
                           <Avatar className="h-4 w-4">
                             <AvatarImage src={`https://avatar.vercel.sh/${user?.username || 'user'}.png`} />
                             <AvatarFallback className="text-[8px]">{user?.username?.substring(0, 2).toUpperCase() || 'U'}</AvatarFallback>

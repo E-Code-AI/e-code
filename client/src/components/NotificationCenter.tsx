@@ -194,7 +194,7 @@ export function NotificationCenter() {
           {unreadCount > 0 && (
             <Badge 
               variant="destructive" 
-              className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs"
+              className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-[11px]"
             >
               {unreadCount}
             </Badge>
@@ -256,13 +256,13 @@ export function NotificationCenter() {
                               <Icon className="h-5 w-5" />
                             </div>
                             <div className="flex-1 space-y-1">
-                              <p className="text-sm font-medium">
+                              <p className="text-[13px] font-medium">
                                 {notification.title}
                               </p>
-                              <p className="text-sm text-muted-foreground">
+                              <p className="text-[13px] text-muted-foreground">
                                 {notification.message}
                               </p>
-                              <p className="text-xs text-muted-foreground">
+                              <p className="text-[11px] text-muted-foreground">
                                 {formatRelativeTime(notification.timestamp)}
                               </p>
                             </div>
@@ -310,13 +310,13 @@ export function NotificationCenter() {
                           <Icon className="h-5 w-5" />
                         </div>
                         <div className="flex-1 space-y-1">
-                          <p className="text-sm font-medium">
+                          <p className="text-[13px] font-medium">
                             {notification.title}
                           </p>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-[13px] text-muted-foreground">
                             {notification.message}
                           </p>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-[11px] text-muted-foreground">
                             {formatRelativeTime(notification.timestamp)}
                           </p>
                         </div>

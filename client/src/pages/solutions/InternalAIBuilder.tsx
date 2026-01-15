@@ -46,7 +46,7 @@ export default function InternalAIBuilder() {
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-semibold text-slate-900 dark:text-white tracking-tight">
             Private AI agents for every team
           </h1>
-          <p className="mt-3 sm:mt-4 text-sm sm:text-base md:text-lg text-slate-600 dark:text-slate-200 px-2 sm:px-0">
+          <p className="mt-3 sm:mt-4 text-[13px] sm:text-base md:text-[15px] text-slate-600 dark:text-slate-200 px-2 sm:px-0">
             Deploy governed AI agents that work across engineering, design, and operations—without compromising compliance or control.
           </p>
           <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row flex-wrap justify-center gap-3 sm:gap-4 px-4 sm:px-0">
@@ -77,8 +77,8 @@ export default function InternalAIBuilder() {
                 <div className="inline-flex rounded-full bg-sky-100 dark:bg-white/10 p-2 sm:p-3 text-sky-600 dark:text-sky-200">
                   <capability.icon className="h-5 w-5 sm:h-6 sm:w-6" />
                 </div>
-                <CardTitle className="text-base sm:text-lg text-slate-900 dark:text-white">{capability.title}</CardTitle>
-                <CardDescription className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed">{capability.description}</CardDescription>
+                <CardTitle className="text-base sm:text-[15px] text-slate-900 dark:text-white">{capability.title}</CardTitle>
+                <CardDescription className="text-[13px] sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed">{capability.description}</CardDescription>
               </CardHeader>
             </Card>
           ))}
@@ -91,7 +91,7 @@ export default function InternalAIBuilder() {
             <CardContent className="grid gap-6 sm:gap-8 py-8 sm:py-12 text-center sm:text-left grid-cols-1 sm:grid-cols-[1.5fr_1fr] p-4 sm:p-6">
               <div className="space-y-3 sm:space-y-4">
                 <h2 className="text-2xl sm:text-3xl font-semibold text-slate-900 dark:text-white">Launch an internal AI center of excellence</h2>
-                <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300">
+                <p className="text-[13px] sm:text-base text-slate-600 dark:text-slate-300">
                   E-Code provides playbooks, governance frameworks, and dedicated solution architects to help you operationalize AI responsibly across your organization.
                 </p>
               </div>

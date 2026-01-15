@@ -40,45 +40,45 @@ export default function Bounties() {
       <div className="grid gap-4 md:grid-cols-4 mb-8">
         <Card data-testid="stat-total-earned">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Earned</CardTitle>
+            <CardTitle className="text-[13px] font-medium">Total Earned</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold" data-testid="text-total-earned">${userBounties?.totalEarned || 0}</div>
-            <p className="text-xs text-muted-foreground">From bounties</p>
+            <p className="text-[11px] text-muted-foreground">From bounties</p>
           </CardContent>
         </Card>
         
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Completed</CardTitle>
+            <CardTitle className="text-[13px] font-medium">Completed</CardTitle>
             <Target className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{completedBounties.length}</div>
-            <p className="text-xs text-muted-foreground">Bounties</p>
+            <p className="text-[11px] text-muted-foreground">Bounties</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active</CardTitle>
+            <CardTitle className="text-[13px] font-medium">Active</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{activeBounties.length}</div>
-            <p className="text-xs text-muted-foreground">Available now</p>
+            <p className="text-[11px] text-muted-foreground">Available now</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Rank</CardTitle>
+            <CardTitle className="text-[13px] font-medium">Rank</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">#{userBounties?.rank || '-'}</div>
-            <p className="text-xs text-muted-foreground">Global ranking</p>
+            <p className="text-[11px] text-muted-foreground">Global ranking</p>
           </CardContent>
         </Card>
       </div>
@@ -98,8 +98,8 @@ export default function Bounties() {
                 <div key={bounty.id} className="border rounded-lg p-4">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <h3 className="font-semibold text-lg">{bounty.title}</h3>
-                      <p className="text-sm text-muted-foreground mt-1">{bounty.description}</p>
+                      <h3 className="font-semibold text-[15px]">{bounty.title}</h3>
+                      <p className="text-[13px] text-muted-foreground mt-1">{bounty.description}</p>
                       <div className="flex items-center gap-4 mt-3">
                         <Badge variant="secondary">
                           <DollarSign className="h-3 w-3 mr-1" />
@@ -128,8 +128,8 @@ export default function Bounties() {
           ) : (
             <div className="text-center py-12 text-muted-foreground">
               <Trophy className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p className="text-lg">No active bounties available</p>
-              <p className="text-sm mt-2">Check back later for new challenges</p>
+              <p className="text-[15px]">No active bounties available</p>
+              <p className="text-[13px] mt-2">Check back later for new challenges</p>
             </div>
           )}
         </CardContent>
@@ -150,7 +150,7 @@ export default function Bounties() {
                 <div key={bounty.id} className="flex items-center justify-between p-3 border rounded">
                   <div>
                     <p className="font-medium">{bounty.title}</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-[13px] text-muted-foreground">
                       Completed on {new Date(bounty.completedAt).toLocaleDateString()}
                     </p>
                   </div>

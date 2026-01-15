@@ -151,7 +151,7 @@ export default function AdvancedAIPanel({ projectId, selectedCode = '', selected
             <AlertDescription>
               {bug.message}
               {bug.suggestion && (
-                <div className="mt-2 text-sm text-muted-foreground">
+                <div className="mt-2 text-[13px] text-muted-foreground">
                   <strong>Suggestion:</strong> {bug.suggestion}
                 </div>
               )}
@@ -184,23 +184,23 @@ export default function AdvancedAIPanel({ projectId, selectedCode = '', selected
             <CardContent className="space-y-2">
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm font-medium">Before:</span>
+                  <span className="text-[13px] font-medium">Before:</span>
                   <Button size="sm" variant="ghost" onClick={() => copyToClipboard(item.before)}>
                     <Copy className="h-3 w-3" />
                   </Button>
                 </div>
-                <pre className="bg-muted p-2 rounded text-xs overflow-x-auto">
+                <pre className="bg-muted p-2 rounded text-[11px] overflow-x-auto">
                   <code>{item.before}</code>
                 </pre>
               </div>
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm font-medium">After:</span>
+                  <span className="text-[13px] font-medium">After:</span>
                   <Button size="sm" variant="ghost" onClick={() => copyToClipboard(item.after)}>
                     <Copy className="h-3 w-3" />
                   </Button>
                 </div>
-                <pre className="bg-muted p-2 rounded text-xs overflow-x-auto">
+                <pre className="bg-muted p-2 rounded text-[11px] overflow-x-auto">
                   <code>{item.after}</code>
                 </pre>
               </div>
@@ -236,7 +236,7 @@ export default function AdvancedAIPanel({ projectId, selectedCode = '', selected
               <CardTitle className="text-base">Summary</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground">{review.summary}</p>
+              <p className="text-[13px] text-muted-foreground">{review.summary}</p>
             </CardContent>
           </Card>
         )}
@@ -250,12 +250,12 @@ export default function AdvancedAIPanel({ projectId, selectedCode = '', selected
                       <Badge variant={severityColors[item.severity] as any}>
                         {item.severity}
                       </Badge>
-                      <span className="text-sm font-medium">{item.category}</span>
+                      <span className="text-[13px] font-medium">{item.category}</span>
                       {item.line && (
-                        <span className="text-xs text-muted-foreground">Line {item.line}</span>
+                        <span className="text-[11px] text-muted-foreground">Line {item.line}</span>
                       )}
                     </div>
-                    <p className="text-sm text-muted-foreground">{item.message}</p>
+                    <p className="text-[13px] text-muted-foreground">{item.message}</p>
                   </div>
                 </div>
               </CardContent>
@@ -286,7 +286,7 @@ export default function AdvancedAIPanel({ projectId, selectedCode = '', selected
             value={code}
             onChange={(e) => setCode(e.target.value)}
             placeholder="Paste your code here or select code in the editor..."
-            className="min-h-[100px] font-mono text-sm"
+            className="min-h-[100px] font-mono text-[13px]"
           />
           <div className="flex gap-2">
             <Select value={language} onValueChange={setLanguage}>
@@ -304,27 +304,27 @@ export default function AdvancedAIPanel({ projectId, selectedCode = '', selected
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
           <TabsList className="grid grid-cols-3 lg:grid-cols-6 w-full">
-            <TabsTrigger value="explain" className="text-xs">
+            <TabsTrigger value="explain" className="text-[11px]">
               <Brain className="h-3 w-3 mr-1" />
               Explain
             </TabsTrigger>
-            <TabsTrigger value="bugs" className="text-xs">
+            <TabsTrigger value="bugs" className="text-[11px]">
               <Bug className="h-3 w-3 mr-1" />
               Bugs
             </TabsTrigger>
-            <TabsTrigger value="tests" className="text-xs">
+            <TabsTrigger value="tests" className="text-[11px]">
               <TestTube className="h-3 w-3 mr-1" />
               Tests
             </TabsTrigger>
-            <TabsTrigger value="refactor" className="text-xs">
+            <TabsTrigger value="refactor" className="text-[11px]">
               <Wand2 className="h-3 w-3 mr-1" />
               Refactor
             </TabsTrigger>
-            <TabsTrigger value="docs" className="text-xs">
+            <TabsTrigger value="docs" className="text-[11px]">
               <FileText className="h-3 w-3 mr-1" />
               Docs
             </TabsTrigger>
-            <TabsTrigger value="review" className="text-xs">
+            <TabsTrigger value="review" className="text-[11px]">
               <MessageSquareCode className="h-3 w-3 mr-1" />
               Review
             </TabsTrigger>
@@ -393,7 +393,7 @@ export default function AdvancedAIPanel({ projectId, selectedCode = '', selected
                 </div>
                 {results.tests && (
                   <ScrollArea className="h-[300px] rounded border">
-                    <pre className="p-4 text-sm">
+                    <pre className="p-4 text-[13px]">
                       <code>{results.tests.tests}</code>
                     </pre>
                   </ScrollArea>
@@ -443,7 +443,7 @@ export default function AdvancedAIPanel({ projectId, selectedCode = '', selected
                 </div>
                 {results.docs && (
                   <ScrollArea className="h-[300px] rounded border">
-                    <pre className="p-4 text-sm">
+                    <pre className="p-4 text-[13px]">
                       <code>{results.docs.documentation}</code>
                     </pre>
                   </ScrollArea>

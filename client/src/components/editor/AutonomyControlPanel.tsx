@@ -133,12 +133,12 @@ function TaskItem({ task, isCurrentTask }: { task: MaxAutonomyTask; isCurrentTas
             )}
           </div>
           {task.description && (
-            <span className="text-xs text-muted-foreground truncate">
+            <span className="text-[11px] text-muted-foreground truncate">
               {task.description}
             </span>
           )}
           {task.errorMessage && (
-            <span className="text-xs text-destructive truncate">
+            <span className="text-[11px] text-destructive truncate">
               {task.errorMessage}
             </span>
           )}
@@ -146,7 +146,7 @@ function TaskItem({ task, isCurrentTask }: { task: MaxAutonomyTask; isCurrentTas
       </div>
       
       <div className="flex items-center gap-2 shrink-0">
-        <span className={cn("text-xs font-medium", priorityConfig.color)}>
+        <span className={cn("text-[11px] font-medium", priorityConfig.color)}>
           {priorityConfig.label}
         </span>
         <Badge variant={statusConfig.variant} data-testid={`task-status-${task.id}`}>
@@ -246,11 +246,11 @@ export function AutonomyControlPanel({ projectId, onBack }: AutonomyControlPanel
                 </Button>
               )}
               <div>
-                <CardTitle className="flex items-center gap-2 text-lg">
+                <CardTitle className="flex items-center gap-2 text-[15px]">
                   <Zap className="h-5 w-5 text-yellow-500" />
                   Max Autonomy Mode
                 </CardTitle>
-                <CardDescription className="text-xs">
+                <CardDescription className="text-[11px]">
                   200+ minute autonomous sessions with AI
                 </CardDescription>
               </div>
@@ -261,7 +261,7 @@ export function AutonomyControlPanel({ projectId, onBack }: AutonomyControlPanel
                 {isPolling && (
                   <Tooltip>
                     <TooltipTrigger>
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
                         <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
                         Live
                       </div>
@@ -284,9 +284,9 @@ export function AutonomyControlPanel({ projectId, onBack }: AutonomyControlPanel
           {error && (
             <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 flex items-start gap-2" data-testid="error-display">
               <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
-              <div className="flex-1 text-sm">
+              <div className="flex-1 text-[13px]">
                 <p className="font-medium text-destructive">Error</p>
-                <p className="text-muted-foreground text-xs">{error.message}</p>
+                <p className="text-muted-foreground text-[11px]">{error.message}</p>
               </div>
               <Button 
                 variant="outline" 
@@ -337,7 +337,7 @@ export function AutonomyControlPanel({ projectId, onBack }: AutonomyControlPanel
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Save className="h-4 w-4 text-muted-foreground" />
-                        <Label htmlFor="auto-checkpoint" className="text-sm">Auto-Checkpoint</Label>
+                        <Label htmlFor="auto-checkpoint" className="text-[13px]">Auto-Checkpoint</Label>
                       </div>
                       <Switch
                         id="auto-checkpoint"
@@ -350,7 +350,7 @@ export function AutonomyControlPanel({ projectId, onBack }: AutonomyControlPanel
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <TestTube className="h-4 w-4 text-muted-foreground" />
-                        <Label htmlFor="auto-test" className="text-sm">Auto-Test</Label>
+                        <Label htmlFor="auto-test" className="text-[13px]">Auto-Test</Label>
                       </div>
                       <Switch
                         id="auto-test"
@@ -363,7 +363,7 @@ export function AutonomyControlPanel({ projectId, onBack }: AutonomyControlPanel
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <RotateCcw className="h-4 w-4 text-muted-foreground" />
-                        <Label htmlFor="auto-rollback" className="text-sm">Auto-Rollback on Failure</Label>
+                        <Label htmlFor="auto-rollback" className="text-[13px]">Auto-Rollback on Failure</Label>
                       </div>
                       <Switch
                         id="auto-rollback"
@@ -396,7 +396,7 @@ export function AutonomyControlPanel({ projectId, onBack }: AutonomyControlPanel
                         ))}
                       </SelectContent>
                     </Select>
-                    <p className={cn("text-xs", RISK_THRESHOLD_INFO[config.riskThreshold].color)}>
+                    <p className={cn("text-[11px]", RISK_THRESHOLD_INFO[config.riskThreshold].color)}>
                       {RISK_THRESHOLD_INFO[config.riskThreshold].description}
                     </p>
                   </div>
@@ -414,7 +414,7 @@ export function AutonomyControlPanel({ projectId, onBack }: AutonomyControlPanel
                       step={30}
                       data-testid="slider-max-duration"
                     />
-                    <div className="flex justify-between text-xs text-muted-foreground">
+                    <div className="flex justify-between text-[11px] text-muted-foreground">
                       <span>30m</span>
                       <span>8h</span>
                     </div>
@@ -445,7 +445,7 @@ export function AutonomyControlPanel({ projectId, onBack }: AutonomyControlPanel
           ) : (
             <div className="space-y-4 flex-1 overflow-hidden flex flex-col">
               <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center justify-between text-[13px]">
                   <span className="text-muted-foreground">Goal:</span>
                   <span className="font-medium truncate ml-2 flex-1 text-right" data-testid="text-session-goal">
                     {session.goal}
@@ -453,7 +453,7 @@ export function AutonomyControlPanel({ projectId, onBack }: AutonomyControlPanel
                 </div>
                 
                 <div className="space-y-1">
-                  <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center justify-between text-[13px]">
                     <span className="text-muted-foreground">Progress</span>
                     <span className="font-medium" data-testid="text-progress-count">
                       {progress?.tasksCompleted ?? 0} / {progress?.tasksTotal ?? 0} tasks
@@ -464,7 +464,7 @@ export function AutonomyControlPanel({ projectId, onBack }: AutonomyControlPanel
                     className="h-2"
                     data-testid="progress-bar"
                   />
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <div className="flex items-center justify-between text-[11px] text-muted-foreground">
                     <span>{progressPercent}% complete</span>
                     {progress?.estimatedRemainingMs != null && progress.estimatedRemainingMs > 0 && (
                       <span className="flex items-center gap-1" data-testid="text-eta">
@@ -478,7 +478,7 @@ export function AutonomyControlPanel({ projectId, onBack }: AutonomyControlPanel
 
               {currentTask && (
                 <div className="bg-primary/5 border border-primary/20 rounded-lg p-3" data-testid="current-task-display">
-                  <div className="flex items-center gap-2 text-sm">
+                  <div className="flex items-center gap-2 text-[13px]">
                     <Loader2 className="h-4 w-4 animate-spin text-primary" />
                     <span className="font-medium">Current Task:</span>
                     <span className="truncate">{currentTask.title}</span>
@@ -490,10 +490,10 @@ export function AutonomyControlPanel({ projectId, onBack }: AutonomyControlPanel
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div className="bg-muted/50 rounded-lg p-2">
-                      <div className="text-lg font-bold text-green-600" data-testid="stat-completed">
+                      <div className="text-[15px] font-bold text-green-600" data-testid="stat-completed">
                         {progress?.tasksCompleted ?? 0}
                       </div>
-                      <div className="text-xs text-muted-foreground">Done</div>
+                      <div className="text-[11px] text-muted-foreground">Done</div>
                     </div>
                   </TooltipTrigger>
                   <TooltipContent>Completed tasks</TooltipContent>
@@ -502,10 +502,10 @@ export function AutonomyControlPanel({ projectId, onBack }: AutonomyControlPanel
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div className="bg-muted/50 rounded-lg p-2">
-                      <div className="text-lg font-bold text-red-600" data-testid="stat-failed">
+                      <div className="text-[15px] font-bold text-red-600" data-testid="stat-failed">
                         {progress?.tasksFailed ?? 0}
                       </div>
-                      <div className="text-xs text-muted-foreground">Failed</div>
+                      <div className="text-[11px] text-muted-foreground">Failed</div>
                     </div>
                   </TooltipTrigger>
                   <TooltipContent>Failed tasks</TooltipContent>
@@ -514,10 +514,10 @@ export function AutonomyControlPanel({ projectId, onBack }: AutonomyControlPanel
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div className="bg-muted/50 rounded-lg p-2">
-                      <div className="text-lg font-bold text-blue-600" data-testid="stat-checkpoints">
+                      <div className="text-[15px] font-bold text-blue-600" data-testid="stat-checkpoints">
                         {progress?.checkpointsCreated ?? 0}
                       </div>
-                      <div className="text-xs text-muted-foreground">Checkpoints</div>
+                      <div className="text-[11px] text-muted-foreground">Checkpoints</div>
                     </div>
                   </TooltipTrigger>
                   <TooltipContent>Checkpoints created</TooltipContent>
@@ -526,10 +526,10 @@ export function AutonomyControlPanel({ projectId, onBack }: AutonomyControlPanel
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div className="bg-muted/50 rounded-lg p-2">
-                      <div className="text-lg font-bold text-emerald-600" data-testid="stat-tests">
+                      <div className="text-[15px] font-bold text-emerald-600" data-testid="stat-tests">
                         {progress?.testsPassed ?? 0}/{progress?.testsRun ?? 0}
                       </div>
-                      <div className="text-xs text-muted-foreground">Tests</div>
+                      <div className="text-[11px] text-muted-foreground">Tests</div>
                     </div>
                   </TooltipTrigger>
                   <TooltipContent>Tests passed / Tests run</TooltipContent>
@@ -602,7 +602,7 @@ export function AutonomyControlPanel({ projectId, onBack }: AutonomyControlPanel
                           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                         </div>
                       ) : tasks.length === 0 ? (
-                        <div className="text-center py-8 text-muted-foreground text-sm">
+                        <div className="text-center py-8 text-muted-foreground text-[13px]">
                           No tasks yet
                         </div>
                       ) : (
@@ -621,7 +621,7 @@ export function AutonomyControlPanel({ projectId, onBack }: AutonomyControlPanel
 
               {(session.status === 'completed' || session.status === 'failed' || session.status === 'cancelled') && (
                 <div className="space-y-2 pt-2 border-t">
-                  <div className="text-sm text-muted-foreground">
+                  <div className="text-[13px] text-muted-foreground">
                     Session ended: {session.status}
                   </div>
                   <Button 

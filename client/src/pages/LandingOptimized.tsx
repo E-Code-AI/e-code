@@ -148,7 +148,7 @@ export default function LandingOptimized() {
           <div className="space-y-8">
             <Badge 
               variant="secondary" 
-              className="mx-auto inline-flex items-center gap-2 px-6 py-2 text-sm font-semibold bg-gradient-to-r from-ecode-accent/10 to-ecode-secondary-accent/10 border border-ecode-accent/20 animate-fade-in"
+              className="mx-auto inline-flex items-center gap-2 px-6 py-2 text-[13px] font-semibold bg-gradient-to-r from-ecode-accent/10 to-ecode-secondary-accent/10 border border-ecode-accent/20 animate-fade-in"
               data-testid="badge-hero"
             >
               <Sparkles className="h-4 w-4 text-ecode-accent" />
@@ -199,7 +199,7 @@ export default function LandingOptimized() {
                       <input
                         type="text"
                         placeholder="Describe your app idea in any language..."
-                        className="w-full bg-transparent border-none outline-none text-base sm:text-lg placeholder:text-[var(--ecode-text-muted)] text-[var(--ecode-text)] px-4 sm:px-6 py-3 sm:py-4"
+                        className="w-full bg-transparent border-none outline-none text-base sm:text-[15px] placeholder:text-[var(--ecode-text-muted)] text-[var(--ecode-text)] px-4 sm:px-6 py-3 sm:py-4"
                         value={appDescription}
                         onChange={(e) => setAppDescription(e.target.value)}
                         onKeyDown={(e) => {
@@ -212,7 +212,7 @@ export default function LandingOptimized() {
                     </div>
                     <Button 
                       size="lg"
-                      className="bg-ecode-accent hover:bg-ecode-accent-hover text-white shadow-lg px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg font-semibold h-auto min-h-[44px] rounded-xl transition-all duration-300 hover:scale-105"
+                      className="bg-ecode-accent hover:bg-ecode-accent-hover text-white shadow-lg px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-[15px] font-semibold h-auto min-h-[44px] rounded-xl transition-all duration-300 hover:scale-105"
                       onClick={() => appDescription.trim() && handleStartBuilding(appDescription)}
                       disabled={!appDescription.trim()}
                       data-testid="button-build-now"
@@ -225,7 +225,7 @@ export default function LandingOptimized() {
               </div>
 
               <div className="mt-8 space-y-4 animate-fade-in" style={{ animationDelay: '500ms' }}>
-                <p className="text-sm text-[var(--ecode-text-muted)] text-center">Try these popular examples:</p>
+                <p className="text-[13px] text-[var(--ecode-text-muted)] text-center">Try these popular examples:</p>
                 <div className="flex flex-wrap justify-center gap-3">
                   {examples.map((example, index) => (
                     <button
@@ -237,22 +237,22 @@ export default function LandingOptimized() {
                       <div className={`bg-gradient-to-r ${example.color} text-white p-1.5 rounded-md`}>
                         {example.icon}
                       </div>
-                      <span className="text-xs sm:text-sm font-medium text-[var(--ecode-text)]">{example.label}</span>
+                      <span className="text-[11px] sm:text-[13px] font-medium text-[var(--ecode-text)]">{example.label}</span>
                     </button>
                   ))}
                 </div>
               </div>
 
               <div className="flex flex-wrap justify-center gap-4 mt-6 animate-fade-in" style={{ animationDelay: '600ms' }}>
-                <div className="flex items-center gap-2 text-sm text-[var(--ecode-text-muted)]">
+                <div className="flex items-center gap-2 text-[13px] text-[var(--ecode-text-muted)]">
                   <CheckCircle className="h-4 w-4 text-ecode-accent" />
                   No credit card required
                 </div>
-                <div className="flex items-center gap-2 text-sm text-[var(--ecode-text-muted)]">
+                <div className="flex items-center gap-2 text-[13px] text-[var(--ecode-text-muted)]">
                   <CheckCircle className="h-4 w-4 text-ecode-accent" />
                   Deploy instantly
                 </div>
-                <div className="flex items-center gap-2 text-sm text-[var(--ecode-text-muted)]">
+                <div className="flex items-center gap-2 text-[13px] text-[var(--ecode-text-muted)]">
                   <CheckCircle className="h-4 w-4 text-ecode-accent" />
                   Scale to millions
                 </div>
@@ -263,7 +263,7 @@ export default function LandingOptimized() {
               <Button 
                 size="lg"
                 variant="outline"
-                className="gap-2 px-6 sm:px-8 py-4 sm:py-6 text-base sm:text-lg border-2 border-[var(--ecode-border)] hover:border-ecode-accent/50 w-full sm:w-auto min-h-[48px]"
+                className="gap-2 px-6 sm:px-8 py-4 sm:py-6 text-base sm:text-[15px] border-2 border-[var(--ecode-border)] hover:border-ecode-accent/50 w-full sm:w-auto min-h-[48px]"
                 onClick={() => document.getElementById('video-demo')?.scrollIntoView({ behavior: 'smooth' })}
                 data-testid="button-watch-demo"
               >
@@ -273,7 +273,7 @@ export default function LandingOptimized() {
               <Button 
                 size="lg"
                 variant="ghost"
-                className="gap-2 px-6 sm:px-8 py-4 sm:py-6 text-base sm:text-lg w-full sm:w-auto min-h-[48px] text-[var(--ecode-text)] hover:text-ecode-accent"
+                className="gap-2 px-6 sm:px-8 py-4 sm:py-6 text-base sm:text-[15px] w-full sm:w-auto min-h-[48px] text-[var(--ecode-text)] hover:text-ecode-accent"
                 onClick={() => navigate('/pricing')}
                 data-testid="button-view-pricing"
               >

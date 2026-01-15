@@ -25,7 +25,7 @@ const DEMO_STEPS: DemoStep[] = [
       '✓ Creating project structure',
       '✓ Installing dependencies'
     ],
-    preview: '<div class="p-3 text-center text-gray-500"><svg class="w-8 h-8 mx-auto mb-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-opacity="0.2" stroke-width="4"></circle><path stroke-opacity="1" stroke-width="4" d="M12 2a10 10 0 0 1 0 20"></path></svg><p class="text-xs">Building...</p></div>'
+    preview: '<div class="p-3 text-center text-gray-500"><svg class="w-8 h-8 mx-auto mb-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-opacity="0.2" stroke-width="4"></circle><path stroke-opacity="1" stroke-width="4" d="M12 2a10 10 0 0 1 0 20"></path></svg><p class="text-[11px]">Building...</p></div>'
   },
   {
     id: 'start',
@@ -44,7 +44,7 @@ const DEMO_STEPS: DemoStep[] = [
       '✓ Installing lucide-react',
       '✓ Setting up dark mode'
     ],
-    preview: '<div class="p-3"><h1 class="text-lg font-semibold">Todo App</h1><div class="flex gap-2 mt-3"><input placeholder="Add todo..." class="border px-2 py-1 text-sm flex-1 rounded"><button class="bg-orange-500 text-white px-3 py-1 text-sm rounded">Add</button></div></div>'
+    preview: '<div class="p-3"><h1 class="text-[15px] font-semibold">Todo App</h1><div class="flex gap-2 mt-3"><input placeholder="Add todo..." class="border px-2 py-1 text-[13px] flex-1 rounded"><button class="bg-orange-500 text-white px-3 py-1 text-[13px] rounded">Add</button></div></div>'
   },
   {
     id: 'code',
@@ -74,7 +74,7 @@ const DEMO_STEPS: DemoStep[] = [
       '✓ Building app...',
       '🚀 Starting preview server'
     ],
-    preview: '<div class="p-3"><div class="flex justify-between items-center mb-3"><h1 class="text-lg font-semibold">Todo App</h1><button class="p-1 rounded hover:bg-gray-100"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg></button></div><div class="space-y-2"><div class="flex items-center gap-2 p-2 bg-gray-50 rounded"><input type="checkbox" class="w-4 h-4"><span class="text-sm">Complete the demo</span></div></div></div>'
+    preview: '<div class="p-3"><div class="flex justify-between items-center mb-3"><h1 class="text-[15px] font-semibold">Todo App</h1><button class="p-1 rounded hover:bg-gray-100"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg></button></div><div class="space-y-2"><div class="flex items-center gap-2 p-2 bg-gray-50 rounded"><input type="checkbox" class="w-4 h-4"><span class="text-[13px]">Complete the demo</span></div></div></div>'
   },
   {
     id: 'complete',
@@ -100,7 +100,7 @@ const DEMO_STEPS: DemoStep[] = [
       '',
       'Share your creation!'
     ],
-    preview: '<div class="p-3"><div class="mb-3"><h1 class="text-lg font-semibold mb-2">Smart Todo</h1><div class="flex gap-2"><span class="text-xs px-2 py-1 bg-green-100 text-green-700 rounded">Live</span><span class="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">v1.0</span></div></div><div class="space-y-2"><div class="flex items-center gap-2 p-2 bg-blue-50 rounded border-l-2 border-blue-400"><input type="checkbox" checked class="w-4 h-4"><span class="text-sm line-through text-gray-500">Build with AI</span></div><div class="flex items-center gap-2 p-2 bg-green-50 rounded border-l-2 border-green-400"><input type="checkbox" checked class="w-4 h-4"><span class="text-sm line-through text-gray-500">Deploy instantly</span></div><div class="flex items-center gap-2 p-2 bg-purple-50 rounded border-l-2 border-purple-400"><input type="checkbox" class="w-4 h-4"><span class="text-sm">Share with friends</span></div></div><div class="mt-3 p-2 bg-gradient-to-r from-orange-100 to-purple-100 rounded text-center"><span class="text-xs font-medium">Built in 45 seconds with E-Code AI</span></div></div>'
+    preview: '<div class="p-3"><div class="mb-3"><h1 class="text-[15px] font-semibold mb-2">Smart Todo</h1><div class="flex gap-2"><span class="text-[11px] px-2 py-1 bg-green-100 text-green-700 rounded">Live</span><span class="text-[11px] px-2 py-1 bg-blue-100 text-blue-700 rounded">v1.0</span></div></div><div class="space-y-2"><div class="flex items-center gap-2 p-2 bg-blue-50 rounded border-l-2 border-blue-400"><input type="checkbox" checked class="w-4 h-4"><span class="text-[13px] line-through text-gray-500">Build with AI</span></div><div class="flex items-center gap-2 p-2 bg-green-50 rounded border-l-2 border-green-400"><input type="checkbox" checked class="w-4 h-4"><span class="text-[13px] line-through text-gray-500">Deploy instantly</span></div><div class="flex items-center gap-2 p-2 bg-purple-50 rounded border-l-2 border-purple-400"><input type="checkbox" class="w-4 h-4"><span class="text-[13px]">Share with friends</span></div></div><div class="mt-3 p-2 bg-gradient-to-r from-orange-100 to-purple-100 rounded text-center"><span class="text-[11px] font-medium">Built in 45 seconds with E-Code AI</span></div></div>'
   }
 ];
 
@@ -177,11 +177,11 @@ export function AnimatedPlatformDemo() {
             <div className="w-2.5 h-2.5 rounded-full bg-green-500 hover:bg-green-600 transition-colors cursor-pointer" />
           </div>
           <div className="h-4 w-px bg-gray-300 dark:bg-gray-600" />
-          <span className="text-gray-700 dark:text-gray-300 text-xs font-medium">todo-app — E-Code</span>
+          <span className="text-gray-700 dark:text-gray-300 text-[11px] font-medium">todo-app — E-Code</span>
         </div>
         
         {/* Step indicator */}
-        <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+        <div className="flex items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400">
           <span className="font-medium">{currentStepData?.title}</span>
           <div className="flex gap-1">
             {DEMO_STEPS.map((_, index) => (
@@ -205,20 +205,20 @@ export function AnimatedPlatformDemo() {
         <div className="bg-gray-50 dark:bg-gray-900 p-3 lg:col-span-2 border-r border-gray-200 dark:border-gray-700 overflow-hidden">
           <div className="flex items-center gap-2 mb-2">
             <div className="flex gap-1">
-              <div className="bg-white dark:bg-gray-800 px-3 py-1 rounded-t-md text-xs text-gray-700 dark:text-gray-300 font-medium border border-b-0 border-gray-200 dark:border-gray-700">
+              <div className="bg-white dark:bg-gray-800 px-3 py-1 rounded-t-md text-[11px] text-gray-700 dark:text-gray-300 font-medium border border-b-0 border-gray-200 dark:border-gray-700">
                 App.jsx
               </div>
-              <div className="bg-gray-100 dark:bg-gray-850 px-3 py-1 rounded-t-md text-xs text-gray-500 dark:text-gray-500">
+              <div className="bg-gray-100 dark:bg-gray-850 px-3 py-1 rounded-t-md text-[11px] text-gray-500 dark:text-gray-500">
                 styles.css
               </div>
             </div>
           </div>
           
           <div className="bg-white dark:bg-gray-800 rounded-md p-3 h-[calc(100%-40px)] overflow-auto border border-gray-200 dark:border-gray-700">
-            <div className="font-mono text-xs leading-5">
+            <div className="font-mono text-[11px] leading-5">
               {displayedCode.map((line, index) => (
                 <div key={index} className="flex hover:bg-gray-50 dark:hover:bg-gray-750 px-1 -mx-1">
-                  <span className="text-gray-400 dark:text-gray-500 w-6 text-right mr-3 select-none text-xs">
+                  <span className="text-gray-400 dark:text-gray-500 w-6 text-right mr-3 select-none text-[11px]">
                     {index + 1}
                   </span>
                   <span className="text-gray-800 dark:text-gray-200 flex-1">
@@ -260,11 +260,11 @@ export function AnimatedPlatformDemo() {
           {/* Live Preview */}
           <div className="bg-white dark:bg-gray-800 p-3 flex-1 border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between mb-2">
-              <div className="text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1.5 font-medium">
+              <div className="text-[11px] text-gray-600 dark:text-gray-400 flex items-center gap-1.5 font-medium">
                 <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
                 Preview
               </div>
-              <div className="text-xs text-gray-400 dark:text-gray-500">
+              <div className="text-[11px] text-gray-400 dark:text-gray-500">
                 localhost:3000
               </div>
             </div>
@@ -276,7 +276,7 @@ export function AnimatedPlatformDemo() {
 
           {/* Compact Terminal */}
           <div className="bg-gray-900 dark:bg-black p-3 h-[140px] overflow-hidden">
-            <div className="text-xs font-mono leading-4">
+            <div className="text-[11px] font-mono leading-4">
               {displayedTerminal.slice(-5).map((line, index) => (
                 <div key={index} className="mb-0.5">
                   {line.startsWith('$') ? (
@@ -307,11 +307,11 @@ export function AnimatedPlatformDemo() {
           style={{ width: `${progress}%` }}
         />
         <div className="relative flex items-center justify-between h-full px-3">
-          <span className="text-xs text-gray-600 dark:text-gray-400 font-medium flex items-center gap-2">
+          <span className="text-[11px] text-gray-600 dark:text-gray-400 font-medium flex items-center gap-2">
             <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
             {currentStepData?.title}
           </span>
-          <div className="flex items-center gap-2 text-xs">
+          <div className="flex items-center gap-2 text-[11px]">
             <span className="text-gray-500 dark:text-gray-400">
               {currentStep + 1}/{DEMO_STEPS.length}
             </span>

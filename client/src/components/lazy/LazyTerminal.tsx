@@ -14,7 +14,7 @@ function TerminalFallback({ height = '300px' }: TerminalFallbackProps) {
     >
       <TerminalIcon className="h-8 w-8 text-zinc-500 mb-2" />
       <Loader2 className="h-5 w-5 animate-spin text-zinc-400 mb-2" />
-      <span className="text-sm text-zinc-400">Loading terminal...</span>
+      <span className="text-[13px] text-zinc-400">Loading terminal...</span>
     </div>
   );
 }

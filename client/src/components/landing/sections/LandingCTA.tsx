@@ -17,7 +17,7 @@ export default function LandingCTA() {
         <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in" style={{ animationDelay: '200ms' }}>
           <Button 
             size="lg"
-            className="bg-white text-ecode-accent hover:bg-white/90 gap-2 px-8 py-6 text-lg font-semibold"
+            className="bg-white text-ecode-accent hover:bg-white/90 gap-2 px-8 py-6 text-[15px] font-semibold"
             onClick={() => navigate('/register')}
             data-testid="button-cta-register"
           >
@@ -27,7 +27,7 @@ export default function LandingCTA() {
           <Button 
             size="lg" 
             variant="outline"
-            className="border-2 border-gray-900 text-gray-900 bg-white/20 hover:bg-white/40 gap-2 px-8 py-6 text-lg font-semibold"
+            className="border-2 border-gray-900 text-gray-900 bg-white/20 hover:bg-white/40 gap-2 px-8 py-6 text-[15px] font-semibold"
             onClick={() => navigate('/pricing')}
             data-testid="button-cta-pricing"
           >

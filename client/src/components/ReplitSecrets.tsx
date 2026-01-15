@@ -264,7 +264,7 @@ export function ReplitSecrets({ projectId }: ReplitSecretsProps) {
             <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5" />
             <div>
               <h3 className="font-medium text-yellow-800">Security Best Practices</h3>
-              <ul className="text-sm text-yellow-700 mt-1 space-y-1">
+              <ul className="text-[13px] text-yellow-700 mt-1 space-y-1">
                 <li>• Never store secrets in your code or commit them to version control</li>
                 <li>• Use strong, unique values for all secrets</li>
                 <li>• Regularly rotate your API keys and passwords</li>
@@ -292,7 +292,7 @@ export function ReplitSecrets({ projectId }: ReplitSecretsProps) {
           ) : secrets.length === 0 ? (
             <div className="text-center py-8">
               <Key className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No secrets configured</h3>
+              <h3 className="text-[15px] font-semibold mb-2">No secrets configured</h3>
               <p className="text-muted-foreground mb-4">
                 Add your first secret to securely store sensitive data
               </p>
@@ -307,20 +307,20 @@ export function ReplitSecrets({ projectId }: ReplitSecretsProps) {
                 <Card key={secret.id} className="p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3 flex-1">
-                      <div className="text-lg">
+                      <div className="text-[15px]">
                         {getCategoryIcon(secret.category)}
                       </div>
                       
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
                           <span className="font-mono font-medium">{secret.key}</span>
-                          <Badge className={`${getCategoryColor(secret.category)} border text-xs`}>
+                          <Badge className={`${getCategoryColor(secret.category)} border text-[11px]`}>
                             {secret.category}
                           </Badge>
                         </div>
                         
                         <div className="flex items-center gap-2">
-                          <div className="font-mono text-sm bg-muted px-2 py-1 rounded flex-1 max-w-md">
+                          <div className="font-mono text-[13px] bg-muted px-2 py-1 rounded flex-1 max-w-md">
                             {secret.isVisible 
                               ? secret.value 
                               : '•'.repeat(Math.min(secret.value.length, 20))
@@ -349,12 +349,12 @@ export function ReplitSecrets({ projectId }: ReplitSecretsProps) {
                         </div>
                         
                         {secret.description && (
-                          <p className="text-xs text-muted-foreground mt-1">
+                          <p className="text-[11px] text-muted-foreground mt-1">
                             {secret.description}
                           </p>
                         )}
                         
-                        <p className="text-xs text-muted-foreground mt-1">
+                        <p className="text-[11px] text-muted-foreground mt-1">
                           Created {new Date(secret.createdAt).toLocaleDateString()}
                           {secret.updatedAt !== secret.createdAt && (
                             <span> • Updated {new Date(secret.updatedAt).toLocaleDateString()}</span>
@@ -391,7 +391,7 @@ export function ReplitSecrets({ projectId }: ReplitSecretsProps) {
         <CardContent className="space-y-4">
           <div>
             <h4 className="font-medium mb-2">Environment Variables</h4>
-            <div className="bg-muted p-3 rounded-lg font-mono text-sm">
+            <div className="bg-muted p-3 rounded-lg font-mono text-[13px]">
               <div>// Node.js</div>
               <div>const apiKey = process.env.API_KEY;</div>
               <div className="mt-2"># Python</div>
@@ -402,7 +402,7 @@ export function ReplitSecrets({ projectId }: ReplitSecretsProps) {
           
           <div>
             <h4 className="font-medium mb-2">Best Practices</h4>
-            <ul className="text-sm text-muted-foreground space-y-1">
+            <ul className="text-[13px] text-muted-foreground space-y-1">
               <li>• Use descriptive names like `DATABASE_URL` instead of `DB`</li>
               <li>• Always check if environment variables exist before using them</li>
               <li>• Use different secrets for development, staging, and production</li>

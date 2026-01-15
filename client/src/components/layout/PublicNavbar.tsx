@@ -88,11 +88,11 @@ export function PublicNavbar() {
                     href={item.href}
                     className="block rounded-xl border border-border bg-surface-solid p-4 transition-all duration-200 hover:-translate-y-1 hover:bg-surface-hover-solid hover:shadow-lg hover:shadow-sky-500"
                   >
-                    <div className="text-sm font-semibold text-[var(--ecode-text)] dark:text-white flex items-center gap-2">
+                    <div className="text-[13px] font-semibold text-[var(--ecode-text)] dark:text-white flex items-center gap-2">
                       <Sparkles className="h-4 w-4 text-sky-300" />
                       {item.title}
                     </div>
-                    <p className="mt-2 text-sm text-[var(--ecode-text-secondary)] dark:text-slate-300 leading-relaxed">
+                    <p className="mt-2 text-[13px] text-[var(--ecode-text-secondary)] dark:text-slate-300 leading-relaxed">
                       {item.description}
                     </p>
                   </Link>
@@ -112,11 +112,11 @@ export function PublicNavbar() {
                     href={item.href}
                     className="block rounded-xl border border-border bg-surface-solid p-4 transition-all duration-200 hover:-translate-y-1 hover:bg-surface-hover-solid hover:shadow-lg hover:shadow-sky-500"
                   >
-                    <div className="text-sm font-semibold text-[var(--ecode-text)] dark:text-white flex items-center gap-2">
+                    <div className="text-[13px] font-semibold text-[var(--ecode-text)] dark:text-white flex items-center gap-2">
                       <ArrowUpRight className="h-4 w-4 text-indigo-300" />
                       {item.title}
                     </div>
-                    <p className="mt-2 text-sm text-[var(--ecode-text-secondary)] dark:text-slate-300 leading-relaxed">
+                    <p className="mt-2 text-[13px] text-[var(--ecode-text-secondary)] dark:text-slate-300 leading-relaxed">
                       {item.description}
                     </p>
                   </Link>
@@ -136,11 +136,11 @@ export function PublicNavbar() {
                     href={item.href}
                     className="block rounded-xl border border-border bg-surface-solid p-4 transition-all duration-200 hover:-translate-y-1 hover:bg-surface-hover-solid hover:shadow-lg hover:shadow-sky-500"
                   >
-                    <div className="text-sm font-semibold text-[var(--ecode-text)] dark:text-white flex items-center gap-2">
+                    <div className="text-[13px] font-semibold text-[var(--ecode-text)] dark:text-white flex items-center gap-2">
                       <Search className="h-4 w-4 text-sky-300" />
                       {item.title}
                     </div>
-                    <p className="mt-2 text-sm text-[var(--ecode-text-secondary)] dark:text-slate-300 leading-relaxed">
+                    <p className="mt-2 text-[13px] text-[var(--ecode-text-secondary)] dark:text-slate-300 leading-relaxed">
                       {item.description}
                     </p>
                   </Link>
@@ -160,11 +160,11 @@ export function PublicNavbar() {
                     href={item.href}
                     className="block rounded-xl border border-border bg-surface-solid p-4 transition-all duration-200 hover:-translate-y-1 hover:bg-surface-hover-solid hover:shadow-lg hover:shadow-sky-500"
                   >
-                    <div className="text-sm font-semibold text-[var(--ecode-text)] dark:text-white flex items-center gap-2">
+                    <div className="text-[13px] font-semibold text-[var(--ecode-text)] dark:text-white flex items-center gap-2">
                       <ChevronRight className="h-4 w-4 text-indigo-300" />
                       {item.title}
                     </div>
-                    <p className="mt-2 text-sm text-[var(--ecode-text-secondary)] dark:text-slate-300 leading-relaxed">
+                    <p className="mt-2 text-[13px] text-[var(--ecode-text-secondary)] dark:text-slate-300 leading-relaxed">
                       {item.description}
                     </p>
                   </Link>
@@ -177,7 +177,7 @@ export function PublicNavbar() {
         <NavigationMenuItem>
           <NavigationMenuLink
             href="/pricing"
-            className="group inline-flex h-10 w-max items-center justify-center rounded-full border border-[var(--ecode-border)] dark:border-border px-5 text-sm font-medium text-[var(--ecode-text)] dark:text-slate-200 transition-colors hover:border-[var(--ecode-accent)] dark:hover:border-surface-hover-solid hover:text-[var(--ecode-accent)] dark:hover:text-white"
+            className="group inline-flex h-10 w-max items-center justify-center rounded-full border border-[var(--ecode-border)] dark:border-border px-5 text-[13px] font-medium text-[var(--ecode-text)] dark:text-slate-200 transition-colors hover:border-[var(--ecode-accent)] dark:hover:border-surface-hover-solid hover:text-[var(--ecode-accent)] dark:hover:text-white"
           >
             Pricing
           </NavigationMenuLink>
@@ -186,7 +186,7 @@ export function PublicNavbar() {
         <NavigationMenuItem>
           <NavigationMenuLink
             href="/team"
-            className="group inline-flex h-10 w-max items-center justify-center rounded-full border border-[var(--ecode-border)] dark:border-border px-5 text-sm font-medium text-[var(--ecode-text)] dark:text-slate-200 transition-colors hover:border-[var(--ecode-accent)] dark:hover:border-surface-hover-solid hover:text-[var(--ecode-accent)] dark:hover:text-white"
+            className="group inline-flex h-10 w-max items-center justify-center rounded-full border border-[var(--ecode-border)] dark:border-border px-5 text-[13px] font-medium text-[var(--ecode-text)] dark:text-slate-200 transition-colors hover:border-[var(--ecode-accent)] dark:hover:border-surface-hover-solid hover:text-[var(--ecode-accent)] dark:hover:text-white"
           >
             Teams
           </NavigationMenuLink>
@@ -198,7 +198,7 @@ export function PublicNavbar() {
   const primaryCta = (
     <Button
       onClick={() => window.location.href = '/register'}
-      className="hidden sm:inline-flex shrink-0 bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 text-white hover:from-sky-300 hover:via-blue-400 hover:to-indigo-400 shadow-lg shadow-blue-500/30 min-h-[44px] px-3 sm:px-4 text-sm whitespace-nowrap"
+      className="hidden sm:inline-flex shrink-0 bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 text-white hover:from-sky-300 hover:via-blue-400 hover:to-indigo-400 shadow-lg shadow-blue-500/30 min-h-[44px] px-3 sm:px-4 text-[13px] whitespace-nowrap"
       data-testid="link-get-started"
     >
       Get started
@@ -208,7 +208,7 @@ export function PublicNavbar() {
   return (
     <header className="sticky top-0 z-50 w-full">
       <div className="hidden md:block border-b border-[var(--ecode-border)] dark:border-border bg-background dark:bg-background">
-        <div className="container-responsive flex h-10 items-center justify-between text-xs text-[var(--ecode-text)] dark:text-slate-100">
+        <div className="container-responsive flex h-10 items-center justify-between text-[11px] text-[var(--ecode-text)] dark:text-slate-100">
           <div className="flex items-center gap-3">
             <Badge variant="secondary" className="bg-surface-solid text-[var(--ecode-accent)] dark:bg-surface-solid dark:text-white border-border dark:border-border uppercase tracking-[0.2em]">
               NEW
@@ -302,7 +302,7 @@ export function PublicNavbar() {
                   <ScrollArea className="h-[calc(100vh-180px)]">
                     <div className="p-4 space-y-6">
                       <div>
-                        <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
+                        <h3 className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
                           Product
                         </h3>
                         <div className="space-y-1">
@@ -315,10 +315,10 @@ export function PublicNavbar() {
                               }}
                               className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                             >
-                              <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                              <div className="text-[13px] font-medium text-gray-900 dark:text-gray-100">
                                 {item.title}
                               </div>
-                              <div className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
+                              <div className="text-[11px] text-gray-600 dark:text-gray-400 mt-0.5">
                                 {item.description}
                               </div>
                             </button>
@@ -327,7 +327,7 @@ export function PublicNavbar() {
                       </div>
 
                       <div>
-                        <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
+                        <h3 className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
                           Solutions
                         </h3>
                         <div className="space-y-1">
@@ -340,10 +340,10 @@ export function PublicNavbar() {
                               }}
                               className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                             >
-                              <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                              <div className="text-[13px] font-medium text-gray-900 dark:text-gray-100">
                                 {item.title}
                               </div>
-                              <div className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
+                              <div className="text-[11px] text-gray-600 dark:text-gray-400 mt-0.5">
                                 {item.description}
                               </div>
                             </button>
@@ -352,7 +352,7 @@ export function PublicNavbar() {
                       </div>
 
                       <div>
-                        <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
+                        <h3 className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
                           Resources
                         </h3>
                         <div className="space-y-1">
@@ -365,10 +365,10 @@ export function PublicNavbar() {
                               }}
                               className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                             >
-                              <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                              <div className="text-[13px] font-medium text-gray-900 dark:text-gray-100">
                                 {item.title}
                               </div>
-                              <div className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
+                              <div className="text-[11px] text-gray-600 dark:text-gray-400 mt-0.5">
                                 {item.description}
                               </div>
                             </button>
@@ -377,7 +377,7 @@ export function PublicNavbar() {
                       </div>
 
                       <div>
-                        <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
+                        <h3 className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
                           Company
                         </h3>
                         <div className="space-y-1">
@@ -390,10 +390,10 @@ export function PublicNavbar() {
                               }}
                               className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                             >
-                              <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                              <div className="text-[13px] font-medium text-gray-900 dark:text-gray-100">
                                 {item.title}
                               </div>
-                              <div className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
+                              <div className="text-[11px] text-gray-600 dark:text-gray-400 mt-0.5">
                                 {item.description}
                               </div>
                             </button>
@@ -408,7 +408,7 @@ export function PublicNavbar() {
                               setMobileMenuOpen(false);
                               navigate('/pricing');
                             }}
-                            className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 text-sm font-medium text-gray-900 dark:text-gray-100 transition-colors"
+                            className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 text-[13px] font-medium text-gray-900 dark:text-gray-100 transition-colors"
                           >
                             Pricing
                           </button>
@@ -417,7 +417,7 @@ export function PublicNavbar() {
                               setMobileMenuOpen(false);
                               navigate('/team');
                             }}
-                            className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 text-sm font-medium text-gray-900 dark:text-gray-100 transition-colors"
+                            className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 text-[13px] font-medium text-gray-900 dark:text-gray-100 transition-colors"
                           >
                             Teams
                           </button>

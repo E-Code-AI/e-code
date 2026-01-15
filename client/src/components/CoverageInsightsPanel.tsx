@@ -108,7 +108,7 @@ export function CoverageInsightsPanel({ projectId, className }: CoverageInsights
           <div className="p-4 space-y-6">
             <div>
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-semibold">Coverage by file</h3>
+                <h3 className="text-[13px] font-semibold">Coverage by file</h3>
                 <Badge variant="outline">Top {SAMPLE_FILES.length}</Badge>
               </div>
               <Table>
@@ -122,15 +122,15 @@ export function CoverageInsightsPanel({ projectId, className }: CoverageInsights
                 <TableBody>
                   {SAMPLE_FILES.map((file) => (
                     <TableRow key={file.path}>
-                      <TableCell className="font-mono text-xs">{file.path}</TableCell>
-                      <TableCell className="text-right text-sm font-medium">{file.lines}%</TableCell>
+                      <TableCell className="font-mono text-[11px]">{file.path}</TableCell>
+                      <TableCell className="text-right text-[13px] font-medium">{file.lines}%</TableCell>
                       <TableCell className="text-right">
                         {typeof file.delta === 'number' ? (
                           <Badge variant={file.delta >= 0 ? 'secondary' : 'destructive'}>
                             {file.delta >= 0 ? '+' : ''}{file.delta}%
                           </Badge>
                         ) : (
-                          <span className="text-xs text-muted-foreground">—</span>
+                          <span className="text-[11px] text-muted-foreground">—</span>
                         )}
                       </TableCell>
                     </TableRow>
@@ -143,16 +143,16 @@ export function CoverageInsightsPanel({ projectId, className }: CoverageInsights
               <div>
                 <div className="flex items-center gap-2 mb-3">
                   <AlertTriangle className="h-4 w-4 text-amber-500" />
-                  <h3 className="text-sm font-semibold">Regressions to investigate</h3>
+                  <h3 className="text-[13px] font-semibold">Regressions to investigate</h3>
                 </div>
                 <div className="space-y-3">
                   {regressions.map((file) => (
                     <div key={file.path} className="rounded border border-amber-200 bg-amber-50/40 px-3 py-2">
                       <div className="flex items-center justify-between">
-                        <span className="font-mono text-xs">{file.path}</span>
+                        <span className="font-mono text-[11px]">{file.path}</span>
                         <Badge variant="destructive">{file.delta}%</Badge>
                       </div>
-                      <p className="text-xs text-muted-foreground mt-1">
+                      <p className="text-[11px] text-muted-foreground mt-1">
                         Coverage dipped on the last run. Revisit tests touching this file.
                       </p>
                     </div>
@@ -186,7 +186,7 @@ function CoverageSummaryCard({ title, value, description, icon: Icon }: Coverage
     <div className="rounded-md border border-border/60 bg-background p-4 shadow-sm">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-xs uppercase text-muted-foreground tracking-wide">{title}</p>
+          <p className="text-[11px] uppercase text-muted-foreground tracking-wide">{title}</p>
           <p className="text-2xl font-semibold mt-1">{value}%</p>
         </div>
         <div className="rounded-full bg-muted p-2">
@@ -195,7 +195,7 @@ function CoverageSummaryCard({ title, value, description, icon: Icon }: Coverage
       </div>
       <div className="mt-3">
         <Progress value={value} className="h-2" />
-        <p className="text-xs text-muted-foreground mt-2">{description}</p>
+        <p className="text-[11px] text-muted-foreground mt-2">{description}</p>
       </div>
     </div>
   );

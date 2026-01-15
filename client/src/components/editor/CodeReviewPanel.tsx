@@ -248,7 +248,7 @@ export default function CodeReviewPanel({
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="flex items-center gap-2 text-lg">
+            <CardTitle className="flex items-center gap-2 text-[15px]">
               <Activity className="w-5 h-5 text-status-warning" />
               Code Review Panel
             </CardTitle>
@@ -294,7 +294,7 @@ export default function CodeReviewPanel({
           <div className="p-3 rounded-lg bg-gradient-to-r from-status-info/10 to-blue-600/10 border border-status-info/20">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-muted-foreground">Total Reviews</p>
+                <p className="text-[11px] text-muted-foreground">Total Reviews</p>
                 <p className="text-xl font-bold">{reviews.length}</p>
               </div>
               <GitBranch className="w-5 h-5 text-status-info" />
@@ -304,7 +304,7 @@ export default function CodeReviewPanel({
           <div className="p-3 rounded-lg bg-gradient-to-r from-status-warning/10 to-orange-600/10 border border-status-warning/20">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-muted-foreground">Open Issues</p>
+                <p className="text-[11px] text-muted-foreground">Open Issues</p>
                 <p className="text-xl font-bold">{totalIssues - fixedIssues}</p>
               </div>
               <AlertCircle className="w-5 h-5 text-status-warning" />
@@ -314,7 +314,7 @@ export default function CodeReviewPanel({
           <div className="p-3 rounded-lg bg-gradient-to-r from-status-success/10 to-green-600/10 border border-status-success/20">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-muted-foreground">Fix Rate</p>
+                <p className="text-[11px] text-muted-foreground">Fix Rate</p>
                 <p className="text-xl font-bold">{fixRate}%</p>
               </div>
               <CheckCircle2 className="w-5 h-5 text-status-success" />
@@ -324,7 +324,7 @@ export default function CodeReviewPanel({
           <div className="p-3 rounded-lg bg-gradient-to-r from-purple-500/10 to-purple-600/10 border border-border/20">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-muted-foreground">Avg Quality</p>
+                <p className="text-[11px] text-muted-foreground">Avg Quality</p>
                 <p className="text-xl font-bold">
                   {reviews.length > 0 
                     ? Math.round(reviews.reduce((sum, r) => sum + r.codeQualityScore, 0) / reviews.length)
@@ -402,7 +402,7 @@ export default function CodeReviewPanel({
             {/* Batch Actions */}
             {selectedIssues.size > 0 && (
               <div className="flex items-center justify-between p-3 bg-status-warning/10 rounded-lg border border-status-warning/20">
-                <span className="text-sm">
+                <span className="text-[13px]">
                   {selectedIssues.size} issue{selectedIssues.size > 1 ? 's' : ''} selected
                 </span>
                 <div className="flex items-center gap-2">
@@ -440,7 +440,7 @@ export default function CodeReviewPanel({
                         onCheckedChange={selectAllIssues}
                         data-testid="checkbox-select-all"
                       />
-                      <span className="text-sm text-muted-foreground">Select all</span>
+                      <span className="text-[13px] text-muted-foreground">Select all</span>
                     </div>
                     
                     {filteredIssues.map(issue => (
@@ -477,15 +477,15 @@ export default function CodeReviewPanel({
                                 Fixed
                               </Badge>
                             )}
-                            <code className="text-xs text-muted-foreground">
+                            <code className="text-[11px] text-muted-foreground">
                               Line {issue.line}
                             </code>
                           </div>
                           
-                          <p className="text-sm">{issue.message}</p>
+                          <p className="text-[13px]">{issue.message}</p>
                           
                           {issue.suggestion && (
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-[11px] text-muted-foreground">
                               💡 {issue.suggestion}
                             </p>
                           )}
@@ -519,7 +519,7 @@ export default function CodeReviewPanel({
                 ) : (
                   <div className="flex flex-col items-center justify-center py-12 text-center">
                     <CheckCircle2 className="w-12 h-12 text-status-success mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">No Issues Found</h3>
+                    <h3 className="text-[15px] font-semibold mb-2">No Issues Found</h3>
                     <p className="text-muted-foreground">
                       {filterStatus !== 'all' || filterSeverity !== 'all' || filterCategory !== 'all'
                         ? 'No issues match the current filters.'
@@ -595,7 +595,7 @@ export default function CodeReviewPanel({
                     
                     return (
                       <div key={category} className="space-y-1">
-                        <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-center justify-between text-[13px]">
                           <div className="flex items-center gap-2">
                             {getCategoryIcon(category)}
                             <span className="capitalize">{category}</span>
@@ -625,12 +625,12 @@ export default function CodeReviewPanel({
                           <Badge className={review.status === 'completed' ? 'bg-status-success' : 'bg-status-info'}>
                             {review.status}
                           </Badge>
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-[11px] text-muted-foreground">
                             {format(new Date(review.createdAt), 'MMM d, yyyy h:mm a')}
                           </span>
                         </div>
                         
-                        <div className="flex items-center gap-4 text-sm">
+                        <div className="flex items-center gap-4 text-[13px]">
                           <div className="flex items-center gap-1">
                             <Activity className="w-4 h-4 text-status-warning" />
                             <span>Quality: {review.codeQualityScore}%</span>
@@ -641,11 +641,11 @@ export default function CodeReviewPanel({
                           </div>
                         </div>
                         
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-[13px] text-muted-foreground">
                           {review.summary}
                         </p>
                         
-                        <div className="flex gap-2 text-xs">
+                        <div className="flex gap-2 text-[11px]">
                           <span className="text-status-critical">
                             {review.criticalIssues} critical
                           </span>
@@ -676,7 +676,7 @@ export default function CodeReviewPanel({
                 {reviews.length === 0 && (
                   <div className="flex flex-col items-center justify-center py-12 text-center">
                     <Clock className="w-12 h-12 text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">No Review History</h3>
+                    <h3 className="text-[15px] font-semibold mb-2">No Review History</h3>
                     <p className="text-muted-foreground">
                       Run your first code review to see the history here.
                     </p>

@@ -130,10 +130,10 @@ export function InstallPrompt() {
 
             {/* Content */}
             <div className="text-center mb-4">
-              <h3 className="text-lg font-semibold mb-2">
+              <h3 className="text-[15px] font-semibold mb-2">
                 Install E-Code
               </h3>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-[13px] text-muted-foreground">
                 {platform === 'mobile'
                   ? 'Add E-Code to your home screen for quick access and offline support'
                   : 'Install E-Code as a desktop app for a native experience'}
@@ -141,7 +141,7 @@ export function InstallPrompt() {
             </div>
 
             {/* Features */}
-            <ul className="mb-4 space-y-2 text-sm text-muted-foreground">
+            <ul className="mb-4 space-y-2 text-[13px] text-muted-foreground">
               <li className="flex items-center gap-2">
                 <div className="h-1.5 w-1.5 rounded-full bg-primary" />
                 <span>Works offline</span>
@@ -237,15 +237,15 @@ export function IOSInstallInstructions() {
             <div className="mb-4 flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 mx-auto">
               <Smartphone className="h-8 w-8 text-primary" />
             </div>
-            <h3 className="text-lg font-semibold mb-2">
+            <h3 className="text-[15px] font-semibold mb-2">
               Install E-Code on iOS
             </h3>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-[13px] text-muted-foreground">
               Add E-Code to your home screen for the best experience
             </p>
           </div>
 
-          <ol className="space-y-3 text-sm text-left mb-4">
+          <ol className="space-y-3 text-[13px] text-left mb-4">
             <li className="flex gap-3">
               <span className="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary font-medium">
                 1

@@ -194,7 +194,7 @@ export default function AssistantPage() {
                 return (
                   <button
                     key={item.id}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 min-h-[44px] ${
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-200 min-h-[44px] ${
                       isActive
                         ? 'bg-primary/10 text-primary border-l-2 border-primary pl-[10px]'
                         : 'text-muted-foreground hover:bg-muted hover:text-foreground'
@@ -212,20 +212,20 @@ export default function AssistantPage() {
             {currentModel && (
               <Card className={`${cardClassName} mt-4`} data-testid="card-current-model">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm flex items-center gap-2">
+                  <CardTitle className="text-[13px] flex items-center gap-2">
                     <Sparkles className="h-4 w-4 text-primary" />
                     Current Model
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
                   <div className="font-medium text-foreground">{currentModel.name}</div>
-                  <div className="text-xs text-muted-foreground">{currentModel.provider}</div>
+                  <div className="text-[11px] text-muted-foreground">{currentModel.provider}</div>
                   <div className="flex gap-2 mt-2">
-                    <Badge variant="secondary" className="text-xs">
+                    <Badge variant="secondary" className="text-[11px]">
                       <Zap className="h-3 w-3 mr-1" />
                       {currentModel.speed}
                     </Badge>
-                    <Badge variant="outline" className="text-xs">
+                    <Badge variant="outline" className="text-[11px]">
                       {currentModel.capability}
                     </Badge>
                   </div>
@@ -304,14 +304,14 @@ export default function AssistantPage() {
                                     <Star className="h-3 w-3 text-yellow-500 fill-yellow-500 flex-shrink-0" />
                                   )}
                                 </div>
-                                <p className="text-sm text-muted-foreground truncate mt-1">{conv.preview}</p>
-                                <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
+                                <p className="text-[13px] text-muted-foreground truncate mt-1">{conv.preview}</p>
+                                <div className="flex items-center gap-3 mt-2 text-[11px] text-muted-foreground">
                                   <span className="flex items-center gap-1">
                                     <Clock className="h-3 w-3" />
                                     {formatTimestamp(conv.timestamp)}
                                   </span>
                                   <span>{conv.messageCount} messages</span>
-                                  <Badge variant="outline" className="text-xs">{conv.model}</Badge>
+                                  <Badge variant="outline" className="text-[11px]">{conv.model}</Badge>
                                 </div>
                               </div>
                               <div className="flex items-center gap-1 ml-2">
@@ -370,7 +370,7 @@ export default function AssistantPage() {
                             <SelectItem key={model.id} value={model.id}>
                               <div className="flex flex-col">
                                 <span className="font-medium">{model.name}</span>
-                                <span className="text-xs text-muted-foreground">{model.description}</span>
+                                <span className="text-[11px] text-muted-foreground">{model.description}</span>
                               </div>
                             </SelectItem>
                           ))}
@@ -393,7 +393,7 @@ export default function AssistantPage() {
                         className="w-full"
                         data-testid="slider-temperature"
                       />
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-[11px] text-muted-foreground">
                         Higher values make output more random, lower values more deterministic.
                       </p>
                     </div>
@@ -411,7 +411,7 @@ export default function AssistantPage() {
                         className="w-full"
                         data-testid="slider-max-tokens"
                       />
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-[11px] text-muted-foreground">
                         Maximum number of tokens in the response.
                       </p>
                     </div>
@@ -422,7 +422,7 @@ export default function AssistantPage() {
                       <div className="flex items-center justify-between p-3 rounded-lg border border-border hover:border-primary/30 transition-all duration-200">
                         <div className="space-y-0.5">
                           <Label className="text-foreground">Stream Responses</Label>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-[13px] text-muted-foreground">
                             Show responses as they are generated
                           </p>
                         </div>
@@ -436,7 +436,7 @@ export default function AssistantPage() {
                       <div className="flex items-center justify-between p-3 rounded-lg border border-border hover:border-primary/30 transition-all duration-200">
                         <div className="space-y-0.5">
                           <Label className="text-foreground">Code Context</Label>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-[13px] text-muted-foreground">
                             Include current file context in prompts
                           </p>
                         </div>
@@ -450,7 +450,7 @@ export default function AssistantPage() {
                       <div className="flex items-center justify-between p-3 rounded-lg border border-border hover:border-primary/30 transition-all duration-200">
                         <div className="space-y-0.5">
                           <Label className="text-foreground">Auto Suggestions</Label>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-[13px] text-muted-foreground">
                             Automatically suggest improvements for selected code
                           </p>
                         </div>

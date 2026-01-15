@@ -285,7 +285,7 @@ export function RollbackManager({ deploymentId, className }: RollbackManagerProp
               <Package className="h-5 w-5 text-muted-foreground" />
               <div>
                 <h4 className="font-semibold">Version {snapshot.version}</h4>
-                <p className="text-sm text-muted-foreground">{formatDate(snapshot.createdAt)}</p>
+                <p className="text-[13px] text-muted-foreground">{formatDate(snapshot.createdAt)}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -301,7 +301,7 @@ export function RollbackManager({ deploymentId, className }: RollbackManagerProp
           </div>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="grid grid-cols-2 gap-2 text-sm">
+          <div className="grid grid-cols-2 gap-2 text-[13px]">
             {snapshot.metadata.commitHash && (
               <div className="flex items-center gap-1">
                 <GitBranch className="h-3 w-3 text-muted-foreground" />
@@ -329,7 +329,7 @@ export function RollbackManager({ deploymentId, className }: RollbackManagerProp
           </div>
           
           {snapshot.metadata.message && (
-            <div className="text-sm text-muted-foreground p-2 bg-muted/50 rounded">
+            <div className="text-[13px] text-muted-foreground p-2 bg-muted/50 rounded">
               {snapshot.metadata.message}
             </div>
           )}
@@ -337,7 +337,7 @@ export function RollbackManager({ deploymentId, className }: RollbackManagerProp
           {snapshot.metadata.tags && snapshot.metadata.tags.length > 0 && (
             <div className="flex flex-wrap gap-1">
               {snapshot.metadata.tags.map((tag) => (
-                <Badge key={tag} variant="secondary" className="text-xs">
+                <Badge key={tag} variant="secondary" className="text-[11px]">
                   <Tag className="h-3 w-3 mr-1" />
                   {tag}
                 </Badge>
@@ -398,7 +398,7 @@ export function RollbackManager({ deploymentId, className }: RollbackManagerProp
             {index + 1}. {step.name}
           </p>
           {step.message && (
-            <p className="text-sm text-muted-foreground">{step.message}</p>
+            <p className="text-[13px] text-muted-foreground">{step.message}</p>
           )}
         </div>
       </div>
@@ -438,7 +438,7 @@ export function RollbackManager({ deploymentId, className }: RollbackManagerProp
           <AlertTitle>Rollback In Progress</AlertTitle>
           <AlertDescription>
             <div className="space-y-3 mt-3">
-              <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center justify-between text-[13px]">
                 <span>Rolling back from {activeRollback.fromVersion} to {activeRollback.toVersion}</span>
                 <span className="font-medium">{activeRollback.progress}%</span>
               </div>
@@ -465,7 +465,7 @@ export function RollbackManager({ deploymentId, className }: RollbackManagerProp
           <div className="flex items-center justify-between">
             <div>
               <p className="font-medium">Automatic Rollback on Failure</p>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-[13px] text-muted-foreground">
                 Automatically rollback if health score drops below 50%
               </p>
             </div>
@@ -489,7 +489,7 @@ export function RollbackManager({ deploymentId, className }: RollbackManagerProp
             <Card className="glassmorphism">
               <CardContent className="flex flex-col items-center justify-center py-12">
                 <History className="h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No Version History</h3>
+                <h3 className="text-[15px] font-semibold mb-2">No Version History</h3>
                 <p className="text-muted-foreground text-center mb-4">
                   No deployment snapshots have been created yet
                 </p>
@@ -525,7 +525,7 @@ export function RollbackManager({ deploymentId, className }: RollbackManagerProp
               ) : rollbackHistory.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12">
                   <History className="h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">No Rollback Activity</h3>
+                  <h3 className="text-[15px] font-semibold mb-2">No Rollback Activity</h3>
                   <p className="text-muted-foreground text-center">
                     No rollback activity yet. Rollbacks will appear here once performed.
                   </p>
@@ -548,7 +548,7 @@ export function RollbackManager({ deploymentId, className }: RollbackManagerProp
                           <p className="font-medium">
                             Rollback to {activity.toVersion} {activity.status}
                           </p>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-[13px] text-muted-foreground">
                             {activity.error ? activity.error : `Rolled back from ${activity.fromVersion}`} • {formatDate(activity.startedAt)}
                           </p>
                         </div>
@@ -686,10 +686,10 @@ export function RollbackManager({ deploymentId, className }: RollbackManagerProp
                   <div className="space-y-2">
                     {versionDiff.files.added.length > 0 && (
                       <div>
-                        <p className="text-sm text-green-600 font-medium">
+                        <p className="text-[13px] text-green-600 font-medium">
                           + {versionDiff.files.added.length} files added
                         </p>
-                        <div className="text-sm text-muted-foreground pl-4">
+                        <div className="text-[13px] text-muted-foreground pl-4">
                           {versionDiff.files.added.slice(0, 5).map((file: string) => (
                             <div key={file}>+ {file}</div>
                           ))}
@@ -702,10 +702,10 @@ export function RollbackManager({ deploymentId, className }: RollbackManagerProp
                     
                     {versionDiff.files.modified.length > 0 && (
                       <div>
-                        <p className="text-sm text-yellow-600 font-medium">
+                        <p className="text-[13px] text-yellow-600 font-medium">
                           ~ {versionDiff.files.modified.length} files modified
                         </p>
-                        <div className="text-sm text-muted-foreground pl-4">
+                        <div className="text-[13px] text-muted-foreground pl-4">
                           {versionDiff.files.modified.slice(0, 5).map((file: string) => (
                             <div key={file}>~ {file}</div>
                           ))}
@@ -718,10 +718,10 @@ export function RollbackManager({ deploymentId, className }: RollbackManagerProp
                     
                     {versionDiff.files.deleted.length > 0 && (
                       <div>
-                        <p className="text-sm text-red-600 font-medium">
+                        <p className="text-[13px] text-red-600 font-medium">
                           - {versionDiff.files.deleted.length} files deleted
                         </p>
-                        <div className="text-sm text-muted-foreground pl-4">
+                        <div className="text-[13px] text-muted-foreground pl-4">
                           {versionDiff.files.deleted.slice(0, 5).map((file: string) => (
                             <div key={file}>- {file}</div>
                           ))}
@@ -738,7 +738,7 @@ export function RollbackManager({ deploymentId, className }: RollbackManagerProp
                 
                 <div>
                   <h4 className="font-medium mb-2">Configuration Changes</h4>
-                  <div className="space-y-2 text-sm">
+                  <div className="space-y-2 text-[13px]">
                     {Object.keys(versionDiff.config.added).length > 0 && (
                       <div>
                         <p className="text-green-600 font-medium">Added:</p>
@@ -774,7 +774,7 @@ export function RollbackManager({ deploymentId, className }: RollbackManagerProp
                     <Separator />
                     <div>
                       <h4 className="font-medium mb-2">Database Changes</h4>
-                      <div className="space-y-2 text-sm">
+                      <div className="space-y-2 text-[13px]">
                         {versionDiff.database.tablesAdded.length > 0 && (
                           <p className="text-green-600">
                             + {versionDiff.database.tablesAdded.length} tables added

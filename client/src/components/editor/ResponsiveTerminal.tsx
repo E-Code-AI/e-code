@@ -205,7 +205,7 @@ export function ResponsiveTerminal({
       {/* Terminal Header */}
       <div className="h-8 flex items-center justify-between px-2 border-b border-[var(--ecode-border)] bg-[var(--ecode-surface)]">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-medium">Terminal</span>
+          <span className="text-[11px] font-medium">Terminal</span>
           {isConnected ? (
             <span className="text-[10px] text-status-success">● Connected</span>
           ) : (

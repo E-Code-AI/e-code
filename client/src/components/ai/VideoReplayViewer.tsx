@@ -129,8 +129,8 @@ export function VideoReplayViewer({
           ) : replays.length === 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground p-8">
               <Video className="h-16 w-16 mb-4 opacity-20" />
-              <h3 className="font-medium text-lg">No recordings yet</h3>
-              <p className="text-sm mt-1 text-center max-w-md">
+              <h3 className="font-medium text-[15px]">No recordings yet</h3>
+              <p className="text-[13px] mt-1 text-center max-w-md">
                 Test session recordings will appear here when you run tests with App Testing enabled.
               </p>
             </div>
@@ -164,7 +164,7 @@ export function VideoReplayViewer({
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium truncate">
+                            <span className="text-[13px] font-medium truncate">
                               {replay.filename || 'Test Session'}
                             </span>
                           </div>

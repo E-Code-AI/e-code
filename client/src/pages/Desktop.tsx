@@ -147,7 +147,7 @@ export default function Desktop() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <Badge variant="default" className="mb-4 text-sm px-4 py-1">
+              <Badge variant="default" className="mb-4 text-[13px] px-4 py-1">
                 <Sparkles className="h-4 w-4 mr-1" />
                 NOW AVAILABLE
               </Badge>
@@ -165,21 +165,21 @@ export default function Desktop() {
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button size="lg" className="text-lg px-8" data-testid="button-download-hero" onClick={() => {
+                <Button size="lg" className="text-[15px] px-8" data-testid="button-download-hero" onClick={() => {
                   const os = osOptions[selectedOS];
                   window.location.href = os.downloadUrl;
                 }}>
                   <Download className="mr-2 h-5 w-5" />
                   Download for {osOptions[selectedOS].name}
                 </Button>
-                <Button size="lg" variant="outline" asChild className="text-lg px-8" data-testid="button-learn-more">
+                <Button size="lg" variant="outline" asChild className="text-[15px] px-8" data-testid="button-learn-more">
                   <Link href="#features">
                     Learn More
                   </Link>
                 </Button>
               </div>
 
-              <p className="text-sm text-muted-foreground mt-4">
+              <p className="text-[13px] text-muted-foreground mt-4">
                 Version {osOptions[selectedOS].version} • {osOptions[selectedOS].size}
                 {osOptions[selectedOS].beta && (
                   <Badge variant="secondary" className="ml-2">Beta</Badge>
@@ -204,7 +204,7 @@ export default function Desktop() {
                   }`}
                 >
                   <Icon className="h-8 w-8" />
-                  <p className="text-sm mt-2">{os.name}</p>
+                  <p className="text-[13px] mt-2">{os.name}</p>
                 </button>
               );
             })}
@@ -229,7 +229,7 @@ export default function Desktop() {
                     <div className="w-3 h-3 rounded-full bg-yellow-500" />
                     <div className="w-3 h-3 rounded-full bg-green-500" />
                   </div>
-                  <div className="flex-1 text-center text-sm text-muted-foreground">
+                  <div className="flex-1 text-center text-[13px] text-muted-foreground">
                     E-Code Desktop - my-awesome-project
                   </div>
                 </div>
@@ -249,7 +249,7 @@ export default function Desktop() {
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
               Desktop-Powered Features
             </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-[15px] text-muted-foreground max-w-2xl mx-auto">
               Everything you need for professional development, now with native performance
             </p>
           </div>
@@ -286,7 +286,7 @@ export default function Desktop() {
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
               Desktop vs Web
             </h2>
-            <p className="text-lg text-muted-foreground">
+            <p className="text-[15px] text-muted-foreground">
               Choose the experience that fits your workflow
             </p>
           </div>
@@ -375,7 +375,7 @@ export default function Desktop() {
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
               Keyboard First
             </h2>
-            <p className="text-lg text-muted-foreground">
+            <p className="text-[15px] text-muted-foreground">
               Navigate at the speed of thought with powerful shortcuts
             </p>
           </div>
@@ -391,12 +391,12 @@ export default function Desktop() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {shortcuts.map((shortcut) => (
                   <div key={shortcut.description} className="flex items-center justify-between p-3 rounded-lg bg-muted">
-                    <span className="text-sm">{shortcut.description}</span>
+                    <span className="text-[13px]">{shortcut.description}</span>
                     <div className="flex gap-1">
                       {shortcut.keys.map((key, index) => (
                         <kbd
                           key={index}
-                          className="px-2 py-1 text-xs bg-background border rounded"
+                          className="px-2 py-1 text-[11px] bg-background border rounded"
                         >
                           {selectedOS !== 'mac' && key === '⌘' ? 'Ctrl' : key}
                         </kbd>
@@ -433,7 +433,7 @@ export default function Desktop() {
                   <CardContent>
                     <ul className="space-y-2">
                       {reqs.map((req, index) => (
-                        <li key={index} className="text-sm text-muted-foreground">
+                        <li key={index} className="text-[13px] text-muted-foreground">
                           • {req}
                         </li>
                       ))}
@@ -493,7 +493,7 @@ export default function Desktop() {
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
               Ready to Code Natively?
             </h2>
-            <p className="text-lg text-muted-foreground mb-8">
+            <p className="text-[15px] text-muted-foreground mb-8">
               Download E-Code Desktop and experience the future of development
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -510,7 +510,7 @@ export default function Desktop() {
                 </Link>
               </Button>
             </div>
-            <p className="text-sm text-muted-foreground mt-6">
+            <p className="text-[13px] text-muted-foreground mt-6">
               Free to use • No credit card required • Syncs with your E-Code account
             </p>
           </div>

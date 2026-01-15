@@ -463,7 +463,7 @@ export function ShellPanel({ projectId, className }: ShellPanelProps) {
         <div className="flex items-center gap-2 overflow-hidden flex-1">
           <div className="flex items-center gap-1.5 shrink-0">
             <Terminal className="w-4 h-4 text-muted-foreground" />
-            <span className="text-sm font-medium hidden sm:inline">Shell</span>
+            <span className="text-[13px] font-medium hidden sm:inline">Shell</span>
           </div>
 
           {activeTab && (
@@ -471,17 +471,17 @@ export function ShellPanel({ projectId, className }: ShellPanelProps) {
               {activeTab.isConnecting ? (
                 <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-muted">
                   <Loader2 className="w-3 h-3 animate-spin text-primary" />
-                  <span className="text-xs text-muted-foreground hidden md:inline">Connecting</span>
+                  <span className="text-[11px] text-muted-foreground hidden md:inline">Connecting</span>
                 </div>
               ) : activeTab.isConnected ? (
                 <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-green-500/10">
                   <Wifi className="w-3 h-3 text-green-500" />
-                  <span className="text-xs text-green-500 hidden md:inline">Connected</span>
+                  <span className="text-[11px] text-green-500 hidden md:inline">Connected</span>
                 </div>
               ) : (
                 <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-muted">
                   <WifiOff className="w-3 h-3 text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground hidden md:inline">Disconnected</span>
+                  <span className="text-[11px] text-muted-foreground hidden md:inline">Disconnected</span>
                 </div>
               )}
             </div>
@@ -495,7 +495,7 @@ export function ShellPanel({ projectId, className }: ShellPanelProps) {
                     <TabsTrigger
                       key={tab.id}
                       value={tab.id}
-                      className="h-6 px-2 text-xs gap-1 data-[state=active]:bg-muted rounded"
+                      className="h-6 px-2 text-[11px] gap-1 data-[state=active]:bg-muted rounded"
                       data-testid={`tab-shell-${tab.id}`}
                     >
                       <span className="truncate max-w-[60px] sm:max-w-[80px]">{tab.name}</span>
@@ -610,7 +610,7 @@ export function ShellPanel({ projectId, className }: ShellPanelProps) {
       </div>
 
       {activeTab && (
-        <div className="h-6 flex items-center px-3 border-b border-border bg-muted/30 text-xs text-muted-foreground gap-2">
+        <div className="h-6 flex items-center px-3 border-b border-border bg-muted/30 text-[11px] text-muted-foreground gap-2">
           <FolderOpen className="w-3 h-3" />
           <span className="truncate" data-testid="text-working-directory">{activeTab.cwd}</span>
         </div>

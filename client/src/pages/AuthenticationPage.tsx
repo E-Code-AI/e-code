@@ -260,7 +260,7 @@ export default function AuthenticationPage() {
                 return (
                   <button
                     key={item.id}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 min-h-[44px] ${
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-200 min-h-[44px] ${
                       isActive
                         ? 'bg-primary/10 text-primary border-l-2 border-primary pl-[10px]'
                         : 'text-muted-foreground hover:bg-muted hover:text-foreground'
@@ -343,7 +343,7 @@ export default function AuthenticationPage() {
                             <Label>X.509 Certificate</Label>
                             <Textarea
                               placeholder="-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----"
-                              className={`${inputClassName} font-mono text-xs`}
+                              className={`${inputClassName} font-mono text-[11px]`}
                               rows={4}
                               data-testid="textarea-certificate"
                             />
@@ -388,7 +388,7 @@ export default function AuthenticationPage() {
                               </Badge>
                               <Badge variant="outline">{provider.type.toUpperCase()}</Badge>
                             </div>
-                            <div className="text-sm text-muted-foreground mt-1">
+                            <div className="text-[13px] text-muted-foreground mt-1">
                               {provider.usersCount} users • {provider.lastSync ? `Last sync: ${provider.lastSync.toLocaleTimeString()}` : 'Not synced'}
                             </div>
                           </div>
@@ -420,18 +420,18 @@ export default function AuthenticationPage() {
                     <h4 className="font-medium text-foreground">Service Provider Details</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="p-4 rounded-lg border border-border bg-muted/50">
-                        <Label className="text-muted-foreground text-xs uppercase">ACS URL</Label>
+                        <Label className="text-muted-foreground text-[11px] uppercase">ACS URL</Label>
                         <div className="flex items-center gap-2 mt-1">
-                          <code className="text-sm text-foreground flex-1 truncate">https://ecode.dev/auth/saml/acs</code>
+                          <code className="text-[13px] text-foreground flex-1 truncate">https://ecode.dev/auth/saml/acs</code>
                           <Button variant="ghost" size="sm" data-testid="button-copy-acs-url">
                             <Copy className="h-4 w-4" />
                           </Button>
                         </div>
                       </div>
                       <div className="p-4 rounded-lg border border-border bg-muted/50">
-                        <Label className="text-muted-foreground text-xs uppercase">Entity ID</Label>
+                        <Label className="text-muted-foreground text-[11px] uppercase">Entity ID</Label>
                         <div className="flex items-center gap-2 mt-1">
-                          <code className="text-sm text-foreground flex-1 truncate">https://ecode.dev/auth/saml/metadata</code>
+                          <code className="text-[13px] text-foreground flex-1 truncate">https://ecode.dev/auth/saml/metadata</code>
                           <Button variant="ghost" size="sm" data-testid="button-copy-entity-id">
                             <Copy className="h-4 w-4" />
                           </Button>
@@ -476,7 +476,7 @@ export default function AuthenticationPage() {
                                 )}
                               </div>
                               {provider.clientId && (
-                                <div className="text-sm text-muted-foreground mt-1">
+                                <div className="text-[13px] text-muted-foreground mt-1">
                                   Client ID: {provider.clientId}
                                 </div>
                               )}
@@ -513,7 +513,7 @@ export default function AuthenticationPage() {
                   <div className="flex items-center justify-between p-4 rounded-lg border border-border">
                     <div className="space-y-1">
                       <Label className="text-foreground">Magic Link</Label>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-[13px] text-muted-foreground">
                         Send a secure login link to user's email
                       </p>
                     </div>
@@ -531,7 +531,7 @@ export default function AuthenticationPage() {
                         <Label className="text-foreground">Passkeys / WebAuthn</Label>
                         <Badge variant="secondary">Beta</Badge>
                       </div>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-[13px] text-muted-foreground">
                         Allow users to sign in with biometrics or security keys
                       </p>
                     </div>
@@ -595,12 +595,12 @@ export default function AuthenticationPage() {
                                   <Badge className="bg-orange-500/10 text-orange-600">Enforced</Badge>
                                 )}
                               </div>
-                              <p className="text-sm text-muted-foreground">{method.description}</p>
+                              <p className="text-[13px] text-muted-foreground">{method.description}</p>
                             </div>
                           </div>
                           <div className="flex items-center gap-4">
                             <div className="flex items-center gap-2">
-                              <Label className="text-sm text-muted-foreground">Enforce</Label>
+                              <Label className="text-[13px] text-muted-foreground">Enforce</Label>
                               <Switch
                                 checked={method.enforced}
                                 onCheckedChange={() => handleToggleMFA(method.id, 'enforced')}
@@ -687,7 +687,7 @@ export default function AuthenticationPage() {
                     <div className="flex items-center justify-between p-4 rounded-lg border border-border">
                       <div className="space-y-1">
                         <Label className="text-foreground">Remember Me</Label>
-                        <p className="text-sm text-muted-foreground">Allow users to stay signed in</p>
+                        <p className="text-[13px] text-muted-foreground">Allow users to stay signed in</p>
                       </div>
                       <Switch
                         checked={rememberMeEnabled}
@@ -699,7 +699,7 @@ export default function AuthenticationPage() {
                     <div className="flex items-center justify-between p-4 rounded-lg border border-border">
                       <div className="space-y-1">
                         <Label className="text-foreground">Force Re-authentication</Label>
-                        <p className="text-sm text-muted-foreground">Require login for sensitive actions</p>
+                        <p className="text-[13px] text-muted-foreground">Require login for sensitive actions</p>
                       </div>
                       <Switch
                         checked={forceReauthEnabled}
@@ -735,13 +735,13 @@ export default function AuthenticationPage() {
                                 <span className="font-medium text-foreground">{session.device}</span>
                                 {session.current && <Badge className="bg-green-500/10 text-green-600">Current</Badge>}
                               </div>
-                              <div className="text-sm text-muted-foreground">
+                              <div className="text-[13px] text-muted-foreground">
                                 {session.browser} • {session.location} • {session.ip}
                               </div>
                             </div>
                           </div>
                           <div className="flex items-center gap-4">
-                            <span className="text-sm text-muted-foreground">
+                            <span className="text-[13px] text-muted-foreground">
                               {session.current ? 'Now' : session.lastActive.toLocaleTimeString()}
                             </span>
                             {!session.current && (
@@ -827,7 +827,7 @@ export default function AuthenticationPage() {
                         <div className="h-12 w-12 mx-auto rounded-lg bg-primary/10 flex items-center justify-center">
                           <Shield className="h-6 w-6 text-primary" />
                         </div>
-                        <h3 className="text-lg font-semibold">{brandingWelcomeText}</h3>
+                        <h3 className="text-[15px] font-semibold">{brandingWelcomeText}</h3>
                         <Button
                           className="w-full"
                           style={{ backgroundColor: brandingPrimaryColor }}
@@ -835,7 +835,7 @@ export default function AuthenticationPage() {
                         >
                           {brandingButtonText}
                         </Button>
-                        <p className="text-sm text-muted-foreground">Preview of your login page</p>
+                        <p className="text-[13px] text-muted-foreground">Preview of your login page</p>
                       </div>
                     </div>
                   </div>
@@ -856,7 +856,7 @@ export default function AuthenticationPage() {
                     <div className="flex items-center justify-between p-4 rounded-lg border border-border">
                       <div className="space-y-1">
                         <Label className="text-foreground">SCIM Auto Provisioning</Label>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-[13px] text-muted-foreground">
                           Automatically create users from your identity provider
                         </p>
                       </div>
@@ -870,7 +870,7 @@ export default function AuthenticationPage() {
                     <div className="flex items-center justify-between p-4 rounded-lg border border-border">
                       <div className="space-y-1">
                         <Label className="text-foreground">Just-in-Time Provisioning</Label>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-[13px] text-muted-foreground">
                           Create user accounts on first SSO login
                         </p>
                       </div>
@@ -884,7 +884,7 @@ export default function AuthenticationPage() {
                     <div className="flex items-center justify-between p-4 rounded-lg border border-border">
                       <div className="space-y-1">
                         <Label className="text-foreground">Deactivate on IdP Removal</Label>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-[13px] text-muted-foreground">
                           Automatically deactivate users removed from your IdP
                         </p>
                       </div>
@@ -937,11 +937,11 @@ export default function AuthenticationPage() {
                       <AlertTriangle className="h-5 w-5 text-amber-500 mt-0.5" />
                       <div>
                         <h5 className="font-medium text-foreground">SCIM Endpoint</h5>
-                        <p className="text-sm text-muted-foreground mt-1">
+                        <p className="text-[13px] text-muted-foreground mt-1">
                           Use this endpoint to configure SCIM in your identity provider:
                         </p>
                         <div className="flex items-center gap-2 mt-2">
-                          <code className="text-sm bg-background px-2 py-1 rounded">https://ecode.dev/scim/v2</code>
+                          <code className="text-[13px] bg-background px-2 py-1 rounded">https://ecode.dev/scim/v2</code>
                           <Button variant="ghost" size="sm" data-testid="button-copy-scim-endpoint">
                             <Copy className="h-4 w-4" />
                           </Button>

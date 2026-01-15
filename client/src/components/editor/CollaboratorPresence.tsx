@@ -176,7 +176,7 @@ export function CollaboratorPresence({
                 ) : (
                   <WifiOff className="h-4 w-4 text-status-critical" />
                 )}
-                <span className="text-xs text-muted-foreground">
+                <span className="text-[11px] text-muted-foreground">
                   {isConnected ? 'Connected' : 'Disconnected'}
                 </span>
               </div>
@@ -214,11 +214,11 @@ export function CollaboratorPresence({
                   <div className="flex flex-col gap-1">
                     <span className="font-semibold">{participant.user.username}</span>
                     {participant.cursor && (
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-[11px] text-muted-foreground">
                         Line {participant.cursor.line}, Col {participant.cursor.column}
                       </span>
                     )}
-                    <span className="text-xs">Click to follow</span>
+                    <span className="text-[11px]">Click to follow</span>
                   </div>
                 </TooltipContent>
               </Tooltip>
@@ -226,7 +226,7 @@ export function CollaboratorPresence({
           ))}
           {hiddenCount > 0 && (
             <div className="relative inline-flex items-center justify-center h-8 w-8 rounded-full bg-muted ring-2 ring-background">
-              <span className="text-xs">+{hiddenCount}</span>
+              <span className="text-[11px]">+{hiddenCount}</span>
             </div>
           )}
         </div>
@@ -268,7 +268,7 @@ export function CollaboratorPresence({
     <Card className={cn("w-80 backdrop-blur-sm bg-background/95", className)}>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-medium flex items-center gap-2">
+          <CardTitle className="text-[13px] font-medium flex items-center gap-2">
             <Users className="h-4 w-4" />
             Active Collaborators
           </CardTitle>
@@ -277,7 +277,7 @@ export function CollaboratorPresence({
             {isConnected ? 'Live' : 'Offline'}
           </Badge>
         </div>
-        <CardDescription className="text-xs">
+        <CardDescription className="text-[11px]">
           {participants.length} {participants.length === 1 ? 'person' : 'people'} editing
         </CardDescription>
       </CardHeader>
@@ -285,7 +285,7 @@ export function CollaboratorPresence({
         <ScrollArea className="h-64 pr-4">
           <div className="space-y-2">
             {participants.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground text-sm">
+              <div className="text-center py-8 text-muted-foreground text-[13px]">
                 No active collaborators
               </div>
             ) : (
@@ -311,16 +311,16 @@ export function CollaboratorPresence({
                       )} />
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-sm font-medium flex items-center gap-2">
+                      <span className="text-[13px] font-medium flex items-center gap-2">
                         {participant.user.username}
                         {userColor === participant.user.color && (
-                          <Badge variant="outline" className="text-xs px-1 py-0">
+                          <Badge variant="outline" className="text-[11px] px-1 py-0">
                             You
                           </Badge>
                         )}
                       </span>
                       {participant.cursor && (
-                        <span className="text-xs text-muted-foreground flex items-center gap-1">
+                        <span className="text-[11px] text-muted-foreground flex items-center gap-1">
                           <MousePointer2 className="h-3 w-3" />
                           L{participant.cursor.line}:C{participant.cursor.column}
                         </span>

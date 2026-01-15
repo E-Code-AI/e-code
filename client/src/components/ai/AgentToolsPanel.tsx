@@ -169,7 +169,7 @@ export function AgentToolsPanel({
           >
             <div className="flex items-center gap-2">
               <Settings2 className="w-4 h-4 text-muted-foreground" />
-              <span className="font-medium text-sm">Agent Tools</span>
+              <span className="font-medium text-[13px]">Agent Tools</span>
               {activeCount > 0 && (
                 <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
                   {activeCount} active
@@ -210,7 +210,7 @@ export function AgentToolsPanel({
                   <div className="flex items-center gap-2">
                     <Label 
                       htmlFor="max-autonomy" 
-                      className="font-medium text-sm cursor-pointer"
+                      className="font-medium text-[13px] cursor-pointer"
                     >
                       Max autonomy
                     </Label>
@@ -251,7 +251,7 @@ export function AgentToolsPanel({
                 <div className="space-y-0.5">
                   <Label 
                     htmlFor="app-testing" 
-                    className="font-medium text-sm cursor-pointer"
+                    className="font-medium text-[13px] cursor-pointer"
                   >
                     App testing
                   </Label>
@@ -262,7 +262,7 @@ export function AgentToolsPanel({
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="min-h-[44px] px-3 mt-1 text-xs text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+                      className="min-h-[44px] px-3 mt-1 text-[11px] text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
                       onClick={onViewVideoReplays}
                       data-testid="view-video-replays"
                     >
@@ -292,7 +292,7 @@ export function AgentToolsPanel({
                 <div className="space-y-0.5">
                   <Label 
                     htmlFor="extended-thinking" 
-                    className="font-medium text-sm cursor-pointer"
+                    className="font-medium text-[13px] cursor-pointer"
                   >
                     Extended thinking
                   </Label>
@@ -330,7 +330,7 @@ export function AgentToolsPanel({
                 <div className="space-y-0.5">
                   <Label 
                     htmlFor="high-power-models" 
-                    className="font-medium text-sm cursor-pointer"
+                    className="font-medium text-[13px] cursor-pointer"
                   >
                     High power models
                   </Label>
@@ -364,7 +364,7 @@ export function AgentToolsPanel({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="w-full min-h-[44px] text-xs"
+                  className="w-full min-h-[44px] text-[11px]"
                   onClick={onViewVideoReplays}
                   data-testid="open-video-replays"
                 >

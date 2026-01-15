@@ -176,9 +176,9 @@ function InsightCard({ icon: Icon, title, description, action, type = "info" }: 
         </div>
         <div className="flex-1">
           <h4 className="font-semibold mb-1">{title}</h4>
-          <p className="text-sm text-muted-foreground">{description}</p>
+          <p className="text-[13px] text-muted-foreground">{description}</p>
           {action && (
-            <Button variant="link" className="p-0 h-auto mt-2 text-sm">
+            <Button variant="link" className="p-0 h-auto mt-2 text-[13px]">
               {action} <ChevronRight className="h-3 w-3 ml-1" />
             </Button>
           )}
@@ -198,9 +198,9 @@ function ScoreBadge({ score, size = "default" }: { score: number; size?: "sm" | 
   };
 
   const sizes = {
-    sm: "w-8 h-8 text-xs",
-    default: "w-10 h-10 text-sm",
-    lg: "w-14 h-14 text-lg"
+    sm: "w-8 h-8 text-[11px]",
+    default: "w-10 h-10 text-[13px]",
+    lg: "w-14 h-14 text-[15px]"
   };
 
   return (
@@ -332,7 +332,7 @@ export default function SEOManagement() {
               <Card className="col-span-2 lg:col-span-1 row-span-2 bg-gradient-to-br from-slate-900 to-slate-800 text-white border-0 overflow-hidden relative">
                 <div className="absolute inset-0 bg-grid-white/5" />
                 <CardContent className="p-6 relative z-10 flex flex-col items-center justify-center h-full">
-                  <p className="text-sm text-slate-400 mb-4">Overall SEO Score</p>
+                  <p className="text-[13px] text-slate-400 mb-4">Overall SEO Score</p>
                   <RadialProgress
                     value={stats.averageScore}
                     size={140}
@@ -343,12 +343,12 @@ export default function SEOManagement() {
                     {stats.averageScore >= 80 ? (
                       <>
                         <TrendingUp className="h-4 w-4 text-green-400" />
-                        <span className="text-sm text-green-400">+5 this month</span>
+                        <span className="text-[13px] text-green-400">+5 this month</span>
                       </>
                     ) : (
                       <>
                         <TrendingDown className="h-4 w-4 text-yellow-400" />
-                        <span className="text-sm text-yellow-400">Needs attention</span>
+                        <span className="text-[13px] text-yellow-400">Needs attention</span>
                       </>
                     )}
                   </div>
@@ -359,7 +359,7 @@ export default function SEOManagement() {
               <Card className="overflow-hidden border-0 shadow-lg">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm text-muted-foreground">Pages</span>
+                    <span className="text-[13px] text-muted-foreground">Pages</span>
                     <FileText className="h-4 w-4 text-muted-foreground" />
                   </div>
                   <div className="text-3xl font-bold mb-2">{stats.total}</div>
@@ -396,13 +396,13 @@ export default function SEOManagement() {
               <Card className="overflow-hidden border-0 shadow-lg">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm text-muted-foreground">Impressions</span>
+                    <span className="text-[13px] text-muted-foreground">Impressions</span>
                     <Eye className="h-4 w-4 text-muted-foreground" />
                   </div>
                   <div className="text-3xl font-bold mb-1">
                     {(stats.totalImpressions / 1000).toFixed(1)}K
                   </div>
-                  <div className="flex items-center gap-1 text-green-500 text-sm">
+                  <div className="flex items-center gap-1 text-green-500 text-[13px]">
                     <ArrowUpRight className="h-3 w-3" />
                     <span>+12.5%</span>
                   </div>
@@ -413,13 +413,13 @@ export default function SEOManagement() {
               <Card className="overflow-hidden border-0 shadow-lg">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm text-muted-foreground">Clicks</span>
+                    <span className="text-[13px] text-muted-foreground">Clicks</span>
                     <MousePointer className="h-4 w-4 text-muted-foreground" />
                   </div>
                   <div className="text-3xl font-bold mb-1">
                     {(stats.totalClicks / 1000).toFixed(1)}K
                   </div>
-                  <div className="flex items-center gap-1 text-green-500 text-sm">
+                  <div className="flex items-center gap-1 text-green-500 text-[13px]">
                     <ArrowUpRight className="h-3 w-3" />
                     <span>+8.3%</span>
                   </div>
@@ -430,7 +430,7 @@ export default function SEOManagement() {
               <Card className="overflow-hidden border-0 shadow-lg">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm text-muted-foreground">Avg. CTR</span>
+                    <span className="text-[13px] text-muted-foreground">Avg. CTR</span>
                     <Target className="h-4 w-4 text-muted-foreground" />
                   </div>
                   <div className="text-3xl font-bold mb-1">{stats.avgCTR}%</div>
@@ -442,11 +442,11 @@ export default function SEOManagement() {
               <Card className="overflow-hidden border-0 shadow-lg bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm text-muted-foreground">Open Issues</span>
+                    <span className="text-[13px] text-muted-foreground">Open Issues</span>
                     <AlertTriangle className="h-4 w-4 text-amber-500" />
                   </div>
                   <div className="text-3xl font-bold text-amber-600 mb-1">{stats.issuesCount}</div>
-                  <Button variant="link" className="p-0 h-auto text-amber-600 text-sm" data-testid="button-view-all-issues">
+                  <Button variant="link" className="p-0 h-auto text-amber-600 text-[13px]" data-testid="button-view-all-issues">
                     View all <ChevronRight className="h-3 w-3" />
                   </Button>
                 </CardContent>
@@ -456,7 +456,7 @@ export default function SEOManagement() {
               <Card className="col-span-2 overflow-hidden border-0 shadow-lg">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm text-muted-foreground">Score Trend (12 months)</span>
+                    <span className="text-[13px] text-muted-foreground">Score Trend (12 months)</span>
                     <LineChart className="h-4 w-4 text-muted-foreground" />
                   </div>
                   <div className="h-12">
@@ -474,8 +474,8 @@ export default function SEOManagement() {
                     <Brain className="h-5 w-5 text-violet-500" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg">AI-Powered Insights</CardTitle>
-                    <p className="text-sm text-muted-foreground">Real-time recommendations from our SEO AI</p>
+                    <CardTitle className="text-[15px]">AI-Powered Insights</CardTitle>
+                    <p className="text-[13px] text-muted-foreground">Real-time recommendations from our SEO AI</p>
                   </div>
                 </div>
               </CardHeader>
@@ -603,8 +603,8 @@ export default function SEOManagement() {
                                       'bg-red-500'
                                     }`} />
                                     <div>
-                                      <div className="font-mono text-sm font-medium">{page.path}</div>
-                                      <div className="text-xs text-muted-foreground truncate max-w-[250px]">
+                                      <div className="font-mono text-[13px] font-medium">{page.path}</div>
+                                      <div className="text-[11px] text-muted-foreground truncate max-w-[250px]">
                                         {page.title}
                                       </div>
                                     </div>
@@ -617,24 +617,24 @@ export default function SEOManagement() {
                                   {page.hasRealData ? (
                                     <div className="font-medium">{(page.impressions / 1000).toFixed(1)}K</div>
                                   ) : (
-                                    <Badge variant="outline" className="text-xs text-muted-foreground">No data yet</Badge>
+                                    <Badge variant="outline" className="text-[11px] text-muted-foreground">No data yet</Badge>
                                   )}
                                 </TableCell>
                                 <TableCell className="hidden md:table-cell">
                                   {page.hasRealData ? (
                                     <div className="font-medium">{page.ctr}%</div>
                                   ) : (
-                                    <Badge variant="outline" className="text-xs text-muted-foreground">No data yet</Badge>
+                                    <Badge variant="outline" className="text-[11px] text-muted-foreground">No data yet</Badge>
                                   )}
                                 </TableCell>
                                 <TableCell className="hidden lg:table-cell">
                                   {page.hasRealData ? (
                                     <div className={`flex items-center gap-1 ${page.trend >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                                       {page.trend >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
-                                      <span className="text-sm">{Math.abs(page.trend)}%</span>
+                                      <span className="text-[13px]">{Math.abs(page.trend)}%</span>
                                     </div>
                                   ) : (
-                                    <Badge variant="outline" className="text-xs text-muted-foreground">No data yet</Badge>
+                                    <Badge variant="outline" className="text-[11px] text-muted-foreground">No data yet</Badge>
                                   )}
                                 </TableCell>
                                 <TableCell>
@@ -718,7 +718,7 @@ export default function SEOManagement() {
                                               <Label>Issues to Fix</Label>
                                               <div className="bg-amber-50 dark:bg-amber-950/30 rounded-lg p-4 space-y-2">
                                                 {page.issues.map((issue, i) => (
-                                                  <div key={i} className="flex items-center gap-2 text-sm text-amber-700 dark:text-amber-400">
+                                                  <div key={i} className="flex items-center gap-2 text-[13px] text-amber-700 dark:text-amber-400">
                                                     <AlertTriangle className="h-4 w-4" />
                                                     {issue}
                                                   </div>
@@ -762,7 +762,7 @@ export default function SEOManagement() {
                             <ScoreBadge score={page.score} size="sm" />
                             <div>
                               <CardTitle className="text-base font-mono">{page.path}</CardTitle>
-                              <p className="text-xs text-muted-foreground truncate max-w-[250px]">{page.title}</p>
+                              <p className="text-[11px] text-muted-foreground truncate max-w-[250px]">{page.title}</p>
                             </div>
                           </div>
                           <Button variant="outline" size="sm" className="gap-2" data-testid={`button-auto-fix-${page.path.replace(/\//g, '-')}`}>
@@ -776,7 +776,7 @@ export default function SEOManagement() {
                           {page.issues.map((issue, i) => (
                             <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30">
                               <AlertTriangle className="h-4 w-4 text-amber-500 flex-shrink-0" />
-                              <span className="text-sm">{issue}</span>
+                              <span className="text-[13px]">{issue}</span>
                             </div>
                           ))}
                         </div>
@@ -800,7 +800,7 @@ export default function SEOManagement() {
                       <div className="space-y-6">
                         <div className="space-y-2">
                           <Label>Page Title</Label>
-                          <Input placeholder="E-Code - AI Development Platform" className="text-lg" />
+                          <Input placeholder="E-Code - AI Development Platform" className="text-[15px]" />
                         </div>
                         <div className="space-y-2">
                           <Label>Subtitle (optional)</Label>
@@ -844,10 +844,10 @@ export default function SEOManagement() {
                         <div className="aspect-[1200/630] rounded-xl overflow-hidden shadow-2xl bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-600 flex flex-col items-center justify-center text-white p-8 relative">
                           <div className="absolute inset-0 bg-grid-white/10" />
                           <div className="absolute top-6 left-6 flex items-center gap-2 z-10">
-                            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center font-bold text-lg backdrop-blur-sm">
+                            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center font-bold text-[15px] backdrop-blur-sm">
                               E
                             </div>
-                            <span className="font-semibold text-lg">E-Code</span>
+                            <span className="font-semibold text-[15px]">E-Code</span>
                           </div>
                           <div className="relative z-10 text-center">
                             <h2 className="text-3xl font-bold mb-3">E-Code - AI Development Platform</h2>
@@ -882,10 +882,10 @@ export default function SEOManagement() {
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div className="flex items-center justify-between p-3 rounded-lg bg-green-50 dark:bg-green-950/30">
-                        <span className="text-sm">sitemap.xml</span>
+                        <span className="text-[13px]">sitemap.xml</span>
                         <Badge className="bg-green-500">Active</Badge>
                       </div>
-                      <div className="text-sm text-muted-foreground">
+                      <div className="text-[13px] text-muted-foreground">
                         {stats.total} URLs indexed
                       </div>
                       <Button variant="outline" className="w-full gap-2" onClick={() => window.open('/sitemap.xml', '_blank')}>
@@ -904,10 +904,10 @@ export default function SEOManagement() {
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div className="flex items-center justify-between p-3 rounded-lg bg-green-50 dark:bg-green-950/30">
-                        <span className="text-sm">robots.txt</span>
+                        <span className="text-[13px]">robots.txt</span>
                         <Badge className="bg-green-500">Configured</Badge>
                       </div>
-                      <div className="text-sm text-muted-foreground">
+                      <div className="text-[13px] text-muted-foreground">
                         Blocking admin, API, and private routes
                       </div>
                       <Button variant="outline" className="w-full gap-2" onClick={() => window.open('/robots.txt', '_blank')}>
@@ -926,21 +926,21 @@ export default function SEOManagement() {
                     </CardHeader>
                     <CardContent className="space-y-3">
                       <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
+                        <div className="flex justify-between text-[13px]">
                           <span>LCP</span>
                           <span className="text-green-500 font-medium">1.2s</span>
                         </div>
                         <Progress value={80} className="h-2" />
                       </div>
                       <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
+                        <div className="flex justify-between text-[13px]">
                           <span>FID</span>
                           <span className="text-green-500 font-medium">18ms</span>
                         </div>
                         <Progress value={95} className="h-2" />
                       </div>
                       <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
+                        <div className="flex justify-between text-[13px]">
                           <span>CLS</span>
                           <span className="text-green-500 font-medium">0.05</span>
                         </div>

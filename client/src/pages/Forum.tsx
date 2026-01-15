@@ -42,7 +42,7 @@ export default function Forum() {
           <h1 className="text-4xl sm:text-5xl font-semibold text-white tracking-tight">
             Connect with the E-Code community
           </h1>
-          <p className="mt-4 text-base sm:text-lg text-slate-200 max-w-3xl mx-auto">
+          <p className="mt-4 text-base sm:text-[15px] text-slate-200 max-w-3xl mx-auto">
             Learn from engineers building at enterprise scale, share feedback with our product teams, and stay ahead with curated best practices.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-4">
@@ -66,17 +66,17 @@ export default function Forum() {
                 <CardTitle className="text-xl text-white">{thread.title}</CardTitle>
                 <CardDescription className="text-slate-300 leading-relaxed">{thread.description}</CardDescription>
               </CardHeader>
-              <CardContent className="flex items-center justify-between text-sm text-slate-300">
+              <CardContent className="flex items-center justify-between text-[13px] text-slate-300">
                 <div className="flex items-center gap-3">
                   <Avatar className="h-9 w-9 border border-white/20">
                     <AvatarFallback className="bg-sky-500/20 text-sky-100">EC</AvatarFallback>
                   </Avatar>
                   <div>
                     <p className="font-medium text-white">E-Code Enterprise Team</p>
-                    <p className="text-xs text-slate-400">Official insights & resources</p>
+                    <p className="text-[11px] text-slate-400">Official insights & resources</p>
                   </div>
                 </div>
-                <span className="rounded-full bg-white/10 px-3 py-1 text-xs">{thread.replies} replies</span>
+                <span className="rounded-full bg-white/10 px-3 py-1 text-[11px]">{thread.replies} replies</span>
               </CardContent>
             </Card>
           ))}
@@ -93,7 +93,7 @@ export default function Forum() {
                     <category.icon className="h-6 w-6" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg text-white">{category.label}</CardTitle>
+                    <CardTitle className="text-[15px] text-white">{category.label}</CardTitle>
                     <CardDescription className="text-slate-300 leading-relaxed">{category.description}</CardDescription>
                   </div>
                 </CardHeader>

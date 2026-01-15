@@ -224,7 +224,7 @@ export function AppsView({ onOpenApp, onBack }: AppsViewProps) {
             </Button>
             <div>
               <h1 className="text-2xl font-bold">Projects</h1>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-[13px] text-muted-foreground">
                 Manage and deploy your projects
               </p>
             </div>
@@ -315,8 +315,8 @@ export function AppsView({ onOpenApp, onBack }: AppsViewProps) {
         ) : filteredProjects.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 text-center">
             <Code2 className="w-12 h-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No projects found</h3>
-            <p className="text-sm text-muted-foreground mb-4">
+            <h3 className="text-[15px] font-semibold mb-2">No projects found</h3>
+            <p className="text-[13px] text-muted-foreground mb-4">
               {searchQuery
                 ? "Try adjusting your search or filters"
                 : "Create your first project to get started"}
@@ -377,13 +377,13 @@ export function AppsView({ onOpenApp, onBack }: AppsViewProps) {
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <div className="flex items-center justify-between text-xs text-muted-foreground mb-3">
+                      <div className="flex items-center justify-between text-[11px] text-muted-foreground mb-3">
                         <div className="flex items-center gap-1">
                           <Clock className="w-3 h-3" />
                           {new Date(project.updatedAt).toLocaleDateString()}
                         </div>
                         {project.language && (
-                          <Badge variant="outline" className="text-xs">
+                          <Badge variant="outline" className="text-[11px]">
                             {project.language}
                           </Badge>
                         )}
@@ -420,19 +420,19 @@ export function AppsView({ onOpenApp, onBack }: AppsViewProps) {
                         {getVisibilityIcon(project.visibility)}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
-                            <h3 className="text-sm font-semibold truncate">{project.name}</h3>
+                            <h3 className="text-[13px] font-semibold truncate">{project.name}</h3>
                             {project.language && (
-                              <Badge variant="outline" className="text-xs">
+                              <Badge variant="outline" className="text-[11px]">
                                 {project.language}
                               </Badge>
                             )}
                           </div>
-                          <p className="text-xs text-muted-foreground truncate">
+                          <p className="text-[11px] text-muted-foreground truncate">
                             {project.description || "No description"}
                           </p>
                         </div>
                         <div className="flex items-center gap-2">
-                          <div className="text-xs text-muted-foreground">
+                          <div className="text-[11px] text-muted-foreground">
                             {new Date(project.updatedAt).toLocaleDateString()}
                           </div>
                           <Button
@@ -589,7 +589,7 @@ export function AppsView({ onOpenApp, onBack }: AppsViewProps) {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <p className="text-sm">
+            <p className="text-[13px]">
               Please type <span className="font-mono font-semibold">{deletingProject?.name}</span> to
               confirm deletion.
             </p>

@@ -235,7 +235,7 @@ export default function Status() {
                 </div>
                 <div className="text-right">
                   <div className="text-3xl font-bold">{averageUptime.toFixed(2)}%</div>
-                  <div className="text-sm text-muted-foreground">30-day uptime</div>
+                  <div className="text-[13px] text-muted-foreground">30-day uptime</div>
                 </div>
               </div>
             </CardContent>
@@ -258,12 +258,12 @@ export default function Status() {
                   </AlertTitle>
                   <AlertDescription>
                     <div className="mt-2 space-y-2">
-                      <p className="text-sm">
+                      <p className="text-[13px]">
                         Affected services: {incident.affectedServices?.join(', ') || 'Unknown'}
                       </p>
                       <div className="space-y-1">
                         {incident.updates?.map((update: any, index: number) => (
-                          <div key={index} className="text-sm">
+                          <div key={index} className="text-[13px]">
                             <span className="text-muted-foreground">
                               {new Date(update.timestamp || update.time).toLocaleTimeString('en', { hour: '2-digit', minute: '2-digit' })} - 
                             </span>
@@ -315,7 +315,7 @@ export default function Status() {
                           </div>
                           <div>
                             <CardTitle className="text-base">{service.name}</CardTitle>
-                            <CardDescription className="text-xs mt-1">
+                            <CardDescription className="text-[11px] mt-1">
                               {service.description}
                             </CardDescription>
                           </div>
@@ -325,18 +325,18 @@ export default function Status() {
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-3">
-                        <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-center justify-between text-[13px]">
                           <span className="text-muted-foreground">Status</span>
                           {getStatusBadge(service.status)}
                         </div>
                         <div className="space-y-1">
-                          <div className="flex items-center justify-between text-sm">
+                          <div className="flex items-center justify-between text-[13px]">
                             <span className="text-muted-foreground">Uptime</span>
                             <span className="font-medium">{(service.uptime || 99.99).toFixed(2)}%</span>
                           </div>
                           <Progress value={service.uptime || 99.99} className="h-1" />
                         </div>
-                        <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-center justify-between text-[13px]">
                           <span className="text-muted-foreground">Response time</span>
                           <span className="font-medium">{service.responseTime || 0}ms</span>
                         </div>
@@ -385,7 +385,7 @@ export default function Status() {
                   <div className="text-3xl font-bold text-green-500">
                     {(metrics as any)?.uptime24h?.toFixed(2) || averageUptime.toFixed(2)}%
                   </div>
-                  <p className="text-sm text-muted-foreground mt-1">
+                  <p className="text-[13px] text-muted-foreground mt-1">
                     {(metrics as any)?.incidents24h || 0} incidents • {(metrics as any)?.downtime24h || '< 1'} min downtime
                   </p>
                 </CardContent>
@@ -398,7 +398,7 @@ export default function Status() {
                   <div className="text-3xl font-bold text-green-500">
                     {(metrics as any)?.uptime7d?.toFixed(2) || (averageUptime - 0.01).toFixed(2)}%
                   </div>
-                  <p className="text-sm text-muted-foreground mt-1">
+                  <p className="text-[13px] text-muted-foreground mt-1">
                     {(metrics as any)?.incidents7d || 0} incidents • {(metrics as any)?.downtime7d || '< 5'} min downtime
                   </p>
                 </CardContent>
@@ -411,7 +411,7 @@ export default function Status() {
                   <div className="text-3xl font-bold text-green-500">
                     {(metrics as any)?.uptime30d?.toFixed(2) || (averageUptime - 0.02).toFixed(2)}%
                   </div>
-                  <p className="text-sm text-muted-foreground mt-1">
+                  <p className="text-[13px] text-muted-foreground mt-1">
                     {(metrics as any)?.incidents30d || 0} incidents • {(metrics as any)?.downtime30d || '< 15'} min downtime
                   </p>
                 </CardContent>
@@ -436,8 +436,8 @@ export default function Status() {
             <Card>
               <CardContent className="py-12 text-center">
                 <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-4" />
-                <p className="text-lg font-medium">No recent incidents</p>
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="text-[15px] font-medium">No recent incidents</p>
+                <p className="text-[13px] text-muted-foreground mt-1">
                   All systems have been operating normally
                 </p>
               </CardContent>
@@ -449,7 +449,7 @@ export default function Status() {
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div>
-                        <CardTitle className="text-lg">{incident.title}</CardTitle>
+                        <CardTitle className="text-[15px]">{incident.title}</CardTitle>
                         <CardDescription>
                           {format(new Date(incident.created || incident.startedAt), 'PPP')} • 
                           {incident.resolvedAt && ` Resolved in ${
@@ -473,13 +473,13 @@ export default function Status() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-[13px] text-muted-foreground">
                         Affected services: {incident.affectedServices?.join(', ') || 'Multiple services'}
                       </p>
                       {incident.updates && incident.updates.length > 0 && (
                         <div className="border-l-2 border-muted pl-4 space-y-2">
                           {incident.updates.map((update: any, index: number) => (
-                            <div key={index} className="text-sm">
+                            <div key={index} className="text-[13px]">
                               <span className="text-muted-foreground">
                                 {new Date(update.timestamp || update.time).toLocaleTimeString('en', { hour: '2-digit', minute: '2-digit' })} - 
                               </span>

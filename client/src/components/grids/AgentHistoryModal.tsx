@@ -93,11 +93,11 @@ export function AgentHistoryModal({
               </Button>
             )}
             <Activity className="h-5 w-5 text-muted-foreground" />
-            <DialogTitle className="text-lg">
+            <DialogTitle className="text-[15px]">
               {selectedSession ? (
                 <div className="flex items-center gap-2">
                   <span>Session Details</span>
-                  <Badge variant="secondary" className="text-xs font-mono">
+                  <Badge variant="secondary" className="text-[11px] font-mono">
                     {selectedSession.id.slice(0, 8)}
                   </Badge>
                 </div>

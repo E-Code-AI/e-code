@@ -177,7 +177,7 @@ export function MergeConflictResolver({
 
     const variant = variants[resolution];
     return (
-      <Badge variant="outline" className={cn("text-xs", variant.color)}>
+      <Badge variant="outline" className={cn("text-[11px]", variant.color)}>
         {variant.label}
       </Badge>
     );
@@ -198,13 +198,13 @@ export function MergeConflictResolver({
     <Card className={cn("h-full flex flex-col", className)}>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-medium flex items-center gap-2">
+          <CardTitle className="text-[13px] font-medium flex items-center gap-2">
             <AlertTriangle className="h-4 w-4 text-yellow-600" />
             Merge Conflicts
           </CardTitle>
 
           <div className="flex items-center gap-2">
-            <Badge variant="outline" className="text-xs">
+            <Badge variant="outline" className="text-[11px]">
               {resolvedConflicts}/{totalConflicts} resolved
             </Badge>
             {getResolutionBadge(currentConflict.resolution)}
@@ -215,7 +215,7 @@ export function MergeConflictResolver({
 
         {/* File and conflict navigation */}
         <div className="space-y-2">
-          <div className="flex items-center justify-between text-xs">
+          <div className="flex items-center justify-between text-[11px]">
             <div className="flex items-center gap-2">
               <span className="text-muted-foreground">File:</span>
               <code className="px-2 py-0.5 rounded bg-muted font-mono">
@@ -254,7 +254,7 @@ export function MergeConflictResolver({
             </div>
           </div>
 
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
             <div className="flex items-center gap-1">
               <div className="h-2 w-2 rounded-full bg-blue-500" />
               <span>{currentFile.currentBranch}</span>
@@ -274,7 +274,7 @@ export function MergeConflictResolver({
           <Button
             size="sm"
             variant="outline"
-            className="h-7 text-xs text-blue-600 border-blue-600/20 hover:bg-blue-500/10"
+            className="h-7 text-[11px] text-blue-600 border-blue-600/20 hover:bg-blue-500/10"
             onClick={() => updateResolution('current')}
           >
             Accept Current
@@ -282,7 +282,7 @@ export function MergeConflictResolver({
           <Button
             size="sm"
             variant="outline"
-            className="h-7 text-xs text-green-600 border-green-600/20 hover:bg-green-500/10"
+            className="h-7 text-[11px] text-green-600 border-green-600/20 hover:bg-green-500/10"
             onClick={() => updateResolution('incoming')}
           >
             Accept Incoming
@@ -290,7 +290,7 @@ export function MergeConflictResolver({
           <Button
             size="sm"
             variant="outline"
-            className="h-7 text-xs text-purple-600 border-purple-600/20 hover:bg-purple-500/10"
+            className="h-7 text-[11px] text-purple-600 border-purple-600/20 hover:bg-purple-500/10"
             onClick={() => updateResolution('both')}
           >
             Accept Both
@@ -299,7 +299,7 @@ export function MergeConflictResolver({
           <Button
             size="sm"
             variant="ghost"
-            className="h-7 text-xs"
+            className="h-7 text-[11px]"
             onClick={resetResolution}
             disabled={!currentConflict.resolution}
           >
@@ -323,12 +323,12 @@ export function MergeConflictResolver({
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <div className="h-3 w-3 rounded-full bg-blue-500" />
-                      <span className="text-sm font-medium">
+                      <span className="text-[13px] font-medium">
                         Current ({currentFile.currentBranch})
                       </span>
                     </div>
                     <div className="p-3 rounded-lg bg-blue-500/5 border border-blue-500/20">
-                      <pre className="text-xs font-mono whitespace-pre-wrap">
+                      <pre className="text-[11px] font-mono whitespace-pre-wrap">
                         {currentConflict.currentContent}
                       </pre>
                     </div>
@@ -338,12 +338,12 @@ export function MergeConflictResolver({
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <div className="h-3 w-3 rounded-full bg-green-500" />
-                      <span className="text-sm font-medium">
+                      <span className="text-[13px] font-medium">
                         Incoming ({currentFile.incomingBranch})
                       </span>
                     </div>
                     <div className="p-3 rounded-lg bg-green-500/5 border border-green-500/20">
-                      <pre className="text-xs font-mono whitespace-pre-wrap">
+                      <pre className="text-[11px] font-mono whitespace-pre-wrap">
                         {currentConflict.incomingContent}
                       </pre>
                     </div>
@@ -354,17 +354,17 @@ export function MergeConflictResolver({
               <TabsContent value="unified" className="mt-0">
                 <div className="space-y-2">
                   <div className="p-3 rounded-lg bg-red-500/5 border border-red-500/20">
-                    <div className="text-xs font-mono text-red-600 mb-2">
+                    <div className="text-[11px] font-mono text-red-600 mb-2">
                       {'<<<<<<< '}Current ({currentFile.currentBranch})
                     </div>
-                    <pre className="text-xs font-mono whitespace-pre-wrap mb-2">
+                    <pre className="text-[11px] font-mono whitespace-pre-wrap mb-2">
                       {currentConflict.currentContent}
                     </pre>
-                    <div className="text-xs font-mono text-yellow-600 my-2">=======</div>
-                    <pre className="text-xs font-mono whitespace-pre-wrap mb-2">
+                    <div className="text-[11px] font-mono text-yellow-600 my-2">=======</div>
+                    <pre className="text-[11px] font-mono whitespace-pre-wrap mb-2">
                       {currentConflict.incomingContent}
                     </pre>
-                    <div className="text-xs font-mono text-green-600">
+                    <div className="text-[11px] font-mono text-green-600">
                       {'>>>>>>> '}Incoming ({currentFile.incomingBranch})
                     </div>
                   </div>
@@ -376,11 +376,11 @@ export function MergeConflictResolver({
             {currentConflict.resolution && (
               <div className="mt-4">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium">Resolution Preview</span>
+                  <span className="text-[13px] font-medium">Resolution Preview</span>
                   {getResolutionBadge(currentConflict.resolution)}
                 </div>
                 <div className="p-3 rounded-lg bg-[var(--ecode-orange)]/5 border border-[var(--ecode-orange)]/20">
-                  <pre className="text-xs font-mono whitespace-pre-wrap">
+                  <pre className="text-[11px] font-mono whitespace-pre-wrap">
                     {currentConflict.resolution === 'current' && currentConflict.currentContent}
                     {currentConflict.resolution === 'incoming' && currentConflict.incomingContent}
                     {currentConflict.resolution === 'both' &&
@@ -404,7 +404,7 @@ export function MergeConflictResolver({
           </Button>
 
           <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">
+            <span className="text-[11px] text-muted-foreground">
               {resolvedConflicts}/{totalConflicts} conflicts resolved
             </span>
             <Button

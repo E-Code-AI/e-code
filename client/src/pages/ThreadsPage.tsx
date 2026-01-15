@@ -213,7 +213,7 @@ export default function ThreadsPage() {
       member: { variant: 'secondary', label: 'Member' },
     };
     const config = variants[role] || { variant: 'secondary' as const, label: role };
-    return <Badge variant={config.variant} className="text-xs">{config.label}</Badge>;
+    return <Badge variant={config.variant} className="text-[11px]">{config.label}</Badge>;
   };
 
   const inputClassName = "min-h-[44px] border-border bg-card text-foreground placeholder:text-muted-foreground focus:ring-primary/20 focus:border-primary/40 focus:ring-2 transition-all duration-200";
@@ -318,7 +318,7 @@ export default function ThreadsPage() {
                           data-testid="textarea-thread-content"
                         />
                       </div>
-                      <p className="text-xs text-muted-foreground mt-1">Supports Markdown and code blocks with syntax highlighting</p>
+                      <p className="text-[11px] text-muted-foreground mt-1">Supports Markdown and code blocks with syntax highlighting</p>
                     </div>
                     <div>
                       <Label>Tags</Label>
@@ -345,7 +345,7 @@ export default function ThreadsPage() {
           <div className="lg:col-span-1 space-y-4">
             <Card className={cardClassName} data-testid="card-categories">
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium">Categories</CardTitle>
+                <CardTitle className="text-[13px] font-medium">Categories</CardTitle>
               </CardHeader>
               <CardContent className="space-y-1">
                 {categoriesLoading ? (
@@ -357,7 +357,7 @@ export default function ThreadsPage() {
                 ) : (
                   <>
                     <button
-                      className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-all ${
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-[13px] transition-all ${
                         selectedCategory === 'all' 
                           ? 'bg-primary/10 text-primary' 
                           : 'text-muted-foreground hover:bg-muted hover:text-foreground'
@@ -371,7 +371,7 @@ export default function ThreadsPage() {
                     {categories.map((cat) => (
                       <button
                         key={cat.id}
-                        className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-all ${
+                        className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-[13px] transition-all ${
                           selectedCategory === cat.id 
                             ? 'bg-primary/10 text-primary' 
                             : 'text-muted-foreground hover:bg-muted hover:text-foreground'
@@ -390,7 +390,7 @@ export default function ThreadsPage() {
 
             <Card className={cardClassName} data-testid="card-trending-tags">
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <CardTitle className="text-[13px] font-medium flex items-center gap-2">
                   <TrendingUp className="h-4 w-4" />
                   Trending Tags
                 </CardTitle>
@@ -414,7 +414,7 @@ export default function ThreadsPage() {
 
             <Card className={cardClassName} data-testid="card-top-contributors">
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <CardTitle className="text-[13px] font-medium flex items-center gap-2">
                   <Star className="h-4 w-4" />
                   Top Contributors
                 </CardTitle>
@@ -423,19 +423,19 @@ export default function ThreadsPage() {
                 {threads.length > 0 ? (
                   threads.slice(0, 4).map((thread, i) => (
                     <div key={thread.author.id} className="flex items-center gap-3" data-testid={`contributor-${thread.author.id}`}>
-                      <span className="text-sm text-muted-foreground w-4">{i + 1}</span>
+                      <span className="text-[13px] text-muted-foreground w-4">{i + 1}</span>
                       <Avatar className="h-8 w-8">
                         <AvatarImage src={thread.author.avatarUrl} />
                         <AvatarFallback>{thread.author.displayName?.[0] || thread.author.username?.[0] || '?'}</AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{thread.author.displayName || thread.author.username}</p>
-                        <p className="text-xs text-muted-foreground">{(thread.author.reputation || 0).toLocaleString()} rep</p>
+                        <p className="text-[13px] font-medium truncate">{thread.author.displayName || thread.author.username}</p>
+                        <p className="text-[11px] text-muted-foreground">{(thread.author.reputation || 0).toLocaleString()} rep</p>
                       </div>
                     </div>
                   ))
                 ) : (
-                  <p className="text-sm text-muted-foreground">No contributors yet</p>
+                  <p className="text-[13px] text-muted-foreground">No contributors yet</p>
                 )}
               </CardContent>
             </Card>
@@ -517,7 +517,7 @@ export default function ThreadsPage() {
                           <span className="font-medium">{selectedThread.author.displayName || selectedThread.author.username}</span>
                           {selectedThread.author.role && getRoleBadge(selectedThread.author.role)}
                         </div>
-                        <span className="text-sm text-muted-foreground">
+                        <span className="text-[13px] text-muted-foreground">
                           Posted {formatDistanceToNow(new Date(selectedThread.createdAt), { addSuffix: true })}
                         </span>
                       </div>
@@ -549,11 +549,11 @@ export default function ThreadsPage() {
                           <Heart className={`h-4 w-4 mr-1 ${selectedThread.isLiked ? 'fill-current' : ''}`} />
                           {selectedThread.likes}
                         </Button>
-                        <span className="text-sm text-muted-foreground flex items-center gap-1">
+                        <span className="text-[13px] text-muted-foreground flex items-center gap-1">
                           <Eye className="h-4 w-4" />
                           {selectedThread.views} views
                         </span>
-                        <span className="text-sm text-muted-foreground flex items-center gap-1">
+                        <span className="text-[13px] text-muted-foreground flex items-center gap-1">
                           <MessageCircle className="h-4 w-4" />
                           {selectedThread.comments} comments
                         </span>
@@ -572,7 +572,7 @@ export default function ThreadsPage() {
 
                 <Card className={cardClassName} data-testid="card-replies">
                   <CardHeader>
-                    <CardTitle className="text-lg">{selectedThread.comments} Comments</CardTitle>
+                    <CardTitle className="text-[15px]">{selectedThread.comments} Comments</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     {selectedThread.comments === 0 ? (
@@ -582,7 +582,7 @@ export default function ThreadsPage() {
                       </div>
                     ) : (
                       <div className="text-center py-4 text-muted-foreground">
-                        <p className="text-sm">Comments are loading from the server...</p>
+                        <p className="text-[13px]">Comments are loading from the server...</p>
                       </div>
                     )}
                   </CardContent>
@@ -590,7 +590,7 @@ export default function ThreadsPage() {
 
                 <Card className={cardClassName} data-testid="card-reply-editor">
                   <CardHeader>
-                    <CardTitle className="text-lg">Post a Reply</CardTitle>
+                    <CardTitle className="text-[15px]">Post a Reply</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="border border-border rounded-lg overflow-hidden">
@@ -663,11 +663,11 @@ export default function ThreadsPage() {
                         </Avatar>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap mb-1">
-                            <Badge variant="outline" className="text-xs">{categories.find(c => c.id === thread.category)?.name || thread.category}</Badge>
+                            <Badge variant="outline" className="text-[11px]">{categories.find(c => c.id === thread.category)?.name || thread.category}</Badge>
                           </div>
                           <h3 className="font-medium text-foreground line-clamp-1">{thread.title}</h3>
-                          <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{thread.content?.replace(/```[\s\S]*?```/g, '[code block]') || ''}</p>
-                          <div className="flex items-center gap-4 mt-3 text-sm text-muted-foreground">
+                          <p className="text-[13px] text-muted-foreground line-clamp-2 mt-1">{thread.content?.replace(/```[\s\S]*?```/g, '[code block]') || ''}</p>
+                          <div className="flex items-center gap-4 mt-3 text-[13px] text-muted-foreground">
                             <span className="flex items-center gap-1">
                               <Clock className="h-3 w-3" />
                               {thread.createdAt ? formatDistanceToNow(new Date(thread.createdAt), { addSuffix: true }) : 'recently'}
@@ -701,13 +701,13 @@ export default function ThreadsPage() {
                       {thread.tags.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-3">
                           {thread.tags.slice(0, 4).map((tag) => (
-                            <Badge key={tag} variant="secondary" className="text-xs" data-testid={`thread-${thread.id}-tag-${tag}`}>
+                            <Badge key={tag} variant="secondary" className="text-[11px]" data-testid={`thread-${thread.id}-tag-${tag}`}>
                               <Hash className="h-2 w-2 mr-1" />
                               {tag}
                             </Badge>
                           ))}
                           {thread.tags.length > 4 && (
-                            <Badge variant="secondary" className="text-xs">+{thread.tags.length - 4}</Badge>
+                            <Badge variant="secondary" className="text-[11px]">+{thread.tags.length - 4}</Badge>
                           )}
                         </div>
                       )}
@@ -719,7 +719,7 @@ export default function ThreadsPage() {
                   <Card className={cardClassName} data-testid="card-no-threads">
                     <CardContent className="pt-8 pb-8 text-center">
                       <MessageSquare className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                      <h3 className="text-lg font-medium text-foreground mb-2">No threads found</h3>
+                      <h3 className="text-[15px] font-medium text-foreground mb-2">No threads found</h3>
                       <p className="text-muted-foreground mb-4">
                         {searchQuery ? 'Try adjusting your search query or filters.' : 'Be the first to start a discussion!'}
                       </p>

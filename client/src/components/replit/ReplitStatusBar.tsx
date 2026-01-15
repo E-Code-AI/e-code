@@ -168,7 +168,7 @@ export function ReplitStatusBar({
       variant="ghost"
       size="sm"
       className={cn(
-        "h-6 px-2 text-xs rounded-none hover:bg-[var(--ecode-sidebar-hover)] transition-colors",
+        "h-6 px-2 text-[11px] rounded-none hover:bg-[var(--ecode-sidebar-hover)] transition-colors",
         getStatusColor(item.status)
       )}
       onClick={item.onClick}
@@ -183,7 +183,7 @@ export function ReplitStatusBar({
 
   return (
     <div className={cn(
-      "h-6 bg-[var(--ecode-surface)] border-t border-[var(--ecode-border)] flex items-center justify-between px-1 text-xs",
+      "h-6 bg-[var(--ecode-surface)] border-t border-[var(--ecode-border)] flex items-center justify-between px-1 text-[11px]",
       className
     )}>
       {/* Left side items */}

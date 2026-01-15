@@ -406,10 +406,10 @@ export function ReplitBackups({ projectId }: ReplitBackupsProps) {
                           className="rounded"
                         />
                         <div>
-                          <label htmlFor={item.key} className="text-sm font-medium">
+                          <label htmlFor={item.key} className="text-[13px] font-medium">
                             {item.label}
                           </label>
-                          <p className="text-xs text-muted-foreground">{item.desc}</p>
+                          <p className="text-[11px] text-muted-foreground">{item.desc}</p>
                         </div>
                       </div>
                     ))}
@@ -447,7 +447,7 @@ export function ReplitBackups({ projectId }: ReplitBackupsProps) {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-medium">Automatic Backups</p>
-                  <p className="text-sm text-muted-foreground">Enable scheduled backups</p>
+                  <p className="text-[13px] text-muted-foreground">Enable scheduled backups</p>
                 </div>
                 <input
                   type="checkbox"
@@ -491,7 +491,7 @@ export function ReplitBackups({ projectId }: ReplitBackupsProps) {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-medium">Cloud Storage</p>
-                  <p className="text-sm text-muted-foreground">Store backups in the cloud</p>
+                  <p className="text-[13px] text-muted-foreground">Store backups in the cloud</p>
                 </div>
                 <input
                   type="checkbox"
@@ -535,7 +535,7 @@ export function ReplitBackups({ projectId }: ReplitBackupsProps) {
           ) : backups.length === 0 ? (
             <div className="text-center py-8">
               <FileArchive className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No backups found</h3>
+              <h3 className="text-[15px] font-semibold mb-2">No backups found</h3>
               <p className="text-muted-foreground mb-4">
                 Create your first backup to protect your project
               </p>
@@ -557,22 +557,22 @@ export function ReplitBackups({ projectId }: ReplitBackupsProps) {
                       <div>
                         <div className="flex items-center gap-2 mb-1">
                           <span className="font-medium">{backup.name}</span>
-                          <Badge className={`${getStatusColor(backup.status)} border text-xs`}>
+                          <Badge className={`${getStatusColor(backup.status)} border text-[11px]`}>
                             {getStatusIcon(backup.status)}
                             <span className="ml-1 capitalize">{backup.status.replace('_', ' ')}</span>
                           </Badge>
-                          <Badge className={`${getTypeColor(backup.type)} border text-xs`}>
+                          <Badge className={`${getTypeColor(backup.type)} border text-[11px]`}>
                             {backup.type}
                           </Badge>
                         </div>
                         
                         {backup.description && (
-                          <p className="text-sm text-muted-foreground mb-1">
+                          <p className="text-[13px] text-muted-foreground mb-1">
                             {backup.description}
                           </p>
                         )}
                         
-                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-4 text-[11px] text-muted-foreground">
                           <div className="flex items-center gap-1">
                             <HardDrive className="h-3 w-3" />
                             {formatBytes(backup.size)}
@@ -594,7 +594,7 @@ export function ReplitBackups({ projectId }: ReplitBackupsProps) {
                         <div className="flex items-center gap-2 mt-2">
                           {Object.entries(backup.includes).map(([key, included]) => 
                             included && (
-                              <Badge key={key} variant="outline" className="text-xs">
+                              <Badge key={key} variant="outline" className="text-[11px]">
                                 {key}
                               </Badge>
                             )
@@ -644,7 +644,7 @@ export function ReplitBackups({ projectId }: ReplitBackupsProps) {
                   
                   {backup.status === 'in_progress' && (
                     <div className="mt-3">
-                      <div className="flex justify-between text-sm mb-1">
+                      <div className="flex justify-between text-[13px] mb-1">
                         <span>Creating backup...</span>
                         <span>45%</span>
                       </div>

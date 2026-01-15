@@ -103,14 +103,14 @@ export default function About() {
       <section className="py-12 sm:py-16 md:py-20 px-4 bg-gradient-to-b from-primary/5 to-transparent">
         <div className="container mx-auto max-w-6xl">
           <div className="text-center space-y-5 sm:space-y-7">
-            <Badge variant="secondary" className="mb-2 sm:mb-4 text-xs sm:text-sm">
+            <Badge variant="secondary" className="mb-2 sm:mb-4 text-[11px] sm:text-[13px]">
               <Sparkles className="h-3 w-3 mr-1" />
               Series A raise in progress · Targeting $25M for global launch
             </Badge>
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold">
               Orchestrating the <span className="text-primary">Vibe coding era</span> for global enterprises
             </h1>
-            <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto px-4 sm:px-0">
+            <p className="text-base sm:text-[15px] md:text-xl text-muted-foreground max-w-3xl mx-auto px-4 sm:px-0">
               E-Code partners with the world’s most ambitious engineering, product, and data teams to choreograph
               creation in the cloud. Our Vibe platform blends human craft with adaptive AI so leaders can launch
               resilient software, govern responsibly, and scale talent with confidence.
@@ -146,7 +146,7 @@ export default function About() {
               <h2 className="text-3xl font-bold mb-4">
                 Building the enterprise home for expressive software teams
               </h2>
-              <p className="text-lg text-muted-foreground mb-6">
+              <p className="text-[15px] text-muted-foreground mb-6">
                 Vibe is engineered for leaders who need velocity without compromise. We eliminate friction from
                 discovery to deployment so multidisciplinary teams can ideate, orchestrate, and scale modern
                 applications in one secure operating environment.
@@ -156,7 +156,7 @@ export default function About() {
                   <div className="p-1 bg-green-100 dark:bg-green-900/20 rounded">
                     <Code className="h-4 w-4 text-green-600 dark:text-green-400" />
                   </div>
-                  <p className="text-sm">
+                  <p className="text-[13px]">
                     <strong>Adaptive AI co-creators</strong> accelerate architecture reviews, compliance, and delivery.
                   </p>
                 </div>
@@ -164,7 +164,7 @@ export default function About() {
                   <div className="p-1 bg-blue-100 dark:bg-blue-900/20 rounded">
                     <Users className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                   </div>
-                  <p className="text-sm">
+                  <p className="text-[13px]">
                     <strong>Enterprise-grade governance</strong> unifies audit trails, secrets, and policy automation.
                   </p>
                 </div>
@@ -172,7 +172,7 @@ export default function About() {
                   <div className="p-1 bg-purple-100 dark:bg-purple-900/20 rounded">
                     <Globe className="h-4 w-4 text-purple-600 dark:text-purple-400" />
                   </div>
-                  <p className="text-sm">
+                  <p className="text-[13px]">
                     <strong>Global reach</strong> with sovereign-ready regions and 24/7 multilingual customer success.
                   </p>
                 </div>
@@ -185,22 +185,22 @@ export default function About() {
                   <div className="text-center space-y-6">
                     <div className="text-6xl font-bold text-primary">$25M</div>
                     <p className="text-xl font-semibold">Series A growth capital powering the Vibe platform</p>
-                    <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                    <p className="text-[13px] text-muted-foreground max-w-md mx-auto">
                       The raise accelerates enterprise go-to-market, compliance automation, and sovereign-ready
                       infrastructure investments so customers can scale with confidence.
                     </p>
                     <div className="grid grid-cols-3 gap-4 pt-4">
                       <div>
                         <div className="text-2xl font-bold">2025</div>
-                        <p className="text-sm text-muted-foreground">Global launch</p>
+                        <p className="text-[13px] text-muted-foreground">Global launch</p>
                       </div>
                       <div>
                         <div className="text-2xl font-bold">6</div>
-                        <p className="text-sm text-muted-foreground">Enterprise regions</p>
+                        <p className="text-[13px] text-muted-foreground">Enterprise regions</p>
                       </div>
                       <div>
                         <div className="text-2xl font-bold">80+</div>
-                        <p className="text-sm text-muted-foreground">Strategic partners</p>
+                        <p className="text-[13px] text-muted-foreground">Strategic partners</p>
                       </div>
                     </div>
                   </div>
@@ -215,14 +215,14 @@ export default function About() {
       <section className="py-20 px-4 bg-gradient-to-b from-transparent via-violet-50/10 to-transparent dark:via-violet-950/20">
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-12">
-            <Badge variant="default" className="mb-4 text-sm px-4 py-1">
+            <Badge variant="default" className="mb-4 text-[13px] px-4 py-1">
               <Sparkles className="h-4 w-4 mr-1" />
               The Vibe platform
             </Badge>
             <h2 className="text-4xl font-bold mb-6">
               Where human rhythm meets autonomous software creation
             </h2>
-            <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+            <p className="text-[15px] text-muted-foreground max-w-3xl mx-auto">
               Vibe synchronizes secure environments, collaborative workspaces, and adaptive AI agents so every ship
               cycle feels orchestrated. From regulated industries to global studios, teams compose software with the
               reliability of an enterprise system and the energy of a creative hub.
@@ -318,7 +318,7 @@ export default function About() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{stat.description}</p>
+                  <p className="text-[13px] text-muted-foreground leading-relaxed">{stat.description}</p>
                 </CardContent>
               </Card>
             ))}
@@ -331,7 +331,7 @@ export default function About() {
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-4">Our leadership principles</h2>
-            <p className="text-lg text-muted-foreground">
+            <p className="text-[15px] text-muted-foreground">
               The beliefs that shape every line of code, every partnership, and every promise we make.
             </p>
           </div>
@@ -342,10 +342,10 @@ export default function About() {
                   <div className="p-2 bg-primary/10 rounded-lg w-fit mb-2">
                     {value.icon}
                   </div>
-                  <CardTitle className="text-lg">{value.title}</CardTitle>
+                  <CardTitle className="text-[15px]">{value.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{value.description}</p>
+                  <p className="text-[13px] text-muted-foreground leading-relaxed">{value.description}</p>
                 </CardContent>
               </Card>
             ))}
@@ -358,7 +358,7 @@ export default function About() {
         <div className="container mx-auto max-w-4xl">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-4">Milestones on our climb</h2>
-            <p className="text-lg text-muted-foreground">
+            <p className="text-[15px] text-muted-foreground">
               Strategic moments that shaped Vibe into a trusted platform for enterprise creation.
             </p>
           </div>
@@ -374,7 +374,7 @@ export default function About() {
                   <div className="h-full border-l-2 border-muted pl-8 pb-8">
                     <div className="relative">
                       <div className="absolute -left-[41px] w-4 h-4 bg-primary rounded-full" />
-                      <p className="text-lg leading-relaxed">{milestone.event}</p>
+                      <p className="text-[15px] leading-relaxed">{milestone.event}</p>
                     </div>
                   </div>
                 </div>
@@ -389,7 +389,7 @@ export default function About() {
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-4">Executive leadership</h2>
-            <p className="text-lg text-muted-foreground">
+            <p className="text-[15px] text-muted-foreground">
               Operators, technologists, and designers united by a mission to make expressive building a strategic
               advantage for every enterprise.
             </p>
@@ -403,8 +403,8 @@ export default function About() {
                       {member.avatar}
                     </div>
                     <div>
-                      <h3 className="font-semibold text-lg">{member.name}</h3>
-                      <p className="text-sm text-muted-foreground leading-relaxed">{member.role}</p>
+                      <h3 className="font-semibold text-[15px]">{member.name}</h3>
+                      <p className="text-[13px] text-muted-foreground leading-relaxed">{member.role}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -426,7 +426,7 @@ export default function About() {
           <h2 className="text-3xl font-bold mb-4">
             Set a new rhythm for your builders
           </h2>
-          <p className="text-lg text-muted-foreground mb-8">
+          <p className="text-[15px] text-muted-foreground mb-8">
             Partner with E-Code to orchestrate secure, expressive creation across your organization—from the first
             whiteboard sketch to global deployment.
           </p>

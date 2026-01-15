@@ -71,7 +71,7 @@ export default function MobileAdminDashboard() {
       {/* Mobile Header */}
       <div className="sticky top-0 z-10 bg-zinc-950 border-b border-zinc-800 p-4">
         <h1 className="text-2xl font-bold text-white">Admin Dashboard</h1>
-        <p className="text-sm text-zinc-400 mt-1">E-Code Platform Management</p>
+        <p className="text-[13px] text-zinc-400 mt-1">E-Code Platform Management</p>
       </div>
 
       <div className="p-4 space-y-6">
@@ -101,7 +101,7 @@ export default function MobileAdminDashboard() {
                       <Icon className={`h-4 w-4 ${stat.color}`} />
                     </div>
                     <div className="text-2xl font-bold text-white">{stat.value}</div>
-                    <p className="text-xs text-zinc-500 mt-1">{stat.title}</p>
+                    <p className="text-[11px] text-zinc-500 mt-1">{stat.title}</p>
                   </CardContent>
                 </Card>
               );
@@ -112,12 +112,12 @@ export default function MobileAdminDashboard() {
         {/* AI Provider Health Status - Mobile Optimized */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+            <h2 className="text-[15px] font-semibold text-white flex items-center gap-2">
               <Activity className="h-5 w-5 text-zinc-400" />
               AI Provider Health
             </h2>
             {!isLoadingHealth && (
-              <Badge variant="outline" className="text-xs text-zinc-400 border-zinc-700">
+              <Badge variant="outline" className="text-[11px] text-zinc-400 border-zinc-700">
                 <RefreshCw className="h-3 w-3 mr-1" />
                 Auto-refresh
               </Badge>
@@ -155,11 +155,11 @@ export default function MobileAdminDashboard() {
                           <div className="flex items-center gap-2">
                             <StatusIcon className={`h-5 w-5 ${statusColor} flex-shrink-0`} />
                             <div>
-                              <p className="text-sm font-medium text-white capitalize">
+                              <p className="text-[13px] font-medium text-white capitalize">
                                 {provider.provider}
                               </p>
                               {provider.responseTime !== undefined && (
-                                <p className="text-xs text-zinc-400 mt-0.5">
+                                <p className="text-[11px] text-zinc-400 mt-0.5">
                                   {provider.responseTime}ms
                                 </p>
                               )}
@@ -167,21 +167,21 @@ export default function MobileAdminDashboard() {
                           </div>
                           <Badge 
                             variant="outline" 
-                            className={`text-xs ${statusColor} border-current`}
+                            className={`text-[11px] ${statusColor} border-current`}
                           >
                             {provider.status}
                           </Badge>
                         </div>
                         
                         {provider.error && (
-                          <p className="text-xs text-zinc-400 mt-2 pl-7">
+                          <p className="text-[11px] text-zinc-400 mt-2 pl-7">
                             {provider.error}
                           </p>
                         )}
                         
                         {provider.recommendation && (
                           <div className="mt-2 pl-7">
-                            <p className="text-xs text-yellow-400">
+                            <p className="text-[11px] text-yellow-400">
                               💡 {provider.recommendation}
                             </p>
                           </div>
@@ -201,21 +201,21 @@ export default function MobileAdminDashboard() {
             <CardTitle className="text-base text-white">System Status</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center justify-between text-[13px]">
               <span className="text-zinc-400">Database</span>
               <Badge variant="outline" className="text-green-500 border-green-500/50">
                 <CheckCircle className="h-3 w-3 mr-1" />
                 Connected
               </Badge>
             </div>
-            <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center justify-between text-[13px]">
               <span className="text-zinc-400">API Endpoints</span>
               <Badge variant="outline" className="text-green-500 border-green-500/50">
                 <CheckCircle className="h-3 w-3 mr-1" />
                 Operational
               </Badge>
             </div>
-            <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center justify-between text-[13px]">
               <span className="text-zinc-400">Valid AI Providers</span>
               <Badge variant="outline" className="text-blue-500 border-blue-500/50">
                 {providerHealth?.providers.filter(p => p.status === 'healthy').length || 0}/5
@@ -225,7 +225,7 @@ export default function MobileAdminDashboard() {
         </Card>
 
         {/* Mobile-Optimized Info */}
-        <div className="text-center text-xs text-zinc-500 pb-4">
+        <div className="text-center text-[11px] text-zinc-500 pb-4">
           <p>Provider health refreshes automatically every 60 seconds</p>
           <p className="mt-1">Pull to refresh or navigate to update stats</p>
         </div>

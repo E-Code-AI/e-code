@@ -180,7 +180,7 @@ export function DeploymentTypes({ projectId, onDeploy }: DeploymentTypesProps) {
     <div className="space-y-6">
       {/* Deployment Type Selection */}
       <div>
-        <h3 className="text-lg font-semibold mb-4">Choose Deployment Type</h3>
+        <h3 className="text-[15px] font-semibold mb-4">Choose Deployment Type</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {deploymentTypes.map((type) => (
             <Card 
@@ -197,30 +197,30 @@ export function DeploymentTypes({ projectId, onDeploy }: DeploymentTypesProps) {
                   </div>
                   <div>
                     <CardTitle className="text-base">{type.name}</CardTitle>
-                    <Badge variant="secondary" className="text-xs">
+                    <Badge variant="secondary" className="text-[11px]">
                       {type.pricing}
                     </Badge>
                   </div>
                 </div>
-                <CardDescription className="text-sm">
+                <CardDescription className="text-[13px]">
                   {type.description}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
                   <div>
-                    <p className="text-xs font-medium text-muted-foreground mb-1">Features:</p>
+                    <p className="text-[11px] font-medium text-muted-foreground mb-1">Features:</p>
                     <div className="flex flex-wrap gap-1">
                       {type.features.map((feature, i) => (
-                        <Badge key={i} variant="outline" className="text-xs">
+                        <Badge key={i} variant="outline" className="text-[11px]">
                           {feature}
                         </Badge>
                       ))}
                     </div>
                   </div>
                   <div>
-                    <p className="text-xs font-medium text-muted-foreground mb-1">Best for:</p>
-                    <p className="text-xs text-foreground">{type.recommended}</p>
+                    <p className="text-[11px] font-medium text-muted-foreground mb-1">Best for:</p>
+                    <p className="text-[11px] text-foreground">{type.recommended}</p>
                   </div>
                 </div>
               </CardContent>
@@ -232,7 +232,7 @@ export function DeploymentTypes({ projectId, onDeploy }: DeploymentTypesProps) {
       {/* Configuration */}
       {selectedType && (
         <div>
-          <h3 className="text-lg font-semibold mb-4">Deployment Configuration</h3>
+          <h3 className="text-[15px] font-semibold mb-4">Deployment Configuration</h3>
           <Tabs defaultValue="basic" className="space-y-4">
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="basic">Basic</TabsTrigger>
@@ -308,7 +308,7 @@ export function DeploymentTypes({ projectId, onDeploy }: DeploymentTypesProps) {
                             }}
                             className="rounded border border-input"
                           />
-                          <label htmlFor={region.id} className="text-sm flex items-center gap-2">
+                          <label htmlFor={region.id} className="text-[13px] flex items-center gap-2">
                             <span>{region.flag}</span>
                             {region.name}
                           </label>
@@ -341,7 +341,7 @@ export function DeploymentTypes({ projectId, onDeploy }: DeploymentTypesProps) {
                         <Lock className="h-4 w-4" />
                         Enable SSL Certificate
                       </Label>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-[11px] text-muted-foreground">
                         Free Let's Encrypt SSL certificate with automatic renewal
                       </p>
                     </div>
@@ -357,7 +357,7 @@ export function DeploymentTypes({ projectId, onDeploy }: DeploymentTypesProps) {
                       value={config.customDomain || ''}
                       onChange={(e) => setConfig(prev => ({ ...prev, customDomain: e.target.value }))}
                     />
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-[11px] text-muted-foreground">
                       You'll need to configure DNS records to point to your deployment
                     </p>
                   </div>
@@ -366,9 +366,9 @@ export function DeploymentTypes({ projectId, onDeploy }: DeploymentTypesProps) {
                     <div className="p-3 bg-muted rounded-lg">
                       <div className="flex items-center gap-2 mb-2">
                         <CheckCircle className="h-4 w-4 text-green-500" />
-                        <span className="text-sm font-medium">Default E-Code Domain</span>
+                        <span className="text-[13px] font-medium">Default E-Code Domain</span>
                       </div>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-[13px] text-muted-foreground">
                         Your app will be available at: <code>project-{projectId}.e-code.ai</code>
                       </p>
                     </div>
@@ -553,7 +553,7 @@ export function DeploymentTypes({ projectId, onDeploy }: DeploymentTypesProps) {
                             scheduling: { ...prev.scheduling!, cron: e.target.value }
                           }))}
                         />
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-[11px] text-muted-foreground">
                           Example: "0 0 * * *" runs daily at midnight
                         </p>
                       </div>

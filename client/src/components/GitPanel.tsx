@@ -459,8 +459,8 @@ const GitPanel: React.FC<GitPanelProps> = ({ projectId }) => {
         <CardContent className="flex-1 flex flex-col items-center justify-center space-y-6 text-center">
           <div>
             <GitBranch className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-medium mb-2">No Git Repository</h3>
-            <p className="text-sm text-muted-foreground mb-4">
+            <h3 className="text-[15px] font-medium mb-2">No Git Repository</h3>
+            <p className="text-[13px] text-muted-foreground mb-4">
               This project does not have a Git repository yet. Initialize a repository to start tracking changes.
             </p>
             <div className="flex flex-col space-y-4">
@@ -486,7 +486,7 @@ const GitPanel: React.FC<GitPanelProps> = ({ projectId }) => {
                 <div className="absolute inset-0 flex items-center">
                   <span className="w-full border-t border-border" />
                 </div>
-                <div className="relative flex justify-center text-xs uppercase">
+                <div className="relative flex justify-center text-[11px] uppercase">
                   <span className="bg-background px-2 text-muted-foreground">
                     Or Clone Existing
                   </span>
@@ -512,7 +512,7 @@ const GitPanel: React.FC<GitPanelProps> = ({ projectId }) => {
                     )}
                   </Button>
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-[11px] text-muted-foreground">
                   Example: https://github.com/username/repository.git
                 </p>
               </div>
@@ -564,8 +564,8 @@ const GitPanel: React.FC<GitPanelProps> = ({ projectId }) => {
           {((gitStatus?.changes?.staged?.length || 0) === 0 && (gitStatus?.changes?.unstaged?.length || 0) === 0 && (gitStatus?.changes?.untracked?.length || 0) === 0) ? (
             <div className="flex-1 flex flex-col items-center justify-center text-center">
               <Check className="h-12 w-12 text-green-500 mb-2" />
-              <h3 className="text-lg font-medium">No Changes</h3>
-              <p className="text-sm text-muted-foreground">
+              <h3 className="text-[15px] font-medium">No Changes</h3>
+              <p className="text-[13px] text-muted-foreground">
                 Your repository is clean. No changes to commit.
               </p>
             </div>
@@ -574,20 +574,20 @@ const GitPanel: React.FC<GitPanelProps> = ({ projectId }) => {
               {/* Staged Changes */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-sm font-medium">Staged Changes</h3>
-                  <Badge variant="outline" className="text-xs">
+                  <h3 className="text-[13px] font-medium">Staged Changes</h3>
+                  <Badge variant="outline" className="text-[11px]">
                     {gitStatus?.changes?.staged.length || 0} files
                   </Badge>
                 </div>
                 {gitStatus?.changes?.staged.length === 0 ? (
-                  <div className="text-xs text-muted-foreground italic p-2">
+                  <div className="text-[11px] text-muted-foreground italic p-2">
                     No staged changes
                   </div>
                 ) : (
                   <ScrollArea className="h-24 rounded-md border">
                     <div className="p-2 space-y-1">
                       {gitStatus?.changes?.staged.map((file, index) => (
-                        <div key={index} className="flex items-center justify-between text-xs p-1 hover:bg-muted/50 rounded">
+                        <div key={index} className="flex items-center justify-between text-[11px] p-1 hover:bg-muted/50 rounded">
                           <div className="flex items-center">
                             <Badge className={`${getStatusColor(file.status)} mr-2 h-4 w-4 p-0 flex items-center justify-center`}>
                               <span className="sr-only">{getStatusText(file.status)}</span>
@@ -607,16 +607,16 @@ const GitPanel: React.FC<GitPanelProps> = ({ projectId }) => {
               {/* Unstaged Changes */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-sm font-medium">Unstaged Changes</h3>
+                  <h3 className="text-[13px] font-medium">Unstaged Changes</h3>
                   <div className="flex items-center space-x-2">
-                    <Badge variant="outline" className="text-xs">
+                    <Badge variant="outline" className="text-[11px]">
                       {gitStatus?.changes?.unstaged.length || 0} files
                     </Badge>
                     {(gitStatus?.changes?.unstaged?.length || 0) > 0 && (
                       <Button 
                         variant="outline" 
                         size="sm" 
-                        className="h-6 text-xs"
+                        className="h-6 text-[11px]"
                         onClick={handleSelectAllUnstaged}
                       >
                         {gitStatus?.changes?.unstaged.every(file => 
@@ -627,14 +627,14 @@ const GitPanel: React.FC<GitPanelProps> = ({ projectId }) => {
                   </div>
                 </div>
                 {gitStatus?.changes?.unstaged.length === 0 ? (
-                  <div className="text-xs text-muted-foreground italic p-2">
+                  <div className="text-[11px] text-muted-foreground italic p-2">
                     No unstaged changes
                   </div>
                 ) : (
                   <ScrollArea className="h-36 rounded-md border">
                     <div className="p-2 space-y-1">
                       {gitStatus?.changes?.unstaged.map((file, index) => (
-                        <div key={index} className="flex items-center justify-between text-xs p-1 hover:bg-muted/50 rounded">
+                        <div key={index} className="flex items-center justify-between text-[11px] p-1 hover:bg-muted/50 rounded">
                           <div className="flex items-center">
                             <Checkbox 
                               checked={selectedFiles.includes(file.path)}
@@ -665,16 +665,16 @@ const GitPanel: React.FC<GitPanelProps> = ({ projectId }) => {
               {/* Untracked Files */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-sm font-medium">Untracked Files</h3>
+                  <h3 className="text-[13px] font-medium">Untracked Files</h3>
                   <div className="flex items-center space-x-2">
-                    <Badge variant="outline" className="text-xs">
+                    <Badge variant="outline" className="text-[11px]">
                       {gitStatus?.changes?.untracked.length || 0} files
                     </Badge>
                     {(gitStatus?.changes?.untracked?.length || 0) > 0 && (
                       <Button 
                         variant="outline" 
                         size="sm" 
-                        className="h-6 text-xs"
+                        className="h-6 text-[11px]"
                         onClick={handleSelectAllUntracked}
                       >
                         {gitStatus?.changes?.untracked.every(file => 
@@ -685,14 +685,14 @@ const GitPanel: React.FC<GitPanelProps> = ({ projectId }) => {
                   </div>
                 </div>
                 {(gitStatus?.changes?.untracked?.length || 0) === 0 ? (
-                  <div className="text-xs text-muted-foreground italic p-2">
+                  <div className="text-[11px] text-muted-foreground italic p-2">
                     No untracked files
                   </div>
                 ) : (
                   <ScrollArea className="h-24 rounded-md border">
                     <div className="p-2 space-y-1">
                       {gitStatus?.changes?.untracked.map((file, index) => (
-                        <div key={index} className="flex items-center text-xs p-1 hover:bg-muted/50 rounded">
+                        <div key={index} className="flex items-center text-[11px] p-1 hover:bg-muted/50 rounded">
                           <Checkbox 
                             checked={selectedFiles.includes(file)}
                             onCheckedChange={() => toggleFileSelection(file)}
@@ -778,8 +778,8 @@ const GitPanel: React.FC<GitPanelProps> = ({ projectId }) => {
           ) : commitHistory?.length === 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center text-center">
               <GitCommit className="h-12 w-12 text-muted-foreground mb-2" />
-              <h3 className="text-lg font-medium">No Commits Yet</h3>
-              <p className="text-sm text-muted-foreground">
+              <h3 className="text-[15px] font-medium">No Commits Yet</h3>
+              <p className="text-[13px] text-muted-foreground">
                 Make your first commit to start tracking history.
               </p>
             </div>
@@ -793,11 +793,11 @@ const GitPanel: React.FC<GitPanelProps> = ({ projectId }) => {
                         <GitCommit className="mr-2 h-4 w-4 text-primary" />
                         <span className="truncate max-w-[200px]">{commit.message}</span>
                       </div>
-                      <Badge variant="outline" className="font-mono text-xs">
+                      <Badge variant="outline" className="font-mono text-[11px]">
                         {commit.shortHash}
                       </Badge>
                     </div>
-                    <div className="flex text-xs text-muted-foreground">
+                    <div className="flex text-[11px] text-muted-foreground">
                       <span>{commit.author}</span>
                       <span className="mx-2">•</span>
                       <span>{new Date(commit.date).toLocaleString()}</span>
@@ -851,9 +851,9 @@ const GitPanel: React.FC<GitPanelProps> = ({ projectId }) => {
         <TabsContent value="remotes" className="flex-1 flex flex-col space-y-4 p-4">
           <div className="space-y-4">
             <div>
-              <h3 className="text-sm font-medium mb-2">Current Remotes</h3>
+              <h3 className="text-[13px] font-medium mb-2">Current Remotes</h3>
               {!gitStatus?.remotes || gitStatus.remotes.length === 0 ? (
-                <div className="text-sm text-muted-foreground p-2 border rounded-md">
+                <div className="text-[13px] text-muted-foreground p-2 border rounded-md">
                   No remote repositories configured.
                 </div>
               ) : (
@@ -862,7 +862,7 @@ const GitPanel: React.FC<GitPanelProps> = ({ projectId }) => {
                     <li key={index} className="flex items-center justify-between p-2 border rounded-md">
                       <div className="flex items-center">
                         <Github className="mr-2 h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm font-mono">{remote}</span>
+                        <span className="text-[13px] font-mono">{remote}</span>
                       </div>
                       <Badge>origin</Badge>
                     </li>
@@ -874,7 +874,7 @@ const GitPanel: React.FC<GitPanelProps> = ({ projectId }) => {
             <Separator />
             
             <div className="space-y-2">
-              <h3 className="text-sm font-medium">Add Remote Repository</h3>
+              <h3 className="text-[13px] font-medium">Add Remote Repository</h3>
               <div className="space-y-2">
                 <Input 
                   placeholder="Enter remote repository URL"
@@ -899,7 +899,7 @@ const GitPanel: React.FC<GitPanelProps> = ({ projectId }) => {
                     </>
                   )}
                 </Button>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-[11px] text-muted-foreground">
                   Example: https://github.com/username/repository.git
                 </p>
               </div>

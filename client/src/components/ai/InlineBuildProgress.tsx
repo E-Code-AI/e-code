@@ -257,14 +257,14 @@ export function ReplitStatusIndicator({
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           {showEmoji && config.emoji && (
-            <span className={compact ? "text-base" : "text-lg"}>
+            <span className={compact ? "text-base" : "text-[15px]"}>
               {config.emoji}
             </span>
           )}
           <span className={cn(
             "font-medium",
             config.color,
-            compact ? "text-sm" : "text-base"
+            compact ? "text-[13px]" : "text-base"
           )}>
             {message || config.label}
           </span>
@@ -298,7 +298,7 @@ export function ReplitStatusIndicator({
               <p
                 className={cn(
                   "text-muted-foreground mt-0.5",
-                  compact ? "text-xs" : "text-sm"
+                  compact ? "text-[11px]" : "text-[13px]"
                 )}
               >
                 {subMessage}
@@ -373,7 +373,7 @@ export function TaskProgressItem({ name, status, index, isLast }: TaskProgressIt
       {/* Task content */}
       <div className="flex-1 min-w-0 pb-3">
         <p className={cn(
-          "text-sm truncate",
+          "text-[13px] truncate",
           status === 'completed' && "text-muted-foreground line-through",
           status === 'in_progress' && "text-foreground font-medium",
           status === 'pending' && "text-muted-foreground",
@@ -409,7 +409,7 @@ export function TaskProgressItem({ name, status, index, isLast }: TaskProgressIt
                 ))
               )}
             </div>
-            <span className="text-xs text-muted-foreground">In progress</span>
+            <span className="text-[11px] text-muted-foreground">In progress</span>
           </LazyMotionDiv>
         )}
       </div>
@@ -453,7 +453,7 @@ export function InlineSearchIndicator({ query }: InlineSearchIndicatorProps) {
     <LazyMotionDiv 
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="flex items-center gap-2 text-sm text-muted-foreground py-1"
+      className="flex items-center gap-2 text-[13px] text-muted-foreground py-1"
     >
       <Search className="h-4 w-4" />
       <span>Searched Replit's integrations for "{query}"</span>
@@ -470,7 +470,7 @@ export function InlineAppType({ appType }: InlineAppTypeProps) {
     <LazyMotionDiv 
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="flex items-center gap-2 text-sm py-1"
+      className="flex items-center gap-2 text-[13px] py-1"
     >
       <span className="text-muted-foreground">App type</span>
       <span className="text-muted-foreground">○</span>
@@ -562,9 +562,9 @@ export function InlinePlanCard({
       >
         <div className="flex items-center gap-2">
           <Sparkles className="h-4 w-4 text-blue-500" />
-          <span className="text-sm font-medium">{title}</span>
+          <span className="text-[13px] font-medium">{title}</span>
           {features.length > 0 && (
-            <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+            <span className="text-[11px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
               {features.length} features
             </span>
           )}
@@ -592,18 +592,18 @@ export function InlinePlanCard({
                       data-testid={`plan-phase-${phase.number}`}
                     >
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/50 px-1.5 py-0.5 rounded">
+                        <span className="text-[11px] font-semibold text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/50 px-1.5 py-0.5 rounded">
                           Phase {phase.number}
                         </span>
-                        <span className="text-sm font-medium">{phase.title}</span>
+                        <span className="text-[13px] font-medium">{phase.title}</span>
                       </div>
                       {phase.description && (
-                        <p className="text-xs text-muted-foreground mb-1.5">{phase.description}</p>
+                        <p className="text-[11px] text-muted-foreground mb-1.5">{phase.description}</p>
                       )}
                       {phase.tasks && phase.tasks.length > 0 && (
                         <ul className="space-y-1 ml-2">
                           {phase.tasks.map((task, j) => (
-                            <li key={j} className="flex items-start gap-1.5 text-xs text-muted-foreground">
+                            <li key={j} className="flex items-start gap-1.5 text-[11px] text-muted-foreground">
                               <span className="mt-1">○</span>
                               <span>{task}</span>
                             </li>
@@ -621,7 +621,7 @@ export function InlinePlanCard({
                       initial={shouldAnimate ? { opacity: 0, x: -10 } : { opacity: 1 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: i * 0.05 }}
-                      className="flex items-start gap-2 text-sm"
+                      className="flex items-start gap-2 text-[13px]"
                     >
                       <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
                       <span>{feature}</span>
@@ -633,7 +633,7 @@ export function InlinePlanCard({
               {planText && (
                 <div className="pt-2 border-t border-blue-200 dark:border-blue-800">
                   <button
-                    className="text-xs text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                    className="text-[11px] text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
                     onClick={(e) => {
                       e.stopPropagation();
                       setShowFullPlan(!showFullPlan);
@@ -648,7 +648,7 @@ export function InlinePlanCard({
                     <div>
                       {showFullPlan && (
                         <div
-                          className="mt-2 p-2 bg-muted/50 rounded text-xs font-mono whitespace-pre-wrap overflow-x-auto max-h-60 overflow-y-auto"
+                          className="mt-2 p-2 bg-muted/50 rounded text-[11px] font-mono whitespace-pre-wrap overflow-x-auto max-h-60 overflow-y-auto"
                           data-testid="full-plan-text"
                         >
                           {planText}
@@ -663,7 +663,7 @@ export function InlinePlanCard({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="mt-2 text-xs text-muted-foreground hover:text-foreground gap-1"
+                  className="mt-2 text-[11px] text-muted-foreground hover:text-foreground gap-1"
                   onClick={(e) => {
                     e.stopPropagation();
                     onChangePlan();
@@ -717,8 +717,8 @@ export function InlineBuildOptions({ onSelectMode, disabled, selectedMode }: Inl
       className="border rounded-lg bg-card p-4 my-3 space-y-4"
     >
       <div>
-        <p className="text-sm font-medium">I've created a feature list based on your request. If everything looks good, we can start building.</p>
-        <p className="text-sm text-muted-foreground mt-1">How do you want to continue?</p>
+        <p className="text-[13px] font-medium">I've created a feature list based on your request. If everything looks good, we can start building.</p>
+        <p className="text-[13px] text-muted-foreground mt-1">How do you want to continue?</p>
       </div>
       
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -763,13 +763,13 @@ export function InlineBuildOptions({ onSelectMode, disabled, selectedMode }: Inl
                 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium text-sm">{option.title}</span>
+                    <span className="font-medium text-[13px]">{option.title}</span>
                   </div>
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
+                  <div className="flex items-center gap-1 text-[11px] text-muted-foreground mt-0.5">
                     <Clock className="h-3 w-3" />
                     <span>{option.time}</span>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-2 line-clamp-2">
+                  <p className="text-[11px] text-muted-foreground mt-2 line-clamp-2">
                     {option.description}
                   </p>
                 </div>
@@ -790,11 +790,11 @@ export function InlineBuildOptions({ onSelectMode, disabled, selectedMode }: Inl
         <Sparkles className="h-4 w-4" />
       </Button>
       
-      <div className="flex items-center justify-between text-xs text-muted-foreground">
-        <Button variant="ghost" size="sm" className="text-xs h-7" data-testid="button-edit-plan">
+      <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+        <Button variant="ghost" size="sm" className="text-[11px] h-7" data-testid="button-edit-plan">
           Edit plan
         </Button>
-        <Button variant="ghost" size="sm" className="text-xs h-7 gap-1" data-testid="button-agent-tools">
+        <Button variant="ghost" size="sm" className="text-[11px] h-7 gap-1" data-testid="button-agent-tools">
           <Code className="h-3 w-3" />
           Agent tools
         </Button>
@@ -901,7 +901,7 @@ export function InlineBuildProgressCard({
       {phase === 'executing' && tasks.length > 0 && (
         <div className="space-y-2">
           <button
-            className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors w-full"
+            className="flex items-center gap-2 text-[11px] text-muted-foreground hover:text-foreground transition-colors w-full"
             onClick={() => setShowTasks(!showTasks)}
             data-testid="toggle-tasks-button"
           >
@@ -956,7 +956,7 @@ export function InlineBuildProgressCard({
           )}
           <div>
             <p className="font-medium text-green-600 dark:text-green-400">Build complete!</p>
-            <p className="text-xs text-muted-foreground">All tasks finished successfully</p>
+            <p className="text-[11px] text-muted-foreground">All tasks finished successfully</p>
           </div>
         </LazyMotionDiv>
       )}
@@ -984,7 +984,7 @@ export function InlineStartBuildingButton({ onClick, timestamp }: InlineStartBui
         Start building
       </Button>
       {timestamp && (
-        <span className="text-xs text-muted-foreground flex items-center gap-1">
+        <span className="text-[11px] text-muted-foreground flex items-center gap-1">
           <Clock className="h-3 w-3" />
           {timestamp}
         </span>
@@ -1012,7 +1012,7 @@ export function InlineCompleteIndicator({ message = 'Build complete!', projectUr
         </div>
         <div className="flex-1">
           <p className="font-medium text-green-700 dark:text-green-300">{message}</p>
-          <p className="text-sm text-muted-foreground mt-0.5">Your workspace is ready to use</p>
+          <p className="text-[13px] text-muted-foreground mt-0.5">Your workspace is ready to use</p>
         </div>
       </div>
       {projectUrl && (
@@ -1057,7 +1057,7 @@ export function InlineErrorIndicator({ message, details, onRetry }: InlineErrorI
             <>
               <button 
                 onClick={() => setShowDetails(!showDetails)}
-                className="text-xs text-muted-foreground mt-1 flex items-center gap-1 hover:text-foreground"
+                className="text-[11px] text-muted-foreground mt-1 flex items-center gap-1 hover:text-foreground"
               >
                 {showDetails ? 'Hide' : 'Show'} details
                 {showDetails ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
@@ -1065,7 +1065,7 @@ export function InlineErrorIndicator({ message, details, onRetry }: InlineErrorI
               <div className={cn("collapsible-content", showDetails && "expanded")}>
                 <div>
                   {showDetails && (
-                    <pre className="text-xs bg-red-100/50 dark:bg-red-900/20 p-2 rounded mt-2 overflow-auto max-h-32">
+                    <pre className="text-[11px] bg-red-100/50 dark:bg-red-900/20 p-2 rounded mt-2 overflow-auto max-h-32">
                       {details}
                     </pre>
                   )}
@@ -1186,8 +1186,8 @@ export function InlineFileOperation({
       
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className={cn("text-xs font-medium", config.color)}>{config.label}</span>
-          <code className="text-xs font-mono truncate text-foreground">{fileName}</code>
+          <span className={cn("text-[11px] font-medium", config.color)}>{config.label}</span>
+          <code className="text-[11px] font-mono truncate text-foreground">{fileName}</code>
         </div>
         {dirPath && (
           <p className="text-[10px] text-muted-foreground truncate">{dirPath}</p>
@@ -1314,7 +1314,7 @@ export function InlineTerminalOutput({
         <Terminal className="h-3.5 w-3.5 text-zinc-400" aria-hidden="true" />
       </div>
       
-      <code className="flex-1 text-xs font-mono text-zinc-200 truncate">
+      <code className="flex-1 text-[11px] font-mono text-zinc-200 truncate">
         $ {command}
       </code>
       
@@ -1429,7 +1429,7 @@ export function InlineCodeBlock({ code, language, filename, action }: InlineCode
       <div className="flex items-center justify-between px-3 py-1.5 bg-muted/50 border-b border-border/50">
         <div className="flex items-center gap-2">
           <Code className="h-3.5 w-3.5 text-muted-foreground" />
-          {filename && <code className="text-xs font-mono text-foreground">{filename}</code>}
+          {filename && <code className="text-[11px] font-mono text-foreground">{filename}</code>}
           {language && <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4">{language}</Badge>}
           {action && (
             <span className={cn(
@@ -1482,7 +1482,7 @@ export function InlineThinkingStep({ step, isActive = false, index = 0 }: Inline
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: index * 0.1 }}
       className={cn(
-        "flex items-center gap-2 py-1.5 px-3 rounded-lg text-sm",
+        "flex items-center gap-2 py-1.5 px-3 rounded-lg text-[13px]",
         isActive 
           ? "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300" 
           : "text-muted-foreground"
@@ -1546,9 +1546,9 @@ export function InlineAgentAction({
     >
       <Icon className={cn("h-4 w-4 mt-0.5 flex-shrink-0", style.text)} />
       <div className="flex-1 min-w-0">
-        <p className={cn("text-sm font-medium", style.text)}>{action}</p>
+        <p className={cn("text-[13px] font-medium", style.text)}>{action}</p>
         {description && (
-          <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
+          <p className="text-[11px] text-muted-foreground mt-0.5">{description}</p>
         )}
       </div>
     </LazyMotionDiv>
@@ -1587,7 +1587,7 @@ export function InlineDependencyInstall({
         ) : (
           <Package className="h-4 w-4 text-red-500" />
         )}
-        <span className="text-sm font-medium">
+        <span className="text-[13px] font-medium">
           {status === 'installing' ? 'Installing dependencies...' : 
            status === 'success' ? 'Dependencies installed' : 'Installation failed'}
         </span>
@@ -1600,7 +1600,7 @@ export function InlineDependencyInstall({
             initial={shouldAnimate ? { opacity: 0, scale: 0.8 } : { opacity: 1 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: i * 0.05 }}
-            className="text-xs font-mono bg-muted px-2 py-0.5 rounded"
+            className="text-[11px] font-mono bg-muted px-2 py-0.5 rounded"
           >
             {pkg}
           </LazyMotionSpan>
@@ -1682,7 +1682,7 @@ export function InlineProgressTimeline({
     >
       <div className="flex items-center gap-2 px-3 py-2 border-b bg-muted/30">
         <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-        <span className="text-xs font-medium">Progress</span>
+        <span className="text-[11px] font-medium">Progress</span>
         <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 ml-auto">
           {events.length} events
         </Badge>
@@ -1727,7 +1727,7 @@ export function InlineProgressTimeline({
               
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-medium truncate">{event.title}</span>
+                  <span className="text-[11px] font-medium truncate">{event.title}</span>
                   {event.status === 'completed' && (
                     <CheckCircle2 className="h-3 w-3 text-green-500 flex-shrink-0" />
                   )}
@@ -1803,7 +1803,7 @@ export function InlineCheckpoint({
             ) : (
               <Sparkles className="h-3.5 w-3.5 text-purple-500" />
             )}
-            <span className="text-xs font-semibold text-purple-700 dark:text-purple-300">
+            <span className="text-[11px] font-semibold text-purple-700 dark:text-purple-300">
               {checkpointNumber !== undefined && `#${checkpointNumber} · `}
               {title}
             </span>
@@ -1898,7 +1898,7 @@ export function InlineTaskListEnhanced({
       <div className="flex items-center justify-between px-3 py-2 border-b bg-muted/30">
         <div className="flex items-center gap-2">
           <CheckCircle2 className="h-3.5 w-3.5 text-muted-foreground" />
-          <span className="text-xs font-medium">{title}</span>
+          <span className="text-[11px] font-medium">{title}</span>
         </div>
         <div className="flex items-center gap-2">
           {inProgressCount > 0 && (
@@ -1939,7 +1939,7 @@ export function InlineTaskListEnhanced({
             {getTaskIcon(task.status)}
             <div className="flex-1 min-w-0">
               <span className={cn(
-                "text-xs",
+                "text-[11px]",
                 task.status === 'completed' && "text-muted-foreground line-through",
                 task.status === 'error' && "text-red-500"
               )}>
@@ -2004,7 +2004,7 @@ export function InlinePreviewWindow({
             <div className="w-2.5 h-2.5 rounded-full bg-yellow-500" />
             <div className="w-2.5 h-2.5 rounded-full bg-green-500" />
           </div>
-          <span className="text-xs font-medium ml-2">{title}</span>
+          <span className="text-[11px] font-medium ml-2">{title}</span>
           {isLive && (
             <Badge className="text-[10px] px-1.5 py-0 h-4 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 gap-1">
               {shouldAnimate ? (
@@ -2066,7 +2066,7 @@ export function InlinePreviewWindow({
               ) : (
                 <Loader2 className="h-6 w-6 text-muted-foreground" />
               )}
-              <span className="text-xs text-muted-foreground">Loading preview...</span>
+              <span className="text-[11px] text-muted-foreground">Loading preview...</span>
             </div>
           </div>
         ) : previewUrl ? (
@@ -2080,7 +2080,7 @@ export function InlinePreviewWindow({
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="flex flex-col items-center gap-2 text-muted-foreground">
               <Globe className="h-8 w-8" />
-              <span className="text-xs">Preview will appear here</span>
+              <span className="text-[11px]">Preview will appear here</span>
             </div>
           </div>
         )}

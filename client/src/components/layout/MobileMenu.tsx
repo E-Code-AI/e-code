@@ -90,10 +90,10 @@ export function MobileMenu({ onOpenSpotlight }: MobileMenuProps) {
                       {user.username?.[0]?.toUpperCase() || 'U'}
                     </div>
                     <div className="flex-1">
-                      <div className="font-semibold text-sm text-gray-900 dark:text-white">
+                      <div className="font-semibold text-[13px] text-gray-900 dark:text-white">
                         {user.username}
                       </div>
-                      <div className="text-xs text-gray-500 dark:text-zinc-400">
+                      <div className="text-[11px] text-gray-500 dark:text-zinc-400">
                         {user.email}
                       </div>
                     </div>
@@ -142,14 +142,14 @@ export function MobileMenu({ onOpenSpotlight }: MobileMenuProps) {
 
                 {/* Navigation */}
                 <div>
-                  <h3 className="text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wider mb-3">
+                  <h3 className="text-[11px] font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wider mb-3">
                     Navigation
                   </h3>
                   <div className="space-y-1">
                     {navigationLinks.map((link) => (
                       <button
                         key={link.path}
-                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
+                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-[13px] transition-colors ${
                           location === link.path
                             ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
                             : 'text-gray-700 dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-800'
@@ -167,14 +167,14 @@ export function MobileMenu({ onOpenSpotlight }: MobileMenuProps) {
 
                 {/* Tools */}
                 <div>
-                  <h3 className="text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wider mb-3">
+                  <h3 className="text-[11px] font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wider mb-3">
                     Tools
                   </h3>
                   <div className="space-y-1">
                     {toolsLinks.map((link) => (
                       <button
                         key={link.path}
-                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
+                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-[13px] transition-colors ${
                           location === link.path
                             ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
                             : 'text-gray-700 dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-800'
@@ -192,14 +192,14 @@ export function MobileMenu({ onOpenSpotlight }: MobileMenuProps) {
 
                 {/* Resources */}
                 <div>
-                  <h3 className="text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wider mb-3">
+                  <h3 className="text-[11px] font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wider mb-3">
                     Resources
                   </h3>
                   <div className="space-y-1">
                     {resourceLinks.map((link) => (
                       <button
                         key={link.path}
-                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
+                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-[13px] transition-colors ${
                           location === link.path
                             ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
                             : 'text-gray-700 dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-800'

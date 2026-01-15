@@ -183,7 +183,7 @@ export default function AdminMonitoring() {
             <p className="text-zinc-400 mt-1">E-Code Platform Health & Metrics Dashboard</p>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-xs text-zinc-500 flex items-center gap-1">
+            <span className="text-[11px] text-zinc-500 flex items-center gap-1">
               <Clock className="h-3 w-3" />
               Last refresh: {lastRefresh.toLocaleTimeString()}
             </span>
@@ -211,20 +211,20 @@ export default function AdminMonitoring() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <Card className="bg-zinc-900 border-zinc-800">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-zinc-400 flex items-center gap-2">
+                  <CardTitle className="text-[13px] font-medium text-zinc-400 flex items-center gap-2">
                     <HeartPulse className="h-4 w-4" />
                     System Status
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   {getStatusBadge(healthData?.status || 'unknown')}
-                  <p className="text-xs text-zinc-500 mt-2">{healthData?.service || 'E-Code Platform'}</p>
+                  <p className="text-[11px] text-zinc-500 mt-2">{healthData?.service || 'E-Code Platform'}</p>
                 </CardContent>
               </Card>
 
               <Card className="bg-zinc-900 border-zinc-800">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-zinc-400 flex items-center gap-2">
+                  <CardTitle className="text-[13px] font-medium text-zinc-400 flex items-center gap-2">
                     <Clock className="h-4 w-4" />
                     Uptime
                   </CardTitle>
@@ -233,13 +233,13 @@ export default function AdminMonitoring() {
                   <p className="text-2xl font-bold text-white">
                     {metricsData ? formatUptime(metricsData.uptime) : healthData?.uptime || '--'}
                   </p>
-                  <p className="text-xs text-zinc-500 mt-1">{healthData?.environment || 'development'}</p>
+                  <p className="text-[11px] text-zinc-500 mt-1">{healthData?.environment || 'development'}</p>
                 </CardContent>
               </Card>
 
               <Card className="bg-zinc-900 border-zinc-800">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-zinc-400 flex items-center gap-2">
+                  <CardTitle className="text-[13px] font-medium text-zinc-400 flex items-center gap-2">
                     <HardDrive className="h-4 w-4" />
                     Memory Usage
                   </CardTitle>
@@ -248,7 +248,7 @@ export default function AdminMonitoring() {
                   <p className="text-2xl font-bold text-white">
                     {metricsData ? formatBytes(metricsData.memory.heapUsed) : '--'}
                   </p>
-                  <p className="text-xs text-zinc-500 mt-1">
+                  <p className="text-[11px] text-zinc-500 mt-1">
                     of {metricsData ? formatBytes(metricsData.memory.heapTotal) : '--'} heap
                   </p>
                 </CardContent>
@@ -256,14 +256,14 @@ export default function AdminMonitoring() {
 
               <Card className="bg-zinc-900 border-zinc-800">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-zinc-400 flex items-center gap-2">
+                  <CardTitle className="text-[13px] font-medium text-zinc-400 flex items-center gap-2">
                     <Database className="h-4 w-4" />
                     Database
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   {getStatusBadge(detailedHealth?.database?.status || 'unknown')}
-                  <p className="text-xs text-zinc-500 mt-2">{detailedHealth?.database?.connection || 'checking...'}</p>
+                  <p className="text-[11px] text-zinc-500 mt-2">{detailedHealth?.database?.connection || 'checking...'}</p>
                 </CardContent>
               </Card>
             </div>
@@ -279,22 +279,22 @@ export default function AdminMonitoring() {
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
-                      <h4 className="text-sm font-medium text-zinc-400 mb-2">Memory</h4>
+                      <h4 className="text-[13px] font-medium text-zinc-400 mb-2">Memory</h4>
                       <p className="text-white">Usage: {detailedHealth.system.memory?.usage}</p>
-                      <p className="text-zinc-400 text-sm">Available: {detailedHealth.system.memory?.available}</p>
-                      <p className="text-zinc-400 text-sm">Total: {detailedHealth.system.memory?.total}</p>
+                      <p className="text-zinc-400 text-[13px]">Available: {detailedHealth.system.memory?.available}</p>
+                      <p className="text-zinc-400 text-[13px]">Total: {detailedHealth.system.memory?.total}</p>
                     </div>
                     <div>
-                      <h4 className="text-sm font-medium text-zinc-400 mb-2">CPU</h4>
+                      <h4 className="text-[13px] font-medium text-zinc-400 mb-2">CPU</h4>
                       <p className="text-white">{detailedHealth.system.cpu?.cores} cores</p>
-                      <p className="text-zinc-400 text-sm">{detailedHealth.system.cpu?.model}</p>
-                      <p className="text-zinc-400 text-sm">Load: {detailedHealth.system.cpu?.loadAverage?.join(', ')}</p>
+                      <p className="text-zinc-400 text-[13px]">{detailedHealth.system.cpu?.model}</p>
+                      <p className="text-zinc-400 text-[13px]">Load: {detailedHealth.system.cpu?.loadAverage?.join(', ')}</p>
                     </div>
                     <div>
-                      <h4 className="text-sm font-medium text-zinc-400 mb-2">Platform</h4>
+                      <h4 className="text-[13px] font-medium text-zinc-400 mb-2">Platform</h4>
                       <p className="text-white">{detailedHealth.system.platform?.os} ({detailedHealth.system.platform?.arch})</p>
-                      <p className="text-zinc-400 text-sm">Node.js {detailedHealth.system.platform?.nodeVersion}</p>
-                      <p className="text-zinc-400 text-sm">Uptime: {detailedHealth.system.platform?.uptime}</p>
+                      <p className="text-zinc-400 text-[13px]">Node.js {detailedHealth.system.platform?.nodeVersion}</p>
+                      <p className="text-zinc-400 text-[13px]">Uptime: {detailedHealth.system.platform?.uptime}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -321,8 +321,8 @@ export default function AdminMonitoring() {
                           <Icon className="h-5 w-5 text-zinc-400 mt-1 sm:mt-0" />
                           <div>
                             <p className="font-medium text-white">{endpoint.name}</p>
-                            <p className="text-sm text-zinc-400">{endpoint.description}</p>
-                            <code className="text-xs text-blue-400 mt-1 block">{baseUrl}{endpoint.path}</code>
+                            <p className="text-[13px] text-zinc-400">{endpoint.description}</p>
+                            <code className="text-[11px] text-blue-400 mt-1 block">{baseUrl}{endpoint.path}</code>
                           </div>
                         </div>
                         <Button
@@ -356,7 +356,7 @@ export default function AdminMonitoring() {
                 {metricsData ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-4">
-                      <h4 className="text-sm font-medium text-zinc-400">Memory</h4>
+                      <h4 className="text-[13px] font-medium text-zinc-400">Memory</h4>
                       <div className="space-y-2">
                         <div className="flex justify-between">
                           <span className="text-zinc-400">RSS</span>
@@ -373,7 +373,7 @@ export default function AdminMonitoring() {
                       </div>
                     </div>
                     <div className="space-y-4">
-                      <h4 className="text-sm font-medium text-zinc-400">Requests</h4>
+                      <h4 className="text-[13px] font-medium text-zinc-400">Requests</h4>
                       <div className="space-y-2">
                         <div className="flex justify-between">
                           <span className="text-zinc-400">Total</span>

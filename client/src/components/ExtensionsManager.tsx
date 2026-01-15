@@ -351,7 +351,7 @@ export function ExtensionsManager({ isOpen, onClose, projectId }: ExtensionsMana
                             </div>
                           </CardHeader>
                           
-                          <CardFooter className="py-2 text-xs text-muted-foreground border-t flex justify-between">
+                          <CardFooter className="py-2 text-[11px] text-muted-foreground border-t flex justify-between">
                             <div>
                               {ext.author} • v{ext.version}
                             </div>
@@ -437,7 +437,7 @@ export function ExtensionsManager({ isOpen, onClose, projectId }: ExtensionsMana
                               </div>
                             </div>
                           </CardHeader>
-                          <CardFooter className="py-2 text-xs text-muted-foreground border-t">
+                          <CardFooter className="py-2 text-[11px] text-muted-foreground border-t">
                             <div>
                               {ext.author} • v{ext.version} • {ext.category}
                             </div>

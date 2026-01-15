@@ -507,7 +507,7 @@ export function AllModelsSelector() {
               <div className="grid gap-4">
                 {(Object.entries(groupedModels) as [string, ModelInfo[]][]).map(([provider, models]) => (
                   <div key={provider} className="space-y-2">
-                    <h3 className="text-sm font-semibold flex items-center gap-2">
+                    <h3 className="text-[13px] font-semibold flex items-center gap-2">
                       {getProviderIcon(provider)}
                       {provider}
                     </h3>
@@ -517,8 +517,8 @@ export function AllModelsSelector() {
                           <CardHeader className="pb-3">
                             <div className="flex items-start justify-between">
                               <div className="space-y-1">
-                                <CardTitle className="text-sm">{model.name}</CardTitle>
-                                <CardDescription className="text-xs">
+                                <CardTitle className="text-[13px]">{model.name}</CardTitle>
+                                <CardDescription className="text-[11px]">
                                   {model.description}
                                 </CardDescription>
                               </div>
@@ -532,23 +532,23 @@ export function AllModelsSelector() {
                           <CardContent className="space-y-2">
                             <div className="flex flex-wrap gap-1">
                               {model.capabilities?.slice(0, 3).map((cap: string) => (
-                                <Badge key={cap} variant="secondary" className="text-xs">
+                                <Badge key={cap} variant="secondary" className="text-[11px]">
                                   {cap}
                                 </Badge>
                               ))}
                             </div>
                             {model.tier && (
-                              <Badge className={`${getTierColor(model.tier)} text-white text-xs`}>
+                              <Badge className={`${getTierColor(model.tier)} text-white text-[11px]`}>
                                 {model.tier}
                               </Badge>
                             )}
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
                               <DollarSign className="h-3 w-3" />
                               <span>
                                 ${model.pricing.input}/{model.pricing.output} per {model.pricing.unit}
                               </span>
                             </div>
-                            <div className="text-xs text-muted-foreground">
+                            <div className="text-[11px] text-muted-foreground">
                               Context: {model.contextWindow.toLocaleString()} tokens
                             </div>
                           </CardContent>
@@ -567,8 +567,8 @@ export function AllModelsSelector() {
                   .map((model) => (
                     <Card key={model.id}>
                       <CardHeader>
-                        <CardTitle className="text-sm">{model.name}</CardTitle>
-                        <CardDescription className="text-xs">{model.description}</CardDescription>
+                        <CardTitle className="text-[13px]">{model.name}</CardTitle>
+                        <CardDescription className="text-[11px]">{model.description}</CardDescription>
                       </CardHeader>
                       <CardContent>
                         <Badge variant={model.available ? "default" : "destructive"}>
@@ -587,8 +587,8 @@ export function AllModelsSelector() {
                   .map((model) => (
                     <Card key={model.id}>
                       <CardHeader>
-                        <CardTitle className="text-sm">{model.name}</CardTitle>
-                        <CardDescription className="text-xs">{model.description}</CardDescription>
+                        <CardTitle className="text-[13px]">{model.name}</CardTitle>
+                        <CardDescription className="text-[11px]">{model.description}</CardDescription>
                       </CardHeader>
                       <CardContent>
                         <Badge variant={model.available ? "default" : "destructive"}>
@@ -607,8 +607,8 @@ export function AllModelsSelector() {
                   .map((model) => (
                     <Card key={model.id}>
                       <CardHeader>
-                        <CardTitle className="text-sm">{model.name}</CardTitle>
-                        <CardDescription className="text-xs">
+                        <CardTitle className="text-[13px]">{model.name}</CardTitle>
+                        <CardDescription className="text-[11px]">
                           Provider: {model.provider}
                         </CardDescription>
                       </CardHeader>
@@ -676,23 +676,23 @@ export function AllModelsSelector() {
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <CheckCircle className="h-4 w-4 text-green-500" />
-              <span className="text-sm">OpenAI Models: GPT-5.1, GPT-5, GPT-5 Mini/Nano, GPT-4o, o3, o4-mini</span>
+              <span className="text-[13px]">OpenAI Models: GPT-5.1, GPT-5, GPT-5 Mini/Nano, GPT-4o, o3, o4-mini</span>
             </div>
             <div className="flex items-center gap-2">
               <CheckCircle className="h-4 w-4 text-green-500" />
-              <span className="text-sm">Anthropic Models: Claude Opus 4.5, Claude Sonnet 4.5, Claude Haiku 4.5</span>
+              <span className="text-[13px]">Anthropic Models: Claude Opus 4.5, Claude Sonnet 4.5, Claude Haiku 4.5</span>
             </div>
             <div className="flex items-center gap-2">
               <CheckCircle className="h-4 w-4 text-green-500" />
-              <span className="text-sm">Other Providers: Gemini 2.5 Pro/Flash, Grok 4, Moonshot Kimi K2, Groq</span>
+              <span className="text-[13px]">Other Providers: Gemini 2.5 Pro/Flash, Grok 4, Moonshot Kimi K2, Groq</span>
             </div>
             <div className="flex items-center gap-2">
               <CheckCircle className="h-4 w-4 text-green-500" />
-              <span className="text-sm">MCP Integration: All models available through MCP tools</span>
+              <span className="text-[13px]">MCP Integration: All models available through MCP tools</span>
             </div>
             <div className="flex items-center gap-2">
               <CheckCircle className="h-4 w-4 text-green-500" />
-              <span className="text-sm">Billing System: Token tracking for all models</span>
+              <span className="text-[13px]">Billing System: Token tracking for all models</span>
             </div>
           </div>
         </CardContent>

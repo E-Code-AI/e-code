@@ -218,7 +218,7 @@ export default function Secrets() {
               </div>
               <div>
                 <h1 className="text-xl sm:text-2xl font-bold" data-testid="text-secrets-title">Secrets</h1>
-                <p className="text-sm sm:text-base text-muted-foreground">Manage your secure environment variables</p>
+                <p className="text-[13px] sm:text-base text-muted-foreground">Manage your secure environment variables</p>
               </div>
             </div>
             <Button 
@@ -266,7 +266,7 @@ export default function Secrets() {
                 {filteredSecrets.length === 0 ? (
                   <div className="text-center py-12" data-testid="empty-secrets">
                     <Key className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                    <h3 className="text-lg font-semibold mb-2">No secrets yet</h3>
+                    <h3 className="text-[15px] font-semibold mb-2">No secrets yet</h3>
                     <p className="text-muted-foreground mb-4">
                       {searchQuery ? 'No secrets match your search.' : 'Create your first secret to get started.'}
                     </p>
@@ -288,13 +288,13 @@ export default function Secrets() {
                         <div className="flex flex-col sm:flex-row items-start justify-between mb-2 gap-2">
                           <div className="flex-1 min-w-0">
                             <div className="flex flex-wrap items-center gap-2 mb-1">
-                              <code className="text-xs sm:text-sm font-mono font-semibold break-all" data-testid={`secret-key-${secret.id}`}>{secret.key}</code>
-                              <Badge variant="outline" className="text-xs hidden sm:inline-flex">
+                              <code className="text-[11px] sm:text-[13px] font-mono font-semibold break-all" data-testid={`secret-key-${secret.id}`}>{secret.key}</code>
+                              <Badge variant="outline" className="text-[11px] hidden sm:inline-flex">
                                 Secure
                               </Badge>
                             </div>
                             {secret.description && (
-                              <p className="text-xs sm:text-sm text-muted-foreground">{secret.description}</p>
+                              <p className="text-[11px] sm:text-[13px] text-muted-foreground">{secret.description}</p>
                             )}
                           </div>
                           <div className="flex items-center gap-1 self-end sm:self-start">
@@ -336,11 +336,11 @@ export default function Secrets() {
                             type={showValues[secret.id] ? 'text' : 'password'}
                             value={secret.value}
                             readOnly
-                            className="font-mono text-sm"
+                            className="font-mono text-[13px]"
                             data-testid={`input-secret-value-${secret.id}`}
                           />
                         </div>
-                        <div className="mt-2 text-xs text-muted-foreground">
+                        <div className="mt-2 text-[11px] text-muted-foreground">
                           Last updated: {new Date(secret.updatedAt).toLocaleDateString()}
                         </div>
                       </div>
@@ -362,7 +362,7 @@ export default function Secrets() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="space-y-2 text-sm">
+                <div className="space-y-2 text-[13px]">
                   <p className="text-muted-foreground">
                     Secrets are encrypted environment variables that keep your sensitive data safe.
                   </p>
@@ -387,8 +387,8 @@ export default function Secrets() {
                 </div>
                 <Separator />
                 <div className="space-y-2">
-                  <h4 className="text-sm font-medium">Usage Example</h4>
-                  <pre className="bg-muted p-2 rounded text-xs overflow-x-auto">
+                  <h4 className="text-[13px] font-medium">Usage Example</h4>
+                  <pre className="bg-muted p-2 rounded text-[11px] overflow-x-auto">
                     <code>{`// Node.js
 const apiKey = process.env.API_KEY;
 
@@ -409,7 +409,7 @@ api_key = os.environ.get('API_KEY')`}</code>
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <ul className="space-y-2 text-sm text-muted-foreground">
+                <ul className="space-y-2 text-[13px] text-muted-foreground">
                   <li>• Use uppercase letters with underscores</li>
                   <li>• Never commit secrets to version control</li>
                   <li>• Rotate secrets regularly</li>
@@ -426,14 +426,14 @@ api_key = os.environ.get('API_KEY')`}</code>
       <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
         <DialogContent className="w-[95vw] max-w-lg sm:w-full" data-testid="dialog-create-secret">
           <DialogHeader>
-            <DialogTitle className="text-lg sm:text-xl">Create New Secret</DialogTitle>
-            <DialogDescription className="text-sm">
+            <DialogTitle className="text-[15px] sm:text-xl">Create New Secret</DialogTitle>
+            <DialogDescription className="text-[13px]">
               Add a new secret that will be available as an environment variable in your projects.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="key" className="text-sm sm:text-base">Key</Label>
+              <Label htmlFor="key" className="text-[13px] sm:text-base">Key</Label>
               <Input
                 id="key"
                 placeholder="API_KEY"
@@ -442,12 +442,12 @@ api_key = os.environ.get('API_KEY')`}</code>
                 className="font-mono min-h-[44px] sm:min-h-0"
                 data-testid="input-secret-key"
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-[11px] text-muted-foreground">
                 Use UPPER_CASE with underscores
               </p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="value" className="text-sm sm:text-base">Value</Label>
+              <Label htmlFor="value" className="text-[13px] sm:text-base">Value</Label>
               <Input
                 id="value"
                 type="password"
@@ -459,7 +459,7 @@ api_key = os.environ.get('API_KEY')`}</code>
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="description" className="text-sm sm:text-base">Description (optional)</Label>
+              <Label htmlFor="description" className="text-[13px] sm:text-base">Description (optional)</Label>
               <Input
                 id="description"
                 placeholder="What is this secret used for?"
@@ -485,8 +485,8 @@ api_key = os.environ.get('API_KEY')`}</code>
       <AlertDialog open={!!deleteSecretId} onOpenChange={(open) => !open && setDeleteSecretId(null)}>
         <AlertDialogContent className="w-[95vw] max-w-lg sm:w-full" data-testid="dialog-delete-secret">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-lg sm:text-xl">Delete Secret</AlertDialogTitle>
-            <AlertDialogDescription className="text-sm">
+            <AlertDialogTitle className="text-[15px] sm:text-xl">Delete Secret</AlertDialogTitle>
+            <AlertDialogDescription className="text-[13px]">
               Are you sure you want to delete this secret? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>

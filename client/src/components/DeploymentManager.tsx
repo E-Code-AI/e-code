@@ -466,40 +466,40 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
         <TabsList className="grid w-full grid-cols-2 sm:grid-cols-6 h-12 sm:h-10 rounded-none border-b glassmorphism overflow-x-auto">
           <TabsTrigger 
             value="overview" 
-            className="text-xs sm:text-sm font-medium min-h-[48px] sm:min-h-0 data-[state=active]:bg-primary/10 data-[state=active]:text-primary px-3 sm:px-4"
+            className="text-[11px] sm:text-[13px] font-medium min-h-[48px] sm:min-h-0 data-[state=active]:bg-primary/10 data-[state=active]:text-primary px-3 sm:px-4"
           >
             Overview
           </TabsTrigger>
           <TabsTrigger 
             value="metrics" 
-            className="text-xs sm:text-sm font-medium min-h-[48px] sm:min-h-0 data-[state=active]:bg-primary/10 data-[state=active]:text-primary px-3 sm:px-4"
+            className="text-[11px] sm:text-[13px] font-medium min-h-[48px] sm:min-h-0 data-[state=active]:bg-primary/10 data-[state=active]:text-primary px-3 sm:px-4"
           >
             <Activity className="h-3 w-3 mr-1" />
             Metrics
           </TabsTrigger>
           <TabsTrigger 
             value="autoscaling" 
-            className="text-xs sm:text-sm font-medium min-h-[48px] sm:min-h-0 data-[state=active]:bg-primary/10 data-[state=active]:text-primary px-3 sm:px-4"
+            className="text-[11px] sm:text-[13px] font-medium min-h-[48px] sm:min-h-0 data-[state=active]:bg-primary/10 data-[state=active]:text-primary px-3 sm:px-4"
           >
             <TrendingUp className="h-3 w-3 mr-1" />
             Auto-Scaling
           </TabsTrigger>
           <TabsTrigger 
             value="rollback" 
-            className="text-xs sm:text-sm font-medium min-h-[48px] sm:min-h-0 data-[state=active]:bg-primary/10 data-[state=active]:text-primary px-3 sm:px-4"
+            className="text-[11px] sm:text-[13px] font-medium min-h-[48px] sm:min-h-0 data-[state=active]:bg-primary/10 data-[state=active]:text-primary px-3 sm:px-4"
           >
             <History className="h-3 w-3 mr-1" />
             Rollback
           </TabsTrigger>
           <TabsTrigger 
             value="logs" 
-            className="text-xs sm:text-sm font-medium min-h-[48px] sm:min-h-0 data-[state=active]:bg-primary/10 data-[state=active]:text-primary px-3 sm:px-4"
+            className="text-[11px] sm:text-[13px] font-medium min-h-[48px] sm:min-h-0 data-[state=active]:bg-primary/10 data-[state=active]:text-primary px-3 sm:px-4"
           >
             Logs
           </TabsTrigger>
           <TabsTrigger 
             value="settings" 
-            className="text-xs sm:text-sm font-medium min-h-[48px] sm:min-h-0 data-[state=active]:bg-primary/10 data-[state=active]:text-primary px-3 sm:px-4"
+            className="text-[11px] sm:text-[13px] font-medium min-h-[48px] sm:min-h-0 data-[state=active]:bg-primary/10 data-[state=active]:text-primary px-3 sm:px-4"
           >
             Settings
           </TabsTrigger>
@@ -515,10 +515,10 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
           >
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
               <div>
-                <h4 className="text-sm font-semibold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                <h4 className="text-[13px] font-semibold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
                   Deploy Application
                 </h4>
-                <p className="text-xs text-muted-foreground mt-1">Deploy your application to production environment</p>
+                <p className="text-[11px] text-muted-foreground mt-1">Deploy your application to production environment</p>
               </div>
               <Button
                 size="sm"
@@ -545,13 +545,13 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
           {containerStatus && (
             <div className="p-4 border-b">
               <div className="flex items-center justify-between">
-                <Label className="text-xs">Container Status</Label>
+                <Label className="text-[11px]">Container Status</Label>
                 <Badge variant={containerStatus?.deployment?.ready ? "default" : "secondary"}>
                   {containerStatus?.deployment?.ready ? "Running" : "Stopped"}
                 </Badge>
               </div>
               {containerStatus?.deployment?.availableReplicas !== undefined && (
-                <div className="mt-2 text-xs text-muted-foreground">
+                <div className="mt-2 text-[11px] text-muted-foreground">
                   {containerStatus.deployment.availableReplicas}/{containerStatus.deployment.replicas} replicas active
                 </div>
               )}
@@ -565,7 +565,7 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
             transition={{ delay: 0.2 }}
             className="p-4 border-b"
           >
-            <Label className="text-sm font-semibold mb-3 text-primary">Active Deployments</Label>
+            <Label className="text-[13px] font-semibold mb-3 text-primary">Active Deployments</Label>
             <div className="space-y-3">
               {deployments.length === 0 && !stats ? (
                 // Skeleton Loaders for Deployments
@@ -601,7 +601,7 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
               ) : deployments.length === 0 ? (
                 <Card className="p-8 text-center border-dashed glassmorphism">
                   <Rocket className="h-12 w-12 mx-auto mb-3 text-primary" />
-                  <p className="text-sm text-muted-foreground">No deployments yet. Click deploy to get started!</p>
+                  <p className="text-[13px] text-muted-foreground">No deployments yet. Click deploy to get started!</p>
                 </Card>
               ) : (
                 <LazyAnimatePresence>
@@ -630,15 +630,15 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
                             >
                               {getStatusIcon(deployment.status)}
                             </LazyMotionDiv>
-                            <span className="font-semibold text-sm">Deployment #{deployment.id}</span>
+                            <span className="font-semibold text-[13px]">Deployment #{deployment.id}</span>
                             <Badge 
                               variant="outline" 
-                              className="text-xs bg-gradient-to-r from-primary/10 to-secondary/10"
+                              className="text-[11px] bg-gradient-to-r from-primary/10 to-secondary/10"
                             >
                               v{deployment.version}
                             </Badge>
                           </div>
-                          <div className="flex items-center space-x-4 mt-2 text-xs text-muted-foreground">
+                          <div className="flex items-center space-x-4 mt-2 text-[11px] text-muted-foreground">
                             <span className="flex items-center">
                               <Server className="h-3 w-3 mr-1" />
                               {deployment.status}
@@ -689,12 +689,12 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
               {selectedDeployment && (
                 <div className="p-4 space-y-4">
                   <div>
-                    <h4 className="text-sm font-medium mb-2">Deployment URL</h4>
+                    <h4 className="text-[13px] font-medium mb-2">Deployment URL</h4>
                     <div className="flex items-center space-x-2">
                       <Input
                         value={selectedDeployment.url || 'Not yet available'}
                         readOnly
-                        className="font-mono text-xs"
+                        className="font-mono text-[11px]"
                       />
                       {selectedDeployment.url && (
                         <Button
@@ -717,23 +717,23 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
                   {/* Deployment Stats */}
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label className="text-xs text-muted-foreground">Status</Label>
+                      <Label className="text-[11px] text-muted-foreground">Status</Label>
                       <div className="flex items-center space-x-2 mt-1">
                         <div className={`w-2 h-2 rounded-full ${getStatusColor(selectedDeployment.status)}`} />
-                        <span className="text-sm capitalize">{selectedDeployment.status}</span>
+                        <span className="text-[13px] capitalize">{selectedDeployment.status}</span>
                       </div>
                     </div>
                     <div>
-                      <Label className="text-xs text-muted-foreground">Uptime</Label>
-                      <p className="text-sm font-medium mt-1">{stats?.uptime}%</p>
+                      <Label className="text-[11px] text-muted-foreground">Uptime</Label>
+                      <p className="text-[13px] font-medium mt-1">{stats?.uptime}%</p>
                     </div>
                     <div>
-                      <Label className="text-xs text-muted-foreground">Response Time</Label>
-                      <p className="text-sm font-medium mt-1">{stats?.averageResponseTime}ms</p>
+                      <Label className="text-[11px] text-muted-foreground">Response Time</Label>
+                      <p className="text-[13px] font-medium mt-1">{stats?.averageResponseTime}ms</p>
                     </div>
                     <div>
-                      <Label className="text-xs text-muted-foreground">Error Rate</Label>
-                      <p className="text-sm font-medium mt-1">{stats?.errorRate}%</p>
+                      <Label className="text-[11px] text-muted-foreground">Error Rate</Label>
+                      <p className="text-[13px] font-medium mt-1">{stats?.errorRate}%</p>
                     </div>
                   </div>
                 </div>
@@ -757,13 +757,13 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
                   <div className="p-3 space-y-1">
                     {containerLogs.length > 0 ? (
                       containerLogs.map((log, index) => (
-                        <div key={index} className="font-mono text-xs text-foreground">
+                        <div key={index} className="font-mono text-[11px] text-foreground">
                           {log}
                         </div>
                       ))
                     ) : buildLogs.length > 0 ? (
                       buildLogs.map((log, index) => (
-                        <div key={index} className="flex items-start space-x-2 font-mono text-xs">
+                        <div key={index} className="flex items-start space-x-2 font-mono text-[11px]">
                           <span className="text-muted-foreground">{log.timestamp}</span>
                           <span className={
                             log.level === 'error' ? 'text-red-500' :
@@ -775,7 +775,7 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
                         </div>
                       ))
                     ) : (
-                      <div className="text-xs text-muted-foreground">No logs available</div>
+                      <div className="text-[11px] text-muted-foreground">No logs available</div>
                     )}
                   </div>
                 </ScrollArea>
@@ -802,9 +802,9 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
                       <div key={index} className="flex items-center justify-between p-2 border rounded">
                         <div className="flex items-center space-x-2">
                           {envVar.isSecret ? <Shield className="h-3.5 w-3.5" /> : <Key className="h-3.5 w-3.5" />}
-                          <code className="text-xs">{envVar.key}</code>
+                          <code className="text-[11px]">{envVar.key}</code>
                         </div>
-                        <code className="text-xs text-muted-foreground">
+                        <code className="text-[11px] text-muted-foreground">
                           {envVar.isSecret ? '••••••••' : envVar.value}
                         </code>
                       </div>
@@ -816,7 +816,7 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
                 <div className="flex items-center justify-between">
                   <div>
                     <Label>Auto Scaling</Label>
-                    <p className="text-xs text-muted-foreground">Automatically scale based on traffic</p>
+                    <p className="text-[11px] text-muted-foreground">Automatically scale based on traffic</p>
                   </div>
                   <Switch checked={autoScaling} onCheckedChange={setAutoScaling} />
                 </div>
@@ -943,7 +943,7 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
             <div className="flex items-center justify-between">
               <div>
                 <Label>Auto Scaling</Label>
-                <p className="text-xs text-muted-foreground">Enable automatic scaling</p>
+                <p className="text-[11px] text-muted-foreground">Enable automatic scaling</p>
               </div>
               <Switch checked={autoScaling} onCheckedChange={setAutoScaling} />
             </div>
@@ -992,7 +992,7 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
                 value={newEnvValue}
                 onChange={(e) => setNewEnvValue(e.target.value)}
                 placeholder="Enter value..."
-                className="font-mono text-sm"
+                className="font-mono text-[13px]"
               />
             </div>
             <div className="flex items-center space-x-2">

@@ -341,7 +341,7 @@ export default function PackagesPage() {
                   
                   {installProgress > 0 && (
                     <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
+                      <div className="flex justify-between text-[13px]">
                         <span>Installing package...</span>
                         <span>{installProgress}%</span>
                       </div>
@@ -366,17 +366,17 @@ export default function PackagesPage() {
                               <div className="flex-1">
                                 <div className="flex items-center gap-2">
                                   <h4 className="font-medium">{pkg.name}</h4>
-                                  <Badge variant="outline" className="text-xs">
+                                  <Badge variant="outline" className="text-[11px]">
                                     {pkg.type.toUpperCase()}
                                   </Badge>
-                                  <Badge variant="secondary" className="text-xs">
+                                  <Badge variant="secondary" className="text-[11px]">
                                     v{pkg.version}
                                   </Badge>
                                 </div>
-                                <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                                <p className="text-[13px] text-muted-foreground mt-1 line-clamp-2">
                                   {pkg.description}
                                 </p>
-                                <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                                <div className="flex items-center gap-4 mt-2 text-[11px] text-muted-foreground">
                                   {pkg.downloads && (
                                     <span className="flex items-center gap-1">
                                       <Download className="h-3 w-3" />
@@ -427,7 +427,7 @@ export default function PackagesPage() {
       <div className="grid gap-3 sm:gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
         <Card data-testid="card-stat-total">
           <CardHeader className="pb-2 p-3 sm:p-6 sm:pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium flex items-center gap-1 sm:gap-2">
+            <CardTitle className="text-[11px] sm:text-[13px] font-medium flex items-center gap-1 sm:gap-2">
               <Package className="h-3 w-3 sm:h-4 sm:w-4" />
               <span className="hidden sm:inline">Total Packages</span>
               <span className="sm:hidden">Total</span>
@@ -435,7 +435,7 @@ export default function PackagesPage() {
           </CardHeader>
           <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
             <div className="text-xl sm:text-2xl font-bold">{stats?.total || packages.length}</div>
-            <p className="text-xs text-muted-foreground truncate">
+            <p className="text-[11px] text-muted-foreground truncate">
               {stats?.npm || 0} NPM · {stats?.pip || 0} Pip
             </p>
           </CardContent>
@@ -443,7 +443,7 @@ export default function PackagesPage() {
 
         <Card data-testid="card-stat-npm">
           <CardHeader className="pb-2 p-3 sm:p-6 sm:pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium flex items-center gap-1 sm:gap-2">
+            <CardTitle className="text-[11px] sm:text-[13px] font-medium flex items-center gap-1 sm:gap-2">
               <Terminal className="h-3 w-3 sm:h-4 sm:w-4 text-red-500" />
               <span className="hidden sm:inline">NPM Packages</span>
               <span className="sm:hidden">NPM</span>
@@ -451,13 +451,13 @@ export default function PackagesPage() {
           </CardHeader>
           <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
             <div className="text-xl sm:text-2xl font-bold text-red-500">{stats?.npm || 0}</div>
-            <p className="text-xs text-muted-foreground truncate">JavaScript/TypeScript</p>
+            <p className="text-[11px] text-muted-foreground truncate">JavaScript/TypeScript</p>
           </CardContent>
         </Card>
 
         <Card data-testid="card-stat-pip">
           <CardHeader className="pb-2 p-3 sm:p-6 sm:pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium flex items-center gap-1 sm:gap-2">
+            <CardTitle className="text-[11px] sm:text-[13px] font-medium flex items-center gap-1 sm:gap-2">
               <Code className="h-3 w-3 sm:h-4 sm:w-4 text-blue-500" />
               <span className="hidden sm:inline">Pip Packages</span>
               <span className="sm:hidden">Pip</span>
@@ -465,26 +465,26 @@ export default function PackagesPage() {
           </CardHeader>
           <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
             <div className="text-xl sm:text-2xl font-bold text-blue-500">{stats?.pip || 0}</div>
-            <p className="text-xs text-muted-foreground">Python</p>
+            <p className="text-[11px] text-muted-foreground">Python</p>
           </CardContent>
         </Card>
 
         <Card data-testid="card-stat-outdated">
           <CardHeader className="pb-2 p-3 sm:p-6 sm:pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium flex items-center gap-1 sm:gap-2">
+            <CardTitle className="text-[11px] sm:text-[13px] font-medium flex items-center gap-1 sm:gap-2">
               <ArrowUp className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-500" />
               Outdated
             </CardTitle>
           </CardHeader>
           <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
             <div className="text-xl sm:text-2xl font-bold text-yellow-500">{stats?.outdated || outdatedPackages.length}</div>
-            <p className="text-xs text-muted-foreground truncate">Updates available</p>
+            <p className="text-[11px] text-muted-foreground truncate">Updates available</p>
           </CardContent>
         </Card>
 
         <Card className="col-span-2 sm:col-span-1" data-testid="card-stat-vulnerabilities">
           <CardHeader className="pb-2 p-3 sm:p-6 sm:pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium flex items-center gap-1 sm:gap-2">
+            <CardTitle className="text-[11px] sm:text-[13px] font-medium flex items-center gap-1 sm:gap-2">
               <ShieldAlert className="h-3 w-3 sm:h-4 sm:w-4 text-red-500" />
               <span className="hidden sm:inline">Vulnerabilities</span>
               <span className="sm:hidden">Issues</span>
@@ -492,7 +492,7 @@ export default function PackagesPage() {
           </CardHeader>
           <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
             <div className="text-xl sm:text-2xl font-bold text-red-500">{stats?.vulnerabilities || vulnerablePackages.length}</div>
-            <p className="text-xs text-muted-foreground">Security issues</p>
+            <p className="text-[11px] text-muted-foreground">Security issues</p>
           </CardContent>
         </Card>
       </div>
@@ -536,22 +536,22 @@ export default function PackagesPage() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="installed" className="text-xs sm:text-sm min-h-[44px] sm:min-h-0" data-testid="tab-installed">
+          <TabsTrigger value="installed" className="text-[11px] sm:text-[13px] min-h-[44px] sm:min-h-0" data-testid="tab-installed">
             <span className="hidden sm:inline">Installed</span>
             <span className="sm:hidden">All</span>
             <span className="ml-1">({filteredPackages.length})</span>
           </TabsTrigger>
-          <TabsTrigger value="outdated" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm min-h-[44px] sm:min-h-0" data-testid="tab-outdated">
+          <TabsTrigger value="outdated" className="flex items-center gap-1 sm:gap-2 text-[11px] sm:text-[13px] min-h-[44px] sm:min-h-0" data-testid="tab-outdated">
             Outdated
             {outdatedPackages.length > 0 && (
-              <Badge variant="secondary" className="text-xs">{outdatedPackages.length}</Badge>
+              <Badge variant="secondary" className="text-[11px]">{outdatedPackages.length}</Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="vulnerabilities" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm min-h-[44px] sm:min-h-0" data-testid="tab-vulnerabilities">
+          <TabsTrigger value="vulnerabilities" className="flex items-center gap-1 sm:gap-2 text-[11px] sm:text-[13px] min-h-[44px] sm:min-h-0" data-testid="tab-vulnerabilities">
             <span className="hidden sm:inline">Vulnerabilities</span>
             <span className="sm:hidden">Vuln</span>
             {vulnerablePackages.length > 0 && (
-              <Badge variant="destructive" className="text-xs">{vulnerablePackages.length}</Badge>
+              <Badge variant="destructive" className="text-[11px]">{vulnerablePackages.length}</Badge>
             )}
           </TabsTrigger>
         </TabsList>
@@ -561,7 +561,7 @@ export default function PackagesPage() {
             <Card>
               <CardContent className="text-center py-12">
                 <Package className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-lg font-semibold mb-2">No packages found</h3>
+                <h3 className="text-[15px] font-semibold mb-2">No packages found</h3>
                 <p className="text-muted-foreground mb-4">
                   {searchQuery ? `No packages match "${searchQuery}"` : "Install your first package to get started"}
                 </p>
@@ -605,7 +605,7 @@ export default function PackagesPage() {
                     <CardHeader>
                       <div className="flex items-start justify-between">
                         <div>
-                          <CardTitle className="text-lg flex items-center gap-2">
+                          <CardTitle className="text-[15px] flex items-center gap-2">
                             <Package className="h-4 w-4" />
                             {pkg.name}
                             <Badge variant="outline">{pkg.type.toUpperCase()}</Badge>
@@ -626,7 +626,7 @@ export default function PackagesPage() {
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <div className="flex items-center gap-8 text-sm">
+                      <div className="flex items-center gap-8 text-[13px]">
                         <div>
                           <p className="text-muted-foreground">Current</p>
                           <p className="font-mono font-medium text-yellow-600">{pkg.installedVersion}</p>
@@ -646,7 +646,7 @@ export default function PackagesPage() {
             <Card>
               <CardContent className="text-center py-12">
                 <CheckCircle2 className="h-12 w-12 mx-auto mb-4 text-green-500" />
-                <h3 className="text-lg font-semibold mb-2">All packages are up to date!</h3>
+                <h3 className="text-[15px] font-semibold mb-2">All packages are up to date!</h3>
                 <p className="text-muted-foreground">
                   Your project dependencies are current with the latest versions.
                 </p>
@@ -672,7 +672,7 @@ export default function PackagesPage() {
                     <CardHeader>
                       <div className="flex items-start justify-between">
                         <div>
-                          <CardTitle className="text-lg flex items-center gap-2">
+                          <CardTitle className="text-[15px] flex items-center gap-2">
                             <ShieldAlert className="h-4 w-4 text-red-500" />
                             {pkg.name}
                             <Badge variant="outline">{pkg.type.toUpperCase()}</Badge>
@@ -697,22 +697,22 @@ export default function PackagesPage() {
                       <div className="grid grid-cols-4 gap-4 text-center mb-4">
                         <div className="p-3 rounded-lg bg-red-50 dark:bg-red-950">
                           <p className="text-2xl font-bold text-red-600">{pkg.vulnerabilities?.critical || 0}</p>
-                          <p className="text-xs text-muted-foreground">Critical</p>
+                          <p className="text-[11px] text-muted-foreground">Critical</p>
                         </div>
                         <div className="p-3 rounded-lg bg-orange-50 dark:bg-orange-950">
                           <p className="text-2xl font-bold text-orange-600">{pkg.vulnerabilities?.high || 0}</p>
-                          <p className="text-xs text-muted-foreground">High</p>
+                          <p className="text-[11px] text-muted-foreground">High</p>
                         </div>
                         <div className="p-3 rounded-lg bg-yellow-50 dark:bg-yellow-950">
                           <p className="text-2xl font-bold text-yellow-600">{pkg.vulnerabilities?.medium || 0}</p>
-                          <p className="text-xs text-muted-foreground">Medium</p>
+                          <p className="text-[11px] text-muted-foreground">Medium</p>
                         </div>
                         <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-950">
                           <p className="text-2xl font-bold text-blue-600">{pkg.vulnerabilities?.low || 0}</p>
-                          <p className="text-xs text-muted-foreground">Low</p>
+                          <p className="text-[11px] text-muted-foreground">Low</p>
                         </div>
                       </div>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-[13px] text-muted-foreground">
                         Current: <span className="font-mono text-red-600">{pkg.installedVersion}</span> → 
                         Fixed in: <span className="font-mono text-green-600">{pkg.latestVersion}</span>
                       </p>
@@ -725,7 +725,7 @@ export default function PackagesPage() {
             <Card>
               <CardContent className="text-center py-12">
                 <ShieldCheck className="h-12 w-12 mx-auto mb-4 text-green-500" />
-                <h3 className="text-lg font-semibold mb-2">No vulnerabilities found</h3>
+                <h3 className="text-[15px] font-semibold mb-2">No vulnerabilities found</h3>
                 <p className="text-muted-foreground mb-4">
                   All your packages are secure. Last scan: {stats?.lastScan || 'Never'}
                 </p>
@@ -756,7 +756,7 @@ export default function PackagesPage() {
             </DialogDescription>
           </DialogHeader>
           <ScrollArea className="h-[500px] rounded-lg border bg-muted/50 p-4">
-            <pre className="text-sm font-mono">
+            <pre className="text-[13px] font-mono">
               {lockFile.length > 0 ? JSON.stringify(lockFile, null, 2) : 'No lock file data available'}
             </pre>
           </ScrollArea>
@@ -792,7 +792,7 @@ export default function PackagesPage() {
           </DialogHeader>
           {selectedPackage && (
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="grid grid-cols-2 gap-4 text-[13px]">
                 <div>
                   <p className="text-muted-foreground">Version</p>
                   <p className="font-mono font-medium">{selectedPackage.installedVersion}</p>
@@ -812,7 +812,7 @@ export default function PackagesPage() {
               </div>
               {selectedPackage.keywords && selectedPackage.keywords.length > 0 && (
                 <div>
-                  <p className="text-muted-foreground text-sm mb-2">Keywords</p>
+                  <p className="text-muted-foreground text-[13px] mb-2">Keywords</p>
                   <div className="flex flex-wrap gap-2">
                     {selectedPackage.keywords.map((keyword) => (
                       <Badge key={keyword} variant="secondary">{keyword}</Badge>
@@ -861,17 +861,17 @@ function PackageCard({ pkg, onUpdate, onRemove, onViewDetails, isUpdating, isRem
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <CardTitle className="text-lg flex items-center gap-2">
+            <CardTitle className="text-[15px] flex items-center gap-2">
               <Package className="h-4 w-4" />
               {pkg.name}
-              <Badge variant="outline" className="text-xs">
+              <Badge variant="outline" className="text-[11px]">
                 {pkg.type.toUpperCase()}
               </Badge>
               {pkg.isDev && (
-                <Badge variant="secondary" className="text-xs">DEV</Badge>
+                <Badge variant="secondary" className="text-[11px]">DEV</Badge>
               )}
               {pkg.vulnerabilities && (
-                <Badge variant="destructive" className="text-xs">
+                <Badge variant="destructive" className="text-[11px]">
                   <AlertTriangle className="h-3 w-3 mr-1" />
                   Vulnerable
                 </Badge>
@@ -896,7 +896,7 @@ function PackageCard({ pkg, onUpdate, onRemove, onViewDetails, isUpdating, isRem
         </div>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-[13px]">
           <div>
             <p className="text-muted-foreground">Installed</p>
             <p className="font-mono font-medium">{pkg.installedVersion}</p>
@@ -905,7 +905,7 @@ function PackageCard({ pkg, onUpdate, onRemove, onViewDetails, isUpdating, isRem
             <p className="text-muted-foreground">Latest</p>
             <p className={cn("font-mono font-medium", pkg.hasUpdate && "text-yellow-600")}>
               {pkg.latestVersion}
-              {pkg.hasUpdate && <Badge variant="secondary" className="ml-2 text-xs">Update</Badge>}
+              {pkg.hasUpdate && <Badge variant="secondary" className="ml-2 text-[11px]">Update</Badge>}
             </p>
           </div>
           <div>

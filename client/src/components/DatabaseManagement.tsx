@@ -267,7 +267,7 @@ export function DatabaseManagement({ projectId }: DatabaseManagementProps) {
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-medium">Query Editor</h3>
+          <h3 className="text-[15px] font-medium">Query Editor</h3>
           <div className="flex gap-2">
             <Button
               variant="outline"
@@ -299,7 +299,7 @@ export function DatabaseManagement({ projectId }: DatabaseManagementProps) {
 
         {queryResults && (
           <div className="space-y-2">
-            <div className="flex items-center justify-between text-sm text-muted-foreground">
+            <div className="flex items-center justify-between text-[13px] text-muted-foreground">
               <span>{queryResults.rowCount} rows returned</span>
               <span>Execution time: {queryResults.executionTime}ms</span>
             </div>
@@ -317,7 +317,7 @@ export function DatabaseManagement({ projectId }: DatabaseManagementProps) {
                   {queryResults.rows.map((row, idx) => (
                     <TableRow key={idx}>
                       {queryResults.columns.map((col) => (
-                        <TableCell key={col} className="font-mono text-sm">
+                        <TableCell key={col} className="font-mono text-[13px]">
                           {row[col]?.toString() || 'NULL'}
                         </TableCell>
                       ))}
@@ -400,7 +400,7 @@ export function DatabaseManagement({ projectId }: DatabaseManagementProps) {
                         </Badge>
                         <Badge variant="outline">{db.type}</Badge>
                       </div>
-                      <div className="text-sm text-muted-foreground">
+                      <div className="text-[13px] text-muted-foreground">
                         {db.region} • {db.plan} plan • Created {new Date(db.createdAt).toLocaleDateString()}
                       </div>
                     </div>
@@ -432,33 +432,33 @@ export function DatabaseManagement({ projectId }: DatabaseManagementProps) {
                   
                   <div className="grid grid-cols-4 gap-4 mt-4">
                     <div className="space-y-1">
-                      <div className="text-sm text-muted-foreground">Storage</div>
+                      <div className="text-[13px] text-muted-foreground">Storage</div>
                       <div className="flex items-center gap-2">
                         <Progress value={(db.size / db.maxSize) * 100} className="h-2" />
-                        <span className="text-xs">{db.size}MB / {db.maxSize}MB</span>
+                        <span className="text-[11px]">{db.size}MB / {db.maxSize}MB</span>
                       </div>
                     </div>
                     
                     <div className="space-y-1">
-                      <div className="text-sm text-muted-foreground">Connections</div>
+                      <div className="text-[13px] text-muted-foreground">Connections</div>
                       <div className="font-medium">{db.connections} / {db.maxConnections}</div>
                     </div>
                     
                     <div className="space-y-1">
-                      <div className="text-sm text-muted-foreground">Backups</div>
+                      <div className="text-[13px] text-muted-foreground">Backups</div>
                       <div className="flex items-center gap-1">
                         {db.backupsEnabled ? (
                           <CheckCircle className="w-4 h-4 text-green-600" />
                         ) : (
                           <AlertCircle className="w-4 h-4 text-yellow-600" />
                         )}
-                        <span className="text-sm">{db.backupsEnabled ? 'Enabled' : 'Disabled'}</span>
+                        <span className="text-[13px]">{db.backupsEnabled ? 'Enabled' : 'Disabled'}</span>
                       </div>
                     </div>
                     
                     <div className="space-y-1">
-                      <div className="text-sm text-muted-foreground">Last Backup</div>
-                      <div className="text-sm">
+                      <div className="text-[13px] text-muted-foreground">Last Backup</div>
+                      <div className="text-[13px]">
                         {db.lastBackup ? new Date(db.lastBackup).toLocaleDateString() : 'Never'}
                       </div>
                     </div>
@@ -490,25 +490,25 @@ export function DatabaseManagement({ projectId }: DatabaseManagementProps) {
                 <div className="grid grid-cols-2 gap-4">
                   <Card>
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-sm">Performance</CardTitle>
+                      <CardTitle className="text-[13px]">Performance</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
-                          <span className="text-sm">CPU Usage</span>
-                          <span className="text-sm font-medium">23%</span>
+                          <span className="text-[13px]">CPU Usage</span>
+                          <span className="text-[13px] font-medium">23%</span>
                         </div>
                         <Progress value={23} className="h-2" />
                         
                         <div className="flex items-center justify-between">
-                          <span className="text-sm">Memory Usage</span>
-                          <span className="text-sm font-medium">67%</span>
+                          <span className="text-[13px]">Memory Usage</span>
+                          <span className="text-[13px] font-medium">67%</span>
                         </div>
                         <Progress value={67} className="h-2" />
                         
                         <div className="flex items-center justify-between">
-                          <span className="text-sm">Disk I/O</span>
-                          <span className="text-sm font-medium">45%</span>
+                          <span className="text-[13px]">Disk I/O</span>
+                          <span className="text-[13px] font-medium">45%</span>
                         </div>
                         <Progress value={45} className="h-2" />
                       </div>
@@ -517,10 +517,10 @@ export function DatabaseManagement({ projectId }: DatabaseManagementProps) {
                   
                   <Card>
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-sm">Statistics</CardTitle>
+                      <CardTitle className="text-[13px]">Statistics</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="space-y-2 text-sm">
+                      <div className="space-y-2 text-[13px]">
                         <div className="flex items-center justify-between">
                           <span className="text-muted-foreground">Total Tables</span>
                           <span className="font-medium">{tables.length}</span>
@@ -668,8 +668,8 @@ export function DatabaseManagement({ projectId }: DatabaseManagementProps) {
               <TabsContent value="backups" className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-lg font-medium">Automatic Backups</h3>
-                    <p className="text-sm text-muted-foreground">
+                    <h3 className="text-[15px] font-medium">Automatic Backups</h3>
+                    <p className="text-[13px] text-muted-foreground">
                       Daily backups are performed at 3:00 AM UTC
                     </p>
                   </div>
@@ -681,7 +681,7 @@ export function DatabaseManagement({ projectId }: DatabaseManagementProps) {
                 
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-sm">Backup History</CardTitle>
+                    <CardTitle className="text-[13px]">Backup History</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
@@ -693,10 +693,10 @@ export function DatabaseManagement({ projectId }: DatabaseManagementProps) {
                             <div className="flex items-center gap-3">
                               <CheckCircle className="w-4 h-4 text-green-600" />
                               <div>
-                                <div className="text-sm font-medium">
+                                <div className="text-[13px] font-medium">
                                   Daily Backup
                                 </div>
-                                <div className="text-xs text-muted-foreground">
+                                <div className="text-[11px] text-muted-foreground">
                                   {date.toLocaleDateString()} at 3:00 AM
                                 </div>
                               </div>

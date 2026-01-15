@@ -45,7 +45,7 @@ export function ReplitBreadcrumbs({
   return (
     <div
       className={cn(
-        "h-8 px-3 bg-[var(--ecode-surface)] border-b border-[var(--ecode-border)] flex items-center gap-1 overflow-x-auto text-xs font-[family-name:var(--ecode-font-sans)]",
+        "h-8 px-3 bg-[var(--ecode-surface)] border-b border-[var(--ecode-border)] flex items-center gap-1 overflow-x-auto text-[11px] font-[family-name:var(--ecode-font-sans)]",
         className
       )}
       data-testid="breadcrumbs"
@@ -80,7 +80,7 @@ export function ReplitBreadcrumbs({
               <DropdownMenuContent align="start" className="max-h-64 overflow-y-auto">
                 <DropdownMenuItem
                   onClick={() => onNavigate?.(segment.path)}
-                  className="text-xs"
+                  className="text-[11px]"
                 >
                   <Folder className="h-3.5 w-3.5 mr-2" />
                   {segment.name}

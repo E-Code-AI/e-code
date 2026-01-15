@@ -114,13 +114,13 @@ export default function HelpCenter() {
       <div className="container mx-auto px-4 py-12 sm:py-16 md:py-20" data-testid="page-help-center">
         {/* Hero Section */}
         <div className="text-center max-w-4xl mx-auto mb-12 sm:mb-16">
-          <Badge className="mb-4 px-4 py-1.5 text-sm font-medium bg-gradient-to-r from-indigo-500 to-purple-500 text-white border-0">
+          <Badge className="mb-4 px-4 py-1.5 text-[13px] font-medium bg-gradient-to-r from-indigo-500 to-purple-500 text-white border-0">
             Support
           </Badge>
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400 bg-clip-text text-transparent" data-testid="heading-help-center">
             Help Center
           </h1>
-          <p className="text-lg sm:text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
+          <p className="text-[15px] sm:text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
             Find answers, browse documentation, or get in touch with our support team.
           </p>
 
@@ -132,7 +132,7 @@ export default function HelpCenter() {
               placeholder="Search for help articles, FAQs..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-12 h-14 text-lg"
+              className="pl-12 h-14 text-[15px]"
               data-testid="input-help-search"
             />
           </div>
@@ -144,21 +144,21 @@ export default function HelpCenter() {
             <Card className="p-6 hover:shadow-lg transition-all duration-300 cursor-pointer group text-center">
               <BookOpen className="h-8 w-8 mx-auto mb-3 text-indigo-600 group-hover:scale-110 transition-transform" />
               <h3 className="font-semibold mb-1">Documentation</h3>
-              <p className="text-sm text-muted-foreground">Comprehensive guides & API reference</p>
+              <p className="text-[13px] text-muted-foreground">Comprehensive guides & API reference</p>
             </Card>
           </Link>
           <Link href="/forum">
             <Card className="p-6 hover:shadow-lg transition-all duration-300 cursor-pointer group text-center">
               <MessageCircle className="h-8 w-8 mx-auto mb-3 text-purple-600 group-hover:scale-110 transition-transform" />
               <h3 className="font-semibold mb-1">Community Forum</h3>
-              <p className="text-sm text-muted-foreground">Ask questions & share solutions</p>
+              <p className="text-[13px] text-muted-foreground">Ask questions & share solutions</p>
             </Card>
           </Link>
           <Link href="/contact">
             <Card className="p-6 hover:shadow-lg transition-all duration-300 cursor-pointer group text-center">
               <Mail className="h-8 w-8 mx-auto mb-3 text-pink-600 group-hover:scale-110 transition-transform" />
               <h3 className="font-semibold mb-1">Contact Support</h3>
-              <p className="text-sm text-muted-foreground">Get help from our team</p>
+              <p className="text-[13px] text-muted-foreground">Get help from our team</p>
             </Card>
           </Link>
         </div>
@@ -174,11 +174,11 @@ export default function HelpCenter() {
                     {category.icon}
                   </div>
                 </div>
-                <h3 className="text-lg font-semibold mb-1 group-hover:text-indigo-600 transition-colors">
+                <h3 className="text-[15px] font-semibold mb-1 group-hover:text-indigo-600 transition-colors">
                   {category.title}
                 </h3>
-                <p className="text-sm text-muted-foreground mb-3">{category.description}</p>
-                <div className="flex items-center text-sm text-muted-foreground">
+                <p className="text-[13px] text-muted-foreground mb-3">{category.description}</p>
+                <div className="flex items-center text-[13px] text-muted-foreground">
                   <span>{category.articles} articles</span>
                   <ChevronRight className="h-4 w-4 ml-auto group-hover:translate-x-1 transition-transform" />
                 </div>
@@ -230,7 +230,7 @@ export default function HelpCenter() {
           <div className="text-center">
             <MessageCircle className="h-12 w-12 mx-auto mb-6 opacity-80" />
             <h2 className="text-2xl sm:text-3xl font-bold mb-4">Still Need Help?</h2>
-            <p className="text-lg text-white/90 mb-8">
+            <p className="text-[15px] text-white/90 mb-8">
               Our support team is here to help. We typically respond within a few hours.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">

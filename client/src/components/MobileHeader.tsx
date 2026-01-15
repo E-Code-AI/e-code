@@ -37,7 +37,7 @@ export function MobileHeader() {
         
         <div className="bg-muted rounded-md flex items-center px-2 py-1 w-[70vw]">
           <Search className="h-4 w-4 text-muted-foreground mr-2" />
-          <span className="text-sm text-muted-foreground">Search & run commands</span>
+          <span className="text-[13px] text-muted-foreground">Search & run commands</span>
         </div>
       </div>
       
@@ -58,7 +58,7 @@ export function MobileHeader() {
           ) : (
             <User className="h-4 w-4" />
           )}
-          <span className="absolute -top-1 -right-1 bg-primary text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+          <span className="absolute -top-1 -right-1 bg-primary text-white text-[11px] rounded-full h-4 w-4 flex items-center justify-center">
             {user?.username ? user.username.slice(0, 2).toUpperCase() : user?.email ? user.email.slice(0, 2).toUpperCase() : 'U'}
           </span>
         </Button>
@@ -70,7 +70,7 @@ export function MobileHeader() {
   const renderNavigationHeader = () => (
     <div className="flex items-center justify-between w-full">
       <div className="flex items-center">
-        <span className="font-medium text-sm mx-2">{user?.username || 'User'}</span>
+        <span className="font-medium text-[13px] mx-2">{user?.username || 'User'}</span>
         <Button variant="ghost" size="sm" className="h-6">
           <X className="h-4 w-4 mr-1" />
         </Button>
@@ -119,7 +119,7 @@ export function MobileHeader() {
                 </div>
                 <div>
                   <div className="font-medium">{user?.username || 'User'}</div>
-                  <div className="text-xs text-muted-foreground">{user?.email || 'user@example.com'}</div>
+                  <div className="text-[11px] text-muted-foreground">{user?.email || 'user@example.com'}</div>
                 </div>
               </div>
             </div>

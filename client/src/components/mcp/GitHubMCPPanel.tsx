@@ -221,11 +221,11 @@ export function GitHubMCPPanel({ projectId }: { projectId?: number }) {
                           <div className="flex items-center gap-2 mb-1">
                             <h4 className="font-medium text-[var(--ecode-text)]">{repo.name}</h4>
                             {repo.private && (
-                              <Badge variant="outline" className="text-xs">Private</Badge>
+                              <Badge variant="outline" className="text-[11px]">Private</Badge>
                             )}
                           </div>
-                          <p className="text-sm text-[var(--ecode-muted)] mb-2">{repo.description}</p>
-                          <div className="flex items-center gap-4 text-xs text-[var(--ecode-muted)]">
+                          <p className="text-[13px] text-[var(--ecode-muted)] mb-2">{repo.description}</p>
+                          <div className="flex items-center gap-4 text-[11px] text-[var(--ecode-muted)]">
                             {repo.language && (
                               <span className="flex items-center gap-1">
                                 <div className="w-2 h-2 rounded-full bg-blue-500" />

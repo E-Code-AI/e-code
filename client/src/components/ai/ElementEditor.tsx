@@ -106,7 +106,7 @@ export function ElementEditor({
         data-testid="element-editor-toggle"
       >
         <MousePointer2 className="w-3.5 h-3.5" />
-        <span className="text-xs font-medium">Element Editor</span>
+        <span className="text-[11px] font-medium">Element Editor</span>
       </Button>
 
       {/* Element Editor Panel - shown when element is selected */}
@@ -118,7 +118,7 @@ export function ElementEditor({
                 <MousePointer2 className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
               </div>
               <div>
-                <p className="text-xs font-medium">{selectedElement.tagName}</p>
+                <p className="text-[11px] font-medium">{selectedElement.tagName}</p>
                 <p className="text-[10px] text-muted-foreground truncate max-w-[180px]">
                   {selectedElement.path}
                 </p>
@@ -134,14 +134,14 @@ export function ElementEditor({
           {/* Direct Text Editing */}
           {selectedElement.canEditDirectly && selectedElement.text && (
             <div className="space-y-1.5">
-              <Label className="text-xs flex items-center gap-1.5">
+              <Label className="text-[11px] flex items-center gap-1.5">
                 <Type className="w-3 h-3" />
                 Text content
               </Label>
               <Input
                 value={editedText}
                 onChange={(e) => setEditedText(e.target.value)}
-                className="h-8 text-xs"
+                className="h-8 text-[11px]"
                 placeholder="Edit text..."
                 data-testid="element-text-input"
               />
@@ -150,7 +150,7 @@ export function ElementEditor({
 
           {/* Color Editing */}
           <div className="space-y-2">
-            <Label className="text-xs flex items-center gap-1.5">
+            <Label className="text-[11px] flex items-center gap-1.5">
               <Palette className="w-3 h-3" />
               Colors
             </Label>
@@ -168,7 +168,7 @@ export function ElementEditor({
                       className="w-4 h-4 rounded border"
                       style={{ backgroundColor: currentColor }}
                     />
-                    <span className="text-xs">Text</span>
+                    <span className="text-[11px]">Text</span>
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-48 p-2" align="start">
@@ -197,7 +197,7 @@ export function ElementEditor({
                       <Input
                         value={currentColor}
                         onChange={(e) => handleStyleChange('color', e.target.value)}
-                        className="h-8 text-xs flex-1"
+                        className="h-8 text-[11px] flex-1"
                         placeholder="#000000"
                       />
                     </div>
@@ -218,7 +218,7 @@ export function ElementEditor({
                       className="w-4 h-4 rounded border"
                       style={{ backgroundColor: currentBgColor }}
                     />
-                    <span className="text-xs">Background</span>
+                    <span className="text-[11px]">Background</span>
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-48 p-2" align="start">
@@ -246,7 +246,7 @@ export function ElementEditor({
                       <Input
                         value={currentBgColor}
                         onChange={(e) => handleStyleChange('backgroundColor', e.target.value)}
-                        className="h-8 text-xs flex-1"
+                        className="h-8 text-[11px] flex-1"
                         placeholder="#ffffff"
                       />
                     </div>
@@ -258,7 +258,7 @@ export function ElementEditor({
 
           {/* Text Alignment */}
           <div className="space-y-1.5">
-            <Label className="text-xs">Alignment</Label>
+            <Label className="text-[11px]">Alignment</Label>
             <div className="flex gap-1">
               {[
                 { value: 'left', icon: AlignLeft },
@@ -291,27 +291,27 @@ export function ElementEditor({
           {/* Spacing Controls */}
           <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1">
-              <Label className="text-xs flex items-center gap-1">
+              <Label className="text-[11px] flex items-center gap-1">
                 <Square className="w-3 h-3" />
                 Padding
               </Label>
               <Input
                 value={editedStyles.padding || selectedElement.styles.padding || ''}
                 onChange={(e) => handleStyleChange('padding', e.target.value)}
-                className="h-8 text-xs"
+                className="h-8 text-[11px]"
                 placeholder="0px"
                 data-testid="padding-input"
               />
             </div>
             <div className="space-y-1">
-              <Label className="text-xs flex items-center gap-1">
+              <Label className="text-[11px] flex items-center gap-1">
                 <Move className="w-3 h-3" />
                 Margin
               </Label>
               <Input
                 value={editedStyles.margin || selectedElement.styles.margin || ''}
                 onChange={(e) => handleStyleChange('margin', e.target.value)}
-                className="h-8 text-xs"
+                className="h-8 text-[11px]"
                 placeholder="0px"
                 data-testid="margin-input"
               />

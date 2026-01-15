@@ -638,7 +638,7 @@ export function ReplitMultiplayers({
           </div>
         </div>
         
-        <p className="text-sm text-muted-foreground mb-3">
+        <p className="text-[13px] text-muted-foreground mb-3">
           Add people by username or email
         </p>
         
@@ -650,12 +650,12 @@ export function ReplitMultiplayers({
               value={inviteEmail}
               onChange={(e) => setInviteEmail(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleInvite()}
-              className="flex-1 text-sm h-8 border-border"
+              className="flex-1 text-[13px] h-8 border-border"
               disabled={inviteMutation.isPending}
               data-testid="input-invite-email"
             />
             <Select value={inviteRole} onValueChange={(v: 'editor' | 'viewer') => setInviteRole(v)}>
-              <SelectTrigger className="w-24 h-8 text-xs">
+              <SelectTrigger className="w-24 h-8 text-[11px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -667,7 +667,7 @@ export function ReplitMultiplayers({
               size="sm"
               onClick={handleInvite}
               disabled={inviteMutation.isPending || !inviteEmail.trim()}
-              className="h-8 px-3 bg-primary hover:bg-primary/90 text-primary-foreground text-xs"
+              className="h-8 px-3 bg-primary hover:bg-primary/90 text-primary-foreground text-[11px]"
               data-testid="button-invite"
             >
               {inviteMutation.isPending ? (
@@ -682,15 +682,15 @@ export function ReplitMultiplayers({
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
         <TabsList className="mx-4 mt-2 grid grid-cols-3">
-          <TabsTrigger value="collaborators" className="text-xs gap-1">
+          <TabsTrigger value="collaborators" className="text-[11px] gap-1">
             <Users className="h-3 w-3" />
             People
           </TabsTrigger>
-          <TabsTrigger value="activity" className="text-xs gap-1">
+          <TabsTrigger value="activity" className="text-[11px] gap-1">
             <Activity className="h-3 w-3" />
             Activity
           </TabsTrigger>
-          <TabsTrigger value="invites" className="text-xs gap-1">
+          <TabsTrigger value="invites" className="text-[11px] gap-1">
             <Clock className="h-3 w-3" />
             Pending
             {pendingInvites.length > 0 && (
@@ -705,16 +705,16 @@ export function ReplitMultiplayers({
           {isLoading && projectId && (
             <div className="flex items-center justify-center py-8" data-testid="loading-collaborators">
               <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-              <span className="ml-2 text-sm text-muted-foreground">Loading collaborators...</span>
+              <span className="ml-2 text-[13px] text-muted-foreground">Loading collaborators...</span>
             </div>
           )}
 
           {!isLoading && !projectId && displayCollaborators.length <= 1 && (
             <div className="px-4 py-3 bg-muted border-b border-border">
-              <p className="text-sm font-medium text-foreground" data-testid="text-no-collaborators">
+              <p className="text-[13px] font-medium text-foreground" data-testid="text-no-collaborators">
                 No one else is here
               </p>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-[11px] text-muted-foreground mt-1">
                 Invite teammates to collaborate in real-time
               </p>
             </div>
@@ -738,7 +738,7 @@ export function ReplitMultiplayers({
                     >
                       <AvatarImage src={collaborator.avatarUrl} />
                       <AvatarFallback 
-                        className="text-xs font-medium"
+                        className="text-[11px] font-medium"
                         style={{ backgroundColor: collaborator.cursor?.color ? `${collaborator.cursor.color}20` : undefined }}
                       >
                         {(collaborator.displayName || collaborator.username)?.[0]?.toUpperCase()}
@@ -754,7 +754,7 @@ export function ReplitMultiplayers({
                   
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-foreground truncate" data-testid={`text-username-${collaborator.id}`}>
+                      <span className="text-[13px] font-medium text-foreground truncate" data-testid={`text-username-${collaborator.id}`}>
                         {collaborator.displayName || collaborator.username}
                         {isCurrentUser(collaborator) && ' (You)'}
                       </span>
@@ -763,7 +763,7 @@ export function ReplitMultiplayers({
                         <span className="ml-1">{collaborator.role}</span>
                       </Badge>
                     </div>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
                       {collaborator.currentFile && (
                         <span className="flex items-center gap-1 truncate">
                           <FileCode className="h-3 w-3" />
@@ -854,16 +854,16 @@ export function ReplitMultiplayers({
           <ScrollArea className="h-full">
             <div className="p-2 space-y-1">
               {activityFeed.length === 0 ? (
-                <div className="text-center py-8 text-sm text-muted-foreground">
+                <div className="text-center py-8 text-[13px] text-muted-foreground">
                   <Activity className="h-8 w-8 mx-auto mb-2 opacity-50" />
                   <p>No activity yet</p>
-                  <p className="text-xs">Activity will appear here as people join and edit</p>
+                  <p className="text-[11px]">Activity will appear here as people join and edit</p>
                 </div>
               ) : (
                 activityFeed.map((event) => (
                   <div 
                     key={event.id} 
-                    className="flex items-start gap-2 p-2 rounded hover:bg-muted text-xs"
+                    className="flex items-start gap-2 p-2 rounded hover:bg-muted text-[11px]"
                   >
                     <div className="mt-0.5">
                       {getActivityIcon(event.type)}
@@ -899,10 +899,10 @@ export function ReplitMultiplayers({
           <ScrollArea className="h-full">
             <div className="p-2 space-y-2">
               {pendingInvites.length === 0 ? (
-                <div className="text-center py-8 text-sm text-muted-foreground">
+                <div className="text-center py-8 text-[13px] text-muted-foreground">
                   <Send className="h-8 w-8 mx-auto mb-2 opacity-50" />
                   <p>No pending invites</p>
-                  <p className="text-xs">Invites you send will appear here</p>
+                  <p className="text-[11px]">Invites you send will appear here</p>
                 </div>
               ) : (
                 pendingInvites.map((invite) => (
@@ -912,7 +912,7 @@ export function ReplitMultiplayers({
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium truncate">{invite.email}</span>
+                        <span className="text-[13px] font-medium truncate">{invite.email}</span>
                         <Badge variant="secondary" className={cn("text-[10px]", getRoleBadgeColor(invite.role))}>
                           {invite.role}
                         </Badge>
@@ -957,7 +957,7 @@ export function ReplitMultiplayers({
 
       <div className="p-4 border-t border-border bg-primary/5">
         <div className="flex items-center gap-2 mb-2">
-          <span className="text-sm font-medium text-foreground">
+          <span className="text-[13px] font-medium text-foreground">
             Share collaboration link
           </span>
         </div>
@@ -965,7 +965,7 @@ export function ReplitMultiplayers({
           variant="outline"
           size="sm"
           onClick={handleCopyLink}
-          className="w-full h-8 text-xs border-primary/30 hover:bg-primary/10"
+          className="w-full h-8 text-[11px] border-primary/30 hover:bg-primary/10"
           data-testid="button-copy-invite-link"
         >
           {copiedLink ? (

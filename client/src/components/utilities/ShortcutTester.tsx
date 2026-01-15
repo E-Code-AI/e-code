@@ -58,7 +58,7 @@ export function ShortcutTester() {
       <div className="bg-background/95 backdrop-blur-lg border border-border rounded-full shadow-2xl px-6 py-3 flex items-center gap-3">
         <Zap className="w-4 h-4 text-yellow-500" />
         <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">Shortcut:</span>
+          <span className="text-[13px] text-muted-foreground">Shortcut:</span>
           <Badge variant="outline" className="font-mono">
             {lastShortcut}
           </Badge>

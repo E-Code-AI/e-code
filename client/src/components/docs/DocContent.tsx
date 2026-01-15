@@ -25,7 +25,7 @@ export function DocContent({ docTitle }: DocContentProps) {
 
   const CodeBlock = ({ code, language = 'bash', id }: { code: string; language?: string; id: string }) => (
     <div className="relative">
-      <pre className="bg-muted p-4 rounded-lg overflow-x-auto text-sm">
+      <pre className="bg-muted p-4 rounded-lg overflow-x-auto text-[13px]">
         <code className={`language-${language}`}>{code}</code>
       </pre>
       <Button
@@ -35,7 +35,7 @@ export function DocContent({ docTitle }: DocContentProps) {
         onClick={() => copyToClipboard(code, id)}
       >
         {copiedCode === id ? (
-          <span className="text-xs text-green-600">✓</span>
+          <span className="text-[11px] text-green-600">✓</span>
         ) : (
           <Copy className="h-3 w-3" />
         )}
@@ -64,7 +64,7 @@ export function DocContent({ docTitle }: DocContentProps) {
                 <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-lg flex items-center justify-center mb-3">
                   <Rocket className="h-6 w-6 text-white" />
                 </div>
-                <CardTitle className="text-lg">Quick Start</CardTitle>
+                <CardTitle className="text-[15px]">Quick Start</CardTitle>
                 <CardDescription>
                   Get up and running with E-Code in under 5 minutes
                 </CardDescription>
@@ -81,7 +81,7 @@ export function DocContent({ docTitle }: DocContentProps) {
                 <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-lg flex items-center justify-center mb-3">
                   <Bot className="h-6 w-6 text-white" />
                 </div>
-                <CardTitle className="text-lg">AI Features</CardTitle>
+                <CardTitle className="text-[15px]">AI Features</CardTitle>
                 <CardDescription>
                   Learn how to build with AI agents and intelligent code assistance
                 </CardDescription>
@@ -98,7 +98,7 @@ export function DocContent({ docTitle }: DocContentProps) {
                 <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-500 rounded-lg flex items-center justify-center mb-3">
                   <Globe className="h-6 w-6 text-white" />
                 </div>
-                <CardTitle className="text-lg">Deployments</CardTitle>
+                <CardTitle className="text-[15px]">Deployments</CardTitle>
                 <CardDescription>
                   Deploy your applications globally with one click
                 </CardDescription>
@@ -119,7 +119,7 @@ export function DocContent({ docTitle }: DocContentProps) {
                 <Code className="h-5 w-5 text-orange-600" />
                 <div>
                   <div className="font-medium">Your First Project</div>
-                  <div className="text-sm text-muted-foreground">Create and deploy your first application</div>
+                  <div className="text-[13px] text-muted-foreground">Create and deploy your first application</div>
                 </div>
                 <ChevronRight className="h-4 w-4 ml-auto text-muted-foreground" />
               </div>
@@ -127,7 +127,7 @@ export function DocContent({ docTitle }: DocContentProps) {
                 <Users className="h-5 w-5 text-blue-600" />
                 <div>
                   <div className="font-medium">Multiplayer Collaboration</div>
-                  <div className="text-sm text-muted-foreground">Code together in real-time</div>
+                  <div className="text-[13px] text-muted-foreground">Code together in real-time</div>
                 </div>
                 <ChevronRight className="h-4 w-4 ml-auto text-muted-foreground" />
               </div>
@@ -135,7 +135,7 @@ export function DocContent({ docTitle }: DocContentProps) {
                 <Database className="h-5 w-5 text-green-600" />
                 <div>
                   <div className="font-medium">Database Setup</div>
-                  <div className="text-sm text-muted-foreground">Connect and manage databases</div>
+                  <div className="text-[13px] text-muted-foreground">Connect and manage databases</div>
                 </div>
                 <ChevronRight className="h-4 w-4 ml-auto text-muted-foreground" />
               </div>
@@ -143,7 +143,7 @@ export function DocContent({ docTitle }: DocContentProps) {
                 <Shield className="h-5 w-5 text-purple-600" />
                 <div>
                   <div className="font-medium">Environment Variables</div>
-                  <div className="text-sm text-muted-foreground">Secure configuration management</div>
+                  <div className="text-[13px] text-muted-foreground">Secure configuration management</div>
                 </div>
                 <ChevronRight className="h-4 w-4 ml-auto text-muted-foreground" />
               </div>
@@ -160,7 +160,7 @@ export function DocContent({ docTitle }: DocContentProps) {
               ].map((lang) => (
                 <div key={lang} className="flex items-center gap-2 p-3 rounded-lg border text-center">
                   <Code className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium">{lang}</span>
+                  <span className="text-[13px] font-medium">{lang}</span>
                 </div>
               ))}
             </div>
@@ -194,10 +194,10 @@ export function DocContent({ docTitle }: DocContentProps) {
                   <Card>
                     <CardHeader>
                       <Zap className="h-6 w-6 text-orange-500 mb-2" />
-                      <CardTitle className="text-lg">Instant Setup</CardTitle>
+                      <CardTitle className="text-[15px]">Instant Setup</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-[13px] text-muted-foreground">
                         Start coding immediately without installing anything locally.
                       </p>
                     </CardContent>
@@ -205,10 +205,10 @@ export function DocContent({ docTitle }: DocContentProps) {
                   <Card>
                     <CardHeader>
                       <Users className="h-6 w-6 text-blue-500 mb-2" />
-                      <CardTitle className="text-lg">Real-time Collaboration</CardTitle>
+                      <CardTitle className="text-[15px]">Real-time Collaboration</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-[13px] text-muted-foreground">
                         Code together with your team in real-time, like Google Docs for code.
                       </p>
                     </CardContent>
@@ -324,7 +324,7 @@ console.log('Hello, World!');
                 <p className="text-muted-foreground mb-4">
                   Use the integrated terminal or click the Run button to execute your code.
                 </p>
-                <div className="bg-black text-green-400 p-4 rounded-lg font-mono text-sm">
+                <div className="bg-black text-green-400 p-4 rounded-lg font-mono text-[13px]">
                   <div className="text-gray-500">$ node index.js</div>
                   <div>Hello, World!</div>
                   <div className="text-gray-500">$</div>
@@ -376,7 +376,7 @@ console.log('Hello, World!');
                       <CardTitle>Multi-Model Support</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-[13px] text-muted-foreground">
                         Powered by Claude 4.0, GPT-4, and other leading AI models for optimal results.
                       </p>
                     </CardContent>
@@ -388,7 +388,7 @@ console.log('Hello, World!');
                       <CardTitle>Autonomous Building</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-[13px] text-muted-foreground">
                         Builds complete applications independently, handling all technical decisions.
                       </p>
                     </CardContent>
@@ -400,48 +400,48 @@ console.log('Hello, World!');
                 <h2 className="text-2xl font-semibold mb-4">How to Use the AI Agent</h2>
                 <div className="space-y-4">
                   <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 mt-0.5">
+                    <div className="w-6 h-6 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center text-[13px] font-bold flex-shrink-0 mt-0.5">
                       1
                     </div>
                     <div>
                       <h3 className="font-semibold mb-1">Describe Your App</h3>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-[13px] text-muted-foreground">
                         Tell the AI what you want to build in natural language.
                       </p>
                     </div>
                   </div>
                   
                   <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 mt-0.5">
+                    <div className="w-6 h-6 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center text-[13px] font-bold flex-shrink-0 mt-0.5">
                       2
                     </div>
                     <div>
                       <h3 className="font-semibold mb-1">Review the Plan</h3>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-[13px] text-muted-foreground">
                         The AI will show you what it plans to build and ask for confirmation.
                       </p>
                     </div>
                   </div>
                   
                   <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 mt-0.5">
+                    <div className="w-6 h-6 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center text-[13px] font-bold flex-shrink-0 mt-0.5">
                       3
                     </div>
                     <div>
                       <h3 className="font-semibold mb-1">Watch It Build</h3>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-[13px] text-muted-foreground">
                         The AI will write code, install dependencies, and set up your application.
                       </p>
                     </div>
                   </div>
                   
                   <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 mt-0.5">
+                    <div className="w-6 h-6 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center text-[13px] font-bold flex-shrink-0 mt-0.5">
                       4
                     </div>
                     <div>
                       <h3 className="font-semibold mb-1">Deploy Instantly</h3>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-[13px] text-muted-foreground">
                         Your app is automatically deployed and ready to use.
                       </p>
                     </div>
@@ -453,20 +453,20 @@ console.log('Hello, World!');
                 <h2 className="text-2xl font-semibold mb-4">Example Prompts</h2>
                 <div className="space-y-3">
                   <div className="p-4 bg-muted rounded-lg">
-                    <p className="text-sm font-medium mb-1">Web Application</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-[13px] font-medium mb-1">Web Application</p>
+                    <p className="text-[13px] text-muted-foreground">
                       "Build a task management app with user authentication, real-time updates, and a dashboard"
                     </p>
                   </div>
                   <div className="p-4 bg-muted rounded-lg">
-                    <p className="text-sm font-medium mb-1">API Service</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-[13px] font-medium mb-1">API Service</p>
+                    <p className="text-[13px] text-muted-foreground">
                       "Create a REST API for a blog with CRUD operations, authentication, and PostgreSQL database"
                     </p>
                   </div>
                   <div className="p-4 bg-muted rounded-lg">
-                    <p className="text-sm font-medium mb-1">Data Analysis</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-[13px] font-medium mb-1">Data Analysis</p>
+                    <p className="text-[13px] text-muted-foreground">
                       "Build a data visualization dashboard that analyzes CSV files and creates interactive charts"
                     </p>
                   </div>
@@ -496,7 +496,7 @@ console.log('Hello, World!');
                       <CardTitle>Live Cursors</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-[13px] text-muted-foreground">
                         See exactly where your teammates are working with live cursor positions and selections.
                       </p>
                     </CardContent>
@@ -508,7 +508,7 @@ console.log('Hello, World!');
                       <CardTitle>Shared Terminal</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-[13px] text-muted-foreground">
                         Run commands together in a shared terminal environment with synchronized output.
                       </p>
                     </CardContent>
@@ -520,36 +520,36 @@ console.log('Hello, World!');
                 <h2 className="text-2xl font-semibold mb-4">How to Collaborate</h2>
                 <div className="space-y-4">
                   <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 mt-0.5">
+                    <div className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-[13px] font-bold flex-shrink-0 mt-0.5">
                       1
                     </div>
                     <div>
                       <h3 className="font-semibold mb-1">Share Your Project</h3>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-[13px] text-muted-foreground">
                         Click the "Share" button and invite teammates via email or link.
                       </p>
                     </div>
                   </div>
                   
                   <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 mt-0.5">
+                    <div className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-[13px] font-bold flex-shrink-0 mt-0.5">
                       2
                     </div>
                     <div>
                       <h3 className="font-semibold mb-1">Set Permissions</h3>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-[13px] text-muted-foreground">
                         Control who can view, edit, or admin your project.
                       </p>
                     </div>
                   </div>
                   
                   <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 mt-0.5">
+                    <div className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-[13px] font-bold flex-shrink-0 mt-0.5">
                       3
                     </div>
                     <div>
                       <h3 className="font-semibold mb-1">Code Together</h3>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-[13px] text-muted-foreground">
                         Start coding together with real-time synchronization.
                       </p>
                     </div>

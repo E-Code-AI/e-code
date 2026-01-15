@@ -246,7 +246,7 @@ export function PackagesPanel({ projectId, language = 'nodejs', className }: Pac
         data-testid="packages-panel-no-project"
       >
         <Package className="w-12 h-12 mb-4 text-muted-foreground opacity-40" />
-        <p className="text-sm text-muted-foreground">Select a project to manage packages</p>
+        <p className="text-[13px] text-muted-foreground">Select a project to manage packages</p>
       </div>
     );
   }
@@ -260,13 +260,13 @@ export function PackagesPanel({ projectId, language = 'nodejs', className }: Pac
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
           <div className="flex items-center gap-2">
             <Package className="w-5 h-5 text-muted-foreground" />
-            <h3 className="text-base sm:text-lg font-semibold" data-testid="text-packages-title">
+            <h3 className="text-base sm:text-[15px] font-semibold" data-testid="text-packages-title">
               Packages
             </h3>
-            <Badge variant="secondary" className="text-xs" data-testid="text-packages-count">
+            <Badge variant="secondary" className="text-[11px]" data-testid="text-packages-count">
               {packages.length}
             </Badge>
-            <Badge variant="outline" className="text-xs ml-1" data-testid="badge-language">
+            <Badge variant="outline" className="text-[11px] ml-1" data-testid="badge-language">
               {languageLabel}
             </Badge>
           </div>
@@ -305,7 +305,7 @@ export function PackagesPanel({ projectId, language = 'nodejs', className }: Pac
           ) : error ? (
             <div className="flex flex-col items-center justify-center py-8 text-center">
               <AlertCircle className="w-12 h-12 mb-3 text-destructive opacity-40" />
-              <p className="text-sm text-muted-foreground">Failed to load packages</p>
+              <p className="text-[13px] text-muted-foreground">Failed to load packages</p>
               <Button variant="link" className="mt-2" onClick={() => refetch()}>
                 Try again
               </Button>
@@ -320,10 +320,10 @@ export function PackagesPanel({ projectId, language = 'nodejs', className }: Pac
                     <ChevronRight className="w-4 h-4 text-muted-foreground" />
                   )}
                   <Box className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm font-medium" data-testid="text-installed-section">
+                  <span className="text-[13px] font-medium" data-testid="text-installed-section">
                     Installed Packages
                   </span>
-                  <Badge variant="secondary" className="ml-auto text-xs">
+                  <Badge variant="secondary" className="ml-auto text-[11px]">
                     {packages.length}
                   </Badge>
                 </CollapsibleTrigger>
@@ -331,7 +331,7 @@ export function PackagesPanel({ projectId, language = 'nodejs', className }: Pac
                   {packages.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-8 text-center">
                       <Package className="w-10 h-10 mb-3 text-muted-foreground opacity-40" />
-                      <p className="text-sm text-muted-foreground">No packages installed</p>
+                      <p className="text-[13px] text-muted-foreground">No packages installed</p>
                       <Button 
                         variant="link" 
                         className="mt-2" 
@@ -351,7 +351,7 @@ export function PackagesPanel({ projectId, language = 'nodejs', className }: Pac
                           <div className="flex-1 min-w-0">
                             <div className="flex flex-wrap items-center gap-2">
                               <span 
-                                className="font-mono text-sm font-medium truncate"
+                                className="font-mono text-[13px] font-medium truncate"
                                 data-testid={`text-package-name-${pkg.name}`}
                               >
                                 {pkg.name}
@@ -373,7 +373,7 @@ export function PackagesPanel({ projectId, language = 'nodejs', className }: Pac
                               )}
                             </div>
                             {pkg.description && (
-                              <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
+                              <p className="text-[11px] text-muted-foreground mt-1 line-clamp-1">
                                 {pkg.description}
                               </p>
                             )}
@@ -426,10 +426,10 @@ export function PackagesPanel({ projectId, language = 'nodejs', className }: Pac
                     <ChevronRight className="w-4 h-4 text-muted-foreground" />
                   )}
                   <Settings2 className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm font-medium" data-testid="text-system-section">
+                  <span className="text-[13px] font-medium" data-testid="text-system-section">
                     System Dependencies
                   </span>
-                  <Badge variant="secondary" className="ml-auto text-xs">
+                  <Badge variant="secondary" className="ml-auto text-[11px]">
                     {systemDependencies.length}
                   </Badge>
                 </CollapsibleTrigger>
@@ -437,7 +437,7 @@ export function PackagesPanel({ projectId, language = 'nodejs', className }: Pac
                   {systemDependencies.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-6 text-center">
                       <Settings2 className="w-8 h-8 mb-2 text-muted-foreground opacity-40" />
-                      <p className="text-xs text-muted-foreground">No system dependencies configured</p>
+                      <p className="text-[11px] text-muted-foreground">No system dependencies configured</p>
                     </div>
                   ) : (
                     systemDependencies.map((dep) => (
@@ -449,7 +449,7 @@ export function PackagesPanel({ projectId, language = 'nodejs', className }: Pac
                         <div className="flex items-center gap-2">
                           <Settings2 className="w-4 h-4 text-muted-foreground shrink-0" />
                           <span 
-                            className="font-mono text-sm truncate"
+                            className="font-mono text-[13px] truncate"
                             data-testid={`text-system-dep-${dep.name}`}
                           >
                             {dep.name}
@@ -523,19 +523,19 @@ export function PackagesPanel({ projectId, language = 'nodejs', className }: Pac
                 {isSearching ? (
                   <div className="flex flex-col items-center justify-center py-8">
                     <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-                    <p className="text-sm text-muted-foreground mt-2">Searching...</p>
+                    <p className="text-[13px] text-muted-foreground mt-2">Searching...</p>
                   </div>
                 ) : searchQuery.length < 2 ? (
                   <div className="flex flex-col items-center justify-center py-8 text-center">
                     <Search className="w-10 h-10 mb-3 text-muted-foreground opacity-40" />
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-[13px] text-muted-foreground">
                       Type at least 2 characters to search
                     </p>
                   </div>
                 ) : searchResults.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-8 text-center">
                     <Package className="w-10 h-10 mb-3 text-muted-foreground opacity-40" />
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-[13px] text-muted-foreground">
                       No packages found for "{searchQuery}"
                     </p>
                   </div>
@@ -554,7 +554,7 @@ export function PackagesPanel({ projectId, language = 'nodejs', className }: Pac
                           <div className="flex-1 min-w-0">
                             <div className="flex flex-wrap items-center gap-2">
                               <span 
-                                className="font-mono text-sm font-medium"
+                                className="font-mono text-[13px] font-medium"
                                 data-testid={`text-search-name-${pkg.name}`}
                               >
                                 {pkg.name}
@@ -569,7 +569,7 @@ export function PackagesPanel({ projectId, language = 'nodejs', className }: Pac
                               )}
                             </div>
                             {pkg.description && (
-                              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                              <p className="text-[11px] text-muted-foreground mt-1 line-clamp-2">
                                 {pkg.description}
                               </p>
                             )}
@@ -578,7 +578,7 @@ export function PackagesPanel({ projectId, language = 'nodejs', className }: Pac
                                 href={pkg.homepage}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-xs text-primary hover:underline mt-1 inline-flex items-center gap-1"
+                                className="text-[11px] text-primary hover:underline mt-1 inline-flex items-center gap-1"
                               >
                                 <ExternalLink className="w-3 h-3" />
                                 Homepage

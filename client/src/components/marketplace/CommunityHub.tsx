@@ -128,32 +128,32 @@ export function CommunityHub() {
               ))}
             </div>
           ) : statsError ? (
-            <p className="text-sm text-destructive">Failed to load community stats</p>
+            <p className="text-[13px] text-destructive">Failed to load community stats</p>
           ) : communityStats ? (
             <div className="grid grid-cols-2 gap-3">
               <div className="text-center p-3 bg-muted rounded-lg">
                 <p className="text-2xl font-bold text-orange-500">
                   {communityStats.totalTemplates.toLocaleString()}
                 </p>
-                <p className="text-xs text-muted-foreground">Templates</p>
+                <p className="text-[11px] text-muted-foreground">Templates</p>
               </div>
               <div className="text-center p-3 bg-muted rounded-lg">
                 <p className="text-2xl font-bold text-blue-500">
                   {communityStats.totalDevelopers}
                 </p>
-                <p className="text-xs text-muted-foreground">Developers</p>
+                <p className="text-[11px] text-muted-foreground">Developers</p>
               </div>
               <div className="text-center p-3 bg-muted rounded-lg">
                 <p className="text-2xl font-bold text-green-500">
                   {(communityStats.totalDownloads / 1000).toFixed(0)}K
                 </p>
-                <p className="text-xs text-muted-foreground">Downloads</p>
+                <p className="text-[11px] text-muted-foreground">Downloads</p>
               </div>
               <div className="text-center p-3 bg-muted rounded-lg">
                 <p className="text-2xl font-bold text-purple-500">
                   {communityStats.monthlyActive}
                 </p>
-                <p className="text-xs text-muted-foreground">Active/mo</p>
+                <p className="text-[11px] text-muted-foreground">Active/mo</p>
               </div>
             </div>
           ) : null}
@@ -166,8 +166,8 @@ export function CommunityHub() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-semibold text-sm">Share Your Template</h3>
-                <p className="text-xs text-muted-foreground mt-1">
+                <h3 className="font-semibold text-[13px]">Share Your Template</h3>
+                <p className="text-[11px] text-muted-foreground mt-1">
                   Join the community and showcase your work
                 </p>
               </div>
@@ -206,7 +206,7 @@ export function CommunityHub() {
                   ))}
                 </div>
               ) : collectionsError ? (
-                <p className="text-sm text-destructive">Failed to load collections</p>
+                <p className="text-[13px] text-destructive">Failed to load collections</p>
               ) : collections.map((collection) => {
                 const Icon = COLLECTION_ICONS[collection.iconName] || Sparkles;
                 return (
@@ -219,8 +219,8 @@ export function CommunityHub() {
                         <Icon className="h-4 w-4" />
                       </div>
                       <div>
-                        <p className="text-sm font-medium">{collection.name}</p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-[13px] font-medium">{collection.name}</p>
+                        <p className="text-[11px] text-muted-foreground">
                           {collection.description}
                         </p>
                       </div>
@@ -243,7 +243,7 @@ export function CommunityHub() {
             <CardContent className="space-y-2">
               <Link href="/docs/templates">
                 <a className="flex items-center justify-between p-2 rounded-lg hover:bg-accent transition-colors">
-                  <span className="text-sm flex items-center gap-2">
+                  <span className="text-[13px] flex items-center gap-2">
                     <BookOpen className="h-4 w-4" />
                     Template Guidelines
                   </span>
@@ -252,7 +252,7 @@ export function CommunityHub() {
               </Link>
               <Link href="/community/forum">
                 <a className="flex items-center justify-between p-2 rounded-lg hover:bg-accent transition-colors">
-                  <span className="text-sm flex items-center gap-2">
+                  <span className="text-[13px] flex items-center gap-2">
                     <MessageSquare className="h-4 w-4" />
                     Community Forum
                   </span>
@@ -261,7 +261,7 @@ export function CommunityHub() {
               </Link>
               <Link href="/tutorials">
                 <a className="flex items-center justify-between p-2 rounded-lg hover:bg-accent transition-colors">
-                  <span className="text-sm flex items-center gap-2">
+                  <span className="text-[13px] flex items-center gap-2">
                     <BookOpen className="h-4 w-4" />
                     Tutorials
                   </span>
@@ -295,9 +295,9 @@ export function CommunityHub() {
                   ))}
                 </div>
               ) : developersError ? (
-                <p className="text-sm text-destructive">Failed to load top developers</p>
+                <p className="text-[13px] text-destructive">Failed to load top developers</p>
               ) : topDevelopers.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-8">No developers yet</p>
+                <p className="text-[13px] text-muted-foreground text-center py-8">No developers yet</p>
               ) : (
                 <div className="space-y-3">
                   {topDevelopers.map((dev, index) => (
@@ -321,15 +321,15 @@ export function CommunityHub() {
                           )}
                         </div>
                         <div>
-                          <p className="text-sm font-medium">{dev.name}</p>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-[13px] font-medium">{dev.name}</p>
+                          <p className="text-[11px] text-muted-foreground">
                             {dev.templates} templates • {(dev.downloads / 1000).toFixed(0)}k downloads
                           </p>
                         </div>
                       </div>
                       <div className="flex items-center gap-1">
                         <Star className="h-3 w-3 fill-current text-yellow-500" />
-                        <span className="text-xs font-medium">{dev.rating}</span>
+                        <span className="text-[11px] font-medium">{dev.rating}</span>
                       </div>
                     </div>
                   ))}
@@ -351,17 +351,17 @@ export function CommunityHub() {
                 <div className="flex items-center gap-3">
                   <Badge className="bg-purple-500">First Template</Badge>
                   <Progress value={100} className="flex-1 h-2" />
-                  <span className="text-xs text-muted-foreground">Unlocked</span>
+                  <span className="text-[11px] text-muted-foreground">Unlocked</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <Badge variant="outline">10 Downloads</Badge>
                   <Progress value={60} className="flex-1 h-2" />
-                  <span className="text-xs text-muted-foreground">6/10</span>
+                  <span className="text-[11px] text-muted-foreground">6/10</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <Badge variant="outline">5-Star Rating</Badge>
                   <Progress value={20} className="flex-1 h-2" />
-                  <span className="text-xs text-muted-foreground">1/5</span>
+                  <span className="text-[11px] text-muted-foreground">1/5</span>
                 </div>
               </div>
             </CardContent>
@@ -412,14 +412,14 @@ export function CommunityHub() {
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1">
-                          <p className="text-sm">
+                          <p className="text-[13px]">
                             <span className="font-medium">{activity.user}</span>
                             {' '}
                             <span className="text-muted-foreground">{activity.action}</span>
                             {' '}
                             <span className="font-medium">{activity.template}</span>
                           </p>
-                          <p className="text-xs text-muted-foreground mt-0.5">
+                          <p className="text-[11px] text-muted-foreground mt-0.5">
                             <Calendar className="h-3 w-3 inline mr-1" />
                             {activity.time}
                           </p>
@@ -436,8 +436,8 @@ export function CommunityHub() {
           <Card className="bg-muted/50">
             <CardContent className="p-4 text-center">
               <MessageSquare className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-              <h3 className="font-semibold text-sm mb-1">Join the Discussion</h3>
-              <p className="text-xs text-muted-foreground mb-3">
+              <h3 className="font-semibold text-[13px] mb-1">Join the Discussion</h3>
+              <p className="text-[11px] text-muted-foreground mb-3">
                 Connect with other developers and share ideas
               </p>
               <Button size="sm" variant="outline">

@@ -87,7 +87,7 @@ function RatingStars({ rating, count }: { rating: number | null; count?: number 
         />
       ))}
       {rating !== null && (
-        <span className="text-sm text-muted-foreground ml-1">
+        <span className="text-[13px] text-muted-foreground ml-1">
           {displayRating.toFixed(1)}
           {count !== undefined && ` (${count})`}
         </span>
@@ -146,7 +146,7 @@ function InteractiveRatingStars({
         </button>
       ))}
       {rating > 0 && (
-        <span className="text-sm text-muted-foreground ml-2">
+        <span className="text-[13px] text-muted-foreground ml-2">
           {rating} star{rating !== 1 ? 's' : ''}
         </span>
       )}
@@ -305,7 +305,7 @@ function BountyCard({ bounty, onApply }: { bounty: Bounty; onApply: (id: number)
           ))}
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-[13px]">
           <div className="flex items-center gap-2 text-muted-foreground" data-testid="bounty-views">
             <Eye className="h-4 w-4" />
             <span>{bounty.viewsCount || 0} views</span>
@@ -333,7 +333,7 @@ function BountyCard({ bounty, onApply }: { bounty: Bounty; onApply: (id: number)
         </div>
 
         {bounty.posterRating && (
-          <div className="flex items-center gap-2 text-sm" data-testid="poster-rating-display">
+          <div className="flex items-center gap-2 text-[13px]" data-testid="poster-rating-display">
             <span className="text-muted-foreground">Poster Rating:</span>
             <RatingStars rating={Number(bounty.posterRating)} />
           </div>
@@ -374,7 +374,7 @@ function BountyCard({ bounty, onApply }: { bounty: Bounty; onApply: (id: number)
                       disabled={rateMutation.isPending}
                     />
                     {ratingValue === 0 && (
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-[13px] text-muted-foreground">
                         Click to select a rating (1-5 stars required)
                       </p>
                     )}
@@ -441,7 +441,7 @@ function BountyCard({ bounty, onApply }: { bounty: Bounty; onApply: (id: number)
                       data-testid="input-proposal"
                     />
                     {proposal.length > 0 && proposal.length < 10 && (
-                      <p className="text-sm text-destructive">
+                      <p className="text-[13px] text-destructive">
                         {10 - proposal.length} more characters needed
                       </p>
                     )}
@@ -456,7 +456,7 @@ function BountyCard({ bounty, onApply }: { bounty: Bounty; onApply: (id: number)
                       data-testid="input-estimated-time"
                     />
                   </div>
-                  <div className="bg-muted p-3 rounded-lg text-sm">
+                  <div className="bg-muted p-3 rounded-lg text-[13px]">
                     <div className="flex justify-between items-center">
                       <span>Bounty Amount:</span>
                       <span className="font-bold text-green-600">${(Number(bounty.amount) / 100).toFixed(2)}</span>
@@ -609,7 +609,7 @@ export default function BountiesMarketplace() {
       {showFilters && (
         <Card className="mb-6" data-testid="filters-panel">
           <CardHeader>
-            <CardTitle className="text-lg">Filter Bounties</CardTitle>
+            <CardTitle className="text-[15px]">Filter Bounties</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -797,7 +797,7 @@ export default function BountiesMarketplace() {
       ) : error ? (
         <Card className="p-8 text-center" data-testid="error-state">
           <AlertCircle className="h-12 w-12 mx-auto mb-4 text-red-500" />
-          <h3 className="text-lg font-semibold mb-2">Failed to load bounties</h3>
+          <h3 className="text-[15px] font-semibold mb-2">Failed to load bounties</h3>
           <p className="text-muted-foreground">Please try again later</p>
         </Card>
       ) : data && data.bounties.length > 0 ? (
@@ -818,7 +818,7 @@ export default function BountiesMarketplace() {
               >
                 Previous
               </Button>
-              <span className="px-4 text-sm text-muted-foreground">
+              <span className="px-4 text-[13px] text-muted-foreground">
                 Page {filters.page} of {totalPages}
               </span>
               <Button

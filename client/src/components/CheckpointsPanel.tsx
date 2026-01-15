@@ -68,7 +68,7 @@ export function CheckpointsPanel({ projectId }: CheckpointsPanelProps) {
   return (
     <div className="p-4">
       <div className="mb-4">
-        <h3 className="text-lg font-semibold mb-2">Create Checkpoint</h3>
+        <h3 className="text-[15px] font-semibold mb-2">Create Checkpoint</h3>
         <input
           type="text"
           placeholder="Checkpoint name (optional)"
@@ -93,7 +93,7 @@ export function CheckpointsPanel({ projectId }: CheckpointsPanelProps) {
       </div>
 
       <div>
-        <h3 className="text-lg font-semibold mb-2">Checkpoint History</h3>
+        <h3 className="text-[15px] font-semibold mb-2">Checkpoint History</h3>
         {isLoading ? (
           <p>Loading checkpoints...</p>
         ) : (
@@ -119,15 +119,15 @@ export function CheckpointsPanel({ projectId }: CheckpointsPanelProps) {
                       )}
                     </div>
                     {checkpoint.description && (
-                      <p className="text-sm text-muted-foreground">{checkpoint.description}</p>
+                      <p className="text-[13px] text-muted-foreground">{checkpoint.description}</p>
                     )}
                     {checkpoint.agentTaskDescription && (
-                      <p className="text-sm text-muted-foreground italic mt-1">
+                      <p className="text-[13px] text-muted-foreground italic mt-1">
                         AI Task: {checkpoint.agentTaskDescription}
                       </p>
                     )}
                     {checkpoint.pricing && (
-                      <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-4 mt-2 text-[11px] text-muted-foreground">
                         <span className="flex items-center">
                           <DollarSign className="h-3 w-3 mr-1" />
                           ${checkpoint.pricing.costInDollars.toFixed(2)}
@@ -146,7 +146,7 @@ export function CheckpointsPanel({ projectId }: CheckpointsPanelProps) {
                         </span>
                       </div>
                     )}
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="text-[11px] text-muted-foreground mt-1">
                       <Clock className="h-3 w-3 inline mr-1" />
                       {format(new Date(checkpoint.createdAt), 'PPpp')}
                     </p>

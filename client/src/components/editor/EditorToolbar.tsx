@@ -48,7 +48,7 @@ export function EditorToolbar({
                   <button
                     onClick={() => onBreadcrumbClick?.(segment, index)}
                     className={cn(
-                      'flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium transition-colors',
+                      'flex items-center gap-1.5 px-2 py-1 rounded text-[11px] font-medium transition-colors',
                       'font-[family-name:var(--ecode-font-sans)]',
                       isLast
                         ? 'text-[var(--ecode-text)] bg-[var(--ecode-surface-hover)]'
@@ -72,7 +72,7 @@ export function EditorToolbar({
             })}
           </div>
         ) : (
-          <div className="flex items-center gap-2 text-xs text-[var(--ecode-text-muted)] font-[family-name:var(--ecode-font-sans)]">
+          <div className="flex items-center gap-2 text-[11px] text-[var(--ecode-text-muted)] font-[family-name:var(--ecode-font-sans)]">
             <File className="h-3.5 w-3.5" />
             <span>{fileName || 'No file selected'}</span>
           </div>
@@ -89,7 +89,7 @@ export function EditorToolbar({
                 size="sm"
                 onClick={onToggleMinimap}
                 className={cn(
-                  'h-6 px-2 text-xs',
+                  'h-6 px-2 text-[11px]',
                   minimapEnabled && 'bg-[var(--ecode-surface-hover)]'
                 )}
                 data-testid="button-toggle-minimap"

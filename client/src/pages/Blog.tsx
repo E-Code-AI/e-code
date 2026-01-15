@@ -117,7 +117,7 @@ export default function Blog() {
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold">
               E-Code Blog
             </h1>
-            <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto px-4 sm:px-0">
+            <p className="text-base sm:text-[15px] md:text-xl text-muted-foreground max-w-2xl mx-auto px-4 sm:px-0">
               Product updates, engineering insights, and stories from our community
             </p>
           </div>
@@ -156,8 +156,8 @@ export default function Blog() {
                         {featuredPost.category}
                       </Badge>
                       <h2 className="text-3xl font-bold mb-4">{featuredPost.title}</h2>
-                      <p className="text-lg text-muted-foreground mb-6">{featuredPost.excerpt}</p>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <p className="text-[15px] text-muted-foreground mb-6">{featuredPost.excerpt}</p>
+                      <div className="flex items-center gap-4 text-[13px] text-muted-foreground">
                         <div className="flex items-center gap-1">
                           <User className="h-4 w-4" />
                           <span>{featuredPost.author}</span>
@@ -191,7 +191,7 @@ export default function Blog() {
                     key={category}
                     variant="outline"
                     size="sm"
-                    className={`min-h-[44px] text-xs sm:text-sm ${category === selectedCategory ? 'bg-primary text-primary-foreground' : ''}`}
+                    className={`min-h-[44px] text-[11px] sm:text-[13px] ${category === selectedCategory ? 'bg-primary text-primary-foreground' : ''}`}
                     onClick={() => setSelectedCategory(category)}
                     data-testid={`button-blog-category-${category.toLowerCase()}`}
                   >
@@ -215,16 +215,16 @@ export default function Blog() {
               >
                 <CardHeader className="p-4 sm:p-6">
                   <div className="flex items-center justify-between mb-2">
-                    <Badge variant="secondary" className={`text-xs ${getCategoryColor(post.category)}`}>
+                    <Badge variant="secondary" className={`text-[11px] ${getCategoryColor(post.category)}`}>
                       {post.category}
                     </Badge>
-                    <span className="text-xs sm:text-sm text-muted-foreground">{post.readTime} min read</span>
+                    <span className="text-[11px] sm:text-[13px] text-muted-foreground">{post.readTime} min read</span>
                   </div>
-                  <CardTitle className="line-clamp-2 text-base sm:text-lg">{post.title}</CardTitle>
+                  <CardTitle className="line-clamp-2 text-base sm:text-[15px]">{post.title}</CardTitle>
                 </CardHeader>
                 <CardContent className="p-4 sm:p-6 pt-0">
-                  <p className="text-muted-foreground line-clamp-3 mb-4 text-sm">{post.excerpt}</p>
-                  <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
+                  <p className="text-muted-foreground line-clamp-3 mb-4 text-[13px]">{post.excerpt}</p>
+                  <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-[11px] sm:text-[13px] text-muted-foreground">
                     <div className="flex items-center gap-1">
                       <User className="h-3 w-3" />
                       <span>{post.author}</span>
@@ -274,7 +274,7 @@ export default function Blog() {
                   placeholder="Enter your email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="flex-1 px-4 py-3 min-h-[44px] rounded-lg border bg-background focus:outline-none focus:ring-2 focus:ring-primary text-sm sm:text-base"
+                  className="flex-1 px-4 py-3 min-h-[44px] rounded-lg border bg-background focus:outline-none focus:ring-2 focus:ring-primary text-[13px] sm:text-base"
                   required
                   data-testid="input-newsletter-email"
                 />
@@ -287,7 +287,7 @@ export default function Blog() {
                   {isSubmitting ? 'Subscribing...' : 'Subscribe'}
                 </Button>
               </form>
-              <p className="text-sm text-muted-foreground mt-4">
+              <p className="text-[13px] text-muted-foreground mt-4">
                 We'll never share your email. Unsubscribe anytime.
               </p>
             </CardContent>

@@ -178,7 +178,7 @@ export default function PublicDeploymentsPage() {
             <h1 className="text-4xl font-semibold tracking-tight text-white sm:text-5xl lg:text-6xl">
               Launch production-grade apps straight from your workspace
             </h1>
-            <p className="mt-6 max-w-2xl text-lg text-white/70">
+            <p className="mt-6 max-w-2xl text-[15px] text-white/70">
               E-Code Deployments pairs the simplicity of an in-browser IDE with the rigor of a global cloud platform.
               Ship instantly, observe everything, and meet enterprise requirements without bolting together tools.
             </p>
@@ -199,9 +199,9 @@ export default function PublicDeploymentsPage() {
                 <Card key={title} className="border-white/10 bg-white/5 text-white">
                   <CardHeader className="pb-2">
                     <Icon className="h-6 w-6" />
-                    <CardTitle className="text-lg font-semibold">{title}</CardTitle>
+                    <CardTitle className="text-[15px] font-semibold">{title}</CardTitle>
                   </CardHeader>
-                  <CardContent className="text-sm text-white/80">{description}</CardContent>
+                  <CardContent className="text-[13px] text-white/80">{description}</CardContent>
                 </Card>
               ))}
             </div>
@@ -211,18 +211,18 @@ export default function PublicDeploymentsPage() {
               <div className="space-y-4 rounded-2xl border border-white/10 bg-slate-950/80 p-6 text-white">
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="text-xs uppercase tracking-wide text-white/60">Deployment</p>
-                    <p className="text-lg font-semibold">marketing-site@main</p>
+                    <p className="text-[11px] uppercase tracking-wide text-white/60">Deployment</p>
+                    <p className="text-[15px] font-semibold">marketing-site@main</p>
                   </div>
                   <Badge className="bg-emerald-500/20 text-emerald-200">Live</Badge>
                 </div>
                 <div className="grid gap-4 rounded-xl bg-white/5 p-4">
-                  <div className="flex items-center justify-between text-sm text-white/70">
+                  <div className="flex items-center justify-between text-[13px] text-white/70">
                     <span>Requests / min</span>
                     <span className="font-medium text-white">4.2k</span>
                   </div>
                   <div className="h-16 rounded-lg bg-gradient-to-r from-emerald-400/60 via-emerald-500/40 to-transparent" />
-                  <div className="flex items-center justify-between text-sm text-white/70">
+                  <div className="flex items-center justify-between text-[13px] text-white/70">
                     <span>Latency p95</span>
                     <span className="font-medium text-white">112 ms</span>
                   </div>
@@ -230,7 +230,7 @@ export default function PublicDeploymentsPage() {
                     <div className="h-full w-3/5 rounded-full bg-emerald-400" />
                   </div>
                 </div>
-                <div className="grid gap-3 text-sm text-white/70">
+                <div className="grid gap-3 text-[13px] text-white/70">
                   <div className="flex items-center justify-between">
                     <span className="flex items-center gap-2">
                       <CheckCircle2 className="h-4 w-4 text-emerald-300" /> Autoscale
@@ -252,7 +252,7 @@ export default function PublicDeploymentsPage() {
                 </div>
               </div>
             </div>
-            <div className="absolute -bottom-12 left-10 hidden w-48 rounded-2xl border border-white/20 bg-slate-900/90 p-4 text-sm text-white shadow-xl lg:block">
+            <div className="absolute -bottom-12 left-10 hidden w-48 rounded-2xl border border-white/20 bg-slate-900/90 p-4 text-[13px] text-white shadow-xl lg:block">
               <p className="font-semibold">Production is live</p>
               <p className="mt-2 text-white/70">
                 Autoscaling ready • SSL issued • Requests streaming in real time
@@ -267,7 +267,7 @@ export default function PublicDeploymentsPage() {
           <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
             Built for teams that refuse to compromise on speed or reliability
           </h2>
-          <p className="mt-4 text-lg text-muted-foreground">
+          <p className="mt-4 text-[15px] text-muted-foreground">
             The exact workflows you saw inside the workspace deployment tab—now available to every project in your
             organization with a consistent, secure experience.
           </p>
@@ -283,7 +283,7 @@ export default function PublicDeploymentsPage() {
                 <p className="text-muted-foreground">{description}</p>
               </CardHeader>
               <CardContent>
-                <ul className="space-y-2 text-sm text-muted-foreground">
+                <ul className="space-y-2 text-[13px] text-muted-foreground">
                   {metrics.map((item) => (
                     <li key={item} className="flex items-center gap-2">
                       <CheckCircle2 className="h-4 w-4 text-primary" />
@@ -304,7 +304,7 @@ export default function PublicDeploymentsPage() {
               <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
                 Everything inside the deployment tab, elevated for production teams
               </h2>
-              <p className="mt-4 text-lg text-muted-foreground">
+              <p className="mt-4 text-[15px] text-muted-foreground">
                 Move from build to live without switching context. Monitor usage, manage resources, configure domains,
                 and audit every release from a single panel.
               </p>
@@ -321,12 +321,12 @@ export default function PublicDeploymentsPage() {
                       <h3 className="text-xl font-semibold">{title}</h3>
                       <p className="mt-2 text-muted-foreground">{description}</p>
                     </div>
-                    <div className={`flex flex-1 flex-col justify-between rounded-xl border bg-gradient-to-br ${accent} p-5 text-sm text-muted-foreground`}> 
+                    <div className={`flex flex-1 flex-col justify-between rounded-xl border bg-gradient-to-br ${accent} p-5 text-[13px] text-muted-foreground`}> 
                       <p className="text-foreground/80">
                         Live metrics stream into the deployment tab with anomaly detection and suggested remediations powered by
                         E-Code AI.
                       </p>
-                      <div className="mt-6 grid gap-3 text-xs uppercase tracking-wide text-foreground/60">
+                      <div className="mt-6 grid gap-3 text-[11px] uppercase tracking-wide text-foreground/60">
                         <div className="flex items-center justify-between">
                           <span>Region Coverage</span>
                           <span>13 global regions</span>
@@ -352,7 +352,7 @@ export default function PublicDeploymentsPage() {
                     <LineChart className="h-5 w-5" /> Performance at a glance
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4 text-sm text-muted-foreground">
+                <CardContent className="space-y-4 text-[13px] text-muted-foreground">
                   <p>
                     Track real-time CPU and memory utilization, understand peak hours, and drill into request latency
                     without leaving the tab.
@@ -369,7 +369,7 @@ export default function PublicDeploymentsPage() {
                     <Cpu className="h-5 w-5 text-primary" /> Intelligent scaling
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3 text-sm text-muted-foreground">
+                <CardContent className="space-y-3 text-[13px] text-muted-foreground">
                   <p>
                     Autoscaling policies learn from historical traffic to pre-warm instances before major launches and
                     product announcements.
@@ -385,7 +385,7 @@ export default function PublicDeploymentsPage() {
                     <BarChart3 className="h-5 w-5 text-primary" /> Insights for leadership
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3 text-sm text-muted-foreground">
+                <CardContent className="space-y-3 text-[13px] text-muted-foreground">
                   <p>
                     Summaries translate infrastructure performance into business-ready reports for product managers,
                     finance partners, and executives.
@@ -404,7 +404,7 @@ export default function PublicDeploymentsPage() {
         <div className="mx-auto max-w-6xl">
           <div className="text-center">
             <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">A workflow your engineers already know</h2>
-            <p className="mt-4 text-lg text-muted-foreground">
+            <p className="mt-4 text-[15px] text-muted-foreground">
               From first commit to global rollout, deployments stay within the E-Code workspace they already use every
               day.
             </p>
@@ -418,7 +418,7 @@ export default function PublicDeploymentsPage() {
                   </div>
                   <CardTitle className="text-xl">{title}</CardTitle>
                 </CardHeader>
-                <CardContent className="text-sm text-muted-foreground">{description}</CardContent>
+                <CardContent className="text-[13px] text-muted-foreground">{description}</CardContent>
               </Card>
             ))}
           </div>
@@ -426,21 +426,21 @@ export default function PublicDeploymentsPage() {
             <div className="flex flex-col gap-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Deployment Targets</p>
-                  <p className="text-lg font-semibold">workspace-deployment</p>
+                  <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Deployment Targets</p>
+                  <p className="text-[15px] font-semibold">workspace-deployment</p>
                 </div>
                 <Badge variant="outline" className="border-primary/40 text-primary">
                   Autoscale
                 </Badge>
               </div>
-              <div className="grid gap-3 text-sm text-muted-foreground">
+              <div className="grid gap-3 text-[13px] text-muted-foreground">
                 <div className="flex items-center justify-between rounded-xl border bg-muted/60 p-4">
                   <div>
                     <p className="font-medium text-foreground">Primary</p>
                     <p>app.e-code.ai</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-xs uppercase tracking-wide text-foreground/70">Status</p>
+                    <p className="text-[11px] uppercase tracking-wide text-foreground/70">Status</p>
                     <p className="font-medium text-emerald-600">Connected</p>
                   </div>
                 </div>
@@ -450,7 +450,7 @@ export default function PublicDeploymentsPage() {
                     <p>staging.e-code.ai</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-xs uppercase tracking-wide text-foreground/70">Status</p>
+                    <p className="text-[11px] uppercase tracking-wide text-foreground/70">Status</p>
                     <p className="font-medium text-amber-600">Pending DNS</p>
                   </div>
                 </div>
@@ -460,7 +460,7 @@ export default function PublicDeploymentsPage() {
                     <p>preview.e-code.ai</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-xs uppercase tracking-wide text-foreground/70">Status</p>
+                    <p className="text-[11px] uppercase tracking-wide text-foreground/70">Status</p>
                     <p className="font-medium text-sky-600">Generating</p>
                   </div>
                 </div>
@@ -475,7 +475,7 @@ export default function PublicDeploymentsPage() {
           <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
             Trusted reliability metrics backed by the E-Code platform
           </h2>
-          <p className="mt-4 text-lg text-muted-foreground">
+          <p className="mt-4 text-[15px] text-muted-foreground">
             Each deployment inherits the resilience, automation, and observability the E-Code team relies on for its
             own production services.
           </p>
@@ -485,7 +485,7 @@ export default function PublicDeploymentsPage() {
             <Card key={label} className="border bg-background">
               <CardContent className="p-6 text-center">
                 <p className={`text-4xl font-semibold ${accent}`}>{value}</p>
-                <p className="mt-2 text-sm text-muted-foreground">{label}</p>
+                <p className="mt-2 text-[13px] text-muted-foreground">{label}</p>
               </CardContent>
             </Card>
           ))}
@@ -499,7 +499,7 @@ export default function PublicDeploymentsPage() {
               <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
                 Security, compliance, and governance woven into every release
               </h2>
-              <p className="mt-4 text-lg text-muted-foreground">
+              <p className="mt-4 text-[15px] text-muted-foreground">
                 Run mission-critical workloads with built-in safeguards. From SOC 2 controls to SSO and advanced audit
                 trails, E-Code Deployments meets Fortune 500 expectations out of the box.
               </p>
@@ -510,9 +510,9 @@ export default function PublicDeploymentsPage() {
                       <div className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
                         <Icon className="h-5 w-5" />
                       </div>
-                      <CardTitle className="text-lg">{title}</CardTitle>
+                      <CardTitle className="text-[15px]">{title}</CardTitle>
                     </CardHeader>
-                    <CardContent className="text-sm text-muted-foreground">{description}</CardContent>
+                    <CardContent className="text-[13px] text-muted-foreground">{description}</CardContent>
                   </Card>
                 ))}
               </div>
@@ -520,17 +520,17 @@ export default function PublicDeploymentsPage() {
             <div className="flex flex-col gap-6">
               <div className="space-y-4 overflow-hidden rounded-3xl border bg-background p-8 shadow-lg">
                 <div className="flex items-center justify-between">
-                  <p className="text-sm font-semibold">Release timeline</p>
+                  <p className="text-[13px] font-semibold">Release timeline</p>
                   <Badge className="bg-primary/10 text-primary">Protected</Badge>
                 </div>
-                <div className="space-y-4 text-sm text-muted-foreground">
+                <div className="space-y-4 text-[13px] text-muted-foreground">
                   <div className="flex items-center justify-between rounded-2xl border bg-muted/60 p-4">
                     <div>
                       <p className="font-medium text-foreground">v2.18.0</p>
                       <p>Rolled out to 100% traffic</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs uppercase tracking-wide text-foreground/70">Approval</p>
+                      <p className="text-[11px] uppercase tracking-wide text-foreground/70">Approval</p>
                       <p className="font-medium text-emerald-600">Complete</p>
                     </div>
                   </div>
@@ -540,7 +540,7 @@ export default function PublicDeploymentsPage() {
                       <p>Canary release active</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs uppercase tracking-wide text-foreground/70">Rollback</p>
+                      <p className="text-[11px] uppercase tracking-wide text-foreground/70">Rollback</p>
                       <p className="font-medium text-amber-600">Available</p>
                     </div>
                   </div>
@@ -550,19 +550,19 @@ export default function PublicDeploymentsPage() {
                       <p>Signed by operations@sso</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs uppercase tracking-wide text-foreground/70">Event</p>
+                      <p className="text-[11px] uppercase tracking-wide text-foreground/70">Event</p>
                       <p className="font-medium text-sky-600">Logged</p>
                     </div>
                   </div>
                 </div>
               </div>
-              <div className="rounded-2xl border bg-muted/60 p-6 text-sm text-muted-foreground">
+              <div className="rounded-2xl border bg-muted/60 p-6 text-[13px] text-muted-foreground">
                 <p className="font-semibold text-foreground">What customers are saying</p>
                 <p className="mt-3">
                   “Our deployment pipeline went from hours of manual coordination to a reliable one-click experience. The
                   integrated observability gives engineering and operations the same source of truth.”
                 </p>
-                <p className="mt-3 text-xs uppercase tracking-wide text-foreground/70">
+                <p className="mt-3 text-[11px] uppercase tracking-wide text-foreground/70">
                   Head of Platform Engineering · Enterprise FinTech
                 </p>
               </div>
@@ -574,7 +574,7 @@ export default function PublicDeploymentsPage() {
       <section className="bg-muted/40 px-6 py-24 lg:px-10">
         <div className="mx-auto max-w-4xl text-center">
           <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">Questions, answered</h2>
-          <p className="mt-4 text-lg text-muted-foreground">
+          <p className="mt-4 text-[15px] text-muted-foreground">
             Everything about E-Code Deployments is designed to eliminate guesswork. Here are the answers teams ask most
             before moving their workloads over.
           </p>
@@ -583,12 +583,12 @@ export default function PublicDeploymentsPage() {
           {faqs.map(({ question, answer }) => (
             <Card key={question} className="border">
               <CardHeader>
-                <CardTitle className="flex items-center justify-between text-lg">
+                <CardTitle className="flex items-center justify-between text-[15px]">
                   <span>{question}</span>
                   <ArrowRight className="h-5 w-5 text-muted-foreground" />
                 </CardTitle>
               </CardHeader>
-              <CardContent className="text-sm text-muted-foreground">{answer}</CardContent>
+              <CardContent className="text-[13px] text-muted-foreground">{answer}</CardContent>
             </Card>
           ))}
         </div>

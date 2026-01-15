@@ -115,7 +115,7 @@ export function FileUpload({ projectId, parentId, onUploadComplete, className = 
       >
         <input {...getInputProps()} />
         <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-        <p className="text-sm text-muted-foreground">
+        <p className="text-[13px] text-muted-foreground">
           {isDragActive 
             ? 'Drop files here...' 
             : 'Drag and drop files here, or click to select'
@@ -126,7 +126,7 @@ export function FileUpload({ projectId, parentId, onUploadComplete, className = 
       {uploadFiles.length > 0 && (
         <div className="mt-4 space-y-2">
           <div className="flex justify-between items-center mb-2">
-            <span className="text-sm text-muted-foreground">
+            <span className="text-[13px] text-muted-foreground">
               {uploadFiles.length} file{uploadFiles.length > 1 ? 's' : ''} ({formatSize(totalSize)})
             </span>
             {!isUploading && (
@@ -144,8 +144,8 @@ export function FileUpload({ projectId, parentId, onUploadComplete, className = 
           {uploadFiles.map((uploadFile, index) => (
             <div key={index} className="flex items-center gap-2 p-2 bg-muted rounded">
               <div className="flex-1 min-w-0">
-                <p className="text-sm truncate">{uploadFile.file.name}</p>
-                <p className="text-xs text-muted-foreground">{formatSize(uploadFile.file.size)}</p>
+                <p className="text-[13px] truncate">{uploadFile.file.name}</p>
+                <p className="text-[11px] text-muted-foreground">{formatSize(uploadFile.file.size)}</p>
               </div>
               
               {uploadFile.status === 'uploading' && (

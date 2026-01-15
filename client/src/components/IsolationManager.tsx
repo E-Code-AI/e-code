@@ -249,7 +249,7 @@ export const IsolationManager: React.FC<IsolationManagerProps> = ({
                 <h3 className="font-medium text-[var(--ecode-text)]">
                   No Isolated Environment
                 </h3>
-                <p className="text-sm text-[var(--ecode-muted)] mt-1">
+                <p className="text-[13px] text-[var(--ecode-muted)] mt-1">
                   Create an isolated container for this project
                 </p>
               </div>
@@ -287,12 +287,12 @@ export const IsolationManager: React.FC<IsolationManagerProps> = ({
               {/* Connection Info */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <Label className="text-xs text-[var(--ecode-muted)]">Port</Label>
-                  <div className="font-mono text-sm">{environment.port}</div>
+                  <Label className="text-[11px] text-[var(--ecode-muted)]">Port</Label>
+                  <div className="font-mono text-[13px]">{environment.port}</div>
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs text-[var(--ecode-muted)]">Uptime</Label>
-                  <div className="text-sm">{formatUptime(environment.createdAt)}</div>
+                  <Label className="text-[11px] text-[var(--ecode-muted)]">Uptime</Label>
+                  <div className="text-[13px]">{formatUptime(environment.createdAt)}</div>
                 </div>
               </div>
 
@@ -300,19 +300,19 @@ export const IsolationManager: React.FC<IsolationManagerProps> = ({
 
               {/* Resource Usage */}
               <div className="space-y-3">
-                <h4 className="text-sm font-medium flex items-center gap-2">
+                <h4 className="text-[13px] font-medium flex items-center gap-2">
                   <Activity className="h-4 w-4" />
                   Resource Usage
                 </h4>
 
                 {/* CPU Usage */}
                 <div className="space-y-1">
-                  <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center justify-between text-[13px]">
                     <span className="flex items-center gap-2">
                       <Cpu className="h-3 w-3" />
                       CPU
                     </span>
-                    <span className="text-xs text-[var(--ecode-muted)]">
+                    <span className="text-[11px] text-[var(--ecode-muted)]">
                       {environment.resourceUsage?.cpu?.toFixed(1) || 0}% / {environment.resourceLimits.cpu}%
                     </span>
                   </div>
@@ -324,12 +324,12 @@ export const IsolationManager: React.FC<IsolationManagerProps> = ({
 
                 {/* Memory Usage */}
                 <div className="space-y-1">
-                  <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center justify-between text-[13px]">
                     <span className="flex items-center gap-2">
                       <Zap className="h-3 w-3" />
                       Memory
                     </span>
-                    <span className="text-xs text-[var(--ecode-muted)]">
+                    <span className="text-[11px] text-[var(--ecode-muted)]">
                       {environment.resourceUsage?.memory?.toFixed(0) || 0} MB / {environment.resourceLimits.memory} MB
                     </span>
                   </div>
@@ -341,12 +341,12 @@ export const IsolationManager: React.FC<IsolationManagerProps> = ({
 
                 {/* Disk Usage */}
                 <div className="space-y-1">
-                  <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center justify-between text-[13px]">
                     <span className="flex items-center gap-2">
                       <HardDrive className="h-3 w-3" />
                       Disk
                     </span>
-                    <span className="text-xs text-[var(--ecode-muted)]">
+                    <span className="text-[11px] text-[var(--ecode-muted)]">
                       {environment.resourceUsage?.disk?.toFixed(0) || 0} MB
                     </span>
                   </div>
@@ -357,22 +357,22 @@ export const IsolationManager: React.FC<IsolationManagerProps> = ({
 
               {/* Network Info */}
               <div className="space-y-2">
-                <h4 className="text-sm font-medium flex items-center gap-2">
+                <h4 className="text-[13px] font-medium flex items-center gap-2">
                   <Network className="h-4 w-4" />
                   Network Isolation
                 </h4>
-                <div className="text-xs font-mono bg-[var(--ecode-surface)] p-2 rounded">
+                <div className="text-[11px] font-mono bg-[var(--ecode-surface)] p-2 rounded">
                   {environment.networkNamespace}
                 </div>
               </div>
 
               {/* Database Info */}
               <div className="space-y-2">
-                <h4 className="text-sm font-medium flex items-center gap-2">
+                <h4 className="text-[13px] font-medium flex items-center gap-2">
                   <HardDrive className="h-4 w-4" />
                   Database Namespace
                 </h4>
-                <div className="text-xs font-mono bg-[var(--ecode-surface)] p-2 rounded">
+                <div className="text-[11px] font-mono bg-[var(--ecode-surface)] p-2 rounded">
                   {environment.databaseNamespace}
                 </div>
               </div>

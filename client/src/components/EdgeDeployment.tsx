@@ -101,7 +101,7 @@ export function EdgeDeployment({ projectId }: { projectId: string }) {
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label htmlFor="edge-enabled">Enable Edge Deployment</Label>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-[13px] text-muted-foreground">
                 Deploy to global CDN with automatic failover
               </p>
             </div>
@@ -146,8 +146,8 @@ export function EdgeDeployment({ projectId }: { projectId: string }) {
                         }}
                       />
                       <div className="flex-1">
-                        <p className="text-sm font-medium">{location.name}</p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-[13px] font-medium">{location.name}</p>
+                        <p className="text-[11px] text-muted-foreground">
                           Load: {location.load.cpu.toFixed(0)}% CPU
                         </p>
                       </div>
@@ -240,14 +240,14 @@ export function EdgeDeployment({ projectId }: { projectId: string }) {
               {deployments.map((deployment: any) => (
                 <div key={deployment.id} className="flex items-center justify-between p-3 border rounded-lg">
                   <div className="space-y-1">
-                    <p className="text-sm font-medium">Deployment {deployment.id}</p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-[13px] font-medium">Deployment {deployment.id}</p>
+                    <p className="text-[11px] text-muted-foreground">
                       {deployment.locations.length} locations • {deployment.routing} routing
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
                     <Shield className="h-4 w-4 text-green-500" />
-                    <span className="text-sm text-green-500">Active</span>
+                    <span className="text-[13px] text-green-500">Active</span>
                   </div>
                 </div>
               ))}

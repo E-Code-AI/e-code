@@ -260,7 +260,7 @@ export default function Account() {
                       disabled
                       data-testid="input-username"
                     />
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-[11px] text-muted-foreground">
                       Your username cannot be changed
                     </p>
                   </div>
@@ -280,7 +280,7 @@ export default function Account() {
                   <Label htmlFor="bio">Bio</Label>
                   <textarea
                     id="bio"
-                    className="w-full min-h-[100px] px-3 py-2 text-sm rounded-md border bg-background"
+                    className="w-full min-h-[100px] px-3 py-2 text-[13px] rounded-md border bg-background"
                     value={profile.bio}
                     onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
                     placeholder="Tell us about yourself..."
@@ -291,7 +291,7 @@ export default function Account() {
                 <Separator />
 
                 <div className="space-y-4">
-                  <h3 className="text-sm font-medium">Website</h3>
+                  <h3 className="text-[13px] font-medium">Website</h3>
                   <div className="flex items-center gap-2">
                     <Globe className="h-4 w-4 text-muted-foreground" />
                     <Input
@@ -342,7 +342,7 @@ export default function Account() {
                     Update Email
                   </Button>
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-[11px] text-muted-foreground">
                   We'll send important notifications to this email
                 </p>
               </div>
@@ -350,7 +350,7 @@ export default function Account() {
               <Separator />
 
               <div className="space-y-4">
-                <h3 className="text-sm font-medium">Password</h3>
+                <h3 className="text-[13px] font-medium">Password</h3>
                 <Button variant="outline" onClick={handleChangePassword} data-testid="button-change-password">
                   <Key className="mr-2 h-4 w-4" />
                   Change Password
@@ -360,12 +360,12 @@ export default function Account() {
               <Separator />
 
               <div className="space-y-4">
-                <h3 className="text-sm font-medium text-destructive">Danger Zone</h3>
+                <h3 className="text-[13px] font-medium text-destructive">Danger Zone</h3>
                 <Button variant="destructive" onClick={handleDeleteAccount} data-testid="button-delete-account">
                   <Trash2 className="mr-2 h-4 w-4" />
                   Delete Account
                 </Button>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-[11px] text-muted-foreground">
                   Once you delete your account, there is no going back. Please be certain.
                 </p>
               </div>
@@ -387,14 +387,14 @@ export default function Account() {
             <CardContent className="space-y-4">
 
               <div className="space-y-4">
-                <h3 className="text-sm font-medium">Active Sessions</h3>
+                <h3 className="text-[13px] font-medium">Active Sessions</h3>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between p-3 border rounded-lg" data-testid="session-current">
                     <div className="flex items-center gap-3">
                       <Chrome className="h-5 w-5" />
                       <div>
-                        <p className="text-sm font-medium">Chrome on Windows</p>
-                        <p className="text-xs text-muted-foreground">Current session</p>
+                        <p className="text-[13px] font-medium">Chrome on Windows</p>
+                        <p className="text-[11px] text-muted-foreground">Current session</p>
                       </div>
                     </div>
                     <Badge variant="secondary">Active</Badge>
@@ -403,8 +403,8 @@ export default function Account() {
                     <div className="flex items-center gap-3">
                       <Smartphone className="h-5 w-5" />
                       <div>
-                        <p className="text-sm font-medium">iPhone</p>
-                        <p className="text-xs text-muted-foreground">Last active 2 hours ago</p>
+                        <p className="text-[13px] font-medium">iPhone</p>
+                        <p className="text-[11px] text-muted-foreground">Last active 2 hours ago</p>
                       </div>
                     </div>
                     <Button variant="ghost" size="sm" data-testid="button-revoke-session">Revoke</Button>
@@ -415,14 +415,14 @@ export default function Account() {
               <Separator />
 
               <div className="space-y-4">
-                <h3 className="text-sm font-medium">Connected Apps</h3>
+                <h3 className="text-[13px] font-medium">Connected Apps</h3>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between p-3 border rounded-lg" data-testid="app-github">
                     <div className="flex items-center gap-3">
                       <Github className="h-5 w-5" />
                       <div>
-                        <p className="text-sm font-medium">GitHub</p>
-                        <p className="text-xs text-muted-foreground">Read access to repos</p>
+                        <p className="text-[13px] font-medium">GitHub</p>
+                        <p className="text-[11px] text-muted-foreground">Read access to repos</p>
                       </div>
                     </div>
                     <Button variant="ghost" size="sm" data-testid="button-disconnect-github">Disconnect</Button>
@@ -457,7 +457,7 @@ export default function Account() {
                       </div>
                       <Badge>Active</Badge>
                     </div>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div className="grid grid-cols-2 gap-4 text-[13px]">
                       <div>
                         <p className="text-muted-foreground">Monthly Cost</p>
                         <p className="font-medium" data-testid="text-monthly-cost">
@@ -481,12 +481,12 @@ export default function Account() {
                   <Separator />
 
                   <div className="space-y-4">
-                    <h3 className="text-sm font-medium">Usage This Month</h3>
+                    <h3 className="text-[13px] font-medium">Usage This Month</h3>
                     <div className="space-y-3">
                       <div>
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-sm">Compute Hours</span>
-                          <span className="text-sm font-medium">
+                          <span className="text-[13px]">Compute Hours</span>
+                          <span className="text-[13px] font-medium">
                             {billingData?.usage?.compute?.used ?? 0} / {billingData?.usage?.compute?.limit ?? 0}
                           </span>
                         </div>
@@ -499,8 +499,8 @@ export default function Account() {
                       </div>
                       <div>
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-sm">Storage</span>
-                          <span className="text-sm font-medium">
+                          <span className="text-[13px]">Storage</span>
+                          <span className="text-[13px] font-medium">
                             {billingData?.usage?.storage?.used?.toFixed(1) ?? 0}GB / {billingData?.usage?.storage?.limit ?? 0}GB
                           </span>
                         </div>
@@ -513,8 +513,8 @@ export default function Account() {
                       </div>
                       <div>
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-sm">Private Repls</span>
-                          <span className="text-sm font-medium">
+                          <span className="text-[13px]">Private Repls</span>
+                          <span className="text-[13px] font-medium">
                             {billingData?.usage?.privateRepls?.used ?? 0} / {billingData?.usage?.privateRepls?.limit ?? 'Unlimited'}
                           </span>
                         </div>
@@ -528,14 +528,14 @@ export default function Account() {
                   <Separator />
 
                   <div className="space-y-4">
-                    <h3 className="text-sm font-medium">Payment Method</h3>
+                    <h3 className="text-[13px] font-medium">Payment Method</h3>
                     {billingData?.paymentMethod ? (
                       <div className="flex items-center justify-between p-3 border rounded-lg" data-testid="payment-method">
                         <div className="flex items-center gap-3">
                           <CreditCard className="h-5 w-5" />
                           <div>
-                            <p className="text-sm font-medium" data-testid="text-card-number">•••• •••• •••• {billingData.paymentMethod.last4}</p>
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-[13px] font-medium" data-testid="text-card-number">•••• •••• •••• {billingData.paymentMethod.last4}</p>
+                            <p className="text-[11px] text-muted-foreground">
                               Expires {billingData.paymentMethod.expiryMonth}/{billingData.paymentMethod.expiryYear}
                             </p>
                           </div>
@@ -570,7 +570,7 @@ export default function Account() {
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label>Marketing emails</Label>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-[13px] text-muted-foreground">
                       Receive emails about new features and updates
                     </p>
                   </div>
@@ -586,7 +586,7 @@ export default function Account() {
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label>Product updates</Label>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-[13px] text-muted-foreground">
                       Get notified about important product changes
                     </p>
                   </div>
@@ -602,7 +602,7 @@ export default function Account() {
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label>Tips & tutorials</Label>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-[13px] text-muted-foreground">
                       Receive helpful tips to get the most out of E-Code
                     </p>
                   </div>
@@ -618,7 +618,7 @@ export default function Account() {
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label>Community digest</Label>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-[13px] text-muted-foreground">
                       Weekly summary of popular projects and discussions
                     </p>
                   </div>
@@ -646,7 +646,7 @@ export default function Account() {
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label>Comments & mentions</Label>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-[13px] text-muted-foreground">
                       When someone comments on your Repl or mentions you
                     </p>
                   </div>
@@ -656,7 +656,7 @@ export default function Account() {
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label>Follows</Label>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-[13px] text-muted-foreground">
                       When someone follows you
                     </p>
                   </div>
@@ -666,7 +666,7 @@ export default function Account() {
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label>Repl activity</Label>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-[13px] text-muted-foreground">
                       Updates about your Repls (forks, likes, etc.)
                     </p>
                   </div>
@@ -692,8 +692,8 @@ export default function Account() {
                   <div className="flex items-center gap-3">
                     <Key className="h-5 w-5" />
                     <div>
-                      <p className="text-sm font-medium">Production API Key</p>
-                      <p className="text-xs text-muted-foreground font-mono">
+                      <p className="text-[13px] font-medium">Production API Key</p>
+                      <p className="text-[11px] text-muted-foreground font-mono">
                         rpl_1234...abcd
                       </p>
                     </div>
@@ -724,8 +724,8 @@ export default function Account() {
                   <div className="flex items-center gap-3">
                     <Lock className="h-5 w-5" />
                     <div>
-                      <p className="text-sm font-medium">MacBook Pro</p>
-                      <p className="text-xs text-muted-foreground font-mono">
+                      <p className="text-[13px] font-medium">MacBook Pro</p>
+                      <p className="text-[11px] text-muted-foreground font-mono">
                         SHA256:xxxxxxxxxxxxxxxxxxxxxxxxxxx
                       </p>
                     </div>

@@ -173,7 +173,7 @@ export default function APISDKPage() {
                 <div className="flex items-center gap-3">
                   <Key className="h-8 w-8 text-blue-600" />
                   <div>
-                    <p className="text-sm text-gray-600">Active Keys</p>
+                    <p className="text-[13px] text-gray-600">Active Keys</p>
                     <p className="text-2xl font-bold">{analytics.activeKeys || 0}</p>
                   </div>
                 </div>
@@ -184,7 +184,7 @@ export default function APISDKPage() {
                 <div className="flex items-center gap-3">
                   <BarChart3 className="h-8 w-8 text-green-600" />
                   <div>
-                    <p className="text-sm text-gray-600">API Calls (30d)</p>
+                    <p className="text-[13px] text-gray-600">API Calls (30d)</p>
                     <p className="text-2xl font-bold">{analytics.apiCalls || 0}</p>
                   </div>
                 </div>
@@ -195,7 +195,7 @@ export default function APISDKPage() {
                 <div className="flex items-center gap-3">
                   <Code className="h-8 w-8 text-purple-600" />
                   <div>
-                    <p className="text-sm text-gray-600">Success Rate</p>
+                    <p className="text-[13px] text-gray-600">Success Rate</p>
                     <p className="text-2xl font-bold">{analytics.successRate || 99}%</p>
                   </div>
                 </div>
@@ -206,7 +206,7 @@ export default function APISDKPage() {
                 <div className="flex items-center gap-3">
                   <ExternalLink className="h-8 w-8 text-orange-600" />
                   <div>
-                    <p className="text-sm text-gray-600">Rate Limit</p>
+                    <p className="text-[13px] text-gray-600">Rate Limit</p>
                     <p className="text-2xl font-bold">{analytics.rateLimit || 1000}/hr</p>
                   </div>
                 </div>
@@ -249,7 +249,7 @@ export default function APISDKPage() {
                             checked={newKeyPermissions.includes(permission)}
                             onCheckedChange={() => handlePermissionToggle(permission)}
                           />
-                          <span className="text-sm">{permission}</span>
+                          <span className="text-[13px]">{permission}</span>
                         </div>
                       ))}
                     </div>
@@ -273,12 +273,12 @@ export default function APISDKPage() {
                     <div className="flex items-center justify-between">
                       <div className="space-y-2">
                         <div className="flex items-center gap-3">
-                          <h3 className="font-semibold text-lg">{key.name}</h3>
+                          <h3 className="font-semibold text-[15px]">{key.name}</h3>
                           <Badge variant={key.isActive ? "default" : "secondary"}>
                             {key.isActive ? "Active" : "Inactive"}
                           </Badge>
                         </div>
-                        <div className="flex items-center gap-2 font-mono text-sm">
+                        <div className="flex items-center gap-2 font-mono text-[13px]">
                           <span>
                             {showKeys[key.id] ? key.key : maskApiKey(key.key)}
                           </span>
@@ -299,12 +299,12 @@ export default function APISDKPage() {
                         </div>
                         <div className="flex flex-wrap gap-1">
                           {key.permissions.map(permission => (
-                            <Badge key={permission} variant="outline" className="text-xs">
+                            <Badge key={permission} variant="outline" className="text-[11px]">
                               {permission}
                             </Badge>
                           ))}
                         </div>
-                        <div className="text-sm text-gray-500">
+                        <div className="text-[13px] text-gray-500">
                           Created: {formatDate(key.createdAt)}
                           {key.lastUsed && ` • Last used: ${formatDate(key.lastUsed)}`}
                         </div>
@@ -325,7 +325,7 @@ export default function APISDKPage() {
               {!apiKeys?.length && (
                 <div className="text-center py-12">
                   <Key className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No API keys found</h3>
+                  <h3 className="text-[15px] font-medium text-gray-900 mb-2">No API keys found</h3>
                   <p className="text-gray-500 mb-4">
                     Create your first API key to start using the E-Code API.
                   </p>
@@ -345,9 +345,9 @@ export default function APISDKPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <p className="text-sm text-gray-600">{example.description}</p>
+                    <p className="text-[13px] text-gray-600">{example.description}</p>
                     <div className="bg-gray-50 p-4 rounded-lg">
-                      <pre className="text-sm overflow-x-auto">
+                      <pre className="text-[13px] overflow-x-auto">
                         <code>{example.code}</code>
                       </pre>
                     </div>
@@ -370,7 +370,7 @@ export default function APISDKPage() {
                       <Code className="h-8 w-8 text-blue-600" />
                     </div>
                     <h3 className="font-semibold mb-2">{language} SDK</h3>
-                    <p className="text-sm text-gray-600 mb-4">
+                    <p className="text-[13px] text-gray-600 mb-4">
                       Official E-Code SDK for {language} applications
                     </p>
                     <div className="flex gap-2">
@@ -408,7 +408,7 @@ export default function APISDKPage() {
                       {['project.created', 'project.updated', 'deployment.success', 'deployment.failed'].map(event => (
                         <div key={event} className="flex items-center gap-2">
                           <Switch />
-                          <span className="text-sm">{event}</span>
+                          <span className="text-[13px]">{event}</span>
                         </div>
                       ))}
                     </div>

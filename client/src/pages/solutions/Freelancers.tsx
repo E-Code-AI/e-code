@@ -102,13 +102,13 @@ export default function Freelancers() {
       <div className="container mx-auto px-4 py-12 sm:py-16 md:py-20">
         {/* Hero Section */}
         <div className="text-center max-w-4xl mx-auto mb-12 sm:mb-16 md:mb-20">
-          <Badge className="mb-4 px-4 py-1.5 text-sm font-medium bg-gradient-to-r from-violet-500 to-purple-500 text-white border-0">
+          <Badge className="mb-4 px-4 py-1.5 text-[13px] font-medium bg-gradient-to-r from-violet-500 to-purple-500 text-white border-0">
             For Freelancers & Contractors
           </Badge>
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-6 bg-gradient-to-r from-violet-600 to-purple-600 dark:from-violet-400 dark:to-purple-400 bg-clip-text text-transparent">
             Deliver Projects Faster
           </h1>
-          <p className="text-lg sm:text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
+          <p className="text-[15px] sm:text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
             Win more clients. Deliver faster. Charge more. Join 50,000+ freelancers
             using AI to supercharge their development workflow.
           </p>
@@ -125,7 +125,7 @@ export default function Freelancers() {
               </Button>
             </Link>
           </div>
-          <p className="mt-4 text-sm text-muted-foreground">
+          <p className="mt-4 text-[13px] text-muted-foreground">
             Free forever tier • No credit card required
           </p>
         </div>
@@ -176,7 +176,7 @@ export default function Freelancers() {
                   {item.step}
                 </div>
                 <h3 className="font-semibold mb-2">{item.title}</h3>
-                <p className="text-sm text-muted-foreground">{item.desc}</p>
+                <p className="text-[13px] text-muted-foreground">{item.desc}</p>
               </div>
             ))}
           </div>
@@ -198,7 +198,7 @@ export default function Freelancers() {
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="font-semibold">{testimonial.name}</div>
-                    <div className="text-sm text-muted-foreground">{testimonial.role}</div>
+                    <div className="text-[13px] text-muted-foreground">{testimonial.role}</div>
                   </div>
                   <Badge variant="secondary" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
                     {testimonial.income}
@@ -242,19 +242,19 @@ export default function Freelancers() {
             <div className="grid grid-cols-2 gap-4">
               <Card className="p-6 text-center">
                 <div className="text-3xl font-bold text-violet-600">$0</div>
-                <div className="text-sm text-muted-foreground">Free Forever</div>
+                <div className="text-[13px] text-muted-foreground">Free Forever</div>
               </Card>
               <Card className="p-6 text-center">
                 <div className="text-3xl font-bold text-violet-600">∞</div>
-                <div className="text-sm text-muted-foreground">Projects</div>
+                <div className="text-[13px] text-muted-foreground">Projects</div>
               </Card>
               <Card className="p-6 text-center">
                 <div className="text-3xl font-bold text-violet-600">SSL</div>
-                <div className="text-sm text-muted-foreground">Included</div>
+                <div className="text-[13px] text-muted-foreground">Included</div>
               </Card>
               <Card className="p-6 text-center">
                 <div className="text-3xl font-bold text-violet-600">24/7</div>
-                <div className="text-sm text-muted-foreground">Support</div>
+                <div className="text-[13px] text-muted-foreground">Support</div>
               </Card>
             </div>
           </div>
@@ -265,7 +265,7 @@ export default function Freelancers() {
           <div className="text-center max-w-3xl mx-auto">
             <Trophy className="h-12 w-12 mx-auto mb-6 opacity-80" />
             <h2 className="text-2xl sm:text-3xl font-bold mb-4">Win More Clients Today</h2>
-            <p className="text-lg text-white/90 mb-8">
+            <p className="text-[15px] text-white/90 mb-8">
               Join 50,000+ freelancers delivering better projects, faster. Start free now.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">

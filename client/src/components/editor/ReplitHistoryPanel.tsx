@@ -251,15 +251,15 @@ function DiffViewer({ oldContent, newContent, fileName }: { oldContent: string; 
       <div className="flex items-center justify-between p-2 sm:p-3 border-b border-gray-200 dark:border-[#3d4452]">
         <div className="flex items-center gap-2 min-w-0 flex-1">
           <FileDiff className="w-4 h-4 text-gray-500 flex-shrink-0" />
-          <span className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white truncate">{fileName}</span>
+          <span className="text-[11px] sm:text-[13px] font-medium text-gray-900 dark:text-white truncate">{fileName}</span>
         </div>
-        <div className="flex items-center gap-2 sm:gap-3 text-[10px] sm:text-xs flex-shrink-0">
+        <div className="flex items-center gap-2 sm:gap-3 text-[10px] sm:text-[11px] flex-shrink-0">
           <span className="text-green-600">+{additions}</span>
           <span className="text-red-500">-{deletions}</span>
         </div>
       </div>
       <ScrollArea className="flex-1">
-        <div className="font-mono text-[10px] sm:text-xs overflow-x-auto">
+        <div className="font-mono text-[10px] sm:text-[11px] overflow-x-auto">
           {diffLines.map((line, idx) => (
             <div 
               key={idx}
@@ -564,7 +564,7 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
           <Button
             size="sm"
             variant="outline"
-            className="h-9 sm:h-8 min-w-[44px] rounded-lg text-xs sm:text-[13px] border-gray-300 dark:border-[#3d4452] text-gray-700 dark:text-[#d4d8dd] bg-transparent hover:bg-gray-100 dark:hover:bg-[#242b3d] touch-manipulation"
+            className="h-9 sm:h-8 min-w-[44px] rounded-lg text-[11px] sm:text-[13px] border-gray-300 dark:border-[#3d4452] text-gray-700 dark:text-[#d4d8dd] bg-transparent hover:bg-gray-100 dark:hover:bg-[#242b3d] touch-manipulation"
             data-testid="button-save-checkpoint"
             onClick={handleSaveCheckpoint}
             disabled={createCheckpointMutation.isPending || !numericProjectId}
@@ -580,11 +580,11 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
 
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'checkpoints' | 'files')} className="w-full">
           <TabsList className="w-full grid grid-cols-2 h-10 sm:h-9 bg-gray-100 dark:bg-[#1c2333]">
-            <TabsTrigger value="files" className="text-xs data-[state=active]:bg-white dark:data-[state=active]:bg-[#242b3d] min-h-[44px] sm:min-h-0 touch-manipulation">
+            <TabsTrigger value="files" className="text-[11px] data-[state=active]:bg-white dark:data-[state=active]:bg-[#242b3d] min-h-[44px] sm:min-h-0 touch-manipulation">
               <FileText className="w-3.5 h-3.5 mr-1 sm:mr-1.5" />
               Files
             </TabsTrigger>
-            <TabsTrigger value="checkpoints" className="text-xs data-[state=active]:bg-white dark:data-[state=active]:bg-[#242b3d] min-h-[44px] sm:min-h-0 touch-manipulation">
+            <TabsTrigger value="checkpoints" className="text-[11px] data-[state=active]:bg-white dark:data-[state=active]:bg-[#242b3d] min-h-[44px] sm:min-h-0 touch-manipulation">
               <GitCommit className="w-3.5 h-3.5 mr-1 sm:mr-1.5" />
               Checkpoints
             </TabsTrigger>
@@ -597,7 +597,7 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
           {/* Mobile: File selector dropdown */}
           <div className="sm:hidden p-2 border-b border-gray-200 dark:border-[#3d4452]">
             {filesWithHistory.length === 0 ? (
-              <p className="text-xs text-gray-500 dark:text-[#9da2a6] text-center py-2">No files with history</p>
+              <p className="text-[11px] text-gray-500 dark:text-[#9da2a6] text-center py-2">No files with history</p>
             ) : (
               <Select
                 value={selectedFile?.id?.toString() || ''}
@@ -606,7 +606,7 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
                   setSelectedFile(file || null);
                 }}
               >
-                <SelectTrigger className="w-full h-11 text-sm touch-manipulation">
+                <SelectTrigger className="w-full h-11 text-[13px] touch-manipulation">
                   <SelectValue placeholder="Select a file to view history" />
                 </SelectTrigger>
                 <SelectContent>
@@ -652,15 +652,15 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
                     >
                       <FileText className="w-4 h-4 text-gray-500 dark:text-[#9da2a6] flex-shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white truncate">
+                        <p className="text-[11px] sm:text-[13px] font-medium text-gray-900 dark:text-white truncate">
                           {file.name}
                         </p>
-                        <p className="text-[10px] sm:text-xs text-gray-500 dark:text-[#9da2a6] truncate">
+                        <p className="text-[10px] sm:text-[11px] text-gray-500 dark:text-[#9da2a6] truncate">
                           {file.path}
                         </p>
                       </div>
                       <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-                        <Badge variant="secondary" className="text-[10px] sm:text-xs px-1 sm:px-1.5">
+                        <Badge variant="secondary" className="text-[10px] sm:text-[11px] px-1 sm:px-1.5">
                           {file.versionCount}
                         </Badge>
                         <ChevronRight className={cn(
@@ -681,7 +681,7 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
               <div className="p-2 border-b border-gray-200 dark:border-[#3d4452] flex items-center justify-between min-h-[44px]">
                 <div className="flex items-center gap-2 min-w-0 flex-1">
                   <FolderOpen className="w-4 h-4 text-gray-500 flex-shrink-0" />
-                  <span className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white truncate">
+                  <span className="text-[11px] sm:text-[13px] font-medium text-gray-900 dark:text-white truncate">
                     {selectedFile.name}
                   </span>
                 </div>
@@ -715,7 +715,7 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
                             {getChangeTypeIcon(version.changeType)}
                             <div className="min-w-0">
                               <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
-                                <span className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white">
+                                <span className="text-[11px] sm:text-[13px] font-medium text-gray-900 dark:text-white">
                                   v{version.version}
                                 </span>
                                 <Badge className={cn("text-[9px] sm:text-[10px] px-1 sm:px-1.5 py-0", getChangeTypeBadge(version.changeType))}>
@@ -723,11 +723,11 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
                                 </Badge>
                               </div>
                               {version.changeSummary && (
-                                <p className="text-[10px] sm:text-xs text-gray-500 dark:text-[#9da2a6] mt-0.5 line-clamp-2">
+                                <p className="text-[10px] sm:text-[11px] text-gray-500 dark:text-[#9da2a6] mt-0.5 line-clamp-2">
                                   {version.changeSummary}
                                 </p>
                               )}
-                              <p className="text-[10px] sm:text-xs text-gray-400 dark:text-[#5c6670] mt-1">
+                              <p className="text-[10px] sm:text-[11px] text-gray-400 dark:text-[#5c6670] mt-1">
                                 {getTimeAgo(version.createdAt)}
                               </p>
                             </div>
@@ -738,7 +738,7 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="h-9 sm:h-7 text-xs px-2 sm:px-2 min-w-[44px] touch-manipulation"
+                            className="h-9 sm:h-7 text-[11px] px-2 sm:px-2 min-w-[44px] touch-manipulation"
                             onClick={() => handleViewDiff(version)}
                           >
                             <Eye className="w-3 h-3 mr-1" />
@@ -748,7 +748,7 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
                             <Button
                               size="sm"
                               variant="ghost"
-                              className="h-9 sm:h-7 text-xs px-2 sm:px-2 min-w-[44px] touch-manipulation"
+                              className="h-9 sm:h-7 text-[11px] px-2 sm:px-2 min-w-[44px] touch-manipulation"
                               onClick={() => handleVersionRestore(version)}
                             >
                               <RotateCcw className="w-3 h-3 mr-1" />
@@ -877,7 +877,7 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
                             <Button
                               size="sm"
                               variant="outline"
-                              className="h-9 sm:h-8 rounded-lg text-xs sm:text-[13px] min-w-[44px] touch-manipulation"
+                              className="h-9 sm:h-8 rounded-lg text-[11px] sm:text-[13px] min-w-[44px] touch-manipulation"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleRestore(checkpoint);
@@ -889,7 +889,7 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
                             <Button
                               size="sm"
                               variant="ghost"
-                              className="h-9 sm:h-8 rounded-lg text-xs sm:text-[13px] min-w-[44px] touch-manipulation"
+                              className="h-9 sm:h-8 rounded-lg text-[11px] sm:text-[13px] min-w-[44px] touch-manipulation"
                               onClick={(e) => {
                                 e.stopPropagation();
                               }}
@@ -977,7 +977,7 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
           
           <div className="py-2 sm:py-3">
             <div className="p-2 sm:p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
-              <p className="text-xs sm:text-sm text-blue-700 dark:text-blue-300">
+              <p className="text-[11px] sm:text-[13px] text-blue-700 dark:text-blue-300">
                 This will replace the current file content with the selected version. A new version entry will be created to track this restore.
               </p>
             </div>

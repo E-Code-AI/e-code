@@ -78,7 +78,7 @@ export function DraggableTab({
         )}
 
         {/* File Name */}
-        <span className="text-xs font-medium font-[family-name:var(--ecode-font-sans)] truncate flex-1">
+        <span className="text-[11px] font-medium font-[family-name:var(--ecode-font-sans)] truncate flex-1">
           {label}
         </span>
 

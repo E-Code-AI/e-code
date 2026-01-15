@@ -121,7 +121,7 @@ export function ReplitConsole({ projectId, userId, isRunning, executionId, class
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1">
             <Terminal className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="text-xs font-medium">Console</span>
+            <span className="text-[11px] font-medium">Console</span>
           </div>
           
           {isRunning && (
@@ -130,7 +130,7 @@ export function ReplitConsole({ projectId, userId, isRunning, executionId, class
                 "w-2 h-2 rounded-full animate-pulse",
                 isConnected ? "bg-green-500" : "bg-yellow-500"
               )} />
-              <span className="text-xs text-muted-foreground">
+              <span className="text-[11px] text-muted-foreground">
                 {isConnected ? 'Live' : 'Connecting...'}
               </span>
             </div>
@@ -144,7 +144,7 @@ export function ReplitConsole({ projectId, userId, isRunning, executionId, class
                 <XCircle className="h-3.5 w-3.5 text-red-500" />
               )}
               <span className={cn(
-                "text-xs",
+                "text-[11px]",
                 exitCode === 0 ? "text-green-500" : "text-red-500"
               )}>
                 Exit: {exitCode}
@@ -157,7 +157,7 @@ export function ReplitConsole({ projectId, userId, isRunning, executionId, class
           <Button
             variant={filter === 'all' ? 'secondary' : 'ghost'}
             size="sm"
-            className="h-6 px-2 text-xs"
+            className="h-6 px-2 text-[11px]"
             onClick={() => setFilter('all')}
           >
             All ({logs.length})
@@ -165,7 +165,7 @@ export function ReplitConsole({ projectId, userId, isRunning, executionId, class
           <Button
             variant={filter === 'error' ? 'secondary' : 'ghost'}
             size="sm"
-            className="h-6 px-2 text-xs"
+            className="h-6 px-2 text-[11px]"
             onClick={() => setFilter('error')}
           >
             Errors ({logs.filter(l => l.type === 'error' || l.type === 'stderr').length})
@@ -187,7 +187,7 @@ export function ReplitConsole({ projectId, userId, isRunning, executionId, class
 
       {/* Console Output */}
       <ScrollArea 
-        className="flex-1 font-mono text-xs"
+        className="flex-1 font-mono text-[11px]"
         onScroll={(e) => {
           const target = e.target as HTMLElement;
           const isAtBottom = target.scrollHeight - target.scrollTop === target.clientHeight;

@@ -158,14 +158,14 @@ export default function AdminAIUsage() {
           <div className="grid gap-4 md:grid-cols-4">
             <Card data-testid="card-total-revenue">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+                <CardTitle className="text-[13px] font-medium">Total Revenue</CardTitle>
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold" data-testid="text-total-revenue">
                   ${stats.totalCost.toFixed(2)}
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-[11px] text-muted-foreground">
                   {period === 'month' ? 'This month' : period === 'week' ? 'This week' : 'Today'}
                 </p>
               </CardContent>
@@ -173,14 +173,14 @@ export default function AdminAIUsage() {
 
             <Card data-testid="card-platform-requests">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Requests</CardTitle>
+                <CardTitle className="text-[13px] font-medium">Total Requests</CardTitle>
                 <Activity className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold" data-testid="text-platform-requests">
                   {stats.totalRequests.toLocaleString()}
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-[11px] text-muted-foreground">
                   Success: {stats.byStatus.success} | Error: {stats.byStatus.error}
                 </p>
               </CardContent>
@@ -188,14 +188,14 @@ export default function AdminAIUsage() {
 
             <Card data-testid="card-unique-users">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Active Users</CardTitle>
+                <CardTitle className="text-[13px] font-medium">Active Users</CardTitle>
                 <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold" data-testid="text-unique-users">
                   {stats.uniqueUsers}
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-[11px] text-muted-foreground">
                   Unique users with AI usage
                 </p>
               </CardContent>
@@ -203,14 +203,14 @@ export default function AdminAIUsage() {
 
             <Card data-testid="card-platform-tokens">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Tokens</CardTitle>
+                <CardTitle className="text-[13px] font-medium">Total Tokens</CardTitle>
                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold" data-testid="text-platform-tokens">
                   {stats.totalTokens.toLocaleString()}
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-[11px] text-muted-foreground">
                   Across all models
                 </p>
               </CardContent>
@@ -235,13 +235,13 @@ export default function AdminAIUsage() {
                       }>
                         {tier.toUpperCase()}
                       </Badge>
-                      <span className="text-sm text-muted-foreground">
+                      <span className="text-[13px] text-muted-foreground">
                         {data.requests} requests
                       </span>
                     </div>
                     <div className="text-right">
                       <p className="font-medium">${data.cost.toFixed(2)}</p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-[11px] text-muted-foreground">
                         {data.tokens.toLocaleString()} tokens
                       </p>
                     </div>
@@ -264,7 +264,7 @@ export default function AdminAIUsage() {
         <CardContent>
           <div className="grid gap-4 md:grid-cols-4">
             <div>
-              <label className="text-sm font-medium">Period</label>
+              <label className="text-[13px] font-medium">Period</label>
               <Select value={period} onValueChange={setPeriod}>
                 <SelectTrigger data-testid="select-period">
                   <SelectValue />
@@ -277,7 +277,7 @@ export default function AdminAIUsage() {
               </Select>
             </div>
             <div>
-              <label className="text-sm font-medium">User ID</label>
+              <label className="text-[13px] font-medium">User ID</label>
               <Input
                 placeholder="Search by user ID..."
                 value={searchUserId}
@@ -286,7 +286,7 @@ export default function AdminAIUsage() {
               />
             </div>
             <div>
-              <label className="text-sm font-medium">Model</label>
+              <label className="text-[13px] font-medium">Model</label>
               <Input
                 placeholder="Filter by model..."
                 value={filterModel}
@@ -295,7 +295,7 @@ export default function AdminAIUsage() {
               />
             </div>
             <div>
-              <label className="text-sm font-medium">Actions</label>
+              <label className="text-[13px] font-medium">Actions</label>
               <Button 
                 variant="outline" 
                 className="w-full"
@@ -348,7 +348,7 @@ export default function AdminAIUsage() {
                     {usageData?.usage && usageData.usage.length > 0 ? (
                       usageData.usage.map((record) => (
                         <TableRow key={record.id} data-testid={`row-record-${record.id}`}>
-                          <TableCell className="font-mono text-xs">
+                          <TableCell className="font-mono text-[11px]">
                             <div>
                               <div className="font-medium">{record.username || 'Unknown'}</div>
                               <div className="text-muted-foreground">{record.userId.slice(0, 8)}...</div>
@@ -357,7 +357,7 @@ export default function AdminAIUsage() {
                           <TableCell>
                             <Badge variant="outline">{record.userTier}</Badge>
                           </TableCell>
-                          <TableCell className="font-mono text-xs">{record.model}</TableCell>
+                          <TableCell className="font-mono text-[11px]">{record.model}</TableCell>
                           <TableCell><Badge variant="secondary">{record.provider}</Badge></TableCell>
                           <TableCell className="text-right font-medium">
                             {record.tokensTotal.toLocaleString()}
@@ -370,7 +370,7 @@ export default function AdminAIUsage() {
                               {record.status}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-xs text-muted-foreground">
+                          <TableCell className="text-[11px] text-muted-foreground">
                             {format(new Date(record.createdAt), 'MMM d, HH:mm:ss')}
                           </TableCell>
                         </TableRow>
@@ -395,14 +395,14 @@ export default function AdminAIUsage() {
                         <div className="flex items-start justify-between">
                           <div>
                             <div className="font-medium">{record.username || 'Unknown'}</div>
-                            <div className="text-xs text-muted-foreground font-mono">{record.userId.slice(0, 12)}...</div>
+                            <div className="text-[11px] text-muted-foreground font-mono">{record.userId.slice(0, 12)}...</div>
                           </div>
                           <Badge variant="outline">{record.userTier}</Badge>
                         </div>
-                        <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div className="grid grid-cols-2 gap-2 text-[13px]">
                           <div>
                             <span className="text-muted-foreground">Model:</span>
-                            <div className="font-mono text-xs mt-1">{record.model}</div>
+                            <div className="font-mono text-[11px] mt-1">{record.model}</div>
                           </div>
                           <div>
                             <span className="text-muted-foreground">Provider:</span>
@@ -426,7 +426,7 @@ export default function AdminAIUsage() {
                           </div>
                           <div>
                             <span className="text-muted-foreground">Time:</span>
-                            <div className="text-xs mt-1">{format(new Date(record.createdAt), 'MMM d, HH:mm')}</div>
+                            <div className="text-[11px] mt-1">{format(new Date(record.createdAt), 'MMM d, HH:mm')}</div>
                           </div>
                         </div>
                       </CardContent>
@@ -442,7 +442,7 @@ export default function AdminAIUsage() {
               {/* Pagination */}
               {usageData && usageData.pagination.totalPages > 1 && (
                 <div className="flex items-center justify-between pt-4">
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-[13px] text-muted-foreground">
                     Page {usageData.pagination.page} of {usageData.pagination.totalPages}
                   </p>
                   <div className="flex gap-2">

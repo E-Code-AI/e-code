@@ -176,7 +176,7 @@ export default function Explore() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Total Repls</p>
+                  <p className="text-[13px] text-muted-foreground">Total Repls</p>
                   <p className="text-2xl font-bold">12,345</p>
                 </div>
                 <Code2 className="h-8 w-8 text-muted-foreground" />
@@ -187,7 +187,7 @@ export default function Explore() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Active Users</p>
+                  <p className="text-[13px] text-muted-foreground">Active Users</p>
                   <p className="text-2xl font-bold">3,456</p>
                 </div>
                 <TrendingUp className="h-8 w-8 text-muted-foreground" />
@@ -198,7 +198,7 @@ export default function Explore() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Total Runs</p>
+                  <p className="text-[13px] text-muted-foreground">Total Runs</p>
                   <p className="text-2xl font-bold">456K</p>
                 </div>
                 <Globe className="h-8 w-8 text-muted-foreground" />
@@ -209,7 +209,7 @@ export default function Explore() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Languages</p>
+                  <p className="text-[13px] text-muted-foreground">Languages</p>
                   <p className="text-2xl font-bold">50+</p>
                 </div>
                 <Code2 className="h-8 w-8 text-muted-foreground" />
@@ -242,8 +242,8 @@ export default function Explore() {
                         <AvatarFallback>{repl.author[0].toUpperCase()}</AvatarFallback>
                       </Avatar>
                       <div>
-                        <CardTitle className="text-lg">{repl.name}</CardTitle>
-                        <p className="text-sm text-muted-foreground">by {repl.author}</p>
+                        <CardTitle className="text-[15px]">{repl.name}</CardTitle>
+                        <p className="text-[13px] text-muted-foreground">by {repl.author}</p>
                       </div>
                     </div>
                     <Badge variant="secondary" className={`${getLanguageColor(repl.language)}`}>
@@ -252,21 +252,21 @@ export default function Explore() {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <p className="text-sm text-muted-foreground line-clamp-2">
+                  <p className="text-[13px] text-muted-foreground line-clamp-2">
                     {repl.description}
                   </p>
                   
                   {/* Tags */}
                   <div className="flex flex-wrap gap-1">
                     {repl.tags.map((tag: string) => (
-                      <Badge key={tag} variant="outline" className="text-xs">
+                      <Badge key={tag} variant="outline" className="text-[11px]">
                         #{tag}
                       </Badge>
                     ))}
                   </div>
                   
                   {/* Stats */}
-                  <div className="flex items-center justify-between text-sm text-muted-foreground">
+                  <div className="flex items-center justify-between text-[13px] text-muted-foreground">
                     <div className="flex items-center gap-3">
                       <span className="flex items-center gap-1">
                         <Star className="h-3 w-3" />
@@ -290,7 +290,7 @@ export default function Explore() {
                   {/* Category */}
                   <div className="flex items-center gap-2 pt-2 border-t">
                     <CategoryIcon className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">
+                    <span className="text-[13px] text-muted-foreground">
                       {categories.find(c => c.id === repl.category)?.name}
                     </span>
                   </div>
@@ -304,7 +304,7 @@ export default function Explore() {
         {!isLoading && publicRepls.length === 0 && (
           <div className="text-center py-12">
             <Code2 className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No repls found</h3>
+            <h3 className="text-[15px] font-semibold mb-2">No repls found</h3>
             <p className="text-muted-foreground">
               Try adjusting your search or filters
             </p>

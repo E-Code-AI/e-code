@@ -50,20 +50,20 @@ export function CreditBalance() {
       <HoverCardContent className="w-80">
         <div className="space-y-3">
           <div className="flex justify-between items-center">
-            <h4 className="text-sm font-semibold">AI Credits</h4>
+            <h4 className="text-[13px] font-semibold">AI Credits</h4>
             <Badge variant="outline">Free Plan</Badge>
           </div>
           
           <div className="space-y-1">
-            <div className="flex justify-between text-sm">
+            <div className="flex justify-between text-[13px]">
               <span>Used</span>
               <span className="font-medium">{totalUsed.toFixed(2)}</span>
             </div>
-            <div className="flex justify-between text-sm">
+            <div className="flex justify-between text-[13px]">
               <span>Remaining</span>
               <span className="font-medium">{remainingCredits.toFixed(2)}</span>
             </div>
-            <div className="flex justify-between text-sm">
+            <div className="flex justify-between text-[13px]">
               <span>Total</span>
               <span className="font-medium">{totalCredits.toFixed(2)}</span>
             </div>
@@ -71,7 +71,7 @@ export function CreditBalance() {
           
           <Progress value={percentage} className="h-2" />
           
-          <p className="text-xs text-muted-foreground">
+          <p className="text-[11px] text-muted-foreground">
             {percentage < 10 && "⚠️ Credits running low. "}
             Credits reset monthly.
           </p>

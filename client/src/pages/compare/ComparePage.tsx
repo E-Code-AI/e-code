@@ -310,7 +310,7 @@ export default function ComparePage() {
         
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 max-w-7xl">
           <div className="flex flex-col items-center gap-6 sm:gap-8 lg:gap-10 text-center">
-            <Badge className="bg-gradient-to-r from-sky-500/20 to-indigo-500/20 text-white border-white/20 px-4 py-1.5 text-sm font-medium" data-testid="badge-comparison">
+            <Badge className="bg-gradient-to-r from-sky-500/20 to-indigo-500/20 text-white border-white/20 px-4 py-1.5 text-[13px] font-medium" data-testid="badge-comparison">
               Platform Comparison
             </Badge>
             
@@ -318,7 +318,7 @@ export default function ComparePage() {
               {content.heroTitle}
             </h1>
             
-            <p className="max-w-3xl text-base sm:text-lg lg:text-xl text-slate-300 leading-relaxed" data-testid="text-hero-description">
+            <p className="max-w-3xl text-base sm:text-[15px] lg:text-xl text-slate-300 leading-relaxed" data-testid="text-hero-description">
               {content.description}
             </p>
 
@@ -328,15 +328,15 @@ export default function ComparePage() {
                   <img src={eCodeLogo} alt="E-Code logo" className="h-8 w-8 sm:h-10 sm:w-10" />
                 </div>
                 <div className="text-left">
-                  <p className="text-lg sm:text-xl font-bold text-white">E-Code</p>
-                  <p className="text-xs sm:text-sm text-slate-300">AI-native enterprise platform</p>
+                  <p className="text-[15px] sm:text-xl font-bold text-white">E-Code</p>
+                  <p className="text-[11px] sm:text-[13px] text-slate-300">AI-native enterprise platform</p>
                 </div>
               </div>
 
-              <div className="hidden sm:flex items-center justify-center rounded-full border-2 border-white/30 bg-white/5 px-5 py-2.5 text-sm font-bold uppercase tracking-[0.3em] text-white/80 backdrop-blur">
+              <div className="hidden sm:flex items-center justify-center rounded-full border-2 border-white/30 bg-white/5 px-5 py-2.5 text-[13px] font-bold uppercase tracking-[0.3em] text-white/80 backdrop-blur">
                 VS
               </div>
-              <div className="flex sm:hidden items-center justify-center py-2 text-sm font-bold uppercase tracking-[0.3em] text-white/60">
+              <div className="flex sm:hidden items-center justify-center py-2 text-[13px] font-bold uppercase tracking-[0.3em] text-white/60">
                 VS
               </div>
 
@@ -345,8 +345,8 @@ export default function ComparePage() {
                   <img src={content.platform.logo} alt={`${content.platform.name} logo`} className="h-8 w-8 sm:h-10 sm:w-10" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
                 </div>
                 <div className="text-left">
-                  <p className="text-lg sm:text-xl font-bold text-white">{content.platform.name}</p>
-                  <p className="text-xs sm:text-sm text-slate-300 line-clamp-1">{content.platform.tagline}</p>
+                  <p className="text-[15px] sm:text-xl font-bold text-white">{content.platform.name}</p>
+                  <p className="text-[11px] sm:text-[13px] text-slate-300 line-clamp-1">{content.platform.tagline}</p>
                 </div>
               </div>
             </div>
@@ -355,7 +355,7 @@ export default function ComparePage() {
               {content.highlights.map((highlight, index) => (
                 <div key={highlight} className="group rounded-xl sm:rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5 backdrop-blur transition-all hover:bg-white/10 hover:border-white/20 hover:scale-[1.02]" data-testid={`card-highlight-${index}`}>
                   <CheckCircle2 className="mb-2 sm:mb-3 h-5 w-5 text-emerald-400 group-hover:scale-110 transition-transform" />
-                  <p className="text-sm sm:text-base text-slate-200 leading-relaxed">{highlight}</p>
+                  <p className="text-[13px] sm:text-base text-slate-200 leading-relaxed">{highlight}</p>
                 </div>
               ))}
             </div>
@@ -363,7 +363,7 @@ export default function ComparePage() {
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-6 sm:mt-8 w-full sm:w-auto">
               <Button 
                 size="lg" 
-                className="w-full sm:w-auto bg-gradient-to-r from-sky-500 via-blue-500 to-indigo-500 text-white font-semibold px-8 py-6 text-base sm:text-lg rounded-xl hover:opacity-90 transition-all hover:scale-105 shadow-lg shadow-blue-500/25"
+                className="w-full sm:w-auto bg-gradient-to-r from-sky-500 via-blue-500 to-indigo-500 text-white font-semibold px-8 py-6 text-base sm:text-[15px] rounded-xl hover:opacity-90 transition-all hover:scale-105 shadow-lg shadow-blue-500/25"
                 onClick={() => window.location.href = '/register'}
                 data-testid="button-start-free"
               >
@@ -373,7 +373,7 @@ export default function ComparePage() {
               <Button 
                 size="lg" 
                 variant="outline" 
-                className="w-full sm:w-auto bg-transparent border-white/20 text-white font-semibold px-8 py-6 text-base sm:text-lg rounded-xl hover:bg-white/10 hover:border-white/40 transition-all"
+                className="w-full sm:w-auto bg-transparent border-white/20 text-white font-semibold px-8 py-6 text-base sm:text-[15px] rounded-xl hover:bg-white/10 hover:border-white/40 transition-all"
                 onClick={() => setShowVideo(true)}
                 data-testid="button-watch-demo"
               >
@@ -397,7 +397,7 @@ export default function ComparePage() {
               <div key={stat.label} className="group rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-6 text-center backdrop-blur transition-all hover:bg-white/10 hover:border-white/20" data-testid={`stat-${index}`}>
                 <stat.icon className={`mx-auto mb-2 sm:mb-3 h-6 w-6 sm:h-8 sm:w-8 ${stat.color} group-hover:scale-110 transition-transform`} />
                 <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white">{stat.value}</p>
-                <p className="text-xs sm:text-sm text-slate-400 mt-1">{stat.label}</p>
+                <p className="text-[11px] sm:text-[13px] text-slate-400 mt-1">{stat.label}</p>
               </div>
             ))}
           </div>
@@ -406,11 +406,11 @@ export default function ComparePage() {
 
       <section className="py-12 sm:py-16 lg:py-20 bg-slate-900" data-testid="section-enterprise-logos">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
-          <p className="text-center text-sm sm:text-base text-slate-400 mb-6 sm:mb-8">Trusted by engineering teams at</p>
+          <p className="text-center text-[13px] sm:text-base text-slate-400 mb-6 sm:mb-8">Trusted by engineering teams at</p>
           <div className="grid grid-cols-4 md:grid-cols-8 gap-4 sm:gap-6 lg:gap-8 items-center justify-items-center opacity-60">
             {enterpriseLogos.map((logo, index) => (
               <div key={logo.name} className="flex items-center justify-center min-w-[40px] min-h-[40px]" data-testid={`logo-enterprise-${index}`} aria-label={`${logo.name} logo`}>
-                <div className="flex items-center justify-center h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 rounded-lg bg-slate-700/50 border border-slate-600/30 text-slate-400 hover:text-white hover:border-slate-500 transition-all font-semibold text-xs sm:text-sm md:text-base">
+                <div className="flex items-center justify-center h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 rounded-lg bg-slate-700/50 border border-slate-600/30 text-slate-400 hover:text-white hover:border-slate-500 transition-all font-semibold text-[11px] sm:text-[13px] md:text-base">
                   {logo.initials}
                 </div>
               </div>
@@ -424,21 +424,21 @@ export default function ComparePage() {
           <div className="text-center mb-8 sm:mb-12">
             <Badge className="bg-white/10 text-white border-white/20 mb-4">Feature Comparison</Badge>
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-3 sm:mb-4">Detailed Analysis</h2>
-            <p className="text-slate-300 max-w-2xl mx-auto text-sm sm:text-base">See how E-Code compares across critical enterprise criteria</p>
+            <p className="text-slate-300 max-w-2xl mx-auto text-[13px] sm:text-base">See how E-Code compares across critical enterprise criteria</p>
           </div>
 
           <div className="hidden lg:block overflow-hidden rounded-2xl border border-white/10 bg-white/5 backdrop-blur">
             <div className="grid grid-cols-[2fr_1fr_1fr] gap-4 p-6 border-b border-white/10 bg-white/5">
-              <div className="text-sm font-semibold uppercase tracking-wider text-slate-400">Feature</div>
+              <div className="text-[13px] font-semibold uppercase tracking-wider text-slate-400">Feature</div>
               <div className="text-center">
                 <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-sky-500/20 to-indigo-500/20 border border-sky-500/30">
                   <img src={eCodeLogo} alt="E-Code" className="h-5 w-5" />
-                  <span className="text-sm font-semibold text-white">E-Code</span>
+                  <span className="text-[13px] font-semibold text-white">E-Code</span>
                 </span>
               </div>
               <div className="text-center">
                 <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 border border-white/20">
-                  <span className="text-sm font-semibold text-slate-300">{content.platform.name}</span>
+                  <span className="text-[13px] font-semibold text-slate-300">{content.platform.name}</span>
                 </span>
               </div>
             </div>
@@ -453,18 +453,18 @@ export default function ComparePage() {
                     <div className="w-full max-w-[120px] h-2 rounded-full bg-white/10 overflow-hidden">
                       <div className="h-full bg-gradient-to-r from-emerald-400 to-emerald-500 rounded-full" style={{ width: `${point.eCodeScore}%` }} />
                     </div>
-                    <span className="text-sm font-bold text-emerald-400">{point.eCodeScore}%</span>
+                    <span className="text-[13px] font-bold text-emerald-400">{point.eCodeScore}%</span>
                   </div>
-                  <p className="text-sm text-slate-300">{point.eCode}</p>
+                  <p className="text-[13px] text-slate-300">{point.eCode}</p>
                 </div>
                 <div className="text-center">
                   <div className="inline-flex items-center gap-2 mb-2">
                     <div className="w-full max-w-[120px] h-2 rounded-full bg-white/10 overflow-hidden">
                       <div className="h-full bg-slate-500 rounded-full" style={{ width: `${point.competitorScore}%` }} />
                     </div>
-                    <span className="text-sm font-bold text-slate-400">{point.competitorScore}%</span>
+                    <span className="text-[13px] font-bold text-slate-400">{point.competitorScore}%</span>
                   </div>
-                  <p className="text-sm text-slate-400">{point.competitor}</p>
+                  <p className="text-[13px] text-slate-400">{point.competitor}</p>
                 </div>
               </div>
             ))}
@@ -474,28 +474,28 @@ export default function ComparePage() {
             {content.comparisonPoints.map((point, index) => (
               <Card key={point.label} className="bg-white/5 border-white/10" data-testid={`comparison-card-mobile-${index}`}>
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-lg text-white">{point.label}</CardTitle>
+                  <CardTitle className="text-[15px] text-white">{point.label}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-semibold text-emerald-400">E-Code</span>
-                      <span className="text-sm font-bold text-emerald-400">{point.eCodeScore}%</span>
+                      <span className="text-[13px] font-semibold text-emerald-400">E-Code</span>
+                      <span className="text-[13px] font-bold text-emerald-400">{point.eCodeScore}%</span>
                     </div>
                     <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden mb-2">
                       <div className="h-full bg-gradient-to-r from-emerald-400 to-emerald-500 rounded-full" style={{ width: `${point.eCodeScore}%` }} />
                     </div>
-                    <p className="text-sm text-slate-200">{point.eCode}</p>
+                    <p className="text-[13px] text-slate-200">{point.eCode}</p>
                   </div>
                   <div className="p-4 rounded-xl bg-white/5 border border-white/10">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-semibold text-slate-300">{content.platform.name}</span>
-                      <span className="text-sm font-bold text-slate-400">{point.competitorScore}%</span>
+                      <span className="text-[13px] font-semibold text-slate-300">{content.platform.name}</span>
+                      <span className="text-[13px] font-bold text-slate-400">{point.competitorScore}%</span>
                     </div>
                     <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden mb-2">
                       <div className="h-full bg-slate-500 rounded-full" style={{ width: `${point.competitorScore}%` }} />
                     </div>
-                    <p className="text-sm text-slate-400">{point.competitor}</p>
+                    <p className="text-[13px] text-slate-400">{point.competitor}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -509,7 +509,7 @@ export default function ComparePage() {
           <div className="text-center mb-8 sm:mb-12">
             <Badge className="bg-white/10 text-white border-white/20 mb-4">Why E-Code</Badge>
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-3 sm:mb-4">Built for Enterprise Scale</h2>
-            <p className="text-slate-300 max-w-2xl mx-auto text-sm sm:text-base">Every feature designed for Fortune 500 requirements</p>
+            <p className="text-slate-300 max-w-2xl mx-auto text-[13px] sm:text-base">Every feature designed for Fortune 500 requirements</p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
@@ -522,7 +522,7 @@ export default function ComparePage() {
                       <div className="p-2 rounded-xl bg-gradient-to-br from-sky-500/20 to-indigo-500/20 group-hover:from-sky-500/30 group-hover:to-indigo-500/30 transition-colors">
                         <IconComponent className="h-5 w-5 text-sky-400" />
                       </div>
-                      <CardTitle className="text-lg text-white">{item.title}</CardTitle>
+                      <CardTitle className="text-[15px] text-white">{item.title}</CardTitle>
                     </div>
                     <CardDescription className="text-slate-300 leading-relaxed">{item.description}</CardDescription>
                   </CardHeader>
@@ -538,7 +538,7 @@ export default function ComparePage() {
           <div className="text-center mb-8 sm:mb-12">
             <Badge className="bg-white/10 text-white border-white/20 mb-4">Customer Stories</Badge>
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-3 sm:mb-4">Loved by Engineering Teams</h2>
-            <p className="text-slate-300 max-w-2xl mx-auto text-sm sm:text-base">See what industry leaders say about switching to E-Code</p>
+            <p className="text-slate-300 max-w-2xl mx-auto text-[13px] sm:text-base">See what industry leaders say about switching to E-Code</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
@@ -546,14 +546,14 @@ export default function ComparePage() {
               <Card key={testimonial.author} className="bg-white/5 border-white/10 hover:bg-white/10 transition-all" data-testid={`testimonial-${index}`}>
                 <CardContent className="pt-6">
                   <Quote className="h-8 w-8 text-sky-400/50 mb-4" />
-                  <p className="text-slate-200 leading-relaxed mb-6 text-sm sm:text-base">"{testimonial.quote}"</p>
+                  <p className="text-slate-200 leading-relaxed mb-6 text-[13px] sm:text-base">"{testimonial.quote}"</p>
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-sky-500 to-indigo-500 text-white font-semibold text-sm">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-sky-500 to-indigo-500 text-white font-semibold text-[13px]">
                       {testimonial.avatar}
                     </div>
                     <div>
-                      <p className="font-semibold text-white text-sm">{testimonial.author}</p>
-                      <p className="text-xs text-slate-400">{testimonial.role}, {testimonial.company}</p>
+                      <p className="font-semibold text-white text-[13px]">{testimonial.author}</p>
+                      <p className="text-[11px] text-slate-400">{testimonial.role}, {testimonial.company}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -568,7 +568,7 @@ export default function ComparePage() {
           <div className="text-center mb-8 sm:mb-12">
             <Badge className="bg-white/10 text-white border-white/20 mb-4">FAQ</Badge>
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-3 sm:mb-4">Common Questions</h2>
-            <p className="text-slate-300 text-sm sm:text-base">Everything you need to know about switching from {content.platform.name}</p>
+            <p className="text-slate-300 text-[13px] sm:text-base">Everything you need to know about switching from {content.platform.name}</p>
           </div>
 
           <div className="space-y-3 sm:space-y-4">
@@ -579,7 +579,7 @@ export default function ComparePage() {
                   onClick={() => setOpenFaq(openFaq === index ? null : index)}
                   data-testid={`button-faq-${index}`}
                 >
-                  <span className="font-semibold text-white text-sm sm:text-base pr-4">{item.question}</span>
+                  <span className="font-semibold text-white text-[13px] sm:text-base pr-4">{item.question}</span>
                   {openFaq === index ? (
                     <ChevronUp className="h-5 w-5 text-slate-400 flex-shrink-0" />
                   ) : (
@@ -588,7 +588,7 @@ export default function ComparePage() {
                 </button>
                 {openFaq === index && (
                   <div className="px-4 sm:px-5 pb-4 sm:pb-5">
-                    <p className="text-slate-300 leading-relaxed text-sm sm:text-base">{item.answer}</p>
+                    <p className="text-slate-300 leading-relaxed text-[13px] sm:text-base">{item.answer}</p>
                   </div>
                 )}
               </div>
@@ -602,7 +602,7 @@ export default function ComparePage() {
           <div className="text-center mb-8 sm:mb-12">
             <Badge className="bg-white/10 text-white border-white/20 mb-4">Works Everywhere</Badge>
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-3 sm:mb-4">Code on Any Device</h2>
-            <p className="text-slate-300 max-w-2xl mx-auto text-sm sm:text-base">Seamless experience across desktop, tablet, and mobile</p>
+            <p className="text-slate-300 max-w-2xl mx-auto text-[13px] sm:text-base">Seamless experience across desktop, tablet, and mobile</p>
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
@@ -614,8 +614,8 @@ export default function ComparePage() {
             ].map((device, index) => (
               <div key={device.label} className="group rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-6 text-center backdrop-blur transition-all hover:bg-white/10 hover:border-white/20" data-testid={`device-${index}`}>
                 <device.icon className="mx-auto mb-3 h-8 w-8 sm:h-10 sm:w-10 text-sky-400 group-hover:scale-110 transition-transform" />
-                <p className="font-semibold text-white text-sm sm:text-base">{device.label}</p>
-                <p className="text-xs sm:text-sm text-slate-400 mt-1">{device.desc}</p>
+                <p className="font-semibold text-white text-[13px] sm:text-base">{device.label}</p>
+                <p className="text-[11px] sm:text-[13px] text-slate-400 mt-1">{device.desc}</p>
               </div>
             ))}
           </div>
@@ -630,7 +630,7 @@ export default function ComparePage() {
               <div className="grid gap-6 lg:gap-8 lg:grid-cols-2 items-center">
                 <div className="text-center lg:text-left">
                   <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-4">Ready to upgrade from {content.platform.name}?</h2>
-                  <ul className="space-y-2 sm:space-y-3 text-slate-200 text-sm sm:text-base mb-6">
+                  <ul className="space-y-2 sm:space-y-3 text-slate-200 text-[13px] sm:text-base mb-6">
                     <li className="flex items-start gap-2 justify-center lg:justify-start">
                       <Check className="mt-0.5 h-5 w-5 text-emerald-400 flex-shrink-0" />
                       <span>Free migration assistance and onboarding</span>
@@ -648,7 +648,7 @@ export default function ComparePage() {
                 <div className="flex flex-col gap-3 sm:gap-4">
                   <Button 
                     size="lg" 
-                    className="w-full bg-white text-slate-900 font-semibold px-8 py-6 text-base sm:text-lg rounded-xl hover:bg-slate-100 transition-all shadow-lg"
+                    className="w-full bg-white text-slate-900 font-semibold px-8 py-6 text-base sm:text-[15px] rounded-xl hover:bg-slate-100 transition-all shadow-lg"
                     onClick={() => window.location.href = '/register'}
                     data-testid="button-cta-start"
                   >
@@ -658,7 +658,7 @@ export default function ComparePage() {
                   <Button 
                     size="lg" 
                     variant="outline" 
-                    className="w-full bg-transparent border-white/30 text-white font-semibold px-8 py-6 text-base sm:text-lg rounded-xl hover:bg-white/10 hover:border-white/50 transition-all"
+                    className="w-full bg-transparent border-white/30 text-white font-semibold px-8 py-6 text-base sm:text-[15px] rounded-xl hover:bg-white/10 hover:border-white/50 transition-all"
                     onClick={() => window.location.href = '/contact-sales'}
                     data-testid="button-cta-demo"
                   >
@@ -666,7 +666,7 @@ export default function ComparePage() {
                     Book Enterprise Demo
                   </Button>
                   <Link href="/pricing" className="text-center">
-                    <span className="text-slate-400 hover:text-white text-sm transition-colors" data-testid="link-view-pricing">
+                    <span className="text-slate-400 hover:text-white text-[13px] transition-colors" data-testid="link-view-pricing">
                       View pricing plans →
                     </span>
                   </Link>
@@ -679,14 +679,14 @@ export default function ComparePage() {
 
       <section className="py-8 sm:py-12 bg-slate-950" data-testid="section-compare-nav">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
-          <p className="text-center text-sm text-slate-400 mb-4 sm:mb-6">Compare E-Code with other platforms</p>
+          <p className="text-center text-[13px] text-slate-400 mb-4 sm:mb-6">Compare E-Code with other platforms</p>
           <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
             {Object.keys(comparisonContent).map((key) => (
               <Link key={key} href={`/compare/${key}`}>
                 <Button 
                   variant="ghost" 
                   size="sm"
-                  className={`rounded-full text-xs sm:text-sm ${slug === key ? 'bg-white/10 text-white' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
+                  className={`rounded-full text-[11px] sm:text-[13px] ${slug === key ? 'bg-white/10 text-white' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
                   data-testid={`button-nav-${key}`}
                 >
                   {comparisonContent[key].platform.name}
@@ -722,7 +722,7 @@ export default function ComparePage() {
         <div className="px-4 py-3 flex gap-2">
           <Button 
             size="sm"
-            className="flex-1 bg-gradient-to-r from-sky-500 to-indigo-500 text-white font-semibold rounded-lg text-sm min-h-[44px]"
+            className="flex-1 bg-gradient-to-r from-sky-500 to-indigo-500 text-white font-semibold rounded-lg text-[13px] min-h-[44px]"
             onClick={() => window.location.href = '/register'}
             data-testid="button-sticky-start"
           >
@@ -731,7 +731,7 @@ export default function ComparePage() {
           <Button 
             size="sm"
             variant="outline"
-            className="flex-1 bg-transparent border-white/20 text-white font-semibold rounded-lg text-sm min-h-[44px] hover:bg-white/10"
+            className="flex-1 bg-transparent border-white/20 text-white font-semibold rounded-lg text-[13px] min-h-[44px] hover:bg-white/10"
             onClick={() => window.location.href = '/contact-sales'}
             data-testid="button-sticky-demo"
           >

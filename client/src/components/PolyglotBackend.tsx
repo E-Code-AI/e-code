@@ -183,7 +183,7 @@ export function PolyglotBackend() {
             {healthData?.services.map((service: ServiceHealth, index: number) => (
               <Card key={service.service} data-testid={`card-service-${service.service}`}>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium flex items-center gap-2" data-testid={`text-service-name-${index}`}>
+                  <CardTitle className="text-[13px] font-medium flex items-center gap-2" data-testid={`text-service-name-${index}`}>
                     {getServiceIcon(service.service)}
                     {service.service.replace('-', ' ').toUpperCase()}
                   </CardTitle>
@@ -192,11 +192,11 @@ export function PolyglotBackend() {
                 <CardContent>
                   <div className="text-2xl font-bold capitalize" data-testid={`text-service-status-${index}`}>{service.status}</div>
                   {service.responseTime && (
-                    <p className="text-xs text-muted-foreground" data-testid={`text-service-response-time-${index}`}>
+                    <p className="text-[11px] text-muted-foreground" data-testid={`text-service-response-time-${index}`}>
                       Response time: {service.responseTime}ms
                     </p>
                   )}
-                  <p className="text-xs text-muted-foreground" data-testid={`text-service-last-check-${index}`}>
+                  <p className="text-[11px] text-muted-foreground" data-testid={`text-service-last-check-${index}`}>
                     Last check: {new Date(service.lastCheck).toLocaleTimeString()}
                   </p>
                 </CardContent>
@@ -215,7 +215,7 @@ export function PolyglotBackend() {
                   <Code className="h-5 w-5 text-blue-600 mt-1" />
                   <div>
                     <h4 className="font-semibold">TypeScript</h4>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-[13px] text-muted-foreground">
                       Web APIs, user management, database operations
                     </p>
                   </div>
@@ -224,7 +224,7 @@ export function PolyglotBackend() {
                   <Cpu className="h-5 w-5 text-green-600 mt-1" />
                   <div>
                     <h4 className="font-semibold">Go</h4>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-[13px] text-muted-foreground">
                       High-performance containers, file ops, real-time
                     </p>
                   </div>
@@ -233,7 +233,7 @@ export function PolyglotBackend() {
                   <Brain className="h-5 w-5 text-purple-600 mt-1" />
                   <div>
                     <h4 className="font-semibold">Python</h4>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-[13px] text-muted-foreground">
                       AI/ML processing, data analysis, code analysis
                     </p>
                   </div>
@@ -262,10 +262,10 @@ export function PolyglotBackend() {
               <CardContent>
                 <div className="space-y-4">
                   <div>
-                    <h4 className="text-sm font-semibold mb-2">Capabilities</h4>
+                    <h4 className="text-[13px] font-semibold mb-2">Capabilities</h4>
                     <div className="space-y-1">
                       {serviceInfo.capabilities.map((capability, index) => (
-                        <div key={index} className="text-sm text-muted-foreground flex items-center gap-2">
+                        <div key={index} className="text-[13px] text-muted-foreground flex items-center gap-2">
                           <CheckCircle className="h-3 w-3 text-green-600" />
                           {capability}
                         </div>
@@ -273,10 +273,10 @@ export function PolyglotBackend() {
                     </div>
                   </div>
                   <div>
-                    <h4 className="text-sm font-semibold mb-2">API Endpoints</h4>
+                    <h4 className="text-[13px] font-semibold mb-2">API Endpoints</h4>
                     <div className="flex flex-wrap gap-2">
                       {serviceInfo.endpoints.map((endpoint, index) => (
-                        <Badge key={index} variant="secondary" className="text-xs">
+                        <Badge key={index} variant="secondary" className="text-[11px]">
                           {endpoint}
                         </Badge>
                       ))}
@@ -305,7 +305,7 @@ export function PolyglotBackend() {
                       </div>
                       <div className="flex items-center gap-2">
                         {getServiceIcon(service)}
-                        <span className="text-sm font-medium">{service}</span>
+                        <span className="text-[13px] font-medium">{service}</span>
                       </div>
                     </div>
                   ))}
@@ -331,7 +331,7 @@ export function PolyglotBackend() {
                         {getServiceIcon(benchmark.service)}
                         <div>
                           <div className="font-medium">{benchmark.service}</div>
-                          <div className="text-sm text-muted-foreground">
+                          <div className="text-[13px] text-muted-foreground">
                             Status: {benchmark.status}
                           </div>
                         </div>
@@ -352,7 +352,7 @@ export function PolyglotBackend() {
                     </div>
                   ))}
                   <div className="mt-4 p-3 bg-muted rounded-lg">
-                    <div className="text-sm">
+                    <div className="text-[13px]">
                       <strong>Fastest Service:</strong> {benchmarkMutation.data.fastest.service} 
                       ({benchmarkMutation.data.fastest.responseTime}ms)
                     </div>

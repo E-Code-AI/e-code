@@ -181,70 +181,70 @@ export default function Subscribe() {
                 <>
                   <div className="flex items-start gap-2">
                     <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">100 hours of compute time per month</span>
+                    <span className="text-[13px]">100 hours of compute time per month</span>
                   </div>
                   <div className="flex items-start gap-2">
                     <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">10 GB storage space</span>
+                    <span className="text-[13px]">10 GB storage space</span>
                   </div>
                   <div className="flex items-start gap-2">
                     <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">100 GB bandwidth</span>
+                    <span className="text-[13px]">100 GB bandwidth</span>
                   </div>
                   <div className="flex items-start gap-2">
                     <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">Unlimited private projects</span>
+                    <span className="text-[13px]">Unlimited private projects</span>
                   </div>
                   <div className="flex items-start gap-2">
                     <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">10 deployments per month</span>
+                    <span className="text-[13px]">10 deployments per month</span>
                   </div>
                   <div className="flex items-start gap-2">
                     <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">3 team collaborators</span>
+                    <span className="text-[13px]">3 team collaborators</span>
                   </div>
                   <div className="flex items-start gap-2">
                     <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">Email support</span>
+                    <span className="text-[13px]">Email support</span>
                   </div>
                   <div className="flex items-start gap-2">
                     <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">500 AI requests per month</span>
+                    <span className="text-[13px]">500 AI requests per month</span>
                   </div>
                 </>
               ) : (
                 <>
                   <div className="flex items-start gap-2">
                     <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">500 hours of compute time per month</span>
+                    <span className="text-[13px]">500 hours of compute time per month</span>
                   </div>
                   <div className="flex items-start gap-2">
                     <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">50 GB storage space</span>
+                    <span className="text-[13px]">50 GB storage space</span>
                   </div>
                   <div className="flex items-start gap-2">
                     <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">500 GB bandwidth</span>
+                    <span className="text-[13px]">500 GB bandwidth</span>
                   </div>
                   <div className="flex items-start gap-2">
                     <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">Unlimited private projects</span>
+                    <span className="text-[13px]">Unlimited private projects</span>
                   </div>
                   <div className="flex items-start gap-2">
                     <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">Unlimited deployments</span>
+                    <span className="text-[13px]">Unlimited deployments</span>
                   </div>
                   <div className="flex items-start gap-2">
                     <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">10 team collaborators</span>
+                    <span className="text-[13px]">10 team collaborators</span>
                   </div>
                   <div className="flex items-start gap-2">
                     <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">Priority support</span>
+                    <span className="text-[13px]">Priority support</span>
                   </div>
                   <div className="flex items-start gap-2">
                     <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">2000 AI requests per month</span>
+                    <span className="text-[13px]">2000 AI requests per month</span>
                   </div>
                 </>
               )}

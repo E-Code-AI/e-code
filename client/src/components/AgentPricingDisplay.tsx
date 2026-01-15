@@ -65,7 +65,7 @@ export const AgentPricingDisplay: React.FC<AgentPricingDisplayProps> = ({
     <Card className="w-full border-blue-200 bg-gradient-to-br from-blue-50/50 to-indigo-50/50">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg flex items-center gap-2">
+          <CardTitle className="text-[15px] flex items-center gap-2">
             <Brain className="h-5 w-5 text-blue-600" />
             Agent Task Analysis
           </CardTitle>
@@ -82,19 +82,19 @@ export const AgentPricingDisplay: React.FC<AgentPricingDisplayProps> = ({
               <DollarSign className="h-6 w-6 text-green-600" />
             </div>
             <div>
-              <p className="text-sm text-gray-600">Task Cost</p>
+              <p className="text-[13px] text-gray-600">Task Cost</p>
               <p className="text-2xl font-bold text-gray-900">${pricing.costInDollars}</p>
             </div>
           </div>
           <div className="text-right">
-            <p className="text-xs text-gray-500">Effort Score</p>
-            <p className="text-lg font-semibold text-blue-600">{pricing.effortScore}x</p>
+            <p className="text-[11px] text-gray-500">Effort Score</p>
+            <p className="text-[15px] font-semibold text-blue-600">{pricing.effortScore}x</p>
           </div>
         </div>
 
         {/* Effort Progress Bar */}
         <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm">
+          <div className="flex items-center justify-between text-[13px]">
             <span className="text-gray-600">Task Complexity</span>
             <span className="text-gray-900 font-medium">{Math.round(effortPercentage)}%</span>
           </div>
@@ -140,9 +140,9 @@ export const AgentPricingDisplay: React.FC<AgentPricingDisplayProps> = ({
           <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
             <div className="flex items-center gap-2">
               <Activity className="h-4 w-4 text-gray-600" />
-              <span className="text-sm text-gray-600">Tokens Used</span>
+              <span className="text-[13px] text-gray-600">Tokens Used</span>
             </div>
-            <span className="text-sm font-medium text-gray-900">
+            <span className="text-[13px] font-medium text-gray-900">
               {metrics.tokensUsed.toLocaleString()}
             </span>
           </div>
@@ -151,7 +151,7 @@ export const AgentPricingDisplay: React.FC<AgentPricingDisplayProps> = ({
         {/* Checkpoint Info */}
         {checkpoint && (
           <div className="pt-2 border-t">
-            <p className="text-xs text-gray-500">
+            <p className="text-[11px] text-gray-500">
               Checkpoint #{checkpoint.id} created • Includes full AI context & database snapshot
             </p>
           </div>
@@ -175,8 +175,8 @@ const MetricCard: React.FC<MetricCardProps> = ({ icon, label, value, color, bgCo
       {icon}
     </div>
     <div>
-      <p className="text-xs text-gray-600">{label}</p>
-      <p className="text-lg font-semibold text-gray-900">{value}</p>
+      <p className="text-[11px] text-gray-600">{label}</p>
+      <p className="text-[15px] font-semibold text-gray-900">{value}</p>
     </div>
   </div>
 );

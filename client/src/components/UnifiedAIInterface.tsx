@@ -258,7 +258,7 @@ export function UnifiedAIInterface({
         <div className="flex items-center gap-2">
           <Bot className="h-5 w-5 text-primary" />
           <h2 className="font-semibold">Unified AI Assistant</h2>
-          <Badge variant="secondary" className="text-xs">
+          <Badge variant="secondary" className="text-[11px]">
             Claude 4.0
           </Badge>
         </div>
@@ -270,13 +270,13 @@ export function UnifiedAIInterface({
             className="w-auto"
           >
             <TabsList className="grid w-full grid-cols-3 h-8">
-              <TabsTrigger value="agent" className="text-xs">
+              <TabsTrigger value="agent" className="text-[11px]">
                 Agent
               </TabsTrigger>
-              <TabsTrigger value="assistant" className="text-xs">
+              <TabsTrigger value="assistant" className="text-[11px]">
                 Assistant
               </TabsTrigger>
-              <TabsTrigger value="advanced" className="text-xs">
+              <TabsTrigger value="advanced" className="text-[11px]">
                 Advanced
               </TabsTrigger>
             </TabsList>
@@ -311,7 +311,7 @@ export function UnifiedAIInterface({
                   checked={autoRun}
                   onCheckedChange={setAutoRun}
                 />
-                <Label htmlFor="auto-run" className="text-sm">
+                <Label htmlFor="auto-run" className="text-[13px]">
                   Auto-run
                 </Label>
               </div>
@@ -335,14 +335,14 @@ export function UnifiedAIInterface({
           {messages.length === 0 && (
             <div className="text-center py-8 text-muted-foreground">
               <Bot className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p className="text-lg font-medium mb-2">
+              <p className="text-[15px] font-medium mb-2">
                 {mode === "agent"
                   ? "AI Agent Ready"
                   : mode === "assistant"
                     ? "AI Assistant Ready"
                     : "Advanced AI Ready"}
               </p>
-              <p className="text-sm">
+              <p className="text-[13px]">
                 {mode === "agent"
                   ? "Describe what you want to build and I'll create it for you"
                   : mode === "assistant"
@@ -373,16 +373,16 @@ export function UnifiedAIInterface({
                     {message.role === "assistant" && (
                       <Bot className="h-4 w-4" />
                     )}
-                    <span className="text-xs opacity-70">
+                    <span className="text-[11px] opacity-70">
                       {message.timestamp.toLocaleTimeString()}
                     </span>
                     {message.model && (
-                      <Badge variant="secondary" className="text-xs">
+                      <Badge variant="secondary" className="text-[11px]">
                         {message.model}
                       </Badge>
                     )}
                     {message.effort && (
-                      <Badge variant="outline" className="text-xs">
+                      <Badge variant="outline" className="text-[11px]">
                         {message.effort} effort
                       </Badge>
                     )}
@@ -424,7 +424,7 @@ export function UnifiedAIInterface({
           {isLoading && (
             <div className="flex items-center gap-2 text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" />
-              <span className="text-sm">AI is thinking...</span>
+              <span className="text-[13px]">AI is thinking...</span>
             </div>
           )}
 
@@ -435,7 +435,7 @@ export function UnifiedAIInterface({
       {/* Effort Pricing Display */}
       {showEffortPricing && totalEffort > 0 && (
         <div className="p-3 border-t bg-muted/50">
-          <div className="flex items-center justify-between text-sm">
+          <div className="flex items-center justify-between text-[13px]">
             <span className="text-muted-foreground">Total effort used:</span>
             <div className="flex items-center gap-2">
               <Zap className="h-4 w-4 text-yellow-500" />
@@ -451,7 +451,7 @@ export function UnifiedAIInterface({
       {/* Input */}
       <div className="p-4 border-t">
         {currentFile && mode === "assistant" && (
-          <div className="flex items-center gap-2 mb-2 text-sm text-muted-foreground">
+          <div className="flex items-center gap-2 mb-2 text-[13px] text-muted-foreground">
             <FileText className="h-3 w-3" />
             <span>Working on: {currentFile}</span>
           </div>

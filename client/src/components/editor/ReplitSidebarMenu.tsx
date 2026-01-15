@@ -117,10 +117,10 @@ export function ReplitSidebarMenu({ isOpen, onClose, onNavigate }: ReplitSidebar
               {user.username?.[0]?.toUpperCase() || 'U'}
             </div>
             <div className="flex-1">
-              <div className="font-medium text-sm text-[var(--ecode-text)]">
+              <div className="font-medium text-[13px] text-[var(--ecode-text)]">
                 {user.username || user.email}
               </div>
-              <div className="text-xs text-[var(--ecode-text-muted)]">
+              <div className="text-[11px] text-[var(--ecode-text-muted)]">
                 Free plan
               </div>
             </div>
@@ -134,7 +134,7 @@ export function ReplitSidebarMenu({ isOpen, onClose, onNavigate }: ReplitSidebar
           {menuItems.map((section) => (
             <div key={section.id} className="mb-2">
               <button
-                className="w-full flex items-center justify-between px-3 py-2 text-xs font-medium text-[var(--ecode-text-muted)] uppercase tracking-wider hover:bg-[var(--ecode-sidebar-hover)] rounded-md"
+                className="w-full flex items-center justify-between px-3 py-2 text-[11px] font-medium text-[var(--ecode-text-muted)] uppercase tracking-wider hover:bg-[var(--ecode-sidebar-hover)] rounded-md"
                 onClick={() => toggleSection(section.id)}
               >
                 <span>{section.title}</span>
@@ -154,12 +154,12 @@ export function ReplitSidebarMenu({ isOpen, onClose, onNavigate }: ReplitSidebar
                       return (
                         <button
                           key={item.label}
-                          className="w-full flex items-center gap-3 px-3 py-2 text-sm text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)] rounded-md"
+                          className="w-full flex items-center gap-3 px-3 py-2 text-[13px] text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)] rounded-md"
                           onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
                         >
                           <Icon className="h-4 w-4" />
                           <span className="flex-1 text-left">{item.label}</span>
-                          <span className="text-xs text-[var(--ecode-text-muted)]">
+                          <span className="text-[11px] text-[var(--ecode-text-muted)]">
                             {theme === 'dark' ? 'Dark' : 'Light'}
                           </span>
                         </button>
@@ -170,7 +170,7 @@ export function ReplitSidebarMenu({ isOpen, onClose, onNavigate }: ReplitSidebar
                       <button
                         key={item.label}
                         className={cn(
-                          "w-full flex items-center gap-3 px-3 py-2 text-sm text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)] rounded-md",
+                          "w-full flex items-center gap-3 px-3 py-2 text-[13px] text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)] rounded-md",
                           location === item.path && "bg-[var(--ecode-accent-subtle)] text-[var(--ecode-accent)]"
                         )}
                         onClick={() => handleNavigation(item.path)}
@@ -191,7 +191,7 @@ export function ReplitSidebarMenu({ isOpen, onClose, onNavigate }: ReplitSidebar
       <div className="p-4 border-t border-[var(--ecode-border)]">
         <Button
           variant="ghost"
-          className="w-full justify-start gap-3 text-sm hover:bg-[var(--ecode-sidebar-hover)]"
+          className="w-full justify-start gap-3 text-[13px] hover:bg-[var(--ecode-sidebar-hover)]"
           onClick={handleLogout}
         >
           <LogOut className="h-4 w-4" />

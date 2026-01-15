@@ -268,7 +268,7 @@ export default function Collaboration({
       {/* Header */}
       <div className="h-12 flex items-center justify-between px-4 border-b border-border bg-muted/30">
         <div className="flex items-center space-x-2">
-          <h3 className="text-sm font-medium">Collaboration</h3>
+          <h3 className="text-[13px] font-medium">Collaboration</h3>
           {isConnected ? (
             <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20">
               Connected
@@ -317,11 +317,11 @@ export default function Collaboration({
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1">
-                  <div className="text-sm font-medium flex items-center">
+                  <div className="text-[13px] font-medium flex items-center">
                     {currentUser.username || currentUser.displayName || `User ${currentUser.id}`}
-                    <Badge className="ml-2 text-xs" variant="secondary">You</Badge>
+                    <Badge className="ml-2 text-[11px]" variant="secondary">You</Badge>
                   </div>
-                  <div className="text-xs text-muted-foreground">Active now</div>
+                  <div className="text-[11px] text-muted-foreground">Active now</div>
                 </div>
               </div>
               
@@ -334,8 +334,8 @@ export default function Collaboration({
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
-                    <div className="text-sm font-medium">{collaborator.username}</div>
-                    <div className="text-xs text-muted-foreground">
+                    <div className="text-[13px] font-medium">{collaborator.username}</div>
+                    <div className="text-[11px] text-muted-foreground">
                       {collaborator.lastActivity
                         ? `Active ${Math.round((Date.now() - collaborator.lastActivity.getTime()) / 1000)}s ago`
                         : 'Joined recently'}
@@ -348,8 +348,8 @@ export default function Collaboration({
               {collaborators.length === 0 && (
                 <div className="text-center p-4 text-muted-foreground">
                   <Users className="h-8 w-8 mx-auto mb-2 opacity-30" />
-                  <p className="text-sm">No other collaborators yet</p>
-                  <p className="text-xs mt-1">Share your project to invite others</p>
+                  <p className="text-[13px]">No other collaborators yet</p>
+                  <p className="text-[11px] mt-1">Share your project to invite others</p>
                 </div>
               )}
             </div>
@@ -363,8 +363,8 @@ export default function Collaboration({
             {chatMessages.length === 0 && (
               <div className="text-center p-4 text-muted-foreground h-full flex flex-col justify-center">
                 <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-30" />
-                <p className="text-sm">No messages yet</p>
-                <p className="text-xs mt-1">Start the conversation!</p>
+                <p className="text-[13px]">No messages yet</p>
+                <p className="text-[11px] mt-1">Start the conversation!</p>
               </div>
             )}
             
@@ -378,18 +378,18 @@ export default function Collaboration({
                 )}
               >
                 {message.isSystem ? (
-                  <div className="bg-muted/30 text-muted-foreground text-xs py-1 px-3 rounded-full">
+                  <div className="bg-muted/30 text-muted-foreground text-[11px] py-1 px-3 rounded-full">
                     {message.content}
                   </div>
                 ) : (
                   <>
                     <div className="flex items-center space-x-2">
-                      <span className="text-xs font-medium">{message.username}</span>
-                      <span className="text-xs text-muted-foreground">{formatTimestamp(message.timestamp)}</span>
+                      <span className="text-[11px] font-medium">{message.username}</span>
+                      <span className="text-[11px] text-muted-foreground">{formatTimestamp(message.timestamp)}</span>
                     </div>
                     <div 
                       className={cn(
-                        "py-2 px-3 rounded-lg text-sm",
+                        "py-2 px-3 rounded-lg text-[13px]",
                         message.userId === currentUser.id 
                           ? "bg-primary text-primary-foreground" 
                           : "bg-muted"

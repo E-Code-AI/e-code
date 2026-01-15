@@ -95,18 +95,18 @@ function StepItem({ step, index }: { step: WorkflowStep; index: number }) {
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="font-medium text-sm">{step.name}</span>
+          <span className="font-medium text-[13px]">{step.name}</span>
           <Badge variant="outline" className="text-[10px]">
             {step.type}
           </Badge>
           {step.duration && (
-            <span className="text-xs text-muted-foreground">
+            <span className="text-[11px] text-muted-foreground">
               {formatDuration(step.duration)}
             </span>
           )}
         </div>
         {step.error && (
-          <p className="text-xs text-destructive mt-1 font-mono bg-destructive/10 rounded p-1.5">
+          <p className="text-[11px] text-destructive mt-1 font-mono bg-destructive/10 rounded p-1.5">
             {step.error}
           </p>
         )}
@@ -159,7 +159,7 @@ function WorkflowCard({ workflow }: { workflow: WorkflowData }) {
                   <CardDescription className="mt-1 line-clamp-2">
                     {workflow.description}
                   </CardDescription>
-                  <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-4 mt-2 text-[11px] text-muted-foreground">
                     <span>Started: {formatTime(workflow.startedAt)}</span>
                     {duration > 0 && <span>Duration: {formatDuration(duration)}</span>}
                     <span>Steps: {completedSteps}/{steps.length}</span>
@@ -187,14 +187,14 @@ function WorkflowCard({ workflow }: { workflow: WorkflowData }) {
               <div className="mb-4 p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
                 <div className="flex items-center gap-2 text-destructive">
                   <AlertCircle className="h-4 w-4" />
-                  <span className="font-medium text-sm">Workflow Error</span>
+                  <span className="font-medium text-[13px]">Workflow Error</span>
                 </div>
-                <p className="text-xs text-destructive/80 mt-1 font-mono">{workflow.error}</p>
+                <p className="text-[11px] text-destructive/80 mt-1 font-mono">{workflow.error}</p>
               </div>
             )}
             
             <div className="space-y-1">
-              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+              <h4 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-3">
                 Workflow Steps
               </h4>
               {steps.length > 0 ? (
@@ -202,7 +202,7 @@ function WorkflowCard({ workflow }: { workflow: WorkflowData }) {
                   <StepItem key={step.id || idx} step={step} index={idx} />
                 ))
               ) : (
-                <p className="text-sm text-muted-foreground">No steps defined</p>
+                <p className="text-[13px] text-muted-foreground">No steps defined</p>
               )}
             </div>
           </CardContent>
@@ -299,7 +299,7 @@ export function WorkflowStatus({ projectId }: { projectId?: number }) {
           <CardContent className="p-8 text-center">
             <Workflow className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <p className="text-muted-foreground">No workflows found</p>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-[11px] text-muted-foreground mt-1">
               Workflows will appear here when the agent executes multi-step tasks
             </p>
           </CardContent>

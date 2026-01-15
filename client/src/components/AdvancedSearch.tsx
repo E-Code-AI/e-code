@@ -190,7 +190,7 @@ export function AdvancedSearch({ initialQuery = '' }: { initialQuery?: string })
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search projects, files, code, users..."
-            className="pl-10 pr-24 h-12 text-lg"
+            className="pl-10 pr-24 h-12 text-[15px]"
             autoFocus
             data-testid="input-search"
           />
@@ -255,7 +255,7 @@ export function AdvancedSearch({ initialQuery = '' }: { initialQuery?: string })
                 variant="ghost"
                 size="sm"
                 onClick={clearFilters}
-                className="h-8 text-xs"
+                className="h-8 text-[11px]"
                 data-testid="button-clear-filters"
               >
                 Clear all
@@ -266,7 +266,7 @@ export function AdvancedSearch({ initialQuery = '' }: { initialQuery?: string })
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               {/* Language Filter */}
               <div className="space-y-2">
-                <Label className="text-sm font-medium">Language</Label>
+                <Label className="text-[13px] font-medium">Language</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -297,7 +297,7 @@ export function AdvancedSearch({ initialQuery = '' }: { initialQuery?: string })
                                 }
                               }}
                             />
-                            <Label className="text-sm font-normal cursor-pointer flex-1">
+                            <Label className="text-[13px] font-normal cursor-pointer flex-1">
                               {lang}
                             </Label>
                           </div>
@@ -310,7 +310,7 @@ export function AdvancedSearch({ initialQuery = '' }: { initialQuery?: string })
 
               {/* Visibility Filter */}
               <div className="space-y-2">
-                <Label className="text-sm font-medium">Visibility</Label>
+                <Label className="text-[13px] font-medium">Visibility</Label>
                 <Select
                   value={filters.visibility.join(',')}
                   onValueChange={(value) => updateFilter('visibility', value.split(','))}
@@ -329,7 +329,7 @@ export function AdvancedSearch({ initialQuery = '' }: { initialQuery?: string })
 
               {/* Date Range Filter */}
               <div className="space-y-2">
-                <Label className="text-sm font-medium">Date Range</Label>
+                <Label className="text-[13px] font-medium">Date Range</Label>
                 <Select
                   value={filters.dateRange}
                   onValueChange={(value) => updateFilter('dateRange', value)}
@@ -349,7 +349,7 @@ export function AdvancedSearch({ initialQuery = '' }: { initialQuery?: string })
 
               {/* Sort By Filter */}
               <div className="space-y-2">
-                <Label className="text-sm font-medium">Sort By</Label>
+                <Label className="text-[13px] font-medium">Sort By</Label>
                 <Select
                   value={filters.sortBy}
                   onValueChange={(value) => updateFilter('sortBy', value)}
@@ -396,7 +396,7 @@ export function AdvancedSearch({ initialQuery = '' }: { initialQuery?: string })
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12 text-center">
               <Search className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No results found</h3>
+              <h3 className="text-[15px] font-semibold mb-2">No results found</h3>
               <p className="text-muted-foreground max-w-sm">
                 Try adjusting your search query or filters to find what you're looking for.
               </p>
@@ -430,7 +430,7 @@ export function AdvancedSearch({ initialQuery = '' }: { initialQuery?: string })
                       <h3 className="font-semibold flex items-center gap-2">
                         {result.title}
                         {result.metadata?.visibility && (
-                          <Badge variant="outline" className="text-xs">
+                          <Badge variant="outline" className="text-[11px]">
                             {result.metadata.visibility === 'public' && <Globe className="h-3 w-3 mr-1" />}
                             {result.metadata.visibility === 'private' && <Lock className="h-3 w-3 mr-1" />}
                             {result.metadata.visibility === 'unlisted' && <Eye className="h-3 w-3 mr-1" />}
@@ -439,18 +439,18 @@ export function AdvancedSearch({ initialQuery = '' }: { initialQuery?: string })
                         )}
                       </h3>
                       {result.description && (
-                        <p className="text-sm text-muted-foreground mt-1">
+                        <p className="text-[13px] text-muted-foreground mt-1">
                           {result.description}
                         </p>
                       )}
                       
                       {result.type === 'code' && result.metadata?.preview && (
-                        <pre className="mt-2 p-2 bg-muted rounded text-xs overflow-x-auto">
+                        <pre className="mt-2 p-2 bg-muted rounded text-[11px] overflow-x-auto">
                           <code>{result.metadata.preview}</code>
                         </pre>
                       )}
                       
-                      <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-4 mt-2 text-[11px] text-muted-foreground">
                         {result.metadata?.language && (
                           <span className="flex items-center gap-1">
                             <span className={cn(
@@ -504,7 +504,7 @@ export function AdvancedSearch({ initialQuery = '' }: { initialQuery?: string })
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12 text-center">
               <Search className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Start searching</h3>
+              <h3 className="text-[15px] font-semibold mb-2">Start searching</h3>
               <p className="text-muted-foreground max-w-sm">
                 Search for projects, files, code snippets, users, and templates across the platform.
               </p>

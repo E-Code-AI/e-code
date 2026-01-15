@@ -195,7 +195,7 @@ export function SlashCommandMenu({
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search..."
-          className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+          className="flex-1 bg-transparent text-[13px] outline-none placeholder:text-muted-foreground"
           data-testid="input-slash-search"
         />
         <button
@@ -210,13 +210,13 @@ export function SlashCommandMenu({
       {/* Server list */}
       <div className="max-h-[280px] overflow-y-auto">
         <div className="px-2 py-1.5">
-          <span className="text-xs font-medium text-muted-foreground px-2">
+          <span className="text-[11px] font-medium text-muted-foreground px-2">
             Integrations
           </span>
         </div>
         
         {filteredServers.length === 0 ? (
-          <div className="px-4 py-6 text-center text-sm text-muted-foreground">
+          <div className="px-4 py-6 text-center text-[13px] text-muted-foreground">
             No integrations found
           </div>
         ) : (
@@ -235,9 +235,9 @@ export function SlashCommandMenu({
                 data-testid={`slash-item-${server.id}`}
               >
                 <span className="shrink-0">{getServerIcon(server.icon)}</span>
-                <span className="flex-1 text-sm font-medium">{server.name}</span>
+                <span className="flex-1 text-[13px] font-medium">{server.name}</span>
                 {index === currentIndex && (
-                  <span className="text-xs text-muted-foreground">Enter</span>
+                  <span className="text-[11px] text-muted-foreground">Enter</span>
                 )}
                 {server.connected && (
                   <span className="w-1.5 h-1.5 rounded-full bg-green-500" title="Connected" />
@@ -250,10 +250,10 @@ export function SlashCommandMenu({
 
       {/* Footer hint */}
       <div className="flex items-center justify-between px-3 py-2 border-t border-border bg-muted/30">
-        <span className="text-xs text-muted-foreground">
+        <span className="text-[11px] text-muted-foreground">
           Type '/' on page
         </span>
-        <span className="text-xs text-muted-foreground">
+        <span className="text-[11px] text-muted-foreground">
           esc
         </span>
       </div>

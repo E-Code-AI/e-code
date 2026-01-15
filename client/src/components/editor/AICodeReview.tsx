@@ -263,17 +263,17 @@ export default function AICodeReview({
         {reviewData && (
           <div className="flex items-center gap-1">
             {reviewData.metrics.criticalIssues > 0 && (
-              <Badge variant="destructive" className="text-xs">
+              <Badge variant="destructive" className="text-[11px]">
                 {reviewData.metrics.criticalIssues} Critical
               </Badge>
             )}
             {reviewData.metrics.highIssues > 0 && (
-              <Badge variant="destructive" className="text-xs opacity-80">
+              <Badge variant="destructive" className="text-[11px] opacity-80">
                 {reviewData.metrics.highIssues} High
               </Badge>
             )}
             {reviewData.metrics.mediumIssues > 0 && (
-              <Badge className="bg-status-warning text-xs">
+              <Badge className="bg-status-warning text-[11px]">
                 {reviewData.metrics.mediumIssues} Medium
               </Badge>
             )}
@@ -287,7 +287,7 @@ export default function AICodeReview({
     <Card className={cn('w-full bg-background/95 backdrop-blur', className)}>
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-lg">
+          <CardTitle className="flex items-center gap-2 text-[15px]">
             <Sparkles className="w-5 h-5 text-status-warning" />
             AI Code Review
           </CardTitle>
@@ -313,7 +313,7 @@ export default function AICodeReview({
         
         {isReviewing && (
           <div className="mt-4 space-y-2">
-            <div className="flex justify-between text-sm text-muted-foreground">
+            <div className="flex justify-between text-[13px] text-muted-foreground">
               <span>Analyzing code...</span>
               <span>{progress}%</span>
             </div>
@@ -326,8 +326,8 @@ export default function AICodeReview({
             <div className="flex items-center gap-2 p-3 rounded-lg bg-gradient-to-r from-status-success/10 to-green-600/10 border border-status-success/20">
               <CheckCircle2 className="w-5 h-5 text-status-success" />
               <div>
-                <p className="text-xs text-muted-foreground">Quality Score</p>
-                <p className="text-lg font-bold text-status-success">
+                <p className="text-[11px] text-muted-foreground">Quality Score</p>
+                <p className="text-[15px] font-bold text-status-success">
                   {reviewData.metrics.codeQualityScore}%
                 </p>
               </div>
@@ -336,8 +336,8 @@ export default function AICodeReview({
             <div className="flex items-center gap-2 p-3 rounded-lg bg-gradient-to-r from-status-critical/10 to-red-600/10 border border-status-critical/20">
               <XCircle className="w-5 h-5 text-status-critical" />
               <div>
-                <p className="text-xs text-muted-foreground">Critical</p>
-                <p className="text-lg font-bold text-status-critical">
+                <p className="text-[11px] text-muted-foreground">Critical</p>
+                <p className="text-[15px] font-bold text-status-critical">
                   {reviewData.metrics.criticalIssues}
                 </p>
               </div>
@@ -346,8 +346,8 @@ export default function AICodeReview({
             <div className="flex items-center gap-2 p-3 rounded-lg bg-gradient-to-r from-status-warning/10 to-orange-600/10 border border-status-warning/20">
               <AlertTriangle className="w-5 h-5 text-status-warning" />
               <div>
-                <p className="text-xs text-muted-foreground">Medium</p>
-                <p className="text-lg font-bold text-status-warning">
+                <p className="text-[11px] text-muted-foreground">Medium</p>
+                <p className="text-[15px] font-bold text-status-warning">
                   {reviewData.metrics.mediumIssues}
                 </p>
               </div>
@@ -356,8 +356,8 @@ export default function AICodeReview({
             <div className="flex items-center gap-2 p-3 rounded-lg bg-gradient-to-r from-status-info/10 to-blue-600/10 border border-status-info/20">
               <Info className="w-5 h-5 text-status-info" />
               <div>
-                <p className="text-xs text-muted-foreground">Low</p>
-                <p className="text-lg font-bold text-status-info">
+                <p className="text-[11px] text-muted-foreground">Low</p>
+                <p className="text-[15px] font-bold text-status-info">
                   {reviewData.metrics.lowIssues}
                 </p>
               </div>
@@ -431,30 +431,30 @@ export default function AICodeReview({
                               {getCategoryIcon(issue.category)}
                               {issue.category}
                             </Badge>
-                            <code className="text-xs text-muted-foreground">
+                            <code className="text-[11px] text-muted-foreground">
                               Line {issue.line}
                               {issue.column && `:${issue.column}`}
                             </code>
                             {issue.confidence < 0.8 && (
-                              <Badge variant="secondary" className="text-xs">
+                              <Badge variant="secondary" className="text-[11px]">
                                 {Math.round(issue.confidence * 100)}% confidence
                               </Badge>
                             )}
                           </div>
                           
-                          <p className="font-medium text-sm">{issue.message}</p>
+                          <p className="font-medium text-[13px]">{issue.message}</p>
                           
                           <div className={cn("collapsible-content", expandedIssues.has(issue.id) && "expanded")}>
                             <div className="mt-3 space-y-2 overflow-hidden">
                                 {issue.explanation && (
-                                  <div className="p-3 rounded bg-muted/50 text-sm">
+                                  <div className="p-3 rounded bg-muted/50 text-[13px]">
                                     <p className="font-medium mb-1">Explanation:</p>
                                     <p className="text-muted-foreground">{issue.explanation}</p>
                                   </div>
                                 )}
                                 
                                 {issue.suggestion && (
-                                  <div className="p-3 rounded bg-status-info/10 border border-status-info/20 text-sm">
+                                  <div className="p-3 rounded bg-status-info/10 border border-status-info/20 text-[13px]">
                                     <p className="font-medium mb-1 text-status-info">Suggestion:</p>
                                     <p>{issue.suggestion}</p>
                                   </div>
@@ -462,15 +462,15 @@ export default function AICodeReview({
                                 
                                 {issue.fixCode && (
                                   <div className="p-3 rounded bg-status-success/10 border border-status-success/20">
-                                    <p className="font-medium mb-1 text-status-success text-sm">Suggested Fix:</p>
-                                    <pre className="text-xs overflow-x-auto">
+                                    <p className="font-medium mb-1 text-status-success text-[13px]">Suggested Fix:</p>
+                                    <pre className="text-[11px] overflow-x-auto">
                                       <code>{issue.fixCode}</code>
                                     </pre>
                                   </div>
                                 )}
                                 
                                 {issue.rule && (
-                                  <p className="text-xs text-muted-foreground">
+                                  <p className="text-[11px] text-muted-foreground">
                                     Rule: {issue.rule}
                                   </p>
                                 )}
@@ -522,7 +522,7 @@ export default function AICodeReview({
         {reviewData && reviewData.issues.length === 0 && (
           <div className="flex flex-col items-center justify-center py-8 text-center">
             <CheckCircle2 className="w-12 h-12 text-status-success mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Perfect Code!</h3>
+            <h3 className="text-[15px] font-semibold mb-2">Perfect Code!</h3>
             <p className="text-muted-foreground">
               No issues found. Your code follows all best practices.
             </p>
@@ -532,7 +532,7 @@ export default function AICodeReview({
         {!reviewData && !isReviewing && (
           <div className="flex flex-col items-center justify-center py-8 text-center">
             <Sparkles className="w-12 h-12 text-status-warning mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Ready to Review</h3>
+            <h3 className="text-[15px] font-semibold mb-2">Ready to Review</h3>
             <p className="text-muted-foreground mb-4">
               Click "Start Review" to analyze your code for issues and improvements.
             </p>

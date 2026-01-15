@@ -193,7 +193,7 @@ export default function Settings() {
                 return (
                   <button
                     key={item.id}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 min-h-[44px] ${
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-200 min-h-[44px] ${
                       isActive 
                         ? 'bg-primary/10 text-primary border-l-2 border-primary pl-[10px]' 
                         : 'text-muted-foreground hover:bg-muted hover:text-foreground'
@@ -235,7 +235,7 @@ export default function Settings() {
                         <Upload className="h-4 w-4" />
                         Upload Avatar
                       </Button>
-                      <p className="text-xs text-muted-foreground mt-1">
+                      <p className="text-[11px] text-muted-foreground mt-1">
                         JPG, PNG or GIF. Max 2MB.
                       </p>
                     </div>
@@ -252,7 +252,7 @@ export default function Settings() {
                         className={`${inputClassName} opacity-60`}
                         data-testid="input-username"
                       />
-                      <p className="text-xs text-muted-foreground mt-1">
+                      <p className="text-[11px] text-muted-foreground mt-1">
                         Username cannot be changed
                       </p>
                     </div>
@@ -317,7 +317,7 @@ export default function Settings() {
                     <div className="flex items-center justify-between p-3 rounded-lg border border-border hover:border-primary/30 transition-all duration-200">
                       <div className="space-y-0.5">
                         <Label className="text-foreground">Email Notifications</Label>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-[13px] text-muted-foreground">
                           Receive notifications via email
                         </p>
                       </div>
@@ -334,7 +334,7 @@ export default function Settings() {
                     <div className="flex items-center justify-between p-3 rounded-lg border border-border hover:border-primary/30 transition-all duration-200">
                       <div className="space-y-0.5">
                         <Label className="text-foreground">Push Notifications</Label>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-[13px] text-muted-foreground">
                           Receive push notifications in your browser
                         </p>
                       </div>
@@ -351,7 +351,7 @@ export default function Settings() {
                     <div className="flex items-center justify-between p-3 rounded-lg border border-border hover:border-primary/30 transition-all duration-200">
                       <div className="space-y-0.5">
                         <Label className="text-foreground">Mentions</Label>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-[13px] text-muted-foreground">
                           Get notified when someone mentions you
                         </p>
                       </div>
@@ -368,7 +368,7 @@ export default function Settings() {
                     <div className="flex items-center justify-between p-3 rounded-lg border border-border hover:border-primary/30 transition-all duration-200">
                       <div className="space-y-0.5">
                         <Label className="text-foreground">Product Updates</Label>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-[13px] text-muted-foreground">
                           News about new features and improvements
                         </p>
                       </div>
@@ -385,7 +385,7 @@ export default function Settings() {
                     <div className="flex items-center justify-between p-3 rounded-lg border border-border hover:border-primary/30 transition-all duration-200">
                       <div className="space-y-0.5">
                         <Label className="text-foreground">Marketing Emails</Label>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-[13px] text-muted-foreground">
                           Promotional content and special offers
                         </p>
                       </div>
@@ -559,7 +559,7 @@ export default function Settings() {
                     <div className="flex items-center justify-between p-3 rounded-lg border border-border hover:border-primary/30 transition-all duration-200">
                       <div className="space-y-0.5">
                         <Label className="text-foreground">Word Wrap</Label>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-[13px] text-muted-foreground">
                           Wrap long lines of code
                         </p>
                       </div>
@@ -574,7 +574,7 @@ export default function Settings() {
                     <div className="flex items-center justify-between p-3 rounded-lg border border-border hover:border-primary/30 transition-all duration-200">
                       <div className="space-y-0.5">
                         <Label className="text-foreground">Minimap</Label>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-[13px] text-muted-foreground">
                           Show code minimap
                         </p>
                       </div>
@@ -589,7 +589,7 @@ export default function Settings() {
                     <div className="flex items-center justify-between p-3 rounded-lg border border-border hover:border-primary/30 transition-all duration-200">
                       <div className="space-y-0.5">
                         <Label className="text-foreground">Auto Save</Label>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-[13px] text-muted-foreground">
                           Automatically save changes
                         </p>
                       </div>
@@ -627,7 +627,7 @@ export default function Settings() {
                     <div className="flex items-center justify-between p-3 rounded-lg border border-border hover:border-primary/30 transition-all duration-200">
                       <div className="space-y-0.5">
                         <Label className="text-foreground">Public Profile</Label>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-[13px] text-muted-foreground">
                           Make your profile visible to others
                         </p>
                       </div>
@@ -641,7 +641,7 @@ export default function Settings() {
                     <div className="flex items-center justify-between p-3 rounded-lg border border-border hover:border-primary/30 transition-all duration-200">
                       <div className="space-y-0.5">
                         <Label className="text-foreground">Show Activity</Label>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-[13px] text-muted-foreground">
                           Display your coding activity on your profile
                         </p>
                       </div>
@@ -655,7 +655,7 @@ export default function Settings() {
                     <div className="flex items-center justify-between p-3 rounded-lg border border-border hover:border-primary/30 transition-all duration-200">
                       <div className="space-y-0.5">
                         <Label className="text-foreground">Analytics</Label>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-[13px] text-muted-foreground">
                           Help improve E-Code with anonymous usage data
                         </p>
                       </div>
@@ -698,7 +698,7 @@ export default function Settings() {
 
                     <div>
                       <Label className="text-foreground">Two-Factor Authentication</Label>
-                      <p className="text-sm text-muted-foreground mb-2">
+                      <p className="text-[13px] text-muted-foreground mb-2">
                         Add an extra layer of security to your account
                       </p>
                       <Button 
@@ -713,7 +713,7 @@ export default function Settings() {
 
                     <div>
                       <Label className="text-foreground">Sessions</Label>
-                      <p className="text-sm text-muted-foreground mb-2">
+                      <p className="text-[13px] text-muted-foreground mb-2">
                         Manage your active sessions
                       </p>
                       <Button 
@@ -750,7 +750,7 @@ export default function Settings() {
                             Current
                           </Badge>
                         </div>
-                        <ul className="space-y-2 text-sm">
+                        <ul className="space-y-2 text-[13px]">
                           <li className="flex items-center gap-2 text-foreground">
                             <Check className="h-4 w-4 text-green-500" />
                             Unlimited public repls
@@ -789,7 +789,7 @@ export default function Settings() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-[13px] text-muted-foreground">
                       No payment methods on file
                     </p>
                     <Button 
@@ -818,7 +818,7 @@ export default function Settings() {
                       <Github className="h-8 w-8 text-foreground" />
                       <div>
                         <h4 className="font-semibold text-foreground">GitHub</h4>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-[13px] text-muted-foreground">
                           Import and sync repositories
                         </p>
                       </div>
@@ -839,7 +839,7 @@ export default function Settings() {
                       </div>
                       <div>
                         <h4 className="font-semibold text-foreground">Google</h4>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-[13px] text-muted-foreground">
                           Sign in with Google
                         </p>
                       </div>

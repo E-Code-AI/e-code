@@ -140,7 +140,7 @@ export default function ContactSales() {
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
                 Empower your entire organization
               </h1>
-              <p className="text-base sm:text-lg md:text-xl text-muted-foreground mb-6 sm:mb-8 px-4 sm:px-0">
+              <p className="text-base sm:text-[15px] md:text-xl text-muted-foreground mb-6 sm:mb-8 px-4 sm:px-0">
                 Transform how your teams build, deploy, and collaborate with E-Code Enterprise. 
                 Get dedicated support, enhanced security, and custom solutions tailored to your needs.
               </p>
@@ -180,8 +180,8 @@ export default function ContactSales() {
                       <div className="p-2 sm:p-3 bg-primary/10 rounded-lg w-fit mb-3 sm:mb-4">
                         {benefit.icon}
                       </div>
-                      <h3 className="font-semibold mb-2 text-sm sm:text-base">{benefit.title}</h3>
-                      <p className="text-xs sm:text-sm text-muted-foreground">{benefit.description}</p>
+                      <h3 className="font-semibold mb-2 text-[13px] sm:text-base">{benefit.title}</h3>
+                      <p className="text-[11px] sm:text-[13px] text-muted-foreground">{benefit.description}</p>
                     </CardContent>
                   </Card>
                 ))}
@@ -190,7 +190,7 @@ export default function ContactSales() {
                 {features.map((feature, index) => (
                   <div key={index} className="flex items-center gap-2 sm:gap-3">
                     <Check className="h-4 w-4 sm:h-5 sm:w-5 text-green-500 flex-shrink-0" />
-                    <span className="text-xs sm:text-sm">{feature}</span>
+                    <span className="text-[11px] sm:text-[13px]">{feature}</span>
                   </div>
                 ))}
               </div>
@@ -347,7 +347,7 @@ export default function ContactSales() {
             <div className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Why Choose Enterprise?</CardTitle>
+                  <CardTitle className="text-[15px]">Why Choose Enterprise?</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {benefits.map((benefit, index) => (
@@ -357,7 +357,7 @@ export default function ContactSales() {
                       </div>
                       <div>
                         <h3 className="font-semibold">{benefit.title}</h3>
-                        <p className="text-sm text-muted-foreground">{benefit.description}</p>
+                        <p className="text-[13px] text-muted-foreground">{benefit.description}</p>
                       </div>
                     </div>
                   ))}
@@ -366,16 +366,16 @@ export default function ContactSales() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Talk to Sales</CardTitle>
+                  <CardTitle className="text-[15px]">Talk to Sales</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center gap-3">
                     <Mail className="h-5 w-5 text-muted-foreground" />
-                    <span className="text-sm">enterprise@e-code.ai</span>
+                    <span className="text-[13px]">enterprise@e-code.ai</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <Clock className="h-5 w-5 text-muted-foreground" />
-                    <span className="text-sm">Mon-Fri, 9AM-6PM PST</span>
+                    <span className="text-[13px]">Mon-Fri, 9AM-6PM PST</span>
                   </div>
                 </CardContent>
               </Card>
@@ -383,7 +383,7 @@ export default function ContactSales() {
               <Card className="bg-primary text-primary-foreground">
                 <CardContent className="pt-6">
                   <h3 className="font-semibold mb-2">Ready to get started?</h3>
-                  <p className="text-sm mb-4 opacity-90">
+                  <p className="text-[13px] mb-4 opacity-90">
                     Our team is standing by to help you succeed.
                   </p>
                   <Button variant="secondary" className="w-full min-h-[44px]" data-testid="button-schedule-demo">

@@ -85,12 +85,12 @@ export default function BlogDetail() {
             
             <h1 className="text-4xl font-bold mb-4">{post.title}</h1>
             
-            <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+            <div className="flex flex-wrap items-center gap-4 text-[13px] text-muted-foreground">
               <div className="flex items-center gap-1">
                 <User className="h-4 w-4" />
                 <span>{post.author}</span>
                 {post.authorRole && (
-                  <span className="text-xs">• {post.authorRole}</span>
+                  <span className="text-[11px]">• {post.authorRole}</span>
                 )}
               </div>
               <div className="flex items-center gap-1">
@@ -143,11 +143,11 @@ export default function BlogDetail() {
                 {post.author.charAt(0)}
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold text-lg">{post.author}</h3>
+                <h3 className="font-semibold text-[15px]">{post.author}</h3>
                 {post.authorRole && (
-                  <p className="text-sm text-muted-foreground mb-2">{post.authorRole}</p>
+                  <p className="text-[13px] text-muted-foreground mb-2">{post.authorRole}</p>
                 )}
-                <p className="text-sm text-muted-foreground">
+                <p className="text-[13px] text-muted-foreground">
                   Passionate about building great developer experiences and sharing knowledge with the community.
                 </p>
               </div>
@@ -174,10 +174,10 @@ export default function BlogDetail() {
                     )}
                     <div className="p-4">
                       <h3 className="font-semibold mb-2 line-clamp-2">{relatedPost.title}</h3>
-                      <p className="text-sm text-muted-foreground line-clamp-2">
+                      <p className="text-[13px] text-muted-foreground line-clamp-2">
                         {relatedPost.excerpt}
                       </p>
-                      <div className="flex items-center gap-2 mt-3 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-2 mt-3 text-[11px] text-muted-foreground">
                         <Clock className="h-3 w-3" />
                         <span>{relatedPost.readTime} min</span>
                       </div>

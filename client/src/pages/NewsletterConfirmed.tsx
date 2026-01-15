@@ -32,7 +32,7 @@ export default function NewsletterConfirmed() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground text-center">
+            <p className="text-[13px] text-muted-foreground text-center">
               {errorMessage || "If you're having trouble, please try subscribing again or contact our support team."}
             </p>
             <div className="flex flex-col gap-2">
@@ -68,7 +68,7 @@ export default function NewsletterConfirmed() {
             <CardTitle className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
               You're All Set!
             </CardTitle>
-            <CardDescription className="text-lg mt-2">
+            <CardDescription className="text-[15px] mt-2">
               Your email has been confirmed successfully
             </CardDescription>
           </div>
@@ -79,10 +79,10 @@ export default function NewsletterConfirmed() {
               <Mail className="h-5 w-5 text-primary mt-0.5" />
               <div className="flex-1">
                 <p className="font-medium">Welcome to E-Code Newsletter!</p>
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="text-[13px] text-muted-foreground mt-1">
                   You'll receive our updates packed with:
                 </p>
-                <ul className="text-sm text-muted-foreground mt-2 space-y-1 list-disc list-inside">
+                <ul className="text-[13px] text-muted-foreground mt-2 space-y-1 list-disc list-inside">
                   <li>Latest features and platform updates</li>
                   <li>Tips and tutorials from our community</li>
                   <li>Exclusive offers and early access</li>
@@ -93,7 +93,7 @@ export default function NewsletterConfirmed() {
           </div>
 
           <div className="space-y-3">
-            <p className="text-sm text-muted-foreground text-center">
+            <p className="text-[13px] text-muted-foreground text-center">
               Ready to start creating amazing things?
             </p>
             <div className="flex flex-col gap-2">
@@ -111,7 +111,7 @@ export default function NewsletterConfirmed() {
             </div>
           </div>
 
-          <p className="text-xs text-muted-foreground text-center">
+          <p className="text-[11px] text-muted-foreground text-center">
             You can unsubscribe at any time from any newsletter email.
           </p>
         </CardContent>

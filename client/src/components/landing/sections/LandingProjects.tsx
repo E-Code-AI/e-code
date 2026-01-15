@@ -59,15 +59,15 @@ export default function LandingProjects() {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                 <div className="absolute bottom-4 left-4 right-4">
-                  <h3 className="text-white font-bold text-lg">{project.title}</h3>
-                  <p className="text-white/80 text-sm">{project.stats}</p>
+                  <h3 className="text-white font-bold text-[15px]">{project.title}</h3>
+                  <p className="text-white/80 text-[13px]">{project.stats}</p>
                 </div>
               </div>
               <CardContent className="p-6">
                 <p className="text-[var(--ecode-text-muted)] mb-4">{project.description}</p>
                 <div className="flex flex-wrap gap-2">
                   {project.tags.map((tag, i) => (
-                    <Badge key={i} variant="secondary" className="text-xs">{tag}</Badge>
+                    <Badge key={i} variant="secondary" className="text-[11px]">{tag}</Badge>
                   ))}
                 </div>
               </CardContent>

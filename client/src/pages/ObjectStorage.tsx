@@ -297,7 +297,7 @@ export default function ObjectStorage() {
               <div className="py-4">
                 <div className="border-2 border-dashed rounded-lg p-8 text-center">
                   <Cloud className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-sm text-muted-foreground mb-2">
+                  <p className="text-[13px] text-muted-foreground mb-2">
                     Drag and drop files here, or click to browse
                   </p>
                   <Input
@@ -320,7 +320,7 @@ export default function ObjectStorage() {
                 {uploadProgress > 0 && (
                   <div className="mt-4">
                     <Progress value={uploadProgress} className="h-2" />
-                    <p className="text-sm text-muted-foreground mt-2 text-center">
+                    <p className="text-[13px] text-muted-foreground mt-2 text-center">
                       Uploading... {uploadProgress}%
                     </p>
                   </div>
@@ -342,7 +342,7 @@ export default function ObjectStorage() {
               {formatFileSize(stats?.usedSize || 0)}
             </div>
             <Progress value={usagePercentage} className="h-2 mt-2" />
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-[11px] text-muted-foreground mt-1">
               {formatFileSize(stats?.totalSize || 0)} total
             </p>
           </CardContent>
@@ -354,7 +354,7 @@ export default function ObjectStorage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats?.fileCount || 0}</div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[11px] text-muted-foreground">
               Across {stats?.folderCount || 0} folders
             </p>
           </CardContent>
@@ -369,7 +369,7 @@ export default function ObjectStorage() {
               {formatFileSize(stats?.bandwidth.used || 0)}
             </div>
             <Progress value={bandwidthPercentage} className="h-2 mt-2" />
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-[11px] text-muted-foreground mt-1">
               {formatFileSize(stats?.bandwidth.limit || 0)} limit
             </p>
           </CardContent>
@@ -380,8 +380,8 @@ export default function ObjectStorage() {
             <CardTitle className="text-base">Storage Type</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-lg font-semibold">S3 Compatible</div>
-            <p className="text-xs text-muted-foreground">
+            <div className="text-[15px] font-semibold">S3 Compatible</div>
+            <p className="text-[11px] text-muted-foreground">
               CDN enabled
             </p>
           </CardContent>
@@ -412,7 +412,7 @@ export default function ObjectStorage() {
         {/* Files Tab */}
         <TabsContent value="files" className="space-y-4">
           {/* Breadcrumb */}
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <div className="flex items-center gap-2 text-[13px] text-muted-foreground">
             <HardDrive className="h-4 w-4" />
             <span>/</span>
             {currentPath.split('/').filter(Boolean).map((part, index) => (
@@ -440,7 +440,7 @@ export default function ObjectStorage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="flex justify-between text-sm text-muted-foreground">
+                    <div className="flex justify-between text-[13px] text-muted-foreground">
                       <span>{folder.fileCount} files</span>
                       <span>{formatFileSize(folder.size)}</span>
                     </div>
@@ -460,7 +460,7 @@ export default function ObjectStorage() {
                       {getFileIcon(file.type)}
                       <div>
                         <CardTitle className="text-base">{file.name}</CardTitle>
-                        <CardDescription className="text-xs">
+                        <CardDescription className="text-[11px]">
                           {formatFileSize(file.size)} • {file.lastModified}
                         </CardDescription>
                       </div>
@@ -530,7 +530,7 @@ export default function ObjectStorage() {
                 </CardHeader>
                 {file.url && file.isPublic && (
                   <CardContent className="pt-0">
-                    <div className="flex items-center gap-2 p-2 bg-muted rounded text-xs">
+                    <div className="flex items-center gap-2 p-2 bg-muted rounded text-[11px]">
                       <ExternalLink className="h-3 w-3" />
                       <span className="truncate flex-1">{file.url}</span>
                       <Button
@@ -553,7 +553,7 @@ export default function ObjectStorage() {
             <Card>
               <CardContent className="text-center py-12">
                 <Cloud className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No files yet</h3>
+                <h3 className="text-[15px] font-semibold mb-2">No files yet</h3>
                 <p className="text-muted-foreground mb-4">
                   Upload your first file to get started
                 </p>
@@ -578,7 +578,7 @@ export default function ObjectStorage() {
             <CardContent className="space-y-4">
               <div>
                 <h3 className="font-medium mb-2">Default Visibility</h3>
-                <p className="text-sm text-muted-foreground mb-3">
+                <p className="text-[13px] text-muted-foreground mb-3">
                   Choose whether new files are public or private by default
                 </p>
                 <select className="w-full p-2 rounded-md border bg-background" data-testid="select-default-visibility">
@@ -589,12 +589,12 @@ export default function ObjectStorage() {
 
               <div>
                 <h3 className="font-medium mb-2">CDN Settings</h3>
-                <p className="text-sm text-muted-foreground mb-3">
+                <p className="text-[13px] text-muted-foreground mb-3">
                   Enable CDN for faster file delivery worldwide
                 </p>
                 <div className="flex items-center gap-2">
                   <Badge variant="default">CDN Enabled</Badge>
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-[13px] text-muted-foreground">
                     Files are served from edge locations
                   </span>
                 </div>
@@ -602,7 +602,7 @@ export default function ObjectStorage() {
 
               <div>
                 <h3 className="font-medium mb-2">Access Keys</h3>
-                <p className="text-sm text-muted-foreground mb-3">
+                <p className="text-[13px] text-muted-foreground mb-3">
                   Generate API keys for programmatic access
                 </p>
                 <Button variant="outline" data-testid="button-generate-key">

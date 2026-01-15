@@ -114,7 +114,7 @@ export const ConnectionStatusBanner = memo(function ConnectionStatusBanner({
     <div
       className={cn(
         'flex items-center justify-between gap-3 px-3 py-2',
-        'border-b text-sm',
+        'border-b text-[13px]',
         'animate-in slide-in-from-top duration-200',
         config.bgClass,
         className
@@ -129,7 +129,7 @@ export const ConnectionStatusBanner = memo(function ConnectionStatusBanner({
           <span className="font-medium text-gray-900 dark:text-white">
             {config.title}
           </span>
-          <span className="text-gray-500 dark:text-gray-400 ml-2 text-xs">
+          <span className="text-gray-500 dark:text-gray-400 ml-2 text-[11px]">
             {config.description}
           </span>
         </div>
@@ -140,7 +140,7 @@ export const ConnectionStatusBanner = memo(function ConnectionStatusBanner({
           variant="outline"
           size="sm"
           onClick={handleRetry}
-          className="flex-shrink-0 h-7 px-3 text-xs"
+          className="flex-shrink-0 h-7 px-3 text-[11px]"
           data-testid="button-retry-connection"
         >
           <RefreshCw className="h-3 w-3 mr-1" />
@@ -149,7 +149,7 @@ export const ConnectionStatusBanner = memo(function ConnectionStatusBanner({
       )}
 
       {state === 'reconnecting' && countdown > 0 && (
-        <div className="flex-shrink-0 flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+        <div className="flex-shrink-0 flex items-center gap-1 text-[11px] text-gray-500 dark:text-gray-400">
           <span className="font-mono">{countdown}s</span>
           <button
             onClick={handleRetry}
@@ -222,7 +222,7 @@ export const ConnectionIndicator = memo(function ConnectionIndicator({
           config.pulse && 'animate-pulse'
         )}
       />
-      <span className="text-xs text-gray-500 dark:text-gray-400 hidden sm:inline">
+      <span className="text-[11px] text-gray-500 dark:text-gray-400 hidden sm:inline">
         {config.label}
       </span>
     </div>

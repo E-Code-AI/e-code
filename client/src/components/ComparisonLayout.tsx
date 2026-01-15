@@ -40,7 +40,7 @@ export function ComparisonLayout({
         <X className="h-5 w-5 text-red-500" />
       );
     }
-    return <span className="text-sm">{value}</span>;
+    return <span className="text-[13px]">{value}</span>;
   };
 
   return (
@@ -168,7 +168,7 @@ export function ComparisonLayout({
                       className="flex gap-3 items-start p-4 rounded-lg bg-background border border-border"
                     >
                       <Check className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                      <p className="text-sm">{advantage}</p>
+                      <p className="text-[13px]">{advantage}</p>
                     </div>
                   ))}
                 </div>
@@ -186,7 +186,7 @@ export function ComparisonLayout({
                       className="flex gap-3 items-start p-4 rounded-lg bg-background border border-border"
                     >
                       <Minus className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
-                      <p className="text-sm">{advantage}</p>
+                      <p className="text-[13px]">{advantage}</p>
                     </div>
                   ))}
                 </div>

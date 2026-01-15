@@ -340,7 +340,7 @@ export default function CodeReviewSettings({ className }: CodeReviewSettingsProp
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="flex items-center gap-2 text-lg">
+            <CardTitle className="flex items-center gap-2 text-[15px]">
               <Settings className="w-5 h-5 text-orange-500" />
               Code Review Settings
             </CardTitle>
@@ -415,7 +415,7 @@ export default function CodeReviewSettings({ className }: CodeReviewSettingsProp
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label>Confidence Threshold</Label>
-                <span className="text-sm text-muted-foreground">
+                <span className="text-[13px] text-muted-foreground">
                   {Math.round(localSettings.confidenceThreshold * 100)}%
                 </span>
               </div>
@@ -428,7 +428,7 @@ export default function CodeReviewSettings({ className }: CodeReviewSettingsProp
                 className="w-full"
                 data-testid="slider-confidence-threshold"
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-[11px] text-muted-foreground">
                 Only show issues above this confidence level
               </p>
             </div>
@@ -437,7 +437,7 @@ export default function CodeReviewSettings({ className }: CodeReviewSettingsProp
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label>Minimum Code Quality Score</Label>
-                <span className="text-sm text-muted-foreground">
+                <span className="text-[13px] text-muted-foreground">
                   {localSettings.codeQualityThreshold}%
                 </span>
               </div>
@@ -450,7 +450,7 @@ export default function CodeReviewSettings({ className }: CodeReviewSettingsProp
                 className="w-full"
                 data-testid="slider-quality-threshold"
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-[11px] text-muted-foreground">
                 Warn when code quality falls below this threshold
               </p>
             </div>
@@ -479,7 +479,7 @@ export default function CodeReviewSettings({ className }: CodeReviewSettingsProp
                 max={10000000}
                 data-testid="input-max-file-size"
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-[11px] text-muted-foreground">
                 Skip review for files larger than this
               </p>
             </div>
@@ -492,7 +492,7 @@ export default function CodeReviewSettings({ className }: CodeReviewSettingsProp
               <div className="grid grid-cols-2 gap-4">
                 {Object.entries(localSettings.severityThresholds).map(([severity, action]) => (
                   <div key={severity} className="flex items-center justify-between">
-                    <Label className="text-sm capitalize">{severity}</Label>
+                    <Label className="text-[13px] capitalize">{severity}</Label>
                     <Select
                       value={action}
                       onValueChange={(value) => updateSetting(`severityThresholds.${severity}`, value)}
@@ -513,7 +513,7 @@ export default function CodeReviewSettings({ className }: CodeReviewSettingsProp
           </TabsContent>
           
           <TabsContent value="checks" className="space-y-4">
-            <p className="text-sm text-muted-foreground mb-4">
+            <p className="text-[13px] text-muted-foreground mb-4">
               Enable or disable specific code review checks
             </p>
             
@@ -531,7 +531,7 @@ export default function CodeReviewSettings({ className }: CodeReviewSettingsProp
                       <Label className="capitalize cursor-pointer">
                         {check.replace(/([A-Z])/g, ' $1').trim()}
                       </Label>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-[11px] text-muted-foreground">
                         {getCheckDescription(check)}
                       </p>
                     </div>
@@ -552,7 +552,7 @@ export default function CodeReviewSettings({ className }: CodeReviewSettingsProp
               <div className="flex items-center justify-between">
                 <div>
                   <Label>Require Documentation</Label>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-[11px] text-muted-foreground">
                     Flag functions without documentation
                   </p>
                 </div>
@@ -566,7 +566,7 @@ export default function CodeReviewSettings({ className }: CodeReviewSettingsProp
               <div className="flex items-center justify-between">
                 <div>
                   <Label>Enforce Naming Conventions</Label>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-[11px] text-muted-foreground">
                     Check for consistent naming patterns
                   </p>
                 </div>
@@ -652,18 +652,18 @@ export default function CodeReviewSettings({ className }: CodeReviewSettingsProp
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="font-medium text-sm">{rule.name}</span>
-                            <Badge variant="outline" className="text-xs">
+                            <span className="font-medium text-[13px]">{rule.name}</span>
+                            <Badge variant="outline" className="text-[11px]">
                               {rule.severity}
                             </Badge>
-                            <Badge variant="outline" className="text-xs">
+                            <Badge variant="outline" className="text-[11px]">
                               {rule.category}
                             </Badge>
                           </div>
-                          <code className="text-xs text-muted-foreground block mb-1">
+                          <code className="text-[11px] text-muted-foreground block mb-1">
                             {rule.pattern}
                           </code>
-                          <p className="text-xs">{rule.message}</p>
+                          <p className="text-[11px]">{rule.message}</p>
                         </div>
                         <div className="flex items-center gap-2">
                           <Switch
@@ -737,7 +737,7 @@ export default function CodeReviewSettings({ className }: CodeReviewSettingsProp
             <div className="flex items-center justify-between p-4 rounded-lg border">
               <div>
                 <Label className="text-base">Enable Auto Review</Label>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-[13px] text-muted-foreground">
                   Automatically review code based on triggers
                 </p>
               </div>
@@ -757,8 +757,8 @@ export default function CodeReviewSettings({ className }: CodeReviewSettingsProp
                     <div className="flex items-center gap-2">
                       <Save className="w-4 h-4 text-muted-foreground" />
                       <div>
-                        <Label className="text-sm">On File Save</Label>
-                        <p className="text-xs text-muted-foreground">
+                        <Label className="text-[13px]">On File Save</Label>
+                        <p className="text-[11px] text-muted-foreground">
                           Review code when files are saved
                         </p>
                       </div>
@@ -774,8 +774,8 @@ export default function CodeReviewSettings({ className }: CodeReviewSettingsProp
                     <div className="flex items-center gap-2">
                       <GitBranch className="w-4 h-4 text-muted-foreground" />
                       <div>
-                        <Label className="text-sm">On Commit</Label>
-                        <p className="text-xs text-muted-foreground">
+                        <Label className="text-[13px]">On Commit</Label>
+                        <p className="text-[11px] text-muted-foreground">
                           Review code before commits
                         </p>
                       </div>
@@ -791,8 +791,8 @@ export default function CodeReviewSettings({ className }: CodeReviewSettingsProp
                     <div className="flex items-center gap-2">
                       <GitBranch className="w-4 h-4 text-muted-foreground" />
                       <div>
-                        <Label className="text-sm">On Pull Request</Label>
-                        <p className="text-xs text-muted-foreground">
+                        <Label className="text-[13px]">On Pull Request</Label>
+                        <p className="text-[11px] text-muted-foreground">
                           Review code in pull requests
                         </p>
                       </div>
@@ -808,8 +808,8 @@ export default function CodeReviewSettings({ className }: CodeReviewSettingsProp
                     <div className="flex items-center gap-2">
                       <Clock className="w-4 h-4 text-muted-foreground" />
                       <div>
-                        <Label className="text-sm">Scheduled Review</Label>
-                        <p className="text-xs text-muted-foreground">
+                        <Label className="text-[13px]">Scheduled Review</Label>
+                        <p className="text-[11px] text-muted-foreground">
                           Run reviews on a schedule
                         </p>
                       </div>
@@ -823,7 +823,7 @@ export default function CodeReviewSettings({ className }: CodeReviewSettingsProp
                   
                   {localSettings.autoReviewTriggers.onSchedule && (
                     <div className="pl-6">
-                      <Label className="text-sm">Cron Schedule</Label>
+                      <Label className="text-[13px]">Cron Schedule</Label>
                       <Input
                         value={localSettings.scheduleInterval}
                         onChange={(e) => updateSetting('scheduleInterval', e.target.value)}
@@ -831,7 +831,7 @@ export default function CodeReviewSettings({ className }: CodeReviewSettingsProp
                         className="mt-2"
                         data-testid="input-cron-schedule"
                       />
-                      <p className="text-xs text-muted-foreground mt-1">
+                      <p className="text-[11px] text-muted-foreground mt-1">
                         Current: {parseCronExpression(localSettings.scheduleInterval || '0 9 * * 1')}
                       </p>
                     </div>

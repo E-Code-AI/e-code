@@ -192,7 +192,7 @@ export function EducationDashboard({ userId, isTeacher = false }: EducationDashb
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
+            <CardTitle className="text-[13px] font-medium">
               {isTeacher ? 'Total Students' : 'Enrolled Courses'}
             </CardTitle>
             <BookOpen className="h-4 w-4 text-muted-foreground" />
@@ -204,7 +204,7 @@ export function EducationDashboard({ userId, isTeacher = false }: EducationDashb
                 : stats.enrolledCourses
               }
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[11px] text-muted-foreground">
               {isTeacher ? 'Across all classrooms' : `${stats.completedCourses} completed`}
             </p>
           </CardContent>
@@ -212,7 +212,7 @@ export function EducationDashboard({ userId, isTeacher = false }: EducationDashb
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
+            <CardTitle className="text-[13px] font-medium">
               {isTeacher ? 'Active Classrooms' : 'Time Spent'}
             </CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
@@ -224,7 +224,7 @@ export function EducationDashboard({ userId, isTeacher = false }: EducationDashb
                 : `${Math.floor(stats.totalTimeSpent / 60)}h`
               }
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[11px] text-muted-foreground">
               {isTeacher ? 'Total classrooms' : `${stats.totalTimeSpent % 60}m`}
             </p>
           </CardContent>
@@ -232,7 +232,7 @@ export function EducationDashboard({ userId, isTeacher = false }: EducationDashb
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
+            <CardTitle className="text-[13px] font-medium">
               {isTeacher ? 'Assignments' : 'Average Score'}
             </CardTitle>
             <Award className="h-4 w-4 text-muted-foreground" />
@@ -244,7 +244,7 @@ export function EducationDashboard({ userId, isTeacher = false }: EducationDashb
                 : `${stats.averageScore}%`
               }
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[11px] text-muted-foreground">
               {isTeacher ? 'Active assignments' : 'Across all courses'}
             </p>
           </CardContent>
@@ -252,7 +252,7 @@ export function EducationDashboard({ userId, isTeacher = false }: EducationDashb
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
+            <CardTitle className="text-[13px] font-medium">
               {isTeacher ? 'Completion Rate' : 'Certificates'}
             </CardTitle>
             <Trophy className="h-4 w-4 text-muted-foreground" />
@@ -264,7 +264,7 @@ export function EducationDashboard({ userId, isTeacher = false }: EducationDashb
                 : stats.completedCourses
               }
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[11px] text-muted-foreground">
               {isTeacher ? 'Average completion' : 'Earned certificates'}
             </p>
           </CardContent>
@@ -312,7 +312,7 @@ export function EducationDashboard({ userId, isTeacher = false }: EducationDashb
                       <CardHeader>
                         <div className="flex items-start justify-between">
                           <div>
-                            <CardTitle className="text-lg">{course.title}</CardTitle>
+                            <CardTitle className="text-[15px]">{course.title}</CardTitle>
                             <CardDescription className="mt-1">
                               {course.description}
                             </CardDescription>
@@ -323,7 +323,7 @@ export function EducationDashboard({ userId, isTeacher = false }: EducationDashb
                         </div>
                       </CardHeader>
                       <CardContent className="space-y-3">
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-4 text-[13px] text-muted-foreground">
                           <span className="flex items-center gap-1">
                             <Clock className="h-3 w-3" />
                             {Math.floor(course.duration / 60)}h {course.duration % 60}m
@@ -354,7 +354,7 @@ export function EducationDashboard({ userId, isTeacher = false }: EducationDashb
 
                         {isEnrolled ? (
                           <div className="space-y-1">
-                            <div className="flex items-center justify-between text-sm">
+                            <div className="flex items-center justify-between text-[13px]">
                               <span>Progress</span>
                               <span>{courseProgress}%</span>
                             </div>
@@ -393,21 +393,21 @@ export function EducationDashboard({ userId, isTeacher = false }: EducationDashb
                         <CardContent className="p-6">
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
-                              <h3 className="font-semibold text-lg">{course.title}</h3>
-                              <p className="text-sm text-muted-foreground mt-1">
+                              <h3 className="font-semibold text-[15px]">{course.title}</h3>
+                              <p className="text-[13px] text-muted-foreground mt-1">
                                 Last accessed: {new Date(p.lastAccessedAt).toLocaleDateString()}
                               </p>
                               
                               <div className="mt-4 space-y-3">
                                 <div className="space-y-1">
-                                  <div className="flex items-center justify-between text-sm">
+                                  <div className="flex items-center justify-between text-[13px]">
                                     <span>Overall Progress</span>
                                     <span>{progressPercentage}%</span>
                                   </div>
                                   <Progress value={progressPercentage} />
                                 </div>
 
-                                <div className="grid grid-cols-3 gap-4 text-sm">
+                                <div className="grid grid-cols-3 gap-4 text-[13px]">
                                   <div>
                                     <p className="text-muted-foreground">Modules</p>
                                     <p className="font-medium">
@@ -461,7 +461,7 @@ export function EducationDashboard({ userId, isTeacher = false }: EducationDashb
                             </div>
                             <div className="flex-1">
                               <h3 className="font-semibold">{course.title}</h3>
-                              <p className="text-sm text-muted-foreground">
+                              <p className="text-[13px] text-muted-foreground">
                                 Completed with {p.score}% score
                               </p>
                             </div>
@@ -488,7 +488,7 @@ export function EducationDashboard({ userId, isTeacher = false }: EducationDashb
           <>
             <TabsContent value="classrooms" className="space-y-4">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold">My Classrooms</h3>
+                <h3 className="text-[15px] font-semibold">My Classrooms</h3>
                 <Button onClick={() => {
                   const name = prompt('Enter classroom name:');
                   if (name) {
@@ -510,7 +510,7 @@ export function EducationDashboard({ userId, isTeacher = false }: EducationDashb
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <div className="grid grid-cols-3 gap-4 text-sm">
+                      <div className="grid grid-cols-3 gap-4 text-[13px]">
                         <div>
                           <p className="text-muted-foreground">Students</p>
                           <p className="font-medium flex items-center gap-1">
@@ -559,7 +559,7 @@ export function EducationDashboard({ userId, isTeacher = false }: EducationDashb
                             </Avatar>
                             <div>
                               <p className="font-medium">{student.username}</p>
-                              <p className="text-sm text-muted-foreground">
+                              <p className="text-[13px] text-muted-foreground">
                                 {student.classroomName}
                               </p>
                             </div>
@@ -569,7 +569,7 @@ export function EducationDashboard({ userId, isTeacher = false }: EducationDashb
                               {Object.values(student.progress).reduce((a, b) => a + b, 0) / 
                                Object.values(student.progress).length || 0}% Average
                             </p>
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-[13px] text-muted-foreground">
                               {Object.keys(student.progress).length} courses
                             </p>
                           </div>
@@ -591,7 +591,7 @@ export function EducationDashboard({ userId, isTeacher = false }: EducationDashb
                     <div className="space-y-3">
                       {['Introduction to Programming', 'Web Development', 'Data Science'].map((course, i) => (
                         <div key={i} className="space-y-1">
-                          <div className="flex items-center justify-between text-sm">
+                          <div className="flex items-center justify-between text-[13px]">
                             <span>{course}</span>
                             <span>{80 - i * 10}%</span>
                           </div>
@@ -609,15 +609,15 @@ export function EducationDashboard({ userId, isTeacher = false }: EducationDashb
                   <CardContent>
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm">Active Today</span>
+                        <span className="text-[13px]">Active Today</span>
                         <span className="font-medium">42 students</span>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-sm">Active This Week</span>
+                        <span className="text-[13px]">Active This Week</span>
                         <span className="font-medium">156 students</span>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-sm">Total Enrolled</span>
+                        <span className="text-[13px]">Total Enrolled</span>
                         <span className="font-medium">234 students</span>
                       </div>
                     </div>

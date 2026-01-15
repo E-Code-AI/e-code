@@ -151,7 +151,7 @@ export default function Learn() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Learning Streak</p>
+                <p className="text-[13px] text-muted-foreground">Learning Streak</p>
                 <p className="text-2xl font-bold">12 days</p>
               </div>
               <Trophy className="h-8 w-8 text-yellow-500" />
@@ -162,7 +162,7 @@ export default function Learn() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Courses Started</p>
+                <p className="text-[13px] text-muted-foreground">Courses Started</p>
                 <p className="text-2xl font-bold">3</p>
               </div>
               <Book className="h-8 w-8 text-blue-500" />
@@ -173,7 +173,7 @@ export default function Learn() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Total Hours</p>
+                <p className="text-[13px] text-muted-foreground">Total Hours</p>
                 <p className="text-2xl font-bold">48</p>
               </div>
               <Clock className="h-8 w-8 text-purple-500" />
@@ -184,7 +184,7 @@ export default function Learn() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Achievements</p>
+                <p className="text-[13px] text-muted-foreground">Achievements</p>
                 <p className="text-2xl font-bold">2/8</p>
               </div>
               <Star className="h-8 w-8 text-orange-500" />
@@ -247,21 +247,21 @@ export default function Learn() {
                     <div className="flex-1">
                       <div className="flex items-start justify-between mb-2">
                         <div>
-                          <h3 className="font-semibold text-lg">{course.title}</h3>
-                          <p className="text-sm text-muted-foreground">by {course.instructor}</p>
+                          <h3 className="font-semibold text-[15px]">{course.title}</h3>
+                          <p className="text-[13px] text-muted-foreground">by {course.instructor}</p>
                         </div>
                         <Badge className={getDifficultyColor(course.difficulty)}>
                           {course.difficulty}
                         </Badge>
                       </div>
                       
-                      <p className="text-sm text-muted-foreground mb-4">
+                      <p className="text-[13px] text-muted-foreground mb-4">
                         {course.description}
                       </p>
                       
                       {course.completedLessons > 0 ? (
                         <div className="mb-4">
-                          <div className="flex justify-between text-sm mb-1">
+                          <div className="flex justify-between text-[13px] mb-1">
                             <span>Progress</span>
                             <span>{course.completedLessons}/{course.lessons} lessons</span>
                           </div>
@@ -271,7 +271,7 @@ export default function Learn() {
                           />
                         </div>
                       ) : (
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
+                        <div className="flex items-center gap-4 text-[13px] text-muted-foreground mb-4">
                           <span className="flex items-center gap-1">
                             <Clock className="h-3 w-3" />
                             {course.duration}
@@ -290,8 +290,8 @@ export default function Learn() {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-1">
                           <Star className="h-4 w-4 text-yellow-500 fill-current" />
-                          <span className="text-sm font-medium">{course.rating}</span>
-                          <span className="text-sm text-muted-foreground">
+                          <span className="text-[13px] font-medium">{course.rating}</span>
+                          <span className="text-[13px] text-muted-foreground">
                             ({course.students.toLocaleString()} students)
                           </span>
                         </div>
@@ -319,7 +319,7 @@ export default function Learn() {
                       <PlayCircle className="h-10 w-10 text-primary" />
                       <div>
                         <h3 className="font-semibold">{tutorial.title}</h3>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
+                        <div className="flex items-center gap-4 text-[13px] text-muted-foreground mt-1">
                           <Badge variant="secondary">{tutorial.category}</Badge>
                           <span className="flex items-center gap-1">
                             <Clock className="h-3 w-3" />
@@ -332,10 +332,10 @@ export default function Learn() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-[13px] text-muted-foreground">
                         {tutorial.views.toLocaleString()} views
                       </p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-[13px] text-muted-foreground">
                         {tutorial.likes.toLocaleString()} likes
                       </p>
                     </div>
@@ -363,7 +363,7 @@ export default function Learn() {
                       <span className="text-2xl">{course.thumbnail}</span>
                       <div>
                         <h4 className="font-semibold">{course.title}</h4>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-[13px] text-muted-foreground">
                           Next: Lesson {course.completedLessons + 1} - Variables and Data Types
                         </p>
                       </div>
@@ -377,7 +377,7 @@ export default function Learn() {
                     value={(course.completedLessons / course.lessons) * 100} 
                     className="h-2"
                   />
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-[11px] text-muted-foreground">
                     {Math.round((course.completedLessons / course.lessons) * 100)}% complete
                   </p>
                 </div>
@@ -423,7 +423,7 @@ export default function Learn() {
                               <CheckCircle className="h-4 w-4 text-green-500" />
                             )}
                           </h4>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-[13px] text-muted-foreground">
                             {achievement.description}
                           </p>
                         </div>
@@ -457,7 +457,7 @@ export default function Learn() {
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <span className="font-bold text-lg">#{user.rank}</span>
+                      <span className="font-bold text-[15px]">#{user.rank}</span>
                       <span className="text-2xl">{user.avatar}</span>
                       <span className="font-medium">{user.name}</span>
                     </div>

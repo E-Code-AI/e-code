@@ -272,7 +272,7 @@ export default function Pricing() {
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center space-y-4">
             <div className="animate-spin w-12 h-12 border-4 border-[var(--ecode-accent)] border-t-transparent rounded-full mx-auto" />
-            <p className="text-lg text-[var(--ecode-text-muted)]">Loading pricing plans...</p>
+            <p className="text-[15px] text-[var(--ecode-text-muted)]">Loading pricing plans...</p>
           </div>
         </div>
       </div>
@@ -308,7 +308,7 @@ export default function Pricing() {
             <div className="animate-slide-in-up opacity-0" style={{ animationDelay: '0ms', animationFillMode: 'forwards' }}>
               <Badge 
                 variant="secondary" 
-                className="mb-4 px-6 py-2 text-sm font-semibold bg-[var(--ecode-accent)]/10 border-[var(--ecode-accent)]/20 text-[var(--ecode-accent)]"
+                className="mb-4 px-6 py-2 text-[13px] font-semibold bg-[var(--ecode-accent)]/10 border-[var(--ecode-accent)]/20 text-[var(--ecode-accent)]"
                 data-testid="badge-savings"
               >
                 <Sparkles className="h-4 w-4 mr-2 text-[var(--ecode-accent)]" />
@@ -342,7 +342,7 @@ export default function Pricing() {
               className="flex flex-wrap items-center justify-center gap-2 sm:gap-4 pt-6 sm:pt-8 animate-slide-in-up opacity-0"
               style={{ animationDelay: '300ms', animationFillMode: 'forwards' }}
             >
-              <span className={`text-sm sm:text-lg font-medium transition-colors duration-200 ${billingPeriod === 'monthly' ? 'text-[var(--ecode-text)]' : 'text-[var(--ecode-text-muted)]'}`}>
+              <span className={`text-[13px] sm:text-[15px] font-medium transition-colors duration-200 ${billingPeriod === 'monthly' ? 'text-[var(--ecode-text)]' : 'text-[var(--ecode-text-muted)]'}`}>
                 Monthly
               </span>
               <Switch
@@ -351,9 +351,9 @@ export default function Pricing() {
                 className="scale-110 sm:scale-125 data-[state=checked]:bg-[var(--ecode-accent)]"
                 data-testid="switch-billing-period"
               />
-              <span className={`text-sm sm:text-lg font-medium transition-colors duration-200 ${billingPeriod === 'yearly' ? 'text-[var(--ecode-text)]' : 'text-[var(--ecode-text-muted)]'}`}>
+              <span className={`text-[13px] sm:text-[15px] font-medium transition-colors duration-200 ${billingPeriod === 'yearly' ? 'text-[var(--ecode-text)]' : 'text-[var(--ecode-text-muted)]'}`}>
                 Yearly
-                <Badge className="ml-1 sm:ml-2 text-[10px] sm:text-xs bg-[var(--ecode-accent)] text-white border-0">
+                <Badge className="ml-1 sm:ml-2 text-[10px] sm:text-[11px] bg-[var(--ecode-accent)] text-white border-0">
                   Save 20%
                 </Badge>
               </span>
@@ -415,7 +415,7 @@ export default function Pricing() {
                         {tier.enterprise ? (
                           <div>
                             <div className="text-4xl font-bold text-[var(--ecode-text)]">Custom</div>
-                            <p className="text-sm text-[var(--ecode-text-muted)] mt-1">Contact for pricing</p>
+                            <p className="text-[13px] text-[var(--ecode-text-muted)] mt-1">Contact for pricing</p>
                           </div>
                         ) : (
                           <div>
@@ -428,7 +428,7 @@ export default function Pricing() {
                               </span>
                             </div>
                             {billingPeriod === 'yearly' && tier.monthlyPrice > 0 && (
-                              <p className="text-sm text-[var(--ecode-accent)] mt-1 font-medium">
+                              <p className="text-[13px] text-[var(--ecode-accent)] mt-1 font-medium">
                                 Save ${(tier.monthlyPrice - tier.yearlyPrice) * 12}/year
                               </p>
                             )}
@@ -440,7 +440,7 @@ export default function Pricing() {
                     <CardContent className="relative z-10 space-y-3 sm:space-y-4 p-4 sm:p-6">
                       {/* CTA Button - E-Code Styled */}
                       <Button 
-                        className={`w-full h-11 sm:h-12 text-sm sm:text-base font-semibold transition-all duration-200 ${
+                        className={`w-full h-11 sm:h-12 text-[13px] sm:text-base font-semibold transition-all duration-200 ${
                           tier.popular 
                             ? 'bg-[var(--ecode-accent)] hover:bg-[var(--ecode-accent-hover)] text-white shadow-lg hover:shadow-xl' 
                             : tier.enterprise
@@ -467,7 +467,7 @@ export default function Pricing() {
                               ) : (
                                 <X className="h-5 w-5 text-[var(--ecode-text-muted)]/50 mt-0.5" />
                               )}
-                              <span className={`text-sm transition-colors duration-200 ${
+                              <span className={`text-[13px] transition-colors duration-200 ${
                                 !feature.included ? 'text-[var(--ecode-text-muted)]/50 line-through' : 
                                 feature.highlight ? 'font-semibold text-[var(--ecode-text)]' : 
                                 'text-[var(--ecode-text-secondary)]'
@@ -492,7 +492,7 @@ export default function Pricing() {
                         
                         {tier.features.length > 10 && (
                           <button 
-                            className="text-sm text-[var(--ecode-accent)] font-medium mt-4 hover:underline transition-all duration-200 hover:text-[var(--ecode-accent-hover)]"
+                            className="text-[13px] text-[var(--ecode-accent)] font-medium mt-4 hover:underline transition-all duration-200 hover:text-[var(--ecode-accent-hover)]"
                             onClick={() => {
                               // Smooth scroll to comparison section or expand list
                               const comparisonSection = document.getElementById('section-comparison');
@@ -550,19 +550,19 @@ export default function Pricing() {
                           <th className="text-left p-6 font-semibold text-[var(--ecode-text)]" data-testid="column-features">Features</th>
                           <th className="text-center p-6 min-w-[150px]" data-testid="column-tier-starter">
                             <div className="font-semibold text-[var(--ecode-text)]">Starter</div>
-                            <div className="text-sm text-[var(--ecode-text-muted)] mt-1">Free forever</div>
+                            <div className="text-[13px] text-[var(--ecode-text-muted)] mt-1">Free forever</div>
                           </th>
                           <th className="text-center p-6 min-w-[150px]" data-testid="column-tier-core">
                             <div className="font-semibold text-[var(--ecode-accent)]">Core</div>
-                            <div className="text-sm text-[var(--ecode-text-muted)] mt-1">Most popular</div>
+                            <div className="text-[13px] text-[var(--ecode-text-muted)] mt-1">Most popular</div>
                           </th>
                           <th className="text-center p-6 min-w-[150px]" data-testid="column-tier-teams">
                             <div className="font-semibold text-[var(--ecode-text)]">Teams</div>
-                            <div className="text-sm text-[var(--ecode-text-muted)] mt-1">For teams</div>
+                            <div className="text-[13px] text-[var(--ecode-text-muted)] mt-1">For teams</div>
                           </th>
                           <th className="text-center p-6 min-w-[150px]" data-testid="column-tier-enterprise">
                             <div className="font-semibold text-[var(--ecode-text)]">Enterprise</div>
-                            <div className="text-sm text-[var(--ecode-text-muted)] mt-1">Custom</div>
+                            <div className="text-[13px] text-[var(--ecode-text-muted)] mt-1">Custom</div>
                           </th>
                     </tr>
                   </thead>
@@ -571,7 +571,7 @@ export default function Pricing() {
                       <Fragment key={categoryIdx}>
                         <tr className="bg-[var(--ecode-surface-tertiary,var(--ecode-surface))]">
                           <td colSpan={5} className="px-6 py-3">
-                            <div className="font-semibold text-sm text-[var(--ecode-text-muted)] uppercase tracking-wider">
+                            <div className="font-semibold text-[13px] text-[var(--ecode-text-muted)] uppercase tracking-wider">
                               {category.category}
                             </div>
                           </td>
@@ -763,7 +763,7 @@ export default function Pricing() {
                   data-testid={`faq-card-${idx}`}
                 >
                   <CardHeader>
-                    <CardTitle className="text-lg font-semibold text-[var(--ecode-text)]">{faq.question}</CardTitle>
+                    <CardTitle className="text-[15px] font-semibold text-[var(--ecode-text)]">{faq.question}</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <p className="text-[var(--ecode-text-muted)]">
@@ -800,7 +800,7 @@ export default function Pricing() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
               <Button 
                 size="lg"
-                className="bg-white text-[var(--ecode-accent)] hover:bg-white/95 px-8 py-6 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
+                className="bg-white text-[var(--ecode-accent)] hover:bg-white/95 px-8 py-6 text-[15px] font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
                 onClick={() => navigate(user ? '/dashboard' : '/register')}
                 data-testid="button-cta-start-free"
               >
@@ -810,7 +810,7 @@ export default function Pricing() {
               <Button 
                 size="lg"
                 variant="ghost"
-                className="text-gray-900 border-2 border-gray-900 bg-white/20 hover:bg-white/40 px-8 py-6 text-lg font-semibold transition-all duration-200"
+                className="text-gray-900 border-2 border-gray-900 bg-white/20 hover:bg-white/40 px-8 py-6 text-[15px] font-semibold transition-all duration-200"
                 onClick={() => navigate('/demo')}
                 data-testid="button-cta-watch-demo"
               >

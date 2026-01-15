@@ -124,13 +124,13 @@ export default function CaseStudies() {
       <div className="container mx-auto px-4 py-12 sm:py-16 md:py-20" data-testid="page-case-studies">
         {/* Hero Section */}
         <div className="text-center max-w-4xl mx-auto mb-12 sm:mb-16">
-          <Badge className="mb-4 px-4 py-1.5 text-sm font-medium bg-gradient-to-r from-emerald-500 to-teal-500 text-white border-0">
+          <Badge className="mb-4 px-4 py-1.5 text-[13px] font-medium bg-gradient-to-r from-emerald-500 to-teal-500 text-white border-0">
             Customer Success
           </Badge>
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-400 dark:to-teal-400 bg-clip-text text-transparent" data-testid="heading-case-studies">
             Case Studies
           </h1>
-          <p className="text-lg sm:text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
+          <p className="text-[15px] sm:text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
             See how leading companies build with E-Code. Real results from
             startups to Fortune 500 enterprises.
           </p>
@@ -158,7 +158,7 @@ export default function CaseStudies() {
                     <div key={metric.label} className="text-center p-4 bg-white dark:bg-slate-900 rounded-lg">
                       <div className="flex justify-center mb-2">{metric.icon}</div>
                       <div className="text-2xl font-bold text-emerald-600">{metric.value}</div>
-                      <div className="text-xs text-muted-foreground">{metric.label}</div>
+                      <div className="text-[11px] text-muted-foreground">{metric.label}</div>
                     </div>
                   ))}
                 </div>
@@ -166,7 +166,7 @@ export default function CaseStudies() {
                 <div className="bg-white dark:bg-slate-900 p-4 rounded-lg">
                   <Quote className="h-6 w-6 text-emerald-500 mb-2" />
                   <p className="italic text-muted-foreground mb-2">"{study.quote}"</p>
-                  <p className="text-sm font-semibold">— {study.quotee}</p>
+                  <p className="text-[13px] font-semibold">— {study.quotee}</p>
                 </div>
               </div>
               <div className="p-4 border-t">
@@ -186,12 +186,12 @@ export default function CaseStudies() {
               <div className={`w-12 h-12 rounded-lg bg-${study.color}-100 dark:bg-${study.color}-900/30 flex items-center justify-center mb-4`}>
                 <span className={`font-bold text-${study.color}-600 dark:text-${study.color}-400`}>{study.logo}</span>
               </div>
-              <Badge variant="outline" className="mb-3 text-xs">{study.industry}</Badge>
+              <Badge variant="outline" className="mb-3 text-[11px]">{study.industry}</Badge>
               <h3 className="font-semibold mb-2 group-hover:text-emerald-600 transition-colors">{study.company}</h3>
-              <p className="text-sm text-muted-foreground line-clamp-2">{study.headline}</p>
+              <p className="text-[13px] text-muted-foreground line-clamp-2">{study.headline}</p>
               <div className="mt-4 pt-4 border-t">
                 <div className="text-2xl font-bold text-emerald-600">{study.metrics[0].value}</div>
-                <div className="text-xs text-muted-foreground">{study.metrics[0].label}</div>
+                <div className="text-[11px] text-muted-foreground">{study.metrics[0].label}</div>
               </div>
             </Card>
           ))}
@@ -203,19 +203,19 @@ export default function CaseStudies() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             <div className="text-center">
               <div className="text-4xl font-bold text-emerald-600">85%</div>
-              <div className="text-sm text-muted-foreground">Average Dev Time Reduction</div>
+              <div className="text-[13px] text-muted-foreground">Average Dev Time Reduction</div>
             </div>
             <div className="text-center">
               <div className="text-4xl font-bold text-emerald-600">$10M+</div>
-              <div className="text-sm text-muted-foreground">Combined Annual Savings</div>
+              <div className="text-[13px] text-muted-foreground">Combined Annual Savings</div>
             </div>
             <div className="text-center">
               <div className="text-4xl font-bold text-emerald-600">500+</div>
-              <div className="text-sm text-muted-foreground">Enterprise Customers</div>
+              <div className="text-[13px] text-muted-foreground">Enterprise Customers</div>
             </div>
             <div className="text-center">
               <div className="text-4xl font-bold text-emerald-600">99.99%</div>
-              <div className="text-sm text-muted-foreground">Average Uptime</div>
+              <div className="text-[13px] text-muted-foreground">Average Uptime</div>
             </div>
           </div>
         </Card>
@@ -225,7 +225,7 @@ export default function CaseStudies() {
           <div className="text-center max-w-3xl mx-auto">
             <BarChart3 className="h-12 w-12 mx-auto mb-6 opacity-80" />
             <h2 className="text-2xl sm:text-3xl font-bold mb-4">Ready to Write Your Success Story?</h2>
-            <p className="text-lg text-white/90 mb-8">
+            <p className="text-[15px] text-white/90 mb-8">
               Join hundreds of companies building faster with E-Code. Let's discuss your use case.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">

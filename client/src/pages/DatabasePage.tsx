@@ -187,7 +187,7 @@ export default function DatabasePage() {
           <div className="flex flex-wrap gap-1 sm:gap-2">
             <Badge
               variant="outline"
-              className={`text-xs sm:text-sm ${
+              className={`text-[11px] sm:text-[13px] ${
                 connectionStatus === 'connected'
                   ? 'bg-green-50 text-green-700 border-green-200'
                   : connectionStatus === 'connecting'
@@ -273,8 +273,8 @@ export default function DatabasePage() {
                           <ChevronRight className="h-4 w-4 mr-2 text-muted-foreground" />
                         )}
                         <Table className="h-4 w-4 mr-2 text-primary" />
-                        <span className="font-medium text-sm">{table.name}</span>
-                        <Badge variant="secondary" className="ml-auto text-xs">
+                        <span className="font-medium text-[13px]">{table.name}</span>
+                        <Badge variant="secondary" className="ml-auto text-[11px]">
                           {table.rowCount.toLocaleString()}
                         </Badge>
                       </CollapsibleTrigger>
@@ -283,7 +283,7 @@ export default function DatabasePage() {
                           {table.columns.map((column) => (
                             <div
                               key={column.name}
-                              className="flex items-center p-1.5 text-xs rounded hover:bg-muted/50 cursor-pointer"
+                              className="flex items-center p-1.5 text-[11px] rounded hover:bg-muted/50 cursor-pointer"
                               onClick={() => setSelectedTable(table.name)}
                               data-testid={`column-${table.name}-${column.name}`}
                             >
@@ -320,21 +320,21 @@ export default function DatabasePage() {
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Tables</span>
+                <span className="text-[13px] text-muted-foreground">Tables</span>
                 <span className="font-medium">{schemas.length}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Total Rows</span>
+                <span className="text-[13px] text-muted-foreground">Total Rows</span>
                 <span className="font-medium">
                   {schemas.reduce((sum, t) => sum + t.rowCount, 0).toLocaleString()}
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Size</span>
+                <span className="text-[13px] text-muted-foreground">Size</span>
                 <span className="font-medium">24.5 MB</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Connections</span>
+                <span className="text-[13px] text-muted-foreground">Connections</span>
                 <span className="font-medium">3 / 100</span>
               </div>
             </CardContent>
@@ -344,15 +344,15 @@ export default function DatabasePage() {
         <div className="lg:col-span-3">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="mb-4 w-full grid grid-cols-3 sm:w-auto sm:inline-flex" data-testid="tabs-database-main">
-              <TabsTrigger value="explorer" className="text-xs sm:text-sm min-h-[44px] sm:min-h-0" data-testid="tab-explorer">
+              <TabsTrigger value="explorer" className="text-[11px] sm:text-[13px] min-h-[44px] sm:min-h-0" data-testid="tab-explorer">
                 <Table className="h-4 w-4 sm:mr-2" />
                 <span className="hidden sm:inline">Table View</span>
               </TabsTrigger>
-              <TabsTrigger value="query" className="text-xs sm:text-sm min-h-[44px] sm:min-h-0" data-testid="tab-query">
+              <TabsTrigger value="query" className="text-[11px] sm:text-[13px] min-h-[44px] sm:min-h-0" data-testid="tab-query">
                 <Code className="h-4 w-4 sm:mr-2" />
                 <span className="hidden sm:inline">Query Editor</span>
               </TabsTrigger>
-              <TabsTrigger value="kv" className="text-xs sm:text-sm min-h-[44px] sm:min-h-0" data-testid="tab-kv">
+              <TabsTrigger value="kv" className="text-[11px] sm:text-[13px] min-h-[44px] sm:min-h-0" data-testid="tab-kv">
                 <Database className="h-4 w-4 sm:mr-2" />
                 <span className="hidden sm:inline">Key-Value Store</span>
               </TabsTrigger>
@@ -388,7 +388,7 @@ export default function DatabasePage() {
                   {selectedTable ? (
                     <div className="border rounded-lg overflow-hidden">
                       <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
+                        <table className="w-full text-[13px]">
                           <thead className="bg-muted">
                             <tr>
                               {schemas
@@ -435,7 +435,7 @@ export default function DatabasePage() {
                         </table>
                       </div>
                       <div className="flex flex-col sm:flex-row items-center justify-between px-3 sm:px-4 py-3 bg-muted/50 border-t gap-2">
-                        <span className="text-xs sm:text-sm text-muted-foreground text-center sm:text-left">
+                        <span className="text-[11px] sm:text-[13px] text-muted-foreground text-center sm:text-left">
                           Showing 1-5 of{' '}
                           {schemas.find((s) => s.name === selectedTable)?.rowCount.toLocaleString()}{' '}
                           rows
@@ -453,7 +453,7 @@ export default function DatabasePage() {
                   ) : (
                     <div className="flex flex-col items-center justify-center py-16 text-center">
                       <Table className="h-12 w-12 text-muted-foreground mb-4" />
-                      <h3 className="text-lg font-medium mb-2">No Table Selected</h3>
+                      <h3 className="text-[15px] font-medium mb-2">No Table Selected</h3>
                       <p className="text-muted-foreground mb-4">
                         Select a table from the schema browser to view its data
                       </p>
@@ -514,7 +514,7 @@ export default function DatabasePage() {
                     <Textarea
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
-                      className="font-mono text-sm min-h-[150px] resize-y"
+                      className="font-mono text-[13px] min-h-[150px] resize-y"
                       placeholder="Enter your SQL query..."
                       data-testid="textarea-query"
                     />
@@ -537,7 +537,7 @@ export default function DatabasePage() {
                   {queryResult && (
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4 text-sm">
+                        <div className="flex items-center gap-4 text-[13px]">
                           {queryResult.error ? (
                             <Badge variant="destructive">
                               <XCircle className="h-3 w-3 mr-1" />
@@ -572,12 +572,12 @@ export default function DatabasePage() {
                             <AlertCircle className="h-4 w-4" />
                             <span className="font-medium">Query Error</span>
                           </div>
-                          <p className="text-sm mt-2">{queryResult.error}</p>
+                          <p className="text-[13px] mt-2">{queryResult.error}</p>
                         </div>
                       ) : (
                         <div className="border rounded-lg overflow-hidden">
                           <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
+                            <table className="w-full text-[13px]">
                               <thead className="bg-muted">
                                 <tr>
                                   {queryResult.columns.map((col) => (
@@ -652,7 +652,7 @@ export default function DatabasePage() {
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <Label>SSL Mode</Label>
-                <p className="text-xs text-muted-foreground">Use secure connection</p>
+                <p className="text-[11px] text-muted-foreground">Use secure connection</p>
               </div>
               <Switch defaultChecked data-testid="switch-ssl" />
             </div>
@@ -689,7 +689,7 @@ export default function DatabasePage() {
             <div className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:bg-muted/50 transition-colors">
               <Upload className="h-10 w-10 mx-auto text-muted-foreground mb-4" />
               <p className="font-medium">Drop files here or click to upload</p>
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="text-[13px] text-muted-foreground mt-1">
                 Supports JSON, CSV, and SQL files up to 50MB
               </p>
             </div>

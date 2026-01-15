@@ -491,17 +491,17 @@ export function ElementSelector({ sessionId, projectId, previewUrl, onCodeChange
     <div className={cn("flex flex-col h-full", className)}>
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
         <TabsList className="grid w-full grid-cols-3 h-auto">
-          <TabsTrigger value="live" data-testid="tab-live-picker" className="min-h-[44px] px-2 sm:px-4 text-xs sm:text-sm">
+          <TabsTrigger value="live" data-testid="tab-live-picker" className="min-h-[44px] px-2 sm:px-4 text-[11px] sm:text-[13px]">
             <MousePointer2 className="h-3.5 w-3.5 sm:mr-1.5" />
             <span className="hidden sm:inline">Live Picker</span>
             <span className="sm:hidden">Live</span>
           </TabsTrigger>
-          <TabsTrigger value="picker" data-testid="tab-element-picker" className="min-h-[44px] px-2 sm:px-4 text-xs sm:text-sm">
+          <TabsTrigger value="picker" data-testid="tab-element-picker" className="min-h-[44px] px-2 sm:px-4 text-[11px] sm:text-[13px]">
             <Wand2 className="h-3.5 w-3.5 sm:mr-1.5" />
             <span className="hidden sm:inline">AI Picker</span>
             <span className="sm:hidden">AI</span>
           </TabsTrigger>
-          <TabsTrigger value="history" data-testid="tab-selector-history" className="min-h-[44px] px-2 sm:px-4 text-xs sm:text-sm">
+          <TabsTrigger value="history" data-testid="tab-selector-history" className="min-h-[44px] px-2 sm:px-4 text-[11px] sm:text-[13px]">
             <span className="hidden sm:inline">History ({selectors.length})</span>
             <span className="sm:hidden">{selectors.length}</span>
           </TabsTrigger>
@@ -518,10 +518,10 @@ export function ElementSelector({ sessionId, projectId, previewUrl, onCodeChange
                 data-testid="toggle-picker-mode"
               >
                 <MousePointer2 className="h-4 w-4" />
-                <span className="text-xs sm:text-sm">{isPickerActive ? 'Picking' : 'Pick'}</span>
+                <span className="text-[11px] sm:text-[13px]">{isPickerActive ? 'Picking' : 'Pick'}</span>
               </Button>
               
-              <div className="flex items-center gap-1.5 text-xs sm:text-sm text-muted-foreground">
+              <div className="flex items-center gap-1.5 text-[11px] sm:text-[13px] text-muted-foreground">
                 <Switch 
                   checked={showOutlines} 
                   onCheckedChange={setShowOutlines} 
@@ -564,7 +564,7 @@ export function ElementSelector({ sessionId, projectId, previewUrl, onCodeChange
                 <div className="h-full flex items-center justify-center text-center p-4">
                   <div>
                     <Eye className="h-12 w-12 mx-auto mb-3 text-muted-foreground opacity-50" />
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-[13px] text-muted-foreground">
                       Preview not available. Start the preview to use live element picking.
                     </p>
                   </div>
@@ -575,7 +575,7 @@ export function ElementSelector({ sessionId, projectId, previewUrl, onCodeChange
             {isPickerActive && (
               <div className="w-full lg:w-72 xl:w-80 border-t lg:border-t-0 lg:border-l bg-card flex flex-col rounded-lg max-h-[40vh] lg:max-h-none overflow-hidden">
                 <div className="p-2 sm:p-3 border-b">
-                  <h3 className="text-xs sm:text-sm font-semibold">Element Editor</h3>
+                  <h3 className="text-[11px] sm:text-[13px] font-semibold">Element Editor</h3>
                 </div>
 
                 <ScrollArea className="flex-1">
@@ -584,7 +584,7 @@ export function ElementSelector({ sessionId, projectId, previewUrl, onCodeChange
                       <div className="p-2 sm:p-3 bg-muted rounded-md">
                         <div className="flex items-center gap-1.5 mb-1 flex-wrap">
                           <Code className="h-3 w-3 sm:h-4 sm:w-4 text-purple-500" />
-                          <span className="text-xs sm:text-sm font-medium">{selectedElement.tagName}</span>
+                          <span className="text-[11px] sm:text-[13px] font-medium">{selectedElement.tagName}</span>
                           {selectedElement.id && (
                             <Badge variant="outline" className="text-[9px] sm:text-[10px] h-4 sm:h-5">#{selectedElement.id}</Badge>
                           )}
@@ -593,7 +593,7 @@ export function ElementSelector({ sessionId, projectId, previewUrl, onCodeChange
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="w-full min-h-[44px] mt-2 text-xs sm:text-sm"
+                          className="w-full min-h-[44px] mt-2 text-[11px] sm:text-[13px]"
                           onClick={() => copyToClipboard((selectedElement as any).selector || selectedElement.path)}
                         >
                           <Copy className="h-3.5 w-3.5 mr-1.5" />
@@ -603,13 +603,13 @@ export function ElementSelector({ sessionId, projectId, previewUrl, onCodeChange
 
                       {selectedElement.canEdit && selectedElement.text && (
                         <div className="space-y-1.5">
-                          <Label className="text-[10px] sm:text-xs flex items-center gap-1">
+                          <Label className="text-[10px] sm:text-[11px] flex items-center gap-1">
                             <Type className="w-3 h-3" /> Text
                           </Label>
                           <Input
                             value={editedText}
                             onChange={(e) => setEditedText(e.target.value)}
-                            className="min-h-[44px] text-xs sm:text-sm"
+                            className="min-h-[44px] text-[11px] sm:text-[13px]"
                             data-testid="live-text-input"
                           />
                         </div>
@@ -618,14 +618,14 @@ export function ElementSelector({ sessionId, projectId, previewUrl, onCodeChange
                       <Separator />
 
                       <div className="space-y-2">
-                        <Label className="text-[10px] sm:text-xs flex items-center gap-1">
+                        <Label className="text-[10px] sm:text-[11px] flex items-center gap-1">
                           <Palette className="w-3 h-3" /> Colors
                         </Label>
                         
                         <div className="grid grid-cols-2 gap-2">
                           <Popover>
                             <PopoverTrigger asChild>
-                              <Button variant="outline" size="sm" className="min-h-[44px] justify-start gap-2 text-xs sm:text-sm">
+                              <Button variant="outline" size="sm" className="min-h-[44px] justify-start gap-2 text-[11px] sm:text-[13px]">
                                 <div className="w-4 h-4 rounded border" style={{ backgroundColor: currentStyles.color }} />
                                 Text
                               </Button>
@@ -652,7 +652,7 @@ export function ElementSelector({ sessionId, projectId, previewUrl, onCodeChange
 
                           <Popover>
                             <PopoverTrigger asChild>
-                              <Button variant="outline" size="sm" className="min-h-[44px] justify-start gap-2 text-xs sm:text-sm">
+                              <Button variant="outline" size="sm" className="min-h-[44px] justify-start gap-2 text-[11px] sm:text-[13px]">
                                 <div className="w-4 h-4 rounded border" style={{ backgroundColor: currentStyles.backgroundColor }} />
                                 BG
                               </Button>
@@ -680,7 +680,7 @@ export function ElementSelector({ sessionId, projectId, previewUrl, onCodeChange
                       </div>
 
                       <div className="space-y-2">
-                        <Label className="text-[10px] sm:text-xs">Typography</Label>
+                        <Label className="text-[10px] sm:text-[11px]">Typography</Label>
                         <div className="flex gap-1">
                           {[
                             { value: 'left', icon: AlignLeft },
@@ -717,7 +717,7 @@ export function ElementSelector({ sessionId, projectId, previewUrl, onCodeChange
                       </div>
 
                       <div className="space-y-2">
-                        <Label className="text-[10px] sm:text-xs">Font Size</Label>
+                        <Label className="text-[10px] sm:text-[11px]">Font Size</Label>
                         <div className="flex items-center gap-2">
                           <Slider
                             value={[parseInt(currentStyles.fontSize) || 16]}
@@ -727,7 +727,7 @@ export function ElementSelector({ sessionId, projectId, previewUrl, onCodeChange
                             step={1}
                             className="flex-1"
                           />
-                          <span className="text-xs sm:text-sm w-10 text-right">{currentStyles.fontSize}</span>
+                          <span className="text-[11px] sm:text-[13px] w-10 text-right">{currentStyles.fontSize}</span>
                         </div>
                       </div>
 
@@ -737,7 +737,7 @@ export function ElementSelector({ sessionId, projectId, previewUrl, onCodeChange
                         <Button 
                           variant="outline" 
                           size="sm" 
-                          className="flex-1 min-h-[44px] text-xs sm:text-sm"
+                          className="flex-1 min-h-[44px] text-[11px] sm:text-[13px]"
                           onClick={() => {
                             setSelectedElement(null);
                             setEditedStyles({});
@@ -748,7 +748,7 @@ export function ElementSelector({ sessionId, projectId, previewUrl, onCodeChange
                         </Button>
                         <Button 
                           size="sm" 
-                          className="flex-1 min-h-[44px] text-xs sm:text-sm"
+                          className="flex-1 min-h-[44px] text-[11px] sm:text-[13px]"
                           onClick={applyChanges}
                         >
                           <Eye className="h-4 w-4 mr-1.5" />
@@ -758,7 +758,7 @@ export function ElementSelector({ sessionId, projectId, previewUrl, onCodeChange
 
                       <Button 
                         size="sm" 
-                        className="w-full min-h-[44px] text-xs sm:text-sm bg-green-600 hover:bg-green-700"
+                        className="w-full min-h-[44px] text-[11px] sm:text-[13px] bg-green-600 hover:bg-green-700"
                         onClick={syncToCode}
                         disabled={syncCodeMutation.isPending}
                       >
@@ -773,7 +773,7 @@ export function ElementSelector({ sessionId, projectId, previewUrl, onCodeChange
                   ) : (
                     <div className="p-4 sm:p-6 text-center text-muted-foreground">
                       <MousePointer2 className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-3 opacity-50" />
-                      <p className="text-xs sm:text-sm">Click an element in the preview to edit it</p>
+                      <p className="text-[11px] sm:text-[13px]">Click an element in the preview to edit it</p>
                     </div>
                   )}
                 </ScrollArea>
@@ -782,7 +782,7 @@ export function ElementSelector({ sessionId, projectId, previewUrl, onCodeChange
                   <div className="p-2 sm:p-3 border-t bg-muted/30">
                     <div className="flex items-center gap-2">
                       <Layers className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-                      <span className="text-[10px] sm:text-xs text-muted-foreground truncate">
+                      <span className="text-[10px] sm:text-[11px] text-muted-foreground truncate">
                         {hoveredElement.tagName} - {hoveredElement.path}
                       </span>
                     </div>
@@ -797,7 +797,7 @@ export function ElementSelector({ sessionId, projectId, previewUrl, onCodeChange
           <Card className="p-3 sm:p-4">
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="url-input" className="text-xs sm:text-sm">Page URL</Label>
+                <Label htmlFor="url-input" className="text-[11px] sm:text-[13px]">Page URL</Label>
                 <Input
                   id="url-input"
                   type="url"
@@ -805,15 +805,15 @@ export function ElementSelector({ sessionId, projectId, previewUrl, onCodeChange
                   onChange={(e) => setPageUrl(e.target.value)}
                   placeholder="https://your-app.repl.co"
                   data-testid="input-page-url"
-                  className="min-h-[44px] text-sm"
+                  className="min-h-[44px] text-[13px]"
                 />
-                <p className="text-[10px] sm:text-xs text-muted-foreground">
+                <p className="text-[10px] sm:text-[11px] text-muted-foreground">
                   Enter the URL of the page to inspect for element selectors
                 </p>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="element-description" className="text-xs sm:text-sm">Element Description</Label>
+                <Label htmlFor="element-description" className="text-[11px] sm:text-[13px]">Element Description</Label>
                 <Input
                   id="element-description"
                   type="text"
@@ -821,20 +821,20 @@ export function ElementSelector({ sessionId, projectId, previewUrl, onCodeChange
                   onChange={(e) => setElementDescription(e.target.value)}
                   placeholder="e.g., Login button, User profile dropdown, Search input"
                   data-testid="input-element-description"
-                  className="min-h-[44px] text-sm"
+                  className="min-h-[44px] text-[13px]"
                 />
-                <p className="text-[10px] sm:text-xs text-muted-foreground">
+                <p className="text-[10px] sm:text-[11px] text-muted-foreground">
                   Describe the element you want to select
                 </p>
               </div>
 
               <div className="space-y-2">
-                <Label className="text-xs sm:text-sm">Selector Type</Label>
+                <Label className="text-[11px] sm:text-[13px]">Selector Type</Label>
                 <div className="flex flex-col sm:flex-row gap-2">
                   <Button
                     variant={preferredType === 'css' ? 'default' : 'outline'}
                     onClick={() => setPreferredType('css')}
-                    className="flex-1 min-h-[44px] text-xs sm:text-sm"
+                    className="flex-1 min-h-[44px] text-[11px] sm:text-[13px]"
                     data-testid="button-type-css"
                   >
                     <Hash className="h-4 w-4 mr-2" />
@@ -843,7 +843,7 @@ export function ElementSelector({ sessionId, projectId, previewUrl, onCodeChange
                   <Button
                     variant={preferredType === 'xpath' ? 'default' : 'outline'}
                     onClick={() => setPreferredType('xpath')}
-                    className="flex-1 min-h-[44px] text-xs sm:text-sm"
+                    className="flex-1 min-h-[44px] text-[11px] sm:text-[13px]"
                     data-testid="button-type-xpath"
                   >
                     <FileCode className="h-4 w-4 mr-2" />
@@ -855,7 +855,7 @@ export function ElementSelector({ sessionId, projectId, previewUrl, onCodeChange
               <Button
                 onClick={() => generateMutation.mutate(undefined)}
                 disabled={generateMutation.isPending || !pageUrl.trim() || !elementDescription.trim()}
-                className="w-full min-h-[44px] text-sm"
+                className="w-full min-h-[44px] text-[13px]"
                 data-testid="button-generate-selectors"
               >
                 {generateMutation.isPending ? (
@@ -876,9 +876,9 @@ export function ElementSelector({ sessionId, projectId, previewUrl, onCodeChange
               <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 sm:p-4">
                 <div className="flex items-start gap-2 sm:gap-3">
                   <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
-                  <div className="text-xs sm:text-sm text-blue-900 dark:text-blue-100">
+                  <div className="text-[11px] sm:text-[13px] text-blue-900 dark:text-blue-100">
                     <p className="font-medium mb-1">How it works</p>
-                    <p className="text-blue-700 dark:text-blue-300 text-[10px] sm:text-sm">
+                    <p className="text-blue-700 dark:text-blue-300 text-[10px] sm:text-[13px]">
                       The AI element selector analyzes the page and generates robust selectors using 
                       data-testid attributes, IDs, and semantic CSS/XPath patterns.
                     </p>
@@ -891,14 +891,14 @@ export function ElementSelector({ sessionId, projectId, previewUrl, onCodeChange
 
         <TabsContent value="history" className="flex-1 flex flex-col mt-3 sm:mt-4">
           <div className="flex items-center justify-between mb-3 sm:mb-4 gap-2">
-            <h3 className="text-base sm:text-lg font-semibold">Selector History</h3>
+            <h3 className="text-base sm:text-[15px] font-semibold">Selector History</h3>
             {selectors.length > 0 && (
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={toggleAll}
                 data-testid="button-toggle-all-selectors"
-                className="min-h-[44px] text-xs sm:text-sm"
+                className="min-h-[44px] text-[11px] sm:text-[13px]"
               >
                 {openSelectors.size === selectors.length ? (
                   <>
@@ -927,8 +927,8 @@ export function ElementSelector({ sessionId, projectId, previewUrl, onCodeChange
             ) : selectors.length === 0 ? (
               <Card className="p-6 sm:p-8 text-center">
                 <MousePointer2 className="h-10 w-10 sm:h-12 sm:w-12 mx-auto text-muted-foreground mb-3 sm:mb-4" />
-                <p className="text-sm sm:text-base text-muted-foreground">No selectors generated yet</p>
-                <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+                <p className="text-[13px] sm:text-base text-muted-foreground">No selectors generated yet</p>
+                <p className="text-[11px] sm:text-[13px] text-muted-foreground mt-1">
                   Use the Live Picker or AI Picker to generate selectors
                 </p>
               </Card>
@@ -951,18 +951,18 @@ export function ElementSelector({ sessionId, projectId, previewUrl, onCodeChange
                               <div className="flex-shrink-0 mt-0.5">{getSelectorIcon(selector.type)}</div>
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-1.5 sm:gap-2 mb-1 flex-wrap">
-                                  <code className="font-mono text-[10px] sm:text-sm bg-muted px-1.5 sm:px-2 py-0.5 rounded truncate max-w-[150px] sm:max-w-none">
+                                  <code className="font-mono text-[10px] sm:text-[13px] bg-muted px-1.5 sm:px-2 py-0.5 rounded truncate max-w-[150px] sm:max-w-none">
                                     {selector.selector}
                                   </code>
                                   <Badge
                                     variant={selector.type === 'css' ? 'default' : 'secondary'}
                                     data-testid={`badge-type-${selector.id}`}
-                                    className="text-[10px] sm:text-xs"
+                                    className="text-[10px] sm:text-[11px]"
                                   >
                                     {selector.type.toUpperCase()}
                                   </Badge>
                                 </div>
-                                <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs text-muted-foreground flex-wrap">
+                                <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-[11px] text-muted-foreground flex-wrap">
                                   <Code className="h-3 w-3 flex-shrink-0" />
                                   <span className="truncate max-w-[100px] sm:max-w-[200px]">{selector.url}</span>
                                   <span className="hidden sm:inline">•</span>
@@ -999,10 +999,10 @@ export function ElementSelector({ sessionId, projectId, previewUrl, onCodeChange
                       <CollapsibleContent>
                         <div className="border-t p-3 sm:p-4 space-y-3 sm:space-y-4">
                           <div>
-                            <Label className="text-[10px] sm:text-xs font-semibold text-muted-foreground mb-2 block">
+                            <Label className="text-[10px] sm:text-[11px] font-semibold text-muted-foreground mb-2 block">
                               Element Path
                             </Label>
-                            <pre className="bg-muted p-2 sm:p-3 rounded-md text-[10px] sm:text-xs font-mono overflow-x-auto">
+                            <pre className="bg-muted p-2 sm:p-3 rounded-md text-[10px] sm:text-[11px] font-mono overflow-x-auto">
                               {selector.elementPath}
                             </pre>
                           </div>
@@ -1010,33 +1010,33 @@ export function ElementSelector({ sessionId, projectId, previewUrl, onCodeChange
                           {selector.metadata && (
                             <div className="space-y-2">
                               {selector.metadata.tagName && (
-                                <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-2 text-xs sm:text-sm">
+                                <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-2 text-[11px] sm:text-[13px]">
                                   <span className="text-muted-foreground sm:min-w-[100px]">
                                     Tag Name:
                                   </span>
-                                  <code className="bg-muted px-2 py-0.5 rounded text-[10px] sm:text-xs">
+                                  <code className="bg-muted px-2 py-0.5 rounded text-[10px] sm:text-[11px]">
                                     {selector.metadata.tagName}
                                   </code>
                                 </div>
                               )}
                               {selector.metadata.textContent && (
-                                <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-2 text-xs sm:text-sm">
+                                <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-2 text-[11px] sm:text-[13px]">
                                   <span className="text-muted-foreground sm:min-w-[100px]">
                                     Text Content:
                                   </span>
-                                  <span className="flex-1 truncate text-[10px] sm:text-sm">
+                                  <span className="flex-1 truncate text-[10px] sm:text-[13px]">
                                     {selector.metadata.textContent}
                                   </span>
                                 </div>
                               )}
                               {selector.metadata.attributes && Object.keys(selector.metadata.attributes).length > 0 && (
                                 <div>
-                                  <Label className="text-[10px] sm:text-xs font-semibold text-muted-foreground mb-2 block">
+                                  <Label className="text-[10px] sm:text-[11px] font-semibold text-muted-foreground mb-2 block">
                                     Attributes
                                   </Label>
                                   <div className="bg-muted p-2 sm:p-3 rounded-md space-y-1">
                                     {Object.entries(selector.metadata.attributes).map(([key, value]) => (
-                                      <div key={key} className="flex items-start gap-1 sm:gap-2 text-[10px] sm:text-xs font-mono flex-wrap">
+                                      <div key={key} className="flex items-start gap-1 sm:gap-2 text-[10px] sm:text-[11px] font-mono flex-wrap">
                                         <span className="text-blue-600 dark:text-blue-400">
                                           {key}:
                                         </span>
@@ -1054,7 +1054,7 @@ export function ElementSelector({ sessionId, projectId, previewUrl, onCodeChange
                           <Button
                             variant="outline"
                             onClick={() => copyToClipboard(selector.selector)}
-                            className="w-full min-h-[44px] text-xs sm:text-sm"
+                            className="w-full min-h-[44px] text-[11px] sm:text-[13px]"
                             data-testid={`button-copy-full-${selector.id}`}
                           >
                             <Copy className="h-4 w-4 mr-2" />

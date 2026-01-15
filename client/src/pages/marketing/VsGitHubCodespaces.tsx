@@ -59,7 +59,7 @@ export default function VsGitHubCodespaces() {
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-3 sm:mb-4">
             E-Code Platform vs GitHub Codespaces
           </h1>
-          <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto px-4 sm:px-0">
+          <p className="text-base sm:text-[15px] md:text-xl text-muted-foreground max-w-3xl mx-auto px-4 sm:px-0">
             Feature-by-feature comparison to help you choose the right platform
           </p>
         </div>
@@ -67,8 +67,8 @@ export default function VsGitHubCodespaces() {
         {/* Comparison Table */}
         <Card className="mb-8 sm:mb-12" data-testid="card-comparison-table">
           <CardHeader className="p-4 sm:p-6">
-            <CardTitle className="text-lg sm:text-xl">Feature Comparison</CardTitle>
-            <CardDescription className="text-sm">
+            <CardTitle className="text-[15px] sm:text-xl">Feature Comparison</CardTitle>
+            <CardDescription className="text-[13px]">
               How E-Code Platform compares to GitHub Codespaces
             </CardDescription>
           </CardHeader>
@@ -77,15 +77,15 @@ export default function VsGitHubCodespaces() {
               <table className="w-full" data-testid="table-comparison">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left p-2 sm:p-4 font-semibold text-xs sm:text-sm">Feature</th>
-                    <th className="text-left p-2 sm:p-4 font-semibold text-xs sm:text-sm">E-Code Platform</th>
-                    <th className="text-left p-2 sm:p-4 font-semibold text-xs sm:text-sm">GitHub Codespaces</th>
+                    <th className="text-left p-2 sm:p-4 font-semibold text-[11px] sm:text-[13px]">Feature</th>
+                    <th className="text-left p-2 sm:p-4 font-semibold text-[11px] sm:text-[13px]">E-Code Platform</th>
+                    <th className="text-left p-2 sm:p-4 font-semibold text-[11px] sm:text-[13px]">GitHub Codespaces</th>
                   </tr>
                 </thead>
                 <tbody>
                   {comparisons.map((item, index) => (
                     <tr key={index} className="border-b hover:bg-muted/50" data-testid={`row-comparison-${index}`}>
-                      <td className="p-2 sm:p-4 font-medium text-xs sm:text-sm">{item.feature}</td>
+                      <td className="p-2 sm:p-4 font-medium text-[11px] sm:text-[13px]">{item.feature}</td>
                       <td className="p-2 sm:p-4">
                         <div className="flex items-start gap-1 sm:gap-2">
                           {item.advantage === "eCode" || item.advantage === "both" ? (
@@ -93,7 +93,7 @@ export default function VsGitHubCodespaces() {
                           ) : (
                             <XCircle className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
                           )}
-                          <span className="text-xs sm:text-sm">{item.eCode}</span>
+                          <span className="text-[11px] sm:text-[13px]">{item.eCode}</span>
                         </div>
                       </td>
                       <td className="p-2 sm:p-4">
@@ -103,7 +103,7 @@ export default function VsGitHubCodespaces() {
                           ) : (
                             <XCircle className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
                           )}
-                          <span className="text-xs sm:text-sm">{item.github}</span>
+                          <span className="text-[11px] sm:text-[13px]">{item.github}</span>
                         </div>
                       </td>
                     </tr>
@@ -117,31 +117,31 @@ export default function VsGitHubCodespaces() {
         {/* Key Advantages */}
         <Card className="mb-8 sm:mb-12" data-testid="card-advantages">
           <CardHeader className="p-4 sm:p-6">
-            <CardTitle className="text-lg sm:text-xl">Why Developers Choose E-Code Platform</CardTitle>
+            <CardTitle className="text-[15px] sm:text-xl">Why Developers Choose E-Code Platform</CardTitle>
           </CardHeader>
           <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
             <div className="grid sm:grid-cols-2 gap-4 sm:gap-6">
               <div data-testid="advantage-allinone">
-                <h3 className="font-semibold text-sm sm:text-base mb-1 sm:mb-2">All-in-One Platform</h3>
-                <p className="text-xs sm:text-sm text-muted-foreground">
+                <h3 className="font-semibold text-[13px] sm:text-base mb-1 sm:mb-2">All-in-One Platform</h3>
+                <p className="text-[11px] sm:text-[13px] text-muted-foreground">
                   Everything you need in one place: IDE, database, deployment, and AI assistance. No need to configure multiple services.
                 </p>
               </div>
               <div data-testid="advantage-ai">
-                <h3 className="font-semibold text-sm sm:text-base mb-1 sm:mb-2">Better AI Integration</h3>
-                <p className="text-xs sm:text-sm text-muted-foreground">
+                <h3 className="font-semibold text-[13px] sm:text-base mb-1 sm:mb-2">Better AI Integration</h3>
+                <p className="text-[11px] sm:text-[13px] text-muted-foreground">
                   Multiple AI models (GPT-5, Claude) built-in at no extra cost. Custom prompts and templates included.
                 </p>
               </div>
               <div data-testid="advantage-setup">
-                <h3 className="font-semibold text-sm sm:text-base mb-1 sm:mb-2">Faster Setup</h3>
-                <p className="text-xs sm:text-sm text-muted-foreground">
+                <h3 className="font-semibold text-[13px] sm:text-base mb-1 sm:mb-2">Faster Setup</h3>
+                <p className="text-[11px] sm:text-[13px] text-muted-foreground">
                   Start coding in seconds. No configuration needed for database, authentication, or deployment.
                 </p>
               </div>
               <div data-testid="advantage-cost">
-                <h3 className="font-semibold text-sm sm:text-base mb-1 sm:mb-2">Lower Cost</h3>
-                <p className="text-xs sm:text-sm text-muted-foreground">
+                <h3 className="font-semibold text-[13px] sm:text-base mb-1 sm:mb-2">Lower Cost</h3>
+                <p className="text-[11px] sm:text-[13px] text-muted-foreground">
                   More generous free tier and lower pricing for premium features. No surprise bills for compute time.
                 </p>
               </div>
@@ -153,7 +153,7 @@ export default function VsGitHubCodespaces() {
         <Card className="bg-primary/5 border-primary/20">
           <CardContent className="p-4 sm:p-6 pt-4 sm:pt-6 text-center">
             <h2 className="text-xl sm:text-2xl font-bold mb-2">Ready to Switch?</h2>
-            <p className="text-sm sm:text-base text-muted-foreground mb-3 sm:mb-4">
+            <p className="text-[13px] sm:text-base text-muted-foreground mb-3 sm:mb-4">
               Import your GitHub repositories and start building in minutes
             </p>
             <Link href="/register">

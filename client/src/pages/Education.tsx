@@ -131,7 +131,7 @@ export default function Education() {
               </div>
               <div>
                 <p className="text-2xl font-bold">42</p>
-                <p className="text-sm text-muted-foreground">Total Students</p>
+                <p className="text-[13px] text-muted-foreground">Total Students</p>
               </div>
             </div>
           </CardContent>
@@ -145,7 +145,7 @@ export default function Education() {
               </div>
               <div>
                 <p className="text-2xl font-bold">8</p>
-                <p className="text-sm text-muted-foreground">Active Courses</p>
+                <p className="text-[13px] text-muted-foreground">Active Courses</p>
               </div>
             </div>
           </CardContent>
@@ -159,7 +159,7 @@ export default function Education() {
               </div>
               <div>
                 <p className="text-2xl font-bold">20</p>
-                <p className="text-sm text-muted-foreground">Assignments</p>
+                <p className="text-[13px] text-muted-foreground">Assignments</p>
               </div>
             </div>
           </CardContent>
@@ -173,7 +173,7 @@ export default function Education() {
               </div>
               <div>
                 <p className="text-2xl font-bold">156</p>
-                <p className="text-sm text-muted-foreground">Certificates</p>
+                <p className="text-[13px] text-muted-foreground">Certificates</p>
               </div>
             </div>
           </CardContent>
@@ -194,20 +194,20 @@ export default function Education() {
                   <div className="flex items-start justify-between mb-2">
                     <div>
                       <h3 className="font-semibold">{classroom.name}</h3>
-                      <p className="text-sm text-muted-foreground">{classroom.code} • {classroom.teacher}</p>
+                      <p className="text-[13px] text-muted-foreground">{classroom.code} • {classroom.teacher}</p>
                     </div>
                     <Badge variant="outline">{classroom.students} students</Badge>
                   </div>
-                  <p className="text-sm text-muted-foreground mb-3">{classroom.description}</p>
+                  <p className="text-[13px] text-muted-foreground mb-3">{classroom.description}</p>
                   <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
+                    <div className="flex justify-between text-[13px]">
                       <span>Course Progress</span>
                       <span>{classroom.progress}%</span>
                     </div>
                     <Progress value={classroom.progress} />
                   </div>
                   <div className="flex items-center justify-between mt-3 pt-3 border-t">
-                    <div className="text-sm">
+                    <div className="text-[13px]">
                       <p className="font-medium">{classroom.nextAssignment}</p>
                       <p className="text-muted-foreground">Due: {classroom.dueDate}</p>
                     </div>
@@ -231,13 +231,13 @@ export default function Education() {
                   <div className="flex items-start justify-between mb-2">
                     <div>
                       <h3 className="font-semibold">{assignment.title}</h3>
-                      <p className="text-sm text-muted-foreground">{assignment.subject}</p>
+                      <p className="text-[13px] text-muted-foreground">{assignment.subject}</p>
                     </div>
                     <Badge variant={assignment.status === 'completed' ? 'default' : 'secondary'}>
                       {assignment.status}
                     </Badge>
                   </div>
-                  <div className="flex items-center justify-between text-sm mb-2">
+                  <div className="flex items-center justify-between text-[13px] mb-2">
                     <span>Submissions: {assignment.submitted}/{assignment.total}</span>
                     <span>Due: {assignment.dueDate}</span>
                   </div>
@@ -286,13 +286,13 @@ export default function Education() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center justify-between text-[13px]">
                   <span>Progress</span>
                   <span>{classroom.progress}%</span>
                 </div>
                 <Progress value={classroom.progress} />
                 
-                <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="grid grid-cols-2 gap-4 text-[13px]">
                   <div>
                     <p className="text-muted-foreground">Students</p>
                     <p className="font-medium">{classroom.students}</p>
@@ -304,9 +304,9 @@ export default function Education() {
                 </div>
                 
                 <div className="pt-4 border-t">
-                  <p className="text-sm font-medium mb-1">Next Assignment</p>
-                  <p className="text-sm text-muted-foreground">{classroom.nextAssignment}</p>
-                  <p className="text-xs text-muted-foreground">Due: {classroom.dueDate}</p>
+                  <p className="text-[13px] font-medium mb-1">Next Assignment</p>
+                  <p className="text-[13px] text-muted-foreground">{classroom.nextAssignment}</p>
+                  <p className="text-[11px] text-muted-foreground">Due: {classroom.dueDate}</p>
                 </div>
               </div>
             </CardContent>
@@ -343,15 +343,15 @@ export default function Education() {
               <div className="flex items-start justify-between">
                 <Badge variant="outline">{course.level}</Badge>
                 <div className="text-right">
-                  <p className="font-semibold text-lg">{course.price}</p>
+                  <p className="font-semibold text-[15px]">{course.price}</p>
                 </div>
               </div>
-              <CardTitle className="text-lg">{course.title}</CardTitle>
+              <CardTitle className="text-[15px]">{course.title}</CardTitle>
               <CardDescription>By {course.instructor}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                <div className="flex items-center gap-4 text-[13px] text-muted-foreground">
                   <div className="flex items-center gap-1">
                     <Clock className="h-4 w-4" />
                     {course.duration}
@@ -368,7 +368,7 @@ export default function Education() {
                 
                 <div className="flex flex-wrap gap-1">
                   {(course.topics || []).map((topic, index) => (
-                    <Badge key={index} variant="secondary" className="text-xs">
+                    <Badge key={index} variant="secondary" className="text-[11px]">
                       {topic}
                     </Badge>
                   ))}
@@ -376,7 +376,7 @@ export default function Education() {
                 
                 {course.progress > 0 && (
                   <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
+                    <div className="flex justify-between text-[13px]">
                       <span>Progress</span>
                       <span>{course.progress}%</span>
                     </div>
@@ -422,12 +422,12 @@ export default function Education() {
                   </Avatar>
                   <div>
                     <p className="font-medium">{student.name}</p>
-                    <p className="text-sm text-muted-foreground">Last active: {student.lastActive}</p>
+                    <p className="text-[13px] text-muted-foreground">Last active: {student.lastActive}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-4">
                   <div className="w-32">
-                    <div className="flex justify-between text-sm mb-1">
+                    <div className="flex justify-between text-[13px] mb-1">
                       <span>Progress</span>
                       <span>{student.progress}%</span>
                     </div>

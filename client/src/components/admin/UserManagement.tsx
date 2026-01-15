@@ -236,14 +236,14 @@ export default function UserManagement() {
                         <div className="flex flex-col">
                           <span className="font-medium">{user.username}</span>
                           {user.displayName && (
-                            <span className="text-sm text-muted-foreground">{user.displayName}</span>
+                            <span className="text-[13px] text-muted-foreground">{user.displayName}</span>
                           )}
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <Mail className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm">{user.email}</span>
+                          <span className="text-[13px]">{user.email}</span>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -275,16 +275,16 @@ export default function UserManagement() {
                       </TableCell>
                       <TableCell>
                         {user.lastLogin ? (
-                          <div className="flex items-center gap-2 text-sm">
+                          <div className="flex items-center gap-2 text-[13px]">
                             <Activity className="h-4 w-4 text-muted-foreground" />
                             {formatDistanceToNow(new Date(user.lastLogin), { addSuffix: true })}
                           </div>
                         ) : (
-                          <span className="text-sm text-muted-foreground">Never</span>
+                          <span className="text-[13px] text-muted-foreground">Never</span>
                         )}
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-2 text-sm">
+                        <div className="flex items-center gap-2 text-[13px]">
                           <Calendar className="h-4 w-4 text-muted-foreground" />
                           {formatDistanceToNow(new Date(user.createdAt), { addSuffix: true })}
                         </div>
@@ -376,7 +376,7 @@ export default function UserManagement() {
           {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">
+              <p className="text-[13px] text-muted-foreground">
                 Showing {page * pageSize + 1} - {Math.min((page + 1) * pageSize, totalUsers)} of {totalUsers} users
               </p>
               <div className="flex items-center gap-2">
@@ -389,7 +389,7 @@ export default function UserManagement() {
                 >
                   Previous
                 </Button>
-                <span className="text-sm">
+                <span className="text-[13px]">
                   Page {page + 1} of {totalPages}
                 </span>
                 <Button

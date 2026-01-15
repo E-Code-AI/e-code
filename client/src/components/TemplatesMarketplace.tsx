@@ -377,28 +377,28 @@ export function TemplatesMarketplace() {
             >
               {template.name}
             </h3>
-            <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
+            <p className="text-[13px] text-muted-foreground line-clamp-2 mt-1">
               {template.description}
             </p>
           </div>
 
           <div className="flex items-center gap-2 mb-3">
             <Avatar className="h-5 w-5">
-              <AvatarFallback className="text-xs">
+              <AvatarFallback className="text-[11px]">
                 {template.authorName?.charAt(0) || 'U'}
               </AvatarFallback>
             </Avatar>
-            <span className="text-xs text-muted-foreground">
+            <span className="text-[11px] text-muted-foreground">
               {template.authorName}
             </span>
             {template.authorVerified && (
-              <Badge variant="outline" className="text-xs py-0 px-1">
+              <Badge variant="outline" className="text-[11px] py-0 px-1">
                 Verified
               </Badge>
             )}
           </div>
 
-          <div className="flex items-center justify-between mb-3 text-xs text-muted-foreground">
+          <div className="flex items-center justify-between mb-3 text-[11px] text-muted-foreground">
             <div className="flex items-center gap-3">
               <span 
                 className="flex items-center gap-1 cursor-pointer hover:text-foreground"
@@ -421,15 +421,15 @@ export function TemplatesMarketplace() {
           </div>
 
           <div className="flex gap-1.5 flex-wrap mb-3">
-            <Badge variant="secondary" className="text-xs">
+            <Badge variant="secondary" className="text-[11px]">
               {template.language}
             </Badge>
             {template.framework && (
-              <Badge variant="outline" className="text-xs">
+              <Badge variant="outline" className="text-[11px]">
                 {template.framework}
               </Badge>
             )}
-            <Badge className={cn("text-xs", DIFFICULTY_COLORS[template.difficulty])}>
+            <Badge className={cn("text-[11px]", DIFFICULTY_COLORS[template.difficulty])}>
               {template.difficulty}
             </Badge>
           </div>
@@ -559,7 +559,7 @@ export function TemplatesMarketplace() {
               <Card className="p-4" data-testid="filters-panel">
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div>
-                      <Label className="text-sm mb-2 block">Category</Label>
+                      <Label className="text-[13px] mb-2 block">Category</Label>
                       <Select
                         value={selectedCategory}
                         onValueChange={(value) => {
@@ -582,7 +582,7 @@ export function TemplatesMarketplace() {
                     </div>
 
                     <div>
-                      <Label className="text-sm mb-2 block">Sort By</Label>
+                      <Label className="text-[13px] mb-2 block">Sort By</Label>
                       <Select
                         value={sortBy}
                         onValueChange={(value) => {
@@ -604,7 +604,7 @@ export function TemplatesMarketplace() {
                     </div>
 
                     <div>
-                      <Label className="text-sm mb-2 block">Minimum Rating</Label>
+                      <Label className="text-[13px] mb-2 block">Minimum Rating</Label>
                       <Select
                         value={minRating?.toString() || 'any'}
                         onValueChange={(value) => {
@@ -625,7 +625,7 @@ export function TemplatesMarketplace() {
                     </div>
 
                     <div>
-                      <Label className="text-sm mb-2 block">Difficulty</Label>
+                      <Label className="text-[13px] mb-2 block">Difficulty</Label>
                       <Select
                         value={difficulty || 'any'}
                         onValueChange={(value) => {
@@ -709,7 +709,7 @@ export function TemplatesMarketplace() {
                 </div>
               )}
 
-              <div className="text-center text-sm text-muted-foreground mt-4">
+              <div className="text-center text-[13px] text-muted-foreground mt-4">
                 Showing {templatesData.templates.length} of {templatesData.pagination.total} templates
               </div>
             </>
@@ -717,7 +717,7 @@ export function TemplatesMarketplace() {
             <div className="text-center py-12" data-testid="empty-state">
               <div className="text-muted-foreground mb-4">
                 <Search className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <h3 className="text-lg font-medium">No templates found</h3>
+                <h3 className="text-[15px] font-medium">No templates found</h3>
                 <p className="mt-1">Try adjusting your search or filters</p>
               </div>
               <Button
@@ -799,21 +799,21 @@ export function TemplatesMarketplace() {
                 <div className="p-6 space-y-6">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label className="text-sm text-muted-foreground">Language</Label>
+                      <Label className="text-[13px] text-muted-foreground">Language</Label>
                       <p className="font-medium">{selectedTemplate?.language}</p>
                     </div>
                     <div>
-                      <Label className="text-sm text-muted-foreground">Framework</Label>
+                      <Label className="text-[13px] text-muted-foreground">Framework</Label>
                       <p className="font-medium">{selectedTemplate?.framework || 'N/A'}</p>
                     </div>
                     <div>
-                      <Label className="text-sm text-muted-foreground">Difficulty</Label>
+                      <Label className="text-[13px] text-muted-foreground">Difficulty</Label>
                       <Badge className={DIFFICULTY_COLORS[selectedTemplate?.difficulty || 'beginner']}>
                         {selectedTemplate?.difficulty}
                       </Badge>
                     </div>
                     <div>
-                      <Label className="text-sm text-muted-foreground">Estimated Time</Label>
+                      <Label className="text-[13px] text-muted-foreground">Estimated Time</Label>
                       <p className="font-medium">{selectedTemplate?.estimatedTime} min</p>
                     </div>
                   </div>
@@ -821,8 +821,8 @@ export function TemplatesMarketplace() {
                   <Separator />
 
                   <div>
-                    <Label className="text-sm text-muted-foreground mb-2 block">Stats</Label>
-                    <div className="flex gap-6 text-sm">
+                    <Label className="text-[13px] text-muted-foreground mb-2 block">Stats</Label>
+                    <div className="flex gap-6 text-[13px]">
                       <span className="flex items-center gap-1">
                         <Star className="h-4 w-4 text-yellow-400" />
                         {selectedTemplate?.rating?.toFixed(1)} ({selectedTemplate?.reviewCount} reviews)
@@ -842,10 +842,10 @@ export function TemplatesMarketplace() {
 
                   {selectedTemplate?.features && selectedTemplate.features.length > 0 && (
                     <div>
-                      <Label className="text-sm text-muted-foreground mb-2 block">Features</Label>
+                      <Label className="text-[13px] text-muted-foreground mb-2 block">Features</Label>
                       <ul className="space-y-1">
                         {selectedTemplate.features.map((feature, i) => (
-                          <li key={i} className="flex items-center gap-2 text-sm">
+                          <li key={i} className="flex items-center gap-2 text-[13px]">
                             <span className="h-1.5 w-1.5 rounded-full bg-orange-500" />
                             {feature}
                           </li>
@@ -897,7 +897,7 @@ export function TemplatesMarketplace() {
 
           <div className="space-y-4 py-4">
             <div>
-              <Label className="text-sm mb-3 block">Your Rating</Label>
+              <Label className="text-[13px] mb-3 block">Your Rating</Label>
               <div className="flex gap-2 justify-center">
                 <StarRating
                   rating={userRating}
@@ -906,7 +906,7 @@ export function TemplatesMarketplace() {
                   onRate={setUserRating}
                 />
               </div>
-              <p className="text-center text-sm text-muted-foreground mt-2">
+              <p className="text-center text-[13px] text-muted-foreground mt-2">
                 {userRating === 0 && 'Click a star to rate'}
                 {userRating === 1 && 'Poor'}
                 {userRating === 2 && 'Fair'}
@@ -917,7 +917,7 @@ export function TemplatesMarketplace() {
             </div>
 
             <div>
-              <Label htmlFor="review" className="text-sm mb-2 block">
+              <Label htmlFor="review" className="text-[13px] mb-2 block">
                 Review (Optional)
               </Label>
               <Textarea

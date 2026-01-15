@@ -135,7 +135,7 @@ export default function PowerUps() {
                     <Zap className="h-5 w-5 text-primary" />
                     <div>
                       <p className="font-medium">{powerUp.name}</p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-[13px] text-muted-foreground">
                         Expires in {powerUp.remainingTime}
                       </p>
                     </div>
@@ -167,8 +167,8 @@ export default function PowerUps() {
               <CardContent>
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <p className="text-sm font-medium">Benefits:</p>
-                    <ul className="text-sm text-muted-foreground space-y-1">
+                    <p className="text-[13px] font-medium">Benefits:</p>
+                    <ul className="text-[13px] text-muted-foreground space-y-1">
                       {powerUp.benefits.map((benefit, index) => (
                         <li key={index} className="flex items-center gap-2">
                           <span className="text-primary">✓</span>
@@ -181,7 +181,7 @@ export default function PowerUps() {
                   <div className="flex items-center justify-between pt-4 border-t">
                     <div>
                       <p className="text-2xl font-bold">${powerUp.price}</p>
-                      <p className="text-xs text-muted-foreground">{powerUp.duration}</p>
+                      <p className="text-[11px] text-muted-foreground">{powerUp.duration}</p>
                     </div>
                     <Button 
                       onClick={() => handleActivate(powerUp.id)}
@@ -204,7 +204,7 @@ export default function PowerUps() {
         <CardHeader>
           <CardTitle>PowerUp Tips</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-2 text-sm text-muted-foreground">
+        <CardContent className="space-y-2 text-[13px] text-muted-foreground">
           <p>• PowerUps stack - activate multiple for combined benefits</p>
           <p>• Duration starts immediately upon activation</p>
           <p>• PowerUps apply to all your projects while active</p>

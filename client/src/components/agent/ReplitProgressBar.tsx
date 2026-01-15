@@ -43,7 +43,7 @@ export function ReplitProgressBar({
     <div className={cn("space-y-1.5", className)}>
       {/* Label and Percentage */}
       {(label || showPercentage) && (
-        <div className="flex items-center justify-between text-sm">
+        <div className="flex items-center justify-between text-[13px]">
           <div className="flex items-center gap-2">
             {status === 'active' && (
               <Loader2 className={cn(iconSizeClasses[size], "animate-spin text-violet-500")} />

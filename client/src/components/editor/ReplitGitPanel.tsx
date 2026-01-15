@@ -751,7 +751,7 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
         <div className={cn("space-y-2", touchMode ? "p-4" : "p-3")}>
           <div className={cn("space-y-2", touchMode && "space-y-3")}>
             <div className="flex items-center justify-between">
-              <span className={cn("font-medium text-muted-foreground uppercase", touchMode ? "text-sm" : "text-xs")}>Remote Updates</span>
+              <span className={cn("font-medium text-muted-foreground uppercase", touchMode ? "text-[13px]" : "text-[11px]")}>Remote Updates</span>
               {repoName && (
                 <a
                   href={`https://github.com/${repoName}`}
@@ -803,7 +803,7 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
                 }}
                 className={cn(
                   "flex-1 border-border rounded-lg touch-manipulation",
-                  touchMode ? "h-11 text-sm min-w-[120px]" : "h-8 text-[13px]"
+                  touchMode ? "h-11 text-[13px] min-w-[120px]" : "h-8 text-[13px]"
                 )}
                 data-testid="button-sync"
               >
@@ -817,7 +817,7 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
                 disabled={pullMutation.isPending}
                 className={cn(
                   "border-border rounded-lg touch-manipulation",
-                  touchMode ? "h-11 px-4 text-sm" : "h-8 px-3 text-[13px]"
+                  touchMode ? "h-11 px-4 text-[13px]" : "h-8 px-3 text-[13px]"
                 )}
                 data-testid="button-pull"
               >
@@ -831,7 +831,7 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
                 disabled={pushMutation.isPending}
                 className={cn(
                   "border-border rounded-lg touch-manipulation",
-                  touchMode ? "h-11 px-4 text-sm" : "h-8 px-3 text-[13px]"
+                  touchMode ? "h-11 px-4 text-[13px]" : "h-8 px-3 text-[13px]"
                 )}
                 data-testid="button-push"
               >
@@ -851,7 +851,7 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
               <div className="space-y-2">
                 {status?.staged && status.staged.length > 0 && (
                   <div className={cn("space-y-1", touchMode && "space-y-0.5")}>
-                    <div className={cn("font-medium text-muted-foreground uppercase", touchMode ? "text-sm" : "text-xs")}>Staged ({status.staged.length})</div>
+                    <div className={cn("font-medium text-muted-foreground uppercase", touchMode ? "text-[13px]" : "text-[11px]")}>Staged ({status.staged.length})</div>
                     {status.staged.map(file => (
                       <div key={file} className={cn(
                         "flex items-center justify-between rounded-lg hover:bg-muted group touch-manipulation",
@@ -868,7 +868,7 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
                           <FileCode className={cn(touchMode ? "w-4 h-4" : "w-3 h-3", "text-green-500 shrink-0")} />
                           <span className={cn(
                             "text-foreground truncate hover:underline",
-                            touchMode ? "text-sm" : "text-[13px]"
+                            touchMode ? "text-[13px]" : "text-[13px]"
                           )}>{file}</span>
                           <Eye className={cn(touchMode ? "w-4 h-4" : "w-3 h-3", "text-muted-foreground", !touchMode && "opacity-0 group-hover:opacity-100")} />
                         </button>
@@ -889,7 +889,7 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
 
                 {status?.unstaged && status.unstaged.length > 0 && (
                   <div className={cn("space-y-1", touchMode && "space-y-0.5")}>
-                    <div className={cn("font-medium text-muted-foreground uppercase", touchMode ? "text-sm" : "text-xs")}>Changes ({status.unstaged.length})</div>
+                    <div className={cn("font-medium text-muted-foreground uppercase", touchMode ? "text-[13px]" : "text-[11px]")}>Changes ({status.unstaged.length})</div>
                     {status.unstaged.map(file => (
                       <div key={file} className={cn(
                         "flex items-center justify-between rounded-lg hover:bg-muted group touch-manipulation",
@@ -906,7 +906,7 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
                           <FileCode className={cn(touchMode ? "w-4 h-4" : "w-3 h-3", "text-yellow-500 shrink-0")} />
                           <span className={cn(
                             "text-foreground truncate hover:underline",
-                            touchMode ? "text-sm" : "text-[13px]"
+                            touchMode ? "text-[13px]" : "text-[13px]"
                           )}>{file}</span>
                           <Eye className={cn(touchMode ? "w-4 h-4" : "w-3 h-3", "text-muted-foreground", !touchMode && "opacity-0 group-hover:opacity-100")} />
                         </button>
@@ -927,7 +927,7 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
 
                 {status?.untracked && status.untracked.length > 0 && (
                   <div className={cn("space-y-1", touchMode && "space-y-0.5")}>
-                    <div className={cn("font-medium text-muted-foreground uppercase", touchMode ? "text-sm" : "text-xs")}>Untracked ({status.untracked.length})</div>
+                    <div className={cn("font-medium text-muted-foreground uppercase", touchMode ? "text-[13px]" : "text-[11px]")}>Untracked ({status.untracked.length})</div>
                     {status.untracked.map(file => (
                       <div key={file} className={cn(
                         "flex items-center justify-between rounded-lg hover:bg-muted group touch-manipulation",
@@ -944,7 +944,7 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
                           <FileCode className={cn(touchMode ? "w-4 h-4" : "w-3 h-3", "text-muted-foreground shrink-0")} />
                           <span className={cn(
                             "text-foreground truncate hover:underline",
-                            touchMode ? "text-sm" : "text-[13px]"
+                            touchMode ? "text-[13px]" : "text-[13px]"
                           )}>{file}</span>
                           <Eye className={cn(touchMode ? "w-4 h-4" : "w-3 h-3", "text-muted-foreground", !touchMode && "opacity-0 group-hover:opacity-100")} />
                         </button>
@@ -978,7 +978,7 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
                   disabled={!commitMessage.trim() || commitMutation.isPending || !status?.staged?.length}
                   className={cn(
                     "w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg touch-manipulation",
-                    touchMode ? "h-11 text-sm" : "h-8 text-[13px]"
+                    touchMode ? "h-11 text-[13px]" : "h-8 text-[13px]"
                   )}
                   data-testid="button-commit"
                 >
@@ -1016,7 +1016,7 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
                       <div className="flex-1 min-w-0">
                         <p className={cn(
                           "text-foreground truncate",
-                          touchMode ? "text-sm" : "text-[13px]"
+                          touchMode ? "text-[13px]" : "text-[13px]"
                         )}>{commit.message}</p>
                         <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
                           <span>{commit.shortHash}</span>
@@ -1040,7 +1040,7 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
               <FileCode className="w-4 h-4" />
               {selectedFile}
               {selectedFileStaged && (
-                <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">Staged</span>
+                <span className="text-[11px] bg-green-100 text-green-700 px-2 py-0.5 rounded">Staged</span>
               )}
             </DialogTitle>
           </DialogHeader>

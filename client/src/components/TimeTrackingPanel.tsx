@@ -90,7 +90,7 @@ export function TimeTrackingPanel({ projectId, userId }: TimeTrackingPanelProps)
   return (
     <div className="p-4">
       <div className="mb-4">
-        <h3 className="text-lg font-semibold mb-2">Time Tracking</h3>
+        <h3 className="text-[15px] font-semibold mb-2">Time Tracking</h3>
         
         {activeTracking ? (
           <Card className="p-4">
@@ -98,7 +98,7 @@ export function TimeTrackingPanel({ projectId, userId }: TimeTrackingPanelProps)
               <div className="text-3xl font-mono font-bold mb-2">
                 {formatDuration(elapsedTime)}
               </div>
-              <p className="text-sm text-muted-foreground mb-3">
+              <p className="text-[13px] text-muted-foreground mb-3">
                 Started at {format(new Date(activeTracking.startTime), 'p')}
               </p>
               <Button
@@ -125,7 +125,7 @@ export function TimeTrackingPanel({ projectId, userId }: TimeTrackingPanelProps)
       </div>
 
       <div>
-        <h3 className="text-lg font-semibold mb-2">Session History</h3>
+        <h3 className="text-[15px] font-semibold mb-2">Session History</h3>
         <div className="space-y-2">
           {trackingHistory?.map((session: any) => (
             <Card key={session.id} className="p-3">
@@ -134,11 +134,11 @@ export function TimeTrackingPanel({ projectId, userId }: TimeTrackingPanelProps)
                   <p className="font-medium">
                     {format(new Date(session.startTime), 'PPp')}
                   </p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-[13px] text-muted-foreground">
                     Duration: {formatDuration(session.duration || 0)}
                   </p>
                   {session.taskDescription && (
-                    <p className="text-sm">{session.taskDescription}</p>
+                    <p className="text-[13px]">{session.taskDescription}</p>
                   )}
                 </div>
                 <Clock className="h-4 w-4 text-muted-foreground" />

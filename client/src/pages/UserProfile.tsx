@@ -112,8 +112,8 @@ export default function UserProfile() {
           <div className="container mx-auto px-4 py-4 flex items-center justify-between">
             <Link href="/" className="text-xl font-bold">E-Code Clone</Link>
             <div className="flex items-center gap-4">
-              <Link href="/projects" className="text-sm">Projects</Link>
-              <Link href="/settings" className="text-sm">Settings</Link>
+              <Link href="/projects" className="text-[13px]">Projects</Link>
+              <Link href="/settings" className="text-[13px]">Settings</Link>
             </div>
           </div>
         </header>
@@ -131,8 +131,8 @@ export default function UserProfile() {
           <div className="container mx-auto px-4 py-4 flex items-center justify-between">
             <Link href="/" className="text-xl font-bold">E-Code Clone</Link>
             <div className="flex items-center gap-4">
-              <Link href="/projects" className="text-sm">Projects</Link>
-              <Link href="/settings" className="text-sm">Settings</Link>
+              <Link href="/projects" className="text-[13px]">Projects</Link>
+              <Link href="/settings" className="text-[13px]">Settings</Link>
             </div>
           </div>
         </header>
@@ -183,7 +183,7 @@ export default function UserProfile() {
                   {profile.bio && (
                     <p className="text-muted-foreground mb-4 max-w-2xl">{profile.bio}</p>
                   )}
-                  <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
+                  <div className="flex flex-wrap gap-3 text-[13px] text-muted-foreground">
                     {profile.location && (
                       <span className="flex items-center">
                         <MapPin className="h-4 w-4 mr-1" />
@@ -259,28 +259,28 @@ export default function UserProfile() {
             {/* Stats - Responsive Grid */}
             <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 sm:gap-4">
               <div className="text-center p-2 sm:p-4 bg-muted/50 rounded-lg">
-                <div className="text-lg sm:text-2xl font-bold">{profile.stats.projects}</div>
-                <div className="text-xs sm:text-sm text-muted-foreground">Projects</div>
+                <div className="text-[15px] sm:text-2xl font-bold">{profile.stats.projects}</div>
+                <div className="text-[11px] sm:text-[13px] text-muted-foreground">Projects</div>
               </div>
               <div className="text-center p-2 sm:p-4 bg-muted/50 rounded-lg">
-                <div className="text-lg sm:text-2xl font-bold">{profile.stats.stars}</div>
-                <div className="text-xs sm:text-sm text-muted-foreground">Stars</div>
+                <div className="text-[15px] sm:text-2xl font-bold">{profile.stats.stars}</div>
+                <div className="text-[11px] sm:text-[13px] text-muted-foreground">Stars</div>
               </div>
               <div className="text-center p-2 sm:p-4 bg-muted/50 rounded-lg">
-                <div className="text-lg sm:text-2xl font-bold">{profile.stats.followers}</div>
-                <div className="text-xs sm:text-sm text-muted-foreground">Followers</div>
+                <div className="text-[15px] sm:text-2xl font-bold">{profile.stats.followers}</div>
+                <div className="text-[11px] sm:text-[13px] text-muted-foreground">Followers</div>
               </div>
               <div className="text-center p-2 sm:p-4 bg-muted/50 rounded-lg">
-                <div className="text-lg sm:text-2xl font-bold">{profile.stats.following}</div>
-                <div className="text-xs sm:text-sm text-muted-foreground">Following</div>
+                <div className="text-[15px] sm:text-2xl font-bold">{profile.stats.following}</div>
+                <div className="text-[11px] sm:text-[13px] text-muted-foreground">Following</div>
               </div>
               <div className="text-center p-2 sm:p-4 bg-muted/50 rounded-lg">
-                <div className="text-lg sm:text-2xl font-bold">{profile.stats.contributions}</div>
-                <div className="text-xs sm:text-sm text-muted-foreground">Contrib.</div>
+                <div className="text-[15px] sm:text-2xl font-bold">{profile.stats.contributions}</div>
+                <div className="text-[11px] sm:text-[13px] text-muted-foreground">Contrib.</div>
               </div>
               <div className="text-center p-2 sm:p-4 bg-muted/50 rounded-lg">
-                <div className="text-lg sm:text-2xl font-bold">{profile.stats.deployments}</div>
-                <div className="text-xs sm:text-sm text-muted-foreground">Deploys</div>
+                <div className="text-[15px] sm:text-2xl font-bold">{profile.stats.deployments}</div>
+                <div className="text-[11px] sm:text-[13px] text-muted-foreground">Deploys</div>
               </div>
             </div>
           </CardContent>
@@ -291,10 +291,10 @@ export default function UserProfile() {
           {/* Scrollable tabs on mobile */}
           <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 pb-2 sm:pb-0 mb-4 sm:mb-6">
             <TabsList className="inline-flex w-auto min-w-full sm:grid sm:w-full sm:grid-cols-4 gap-1 bg-muted/50 p-1 rounded-lg">
-              <TabsTrigger value="overview" className="flex-shrink-0 px-4 sm:px-3 text-sm whitespace-nowrap" data-testid="tab-overview">Overview</TabsTrigger>
-              <TabsTrigger value="projects" className="flex-shrink-0 px-4 sm:px-3 text-sm whitespace-nowrap" data-testid="tab-projects">Projects</TabsTrigger>
-              <TabsTrigger value="activity" className="flex-shrink-0 px-4 sm:px-3 text-sm whitespace-nowrap" data-testid="tab-activity">Activity</TabsTrigger>
-              <TabsTrigger value="achievements" className="flex-shrink-0 px-4 sm:px-3 text-sm whitespace-nowrap" data-testid="tab-achievements">Achievements</TabsTrigger>
+              <TabsTrigger value="overview" className="flex-shrink-0 px-4 sm:px-3 text-[13px] whitespace-nowrap" data-testid="tab-overview">Overview</TabsTrigger>
+              <TabsTrigger value="projects" className="flex-shrink-0 px-4 sm:px-3 text-[13px] whitespace-nowrap" data-testid="tab-projects">Projects</TabsTrigger>
+              <TabsTrigger value="activity" className="flex-shrink-0 px-4 sm:px-3 text-[13px] whitespace-nowrap" data-testid="tab-activity">Activity</TabsTrigger>
+              <TabsTrigger value="achievements" className="flex-shrink-0 px-4 sm:px-3 text-[13px] whitespace-nowrap" data-testid="tab-achievements">Achievements</TabsTrigger>
             </TabsList>
           </div>
 
@@ -315,10 +315,10 @@ export default function UserProfile() {
                     >
                       <div className="flex-1">
                         <h4 className="font-medium">{project.name}</h4>
-                        <p className="text-sm text-muted-foreground line-clamp-1">
+                        <p className="text-[13px] text-muted-foreground line-clamp-1">
                           {project.description}
                         </p>
-                        <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-4 mt-2 text-[13px] text-muted-foreground">
                           <span className="flex items-center">
                             <Code className="h-3 w-3 mr-1" />
                             {project.language}
@@ -358,8 +358,8 @@ export default function UserProfile() {
                             {activity.type === 'deployment' && <Rocket className="h-4 w-4" />}
                           </div>
                           <div className="flex-1">
-                            <p className="text-sm">{activity.description}</p>
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-[13px]">{activity.description}</p>
+                            <p className="text-[11px] text-muted-foreground">
                               {new Date(activity.timestamp).toLocaleString()}
                             </p>
                           </div>
@@ -399,10 +399,10 @@ export default function UserProfile() {
                           onClick={() => navigate(`/ide/${project.id}`)}>
                       <CardContent className="p-4">
                         <h3 className="font-semibold mb-2">{project.name}</h3>
-                        <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                        <p className="text-[13px] text-muted-foreground mb-3 line-clamp-2">
                           {project.description}
                         </p>
-                        <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-center justify-between text-[13px]">
                           <div className="flex items-center gap-3">
                             <span className="flex items-center">
                               <Code className="h-3 w-3 mr-1" />
@@ -452,13 +452,13 @@ export default function UserProfile() {
                         {activity.projectName && (
                           <Button 
                             variant="link" 
-                            className="p-0 h-auto text-sm"
+                            className="p-0 h-auto text-[13px]"
                             onClick={() => navigate(`/ide/${activity.projectId}`)}
                           >
                             {activity.projectName}
                           </Button>
                         )}
-                        <p className="text-sm text-muted-foreground mt-1">
+                        <p className="text-[13px] text-muted-foreground mt-1">
                           {new Date(activity.timestamp).toLocaleString()}
                         </p>
                       </div>
@@ -480,8 +480,8 @@ export default function UserProfile() {
                   {profile.badges.map(badge => (
                     <Card key={badge.id} className="text-center p-4">
                       <div className="text-4xl mb-2">{badge.icon}</div>
-                      <h4 className="font-medium text-sm">{badge.name}</h4>
-                      <p className="text-xs text-muted-foreground mt-1">
+                      <h4 className="font-medium text-[13px]">{badge.name}</h4>
+                      <p className="text-[11px] text-muted-foreground mt-1">
                         {new Date(badge.earnedAt).toLocaleDateString()}
                       </p>
                     </Card>

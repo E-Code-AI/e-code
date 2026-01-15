@@ -8,7 +8,7 @@ interface ECodeLogoProps {
 
 const sizeMap: Record<NonNullable<ECodeLogoProps['size']>, { icon: string; text: string }> = {
   xs: { icon: 'h-6 w-6', text: 'text-base' },
-  sm: { icon: 'h-7 w-7', text: 'text-lg' },
+  sm: { icon: 'h-7 w-7', text: 'text-[15px]' },
   md: { icon: 'h-9 w-9', text: 'text-xl' },
   lg: { icon: 'h-11 w-11', text: 'text-2xl' }
 };

@@ -165,7 +165,7 @@ export function FloatingPane({ floatingPane, className }: FloatingPaneProps) {
         >
           <div className="flex items-center gap-2">
             <Pin className="h-3 w-3 text-gray-500" />
-            <span className="text-sm font-medium">
+            <span className="text-[13px] font-medium">
               {floatingPane.paneGroup.tabs[floatingPane.paneGroup.activeTabIndex]?.title || 'Floating Pane'}
             </span>
           </div>

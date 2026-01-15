@@ -219,7 +219,7 @@ export function ReplitCollaboration({ projectId, isOwner }: ReplitCollaborationP
             <CardContent>
               <div className="space-y-3">
                 {collaborators.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">
+                  <p className="text-[13px] text-muted-foreground text-center py-4">
                     No collaborators yet. Invite team members to get started!
                   </p>
                 ) : (
@@ -243,7 +243,7 @@ export function ReplitCollaboration({ projectId, isOwner }: ReplitCollaborationP
                               <Crown className="h-3 w-3 text-yellow-600" />
                             )}
                           </div>
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
                             <span>@{collaborator.username}</span>
                             <span>•</span>
                             <span className="capitalize">{collaborator.status}</span>
@@ -258,7 +258,7 @@ export function ReplitCollaboration({ projectId, isOwner }: ReplitCollaborationP
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <Badge className={`${getRoleColor(collaborator.role)} border text-xs`}>
+                        <Badge className={`${getRoleColor(collaborator.role)} border text-[11px]`}>
                           {collaborator.role}
                         </Badge>
                         
@@ -307,7 +307,7 @@ export function ReplitCollaboration({ projectId, isOwner }: ReplitCollaborationP
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-medium">Voice Chat</p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-[13px] text-muted-foreground">
                     {isVoiceConnected ? 'Connected to voice channel' : 'Join voice channel to talk with collaborators'}
                   </p>
                 </div>
@@ -355,14 +355,14 @@ export function ReplitCollaboration({ projectId, isOwner }: ReplitCollaborationP
                     <div key={collaborator.id} className="flex items-center gap-3 p-2 border rounded">
                       <Avatar className="h-6 w-6">
                         <AvatarImage src={collaborator.avatarUrl} />
-                        <AvatarFallback className="text-xs">
+                        <AvatarFallback className="text-[11px]">
                           {collaborator.displayName.charAt(0).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
-                      <span className="text-sm">{collaborator.displayName}</span>
+                      <span className="text-[13px]">{collaborator.displayName}</span>
                       <div className="ml-auto flex items-center gap-1">
                         <Activity className="h-3 w-3 text-green-500" />
-                        <span className="text-xs text-muted-foreground">Speaking</span>
+                        <span className="text-[11px] text-muted-foreground">Speaking</span>
                       </div>
                     </div>
                   ))}
@@ -389,7 +389,7 @@ export function ReplitCollaboration({ projectId, isOwner }: ReplitCollaborationP
                 <Input
                   readOnly
                   value={shareLink}
-                  className="font-mono text-sm"
+                  className="font-mono text-[13px]"
                 />
                 <Button onClick={copyShareLink} variant="outline">
                   {linkCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
@@ -399,9 +399,9 @@ export function ReplitCollaboration({ projectId, isOwner }: ReplitCollaborationP
               <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
                 <div className="flex items-center gap-2 mb-2">
                   <Eye className="h-4 w-4 text-blue-600" />
-                  <span className="text-sm font-medium text-blue-800">Public Access</span>
+                  <span className="text-[13px] font-medium text-blue-800">Public Access</span>
                 </div>
-                <p className="text-sm text-blue-700">
+                <p className="text-[13px] text-blue-700">
                   Anyone with this link can view the project. Only invited collaborators can edit.
                 </p>
               </div>
@@ -417,7 +417,7 @@ export function ReplitCollaboration({ projectId, isOwner }: ReplitCollaborationP
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-medium">Public Visibility</p>
-                  <p className="text-sm text-muted-foreground">Anyone can view this project</p>
+                  <p className="text-[13px] text-muted-foreground">Anyone can view this project</p>
                 </div>
                 <Badge variant="outline" className="text-green-600 bg-green-50 border-green-200">
                   Enabled
@@ -427,7 +427,7 @@ export function ReplitCollaboration({ projectId, isOwner }: ReplitCollaborationP
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-medium">Fork Protection</p>
-                  <p className="text-sm text-muted-foreground">Prevent others from forking this project</p>
+                  <p className="text-[13px] text-muted-foreground">Prevent others from forking this project</p>
                 </div>
                 <Badge variant="outline" className="text-gray-600 bg-gray-50 border-gray-200">
                   Disabled
@@ -437,7 +437,7 @@ export function ReplitCollaboration({ projectId, isOwner }: ReplitCollaborationP
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-medium">Download Protection</p>
-                  <p className="text-sm text-muted-foreground">Prevent others from downloading project files</p>
+                  <p className="text-[13px] text-muted-foreground">Prevent others from downloading project files</p>
                 </div>
                 <Badge variant="outline" className="text-gray-600 bg-gray-50 border-gray-200">
                   Disabled

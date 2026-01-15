@@ -47,7 +47,7 @@ function MetricCard({
   return (
     <Card className="relative overflow-hidden">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">
+        <CardTitle className="text-[13px] font-medium text-muted-foreground">
           {title}
         </CardTitle>
         <Icon className={cn("h-4 w-4", colorClasses[color])} />
@@ -57,13 +57,13 @@ function MetricCard({
           {value}
         </div>
         {subtitle && (
-          <p className="text-xs text-muted-foreground mt-1">
+          <p className="text-[11px] text-muted-foreground mt-1">
             {subtitle}
           </p>
         )}
         {trend && (
           <div className={cn(
-            "flex items-center gap-1 mt-2 text-xs",
+            "flex items-center gap-1 mt-2 text-[11px]",
             trend.positive ? "text-emerald-600" : "text-red-600"
           )}>
             <TrendingUp className={cn("h-3 w-3", !trend.positive && "rotate-180")} />
@@ -128,7 +128,7 @@ export function AgentMetricsDashboard({ projectId, className }: AgentMetricsDash
     <div className={cn("space-y-6", className)} data-testid="agent-metrics-dashboard">
       {/* Session Metrics */}
       <div>
-        <h3 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
+        <h3 className="text-[13px] font-medium text-muted-foreground mb-3 flex items-center gap-2">
           <Activity className="h-4 w-4" />
           Session Overview
         </h3>
@@ -164,7 +164,7 @@ export function AgentMetricsDashboard({ projectId, className }: AgentMetricsDash
 
       {/* Action Metrics */}
       <div>
-        <h3 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
+        <h3 className="text-[13px] font-medium text-muted-foreground mb-3 flex items-center gap-2">
           <BarChart3 className="h-4 w-4" />
           Action Statistics
         </h3>
@@ -200,7 +200,7 @@ export function AgentMetricsDashboard({ projectId, className }: AgentMetricsDash
         {/* Action Types Breakdown */}
         <Card className="mt-4">
           <CardHeader className="py-3">
-            <CardTitle className="text-sm">Actions by Type</CardTitle>
+            <CardTitle className="text-[13px]">Actions by Type</CardTitle>
           </CardHeader>
           <CardContent className="pb-3">
             <div className="space-y-2">
@@ -209,14 +209,14 @@ export function AgentMetricsDashboard({ projectId, className }: AgentMetricsDash
                 .slice(0, 5)
                 .map(([type, count]) => (
                   <div key={type} className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground w-24 truncate">
+                    <span className="text-[11px] text-muted-foreground w-24 truncate">
                       {type.replace('_', ' ')}
                     </span>
                     <Progress 
                       value={(count / actions.totalActions) * 100} 
                       className="flex-1 h-2"
                     />
-                    <span className="text-xs font-medium w-12 text-right">
+                    <span className="text-[11px] font-medium w-12 text-right">
                       {count}
                     </span>
                   </div>
@@ -228,7 +228,7 @@ export function AgentMetricsDashboard({ projectId, className }: AgentMetricsDash
 
       {/* File Metrics */}
       <div>
-        <h3 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
+        <h3 className="text-[13px] font-medium text-muted-foreground mb-3 flex items-center gap-2">
           <FileCode className="h-4 w-4" />
           File Operations
         </h3>
@@ -262,12 +262,12 @@ export function AgentMetricsDashboard({ projectId, className }: AgentMetricsDash
         {files.topLanguages.length > 0 && (
           <Card className="mt-4">
             <CardHeader className="py-3">
-              <CardTitle className="text-sm">Top Languages</CardTitle>
+              <CardTitle className="text-[13px]">Top Languages</CardTitle>
             </CardHeader>
             <CardContent className="pb-3">
               <div className="flex flex-wrap gap-2">
                 {files.topLanguages.map(({ language, count }) => (
-                  <Badge key={language} variant="secondary" className="text-xs">
+                  <Badge key={language} variant="secondary" className="text-[11px]">
                     {language}: {count}
                   </Badge>
                 ))}
@@ -279,7 +279,7 @@ export function AgentMetricsDashboard({ projectId, className }: AgentMetricsDash
 
       {/* Conversation Metrics */}
       <div>
-        <h3 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
+        <h3 className="text-[13px] font-medium text-muted-foreground mb-3 flex items-center gap-2">
           <Cpu className="h-4 w-4" />
           Conversation Stats
         </h3>
@@ -311,13 +311,13 @@ export function AgentMetricsDashboard({ projectId, className }: AgentMetricsDash
         {conversations.topModels.length > 0 && (
           <Card className="mt-4">
             <CardHeader className="py-3">
-              <CardTitle className="text-sm">Top Models</CardTitle>
+              <CardTitle className="text-[13px]">Top Models</CardTitle>
             </CardHeader>
             <CardContent className="pb-3">
               <div className="space-y-2">
                 {conversations.topModels.map(({ model, count, tokens }) => (
-                  <div key={model} className="flex items-center justify-between text-sm">
-                    <span className="font-mono text-xs">{model}</span>
+                  <div key={model} className="flex items-center justify-between text-[13px]">
+                    <span className="font-mono text-[11px]">{model}</span>
                     <div className="flex items-center gap-4">
                       <span className="text-muted-foreground">{count} msgs</span>
                       <span className="font-medium">{formatNumber(tokens)} tokens</span>

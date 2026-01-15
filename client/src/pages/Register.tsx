@@ -194,19 +194,19 @@ export default function Register() {
             className="inline-flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
           >
             <ChevronLeft className="h-4 w-4" />
-            <span className="text-sm">Back to home</span>
+            <span className="text-[13px]">Back to home</span>
           </button>
 
           {/* Logo */}
           <div className="flex flex-col items-center justify-center mb-2">
             <ECodeLogo size="lg" showText={true} />
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Enterprise Development Platform</p>
+            <p className="text-[13px] text-gray-600 dark:text-gray-400 mt-2">Enterprise Development Platform</p>
           </div>
 
           {/* Welcome Message - Responsive Typography */}
           <div className="space-y-2">
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight">Create your account</h2>
-            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
+            <p className="text-[13px] sm:text-base text-gray-600 dark:text-gray-400">
               Get started with a free account. No credit card required.
             </p>
           </div>
@@ -237,7 +237,7 @@ export default function Register() {
           <form onSubmit={handleRegister} className="space-y-4 sm:space-y-5">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="username" className="text-sm font-medium">
+                <Label htmlFor="username" className="text-[13px] font-medium">
                   Username *
                 </Label>
                 <div className="relative">
@@ -247,7 +247,7 @@ export default function Register() {
                     name="username"
                     type="text"
                     placeholder="johndoe"
-                    className="pl-10 h-12 sm:h-11 text-base sm:text-sm"
+                    className="pl-10 h-12 sm:h-11 text-base sm:text-[13px]"
                     value={formData.username}
                     onChange={handleInputChange}
                     disabled={isLoading}
@@ -258,7 +258,7 @@ export default function Register() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="displayName" className="text-sm font-medium">
+                <Label htmlFor="displayName" className="text-[13px] font-medium">
                   Display Name
                 </Label>
                 <Input
@@ -266,7 +266,7 @@ export default function Register() {
                   name="displayName"
                   type="text"
                   placeholder="John Doe"
-                  className="h-12 sm:h-11 text-base sm:text-sm"
+                  className="h-12 sm:h-11 text-base sm:text-[13px]"
                   value={formData.displayName}
                   onChange={handleInputChange}
                   disabled={isLoading}
@@ -276,7 +276,7 @@ export default function Register() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium">
+              <Label htmlFor="email" className="text-[13px] font-medium">
                 Email Address *
               </Label>
               <div className="relative">
@@ -286,7 +286,7 @@ export default function Register() {
                   name="email"
                   type="email"
                   placeholder="john@example.com"
-                  className="pl-10 h-12 sm:h-11 text-base sm:text-sm"
+                  className="pl-10 h-12 sm:h-11 text-base sm:text-[13px]"
                   value={formData.email}
                   onChange={handleInputChange}
                   disabled={isLoading}
@@ -297,7 +297,7 @@ export default function Register() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-medium">
+              <Label htmlFor="password" className="text-[13px] font-medium">
                 Password *
               </Label>
               <div className="relative">
@@ -307,7 +307,7 @@ export default function Register() {
                   name="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="Create a strong password"
-                  className="pl-10 pr-12 h-12 sm:h-11 text-base sm:text-sm"
+                  className="pl-10 pr-12 h-12 sm:h-11 text-base sm:text-[13px]"
                   value={formData.password}
                   onChange={handleInputChange}
                   disabled={isLoading}
@@ -329,8 +329,8 @@ export default function Register() {
               <div className={`collapsible-content ${formData.password ? 'expanded' : ''}`}>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-500">Password strength</span>
-                    <span className={`text-xs font-medium ${
+                    <span className="text-[11px] text-gray-500">Password strength</span>
+                    <span className={`text-[11px] font-medium ${
                       passwordStrength.color.replace('bg-', 'text-')
                     }`}>
                       {passwordStrength.label}
@@ -340,7 +340,7 @@ export default function Register() {
                   
                   <div className="grid grid-cols-2 gap-2 mt-2">
                     {passwordRequirements.map((req, idx) => (
-                      <div key={idx} className="flex items-center gap-1 text-xs">
+                      <div key={idx} className="flex items-center gap-1 text-[11px]">
                         {req.met ? (
                           <CheckCircle2 className="h-3 w-3 text-green-500" />
                         ) : (
@@ -357,7 +357,7 @@ export default function Register() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword" className="text-sm font-medium">
+              <Label htmlFor="confirmPassword" className="text-[13px] font-medium">
                 Confirm Password *
               </Label>
               <div className="relative">
@@ -367,7 +367,7 @@ export default function Register() {
                   name="confirmPassword"
                   type={showConfirmPassword ? "text" : "password"}
                   placeholder="Re-enter your password"
-                  className="pl-10 pr-12 h-12 sm:h-11 text-base sm:text-sm"
+                  className="pl-10 pr-12 h-12 sm:h-11 text-base sm:text-[13px]"
                   value={formData.confirmPassword}
                   onChange={handleInputChange}
                   disabled={isLoading}
@@ -385,7 +385,7 @@ export default function Register() {
                 </button>
               </div>
               {formData.confirmPassword && formData.password !== formData.confirmPassword && (
-                <p className="text-xs text-red-500">Passwords do not match</p>
+                <p className="text-[11px] text-red-500">Passwords do not match</p>
               )}
             </div>
 
@@ -397,7 +397,7 @@ export default function Register() {
               />
               <label 
                 htmlFor="terms" 
-                className="text-sm text-gray-600 dark:text-gray-400 cursor-pointer"
+                className="text-[13px] text-gray-600 dark:text-gray-400 cursor-pointer"
               >
                 I agree to the{' '}
                 <Link href="/terms" className="text-orange-600 dark:text-orange-400 hover:underline">
@@ -412,7 +412,7 @@ export default function Register() {
 
             <Button 
               type="submit" 
-              className="w-full h-12 sm:h-11 text-base sm:text-sm font-semibold"
+              className="w-full h-12 sm:h-11 text-base sm:text-[13px] font-semibold"
               style={{
                 background: 'linear-gradient(135deg, #F26207 0%, #F99D25 100%)',
               }}
@@ -443,7 +443,7 @@ export default function Register() {
               <div className="absolute inset-0 flex items-center">
                 <Separator />
               </div>
-              <div className="relative flex justify-center text-xs uppercase">
+              <div className="relative flex justify-center text-[11px] uppercase">
                 <span className="bg-background px-2 text-gray-500">Or sign up with</span>
               </div>
             </div>
@@ -478,7 +478,7 @@ export default function Register() {
           </form>
 
           {/* Sign In Link */}
-          <p className="text-center text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-center text-[13px] text-gray-600 dark:text-gray-400">
             Already have an account?{' '}
             <Link href="/login" className="font-semibold text-orange-600 dark:text-orange-400 hover:underline" data-testid="link-login">
               Sign in
@@ -486,7 +486,7 @@ export default function Register() {
           </p>
 
           {/* Terms */}
-          <p className="text-center text-xs text-gray-500">
+          <p className="text-center text-[11px] text-gray-500">
             By signing up, you agree to our{' '}
             <Link href="/terms" className="underline hover:text-gray-700 dark:hover:text-gray-300">
               Terms of Service
@@ -527,14 +527,14 @@ export default function Register() {
             <div className="space-y-4">
               <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
                 <Zap className="h-4 w-4" />
-                <span className="text-sm font-medium">Get Started in Seconds</span>
+                <span className="text-[13px] font-medium">Get Started in Seconds</span>
               </div>
               
               <h2 className="text-4xl font-bold leading-tight">
                 Start building with AI today
               </h2>
               
-              <p className="text-lg opacity-90">
+              <p className="text-[15px] opacity-90">
                 Start building production-ready applications with AI assistance, enterprise security, and unlimited scalability.
               </p>
             </div>
@@ -564,11 +564,11 @@ export default function Register() {
             <div className="grid grid-cols-2 gap-4 pt-8 border-t border-white/20">
               <div>
                 <div className="text-3xl font-bold">21</div>
-                <div className="text-sm opacity-75">AI Models</div>
+                <div className="text-[13px] opacity-75">AI Models</div>
               </div>
               <div>
                 <div className="text-3xl font-bold">29+</div>
-                <div className="text-sm opacity-75">Languages</div>
+                <div className="text-[13px] opacity-75">Languages</div>
               </div>
             </div>
           </div>

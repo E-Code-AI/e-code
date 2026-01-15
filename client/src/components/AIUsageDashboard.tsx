@@ -82,12 +82,12 @@ export function AIUsageDashboard() {
       <div className="grid gap-4 md:grid-cols-3">
         <Card data-testid="card-total-cost">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Cost</CardTitle>
+            <CardTitle className="text-[13px] font-medium">Total Cost</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold" data-testid="text-total-cost">${totalCost.toFixed(4)}</div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[11px] text-muted-foreground">
               {requestCount} AI requests
             </p>
           </CardContent>
@@ -95,12 +95,12 @@ export function AIUsageDashboard() {
 
         <Card data-testid="card-total-tokens">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Tokens</CardTitle>
+            <CardTitle className="text-[13px] font-medium">Total Tokens</CardTitle>
             <Zap className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold" data-testid="text-total-tokens">{totalTokens.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[11px] text-muted-foreground">
               Across all models
             </p>
           </CardContent>
@@ -108,12 +108,12 @@ export function AIUsageDashboard() {
 
         <Card data-testid="card-requests">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">API Requests</CardTitle>
+            <CardTitle className="text-[13px] font-medium">API Requests</CardTitle>
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold" data-testid="text-requests">{requestCount.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[11px] text-muted-foreground">
               This month
             </p>
           </CardContent>
@@ -168,7 +168,7 @@ export function AIUsageDashboard() {
                 {usage?.recentUsage && usage.recentUsage.length > 0 ? (
                   usage.recentUsage.map((record) => (
                     <TableRow key={record.id} data-testid={`row-usage-${record.id}`}>
-                      <TableCell className="font-mono text-xs">
+                      <TableCell className="font-mono text-[11px]">
                         {record.model}
                       </TableCell>
                       <TableCell>
@@ -193,7 +193,7 @@ export function AIUsageDashboard() {
                           {record.status}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
+                      <TableCell className="text-[11px] text-muted-foreground">
                         {format(new Date(record.createdAt), 'MMM d, HH:mm:ss')}
                       </TableCell>
                     </TableRow>

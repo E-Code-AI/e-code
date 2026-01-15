@@ -292,7 +292,7 @@ export default function Landing() {
             <LazyMotionDiv variants={fadeInUp}>
               <Badge 
                 variant="secondary" 
-                className="mx-auto inline-flex items-center gap-2 px-6 py-2 text-sm font-semibold bg-gradient-to-r from-ecode-accent/10 to-ecode-secondary-accent/10 border border-ecode-accent/20 dark:from-ecode-accent/15 dark:to-ecode-secondary-accent/15 dark:border-ecode-accent/30 transition-all duration-300 hover:border-ecode-accent/40"
+                className="mx-auto inline-flex items-center gap-2 px-6 py-2 text-[13px] font-semibold bg-gradient-to-r from-ecode-accent/10 to-ecode-secondary-accent/10 border border-ecode-accent/20 dark:from-ecode-accent/15 dark:to-ecode-secondary-accent/15 dark:border-ecode-accent/30 transition-all duration-300 hover:border-ecode-accent/40"
                 data-testid="badge-hero"
               >
                 <Sparkles className="h-4 w-4 text-ecode-accent" />
@@ -358,7 +358,7 @@ export default function Landing() {
                       <input
                         type="text"
                         placeholder="Describe your app idea in any language..."
-                        className="w-full bg-transparent border-none outline-none text-base sm:text-lg placeholder:text-[var(--ecode-text-muted)] text-[var(--ecode-text)] px-4 sm:px-6 py-3 sm:py-4 font-normal transition-colors duration-200"
+                        className="w-full bg-transparent border-none outline-none text-base sm:text-[15px] placeholder:text-[var(--ecode-text-muted)] text-[var(--ecode-text)] px-4 sm:px-6 py-3 sm:py-4 font-normal transition-colors duration-200"
                         style={{ fontFamily: 'var(--ecode-font-sans)' }}
                         value={appDescription}
                         onChange={(e) => setAppDescription(e.target.value)}
@@ -372,7 +372,7 @@ export default function Landing() {
                     </div>
               <Button 
                 size="lg"
-                className="bg-ecode-accent hover:bg-ecode-accent-hover text-white shadow-lg px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg font-semibold h-auto min-h-[44px] rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-[0_8px_32px_-8px_rgba(242,98,7,0.4)]"
+                className="bg-ecode-accent hover:bg-ecode-accent-hover text-white shadow-lg px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-[15px] font-semibold h-auto min-h-[44px] rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-[0_8px_32px_-8px_rgba(242,98,7,0.4)]"
                 onClick={() => {
                   if (appDescription.trim()) {
                     handleStartBuilding(appDescription);
@@ -394,7 +394,7 @@ export default function Landing() {
                 className="mt-8 space-y-4"
                 variants={fadeInUp}
               >
-                <p className="text-sm text-[var(--ecode-text-muted)] text-center">
+                <p className="text-[13px] text-[var(--ecode-text-muted)] text-center">
                   Try these popular examples:
                 </p>
                 <div className="flex flex-wrap justify-center gap-3">
@@ -460,7 +460,7 @@ export default function Landing() {
                       <div className={`bg-gradient-to-r ${example.color} text-white p-1.5 rounded-md transition-transform duration-300 group-hover:scale-110`}>
                         {example.icon}
                       </div>
-                      <span className="text-xs sm:text-sm font-medium text-[var(--ecode-text)]">
+                      <span className="text-[11px] sm:text-[13px] font-medium text-[var(--ecode-text)]">
                         {example.label}
                       </span>
                     </button>
@@ -473,15 +473,15 @@ export default function Landing() {
                 className="flex flex-wrap justify-center gap-4 mt-6"
                 variants={fadeInUp}
               >
-                <div className="flex items-center gap-2 text-sm text-[var(--ecode-text-muted)]">
+                <div className="flex items-center gap-2 text-[13px] text-[var(--ecode-text-muted)]">
                   <CheckCircle className="h-4 w-4 text-ecode-accent" />
                   No credit card required
                 </div>
-                <div className="flex items-center gap-2 text-sm text-[var(--ecode-text-muted)]">
+                <div className="flex items-center gap-2 text-[13px] text-[var(--ecode-text-muted)]">
                   <CheckCircle className="h-4 w-4 text-ecode-accent" />
                   Deploy instantly
                 </div>
-                <div className="flex items-center gap-2 text-sm text-[var(--ecode-text-muted)]">
+                <div className="flex items-center gap-2 text-[13px] text-[var(--ecode-text-muted)]">
                   <CheckCircle className="h-4 w-4 text-ecode-accent" />
                   Scale to millions
                 </div>
@@ -496,7 +496,7 @@ export default function Landing() {
               <Button 
                 size="lg"
                 variant="outline"
-                className="gap-2 px-6 sm:px-8 py-4 sm:py-6 text-base sm:text-lg border-2 border-[var(--ecode-border)] hover:border-ecode-accent/50 w-full sm:w-auto min-h-[48px] transition-all duration-300 hover:shadow-[0_4px_16px_-4px_rgba(242,98,7,0.2)]"
+                className="gap-2 px-6 sm:px-8 py-4 sm:py-6 text-base sm:text-[15px] border-2 border-[var(--ecode-border)] hover:border-ecode-accent/50 w-full sm:w-auto min-h-[48px] transition-all duration-300 hover:shadow-[0_4px_16px_-4px_rgba(242,98,7,0.2)]"
                 onClick={() => {
                   const demoSection = document.getElementById('video-demo');
                   demoSection?.scrollIntoView({ behavior: 'smooth' });
@@ -509,7 +509,7 @@ export default function Landing() {
               <Button 
                 size="lg"
                 variant="ghost"
-                className="gap-2 px-6 sm:px-8 py-4 sm:py-6 text-base sm:text-lg w-full sm:w-auto min-h-[48px] text-[var(--ecode-text)] hover:text-ecode-accent transition-all duration-300"
+                className="gap-2 px-6 sm:px-8 py-4 sm:py-6 text-base sm:text-[15px] w-full sm:w-auto min-h-[48px] text-[var(--ecode-text)] hover:text-ecode-accent transition-all duration-300"
                 onClick={() => navigate('/pricing')}
                 data-testid="button-hero-view-pricing"
               >
@@ -553,7 +553,7 @@ export default function Landing() {
                 <div className="text-4xl font-bold bg-gradient-to-r from-ecode-orange via-ecode-orange-light to-ecode-yellow bg-clip-text text-transparent">
                   {stat.value}
                 </div>
-                <div className="text-sm text-[var(--ecode-text-muted)] mt-1">
+                <div className="text-[13px] text-[var(--ecode-text-muted)] mt-1">
                   {stat.label}
                 </div>
               </LazyMotionDiv>
@@ -670,8 +670,8 @@ export default function Landing() {
 
             {/* Video Description */}
             <div className="mt-8 text-center">
-              <h3 className="text-lg font-semibold mb-2">Live Platform Demo</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <h3 className="text-[15px] font-semibold mb-2">Live Platform Demo</h3>
+              <p className="text-[13px] text-gray-600 dark:text-gray-400">
                 Watch how E-Code Platform's AI agent builds a complete full-stack application with database, authentication, 
                 and deployment - all from a single prompt
               </p>
@@ -783,7 +783,7 @@ export default function Landing() {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                     <div className="absolute bottom-4 left-4">
                       <h3 className="text-xl font-bold text-white">{project.title}</h3>
-                      <p className="text-sm text-gray-200">{project.creator}</p>
+                      <p className="text-[13px] text-gray-200">{project.creator}</p>
                     </div>
                   </div>
                   <CardContent className="p-6">
@@ -792,7 +792,7 @@ export default function Landing() {
                     </p>
                     <div className="flex flex-wrap gap-2 mb-4">
                       {project.tags.map(tag => (
-                        <Badge key={tag} variant="secondary" className="text-xs bg-ecode-accent/10 text-ecode-accent border-ecode-accent/20">
+                        <Badge key={tag} variant="secondary" className="text-[11px] bg-ecode-accent/10 text-ecode-accent border-ecode-accent/20">
                           {tag}
                         </Badge>
                       ))}
@@ -800,10 +800,10 @@ export default function Landing() {
                     <div className="grid grid-cols-3 gap-2 pt-4 border-t border-[var(--ecode-border)]">
                       {Object.entries(project.metrics).map(([key, value]) => (
                         <div key={key} className="text-center">
-                          <div className="text-sm font-semibold text-[var(--ecode-text)]">
+                          <div className="text-[13px] font-semibold text-[var(--ecode-text)]">
                             {value}
                           </div>
-                          <div className="text-xs text-[var(--ecode-text-muted)] capitalize">
+                          <div className="text-[11px] text-[var(--ecode-text-muted)] capitalize">
                             {key === "time" ? "" : key}
                           </div>
                         </div>
@@ -929,7 +929,7 @@ export default function Landing() {
                 Code Together,
                 <span className="bg-gradient-to-r from-ecode-orange via-ecode-orange-light to-ecode-yellow bg-clip-text text-transparent"> Ship Faster</span>
               </h3>
-              <p className="text-lg text-[var(--ecode-text-muted)]">
+              <p className="text-[15px] text-[var(--ecode-text-muted)]">
                 Multiple developers can work on the same codebase simultaneously. See changes in real-time, 
                 resolve conflicts automatically, and ship features faster than ever before.
               </p>
@@ -963,7 +963,7 @@ export default function Landing() {
                 Your AI
                 <span className="bg-gradient-to-r from-ecode-orange via-ecode-orange-light to-ecode-yellow bg-clip-text text-transparent"> Pair Programmer</span>
               </h3>
-              <p className="text-lg text-[var(--ecode-text-muted)]">
+              <p className="text-[15px] text-[var(--ecode-text-muted)]">
                 Our AI understands your codebase, suggests improvements, writes tests, and even deploys your applications. 
                 It's like having a senior developer available 24/7.
               </p>
@@ -1048,7 +1048,7 @@ export default function Landing() {
                   data-testid={`language-${name.toLowerCase().replace(/\./g, '')}`}
                 >
                   <Icon className={`h-12 w-12 ${color}`} />
-                  <span className="text-sm font-medium text-[var(--ecode-text)]">{name}</span>
+                  <span className="text-[13px] font-medium text-[var(--ecode-text)]">{name}</span>
                 </LazyMotionDiv>
               ))}
             </LazyMotionDiv>
@@ -1099,8 +1099,8 @@ export default function Landing() {
                       </div>
                       <div>
                         <div className="font-semibold text-[var(--ecode-text)]">{testimonial.author}</div>
-                        <div className="text-sm text-[var(--ecode-text-muted)]">{testimonial.role}</div>
-                        <div className="text-xs text-[var(--ecode-text-muted)]">{testimonial.company}</div>
+                        <div className="text-[13px] text-[var(--ecode-text-muted)]">{testimonial.role}</div>
+                        <div className="text-[11px] text-[var(--ecode-text-muted)]">{testimonial.company}</div>
                       </div>
                     </div>
                     <div className="flex gap-1 mb-3">
@@ -1127,7 +1127,7 @@ export default function Landing() {
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <p className="text-sm text-[var(--ecode-text-muted)] mb-8">
+            <p className="text-[13px] text-[var(--ecode-text-muted)] mb-8">
               Trusted by Fortune 500 companies and startups alike
             </p>
             <div className="flex flex-wrap justify-center items-center gap-12 opacity-60 grayscale hover:grayscale-0 transition-all duration-300 hover:opacity-100 text-[var(--ecode-text)]">
@@ -1165,7 +1165,7 @@ export default function Landing() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mt-8">
               <Button 
                 size="lg"
-                className="bg-white text-ecode-accent hover:bg-white/95 px-8 py-6 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+                className="bg-white text-ecode-accent hover:bg-white/95 px-8 py-6 text-[15px] font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
                 onClick={() => {
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                   setTimeout(() => {
@@ -1183,7 +1183,7 @@ export default function Landing() {
               <Button 
                 size="lg"
                 variant="ghost"
-                className="text-gray-900 border-2 border-gray-900 bg-white/20 hover:bg-white/40 px-8 py-6 text-lg font-semibold transition-all duration-300"
+                className="text-gray-900 border-2 border-gray-900 bg-white/20 hover:bg-white/40 px-8 py-6 text-[15px] font-semibold transition-all duration-300"
                 onClick={() => navigate('/contact-sales')}
                 data-testid="button-contact-sales"
               >

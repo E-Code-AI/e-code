@@ -139,7 +139,7 @@ export function MemoryBankPanel({ projectId, className, compact = false }: Memor
             </div>
             <div className="flex items-center gap-2">
               {status?.initialized && (
-                <Badge variant="secondary" className="text-xs gap-1">
+                <Badge variant="secondary" className="text-[11px] gap-1">
                   <Sparkles className="h-3 w-3" />
                   Auto
                 </Badge>
@@ -165,7 +165,7 @@ export function MemoryBankPanel({ projectId, className, compact = false }: Memor
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Brain className="h-5 w-5 text-primary" />
-            <CardTitle className="text-lg">Memory Bank</CardTitle>
+            <CardTitle className="text-[15px]">Memory Bank</CardTitle>
           </div>
           <div className="flex items-center gap-2">
             {status?.initialized && (
@@ -249,7 +249,7 @@ function MemoryBankContent({
         </div>
         <div>
           <h4 className="font-medium">Initializing Memory Bank...</h4>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-[13px] text-muted-foreground mt-1">
             Setting up persistent AI context for your project
           </p>
         </div>
@@ -275,15 +275,15 @@ function MemoryBankContent({
                 >
                   <div className="flex items-center gap-2">
                     <FileText className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-mono text-sm">{file.name}</span>
+                    <span className="font-mono text-[13px]">{file.name}</span>
                     {file.name === 'activeContext.md' && (
-                      <Badge variant="secondary" className="text-xs gap-1 bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
+                      <Badge variant="secondary" className="text-[11px] gap-1 bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
                         <Sparkles className="h-2.5 w-2.5" />
                         Auto
                       </Badge>
                     )}
                   </div>
-                  <div className="flex items-center gap-1 sm:gap-2 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1 sm:gap-2 text-[11px] text-muted-foreground">
                     <span className="hidden sm:inline-flex items-center gap-1">
                       <Clock className="h-3 w-3" />
                       <span>{new Date(file.lastUpdated).toLocaleDateString()}</span>
@@ -301,7 +301,7 @@ function MemoryBankContent({
               <CollapsibleContent>
                 <div className="px-3 pb-3">
                   <div className="space-y-2">
-                    <pre className="text-xs bg-muted p-3 rounded-md overflow-x-auto whitespace-pre-wrap max-h-[200px] overflow-y-auto">
+                    <pre className="text-[11px] bg-muted p-3 rounded-md overflow-x-auto whitespace-pre-wrap max-h-[200px] overflow-y-auto">
                       {file.content.substring(0, 1500)}
                       {file.content.length > 1500 && (
                         <span className="text-muted-foreground italic">
@@ -309,7 +309,7 @@ function MemoryBankContent({
                         </span>
                       )}
                     </pre>
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <div className="flex items-center justify-between text-[11px] text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <Eye className="h-3 w-3" />
                         Read-only
@@ -328,15 +328,15 @@ function MemoryBankContent({
         {memoryBank.files.length === 0 && (
           <div className="text-center py-4 text-muted-foreground">
             <FolderOpen className="h-8 w-8 mx-auto mb-2 opacity-50" />
-            <p className="text-sm">No memory bank files yet</p>
+            <p className="text-[13px]">No memory bank files yet</p>
           </div>
         )}
       </div>
       
-      <div className="mt-4 pt-3 border-t text-xs text-muted-foreground flex justify-between items-center">
+      <div className="mt-4 pt-3 border-t text-[11px] text-muted-foreground flex justify-between items-center">
         <span>Total: {memoryBank.files.length} files</span>
         <div className="flex items-center gap-2">
-          <Badge variant="outline" className="text-xs gap-1">
+          <Badge variant="outline" className="text-[11px] gap-1">
             <Sparkles className="h-2.5 w-2.5" />
             Auto-updating
           </Badge>

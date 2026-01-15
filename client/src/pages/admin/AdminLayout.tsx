@@ -92,8 +92,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           <div className="flex items-center gap-3">
             <ECodeLogo size="sm" showText={false} />
             <div>
-              <h1 className="text-lg font-bold text-foreground">Admin Panel</h1>
-              <p className="text-xs text-muted-foreground">E-Code Administration</p>
+              <h1 className="text-[15px] font-bold text-foreground">Admin Panel</h1>
+              <p className="text-[11px] text-muted-foreground">E-Code Administration</p>
             </div>
           </div>
         </div>
@@ -109,7 +109,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 <Link key={item.path} href={item.path}>
                   <Button
                     variant={isActive ? 'secondary' : 'ghost'}
-                    className={`w-full justify-start mb-1 h-11 sm:h-10 text-sm ${
+                    className={`w-full justify-start mb-1 h-11 sm:h-10 text-[13px] ${
                       isActive 
                         ? 'bg-primary/10 text-primary dark:bg-primary/15' 
                         : 'text-muted-foreground hover:text-foreground hover:bg-muted dark:hover:bg-[var(--ecode-surface-hover)]'

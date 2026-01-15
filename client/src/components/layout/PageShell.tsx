@@ -80,7 +80,7 @@ export function PageHeader({
         <div className={cn("flex w-full flex-col gap-4", alignCenter && "items-center")}
         >
           {eyebrow && (
-            <span className="text-xs font-semibold uppercase tracking-wider text-[var(--ecode-text-muted)]">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--ecode-text-muted)]">
               {eyebrow}
             </span>
           )}
@@ -97,7 +97,7 @@ export function PageHeader({
                 {title}
               </h1>
               {description && (
-                <p className="max-w-3xl text-base text-[var(--ecode-text-muted)] sm:text-lg">
+                <p className="max-w-3xl text-base text-[var(--ecode-text-muted)] sm:text-[15px]">
                   {description}
                 </p>
               )}

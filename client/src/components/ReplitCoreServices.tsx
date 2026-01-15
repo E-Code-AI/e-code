@@ -367,7 +367,7 @@ export function ReplitCoreServices() {
                 {scanProgress > 0 && (
                   <div className="flex-1">
                     <Progress value={scanProgress} className="w-full" />
-                    <p className="text-sm text-muted-foreground mt-1">
+                    <p className="text-[13px] text-muted-foreground mt-1">
                       Scanning... {scanProgress}%
                     </p>
                   </div>
@@ -385,8 +385,8 @@ export function ReplitCoreServices() {
                         </Badge>
                         <div className="flex-1">
                           <p className="font-medium">{issue.type}</p>
-                          <p className="text-sm text-muted-foreground">{issue.message}</p>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-[13px] text-muted-foreground">{issue.message}</p>
+                          <p className="text-[11px] text-muted-foreground">
                             {issue.file} {issue.line && `(line ${issue.line})`}
                           </p>
                         </div>
@@ -521,10 +521,10 @@ export function ReplitCoreServices() {
                     <div key={key.id} className="flex items-center justify-between p-4 border-b">
                       <div className="flex-1">
                         <p className="font-medium">{key.name}</p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-[11px] text-muted-foreground">
                           {key.type.toUpperCase()} • {key.fingerprint}
                         </p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-[11px] text-muted-foreground">
                           Created {new Date(key.created).toLocaleDateString()}
                         </p>
                       </div>
@@ -576,7 +576,7 @@ export function ReplitCoreServices() {
                           <div className={`w-2 h-2 rounded-full ${getStatusColor(service.status)}`} />
                           <span className="font-medium">{service.name}</span>
                         </div>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-4 text-[13px] text-muted-foreground">
                           <span>{service.uptime.toFixed(1)}% uptime</span>
                           <span>{service.responseTime}ms</span>
                         </div>
@@ -659,10 +659,10 @@ export function ReplitCoreServices() {
                     <div key={db.id} className="flex items-center justify-between p-4 border-b">
                       <div className="flex-1">
                         <p className="font-medium">{db.name}</p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-[11px] text-muted-foreground">
                           {db.type.toUpperCase()} • {db.plan} plan • {db.region}
                         </p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-[11px] text-muted-foreground">
                           Created {new Date(db.created).toLocaleDateString()}
                         </p>
                       </div>

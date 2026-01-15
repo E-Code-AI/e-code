@@ -255,7 +255,7 @@ export function ReplitForkGraph({ projectId, className }: ForkGraphProps) {
                     </Avatar>
                     <div>
                       <h3 className="font-semibold">{selectedFork.name}</h3>
-                      <p className="text-sm text-muted-foreground">@{selectedFork.owner.username}</p>
+                      <p className="text-[13px] text-muted-foreground">@{selectedFork.owner.username}</p>
                     </div>
                   </div>
                   <Button
@@ -268,21 +268,21 @@ export function ReplitForkGraph({ projectId, className }: ForkGraphProps) {
                 </div>
 
                 {selectedFork.description && (
-                  <p className="text-sm text-muted-foreground mb-4">{selectedFork.description}</p>
+                  <p className="text-[13px] text-muted-foreground mb-4">{selectedFork.description}</p>
                 )}
 
                 <div className="flex items-center gap-4 mb-4">
                   <div className="flex items-center gap-1">
                     <Star className="h-4 w-4" />
-                    <span className="text-sm">{selectedFork.stars}</span>
+                    <span className="text-[13px]">{selectedFork.stars}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <Eye className="h-4 w-4" />
-                    <span className="text-sm">{selectedFork.views}</span>
+                    <span className="text-[13px]">{selectedFork.views}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <GitBranch className="h-4 w-4" />
-                    <span className="text-sm">{selectedFork.children?.length || 0} forks</span>
+                    <span className="text-[13px]">{selectedFork.children?.length || 0} forks</span>
                   </div>
                 </div>
 
@@ -290,10 +290,10 @@ export function ReplitForkGraph({ projectId, className }: ForkGraphProps) {
                   <div className="border-t pt-4">
                     <div className="flex items-center gap-2 mb-2">
                       <GitCommit className="h-4 w-4" />
-                      <span className="text-sm font-medium">Last commit</span>
+                      <span className="text-[13px] font-medium">Last commit</span>
                     </div>
-                    <p className="text-sm text-muted-foreground">{selectedFork.lastCommit.message}</p>
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="text-[13px] text-muted-foreground">{selectedFork.lastCommit.message}</p>
+                    <p className="text-[11px] text-muted-foreground mt-1">
                       by {selectedFork.lastCommit.author} • {new Date(selectedFork.lastCommit.date).toLocaleDateString()}
                     </p>
                   </div>
@@ -308,7 +308,7 @@ export function ReplitForkGraph({ projectId, className }: ForkGraphProps) {
           </div>
 
           <div className="p-4 border-t">
-            <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center justify-between text-[13px]">
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 rounded-full bg-primary" />

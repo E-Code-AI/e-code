@@ -190,7 +190,7 @@ function BuildValidationProgress({ currentStep, depsResult, buildResult, qaResul
       <div className="bg-muted/50 rounded-lg p-3 mb-3 border border-border/50">
       <div className="flex items-center gap-2 mb-2">
         <Loader2 className="h-4 w-4 animate-spin text-primary" />
-        <span className="text-sm font-medium">Post-Build Validation</span>
+        <span className="text-[13px] font-medium">Post-Build Validation</span>
       </div>
       
       <div className="flex items-center gap-2">
@@ -201,7 +201,7 @@ function BuildValidationProgress({ currentStep, depsResult, buildResult, qaResul
           return (
             <div key={step.key} className="flex items-center">
               <div className={cn(
-                "flex items-center gap-1.5 px-2 py-1 rounded-md text-xs",
+                "flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px]",
                 status === 'active' && "bg-primary/20 text-primary",
                 status === 'success' && "bg-green-500/20 text-green-600 dark:text-green-400",
                 status === 'error' && "bg-red-500/20 text-red-600 dark:text-red-400",
@@ -231,7 +231,7 @@ function BuildValidationProgress({ currentStep, depsResult, buildResult, qaResul
       </div>
       
       {qaResult && currentStep === 'qa_complete' && (
-        <div className="mt-2 text-xs text-muted-foreground">
+        <div className="mt-2 text-[11px] text-muted-foreground">
           {qaResult.passedTests}/{qaResult.totalTests} responsive tests passed
         </div>
       )}
@@ -2226,8 +2226,8 @@ export function ReplitAgentPanelV3({
             <Loader2 className="h-5 w-5 text-primary animate-spin absolute -bottom-1 -right-1" />
           </div>
           <div className="space-y-1">
-            <p className="text-sm font-medium">Initializing Agent</p>
-            <p className="text-xs text-muted-foreground">Setting up your workspace...</p>
+            <p className="text-[13px] font-medium">Initializing Agent</p>
+            <p className="text-[11px] text-muted-foreground">Setting up your workspace...</p>
           </div>
         </div>
       </div>
@@ -2242,7 +2242,7 @@ export function ReplitAgentPanelV3({
           <div className="flex items-center gap-1 sm:gap-2 min-w-0 flex-shrink">
             <ECodeLogo size="xs" showText={!isCompactMode} />
             {isWorking && (
-              <Badge variant="secondary" className="text-[10px] sm:text-xs animate-pulse flex-shrink-0" data-testid="header-badge-working">
+              <Badge variant="secondary" className="text-[10px] sm:text-[11px] animate-pulse flex-shrink-0" data-testid="header-badge-working">
                 <Loader2 className="h-3 w-3 mr-0.5 sm:mr-1 animate-spin" />
                 <span className="hidden sm:inline">Working</span>
               </Badge>
@@ -2256,7 +2256,7 @@ export function ReplitAgentPanelV3({
                   <button
                     onClick={handleFastModeToggle}
                     className={cn(
-                      "flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-all flex-shrink-0",
+                      "flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium transition-all flex-shrink-0",
                       fastMode 
                         ? "bg-yellow-500/20 text-yellow-600 dark:text-yellow-400 border border-yellow-500/30" 
                         : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground border border-transparent"
@@ -2271,7 +2271,7 @@ export function ReplitAgentPanelV3({
                 </TooltipTrigger>
                 <TooltipContent>
                   <p className="font-medium">{fastMode ? 'Fast Mode Active' : 'Enable Fast Mode'}</p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-[11px] text-muted-foreground">
                     {fastMode 
                       ? 'Using fast model for quick 10-60s edits' 
                       : 'Quick mode for single-file targeted changes'}
@@ -2419,7 +2419,7 @@ export function ReplitAgentPanelV3({
             data-testid="connection-error-banner"
           >
             <div className={cn(
-              "flex items-center gap-2 text-sm",
+              "flex items-center gap-2 text-[13px]",
               connectionError ? "text-destructive" : "text-warning"
             )}>
               {reconnectAttempt > 0 && reconnectAttempt < maxReconnectAttempts ? (
@@ -2438,7 +2438,7 @@ export function ReplitAgentPanelV3({
                 variant="outline"
                 size="sm"
                 onClick={manualReconnect}
-                className="flex-shrink-0 h-7 px-3 text-xs"
+                className="flex-shrink-0 h-7 px-3 text-[11px]"
                 data-testid="button-retry-connection"
               >
                 <RefreshCw className="h-3 w-3 mr-1" />
@@ -2514,7 +2514,7 @@ export function ReplitAgentPanelV3({
               data-testid="active-thinking-container"
             >
               <Avatar className="h-9 w-9 ring-2 ring-offset-2 ring-offset-background ring-primary/30 shadow-lg" data-testid="active-thinking-avatar">
-                <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary text-xs">
+                <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary text-[11px]">
                   <Sparkles className="h-4 w-4 animate-pulse" />
                 </AvatarFallback>
               </Avatar>
@@ -2546,7 +2546,7 @@ export function ReplitAgentPanelV3({
               data-testid="streaming-message-container"
             >
               <Avatar className="h-9 w-9 ring-2 ring-offset-2 ring-offset-background ring-primary/30 shadow-lg" data-testid="streaming-avatar">
-                <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary text-xs">
+                <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary text-[11px]">
                   <Sparkles className="h-4 w-4 animate-pulse" />
                 </AvatarFallback>
               </Avatar>
@@ -2557,7 +2557,7 @@ export function ReplitAgentPanelV3({
                   initial={{ scale: 0.95 }}
                   animate={{ scale: 1 }}
                 >
-                  <div className="text-sm whitespace-pre-wrap break-words leading-relaxed" data-testid="streaming-text">
+                  <div className="text-[13px] whitespace-pre-wrap break-words leading-relaxed" data-testid="streaming-text">
                     <StreamingText 
                       content={streamingContent} 
                       isComplete={false}
@@ -2723,7 +2723,7 @@ export function ReplitAgentPanelV3({
                 {pendingAttachments.map((attachment) => (
                   <div
                     key={attachment.id}
-                    className="flex items-center gap-1.5 px-2 py-1 bg-background rounded-md border border-border text-xs"
+                    className="flex items-center gap-1.5 px-2 py-1 bg-background rounded-md border border-border text-[11px]"
                   >
                     {attachment.type === 'image' ? (
                       <div className="w-6 h-6 rounded overflow-hidden bg-muted flex-shrink-0">
@@ -2753,7 +2753,7 @@ export function ReplitAgentPanelV3({
                   </div>
                 ))}
                 {isUploadingFiles && (
-                  <div className="flex items-center gap-1.5 px-2 py-1 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1.5 px-2 py-1 text-[11px] text-muted-foreground">
                     <Loader2 className="h-3 w-3 animate-spin" />
                     <span>Uploading...</span>
                   </div>
@@ -2799,7 +2799,7 @@ export function ReplitAgentPanelV3({
                 "Ask a question or describe what you want to plan... Type / for integrations"
               }
               className={cn(
-                "pr-24 resize-none text-sm min-h-[52px] max-h-[200px]",
+                "pr-24 resize-none text-[13px] min-h-[52px] max-h-[200px]",
                 "rounded-xl border border-border/50 focus:border-primary/50",
                 "transition-all duration-200 shadow-sm focus:shadow-md",
                 "placeholder:text-muted-foreground/70"

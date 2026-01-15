@@ -59,20 +59,20 @@ function ActionCard({ action, onSelect }: { action: AgentActionRow; onSelect?: (
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-2">
               <StatusIcon className={cn("h-4 w-4", config.color)} />
-              <Badge variant="outline" className="text-xs">
+              <Badge variant="outline" className="text-[11px]">
                 {action.actionType.replace('_', ' ')}
               </Badge>
             </div>
-            <div className="text-sm font-medium truncate mb-1">
+            <div className="text-[13px] font-medium truncate mb-1">
               {action.actionLabel}
             </div>
-            <div className="text-xs text-muted-foreground truncate mb-2">
+            <div className="text-[11px] text-muted-foreground truncate mb-2">
               {action.target}
             </div>
-            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+            <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
               <span>{action.duration ? `${action.duration}ms` : '-'}</span>
               {action.riskScore !== undefined && (
-                <Badge variant={action.riskScore > 50 ? 'destructive' : 'secondary'} className="text-xs">
+                <Badge variant={action.riskScore > 50 ? 'destructive' : 'secondary'} className="text-[11px]">
                   Risk: {action.riskScore}
                 </Badge>
               )}
@@ -80,7 +80,7 @@ function ActionCard({ action, onSelect }: { action: AgentActionRow; onSelect?: (
           </div>
           <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
         </div>
-        <div className="mt-2 pt-2 border-t text-xs text-muted-foreground">
+        <div className="mt-2 pt-2 border-t text-[11px] text-muted-foreground">
           {action.executedAt ? format(new Date(action.executedAt), 'MMM d, HH:mm:ss') : '-'}
         </div>
       </CardContent>
@@ -164,14 +164,14 @@ export function AgentActionsGrid({
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <Activity className="h-4 w-4 text-muted-foreground" />
-          <h4 className="font-medium text-sm">Actions</h4>
+          <h4 className="font-medium text-[13px]">Actions</h4>
           {data && (
             <>
-              <Badge variant="secondary" className="text-xs">
+              <Badge variant="secondary" className="text-[11px]">
                 {data.totalCount} total
               </Badge>
               {errorCount > 0 && (
-                <Badge variant="destructive" className="text-xs">
+                <Badge variant="destructive" className="text-[11px]">
                   <AlertTriangle className="h-3 w-3 mr-1" />
                   {errorCount} errors
                 </Badge>
@@ -187,13 +187,13 @@ export function AgentActionsGrid({
               placeholder="Search..."
               value={searchQuery}
               onChange={(e) => handleQuickFilter(e.target.value)}
-              className="pl-7 w-[150px] h-8 text-xs"
+              className="pl-7 w-[150px] h-8 text-[11px]"
               data-testid="input-search-actions"
             />
           </div>
 
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[100px] h-8 text-xs" data-testid="select-action-status">
+            <SelectTrigger className="w-[100px] h-8 text-[11px]" data-testid="select-action-status">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
@@ -205,7 +205,7 @@ export function AgentActionsGrid({
           </Select>
 
           <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="w-[120px] h-8 text-xs" data-testid="select-action-type">
+            <SelectTrigger className="w-[120px] h-8 text-[11px]" data-testid="select-action-type">
               <SelectValue placeholder="Type" />
             </SelectTrigger>
             <SelectContent>
@@ -236,7 +236,7 @@ export function AgentActionsGrid({
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       ) : error ? (
-        <div className="flex flex-col items-center justify-center py-12 gap-2 text-muted-foreground text-sm">
+        <div className="flex flex-col items-center justify-center py-12 gap-2 text-muted-foreground text-[13px]">
           <p>Failed to load actions</p>
           <Button variant="outline" size="sm" onClick={() => refetch()}>
             Retry
@@ -245,7 +245,7 @@ export function AgentActionsGrid({
       ) : isMobile ? (
         <div className="space-y-3" data-testid="actions-mobile-view">
           {filteredData.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground text-sm">
+            <div className="text-center py-8 text-muted-foreground text-[13px]">
               No actions found
             </div>
           ) : (

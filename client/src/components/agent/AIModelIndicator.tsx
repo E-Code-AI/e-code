@@ -113,8 +113,8 @@ export function AIModelIndicator({
   const providerColor = PROVIDER_COLORS[delegation.provider.toLowerCase()] || 'text-gray-600';
   
   const sizeClasses = {
-    sm: 'text-xs',
-    md: 'text-sm',
+    sm: 'text-[11px]',
+    md: 'text-[13px]',
     lg: 'text-base'
   };
   
@@ -140,7 +140,7 @@ export function AIModelIndicator({
           </TooltipTrigger>
           <TooltipContent>
             <p className="font-medium">{getModelDisplayName(delegation.model)}</p>
-            <p className="text-xs text-muted-foreground">{tierConfig.description}</p>
+            <p className="text-[11px] text-muted-foreground">{tierConfig.description}</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
@@ -182,7 +182,7 @@ export function AIModelIndicator({
         
         <div className="px-2 py-3 space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Tier</span>
+            <span className="text-[13px] text-muted-foreground">Tier</span>
             <Badge variant="outline" className={cn(tierConfig.bgColor, tierConfig.color, "gap-1")}>
               <TierIcon className="h-3 w-3" />
               {tierConfig.label}
@@ -190,30 +190,30 @@ export function AIModelIndicator({
           </div>
           
           <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Provider</span>
-            <span className={cn("text-sm font-medium", providerColor)}>
+            <span className="text-[13px] text-muted-foreground">Provider</span>
+            <span className={cn("text-[13px] font-medium", providerColor)}>
               {getProviderDisplayName(delegation.provider)}
             </span>
           </div>
           
           <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Model</span>
-            <span className="text-sm font-medium">
+            <span className="text-[13px] text-muted-foreground">Model</span>
+            <span className="text-[13px] font-medium">
               {getModelDisplayName(delegation.model)}
             </span>
           </div>
           
           {delegation.taskComplexity !== undefined && (
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Task Complexity</span>
-              <span className="text-sm font-medium">{delegation.taskComplexity}/10</span>
+              <span className="text-[13px] text-muted-foreground">Task Complexity</span>
+              <span className="text-[13px] font-medium">{delegation.taskComplexity}/10</span>
             </div>
           )}
           
           {delegation.estimatedTokens !== undefined && (
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Est. Tokens</span>
-              <span className="text-sm font-medium">{delegation.estimatedTokens.toLocaleString()}</span>
+              <span className="text-[13px] text-muted-foreground">Est. Tokens</span>
+              <span className="text-[13px] font-medium">{delegation.estimatedTokens.toLocaleString()}</span>
             </div>
           )}
           
@@ -221,11 +221,11 @@ export function AIModelIndicator({
             <>
               <DropdownMenuSeparator />
               <div className="space-y-1">
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
                   <Info className="h-3 w-3" />
                   Delegation Reason
                 </div>
-                <p className="text-xs text-foreground">
+                <p className="text-[11px] text-foreground">
                   {delegation.reason}
                 </p>
               </div>
@@ -235,7 +235,7 @@ export function AIModelIndicator({
         
         <DropdownMenuSeparator />
         <div className="px-2 py-2">
-          <p className="text-xs text-muted-foreground">
+          <p className="text-[11px] text-muted-foreground">
             {tierConfig.description}
           </p>
         </div>
@@ -259,7 +259,7 @@ export function AIModelBadge({
   return (
     <Badge 
       variant="outline" 
-      className={cn(tierConfig.bgColor, tierConfig.color, "gap-1 text-xs", className)}
+      className={cn(tierConfig.bgColor, tierConfig.color, "gap-1 text-[11px]", className)}
       data-testid="badge-model-mini"
     >
       <TierIcon className="h-3 w-3" />

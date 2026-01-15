@@ -227,10 +227,10 @@ export default function Teams() {
               <div key={invitation.id} className="flex items-center justify-between p-4 border rounded-lg">
                 <div className="flex-1">
                   <div className="font-medium">{invitation.teamName}</div>
-                  <div className="text-sm text-muted-foreground">
+                  <div className="text-[13px] text-muted-foreground">
                     Invited by {invitation.inviterName} as {invitation.role}
                   </div>
-                  <div className="text-xs text-muted-foreground mt-1">
+                  <div className="text-[11px] text-muted-foreground mt-1">
                     {new Date(invitation.sent).toLocaleDateString()}
                   </div>
                 </div>
@@ -357,7 +357,7 @@ export default function Teams() {
         <Card>
           <CardContent className="py-12 text-center">
             <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium mb-2">No teams found</h3>
+            <h3 className="text-[15px] font-medium mb-2">No teams found</h3>
             <p className="text-muted-foreground mb-4">
               {searchQuery ? 'No teams match your search.' : 'Create your first team to get started.'}
             </p>
@@ -383,10 +383,10 @@ export default function Teams() {
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <CardTitle className="text-lg">{team.name}</CardTitle>
+                      <CardTitle className="text-[15px]">{team.name}</CardTitle>
                       <div className="flex items-center gap-2 mt-1">
                         {getRoleIcon(team.role)}
-                        <span className="text-xs text-muted-foreground capitalize">{team.role}</span>
+                        <span className="text-[11px] text-muted-foreground capitalize">{team.role}</span>
                         {getVisibilityIcon(team.visibility)}
                       </div>
                     </div>
@@ -404,7 +404,7 @@ export default function Teams() {
                   {team.description || 'No description provided'}
                 </CardDescription>
                 
-                <div className="flex items-center justify-between text-sm text-muted-foreground">
+                <div className="flex items-center justify-between text-[13px] text-muted-foreground">
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-1">
                       <Users className="h-4 w-4" />
@@ -417,7 +417,7 @@ export default function Teams() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
                   <Calendar className="h-3 w-3" />
                   Created {new Date(team.created).toLocaleDateString()}
                 </div>

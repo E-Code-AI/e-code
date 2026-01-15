@@ -536,7 +536,7 @@ export default function VNCPage() {
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <CardTitle className="text-lg">Remote Desktop Viewer</CardTitle>
+                  <CardTitle className="text-[15px]">Remote Desktop Viewer</CardTitle>
                   {sessionState.isConnected ? (
                     <Badge variant="default" className="gap-1" data-testid="badge-connection-status">
                       <Wifi className="h-3 w-3" />
@@ -569,7 +569,7 @@ export default function VNCPage() {
                   )}
                 </div>
                 {sessionState.isConnected && (
-                  <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-4 text-[11px] text-muted-foreground">
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -629,7 +629,7 @@ export default function VNCPage() {
                   <div className="absolute inset-0 flex items-center justify-center bg-black/80">
                     <div className="flex flex-col items-center gap-4">
                       <RefreshCw className="h-8 w-8 animate-spin text-primary" />
-                      <p className="text-sm text-muted-foreground">Establishing connection...</p>
+                      <p className="text-[13px] text-muted-foreground">Establishing connection...</p>
                     </div>
                   </div>
                 )}
@@ -656,7 +656,7 @@ export default function VNCPage() {
                           <div className="space-y-6">
                             {['System', 'Windows', 'Clipboard', 'Navigation', 'Editing'].map(category => (
                               <div key={category}>
-                                <h4 className="font-medium mb-3 text-sm text-muted-foreground">{category}</h4>
+                                <h4 className="font-medium mb-3 text-[13px] text-muted-foreground">{category}</h4>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                   {KEYBOARD_SHORTCUTS.filter(s => s.category === category).map(shortcut => (
                                     <Button
@@ -668,11 +668,11 @@ export default function VNCPage() {
                                     >
                                       <span className="text-left">
                                         <span className="block font-medium">{shortcut.name}</span>
-                                        <span className="block text-xs text-muted-foreground">{shortcut.description}</span>
+                                        <span className="block text-[11px] text-muted-foreground">{shortcut.description}</span>
                                       </span>
                                       <div className="flex gap-1">
                                         {shortcut.keys.map(key => (
-                                          <kbd key={key} className="px-2 py-1 text-xs bg-muted rounded">{key}</kbd>
+                                          <kbd key={key} className="px-2 py-1 text-[11px] bg-muted rounded">{key}</kbd>
                                         ))}
                                       </div>
                                     </Button>
@@ -687,7 +687,7 @@ export default function VNCPage() {
                   </div>
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">
-                      <Label htmlFor="clipboard-sync" className="text-sm">Clipboard Sync</Label>
+                      <Label htmlFor="clipboard-sync" className="text-[13px]">Clipboard Sync</Label>
                       <Switch
                         id="clipboard-sync"
                         checked={sessionState.clipboardSync}
@@ -771,7 +771,7 @@ export default function VNCPage() {
                   <Separator />
 
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="view-only" className="text-sm">View Only Mode</Label>
+                    <Label htmlFor="view-only" className="text-[13px]">View Only Mode</Label>
                     <Switch
                       id="view-only"
                       checked={config.viewOnly}
@@ -781,7 +781,7 @@ export default function VNCPage() {
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="shared-session" className="text-sm">Shared Session</Label>
+                    <Label htmlFor="shared-session" className="text-[13px]">Shared Session</Label>
                     <Switch
                       id="shared-session"
                       checked={config.sharedSession}
@@ -794,14 +794,14 @@ export default function VNCPage() {
                     <>
                       <Separator />
                       <div className="space-y-2">
-                        <Label className="text-sm text-muted-foreground">Recent Connections</Label>
+                        <Label className="text-[13px] text-muted-foreground">Recent Connections</Label>
                         <div className="space-y-1">
                           {connectionHistory.slice(0, 3).map((conn, idx) => (
                             <Button
                               key={idx}
                               variant="ghost"
                               size="sm"
-                              className="w-full justify-start text-sm"
+                              className="w-full justify-start text-[13px]"
                               onClick={() => {
                                 const [host, port] = conn.split(':');
                                 setConfig(prev => ({ ...prev, host, port: parseInt(port) || 5900 }));
@@ -874,8 +874,8 @@ export default function VNCPage() {
 
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <Label className="text-sm">Quality</Label>
-                      <span className="text-sm text-muted-foreground">{displaySettings.quality}%</span>
+                      <Label className="text-[13px]">Quality</Label>
+                      <span className="text-[13px] text-muted-foreground">{displaySettings.quality}%</span>
                     </div>
                     <Slider
                       value={[displaySettings.quality]}
@@ -885,13 +885,13 @@ export default function VNCPage() {
                       step={10}
                       data-testid="slider-quality"
                     />
-                    <p className="text-xs text-muted-foreground">Higher quality uses more bandwidth</p>
+                    <p className="text-[11px] text-muted-foreground">Higher quality uses more bandwidth</p>
                   </div>
 
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <Label className="text-sm">Compression</Label>
-                      <span className="text-sm text-muted-foreground">Level {displaySettings.compression}</span>
+                      <Label className="text-[13px]">Compression</Label>
+                      <span className="text-[13px] text-muted-foreground">Level {displaySettings.compression}</span>
                     </div>
                     <Slider
                       value={[displaySettings.compression]}
@@ -901,7 +901,7 @@ export default function VNCPage() {
                       step={1}
                       data-testid="slider-compression"
                     />
-                    <p className="text-xs text-muted-foreground">Higher compression reduces bandwidth</p>
+                    <p className="text-[11px] text-muted-foreground">Higher compression reduces bandwidth</p>
                   </div>
                 </TabsContent>
               </Tabs>
@@ -931,9 +931,9 @@ export default function VNCPage() {
                     <div className="text-left flex-1">
                       <div className="flex items-center gap-2">
                         <span className="font-medium">{display.name}</span>
-                        {display.primary && <Badge variant="outline" className="text-xs">Primary</Badge>}
+                        {display.primary && <Badge variant="outline" className="text-[11px]">Primary</Badge>}
                       </div>
-                      <span className="text-xs text-muted-foreground">{display.resolution}</span>
+                      <span className="text-[11px] text-muted-foreground">{display.resolution}</span>
                     </div>
                     {sessionState.currentDisplay === display.id && sessionState.isConnected && (
                       <CheckCircle2 className="h-4 w-4 text-primary" />
@@ -952,7 +952,7 @@ export default function VNCPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center justify-between text-[13px]">
                 <span className="text-muted-foreground">Status</span>
                 <span className="flex items-center gap-1">
                   {sessionState.isConnected ? (
@@ -968,11 +968,11 @@ export default function VNCPage() {
                   )}
                 </span>
               </div>
-              <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center justify-between text-[13px]">
                 <span className="text-muted-foreground">Protocol</span>
                 <span>VNC (RFB 3.8)</span>
               </div>
-              <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center justify-between text-[13px]">
                 <span className="text-muted-foreground">Encryption</span>
                 <span className="flex items-center gap-1">
                   <Lock className="h-3 w-3" />
@@ -982,11 +982,11 @@ export default function VNCPage() {
               {sessionState.isConnected && (
                 <>
                   <Separator />
-                  <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center justify-between text-[13px]">
                     <span className="text-muted-foreground">Host</span>
                     <span>{config.host}:{config.port}</span>
                   </div>
-                  <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center justify-between text-[13px]">
                     <span className="text-muted-foreground">Resolution</span>
                     <span>{displaySettings.resolution === 'auto' ? '1920x1080' : displaySettings.resolution}</span>
                   </div>

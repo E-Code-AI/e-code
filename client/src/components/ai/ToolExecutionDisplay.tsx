@@ -147,7 +147,7 @@ function CompactToolExecution({
         >
           <Icon className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
           <div className="flex-1 min-w-0 flex items-center gap-1 sm:gap-2">
-            <span className="text-[10px] sm:text-xs font-medium truncate">{label}</span>
+            <span className="text-[10px] sm:text-[11px] font-medium truncate">{label}</span>
             {target && (
               <code className="text-[9px] sm:text-[10px] bg-background px-1 sm:px-1.5 py-0.5 rounded truncate max-w-[100px] sm:max-w-[200px] hidden xs:inline">
                 {target}
@@ -172,7 +172,7 @@ function CompactToolExecution({
 
       {hasDetails && (
         <CollapsibleContent>
-          <div className="mt-1.5 ml-4 sm:ml-6 pl-2 sm:pl-3 border-l-2 border-muted space-y-1.5 sm:space-y-2 text-[10px] sm:text-xs">
+          <div className="mt-1.5 ml-4 sm:ml-6 pl-2 sm:pl-3 border-l-2 border-muted space-y-1.5 sm:space-y-2 text-[10px] sm:text-[11px]">
             {/* Target on mobile (hidden above) */}
             {target && (
               <div className="xs:hidden">
@@ -332,7 +332,7 @@ export function ToolExecutionList({
       {/* Filters - only when showFilters is true and many items */}
       {showFilters && toolExecutions.length > 5 && (
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <span className="text-xs font-medium text-muted-foreground">
+          <span className="text-[11px] font-medium text-muted-foreground">
             Agent Actions ({toolExecutions.length})
           </span>
         </div>
@@ -378,7 +378,7 @@ export function ToolExecutionList({
         <Button
           variant="ghost"
           size="sm"
-          className="w-full h-7 text-xs text-muted-foreground"
+          className="w-full h-7 text-[11px] text-muted-foreground"
           onClick={() => setShowAll(true)}
           data-testid="button-show-more"
         >
@@ -426,10 +426,10 @@ export function ToolExecutionDisplay({
       <CardHeader className="p-3 pb-2">
         <div className="flex items-center gap-2">
           <Icon className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm font-medium">{label}</span>
+          <span className="text-[13px] font-medium">{label}</span>
           {getStatusIcon()}
           {metadata?.executionTime && (
-            <Badge variant="outline" className="ml-auto text-xs">
+            <Badge variant="outline" className="ml-auto text-[11px]">
               {metadata.executionTime}ms
             </Badge>
           )}
@@ -438,7 +438,7 @@ export function ToolExecutionDisplay({
       <CardContent className="p-3 pt-0">
         <div className="space-y-2">
           {(tool === 'create_file' || tool === 'edit_file') && (
-            <div className="text-xs">
+            <div className="text-[11px]">
               <span className="text-muted-foreground">Path: </span>
               <code className="bg-muted px-1 rounded">{parameters.path}</code>
               {parameters.description && (
@@ -448,9 +448,9 @@ export function ToolExecutionDisplay({
           )}
 
           {(tool === 'run_command' || tool === 'install_package') && (
-            <div className="text-xs">
+            <div className="text-[11px]">
               <span className="text-muted-foreground">Command: </span>
-              <code className="bg-muted px-1 rounded text-xs block mt-1 p-2 rounded overflow-x-auto">
+              <code className="bg-muted px-1 rounded text-[11px] block mt-1 p-2 rounded overflow-x-auto">
                 {parameters.command || `npm install ${parameters.package_name}${parameters.dev ? ' --save-dev' : ''}`}
               </code>
               {parameters.description && (
@@ -460,21 +460,21 @@ export function ToolExecutionDisplay({
           )}
 
           {(tool === 'web_search' || tool === 'search_code') && (
-            <div className="text-xs">
+            <div className="text-[11px]">
               <span className="text-muted-foreground">Query: </span>
               <code className="bg-muted px-1 rounded">{parameters.query || parameters.pattern}</code>
             </div>
           )}
 
           {status === 'complete' && result && (
-            <div className="mt-2 pt-2 border-t text-xs">
+            <div className="mt-2 pt-2 border-t text-[11px]">
               {metadata?.filesChanged && metadata.filesChanged.length > 0 && (
                 <div>
                   <span className="text-muted-foreground">Files changed:</span>
                   <ul className="mt-1 space-y-1">
                     {metadata.filesChanged.map((file, i) => (
                       <li key={i} className="ml-2">
-                        <code className="bg-muted px-1 rounded text-xs">{file}</code>
+                        <code className="bg-muted px-1 rounded text-[11px]">{file}</code>
                       </li>
                     ))}
                   </ul>
@@ -484,7 +484,7 @@ export function ToolExecutionDisplay({
               {result.stdout && (
                 <div className="mt-2">
                   <span className="text-muted-foreground">Output:</span>
-                  <pre className="bg-muted p-2 rounded text-xs mt-1 overflow-x-auto max-h-32 overflow-y-auto">
+                  <pre className="bg-muted p-2 rounded text-[11px] mt-1 overflow-x-auto max-h-32 overflow-y-auto">
                     {result.stdout}
                   </pre>
                 </div>
@@ -510,11 +510,11 @@ export function ToolExecutionDisplay({
 
           {(status === 'error' || error) && (
             <div className="mt-2 pt-2 border-t">
-              <p className="text-red-600 dark:text-red-400 text-xs">
+              <p className="text-red-600 dark:text-red-400 text-[11px]">
                 ✗ {error || 'Tool execution failed'}
               </p>
               {result?.stderr && (
-                <pre className="bg-red-950 p-2 rounded text-xs mt-1 overflow-x-auto max-h-32 overflow-y-auto">
+                <pre className="bg-red-950 p-2 rounded text-[11px] mt-1 overflow-x-auto max-h-32 overflow-y-auto">
                   {result.stderr}
                 </pre>
               )}

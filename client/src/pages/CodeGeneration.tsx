@@ -123,7 +123,7 @@ export default function CodeGeneration() {
                       <Icon className="h-5 w-5 text-primary mr-2" />
                       <span className="text-2xl font-bold">{stat.value}</span>
                     </div>
-                    <p className="text-sm text-muted-foreground">{stat.label}</p>
+                    <p className="text-[13px] text-muted-foreground">{stat.label}</p>
                   </div>
                 );
               })}
@@ -133,7 +133,7 @@ export default function CodeGeneration() {
               <Button 
                 size="lg" 
                 onClick={() => setActiveTab('generator')}
-                className="text-lg px-8"
+                className="text-[15px] px-8"
               >
                 <Sparkles className="mr-2 h-5 w-5" />
                 Start Generating
@@ -195,7 +195,7 @@ export default function CodeGeneration() {
                             <div className="text-3xl">{example.image}</div>
                             <div className="flex items-center gap-1">
                               <TrendingUp className="h-3 w-3 text-green-500" />
-                              <span className="text-xs text-green-500 font-medium">
+                              <span className="text-[11px] text-green-500 font-medium">
                                 {example.popularity}%
                               </span>
                             </div>
@@ -205,14 +205,14 @@ export default function CodeGeneration() {
                           </CardTitle>
                         </CardHeader>
                         <CardContent>
-                          <p className="text-sm text-muted-foreground mb-4">
+                          <p className="text-[13px] text-muted-foreground mb-4">
                             {example.description}
                           </p>
                           
                           <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center gap-1">
                               <Clock className="h-3 w-3 text-muted-foreground" />
-                              <span className="text-xs text-muted-foreground">
+                              <span className="text-[11px] text-muted-foreground">
                                 {example.time}
                               </span>
                             </div>
@@ -220,7 +220,7 @@ export default function CodeGeneration() {
 
                           <div className="flex flex-wrap gap-1 mb-4">
                             {example.tags.map((tag) => (
-                              <Badge key={tag} variant="secondary" className="text-xs">
+                              <Badge key={tag} variant="secondary" className="text-[11px]">
                                 {tag}
                               </Badge>
                             ))}

@@ -186,10 +186,10 @@ function EmptyState({
   return (
     <div className="p-8 rounded-lg border border-dashed border-border bg-muted/30 text-center" data-testid="empty-state">
       <Icon className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-      <h3 className="text-lg font-medium text-foreground mb-2">{title}</h3>
+      <h3 className="text-[15px] font-medium text-foreground mb-2">{title}</h3>
       <p className="text-muted-foreground mb-4 max-w-md mx-auto">{description}</p>
       {showContactSales && (
-        <Badge variant="secondary" className="text-xs">
+        <Badge variant="secondary" className="text-[11px]">
           Enterprise Feature - Contact Sales
         </Badge>
       )}
@@ -322,7 +322,7 @@ export default function NetworkingPage() {
                 return (
                   <button
                     key={item.id}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 min-h-[44px] ${
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-200 min-h-[44px] ${
                       isActive 
                         ? 'bg-primary/10 text-primary border-l-2 border-primary pl-[10px]' 
                         : 'text-muted-foreground hover:bg-muted hover:text-foreground'

@@ -199,12 +199,12 @@ export const VirtualizedMessageList = memo(forwardRef<HTMLDivElement, Virtualize
           >
             <div className="flex items-start gap-3">
               <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <span className="text-xs font-medium text-primary">AI</span>
+                <span className="text-[11px] font-medium text-primary">AI</span>
               </div>
               <div className="flex-1 min-w-0">
                 <StreamingText 
                   content={streamingContent} 
-                  className="text-sm text-foreground"
+                  className="text-[13px] text-foreground"
                 />
                 <span className="inline-block w-2 h-4 ml-0.5 bg-primary animate-pulse" />
               </div>

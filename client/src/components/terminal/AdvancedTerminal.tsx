@@ -389,7 +389,7 @@ export function AdvancedTerminal({
         <div className="flex items-center justify-between px-3 py-2 border-b bg-surface-solid">
           <div className="flex items-center space-x-2">
             <TerminalIcon className="h-4 w-4" />
-            <span className="text-sm font-medium">Terminal</span>
+            <span className="text-[13px] font-medium">Terminal</span>
             
             {/* Session Tabs */}
             <Tabs value={activeSessionId} onValueChange={setActiveSessionId} className="ml-4">
@@ -398,7 +398,7 @@ export function AdvancedTerminal({
                   <TabsTrigger 
                     key={session.id} 
                     value={session.id}
-                    className="text-xs px-2 py-1 h-6"
+                    className="text-[11px] px-2 py-1 h-6"
                   >
                     <span className="max-w-[100px] truncate">{session.name}</span>
                     {sessions.length > 1 && (
@@ -607,7 +607,7 @@ export function AdvancedTerminal({
                   {searchResults.map((result, index) => (
                     <div
                       key={index}
-                      className="px-2 py-1 text-xs hover:bg-muted rounded cursor-pointer"
+                      className="px-2 py-1 text-[11px] hover:bg-muted rounded cursor-pointer"
                       onClick={() => goToSearchResult(result.sessionId, result.line)}
                     >
                       <span className="font-medium">
@@ -667,7 +667,7 @@ export function AdvancedTerminal({
                 {activeSession?.history.map((command, index) => (
                   <div
                     key={index}
-                    className="px-3 py-2 rounded hover:bg-muted cursor-pointer font-mono text-sm"
+                    className="px-3 py-2 rounded hover:bg-muted cursor-pointer font-mono text-[13px]"
                     onClick={() => {
                       if (activeSession.websocket?.readyState === WebSocket.OPEN) {
                         activeSession.websocket.send(command);

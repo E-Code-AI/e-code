@@ -312,7 +312,7 @@ export default function Careers() {
             <div className="text-center space-y-8">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20">
                 <Sparkles className="h-4 w-4 text-primary" />
-                <span className="text-sm font-medium">We're hiring globally</span>
+                <span className="text-[13px] font-medium">We're hiring globally</span>
               </div>
               
               <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold">
@@ -330,7 +330,7 @@ export default function Careers() {
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button 
                   size="lg" 
-                  className="text-lg px-8"
+                  className="text-[15px] px-8"
                   onClick={() => document.getElementById('open-positions')?.scrollIntoView({ behavior: 'smooth' })}
                   data-testid="button-careers-view-roles"
                 >
@@ -340,7 +340,7 @@ export default function Careers() {
                 <Button 
                   size="lg" 
                   variant="outline"
-                  className="text-lg px-8"
+                  className="text-[15px] px-8"
                   onClick={() => navigate('/about')}
                   data-testid="button-careers-learn-about"
                 >
@@ -358,7 +358,7 @@ export default function Careers() {
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             <div className="space-y-8">
               <div>
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-muted text-sm font-medium mb-4">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-muted text-[13px] font-medium mb-4">
                   <Users className="h-4 w-4" />
                   Our Culture
                 </div>
@@ -366,7 +366,7 @@ export default function Careers() {
                   Where talent meets
                   <span className="text-primary"> purpose</span>
                 </h2>
-                <p className="text-lg text-muted-foreground leading-relaxed">
+                <p className="text-[15px] text-muted-foreground leading-relaxed">
                   We're building more than a product – we're creating a movement to democratize 
                   software creation. Our culture celebrates innovation, embraces challenges, 
                   and values every perspective.
@@ -379,8 +379,8 @@ export default function Careers() {
                     <div className="p-2 bg-primary/10 rounded-lg w-fit">
                       {value.icon}
                     </div>
-                    <h3 className="font-semibold text-lg">{value.title}</h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
+                    <h3 className="font-semibold text-[15px]">{value.title}</h3>
+                    <p className="text-[13px] text-muted-foreground leading-relaxed">
                       {value.description}
                     </p>
                   </div>
@@ -399,19 +399,19 @@ export default function Careers() {
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <div className="text-3xl font-bold text-primary">150+</div>
-                        <p className="text-sm text-muted-foreground">Team members</p>
+                        <p className="text-[13px] text-muted-foreground">Team members</p>
                       </div>
                       <div className="space-y-2">
                         <div className="text-3xl font-bold text-primary">25+</div>
-                        <p className="text-sm text-muted-foreground">Countries</p>
+                        <p className="text-[13px] text-muted-foreground">Countries</p>
                       </div>
                       <div className="space-y-2">
                         <div className="text-3xl font-bold text-primary">4.8/5</div>
-                        <p className="text-sm text-muted-foreground">Employee rating</p>
+                        <p className="text-[13px] text-muted-foreground">Employee rating</p>
                       </div>
                       <div className="space-y-2">
                         <div className="text-3xl font-bold text-primary">100%</div>
-                        <p className="text-sm text-muted-foreground">Remote friendly</p>
+                        <p className="text-[13px] text-muted-foreground">Remote friendly</p>
                       </div>
                     </div>
                   </CardContent>
@@ -420,8 +420,8 @@ export default function Careers() {
                 <Card className="bg-primary text-primary-foreground">
                   <CardContent className="pt-6">
                     <Trophy className="h-8 w-8 mb-4" />
-                    <p className="text-lg font-medium mb-2">Best Places to Work 2024</p>
-                    <p className="text-sm opacity-90">
+                    <p className="text-[15px] font-medium mb-2">Best Places to Work 2024</p>
+                    <p className="text-[13px] opacity-90">
                       Recognized as one of the top remote-first companies
                     </p>
                   </CardContent>
@@ -436,14 +436,14 @@ export default function Careers() {
       <section className="py-24 px-4 bg-gradient-to-b from-muted/50 to-background">
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-muted text-sm font-medium mb-4">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-muted text-[13px] font-medium mb-4">
               <Gift className="h-4 w-4" />
               Benefits & Perks
             </div>
             <h2 className="text-4xl md:text-5xl font-bold mb-4">
               We invest in <span className="text-primary">your success</span>
             </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-[15px] text-muted-foreground max-w-2xl mx-auto">
               Competitive compensation is just the start. We provide everything you need to thrive personally and professionally.
             </p>
           </div>
@@ -465,7 +465,7 @@ export default function Careers() {
           </div>
           
           <div className="mt-12 text-center">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-[13px] text-muted-foreground">
               Plus many more perks including team retreats, learning stipends, and wellness programs
             </p>
           </div>
@@ -476,14 +476,14 @@ export default function Careers() {
       <section id="open-positions" className="py-24 px-4">
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-muted text-sm font-medium mb-4">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-muted text-[13px] font-medium mb-4">
               <Briefcase className="h-4 w-4" />
               Open Positions
             </div>
             <h2 className="text-4xl md:text-5xl font-bold mb-4">
               Find your <span className="text-primary">dream role</span>
             </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-[15px] text-muted-foreground max-w-2xl mx-auto">
               Join us in our mission to democratize software creation. We have openings across all departments.
             </p>
           </div>
@@ -507,7 +507,7 @@ export default function Careers() {
                           <CardTitle className="text-xl group-hover:text-primary transition-colors">
                             {job.title}
                           </CardTitle>
-                          <p className="text-sm text-muted-foreground">{job.team}</p>
+                          <p className="text-[13px] text-muted-foreground">{job.team}</p>
                         </div>
                       </div>
                       <CardDescription className="text-base leading-relaxed">
@@ -565,7 +565,7 @@ export default function Careers() {
           <h2 className="text-3xl font-bold mb-4">
             Ready to make an impact?
           </h2>
-          <p className="text-lg mb-8 opacity-90">
+          <p className="text-[15px] mb-8 opacity-90">
             Join us in our mission to bring the next billion software creators online
           </p>
           <div className="flex gap-4 justify-center">
@@ -641,7 +641,7 @@ export default function Careers() {
                 <Separator />
 
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <h3 className="text-[15px] font-semibold flex items-center gap-2">
                     <Target className="h-5 w-5 text-primary" />
                     Responsibilities
                   </h3>
@@ -658,7 +658,7 @@ export default function Careers() {
                 <Separator />
 
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <h3 className="text-[15px] font-semibold flex items-center gap-2">
                     <Shield className="h-5 w-5 text-primary" />
                     Requirements
                   </h3>
@@ -676,7 +676,7 @@ export default function Careers() {
                   <>
                     <Separator />
                     <div className="space-y-4">
-                      <h3 className="text-lg font-semibold flex items-center gap-2">
+                      <h3 className="text-[15px] font-semibold flex items-center gap-2">
                         <Sparkles className="h-5 w-5 text-primary" />
                         Nice to Have
                       </h3>

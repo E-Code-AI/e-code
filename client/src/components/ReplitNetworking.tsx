@@ -416,7 +416,7 @@ export function ReplitNetworking({ projectId, className }: ReplitNetworkingProps
                     value={headers}
                     onChange={(e) => setHeaders(e.target.value)}
                     placeholder="Content-Type: application/json&#10;Authorization: Bearer token"
-                    className="font-mono text-sm h-24"
+                    className="font-mono text-[13px] h-24"
                   />
                 </div>
 
@@ -427,7 +427,7 @@ export function ReplitNetworking({ projectId, className }: ReplitNetworkingProps
                       value={body}
                       onChange={(e) => setBody(e.target.value)}
                       placeholder='{"key": "value"}'
-                      className="font-mono text-sm h-32"
+                      className="font-mono text-[13px] h-32"
                     />
                   </div>
                 )}
@@ -453,14 +453,14 @@ export function ReplitNetworking({ projectId, className }: ReplitNetworkingProps
                           >
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2">
-                                <Badge variant="outline" className={cn('text-xs', getMethodColor(req.method))}>
+                                <Badge variant="outline" className={cn('text-[11px]', getMethodColor(req.method))}>
                                   {req.method}
                                 </Badge>
-                                <span className="text-sm truncate flex-1">
+                                <span className="text-[13px] truncate flex-1">
                                   {new URL(req.url).pathname}
                                 </span>
                               </div>
-                              <div className="flex items-center gap-2 text-xs">
+                              <div className="flex items-center gap-2 text-[11px]">
                                 <span className={getStatusColor(req.status)}>
                                   {req.status || '—'}
                                 </span>
@@ -518,7 +518,7 @@ export function ReplitNetworking({ projectId, className }: ReplitNetworkingProps
                         </TabsList>
                         <TabsContent value="body">
                           <ScrollArea className="h-96 border rounded p-4">
-                            <pre className="text-sm">
+                            <pre className="text-[13px]">
                               {selectedRequest.responseBody || 'No response body'}
                             </pre>
                           </ScrollArea>
@@ -539,7 +539,7 @@ export function ReplitNetworking({ projectId, className }: ReplitNetworkingProps
                         </TabsContent>
                         <TabsContent value="raw">
                           <ScrollArea className="h-96 border rounded p-4">
-                            <pre className="text-sm font-mono">
+                            <pre className="text-[13px] font-mono">
                               {`${selectedRequest.method} ${selectedRequest.url}
 ${Object.entries(selectedRequest.headers).map(([k, v]) => `${k}: ${v}`).join('\n')}
 
@@ -614,11 +614,11 @@ ${selectedRequest.body || ''}`}
                           msg.type === 'sent' ? 'bg-primary/10 ml-8' : 'bg-muted mr-8'
                         )}
                       >
-                        <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+                        <div className="flex items-center justify-between text-[11px] text-muted-foreground mb-1">
                           <span>{msg.type === 'sent' ? 'Sent' : 'Received'}</span>
                           <span>{msg.timestamp.toLocaleTimeString()}</span>
                         </div>
-                        <pre className="text-sm whitespace-pre-wrap">{msg.data}</pre>
+                        <pre className="text-[13px] whitespace-pre-wrap">{msg.data}</pre>
                       </div>
                     ))}
                   </div>
@@ -634,7 +634,7 @@ ${selectedRequest.body || ''}`}
                 <CardContent className="pt-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-muted-foreground">Total Requests</p>
+                      <p className="text-[13px] text-muted-foreground">Total Requests</p>
                       <p className="text-2xl font-bold">{requests.length}</p>
                     </div>
                     <Activity className="h-8 w-8 text-muted-foreground" />
@@ -646,7 +646,7 @@ ${selectedRequest.body || ''}`}
                 <CardContent className="pt-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-muted-foreground">Success Rate</p>
+                      <p className="text-[13px] text-muted-foreground">Success Rate</p>
                       <p className="text-2xl font-bold">
                         {requests.length > 0
                           ? Math.round((requests.filter(r => r.status && r.status < 400).length / requests.length) * 100)
@@ -662,7 +662,7 @@ ${selectedRequest.body || ''}`}
                 <CardContent className="pt-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-muted-foreground">Avg Response Time</p>
+                      <p className="text-[13px] text-muted-foreground">Avg Response Time</p>
                       <p className="text-2xl font-bold">
                         {requests.length > 0
                           ? Math.round(requests.reduce((acc, r) => acc + (r.responseTime || 0), 0) / requests.length)
@@ -678,7 +678,7 @@ ${selectedRequest.body || ''}`}
                 <CardContent className="pt-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-muted-foreground">Failed Requests</p>
+                      <p className="text-[13px] text-muted-foreground">Failed Requests</p>
                       <p className="text-2xl font-bold">
                         {requests.filter(r => r.error || (r.status && r.status >= 400)).length}
                       </p>
@@ -706,7 +706,7 @@ ${selectedRequest.body || ''}`}
                     {requests.map((req) => (
                       <TableRow key={req.id} className="cursor-pointer hover:bg-muted">
                         <TableCell>
-                          <Badge variant="outline" className={cn('text-xs', getMethodColor(req.method))}>
+                          <Badge variant="outline" className={cn('text-[11px]', getMethodColor(req.method))}>
                             {req.method}
                           </Badge>
                         </TableCell>

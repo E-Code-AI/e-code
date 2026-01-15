@@ -61,18 +61,18 @@ function MessageCard({ message, onSelect }: { message: ConversationMessageRow; o
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between gap-2 mb-1">
-              <span className="font-medium text-sm">{config.label}</span>
+              <span className="font-medium text-[13px]">{config.label}</span>
               {message.model && (
-                <Badge variant="outline" className="text-xs flex items-center gap-1">
+                <Badge variant="outline" className="text-[11px] flex items-center gap-1">
                   <Cpu className="h-2.5 w-2.5" />
                   {message.model}
                 </Badge>
               )}
             </div>
-            <div className="text-sm text-muted-foreground line-clamp-2 mb-2">
+            <div className="text-[13px] text-muted-foreground line-clamp-2 mb-2">
               {message.content}
             </div>
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <div className="flex items-center justify-between text-[11px] text-muted-foreground">
               <span className="flex items-center gap-1">
                 <Clock className="h-3 w-3" />
                 {message.createdAt ? format(new Date(message.createdAt), 'MMM d, HH:mm') : '-'}
@@ -157,19 +157,19 @@ export function ConversationHistoryGrid({
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <MessageSquare className="h-4 w-4 text-muted-foreground" />
-          <h4 className="font-medium text-sm">Messages</h4>
+          <h4 className="font-medium text-[13px]">Messages</h4>
           {data && (
             <div className="flex items-center gap-1">
-              <Badge variant="secondary" className="text-xs bg-blue-500/10 text-blue-600">
+              <Badge variant="secondary" className="text-[11px] bg-blue-500/10 text-blue-600">
                 <User className="h-2.5 w-2.5 mr-1" />
                 {stats.user}
               </Badge>
-              <Badge variant="secondary" className="text-xs bg-green-500/10 text-green-600">
+              <Badge variant="secondary" className="text-[11px] bg-green-500/10 text-green-600">
                 <Bot className="h-2.5 w-2.5 mr-1" />
                 {stats.assistant}
               </Badge>
               {stats.tool > 0 && (
-                <Badge variant="secondary" className="text-xs bg-purple-500/10 text-purple-600">
+                <Badge variant="secondary" className="text-[11px] bg-purple-500/10 text-purple-600">
                   <Wrench className="h-2.5 w-2.5 mr-1" />
                   {stats.tool}
                 </Badge>
@@ -185,13 +185,13 @@ export function ConversationHistoryGrid({
               placeholder="Search messages..."
               value={searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
-              className="pl-7 w-[180px] h-8 text-xs"
+              className="pl-7 w-[180px] h-8 text-[11px]"
               data-testid="input-search-messages"
             />
           </div>
 
           <Select value={roleFilter} onValueChange={setRoleFilter}>
-            <SelectTrigger className="w-[90px] h-8 text-xs" data-testid="select-message-role">
+            <SelectTrigger className="w-[90px] h-8 text-[11px]" data-testid="select-message-role">
               <SelectValue placeholder="Role" />
             </SelectTrigger>
             <SelectContent>
@@ -204,7 +204,7 @@ export function ConversationHistoryGrid({
           </Select>
 
           <Select value={modelFilter} onValueChange={setModelFilter}>
-            <SelectTrigger className="w-[120px] h-8 text-xs" data-testid="select-message-model">
+            <SelectTrigger className="w-[120px] h-8 text-[11px]" data-testid="select-message-model">
               <SelectValue placeholder="Model" />
             </SelectTrigger>
             <SelectContent>
@@ -234,7 +234,7 @@ export function ConversationHistoryGrid({
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       ) : error ? (
-        <div className="flex flex-col items-center justify-center py-12 gap-2 text-muted-foreground text-sm">
+        <div className="flex flex-col items-center justify-center py-12 gap-2 text-muted-foreground text-[13px]">
           <p>Failed to load messages</p>
           <Button variant="outline" size="sm" onClick={() => refetch()}>
             Retry
@@ -243,7 +243,7 @@ export function ConversationHistoryGrid({
       ) : isMobile ? (
         <div className="space-y-3" data-testid="messages-mobile-view">
           {(data?.rows || []).length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground text-sm">
+            <div className="text-center py-8 text-muted-foreground text-[13px]">
               No messages found
             </div>
           ) : (

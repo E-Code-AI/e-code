@@ -330,24 +330,24 @@ export function VisualDiffEditor({
     <Card className={cn("h-full flex flex-col", className)}>
       <CardHeader className="pb-3 space-y-0">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-medium flex items-center gap-2">
+          <CardTitle className="text-[13px] font-medium flex items-center gap-2">
             <GitCompare className="h-4 w-4" />
             Visual Diff
           </CardTitle>
 
           <div className="flex items-center gap-2">
             {stats.added > 0 && (
-              <Badge variant="outline" className="text-xs bg-green-500/10 text-green-600 border-green-500/20">
+              <Badge variant="outline" className="text-[11px] bg-green-500/10 text-green-600 border-green-500/20">
                 +{stats.added}
               </Badge>
             )}
             {stats.removed > 0 && (
-              <Badge variant="outline" className="text-xs bg-red-500/10 text-red-600 border-red-500/20">
+              <Badge variant="outline" className="text-[11px] bg-red-500/10 text-red-600 border-red-500/20">
                 -{stats.removed}
               </Badge>
             )}
             {stats.modified > 0 && (
-              <Badge variant="outline" className="text-xs bg-yellow-500/10 text-yellow-600 border-yellow-500/20">
+              <Badge variant="outline" className="text-[11px] bg-yellow-500/10 text-yellow-600 border-yellow-500/20">
                 ~{stats.modified}
               </Badge>
             )}
@@ -356,7 +356,7 @@ export function VisualDiffEditor({
 
         <Separator className="my-3" />
 
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
+        <div className="flex items-center justify-between text-[11px] text-muted-foreground">
           <div className="flex items-center gap-2">
             <span className="font-mono">{originalFileName}</span>
             <ArrowLeftRight className="h-3 w-3" />
@@ -374,7 +374,7 @@ export function VisualDiffEditor({
             >
               <ChevronLeft className="h-3.5 w-3.5" />
             </Button>
-            <span className="px-2 text-xs">
+            <span className="px-2 text-[11px]">
               {totalDiffs > 0 ? `${currentDiff + 1}/${totalDiffs}` : '0/0'}
             </span>
             <Button
@@ -395,7 +395,7 @@ export function VisualDiffEditor({
             <Button
               size="sm"
               variant="outline"
-              className="h-7 text-xs"
+              className="h-7 text-[11px]"
               onClick={() => setInlineView(!inlineView)}
               data-testid="diff-toggle-view"
             >
@@ -415,7 +415,7 @@ export function VisualDiffEditor({
             <Button
               size="sm"
               variant="outline"
-              className="h-7 text-xs"
+              className="h-7 text-[11px]"
               onClick={() => setShowWhitespace(!showWhitespace)}
               data-testid="diff-toggle-whitespace"
             >
@@ -426,7 +426,7 @@ export function VisualDiffEditor({
             <Button
               size="sm"
               variant="ghost"
-              className="h-7 text-xs"
+              className="h-7 text-[11px]"
               onClick={handleCopyModified}
               data-testid="diff-copy"
             >
@@ -440,7 +440,7 @@ export function VisualDiffEditor({
               <Button
                 size="sm"
                 variant="outline"
-                className="h-7 text-xs text-green-600 border-green-600/20 hover:bg-green-500/10"
+                className="h-7 text-[11px] text-green-600 border-green-600/20 hover:bg-green-500/10"
                 onClick={handleAcceptAll}
                 disabled={changes.length === 0}
                 data-testid="diff-accept-all"
@@ -451,7 +451,7 @@ export function VisualDiffEditor({
               <Button
                 size="sm"
                 variant="outline"
-                className="h-7 text-xs text-red-600 border-red-600/20 hover:bg-red-500/10"
+                className="h-7 text-[11px] text-red-600 border-red-600/20 hover:bg-red-500/10"
                 onClick={handleRejectAll}
                 disabled={changes.length === 0}
                 data-testid="diff-reject-all"

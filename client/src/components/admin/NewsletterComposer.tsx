@@ -256,7 +256,7 @@ export default function NewsletterComposer() {
 
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <Label className="text-sm font-medium">Content sections</Label>
+              <Label className="text-[13px] font-medium">Content sections</Label>
               <Button type="button" variant="outline" size="sm" onClick={addSection}>
                 <Plus className="h-4 w-4 mr-1" />
                 Add section

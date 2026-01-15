@@ -140,7 +140,7 @@ export function DatabaseBrowser({ projectId }: { projectId: string }) {
           <div className="flex items-center gap-2">
             <Database className="h-5 w-5" />
             <div>
-              <CardTitle className="text-lg">Database Browser</CardTitle>
+              <CardTitle className="text-[15px]">Database Browser</CardTitle>
               <CardDescription>
                 {dbInfo ? `${dbInfo.name} (${dbInfo.size})` : 'PostgreSQL Database'}
               </CardDescription>
@@ -193,9 +193,9 @@ export function DatabaseBrowser({ projectId }: { projectId: string }) {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <TableIcon className="h-4 w-4" />
-                        <span className="text-sm font-medium">{table.name}</span>
+                        <span className="text-[13px] font-medium">{table.name}</span>
                       </div>
-                      <Badge variant="secondary" className="text-xs">
+                      <Badge variant="secondary" className="text-[11px]">
                         {table.rowCount} rows
                       </Badge>
                     </div>
@@ -255,11 +255,11 @@ export function DatabaseBrowser({ projectId }: { projectId: string }) {
                           {tableData.rows.map((row: any, index: number) => (
                             <TableRow key={index}>
                               {Object.values(row).map((value: any, i: number) => (
-                                <TableCell key={i} className="font-mono text-sm">
+                                <TableCell key={i} className="font-mono text-[13px]">
                                   {value === null ? (
                                     <span className="text-muted-foreground">NULL</span>
                                   ) : typeof value === 'object' ? (
-                                    <span className="text-xs">{JSON.stringify(value)}</span>
+                                    <span className="text-[11px]">{JSON.stringify(value)}</span>
                                   ) : (
                                     String(value)
                                   )}
@@ -290,7 +290,7 @@ export function DatabaseBrowser({ projectId }: { projectId: string }) {
                   {/* Pagination */}
                   {tableData && tableData.totalRows && tableData.totalRows > pageSize && (
                     <div className="p-4 border-t flex items-center justify-between">
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-[13px] text-muted-foreground">
                         Showing {(currentPage - 1) * pageSize + 1} to {Math.min(currentPage * pageSize, tableData.totalRows)} of {tableData.totalRows} rows
                       </p>
                       <div className="flex items-center gap-2">
@@ -302,7 +302,7 @@ export function DatabaseBrowser({ projectId }: { projectId: string }) {
                         >
                           <ChevronLeft className="h-4 w-4" />
                         </Button>
-                        <span className="text-sm">Page {currentPage}</span>
+                        <span className="text-[13px]">Page {currentPage}</span>
                         <Button
                           variant="outline"
                           size="sm"
@@ -343,9 +343,9 @@ export function DatabaseBrowser({ projectId }: { projectId: string }) {
                         ?.columns.map((column) => (
                           <TableRow key={column.name}>
                             <TableCell className="font-mono">{column.name}</TableCell>
-                            <TableCell className="font-mono text-sm">{column.type}</TableCell>
+                            <TableCell className="font-mono text-[13px]">{column.type}</TableCell>
                             <TableCell>{column.nullable ? 'Yes' : 'No'}</TableCell>
-                            <TableCell className="font-mono text-sm">
+                            <TableCell className="font-mono text-[13px]">
                               {column.default || '-'}
                             </TableCell>
                             <TableCell>
@@ -371,11 +371,11 @@ export function DatabaseBrowser({ projectId }: { projectId: string }) {
                     value={queryInput}
                     onChange={(e) => setQueryInput(e.target.value)}
                     placeholder="Enter SQL query..."
-                    className="w-full h-full p-4 font-mono text-sm bg-background border rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full h-full p-4 font-mono text-[13px] bg-background border rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
                 <div className="flex justify-between items-center">
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-[13px] text-muted-foreground">
                     Write custom SQL queries to interact with your database
                   </p>
                   <Button

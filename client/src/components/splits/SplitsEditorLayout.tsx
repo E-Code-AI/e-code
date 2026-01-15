@@ -190,7 +190,7 @@ export function SplitsEditorLayout({
         <div className={cn("flex flex-col h-full w-full bg-[var(--ecode-background)]", className)}>
           {/* Mobile Top Toolbar */}
           <div className="h-12 border-b border-[var(--ecode-border)] bg-[var(--ecode-surface)] flex items-center px-3 justify-between flex-shrink-0">
-            <h1 className="text-sm font-semibold text-[var(--ecode-text)] font-[family-name:var(--ecode-font-sans)] truncate max-w-[150px]">
+            <h1 className="text-[13px] font-semibold text-[var(--ecode-text)] font-[family-name:var(--ecode-font-sans)] truncate max-w-[150px]">
               {projectName}
             </h1>
             
@@ -211,28 +211,28 @@ export function SplitsEditorLayout({
             <TabsList className="w-full shrink-0 h-10 bg-[var(--ecode-surface)] border-b border-[var(--ecode-border)] rounded-none justify-start px-2 gap-1">
               <TabsTrigger 
                 value="files" 
-                className="text-xs data-[state=active]:bg-[var(--ecode-surface-hover)]"
+                className="text-[11px] data-[state=active]:bg-[var(--ecode-surface-hover)]"
                 data-testid="mobile-tab-files"
               >
                 Files
               </TabsTrigger>
               <TabsTrigger 
                 value="editor" 
-                className="text-xs data-[state=active]:bg-[var(--ecode-surface-hover)]"
+                className="text-[11px] data-[state=active]:bg-[var(--ecode-surface-hover)]"
                 data-testid="tab-editor"
               >
                 Editor
               </TabsTrigger>
               <TabsTrigger 
                 value="preview" 
-                className="text-xs data-[state=active]:bg-[var(--ecode-surface-hover)]"
+                className="text-[11px] data-[state=active]:bg-[var(--ecode-surface-hover)]"
                 data-testid="tab-preview"
               >
                 Preview
               </TabsTrigger>
               <TabsTrigger 
                 value="terminal" 
-                className="text-xs data-[state=active]:bg-[var(--ecode-surface-hover)]"
+                className="text-[11px] data-[state=active]:bg-[var(--ecode-surface-hover)]"
                 data-testid="tab-terminal"
               >
                 Terminal
@@ -277,7 +277,7 @@ export function SplitsEditorLayout({
               <div className="h-full bg-[var(--ecode-surface)]">
                 {previewContent || (
                   <div className="flex items-center justify-center h-full text-[var(--ecode-text-muted)]">
-                    <p className="text-sm font-[family-name:var(--ecode-font-sans)]">Preview will appear here</p>
+                    <p className="text-[13px] font-[family-name:var(--ecode-font-sans)]">Preview will appear here</p>
                   </div>
                 )}
               </div>
@@ -339,7 +339,7 @@ export function SplitsEditorLayout({
         {/* Top Toolbar - Replit Style */}
         <div className="h-12 border-b border-[var(--ecode-border)] bg-[var(--ecode-surface)] flex items-center px-4 justify-between flex-shrink-0">
         <div className="flex items-center gap-3">
-          <h1 className="text-sm font-semibold text-[var(--ecode-text)] font-[family-name:var(--ecode-font-sans)]">
+          <h1 className="text-[13px] font-semibold text-[var(--ecode-text)] font-[family-name:var(--ecode-font-sans)]">
             {projectName}
           </h1>
         </div>
@@ -399,37 +399,37 @@ export function SplitsEditorLayout({
                   <div className="h-10 border-b border-[var(--ecode-border)] flex items-center px-2 bg-[var(--ecode-surface)] justify-between flex-shrink-0">
                     <Tabs value={activeTool} onValueChange={setActiveTool} className="flex-1 overflow-x-auto">
                       <TabsList className="bg-transparent border-0 h-9 inline-flex">
-                        <TabsTrigger value="files" className="data-[state=active]:bg-[var(--ecode-surface-hover)] text-xs" data-testid="tab-files">
+                        <TabsTrigger value="files" className="data-[state=active]:bg-[var(--ecode-surface-hover)] text-[11px]" data-testid="tab-files">
                           Files
                         </TabsTrigger>
-                        <TabsTrigger value="search" className="data-[state=active]:bg-[var(--ecode-surface-hover)] text-xs" data-testid="tab-search">
+                        <TabsTrigger value="search" className="data-[state=active]:bg-[var(--ecode-surface-hover)] text-[11px]" data-testid="tab-search">
                           Search
                         </TabsTrigger>
-                        <TabsTrigger value="git" className="data-[state=active]:bg-[var(--ecode-surface-hover)] text-xs" data-testid="tab-git">
+                        <TabsTrigger value="git" className="data-[state=active]:bg-[var(--ecode-surface-hover)] text-[11px]" data-testid="tab-git">
                           Git
                         </TabsTrigger>
-                        <TabsTrigger value="debugger" className="data-[state=active]:bg-[var(--ecode-surface-hover)] text-xs" data-testid="tab-debugger">
+                        <TabsTrigger value="debugger" className="data-[state=active]:bg-[var(--ecode-surface-hover)] text-[11px]" data-testid="tab-debugger">
                           Debugger
                         </TabsTrigger>
-                        <TabsTrigger value="testing" className="data-[state=active]:bg-[var(--ecode-surface-hover)] text-xs" data-testid="tab-testing">
+                        <TabsTrigger value="testing" className="data-[state=active]:bg-[var(--ecode-surface-hover)] text-[11px]" data-testid="tab-testing">
                           Testing
                         </TabsTrigger>
-                        <TabsTrigger value="database" className="data-[state=active]:bg-[var(--ecode-surface-hover)] text-xs" data-testid="tab-database">
+                        <TabsTrigger value="database" className="data-[state=active]:bg-[var(--ecode-surface-hover)] text-[11px]" data-testid="tab-database">
                           Database
                         </TabsTrigger>
-                        <TabsTrigger value="packages" className="data-[state=active]:bg-[var(--ecode-surface-hover)] text-xs" data-testid="tab-packages">
+                        <TabsTrigger value="packages" className="data-[state=active]:bg-[var(--ecode-surface-hover)] text-[11px]" data-testid="tab-packages">
                           Packages
                         </TabsTrigger>
-                        <TabsTrigger value="history" className="data-[state=active]:bg-[var(--ecode-surface-hover)] text-xs" data-testid="tab-history">
+                        <TabsTrigger value="history" className="data-[state=active]:bg-[var(--ecode-surface-hover)] text-[11px]" data-testid="tab-history">
                           History
                         </TabsTrigger>
-                        <TabsTrigger value="secrets" className="data-[state=active]:bg-[var(--ecode-surface-hover)] text-xs" data-testid="tab-secrets">
+                        <TabsTrigger value="secrets" className="data-[state=active]:bg-[var(--ecode-surface-hover)] text-[11px]" data-testid="tab-secrets">
                           Secrets
                         </TabsTrigger>
-                        <TabsTrigger value="agent" className="data-[state=active]:bg-[var(--ecode-surface-hover)] text-xs" data-testid="tab-agent">
+                        <TabsTrigger value="agent" className="data-[state=active]:bg-[var(--ecode-surface-hover)] text-[11px]" data-testid="tab-agent">
                           AI Agent
                         </TabsTrigger>
-                        <TabsTrigger value="settings" className="data-[state=active]:bg-[var(--ecode-surface-hover)] text-xs" data-testid="tab-settings">
+                        <TabsTrigger value="settings" className="data-[state=active]:bg-[var(--ecode-surface-hover)] text-[11px]" data-testid="tab-settings">
                           Settings
                         </TabsTrigger>
                       </TabsList>
@@ -494,19 +494,19 @@ export function SplitsEditorLayout({
                     <Tabs defaultValue="terminal" className="h-full flex flex-col">
                       <div className="h-9 bg-[var(--ecode-terminal-bg)] border-b border-[var(--ecode-border)] flex items-center justify-between px-3 flex-shrink-0">
                         <TabsList className="bg-transparent border-0 h-8 overflow-x-auto">
-                          <TabsTrigger value="terminal" className="text-xs" data-testid="tab-terminal">
+                          <TabsTrigger value="terminal" className="text-[11px]" data-testid="tab-terminal">
                             Terminal
                           </TabsTrigger>
-                          <TabsTrigger value="output" className="text-xs" data-testid="tab-output">
+                          <TabsTrigger value="output" className="text-[11px]" data-testid="tab-output">
                             Output
                           </TabsTrigger>
-                          <TabsTrigger value="problems" className="text-xs" data-testid="tab-problems">
+                          <TabsTrigger value="problems" className="text-[11px]" data-testid="tab-problems">
                             Problems
                           </TabsTrigger>
-                          <TabsTrigger value="console" className="text-xs" data-testid="tab-console">
+                          <TabsTrigger value="console" className="text-[11px]" data-testid="tab-console">
                             Console
                           </TabsTrigger>
-                          <TabsTrigger value="debug" className="text-xs" data-testid="tab-debug-console">
+                          <TabsTrigger value="debug" className="text-[11px]" data-testid="tab-debug-console">
                             Debug Console
                           </TabsTrigger>
                         </TabsList>
@@ -548,7 +548,7 @@ export function SplitsEditorLayout({
                       <TabsContent value="console" className="flex-1 m-0 overflow-hidden">
                         <div className="h-full bg-[var(--ecode-terminal-bg)]">
                           {consoleContent || (
-                            <div className="p-4 text-[var(--ecode-terminal-text)] text-xs font-[family-name:var(--ecode-font-mono)]">
+                            <div className="p-4 text-[var(--ecode-terminal-text)] text-[11px] font-[family-name:var(--ecode-font-mono)]">
                               Console output will appear here...
                             </div>
                           )}
@@ -557,7 +557,7 @@ export function SplitsEditorLayout({
                       
                       <TabsContent value="debug" className="flex-1 m-0 overflow-hidden">
                         <div className="h-full bg-[var(--ecode-terminal-bg)] p-4">
-                          <p className="text-[var(--ecode-terminal-text)] text-xs font-[family-name:var(--ecode-font-mono)]">
+                          <p className="text-[var(--ecode-terminal-text)] text-[11px] font-[family-name:var(--ecode-font-mono)]">
                             Debug console ready. Start debugging to see output here.
                           </p>
                         </div>
@@ -604,7 +604,7 @@ export function SplitsEditorLayout({
                 <div className="h-full flex flex-col border-l border-[var(--ecode-border)]">
                   {/* Right Panel Header */}
                   <div className="h-10 border-b border-[var(--ecode-border)] flex items-center px-3 bg-[var(--ecode-surface)] justify-between flex-shrink-0">
-                    <span className="text-sm font-medium text-[var(--ecode-text)] font-[family-name:var(--ecode-font-sans)]">
+                    <span className="text-[13px] font-medium text-[var(--ecode-text)] font-[family-name:var(--ecode-font-sans)]">
                       Preview
                     </span>
                     <button
@@ -619,7 +619,7 @@ export function SplitsEditorLayout({
                   <div className="flex-1 overflow-hidden bg-[var(--ecode-surface)]">
                     {previewContent || (
                       <div className="flex items-center justify-center h-full text-[var(--ecode-text-muted)]">
-                        <p className="text-sm font-[family-name:var(--ecode-font-sans)]">Preview will appear here</p>
+                        <p className="text-[13px] font-[family-name:var(--ecode-font-sans)]">Preview will appear here</p>
                       </div>
                     )}
                   </div>
@@ -658,7 +658,7 @@ export function SplitsEditorLayout({
           data-testid="button-open-console"
         >
           <ChevronUp className="h-4 w-4 text-[var(--ecode-text-secondary)]" />
-          <span className="text-sm text-[var(--ecode-text)] font-[family-name:var(--ecode-font-sans)]">Show Console</span>
+          <span className="text-[13px] text-[var(--ecode-text)] font-[family-name:var(--ecode-font-sans)]">Show Console</span>
         </button>
       )}
       

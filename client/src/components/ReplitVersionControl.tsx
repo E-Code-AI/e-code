@@ -183,7 +183,7 @@ export function ReplitVersionControl({ projectId, className }: VersionControlPro
     return (
       <div
         key={index}
-        className={cn("font-mono text-xs px-2 py-0.5", bgColor, textColor)}
+        className={cn("font-mono text-[11px] px-2 py-0.5", bgColor, textColor)}
       >
         <span className="select-none mr-2">{prefix}</span>
         <span>{line.content}</span>
@@ -276,9 +276,9 @@ export function ReplitVersionControl({ projectId, className }: VersionControlPro
                               className="cursor-pointer"
                             />
                             {getFileIcon(file.status)}
-                            <span className="text-sm">{file.path}</span>
+                            <span className="text-[13px]">{file.path}</span>
                           </div>
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
                             <span className="text-green-600">+{file.additions}</span>
                             <span className="text-red-600">-{file.deletions}</span>
                           </div>
@@ -310,8 +310,8 @@ export function ReplitVersionControl({ projectId, className }: VersionControlPro
                 <div className="flex-1 flex items-center justify-center">
                   <div className="text-center">
                     <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-4" />
-                    <p className="text-lg font-medium">Working tree clean</p>
-                    <p className="text-sm text-muted-foreground">No changes to commit</p>
+                    <p className="text-[15px] font-medium">Working tree clean</p>
+                    <p className="text-[13px] text-muted-foreground">No changes to commit</p>
                   </div>
                 </div>
               )}
@@ -339,17 +339,17 @@ export function ReplitVersionControl({ projectId, className }: VersionControlPro
                               <AvatarFallback>{commit.author.name[0]}</AvatarFallback>
                             </Avatar>
                             <div>
-                              <p className="text-sm font-medium line-clamp-1">{commit.message}</p>
-                              <p className="text-xs text-muted-foreground">
+                              <p className="text-[13px] font-medium line-clamp-1">{commit.message}</p>
+                              <p className="text-[11px] text-muted-foreground">
                                 {commit.author.name} • {new Date(commit.date).toLocaleDateString()}
                               </p>
                             </div>
                           </div>
-                          <Badge variant="outline" className="text-xs">
+                          <Badge variant="outline" className="text-[11px]">
                             {commit.id.slice(0, 7)}
                           </Badge>
                         </div>
-                        <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-4 mt-2 text-[11px] text-muted-foreground">
                           <span>{commit.stats.filesChanged} files</span>
                           <span className="text-green-600">+{commit.stats.additions}</span>
                           <span className="text-red-600">-{commit.stats.deletions}</span>
@@ -365,7 +365,7 @@ export function ReplitVersionControl({ projectId, className }: VersionControlPro
                   <div className="h-full flex flex-col">
                     <div className="p-4 border-b">
                       <h3 className="font-semibold">{selectedCommit.message}</h3>
-                      <p className="text-sm text-muted-foreground mt-1">
+                      <p className="text-[13px] text-muted-foreground mt-1">
                         {selectedCommit.author.name} committed on {new Date(selectedCommit.date).toLocaleString()}
                       </p>
                     </div>
@@ -375,15 +375,15 @@ export function ReplitVersionControl({ projectId, className }: VersionControlPro
                           <div key={file.path} className="space-y-2">
                             <div className="flex items-center gap-2">
                               {getFileIcon(file.status)}
-                              <span className="text-sm font-medium">{file.path}</span>
-                              <Badge variant="secondary" className="text-xs">
+                              <span className="text-[13px] font-medium">{file.path}</span>
+                              <Badge variant="secondary" className="text-[11px]">
                                 +{file.additions} -{file.deletions}
                               </Badge>
                             </div>
                             <div className="border rounded-md overflow-hidden">
                               {file.hunks.map((hunk, hunkIndex) => (
                                 <div key={hunkIndex}>
-                                  <div className="bg-muted px-2 py-1 text-xs font-mono text-muted-foreground">
+                                  <div className="bg-muted px-2 py-1 text-[11px] font-mono text-muted-foreground">
                                     @@ -{hunk.oldStart},{hunk.oldLines} +{hunk.newStart},{hunk.newLines} @@
                                   </div>
                                   {hunk.lines.map((line, lineIndex) => renderDiffLine(line, lineIndex))}
@@ -421,17 +421,17 @@ export function ReplitVersionControl({ projectId, className }: VersionControlPro
                           <GitBranch className="h-4 w-4" />
                           <span className="font-medium">{branch.name}</span>
                           {branch.isActive && (
-                            <Badge variant="secondary" className="text-xs">Active</Badge>
+                            <Badge variant="secondary" className="text-[11px]">Active</Badge>
                           )}
                         </div>
                         <Button variant="ghost" size="sm">
                           <ChevronRight className="h-4 w-4" />
                         </Button>
                       </div>
-                      <p className="text-sm text-muted-foreground mt-2">
+                      <p className="text-[13px] text-muted-foreground mt-2">
                         {branch.lastCommit.message}
                       </p>
-                      <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-4 mt-2 text-[11px] text-muted-foreground">
                         <span>{new Date(branch.lastCommit.date).toLocaleDateString()}</span>
                         {branch.ahead > 0 && (
                           <span className="text-green-600">↑ {branch.ahead}</span>

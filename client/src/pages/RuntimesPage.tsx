@@ -103,8 +103,8 @@ export default function RuntimesPage() {
                   {selectedLanguage && (
                     <div className="space-y-4">
                       <div>
-                        <h3 className="text-sm font-medium">Runtime Setup</h3>
-                        <p className="text-sm text-muted-foreground mt-1">
+                        <h3 className="text-[13px] font-medium">Runtime Setup</h3>
+                        <p className="text-[13px] text-muted-foreground mt-1">
                           {dockerAvailable ? 
                             `Using Docker with official ${selectedLanguage} images` : 
                             nixAvailable ? 
@@ -115,8 +115,8 @@ export default function RuntimesPage() {
                       </div>
                       
                       <div>
-                        <h3 className="text-sm font-medium">Environment Info</h3>
-                        <table className="w-full text-sm mt-1">
+                        <h3 className="text-[13px] font-medium">Environment Info</h3>
+                        <table className="w-full text-[13px] mt-1">
                           <tbody>
                             <tr>
                               <td className="py-1 font-medium">Default File</td>
@@ -126,7 +126,7 @@ export default function RuntimesPage() {
                             </tr>
                             <tr>
                               <td className="py-1 font-medium">Run Command</td>
-                              <td className="py-1 text-muted-foreground font-mono text-xs">
+                              <td className="py-1 text-muted-foreground font-mono text-[11px]">
                                 {languageConfigs[selectedLanguage]?.runCommand || 'node index.js'}
                               </td>
                             </tr>
@@ -139,7 +139,7 @@ export default function RuntimesPage() {
                             {languageConfigs[selectedLanguage]?.installCommand && (
                               <tr>
                                 <td className="py-1 font-medium">Install Command</td>
-                                <td className="py-1 text-muted-foreground font-mono text-xs">
+                                <td className="py-1 text-muted-foreground font-mono text-[11px]">
                                   {languageConfigs[selectedLanguage]?.installCommand}
                                 </td>
                               </tr>
@@ -149,8 +149,8 @@ export default function RuntimesPage() {
                       </div>
                       
                       <div>
-                        <h3 className="text-sm font-medium">Packages & Dependencies</h3>
-                        <p className="text-sm text-muted-foreground mt-1">
+                        <h3 className="text-[13px] font-medium">Packages & Dependencies</h3>
+                        <p className="text-[13px] text-muted-foreground mt-1">
                           {selectedLanguage === 'nodejs' || selectedLanguage === 'typescript' ? 
                             'Manages dependencies via package.json and npm' : 
                             selectedLanguage === 'python' ? 

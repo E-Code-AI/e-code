@@ -113,7 +113,7 @@ export function AnimatedTemplateCard({
             />
           </LazyMotionDiv>
         ))}
-        <span className="ml-1 text-sm text-muted-foreground">
+        <span className="ml-1 text-[13px] text-muted-foreground">
           ({template.reviewCount || 0})
         </span>
       </div>
@@ -149,14 +149,14 @@ export function AnimatedTemplateCard({
               <div className="flex-1 p-4">
                 <div className="flex items-start justify-between mb-2">
                   <div>
-                    <h3 className="font-semibold text-lg">{template.name}</h3>
-                    <p className="text-sm text-muted-foreground line-clamp-2">
+                    <h3 className="font-semibold text-[15px]">{template.name}</h3>
+                    <p className="text-[13px] text-muted-foreground line-clamp-2">
                       {template.description}
                     </p>
                   </div>
                   <div className="text-right">
                     {template.price > 0 ? (
-                      <div className="font-bold text-lg text-primary">
+                      <div className="font-bold text-[15px] text-primary">
                         $<AnimatedValue value={template.price} decimals={2} />
                       </div>
                     ) : (
@@ -165,7 +165,7 @@ export function AnimatedTemplateCard({
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                <div className="flex items-center gap-4 text-[13px] text-muted-foreground">
                   <span className="flex items-center gap-1">
                     <Download className="h-3 w-3" />
                     <AnimatedValue value={template.downloads || 0} />
@@ -180,7 +180,7 @@ export function AnimatedTemplateCard({
                 <div className="flex items-center justify-between mt-3">
                   <div className="flex gap-2">
                     {template.tags?.slice(0, 3).map((tag: string, i: number) => (
-                      <Badge key={tag} variant="outline" className="text-xs">
+                      <Badge key={tag} variant="outline" className="text-[11px]">
                         {tag}
                       </Badge>
                     ))}
@@ -250,15 +250,15 @@ export function AnimatedTemplateCard({
             <div className="absolute bottom-2 left-2 right-2">
               <h3 className="font-semibold text-white mb-1">{template.name}</h3>
               <div className="flex items-center gap-2">
-                <Badge variant="secondary" className="text-xs bg-white/20 text-white">
+                <Badge variant="secondary" className="text-[11px] bg-white/20 text-white">
                   {template.category}
                 </Badge>
                 {template.price > 0 ? (
-                  <Badge className="text-xs bg-primary">
+                  <Badge className="text-[11px] bg-primary">
                     ${template.price}
                   </Badge>
                 ) : (
-                  <Badge variant="secondary" className="text-xs bg-green-500 text-white">
+                  <Badge variant="secondary" className="text-[11px] bg-green-500 text-white">
                     Free
                   </Badge>
                 )}
@@ -267,12 +267,12 @@ export function AnimatedTemplateCard({
           </div>
           
           <CardContent className="p-4">
-            <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+            <p className="text-[13px] text-muted-foreground line-clamp-2 mb-3">
               {template.description}
             </p>
             
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3 text-sm text-muted-foreground">
+              <div className="flex items-center gap-3 text-[13px] text-muted-foreground">
                 <span className="flex items-center gap-1">
                   <Download className="h-3 w-3" />
                   {template.downloads || 0}
@@ -293,12 +293,12 @@ export function AnimatedTemplateCard({
           style={{ transform: 'rotateY(180deg)' }}
         >
           <CardContent className="p-4 h-full flex flex-col">
-            <h3 className="font-semibold text-lg mb-2">{template.name}</h3>
+            <h3 className="font-semibold text-[15px] mb-2">{template.name}</h3>
             
             <div className="space-y-3 flex-1">
               <div>
-                <h4 className="text-sm font-medium mb-1">Features</h4>
-                <ul className="text-sm text-muted-foreground space-y-1">
+                <h4 className="text-[13px] font-medium mb-1">Features</h4>
+                <ul className="text-[13px] text-muted-foreground space-y-1">
                   {template.features?.slice(0, 4).map((feature: string) => (
                     <li key={feature} className="flex items-center gap-1">
                       <ChevronRight className="h-3 w-3 text-primary" />
@@ -309,17 +309,17 @@ export function AnimatedTemplateCard({
               </div>
               
               <div>
-                <h4 className="text-sm font-medium mb-1">Technologies</h4>
+                <h4 className="text-[13px] font-medium mb-1">Technologies</h4>
                 <div className="flex flex-wrap gap-1">
                   {template.technologies?.map((tech: string) => (
-                    <Badge key={tech} variant="outline" className="text-xs">
+                    <Badge key={tech} variant="outline" className="text-[11px]">
                       {tech}
                     </Badge>
                   ))}
                 </div>
               </div>
               
-              <div className="grid grid-cols-2 gap-2 text-sm">
+              <div className="grid grid-cols-2 gap-2 text-[13px]">
                 <div>
                   <span className="text-muted-foreground">Author:</span>
                   <p className="font-medium">{template.author}</p>

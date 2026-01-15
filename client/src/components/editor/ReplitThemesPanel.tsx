@@ -253,7 +253,7 @@ export function ReplitThemesPanel({ projectId }: { projectId?: string }) {
         <div className="flex gap-1 p-1 bg-muted rounded">
           <button
             className={cn(
-              "flex-1 px-3 py-1.5 text-sm rounded transition-colors",
+              "flex-1 px-3 py-1.5 text-[13px] rounded transition-colors",
               "flex items-center justify-center gap-2",
               selectedTheme === 'light' && "bg-background shadow-sm"
             )}
@@ -266,7 +266,7 @@ export function ReplitThemesPanel({ projectId }: { projectId?: string }) {
           </button>
           <button
             className={cn(
-              "flex-1 px-3 py-1.5 text-sm rounded transition-colors",
+              "flex-1 px-3 py-1.5 text-[13px] rounded transition-colors",
               "flex items-center justify-center gap-2",
               selectedTheme === 'dark' && "bg-background shadow-sm"
             )}
@@ -279,7 +279,7 @@ export function ReplitThemesPanel({ projectId }: { projectId?: string }) {
           </button>
           <button
             className={cn(
-              "flex-1 px-3 py-1.5 text-sm rounded transition-colors",
+              "flex-1 px-3 py-1.5 text-[13px] rounded transition-colors",
               "flex items-center justify-center gap-2",
               selectedTheme === 'system' && "bg-background shadow-sm"
             )}
@@ -296,9 +296,9 @@ export function ReplitThemesPanel({ projectId }: { projectId?: string }) {
       {/* Tabs */}
       <Tabs defaultValue="presets" className="flex-1 flex flex-col">
         <TabsList className="grid w-full grid-cols-3 px-4 pt-2">
-          <TabsTrigger value="presets" className="text-xs">Presets</TabsTrigger>
-          <TabsTrigger value="customize" className="text-xs">Customize</TabsTrigger>
-          <TabsTrigger value="editor" className="text-xs">Editor</TabsTrigger>
+          <TabsTrigger value="presets" className="text-[11px]">Presets</TabsTrigger>
+          <TabsTrigger value="customize" className="text-[11px]">Customize</TabsTrigger>
+          <TabsTrigger value="editor" className="text-[11px]">Editor</TabsTrigger>
         </TabsList>
 
         {/* Presets Tab */}
@@ -320,15 +320,15 @@ export function ReplitThemesPanel({ projectId }: { projectId?: string }) {
                     <div className="flex items-start justify-between mb-2">
                       <div>
                         <div className="flex items-center gap-2">
-                          <h4 className="font-medium text-sm">{theme.name}</h4>
+                          <h4 className="font-medium text-[13px]">{theme.name}</h4>
                           {theme.isPro && (
-                            <Badge className="text-xs px-1.5 py-0">
+                            <Badge className="text-[11px] px-1.5 py-0">
                               <Sparkles className="h-3 w-3 mr-1" />
                               Pro
                             </Badge>
                           )}
                           {theme.isCustom && (
-                            <Badge variant="secondary" className="text-xs px-1.5 py-0">
+                            <Badge variant="secondary" className="text-[11px] px-1.5 py-0">
                               Custom
                             </Badge>
                           )}
@@ -336,7 +336,7 @@ export function ReplitThemesPanel({ projectId }: { projectId?: string }) {
                             <Check className="h-4 w-4 text-status-info" />
                           )}
                         </div>
-                        <p className="text-xs text-muted-foreground mt-1">{theme.description}</p>
+                        <p className="text-[11px] text-muted-foreground mt-1">{theme.description}</p>
                       </div>
                     </div>
 
@@ -366,7 +366,7 @@ export function ReplitThemesPanel({ projectId }: { projectId?: string }) {
               {Object.entries(customColors).map(([key, value]) => (
                 <div key={key} className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label htmlFor={key} className="text-sm capitalize">
+                    <Label htmlFor={key} className="text-[13px] capitalize">
                       {key.replace(/([A-Z])/g, ' $1').trim()}
                     </Label>
                     <div className="flex items-center gap-2">
@@ -374,7 +374,7 @@ export function ReplitThemesPanel({ projectId }: { projectId?: string }) {
                         className="w-6 h-6 rounded border border-border"
                         style={{ backgroundColor: value }}
                       />
-                      <span className="text-xs font-mono text-muted-foreground">{value}</span>
+                      <span className="text-[11px] font-mono text-muted-foreground">{value}</span>
                     </div>
                   </div>
                   <Input
@@ -392,8 +392,8 @@ export function ReplitThemesPanel({ projectId }: { projectId?: string }) {
                 <div className="space-y-4">
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <Label className="text-sm">Font Size</Label>
-                      <span className="text-xs text-muted-foreground">{fontSize[0]}px</span>
+                      <Label className="text-[13px]">Font Size</Label>
+                      <span className="text-[11px] text-muted-foreground">{fontSize[0]}px</span>
                     </div>
                     <Slider
                       value={fontSize}
@@ -406,8 +406,8 @@ export function ReplitThemesPanel({ projectId }: { projectId?: string }) {
 
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <Label className="text-sm">Border Radius</Label>
-                      <span className="text-xs text-muted-foreground">{borderRadius[0]}px</span>
+                      <Label className="text-[13px]">Border Radius</Label>
+                      <span className="text-[11px] text-muted-foreground">{borderRadius[0]}px</span>
                     </div>
                     <Slider
                       value={borderRadius}
@@ -438,7 +438,7 @@ export function ReplitThemesPanel({ projectId }: { projectId?: string }) {
         <TabsContent value="editor" className="flex-1">
           <ScrollArea className="h-full">
             <div className="p-4">
-              <h4 className="text-sm font-medium mb-3">Editor Themes</h4>
+              <h4 className="text-[13px] font-medium mb-3">Editor Themes</h4>
               
               <div className="space-y-2">
                 {['VS Code', 'Monokai', 'GitHub', 'Solarized', 'Dracula', 'Nord'].map((theme) => (
@@ -447,7 +447,7 @@ export function ReplitThemesPanel({ projectId }: { projectId?: string }) {
                     className="w-full p-3 text-left border border-border rounded hover:bg-muted transition-colors"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-foreground">{theme}</span>
+                      <span className="text-[13px] text-foreground">{theme}</span>
                       <Eye className="h-4 w-4 text-muted-foreground" />
                     </div>
                   </button>
@@ -456,8 +456,8 @@ export function ReplitThemesPanel({ projectId }: { projectId?: string }) {
 
               {/* Live Preview */}
               <div className="mt-6">
-                <h4 className="text-sm font-medium mb-3">Preview</h4>
-                <div className="p-4 bg-background rounded text-white font-mono text-xs">
+                <h4 className="text-[13px] font-medium mb-3">Preview</h4>
+                <div className="p-4 bg-background rounded text-white font-mono text-[11px]">
                   <div className="text-status-info">// Sample code preview</div>
                   <div>
                     <span className="text-primary">function</span>{' '}

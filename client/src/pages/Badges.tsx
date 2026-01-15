@@ -164,7 +164,7 @@ export default function Badges() {
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <span>Your Progress</span>
-            <Badge variant="default" className="text-lg px-3 py-1" data-testid="badge-count">
+            <Badge variant="default" className="text-[15px] px-3 py-1" data-testid="badge-count">
               {earnedCount}/{totalBadges} Badges
             </Badge>
           </CardTitle>
@@ -174,19 +174,19 @@ export default function Badges() {
           <div className="grid grid-cols-4 gap-4 mt-6">
             <div className="text-center">
               <p className="text-2xl font-bold">{earnedBadges.filter((b: any) => b.rarity === 'common').length}</p>
-              <p className="text-sm text-muted-foreground">Common</p>
+              <p className="text-[13px] text-muted-foreground">Common</p>
             </div>
             <div className="text-center">
               <p className="text-2xl font-bold text-blue-500">{earnedBadges.filter((b: any) => b.rarity === 'rare').length}</p>
-              <p className="text-sm text-muted-foreground">Rare</p>
+              <p className="text-[13px] text-muted-foreground">Rare</p>
             </div>
             <div className="text-center">
               <p className="text-2xl font-bold text-purple-500">{earnedBadges.filter((b: any) => b.rarity === 'epic').length}</p>
-              <p className="text-sm text-muted-foreground">Epic</p>
+              <p className="text-[13px] text-muted-foreground">Epic</p>
             </div>
             <div className="text-center">
               <p className="text-2xl font-bold text-yellow-500">{earnedBadges.filter((b: any) => b.rarity === 'legendary').length}</p>
-              <p className="text-sm text-muted-foreground">Legendary</p>
+              <p className="text-[13px] text-muted-foreground">Legendary</p>
             </div>
           </div>
         </CardContent>
@@ -233,11 +233,11 @@ export default function Badges() {
                         </Badge>
                       </div>
                       <h3 className="font-semibold mb-1">{badge.name}</h3>
-                      <p className="text-sm text-muted-foreground mb-3">{badge.description}</p>
+                      <p className="text-[13px] text-muted-foreground mb-3">{badge.description}</p>
                       
                       {!badge.earned && (
                         <div className="space-y-2">
-                          <div className="flex items-center justify-between text-sm">
+                          <div className="flex items-center justify-between text-[13px]">
                             <span>Progress</span>
                             <span className="font-medium">{badge.progress}%</span>
                           </div>
@@ -246,7 +246,7 @@ export default function Badges() {
                       )}
                       
                       {badge.earned && (
-                        <div className="flex items-center gap-2 text-sm text-green-600">
+                        <div className="flex items-center gap-2 text-[13px] text-green-600">
                           <Star className="h-4 w-4 fill-current" />
                           <span className="font-medium">Earned!</span>
                         </div>
@@ -280,7 +280,7 @@ export default function Badges() {
                     </div>
                     <div>
                       <p className="font-medium">{badge.name}</p>
-                      <p className="text-xs text-muted-foreground capitalize">{badge.rarity}</p>
+                      <p className="text-[11px] text-muted-foreground capitalize">{badge.rarity}</p>
                     </div>
                   </div>
                 ))}
@@ -289,7 +289,7 @@ export default function Badges() {
             <div className="text-center py-8 text-muted-foreground">
               <Trophy className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p>No rare badges earned yet</p>
-              <p className="text-sm mt-2">Keep completing achievements to earn epic and legendary badges!</p>
+              <p className="text-[13px] mt-2">Keep completing achievements to earn epic and legendary badges!</p>
             </div>
           )}
         </CardContent>

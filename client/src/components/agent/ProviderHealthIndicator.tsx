@@ -70,7 +70,7 @@ export function ProviderHealthIndicator({ className, compact = false }: Provider
     return (
       <Badge variant="outline" className={cn("gap-1 animate-pulse", className)} data-testid="badge-provider-loading">
         <Activity className="h-3 w-3" />
-        <span className="text-xs">...</span>
+        <span className="text-[11px]">...</span>
       </Badge>
     );
   }
@@ -87,7 +87,7 @@ export function ProviderHealthIndicator({ className, compact = false }: Provider
                 data-testid="badge-provider-unavailable"
               >
                 <AlertTriangle className="h-3 w-3" />
-                <span className="text-xs">N/A</span>
+                <span className="text-[11px]">N/A</span>
               </Badge>
             </TooltipTrigger>
             <TooltipContent>
@@ -99,7 +99,7 @@ export function ProviderHealthIndicator({ className, compact = false }: Provider
     }
     return (
       <div className={cn("rounded-lg border bg-muted/50 p-3", className)} data-testid="panel-provider-error">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="flex items-center gap-2 text-[13px] text-muted-foreground">
           <AlertTriangle className="h-4 w-4 text-yellow-500" />
           <span>Provider health data unavailable</span>
         </div>
@@ -140,7 +140,7 @@ export function ProviderHealthIndicator({ className, compact = false }: Provider
               </p>
               <div className="space-y-1">
                 {Object.entries(data.providers).map(([provider, health]) => (
-                  <div key={provider} className="flex items-center justify-between text-xs">
+                  <div key={provider} className="flex items-center justify-between text-[11px]">
                     <span className={PROVIDER_DISPLAY[provider]?.color}>
                       {PROVIDER_DISPLAY[provider]?.name || provider}
                     </span>
@@ -156,7 +156,7 @@ export function ProviderHealthIndicator({ className, compact = false }: Provider
                 ))}
               </div>
               {data.globalStats.totalTasks > 0 && (
-                <div className="pt-2 border-t text-xs text-muted-foreground">
+                <div className="pt-2 border-t text-[11px] text-muted-foreground">
                   <div className="flex justify-between">
                     <span>Tasks executed:</span>
                     <span>{data.globalStats.totalTasks}</span>
@@ -177,14 +177,14 @@ export function ProviderHealthIndicator({ className, compact = false }: Provider
   return (
     <div className={cn("rounded-lg border bg-card p-3 space-y-3", className)} data-testid="panel-provider-health">
       <div className="flex items-center justify-between">
-        <h4 className="text-sm font-medium flex items-center gap-2">
+        <h4 className="text-[13px] font-medium flex items-center gap-2">
           <Activity className="h-4 w-4" />
           AI Provider Health
         </h4>
         <Badge 
           variant="outline"
           className={cn(
-            "text-xs",
+            "text-[11px]",
             allHealthy ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" :
             "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
           )}
@@ -205,14 +205,14 @@ export function ProviderHealthIndicator({ className, compact = false }: Provider
             data-testid={`provider-${provider}`}
           >
             {getHealthIcon(health.available, health.failures)}
-            <span className={cn("text-xs font-medium", PROVIDER_DISPLAY[provider]?.color)}>
+            <span className={cn("text-[11px] font-medium", PROVIDER_DISPLAY[provider]?.color)}>
               {PROVIDER_DISPLAY[provider]?.name || provider}
             </span>
           </div>
         ))}
       </div>
 
-      <div className="grid grid-cols-3 gap-2 text-xs">
+      <div className="grid grid-cols-3 gap-2 text-[11px]">
         <div className="flex items-center gap-1">
           <Zap className="h-3 w-3 text-green-500" />
           <span className="text-muted-foreground">Fast</span>
@@ -231,7 +231,7 @@ export function ProviderHealthIndicator({ className, compact = false }: Provider
       </div>
 
       {data.globalStats.totalTasks > 0 && (
-        <div className="pt-2 border-t grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+        <div className="pt-2 border-t grid grid-cols-2 gap-2 text-[11px] text-muted-foreground">
           <div className="flex justify-between">
             <span>Total tasks:</span>
             <span className="font-medium text-foreground">{data.globalStats.totalTasks}</span>

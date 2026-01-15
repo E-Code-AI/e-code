@@ -363,7 +363,7 @@ export default function ShellPage() {
               <FileCode className="h-4 w-4 text-muted-foreground" />
             </>
           )}
-          <span className="text-sm">{node.name}</span>
+          <span className="text-[13px]">{node.name}</span>
         </div>
         {node.type === 'directory' && expandedDirs.has(node.path) && node.children && (
           <div>{renderFileTree(node.children, depth + 1)}</div>
@@ -444,7 +444,7 @@ export default function ShellPage() {
                   ) : (
                     <div className="flex flex-col items-center justify-center h-[200px] text-muted-foreground p-4 text-center">
                       <FolderTree className="h-8 w-8 mb-2 opacity-20" />
-                      <p className="text-sm">No files found</p>
+                      <p className="text-[13px]">No files found</p>
                     </div>
                   )}
                 </div>
@@ -476,8 +476,8 @@ export default function ShellPage() {
                         <WifiOff className="h-4 w-4 text-muted-foreground" />
                       )}
                       <div>
-                        <p className="text-sm font-medium">{conn.name}</p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-[13px] font-medium">{conn.name}</p>
+                        <p className="text-[11px] text-muted-foreground">
                           {conn.username}@{conn.host}
                         </p>
                       </div>
@@ -498,7 +498,7 @@ export default function ShellPage() {
               ) : (
                 <div className="text-center py-6 border rounded-lg border-dashed">
                   <Server className="h-8 w-8 mx-auto text-muted-foreground opacity-20 mb-2" />
-                  <p className="text-sm text-muted-foreground">No SSH connections</p>
+                  <p className="text-[13px] text-muted-foreground">No SSH connections</p>
                   <Button
                     variant="link"
                     size="sm"
@@ -535,8 +535,8 @@ export default function ShellPage() {
                 <div className="flex items-center justify-between px-4 py-2 border-b bg-muted/30">
                   <div className="flex items-center gap-2">
                     <TerminalSquare className="h-4 w-4" />
-                    <span className="text-sm font-medium">Interactive Shell</span>
-                    <Badge variant="secondary" className="text-xs">
+                    <span className="text-[13px] font-medium">Interactive Shell</span>
+                    <Badge variant="secondary" className="text-[11px]">
                       bash
                     </Badge>
                   </div>
@@ -613,7 +613,7 @@ export default function ShellPage() {
                             )}
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2">
-                                <code className="font-medium text-sm">{envVar.key}</code>
+                                <code className="font-medium text-[13px]">{envVar.key}</code>
                                 <Badge
                                   variant="outline"
                                   className={`text-[10px] ${getSourceBadgeColor(envVar.source)}`}
@@ -622,7 +622,7 @@ export default function ShellPage() {
                                 </Badge>
                               </div>
                               <div className="flex items-center gap-2 mt-1">
-                                <code className="text-xs text-muted-foreground truncate">
+                                <code className="text-[11px] text-muted-foreground truncate">
                                   {envVar.isSecret && !showSecrets.has(envVar.key)
                                     ? '••••••••'
                                     : envVar.value}
@@ -673,8 +673,8 @@ export default function ShellPage() {
                     ) : (
                       <div className="text-center py-12 border rounded-xl border-dashed">
                         <Key className="h-10 w-10 mx-auto text-muted-foreground opacity-20 mb-3" />
-                        <h3 className="text-sm font-medium">No Environment Variables</h3>
-                        <p className="text-xs text-muted-foreground mt-1 mb-4">
+                        <h3 className="text-[13px] font-medium">No Environment Variables</h3>
+                        <p className="text-[11px] text-muted-foreground mt-1 mb-4">
                           Add variables to configure your shell environment
                         </p>
                         <Button
@@ -729,12 +729,12 @@ export default function ShellPage() {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
                               <Zap className="h-4 w-4 text-primary" />
-                              <h4 className="font-medium text-sm">{script.name}</h4>
+                              <h4 className="font-medium text-[13px]">{script.name}</h4>
                             </div>
-                            <p className="text-xs text-muted-foreground mt-1">
+                            <p className="text-[11px] text-muted-foreground mt-1">
                               {script.description}
                             </p>
-                            <code className="text-xs text-muted-foreground mt-2 block truncate">
+                            <code className="text-[11px] text-muted-foreground mt-2 block truncate">
                               $ {script.script}
                             </code>
                           </div>
@@ -808,7 +808,7 @@ export default function ShellPage() {
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <Label>Secret Value</Label>
-                <p className="text-xs text-muted-foreground">Hide value by default</p>
+                <p className="text-[11px] text-muted-foreground">Hide value by default</p>
               </div>
               <Switch
                 checked={newEnvVar.isSecret}
@@ -855,7 +855,7 @@ export default function ShellPage() {
                       )}
                       <div>
                         <p className="font-medium">{conn.name}</p>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-[13px] text-muted-foreground">
                           {conn.username}@{conn.host}:{conn.port}
                         </p>
                       </div>
@@ -883,7 +883,7 @@ export default function ShellPage() {
             ) : (
               <div className="flex flex-col items-center justify-center py-8 border-2 border-dashed rounded-lg">
                 <Server className="h-12 w-12 text-muted-foreground opacity-20 mb-3" />
-                <p className="text-muted-foreground text-sm">No SSH connections configured</p>
+                <p className="text-muted-foreground text-[13px]">No SSH connections configured</p>
               </div>
             )}
             <Button variant="outline" className="w-full" data-testid="button-add-ssh">

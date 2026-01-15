@@ -146,7 +146,7 @@ function FileTreeItem({
             if (e.key === 'Escape') setIsRenaming(false);
           }}
           onBlur={handleRename}
-          className="h-6 text-xs"
+          className="h-6 text-[11px]"
           autoFocus
         />
       </div>
@@ -270,7 +270,7 @@ function FileTreeItem({
               setShowInput(false);
               setInputValue('');
             }}
-            className="h-6 text-xs"
+            className="h-6 text-[11px]"
             autoFocus
           />
         </div>
@@ -406,7 +406,7 @@ export function ReplitFileSidebar({
                   setNewItemName('');
                 }
               }}
-              className="h-7 text-xs"
+              className="h-7 text-[11px]"
               autoFocus
             />
           </div>
@@ -417,7 +417,7 @@ export function ReplitFileSidebar({
       <ScrollArea className="flex-1">
         <div className="py-1">
           {filteredFiles.length === 0 ? (
-            <div className="text-center py-8 text-sm text-[var(--ecode-text-muted)]">
+            <div className="text-center py-8 text-[13px] text-[var(--ecode-text-muted)]">
               {searchQuery ? 'No files found' : 'No files yet'}
             </div>
           ) : (

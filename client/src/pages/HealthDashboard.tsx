@@ -156,7 +156,7 @@ export default function HealthDashboard() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Icon className={`h-5 w-5 ${getStatusColor(stat.status)}`} />
-                        <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
+                        <CardTitle className="text-[13px] font-medium">{stat.title}</CardTitle>
                       </div>
                       {getStatusBadge(stat.status)}
                     </div>
@@ -165,7 +165,7 @@ export default function HealthDashboard() {
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="text-2xl font-bold">{stat.value}</span>
-                        <div className="flex items-center gap-1 text-sm">
+                        <div className="flex items-center gap-1 text-[13px]">
                           {getTrendIcon(stat.trend)}
                           <span className={
                             stat.trend === 'up' ? 'text-green-500' :
@@ -176,7 +176,7 @@ export default function HealthDashboard() {
                           </span>
                         </div>
                       </div>
-                      <CardDescription className="text-xs">
+                      <CardDescription className="text-[11px]">
                         {stat.description}
                       </CardDescription>
                     </div>
@@ -208,19 +208,19 @@ export default function HealthDashboard() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <Button variant="outline" className="h-16 flex flex-col gap-1" data-testid="button-health-check">
                   <Activity className="h-5 w-5" />
-                  <span className="text-sm">Run Health Check</span>
+                  <span className="text-[13px]">Run Health Check</span>
                 </Button>
                 <Button variant="outline" className="h-16 flex flex-col gap-1" data-testid="button-performance-audit">
                   <TrendingUp className="h-5 w-5" />
-                  <span className="text-sm">Performance Audit</span>
+                  <span className="text-[13px]">Performance Audit</span>
                 </Button>
                 <Button variant="outline" className="h-16 flex flex-col gap-1" data-testid="button-security-scan">
                   <AlertTriangle className="h-5 w-5" />
-                  <span className="text-sm">Security Scan</span>
+                  <span className="text-[13px]">Security Scan</span>
                 </Button>
                 <Button variant="outline" className="h-16 flex flex-col gap-1" data-testid="button-generate-report">
                   <Download className="h-5 w-5" />
-                  <span className="text-sm">Generate Report</span>
+                  <span className="text-[13px]">Generate Report</span>
                 </Button>
               </div>
             </CardContent>
@@ -244,11 +244,11 @@ export default function HealthDashboard() {
                 <div className="flex items-start gap-3 p-3 bg-white dark:bg-amber-950/40 rounded-lg">
                   <div className="w-2 h-2 bg-amber-500 rounded-full mt-2" />
                   <div className="flex-1">
-                    <h4 className="font-medium text-sm">Database Connection Pool</h4>
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <h4 className="font-medium text-[13px]">Database Connection Pool</h4>
+                    <p className="text-[11px] text-muted-foreground mt-1">
                       Connection pool utilization is at 78%. Consider increasing pool size for better performance.
                     </p>
-                    <Button size="sm" variant="link" className="h-auto p-0 text-xs mt-1">
+                    <Button size="sm" variant="link" className="h-auto p-0 text-[11px] mt-1">
                       View Details →
                     </Button>
                   </div>
@@ -257,11 +257,11 @@ export default function HealthDashboard() {
                 <div className="flex items-start gap-3 p-3 bg-white dark:bg-amber-950/40 rounded-lg">
                   <div className="w-2 h-2 bg-amber-500 rounded-full mt-2" />
                   <div className="flex-1">
-                    <h4 className="font-medium text-sm">Memory Usage</h4>
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <h4 className="font-medium text-[13px]">Memory Usage</h4>
+                    <p className="text-[11px] text-muted-foreground mt-1">
                       System memory usage has exceeded 85% threshold. Monitor for potential memory leaks.
                     </p>
-                    <Button size="sm" variant="link" className="h-auto p-0 text-xs mt-1">
+                    <Button size="sm" variant="link" className="h-auto p-0 text-[11px] mt-1">
                       View Details →
                     </Button>
                   </div>
@@ -270,11 +270,11 @@ export default function HealthDashboard() {
                 <div className="flex items-start gap-3 p-3 bg-white dark:bg-amber-950/40 rounded-lg">
                   <div className="w-2 h-2 bg-blue-500 rounded-full mt-2" />
                   <div className="flex-1">
-                    <h4 className="font-medium text-sm">SSL Certificate</h4>
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <h4 className="font-medium text-[13px]">SSL Certificate</h4>
+                    <p className="text-[11px] text-muted-foreground mt-1">
                       SSL certificate for *.e-code.ai expires in 14 days. Renewal recommended.
                     </p>
-                    <Button size="sm" variant="link" className="h-auto p-0 text-xs mt-1">
+                    <Button size="sm" variant="link" className="h-auto p-0 text-[11px] mt-1">
                       Renew Now →
                     </Button>
                   </div>

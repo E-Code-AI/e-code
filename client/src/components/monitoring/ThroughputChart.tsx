@@ -43,11 +43,11 @@ export function ThroughputChart({ data, realTime, detailed }: ThroughputChartPro
             <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
             <XAxis 
               dataKey="time" 
-              className="text-xs"
+              className="text-[11px]"
               tick={{ fill: 'currentColor' }}
             />
             <YAxis 
-              className="text-xs"
+              className="text-[11px]"
               tick={{ fill: 'currentColor' }}
               label={{ value: 'Requests/min', angle: -90, position: 'insideLeft' }}
             />
@@ -94,15 +94,15 @@ export function ThroughputChart({ data, realTime, detailed }: ThroughputChartPro
           <div className="mt-4 grid grid-cols-3 gap-4 text-center">
             <div>
               <p className="text-2xl font-bold text-green-600">{(currentThroughput * 0.95).toFixed(0)}</p>
-              <p className="text-xs text-muted-foreground">Successful</p>
+              <p className="text-[11px] text-muted-foreground">Successful</p>
             </div>
             <div>
               <p className="text-2xl font-bold text-red-600">{(currentThroughput * 0.05).toFixed(0)}</p>
-              <p className="text-xs text-muted-foreground">Failed</p>
+              <p className="text-[11px] text-muted-foreground">Failed</p>
             </div>
             <div>
               <p className="text-2xl font-bold text-blue-600">95%</p>
-              <p className="text-xs text-muted-foreground">Success Rate</p>
+              <p className="text-[11px] text-muted-foreground">Success Rate</p>
             </div>
           </div>
         )}

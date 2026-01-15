@@ -405,7 +405,7 @@ export function ReplitObjectStorage({ projectId, className }: ReplitObjectStorag
                             <HardDrive className="h-8 w-8 text-muted-foreground" />
                             <div>
                               <h3 className="font-semibold">{bucket.name}</h3>
-                              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                              <div className="flex items-center gap-4 text-[13px] text-muted-foreground">
                                 <span>{bucket.region}</span>
                                 <span>{bucket.objectCount} objects</span>
                                 <span>{formatBytes(bucket.totalSize)}</span>
@@ -450,7 +450,7 @@ export function ReplitObjectStorage({ projectId, className }: ReplitObjectStorag
                       <ChevronRight className="h-4 w-4 mr-1 rotate-180" />
                       Back to Buckets
                     </Button>
-                    <span className="text-sm text-muted-foreground">
+                    <span className="text-[13px] text-muted-foreground">
                       {selectedBucket.name} / {currentPath}
                     </span>
                   </div>
@@ -484,7 +484,7 @@ export function ReplitObjectStorage({ projectId, className }: ReplitObjectStorag
                         </DialogHeader>
                         <div className="border-2 border-dashed rounded-lg p-8 text-center">
                           <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                          <p className="text-sm text-muted-foreground mb-4">
+                          <p className="text-[13px] text-muted-foreground mb-4">
                             Drag files here or click to browse
                           </p>
                           <Input
@@ -510,7 +510,7 @@ export function ReplitObjectStorage({ projectId, className }: ReplitObjectStorag
                   <div className="space-y-2">
                     {Object.entries(uploadProgress).map(([id, progress]) => (
                       <div key={id} className="space-y-1">
-                        <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-center justify-between text-[13px]">
                           <span>{id.split('-')[0]}</span>
                           <span>{progress}%</span>
                         </div>
@@ -546,7 +546,7 @@ export function ReplitObjectStorage({ projectId, className }: ReplitObjectStorag
                           </TableCell>
                           <TableCell>{formatBytes(object.size)}</TableCell>
                           <TableCell>
-                            <Badge variant="outline" className="text-xs">
+                            <Badge variant="outline" className="text-[11px]">
                               {object.type}
                             </Badge>
                           </TableCell>
@@ -555,12 +555,12 @@ export function ReplitObjectStorage({ projectId, className }: ReplitObjectStorag
                           </TableCell>
                           <TableCell>
                             {object.isPublic ? (
-                              <Badge variant="secondary" className="text-xs">
+                              <Badge variant="secondary" className="text-[11px]">
                                 <Unlock className="h-3 w-3 mr-1" />
                                 Public
                               </Badge>
                             ) : (
-                              <Badge variant="outline" className="text-xs">
+                              <Badge variant="outline" className="text-[11px]">
                                 <Lock className="h-3 w-3 mr-1" />
                                 Private
                               </Badge>
@@ -623,9 +623,9 @@ export function ReplitObjectStorage({ projectId, className }: ReplitObjectStorag
                   <CardContent className="pt-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm text-muted-foreground">Total Storage</p>
+                        <p className="text-[13px] text-muted-foreground">Total Storage</p>
                         <p className="text-2xl font-bold">1.7 GB</p>
-                        <p className="text-xs text-muted-foreground">of 10 GB</p>
+                        <p className="text-[11px] text-muted-foreground">of 10 GB</p>
                       </div>
                       <HardDrive className="h-8 w-8 text-muted-foreground" />
                     </div>
@@ -637,9 +637,9 @@ export function ReplitObjectStorage({ projectId, className }: ReplitObjectStorag
                   <CardContent className="pt-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm text-muted-foreground">Total Objects</p>
+                        <p className="text-[13px] text-muted-foreground">Total Objects</p>
                         <p className="text-2xl font-bold">257</p>
-                        <p className="text-xs text-muted-foreground">across 3 buckets</p>
+                        <p className="text-[11px] text-muted-foreground">across 3 buckets</p>
                       </div>
                       <File className="h-8 w-8 text-muted-foreground" />
                     </div>
@@ -650,9 +650,9 @@ export function ReplitObjectStorage({ projectId, className }: ReplitObjectStorag
                   <CardContent className="pt-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm text-muted-foreground">Bandwidth Used</p>
+                        <p className="text-[13px] text-muted-foreground">Bandwidth Used</p>
                         <p className="text-2xl font-bold">45.2 GB</p>
-                        <p className="text-xs text-muted-foreground">this month</p>
+                        <p className="text-[11px] text-muted-foreground">this month</p>
                       </div>
                       <Activity className="h-8 w-8 text-muted-foreground" />
                     </div>
@@ -666,40 +666,40 @@ export function ReplitObjectStorage({ projectId, className }: ReplitObjectStorag
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Image className="h-4 w-4" />
-                      <span className="text-sm">Images</span>
+                      <span className="text-[13px]">Images</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm text-muted-foreground">450 MB</span>
+                      <span className="text-[13px] text-muted-foreground">450 MB</span>
                       <Progress value={45} className="w-32" />
                     </div>
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <FileVideo className="h-4 w-4" />
-                      <span className="text-sm">Videos</span>
+                      <span className="text-[13px]">Videos</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm text-muted-foreground">800 MB</span>
+                      <span className="text-[13px] text-muted-foreground">800 MB</span>
                       <Progress value={80} className="w-32" />
                     </div>
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <FileText className="h-4 w-4" />
-                      <span className="text-sm">Documents</span>
+                      <span className="text-[13px]">Documents</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm text-muted-foreground">200 MB</span>
+                      <span className="text-[13px] text-muted-foreground">200 MB</span>
                       <Progress value={20} className="w-32" />
                     </div>
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Archive className="h-4 w-4" />
-                      <span className="text-sm">Archives</span>
+                      <span className="text-[13px]">Archives</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm text-muted-foreground">250 MB</span>
+                      <span className="text-[13px] text-muted-foreground">250 MB</span>
                       <Progress value={25} className="w-32" />
                     </div>
                   </div>

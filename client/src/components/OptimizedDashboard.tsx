@@ -90,7 +90,7 @@ const ProjectCard = optimizedMemo(({
                 <h3 className="font-semibold text-foreground line-clamp-1">
                   {project.name}
                 </h3>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-[11px] text-muted-foreground">
                   {project.language || 'JavaScript'}
                 </p>
               </div>
@@ -107,12 +107,12 @@ const ProjectCard = optimizedMemo(({
         </CardHeader>
         <CardContent className="pb-3">
           {project.description && (
-            <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+            <p className="text-[13px] text-muted-foreground line-clamp-2 mb-3">
               {project.description}
             </p>
           )}
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4 text-xs text-muted-foreground">
+            <div className="flex items-center space-x-4 text-[11px] text-muted-foreground">
               <span className="flex items-center">
                 <Eye className="h-3 w-3 mr-1" />
                 {project.views ?? 0}
@@ -126,7 +126,7 @@ const ProjectCard = optimizedMemo(({
                 {project.likes ?? 0}
               </span>
             </div>
-            <Badge variant="secondary" className="text-xs">
+            <Badge variant="secondary" className="text-[11px]">
               Active
             </Badge>
           </div>

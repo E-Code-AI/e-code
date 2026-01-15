@@ -50,16 +50,16 @@ export function MVPCompletionDialog({
                 {safeTaskList.slice(0, 5).map((task, index) => (
                   <div 
                     key={index}
-                    className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300"
+                    className="flex items-start gap-2 text-[13px] text-gray-700 dark:text-gray-300"
                   >
-                    <span className="text-gray-400 dark:text-gray-600 font-mono text-xs mt-0.5">
+                    <span className="text-gray-400 dark:text-gray-600 font-mono text-[11px] mt-0.5">
                       {index + 1}.
                     </span>
                     <span>{task}</span>
                   </div>
                 ))}
                 {safeTaskList.length > 5 && (
-                  <p className="text-xs text-gray-500 dark:text-gray-500 italic pl-4">
+                  <p className="text-[11px] text-gray-500 dark:text-gray-500 italic pl-4">
                     +{safeTaskList.length - 5} more tasks...
                   </p>
                 )}

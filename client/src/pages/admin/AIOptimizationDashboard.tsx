@@ -272,12 +272,12 @@ export default function AIOptimizationDashboard() {
       <div className="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 lg:space-y-8">
         <div className="mb-4 sm:mb-6 lg:mb-8">
           <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white mb-1 sm:mb-2" data-testid="heading-page-title">AI Optimization</h1>
-          <p className="text-xs sm:text-sm text-zinc-400" data-testid="text-page-description">Monitor queue, circuit breakers, and token usage</p>
+          <p className="text-[11px] sm:text-[13px] text-zinc-400" data-testid="text-page-description">Monitor queue, circuit breakers, and token usage</p>
         </div>
 
         {/* Queue Stats Section */}
         <div className="mb-4 sm:mb-6 lg:mb-8">
-          <h2 className="text-base sm:text-lg lg:text-xl font-semibold text-white mb-3 sm:mb-4 flex items-center gap-2" data-testid="heading-queue-stats">
+          <h2 className="text-base sm:text-[15px] lg:text-xl font-semibold text-white mb-3 sm:mb-4 flex items-center gap-2" data-testid="heading-queue-stats">
             <Activity className="h-4 w-4 sm:h-5 sm:w-5" />
             Queue Statistics
           </h2>
@@ -303,14 +303,14 @@ export default function AIOptimizationDashboard() {
                 return (
                   <Card key={stat.title} className="bg-zinc-800 border-zinc-700 hover:border-zinc-600 transition-colors" data-testid={testId}>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 p-2 sm:p-4 pb-1 sm:pb-2">
-                      <CardTitle className="text-xs sm:text-sm font-medium text-zinc-300">
+                      <CardTitle className="text-[11px] sm:text-[13px] font-medium text-zinc-300">
                         {stat.title}
                       </CardTitle>
                       <Icon className={`h-3 w-3 sm:h-4 sm:w-4 ${stat.color}`} />
                     </CardHeader>
                     <CardContent className="p-2 sm:p-4 pt-0">
-                      <div className="text-lg sm:text-2xl font-bold text-white" data-testid={`text-queue-${stat.title.toLowerCase()}`}>{stat.value}</div>
-                      <p className="text-[10px] sm:text-xs text-zinc-400 mt-1 truncate">{stat.description}</p>
+                      <div className="text-[15px] sm:text-2xl font-bold text-white" data-testid={`text-queue-${stat.title.toLowerCase()}`}>{stat.value}</div>
+                      <p className="text-[10px] sm:text-[11px] text-zinc-400 mt-1 truncate">{stat.description}</p>
                     </CardContent>
                   </Card>
                 );
@@ -321,7 +321,7 @@ export default function AIOptimizationDashboard() {
 
         {/* Token Usage Section */}
         <div className="mb-4 sm:mb-6 lg:mb-8">
-          <h2 className="text-base sm:text-lg lg:text-xl font-semibold text-white mb-3 sm:mb-4 flex items-center gap-2" data-testid="heading-token-usage">
+          <h2 className="text-base sm:text-[15px] lg:text-xl font-semibold text-white mb-3 sm:mb-4 flex items-center gap-2" data-testid="heading-token-usage">
             <DollarSign className="h-4 w-4 sm:h-5 sm:w-5" />
             Token Usage & Savings
           </h2>
@@ -350,14 +350,14 @@ export default function AIOptimizationDashboard() {
                 return (
                   <Card key={stat.title} className="bg-zinc-800 border-zinc-700 hover:border-zinc-600 transition-colors" data-testid={testId}>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 p-2 sm:p-4 pb-1 sm:pb-2">
-                      <CardTitle className="text-xs sm:text-sm font-medium text-zinc-300 truncate pr-2">
+                      <CardTitle className="text-[11px] sm:text-[13px] font-medium text-zinc-300 truncate pr-2">
                         {stat.title}
                       </CardTitle>
                       <Icon className={`h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0 ${stat.color}`} />
                     </CardHeader>
                     <CardContent className="p-2 sm:p-4 pt-0">
-                      <div className="text-lg sm:text-2xl font-bold text-white" data-testid={`text-token-${testIdKey}`}>{stat.value}</div>
-                      <p className="text-[10px] sm:text-xs text-zinc-400 mt-1 truncate">{stat.description}</p>
+                      <div className="text-[15px] sm:text-2xl font-bold text-white" data-testid={`text-token-${testIdKey}`}>{stat.value}</div>
+                      <p className="text-[10px] sm:text-[11px] text-zinc-400 mt-1 truncate">{stat.description}</p>
                     </CardContent>
                   </Card>
                 );
@@ -368,7 +368,7 @@ export default function AIOptimizationDashboard() {
 
         {/* Circuit Breaker Status Section */}
         <div className="mb-4 sm:mb-6 lg:mb-8">
-          <h2 className="text-base sm:text-lg lg:text-xl font-semibold text-white mb-3 sm:mb-4 flex items-center gap-2" data-testid="heading-circuit-breaker">
+          <h2 className="text-base sm:text-[15px] lg:text-xl font-semibold text-white mb-3 sm:mb-4 flex items-center gap-2" data-testid="heading-circuit-breaker">
             <Zap className="h-4 w-4 sm:h-5 sm:w-5" />
             Circuit Breaker Status
           </h2>
@@ -398,16 +398,16 @@ export default function AIOptimizationDashboard() {
                 return (
                   <Card key={breaker.provider} className="bg-zinc-800 border-zinc-700 hover:border-zinc-600 transition-colors" data-testid={`card-circuit-${providerKey}`}>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 p-2 sm:p-4 pb-1 sm:pb-2">
-                      <CardTitle className="text-xs sm:text-sm font-medium text-zinc-300">
+                      <CardTitle className="text-[11px] sm:text-[13px] font-medium text-zinc-300">
                         {breaker.provider.toUpperCase()}
                       </CardTitle>
                       <Icon className={`h-3 w-3 sm:h-4 sm:w-4 ${stateColor}`} />
                     </CardHeader>
                     <CardContent className="p-2 sm:p-4 pt-0">
-                      <div className={`text-sm sm:text-lg font-bold ${stateColor} mb-1 sm:mb-2 uppercase`} data-testid={`text-circuit-${providerKey}-state`}>
+                      <div className={`text-[13px] sm:text-[15px] font-bold ${stateColor} mb-1 sm:mb-2 uppercase`} data-testid={`text-circuit-${providerKey}-state`}>
                         {breaker.state}
                       </div>
-                      <div className="space-y-0.5 sm:space-y-1 text-[10px] sm:text-xs text-zinc-400">
+                      <div className="space-y-0.5 sm:space-y-1 text-[10px] sm:text-[11px] text-zinc-400">
                         <div className="flex justify-between">
                           <span>Failures:</span>
                           <span className="text-white" data-testid={`text-circuit-${providerKey}-failures`}>{breaker.failureCount}</span>
@@ -431,7 +431,7 @@ export default function AIOptimizationDashboard() {
 
         {/* Task Classification Stats */}
         <div className="mb-4 sm:mb-6 lg:mb-8">
-          <h2 className="text-base sm:text-lg lg:text-xl font-semibold text-white mb-3 sm:mb-4 flex items-center gap-2" data-testid="heading-task-classification">
+          <h2 className="text-base sm:text-[15px] lg:text-xl font-semibold text-white mb-3 sm:mb-4 flex items-center gap-2" data-testid="heading-task-classification">
             <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" />
             Task Classification Stats
           </h2>
@@ -455,12 +455,12 @@ export default function AIOptimizationDashboard() {
                   <table className="w-full" data-testid="table-task-classification">
                     <thead>
                       <tr className="border-b border-zinc-700">
-                        <th className="text-left py-3 px-4 text-sm font-medium text-zinc-300">Category</th>
-                        <th className="text-right py-3 px-4 text-sm font-medium text-zinc-300">Total</th>
-                        <th className="text-right py-3 px-4 text-sm font-medium text-zinc-300">MCP</th>
-                        <th className="text-right py-3 px-4 text-sm font-medium text-zinc-300">AI</th>
-                        <th className="text-right py-3 px-4 text-sm font-medium text-zinc-300">Avg Tokens</th>
-                        <th className="text-right py-3 px-4 text-sm font-medium text-zinc-300">Success Rate</th>
+                        <th className="text-left py-3 px-4 text-[13px] font-medium text-zinc-300">Category</th>
+                        <th className="text-right py-3 px-4 text-[13px] font-medium text-zinc-300">Total</th>
+                        <th className="text-right py-3 px-4 text-[13px] font-medium text-zinc-300">MCP</th>
+                        <th className="text-right py-3 px-4 text-[13px] font-medium text-zinc-300">AI</th>
+                        <th className="text-right py-3 px-4 text-[13px] font-medium text-zinc-300">Avg Tokens</th>
+                        <th className="text-right py-3 px-4 text-[13px] font-medium text-zinc-300">Success Rate</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -468,12 +468,12 @@ export default function AIOptimizationDashboard() {
                         const categoryKey = task.category.toLowerCase().replace(/\s+/g, '-');
                         return (
                           <tr key={index} className="border-b border-zinc-700/50 hover:bg-zinc-700/20 transition-colors" data-testid={`row-task-${categoryKey}`}>
-                            <td className="py-3 px-4 text-sm text-white font-medium">{task.category}</td>
-                            <td className="text-right py-3 px-4 text-sm text-zinc-300" data-testid={`text-task-${categoryKey}-count`}>{task.count}</td>
-                            <td className="text-right py-3 px-4 text-sm text-cyan-400" data-testid={`text-task-${categoryKey}-mcp`}>{task.mcpExecutions}</td>
-                            <td className="text-right py-3 px-4 text-sm text-orange-400" data-testid={`text-task-${categoryKey}-ai`}>{task.aiExecutions}</td>
-                            <td className="text-right py-3 px-4 text-sm text-zinc-300" data-testid={`text-task-${categoryKey}-tokens`}>{task.avgTokensUsed.toFixed(0)}</td>
-                            <td className="text-right py-3 px-4 text-sm text-green-400" data-testid={`text-task-${categoryKey}-success`}>{(task.successRate * 100).toFixed(1)}%</td>
+                            <td className="py-3 px-4 text-[13px] text-white font-medium">{task.category}</td>
+                            <td className="text-right py-3 px-4 text-[13px] text-zinc-300" data-testid={`text-task-${categoryKey}-count`}>{task.count}</td>
+                            <td className="text-right py-3 px-4 text-[13px] text-cyan-400" data-testid={`text-task-${categoryKey}-mcp`}>{task.mcpExecutions}</td>
+                            <td className="text-right py-3 px-4 text-[13px] text-orange-400" data-testid={`text-task-${categoryKey}-ai`}>{task.aiExecutions}</td>
+                            <td className="text-right py-3 px-4 text-[13px] text-zinc-300" data-testid={`text-task-${categoryKey}-tokens`}>{task.avgTokensUsed.toFixed(0)}</td>
+                            <td className="text-right py-3 px-4 text-[13px] text-green-400" data-testid={`text-task-${categoryKey}-success`}>{(task.successRate * 100).toFixed(1)}%</td>
                           </tr>
                         );
                       })}
@@ -487,10 +487,10 @@ export default function AIOptimizationDashboard() {
 
         {/* Provider Latency Monitoring */}
         <div className="mb-4 sm:mb-6 lg:mb-8">
-          <h2 className="text-base sm:text-lg lg:text-xl font-semibold text-white mb-3 sm:mb-4 flex items-center gap-2" data-testid="heading-provider-latency">
+          <h2 className="text-base sm:text-[15px] lg:text-xl font-semibold text-white mb-3 sm:mb-4 flex items-center gap-2" data-testid="heading-provider-latency">
             <Clock className="h-4 w-4 sm:h-5 sm:w-5" />
             Provider Latency Monitoring
-            <span className="text-xs text-zinc-400 font-normal ml-2">(50-90% Cost Savings)</span>
+            <span className="text-[11px] text-zinc-400 font-normal ml-2">(50-90% Cost Savings)</span>
           </h2>
           {isLatencyLoading ? (
             <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-2 sm:gap-4">
@@ -515,16 +515,16 @@ export default function AIOptimizationDashboard() {
                 return (
                   <Card key={provider.provider} className="bg-zinc-800 border-zinc-700 hover:border-zinc-600 transition-colors" data-testid={`card-latency-${providerKey}`}>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 p-2 sm:p-4 pb-1 sm:pb-2">
-                      <CardTitle className="text-xs sm:text-sm font-medium text-zinc-300 uppercase">
+                      <CardTitle className="text-[11px] sm:text-[13px] font-medium text-zinc-300 uppercase">
                         {provider.provider}
                       </CardTitle>
                       <div className={`h-2 w-2 rounded-full ${provider.health === 'healthy' ? 'bg-green-500' : provider.health === 'degraded' ? 'bg-yellow-500' : 'bg-red-500'}`} />
                     </CardHeader>
                     <CardContent className="p-2 sm:p-4 pt-0">
-                      <div className={`text-sm sm:text-lg font-bold ${healthColor} mb-1`} data-testid={`text-latency-${providerKey}-health`}>
+                      <div className={`text-[13px] sm:text-[15px] font-bold ${healthColor} mb-1`} data-testid={`text-latency-${providerKey}-health`}>
                         {provider.health.toUpperCase()}
                       </div>
-                      <div className="space-y-0.5 text-[10px] sm:text-xs text-zinc-400">
+                      <div className="space-y-0.5 text-[10px] sm:text-[11px] text-zinc-400">
                         <div className="flex justify-between">
                           <span>P50:</span>
                           <span className="text-white" data-testid={`text-latency-${providerKey}-p50`}>{provider.p50?.toFixed(0) || 0}ms</span>
@@ -541,11 +541,11 @@ export default function AIOptimizationDashboard() {
                     </CardContent>
                   </Card>
                 );
-              }) || <p className="text-zinc-400 text-sm">No latency data available yet</p>}
+              }) || <p className="text-zinc-400 text-[13px]">No latency data available yet</p>}
             </div>
           )}
           {latencyData?.fallbackRecommendation && (
-            <div className="mt-3 p-3 bg-card border border-yellow-700 rounded-lg text-sm text-yellow-300" data-testid="text-fallback-recommendation">
+            <div className="mt-3 p-3 bg-card border border-yellow-700 rounded-lg text-[13px] text-yellow-300" data-testid="text-fallback-recommendation">
               <AlertTriangle className="inline h-4 w-4 mr-2" />
               Fallback Recommendation: {latencyData.fallbackRecommendation}
             </div>
@@ -554,7 +554,7 @@ export default function AIOptimizationDashboard() {
 
         {/* Prompt Cache Metrics */}
         <div className="mb-4 sm:mb-6 lg:mb-8">
-          <h2 className="text-base sm:text-lg lg:text-xl font-semibold text-white mb-3 sm:mb-4 flex items-center gap-2" data-testid="heading-prompt-cache">
+          <h2 className="text-base sm:text-[15px] lg:text-xl font-semibold text-white mb-3 sm:mb-4 flex items-center gap-2" data-testid="heading-prompt-cache">
             <TrendingDown className="h-4 w-4 sm:h-5 sm:w-5" />
             Prompt Cache Metrics
           </h2>
@@ -575,52 +575,52 @@ export default function AIOptimizationDashboard() {
             <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
               <Card className="bg-zinc-800 border-zinc-700 hover:border-zinc-600 transition-colors" data-testid="card-cache-hit-rate">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 p-2 sm:p-4 pb-1 sm:pb-2">
-                  <CardTitle className="text-xs sm:text-sm font-medium text-zinc-300">Cache Hit Rate</CardTitle>
+                  <CardTitle className="text-[11px] sm:text-[13px] font-medium text-zinc-300">Cache Hit Rate</CardTitle>
                   <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-green-500" />
                 </CardHeader>
                 <CardContent className="p-2 sm:p-4 pt-0">
-                  <div className="text-lg sm:text-2xl font-bold text-green-400" data-testid="text-cache-hit-rate">
+                  <div className="text-[15px] sm:text-2xl font-bold text-green-400" data-testid="text-cache-hit-rate">
                     {((cacheMetrics?.hitRate || 0) * 100).toFixed(1)}%
                   </div>
-                  <p className="text-[10px] sm:text-xs text-zinc-400 mt-1">
+                  <p className="text-[10px] sm:text-[11px] text-zinc-400 mt-1">
                     {cacheMetrics?.totalHits || 0} hits / {cacheMetrics?.totalMisses || 0} misses
                   </p>
                 </CardContent>
               </Card>
               <Card className="bg-zinc-800 border-zinc-700 hover:border-zinc-600 transition-colors" data-testid="card-cache-tokens-saved">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 p-2 sm:p-4 pb-1 sm:pb-2">
-                  <CardTitle className="text-xs sm:text-sm font-medium text-zinc-300">Tokens Saved</CardTitle>
+                  <CardTitle className="text-[11px] sm:text-[13px] font-medium text-zinc-300">Tokens Saved</CardTitle>
                   <Cpu className="h-3 w-3 sm:h-4 sm:w-4 text-purple-500" />
                 </CardHeader>
                 <CardContent className="p-2 sm:p-4 pt-0">
-                  <div className="text-lg sm:text-2xl font-bold text-purple-400" data-testid="text-cache-tokens-saved">
+                  <div className="text-[15px] sm:text-2xl font-bold text-purple-400" data-testid="text-cache-tokens-saved">
                     {(cacheMetrics?.estimatedTokensSaved || 0).toLocaleString()}
                   </div>
-                  <p className="text-[10px] sm:text-xs text-zinc-400 mt-1">Via prompt caching</p>
+                  <p className="text-[10px] sm:text-[11px] text-zinc-400 mt-1">Via prompt caching</p>
                 </CardContent>
               </Card>
               <Card className="bg-zinc-800 border-zinc-700 hover:border-zinc-600 transition-colors" data-testid="card-cache-cost-saved">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 p-2 sm:p-4 pb-1 sm:pb-2">
-                  <CardTitle className="text-xs sm:text-sm font-medium text-zinc-300">Cost Saved</CardTitle>
+                  <CardTitle className="text-[11px] sm:text-[13px] font-medium text-zinc-300">Cost Saved</CardTitle>
                   <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 text-green-500" />
                 </CardHeader>
                 <CardContent className="p-2 sm:p-4 pt-0">
-                  <div className="text-lg sm:text-2xl font-bold text-green-400" data-testid="text-cache-cost-saved">
+                  <div className="text-[15px] sm:text-2xl font-bold text-green-400" data-testid="text-cache-cost-saved">
                     ${(cacheMetrics?.estimatedCostSaved || 0).toFixed(2)}
                   </div>
-                  <p className="text-[10px] sm:text-xs text-zinc-400 mt-1">Estimated savings</p>
+                  <p className="text-[10px] sm:text-[11px] text-zinc-400 mt-1">Estimated savings</p>
                 </CardContent>
               </Card>
               <Card className="bg-zinc-800 border-zinc-700 hover:border-zinc-600 transition-colors" data-testid="card-cache-size">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 p-2 sm:p-4 pb-1 sm:pb-2">
-                  <CardTitle className="text-xs sm:text-sm font-medium text-zinc-300">Cache Size</CardTitle>
+                  <CardTitle className="text-[11px] sm:text-[13px] font-medium text-zinc-300">Cache Size</CardTitle>
                   <Activity className="h-3 w-3 sm:h-4 sm:w-4 text-blue-500" />
                 </CardHeader>
                 <CardContent className="p-2 sm:p-4 pt-0">
-                  <div className="text-lg sm:text-2xl font-bold text-blue-400" data-testid="text-cache-size">
+                  <div className="text-[15px] sm:text-2xl font-bold text-blue-400" data-testid="text-cache-size">
                     {(cacheMetrics?.systemPromptCacheSize || 0) + (cacheMetrics?.responseCacheSize || 0)}
                   </div>
-                  <p className="text-[10px] sm:text-xs text-zinc-400 mt-1">
+                  <p className="text-[10px] sm:text-[11px] text-zinc-400 mt-1">
                     {cacheMetrics?.systemPromptCacheSize || 0} prompts, {cacheMetrics?.responseCacheSize || 0} responses
                   </p>
                 </CardContent>
@@ -654,16 +654,16 @@ export default function AIOptimizationDashboard() {
                       <>
                         <CheckCircle className="h-5 w-5 text-green-500" />
                         <div>
-                          <p className="text-sm font-medium text-white" data-testid="text-slack-status">Slack alerts enabled</p>
-                          <p className="text-xs text-zinc-400">Webhook URL: {slackConfig.webhookUrl || 'Not set'}</p>
+                          <p className="text-[13px] font-medium text-white" data-testid="text-slack-status">Slack alerts enabled</p>
+                          <p className="text-[11px] text-zinc-400">Webhook URL: {slackConfig.webhookUrl || 'Not set'}</p>
                         </div>
                       </>
                     ) : (
                       <>
                         <XCircle className="h-5 w-5 text-zinc-500" />
                         <div>
-                          <p className="text-sm font-medium text-white" data-testid="text-slack-status">Slack alerts disabled</p>
-                          <p className="text-xs text-zinc-400">Configure a webhook URL to enable alerts</p>
+                          <p className="text-[13px] font-medium text-white" data-testid="text-slack-status">Slack alerts disabled</p>
+                          <p className="text-[11px] text-zinc-400">Configure a webhook URL to enable alerts</p>
                         </div>
                       </>
                     )}
@@ -671,7 +671,7 @@ export default function AIOptimizationDashboard() {
 
                   {/* Webhook URL Input */}
                   <div className="space-y-2">
-                    <label className="text-sm text-zinc-300 font-medium">
+                    <label className="text-[13px] text-zinc-300 font-medium">
                       Webhook URL
                     </label>
                     <div className="flex gap-2">
@@ -692,7 +692,7 @@ export default function AIOptimizationDashboard() {
                         {updateWebhookMutation.isPending ? 'Updating...' : 'Update'}
                       </Button>
                     </div>
-                    <p className="text-xs text-zinc-500">
+                    <p className="text-[11px] text-zinc-500">
                       Get your webhook URL from{' '}
                       <a
                         href="https://api.slack.com/messaging/webhooks"

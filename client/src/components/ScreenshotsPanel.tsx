@@ -67,7 +67,7 @@ export function ScreenshotsPanel({ projectId }: ScreenshotsPanelProps) {
   return (
     <div className="p-4">
       <div className="mb-4">
-        <h3 className="text-lg font-semibold mb-2">Capture Screenshot</h3>
+        <h3 className="text-[15px] font-semibold mb-2">Capture Screenshot</h3>
         <label htmlFor="screenshot-title" className="sr-only">Screenshot title</label>
         <input
           id="screenshot-title"
@@ -98,7 +98,7 @@ export function ScreenshotsPanel({ projectId }: ScreenshotsPanelProps) {
       </div>
 
       <div>
-        <h3 className="text-lg font-semibold mb-2">Screenshots Gallery</h3>
+        <h3 className="text-[15px] font-semibold mb-2">Screenshots Gallery</h3>
         {isLoading ? (
           <p>Loading screenshots...</p>
         ) : (
@@ -111,11 +111,11 @@ export function ScreenshotsPanel({ projectId }: ScreenshotsPanelProps) {
                   className="w-full h-32 object-cover"
                 />
                 <div className="p-2">
-                  <h4 className="font-medium text-sm truncate">{screenshot.title}</h4>
+                  <h4 className="font-medium text-[13px] truncate">{screenshot.title}</h4>
                   {screenshot.description && (
-                    <p className="text-xs text-muted-foreground truncate">{screenshot.description}</p>
+                    <p className="text-[11px] text-muted-foreground truncate">{screenshot.description}</p>
                   )}
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="text-[11px] text-muted-foreground mt-1">
                     {format(new Date(screenshot.createdAt), 'PP')}
                   </p>
                   <div className="flex gap-1 mt-2">

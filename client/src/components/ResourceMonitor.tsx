@@ -159,7 +159,7 @@ export function ResourceMonitor({ projectId, className }: ResourceMonitorProps) 
           </CardTitle>
           <Badge 
             variant={resources.status === 'running' ? 'default' : 'secondary'}
-            className="text-xs"
+            className="text-[11px]"
           >
             {resources.status === 'running' && <Zap className="h-3 w-3 mr-1" />}
             {resources.status.toUpperCase()}
@@ -169,7 +169,7 @@ export function ResourceMonitor({ projectId, className }: ResourceMonitorProps) 
       <CardContent className="space-y-4">
         {/* CPU Usage */}
         <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm">
+          <div className="flex items-center justify-between text-[13px]">
             <div className="flex items-center gap-2">
               <Cpu className="h-4 w-4 text-muted-foreground" />
               <span className="font-medium">CPU</span>
@@ -186,7 +186,7 @@ export function ResourceMonitor({ projectId, className }: ResourceMonitorProps) 
 
         {/* Memory Usage */}
         <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm">
+          <div className="flex items-center justify-between text-[13px]">
             <div className="flex items-center gap-2">
               <HardDrive className="h-4 w-4 text-muted-foreground" />
               <span className="font-medium">Memory</span>
@@ -203,7 +203,7 @@ export function ResourceMonitor({ projectId, className }: ResourceMonitorProps) 
 
         {/* Storage Usage */}
         <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm">
+          <div className="flex items-center justify-between text-[13px]">
             <div className="flex items-center gap-2">
               <HardDrive className="h-4 w-4 text-muted-foreground" />
               <span className="font-medium">Storage</span>
@@ -220,7 +220,7 @@ export function ResourceMonitor({ projectId, className }: ResourceMonitorProps) 
 
         {/* Bandwidth Usage */}
         <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm">
+          <div className="flex items-center justify-between text-[13px]">
             <div className="flex items-center gap-2">
               <Wifi className="h-4 w-4 text-muted-foreground" />
               <span className="font-medium">Bandwidth</span>
@@ -237,7 +237,7 @@ export function ResourceMonitor({ projectId, className }: ResourceMonitorProps) 
 
         {/* Uptime */}
         <div className="pt-2 border-t">
-          <div className="flex items-center justify-between text-sm text-muted-foreground">
+          <div className="flex items-center justify-between text-[13px] text-muted-foreground">
             <div className="flex items-center gap-2">
               <Timer className="h-4 w-4" />
               <span>Uptime</span>

@@ -125,7 +125,7 @@ export function CommandPalette({
         
         <ScrollArea className="max-h-80">
           {filteredItems.length === 0 ? (
-            <div className="p-4 text-center text-sm text-muted-foreground">
+            <div className="p-4 text-center text-[13px] text-muted-foreground">
               No results found
             </div>
           ) : (
@@ -138,7 +138,7 @@ export function CommandPalette({
                     onOpenChange(false);
                   }}
                   className={cn(
-                    "w-full flex items-center gap-3 px-3 py-2 rounded-md text-left text-sm",
+                    "w-full flex items-center gap-3 px-3 py-2 rounded-md text-left text-[13px]",
                     "hover:bg-accent hover:text-accent-foreground",
                     index === selectedIndex && "bg-accent text-accent-foreground"
                   )}
@@ -150,13 +150,13 @@ export function CommandPalette({
                   <div className="flex-1 min-w-0">
                     <div className="font-medium truncate">{item.title}</div>
                     {item.description && (
-                      <div className="text-xs text-muted-foreground truncate">
+                      <div className="text-[11px] text-muted-foreground truncate">
                         {item.description}
                       </div>
                     )}
                   </div>
                   {item.shortcut && (
-                    <kbd className="text-xs bg-muted px-1.5 py-0.5 rounded">
+                    <kbd className="text-[11px] bg-muted px-1.5 py-0.5 rounded">
                       {item.shortcut}
                     </kbd>
                   )}

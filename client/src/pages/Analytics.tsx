@@ -150,7 +150,7 @@ export default function Analytics() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">{stat.label}</p>
+                    <p className="text-[13px] font-medium text-muted-foreground">{stat.label}</p>
                     <div className="flex items-center gap-2">
                       <p className="text-2xl font-bold">{stat.value || '0'}</p>
                       {stat.change && (
@@ -234,7 +234,7 @@ export default function Analytics() {
                           <div className="w-20">
                             <Progress value={source.percentage} className="h-2" />
                           </div>
-                          <span className="text-sm text-muted-foreground w-12 text-right">
+                          <span className="text-[13px] text-muted-foreground w-12 text-right">
                             {source.visitors}
                           </span>
                         </div>
@@ -277,12 +277,12 @@ export default function Analytics() {
                   <div className="space-y-4">
                     {trafficSources.map((source, index) => (
                       <div key={index} className="space-y-2">
-                        <div className="flex justify-between text-sm">
+                        <div className="flex justify-between text-[13px]">
                           <span>{source.source}</span>
                           <span>{source.percentage}%</span>
                         </div>
                         <Progress value={source.percentage} />
-                        <p className="text-xs text-muted-foreground">{source.visitors} visitors</p>
+                        <p className="text-[11px] text-muted-foreground">{source.visitors} visitors</p>
                       </div>
                     ))}
                   </div>
@@ -307,7 +307,7 @@ export default function Analytics() {
                         </div>
                         <div>
                           <p className="font-medium">{page.page}</p>
-                          <p className="text-sm text-muted-foreground">{page.views} views</p>
+                          <p className="text-[13px] text-muted-foreground">{page.views} views</p>
                         </div>
                       </div>
                       <Badge variant={page.change && page.change.startsWith('+') ? 'default' : 'secondary'}>
@@ -342,7 +342,7 @@ export default function Analytics() {
                           <div className="w-20">
                             <Progress value={device.percentage} className="h-2" />
                           </div>
-                          <span className="text-sm text-muted-foreground w-12 text-right">
+                          <span className="text-[13px] text-muted-foreground w-12 text-right">
                             {device.percentage}%
                           </span>
                         </div>
@@ -363,11 +363,11 @@ export default function Analytics() {
                     {geographicData.map((country, index) => (
                       <div key={index} className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <span className="text-lg">{country.flag}</span>
+                          <span className="text-[15px]">{country.flag}</span>
                           <span className="font-medium">{country.country}</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-sm text-muted-foreground">
+                          <span className="text-[13px] text-muted-foreground">
                             {country.users} users
                           </span>
                         </div>
@@ -391,10 +391,10 @@ export default function Analytics() {
                     <div className="text-5xl font-bold text-green-600 mb-2 animate-pulse">
                       {analyticsData?.realtimeUsers || 0}
                     </div>
-                    <p className="text-sm text-muted-foreground">Active right now</p>
+                    <p className="text-[13px] text-muted-foreground">Active right now</p>
                     <div className="mt-4 flex items-center justify-center gap-2">
                       <span className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></span>
-                      <span className="text-xs text-green-600">Live</span>
+                      <span className="text-[11px] text-green-600">Live</span>
                     </div>
                   </div>
                 </CardContent>
@@ -408,36 +408,36 @@ export default function Analytics() {
                 <CardContent>
                   <div className="space-y-3">
                     {realtimeLoading ? (
-                      <p className="text-sm text-muted-foreground text-center py-4">Loading activity...</p>
+                      <p className="text-[13px] text-muted-foreground text-center py-4">Loading activity...</p>
                     ) : realtimeActivities.length > 0 ? (
                       realtimeActivities.slice(0, 5).map((activity, index) => (
                         <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                           <div className="flex items-center gap-3">
                             <div className="h-2 w-2 bg-green-500 rounded-full"></div>
                             <div>
-                              <p className="text-sm font-medium">{activity.action}</p>
-                              <p className="text-xs text-muted-foreground">{activity.user} • {activity.page}</p>
+                              <p className="text-[13px] font-medium">{activity.action}</p>
+                              <p className="text-[11px] text-muted-foreground">{activity.user} • {activity.page}</p>
                             </div>
                           </div>
-                          <span className="text-xs text-muted-foreground">{activity.time}</span>
+                          <span className="text-[11px] text-muted-foreground">{activity.time}</span>
                         </div>
                       ))
                     ) : (
-                      <p className="text-sm text-muted-foreground text-center py-4">No recent activity</p>
+                      <p className="text-[13px] text-muted-foreground text-center py-4">No recent activity</p>
                     )}
                   </div>
                 </CardContent>
                 <CardContent>
                   <div className="space-y-3">
-                    <div className="flex items-center gap-2 text-sm">
+                    <div className="flex items-center gap-2 text-[13px]">
                       <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                       <span>User viewed /dashboard</span>
                     </div>
-                    <div className="flex items-center gap-2 text-sm">
+                    <div className="flex items-center gap-2 text-[13px]">
                       <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
                       <span>New user signed up</span>
                     </div>
-                    <div className="flex items-center gap-2 text-sm">
+                    <div className="flex items-center gap-2 text-[13px]">
                       <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
                       <span>Project created</span>
                     </div>
@@ -452,7 +452,7 @@ export default function Analytics() {
                 <CardContent>
                   <div className="text-center">
                     <div className="text-4xl font-bold mb-2">127</div>
-                    <p className="text-sm text-muted-foreground">+15% vs previous hour</p>
+                    <p className="text-[13px] text-muted-foreground">+15% vs previous hour</p>
                   </div>
                 </CardContent>
               </Card>
@@ -467,7 +467,7 @@ export default function Analytics() {
                 <div className="space-y-3">
                   {['/dashboard', '/project/my-app', '/bounties', '/learn'].map((page, index) => (
                     <div key={index} className="flex items-center justify-between p-2 border rounded">
-                      <span className="font-mono text-sm">{page}</span>
+                      <span className="font-mono text-[13px]">{page}</span>
                       <Badge variant="outline">{index + 2} users</Badge>
                     </div>
                   ))}

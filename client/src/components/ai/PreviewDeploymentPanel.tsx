@@ -351,7 +351,7 @@ export function PreviewDeploymentPanel({
                       href={previewUrl || '#'}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-sm text-primary hover:underline truncate flex-1"
+                      className="text-[13px] text-primary hover:underline truncate flex-1"
                       data-testid="link-preview-url"
                     >
                       {previewUrl}
@@ -394,12 +394,12 @@ export function PreviewDeploymentPanel({
 
                   {preview?.services && preview.services.length > 1 && (
                     <div className="space-y-2">
-                      <div className="text-xs font-medium text-muted-foreground">Services</div>
+                      <div className="text-[11px] font-medium text-muted-foreground">Services</div>
                       <div className="grid gap-2">
                         {preview.services.map((service) => (
                           <div
                             key={service.port}
-                            className="flex items-center justify-between p-2 bg-muted/30 rounded-md text-sm"
+                            className="flex items-center justify-between p-2 bg-muted/30 rounded-md text-[13px]"
                             data-testid={`service-${service.port}`}
                           >
                             <div className="flex items-center gap-2">
@@ -450,7 +450,7 @@ export function PreviewDeploymentPanel({
                       <Button
                         variant="outline"
                         size="sm"
-                        className="h-7 text-xs"
+                        className="h-7 text-[11px]"
                         onClick={() => restartPreviewMutation.mutate()}
                         disabled={restartPreviewMutation.isPending}
                         data-testid="button-restart-preview"
@@ -465,7 +465,7 @@ export function PreviewDeploymentPanel({
                       <Button
                         variant="outline"
                         size="sm"
-                        className="h-7 text-xs text-destructive hover:text-destructive"
+                        className="h-7 text-[11px] text-destructive hover:text-destructive"
                         onClick={() => stopPreviewMutation.mutate()}
                         disabled={stopPreviewMutation.isPending}
                         data-testid="button-stop-preview"
@@ -503,8 +503,8 @@ export function PreviewDeploymentPanel({
                 >
                   <div className="text-center py-6">
                     <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary mb-3" />
-                    <p className="text-sm text-muted-foreground">Starting preview server...</p>
-                    <p className="text-xs text-muted-foreground mt-1">This may take a moment</p>
+                    <p className="text-[13px] text-muted-foreground">Starting preview server...</p>
+                    <p className="text-[11px] text-muted-foreground mt-1">This may take a moment</p>
                   </div>
                   <Progress value={33} className="h-1" />
                 </LazyMotionDiv>
@@ -518,8 +518,8 @@ export function PreviewDeploymentPanel({
                 >
                   <div className="text-center py-6">
                     <AlertCircle className="h-8 w-8 mx-auto text-destructive mb-3" />
-                    <p className="text-sm text-destructive font-medium">Preview failed to start</p>
-                    <p className="text-xs text-muted-foreground mt-1">Check your code for errors</p>
+                    <p className="text-[13px] text-destructive font-medium">Preview failed to start</p>
+                    <p className="text-[11px] text-muted-foreground mt-1">Check your code for errors</p>
                   </div>
                   <Button
                     variant="outline"
@@ -546,8 +546,8 @@ export function PreviewDeploymentPanel({
                 >
                   <div className="text-center py-6">
                     <EyeOff className="h-8 w-8 mx-auto text-muted-foreground/50 mb-3" />
-                    <p className="text-sm text-muted-foreground">No preview running</p>
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="text-[13px] text-muted-foreground">No preview running</p>
+                    <p className="text-[11px] text-muted-foreground mt-1">
                       Start a preview to see your app in action
                     </p>
                   </div>

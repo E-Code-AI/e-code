@@ -403,7 +403,7 @@ export function LanguageEnvironments({ onSelectLanguage, selectedLanguage }: Lan
                             </div>
                           </div>
                         </CardHeader>
-                        <CardFooter className="pt-0 pb-3 text-xs text-muted-foreground">
+                        <CardFooter className="pt-0 pb-3 text-[11px] text-muted-foreground">
                           {config.fileExtensions.join(', ')}
                         </CardFooter>
                       </Card>

@@ -34,7 +34,7 @@ export function AdminSidebar() {
     <aside aria-label="Admin navigation" className="w-64 bg-zinc-950 border-r border-zinc-800">
       <div className="p-6">
         <h1 className="text-xl font-bold text-white">Admin Panel</h1>
-        <p className="text-sm text-zinc-400 mt-1">E-Code Administration</p>
+        <p className="text-[13px] text-zinc-400 mt-1">E-Code Administration</p>
       </div>
       
       <nav aria-label="Admin menu" className="px-4 pb-4">

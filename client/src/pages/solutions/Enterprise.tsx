@@ -81,13 +81,13 @@ export default function Enterprise() {
       <div className="container mx-auto px-4 py-12 sm:py-16 md:py-20">
         {/* Hero Section */}
         <div className="text-center max-w-4xl mx-auto mb-12 sm:mb-16 md:mb-20">
-          <Badge className="mb-4 px-4 py-1.5 text-sm font-medium bg-gradient-to-r from-slate-700 to-slate-900 text-white border-0">
+          <Badge className="mb-4 px-4 py-1.5 text-[13px] font-medium bg-gradient-to-r from-slate-700 to-slate-900 text-white border-0">
             Enterprise-Grade Platform
           </Badge>
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-6 bg-gradient-to-r from-slate-800 to-slate-600 dark:from-white dark:to-slate-300 bg-clip-text text-transparent">
             Enterprise Solutions
           </h1>
-          <p className="text-lg sm:text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
+          <p className="text-[15px] sm:text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
             The development platform trusted by Fortune 500 companies. Enterprise security,
             compliance, and support built for the world's largest organizations.
           </p>
@@ -112,7 +112,7 @@ export default function Enterprise() {
           {stats.map((stat) => (
             <Card key={stat.label} className="p-6 text-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
               <div className="text-3xl sm:text-4xl font-bold text-primary mb-2">{stat.value}</div>
-              <div className="text-sm text-muted-foreground">{stat.label}</div>
+              <div className="text-[13px] text-muted-foreground">{stat.label}</div>
             </Card>
           ))}
         </div>
@@ -234,7 +234,7 @@ export default function Enterprise() {
           <p className="text-center text-muted-foreground mb-8">Trusted by leading enterprises worldwide</p>
           <div className="flex flex-wrap justify-center gap-8 opacity-60">
             {trustedBy.map((company) => (
-              <div key={company} className="text-lg font-semibold text-muted-foreground">
+              <div key={company} className="text-[15px] font-semibold text-muted-foreground">
                 {company}
               </div>
             ))}
@@ -245,7 +245,7 @@ export default function Enterprise() {
         <Card className="p-8 md:p-12 bg-gradient-to-r from-slate-900 to-slate-800 dark:from-slate-800 dark:to-slate-900 border-0 text-white">
           <div className="text-center max-w-3xl mx-auto">
             <h2 className="text-2xl sm:text-3xl font-bold mb-4">Ready for Enterprise?</h2>
-            <p className="text-lg text-slate-300 mb-8">
+            <p className="text-[15px] text-slate-300 mb-8">
               Talk to our sales team about custom pricing, dedicated support, and tailored solutions for your organization.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">

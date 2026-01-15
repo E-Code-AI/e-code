@@ -228,7 +228,7 @@ export default function SolarTechCRMApp() {
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground">Total Pipeline</p>
+                    <p className="text-[13px] text-muted-foreground">Total Pipeline</p>
                     <p className="text-2xl font-bold">{formatCurrency(totalValue)}</p>
                   </div>
                   <DollarSign className="h-8 w-8 text-primary" />
@@ -240,7 +240,7 @@ export default function SolarTechCRMApp() {
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground">Active Deals</p>
+                    <p className="text-[13px] text-muted-foreground">Active Deals</p>
                     <p className="text-2xl font-bold">{deals.length}</p>
                   </div>
                   <FileText className="h-8 w-8 text-primary" />
@@ -252,7 +252,7 @@ export default function SolarTechCRMApp() {
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground">Avg Deal Size</p>
+                    <p className="text-[13px] text-muted-foreground">Avg Deal Size</p>
                     <p className="text-2xl font-bold">{formatCurrency(avgDealSize)}</p>
                   </div>
                   <TrendingUp className="h-8 w-8 text-primary" />
@@ -264,7 +264,7 @@ export default function SolarTechCRMApp() {
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground">Win Rate</p>
+                    <p className="text-[13px] text-muted-foreground">Win Rate</p>
                     <p className="text-2xl font-bold">{winRate.toFixed(1)}%</p>
                   </div>
                   <Star className="h-8 w-8 text-primary" />
@@ -319,12 +319,12 @@ export default function SolarTechCRMApp() {
                                     <div className="flex-1">
                                       <div className="flex items-center gap-2 mb-1">
                                         <h3 className="font-medium">{customer.name}</h3>
-                                        <Badge className={`text-xs ${getStatusColor(customer.status)} text-white`}>
+                                        <Badge className={`text-[11px] ${getStatusColor(customer.status)} text-white`}>
                                           {customer.status}
                                         </Badge>
                                       </div>
-                                      <p className="text-sm text-muted-foreground">{customer.company}</p>
-                                      <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                                      <p className="text-[13px] text-muted-foreground">{customer.company}</p>
+                                      <div className="flex items-center gap-4 mt-2 text-[11px] text-muted-foreground">
                                         <span className="flex items-center gap-1">
                                           <Mail className="h-3 w-3" />
                                           {customer.email}
@@ -338,7 +338,7 @@ export default function SolarTechCRMApp() {
                                   </div>
                                   <div className="text-right">
                                     <p className="font-semibold text-primary">{formatCurrency(customer.value)}</p>
-                                    <p className="text-xs text-muted-foreground">
+                                    <p className="text-[11px] text-muted-foreground">
                                       Last: {formatDate(customer.lastContact)}
                                     </p>
                                   </div>
@@ -373,12 +373,12 @@ export default function SolarTechCRMApp() {
                         <div className="text-center">
                           <Avatar className="h-16 w-16 mx-auto mb-3">
                             <AvatarImage src={selectedCustomer.avatar} />
-                            <AvatarFallback className="text-lg">
+                            <AvatarFallback className="text-[15px]">
                               {selectedCustomer.name.split(' ').map(n => n[0]).join('')}
                             </AvatarFallback>
                           </Avatar>
                           <h3 className="font-semibold">{selectedCustomer.name}</h3>
-                          <p className="text-sm text-muted-foreground">{selectedCustomer.company}</p>
+                          <p className="text-[13px] text-muted-foreground">{selectedCustomer.company}</p>
                           <Badge className={`mt-2 ${getStatusColor(selectedCustomer.status)} text-white`}>
                             {selectedCustomer.status}
                           </Badge>
@@ -387,30 +387,30 @@ export default function SolarTechCRMApp() {
                         <div className="space-y-3">
                           <div className="flex items-center gap-2">
                             <Phone className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm">{selectedCustomer.phone}</span>
+                            <span className="text-[13px]">{selectedCustomer.phone}</span>
                           </div>
                           <div className="flex items-center gap-2">
                             <Mail className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm">{selectedCustomer.email}</span>
+                            <span className="text-[13px]">{selectedCustomer.email}</span>
                           </div>
                           <div className="flex items-center gap-2">
                             <MapPin className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm">{selectedCustomer.location}</span>
+                            <span className="text-[13px]">{selectedCustomer.location}</span>
                           </div>
                           <div className="flex items-center gap-2">
                             <Building className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm">{selectedCustomer.systemSize || 'TBD'}</span>
+                            <span className="text-[13px]">{selectedCustomer.systemSize || 'TBD'}</span>
                           </div>
                         </div>
 
                         <div className="border-t pt-4">
                           <h4 className="font-medium mb-2">Notes</h4>
-                          <p className="text-sm text-muted-foreground">{selectedCustomer.notes}</p>
+                          <p className="text-[13px] text-muted-foreground">{selectedCustomer.notes}</p>
                         </div>
 
                         <div className="border-t pt-4">
                           <h4 className="font-medium mb-2">Next Steps</h4>
-                          <div className="flex items-center gap-2 text-sm">
+                          <div className="flex items-center gap-2 text-[13px]">
                             <Calendar className="h-4 w-4 text-muted-foreground" />
                             <span>Follow up: {formatDate(selectedCustomer.nextFollowup)}</span>
                           </div>
@@ -459,18 +459,18 @@ export default function SolarTechCRMApp() {
                                 {deal.stage}
                               </Badge>
                             </div>
-                            <p className="text-sm text-muted-foreground mb-2">{deal.customerName}</p>
-                            <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                            <p className="text-[13px] text-muted-foreground mb-2">{deal.customerName}</p>
+                            <div className="flex items-center gap-4 text-[11px] text-muted-foreground">
                               <span>System: {deal.systemSize}</span>
                               <span>Panels: {deal.panelType}</span>
                               <span>Close: {formatDate(deal.closeDate)}</span>
                             </div>
                           </div>
                           <div className="text-right">
-                            <p className="font-semibold text-lg">{formatCurrency(deal.value)}</p>
+                            <p className="font-semibold text-[15px]">{formatCurrency(deal.value)}</p>
                             <div className="flex items-center gap-2 mt-1">
                               <Progress value={deal.probability} className="w-20" />
-                              <span className="text-sm text-muted-foreground">{deal.probability}%</span>
+                              <span className="text-[13px] text-muted-foreground">{deal.probability}%</span>
                             </div>
                           </div>
                         </div>

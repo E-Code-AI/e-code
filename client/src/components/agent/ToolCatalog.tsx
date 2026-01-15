@@ -108,13 +108,13 @@ function ToolCard({ tool }: { tool: Tool }) {
                   <Icon className="h-4 w-4" />
                 </div>
                 <div>
-                  <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <CardTitle className="text-[13px] font-medium flex items-center gap-2">
                     {tool.displayName || tool.name}
                     {tool.requiresAuth && (
                       <Lock className="h-3 w-3 text-muted-foreground" />
                     )}
                   </CardTitle>
-                  <CardDescription className="text-xs mt-0.5 line-clamp-1">
+                  <CardDescription className="text-[11px] mt-0.5 line-clamp-1">
                     {tool.description}
                   </CardDescription>
                 </div>
@@ -135,18 +135,18 @@ function ToolCard({ tool }: { tool: Tool }) {
         <CollapsibleContent>
           <CardContent className="pt-0 pb-4 px-4">
             <div className="space-y-3">
-              <p className="text-sm text-muted-foreground">{tool.description}</p>
+              <p className="text-[13px] text-muted-foreground">{tool.description}</p>
               
               {inputParams.length > 0 && (
                 <div className="space-y-2">
-                  <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  <h4 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
                     Parameters
                   </h4>
                   <div className="space-y-1.5">
                     {inputParams.map((param) => (
                       <div
                         key={param.name}
-                        className="flex items-start gap-2 text-xs bg-muted/50 rounded-md p-2"
+                        className="flex items-start gap-2 text-[11px] bg-muted/50 rounded-md p-2"
                         data-testid={`param-${tool.name}-${param.name}`}
                       >
                         <code className="font-mono text-primary font-medium">
@@ -173,7 +173,7 @@ function ToolCard({ tool }: { tool: Tool }) {
               )}
               
               {tool.configuration?.rateLimit && (
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
                   <Zap className="h-3 w-3" />
                   <span>Rate limit: {tool.configuration.rateLimit} req/min</span>
                 </div>
@@ -212,7 +212,7 @@ function CategorySection({
             </div>
             <div className="text-left">
               <span className="font-medium">{meta?.label || category}</span>
-              <p className="text-xs text-muted-foreground font-normal">
+              <p className="text-[11px] text-muted-foreground font-normal">
                 {meta?.description} • {tools.length} tools
               </p>
             </div>
@@ -346,7 +346,7 @@ export function ToolCatalog() {
       ) : (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground" data-testid="text-tool-count">
+            <p className="text-[13px] text-muted-foreground" data-testid="text-tool-count">
               {filteredTools.length} tools available
             </p>
           </div>

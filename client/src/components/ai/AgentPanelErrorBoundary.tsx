@@ -55,12 +55,12 @@ export class AgentPanelErrorBoundary extends Component<Props, State> {
         >
           <AlertTriangle className="h-10 w-10 text-yellow-500 mb-4" aria-hidden="true" />
           <h3 className="text-base font-semibold mb-2">AI Assistant Error</h3>
-          <p className="text-sm text-muted-foreground text-center mb-4 max-w-xs">
+          <p className="text-[13px] text-muted-foreground text-center mb-4 max-w-xs">
             The AI assistant encountered an issue. Try restarting or refreshing the page.
           </p>
           {this.state.error && (
             <pre 
-              className="text-xs text-left bg-muted p-2 rounded-md mb-4 overflow-auto max-h-20 max-w-full w-full"
+              className="text-[11px] text-left bg-muted p-2 rounded-md mb-4 overflow-auto max-h-20 max-w-full w-full"
               aria-label="Error details"
             >
               {this.state.error.message}

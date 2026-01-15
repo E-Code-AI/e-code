@@ -188,7 +188,7 @@ export default function ReferralsPage() {
                 return (
                   <button
                     key={item.id}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 min-h-[44px] ${
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-200 min-h-[44px] ${
                       isActive 
                         ? 'bg-primary/10 text-primary border-l-2 border-primary pl-[10px]' 
                         : 'text-muted-foreground hover:bg-muted hover:text-foreground'
@@ -205,7 +205,7 @@ export default function ReferralsPage() {
 
             <Card className={`${cardClassName} mt-4`} data-testid="card-your-tier">
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <CardTitle className="text-[13px] font-medium flex items-center gap-2">
                   {getTierIcon(stats.tier)}
                   Your Tier
                 </CardTitle>
@@ -215,8 +215,8 @@ export default function ReferralsPage() {
                   <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center mx-auto mb-3">
                     <Clock className="h-6 w-6 text-muted-foreground" />
                   </div>
-                  <p className="text-sm font-medium text-foreground">Coming Soon</p>
-                  <p className="text-xs text-muted-foreground mt-1">Referral tiers will be available soon</p>
+                  <p className="text-[13px] font-medium text-foreground">Coming Soon</p>
+                  <p className="text-[11px] text-muted-foreground mt-1">Referral tiers will be available soon</p>
                 </div>
               </CardContent>
             </Card>
@@ -230,7 +230,7 @@ export default function ReferralsPage() {
                     <CardContent className="pt-6">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm text-muted-foreground">Total Referrals</p>
+                          <p className="text-[13px] text-muted-foreground">Total Referrals</p>
                           <p className="text-2xl font-bold text-foreground">{stats.totalReferrals}</p>
                         </div>
                         <div className="p-3 rounded-lg bg-primary/10">
@@ -243,7 +243,7 @@ export default function ReferralsPage() {
                     <CardContent className="pt-6">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm text-muted-foreground">Successful</p>
+                          <p className="text-[13px] text-muted-foreground">Successful</p>
                           <p className="text-2xl font-bold text-foreground">{stats.successfulReferrals}</p>
                         </div>
                         <div className="p-3 rounded-lg bg-green-500/10">
@@ -256,7 +256,7 @@ export default function ReferralsPage() {
                     <CardContent className="pt-6">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm text-muted-foreground">Total Earnings</p>
+                          <p className="text-[13px] text-muted-foreground">Total Earnings</p>
                           <p className="text-2xl font-bold text-foreground">${stats.totalEarnings}</p>
                         </div>
                         <div className="p-3 rounded-lg bg-yellow-500/10">
@@ -269,7 +269,7 @@ export default function ReferralsPage() {
                     <CardContent className="pt-6">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm text-muted-foreground">Your Rank</p>
+                          <p className="text-[13px] text-muted-foreground">Your Rank</p>
                           <p className="text-2xl font-bold text-foreground">{stats.rank > 0 ? `#${stats.rank}` : '-'}</p>
                         </div>
                         <div className="p-3 rounded-lg bg-purple-500/10">
@@ -296,7 +296,7 @@ export default function ReferralsPage() {
                         <Clock className="h-8 w-8 text-muted-foreground" />
                       </div>
                       <h4 className="font-medium text-foreground mb-2">Referral Program Coming Soon</h4>
-                      <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+                      <p className="text-[13px] text-muted-foreground max-w-sm mx-auto">
                         We're working on setting up the referral program. You'll be able to generate your unique referral link and start earning rewards soon!
                       </p>
                     </div>
@@ -317,21 +317,21 @@ export default function ReferralsPage() {
                           <Share2 className="h-6 w-6 text-primary" />
                         </div>
                         <h4 className="font-medium text-foreground mb-2">1. Share Your Link</h4>
-                        <p className="text-sm text-muted-foreground">Share your unique referral link with friends, colleagues, or on social media</p>
+                        <p className="text-[13px] text-muted-foreground">Share your unique referral link with friends, colleagues, or on social media</p>
                       </div>
                       <div className="text-center p-4" data-testid="step-2">
                         <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
                           <UserPlus className="h-6 w-6 text-primary" />
                         </div>
                         <h4 className="font-medium text-foreground mb-2">2. Friend Signs Up</h4>
-                        <p className="text-sm text-muted-foreground">Your friend creates an account using your referral link</p>
+                        <p className="text-[13px] text-muted-foreground">Your friend creates an account using your referral link</p>
                       </div>
                       <div className="text-center p-4" data-testid="step-3">
                         <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
                           <Gift className="h-6 w-6 text-primary" />
                         </div>
                         <h4 className="font-medium text-foreground mb-2">3. Both Get Rewarded</h4>
-                        <p className="text-sm text-muted-foreground">You both receive $50 in credits when they subscribe to a paid plan</p>
+                        <p className="text-[13px] text-muted-foreground">You both receive $50 in credits when they subscribe to a paid plan</p>
                       </div>
                     </div>
                   </CardContent>
@@ -357,7 +357,7 @@ export default function ReferralsPage() {
                         <Users className="h-8 w-8 text-muted-foreground" />
                       </div>
                       <h4 className="font-medium text-foreground mb-2">No referrals yet</h4>
-                      <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+                      <p className="text-[13px] text-muted-foreground max-w-sm mx-auto">
                         Share your referral link with friends to start earning rewards. Your referrals will appear here once they sign up.
                       </p>
                     </div>
@@ -379,14 +379,14 @@ export default function ReferralsPage() {
                               <TableCell>
                                 <div>
                                   <p className="font-medium">{referral.username || referral.email}</p>
-                                  {referral.username && <p className="text-xs text-muted-foreground">{referral.email}</p>}
+                                  {referral.username && <p className="text-[11px] text-muted-foreground">{referral.email}</p>}
                                 </div>
                               </TableCell>
                               <TableCell>{getStatusBadge(referral.status)}</TableCell>
-                              <TableCell className="text-sm text-muted-foreground">
+                              <TableCell className="text-[13px] text-muted-foreground">
                                 {formatDistanceToNow(new Date(referral.invitedAt), { addSuffix: true })}
                               </TableCell>
-                              <TableCell className="text-sm text-muted-foreground">
+                              <TableCell className="text-[13px] text-muted-foreground">
                                 {referral.signedUpAt 
                                   ? formatDistanceToNow(new Date(referral.signedUpAt), { addSuffix: true })
                                   : '-'
@@ -416,7 +416,7 @@ export default function ReferralsPage() {
                     <CardContent className="pt-6">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm text-muted-foreground">Available Credits</p>
+                          <p className="text-[13px] text-muted-foreground">Available Credits</p>
                           <p className="text-3xl font-bold text-foreground">${stats.availableCredits}</p>
                         </div>
                         <div className="p-3 rounded-lg bg-green-500/10">
@@ -432,14 +432,14 @@ export default function ReferralsPage() {
                     <CardContent className="pt-6">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm text-muted-foreground">Lifetime Earnings</p>
+                          <p className="text-[13px] text-muted-foreground">Lifetime Earnings</p>
                           <p className="text-3xl font-bold text-foreground">${stats.lifetimeCredits}</p>
                         </div>
                         <div className="p-3 rounded-lg bg-primary/10">
                           <TrendingUp className="h-6 w-6 text-primary" />
                         </div>
                       </div>
-                      <p className="text-sm text-muted-foreground mt-4">
+                      <p className="text-[13px] text-muted-foreground mt-4">
                         Total credits earned since joining the referral program
                       </p>
                     </CardContent>
@@ -460,7 +460,7 @@ export default function ReferralsPage() {
                           <Gift className="h-8 w-8 text-muted-foreground" />
                         </div>
                         <h4 className="font-medium text-foreground mb-2">No rewards yet</h4>
-                        <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+                        <p className="text-[13px] text-muted-foreground max-w-sm mx-auto">
                           Start referring friends to earn rewards. Your rewards will appear here once your referrals convert.
                         </p>
                       </div>
@@ -483,13 +483,13 @@ export default function ReferralsPage() {
                               </div>
                               <div>
                                 <p className="font-medium text-foreground">{reward.description}</p>
-                                <p className="text-sm text-muted-foreground">
+                                <p className="text-[13px] text-muted-foreground">
                                   {formatDistanceToNow(new Date(reward.earnedAt), { addSuffix: true })}
                                 </p>
                               </div>
                             </div>
                             <div className="flex items-center gap-3">
-                              <span className="font-bold text-lg text-foreground">+${reward.amount}</span>
+                              <span className="font-bold text-[15px] text-foreground">+${reward.amount}</span>
                               {getStatusBadge(reward.status)}
                             </div>
                           </div>
@@ -518,7 +518,7 @@ export default function ReferralsPage() {
                       <Trophy className="h-8 w-8 text-muted-foreground" />
                     </div>
                     <h4 className="font-medium text-foreground mb-2">Leaderboard Coming Soon</h4>
-                    <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+                    <p className="text-[13px] text-muted-foreground max-w-sm mx-auto">
                       The referral leaderboard is being set up. Check back soon to see how you rank against other community members.
                     </p>
                   </div>
@@ -591,7 +591,7 @@ export default function ReferralsPage() {
                       <Info className="h-4 w-4" />
                       Terms and Conditions
                     </h4>
-                    <div className="text-sm text-muted-foreground space-y-2">
+                    <div className="text-[13px] text-muted-foreground space-y-2">
                       <p>By participating in the E-Code Referral Program, you agree to the following terms:</p>
                       <ol className="list-decimal list-inside space-y-1">
                         <li>Referral credits are non-transferable and cannot be exchanged for cash.</li>

@@ -154,7 +154,7 @@ export default function SharedSnippet() {
               <FileCode className="h-24 w-24 mx-auto text-muted-foreground/50" />
             </div>
             <h1 className="text-3xl font-bold mb-4">Snippet Not Found</h1>
-            <p className="text-lg text-muted-foreground mb-8">
+            <p className="text-[15px] text-muted-foreground mb-8">
               {error || "The snippet you're looking for doesn't exist or has been removed."}
             </p>
             <div className="flex gap-4 justify-center">
@@ -189,7 +189,7 @@ export default function SharedSnippet() {
           <div className="mb-8">
             <h1 className="text-3xl font-bold mb-4">{snippet.title}</h1>
             
-            <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+            <div className="flex flex-wrap items-center gap-4 text-[13px] text-muted-foreground">
               {snippet.author && (
                 <div className="flex items-center gap-1">
                   <User className="h-4 w-4" />
@@ -224,11 +224,11 @@ export default function SharedSnippet() {
           <Card className="overflow-hidden">
             <div className="bg-muted px-4 py-3 border-b flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <span className="text-sm font-medium">{snippet.fileName}</span>
-                <span className="text-sm text-muted-foreground">
+                <span className="text-[13px] font-medium">{snippet.fileName}</span>
+                <span className="text-[13px] text-muted-foreground">
                   Lines {snippet.lineStart}-{snippet.lineEnd} ({lineCount} lines)
                 </span>
-                <span className="text-sm px-2 py-1 bg-primary/10 text-primary rounded">
+                <span className="text-[13px] px-2 py-1 bg-primary/10 text-primary rounded">
                   {getLanguageDisplay(snippet.language)}
                 </span>
               </div>
@@ -248,7 +248,7 @@ export default function SharedSnippet() {
             </div>
             
             <div className="relative">
-              <div className="absolute left-0 top-0 bottom-0 w-12 bg-muted/50 text-muted-foreground text-xs leading-[1.5rem] text-right pr-2 pt-3 select-none">
+              <div className="absolute left-0 top-0 bottom-0 w-12 bg-muted/50 text-muted-foreground text-[11px] leading-[1.5rem] text-right pr-2 pt-3 select-none">
                 {Array.from({ length: lineCount }, (_, i) => (
                   <div key={i}>{snippet.lineStart + i}</div>
                 ))}

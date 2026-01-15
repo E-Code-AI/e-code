@@ -329,7 +329,7 @@ export const routes = createRouter({
     switch (featureId) {
       case 'editor':
         return (
-          <pre className="text-left text-xs leading-relaxed font-mono text-emerald-200 bg-black/50 border border-white/10 rounded-lg p-4">
+          <pre className="text-left text-[11px] leading-relaxed font-mono text-emerald-200 bg-black/50 border border-white/10 rounded-lg p-4">
 {`import Workspace from "@ecode/mobile";
 const session = Workspace.resume("inventory-app");
 
@@ -340,7 +340,7 @@ session.share({ team: "Field Ops" });
         );
       case 'terminal':
         return (
-          <div className="space-y-2 text-xs font-mono text-emerald-200">
+          <div className="space-y-2 text-[11px] font-mono text-emerald-200">
             <div className="flex items-center justify-between text-emerald-300">
               <span>mobile@ecode:~/shipping-service</span>
               <Badge variant="success" className="bg-emerald-500/20 text-emerald-100 border border-emerald-400/30">LIVE</Badge>
@@ -352,7 +352,7 @@ session.share({ team: "Field Ops" });
         );
       case 'ai':
         return (
-          <div className="space-y-3 text-xs">
+          <div className="space-y-3 text-[11px]">
             <div className="rounded-lg bg-purple-500/20 border border-purple-400/30 p-3 text-purple-100">
               <p className="font-semibold flex items-center gap-2">
                 <Sparkles className="h-3.5 w-3.5" /> AI Pair
@@ -366,23 +366,23 @@ session.share({ team: "Field Ops" });
         );
       case 'preview':
         return (
-          <div className="space-y-3 text-xs text-white/80">
+          <div className="space-y-3 text-[11px] text-white/80">
             <Badge variant="secondary" className="bg-white/10 text-white border border-white/10 w-fit">Edge Preview</Badge>
-            <p className="font-semibold text-sm text-white">{selectedPreviewDevice.name}</p>
+            <p className="font-semibold text-[13px] text-white">{selectedPreviewDevice.name}</p>
             <p>{selectedPreviewDevice.resolution}</p>
             <p className="text-white/60">{selectedPreviewDevice.latency}</p>
           </div>
         );
       case 'collab':
         return (
-          <div className="space-y-2 text-xs text-white/80">
+          <div className="space-y-2 text-[11px] text-white/80">
             {collabPresence.map((member) => (
               <div key={member.name} className="flex items-center gap-3">
                 <div className={`h-7 w-7 rounded-full flex items-center justify-center text-[0.65rem] ${member.color}`}>
                   {member.initials}
                 </div>
                 <div>
-                  <p className="text-white text-sm font-semibold">{member.name}</p>
+                  <p className="text-white text-[13px] font-semibold">{member.name}</p>
                   <p className="text-white/60">{member.status}</p>
                 </div>
               </div>
@@ -391,10 +391,10 @@ session.share({ team: "Field Ops" });
         );
       case 'git':
         return (
-          <div className="space-y-2 text-xs text-white/80">
+          <div className="space-y-2 text-[11px] text-white/80">
             {gitCommits.slice(0, 2).map((commit) => (
               <div key={commit.sha} className="rounded-lg border border-white/10 bg-white/5 p-3">
-                <p className="text-white text-sm font-semibold">{commit.message}</p>
+                <p className="text-white text-[13px] font-semibold">{commit.message}</p>
                 <p className="text-white/60">{commit.sha} · {commit.time}</p>
               </div>
             ))}
@@ -416,7 +416,7 @@ session.share({ team: "Field Ops" });
                   <button
                     key={file}
                     onClick={() => setActiveDemoFile(file)}
-                    className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                    className={`rounded-md px-3 py-1.5 text-[11px] font-medium transition-colors ${
                       activeDemoFile === file
                         ? 'bg-white/10 text-white shadow'
                         : 'text-white/60 hover:text-white/90 bg-white/5'
@@ -435,7 +435,7 @@ session.share({ team: "Field Ops" });
                 <Play className="h-3.5 w-3.5" /> Run project
               </Button>
             </div>
-            <pre className="bg-[var(--ecode-terminal-bg)] text-left text-xs leading-relaxed font-mono text-emerald-200/90 p-4 rounded-lg border border-white/5 overflow-x-auto">
+            <pre className="bg-[var(--ecode-terminal-bg)] text-left text-[11px] leading-relaxed font-mono text-emerald-200/90 p-4 rounded-lg border border-white/5 overflow-x-auto">
 {editorFiles[activeDemoFile]}
             </pre>
           </div>
@@ -443,7 +443,7 @@ session.share({ team: "Field Ops" });
       case 'terminal':
         return (
           <div className="w-full">
-            <div className="flex flex-wrap items-center justify-between gap-3 mb-3 text-xs text-white/70 font-mono">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-3 text-[11px] text-white/70 font-mono">
               <span>mobile@ecode:~/checkout-service</span>
               <div className="flex gap-2">
                 <Button
@@ -465,7 +465,7 @@ session.share({ team: "Field Ops" });
                 </Button>
               </div>
             </div>
-            <div className="space-y-3 font-mono text-xs">
+            <div className="space-y-3 font-mono text-[11px]">
               {terminalCommands.slice(0, terminalStep).map((entry) => (
                 <div key={entry.command} className="rounded-lg border border-white/10 bg-black/40 p-3">
                   <p className="text-emerald-300">$ {entry.command}</p>
@@ -481,14 +481,14 @@ session.share({ team: "Field Ops" });
         );
       case 'ai':
         return (
-          <div className="space-y-4 text-sm text-white/80">
+          <div className="space-y-4 text-[13px] text-white/80">
             <div className="rounded-xl border border-purple-400/30 bg-purple-500/15 p-4">
-              <p className="text-xs uppercase tracking-wide text-purple-200/80">Prompt</p>
+              <p className="text-[11px] uppercase tracking-wide text-purple-200/80">Prompt</p>
               <p className="mt-1 text-white font-semibold">{currentAIScenario.prompt}</p>
             </div>
             <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-              <p className="text-xs uppercase tracking-wide text-white/60">AI Response</p>
-              <p className="mt-2 text-sm">{currentAIScenario.response}</p>
+              <p className="text-[11px] uppercase tracking-wide text-white/60">AI Response</p>
+              <p className="mt-2 text-[13px]">{currentAIScenario.response}</p>
               {aiSuggestionAccepted && (
                 <Badge variant="success" className="mt-3 w-fit">Applied to App.tsx</Badge>
               )}
@@ -540,15 +540,15 @@ session.share({ team: "Field Ops" });
             <div className="rounded-2xl border border-white/10 bg-black/40 p-4">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-sm text-white font-semibold">{selectedPreviewDevice.name}</p>
-                  <p className="text-xs text-white/60">{selectedPreviewDevice.resolution}</p>
-                  <p className="text-xs text-white/60">{selectedPreviewDevice.latency}</p>
+                  <p className="text-[13px] text-white font-semibold">{selectedPreviewDevice.name}</p>
+                  <p className="text-[11px] text-white/60">{selectedPreviewDevice.resolution}</p>
+                  <p className="text-[11px] text-white/60">{selectedPreviewDevice.latency}</p>
                   <Badge variant="secondary" className="mt-3 bg-white/10 text-white border border-white/10">
                     {previewOrientation === 'portrait' ? 'Portrait' : 'Landscape'} · {selectedPreviewDevice.theme}
                   </Badge>
                 </div>
                 <div className="flex flex-col items-center gap-3">
-                  <div className={`relative rounded-[1.5rem] border border-white/10 bg-gradient-to-br from-primary/20 via-purple-600/20 to-pink-600/30 flex items-center justify-center text-white text-xs font-medium ${previewOrientation === 'portrait' ? 'h-[220px] w-[120px]' : 'h-[150px] w-[240px]'}`}>
+                  <div className={`relative rounded-[1.5rem] border border-white/10 bg-gradient-to-br from-primary/20 via-purple-600/20 to-pink-600/30 flex items-center justify-center text-white text-[11px] font-medium ${previewOrientation === 'portrait' ? 'h-[220px] w-[120px]' : 'h-[150px] w-[240px]'}`}>
                     <span>Preview #{previewOrientation === 'portrait' ? 'A' : 'B'}</span>
                   </div>
                   <Button
@@ -598,15 +598,15 @@ session.share({ team: "Field Ops" });
                 {collabPresence.map((member) => (
                   <div key={member.name} className="flex items-center justify-between rounded-xl border border-white/10 bg-black/40 p-3">
                     <div className="flex items-center gap-3">
-                      <div className={`h-10 w-10 rounded-full flex items-center justify-center text-sm font-semibold ${member.color}`}>
+                      <div className={`h-10 w-10 rounded-full flex items-center justify-center text-[13px] font-semibold ${member.color}`}>
                         {member.initials}
                       </div>
                       <div>
                         <p className="text-white font-semibold">{member.name}</p>
-                        <p className="text-xs text-white/60">{member.status}</p>
+                        <p className="text-[11px] text-white/60">{member.status}</p>
                       </div>
                     </div>
-                    <Badge variant="secondary" className="bg-white/10 text-white border border-white/10 text-xs">
+                    <Badge variant="secondary" className="bg-white/10 text-white border border-white/10 text-[11px]">
                       {member.location}
                     </Badge>
                   </div>
@@ -616,9 +616,9 @@ session.share({ team: "Field Ops" });
               <div className="space-y-3">
                 {collabReviews.map((review) => (
                   <div key={review.file} className="rounded-xl border border-white/10 bg-white/5 p-4">
-                    <p className="text-xs uppercase tracking-wide text-white/60">{review.file}</p>
-                    <p className="mt-2 text-sm text-white">{review.comment}</p>
-                    <p className="mt-2 text-xs text-white/50">{review.author} · {review.time}</p>
+                    <p className="text-[11px] uppercase tracking-wide text-white/60">{review.file}</p>
+                    <p className="mt-2 text-[13px] text-white">{review.comment}</p>
+                    <p className="mt-2 text-[11px] text-white/50">{review.author} · {review.time}</p>
                     <div className="mt-3 flex gap-2">
                       <Button
                         variant="ghost"
@@ -688,11 +688,11 @@ session.share({ team: "Field Ops" });
                   <div key={commit.sha} className="rounded-xl border border-white/10 bg-black/40 p-4">
                     <div className="flex items-center justify-between">
                       <p className="text-white font-semibold">{commit.message}</p>
-                      <Badge variant="secondary" className="bg-white/10 text-white border border-white/10 text-xs">
+                      <Badge variant="secondary" className="bg-white/10 text-white border border-white/10 text-[11px]">
                         {commit.status}
                       </Badge>
                     </div>
-                    <p className="mt-2 text-xs text-white/60">{commit.sha} · {commit.author} · {commit.time}</p>
+                    <p className="mt-2 text-[11px] text-white/60">{commit.sha} · {commit.author} · {commit.time}</p>
                   </div>
                 ))}
               </div>
@@ -701,8 +701,8 @@ session.share({ team: "Field Ops" });
                 {gitBranches.map((branch) => (
                   <div key={branch.name} className="rounded-xl border border-white/10 bg-white/5 p-4">
                     <p className="text-white font-semibold">{branch.name}</p>
-                    <p className="text-xs text-white/60 mt-1">{branch.description}</p>
-                    <p className="text-xs text-white/50 mt-2">{branch.updated}</p>
+                    <p className="text-[11px] text-white/60 mt-1">{branch.description}</p>
+                    <p className="text-[11px] text-white/50 mt-2">{branch.updated}</p>
                   </div>
                 ))}
               </div>
@@ -805,7 +805,7 @@ session.share({ team: "Field Ops" });
                 <div className="text-center lg:text-left space-y-8">
                   <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20">
                     <Smartphone className="h-4 w-4 text-primary" />
-                    <span className="text-sm font-medium">Available on iOS & Android</span>
+                    <span className="text-[13px] font-medium">Available on iOS & Android</span>
                   </div>
 
                   <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold">
@@ -832,8 +832,8 @@ session.share({ team: "Field Ops" });
                       <div className="relative flex items-center gap-3 bg-black px-6 py-3 rounded-lg">
                         <Apple className="h-8 w-8 text-white" />
                         <div className="text-left">
-                          <p className="text-xs text-gray-300">Download on the</p>
-                          <p className="text-lg font-semibold text-white">App Store</p>
+                          <p className="text-[11px] text-gray-300">Download on the</p>
+                          <p className="text-[15px] font-semibold text-white">App Store</p>
                         </div>
                       </div>
                     </a>
@@ -848,8 +848,8 @@ session.share({ team: "Field Ops" });
                       <div className="relative flex items-center gap-3 bg-black px-6 py-3 rounded-lg">
                         <Chrome className="h-8 w-8 text-white" />
                         <div className="text-left">
-                          <p className="text-xs text-gray-300">Get it on</p>
-                          <p className="text-lg font-semibold text-white">Google Play</p>
+                          <p className="text-[11px] text-gray-300">Get it on</p>
+                          <p className="text-[15px] font-semibold text-white">Google Play</p>
                         </div>
                       </div>
                     </a>
@@ -859,8 +859,8 @@ session.share({ team: "Field Ops" });
                   <div className="flex items-center gap-4 p-4 bg-muted/50 rounded-lg max-w-fit mx-auto lg:mx-0">
                     <QrCode className="h-16 w-16 text-muted-foreground" />
                     <div className="text-left">
-                      <p className="text-sm font-medium">Scan to download</p>
-                      <p className="text-xs text-muted-foreground">Or visit e-code.ai/mobile</p>
+                      <p className="text-[13px] font-medium">Scan to download</p>
+                      <p className="text-[11px] text-muted-foreground">Or visit e-code.ai/mobile</p>
                     </div>
                   </div>
                 </div>
@@ -875,7 +875,7 @@ session.share({ team: "Field Ops" });
                         {/* Dynamic content based on active feature */}
                         <div className="relative w-full h-full bg-gradient-to-br from-gray-900 to-black">
                           {/* Status bar */}
-                          <div className="absolute top-0 left-0 right-0 h-10 bg-black/50 flex items-center justify-between px-6 text-white text-xs">
+                          <div className="absolute top-0 left-0 right-0 h-10 bg-black/50 flex items-center justify-between px-6 text-white text-[11px]">
                             <span>9:41</span>
                             <div className="flex gap-1">
                               <div className="w-4 h-3 bg-white rounded-sm"></div>
@@ -894,7 +894,7 @@ session.share({ team: "Field Ops" });
                                 </div>
                                 <h3 className="text-xl font-semibold">{activeFeature.title}</h3>
                               </div>
-                              <p className="text-sm text-gray-300 leading-relaxed">
+                              <p className="text-[13px] text-gray-300 leading-relaxed">
                                 {activeFeature.description}
                               </p>
                               <div className="mt-2 bg-black/30 rounded-lg p-4 flex-1 overflow-hidden">
@@ -937,14 +937,14 @@ session.share({ team: "Field Ops" });
         <section className="py-24 px-4">
           <div className="container mx-auto max-w-7xl">
             <div className="text-center mb-16">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-muted text-sm font-medium mb-4">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-muted text-[13px] font-medium mb-4">
                 <Sparkles className="h-4 w-4" />
                 Mobile Features
               </div>
               <h2 className="text-4xl md:text-5xl font-bold mb-4">
                 Everything you need, <span className="text-primary">anywhere you are</span>
               </h2>
-              <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+              <p className="text-[15px] text-muted-foreground max-w-3xl mx-auto">
                 Our mobile apps are built from the ground up for touch, with all the power of the desktop experience
               </p>
             </div>
@@ -955,7 +955,7 @@ session.share({ team: "Field Ops" });
                   <TabsTrigger
                     key={feature.id}
                     value={feature.id}
-                    className="flex-1 sm:flex-none min-w-[140px] gap-2 text-sm font-semibold text-muted-foreground data-[state=active]:bg-background data-[state=active]:text-foreground"
+                    className="flex-1 sm:flex-none min-w-[140px] gap-2 text-[13px] font-semibold text-muted-foreground data-[state=active]:bg-background data-[state=active]:text-foreground"
                   >
                     {feature.icon}
                     <span className="truncate">{feature.title}</span>
@@ -971,7 +971,7 @@ session.share({ team: "Field Ops" });
                         {feature.icon}
                       </div>
                       <h3 className="text-3xl font-bold">{feature.title}</h3>
-                      <p className="text-lg text-muted-foreground">{feature.description}</p>
+                      <p className="text-[15px] text-muted-foreground">{feature.description}</p>
 
                       <ul className="space-y-3">
                         {(featureChecklists[feature.id] ?? []).map((item) => (
@@ -1006,7 +1006,7 @@ session.share({ team: "Field Ops" });
               <h2 className="text-4xl md:text-5xl font-bold mb-4">
                 Professional development, <span className="text-primary">pocket-sized</span>
               </h2>
-              <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+              <p className="text-[15px] text-muted-foreground max-w-3xl mx-auto">
                 No compromises. Get the full development experience on your mobile device.
               </p>
             </div>
@@ -1043,25 +1043,25 @@ session.share({ team: "Field Ops" });
                   <ul className="space-y-4">
                     <li className="flex items-start gap-3">
                       <div className="h-6 w-6 rounded-full bg-red-500/20 flex items-center justify-center mt-0.5">
-                        <span className="text-red-500 text-sm">✗</span>
+                        <span className="text-red-500 text-[13px]">✗</span>
                       </div>
                       <span className="text-muted-foreground">Limited language support</span>
                     </li>
                     <li className="flex items-start gap-3">
                       <div className="h-6 w-6 rounded-full bg-red-500/20 flex items-center justify-center mt-0.5">
-                        <span className="text-red-500 text-sm">✗</span>
+                        <span className="text-red-500 text-[13px]">✗</span>
                       </div>
                       <span className="text-muted-foreground">No package management</span>
                     </li>
                     <li className="flex items-start gap-3">
                       <div className="h-6 w-6 rounded-full bg-red-500/20 flex items-center justify-center mt-0.5">
-                        <span className="text-red-500 text-sm">✗</span>
+                        <span className="text-red-500 text-[13px]">✗</span>
                       </div>
                       <span className="text-muted-foreground">Basic text editing only</span>
                     </li>
                     <li className="flex items-start gap-3">
                       <div className="h-6 w-6 rounded-full bg-red-500/20 flex items-center justify-center mt-0.5">
-                        <span className="text-red-500 text-sm">✗</span>
+                        <span className="text-red-500 text-[13px]">✗</span>
                       </div>
                       <span className="text-muted-foreground">No collaboration features</span>
                     </li>
@@ -1115,7 +1115,7 @@ session.share({ team: "Field Ops" });
                     <Star key={i} className="h-6 w-6 text-yellow-500 fill-yellow-500" />
                   ))}
                 </div>
-                <span className="text-lg font-semibold">4.8/5</span>
+                <span className="text-[15px] font-semibold">4.8/5</span>
                 <span className="text-muted-foreground">(10,000+ reviews)</span>
               </div>
             </div>
@@ -1130,7 +1130,7 @@ session.share({ team: "Field Ops" });
                       </div>
                       <div>
                         <p className="font-semibold">{testimonial.name}</p>
-                        <p className="text-sm text-muted-foreground">{testimonial.role}</p>
+                        <p className="text-[13px] text-muted-foreground">{testimonial.role}</p>
                       </div>
                     </div>
                     <div className="flex mb-3">
@@ -1167,7 +1167,7 @@ session.share({ team: "Field Ops" });
                 <div className="relative flex items-center gap-3 bg-black px-8 py-4 rounded-lg">
                   <Apple className="h-10 w-10 text-white" />
                   <div className="text-left">
-                    <p className="text-sm text-gray-300">Download on the</p>
+                    <p className="text-[13px] text-gray-300">Download on the</p>
                     <p className="text-xl font-semibold text-white">App Store</p>
                   </div>
                 </div>
@@ -1183,7 +1183,7 @@ session.share({ team: "Field Ops" });
                 <div className="relative flex items-center gap-3 bg-black px-8 py-4 rounded-lg">
                   <Chrome className="h-10 w-10 text-white" />
                   <div className="text-left">
-                    <p className="text-sm text-gray-300">Get it on</p>
+                    <p className="text-[13px] text-gray-300">Get it on</p>
                     <p className="text-xl font-semibold text-white">Google Play</p>
                   </div>
                 </div>

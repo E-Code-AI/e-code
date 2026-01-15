@@ -33,7 +33,7 @@ const EditorFallback = () => (
   <div className="h-full flex items-center justify-center bg-muted/30">
     <div className="flex flex-col items-center gap-2">
       <Loader2 className="h-6 w-6 animate-spin text-primary" />
-      <p className="text-sm text-muted-foreground">Loading editor...</p>
+      <p className="text-[13px] text-muted-foreground">Loading editor...</p>
     </div>
   </div>
 );
@@ -477,7 +477,7 @@ export default function ChatGPTAdmin() {
           
           {/* Project Selector */}
           <div className="mb-4">
-            <Label className="text-sm font-medium mb-2 block">Select Project (All Users)</Label>
+            <Label className="text-[13px] font-medium mb-2 block">Select Project (All Users)</Label>
             <Select 
               value={selectedProject?.id?.toString() || ''} 
               onValueChange={handleProjectSelect}
@@ -487,7 +487,7 @@ export default function ChatGPTAdmin() {
               </SelectTrigger>
               <SelectContent>
                 {projectsLoading ? (
-                  <div className="p-2 text-center text-sm text-muted-foreground">
+                  <div className="p-2 text-center text-[13px] text-muted-foreground">
                     <Loader2 className="h-4 w-4 animate-spin inline mr-2" />
                     Loading projects...
                   </div>
@@ -496,7 +496,7 @@ export default function ChatGPTAdmin() {
                     <SelectItem key={project.id} value={project.id.toString()}>
                       <div className="flex flex-col">
                         <span>{project.name}</span>
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-[11px] text-muted-foreground">
                           {project.ownerEmail || project.ownerUsername || `User #${project.ownerId}`}
                         </span>
                       </div>
@@ -506,7 +506,7 @@ export default function ChatGPTAdmin() {
               </SelectContent>
             </Select>
             {selectedProject && (
-              <div className="mt-2 p-2 bg-muted/50 rounded text-xs">
+              <div className="mt-2 p-2 bg-muted/50 rounded text-[11px]">
                 <div><strong>Owner:</strong> {selectedProject.ownerEmail || selectedProject.ownerUsername}</div>
                 <div><strong>ID:</strong> {selectedProject.id}</div>
               </div>
@@ -517,7 +517,7 @@ export default function ChatGPTAdmin() {
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-base">Start Chat Session</CardTitle>
-                <CardDescription className="text-xs">Configure and launch GPT session</CardDescription>
+                <CardDescription className="text-[11px]">Configure and launch GPT session</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
@@ -572,33 +572,33 @@ export default function ChatGPTAdmin() {
               <Card>
                 <CardContent className="pt-4">
                   <div className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center justify-between text-[13px]">
                       <span className="text-muted-foreground">Session</span>
-                      <Badge variant="outline" className="font-mono text-xs">
+                      <Badge variant="outline" className="font-mono text-[11px]">
                         {activeSession.id.slice(0, 8)}
                       </Badge>
                     </div>
-                    <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center justify-between text-[13px]">
                       <span className="text-muted-foreground">Model</span>
                       <span className="font-medium">{activeSession.model}</span>
                     </div>
-                    <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center justify-between text-[13px]">
                       <span className="text-muted-foreground">Status</span>
                       <Badge variant="default">Active</Badge>
                     </div>
                     {selectedProject && (
-                      <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center justify-between text-[13px]">
                         <span className="text-muted-foreground">Project</span>
                         <span className="font-medium truncate max-w-[120px]">{selectedProject.name}</span>
                       </div>
                     )}
                     <Separator className="my-2" />
                     <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
+                      <div className="flex justify-between text-[13px]">
                         <span className="text-muted-foreground">Tokens Used</span>
                         <span className="font-mono">{stats?.tokensUsed || 0}</span>
                       </div>
-                      <div className="flex justify-between text-sm">
+                      <div className="flex justify-between text-[13px]">
                         <span className="text-muted-foreground">Operations</span>
                         <span className="font-mono">{stats?.totalOperations || 0}</span>
                       </div>
@@ -619,8 +619,8 @@ export default function ChatGPTAdmin() {
                         <div key={tool.id} className="flex items-center gap-2 p-2 rounded hover:bg-accent">
                           <Code2 className="h-4 w-4 text-muted-foreground" />
                           <div className="flex-1">
-                            <div className="text-sm font-medium">{tool.displayName}</div>
-                            <div className="text-xs text-muted-foreground">{tool.capability}</div>
+                            <div className="text-[13px] font-medium">{tool.displayName}</div>
+                            <div className="text-[11px] text-muted-foreground">{tool.capability}</div>
                           </div>
                           {tool.isEnabled && (
                             <CheckCircle className="h-3 w-3 text-green-500" />
@@ -641,7 +641,7 @@ export default function ChatGPTAdmin() {
             <h3 className="font-medium mb-2">Workflow Progress</h3>
             <div className="space-y-1">
               {workflowSteps.map(step => (
-                <div key={step.id} className="flex items-center gap-2 text-sm">
+                <div key={step.id} className="flex items-center gap-2 text-[13px]">
                   {step.status === 'completed' ? (
                     <CheckCircle className="h-3 w-3 text-green-500" />
                   ) : step.status === 'running' ? (
@@ -716,13 +716,13 @@ export default function ChatGPTAdmin() {
                           )}
                           <div className={`max-w-[70%] ${message.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'} rounded-lg p-3`}>
                             <div className="whitespace-pre-wrap">{message.content}</div>
-                            <div className="text-xs opacity-70 mt-1">
+                            <div className="text-[11px] opacity-70 mt-1">
                               {format(message.timestamp, 'HH:mm')}
                             </div>
                           </div>
                           {message.role === 'user' && (
                             <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center">
-                              <span className="text-sm font-medium">{user?.username?.[0]?.toUpperCase()}</span>
+                              <span className="text-[13px] font-medium">{user?.username?.[0]?.toUpperCase()}</span>
                             </div>
                           )}
                         </LazyMotionDiv>
@@ -750,7 +750,7 @@ export default function ChatGPTAdmin() {
                     </Button>
                   </div>
                   {isExecuting && (
-                    <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
+                    <div className="mt-2 flex items-center gap-2 text-[13px] text-muted-foreground">
                       <Activity className="h-3 w-3 animate-pulse" />
                       Agent is working...
                     </div>
@@ -774,7 +774,7 @@ export default function ChatGPTAdmin() {
                     </Button>
                   </div>
                   {!selectedProject ? (
-                    <div className="p-4 text-center text-sm text-muted-foreground">
+                    <div className="p-4 text-center text-[13px] text-muted-foreground">
                       Select a project to view files
                     </div>
                   ) : filesLoading ? (
@@ -789,7 +789,7 @@ export default function ChatGPTAdmin() {
                           <button
                             key={file.id}
                             onClick={() => loadFile(file)}
-                            className={`w-full flex items-center gap-2 p-2 rounded text-sm hover:bg-accent text-left ${selectedFile?.id === file.id ? 'bg-accent' : ''}`}
+                            className={`w-full flex items-center gap-2 p-2 rounded text-[13px] hover:bg-accent text-left ${selectedFile?.id === file.id ? 'bg-accent' : ''}`}
                           >
                             {file.isDirectory ? (
                               <FolderOpen className="h-4 w-4 text-muted-foreground" />
@@ -800,7 +800,7 @@ export default function ChatGPTAdmin() {
                           </button>
                         ))}
                         {projectFiles?.length === 0 && (
-                          <div className="text-sm text-muted-foreground p-2">No files found</div>
+                          <div className="text-[13px] text-muted-foreground p-2">No files found</div>
                         )}
                       </div>
                     </ScrollArea>
@@ -812,8 +812,8 @@ export default function ChatGPTAdmin() {
                     <>
                       <div className="p-2 border-b flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-mono">{selectedFile.name || selectedFile.path}</span>
-                          <Badge variant="outline" className="text-xs">ID: {selectedFile.id}</Badge>
+                          <span className="text-[13px] font-mono">{selectedFile.name || selectedFile.path}</span>
+                          <Badge variant="outline" className="text-[11px]">ID: {selectedFile.id}</Badge>
                         </div>
                         <Button 
                           size="sm" 
@@ -850,8 +850,8 @@ export default function ChatGPTAdmin() {
               <TabsContent value="sessions" className="flex-1 flex flex-col p-4">
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h2 className="text-lg font-semibold">Active Agent Sessions</h2>
-                    <p className="text-sm text-muted-foreground">Monitor and manage all user sessions</p>
+                    <h2 className="text-[15px] font-semibold">Active Agent Sessions</h2>
+                    <p className="text-[13px] text-muted-foreground">Monitor and manage all user sessions</p>
                   </div>
                   <Button variant="outline" size="sm" onClick={() => refetchSessions()}>
                     <RefreshCw className="h-4 w-4 mr-2" />
@@ -882,9 +882,9 @@ export default function ChatGPTAdmin() {
                                   <Badge variant={session.status === 'active' ? 'default' : 'secondary'}>
                                     {session.status}
                                   </Badge>
-                                  <span className="font-mono text-sm">{session.id.slice(0, 12)}...</span>
+                                  <span className="font-mono text-[13px]">{session.id.slice(0, 12)}...</span>
                                 </div>
-                                <div className="grid grid-cols-2 gap-x-8 gap-y-1 text-sm mt-2">
+                                <div className="grid grid-cols-2 gap-x-8 gap-y-1 text-[13px] mt-2">
                                   <div className="flex items-center gap-2">
                                     <Users className="h-3 w-3 text-muted-foreground" />
                                     <span className="text-muted-foreground">User:</span>
@@ -966,7 +966,7 @@ export default function ChatGPTAdmin() {
                   className="p-4 border-t bg-card"
                 >
                   <div className="flex gap-2">
-                    <span className="text-sm text-muted-foreground">$</span>
+                    <span className="text-[13px] text-muted-foreground">$</span>
                     <Input
                       name="command"
                       placeholder="Enter command..."
@@ -1005,8 +1005,8 @@ export default function ChatGPTAdmin() {
               </p>
               {selectedProject && (
                 <div className="mt-4 p-4 bg-muted/50 rounded-lg">
-                  <p className="text-sm font-medium">Selected Project: {selectedProject.name}</p>
-                  <p className="text-xs text-muted-foreground">Owner: {selectedProject.ownerEmail || selectedProject.ownerUsername}</p>
+                  <p className="text-[13px] font-medium">Selected Project: {selectedProject.name}</p>
+                  <p className="text-[11px] text-muted-foreground">Owner: {selectedProject.ownerEmail || selectedProject.ownerUsername}</p>
                 </div>
               )}
             </div>

@@ -226,7 +226,7 @@ export function AdvancedDeployments({ projectId }: AdvancedDeploymentsProps) {
             <CardHeader>
               <div className="flex items-start justify-between">
                 <div>
-                  <CardTitle className="text-lg flex items-center gap-2">
+                  <CardTitle className="text-[15px] flex items-center gap-2">
                     <span className={getStatusColor(deployment.status)}>
                       {getStatusIcon(deployment.status)}
                     </span>
@@ -241,7 +241,7 @@ export function AdvancedDeployments({ projectId }: AdvancedDeploymentsProps) {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="grid grid-cols-2 gap-4 text-[13px]">
                   <div>
                     <p className="text-muted-foreground">Requests</p>
                     <p className="font-medium">{deployment.metrics.requests.toLocaleString()}</p>
@@ -261,11 +261,11 @@ export function AdvancedDeployments({ projectId }: AdvancedDeploymentsProps) {
                 </div>
 
                 {deployment.sslCertificate && (
-                  <div className="flex items-center gap-2 text-sm">
+                  <div className="flex items-center gap-2 text-[13px]">
                     <Lock className="h-3 w-3 text-green-600" />
                     <span>SSL Active</span>
                     {deployment.sslCertificate.status === 'pending' && (
-                      <Badge variant="secondary" className="text-xs">Pending</Badge>
+                      <Badge variant="secondary" className="text-[11px]">Pending</Badge>
                     )}
                   </div>
                 )}
@@ -360,7 +360,7 @@ export function AdvancedDeployments({ projectId }: AdvancedDeploymentsProps) {
               <Label>Auto-Scaling</Label>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label className="text-sm">Min Instances</Label>
+                  <Label className="text-[13px]">Min Instances</Label>
                   <Input
                     type="number"
                     value={deploymentConfig.scaleMin}
@@ -373,7 +373,7 @@ export function AdvancedDeployments({ projectId }: AdvancedDeploymentsProps) {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-sm">Max Instances</Label>
+                  <Label className="text-[13px]">Max Instances</Label>
                   <Input
                     type="number"
                     value={deploymentConfig.scaleMax}
@@ -456,7 +456,7 @@ export function AdvancedDeployments({ projectId }: AdvancedDeploymentsProps) {
                           {selectedDeployment.customDomain || 'Default Domain'}
                         </p>
                         {selectedDeployment.sslCertificate && (
-                          <p className="text-sm text-muted-foreground flex items-center gap-1">
+                          <p className="text-[13px] text-muted-foreground flex items-center gap-1">
                             <Lock className="h-3 w-3" />
                             SSL {selectedDeployment.sslCertificate.status}
                           </p>
@@ -487,7 +487,7 @@ export function AdvancedDeployments({ projectId }: AdvancedDeploymentsProps) {
                       <p className="font-medium">
                         {selectedDeployment.scaling.min} - {selectedDeployment.scaling.max} instances
                       </p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-[13px] text-muted-foreground">
                         CPU: {selectedDeployment.scaling.cpuThreshold}%
                       </p>
                     </CardContent>
@@ -497,25 +497,25 @@ export function AdvancedDeployments({ projectId }: AdvancedDeploymentsProps) {
                 {/* Quick Stats */}
                 <div className="grid grid-cols-4 gap-4">
                   <div className="space-y-1">
-                    <p className="text-sm text-muted-foreground">Total Requests</p>
+                    <p className="text-[13px] text-muted-foreground">Total Requests</p>
                     <p className="text-2xl font-bold">
                       {selectedDeployment.metrics.requests.toLocaleString()}
                     </p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-sm text-muted-foreground">Error Rate</p>
+                    <p className="text-[13px] text-muted-foreground">Error Rate</p>
                     <p className="text-2xl font-bold">
                       {((selectedDeployment.metrics.errors / selectedDeployment.metrics.requests) * 100).toFixed(2)}%
                     </p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-sm text-muted-foreground">Response Time</p>
+                    <p className="text-[13px] text-muted-foreground">Response Time</p>
                     <p className="text-2xl font-bold">
                       {selectedDeployment.metrics.avgResponseTime}ms
                     </p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-sm text-muted-foreground">Monthly Cost</p>
+                    <p className="text-[13px] text-muted-foreground">Monthly Cost</p>
                     <p className="text-2xl font-bold">
                       ${selectedDeployment.metrics.cost.toFixed(2)}
                     </p>
@@ -544,14 +544,14 @@ export function AdvancedDeployments({ projectId }: AdvancedDeploymentsProps) {
                     <Label>Build Configuration</Label>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <Label className="text-sm">Build Command</Label>
+                        <Label className="text-[13px]">Build Command</Label>
                         <Input 
                           value={selectedDeployment.buildConfig.command} 
                           disabled 
                         />
                       </div>
                       <div>
-                        <Label className="text-sm">Output Directory</Label>
+                        <Label className="text-[13px]">Output Directory</Label>
                         <Input 
                           value={selectedDeployment.buildConfig.outputDirectory} 
                           disabled 
@@ -572,14 +572,14 @@ export function AdvancedDeployments({ projectId }: AdvancedDeploymentsProps) {
                     {selectedDeployment.healthCheck && (
                       <div className="grid grid-cols-3 gap-4 mt-2">
                         <div>
-                          <Label className="text-sm">Path</Label>
+                          <Label className="text-[13px]">Path</Label>
                           <Input 
                             value={selectedDeployment.healthCheck.path} 
                             disabled 
                           />
                         </div>
                         <div>
-                          <Label className="text-sm">Interval (s)</Label>
+                          <Label className="text-[13px]">Interval (s)</Label>
                           <Input 
                             type="number"
                             value={selectedDeployment.healthCheck.interval} 
@@ -587,7 +587,7 @@ export function AdvancedDeployments({ projectId }: AdvancedDeploymentsProps) {
                           />
                         </div>
                         <div>
-                          <Label className="text-sm">Timeout (s)</Label>
+                          <Label className="text-[13px]">Timeout (s)</Label>
                           <Input 
                             type="number"
                             value={selectedDeployment.healthCheck.timeout} 
@@ -622,7 +622,7 @@ export function AdvancedDeployments({ projectId }: AdvancedDeploymentsProps) {
                 </div>
 
                 <ScrollArea className="h-96 w-full rounded-md border p-4">
-                  <div className="space-y-2 font-mono text-sm">
+                  <div className="space-y-2 font-mono text-[13px]">
                     {selectedDeployment.logs.map(log => (
                       <div 
                         key={log.id}
@@ -632,10 +632,10 @@ export function AdvancedDeployments({ projectId }: AdvancedDeploymentsProps) {
                           'text-muted-foreground'
                         }`}
                       >
-                        <span className="text-xs opacity-60">
+                        <span className="text-[11px] opacity-60">
                           {new Date(log.timestamp).toLocaleTimeString()}
                         </span>
-                        <span className="uppercase text-xs font-bold">
+                        <span className="uppercase text-[11px] font-bold">
                           [{log.level}]
                         </span>
                         <span className="flex-1">{log.message}</span>
@@ -686,12 +686,12 @@ export function AdvancedDeployments({ projectId }: AdvancedDeploymentsProps) {
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-2">
-                        <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-center justify-between text-[13px]">
                           <span>Used</span>
                           <span>{(selectedDeployment.metrics.bandwidth / 1024).toFixed(2)} GB</span>
                         </div>
                         <Progress value={75} />
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-[11px] text-muted-foreground">
                           75% of 100 GB limit
                         </p>
                       </div>
@@ -702,7 +702,7 @@ export function AdvancedDeployments({ projectId }: AdvancedDeploymentsProps) {
 
               <TabsContent value="cron" className="space-y-4">
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-semibold">Scheduled Jobs</h3>
+                  <h3 className="text-[15px] font-semibold">Scheduled Jobs</h3>
                   <Button size="sm">Add Cron Job</Button>
                 </div>
 
@@ -715,10 +715,10 @@ export function AdvancedDeployments({ projectId }: AdvancedDeploymentsProps) {
                           <div className="flex items-center justify-between">
                             <div>
                               <h4 className="font-medium">{job.name}</h4>
-                              <p className="text-sm text-muted-foreground font-mono">
+                              <p className="text-[13px] text-muted-foreground font-mono">
                                 {job.schedule}
                               </p>
-                              <p className="text-sm text-muted-foreground mt-1">
+                              <p className="text-[13px] text-muted-foreground mt-1">
                                 {job.command}
                               </p>
                             </div>
@@ -727,11 +727,11 @@ export function AdvancedDeployments({ projectId }: AdvancedDeploymentsProps) {
                                 {job.status}
                               </Badge>
                               {job.lastRun && (
-                                <p className="text-xs text-muted-foreground mt-1">
+                                <p className="text-[11px] text-muted-foreground mt-1">
                                   Last: {new Date(job.lastRun).toLocaleString()}
                                 </p>
                               )}
-                              <p className="text-xs text-muted-foreground">
+                              <p className="text-[11px] text-muted-foreground">
                                 Next: {new Date(job.nextRun).toLocaleString()}
                               </p>
                             </div>

@@ -119,7 +119,7 @@ export function ReplitSidebar({ projectId }: { projectId?: number }) {
           ) : (
             <FileText className="h-4 w-4 mr-2 ml-5 flex-shrink-0 text-[var(--ecode-text-secondary)]" />
           )}
-          <span className="truncate text-sm">{file.name}</span>
+          <span className="truncate text-[13px]">{file.name}</span>
         </div>
         {file.type === "folder" && expandedFolders.has(file.path) && file.children && (
           <div>
@@ -144,7 +144,7 @@ export function ReplitSidebar({ projectId }: { projectId?: number }) {
                   >
                     <div className="flex items-center">
                       <Folder className="h-4 w-4 mr-2" />
-                      <span className="text-sm font-medium">Files</span>
+                      <span className="text-[13px] font-medium">Files</span>
                     </div>
                     <ChevronDown className="h-4 w-4" />
                   </Button>
@@ -217,26 +217,26 @@ export function ReplitSidebar({ projectId }: { projectId?: number }) {
                 >
                   <div className="flex items-center">
                     <GitBranch className="h-4 w-4 mr-2" />
-                    <span className="text-sm font-medium">Version Control</span>
+                    <span className="text-[13px] font-medium">Version Control</span>
                   </div>
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </CollapsibleTrigger>
               <CollapsibleContent className="space-y-2 mt-2">
                 <div className="px-2 space-y-1">
-                  <div className="text-xs text-[var(--ecode-text-secondary)]">main</div>
+                  <div className="text-[11px] text-[var(--ecode-text-secondary)]">main</div>
                   <div className="flex items-center space-x-1">
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-7 px-2 text-xs text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
+                      className="h-7 px-2 text-[11px] text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
                     >
                       Commit
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-7 px-2 text-xs text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
+                      className="h-7 px-2 text-[11px] text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
                     >
                       Push
                     </Button>
@@ -254,13 +254,13 @@ export function ReplitSidebar({ projectId }: { projectId?: number }) {
                   >
                     <div className="flex items-center">
                       <Sparkles className="h-4 w-4 mr-2" />
-                      <span className="text-sm font-medium">Agent</span>
+                      <span className="text-[13px] font-medium">Agent</span>
                     </div>
                     <ChevronRight className="h-4 w-4" />
                   </Button>
                 </CollapsibleTrigger>
                 <CollapsibleContent className="space-y-1 mt-2">
-                  <div className="px-2 py-2 text-xs text-[var(--ecode-text-secondary)]">
+                  <div className="px-2 py-2 text-[11px] text-[var(--ecode-text-secondary)]">
                     AI-powered assistant to help you build faster
                   </div>
                   <Button
@@ -284,7 +284,7 @@ export function ReplitSidebar({ projectId }: { projectId?: number }) {
                 >
                   <div className="flex items-center">
                     <Terminal className="h-4 w-4 mr-2" />
-                    <span className="text-sm font-medium">Tools</span>
+                    <span className="text-[13px] font-medium">Tools</span>
                   </div>
                   <ChevronRight className="h-4 w-4" />
                 </Button>
@@ -365,7 +365,7 @@ export function ReplitSidebar({ projectId }: { projectId?: number }) {
                   >
                     <div className="flex items-center">
                       <Clock className="h-4 w-4 mr-2" />
-                      <span className="text-sm font-medium">Recent</span>
+                      <span className="text-[13px] font-medium">Recent</span>
                     </div>
                     <ChevronDown className="h-4 w-4" />
                   </Button>
@@ -386,7 +386,7 @@ export function ReplitSidebar({ projectId }: { projectId?: number }) {
                           </div>
                           <div className="ml-2 min-w-0 flex-1">
                             <div className="flex items-center space-x-1">
-                              <span className="text-sm text-[var(--ecode-text)] truncate">
+                              <span className="text-[13px] text-[var(--ecode-text)] truncate">
                                 {project.name}
                               </span>
                               {project.isStarred && (
@@ -396,14 +396,14 @@ export function ReplitSidebar({ projectId }: { projectId?: number }) {
                             <div className="flex items-center space-x-2 mt-1">
                               <Badge
                                 variant="outline"
-                                className="text-xs border-[var(--ecode-border)] text-[var(--ecode-text-secondary)]"
+                                className="text-[11px] border-[var(--ecode-border)] text-[var(--ecode-text-secondary)]"
                               >
                                 {project.language}
                               </Badge>
                               {project.isRunning && (
                                 <div className="flex items-center">
                                   <div className="h-2 w-2 bg-[var(--ecode-green)] rounded-full animate-pulse"></div>
-                                  <span className="text-xs text-[var(--ecode-green)] ml-1">Running</span>
+                                  <span className="text-[11px] text-[var(--ecode-green)] ml-1">Running</span>
                                 </div>
                               )}
                             </div>
@@ -439,13 +439,13 @@ export function ReplitSidebar({ projectId }: { projectId?: number }) {
                   >
                     <div className="flex items-center">
                       <Rocket className="h-4 w-4 mr-2" />
-                      <span className="text-sm font-medium">Deploy</span>
+                      <span className="text-[13px] font-medium">Deploy</span>
                     </div>
                     <ChevronRight className="h-4 w-4" />
                   </Button>
                 </CollapsibleTrigger>
                 <CollapsibleContent className="space-y-1 mt-2">
-                  <div className="px-2 py-2 text-xs text-[var(--ecode-text-secondary)]">
+                  <div className="px-2 py-2 text-[11px] text-[var(--ecode-text-secondary)]">
                     Deploy your project to the web.
                   </div>
                   <Button

@@ -103,7 +103,7 @@ export default function NewsletterUnsubscribe() {
               </form>
 
               <div className="mt-6 pt-6 border-t text-center">
-                <p className="text-sm text-muted-foreground">
+                <p className="text-[13px] text-muted-foreground">
                   Changed your mind? You can always resubscribe from our homepage or blog.
                 </p>
               </div>

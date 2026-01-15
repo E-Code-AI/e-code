@@ -46,7 +46,7 @@ export function ResourceUsageChart({ data, realTime, detailed }: ResourceUsageCh
             <Cpu className="h-4 w-4" />
             Resource Usage
           </span>
-          <div className="flex gap-4 text-sm">
+          <div className="flex gap-4 text-[13px]">
             <span>CPU: {currentCpu.toFixed(1)}%</span>
             <span>Memory: {currentMemory.toFixed(1)}%</span>
           </div>
@@ -72,11 +72,11 @@ export function ResourceUsageChart({ data, realTime, detailed }: ResourceUsageCh
             <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
             <XAxis 
               dataKey="time" 
-              className="text-xs"
+              className="text-[11px]"
               tick={{ fill: 'currentColor' }}
             />
             <YAxis 
-              className="text-xs"
+              className="text-[11px]"
               tick={{ fill: 'currentColor' }}
               domain={[0, 100]}
               label={{ value: 'Usage (%)', angle: -90, position: 'insideLeft' }}

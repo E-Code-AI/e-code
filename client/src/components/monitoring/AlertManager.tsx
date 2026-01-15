@@ -139,7 +139,7 @@ export function AlertManager({ alerts }: AlertManagerProps) {
                 onCheckedChange={setShowMuted}
                 id="show-muted"
               />
-              <Label htmlFor="show-muted" className="text-sm">
+              <Label htmlFor="show-muted" className="text-[13px]">
                 Show Muted
               </Label>
             </div>
@@ -151,8 +151,8 @@ export function AlertManager({ alerts }: AlertManagerProps) {
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12">
                 <CheckCircle className="h-12 w-12 text-green-500 mb-4" />
-                <p className="text-lg font-semibold">No Active Alerts</p>
-                <p className="text-sm text-muted-foreground">All systems are operating normally</p>
+                <p className="text-[15px] font-semibold">No Active Alerts</p>
+                <p className="text-[13px] text-muted-foreground">All systems are operating normally</p>
               </CardContent>
             </Card>
           ) : (
@@ -193,7 +193,7 @@ export function AlertManager({ alerts }: AlertManagerProps) {
                                 </Badge>
                               )}
                             </div>
-                            <span className="text-xs text-muted-foreground">
+                            <span className="text-[11px] text-muted-foreground">
                               {formatTimeAgo(alert.triggeredAt)}
                             </span>
                           </div>
@@ -201,7 +201,7 @@ export function AlertManager({ alerts }: AlertManagerProps) {
                         <CardContent>
                           <p className="font-medium mb-2">{alert.message}</p>
                           {alert.details && (
-                            <div className="text-sm text-muted-foreground space-y-1">
+                            <div className="text-[13px] text-muted-foreground space-y-1">
                               <p>Metric: {alert.details.metric}</p>
                               <p>Value: {alert.details.value} {alert.details.operator} {alert.details.threshold}</p>
                             </div>
@@ -269,8 +269,8 @@ export function AlertManager({ alerts }: AlertManagerProps) {
                     >
                       <div className="space-y-1">
                         <p className="font-medium">{rule.name}</p>
-                        <p className="text-sm text-muted-foreground">{rule.description}</p>
-                        <div className="flex items-center gap-2 text-xs">
+                        <p className="text-[13px] text-muted-foreground">{rule.description}</p>
+                        <div className="flex items-center gap-2 text-[11px]">
                           <Badge variant="outline">
                             {rule.condition.metric} {rule.condition.operator} {rule.condition.value}
                           </Badge>
@@ -323,15 +323,15 @@ export function AlertManager({ alerts }: AlertManagerProps) {
                 <Label>Notification Channels</Label>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm">In-App Notifications</span>
+                    <span className="text-[13px]">In-App Notifications</span>
                     <Switch defaultChecked />
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm">Email Notifications</span>
+                    <span className="text-[13px]">Email Notifications</span>
                     <Switch />
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm">Slack Notifications</span>
+                    <span className="text-[13px]">Slack Notifications</span>
                     <Switch />
                   </div>
                 </div>

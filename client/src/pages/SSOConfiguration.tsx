@@ -177,7 +177,7 @@ export function SSOConfiguration() {
                     id="certificateData"
                     name="certificateData"
                     placeholder="-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----"
-                    className="font-mono text-xs"
+                    className="font-mono text-[11px]"
                     rows={6}
                     data-testid="textarea-certificate"
                   />
@@ -251,7 +251,7 @@ export function SSOConfiguration() {
                         </div>
                         <div>
                           <h3 className="font-semibold">{provider.providerName}</h3>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-[13px] text-muted-foreground">
                             {provider.providerType.toUpperCase()} • {provider.entityId}
                           </p>
                         </div>
@@ -315,7 +315,7 @@ export function SSOConfiguration() {
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label>Enforce SSO</Label>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-[13px] text-muted-foreground">
                     Require all users to authenticate via SSO
                   </p>
                 </div>
@@ -325,7 +325,7 @@ export function SSOConfiguration() {
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label>Auto-provision Users</Label>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-[13px] text-muted-foreground">
                     Automatically create user accounts on first SSO login
                   </p>
                 </div>
@@ -335,7 +335,7 @@ export function SSOConfiguration() {
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label>Update User Attributes</Label>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-[13px] text-muted-foreground">
                     Update user profile from SSO attributes on each login
                   </p>
                 </div>

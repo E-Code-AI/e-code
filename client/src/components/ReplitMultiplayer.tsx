@@ -154,7 +154,7 @@ export function ReplitMultiplayer({ projectId }: ReplitMultiplayerProps) {
           connectionState === 'failed' || connectionState === 'circuit_open' ? 'bg-red-500' : 
           'bg-gray-400'
         }`} />
-        <span className="text-sm">
+        <span className="text-[13px]">
           {isConnected ? 'Connected to multiplayer session' : 
            connectionState === 'reconnecting' ? 'Reconnecting...' :
            connectionState === 'failed' ? 'Connection failed - will retry' :
@@ -186,7 +186,7 @@ export function ReplitMultiplayer({ projectId }: ReplitMultiplayerProps) {
                 style={{ color: cursor.color }}
               />
               <span 
-                className="text-xs bg-black text-white px-1 py-0.5 rounded"
+                className="text-[11px] bg-black text-white px-1 py-0.5 rounded"
                 style={{ backgroundColor: cursor.color }}
               >
                 {cursor.username}
@@ -211,7 +211,7 @@ export function ReplitMultiplayer({ projectId }: ReplitMultiplayerProps) {
           {users.length === 0 ? (
             <div className="text-center py-8">
               <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-sm text-muted-foreground">
+              <p className="text-[13px] text-muted-foreground">
                 No other users online right now
               </p>
             </div>
@@ -236,12 +236,12 @@ export function ReplitMultiplayer({ projectId }: ReplitMultiplayerProps) {
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="font-medium">{user.displayName}</span>
-                        <Badge className={`${getStatusColor(user.status)} border text-xs`}>
+                        <Badge className={`${getStatusColor(user.status)} border text-[11px]`}>
                           {getStatusIcon(user.status)}
                           <span className="ml-1 capitalize">{user.status}</span>
                         </Badge>
                       </div>
-                      <div className="text-xs text-muted-foreground">
+                      <div className="text-[11px] text-muted-foreground">
                         {user.currentFile ? (
                           <div className="flex items-center gap-1">
                             <Code className="h-3 w-3" />
@@ -254,7 +254,7 @@ export function ReplitMultiplayer({ projectId }: ReplitMultiplayerProps) {
                     </div>
                   </div>
 
-                  <div className="text-xs text-muted-foreground">
+                  <div className="text-[11px] text-muted-foreground">
                     {new Date(user.lastActivity).toLocaleTimeString()}
                   </div>
                 </div>
@@ -273,24 +273,24 @@ export function ReplitMultiplayer({ projectId }: ReplitMultiplayerProps) {
           <div className="flex items-center gap-3">
             <Cursor className="h-4 w-4 text-blue-600" />
             <div>
-              <p className="text-sm font-medium">Live Cursors</p>
-              <p className="text-xs text-muted-foreground">See where others are editing in real-time</p>
+              <p className="text-[13px] font-medium">Live Cursors</p>
+              <p className="text-[11px] text-muted-foreground">See where others are editing in real-time</p>
             </div>
           </div>
           
           <div className="flex items-center gap-3">
             <Activity className="h-4 w-4 text-green-600" />
             <div>
-              <p className="text-sm font-medium">Live Editing</p>
-              <p className="text-xs text-muted-foreground">Collaborative editing with conflict resolution</p>
+              <p className="text-[13px] font-medium">Live Editing</p>
+              <p className="text-[11px] text-muted-foreground">Collaborative editing with conflict resolution</p>
             </div>
           </div>
           
           <div className="flex items-center gap-3">
             <Zap className="h-4 w-4 text-purple-600" />
             <div>
-              <p className="text-sm font-medium">Instant Sync</p>
-              <p className="text-xs text-muted-foreground">Changes sync instantly across all users</p>
+              <p className="text-[13px] font-medium">Instant Sync</p>
+              <p className="text-[11px] text-muted-foreground">Changes sync instantly across all users</p>
             </div>
           </div>
         </CardContent>
@@ -304,8 +304,8 @@ export function ReplitMultiplayer({ projectId }: ReplitMultiplayerProps) {
         <CardContent className="space-y-3">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium">Show Cursors</p>
-              <p className="text-xs text-muted-foreground">Display other users' cursors</p>
+              <p className="text-[13px] font-medium">Show Cursors</p>
+              <p className="text-[11px] text-muted-foreground">Display other users' cursors</p>
             </div>
             <Button variant="outline" size="sm">
               Enabled
@@ -314,8 +314,8 @@ export function ReplitMultiplayer({ projectId }: ReplitMultiplayerProps) {
           
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium">Follow Mode</p>
-              <p className="text-xs text-muted-foreground">Follow another user's cursor</p>
+              <p className="text-[13px] font-medium">Follow Mode</p>
+              <p className="text-[11px] text-muted-foreground">Follow another user's cursor</p>
             </div>
             <Button variant="outline" size="sm" disabled={users.length === 0}>
               {users.length > 0 ? 'Follow User' : 'No users to follow'}
@@ -324,8 +324,8 @@ export function ReplitMultiplayer({ projectId }: ReplitMultiplayerProps) {
           
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium">Broadcast Mode</p>
-              <p className="text-xs text-muted-foreground">Share your screen with others</p>
+              <p className="text-[13px] font-medium">Broadcast Mode</p>
+              <p className="text-[11px] text-muted-foreground">Share your screen with others</p>
             </div>
             <Button variant="outline" size="sm">
               Start Broadcast

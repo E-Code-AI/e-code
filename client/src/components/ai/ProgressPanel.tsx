@@ -138,14 +138,14 @@ function ActivityItem({
         <Icon className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium truncate">{event.description}</span>
+            <span className="text-[13px] font-medium truncate">{event.description}</span>
             {getStatusIcon(event.status)}
           </div>
           
           {event.filePath && (
             <button
               onClick={() => onFileNavigate?.(event.filePath!)}
-              className="text-xs text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 mt-0.5"
+              className="text-[11px] text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 mt-0.5"
               data-testid={`navigate-file-${event.id}`}
             >
               <FileCode className="h-3 w-3" />
@@ -166,12 +166,12 @@ function ActivityItem({
           
           {event.details && (
             <Collapsible open={isExpanded} onOpenChange={onToggle}>
-              <CollapsibleTrigger className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground mt-1">
+              <CollapsibleTrigger className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground mt-1">
                 {isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
                 Details
               </CollapsibleTrigger>
               <CollapsibleContent className="mt-1">
-                <pre className="text-xs bg-surface-solid rounded p-2 overflow-x-auto max-h-32">
+                <pre className="text-[11px] bg-surface-solid rounded p-2 overflow-x-auto max-h-32">
                   {event.details}
                 </pre>
               </CollapsibleContent>
@@ -390,7 +390,7 @@ export function ProgressPanel({
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <Activity className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-            <h2 className="text-sm font-semibold">Progress</h2>
+            <h2 className="text-[13px] font-semibold">Progress</h2>
             {isLive && !isPaused && (
               <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-green-900 text-green-400">
                 <span className="w-1.5 h-1.5 bg-green-500 rounded-full mr-1 animate-pulse" />
@@ -424,7 +424,7 @@ export function ProgressPanel({
         {externalIsThinking && (
           <div className="flex items-center gap-2 mb-2 p-2 bg-surface-solid rounded-md border border-purple-800">
             <Brain className="h-4 w-4 text-purple-600 dark:text-purple-400 animate-pulse" />
-            <span className="text-xs font-medium text-purple-700 dark:text-purple-300">
+            <span className="text-[11px] font-medium text-purple-700 dark:text-purple-300">
               Agent is thinking...
             </span>
             {externalThinkingSteps && externalThinkingSteps.length > 0 && (
@@ -436,7 +436,7 @@ export function ProgressPanel({
         )}
 
         {/* Stats bar */}
-        <div className="flex items-center gap-3 text-xs text-muted-foreground mb-2">
+        <div className="flex items-center gap-3 text-[11px] text-muted-foreground mb-2">
           <span>{stats.total} actions</span>
           <span className="text-green-600">{stats.completed} done</span>
           {stats.running > 0 && <span className="text-blue-600">{stats.running} running</span>}
@@ -450,7 +450,7 @@ export function ProgressPanel({
             placeholder="Filter activity..."
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            className="h-8 pl-8 text-sm"
+            className="h-8 pl-8 text-[13px]"
             data-testid="input-filter-activity"
           />
         </div>
@@ -466,8 +466,8 @@ export function ProgressPanel({
           ) : filteredEvents.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
               <Activity className="h-12 w-12 mb-3 opacity-20" />
-              <p className="text-sm font-medium">No activity yet</p>
-              <p className="text-xs mt-1">Agent actions will appear here</p>
+              <p className="text-[13px] font-medium">No activity yet</p>
+              <p className="text-[11px] mt-1">Agent actions will appear here</p>
             </div>
           ) : (
             filteredEvents.map((event) => (

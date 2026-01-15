@@ -83,10 +83,10 @@ export function TaskMessage({ tasks, className }: TaskMessageProps) {
       <div className="flex items-center gap-3">
         <div className="flex-1">
           <div className="flex items-center justify-between mb-1">
-            <span className="text-xs font-medium text-[var(--ecode-text)]">
+            <span className="text-[11px] font-medium text-[var(--ecode-text)]">
               Tasks Progress
             </span>
-            <span className="text-xs text-[var(--ecode-text-secondary)]">
+            <span className="text-[11px] text-[var(--ecode-text-secondary)]">
               {completedTasks} / {totalTasks}
             </span>
           </div>
@@ -127,14 +127,14 @@ export function TaskMessage({ tasks, className }: TaskMessageProps) {
                     {/* Task Content */}
                     <div className="flex-1 min-w-0 text-left">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="text-sm font-medium text-[var(--ecode-text)]">
+                        <span className="text-[13px] font-medium text-[var(--ecode-text)]">
                           {task.title}
                         </span>
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="outline" className="text-[11px]">
                           {config.label}
                         </Badge>
                         {task.estimatedTime && task.status === 'pending' && (
-                          <Badge variant="outline" className="text-xs flex items-center gap-1">
+                          <Badge variant="outline" className="text-[11px] flex items-center gap-1">
                             <Clock className="h-3 w-3" />
                             {task.estimatedTime}
                           </Badge>
@@ -142,7 +142,7 @@ export function TaskMessage({ tasks, className }: TaskMessageProps) {
                       </div>
                       
                       {task.description && (
-                        <div className="text-xs text-[var(--ecode-text-secondary)] mb-2">
+                        <div className="text-[11px] text-[var(--ecode-text-secondary)] mb-2">
                           {task.description}
                         </div>
                       )}
@@ -158,7 +158,7 @@ export function TaskMessage({ tasks, className }: TaskMessageProps) {
                       {task.error && (
                         <div className="mt-2 flex items-start gap-2 p-2 rounded-md bg-red-100 dark:bg-red-950/20">
                           <AlertCircle className="h-3 w-3 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
-                          <span className="text-xs text-red-700 dark:text-red-300">
+                          <span className="text-[11px] text-red-700 dark:text-red-300">
                             {task.error}
                           </span>
                         </div>
@@ -186,13 +186,13 @@ export function TaskMessage({ tasks, className }: TaskMessageProps) {
                         <div className="mt-2">
                           <div className="flex items-center gap-2 mb-1">
                             <FileText className="h-3 w-3 text-green-600 dark:text-green-400" />
-                            <span className="text-xs font-medium text-[var(--ecode-text)]">
+                            <span className="text-[11px] font-medium text-[var(--ecode-text)]">
                               Files Created ({task.artifacts.filesCreated.length})
                             </span>
                           </div>
                           <div className="pl-5 space-y-1">
                             {task.artifacts.filesCreated.map((file, idx) => (
-                              <div key={idx} className="text-xs font-mono text-[var(--ecode-text-secondary)]">
+                              <div key={idx} className="text-[11px] font-mono text-[var(--ecode-text-secondary)]">
                                 {file}
                               </div>
                             ))}
@@ -204,13 +204,13 @@ export function TaskMessage({ tasks, className }: TaskMessageProps) {
                         <div>
                           <div className="flex items-center gap-2 mb-1">
                             <FileText className="h-3 w-3 text-blue-600 dark:text-blue-400" />
-                            <span className="text-xs font-medium text-[var(--ecode-text)]">
+                            <span className="text-[11px] font-medium text-[var(--ecode-text)]">
                               Files Modified ({task.artifacts.filesModified.length})
                             </span>
                           </div>
                           <div className="pl-5 space-y-1">
                             {task.artifacts.filesModified.map((file, idx) => (
-                              <div key={idx} className="text-xs font-mono text-[var(--ecode-text-secondary)]">
+                              <div key={idx} className="text-[11px] font-mono text-[var(--ecode-text-secondary)]">
                                 {file}
                               </div>
                             ))}
@@ -222,13 +222,13 @@ export function TaskMessage({ tasks, className }: TaskMessageProps) {
                         <div>
                           <div className="flex items-center gap-2 mb-1">
                             <Package className="h-3 w-3 text-purple-600 dark:text-purple-400" />
-                            <span className="text-xs font-medium text-[var(--ecode-text)]">
+                            <span className="text-[11px] font-medium text-[var(--ecode-text)]">
                               Packages Installed ({task.artifacts.packagesInstalled.length})
                             </span>
                           </div>
                           <div className="pl-5 space-y-1">
                             {task.artifacts.packagesInstalled.map((pkg, idx) => (
-                              <div key={idx} className="text-xs font-mono text-[var(--ecode-text-secondary)]">
+                              <div key={idx} className="text-[11px] font-mono text-[var(--ecode-text-secondary)]">
                                 {pkg}
                               </div>
                             ))}
@@ -240,13 +240,13 @@ export function TaskMessage({ tasks, className }: TaskMessageProps) {
                         <div>
                           <div className="flex items-center gap-2 mb-1">
                             <Terminal className="h-3 w-3 text-orange-600 dark:text-orange-400" />
-                            <span className="text-xs font-medium text-[var(--ecode-text)]">
+                            <span className="text-[11px] font-medium text-[var(--ecode-text)]">
                               Commands Executed ({task.artifacts.commands.length})
                             </span>
                           </div>
                           <div className="pl-5 space-y-1">
                             {task.artifacts.commands.map((cmd, idx) => (
-                              <div key={idx} className="text-xs font-mono text-[var(--ecode-text-secondary)]">
+                              <div key={idx} className="text-[11px] font-mono text-[var(--ecode-text-secondary)]">
                                 $ {cmd}
                               </div>
                             ))}

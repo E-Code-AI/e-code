@@ -162,7 +162,7 @@ export function TestResultsPanel({
     return (
       <Badge 
         variant="outline" 
-        className={cn('text-xs capitalize', variants[status])}
+        className={cn('text-[11px] capitalize', variants[status])}
         data-testid={`badge-status-${status}`}
       >
         {status}
@@ -199,7 +199,7 @@ export function TestResultsPanel({
                 <div className="w-5" />
               )}
               {getStatusIcon(job.status)}
-              <CardTitle className="text-sm font-medium">
+              <CardTitle className="text-[13px] font-medium">
                 Project #{job.projectId}
               </CardTitle>
             </div>
@@ -208,7 +208,7 @@ export function TestResultsPanel({
               {job.results && (
                 <Badge 
                   variant={job.results.passed ? 'success' : 'destructive'}
-                  className="text-xs"
+                  className="text-[11px]"
                   data-testid={`badge-result-${job.projectId}`}
                 >
                   {job.results.passed ? 'Passed' : `${job.results.failures.length} Failed`}
@@ -221,7 +221,7 @@ export function TestResultsPanel({
         {isExpanded && job.results && (
           <CardContent className="pt-0 pb-3 px-3">
             <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="grid grid-cols-2 gap-2 text-[11px]">
                 <div className="flex items-center gap-2">
                   <span className="text-muted-foreground">Page Load:</span>
                   {job.results.pageLoadPassed ? (
@@ -258,7 +258,7 @@ export function TestResultsPanel({
 
               {job.results.failures.length > 0 && (
                 <div className="space-y-2">
-                  <h4 className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                  <h4 className="text-[11px] font-medium text-muted-foreground flex items-center gap-1">
                     <AlertTriangle className="h-3 w-3" />
                     Failed Tests ({job.results.failures.length})
                   </h4>
@@ -270,11 +270,11 @@ export function TestResultsPanel({
                     >
                       <div className="flex items-center gap-2 mb-1">
                         <FileCode className="h-3 w-3 text-red-500" />
-                        <span className="text-xs font-medium text-red-600">
+                        <span className="text-[11px] font-medium text-red-600">
                           {failure.test}
                         </span>
                       </div>
-                      <pre className="text-xs text-muted-foreground bg-muted/50 rounded p-2 overflow-x-auto whitespace-pre-wrap">
+                      <pre className="text-[11px] text-muted-foreground bg-muted/50 rounded p-2 overflow-x-auto whitespace-pre-wrap">
                         <code data-testid={`error-message-${job.projectId}-${idx}`}>
                           {failure.error}
                         </code>
@@ -286,7 +286,7 @@ export function TestResultsPanel({
 
               {job.changedFiles && job.changedFiles.length > 0 && (
                 <div className="space-y-1">
-                  <h4 className="text-xs font-medium text-muted-foreground">
+                  <h4 className="text-[11px] font-medium text-muted-foreground">
                     Changed Files ({job.changedFiles.length})
                   </h4>
                   <div className="flex flex-wrap gap-1">
@@ -294,14 +294,14 @@ export function TestResultsPanel({
                       <Badge 
                         key={idx} 
                         variant="outline" 
-                        className="text-xs font-mono"
+                        className="text-[11px] font-mono"
                         data-testid={`changed-file-${idx}`}
                       >
                         {file}
                       </Badge>
                     ))}
                     {job.changedFiles.length > 5 && (
-                      <Badge variant="outline" className="text-xs">
+                      <Badge variant="outline" className="text-[11px]">
                         +{job.changedFiles.length - 5} more
                       </Badge>
                     )}
@@ -324,16 +324,16 @@ export function TestResultsPanel({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Terminal className="h-4 w-4" />
-            <h3 className="text-sm font-semibold">Background Tests</h3>
+            <h3 className="text-[13px] font-semibold">Background Tests</h3>
           </div>
           <div className="flex items-center gap-1">
             {isConnected ? (
-              <Badge variant="outline" className="text-xs bg-green-500/10 text-green-600" data-testid="status-connection">
+              <Badge variant="outline" className="text-[11px] bg-green-500/10 text-green-600" data-testid="status-connection">
                 <Wifi className="h-3 w-3 mr-1" />
                 Connected
               </Badge>
             ) : (
-              <Badge variant="outline" className="text-xs bg-red-500/10 text-red-600" data-testid="status-connection">
+              <Badge variant="outline" className="text-[11px] bg-red-500/10 text-red-600" data-testid="status-connection">
                 <WifiOff className="h-3 w-3 mr-1" />
                 Disconnected
               </Badge>
@@ -342,7 +342,7 @@ export function TestResultsPanel({
         </div>
 
         {connectionError && (
-          <div className="flex items-center gap-2 text-xs text-red-600 bg-red-500/10 rounded-md p-2" data-testid="text-test-error">
+          <div className="flex items-center gap-2 text-[11px] text-red-600 bg-red-500/10 rounded-md p-2" data-testid="text-test-error">
             <AlertTriangle className="h-3 w-3" />
             {connectionError}
           </div>
@@ -354,7 +354,7 @@ export function TestResultsPanel({
             variant="default"
             onClick={handleRerun}
             disabled={isRerunning || !isConnected}
-            className="h-7 px-3 text-xs"
+            className="h-7 px-3 text-[11px]"
             data-testid="button-rerun-tests"
           >
             {isRerunning ? (
@@ -369,7 +369,7 @@ export function TestResultsPanel({
             variant="outline"
             onClick={handleClear}
             disabled={!hasTests}
-            className="h-7 px-3 text-xs"
+            className="h-7 px-3 text-[11px]"
             data-testid="button-clear-results"
           >
             <Trash2 className="h-3 w-3 mr-1" />
@@ -387,7 +387,7 @@ export function TestResultsPanel({
           </Button>
         </div>
 
-        <div className="flex items-center gap-3 text-xs">
+        <div className="flex items-center gap-3 text-[11px]">
           <Badge variant="outline" className="bg-muted" data-testid="badge-total-tests">
             Total: {allTests.length}
           </Badge>
@@ -419,8 +419,8 @@ export function TestResultsPanel({
           {!hasTests ? (
             <div className="flex flex-col items-center justify-center py-12 text-center" data-testid="empty-state">
               <FileCode className="h-10 w-10 text-muted-foreground mb-3" />
-              <p className="text-sm text-muted-foreground">No test results yet</p>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-[13px] text-muted-foreground">No test results yet</p>
+              <p className="text-[11px] text-muted-foreground mt-1">
                 Tests will run automatically when files change
               </p>
               <Button
@@ -439,7 +439,7 @@ export function TestResultsPanel({
             <>
               {testQueue.length > 0 && (
                 <div className="mb-4">
-                  <h4 className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1">
+                  <h4 className="text-[11px] font-medium text-muted-foreground mb-2 flex items-center gap-1">
                     <Clock className="h-3 w-3" />
                     Queued ({testQueue.length})
                   </h4>
@@ -449,7 +449,7 @@ export function TestResultsPanel({
 
               {runningTests.length > 0 && (
                 <div className="mb-4">
-                  <h4 className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1">
+                  <h4 className="text-[11px] font-medium text-muted-foreground mb-2 flex items-center gap-1">
                     <Loader2 className="h-3 w-3 animate-spin" />
                     Running ({runningTests.length})
                   </h4>
@@ -459,7 +459,7 @@ export function TestResultsPanel({
 
               {(completedTests.length > 0 || failedTests.length > 0) && (
                 <div>
-                  <h4 className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1">
+                  <h4 className="text-[11px] font-medium text-muted-foreground mb-2 flex items-center gap-1">
                     <CheckCircle className="h-3 w-3" />
                     Results ({completedTests.length + failedTests.length})
                   </h4>
@@ -479,7 +479,7 @@ export function TestResultsPanel({
 
       {currentStatus && (
         <div className="border-t p-3" data-testid="current-status">
-          <div className="flex items-center justify-between text-xs">
+          <div className="flex items-center justify-between text-[11px]">
             <span className="text-muted-foreground">Last Test Run</span>
             <div className="flex items-center gap-2">
               {getStatusIcon(currentStatus.status)}

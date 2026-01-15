@@ -182,14 +182,14 @@ export default function SecurityScanner() {
                 <div className={`text-5xl font-bold ${getScoreColor(scanResult.score)}`}>
                   {scanResult.score}
                 </div>
-                <p className="text-sm text-muted-foreground mt-1">out of 100</p>
+                <p className="text-[13px] text-muted-foreground mt-1">out of 100</p>
               </div>
             </div>
           </CardHeader>
           <CardContent>
             {scanProgress > 0 && scanProgress < 100 && (
               <div className="mb-4">
-                <p className="text-sm text-muted-foreground mb-2">Scanning in progress...</p>
+                <p className="text-[13px] text-muted-foreground mb-2">Scanning in progress...</p>
                 <Progress value={scanProgress} className="h-2" />
               </div>
             )}
@@ -197,19 +197,19 @@ export default function SecurityScanner() {
             <div className="grid grid-cols-4 gap-4 text-center">
               <div>
                 <div className="text-2xl font-bold text-red-500">{scanResult.vulnerabilities.critical}</div>
-                <p className="text-sm text-muted-foreground">Critical</p>
+                <p className="text-[13px] text-muted-foreground">Critical</p>
               </div>
               <div>
                 <div className="text-2xl font-bold text-orange-500">{scanResult.vulnerabilities.high}</div>
-                <p className="text-sm text-muted-foreground">High</p>
+                <p className="text-[13px] text-muted-foreground">High</p>
               </div>
               <div>
                 <div className="text-2xl font-bold text-yellow-500">{scanResult.vulnerabilities.medium}</div>
-                <p className="text-sm text-muted-foreground">Medium</p>
+                <p className="text-[13px] text-muted-foreground">Medium</p>
               </div>
               <div>
                 <div className="text-2xl font-bold text-blue-500">{scanResult.vulnerabilities.low}</div>
-                <p className="text-sm text-muted-foreground">Low</p>
+                <p className="text-[13px] text-muted-foreground">Low</p>
               </div>
             </div>
           </CardContent>
@@ -243,7 +243,7 @@ export default function SecurityScanner() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{scanResult?.filesScanned || 0}</div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-[11px] text-muted-foreground">
                   Last scan: {metrics?.lastScan}
                 </p>
               </CardContent>
@@ -258,7 +258,7 @@ export default function SecurityScanner() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{metrics?.totalScans || 0}</div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-[11px] text-muted-foreground">
                   All time
                 </p>
               </CardContent>
@@ -275,7 +275,7 @@ export default function SecurityScanner() {
                 <div className={`text-2xl font-bold ${getScoreColor(metrics?.averageScore || 0)}`}>
                   {metrics?.averageScore || 0}
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-[11px] text-muted-foreground">
                   Last 30 days
                 </p>
               </CardContent>
@@ -327,7 +327,7 @@ export default function SecurityScanner() {
                   <CardHeader>
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
-                        <CardTitle className="text-lg flex items-center gap-2">
+                        <CardTitle className="text-[15px] flex items-center gap-2">
                           <Badge className={getSeverityColor(vuln.severity)}>
                             {vuln.severity.toUpperCase()}
                           </Badge>
@@ -341,7 +341,7 @@ export default function SecurityScanner() {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="flex flex-wrap gap-4 text-sm">
+                    <div className="flex flex-wrap gap-4 text-[13px]">
                       {vuln.file && (
                         <div className="flex items-center gap-1 text-muted-foreground">
                           <FileSearch className="h-3 w-3" />
@@ -369,7 +369,7 @@ export default function SecurityScanner() {
             <Card>
               <CardContent className="text-center py-12">
                 <ShieldCheck className="h-12 w-12 text-green-500 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No vulnerabilities found</h3>
+                <h3 className="text-[15px] font-semibold mb-2">No vulnerabilities found</h3>
                 <p className="text-muted-foreground">
                   Your code passed all security checks!
                 </p>
@@ -391,7 +391,7 @@ export default function SecurityScanner() {
               <div className="space-y-2">
                 {metrics?.trendsData.map((data, index) => (
                   <div key={index} className="flex items-center justify-between p-2 hover:bg-muted rounded" data-testid={`row-trend-${index}`}>
-                    <span className="text-sm">{data.date}</span>
+                    <span className="text-[13px]">{data.date}</span>
                     <div className="flex items-center gap-4">
                       <Badge variant="outline" className="font-mono">
                         {data.vulnerabilities} issues

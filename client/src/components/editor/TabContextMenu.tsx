@@ -75,7 +75,7 @@ export function TabContextMenu({
           >
             <X className="mr-2 h-4 w-4" />
             Close Tab
-            <span className="ml-auto text-xs text-muted-foreground">Ctrl+W</span>
+            <span className="ml-auto text-[11px] text-muted-foreground">Ctrl+W</span>
           </ContextMenuItem>
         )}
         
@@ -87,7 +87,7 @@ export function TabContextMenu({
           >
             <X className="mr-2 h-4 w-4" />
             Close Tab
-            <span className="ml-auto text-xs text-muted-foreground">Pinned</span>
+            <span className="ml-auto text-[11px] text-muted-foreground">Pinned</span>
           </ContextMenuItem>
         )}
         
@@ -98,7 +98,7 @@ export function TabContextMenu({
           <X className="mr-2 h-4 w-4" />
           <div className="flex flex-col">
             <span>Close Other Tabs</span>
-            <span className="text-xs text-muted-foreground">Keeps pinned tabs</span>
+            <span className="text-[11px] text-muted-foreground">Keeps pinned tabs</span>
           </div>
         </ContextMenuItem>
         
@@ -110,7 +110,7 @@ export function TabContextMenu({
             <X className="mr-2 h-4 w-4" />
             <div className="flex flex-col">
               <span>Close Tabs to the Right</span>
-              <span className="text-xs text-muted-foreground">Keeps pinned tabs</span>
+              <span className="text-[11px] text-muted-foreground">Keeps pinned tabs</span>
             </div>
           </ContextMenuItem>
         )}

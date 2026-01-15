@@ -300,7 +300,7 @@ export function ReplitDesktopShell({
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <TerminalIcon className="h-5 w-5 text-primary" />
-            <h1 className="text-lg font-semibold">Shell</h1>
+            <h1 className="text-[15px] font-semibold">Shell</h1>
           </div>
 
           <Tabs value={activeTabId} onValueChange={setActiveTabId}>
@@ -309,7 +309,7 @@ export function ReplitDesktopShell({
                 <TabsTrigger 
                   key={tab.id} 
                   value={tab.id}
-                  className="text-xs px-3 py-1 gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                  className="text-[11px] px-3 py-1 gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
                   data-testid={`desktop-shell-tab-${tab.id}`}
                 >
                   <span className={cn("h-1.5 w-1.5 rounded-full", tab.isConnected ? 'bg-green-500' : 'bg-red-500')} />
@@ -389,7 +389,7 @@ export function ReplitDesktopShell({
               <DropdownMenuSeparator />
               
               <div className="px-2 py-1.5">
-                <label className="text-sm font-medium">Font Size</label>
+                <label className="text-[13px] font-medium">Font Size</label>
                 <Select value={fontSize.toString()} onValueChange={(v) => setFontSize(parseInt(v))}>
                   <SelectTrigger className="w-full mt-1">
                     <SelectValue />
@@ -417,7 +417,7 @@ export function ReplitDesktopShell({
         </div>
       </div>
 
-      <div className="flex items-center justify-between px-4 py-1.5 border-b bg-muted/30 text-xs text-muted-foreground">
+      <div className="flex items-center justify-between px-4 py-1.5 border-b bg-muted/30 text-[11px] text-muted-foreground">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <FolderOpen className="h-3 w-3" />
@@ -440,14 +440,14 @@ export function ReplitDesktopShell({
           <Button 
             variant="ghost" 
             size="sm" 
-            className="h-6 text-xs gap-1"
+            className="h-6 text-[11px] gap-1"
             onClick={() => setIsGenerateMode(!isGenerateMode)}
             data-testid="desktop-shell-generate"
           >
             <Sparkles className="h-3 w-3" />
             Generate
           </Button>
-          <Button variant="ghost" size="sm" className="h-6 text-xs gap-1" data-testid="desktop-shell-help">
+          <Button variant="ghost" size="sm" className="h-6 text-[11px] gap-1" data-testid="desktop-shell-help">
             <HelpCircle className="h-3 w-3" />
             Help
           </Button>
@@ -460,12 +460,12 @@ export function ReplitDesktopShell({
             value={findQuery}
             onChange={(e) => handleFindChange(e.target.value)}
             placeholder="Find in shell..."
-            className="h-8 text-sm flex-1 max-w-xs"
+            className="h-8 text-[13px] flex-1 max-w-xs"
             autoFocus
             data-testid="desktop-shell-find-input"
           />
           {findMatches.length > 0 && (
-            <span className="text-xs text-muted-foreground">
+            <span className="text-[11px] text-muted-foreground">
               {currentMatchIndex + 1}/{findMatches.length}
             </span>
           )}
@@ -512,7 +512,7 @@ export function ReplitDesktopShell({
             value={generatePrompt}
             onChange={(e) => setGeneratePrompt(e.target.value)}
             placeholder="Describe the command you want..."
-            className="h-8 text-sm flex-1"
+            className="h-8 text-[13px] flex-1"
             onKeyDown={(e) => {
               if (e.key === 'Enter' && generatePrompt.trim()) {
                 generateCommandMutation.mutate(generatePrompt);
@@ -587,21 +587,21 @@ export function ReplitDesktopShell({
             <Square className="h-3 w-3" />
           </Button>
           
-          <span className="text-primary text-sm font-mono">{activeTab.cwd}$</span>
+          <span className="text-primary text-[13px] font-mono">{activeTab.cwd}$</span>
           <Input
             ref={inputRef}
             value={currentCommand}
             onChange={(e) => setCurrentCommand(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Enter command..."
-            className="h-8 text-sm font-mono flex-1 bg-transparent border-none focus-visible:ring-0"
+            className="h-8 text-[13px] font-mono flex-1 bg-transparent border-none focus-visible:ring-0"
             data-testid="desktop-shell-input"
           />
         </div>
       </div>
 
       <div className="border-t bg-muted/30 px-4 py-1">
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
+        <div className="flex items-center justify-between text-[11px] text-muted-foreground">
           <div className="flex items-center gap-4">
             <span>{activeTab.isConnected ? 'Connected' : 'Disconnected'}</span>
             <span>•</span>

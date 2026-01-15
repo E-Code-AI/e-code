@@ -346,7 +346,7 @@ export default function AI() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8 }}
             >
-              <Badge variant="default" className="mb-6 text-sm px-4 py-1.5 bg-primary/90">
+              <Badge variant="default" className="mb-6 text-[13px] px-4 py-1.5 bg-primary/90">
                 <Sparkles className="h-4 w-4 mr-1" />
                 POWERED BY E-CODE.AI
               </Badge>
@@ -364,13 +364,13 @@ export default function AI() {
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 mb-12">
-                <Button size="lg" asChild className="text-lg px-8 h-14 shadow-lg hover:shadow-xl transition-shadow" data-testid="button-start-building">
+                <Button size="lg" asChild className="text-[15px] px-8 h-14 shadow-lg hover:shadow-xl transition-shadow" data-testid="button-start-building">
                   <Link href="/ai-agent">
                     Start Building Now
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Link>
                 </Button>
-                <Button size="lg" variant="outline" asChild className="text-lg px-8 h-14" data-testid="button-watch-demo">
+                <Button size="lg" variant="outline" asChild className="text-[15px] px-8 h-14" data-testid="button-watch-demo">
                   <a href="#demo-video" className="scroll-smooth">
                     Watch Demo
                   </a>
@@ -387,7 +387,7 @@ export default function AI() {
                     <div className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
                       {stat.value}
                     </div>
-                    <div className="text-sm text-muted-foreground font-medium">{stat.label}</div>
+                    <div className="text-[13px] text-muted-foreground font-medium">{stat.label}</div>
                   </div>
                 ))}
               </div>
@@ -412,7 +412,7 @@ export default function AI() {
                 </video>
                 <div className="absolute inset-0 bg-gradient-to-tr from-primary/20 via-transparent to-transparent" />
                 <div className="absolute inset-0 flex flex-col justify-end bg-black/20 p-6 text-white">
-                  <p className="text-sm font-medium uppercase tracking-widest text-white/70">Live preview</p>
+                  <p className="text-[13px] font-medium uppercase tracking-widest text-white/70">Live preview</p>
                   <p className="text-xl font-semibold">AI agent assembling a production-ready dashboard</p>
                 </div>
               </div>
@@ -464,11 +464,11 @@ export default function AI() {
                   <h3 className="text-2xl sm:text-3xl font-semibold leading-snug">
                     From prompt to production in under two minutes
                   </h3>
-                  <p className="text-sm sm:text-base text-white/80">
+                  <p className="text-[13px] sm:text-base text-white/80">
                     Follow along as the AI agent scaffolds a SaaS dashboard, configures infrastructure, and ships to the cloud.
                   </p>
                 </div>
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 text-sm font-medium">
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 text-[13px] font-medium">
                   <div className="flex items-center gap-2 bg-white/10 backdrop-blur rounded-lg px-3 py-2">
                     <CheckCircle className="h-4 w-4 text-emerald-300 flex-shrink-0" />
                     <span>Multi-step planning</span>
@@ -536,12 +536,12 @@ export default function AI() {
                         <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
                           <Icon className="h-5 w-5 text-primary" />
                         </div>
-                        <CardTitle className="text-lg">{highlight.title}</CardTitle>
+                        <CardTitle className="text-[15px]">{highlight.title}</CardTitle>
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-muted-foreground text-sm">{highlight.description}</p>
-                      <div className="mt-3 text-xs text-muted-foreground">Duration: {highlight.duration}</div>
+                      <p className="text-muted-foreground text-[13px]">{highlight.description}</p>
+                      <div className="mt-3 text-[11px] text-muted-foreground">Duration: {highlight.duration}</div>
                     </CardContent>
                   </Card>
                 );
@@ -558,7 +558,7 @@ export default function AI() {
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
               How Our AI Agent Works
             </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-[15px] text-muted-foreground max-w-2xl mx-auto">
               From idea to deployed app in three simple steps
             </p>
           </div>
@@ -613,7 +613,7 @@ export default function AI() {
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
               AI Agent Capabilities
             </h2>
-            <p className="text-lg text-muted-foreground">
+            <p className="text-[15px] text-muted-foreground">
               Powerful features that make building effortless
             </p>
           </div>
@@ -637,7 +637,7 @@ export default function AI() {
                           <Icon className="h-5 w-5 text-primary" />
                         </div>
                         <div className="flex-1">
-                          <CardTitle className="text-lg">{feature.title}</CardTitle>
+                          <CardTitle className="text-[15px]">{feature.title}</CardTitle>
                           <CardDescription className="mt-1">
                             {feature.description}
                           </CardDescription>
@@ -677,7 +677,7 @@ export default function AI() {
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
               AI-Powered Tools
             </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-[15px] text-muted-foreground max-w-2xl mx-auto">
               Advanced capabilities that help AI build better applications
             </p>
           </div>
@@ -692,7 +692,7 @@ export default function AI() {
                       <Icon className="h-6 w-6 text-primary" />
                     </div>
                     <h3 className="font-semibold mb-1">{tool.name}</h3>
-                    <p className="text-sm text-muted-foreground">{tool.description}</p>
+                    <p className="text-[13px] text-muted-foreground">{tool.description}</p>
                   </CardContent>
                 </Card>
               );
@@ -708,7 +708,7 @@ export default function AI() {
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
               Who Uses Our AI Agent?
             </h2>
-            <p className="text-lg text-muted-foreground">
+            <p className="text-[15px] text-muted-foreground">
               From complete beginners to experienced developers
             </p>
           </div>
@@ -733,7 +733,7 @@ export default function AI() {
                   </CardHeader>
                   <CardContent>
                     <div className="bg-muted rounded-lg p-4">
-                      <p className="text-sm font-mono">{useCase.example}</p>
+                      <p className="text-[13px] font-mono">{useCase.example}</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -759,7 +759,7 @@ export default function AI() {
             <CardContent className="p-8">
               <div className="space-y-6">
                 <div className="bg-muted rounded-lg p-4">
-                  <p className="text-sm text-muted-foreground mb-2">Example prompts to try:</p>
+                  <p className="text-[13px] text-muted-foreground mb-2">Example prompts to try:</p>
                   <div className="space-y-2">
                     <Button variant="outline" size="sm" className="w-full justify-start" asChild data-testid="button-prompt-portfolio">
                       <Link href="/agent?prompt=Build a personal portfolio website with dark mode">
@@ -797,7 +797,7 @@ export default function AI() {
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
               Start Building Today
             </h2>
-            <p className="text-lg text-muted-foreground mb-8">
+            <p className="text-[15px] text-muted-foreground mb-8">
               No credit card required. Build unlimited apps with our free tier.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">

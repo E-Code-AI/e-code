@@ -188,8 +188,8 @@ export function SplitsLayout({ className, onLayoutChange, defaultLayout }: Split
           {root ? renderNode(root) : (
             <div className="flex items-center justify-center h-full text-gray-500">
               <div className="text-center">
-                <p className="text-lg mb-2">No layout configured</p>
-                <p className="text-sm">Start by opening a file or creating a new pane</p>
+                <p className="text-[15px] mb-2">No layout configured</p>
+                <p className="text-[13px]">Start by opening a file or creating a new pane</p>
               </div>
             </div>
           )}

@@ -303,12 +303,12 @@ export function AIAssistant({ projectId, selectedFile, selectedCode, className }
             isUser ? 'bg-primary text-primary-foreground' : 'bg-muted'
           }`}>
             {message.metadata?.fileName && (
-              <div className="text-xs opacity-70 mb-1">
+              <div className="text-[11px] opacity-70 mb-1">
                 {message.metadata.fileName}
               </div>
             )}
             
-            <div className="text-sm whitespace-pre-wrap">
+            <div className="text-[13px] whitespace-pre-wrap">
               {message.content.split(codeBlockRegex).map((part, index) => {
                 if (index % 3 === 2) {
                   // This is code content
@@ -317,7 +317,7 @@ export function AIAssistant({ projectId, selectedFile, selectedCode, className }
                     <div key={index} className="relative my-2">
                       <div className="bg-background rounded p-3 border">
                         <div className="flex items-center justify-between mb-2">
-                          <Badge variant="secondary" className="text-xs">
+                          <Badge variant="secondary" className="text-[11px]">
                             {language}
                           </Badge>
                           <Button
@@ -329,7 +329,7 @@ export function AIAssistant({ projectId, selectedFile, selectedCode, className }
                             <Copy className="h-3 w-3" />
                           </Button>
                         </div>
-                        <pre className="text-xs overflow-x-auto">
+                        <pre className="text-[11px] overflow-x-auto">
                           <code>{part}</code>
                         </pre>
                       </div>
@@ -386,7 +386,7 @@ export function AIAssistant({ projectId, selectedFile, selectedCode, className }
             <Bot className="h-4 w-4 mr-2" />
             AI Assistant
             {activePromptRules.length > 0 && (
-              <Badge variant="secondary" className="ml-2 text-xs">
+              <Badge variant="secondary" className="ml-2 text-[11px]">
                 {activePromptRules.length} Rule{activePromptRules.length > 1 ? 's' : ''} Active
               </Badge>
             )}
@@ -424,9 +424,9 @@ export function AIAssistant({ projectId, selectedFile, selectedCode, className }
       <CardContent className="p-0">
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
           <TabsList className="grid w-full grid-cols-3 h-8">
-            <TabsTrigger value="chat" className="text-xs">Chat</TabsTrigger>
-            <TabsTrigger value="suggestions" className="text-xs">Suggestions</TabsTrigger>
-            <TabsTrigger value="history" className="text-xs">History</TabsTrigger>
+            <TabsTrigger value="chat" className="text-[11px]">Chat</TabsTrigger>
+            <TabsTrigger value="suggestions" className="text-[11px]">Suggestions</TabsTrigger>
+            <TabsTrigger value="history" className="text-[11px]">History</TabsTrigger>
           </TabsList>
 
           <TabsContent value="chat" className="mt-0">
@@ -455,8 +455,8 @@ export function AIAssistant({ projectId, selectedFile, selectedCode, className }
               {messages.length === 0 ? (
                 <div className="text-center text-muted-foreground py-8">
                   <Bot className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                  <p className="text-sm">Hi! I'm your AI assistant.</p>
-                  <p className="text-xs mt-1">Ask me anything about your code!</p>
+                  <p className="text-[13px]">Hi! I'm your AI assistant.</p>
+                  <p className="text-[11px] mt-1">Ask me anything about your code!</p>
                 </div>
               ) : (
                 <>
@@ -470,7 +470,7 @@ export function AIAssistant({ projectId, selectedFile, selectedCode, className }
                           </AvatarFallback>
                         </Avatar>
                         <div className="rounded-lg p-3 bg-muted">
-                          <div className="text-sm whitespace-pre-wrap">
+                          <div className="text-[13px] whitespace-pre-wrap">
                             {streamingMessage}
                             <span className="inline-block w-2 h-4 ml-1 bg-foreground/50 animate-pulse" />
                           </div>
@@ -516,26 +516,26 @@ export function AIAssistant({ projectId, selectedFile, selectedCode, className }
                 {suggestions.length === 0 ? (
                   <div className="text-center text-muted-foreground py-8">
                     <Lightbulb className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                    <p className="text-sm">No suggestions yet</p>
-                    <p className="text-xs mt-1">Select some code to get AI suggestions</p>
+                    <p className="text-[13px]">No suggestions yet</p>
+                    <p className="text-[11px] mt-1">Select some code to get AI suggestions</p>
                   </div>
                 ) : (
                   suggestions.map(suggestion => (
                     <Card key={suggestion.id} className="p-3">
                       <div className="flex items-start justify-between mb-2">
                         <div>
-                          <h4 className="text-sm font-medium">{suggestion.title}</h4>
-                          <p className="text-xs text-muted-foreground mt-1">
+                          <h4 className="text-[13px] font-medium">{suggestion.title}</h4>
+                          <p className="text-[11px] text-muted-foreground mt-1">
                             {suggestion.description}
                           </p>
                         </div>
-                        <Badge variant="secondary" className="text-xs">
+                        <Badge variant="secondary" className="text-[11px]">
                           {Math.round(suggestion.confidence * 100)}%
                         </Badge>
                       </div>
                       {suggestion.code && (
                         <div className="mt-2">
-                          <pre className="text-xs p-2 bg-muted rounded overflow-x-auto">
+                          <pre className="text-[11px] p-2 bg-muted rounded overflow-x-auto">
                             <code>{suggestion.code}</code>
                           </pre>
                           <Button
@@ -571,7 +571,7 @@ export function AIAssistant({ projectId, selectedFile, selectedCode, className }
                         onClick={() => setInput(msg.content)}
                       >
                         <History className="h-4 w-4 mr-2 flex-shrink-0" />
-                        <span className="truncate text-sm">{msg.content}</span>
+                        <span className="truncate text-[13px]">{msg.content}</span>
                       </Button>
                     ))}
                 </div>

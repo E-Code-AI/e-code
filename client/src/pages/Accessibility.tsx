@@ -61,13 +61,13 @@ export default function Accessibility() {
       <div className="container mx-auto px-4 py-12 sm:py-16 md:py-20" data-testid="page-accessibility">
         {/* Hero Section */}
         <div className="text-center max-w-4xl mx-auto mb-12 sm:mb-16">
-          <Badge className="mb-4 px-4 py-1.5 text-sm font-medium bg-gradient-to-r from-teal-500 to-cyan-500 text-white border-0">
+          <Badge className="mb-4 px-4 py-1.5 text-[13px] font-medium bg-gradient-to-r from-teal-500 to-cyan-500 text-white border-0">
             Inclusive by Design
           </Badge>
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-teal-600 to-cyan-600 dark:from-teal-400 dark:to-cyan-400 bg-clip-text text-transparent" data-testid="heading-accessibility">
             Accessibility Statement
           </h1>
-          <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto">
+          <p className="text-[15px] sm:text-xl text-muted-foreground max-w-3xl mx-auto">
             E-Code is committed to ensuring digital accessibility for people with disabilities.
             We continually improve the user experience for everyone.
           </p>
@@ -108,7 +108,7 @@ export default function Accessibility() {
                   </div>
                   <div>
                     <h3 className="font-semibold mb-2">{feature.title}</h3>
-                    <p className="text-sm text-muted-foreground">{feature.description}</p>
+                    <p className="text-[13px] text-muted-foreground">{feature.description}</p>
                   </div>
                 </div>
               </Card>
@@ -166,7 +166,7 @@ export default function Accessibility() {
                   "Windows Narrator",
                   "ZoomText"
                 ].map((tech) => (
-                  <li key={tech} className="flex items-center gap-2 text-sm">
+                  <li key={tech} className="flex items-center gap-2 text-[13px]">
                     <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
                     {tech}
                   </li>
@@ -183,7 +183,7 @@ export default function Accessibility() {
                   "Edge 90+ (Windows)",
                   "Opera 76+ (Windows, macOS)"
                 ].map((browser) => (
-                  <li key={browser} className="flex items-center gap-2 text-sm">
+                  <li key={browser} className="flex items-center gap-2 text-[13px]">
                     <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
                     {browser}
                   </li>
@@ -231,7 +231,7 @@ export default function Accessibility() {
           <div className="text-center">
             <Mail className="h-12 w-12 mx-auto mb-6 opacity-80" />
             <h2 className="text-2xl sm:text-3xl font-bold mb-4">Accessibility Feedback</h2>
-            <p className="text-lg text-white/90 mb-8 max-w-2xl mx-auto">
+            <p className="text-[15px] text-white/90 mb-8 max-w-2xl mx-auto">
               We welcome your feedback on the accessibility of E-Code. If you encounter
               any barriers or have suggestions for improvement, please let us know.
             </p>
@@ -243,14 +243,14 @@ export default function Accessibility() {
                 </Button>
               </Link>
             </div>
-            <p className="mt-6 text-sm text-white/80">
+            <p className="mt-6 text-[13px] text-white/80">
               Email: accessibility@e-code.ai
             </p>
           </div>
         </Card>
 
         {/* Last Updated */}
-        <div className="max-w-4xl mx-auto mt-8 text-center text-sm text-muted-foreground">
+        <div className="max-w-4xl mx-auto mt-8 text-center text-[13px] text-muted-foreground">
           <p>This accessibility statement was last updated on November 2024.</p>
         </div>
       </div>

@@ -238,7 +238,7 @@ export default function Dependencies() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats?.total || 0}</div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[11px] text-muted-foreground">
               Production & Dev
             </p>
           </CardContent>
@@ -253,7 +253,7 @@ export default function Dependencies() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-yellow-500">{stats?.outdated || 0}</div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[11px] text-muted-foreground">
               Updates available
             </p>
           </CardContent>
@@ -268,7 +268,7 @@ export default function Dependencies() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-500">{stats?.vulnerabilities || 0}</div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[11px] text-muted-foreground">
               Security issues found
             </p>
           </CardContent>
@@ -282,7 +282,7 @@ export default function Dependencies() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-sm font-medium">{stats?.lastUpdated}</div>
+            <div className="text-[13px] font-medium">{stats?.lastUpdated}</div>
             <Button variant="ghost" size="sm" className="h-6 px-2 mt-1" data-testid="button-check-now">
               <RefreshCw className="h-3 w-3 mr-1" />
               Check Now
@@ -347,7 +347,7 @@ export default function Dependencies() {
                 <CardHeader>
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
-                      <CardTitle className="text-lg flex items-center gap-2">
+                      <CardTitle className="text-[15px] flex items-center gap-2">
                         <Package className="h-4 w-4" />
                         {dep.name}
                         {dep.vulnerabilities && (
@@ -373,7 +373,7 @@ export default function Dependencies() {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-[13px]">
                     <div>
                       <p className="text-muted-foreground">Installed</p>
                       <p className="font-medium">{dep.installedVersion}</p>
@@ -383,7 +383,7 @@ export default function Dependencies() {
                       <p className="font-medium">
                         {dep.latestVersion}
                         {dep.hasUpdate && (
-                          <Badge variant="secondary" className="ml-2 text-xs">
+                          <Badge variant="secondary" className="ml-2 text-[11px]">
                             Update
                           </Badge>
                         )}
@@ -404,7 +404,7 @@ export default function Dependencies() {
                       <Shield className="h-4 w-4" />
                       <AlertTitle>Security Vulnerabilities</AlertTitle>
                       <AlertDescription className="mt-2">
-                        <div className="flex gap-4 text-sm">
+                        <div className="flex gap-4 text-[13px]">
                           <span>Critical: {dep.vulnerabilities.critical}</span>
                           <span>High: {dep.vulnerabilities.high}</span>
                           <span>Medium: {dep.vulnerabilities.medium}</span>
@@ -415,7 +415,7 @@ export default function Dependencies() {
                   )}
 
                   <div className="flex items-center justify-between pt-2">
-                    <div className="flex gap-2 text-sm">
+                    <div className="flex gap-2 text-[13px]">
                       {dep.repository && (
                         <Button variant="ghost" size="sm" asChild data-testid={`link-repository-${dep.name}`}>
                           <a href={dep.repository} target="_blank" rel="noopener noreferrer">
@@ -461,7 +461,7 @@ export default function Dependencies() {
               {outdatedDependencies.map((dep) => (
                 <Card key={dep.name}>
                   <CardHeader>
-                    <CardTitle className="text-lg flex items-center gap-2">
+                    <CardTitle className="text-[15px] flex items-center gap-2">
                       <Package className="h-4 w-4" />
                       {dep.name}
                     </CardTitle>
@@ -470,10 +470,10 @@ export default function Dependencies() {
                   <CardContent>
                     <div className="flex items-center justify-between">
                       <div className="space-y-1">
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-[13px] text-muted-foreground">
                           Current: <span className="font-medium text-foreground">{dep.installedVersion}</span>
                         </p>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-[13px] text-muted-foreground">
                           Latest: <span className="font-medium text-green-600">{dep.latestVersion}</span>
                         </p>
                       </div>
@@ -497,7 +497,7 @@ export default function Dependencies() {
             <Card>
               <CardContent className="text-center py-12">
                 <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">All dependencies are up to date!</h3>
+                <h3 className="text-[15px] font-semibold mb-2">All dependencies are up to date!</h3>
                 <p className="text-muted-foreground">
                   Great job keeping your project dependencies current.
                 </p>
@@ -522,7 +522,7 @@ export default function Dependencies() {
                 {vulnerableDependencies.map((dep) => (
                   <Card key={dep.name} className="border-destructive">
                     <CardHeader>
-                      <CardTitle className="text-lg flex items-center gap-2">
+                      <CardTitle className="text-[15px] flex items-center gap-2">
                         <Shield className="h-4 w-4 text-destructive" />
                         {dep.name}
                       </CardTitle>
@@ -533,25 +533,25 @@ export default function Dependencies() {
                           <p className="text-2xl font-bold text-red-500">
                             {dep.vulnerabilities?.critical || 0}
                           </p>
-                          <p className="text-sm text-muted-foreground">Critical</p>
+                          <p className="text-[13px] text-muted-foreground">Critical</p>
                         </div>
                         <div>
                           <p className="text-2xl font-bold text-orange-500">
                             {dep.vulnerabilities?.high || 0}
                           </p>
-                          <p className="text-sm text-muted-foreground">High</p>
+                          <p className="text-[13px] text-muted-foreground">High</p>
                         </div>
                         <div>
                           <p className="text-2xl font-bold text-yellow-500">
                             {dep.vulnerabilities?.medium || 0}
                           </p>
-                          <p className="text-sm text-muted-foreground">Medium</p>
+                          <p className="text-[13px] text-muted-foreground">Medium</p>
                         </div>
                         <div>
                           <p className="text-2xl font-bold text-blue-500">
                             {dep.vulnerabilities?.low || 0}
                           </p>
-                          <p className="text-sm text-muted-foreground">Low</p>
+                          <p className="text-[13px] text-muted-foreground">Low</p>
                         </div>
                       </div>
                       
@@ -578,7 +578,7 @@ export default function Dependencies() {
             <Card>
               <CardContent className="text-center py-12">
                 <ShieldCheck className="h-12 w-12 text-green-500 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No vulnerabilities found</h3>
+                <h3 className="text-[15px] font-semibold mb-2">No vulnerabilities found</h3>
                 <p className="text-muted-foreground">
                   All your dependencies are secure.
                 </p>

@@ -270,25 +270,25 @@ export function HistoryTimeline({ projectId, className }: HistoryTimelineProps) 
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
                               <div className="flex items-center gap-2 mb-1">
-                                <h4 className="text-sm font-medium">
+                                <h4 className="text-[13px] font-medium">
                                   {entry.title}
                                 </h4>
                                 {entry.isRestorePoint && (
-                                  <Badge variant="outline" className="text-xs">
+                                  <Badge variant="outline" className="text-[11px]">
                                     Restore Point
                                   </Badge>
                                 )}
                               </div>
                               {entry.description && (
-                                <p className="text-xs text-muted-foreground mb-2">
+                                <p className="text-[11px] text-muted-foreground mb-2">
                                   {entry.description}
                                 </p>
                               )}
-                              <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                              <div className="flex items-center gap-4 text-[11px] text-muted-foreground">
                                 <div className="flex items-center gap-1">
                                   <Avatar className="h-5 w-5">
                                     <AvatarImage src={entry.author.avatar} />
-                                    <AvatarFallback className="text-xs">
+                                    <AvatarFallback className="text-[11px]">
                                       {entry.author.name.charAt(0)}
                                     </AvatarFallback>
                                   </Avatar>
@@ -306,7 +306,7 @@ export function HistoryTimeline({ projectId, className }: HistoryTimelineProps) 
                               {entry.tags && entry.tags.length > 0 && (
                                 <div className="flex gap-1 mt-2">
                                   {entry.tags.map((tag) => (
-                                    <Badge key={tag} variant="secondary" className="text-xs">
+                                    <Badge key={tag} variant="secondary" className="text-[11px]">
                                       {tag}
                                     </Badge>
                                   ))}
@@ -332,7 +332,7 @@ export function HistoryTimeline({ projectId, className }: HistoryTimelineProps) 
                               <Separator className="my-3" />
                               <div className="space-y-3">
                                 {/* Change Summary */}
-                                <div className="flex items-center gap-4 text-xs">
+                                <div className="flex items-center gap-4 text-[11px]">
                                   <div className="flex items-center gap-1">
                                     <Plus className="h-3 w-3 text-green-500" />
                                     <span>{entry.changes.additions} additions</span>
@@ -353,7 +353,7 @@ export function HistoryTimeline({ projectId, className }: HistoryTimelineProps) 
                                     {entry.changes.files.map((file) => (
                                       <div
                                         key={file.name}
-                                        className="flex items-center justify-between text-xs"
+                                        className="flex items-center justify-between text-[11px]"
                                       >
                                         <div className="flex items-center gap-2">
                                           <Code2 className={cn("h-3 w-3", getStatusColor(file.status))} />
@@ -420,7 +420,7 @@ export function HistoryTimeline({ projectId, className }: HistoryTimelineProps) 
               <div className="flex items-center justify-center h-96 text-muted-foreground">
                 <div className="text-center">
                   <GitPullRequest className="h-12 w-12 mx-auto mb-2" />
-                  <p className="text-sm">Graph view coming soon</p>
+                  <p className="text-[13px]">Graph view coming soon</p>
                 </div>
               </div>
             )}

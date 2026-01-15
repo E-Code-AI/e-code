@@ -46,7 +46,7 @@ function getProjectIcon(project: Project) {
 
   return (
     <div 
-      className={`${bgColor} w-12 h-12 rounded-xl flex items-center justify-center text-white font-semibold text-lg shadow-lg`}
+      className={`${bgColor} w-12 h-12 rounded-xl flex items-center justify-center text-white font-semibold text-[15px] shadow-lg`}
       role="img"
       aria-label={`Project icon for ${project.name}`}
     >
@@ -296,7 +296,7 @@ export default function Dashboard() {
                 {greeting.text}, {user?.displayName || user?.username || 'Developer'}!
               </h1>
             </div>
-            <p className="text-white/90 mb-5 text-lg">
+            <p className="text-white/90 mb-5 text-[15px]">
               What would you like to build today?
             </p>
 
@@ -344,7 +344,7 @@ export default function Dashboard() {
 
         {/* Agents & Automations Section */}
         <div>
-          <h2 className="text-lg font-semibold mb-4 text-[var(--ecode-text)]">Agents & Automations</h2>
+          <h2 className="text-[15px] font-semibold mb-4 text-[var(--ecode-text)]">Agents & Automations</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {agentsAutomations.map((item, index) => (
               <div
@@ -361,8 +361,8 @@ export default function Dashboard() {
                     <div className="p-3 rounded-xl bg-[var(--ecode-accent)]/10 group-hover:bg-[var(--ecode-accent)]/15 transition-colors mb-3">
                       <item.icon className="h-6 w-6 text-[var(--ecode-accent)]" />
                     </div>
-                    <h3 className="font-medium text-sm mb-1 text-[var(--ecode-text)] group-hover:text-[var(--ecode-accent)] transition-colors">{item.title}</h3>
-                    <p className="text-xs text-[var(--ecode-text-muted)] hidden md:block">{item.description}</p>
+                    <h3 className="font-medium text-[13px] mb-1 text-[var(--ecode-text)] group-hover:text-[var(--ecode-accent)] transition-colors">{item.title}</h3>
+                    <p className="text-[11px] text-[var(--ecode-text-muted)] hidden md:block">{item.description}</p>
                   </CardContent>
                 </Card>
               </div>
@@ -372,7 +372,7 @@ export default function Dashboard() {
 
         {/* Quick Actions - E-Code Styled */}
         <div>
-          <h2 className="text-lg font-semibold mb-4 text-[var(--ecode-text)]">Quick Actions</h2>
+          <h2 className="text-[15px] font-semibold mb-4 text-[var(--ecode-text)]">Quick Actions</h2>
           <div className={`grid ${TABLET_GRID_CLASSES.quickActionsTabletOptimized} gap-4`}>
             {quickActions.map((action, index) => (
               <div
@@ -389,8 +389,8 @@ export default function Dashboard() {
                     <div className="p-3 rounded-xl bg-[var(--ecode-accent)]/10 group-hover:bg-[var(--ecode-accent)]/15 transition-colors mb-3">
                       <action.icon className="h-6 w-6 text-[var(--ecode-accent)]" />
                     </div>
-                    <h3 className="font-medium text-sm mb-1 text-[var(--ecode-text)] group-hover:text-[var(--ecode-accent)] transition-colors">{action.title}</h3>
-                    <p className="text-xs text-[var(--ecode-text-muted)] hidden md:block">{action.description}</p>
+                    <h3 className="font-medium text-[13px] mb-1 text-[var(--ecode-text)] group-hover:text-[var(--ecode-accent)] transition-colors">{action.title}</h3>
+                    <p className="text-[11px] text-[var(--ecode-text-muted)] hidden md:block">{action.description}</p>
                   </CardContent>
                 </Card>
               </div>
@@ -401,7 +401,7 @@ export default function Dashboard() {
         {/* Recent Projects - E-Code Styled */}
         <div>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-            <h2 className="text-lg font-semibold text-[var(--ecode-text)]">Your Projects ({recentProjects.length})</h2>
+            <h2 className="text-[15px] font-semibold text-[var(--ecode-text)]">Your Projects ({recentProjects.length})</h2>
             <div className="flex items-center gap-3">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--ecode-text-muted)]" />
@@ -410,7 +410,7 @@ export default function Dashboard() {
                   placeholder="Search projects..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 pr-4 py-2.5 min-h-[44px] text-sm border border-[var(--ecode-border)] rounded-xl bg-[var(--ecode-surface)] focus:outline-none focus:ring-2 focus:ring-[var(--ecode-accent)]/20 focus:border-[var(--ecode-accent)]/40 transition-all duration-200"
+                  className="pl-9 pr-4 py-2.5 min-h-[44px] text-[13px] border border-[var(--ecode-border)] rounded-xl bg-[var(--ecode-surface)] focus:outline-none focus:ring-2 focus:ring-[var(--ecode-accent)]/20 focus:border-[var(--ecode-accent)]/40 transition-all duration-200"
                   style={{ fontFamily: 'var(--ecode-font-sans)' }}
                   data-testid="input-search-projects"
                 />
@@ -476,7 +476,7 @@ export default function Dashboard() {
                           Live
                         </Badge>
                       )}
-                      <Badge variant="secondary" className="absolute bottom-2 left-2 text-xs bg-[var(--ecode-surface)] text-[var(--ecode-text-muted)] border border-[var(--ecode-border)]">
+                      <Badge variant="secondary" className="absolute bottom-2 left-2 text-[11px] bg-[var(--ecode-surface)] text-[var(--ecode-text-muted)] border border-[var(--ecode-border)]">
                         {project.language || 'JavaScript'}
                       </Badge>
                     </div>
@@ -485,12 +485,12 @@ export default function Dashboard() {
                       <h3 className="font-semibold truncate mb-1 text-[var(--ecode-text)] group-hover:text-[var(--ecode-accent)] transition-colors" data-testid={`project-name-${project.id}`}>
                         {project.name}
                       </h3>
-                      <p className="text-sm text-[var(--ecode-text-muted)] mb-3 line-clamp-2" data-testid={`project-description-${project.id}`}>
+                      <p className="text-[13px] text-[var(--ecode-text-muted)] mb-3 line-clamp-2" data-testid={`project-description-${project.id}`}>
                         {project.description || 'No description'}
                       </p>
 
                       <div className="flex items-center justify-between">
-                        <span className="text-xs text-[var(--ecode-text-muted)] flex items-center gap-1" data-testid={`project-updated-${project.id}`}>
+                        <span className="text-[11px] text-[var(--ecode-text-muted)] flex items-center gap-1" data-testid={`project-updated-${project.id}`}>
                           <Clock className="h-3 w-3" />
                           {getTimeAgo(project.updatedAt)}
                         </span>

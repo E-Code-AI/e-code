@@ -168,7 +168,7 @@ export function ProjectSharing({ projectId, projectName, className }: ProjectSha
                   <Lock className="h-4 w-4" />
                   Private
                 </Label>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-[11px] text-muted-foreground mt-1">
                   Only you and invited collaborators can access
                 </p>
               </div>
@@ -181,7 +181,7 @@ export function ProjectSharing({ projectId, projectName, className }: ProjectSha
                   <Link className="h-4 w-4" />
                   Unlisted
                 </Label>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-[11px] text-muted-foreground mt-1">
                   Anyone with the link can view
                 </p>
               </div>
@@ -194,7 +194,7 @@ export function ProjectSharing({ projectId, projectName, className }: ProjectSha
                   <Globe className="h-4 w-4" />
                   Public
                 </Label>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-[11px] text-muted-foreground mt-1">
                   Anyone can find and view this project
                 </p>
               </div>
@@ -213,7 +213,7 @@ export function ProjectSharing({ projectId, projectName, className }: ProjectSha
                 <Input
                   value={shareLink}
                   readOnly
-                  className="font-mono text-sm"
+                  className="font-mono text-[13px]"
                 />
                 <Button
                   size="sm"
@@ -243,7 +243,7 @@ export function ProjectSharing({ projectId, projectName, className }: ProjectSha
             <select
               value={inviteRole}
               onChange={(e) => setInviteRole(e.target.value as 'editor' | 'viewer')}
-              className="px-3 py-2 border rounded-md text-sm"
+              className="px-3 py-2 border rounded-md text-[13px]"
               aria-label="Select collaborator permission level"
             >
               <option value="editor">Can Edit</option>
@@ -279,8 +279,8 @@ export function ProjectSharing({ projectId, projectName, className }: ProjectSha
             ) : collaborators.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full py-8 text-center">
                 <Users className="h-10 w-10 text-muted-foreground mb-2" />
-                <p className="text-sm font-medium text-muted-foreground">No collaborators yet</p>
-                <p className="text-xs text-muted-foreground mt-1">Invite team members to collaborate on this project</p>
+                <p className="text-[13px] font-medium text-muted-foreground">No collaborators yet</p>
+                <p className="text-[11px] text-muted-foreground mt-1">Invite team members to collaborate on this project</p>
               </div>
             ) : (
             <div className="space-y-2">
@@ -297,20 +297,20 @@ export function ProjectSharing({ projectId, projectName, className }: ProjectSha
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <p className="text-sm font-medium">{collaborator.username}</p>
-                      <p className="text-xs text-muted-foreground">{collaborator.email}</p>
+                      <p className="text-[13px] font-medium">{collaborator.username}</p>
+                      <p className="text-[11px] text-muted-foreground">{collaborator.email}</p>
                     </div>
                   </div>
                   
                   <div className="flex items-center gap-2">
                     {collaborator.status === 'pending' && (
-                      <Badge variant="secondary" className="text-xs">
+                      <Badge variant="secondary" className="text-[11px]">
                         Pending
                       </Badge>
                     )}
                     
                     {collaborator.role === 'owner' ? (
-                      <Badge variant="default" className="text-xs">
+                      <Badge variant="default" className="text-[11px]">
                         {getRoleIcon(collaborator.role)}
                         <span className="ml-1">Owner</span>
                       </Badge>
@@ -322,7 +322,7 @@ export function ProjectSharing({ projectId, projectName, className }: ProjectSha
                             collaborator.id, 
                             e.target.value as 'editor' | 'viewer'
                           )}
-                          className="text-xs border rounded px-2 py-1"
+                          className="text-[11px] border rounded px-2 py-1"
                           aria-label={`Change ${collaborator.username}'s permission level`}
                         >
                           <option value="editor">Can Edit</option>

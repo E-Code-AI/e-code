@@ -163,7 +163,7 @@ export function PlanApprovalModal({
           <DialogDescription className="text-base">
             The AI has generated a detailed execution plan for your goal: <strong>{plan.goal}</strong>
             <br />
-            <span className="text-sm text-muted-foreground">
+            <span className="text-[13px] text-muted-foreground">
               {plan.tasks?.length} tasks • ~{plan.totalEstimatedMinutes} minutes • Risk: {plan.riskAssessment?.overallRisk}/100
             </span>
           </DialogDescription>

@@ -219,8 +219,8 @@ export function SessionRecording({ sessionId, projectId, className }: SessionRec
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-semibold">Session Recorder</h3>
-                  <p className="text-sm text-muted-foreground">
+                  <h3 className="text-[15px] font-semibold">Session Recorder</h3>
+                  <p className="text-[13px] text-muted-foreground">
                     Record browser sessions with timeline markers
                   </p>
                 </div>
@@ -293,7 +293,7 @@ export function SessionRecording({ sessionId, projectId, className }: SessionRec
               <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
                 <div className="flex items-start gap-2">
                   <AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5" />
-                  <div className="text-sm text-blue-900 dark:text-blue-100">
+                  <div className="text-[13px] text-blue-900 dark:text-blue-100">
                     <p className="font-medium mb-1">How it works</p>
                     <p className="text-blue-700 dark:text-blue-300">
                       Session recording captures browser interactions with video replay and
@@ -309,7 +309,7 @@ export function SessionRecording({ sessionId, projectId, className }: SessionRec
 
         <TabsContent value="sessions" className="flex-1 flex flex-col mt-4">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold">Recorded Sessions</h3>
+            <h3 className="text-[15px] font-semibold">Recorded Sessions</h3>
             {recordings.length > 0 && (
               <Button
                 variant="ghost"
@@ -335,7 +335,7 @@ export function SessionRecording({ sessionId, projectId, className }: SessionRec
               <Card className="p-8 text-center">
                 <Video className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                 <p className="text-muted-foreground">No recordings yet</p>
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="text-[13px] text-muted-foreground mt-1">
                   Start a recording to capture browser sessions
                 </p>
               </Card>
@@ -373,7 +373,7 @@ export function SessionRecording({ sessionId, projectId, className }: SessionRec
                                     {recording.status}
                                   </Badge>
                                 </div>
-                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
                                   <Clock className="h-3 w-3" />
                                   <span>
                                     {new Date(recording.startedAt).toLocaleString()}
@@ -416,7 +416,7 @@ export function SessionRecording({ sessionId, projectId, className }: SessionRec
                           {/* Timeline Markers */}
                           {recording.markers && recording.markers.length > 0 && (
                             <div>
-                              <h4 className="text-sm font-semibold mb-2">Timeline Markers</h4>
+                              <h4 className="text-[13px] font-semibold mb-2">Timeline Markers</h4>
                               <div className="space-y-1">
                                 {recording.markers.map((marker, idx) => (
                                   <div
@@ -425,8 +425,8 @@ export function SessionRecording({ sessionId, projectId, className }: SessionRec
                                     data-testid={`marker-${idx}`}
                                   >
                                     {getMarkerIcon(marker.type)}
-                                    <span className="text-sm flex-1">{marker.label}</span>
-                                    <span className="text-xs text-muted-foreground">
+                                    <span className="text-[13px] flex-1">{marker.label}</span>
+                                    <span className="text-[11px] text-muted-foreground">
                                       {formatDuration(marker.timestamp)}
                                     </span>
                                   </div>
@@ -437,7 +437,7 @@ export function SessionRecording({ sessionId, projectId, className }: SessionRec
 
                           {/* Metadata */}
                           {recording.metadata && (
-                            <div className="flex gap-4 text-sm border-t pt-4">
+                            <div className="flex gap-4 text-[13px] border-t pt-4">
                               {recording.metadata.browserType && (
                                 <div>
                                   <span className="text-muted-foreground">Browser:</span>{' '}

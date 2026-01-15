@@ -270,7 +270,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                             />
                           </FormControl>
                           <FormMessage />
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-[11px] text-muted-foreground">
                             8+ characters with uppercase, lowercase and number
                           </p>
                         </FormItem>
@@ -318,7 +318,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
               <div className="mt-4 text-center">
                 <button
                   onClick={() => switchMode(mode === 'login' ? 'register' : 'login')}
-                  className="text-sm text-blue-600 hover:underline"
+                  className="text-[13px] text-blue-600 hover:underline"
                   data-testid="switch-auth-mode"
                 >
                   {mode === 'login'

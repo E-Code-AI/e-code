@@ -141,7 +141,7 @@ export function OrchestratorProgress({
             <div className="flex items-center gap-2">
               {getStatusBadge(progress.status)}
               {progress.currentTaskTitle && progress.status === 'running' && (
-                <span className="text-xs text-muted-foreground truncate">
+                <span className="text-[11px] text-muted-foreground truncate">
                   Working on: {progress.currentTaskTitle}
                 </span>
               )}
@@ -187,7 +187,7 @@ export function OrchestratorProgress({
         </div>
         
         <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm">
+          <div className="flex items-center justify-between text-[13px]">
             <span className="text-muted-foreground">Task Progress</span>
             <span className="font-medium">
               {progress.tasksCompleted}/{progress.tasksTotal}
@@ -205,36 +205,36 @@ export function OrchestratorProgress({
         
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
           <div className="space-y-1">
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
               <Clock className="h-3 w-3" />
               Elapsed
             </div>
-            <p className="text-sm font-medium tabular-nums">
+            <p className="text-[13px] font-medium tabular-nums">
               {formatTime(elapsedTime)}
             </p>
           </div>
           
           <div className="space-y-1">
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
               <TrendingUp className="h-3 w-3" />
               ETA
             </div>
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <p className="text-sm font-medium tabular-nums cursor-help">
+                  <p className="text-[13px] font-medium tabular-nums cursor-help">
                     {progress.estimatedRemainingMs > 0 
                       ? formatTime(progress.estimatedRemainingMs)
                       : '--'
                     }
-                    <span className={cn("text-xs ml-1", confidenceInfo.color)}>
+                    <span className={cn("text-[11px] ml-1", confidenceInfo.color)}>
                       ({confidenceInfo.label})
                     </span>
                   </p>
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>Based on {progress.etaBasedOnSamples} historical samples</p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-[11px] text-muted-foreground">
                     Confidence: {Math.round(progress.etaConfidence * 100)}%
                   </p>
                 </TooltipContent>
@@ -243,25 +243,25 @@ export function OrchestratorProgress({
           </div>
           
           <div className="space-y-1">
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
               <BarChart3 className="h-3 w-3" />
               Tokens
             </div>
-            <p className="text-sm font-medium tabular-nums">
+            <p className="text-[13px] font-medium tabular-nums">
               {progress.totalTokensUsed.toLocaleString()}
             </p>
           </div>
           
           <div className="space-y-1">
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
               <CheckCircle2 className="h-3 w-3" />
               Tests
             </div>
-            <p className="text-sm font-medium tabular-nums">
+            <p className="text-[13px] font-medium tabular-nums">
               {progress.testsPassed}/{progress.testsRun}
               {progress.testsRun > 0 && (
                 <span className={cn(
-                  "text-xs ml-1",
+                  "text-[11px] ml-1",
                   testPassRate >= 80 && "text-green-600 dark:text-green-400",
                   testPassRate >= 50 && testPassRate < 80 && "text-yellow-600 dark:text-yellow-400",
                   testPassRate < 50 && "text-red-600 dark:text-red-400"
@@ -273,18 +273,18 @@ export function OrchestratorProgress({
           </div>
           
           <div className="space-y-1">
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
               <DollarSign className="h-3 w-3" />
               Cost
             </div>
-            <p className="text-sm font-medium tabular-nums text-green-600 dark:text-green-400">
+            <p className="text-[13px] font-medium tabular-nums text-green-600 dark:text-green-400">
               ${parseFloat(progress.totalCostUsd).toFixed(4)}
             </p>
           </div>
         </div>
         
         {(progress.checkpointsCreated > 0 || progress.rollbacksPerformed > 0) && (
-          <div className="flex items-center gap-4 pt-2 border-t border-violet-200 dark:border-violet-800 text-xs text-muted-foreground">
+          <div className="flex items-center gap-4 pt-2 border-t border-violet-200 dark:border-violet-800 text-[11px] text-muted-foreground">
             {progress.checkpointsCreated > 0 && (
               <span>{progress.checkpointsCreated} checkpoints</span>
             )}
@@ -326,7 +326,7 @@ export function MiniProgressIndicator({
       <div className="flex-1 min-w-[60px]">
         <Progress value={progress} className="h-1.5" data-testid="progress-mini" />
       </div>
-      <span className="text-xs text-muted-foreground tabular-nums whitespace-nowrap">
+      <span className="text-[11px] text-muted-foreground tabular-nums whitespace-nowrap">
         {completed}/{total}
         {eta && eta > 0 && (
           <>

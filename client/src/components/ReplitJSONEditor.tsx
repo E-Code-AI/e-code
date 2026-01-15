@@ -300,14 +300,14 @@ export function ReplitJSONEditor({
           )}
           {!node.children && <div className="w-4" />}
           
-          <span className="font-mono text-sm">{node.key}:</span>
+          <span className="font-mono text-[13px]">{node.key}:</span>
           
           {editing ? (
             <div className="flex items-center gap-2">
               <Input
                 value={editValue}
                 onChange={(e) => setEditValue(e.target.value)}
-                className="h-6 text-sm font-mono"
+                className="h-6 text-[13px] font-mono"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') handleSaveEdit();
                   if (e.key === 'Escape') setEditing(false);
@@ -322,10 +322,10 @@ export function ReplitJSONEditor({
             </div>
           ) : (
             <>
-              <span className={cn('font-mono text-sm', getTypeColor())}>
+              <span className={cn('font-mono text-[13px]', getTypeColor())}>
                 {getValueDisplay()}
               </span>
-              <Badge variant="outline" className="text-xs py-0 h-5">
+              <Badge variant="outline" className="text-[11px] py-0 h-5">
                 {node.type}
               </Badge>
               {(node.type !== 'object' && node.type !== 'array') && (
@@ -463,7 +463,7 @@ export function ReplitJSONEditor({
         </div>
 
         {/* Status Bar */}
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
+        <div className="flex items-center justify-between text-[11px] text-muted-foreground">
           <div className="flex items-center gap-4">
             <span>
               {validationError ? (

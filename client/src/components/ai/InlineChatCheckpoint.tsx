@@ -90,10 +90,10 @@ export function InlineChatCheckpoint({
               {statusIcon[status]}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs text-muted-foreground mb-1" data-testid={`checkpoint-time-${id}`}>
+              <p className="text-[11px] text-muted-foreground mb-1" data-testid={`checkpoint-time-${id}`}>
                 {timeAgo}
               </p>
-              <p className="text-sm font-medium text-foreground leading-snug" data-testid={`checkpoint-description-${id}`}>
+              <p className="text-[13px] font-medium text-foreground leading-snug" data-testid={`checkpoint-description-${id}`}>
                 {description}
               </p>
               {commitId && (
@@ -111,7 +111,7 @@ export function InlineChatCheckpoint({
             <Button
               variant="secondary"
               size="sm"
-              className="h-8 px-3 text-xs font-medium bg-background hover:bg-muted border border-border"
+              className="h-8 px-3 text-[11px] font-medium bg-background hover:bg-muted border border-border"
               onClick={() => setShowRollbackDialog(true)}
               disabled={isRestoring || status !== 'complete'}
               data-testid={`button-rollback-${id}`}
@@ -123,7 +123,7 @@ export function InlineChatCheckpoint({
             <Button
               variant="secondary"
               size="sm"
-              className="h-8 px-3 text-xs font-medium bg-background hover:bg-muted border border-border"
+              className="h-8 px-3 text-[11px] font-medium bg-background hover:bg-muted border border-border"
               onClick={() => onViewChanges?.(id)}
               disabled={!commitId}
               data-testid={`button-changes-${id}`}
@@ -135,7 +135,7 @@ export function InlineChatCheckpoint({
             <Button
               variant="secondary"
               size="sm"
-              className="h-8 px-3 text-xs font-medium bg-background hover:bg-muted border border-border"
+              className="h-8 px-3 text-[11px] font-medium bg-background hover:bg-muted border border-border"
               onClick={() => onPreview?.(id)}
               data-testid={`button-preview-${id}`}
             >
@@ -152,7 +152,7 @@ export function InlineChatCheckpoint({
               className="flex items-center justify-between w-full text-left hover:bg-muted/50 rounded-lg p-2 -m-2 transition-colors"
               data-testid={`button-toggle-stats-${id}`}
             >
-              <span className="text-sm text-muted-foreground flex items-center gap-2">
+              <span className="text-[13px] text-muted-foreground flex items-center gap-2">
                 <FileCode className="h-4 w-4" />
                 {showStats ? 'Show less' : 'Show more'}
               </span>
@@ -164,7 +164,7 @@ export function InlineChatCheckpoint({
             </button>
             
             {showStats && (
-              <div className="mt-3 space-y-2 text-sm">
+              <div className="mt-3 space-y-2 text-[13px]">
                 {stats.timeWorked && (
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground">Time worked</span>
@@ -256,7 +256,7 @@ export function CollapsedCheckpointMessage({
         className="flex items-center justify-between w-full text-left hover:bg-muted/30 rounded-lg p-2 -mx-2 transition-colors"
         data-testid="button-expand-message"
       >
-        <span className="text-sm text-muted-foreground">
+        <span className="text-[13px] text-muted-foreground">
           {messageCount} message{messageCount !== 1 ? 's' : ''} & {actionCount} action{actionCount !== 1 ? 's' : ''}
         </span>
         {isExpanded ? (
@@ -267,7 +267,7 @@ export function CollapsedCheckpointMessage({
       </button>
       
       {!isExpanded && (
-        <p className="text-sm text-foreground line-clamp-2" data-testid="message-summary">
+        <p className="text-[13px] text-foreground line-clamp-2" data-testid="message-summary">
           {summary}
         </p>
       )}

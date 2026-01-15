@@ -136,14 +136,14 @@ export function PerformanceDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Requests/min</CardTitle>
+            <CardTitle className="text-[13px] font-medium">Requests/min</CardTitle>
             <Zap className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
               {realTimeMetrics?.requestsPerMinute || 0}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[11px] text-muted-foreground">
               Real-time request rate
             </p>
           </CardContent>
@@ -151,14 +151,14 @@ export function PerformanceDashboard() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg Response Time</CardTitle>
+            <CardTitle className="text-[13px] font-medium">Avg Response Time</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
               {realTimeMetrics?.avgResponseTime.toFixed(2) || 0}ms
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[11px] text-muted-foreground">
               Average processing time
             </p>
           </CardContent>
@@ -166,14 +166,14 @@ export function PerformanceDashboard() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Error Rate</CardTitle>
+            <CardTitle className="text-[13px] font-medium">Error Rate</CardTitle>
             <AlertCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
               {((realTimeMetrics?.errorRate || 0) * 100).toFixed(2)}%
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[11px] text-muted-foreground">
               Failed requests ratio
             </p>
           </CardContent>
@@ -181,14 +181,14 @@ export function PerformanceDashboard() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Uptime</CardTitle>
+            <CardTitle className="text-[13px] font-medium">Uptime</CardTitle>
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
               {formatUptime(realTimeMetrics?.uptime || 0)}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[11px] text-muted-foreground">
               Service availability
             </p>
           </CardContent>
@@ -262,8 +262,8 @@ export function PerformanceDashboard() {
                 <>
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">Heap Used</span>
-                      <span className="text-sm text-muted-foreground">
+                      <span className="text-[13px] font-medium">Heap Used</span>
+                      <span className="text-[13px] text-muted-foreground">
                         {formatBytes(realTimeMetrics.currentMemoryUsage.heapUsed)} / {formatBytes(realTimeMetrics.currentMemoryUsage.heapTotal)}
                       </span>
                     </div>
@@ -274,8 +274,8 @@ export function PerformanceDashboard() {
 
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">RSS</span>
-                      <span className="text-sm text-muted-foreground">
+                      <span className="text-[13px] font-medium">RSS</span>
+                      <span className="text-[13px] text-muted-foreground">
                         {formatBytes(realTimeMetrics.currentMemoryUsage.rss)}
                       </span>
                     </div>
@@ -287,8 +287,8 @@ export function PerformanceDashboard() {
 
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">External</span>
-                      <span className="text-sm text-muted-foreground">
+                      <span className="text-[13px] font-medium">External</span>
+                      <span className="text-[13px] text-muted-foreground">
                         {formatBytes(realTimeMetrics.currentMemoryUsage.external)}
                       </span>
                     </div>
@@ -331,9 +331,9 @@ export function PerformanceDashboard() {
                               {bottleneck.severity}
                             </Badge>
                           </div>
-                          <p className="text-sm">{bottleneck.recommendation}</p>
+                          <p className="text-[13px]">{bottleneck.recommendation}</p>
                           {bottleneck.endpoints && (
-                            <ul className="text-sm text-muted-foreground ml-4">
+                            <ul className="text-[13px] text-muted-foreground ml-4">
                               {bottleneck.endpoints.slice(0, 3).map((ep, i) => (
                                 <li key={i}>• {ep.endpoint} ({ep.avgResponseTime.toFixed(0)}ms)</li>
                               ))}
@@ -368,7 +368,7 @@ export function PerformanceDashboard() {
               <div className="text-center py-8 text-muted-foreground">
                 <Cpu className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p>Historical trend data will appear here</p>
-                <p className="text-sm">Collecting performance metrics...</p>
+                <p className="text-[13px]">Collecting performance metrics...</p>
               </div>
             </CardContent>
           </Card>

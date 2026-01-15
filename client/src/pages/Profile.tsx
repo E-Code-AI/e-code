@@ -151,7 +151,7 @@ export default function Profile() {
                 <p className="mb-4" data-testid="text-bio">{profile.bio}</p>
                 
                 {/* Contact and social */}
-                <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mb-4">
+                <div className="flex flex-wrap gap-4 text-[13px] text-muted-foreground mb-4">
                   {profile.location && (
                     <span className="flex items-center gap-1">
                       <MapPin className="h-4 w-4" />
@@ -213,19 +213,19 @@ export default function Profile() {
             <div className="flex gap-6 md:ml-auto" data-testid="profile-stats">
               <div className="text-center">
                 <div className="text-2xl font-bold" data-testid="stat-repls">{profile.stats?.repls || 0}</div>
-                <div className="text-sm text-muted-foreground">Repls</div>
+                <div className="text-[13px] text-muted-foreground">Repls</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold" data-testid="stat-followers">{profile.stats?.followers || 0}</div>
-                <div className="text-sm text-muted-foreground">Followers</div>
+                <div className="text-[13px] text-muted-foreground">Followers</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold" data-testid="stat-following">{profile.stats?.following || 0}</div>
-                <div className="text-sm text-muted-foreground">Following</div>
+                <div className="text-[13px] text-muted-foreground">Following</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold" data-testid="stat-stars">{profile.stats?.stars || 0}</div>
-                <div className="text-sm text-muted-foreground">Stars</div>
+                <div className="text-[13px] text-muted-foreground">Stars</div>
               </div>
             </div>
           </div>
@@ -274,7 +274,7 @@ export default function Profile() {
                         />
                       ))}
                     </div>
-                    <p className="text-xs text-muted-foreground mt-2">
+                    <p className="text-[11px] text-muted-foreground mt-2">
                       Last 52 weeks of activity
                     </p>
                   </CardContent>
@@ -295,10 +295,10 @@ export default function Profile() {
                         >
                           <div>
                             <h4 className="font-semibold">{repl.name}</h4>
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-[13px] text-muted-foreground">
                               {repl.description}
                             </p>
-                            <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                            <div className="flex items-center gap-4 mt-2 text-[11px] text-muted-foreground">
                               <span className="flex items-center gap-1">
                                 <Star className="h-3 w-3" />
                                 {repl.stars}
@@ -346,14 +346,14 @@ export default function Profile() {
                   <CardContent>
                     <div className="space-y-3">
                       {profile.recentActivity.map((activity: { type: string; repl: string; time: string }, index: number) => (
-                        <div key={index} className="flex items-start gap-2 text-sm">
+                        <div key={index} className="flex items-start gap-2 text-[13px]">
                           <Activity className="h-4 w-4 mt-0.5 text-muted-foreground" />
                           <div>
                             <span className="text-muted-foreground">
                               {activity.type} 
                             </span>{' '}
                             <span className="font-medium">{activity.repl}</span>
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-[11px] text-muted-foreground">
                               {activity.time}
                             </p>
                           </div>
@@ -378,7 +378,7 @@ export default function Profile() {
                             className="flex flex-col items-center text-center"
                           >
                             <Icon className={`h-8 w-8 mb-1 ${badge.color}`} />
-                            <span className="text-xs">{badge.name}</span>
+                            <span className="text-[11px]">{badge.name}</span>
                           </div>
                         );
                       })}
@@ -413,7 +413,7 @@ export default function Profile() {
                       <Badge variant="secondary" className={getLanguageColor(repl.language)}>
                         {repl.language}
                       </Badge>
-                      <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-3 text-[13px] text-muted-foreground">
                         <span className="flex items-center gap-1">
                           <Star className="h-3 w-3" />
                           {repl.stars}
@@ -452,7 +452,7 @@ export default function Profile() {
                     <CardContent className="p-6 text-center">
                       <Icon className={`h-12 w-12 mx-auto mb-3 ${badge.color}`} />
                       <h3 className="font-semibold mb-1">{badge.name}</h3>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-[13px] text-muted-foreground">
                         Earned for exceptional contributions
                       </p>
                     </CardContent>

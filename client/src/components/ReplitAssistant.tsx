@@ -218,12 +218,12 @@ export function ReplitAssistant({
             <Sparkles className="h-4 w-4 text-white" />
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-[var(--ecode-text-primary)]">AI Assistant</h3>
-            <p className="text-xs text-[var(--ecode-text-secondary)]">Powered by Claude</p>
+            <h3 className="text-[13px] font-semibold text-[var(--ecode-text-primary)]">AI Assistant</h3>
+            <p className="text-[11px] text-[var(--ecode-text-secondary)]">Powered by Claude</p>
           </div>
         </div>
         {currentFile && (
-          <Badge variant="secondary" className="text-xs">
+          <Badge variant="secondary" className="text-[11px]">
             {currentFile}
           </Badge>
         )}
@@ -232,7 +232,7 @@ export function ReplitAssistant({
       {/* Quick Actions */}
       {selectedCode && (
         <div className="px-4 py-2 border-b border-[var(--ecode-border)]">
-          <p className="text-xs text-[var(--ecode-text-secondary)] mb-2">Quick actions for selected code:</p>
+          <p className="text-[11px] text-[var(--ecode-text-secondary)] mb-2">Quick actions for selected code:</p>
           <div className="flex flex-wrap gap-2">
             {QUICK_ACTIONS.map(action => (
               <Button
@@ -240,7 +240,7 @@ export function ReplitAssistant({
                 variant="outline"
                 size="sm"
                 onClick={() => handleQuickAction(action.id)}
-                className="text-xs"
+                className="text-[11px]"
                 disabled={isLoading}
               >
                 <action.icon className={cn("h-3 w-3 mr-1", action.color)} />
@@ -274,7 +274,7 @@ export function ReplitAssistant({
                   : "bg-gradient-to-br from-orange-500 to-pink-600"
               )}>
                 {message.role === 'user' ? (
-                  <span className="text-xs font-bold">U</span>
+                  <span className="text-[11px] font-bold">U</span>
                 ) : message.role === 'system' ? (
                   <MessageSquare className="h-4 w-4 text-white" />
                 ) : (
@@ -293,7 +293,7 @@ export function ReplitAssistant({
                 {message.isStreaming ? (
                   <div className="flex items-center gap-2">
                     <Loader2 className="h-3 w-3 animate-spin" />
-                    <span className="text-sm">Thinking...</span>
+                    <span className="text-[13px]">Thinking...</span>
                   </div>
                 ) : (
                   <div className="prose prose-sm dark:prose-invert max-w-none">
@@ -312,7 +312,7 @@ export function ReplitAssistant({
                             return (
                               <div className="relative group my-2">
                                 <div className="flex items-center justify-between bg-[var(--ecode-bg-secondary)] rounded-t-md px-3 py-1 border border-[var(--ecode-border)] border-b-0">
-                                  <span className="text-xs text-[var(--ecode-text-secondary)]">
+                                  <span className="text-[11px] text-[var(--ecode-text-secondary)]">
                                     {language}
                                   </span>
                                   <div className="flex items-center gap-2">
@@ -358,7 +358,7 @@ export function ReplitAssistant({
                           
                           return (
                             <code className={cn(
-                              "px-1 py-0.5 rounded text-xs",
+                              "px-1 py-0.5 rounded text-[11px]",
                               message.role === 'user'
                                 ? "bg-white/20 text-white"
                                 : "bg-[var(--ecode-bg-secondary)] text-[var(--ecode-accent)]"
@@ -375,11 +375,11 @@ export function ReplitAssistant({
                 )}
                 
                 <div className="flex items-center justify-between mt-2">
-                  <span className="text-xs opacity-60">
+                  <span className="text-[11px] opacity-60">
                     {new Date(message.timestamp).toLocaleTimeString()}
                   </span>
                   {message.error && (
-                    <span className="text-xs text-red-500 flex items-center gap-1">
+                    <span className="text-[11px] text-red-500 flex items-center gap-1">
                       <AlertCircle className="h-3 w-3" />
                       Error
                     </span>
@@ -417,7 +417,7 @@ export function ReplitAssistant({
             )}
           </Button>
         </div>
-        <p className="text-xs text-[var(--ecode-text-secondary)] mt-2">
+        <p className="text-[11px] text-[var(--ecode-text-secondary)] mt-2">
           Press Enter to send, Shift+Enter for new line
         </p>
       </div>

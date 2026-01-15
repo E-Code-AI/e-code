@@ -254,7 +254,7 @@ export function ReplitPackages({ projectId }: ReplitPackagesProps) {
                 {searching && (
                   <div className="flex items-center justify-center py-4">
                     <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary" />
-                    <span className="ml-2 text-sm">Searching packages...</span>
+                    <span className="ml-2 text-[13px]">Searching packages...</span>
                   </div>
                 )}
                 
@@ -266,19 +266,19 @@ export function ReplitPackages({ projectId }: ReplitPackagesProps) {
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">
                               <span className="font-medium">{pkg.name}</span>
-                              <Badge variant="outline" className="text-xs">
+                              <Badge variant="outline" className="text-[11px]">
                                 v{pkg.version}
                               </Badge>
                               {pkg.stars && (
-                                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
                                   <Star className="h-3 w-3" />
                                   {pkg.stars.toLocaleString()}
                                 </div>
                               )}
                             </div>
-                            <p className="text-sm text-muted-foreground">{pkg.description}</p>
+                            <p className="text-[13px] text-muted-foreground">{pkg.description}</p>
                             {pkg.author && (
-                              <p className="text-xs text-muted-foreground mt-1">
+                              <p className="text-[11px] text-muted-foreground mt-1">
                                 by {pkg.author}
                               </p>
                             )}
@@ -330,7 +330,7 @@ export function ReplitPackages({ projectId }: ReplitPackagesProps) {
             <Card>
               <CardContent className="text-center py-12">
                 <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No packages installed</h3>
+                <h3 className="text-[15px] font-semibold mb-2">No packages installed</h3>
                 <p className="text-muted-foreground mb-4">
                   Install your first package to get started
                 </p>
@@ -354,16 +354,16 @@ export function ReplitPackages({ projectId }: ReplitPackagesProps) {
                         <div className="flex items-center gap-2 mb-1">
                           <span className="font-medium">{pkg.name}</span>
                           <Badge variant="outline">v{pkg.version}</Badge>
-                          <Badge className={`${getCategoryColor(pkg.category)} border text-xs`}>
+                          <Badge className={`${getCategoryColor(pkg.category)} border text-[11px]`}>
                             {pkg.category === 'devDependency' ? 'dev' : pkg.category}
                           </Badge>
                         </div>
                         
-                        <p className="text-sm text-muted-foreground mb-1">
+                        <p className="text-[13px] text-muted-foreground mb-1">
                           {pkg.description}
                         </p>
                         
-                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-4 text-[11px] text-muted-foreground">
                           {pkg.size && (
                             <span>Size: {pkg.size}</span>
                           )}
@@ -420,7 +420,7 @@ export function ReplitPackages({ projectId }: ReplitPackagesProps) {
                             Update available
                           </Badge>
                         </div>
-                        <p className="text-sm text-muted-foreground">{pkg.description}</p>
+                        <p className="text-[13px] text-muted-foreground">{pkg.description}</p>
                       </div>
                     </div>
                     
@@ -461,7 +461,7 @@ export function ReplitPackages({ projectId }: ReplitPackagesProps) {
                 <div className="text-center p-4 border rounded-lg">
                   <Terminal className="h-8 w-8 mx-auto mb-2 text-blue-600" />
                   <h3 className="font-semibold">Universal</h3>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-[13px] text-muted-foreground">
                     Install packages for any language
                   </p>
                 </div>
@@ -469,7 +469,7 @@ export function ReplitPackages({ projectId }: ReplitPackagesProps) {
                 <div className="text-center p-4 border rounded-lg">
                   <Clock className="h-8 w-8 mx-auto mb-2 text-green-600" />
                   <h3 className="font-semibold">Instant</h3>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-[13px] text-muted-foreground">
                     No download or compile time
                   </p>
                 </div>
@@ -477,7 +477,7 @@ export function ReplitPackages({ projectId }: ReplitPackagesProps) {
                 <div className="text-center p-4 border rounded-lg">
                   <RefreshCw className="h-8 w-8 mx-auto mb-2 text-purple-600" />
                   <h3 className="font-semibold">Reproducible</h3>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-[13px] text-muted-foreground">
                     Same versions everywhere
                   </p>
                 </div>
@@ -497,7 +497,7 @@ export function ReplitPackages({ projectId }: ReplitPackagesProps) {
               
               <div>
                 <h4 className="font-medium mb-2">Key Features</h4>
-                <ul className="text-sm text-muted-foreground space-y-1">
+                <ul className="text-[13px] text-muted-foreground space-y-1">
                   <li>• Atomic package operations - no broken environments</li>
                   <li>• Rollback to previous environments instantly</li>
                   <li>• Zero package conflicts with isolated environments</li>

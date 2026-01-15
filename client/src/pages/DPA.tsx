@@ -22,7 +22,7 @@ export default function DPA() {
 
             <Card className="p-8 mb-8">
               <h2 className="text-2xl font-semibold mb-6">1. Definitions</h2>
-              <div className="space-y-4 text-sm">
+              <div className="space-y-4 text-[13px]">
                 <p><strong>"Data Controller"</strong> means the entity which determines the purposes and means of the Processing of Personal Data.</p>
                 <p><strong>"Data Processor"</strong> means the entity which Processes Personal Data on behalf of the Data Controller.</p>
                 <p><strong>"GDPR"</strong> means the General Data Protection Regulation (EU) 2016/679.</p>
@@ -34,7 +34,7 @@ export default function DPA() {
 
             <Card className="p-8 mb-8">
               <h2 className="text-2xl font-semibold mb-6">2. Processing of Personal Data</h2>
-              <div className="space-y-4 text-sm">
+              <div className="space-y-4 text-[13px]">
                 <h3 className="font-semibold text-base">2.1 Roles of the Parties</h3>
                 <p>The parties acknowledge and agree that with regard to the Processing of Personal Data, Customer is the Data Controller, E-Code is the Data Processor.</p>
                 
@@ -48,14 +48,14 @@ export default function DPA() {
 
             <Card className="p-8 mb-8">
               <h2 className="text-2xl font-semibold mb-6">3. E-Code Personnel</h2>
-              <div className="space-y-4 text-sm">
+              <div className="space-y-4 text-[13px]">
                 <p>E-Code shall ensure that its personnel engaged in the Processing of Personal Data are informed of the confidential nature of the Personal Data, have received appropriate training, and have executed written confidentiality agreements.</p>
               </div>
             </Card>
 
             <Card className="p-8 mb-8">
               <h2 className="text-2xl font-semibold mb-6">4. Security</h2>
-              <div className="space-y-4 text-sm">
+              <div className="space-y-4 text-[13px]">
                 <p>E-Code shall implement and maintain appropriate technical and organizational measures to protect Personal Data against accidental or unlawful destruction, loss, alteration, unauthorized disclosure or access.</p>
                 
                 <h3 className="font-semibold text-base mt-6">Security measures include:</h3>
@@ -71,7 +71,7 @@ export default function DPA() {
 
             <Card className="p-8 mb-8">
               <h2 className="text-2xl font-semibold mb-6">5. Sub-processors</h2>
-              <div className="space-y-4 text-sm">
+              <div className="space-y-4 text-[13px]">
                 <p>Customer acknowledges and agrees that E-Code may engage third-party Sub-processors in connection with the provision of the Services.</p>
                 <p>E-Code maintains a list of current Sub-processors at <a href="/subprocessors" className="text-primary hover:underline">e-code.ai/subprocessors</a>.</p>
                 <p>E-Code shall notify Customer of any intended changes concerning the addition or replacement of Sub-processors, giving Customer the opportunity to object to such changes.</p>
@@ -80,7 +80,7 @@ export default function DPA() {
 
             <Card className="p-8 mb-8">
               <h2 className="text-2xl font-semibold mb-6">6. Data Subject Rights</h2>
-              <div className="space-y-4 text-sm">
+              <div className="space-y-4 text-[13px]">
                 <p>E-Code shall assist Customer in fulfilling its obligations to respond to data subjects' requests to exercise their rights under applicable data protection laws, including:</p>
                 <ul className="list-disc pl-6 space-y-2">
                   <li>Access to their Personal Data</li>
@@ -95,35 +95,35 @@ export default function DPA() {
 
             <Card className="p-8 mb-8">
               <h2 className="text-2xl font-semibold mb-6">7. Personal Data Breach</h2>
-              <div className="space-y-4 text-sm">
+              <div className="space-y-4 text-[13px]">
                 <p>E-Code shall notify Customer without undue delay after becoming aware of a Personal Data Breach affecting Customer Personal Data, providing Customer with sufficient information to allow it to meet any obligations to report or inform Data Subjects of the Personal Data Breach.</p>
               </div>
             </Card>
 
             <Card className="p-8 mb-8">
               <h2 className="text-2xl font-semibold mb-6">8. Data Protection Impact Assessment and Prior Consultation</h2>
-              <div className="space-y-4 text-sm">
+              <div className="space-y-4 text-[13px]">
                 <p>E-Code shall provide reasonable assistance to Customer with any data protection impact assessments and prior consultations with supervising authorities, which Customer reasonably considers to be required by applicable data protection laws.</p>
               </div>
             </Card>
 
             <Card className="p-8 mb-8">
               <h2 className="text-2xl font-semibold mb-6">9. Deletion or Return of Personal Data</h2>
-              <div className="space-y-4 text-sm">
+              <div className="space-y-4 text-[13px]">
                 <p>Upon termination of the Services, E-Code shall, at Customer's option, delete or return all Personal Data to Customer and delete existing copies unless applicable law requires storage of the Personal Data.</p>
               </div>
             </Card>
 
             <Card className="p-8 mb-8">
               <h2 className="text-2xl font-semibold mb-6">10. Audit Rights</h2>
-              <div className="space-y-4 text-sm">
+              <div className="space-y-4 text-[13px]">
                 <p>E-Code shall make available to Customer all information necessary to demonstrate compliance with this DPA and allow for and contribute to audits, including inspections, conducted by Customer or an auditor mandated by Customer.</p>
               </div>
             </Card>
 
             <Card className="p-8 mb-8">
               <h2 className="text-2xl font-semibold mb-6">11. International Transfers</h2>
-              <div className="space-y-4 text-sm">
+              <div className="space-y-4 text-[13px]">
                 <p>E-Code shall not transfer Personal Data to countries outside the European Economic Area without Customer's prior written consent and appropriate safeguards in place, such as:</p>
                 <ul className="list-disc pl-6 space-y-2">
                   <li>Standard Contractual Clauses</li>
@@ -136,7 +136,7 @@ export default function DPA() {
 
             <Card className="p-8 mb-8">
               <h2 className="text-2xl font-semibold mb-6">Annex 1: Details of Processing</h2>
-              <div className="space-y-6 text-sm">
+              <div className="space-y-6 text-[13px]">
                 <div>
                   <h3 className="font-semibold mb-2">Nature and Purpose of Processing</h3>
                   <p>E-Code will Process Personal Data as necessary to provide the Services pursuant to the Principal Agreement.</p>
@@ -182,7 +182,7 @@ export default function DPA() {
             </div>
 
             <div className="mt-8 p-4 bg-muted rounded-lg">
-              <p className="text-sm text-muted-foreground">
+              <p className="text-[13px] text-muted-foreground">
                 <strong>Last Updated:</strong> January 1, 2025<br />
                 <strong>Effective Date:</strong> Upon execution of the Principal Agreement<br />
                 For questions about this DPA, please contact our Data Protection Officer at <a href="mailto:privacy@e-code.ai" className="text-primary hover:underline">privacy@e-code.ai</a>

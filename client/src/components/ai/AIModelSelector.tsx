@@ -141,7 +141,7 @@ export function AIModelSelector({
     return (
       <Card className="border-yellow-500 bg-surface-solid">
         <CardContent className="p-3 sm:p-4">
-          <p className="text-xs sm:text-sm text-yellow-600 dark:text-yellow-500">
+          <p className="text-[11px] sm:text-[13px] text-yellow-600 dark:text-yellow-500">
             No AI providers configured. Please set OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY, XAI_API_KEY, or MOONSHOT_API_KEY.
           </p>
         </CardContent>
@@ -156,9 +156,9 @@ export function AIModelSelector({
           <div className="space-y-3 sm:space-y-4">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-orange-500 shrink-0" />
-              <h3 className="font-semibold text-sm sm:text-base">AI Model Selection</h3>
+              <h3 className="font-semibold text-[13px] sm:text-base">AI Model Selection</h3>
             </div>
-            <p className="text-[10px] sm:text-xs text-muted-foreground">
+            <p className="text-[10px] sm:text-[11px] text-muted-foreground">
               Choose your preferred AI model for code generation ({availableModels.length} available)
             </p>
             <Select value={currentModel || undefined} onValueChange={handleModelChange}>
@@ -185,7 +185,7 @@ export function AIModelSelector({
                       <div className="flex items-start gap-3 w-full">
                         <div className={`w-2.5 h-2.5 rounded-full shrink-0 mt-1 ${providerColor}`} />
                         <div className="flex-1 min-w-0 pr-2">
-                          <div className="font-medium text-sm flex items-center gap-2">
+                          <div className="font-medium text-[13px] flex items-center gap-2">
                             {model.name}
                             {model.supportsStreaming && isAvailable && (
                               <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Stream</Badge>
@@ -201,7 +201,7 @@ export function AIModelSelector({
               </SelectContent>
             </Select>
             {currentModel && (
-              <div className="flex items-center gap-2 text-xs sm:text-sm text-green-600 dark:text-green-500">
+              <div className="flex items-center gap-2 text-[11px] sm:text-[13px] text-green-600 dark:text-green-500">
                 <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
                 <span>Model preference saved</span>
               </div>
@@ -234,7 +234,7 @@ export function AIModelSelector({
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2" data-testid="ai-model-selector-hero-header">
           <div className="flex items-center gap-2 text-white/90">
             <Sparkles className="h-4 w-4 sm:h-5 sm:w-5" />
-            <span className="text-sm sm:text-base font-semibold">Choose Your AI Model</span>
+            <span className="text-[13px] sm:text-base font-semibold">Choose Your AI Model</span>
           </div>
           <div className="flex items-center gap-2">
             {showRAGControls && ragStats?.isAvailable && (
@@ -259,12 +259,12 @@ export function AIModelSelector({
               <div className="flex items-center gap-2 sm:gap-3 w-full">
                 <div className={`w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full ${providerColor} shrink-0`} />
                 <div className="flex-1 text-left min-w-0">
-                  <div className="font-semibold text-sm sm:text-base truncate">{currentModelData.name}</div>
+                  <div className="font-semibold text-[13px] sm:text-base truncate">{currentModelData.name}</div>
                   {/* Hide description on mobile, show on sm+ */}
-                  <div className="hidden sm:block text-xs text-muted-foreground truncate">{currentModelData.description}</div>
+                  <div className="hidden sm:block text-[11px] text-muted-foreground truncate">{currentModelData.description}</div>
                 </div>
                 {currentModelData.supportsStreaming && (
-                  <Badge variant="secondary" className="text-xs shrink-0">
+                  <Badge variant="secondary" className="text-[11px] shrink-0">
                     <Zap className="h-3 w-3 sm:mr-1" />
                     <span className="hidden sm:inline">Streaming</span>
                   </Badge>
@@ -299,7 +299,7 @@ export function AIModelSelector({
                       <ModelIcon className="h-4 w-4 text-white" />
                     </div>
                     <div className="flex-1 min-w-0 pr-2">
-                      <div className="font-semibold text-sm flex items-center gap-2 flex-wrap">
+                      <div className="font-semibold text-[13px] flex items-center gap-2 flex-wrap">
                         <span>{model.name}</span>
                         {model.supportsStreaming && isAvailable && (
                           <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
@@ -325,7 +325,7 @@ export function AIModelSelector({
         </Select>
 
         {currentModelData && (
-          <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground bg-surface-solid rounded-md px-2 sm:px-3 py-1.5 sm:py-2">
+          <div className="flex items-center gap-2 text-[11px] sm:text-[13px] text-muted-foreground bg-surface-solid rounded-md px-2 sm:px-3 py-1.5 sm:py-2">
             <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-green-400 shrink-0" />
             <span className="truncate">Using {currentModelData.name} for code generation</span>
           </div>
@@ -338,7 +338,7 @@ export function AIModelSelector({
   return (
     <div className={`space-y-1 ${className}`}>
       <Select value={currentModel || undefined} onValueChange={handleModelChange}>
-        <SelectTrigger className="w-full h-8 text-xs bg-surface-solid border-border" data-testid="select-ai-model-inline">
+        <SelectTrigger className="w-full h-8 text-[11px] bg-surface-solid border-border" data-testid="select-ai-model-inline">
           <SelectValue placeholder="Select model..." />
         </SelectTrigger>
         <SelectContent className="w-56 max-h-[300px]">
@@ -355,7 +355,7 @@ export function AIModelSelector({
               >
                 <div className="flex items-center gap-2">
                   <div className={`w-2 h-2 rounded-full shrink-0 ${providerColor}`} />
-                  <span className="truncate text-xs font-medium">{model.name}</span>
+                  <span className="truncate text-[11px] font-medium">{model.name}</span>
                   {!isAvailable && <span className="text-[10px] text-red-500 shrink-0">N/A</span>}
                 </div>
               </SelectItem>

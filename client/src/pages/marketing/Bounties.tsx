@@ -95,7 +95,7 @@ export default function MarketingBounties() {
               <h1 className="text-4xl font-bold leading-tight tracking-tight md:text-6xl">
                 Ship features faster with outcome-based bounties
               </h1>
-              <p className="max-w-2xl text-lg text-white/80 md:text-xl">
+              <p className="max-w-2xl text-[15px] text-white/80 md:text-xl">
                 Publish challenges, collaborate with expert builders, and pay on delivery. E-Code handles recruiting, secure review environments, and automated payouts.
               </p>
               <div className="flex flex-wrap gap-4">
@@ -110,7 +110,7 @@ export default function MarketingBounties() {
                   </Button>
                 </Link>
               </div>
-              <div className="flex flex-wrap items-center gap-6 text-sm text-white/70">
+              <div className="flex flex-wrap items-center gap-6 text-[13px] text-white/70">
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4" />
                   Global payouts managed
@@ -129,12 +129,12 @@ export default function MarketingBounties() {
               <CardContent className="space-y-6 p-8 text-white">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm uppercase tracking-wide text-white/70">Active bounties</p>
+                    <p className="text-[13px] uppercase tracking-wide text-white/70">Active bounties</p>
                     <p className="text-4xl font-bold">324</p>
                   </div>
                   <Trophy className="h-12 w-12 text-yellow-300" />
                 </div>
-                <div className="grid grid-cols-2 gap-6 text-sm">
+                <div className="grid grid-cols-2 gap-6 text-[13px]">
                   <div>
                     <p className="text-white/70">Avg. payout</p>
                     <p className="text-2xl font-semibold">$3.4k</p>
@@ -152,7 +152,7 @@ export default function MarketingBounties() {
                     <p className="text-2xl font-semibold">5.2k</p>
                   </div>
                 </div>
-                <div className="rounded-lg bg-black/20 p-4 text-sm leading-relaxed">
+                <div className="rounded-lg bg-black/20 p-4 text-[13px] leading-relaxed">
                   "We cut our feature backlog in half. The managed review workflow keeps velocity high without sacrificing quality."
                   <div className="mt-3 font-semibold">— Anna Larson, CTO @ Circuit Labs</div>
                 </div>
@@ -164,7 +164,7 @@ export default function MarketingBounties() {
         <section className="mx-auto max-w-6xl space-y-12 px-4 py-20">
           <div className="space-y-4 text-center">
             <h2 className="text-3xl font-bold md:text-4xl">Designed for product and platform teams</h2>
-            <p className="text-lg text-muted-foreground">
+            <p className="text-[15px] text-muted-foreground">
               Empower internal teams with curated external talent while maintaining governance, security, and predictable delivery.
             </p>
           </div>
@@ -175,7 +175,7 @@ export default function MarketingBounties() {
                   <Icon className="h-6 w-6" />
                 </div>
                 <h3 className="text-xl font-semibold">{title}</h3>
-                <p className="text-sm text-muted-foreground">{description}</p>
+                <p className="text-[13px] text-muted-foreground">{description}</p>
               </div>
             ))}
           </div>
@@ -188,10 +188,10 @@ export default function MarketingBounties() {
                 Trusted workflow
               </Badge>
               <h2 className="text-3xl font-bold md:text-4xl">A managed pipeline from idea to payout</h2>
-              <p className="text-lg text-muted-foreground">
+              <p className="text-[15px] text-muted-foreground">
                 Every bounty includes secure workspaces, automated review flows, and programmable payouts. Keep stakeholders aligned with audit trails and status snapshots.
               </p>
-              <ul className="space-y-3 text-sm leading-relaxed text-muted-foreground">
+              <ul className="space-y-3 text-[13px] leading-relaxed text-muted-foreground">
                 <li className="flex items-start gap-3">
                   <Sparkles className="mt-1 h-5 w-5 text-purple-500" />
                   Ready-to-use templates for AI features, integrations, and growth experiments.
@@ -210,9 +210,9 @@ export default function MarketingBounties() {
               {workflow.map(({ step, title, copy }) => (
                 <div key={step} className="relative overflow-hidden rounded-2xl border bg-background p-6 shadow-sm">
                   <div className="absolute -right-10 top-1/2 h-32 w-32 -translate-y-1/2 rounded-full bg-purple-500/10" />
-                  <div className="text-sm font-semibold text-purple-500">{step}</div>
+                  <div className="text-[13px] font-semibold text-purple-500">{step}</div>
                   <h3 className="mt-2 text-xl font-semibold">{title}</h3>
-                  <p className="mt-3 text-sm text-muted-foreground">{copy}</p>
+                  <p className="mt-3 text-[13px] text-muted-foreground">{copy}</p>
                 </div>
               ))}
             </div>
@@ -226,7 +226,7 @@ export default function MarketingBounties() {
                 High-signal contributors
               </Badge>
               <h2 className="text-3xl font-bold md:text-4xl">Curate bounties across every product surface</h2>
-              <p className="text-lg text-muted-foreground">
+              <p className="text-[15px] text-muted-foreground">
                 Filter by stack, experience level, location, or community reputation. Our matching engine surfaces the best builders for your scope.
               </p>
               <div className="flex flex-wrap gap-2">
@@ -242,8 +242,8 @@ export default function MarketingBounties() {
                 <div key={name} className="rounded-2xl border bg-card p-6 shadow-sm">
                   <Star className="h-6 w-6 text-yellow-500" />
                   <p className="mt-4 text-base leading-relaxed text-muted-foreground">“{quote}”</p>
-                  <div className="mt-4 text-sm font-semibold text-foreground">{name}</div>
-                  <div className="text-sm text-muted-foreground">{role}</div>
+                  <div className="mt-4 text-[13px] font-semibold text-foreground">{name}</div>
+                  <div className="text-[13px] text-muted-foreground">{role}</div>
                 </div>
               ))}
             </div>
@@ -253,7 +253,7 @@ export default function MarketingBounties() {
         <section className="bg-foreground py-20 text-background">
           <div className="mx-auto flex max-w-5xl flex-col items-center gap-6 px-4 text-center">
             <h2 className="text-3xl font-bold md:text-4xl">Ready to supercharge your roadmap?</h2>
-            <p className="text-lg text-background/80 md:text-xl">
+            <p className="text-[15px] text-background/80 md:text-xl">
               Spin up a bounty, invite your team, and start reviewing submissions in minutes.
             </p>
             <div className="flex flex-wrap justify-center gap-4">

@@ -137,7 +137,7 @@ export default function FigmaImport() {
                     <Loader2 className="h-5 w-5 animate-spin text-blue-500" />
                     <div>
                       <p className="font-medium">Processing your design...</p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-[13px] text-muted-foreground">
                         Extracting components and design tokens
                       </p>
                     </div>
@@ -149,7 +149,7 @@ export default function FigmaImport() {
                     <CheckCircle className="h-5 w-5 text-green-500" />
                     <div>
                       <p className="font-medium">Import completed!</p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-[13px] text-muted-foreground">
                         Created {importDetails.metadata?.componentsCreated || 0} components
                       </p>
                     </div>
@@ -161,7 +161,7 @@ export default function FigmaImport() {
                     <div className="h-5 w-5 rounded-full bg-red-500" />
                     <div>
                       <p className="font-medium">Import failed</p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-[13px] text-muted-foreground">
                         Please check your URL and try again
                       </p>
                     </div>
@@ -177,7 +177,7 @@ export default function FigmaImport() {
             <CardTitle>What gets imported?</CardTitle>
           </CardHeader>
           <CardContent>
-            <ul className="space-y-2 text-sm">
+            <ul className="space-y-2 text-[13px]">
               <li className="flex items-start gap-2">
                 <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
                 <span>React components for each Figma component</span>

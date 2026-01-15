@@ -257,8 +257,8 @@ export default function AIAgentStudio() {
         <div className="flex h-[480px] flex-col items-center justify-center gap-4 text-center text-muted-foreground">
           <Sparkles className="h-12 w-12 text-primary/70" />
           <div>
-            <p className="text-lg font-medium text-foreground">Describe the product you want to build.</p>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-[15px] font-medium text-foreground">Describe the product you want to build.</p>
+            <p className="text-[13px] text-muted-foreground">
               The agent generates a deployable workspace, installs dependencies, and renders a live preview here.
             </p>
           </div>
@@ -286,7 +286,7 @@ export default function AIAgentStudio() {
               <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
                 Agent Studio
               </h1>
-              <p className="mt-3 max-w-2xl text-lg text-muted-foreground">
+              <p className="mt-3 max-w-2xl text-[15px] text-muted-foreground">
                 Turn natural language prompts into real, deployable applications. Connect a project, inspect every file, and push
                 directly to production.
               </p>
@@ -294,15 +294,15 @@ export default function AIAgentStudio() {
           </div>
           <div className="grid gap-3 sm:grid-cols-3">
             <div className="rounded-xl border bg-background/70 p-4">
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">Average build time</p>
+              <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Average build time</p>
               <p className="text-2xl font-semibold">{result ? `${result.estimatedTime} min` : "~2 min"}</p>
             </div>
             <div className="rounded-xl border bg-background/70 p-4">
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">Files generated</p>
+              <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Files generated</p>
               <p className="text-2xl font-semibold">{result ? result.metrics.filesGenerated : "20+"}</p>
             </div>
             <div className="rounded-xl border bg-background/70 p-4">
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">Deploy readiness</p>
+              <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Deploy readiness</p>
               <p className="text-2xl font-semibold">
                 {result?.deployment.ready ? "Ready" : result ? "Review" : "Auto"}
               </p>
@@ -330,7 +330,7 @@ export default function AIAgentStudio() {
                 }}
               >
                 <div className="space-y-2">
-                  <label htmlFor="agent-prompt" className="text-sm font-medium text-foreground">
+                  <label htmlFor="agent-prompt" className="text-[13px] font-medium text-foreground">
                     Prompt
                   </label>
                   <Textarea
@@ -346,7 +346,7 @@ export default function AIAgentStudio() {
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">Preferred stack</label>
+                    <label className="text-[13px] font-medium text-foreground">Preferred stack</label>
                     <Select
                       value={language}
                       onValueChange={setLanguage}
@@ -366,7 +366,7 @@ export default function AIAgentStudio() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">Attach to project (optional)</label>
+                    <label className="text-[13px] font-medium text-foreground">Attach to project (optional)</label>
                     <Input
                       inputMode="numeric"
                       placeholder="Project ID"
@@ -375,7 +375,7 @@ export default function AIAgentStudio() {
                       disabled={generatePreviewMutation.isPending}
                       data-testid="input-project-id"
                     />
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-[11px] text-muted-foreground">
                       Provide a project ID to apply files instantly after review.
                     </p>
                   </div>
@@ -410,7 +410,7 @@ export default function AIAgentStudio() {
                       </>
                     )}
                   </Button>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-[13px] text-muted-foreground">
                     Preview before committing — no files are written until you apply them.
                   </p>
                 </div>
@@ -418,8 +418,8 @@ export default function AIAgentStudio() {
 
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Build progress</span>
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Build progress</span>
+                  <span className="text-[11px] text-muted-foreground">
                     {generatePreviewMutation.isPending ? "Working" : result ? "Completed" : "Idle"}
                   </span>
                 </div>
@@ -448,8 +448,8 @@ export default function AIAgentStudio() {
                           {isComplete ? <Check className="h-4 w-4" /> : <Layers className="h-4 w-4" />}
                         </div>
                         <div>
-                          <p className="text-sm font-semibold text-foreground">{step.title}</p>
-                          <p className="text-sm text-muted-foreground">{step.description}</p>
+                          <p className="text-[13px] font-semibold text-foreground">{step.title}</p>
+                          <p className="text-[13px] text-muted-foreground">{step.description}</p>
                         </div>
                       </div>
                     );
@@ -472,7 +472,7 @@ export default function AIAgentStudio() {
                   </CardDescription>
                 </div>
                 {result && (
-                  <Badge variant="secondary" className="text-xs capitalize">
+                  <Badge variant="secondary" className="text-[11px] capitalize">
                     {result.complexity}
                   </Badge>
                 )}
@@ -498,7 +498,7 @@ export default function AIAgentStudio() {
               <CardContent className="space-y-4">
                 {result ? (
                   <>
-                    <p className="text-sm text-muted-foreground">{result.description}</p>
+                    <p className="text-[13px] text-muted-foreground">{result.description}</p>
                     <div className="flex flex-wrap gap-2">
                       {result.features.map((feature) => (
                         <Badge key={feature} variant="outline" className="capitalize">
@@ -508,21 +508,21 @@ export default function AIAgentStudio() {
                     </div>
                     <div className="grid gap-3 sm:grid-cols-3">
                       <div className="rounded-lg border bg-muted/30 p-3">
-                        <p className="text-xs uppercase tracking-wide text-muted-foreground">Lines of code</p>
-                        <p className="text-lg font-semibold">{result.metrics.totalLinesOfCode.toLocaleString()}</p>
+                        <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Lines of code</p>
+                        <p className="text-[15px] font-semibold">{result.metrics.totalLinesOfCode.toLocaleString()}</p>
                       </div>
                       <div className="rounded-lg border bg-muted/30 p-3">
-                        <p className="text-xs uppercase tracking-wide text-muted-foreground">Tech stack</p>
-                        <p className="text-lg font-semibold">{result.technologies.join(", ")}</p>
+                        <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Tech stack</p>
+                        <p className="text-[15px] font-semibold">{result.technologies.join(", ")}</p>
                       </div>
                       <div className="rounded-lg border bg-muted/30 p-3">
-                        <p className="text-xs uppercase tracking-wide text-muted-foreground">Tokens estimated</p>
-                        <p className="text-lg font-semibold">{result.metrics.estimatedTokens.toLocaleString()}</p>
+                        <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Tokens estimated</p>
+                        <p className="text-[15px] font-semibold">{result.metrics.estimatedTokens.toLocaleString()}</p>
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <p className="text-xs uppercase tracking-wide text-muted-foreground">Deployment checklist</p>
-                      <ul className="space-y-2 text-sm text-muted-foreground">
+                      <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Deployment checklist</p>
+                      <ul className="space-y-2 text-[13px] text-muted-foreground">
                         {result.deployment.instructions.map((instruction) => (
                           <li key={instruction} className="flex items-center gap-2">
                             <CheckCircle2 className="h-4 w-4 text-green-500" />
@@ -533,7 +533,7 @@ export default function AIAgentStudio() {
                     </div>
                   </>
                 ) : (
-                  <div className="space-y-3 text-sm text-muted-foreground">
+                  <div className="space-y-3 text-[13px] text-muted-foreground">
                     <p>The agent will summarise the generated project footprint here.</p>
                     <ul className="space-y-2">
                       <li className="flex items-center gap-2">
@@ -575,7 +575,7 @@ export default function AIAgentStudio() {
                           key={file.id}
                           onClick={() => setSelectedFileId(file.id)}
                           className={cn(
-                            "w-full rounded-lg border px-3 py-2 text-left text-sm transition",
+                            "w-full rounded-lg border px-3 py-2 text-left text-[13px] transition",
                             isActive
                               ? "border-primary bg-primary/10 text-primary"
                               : "border-muted text-muted-foreground hover:border-primary/40 hover:text-foreground",
@@ -589,13 +589,13 @@ export default function AIAgentStudio() {
                             </Badge>
                           </div>
                           {file.description && (
-                            <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{file.description}</p>
+                            <p className="mt-1 line-clamp-2 text-[11px] text-muted-foreground">{file.description}</p>
                           )}
                         </button>
                       );
                     })
                   ) : (
-                    <div className="space-y-2 text-sm text-muted-foreground">
+                    <div className="space-y-2 text-[13px] text-muted-foreground">
                       <p>The agent will list generated files here.</p>
                       <p>Expect complete source, configuration, and documentation assets.</p>
                     </div>
@@ -607,7 +607,7 @@ export default function AIAgentStudio() {
                       <div className="flex items-start justify-between gap-3 border-b pb-3">
                         <div>
                           <p className="font-semibold text-foreground">{selectedFile.fileName}</p>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-[11px] text-muted-foreground">
                             {selectedFile.dependencies?.length
                               ? `Dependencies: ${selectedFile.dependencies.join(", ")}`
                               : "No external dependencies"}
@@ -633,7 +633,7 @@ export default function AIAgentStudio() {
                           <TabsTrigger value="preview" data-testid="tab-rendered">Rendered</TabsTrigger>
                         </TabsList>
                         <TabsContent value="code" className="mt-4 flex-1 overflow-auto">
-                          <pre className="max-h-[360px] whitespace-pre-wrap rounded-md bg-background p-4 text-xs text-foreground">
+                          <pre className="max-h-[360px] whitespace-pre-wrap rounded-md bg-background p-4 text-[11px] text-foreground">
                             <code>{selectedFile.content}</code>
                           </pre>
                         </TabsContent>
@@ -646,7 +646,7 @@ export default function AIAgentStudio() {
                               sandbox="allow-scripts allow-same-origin"
                             />
                           ) : (
-                            <div className="flex h-full items-center justify-center p-6 text-sm text-muted-foreground">
+                            <div className="flex h-full items-center justify-center p-6 text-[13px] text-muted-foreground">
                               Rendering is only available for HTML files.
                             </div>
                           )}
@@ -654,7 +654,7 @@ export default function AIAgentStudio() {
                       </Tabs>
                     </div>
                   ) : (
-                    <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                    <div className="flex h-full items-center justify-center text-[13px] text-muted-foreground">
                       Select a file to inspect its source.
                     </div>
                   )}

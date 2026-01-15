@@ -44,7 +44,7 @@ export function CollapsibleSection({
             <ChevronRight className="h-5 w-5 md:h-4 md:w-4 text-[var(--ecode-text-secondary)] flex-shrink-0" />
           )}
           {icon && <div className="flex-shrink-0">{icon}</div>}
-          <span className="text-sm font-medium text-[var(--ecode-text)] truncate">
+          <span className="text-[13px] font-medium text-[var(--ecode-text)] truncate">
             {title}
           </span>
         </div>
@@ -83,11 +83,11 @@ export function CodeCollapsible({ code, language, maxLines = 10 }: CodeCollapsib
     <div className="relative">
       <pre className="p-3 bg-[var(--ecode-surface)] border border-[var(--ecode-border)] rounded-lg overflow-x-auto">
         {language && (
-          <div className="text-xs font-mono text-[var(--ecode-text-secondary)] mb-2 uppercase">
+          <div className="text-[11px] font-mono text-[var(--ecode-text-secondary)] mb-2 uppercase">
             {language}
           </div>
         )}
-        <code className="text-xs font-mono text-[var(--ecode-text)]">
+        <code className="text-[11px] font-mono text-[var(--ecode-text)]">
           {displayCode}
         </code>
       </pre>
@@ -97,7 +97,7 @@ export function CodeCollapsible({ code, language, maxLines = 10 }: CodeCollapsib
           variant="ghost"
           size="sm"
           onClick={() => setIsExpanded(!isExpanded)}
-          className="mt-2 text-xs min-h-[44px] h-auto py-2 px-3 touch-manipulation"
+          className="mt-2 text-[11px] min-h-[44px] h-auto py-2 px-3 touch-manipulation"
           data-testid="code-collapsible-toggle"
         >
           {isExpanded ? (

@@ -45,7 +45,7 @@ export default function AIDocumentation() {
                       <Zap className="h-4 w-4 text-primary" />
                       AI-Powered Code Generation
                     </h3>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-[13px] text-muted-foreground">
                       Generate complete applications, components, and functions using natural language descriptions. Our AI understands context and best practices.
                     </p>
                   </div>
@@ -55,7 +55,7 @@ export default function AIDocumentation() {
                       <Lightbulb className="h-4 w-4 text-primary" />
                       Intelligent Code Completion
                     </h3>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-[13px] text-muted-foreground">
                       Get smart suggestions as you type. The AI learns from your codebase and coding style to provide relevant completions.
                     </p>
                   </div>
@@ -65,7 +65,7 @@ export default function AIDocumentation() {
                       <Code className="h-4 w-4 text-primary" />
                       Code Analysis & Refactoring
                     </h3>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-[13px] text-muted-foreground">
                       Automatically identify code smells, performance issues, and security vulnerabilities. Get AI-powered refactoring suggestions.
                     </p>
                   </div>
@@ -75,7 +75,7 @@ export default function AIDocumentation() {
                       <Rocket className="h-4 w-4 text-primary" />
                       Deployment Assistance
                     </h3>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-[13px] text-muted-foreground">
                       AI helps configure deployments, set up CI/CD pipelines, and optimize your infrastructure automatically.
                     </p>
                   </div>
@@ -97,28 +97,28 @@ export default function AIDocumentation() {
                     <div className="flex items-start justify-between mb-2">
                       <div>
                         <h3 className="font-semibold">GPT-5</h3>
-                        <p className="text-sm text-muted-foreground">OpenAI's latest model (gpt-5-2025-08-07)</p>
+                        <p className="text-[13px] text-muted-foreground">OpenAI's latest model (gpt-5-2025-08-07)</p>
                       </div>
-                      <span className="px-2 py-1 bg-primary/10 text-primary text-xs rounded">Primary</span>
+                      <span className="px-2 py-1 bg-primary/10 text-primary text-[11px] rounded">Primary</span>
                     </div>
-                    <p className="text-sm mt-2">Best for complex code generation, architecture design, and natural language understanding.</p>
+                    <p className="text-[13px] mt-2">Best for complex code generation, architecture design, and natural language understanding.</p>
                   </div>
 
                   <div className="border rounded-lg p-4">
                     <div className="flex items-start justify-between mb-2">
                       <div>
                         <h3 className="font-semibold">Claude Sonnet 4.5</h3>
-                        <p className="text-sm text-muted-foreground">Anthropic's advanced model (claude-sonnet-4-5-20250929)</p>
+                        <p className="text-[13px] text-muted-foreground">Anthropic's advanced model (claude-sonnet-4-5-20250929)</p>
                       </div>
-                      <span className="px-2 py-1 bg-blue-500/10 text-blue-500 text-xs rounded">Fallback</span>
+                      <span className="px-2 py-1 bg-blue-500/10 text-blue-500 text-[11px] rounded">Fallback</span>
                     </div>
-                    <p className="text-sm mt-2">Excellent for code analysis, refactoring, and detailed technical explanations.</p>
+                    <p className="text-[13px] mt-2">Excellent for code analysis, refactoring, and detailed technical explanations.</p>
                   </div>
 
                   <div className="border rounded-lg p-4">
                     <h3 className="font-semibold">Gemini 2.5 Pro</h3>
-                    <p className="text-sm text-muted-foreground">Google's multimodal AI</p>
-                    <p className="text-sm mt-2">Supports vision and code understanding for complex use cases.</p>
+                    <p className="text-[13px] text-muted-foreground">Google's multimodal AI</p>
+                    <p className="text-[13px] mt-2">Supports vision and code understanding for complex use cases.</p>
                   </div>
                 </div>
               </CardContent>
@@ -133,7 +133,7 @@ export default function AIDocumentation() {
                 <CardDescription>Customize AI behavior for your projects</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <p className="text-sm text-muted-foreground">
+                <p className="text-[13px] text-muted-foreground">
                   Create custom prompts to define specific AI behaviors, coding standards, and project-specific rules.
                 </p>
                 <div className="space-y-3">
@@ -141,21 +141,21 @@ export default function AIDocumentation() {
                     <CheckCircle2 className="h-5 w-5 text-primary mt-0.5" />
                     <div>
                       <p className="font-medium">Project-specific rules</p>
-                      <p className="text-sm text-muted-foreground">Define custom coding standards and conventions</p>
+                      <p className="text-[13px] text-muted-foreground">Define custom coding standards and conventions</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
                     <CheckCircle2 className="h-5 w-5 text-primary mt-0.5" />
                     <div>
                       <p className="font-medium">Template library</p>
-                      <p className="text-sm text-muted-foreground">Pre-built templates for common development tasks</p>
+                      <p className="text-[13px] text-muted-foreground">Pre-built templates for common development tasks</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
                     <CheckCircle2 className="h-5 w-5 text-primary mt-0.5" />
                     <div>
                       <p className="font-medium">Variable support</p>
-                      <p className="text-sm text-muted-foreground">Use dynamic variables like {`{{projectName}}`} and {`{{language}}`}</p>
+                      <p className="text-[13px] text-muted-foreground">Use dynamic variables like {`{{projectName}}`} and {`{{language}}`}</p>
                     </div>
                   </div>
                 </div>
@@ -174,19 +174,19 @@ export default function AIDocumentation() {
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="border rounded-lg p-4">
                     <h3 className="font-semibold mb-2">React Component Generator</h3>
-                    <p className="text-sm text-muted-foreground">Generate modern React components with TypeScript and hooks</p>
+                    <p className="text-[13px] text-muted-foreground">Generate modern React components with TypeScript and hooks</p>
                   </div>
                   <div className="border rounded-lg p-4">
                     <h3 className="font-semibold mb-2">API Endpoint Creator</h3>
-                    <p className="text-sm text-muted-foreground">Create RESTful API endpoints with validation and error handling</p>
+                    <p className="text-[13px] text-muted-foreground">Create RESTful API endpoints with validation and error handling</p>
                   </div>
                   <div className="border rounded-lg p-4">
                     <h3 className="font-semibold mb-2">Database Schema Designer</h3>
-                    <p className="text-sm text-muted-foreground">Design normalized database schemas with relationships</p>
+                    <p className="text-[13px] text-muted-foreground">Design normalized database schemas with relationships</p>
                   </div>
                   <div className="border rounded-lg p-4">
                     <h3 className="font-semibold mb-2">Test Generator</h3>
-                    <p className="text-sm text-muted-foreground">Generate comprehensive unit and integration tests</p>
+                    <p className="text-[13px] text-muted-foreground">Generate comprehensive unit and integration tests</p>
                   </div>
                 </div>
               </CardContent>
@@ -204,9 +204,9 @@ export default function AIDocumentation() {
                 <div className="space-y-4">
                   <div>
                     <h3 className="font-semibold mb-2">POST /api/ai/generate</h3>
-                    <p className="text-sm text-muted-foreground mb-2">Generate code using AI</p>
+                    <p className="text-[13px] text-muted-foreground mb-2">Generate code using AI</p>
                     <div className="bg-muted p-3 rounded-lg">
-                      <pre className="text-xs overflow-x-auto">
+                      <pre className="text-[11px] overflow-x-auto">
 {`{
   "prompt": "Create a login form",
   "model": "gpt-5.2",
@@ -218,9 +218,9 @@ export default function AIDocumentation() {
 
                   <div>
                     <h3 className="font-semibold mb-2">POST /api/ai/analyze</h3>
-                    <p className="text-sm text-muted-foreground mb-2">Analyze and refactor code</p>
+                    <p className="text-[13px] text-muted-foreground mb-2">Analyze and refactor code</p>
                     <div className="bg-muted p-3 rounded-lg">
-                      <pre className="text-xs overflow-x-auto">
+                      <pre className="text-[11px] overflow-x-auto">
 {`{
   "code": "// your code here",
   "task": "refactor"
@@ -244,21 +244,21 @@ export default function AIDocumentation() {
                 <div className="space-y-4">
                   <div className="border-l-4 border-primary pl-4">
                     <h3 className="font-semibold mb-1">Building a Blog Platform</h3>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-[13px] text-muted-foreground">
                       Use AI to generate the entire blog architecture, from database schema to authentication and post management.
                     </p>
                   </div>
                   
                   <div className="border-l-4 border-primary pl-4">
                     <h3 className="font-semibold mb-1">E-commerce Application</h3>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-[13px] text-muted-foreground">
                       Generate product catalog, shopping cart, checkout flow, and payment integration automatically.
                     </p>
                   </div>
 
                   <div className="border-l-4 border-primary pl-4">
                     <h3 className="font-semibold mb-1">Dashboard Analytics</h3>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-[13px] text-muted-foreground">
                       Create data visualization dashboards with charts, metrics, and real-time updates.
                     </p>
                   </div>

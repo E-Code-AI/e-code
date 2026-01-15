@@ -124,7 +124,7 @@ export function MaxAutonomyProgress({
     return (
       <div className="flex items-center gap-2 p-3 bg-surface-solid rounded-lg animate-pulse" data-testid="autonomy-progress-loading">
         <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-        <span className="text-sm text-muted-foreground">Loading autonomous session...</span>
+        <span className="text-[13px] text-muted-foreground">Loading autonomous session...</span>
       </div>
     );
   }
@@ -155,7 +155,7 @@ export function MaxAutonomyProgress({
               </div>
               
               <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
-                <span className="text-sm font-medium">Max Autonomy</span>
+                <span className="text-[13px] font-medium">Max Autonomy</span>
                 <Badge 
                   variant="outline" 
                   className={cn("text-[10px] px-1.5 py-0 h-4", getStatusColor(session.status))}
@@ -168,7 +168,7 @@ export function MaxAutonomyProgress({
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground hidden sm:inline">
+              <span className="text-[11px] text-muted-foreground hidden sm:inline">
                 {progressPercent}% • {progress?.tasksCompleted || 0}/{progress?.tasksTotal || 0} tasks
               </span>
               
@@ -235,21 +235,21 @@ export function MaxAutonomyProgress({
         <CollapsibleContent>
           <div className="px-3 pb-3 space-y-3">
             <div className="space-y-1.5">
-              <div className="flex items-center justify-between text-xs">
+              <div className="flex items-center justify-between text-[11px]">
                 <span className="text-muted-foreground">Progress</span>
                 <span className="font-medium">{progressPercent}%</span>
               </div>
               <Progress value={progressPercent} className="h-1.5" />
             </div>
 
-            <div className="text-xs text-muted-foreground line-clamp-2" data-testid="autonomy-goal">
+            <div className="text-[11px] text-muted-foreground line-clamp-2" data-testid="autonomy-goal">
               <span className="font-medium">Goal:</span> {session.goal}
             </div>
 
             {currentTask && (
               <div className="flex items-start gap-2 p-2 bg-blue-950 border border-blue-500 rounded-md">
                 <Loader2 className="h-3.5 w-3.5 text-blue-500 animate-spin mt-0.5 shrink-0" />
-                <div className="text-xs">
+                <div className="text-[11px]">
                   <div className="font-medium text-blue-600 dark:text-blue-400">
                     Current: {currentTask.title}
                   </div>
@@ -263,33 +263,33 @@ export function MaxAutonomyProgress({
             )}
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              <div className="flex items-center gap-1.5 text-xs">
+              <div className="flex items-center gap-1.5 text-[11px]">
                 <Clock className="h-3 w-3 text-muted-foreground" />
                 <span>{formatDuration(progress?.elapsedTimeMs || 0)}</span>
               </div>
-              <div className="flex items-center gap-1.5 text-xs">
+              <div className="flex items-center gap-1.5 text-[11px]">
                 <DollarSign className="h-3 w-3 text-muted-foreground" />
                 <span>{formatCost(progress?.totalCostUsd || '0')}</span>
               </div>
-              <div className="flex items-center gap-1.5 text-xs">
+              <div className="flex items-center gap-1.5 text-[11px]">
                 <Shield className="h-3 w-3 text-muted-foreground" />
                 <span>{progress?.checkpointsCreated || 0} checkpoints</span>
               </div>
-              <div className="flex items-center gap-1.5 text-xs">
+              <div className="flex items-center gap-1.5 text-[11px]">
                 <TestTube className="h-3 w-3 text-muted-foreground" />
                 <span>{progress?.testsPassed || 0}/{progress?.testsRun || 0} tests</span>
               </div>
             </div>
 
             {progress?.estimatedRemainingMs && progress.estimatedRemainingMs > 0 && (
-              <div className="text-xs text-muted-foreground">
+              <div className="text-[11px] text-muted-foreground">
                 <span className="font-medium">ETA:</span> ~{formatDuration(progress.estimatedRemainingMs)} remaining
               </div>
             )}
 
             {safeTasks.length > 0 && (
               <div className="space-y-1.5">
-                <div className="text-xs font-medium text-muted-foreground flex items-center justify-between">
+                <div className="text-[11px] font-medium text-muted-foreground flex items-center justify-between">
                   <span>Tasks ({safeTasks.length})</span>
                   {safeTasks.length > 5 && (
                     <Button
@@ -309,7 +309,7 @@ export function MaxAutonomyProgress({
                     <div 
                       key={task.id}
                       className={cn(
-                        "flex items-center gap-2 p-1.5 rounded text-xs",
+                        "flex items-center gap-2 p-1.5 rounded text-[11px]",
                         task.status === 'running' && "bg-blue-950",
                         task.status === 'completed' && "opacity-70",
                         task.status === 'failed' && "bg-red-950"
@@ -335,7 +335,7 @@ export function MaxAutonomyProgress({
             )}
 
             {(progress?.rollbacksPerformed ?? 0) > 0 && (
-              <div className="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400">
+              <div className="flex items-center gap-1.5 text-[11px] text-amber-600 dark:text-amber-400">
                 <RotateCcw className="h-3 w-3" />
                 <span>{progress?.rollbacksPerformed} rollback(s) performed</span>
               </div>
@@ -388,13 +388,13 @@ export function MaxAutonomyStartForm({
     <div className="space-y-3 p-3 border border-amber-500 bg-amber-950 rounded-lg" data-testid="autonomy-start-form">
       <div className="flex items-center gap-2">
         <Zap className="h-4 w-4 text-amber-500" />
-        <span className="text-sm font-medium">Max Autonomy Mode</span>
+        <span className="text-[13px] font-medium">Max Autonomy Mode</span>
         <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 bg-amber-950 text-amber-600 border-amber-500">
           Up to {maxDuration} min
         </Badge>
       </div>
 
-      <p className="text-xs text-muted-foreground">
+      <p className="text-[11px] text-muted-foreground">
         Describe your goal and the AI will work autonomously to achieve it, with automatic checkpoints, testing, and rollback.
       </p>
 
@@ -402,20 +402,20 @@ export function MaxAutonomyStartForm({
         value={goal}
         onChange={(e) => setGoal(e.target.value)}
         placeholder="Example: Build a todo app with user authentication, dark mode, and PostgreSQL database..."
-        className="w-full min-h-[80px] p-2 text-sm bg-background border border-border rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+        className="w-full min-h-[80px] p-2 text-[13px] bg-background border border-border rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-amber-500/50"
         data-testid="input-autonomy-goal"
       />
 
       <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
         <CollapsibleTrigger asChild>
-          <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" data-testid="button-toggle-advanced">
+          <Button variant="ghost" size="sm" className="h-6 px-2 text-[11px]" data-testid="button-toggle-advanced">
             {showAdvanced ? <ChevronDown className="h-3 w-3 mr-1" /> : <ChevronRight className="h-3 w-3 mr-1" />}
             Advanced options
           </Button>
         </CollapsibleTrigger>
         <CollapsibleContent className="space-y-2 pt-2">
           <div className="grid grid-cols-2 gap-2">
-            <label className="flex items-center gap-2 text-xs">
+            <label className="flex items-center gap-2 text-[11px]">
               <input
                 type="checkbox"
                 checked={autoCheckpoint}
@@ -425,7 +425,7 @@ export function MaxAutonomyStartForm({
               />
               Auto-checkpoint
             </label>
-            <label className="flex items-center gap-2 text-xs">
+            <label className="flex items-center gap-2 text-[11px]">
               <input
                 type="checkbox"
                 checked={autoTest}
@@ -435,7 +435,7 @@ export function MaxAutonomyStartForm({
               />
               Auto-test
             </label>
-            <label className="flex items-center gap-2 text-xs">
+            <label className="flex items-center gap-2 text-[11px]">
               <input
                 type="checkbox"
                 checked={autoRollback}
@@ -448,11 +448,11 @@ export function MaxAutonomyStartForm({
           </div>
           
           <div className="flex items-center gap-2">
-            <label className="text-xs">Risk threshold:</label>
+            <label className="text-[11px]">Risk threshold:</label>
             <select 
               value={riskThreshold}
               onChange={(e) => setRiskThreshold(e.target.value as any)}
-              className="text-xs bg-background border border-border rounded px-2 py-1"
+              className="text-[11px] bg-background border border-border rounded px-2 py-1"
               data-testid="select-risk-threshold"
             >
               <option value="low">Low (Fast)</option>
@@ -463,11 +463,11 @@ export function MaxAutonomyStartForm({
           </div>
 
           <div className="flex items-center gap-2">
-            <label className="text-xs">Max duration:</label>
+            <label className="text-[11px]">Max duration:</label>
             <select 
               value={maxDuration}
               onChange={(e) => setMaxDuration(parseInt(e.target.value))}
-              className="text-xs bg-background border border-border rounded px-2 py-1"
+              className="text-[11px] bg-background border border-border rounded px-2 py-1"
               data-testid="select-max-duration"
             >
               <option value="30">30 minutes</option>

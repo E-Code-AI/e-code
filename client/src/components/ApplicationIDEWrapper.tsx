@@ -155,8 +155,8 @@ export function ApplicationIDEWrapper({
         />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
-            <p className="text-lg font-semibold text-destructive mb-2">Failed to load project files</p>
-            <p className="text-sm text-muted-foreground">{(filesError as Error).message}</p>
+            <p className="text-[15px] font-semibold text-destructive mb-2">Failed to load project files</p>
+            <p className="text-[13px] text-muted-foreground">{(filesError as Error).message}</p>
           </div>
         </div>
       </div>
@@ -190,9 +190,9 @@ export function ApplicationIDEWrapper({
               <div className="h-full flex flex-col border-r">
                 <div className="p-3 border-b flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-medium">Files</h3>
+                    <h3 className="text-[13px] font-medium">Files</h3>
                     {files.length > 0 && (
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-[11px] text-muted-foreground">
                         ({files.length})
                       </span>
                     )}
@@ -208,7 +208,7 @@ export function ApplicationIDEWrapper({
                 </div>
                 <div className="flex-1 overflow-auto p-2">
                   {files.length === 0 ? (
-                    <div className="flex items-center justify-center h-32 text-sm text-muted-foreground">
+                    <div className="flex items-center justify-center h-32 text-[13px] text-muted-foreground">
                       No files in this project
                     </div>
                   ) : (
@@ -235,7 +235,7 @@ export function ApplicationIDEWrapper({
                     <div className="flex">
                       <button
                         className={cn(
-                          "px-4 py-2 text-sm font-medium border-b-2 transition-colors",
+                          "px-4 py-2 text-[13px] font-medium border-b-2 transition-colors",
                           activeTab === 'preview' 
                             ? "border-primary text-primary" 
                             : "border-transparent text-muted-foreground hover:text-foreground"
@@ -247,7 +247,7 @@ export function ApplicationIDEWrapper({
                       </button>
                       <button
                         className={cn(
-                          "px-4 py-2 text-sm font-medium border-b-2 transition-colors",
+                          "px-4 py-2 text-[13px] font-medium border-b-2 transition-colors",
                           activeTab === 'code' 
                             ? "border-primary text-primary" 
                             : "border-transparent text-muted-foreground hover:text-foreground"
@@ -265,7 +265,7 @@ export function ApplicationIDEWrapper({
                         size="sm"
                       />
                       {isRunning && (
-                        <div className="flex items-center gap-1 text-xs text-green-600">
+                        <div className="flex items-center gap-1 text-[11px] text-green-600">
                           <div className="h-2 w-2 rounded-full bg-green-600 animate-pulse" />
                           Running
                         </div>
@@ -291,7 +291,7 @@ export function ApplicationIDEWrapper({
                       }}
                     />
                   ) : (
-                    <div className="h-full flex items-center justify-center text-sm text-muted-foreground">
+                    <div className="h-full flex items-center justify-center text-[13px] text-muted-foreground">
                       Select a file to edit
                     </div>
                   )}
@@ -308,7 +308,7 @@ export function ApplicationIDEWrapper({
                   <div className="p-3 border-b flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Bot className="h-4 w-4" />
-                      <h3 className="text-sm font-medium">AI Assistant</h3>
+                      <h3 className="text-[13px] font-medium">AI Assistant</h3>
                     </div>
                     <Button
                       variant="ghost"
@@ -338,9 +338,9 @@ export function ApplicationIDEWrapper({
                 <div className="p-2 border-b flex items-center justify-between bg-muted/30">
                   <div className="flex items-center gap-2">
                     <TerminalIcon className="h-4 w-4" />
-                    <span className="text-sm font-medium">Console</span>
+                    <span className="text-[13px] font-medium">Console</span>
                     {isRunning && (
-                      <span className="text-xs text-green-600 flex items-center gap-1">
+                      <span className="text-[11px] text-green-600 flex items-center gap-1">
                         <div className="h-1.5 w-1.5 rounded-full bg-green-600 animate-pulse" />
                         Live
                       </span>

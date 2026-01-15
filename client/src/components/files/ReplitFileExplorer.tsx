@@ -335,7 +335,7 @@ export function ReplitFileExplorer({
               </div>
 
               {/* Nom du fichier */}
-              <span className="truncate flex-1 text-sm">{file.name}</span>
+              <span className="truncate flex-1 text-[13px]">{file.name}</span>
 
               {/* Indicateurs d'état */}
               <div className="flex items-center space-x-1 ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -480,7 +480,7 @@ export function ReplitFileExplorer({
                 placeholder="Search files..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-7 h-7 text-xs bg-[var(--ecode-surface-secondary)] border-[var(--ecode-border)] text-[var(--ecode-text)] placeholder:text-[var(--ecode-text-secondary)]"
+                className="pl-7 h-7 text-[11px] bg-[var(--ecode-surface-secondary)] border-[var(--ecode-border)] text-[var(--ecode-text)] placeholder:text-[var(--ecode-text-secondary)]"
               />
             </div>
             
@@ -505,7 +505,7 @@ export function ReplitFileExplorer({
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-7 px-2 text-xs text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
+                className="h-7 px-2 text-[11px] text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
                 onClick={() => handleCreateNew("file")}
               >
                 <Plus className="h-3 w-3 mr-1" />
@@ -515,7 +515,7 @@ export function ReplitFileExplorer({
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-7 px-2 text-xs text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
+                className="h-7 px-2 text-[11px] text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
                 onClick={() => handleCreateNew("folder")}
               >
                 <Folder className="h-3 w-3 mr-1" />
@@ -533,12 +533,12 @@ export function ReplitFileExplorer({
             ) : (
               <div className="text-center py-8 text-[var(--ecode-text-secondary)]">
                 <FileMinus className="h-8 w-8 mx-auto mb-2" />
-                <p className="text-sm">No files found</p>
+                <p className="text-[13px]">No files found</p>
                 {!readonly && (
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="mt-2 text-xs"
+                    className="mt-2 text-[11px]"
                     onClick={() => handleCreateNew("file")}
                   >
                     Create your first file

@@ -53,7 +53,7 @@ export function ThemeSwitcher() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="sm" className="h-8 gap-2" data-testid="button-theme-toggle">
           {getIcon()}
-          <span className="hidden sm:inline text-xs">{getLabel()}</span>
+          <span className="hidden sm:inline text-[11px]">{getLabel()}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-40">

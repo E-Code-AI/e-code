@@ -59,19 +59,19 @@ function FileCard({ file, onSelect }: { file: FileOperationRow; onSelect?: (f: F
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-2">
               <OpIcon className={cn("h-4 w-4", config.color)} />
-              <Badge variant="outline" className="text-xs">{config.label}</Badge>
-              {file.language && <Badge variant="secondary" className="text-xs">{file.language}</Badge>}
+              <Badge variant="outline" className="text-[11px]">{config.label}</Badge>
+              {file.language && <Badge variant="secondary" className="text-[11px]">{file.language}</Badge>}
             </div>
-            <div className="text-sm font-medium truncate mb-1">{file.fileName}</div>
-            <div className="text-xs text-muted-foreground truncate mb-2">{file.filePath}</div>
-            <div className="flex items-center gap-3 text-xs">
+            <div className="text-[13px] font-medium truncate mb-1">{file.fileName}</div>
+            <div className="text-[11px] text-muted-foreground truncate mb-2">{file.filePath}</div>
+            <div className="flex items-center gap-3 text-[11px]">
               <span className="text-green-600 flex items-center gap-1"><Plus className="h-3 w-3" />{file.linesAdded || 0}</span>
               <span className="text-red-600 flex items-center gap-1"><Minus className="h-3 w-3" />{file.linesRemoved || 0}</span>
             </div>
           </div>
           <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
         </div>
-        <div className="mt-2 pt-2 border-t text-xs text-muted-foreground">
+        <div className="mt-2 pt-2 border-t text-[11px] text-muted-foreground">
           {file.createdAt ? format(new Date(file.createdAt), 'MMM d, HH:mm:ss') : '-'}
         </div>
       </CardContent>
@@ -160,19 +160,19 @@ export function FileOperationsGrid({
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <FileCode className="h-4 w-4 text-muted-foreground" />
-          <h4 className="font-medium text-sm">File Operations</h4>
+          <h4 className="font-medium text-[13px]">File Operations</h4>
           {data && (
             <div className="flex items-center gap-1">
-              <Badge variant="secondary" className="text-xs bg-green-500/10 text-green-600">
+              <Badge variant="secondary" className="text-[11px] bg-green-500/10 text-green-600">
                 <FilePlus className="h-2.5 w-2.5 mr-1" />
                 {stats.created}
               </Badge>
-              <Badge variant="secondary" className="text-xs bg-blue-500/10 text-blue-600">
+              <Badge variant="secondary" className="text-[11px] bg-blue-500/10 text-blue-600">
                 <FileEdit className="h-2.5 w-2.5 mr-1" />
                 {stats.edited}
               </Badge>
               {stats.deleted > 0 && (
-                <Badge variant="secondary" className="text-xs bg-red-500/10 text-red-600">
+                <Badge variant="secondary" className="text-[11px] bg-red-500/10 text-red-600">
                   <Trash2 className="h-2.5 w-2.5 mr-1" />
                   {stats.deleted}
                 </Badge>
@@ -188,13 +188,13 @@ export function FileOperationsGrid({
               placeholder="Search files..."
               value={searchQuery}
               onChange={(e) => handleQuickFilter(e.target.value)}
-              className="pl-7 w-[150px] h-8 text-xs"
+              className="pl-7 w-[150px] h-8 text-[11px]"
               data-testid="input-search-files"
             />
           </div>
 
           <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="w-[90px] h-8 text-xs" data-testid="select-file-op-type">
+            <SelectTrigger className="w-[90px] h-8 text-[11px]" data-testid="select-file-op-type">
               <SelectValue placeholder="Type" />
             </SelectTrigger>
             <SelectContent>
@@ -206,7 +206,7 @@ export function FileOperationsGrid({
           </Select>
 
           <Select value={languageFilter} onValueChange={setLanguageFilter}>
-            <SelectTrigger className="w-[100px] h-8 text-xs" data-testid="select-file-language">
+            <SelectTrigger className="w-[100px] h-8 text-[11px]" data-testid="select-file-language">
               <SelectValue placeholder="Language" />
             </SelectTrigger>
             <SelectContent>
@@ -238,7 +238,7 @@ export function FileOperationsGrid({
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       ) : error ? (
-        <div className="flex flex-col items-center justify-center py-12 gap-2 text-muted-foreground text-sm">
+        <div className="flex flex-col items-center justify-center py-12 gap-2 text-muted-foreground text-[13px]">
           <p>Failed to load files</p>
           <Button variant="outline" size="sm" onClick={() => refetch()}>
             Retry
@@ -247,7 +247,7 @@ export function FileOperationsGrid({
       ) : isMobile ? (
         <div className="space-y-3" data-testid="files-mobile-view">
           {filteredData.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground text-sm">
+            <div className="text-center py-8 text-muted-foreground text-[13px]">
               No file operations found
             </div>
           ) : (

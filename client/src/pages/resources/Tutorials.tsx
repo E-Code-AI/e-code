@@ -126,13 +126,13 @@ export default function Tutorials() {
       <div className="container mx-auto px-4 py-12 sm:py-16 md:py-20" data-testid="page-tutorials">
         {/* Hero Section */}
         <div className="text-center max-w-4xl mx-auto mb-12 sm:mb-16">
-          <Badge className="mb-4 px-4 py-1.5 text-sm font-medium bg-gradient-to-r from-blue-500 to-cyan-500 text-white border-0">
+          <Badge className="mb-4 px-4 py-1.5 text-[13px] font-medium bg-gradient-to-r from-blue-500 to-cyan-500 text-white border-0">
             Learn & Build
           </Badge>
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-blue-600 to-cyan-600 dark:from-blue-400 dark:to-cyan-400 bg-clip-text text-transparent" data-testid="heading-tutorials">
             Tutorials
           </h1>
-          <p className="text-lg sm:text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
+          <p className="text-[15px] sm:text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
             Learn to build real-world applications with step-by-step tutorials.
             From beginner to advanced, we've got you covered.
           </p>
@@ -145,7 +145,7 @@ export default function Tutorials() {
               placeholder="Search tutorials..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-12 h-12 text-lg"
+              className="pl-12 h-12 text-[15px]"
               data-testid="input-tutorials-search"
             />
           </div>
@@ -188,7 +188,7 @@ export default function Tutorials() {
                   <div className="p-6">
                     <div className="flex items-center gap-4 mb-3">
                       <Badge variant="outline">{tutorial.level}</Badge>
-                      <span className="text-sm text-muted-foreground flex items-center gap-1">
+                      <span className="text-[13px] text-muted-foreground flex items-center gap-1">
                         <Clock className="h-4 w-4" />
                         {tutorial.duration}
                       </span>
@@ -208,7 +208,7 @@ export default function Tutorials() {
         <div>
           <h2 className="text-2xl font-bold mb-6">
             {activeCategory === "All" ? "All Tutorials" : activeCategory}
-            <span className="text-muted-foreground font-normal text-lg ml-2">
+            <span className="text-muted-foreground font-normal text-[15px] ml-2">
               ({filteredTutorials.length})
             </span>
           </h2>
@@ -235,8 +235,8 @@ export default function Tutorials() {
                   </div>
                   <div className="p-5">
                     <div className="flex items-center gap-3 mb-3">
-                      <Badge variant="secondary" className="text-xs">{tutorial.category}</Badge>
-                      <span className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Badge variant="secondary" className="text-[11px]">{tutorial.category}</Badge>
+                      <span className="text-[11px] text-muted-foreground flex items-center gap-1">
                         <Clock className="h-3 w-3" />
                         {tutorial.duration}
                       </span>
@@ -244,9 +244,9 @@ export default function Tutorials() {
                     <h3 className="font-semibold mb-2 group-hover:text-blue-600 transition-colors line-clamp-2">
                       {tutorial.title}
                     </h3>
-                    <p className="text-sm text-muted-foreground line-clamp-2">{tutorial.description}</p>
+                    <p className="text-[13px] text-muted-foreground line-clamp-2">{tutorial.description}</p>
                     <div className="mt-3">
-                      <Badge variant="outline" className="text-xs">{tutorial.level}</Badge>
+                      <Badge variant="outline" className="text-[11px]">{tutorial.level}</Badge>
                     </div>
                   </div>
                 </Card>
@@ -260,7 +260,7 @@ export default function Tutorials() {
           <div className="text-center max-w-3xl mx-auto">
             <Rocket className="h-12 w-12 mx-auto mb-6 opacity-80" />
             <h2 className="text-2xl sm:text-3xl font-bold mb-4">Ready to Start Building?</h2>
-            <p className="text-lg text-white/90 mb-8">
+            <p className="text-[15px] text-white/90 mb-8">
               Put your learning into practice. Create your first project in minutes.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">

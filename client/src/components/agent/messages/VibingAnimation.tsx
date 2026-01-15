@@ -22,7 +22,7 @@ export function VibingAnimation({ className, size = 'md', variant = 'dots' }: Vi
     return (
       <div className={cn("flex items-center gap-2", className)}>
         <div className={cn(sizeClasses[size], "bg-gradient-to-r from-violet-500 to-fuchsia-500 rounded-full agent-vibing")} />
-        <span className="text-xs text-violet-600 dark:text-violet-400 animate-pulse">Thinking...</span>
+        <span className="text-[11px] text-violet-600 dark:text-violet-400 animate-pulse">Thinking...</span>
       </div>
     );
   }

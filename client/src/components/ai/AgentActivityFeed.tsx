@@ -151,13 +151,13 @@ function ActivityEventItem({ event }: { event: ActivityEvent }) {
               >
                 {label}
               </Badge>
-              <code className="text-[10px] sm:text-xs bg-muted px-1 rounded truncate max-w-[150px] sm:max-w-[250px]">
+              <code className="text-[10px] sm:text-[11px] bg-muted px-1 rounded truncate max-w-[150px] sm:max-w-[250px]">
                 {event.target}
               </code>
             </div>
             
             {event.description && (
-              <p className="text-[10px] sm:text-xs text-muted-foreground line-clamp-1">
+              <p className="text-[10px] sm:text-[11px] text-muted-foreground line-clamp-1">
                 {event.description}
               </p>
             )}
@@ -178,7 +178,7 @@ function ActivityEventItem({ event }: { event: ActivityEvent }) {
 
       {hasDetails && (
         <CollapsibleContent>
-          <div className="ml-5 sm:ml-6 pl-2 sm:pl-3 border-l-2 border-muted mb-2 space-y-1.5 text-[10px] sm:text-xs">
+          <div className="ml-5 sm:ml-6 pl-2 sm:pl-3 border-l-2 border-muted mb-2 space-y-1.5 text-[10px] sm:text-[11px]">
             {event.details?.filesChanged && event.details.filesChanged.length > 0 && (
               <div>
                 <span className="text-muted-foreground">Files changed:</span>
@@ -282,7 +282,7 @@ export function AgentActivityFeed({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Activity className="h-4 w-4 text-primary" />
-            <CardTitle className="text-sm sm:text-base">Activity Feed</CardTitle>
+            <CardTitle className="text-[13px] sm:text-base">Activity Feed</CardTitle>
             {isLive && (
               <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 bg-emerald-950 text-emerald-600 border-emerald-500 animate-pulse">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1" />
@@ -295,7 +295,7 @@ export function AgentActivityFeed({
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 px-2 text-xs"
+              className="h-7 px-2 text-[11px]"
               onClick={() => setShowStats(!showStats)}
               data-testid="button-toggle-stats"
             >
@@ -306,7 +306,7 @@ export function AgentActivityFeed({
 
         {/* Session Stats */}
         {stats && showStats && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 p-2 sm:p-3 bg-surface-solid rounded-lg text-[10px] sm:text-xs" data-testid="session-stats">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 p-2 sm:p-3 bg-surface-solid rounded-lg text-[10px] sm:text-[11px]" data-testid="session-stats">
             <div className="space-y-0.5">
               <p className="text-muted-foreground">Duration</p>
               <p className="font-medium">{formatDuration(stats.duration)}</p>
@@ -344,7 +344,7 @@ export function AgentActivityFeed({
               variant={filter === id ? 'secondary' : 'ghost'}
               size="sm"
               className={cn(
-                "h-6 px-2 text-[10px] sm:text-xs shrink-0",
+                "h-6 px-2 text-[10px] sm:text-[11px] shrink-0",
                 filter === id && "bg-surface-tertiary-solid"
               )}
               onClick={() => setFilter(id)}
@@ -362,7 +362,7 @@ export function AgentActivityFeed({
         <ScrollArea className="h-full">
           <div className="p-2 sm:p-3 space-y-0.5 sm:space-y-1">
             {filteredEvents.length === 0 ? (
-              <div className="text-center py-8 text-sm text-muted-foreground">
+              <div className="text-center py-8 text-[13px] text-muted-foreground">
                 <Activity className="h-8 w-8 mx-auto mb-2 opacity-50" />
                 <p>No activity yet</p>
               </div>

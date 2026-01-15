@@ -315,7 +315,7 @@ export default function GitHubImport() {
 
                     {isImporting && (
                       <div className="space-y-2">
-                        <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-center justify-between text-[13px]">
                           <span>Importing repository...</span>
                           <span>{importProgress}%</span>
                         </div>
@@ -351,7 +351,7 @@ export default function GitHubImport() {
                     {userRepos.length === 0 ? (
                       <div className="text-center py-12">
                         <Github className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-                        <h3 className="text-lg font-semibold mb-2">Connect to GitHub</h3>
+                        <h3 className="text-[15px] font-semibold mb-2">Connect to GitHub</h3>
                         <p className="text-muted-foreground mb-6">
                           Link your GitHub account to import repositories with one click
                         </p>
@@ -406,7 +406,7 @@ export default function GitHubImport() {
                                           <Unlock className="h-4 w-4 text-muted-foreground" />
                                         )}
                                         {repo.language && (
-                                          <Badge variant="secondary" className="text-xs">
+                                          <Badge variant="secondary" className="text-[11px]">
                                             <span 
                                               className="w-2 h-2 rounded-full mr-1"
                                               style={{ backgroundColor: languageColors[repo.language] || '#ccc' }}
@@ -416,11 +416,11 @@ export default function GitHubImport() {
                                         )}
                                       </div>
                                       {repo.description && (
-                                        <p className="text-sm text-muted-foreground mb-2">
+                                        <p className="text-[13px] text-muted-foreground mb-2">
                                           {repo.description}
                                         </p>
                                       )}
-                                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                                      <div className="flex items-center gap-4 text-[11px] text-muted-foreground">
                                         <span className="flex items-center gap-1">
                                           <Star className="h-3 w-3" />
                                           {repo.stargazers_count}
@@ -461,7 +461,7 @@ export default function GitHubImport() {
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
               Why Import to E-Code?
             </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-[15px] text-muted-foreground max-w-2xl mx-auto">
               Enhance your existing projects with AI-powered development
             </p>
           </div>
@@ -516,7 +516,7 @@ export default function GitHubImport() {
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
               How It Works
             </h2>
-            <p className="text-lg text-muted-foreground">
+            <p className="text-[15px] text-muted-foreground">
               Import your GitHub repository in three simple steps
             </p>
           </div>
@@ -528,7 +528,7 @@ export default function GitHubImport() {
                   <span className="text-2xl font-bold text-primary">1</span>
                 </div>
                 <h3 className="font-semibold mb-2">Choose Repository</h3>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-[13px] text-muted-foreground">
                   Paste a URL or connect your GitHub account to select a repository
                 </p>
               </div>
@@ -538,7 +538,7 @@ export default function GitHubImport() {
                   <span className="text-2xl font-bold text-primary">2</span>
                 </div>
                 <h3 className="font-semibold mb-2">Import & Setup</h3>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-[13px] text-muted-foreground">
                   E-Code clones your repository and sets up the development environment
                 </p>
               </div>
@@ -548,7 +548,7 @@ export default function GitHubImport() {
                   <span className="text-2xl font-bold text-primary">3</span>
                 </div>
                 <h3 className="font-semibold mb-2">Start Coding</h3>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-[13px] text-muted-foreground">
                   Begin coding with AI assistance, real-time collaboration, and instant preview
                 </p>
               </div>
@@ -564,7 +564,7 @@ export default function GitHubImport() {
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
               Ready to Enhance Your Projects?
             </h2>
-            <p className="text-lg text-muted-foreground mb-8">
+            <p className="text-[15px] text-muted-foreground mb-8">
               Import your GitHub repositories and experience the power of AI-assisted development
             </p>
             {!isAuthenticated ? (

@@ -130,8 +130,8 @@ export const AgentToolsBottomSheet = memo(function AgentToolsBottomSheet({
                     )}
                   </div>
                   <div>
-                    <div className="font-medium text-sm text-foreground">Fast</div>
-                    <div className="text-xs text-muted-foreground">Make lightweight changes, quickly</div>
+                    <div className="font-medium text-[13px] text-foreground">Fast</div>
+                    <div className="text-[11px] text-muted-foreground">Make lightweight changes, quickly</div>
                   </div>
                 </div>
                 <Zap className="w-5 h-5 text-muted-foreground" />
@@ -163,8 +163,8 @@ export const AgentToolsBottomSheet = memo(function AgentToolsBottomSheet({
                       )}
                     </div>
                     <div>
-                      <div className="font-medium text-sm text-foreground">Autonomous</div>
-                      <div className="text-xs text-muted-foreground">Control Agent's level of autonomy</div>
+                      <div className="font-medium text-[13px] text-foreground">Autonomous</div>
+                      <div className="text-[11px] text-muted-foreground">Control Agent's level of autonomy</div>
                     </div>
                   </div>
                   <Infinity className="w-5 h-5 text-muted-foreground" />
@@ -178,7 +178,7 @@ export const AgentToolsBottomSheet = memo(function AgentToolsBottomSheet({
                           key={level}
                           onClick={() => handleAutonomyLevelChange(level)}
                           className={cn(
-                            "flex-1 py-2 px-3 text-xs font-medium rounded-md transition-all",
+                            "flex-1 py-2 px-3 text-[11px] font-medium rounded-md transition-all",
                             autonomyLevel === level
                               ? "bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300 border-l-2 border-amber-500"
                               : "text-muted-foreground hover:text-foreground hover:bg-muted"
@@ -190,7 +190,7 @@ export const AgentToolsBottomSheet = memo(function AgentToolsBottomSheet({
                       ))}
                     </div>
 
-                    <div className="text-xs text-amber-600 dark:text-amber-400 font-medium">
+                    <div className="text-[11px] text-amber-600 dark:text-amber-400 font-medium">
                       Long-running, hands-off building experience
                     </div>
 
@@ -198,7 +198,7 @@ export const AgentToolsBottomSheet = memo(function AgentToolsBottomSheet({
                       {AUTONOMY_FEATURES.map((feature, index) => (
                         <div key={index} className="flex items-start gap-2">
                           <Check className="w-3.5 h-3.5 text-muted-foreground mt-0.5 flex-shrink-0" />
-                          <span className="text-xs text-muted-foreground">{feature}</span>
+                          <span className="text-[11px] text-muted-foreground">{feature}</span>
                         </div>
                       ))}
                     </div>
@@ -206,7 +206,7 @@ export const AgentToolsBottomSheet = memo(function AgentToolsBottomSheet({
                     <div className="flex items-center justify-between pt-2">
                       <div className="flex items-center gap-2">
                         <TestTube2 className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-sm text-foreground">App testing</span>
+                        <span className="text-[13px] text-foreground">App testing</span>
                       </div>
                       <Switch
                         checked={settings.appTesting}
@@ -221,10 +221,10 @@ export const AgentToolsBottomSheet = memo(function AgentToolsBottomSheet({
             </div>
 
             <div className="flex items-center justify-between pt-2">
-              <span className="text-sm text-muted-foreground">Other</span>
+              <span className="text-[13px] text-muted-foreground">Other</span>
               <button
                 onClick={() => setView('other')}
-                className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                className="flex items-center gap-1 text-[13px] text-muted-foreground hover:text-foreground transition-colors"
                 data-testid="button-media-generation"
               >
                 <span>Media generation</span>
@@ -245,8 +245,8 @@ export const AgentToolsBottomSheet = memo(function AgentToolsBottomSheet({
                 <div className="flex items-center gap-3">
                   <Globe className="w-5 h-5 text-muted-foreground" />
                   <div>
-                    <div className="font-medium text-sm text-foreground">Web search</div>
-                    <div className="text-xs text-muted-foreground">Searches across the internet</div>
+                    <div className="font-medium text-[13px] text-foreground">Web search</div>
+                    <div className="text-[11px] text-muted-foreground">Searches across the internet</div>
                   </div>
                 </div>
                 <Switch
@@ -261,8 +261,8 @@ export const AgentToolsBottomSheet = memo(function AgentToolsBottomSheet({
                 <div className="flex items-center gap-3">
                   <Image className="w-5 h-5 text-muted-foreground" />
                   <div>
-                    <div className="font-medium text-sm text-foreground">Media generation</div>
-                    <div className="text-xs text-muted-foreground">Generates images and video with AI</div>
+                    <div className="font-medium text-[13px] text-foreground">Media generation</div>
+                    <div className="text-[11px] text-muted-foreground">Generates images and video with AI</div>
                   </div>
                 </div>
                 <Switch
@@ -278,7 +278,7 @@ export const AgentToolsBottomSheet = memo(function AgentToolsBottomSheet({
                   <Sparkles className="w-5 h-5 text-muted-foreground flex-shrink-0 mt-0.5" />
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
-                      <span className="font-medium text-sm text-foreground">Looking for High Power Model?</span>
+                      <span className="font-medium text-[13px] text-foreground">Looking for High Power Model?</span>
                       <button 
                         onClick={() => {}} 
                         className="text-muted-foreground hover:text-foreground"
@@ -287,7 +287,7 @@ export const AgentToolsBottomSheet = memo(function AgentToolsBottomSheet({
                         <X className="w-4 h-4" />
                       </button>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="text-[11px] text-muted-foreground mt-1">
                       Agent now automatically leverages high power models wherever relevant, no longer requiring a manual toggle
                     </p>
                   </div>
@@ -297,7 +297,7 @@ export const AgentToolsBottomSheet = memo(function AgentToolsBottomSheet({
 
             <button
               onClick={() => setView('main')}
-              className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors pt-2"
+              className="flex items-center gap-1 text-[13px] text-muted-foreground hover:text-foreground transition-colors pt-2"
               data-testid="button-back"
             >
               <ChevronLeft className="w-4 h-4" />

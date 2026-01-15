@@ -152,7 +152,7 @@ export function FolderOrganization({ projectId, files = [], onFileMove }: Folder
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Folder className="h-5 w-5" />
-          <h3 className="text-lg font-semibold">Folder Organization</h3>
+          <h3 className="text-[15px] font-semibold">Folder Organization</h3>
         </div>
         <Button
           size="sm"
@@ -239,11 +239,11 @@ export function FolderOrganization({ projectId, files = [], onFileMove }: Folder
                     <Folder className="h-4 w-4 text-primary" />
                   )}
                   <span className="font-medium">{folder.name}</span>
-                  <Badge variant="secondary" className="text-xs">
+                  <Badge variant="secondary" className="text-[11px]">
                     {folder.fileCount || 0} files
                   </Badge>
                   {folder.type && (
-                    <Badge variant="outline" className="text-xs">
+                    <Badge variant="outline" className="text-[11px]">
                       {folder.type}
                     </Badge>
                   )}
@@ -280,14 +280,14 @@ export function FolderOrganization({ projectId, files = [], onFileMove }: Folder
                       .map((file: any) => (
                         <div 
                           key={file.id}
-                          className="flex items-center gap-2 py-1 px-2 hover:bg-surface-hover-solid rounded text-sm"
+                          className="flex items-center gap-2 py-1 px-2 hover:bg-surface-hover-solid rounded text-[13px]"
                         >
                           <FileText className="h-3 w-3 text-muted-foreground" />
                           <span>{file.name}</span>
                         </div>
                       ))}
                     {files.filter((file: any) => file.folderId === folder.id).length === 0 && (
-                      <p className="text-sm text-muted-foreground italic">
+                      <p className="text-[13px] text-muted-foreground italic">
                         Drop files here to organize
                       </p>
                     )}
@@ -302,11 +302,11 @@ export function FolderOrganization({ projectId, files = [], onFileMove }: Folder
               <div className="text-center text-muted-foreground">
                 <Folder className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p className="mb-4">No folders yet</p>
-                <p className="text-sm mb-6">Create folders to organize your project files</p>
+                <p className="text-[13px] mb-6">Create folders to organize your project files</p>
                 
                 {/* Folder suggestions */}
                 <div className="space-y-2">
-                  <p className="text-xs uppercase tracking-wide mb-3">Quick create:</p>
+                  <p className="text-[11px] uppercase tracking-wide mb-3">Quick create:</p>
                   <div className="flex flex-wrap gap-2 justify-center">
                     {defaultFolders.map((suggestion) => (
                       <Button
@@ -332,9 +332,9 @@ export function FolderOrganization({ projectId, files = [], onFileMove }: Folder
       {folders.length > 0 && (
         <Card className="bg-muted/50">
           <CardHeader className="py-3">
-            <CardTitle className="text-sm">Organization Tips</CardTitle>
+            <CardTitle className="text-[13px]">Organization Tips</CardTitle>
           </CardHeader>
-          <CardContent className="py-3 space-y-1 text-xs text-muted-foreground">
+          <CardContent className="py-3 space-y-1 text-[11px] text-muted-foreground">
             <p>• Drag and drop files into folders to organize them</p>
             <p>• Use descriptive folder names for better organization</p>
             <p>• Create nested folders for complex projects</p>

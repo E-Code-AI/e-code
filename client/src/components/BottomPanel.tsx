@@ -106,14 +106,14 @@ const BottomPanel = ({ activeFile, projectId }: BottomPanelProps) => {
           <ScrollArea className="h-full">
             <div className="p-4 space-y-1">
               {logs.length === 0 ? (
-                <div className="text-muted-foreground text-sm py-8 text-center">
+                <div className="text-muted-foreground text-[13px] py-8 text-center">
                   Console is empty
                 </div>
               ) : (
                 logs.map(log => (
-                  <div key={log.id} className="flex text-sm">
+                  <div key={log.id} className="flex text-[13px]">
                     <div className="flex items-center gap-2 min-w-0">
-                      <span className="text-muted-foreground text-xs shrink-0">
+                      <span className="text-muted-foreground text-[11px] shrink-0">
                         {formatTimestamp(log.timestamp)}
                       </span>
                       <span className="shrink-0">
@@ -134,12 +134,12 @@ const BottomPanel = ({ activeFile, projectId }: BottomPanelProps) => {
           <ScrollArea className="h-full">
             <div className="p-4 space-y-2">
               {problems.length === 0 ? (
-                <div className="text-muted-foreground text-sm py-8 text-center">
+                <div className="text-muted-foreground text-[13px] py-8 text-center">
                   No problems detected
                 </div>
               ) : (
                 problems.map(problem => (
-                  <div key={problem.id} className="flex text-sm gap-2 p-2 hover:bg-surface-hover-solid rounded-md cursor-pointer">
+                  <div key={problem.id} className="flex text-[13px] gap-2 p-2 hover:bg-surface-hover-solid rounded-md cursor-pointer">
                     <div className="shrink-0 mt-0.5">
                       {problem.type === "error" ? (
                         <AlertCircle className="h-4 w-4 text-red-500" />
@@ -151,7 +151,7 @@ const BottomPanel = ({ activeFile, projectId }: BottomPanelProps) => {
                       <span className="break-all font-medium">
                         {problem.message}
                       </span>
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-[11px] text-muted-foreground">
                         Line {problem.line}, Column {problem.column}
                       </span>
                     </div>
@@ -168,7 +168,7 @@ const BottomPanel = ({ activeFile, projectId }: BottomPanelProps) => {
               {projectId ? (
                 <ReplitWorkflows projectId={projectId} />
               ) : (
-                <div className="text-sm text-muted-foreground py-8 text-center">
+                <div className="text-[13px] text-muted-foreground py-8 text-center">
                   Project information unavailable. Open a project to manage workflows.
                 </div>
               )}

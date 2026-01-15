@@ -159,14 +159,14 @@ export function ReplitResourceMonitor({ projectId, className }: ResourceMonitorP
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <Cpu className="h-4 w-4" />
-                  <span className="text-sm font-medium">CPU</span>
+                  <span className="text-[13px] font-medium">CPU</span>
                 </div>
                 <span className={cn("text-2xl font-bold", getUsageColor(cpuUsage))}>
                   {cpuUsage.toFixed(1)}%
                 </span>
               </div>
               <Progress value={cpuUsage} className="h-2" />
-              <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
+              <div className="flex items-center justify-between mt-2 text-[11px] text-muted-foreground">
                 <span>{currentMetrics?.cpu.cores} cores</span>
                 <span>{currentMetrics?.cpu.processes} processes</span>
               </div>
@@ -176,14 +176,14 @@ export function ReplitResourceMonitor({ projectId, className }: ResourceMonitorP
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <MemoryStick className="h-4 w-4" />
-                  <span className="text-sm font-medium">Memory</span>
+                  <span className="text-[13px] font-medium">Memory</span>
                 </div>
                 <span className={cn("text-2xl font-bold", getUsageColor(memoryUsage))}>
                   {memoryUsage.toFixed(1)}%
                 </span>
               </div>
               <Progress value={memoryUsage} className="h-2" />
-              <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
+              <div className="flex items-center justify-between mt-2 text-[11px] text-muted-foreground">
                 <span>{formatBytes(currentMetrics?.memory.used || 0)}</span>
                 <span>{formatBytes(currentMetrics?.memory.total || 0)}</span>
               </div>
@@ -193,14 +193,14 @@ export function ReplitResourceMonitor({ projectId, className }: ResourceMonitorP
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <HardDrive className="h-4 w-4" />
-                  <span className="text-sm font-medium">Disk</span>
+                  <span className="text-[13px] font-medium">Disk</span>
                 </div>
                 <span className={cn("text-2xl font-bold", getUsageColor(diskUsage))}>
                   {diskUsage.toFixed(1)}%
                 </span>
               </div>
               <Progress value={diskUsage} className="h-2" />
-              <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
+              <div className="flex items-center justify-between mt-2 text-[11px] text-muted-foreground">
                 <span>{formatBytes(currentMetrics?.disk.used || 0)}</span>
                 <span>{formatBytes(currentMetrics?.disk.total || 0)}</span>
               </div>
@@ -210,11 +210,11 @@ export function ReplitResourceMonitor({ projectId, className }: ResourceMonitorP
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <Network className="h-4 w-4" />
-                  <span className="text-sm font-medium">Network</span>
+                  <span className="text-[13px] font-medium">Network</span>
                 </div>
                 <Zap className="h-4 w-4 text-green-500" />
               </div>
-              <div className="space-y-1 text-xs">
+              <div className="space-y-1 text-[11px]">
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">↓ Download</span>
                   <span>{formatSpeed(currentMetrics?.network.download || 0)}</span>
@@ -262,7 +262,7 @@ export function ReplitResourceMonitor({ projectId, className }: ResourceMonitorP
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-full">
                 {/* CPU Chart */}
                 <div className="border rounded-lg p-4">
-                  <h3 className="text-sm font-medium mb-4 flex items-center gap-2">
+                  <h3 className="text-[13px] font-medium mb-4 flex items-center gap-2">
                     <Cpu className="h-4 w-4" />
                     CPU Usage
                   </h3>
@@ -288,7 +288,7 @@ export function ReplitResourceMonitor({ projectId, className }: ResourceMonitorP
 
                 {/* Memory Chart */}
                 <div className="border rounded-lg p-4">
-                  <h3 className="text-sm font-medium mb-4 flex items-center gap-2">
+                  <h3 className="text-[13px] font-medium mb-4 flex items-center gap-2">
                     <MemoryStick className="h-4 w-4" />
                     Memory Usage
                   </h3>
@@ -314,7 +314,7 @@ export function ReplitResourceMonitor({ projectId, className }: ResourceMonitorP
 
                 {/* Network Chart */}
                 <div className="border rounded-lg p-4">
-                  <h3 className="text-sm font-medium mb-4 flex items-center gap-2">
+                  <h3 className="text-[13px] font-medium mb-4 flex items-center gap-2">
                     <Network className="h-4 w-4" />
                     Network I/O
                   </h3>
@@ -347,7 +347,7 @@ export function ReplitResourceMonitor({ projectId, className }: ResourceMonitorP
 
                 {/* Disk I/O Chart */}
                 <div className="border rounded-lg p-4">
-                  <h3 className="text-sm font-medium mb-4 flex items-center gap-2">
+                  <h3 className="text-[13px] font-medium mb-4 flex items-center gap-2">
                     <HardDrive className="h-4 w-4" />
                     Disk I/O
                   </h3>
@@ -399,15 +399,15 @@ export function ReplitResourceMonitor({ projectId, className }: ResourceMonitorP
                           </Badge>
                           <div>
                             <p className="font-medium">{process.name}</p>
-                            <p className="text-sm text-muted-foreground">PID: {process.pid}</p>
+                            <p className="text-[13px] text-muted-foreground">PID: {process.pid}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-4">
                           <div className="text-right">
-                            <p className={cn("text-sm font-medium", getUsageColor(process.cpu))}>
+                            <p className={cn("text-[13px] font-medium", getUsageColor(process.cpu))}>
                               {process.cpu.toFixed(1)}% CPU
                             </p>
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-[13px] text-muted-foreground">
                               {formatBytes(process.memory)} RAM
                             </p>
                           </div>

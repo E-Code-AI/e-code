@@ -94,7 +94,7 @@ export function AutoSaveIndicator({ status, lastSaved, className }: AutoSaveIndi
     <Badge 
       variant="outline" 
       className={cn(
-        "text-xs px-2 py-1 flex items-center gap-1.5 transition-all",
+        "text-[11px] px-2 py-1 flex items-center gap-1.5 transition-all",
         getStatusColor(),
         className
       )}

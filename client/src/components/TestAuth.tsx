@@ -48,7 +48,7 @@ export function TestAuth() {
           </div>
         ) : user ? (
           <div className="space-y-4">
-            <div className="text-sm">
+            <div className="text-[13px]">
               <p><strong>User ID:</strong> {user.id}</p>
               <p><strong>Username:</strong> {user.username}</p>
               {user.email && <p><strong>Email:</strong> {user.email}</p>}
@@ -72,7 +72,7 @@ export function TestAuth() {
             )}
             <div className="grid gap-4">
               <div className="grid gap-2">
-                <label htmlFor="username" className="text-sm font-medium">Username</label>
+                <label htmlFor="username" className="text-[13px] font-medium">Username</label>
                 <Input 
                   id="username"
                   value={username}
@@ -81,7 +81,7 @@ export function TestAuth() {
                 />
               </div>
               <div className="grid gap-2">
-                <label htmlFor="password" className="text-sm font-medium">Password</label>
+                <label htmlFor="password" className="text-[13px] font-medium">Password</label>
                 <Input 
                   id="password"
                   type="password"
@@ -114,7 +114,7 @@ export function TestAuth() {
           </div>
         )}
       </CardContent>
-      <CardFooter className="text-xs text-muted-foreground">
+      <CardFooter className="text-[11px] text-muted-foreground">
         This component is for testing authentication during development.
       </CardFooter>
     </Card>

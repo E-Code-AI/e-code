@@ -64,11 +64,11 @@ export function ErrorRateChart({ data, realTime, detailed }: ErrorRateChartProps
             <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
             <XAxis 
               dataKey="time" 
-              className="text-xs"
+              className="text-[11px]"
               tick={{ fill: 'currentColor' }}
             />
             <YAxis 
-              className="text-xs"
+              className="text-[11px]"
               tick={{ fill: 'currentColor' }}
               label={{ value: 'Error Rate (%)', angle: -90, position: 'insideLeft' }}
             />
@@ -94,17 +94,17 @@ export function ErrorRateChart({ data, realTime, detailed }: ErrorRateChartProps
         
         {detailed && currentErrorRate > 0 && (
           <div className="mt-4 space-y-2">
-            <p className="text-sm font-semibold">Recent Errors</p>
+            <p className="text-[13px] font-semibold">Recent Errors</p>
             <div className="space-y-1">
-              <div className="flex justify-between text-xs">
+              <div className="flex justify-between text-[11px]">
                 <span className="text-muted-foreground">404 Not Found</span>
                 <span>23%</span>
               </div>
-              <div className="flex justify-between text-xs">
+              <div className="flex justify-between text-[11px]">
                 <span className="text-muted-foreground">500 Internal Server</span>
                 <span>15%</span>
               </div>
-              <div className="flex justify-between text-xs">
+              <div className="flex justify-between text-[11px]">
                 <span className="text-muted-foreground">401 Unauthorized</span>
                 <span>8%</span>
               </div>

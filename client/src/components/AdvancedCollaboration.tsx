@@ -212,12 +212,12 @@ export function AdvancedCollaboration() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Collaborators</CardTitle>
+            <CardTitle className="text-[13px] font-medium">Active Collaborators</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{collaborationStats.activeUsers}</div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[11px] text-muted-foreground">
               of {collaborationStats.totalSessions} total sessions
             </p>
           </CardContent>
@@ -225,12 +225,12 @@ export function AdvancedCollaboration() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Voice Participants</CardTitle>
+            <CardTitle className="text-[13px] font-medium">Voice Participants</CardTitle>
             <Mic className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{collaborationStats.voiceParticipants}</div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[11px] text-muted-foreground">
               In voice channel
             </p>
           </CardContent>
@@ -238,12 +238,12 @@ export function AdvancedCollaboration() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Screen Shares</CardTitle>
+            <CardTitle className="text-[13px] font-medium">Screen Shares</CardTitle>
             <ScreenShare className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{collaborationStats.screenShares}</div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[11px] text-muted-foreground">
               Active streams
             </p>
           </CardContent>
@@ -251,12 +251,12 @@ export function AdvancedCollaboration() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Sync Quality</CardTitle>
+            <CardTitle className="text-[13px] font-medium">Sync Quality</CardTitle>
             <Zap className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">98.5%</div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[11px] text-muted-foreground">
               Real-time sync accuracy
             </p>
           </CardContent>
@@ -299,20 +299,20 @@ export function AdvancedCollaboration() {
                             style={{ backgroundColor: collaborator.color }}
                           />
                         </div>
-                        <div className="text-sm text-muted-foreground">
+                        <div className="text-[13px] text-muted-foreground">
                           {collaborator.activeFile ? `Editing ${collaborator.activeFile}` : 'Browsing project'}
                         </div>
                       </div>
                     </div>
                     <div className="text-right">
-                      <Badge variant="outline" className={`text-xs ${
+                      <Badge variant="outline" className={`text-[11px] ${
                         collaborator.status === 'active' ? 'border-green-500 text-green-600' :
                         collaborator.status === 'idle' ? 'border-yellow-500 text-yellow-600' :
                         'border-gray-500 text-gray-600'
                       }`}>
                         {getStatusText(collaborator.status)}
                       </Badge>
-                      <div className="text-xs text-muted-foreground mt-1">
+                      <div className="text-[11px] text-muted-foreground mt-1">
                         {formatLastActivity(collaborator.lastActivity)}
                       </div>
                     </div>
@@ -347,7 +347,7 @@ export function AdvancedCollaboration() {
                     <div className="font-medium">
                       {voiceConnected ? 'Connected to Voice' : 'Join Voice Channel'}
                     </div>
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-[13px] text-muted-foreground">
                       {voiceConnected ? `${voiceParticipants.length} participants` : 'Click to join voice chat'}
                     </div>
                   </div>
@@ -405,11 +405,11 @@ export function AdvancedCollaboration() {
                             <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${participant.username}`} />
                             <AvatarFallback>{participant.username.slice(0, 2).toUpperCase()}</AvatarFallback>
                           </Avatar>
-                          <span className="text-sm font-medium">{participant.username}</span>
+                          <span className="text-[13px] font-medium">{participant.username}</span>
                           {participant.isSpeaking && (
                             <div className="flex items-center space-x-1">
                               <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse" />
-                              <span className="text-xs text-green-600">Speaking</span>
+                              <span className="text-[11px] text-green-600">Speaking</span>
                             </div>
                           )}
                         </div>
@@ -435,7 +435,7 @@ export function AdvancedCollaboration() {
                     <div className="font-medium">
                       {isScreenSharing ? 'Sharing Screen' : 'Screen Share'}
                     </div>
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-[13px] text-muted-foreground">
                       {isScreenSharing ? 'Your screen is visible to collaborators' : 'Share your screen with the team'}
                     </div>
                   </div>
@@ -470,8 +470,8 @@ export function AdvancedCollaboration() {
                         <div className="flex items-center space-x-3">
                           <Monitor className="h-5 w-5 text-blue-600" />
                           <div>
-                            <div className="text-sm font-medium">{share.username}'s screen</div>
-                            <div className="text-xs text-muted-foreground">
+                            <div className="text-[13px] font-medium">{share.username}'s screen</div>
+                            <div className="text-[11px] text-muted-foreground">
                               Quality: {share.quality} • Stream ID: {share.streamId}
                             </div>
                           </div>
@@ -503,7 +503,7 @@ export function AdvancedCollaboration() {
               {/* Chat Messages */}
               <div className="h-64 overflow-y-auto space-y-2 p-2 bg-gray-50 rounded-lg">
                 {chatMessages.length === 0 ? (
-                  <div className="text-center text-muted-foreground text-sm py-8">
+                  <div className="text-center text-muted-foreground text-[13px] py-8">
                     <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-50" />
                     <p>No messages yet</p>
                     <p>Start a conversation!</p>
@@ -512,12 +512,12 @@ export function AdvancedCollaboration() {
                   chatMessages.map((message) => (
                     <div key={message.id} className="space-y-1">
                       <div className="flex items-center space-x-2">
-                        <span className="text-xs font-medium">{message.username}</span>
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-[11px] font-medium">{message.username}</span>
+                        <span className="text-[11px] text-muted-foreground">
                           {new Date(message.createdAt).toLocaleTimeString()}
                         </span>
                       </div>
-                      <div className="text-sm bg-white p-2 rounded border">
+                      <div className="text-[13px] bg-white p-2 rounded border">
                         {message.content}
                       </div>
                     </div>
@@ -569,7 +569,7 @@ export function AdvancedCollaboration() {
                 <Label>Max Concurrent Users</Label>
                 <div className="flex items-center space-x-2 mt-1">
                   <Progress value={collaborationStats.activeUsers / 50 * 100} className="flex-1" />
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-[13px] text-muted-foreground">
                     {collaborationStats.activeUsers}/50
                   </span>
                 </div>

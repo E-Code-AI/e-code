@@ -25,7 +25,7 @@ export default function LandingStats() {
               <div className="text-4xl font-bold bg-gradient-to-r from-ecode-orange via-ecode-orange-light to-ecode-yellow bg-clip-text text-transparent" data-testid={`text-stat-value-${index}`}>
                 {stat.value}
               </div>
-              <div className="text-sm text-[var(--ecode-text-muted)] mt-1" data-testid={`text-stat-label-${index}`}>
+              <div className="text-[13px] text-[var(--ecode-text-muted)] mt-1" data-testid={`text-stat-label-${index}`}>
                 {stat.label}
               </div>
             </div>

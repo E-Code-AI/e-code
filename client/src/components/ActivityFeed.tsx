@@ -71,9 +71,9 @@ const ActivityFeed = memo(function ActivityFeed() {
           <LazyAnimatePresence mode="popLayout">
             <div className="space-y-4">
               {isLoading ? (
-                <p className="text-sm text-muted-foreground text-center py-4">Loading activity...</p>
+                <p className="text-[13px] text-muted-foreground text-center py-4">Loading activity...</p>
               ) : activityFeed.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-4">No recent activity</p>
+                <p className="text-[13px] text-muted-foreground text-center py-4">No recent activity</p>
               ) : activityFeed.map((item) => (
                 <LazyMotionDiv
                   key={item.id}
@@ -84,7 +84,7 @@ const ActivityFeed = memo(function ActivityFeed() {
                   className="flex items-start space-x-3 gpu-accelerated"
                 >
                   <div className="flex-shrink-0 mt-1">
-                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm">
+                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-[13px]">
                       {item.avatar}
                     </div>
                   </div>
@@ -92,14 +92,14 @@ const ActivityFeed = memo(function ActivityFeed() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
                         <ActivityIcon type={item.type} />
-                        <span className="font-medium text-sm">{item.user}</span>
-                        <span className="text-sm text-muted-foreground">
+                        <span className="font-medium text-[13px]">{item.user}</span>
+                        <span className="text-[13px] text-muted-foreground">
                           {item.type === 'deploy' && 'deployed'}
                           {item.type === 'commit' && 'committed to'}
                           {item.type === 'build' && 'built'}
                           {item.type === 'error' && 'error in'}
                         </span>
-                        <span className="font-medium text-sm">{item.project}</span>
+                        <span className="font-medium text-[13px]">{item.project}</span>
                       </div>
                       {item.status && (
                         <Badge
@@ -107,16 +107,16 @@ const ActivityFeed = memo(function ActivityFeed() {
                             item.status === 'success' ? 'default' :
                             item.status === 'error' ? 'destructive' : 'secondary'
                           }
-                          className="text-xs"
+                          className="text-[11px]"
                         >
                           {item.status}
                         </Badge>
                       )}
                     </div>
                     {item.message && (
-                      <p className="text-sm text-muted-foreground">{item.message}</p>
+                      <p className="text-[13px] text-muted-foreground">{item.message}</p>
                     )}
-                    <p className="text-xs text-muted-foreground">{item.time}</p>
+                    <p className="text-[11px] text-muted-foreground">{item.time}</p>
                   </div>
                 </LazyMotionDiv>
               ))}

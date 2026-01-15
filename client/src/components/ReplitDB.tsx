@@ -292,10 +292,10 @@ export function ReplitDB({ projectId, className }: ReplitDBProps) {
   const getValuePreview = (value: any, type: DBEntry['type']) => {
     if (type === 'null') return <span className="text-muted-foreground">null</span>;
     if (type === 'boolean') return <Badge variant={value ? 'default' : 'secondary'}>{String(value)}</Badge>;
-    if (type === 'number') return <code className="text-sm">{value}</code>;
-    if (type === 'string') return <span className="text-sm truncate max-w-[200px] inline-block">{value}</span>;
-    if (type === 'array') return <span className="text-sm text-muted-foreground">[{value.length} items]</span>;
-    if (type === 'object') return <span className="text-sm text-muted-foreground">{Object.keys(value).length} properties</span>;
+    if (type === 'number') return <code className="text-[13px]">{value}</code>;
+    if (type === 'string') return <span className="text-[13px] truncate max-w-[200px] inline-block">{value}</span>;
+    if (type === 'array') return <span className="text-[13px] text-muted-foreground">[{value.length} items]</span>;
+    if (type === 'object') return <span className="text-[13px] text-muted-foreground">{Object.keys(value).length} properties</span>;
   };
 
   const getValueType = (value: any): DBEntry['type'] => {
@@ -394,7 +394,7 @@ export function ReplitDB({ projectId, className }: ReplitDBProps) {
             </div>
             
             {stats && (
-              <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="grid grid-cols-2 gap-2 text-[11px]">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Total Keys:</span>
                   <span className="font-medium">{stats.totalKeys}</span>
@@ -430,13 +430,13 @@ export function ReplitDB({ projectId, className }: ReplitDBProps) {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center space-x-1 mb-1">
                             {getTypeIcon(entry.type)}
-                            <span className="text-sm font-medium truncate">{entry.key}</span>
+                            <span className="text-[13px] font-medium truncate">{entry.key}</span>
                           </div>
-                          <div className="text-xs text-muted-foreground">
+                          <div className="text-[11px] text-muted-foreground">
                             {getValuePreview(entry.value, entry.type)}
                           </div>
                         </div>
-                        <Badge variant="outline" className="text-xs ml-2">
+                        <Badge variant="outline" className="text-[11px] ml-2">
                           {formatSize(entry.size)}
                         </Badge>
                       </div>
@@ -457,10 +457,10 @@ export function ReplitDB({ projectId, className }: ReplitDBProps) {
                         <span className="ml-2">{selectedEntry.key}</span>
                       </h3>
                       <div className="flex items-center space-x-2 mt-1">
-                        <Badge variant="secondary" className="text-xs">
+                        <Badge variant="secondary" className="text-[11px]">
                           {selectedEntry.type}
                         </Badge>
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-[11px] text-muted-foreground">
                           {formatSize(selectedEntry.size)}
                         </span>
                       </div>
@@ -525,12 +525,12 @@ export function ReplitDB({ projectId, className }: ReplitDBProps) {
                       <Textarea
                         value={editValue}
                         onChange={(e) => setEditValue(e.target.value)}
-                        className="h-full font-mono text-xs resize-none"
+                        className="h-full font-mono text-[11px] resize-none"
                         placeholder="Enter value..."
                       />
                     ) : (
                       <ScrollArea className="h-full">
-                        <pre className="text-xs p-3 bg-muted rounded">
+                        <pre className="text-[11px] p-3 bg-muted rounded">
                           <code>{JSON.stringify(selectedEntry.value, null, 2)}</code>
                         </pre>
                       </ScrollArea>
@@ -541,7 +541,7 @@ export function ReplitDB({ projectId, className }: ReplitDBProps) {
                 <div className="h-full flex items-center justify-center text-muted-foreground">
                   <div className="text-center">
                     <Database className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                    <p className="text-sm">Select a key to view its value</p>
+                    <p className="text-[13px]">Select a key to view its value</p>
                   </div>
                 </div>
               )}
@@ -610,7 +610,7 @@ export function ReplitDB({ projectId, className }: ReplitDBProps) {
                     newValueType === 'number' ? '42' :
                     'Enter value...'
                   }
-                  className="font-mono text-sm"
+                  className="font-mono text-[13px]"
                 />
               )}
             </div>

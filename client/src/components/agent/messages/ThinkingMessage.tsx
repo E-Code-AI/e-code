@@ -49,7 +49,7 @@ export function ThinkingMessage({ steps, isStreaming, totalTokens, thinkingTime 
           <div className="p-1.5 rounded-md bg-gradient-to-br from-violet-500/10 to-fuchsia-500/10 flex-shrink-0">
             <Brain className="h-5 w-5 md:h-4 md:w-4 text-violet-500" />
           </div>
-          <span className="text-sm font-medium text-[var(--ecode-text)] truncate">
+          <span className="text-[13px] font-medium text-[var(--ecode-text)] truncate">
             {isStreaming ? 'Thinking...' : 'Thought Process'}
           </span>
           {isStreaming && <VibingAnimation size="sm" />}
@@ -57,17 +57,17 @@ export function ThinkingMessage({ steps, isStreaming, totalTokens, thinkingTime 
         
         <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
           {!isStreaming && thinkingTime && (
-            <Badge variant="outline" className="text-xs whitespace-nowrap">
+            <Badge variant="outline" className="text-[11px] whitespace-nowrap">
               {thinkingTime}ms
             </Badge>
           )}
           {!isStreaming && totalTokens && (
-            <Badge variant="outline" className="text-xs whitespace-nowrap">
+            <Badge variant="outline" className="text-[11px] whitespace-nowrap">
               {totalTokens} tokens
             </Badge>
           )}
           {safeSteps.length > 0 && (
-            <Badge variant="outline" className="text-xs whitespace-nowrap">
+            <Badge variant="outline" className="text-[11px] whitespace-nowrap">
               {safeSteps.filter(s => s.status === 'completed').length}/{safeSteps.length} steps
             </Badge>
           )}
@@ -101,20 +101,20 @@ export function ThinkingMessage({ steps, isStreaming, totalTokens, thinkingTime 
               {/* Content */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className={cn("text-xs font-medium", config.color)}>
+                  <span className={cn("text-[11px] font-medium", config.color)}>
                     {config.label}
                   </span>
                   {step.duration && (
-                    <span className="text-xs text-[var(--ecode-text-secondary)]">
+                    <span className="text-[11px] text-[var(--ecode-text-secondary)]">
                       {step.duration}ms
                     </span>
                   )}
                 </div>
-                <div className="text-sm font-medium text-[var(--ecode-text)] mb-1">
+                <div className="text-[13px] font-medium text-[var(--ecode-text)] mb-1">
                   {step.title}
                 </div>
                 {step.content && (
-                  <div className="text-xs text-[var(--ecode-text-secondary)] leading-relaxed">
+                  <div className="text-[11px] text-[var(--ecode-text-secondary)] leading-relaxed">
                     {step.content}
                   </div>
                 )}
@@ -127,7 +127,7 @@ export function ThinkingMessage({ steps, isStreaming, totalTokens, thinkingTime 
           {isStreaming && safeSteps.length === 0 && (
             <div className="flex items-center gap-3 p-3 rounded-md bg-blue-50 dark:bg-blue-950/10 border border-blue-200 dark:border-blue-800">
               <VibingAnimation />
-              <span className="text-sm text-[var(--ecode-text)]">
+              <span className="text-[13px] text-[var(--ecode-text)]">
                 Processing your request...
               </span>
             </div>

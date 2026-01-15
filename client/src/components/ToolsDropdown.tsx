@@ -94,14 +94,14 @@ export const ToolsDropdown: React.FC<ToolsDropdownProps> = ({ onSelectTool, curr
           <input
             type="text"
             placeholder="Search for files & tools..."
-            className="w-full px-3 py-2 text-sm bg-muted rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full px-3 py-2 text-[13px] bg-muted rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
           />
         </div>
         
         <DropdownMenuSeparator />
         
         <div className="p-1">
-          <div className="text-xs font-medium text-muted-foreground px-2 py-1">Tools</div>
+          <div className="text-[11px] font-medium text-muted-foreground px-2 py-1">Tools</div>
           {tools.map((tool) => {
             const Icon = tool.icon;
             const isActive = currentTools.includes(tool.id);
@@ -114,7 +114,7 @@ export const ToolsDropdown: React.FC<ToolsDropdownProps> = ({ onSelectTool, curr
                 data-testid={`tool-${tool.id}`}
               >
                 <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
-                <span className="font-medium text-sm truncate">{tool.label}</span>
+                <span className="font-medium text-[13px] truncate">{tool.label}</span>
                 {isActive && (
                   <span className="ml-auto text-[10px] text-muted-foreground shrink-0">Active</span>
                 )}

@@ -16,7 +16,7 @@ const EditorFallback = () => (
   <div className="h-full flex items-center justify-center bg-[var(--ecode-editor-bg)]">
     <div className="flex flex-col items-center gap-2">
       <Loader2 className="h-6 w-6 animate-spin text-[var(--ecode-accent)]" />
-      <p className="text-sm text-[var(--ecode-text-secondary)]">Loading editor...</p>
+      <p className="text-[13px] text-[var(--ecode-text-secondary)]">Loading editor...</p>
     </div>
   </div>
 );
@@ -25,7 +25,7 @@ const TerminalFallback = () => (
   <div className="h-full flex items-center justify-center bg-[var(--ecode-editor-bg)]">
     <div className="flex flex-col items-center gap-2">
       <Loader2 className="h-5 w-5 animate-spin text-[var(--ecode-accent)]" />
-      <p className="text-xs text-[var(--ecode-text-secondary)]">Loading terminal...</p>
+      <p className="text-[11px] text-[var(--ecode-text-secondary)]">Loading terminal...</p>
     </div>
   </div>
 );
@@ -130,7 +130,7 @@ export function AdvancedEditorIntegration({
                       <div className="text-6xl mb-4 text-[var(--ecode-text-secondary)]">
                         📁
                       </div>
-                      <h3 className="text-lg font-medium text-[var(--ecode-text)] mb-2">
+                      <h3 className="text-[15px] font-medium text-[var(--ecode-text)] mb-2">
                         Welcome to Your Workspace
                       </h3>
                       <p className="text-[var(--ecode-text-secondary)] mb-4">

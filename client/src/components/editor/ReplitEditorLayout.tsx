@@ -40,7 +40,7 @@ const TerminalFallback = () => (
   <div className="h-full flex items-center justify-center bg-background">
     <div className="flex flex-col items-center gap-2">
       <Loader2 className="h-5 w-5 animate-spin text-primary" />
-      <p className="text-xs text-muted-foreground">Loading terminal...</p>
+      <p className="text-[11px] text-muted-foreground">Loading terminal...</p>
     </div>
   </div>
 );
@@ -114,7 +114,7 @@ export function ReplitEditorLayout({
         <div className="flex items-center justify-center h-screen bg-muted">
           <div className="flex flex-col items-center gap-2">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            <p className="text-sm text-muted-foreground">Loading editor layout...</p>
+            <p className="text-[13px] text-muted-foreground">Loading editor layout...</p>
           </div>
         </div>
       }>
@@ -228,7 +228,7 @@ export function ReplitEditorLayout({
       default:
         return (
           <div className="p-4 text-center text-muted-foreground">
-            <p className="text-sm">{activeTool} coming soon...</p>
+            <p className="text-[13px]">{activeTool} coming soon...</p>
           </div>
         );
     }
@@ -323,7 +323,7 @@ export function ReplitEditorLayout({
               onClick={() => setMobileBottomPanelOpen(!mobileBottomPanelOpen)}
               className="p-2 border-t border-border bg-muted flex items-center justify-between"
             >
-              <span className="text-sm text-foreground">Console</span>
+              <span className="text-[13px] text-foreground">Console</span>
               {mobileBottomPanelOpen ? (
                 <ChevronDown className="h-4 w-4 text-muted-foreground" />
               ) : (
@@ -392,7 +392,7 @@ export function ReplitEditorLayout({
                 <div className="h-full bg-background border-t border-border">
                   {/* Console/Terminal Header */}
                   <div className="h-8 flex items-center justify-between px-3 bg-background border-b border-border">
-                    <div className="flex items-center gap-2 text-xs font-medium text-status-success">
+                    <div className="flex items-center gap-2 text-[11px] font-medium text-status-success">
                       <TerminalIcon className="h-3.5 w-3.5" />
                       Console
                     </div>
@@ -439,7 +439,7 @@ export function ReplitEditorLayout({
                         key={panel.id}
                         onClick={() => handleRightPanelChange(panel.id)}
                         className={cn(
-                          "px-3 py-1 text-sm font-medium transition-colors rounded-md mr-1",
+                          "px-3 py-1 text-[13px] font-medium transition-colors rounded-md mr-1",
                           isActive
                             ? "bg-muted text-foreground"
                             : "text-muted-foreground hover:text-foreground hover:bg-muted"
@@ -505,7 +505,7 @@ export function ReplitEditorLayout({
           className="fixed bottom-4 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-background border border-border rounded-md shadow-sm hover:shadow-md transition-shadow flex items-center gap-2"
         >
           <TerminalIcon className="h-3.5 w-3.5 text-muted-foreground" />
-          <span className="text-sm text-muted-foreground">Console</span>
+          <span className="text-[13px] text-muted-foreground">Console</span>
         </button>
       )}
     </div>

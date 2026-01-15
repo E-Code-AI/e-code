@@ -207,14 +207,14 @@ export const ScalabilityDashboard: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">System Status</CardTitle>
+            <CardTitle className="text-[13px] font-medium">System Status</CardTitle>
             {getStatusIcon(clusterStatus?.status || 'unknown')}
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold capitalize">
               {clusterStatus?.status || 'Loading...'}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[11px] text-muted-foreground">
               All systems operational
             </p>
           </CardContent>
@@ -222,14 +222,14 @@ export const ScalabilityDashboard: React.FC = () => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Containers</CardTitle>
+            <CardTitle className="text-[13px] font-medium">Active Containers</CardTitle>
             <Server className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
               {clusterStatus?.cluster.metrics.activeContainers || 0}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[11px] text-muted-foreground">
               Running instances
             </p>
           </CardContent>
@@ -237,7 +237,7 @@ export const ScalabilityDashboard: React.FC = () => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">CPU Usage</CardTitle>
+            <CardTitle className="text-[13px] font-medium">CPU Usage</CardTitle>
             <Cpu className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -253,7 +253,7 @@ export const ScalabilityDashboard: React.FC = () => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Memory Usage</CardTitle>
+            <CardTitle className="text-[13px] font-medium">Memory Usage</CardTitle>
             <HardDrive className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -291,7 +291,7 @@ export const ScalabilityDashboard: React.FC = () => {
                     <Database className="h-5 w-5" />
                     <div>
                       <p className="font-medium">Redis Cache</p>
-                      <p className="text-sm text-muted-foreground">In-memory data store</p>
+                      <p className="text-[13px] text-muted-foreground">In-memory data store</p>
                     </div>
                   </div>
                   <Badge variant={getStatusColor(clusterStatus?.services.redis || 'unknown')}>
@@ -304,7 +304,7 @@ export const ScalabilityDashboard: React.FC = () => {
                     <Shield className="h-5 w-5" />
                     <div>
                       <p className="font-medium">Database Pool</p>
-                      <p className="text-sm text-muted-foreground">Connection pooling</p>
+                      <p className="text-[13px] text-muted-foreground">Connection pooling</p>
                     </div>
                   </div>
                   <Badge variant={getStatusColor(clusterStatus?.services.database || 'unknown')}>
@@ -317,7 +317,7 @@ export const ScalabilityDashboard: React.FC = () => {
                     <Globe className="h-5 w-5" />
                     <div>
                       <p className="font-medium">CDN</p>
-                      <p className="text-sm text-muted-foreground">Content delivery</p>
+                      <p className="text-[13px] text-muted-foreground">Content delivery</p>
                     </div>
                   </div>
                   <Badge variant={getStatusColor(clusterStatus?.services.cdn || 'unknown')}>
@@ -387,15 +387,15 @@ export const ScalabilityDashboard: React.FC = () => {
                         <Server className="h-5 w-5 text-muted-foreground" />
                         <div>
                           <p className="font-medium">{container.id}</p>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-[13px] text-muted-foreground">
                             Project: {container.projectId} • Port: {container.port}
                           </p>
                         </div>
                       </div>
                       <div className="flex items-center space-x-4">
                         <div className="text-right">
-                          <p className="text-sm">CPU: {container.resources.cpuLimit}%</p>
-                          <p className="text-sm">Memory: {container.resources.memoryLimit}MB</p>
+                          <p className="text-[13px]">CPU: {container.resources.cpuLimit}%</p>
+                          <p className="text-[13px]">Memory: {container.resources.memoryLimit}MB</p>
                         </div>
                         <Badge variant={getStatusColor(container.status)}>
                           {container.status}
@@ -420,26 +420,26 @@ export const ScalabilityDashboard: React.FC = () => {
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div>
-                      <p className="text-sm text-muted-foreground">Total Connections</p>
+                      <p className="text-[13px] text-muted-foreground">Total Connections</p>
                       <p className="text-2xl font-bold">{poolStats.stats.totalConnections}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Active</p>
+                      <p className="text-[13px] text-muted-foreground">Active</p>
                       <p className="text-2xl font-bold">{poolStats.stats.activeConnections}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Idle</p>
+                      <p className="text-[13px] text-muted-foreground">Idle</p>
                       <p className="text-2xl font-bold">{poolStats.stats.idleConnections}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Waiting</p>
+                      <p className="text-[13px] text-muted-foreground">Waiting</p>
                       <p className="text-2xl font-bold">{poolStats.stats.waitingRequests}</p>
                     </div>
                   </div>
 
                   <div className="border rounded p-4">
                     <h4 className="font-medium mb-2">Pool Configuration</h4>
-                    <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div className="grid grid-cols-2 gap-2 text-[13px]">
                       <div>Max Connections: {poolStats.stats.configuration.max}</div>
                       <div>Min Connections: {poolStats.stats.configuration.min}</div>
                       <div>Idle Timeout: {poolStats.stats.configuration.idleTimeoutMillis}ms</div>
@@ -473,7 +473,7 @@ export const ScalabilityDashboard: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="font-medium">CDN Status</p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-[13px] text-muted-foreground">
                         {cdnStatus.enabled ? 'Enabled and serving content' : 'Disabled'}
                       </p>
                     </div>
@@ -519,7 +519,7 @@ export const ScalabilityDashboard: React.FC = () => {
 
                   <div className="border rounded p-4">
                     <h4 className="font-medium mb-2">Cache Statistics</h4>
-                    <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div className="grid grid-cols-2 gap-2 text-[13px]">
                       <div>Total Purges: {cdnStatus.purgeStats.totalPurges}</div>
                       <div>URLs Purged: {cdnStatus.purgeStats.urlsPurged}</div>
                       <div>Tags Purged: {cdnStatus.purgeStats.tagsPurged}</div>
@@ -553,21 +553,21 @@ export const ScalabilityDashboard: React.FC = () => {
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div>
-                      <p className="text-sm text-muted-foreground">Total CPU</p>
+                      <p className="text-[13px] text-muted-foreground">Total CPU</p>
                       <p className="text-2xl font-bold">{clusterStatus.cluster.metrics.totalCPU}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Used CPU</p>
+                      <p className="text-[13px] text-muted-foreground">Used CPU</p>
                       <p className="text-2xl font-bold">{clusterStatus.cluster.metrics.usedCPU}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Total Memory</p>
+                      <p className="text-[13px] text-muted-foreground">Total Memory</p>
                       <p className="text-2xl font-bold">
                         {(clusterStatus.cluster.metrics.totalMemory / 1024).toFixed(1)}GB
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Used Memory</p>
+                      <p className="text-[13px] text-muted-foreground">Used Memory</p>
                       <p className="text-2xl font-bold">
                         {(clusterStatus.cluster.metrics.usedMemory / 1024).toFixed(1)}GB
                       </p>
@@ -578,19 +578,19 @@ export const ScalabilityDashboard: React.FC = () => {
                     <h4 className="font-medium mb-2">Request Metrics</h4>
                     <div className="grid grid-cols-3 gap-4">
                       <div>
-                        <p className="text-sm text-muted-foreground">Total Requests</p>
+                        <p className="text-[13px] text-muted-foreground">Total Requests</p>
                         <p className="text-xl font-bold">
                           {clusterStatus.cluster.metrics.totalRequests}
                         </p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">Requests/sec</p>
+                        <p className="text-[13px] text-muted-foreground">Requests/sec</p>
                         <p className="text-xl font-bold">
                           {clusterStatus.cluster.health.requestsPerSecond}
                         </p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">Error Rate</p>
+                        <p className="text-[13px] text-muted-foreground">Error Rate</p>
                         <p className="text-xl font-bold">
                           {clusterStatus.cluster.health.errorRate.toFixed(2)}%
                         </p>

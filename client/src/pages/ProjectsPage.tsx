@@ -539,7 +539,7 @@ const ProjectsPage = () => {
               >
                 <Card className="sticky top-4 border border-[var(--ecode-border)] bg-[var(--ecode-surface)] shadow-sm">
                   <CardHeader className="py-2 px-3">
-                    <CardTitle className="text-sm font-medium text-[var(--ecode-text)]">Filters</CardTitle>
+                    <CardTitle className="text-[13px] font-medium text-[var(--ecode-text)]">Filters</CardTitle>
                   </CardHeader>
                   <CardContent className="p-3 pt-0 space-y-3">
                     {/* Search */}
@@ -549,14 +549,14 @@ const ProjectsPage = () => {
                         placeholder="Search..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="h-8 pl-8 text-sm border-[var(--ecode-border)] bg-[var(--ecode-surface)] text-[var(--ecode-text)] focus:ring-[var(--ecode-accent)]/20 focus:border-[var(--ecode-accent)]/40"
+                        className="h-8 pl-8 text-[13px] border-[var(--ecode-border)] bg-[var(--ecode-surface)] text-[var(--ecode-text)] focus:ring-[var(--ecode-accent)]/20 focus:border-[var(--ecode-accent)]/40"
                         data-testid="input-search-projects"
                       />
                     </div>
 
                     {/* Language/Framework Filter */}
                     <div>
-                      <Label className="text-xs font-medium text-[var(--ecode-text-muted)]">Languages</Label>
+                      <Label className="text-[11px] font-medium text-[var(--ecode-text-muted)]">Languages</Label>
                       <ScrollArea className="h-24 mt-1">
                         <div className="space-y-1">
                           {availableLanguages.map(lang => (
@@ -576,7 +576,7 @@ const ProjectsPage = () => {
                               />
                               <Label
                                 htmlFor={`lang-${lang}`}
-                                className="text-xs font-normal cursor-pointer text-[var(--ecode-text)]"
+                                className="text-[11px] font-normal cursor-pointer text-[var(--ecode-text)]"
                               >
                                 {lang}
                               </Label>
@@ -588,7 +588,7 @@ const ProjectsPage = () => {
 
                     {/* Visibility Filter */}
                     <div>
-                      <Label className="text-xs font-medium text-[var(--ecode-text-muted)]">Visibility</Label>
+                      <Label className="text-[11px] font-medium text-[var(--ecode-text-muted)]">Visibility</Label>
                       <div className="space-y-1 mt-1">
                         {['public', 'private', 'unlisted'].map(vis => (
                           <div key={vis} className="flex items-center space-x-2">
@@ -607,7 +607,7 @@ const ProjectsPage = () => {
                             />
                             <Label
                               htmlFor={`vis-${vis}`}
-                              className="text-xs font-normal cursor-pointer capitalize text-[var(--ecode-text)]"
+                              className="text-[11px] font-normal cursor-pointer capitalize text-[var(--ecode-text)]"
                             >
                               {vis}
                             </Label>
@@ -620,7 +620,7 @@ const ProjectsPage = () => {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="w-full h-7 text-xs text-[var(--ecode-text-muted)] hover:bg-[var(--ecode-accent)]/10 hover:text-[var(--ecode-accent)]"
+                      className="w-full h-7 text-[11px] text-[var(--ecode-text-muted)] hover:bg-[var(--ecode-accent)]/10 hover:text-[var(--ecode-accent)]"
                       onClick={() => {
                         setSearchQuery('');
                         setFilterLanguage([]);
@@ -789,7 +789,7 @@ const ProjectsPage = () => {
                       className="border-[var(--ecode-border)] data-[state=checked]:bg-[var(--ecode-accent)] data-[state=checked]:border-[var(--ecode-accent)]"
                       data-testid="checkbox-select-all"
                     />
-                    <Label htmlFor="select-all" className="text-sm cursor-pointer text-[var(--ecode-text)] whitespace-nowrap">
+                    <Label htmlFor="select-all" className="text-[13px] cursor-pointer text-[var(--ecode-text)] whitespace-nowrap">
                       Select All
                     </Label>
                   </div>
@@ -884,7 +884,7 @@ const ProjectsPage = () => {
                             <div className="absolute bottom-2 left-2">
                               <Badge
                                 variant="secondary"
-                                className={`${languageColors[project.language] || languageColors.other} text-white text-xs shadow-md`}
+                                className={`${languageColors[project.language] || languageColors.other} text-white text-[11px] shadow-md`}
                               >
                                 {project.language}
                               </Badge>
@@ -895,14 +895,14 @@ const ProjectsPage = () => {
                         {/* Card Content */}
                         <CardContent className="p-4">
                           <div className="mb-3">
-                            <h3 className="font-semibold text-lg truncate mb-1 text-[var(--ecode-text)]">{project.name}</h3>
-                            <p className="text-sm text-[var(--ecode-text-muted)] line-clamp-2">
+                            <h3 className="font-semibold text-[15px] truncate mb-1 text-[var(--ecode-text)]">{project.name}</h3>
+                            <p className="text-[13px] text-[var(--ecode-text-muted)] line-clamp-2">
                               {project.description || 'No description available'}
                             </p>
                           </div>
 
                           {/* Stats */}
-                          <div className="flex items-center justify-between text-xs text-[var(--ecode-text-muted)] mb-3">
+                          <div className="flex items-center justify-between text-[11px] text-[var(--ecode-text-muted)] mb-3">
                             <div className="flex items-center gap-3">
                               <div className="flex items-center gap-1">
                                 <Heart className="h-3 w-3" />
@@ -921,13 +921,13 @@ const ProjectsPage = () => {
                                 <span>{project.runs || 0}</span>
                               </div>
                             </div>
-                            <Badge variant="outline" className="text-xs border-[var(--ecode-border)] text-[var(--ecode-text-muted)]">
+                            <Badge variant="outline" className="text-[11px] border-[var(--ecode-border)] text-[var(--ecode-text-muted)]">
                               {project.visibility}
                             </Badge>
                           </div>
 
                           {/* Updated At */}
-                          <div className="text-xs text-[var(--ecode-text-muted)] border-t border-[var(--ecode-border)] pt-3">
+                          <div className="text-[11px] text-[var(--ecode-text-muted)] border-t border-[var(--ecode-border)] pt-3">
                             <div className="flex items-center justify-between">
                               <span className="flex items-center gap-1">
                                 <Clock className="h-3 w-3" />
@@ -1040,13 +1040,13 @@ const ProjectsPage = () => {
                             {/* Project Info */}
                             <div className="flex-1">
                               <div className="flex items-center gap-2 mb-1">
-                                <h3 className="font-semibold text-lg text-[var(--ecode-text)]">{project.name}</h3>
+                                <h3 className="font-semibold text-[15px] text-[var(--ecode-text)]">{project.name}</h3>
                                 {project.isPinned && <Pin className="h-4 w-4 text-[var(--ecode-accent)]" />}
                               </div>
-                              <p className="text-sm text-[var(--ecode-text-muted)] mb-2">
+                              <p className="text-[13px] text-[var(--ecode-text-muted)] mb-2">
                                 {project.description || 'No description available'}
                               </p>
-                              <div className="flex items-center gap-4 text-xs text-[var(--ecode-text-muted)]">
+                              <div className="flex items-center gap-4 text-[11px] text-[var(--ecode-text-muted)]">
                                 <span className="flex items-center gap-1">
                                   <Heart className="h-3 w-3" />
                                   {project.likes || 0}

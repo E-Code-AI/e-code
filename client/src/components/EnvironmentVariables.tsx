@@ -168,7 +168,7 @@ export function EnvironmentVariables({ projectId }: EnvironmentVariablesProps) {
       <CardContent className="p-6">
         {/* Add new variable form */}
         <div className="mb-6 space-y-4 rounded-lg border bg-muted/10 p-4">
-          <h3 className="text-sm font-medium">Add new variable</h3>
+          <h3 className="text-[13px] font-medium">Add new variable</h3>
           <div className="grid gap-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -224,7 +224,7 @@ export function EnvironmentVariables({ projectId }: EnvironmentVariablesProps) {
         {/* Variables list */}
         <div className="space-y-2">
           {variables.length === 0 ? (
-            <p className="text-center text-sm text-muted-foreground py-8">
+            <p className="text-center text-[13px] text-muted-foreground py-8">
               No environment variables yet. Add one above to get started.
             </p>
           ) : (

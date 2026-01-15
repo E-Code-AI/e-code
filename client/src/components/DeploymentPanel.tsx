@@ -128,7 +128,7 @@ export const DeploymentPanel: React.FC<DeploymentPanelProps> = ({ projectId }) =
           <div className="flex items-center gap-3">
             <h3 className="font-medium">Deployment</h3>
             <span className={cn(
-              "px-2 py-0.5 text-xs rounded-full font-medium",
+              "px-2 py-0.5 text-[11px] rounded-full font-medium",
               deployment?.status === 'running' || deployment?.status === 'active' ? "bg-green-100 text-green-700" : 
               deployment?.status === 'failed' ? "bg-red-100 text-red-700" :
               deployment?.status === 'building' ? "bg-blue-100 text-blue-700" :
@@ -137,7 +137,7 @@ export const DeploymentPanel: React.FC<DeploymentPanelProps> = ({ projectId }) =
               {deployment?.environment || 'Production'}
             </span>
             {deployment?.status === 'failed' && deployment?.updatedAt && (
-              <span className="text-xs text-red-600 flex items-center gap-1">
+              <span className="text-[11px] text-red-600 flex items-center gap-1">
                 <AlertCircle className="h-3 w-3" />
                 Deployment failed {new Date(deployment.updatedAt).toLocaleDateString()}
               </span>
@@ -146,7 +146,7 @@ export const DeploymentPanel: React.FC<DeploymentPanelProps> = ({ projectId }) =
         </div>
 
         {/* Deployment Info */}
-        <div className="space-y-2 text-sm">
+        <div className="space-y-2 text-[13px]">
           <div className="flex items-center gap-2">
             <span className="text-muted-foreground">Visibility:</span>
             <div className="flex items-center gap-1">
@@ -212,7 +212,7 @@ export const DeploymentPanel: React.FC<DeploymentPanelProps> = ({ projectId }) =
             <AlertCircle className="h-4 w-4 text-red-600" />
             <AlertDescription className="text-red-800">
               <div className="font-medium mb-2">Build process failed</div>
-              <div className="space-y-2 text-sm">
+              <div className="space-y-2 text-[13px]">
                 {deployment.buildErrors.slice(0, 4).map((error, index) => (
                   <div key={index} className="space-y-1">
                     <div>{error.message || error}</div>
@@ -224,7 +224,7 @@ export const DeploymentPanel: React.FC<DeploymentPanelProps> = ({ projectId }) =
                   </div>
                 ))}
                 {deployment.buildErrors.length > 4 && (
-                  <div className="text-xs text-muted-foreground">
+                  <div className="text-[11px] text-muted-foreground">
                     ...and {deployment.buildErrors.length - 4} more errors
                   </div>
                 )}
@@ -250,7 +250,7 @@ export const DeploymentPanel: React.FC<DeploymentPanelProps> = ({ projectId }) =
           
           {showAgentSuggestions && (
             <div className="mt-3 space-y-2">
-              <p className="text-sm text-muted-foreground mb-2">
+              <p className="text-[13px] text-muted-foreground mb-2">
                 AI Agent can help you debug and fix these deployment errors.
               </p>
               <Button className="w-full mt-3 bg-purple-600 hover:bg-purple-700">
@@ -298,7 +298,7 @@ export const DeploymentPanel: React.FC<DeploymentPanelProps> = ({ projectId }) =
           >
             View logs
             {deployment?.id && (
-              <span className="bg-gray-200 text-gray-700 px-1.5 py-0.5 rounded text-xs ml-1">
+              <span className="bg-gray-200 text-gray-700 px-1.5 py-0.5 rounded text-[11px] ml-1">
                 {deployment.buildErrors?.length || 0}
               </span>
             )}
@@ -311,7 +311,7 @@ export const DeploymentPanel: React.FC<DeploymentPanelProps> = ({ projectId }) =
         <div className="p-4 border-t mt-auto">
           <button
             onClick={() => setShowBuildErrors(!showBuildErrors)}
-            className="flex items-center gap-2 text-sm text-blue-600 hover:underline"
+            className="flex items-center gap-2 text-[13px] text-blue-600 hover:underline"
           >
             {showBuildErrors ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
             View all failed builds

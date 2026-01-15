@@ -147,7 +147,7 @@ function SortableTab({ tab, isActive, onClick, onClose }: SortableTabProps) {
       onClick={onClick}
       data-testid={`editor-tab-${tab.fileId}`}
     >
-      <span className="text-sm whitespace-nowrap font-[family-name:var(--ecode-font-sans)]">
+      <span className="text-[13px] whitespace-nowrap font-[family-name:var(--ecode-font-sans)]">
         {tab.isDirty && <span className="text-primary mr-1">•</span>}
         {tab.fileName}
       </span>
@@ -387,8 +387,8 @@ export function ReplitCodeEditor({
     return (
       <div className={cn("flex items-center justify-center h-full bg-background", className)}>
         <div className="text-center">
-          <p className="text-lg text-muted-foreground">No files open</p>
-          <p className="text-sm text-muted-foreground mt-2">
+          <p className="text-[15px] text-muted-foreground">No files open</p>
+          <p className="text-[13px] text-muted-foreground mt-2">
             Select a file from the sidebar to start editing
           </p>
         </div>
@@ -449,7 +449,7 @@ export function ReplitCodeEditor({
         <div className="ml-auto flex items-center px-2 gap-2">
           {/* AI Status Badge */}
           {aiProcessing && (
-            <Badge variant="outline" className="text-xs bg-card border-primary">
+            <Badge variant="outline" className="text-[11px] bg-card border-primary">
               <Sparkles className="h-3 w-3 mr-1 animate-pulse" />
               AI Processing...
             </Badge>
@@ -474,7 +474,7 @@ export function ReplitCodeEditor({
               <TooltipContent>
                 <div className="space-y-1">
                   <p className="font-semibold">AI Code Completion {aiPreferences.enabled ? 'Enabled' : 'Disabled'}</p>
-                  <p className="text-xs">Press Ctrl+Alt+Space to trigger manually</p>
+                  <p className="text-[11px]">Press Ctrl+Alt+Space to trigger manually</p>
                 </div>
               </TooltipContent>
             </Tooltip>
@@ -492,7 +492,7 @@ export function ReplitCodeEditor({
               <DropdownMenuSeparator />
               
               {/* Model Selection */}
-              <DropdownMenuLabel className="text-xs text-muted-foreground">AI Model</DropdownMenuLabel>
+              <DropdownMenuLabel className="text-[11px] text-muted-foreground">AI Model</DropdownMenuLabel>
               {getAvailableModels().map((model) => (
                 <DropdownMenuCheckboxItem
                   key={model.value}
@@ -501,7 +501,7 @@ export function ReplitCodeEditor({
                 >
                   <div>
                     <div className="font-medium">{model.label}</div>
-                    <div className="text-xs text-muted-foreground">{model.description}</div>
+                    <div className="text-[11px] text-muted-foreground">{model.description}</div>
                   </div>
                 </DropdownMenuCheckboxItem>
               ))}
@@ -527,8 +527,8 @@ export function ReplitCodeEditor({
                 onSelect={(e) => e.preventDefault()}
               >
                 <div className="flex items-center justify-between w-full">
-                  <Label className="text-xs">Confidence Threshold</Label>
-                  <span className="text-xs text-muted-foreground">{Math.round(aiPreferences.confidenceThreshold * 100)}%</span>
+                  <Label className="text-[11px]">Confidence Threshold</Label>
+                  <span className="text-[11px] text-muted-foreground">{Math.round(aiPreferences.confidenceThreshold * 100)}%</span>
                 </div>
                 <input
                   type="range"
@@ -552,7 +552,7 @@ export function ReplitCodeEditor({
             <div className="text-center space-y-4">
               <Skeleton className="h-4 w-48 mx-auto" />
               <Skeleton className="h-4 w-32 mx-auto" />
-              <p className="text-sm text-muted-foreground">Loading editor...</p>
+              <p className="text-[13px] text-muted-foreground">Loading editor...</p>
             </div>
           </div>
         )}

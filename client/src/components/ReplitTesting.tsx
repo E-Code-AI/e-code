@@ -309,7 +309,7 @@ export function ReplitTesting({ projectId }: ReplitTestingProps) {
             <div className="flex items-center gap-2">
               <TestTube className="h-5 w-5 text-blue-600" />
               <div>
-                <p className="text-sm text-muted-foreground">Total Tests</p>
+                <p className="text-[13px] text-muted-foreground">Total Tests</p>
                 <p className="text-2xl font-bold">{totalTests}</p>
               </div>
             </div>
@@ -321,7 +321,7 @@ export function ReplitTesting({ projectId }: ReplitTestingProps) {
             <div className="flex items-center gap-2">
               <CheckCircle className="h-5 w-5 text-green-600" />
               <div>
-                <p className="text-sm text-muted-foreground">Passed</p>
+                <p className="text-[13px] text-muted-foreground">Passed</p>
                 <p className="text-2xl font-bold text-green-600">{passedTests}</p>
               </div>
             </div>
@@ -333,7 +333,7 @@ export function ReplitTesting({ projectId }: ReplitTestingProps) {
             <div className="flex items-center gap-2">
               <XCircle className="h-5 w-5 text-red-600" />
               <div>
-                <p className="text-sm text-muted-foreground">Failed</p>
+                <p className="text-[13px] text-muted-foreground">Failed</p>
                 <p className="text-2xl font-bold text-red-600">{failedTests}</p>
               </div>
             </div>
@@ -345,7 +345,7 @@ export function ReplitTesting({ projectId }: ReplitTestingProps) {
             <div className="flex items-center gap-2">
               <Target className="h-5 w-5 text-purple-600" />
               <div>
-                <p className="text-sm text-muted-foreground">Success Rate</p>
+                <p className="text-[13px] text-muted-foreground">Success Rate</p>
                 <p className="text-2xl font-bold">
                   {totalTests > 0 ? Math.round((passedTests / totalTests) * 100) : 0}%
                 </p>
@@ -367,7 +367,7 @@ export function ReplitTesting({ projectId }: ReplitTestingProps) {
             <Card>
               <CardContent className="text-center py-12">
                 <TestTube className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No test suites found</h3>
+                <h3 className="text-[15px] font-semibold mb-2">No test suites found</h3>
                 <p className="text-muted-foreground mb-4">
                   Create test files in your project to see them here
                 </p>
@@ -421,7 +421,7 @@ export function ReplitTesting({ projectId }: ReplitTestingProps) {
                   </CardHeader>
                   
                   <CardContent>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
+                    <div className="flex items-center gap-4 text-[13px] text-muted-foreground mb-3">
                       <div className="flex items-center gap-1">
                         <FileText className="h-3 w-3" />
                         {suite.tests.length} tests
@@ -447,7 +447,7 @@ export function ReplitTesting({ projectId }: ReplitTestingProps) {
                     
                     {suite.coverage && (
                       <div className="space-y-2">
-                        <div className="flex justify-between text-xs">
+                        <div className="flex justify-between text-[11px]">
                           <span>Code Coverage</span>
                           <span>{suite.coverage.lines}%</span>
                         </div>
@@ -484,7 +484,7 @@ export function ReplitTesting({ projectId }: ReplitTestingProps) {
                         <p className="font-medium">
                           Test Run #{run.id.slice(0, 8)}
                         </p>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-[13px] text-muted-foreground">
                           Started {new Date(run.startedAt).toLocaleString()}
                           {run.completedAt && (
                             <span> • Duration {Math.round((new Date(run.completedAt).getTime() - new Date(run.startedAt).getTime()) / 1000)}s</span>
@@ -494,7 +494,7 @@ export function ReplitTesting({ projectId }: ReplitTestingProps) {
                     </div>
                     
                     {run.status === 'completed' && (
-                      <div className="flex items-center gap-4 text-sm">
+                      <div className="flex items-center gap-4 text-[13px]">
                         <div className="flex items-center gap-1 text-green-600">
                           <CheckCircle className="h-3 w-3" />
                           {run.results.passed}
@@ -531,19 +531,19 @@ export function ReplitTesting({ projectId }: ReplitTestingProps) {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                 <div className="text-center p-4 border rounded-lg">
                   <p className="text-2xl font-bold text-blue-600">85%</p>
-                  <p className="text-sm text-muted-foreground">Lines</p>
+                  <p className="text-[13px] text-muted-foreground">Lines</p>
                 </div>
                 <div className="text-center p-4 border rounded-lg">
                   <p className="text-2xl font-bold text-green-600">92%</p>
-                  <p className="text-sm text-muted-foreground">Functions</p>
+                  <p className="text-[13px] text-muted-foreground">Functions</p>
                 </div>
                 <div className="text-center p-4 border rounded-lg">
                   <p className="text-2xl font-bold text-purple-600">78%</p>
-                  <p className="text-sm text-muted-foreground">Branches</p>
+                  <p className="text-[13px] text-muted-foreground">Branches</p>
                 </div>
                 <div className="text-center p-4 border rounded-lg">
                   <p className="text-2xl font-bold text-orange-600">88%</p>
-                  <p className="text-sm text-muted-foreground">Statements</p>
+                  <p className="text-[13px] text-muted-foreground">Statements</p>
                 </div>
               </div>
               
@@ -556,7 +556,7 @@ export function ReplitTesting({ projectId }: ReplitTestingProps) {
                   { file: 'src/hooks/useAuth.ts', coverage: 65 }
                 ].map((item) => (
                   <div key={item.file} className="flex items-center justify-between p-3 border rounded">
-                    <span className="font-mono text-sm">{item.file}</span>
+                    <span className="font-mono text-[13px]">{item.file}</span>
                     <div className="flex items-center gap-2">
                       <div className="w-24 bg-gray-200 rounded-full h-2">
                         <div 
@@ -567,7 +567,7 @@ export function ReplitTesting({ projectId }: ReplitTestingProps) {
                           style={{ width: `${item.coverage}%` }}
                         />
                       </div>
-                      <span className="text-sm font-medium w-12">{item.coverage}%</span>
+                      <span className="text-[13px] font-medium w-12">{item.coverage}%</span>
                     </div>
                   </div>
                 ))}
@@ -627,14 +627,14 @@ export function ReplitTesting({ projectId }: ReplitTestingProps) {
                     {getStatusIcon(test.status)}
                     <div>
                       <p className="font-medium">{test.name}</p>
-                      <p className="text-sm text-muted-foreground">{test.description}</p>
+                      <p className="text-[13px] text-muted-foreground">{test.description}</p>
                       {test.error && (
-                        <p className="text-sm text-red-600 mt-1">{test.error}</p>
+                        <p className="text-[13px] text-red-600 mt-1">{test.error}</p>
                       )}
                     </div>
                   </div>
                   
-                  <div className="text-right text-sm text-muted-foreground">
+                  <div className="text-right text-[13px] text-muted-foreground">
                     {test.duration && <p>{test.duration}ms</p>}
                     {test.assertions && (
                       <p>{test.assertions.passed}/{test.assertions.total} assertions</p>

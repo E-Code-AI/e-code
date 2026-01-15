@@ -250,13 +250,13 @@ const CodeEditor = ({ file, onChange, onSelectionChange, collaboration }: CodeEd
       <div className="h-10 border-b border-border flex items-center px-2 justify-between">
         <div className="flex items-center space-x-2">
           {/* Language badge */}
-          <div className="px-2 py-1 text-xs font-medium rounded bg-secondary text-secondary-foreground">
+          <div className="px-2 py-1 text-[11px] font-medium rounded bg-secondary text-secondary-foreground">
             {getLanguageFromFilename(file.name)}
           </div>
           
           {/* Auto-save indicator */}
           {editorSettings.autoSave && (
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
               {isSaving ? (
                 <>
                   <Save className="h-3 w-3 animate-pulse" />
@@ -352,7 +352,7 @@ const CodeEditor = ({ file, onChange, onSelectionChange, collaboration }: CodeEd
                             })}
                             className="flex-1"
                           />
-                          <span className="w-8 text-sm">{editorSettings.fontSize}px</span>
+                          <span className="w-8 text-[13px]">{editorSettings.fontSize}px</span>
                         </div>
                       </div>
                       
@@ -374,7 +374,7 @@ const CodeEditor = ({ file, onChange, onSelectionChange, collaboration }: CodeEd
                             })}
                             className="flex-1"
                           />
-                          <span className="w-8 text-sm">{editorSettings.tabSize}</span>
+                          <span className="w-8 text-[13px]">{editorSettings.tabSize}</span>
                         </div>
                       </div>
                       
@@ -485,10 +485,10 @@ const CodeEditor = ({ file, onChange, onSelectionChange, collaboration }: CodeEd
         {/* Collaborators indicator */}
         {collaboration && collaboration.collaborators.length > 0 && (
           <div className="absolute top-2 right-4 z-10 bg-background/80 backdrop-blur-sm p-2 rounded-md border border-border">
-            <div className="text-xs font-medium mb-1">Collaborators ({collaboration.collaborators.length})</div>
+            <div className="text-[11px] font-medium mb-1">Collaborators ({collaboration.collaborators.length})</div>
             <div className="flex flex-col gap-1">
               {collaboration.collaborators.map((collaborator) => (
-                <div key={collaborator.userId} className="flex items-center gap-1.5 text-xs">
+                <div key={collaborator.userId} className="flex items-center gap-1.5 text-[11px]">
                   <span 
                     className="w-2 h-2 rounded-full" 
                     style={{ backgroundColor: collaborator.color }}
@@ -502,7 +502,7 @@ const CodeEditor = ({ file, onChange, onSelectionChange, collaboration }: CodeEd
       </div>
       
       {/* Status bar */}
-      <div className="h-6 border-t border-border bg-background/50 flex items-center px-2 text-xs text-muted-foreground">
+      <div className="h-6 border-t border-border bg-background/50 flex items-center px-2 text-[11px] text-muted-foreground">
         <div className="flex-1 flex items-center space-x-4">
           <div>
             Line: {cursorPosition.line}

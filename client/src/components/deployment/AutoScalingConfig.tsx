@@ -256,7 +256,7 @@ export function AutoScalingConfig({ deploymentId, className }: AutoScalingConfig
                 </div>
                 <div>
                   <h4 className="font-semibold">{policy.name}</h4>
-                  <p className="text-sm text-muted-foreground">{METRIC_LABELS[policy.metric]}</p>
+                  <p className="text-[13px] text-muted-foreground">{METRIC_LABELS[policy.metric]}</p>
                 </div>
               </div>
               <Switch
@@ -268,7 +268,7 @@ export function AutoScalingConfig({ deploymentId, className }: AutoScalingConfig
               />
             </div>
             
-            <div className="space-y-2 text-sm">
+            <div className="space-y-2 text-[13px]">
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Scale Up</span>
                 <span className="font-medium">
@@ -336,16 +336,16 @@ export function AutoScalingConfig({ deploymentId, className }: AutoScalingConfig
         
         <div className="flex-1">
           <div className="flex items-center justify-between">
-            <p className="text-sm font-medium">
+            <p className="text-[13px] font-medium">
               {event.action === 'scale_up' && `Scaled up from ${event.previousInstances} to ${event.newInstances}`}
               {event.action === 'scale_down' && `Scaled down from ${event.previousInstances} to ${event.newInstances}`}
               {event.action === 'no_action' && 'No action taken'}
             </p>
-            <span className="text-xs text-muted-foreground">
+            <span className="text-[11px] text-muted-foreground">
               {formatEventTime(event.timestamp)}
             </span>
           </div>
-          <p className="text-xs text-muted-foreground mt-1">
+          <p className="text-[11px] text-muted-foreground mt-1">
             {event.reason}
           </p>
         </div>
@@ -373,24 +373,24 @@ export function AutoScalingConfig({ deploymentId, className }: AutoScalingConfig
       {status && (
         <Card className="glassmorphism">
           <CardHeader className="pb-3">
-            <CardTitle className="text-lg">Current Status</CardTitle>
+            <CardTitle className="text-[15px]">Current Status</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
-                <p className="text-sm text-muted-foreground">Current Instances</p>
+                <p className="text-[13px] text-muted-foreground">Current Instances</p>
                 <p className="text-2xl font-bold">{status.currentInstances || 1}</p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Target Instances</p>
+                <p className="text-[13px] text-muted-foreground">Target Instances</p>
                 <p className="text-2xl font-bold">{status.targetInstances || 1}</p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Active Policies</p>
+                <p className="text-[13px] text-muted-foreground">Active Policies</p>
                 <p className="text-2xl font-bold">{status.activePolicies || 0}</p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Est. Monthly Cost</p>
+                <p className="text-[13px] text-muted-foreground">Est. Monthly Cost</p>
                 <p className="text-2xl font-bold text-ecode-primary">
                   ${status.estimatedCost?.toFixed(2) || '0.00'}
                 </p>
@@ -426,7 +426,7 @@ export function AutoScalingConfig({ deploymentId, className }: AutoScalingConfig
             <Card className="glassmorphism">
               <CardContent className="flex flex-col items-center justify-center py-12">
                 <Zap className="h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No Scaling Policies</h3>
+                <h3 className="text-[15px] font-semibold mb-2">No Scaling Policies</h3>
                 <p className="text-muted-foreground text-center mb-4">
                   Create your first auto-scaling policy to optimize resource usage
                 </p>
@@ -495,13 +495,13 @@ export function AutoScalingConfig({ deploymentId, className }: AutoScalingConfig
               
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm text-muted-foreground">Hourly Cost</p>
+                  <p className="text-[13px] text-muted-foreground">Hourly Cost</p>
                   <p className="text-2xl font-bold">
                     ${(previewInstances * 0.05).toFixed(2)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Monthly Cost</p>
+                  <p className="text-[13px] text-muted-foreground">Monthly Cost</p>
                   <p className="text-2xl font-bold text-ecode-primary">
                     ${calculateCostEstimate(previewInstances).toFixed(2)}
                   </p>
@@ -509,19 +509,19 @@ export function AutoScalingConfig({ deploymentId, className }: AutoScalingConfig
               </div>
               
               <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center justify-between text-[13px]">
                   <span className="text-muted-foreground">Compute</span>
                   <span>${(previewInstances * 0.02 * 730).toFixed(2)}/mo</span>
                 </div>
-                <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center justify-between text-[13px]">
                   <span className="text-muted-foreground">Memory</span>
                   <span>${(previewInstances * 0.01 * 730).toFixed(2)}/mo</span>
                 </div>
-                <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center justify-between text-[13px]">
                   <span className="text-muted-foreground">Network</span>
                   <span>${(previewInstances * 0.015 * 730).toFixed(2)}/mo</span>
                 </div>
-                <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center justify-between text-[13px]">
                   <span className="text-muted-foreground">Storage</span>
                   <span>${(previewInstances * 0.005 * 730).toFixed(2)}/mo</span>
                 </div>

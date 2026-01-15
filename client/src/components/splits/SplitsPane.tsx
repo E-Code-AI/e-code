@@ -196,9 +196,9 @@ export function SplitsPane({
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                {tab.icon && <span className="text-xs">{tab.icon}</span>}
-                <span className="text-xs truncate max-w-[120px]">{tab.title}</span>
-                {tab.isDirty && <span className="text-xs text-yellow-500">●</span>}
+                {tab.icon && <span className="text-[11px]">{tab.icon}</span>}
+                <span className="text-[11px] truncate max-w-[120px]">{tab.title}</span>
+                {tab.isDirty && <span className="text-[11px] text-yellow-500">●</span>}
                 {tab.canClose !== false && (
                   <Button
                     variant="ghost"
@@ -273,8 +273,8 @@ export function SplitsPane({
           ) : (
             <div className="flex items-center justify-center h-full text-gray-500">
               <div className="text-center">
-                <p className="text-sm mb-2">No tabs open</p>
-                <p className="text-xs">Drag a file here or use the file tree</p>
+                <p className="text-[13px] mb-2">No tabs open</p>
+                <p className="text-[11px]">Drag a file here or use the file tree</p>
               </div>
             </div>
           )}

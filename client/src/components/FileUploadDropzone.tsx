@@ -175,14 +175,14 @@ export function FileUploadDropzone({
                 isDragActive && "text-primary"
               )} />
               <div>
-                <p className="text-sm font-medium">
+                <p className="text-[13px] font-medium">
                   {isDragActive ? 'Drop files here' : 'Drag & drop files here'}
                 </p>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-[11px] text-muted-foreground mt-1">
                   or click to browse files
                 </p>
               </div>
-              <Badge variant="secondary" className="text-xs">
+              <Badge variant="secondary" className="text-[11px]">
                 Upload to: {currentPath}
               </Badge>
             </div>
@@ -195,13 +195,13 @@ export function FileUploadDropzone({
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-3">
-              <h4 className="text-sm font-medium">Upload Queue</h4>
+              <h4 className="text-[13px] font-medium">Upload Queue</h4>
               {!isUploading && (
                 <Button
                   size="sm"
                   variant="ghost"
                   onClick={() => setUploadFiles([])}
-                  className="h-7 text-xs"
+                  className="h-7 text-[11px]"
                 >
                   Clear All
                 </Button>
@@ -218,10 +218,10 @@ export function FileUploadDropzone({
                   
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium truncate">
+                      <p className="text-[13px] font-medium truncate">
                         {uploadFile.file.name}
                       </p>
-                      <span className="text-xs text-muted-foreground ml-2">
+                      <span className="text-[11px] text-muted-foreground ml-2">
                         {getFileSize(uploadFile.file.size)}
                       </span>
                     </div>
@@ -234,7 +234,7 @@ export function FileUploadDropzone({
                     )}
                     
                     {uploadFile.error && (
-                      <p className="text-xs text-red-500 mt-1">{uploadFile.error}</p>
+                      <p className="text-[11px] text-red-500 mt-1">{uploadFile.error}</p>
                     )}
                   </div>
                   
@@ -246,7 +246,7 @@ export function FileUploadDropzone({
                       <AlertCircle className="h-4 w-4 text-red-500" />
                     )}
                     {uploadFile.status === 'pending' && (
-                      <Badge variant="secondary" className="text-xs">
+                      <Badge variant="secondary" className="text-[11px]">
                         Pending
                       </Badge>
                     )}

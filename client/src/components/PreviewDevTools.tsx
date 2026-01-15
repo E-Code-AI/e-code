@@ -302,7 +302,7 @@ export function PreviewDevTools({ previewUrl, projectId, onClose }: PreviewDevTo
     <Card className="fixed bottom-0 left-0 right-0 z-50 h-[400px] border-t-2 shadow-2xl">
       <CardHeader className="py-2 px-4">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-medium flex items-center gap-2">
+          <CardTitle className="text-[13px] font-medium flex items-center gap-2">
             <Terminal className="h-4 w-4" />
             Preview Developer Tools
           </CardTitle>
@@ -402,7 +402,7 @@ export function PreviewDevTools({ previewUrl, projectId, onClose }: PreviewDevTo
                 </Button>
               </div>
               <ScrollArea className="flex-1">
-                <div className="p-2 space-y-1 font-mono text-xs">
+                <div className="p-2 space-y-1 font-mono text-[11px]">
                   {filteredConsoleMessages.map((msg) => (
                     <div
                       key={msg.id}
@@ -423,17 +423,17 @@ export function PreviewDevTools({ previewUrl, projectId, onClose }: PreviewDevTo
                             {msg.message}
                           </span>
                           {msg.count && msg.count > 1 && (
-                            <Badge variant="secondary" className="h-4 px-1 text-xs">
+                            <Badge variant="secondary" className="h-4 px-1 text-[11px]">
                               {msg.count}
                             </Badge>
                           )}
                         </div>
                         {msg.stack && (
-                          <pre className="mt-1 text-xs text-muted-foreground overflow-x-auto">
+                          <pre className="mt-1 text-[11px] text-muted-foreground overflow-x-auto">
                             {msg.stack}
                           </pre>
                         )}
-                        <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+                        <div className="mt-1 flex items-center gap-2 text-[11px] text-muted-foreground">
                           <Clock className="h-3 w-3" />
                           {msg.timestamp.toLocaleTimeString()}
                           {msg.source && (
@@ -486,7 +486,7 @@ export function PreviewDevTools({ previewUrl, projectId, onClose }: PreviewDevTo
                 </Button>
               </div>
               <ScrollArea className="flex-1">
-                <table className="w-full text-xs">
+                <table className="w-full text-[11px]">
                   <thead className="sticky top-0 bg-background border-b">
                     <tr>
                       <th className="text-left p-2">Name</th>
@@ -507,7 +507,7 @@ export function PreviewDevTools({ previewUrl, projectId, onClose }: PreviewDevTo
                           {req.status || 'Pending'}
                         </td>
                         <td className="p-2">
-                          <Badge variant="outline" className={cn("text-xs", getMethodColor(req.method))}>
+                          <Badge variant="outline" className={cn("text-[11px]", getMethodColor(req.method))}>
                             {req.method}
                           </Badge>
                         </td>
@@ -542,8 +542,8 @@ export function PreviewDevTools({ previewUrl, projectId, onClose }: PreviewDevTo
                 {selectedElement ? (
                   <div className="space-y-4">
                     <div>
-                      <h3 className="text-sm font-medium mb-2">Element</h3>
-                      <div className="bg-muted p-2 rounded font-mono text-xs">
+                      <h3 className="text-[13px] font-medium mb-2">Element</h3>
+                      <div className="bg-muted p-2 rounded font-mono text-[11px]">
                         &lt;{selectedElement.tagName.toLowerCase()}
                         {selectedElement.id && ` id="${selectedElement.id}"`}
                         {selectedElement.className && ` class="${selectedElement.className}"`}
@@ -553,10 +553,10 @@ export function PreviewDevTools({ previewUrl, projectId, onClose }: PreviewDevTo
 
                     {Object.keys(selectedElement.attributes).length > 0 && (
                       <div>
-                        <h3 className="text-sm font-medium mb-2">Attributes</h3>
+                        <h3 className="text-[13px] font-medium mb-2">Attributes</h3>
                         <div className="space-y-1">
                           {Object.entries(selectedElement.attributes).map(([key, value]) => (
-                            <div key={key} className="flex items-center gap-2 text-xs">
+                            <div key={key} className="flex items-center gap-2 text-[11px]">
                               <span className="font-medium">{key}:</span>
                               <span className="text-muted-foreground">{value}</span>
                             </div>
@@ -567,8 +567,8 @@ export function PreviewDevTools({ previewUrl, projectId, onClose }: PreviewDevTo
 
                     {selectedElement.dimensions && (
                       <div>
-                        <h3 className="text-sm font-medium mb-2">Dimensions</h3>
-                        <div className="grid grid-cols-2 gap-2 text-xs">
+                        <h3 className="text-[13px] font-medium mb-2">Dimensions</h3>
+                        <div className="grid grid-cols-2 gap-2 text-[11px]">
                           <div>
                             <span className="font-medium">Width:</span> {selectedElement.dimensions.width}px
                           </div>
@@ -587,11 +587,11 @@ export function PreviewDevTools({ previewUrl, projectId, onClose }: PreviewDevTo
 
                     {selectedElement.computedStyles && Object.keys(selectedElement.computedStyles).length > 0 && (
                       <div>
-                        <h3 className="text-sm font-medium mb-2">Computed Styles</h3>
+                        <h3 className="text-[13px] font-medium mb-2">Computed Styles</h3>
                         <ScrollArea className="h-[150px] border rounded p-2">
                           <div className="space-y-1">
                             {Object.entries(selectedElement.computedStyles).map(([key, value]) => (
-                              <div key={key} className="flex items-center gap-2 text-xs">
+                              <div key={key} className="flex items-center gap-2 text-[11px]">
                                 <span className="font-medium">{key}:</span>
                                 <span className="text-muted-foreground">{value}</span>
                               </div>
@@ -604,7 +604,7 @@ export function PreviewDevTools({ previewUrl, projectId, onClose }: PreviewDevTo
                 ) : (
                   <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
                     <Code2 className="h-12 w-12 mb-4 opacity-50" />
-                    <p className="text-sm">Click "Select Element" to inspect an element</p>
+                    <p className="text-[13px]">Click "Select Element" to inspect an element</p>
                   </div>
                 )}
               </ScrollArea>
@@ -615,14 +615,14 @@ export function PreviewDevTools({ previewUrl, projectId, onClose }: PreviewDevTo
             <ScrollArea className="h-full p-4">
               <div className="space-y-4">
                 <div>
-                  <h3 className="text-sm font-medium mb-3">Performance Metrics</h3>
+                  <h3 className="text-[13px] font-medium mb-3">Performance Metrics</h3>
                   <div className="grid gap-3">
                     {performanceMetrics.map((metric) => (
                       <div key={metric.name} className="space-y-2">
                         <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium">{metric.name}</span>
+                          <span className="text-[13px] font-medium">{metric.name}</span>
                           <div className="flex items-center gap-2">
-                            <span className="text-sm">
+                            <span className="text-[13px]">
                               {metric.value} {metric.unit}
                             </span>
                             <Badge variant={
@@ -650,12 +650,12 @@ export function PreviewDevTools({ previewUrl, projectId, onClose }: PreviewDevTo
                 <Separator />
 
                 <div>
-                  <h3 className="text-sm font-medium mb-3">Real-time Monitoring</h3>
+                  <h3 className="text-[13px] font-medium mb-3">Real-time Monitoring</h3>
                   <div className="grid grid-cols-2 gap-4">
                     <Card>
                       <CardContent className="p-3">
                         <div className="flex items-center justify-between">
-                          <span className="text-xs text-muted-foreground">FPS</span>
+                          <span className="text-[11px] text-muted-foreground">FPS</span>
                           <Activity className="h-4 w-4 text-muted-foreground" />
                         </div>
                         <p className="text-2xl font-bold">60</p>
@@ -664,7 +664,7 @@ export function PreviewDevTools({ previewUrl, projectId, onClose }: PreviewDevTo
                     <Card>
                       <CardContent className="p-3">
                         <div className="flex items-center justify-between">
-                          <span className="text-xs text-muted-foreground">Memory</span>
+                          <span className="text-[11px] text-muted-foreground">Memory</span>
                           <Activity className="h-4 w-4 text-muted-foreground" />
                         </div>
                         <p className="text-2xl font-bold">128 MB</p>

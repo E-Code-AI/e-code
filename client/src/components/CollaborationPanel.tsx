@@ -118,7 +118,7 @@ const CollaboratorListItem = memo(({
           >
             <AvatarImage src={collaborator.avatar} />
             <AvatarFallback 
-              className="text-xs font-medium text-white"
+              className="text-[11px] font-medium text-white"
               style={{ backgroundColor: collaborator.color }}
             >
               {collaborator.username.slice(0, 2).toUpperCase()}
@@ -128,14 +128,14 @@ const CollaboratorListItem = memo(({
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <p className="text-sm font-medium truncate">{collaborator.username}</p>
+            <p className="text-[13px] font-medium truncate">{collaborator.username}</p>
             {isFollowing && (
-              <Badge variant="secondary" className="text-xs px-1.5 py-0">
+              <Badge variant="secondary" className="text-[11px] px-1.5 py-0">
                 Following
               </Badge>
             )}
           </div>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
             <ActivityIcon activity={collaborator.activity} />
             <span className="truncate">
               {collaborator.activity || 'Online'}
@@ -185,21 +185,21 @@ const ChatMessageBubble = memo(({ message, isOwn }: { message: ChatMessage; isOw
   return (
     <div className={cn("flex gap-2 my-2", isOwn && "flex-row-reverse")}>
       <div 
-        className="h-7 w-7 rounded-full flex items-center justify-center text-xs font-medium text-white shrink-0"
+        className="h-7 w-7 rounded-full flex items-center justify-center text-[11px] font-medium text-white shrink-0"
         style={{ backgroundColor: message.senderColor }}
       >
         {message.senderName.slice(0, 1).toUpperCase()}
       </div>
       <div className={cn("max-w-[75%]", isOwn && "text-right")}>
         <div className="flex items-baseline gap-2 mb-0.5">
-          <span className="text-xs font-medium">{message.senderName}</span>
+          <span className="text-[11px] font-medium">{message.senderName}</span>
           <span className="text-[10px] text-muted-foreground">
             {format(new Date(message.timestamp), 'HH:mm')}
           </span>
         </div>
         <div 
           className={cn(
-            "text-sm px-3 py-1.5 rounded-lg",
+            "text-[13px] px-3 py-1.5 rounded-lg",
             isOwn 
               ? "bg-primary text-primary-foreground rounded-br-sm" 
               : "bg-muted rounded-bl-sm"
@@ -286,7 +286,7 @@ const InviteDialog = memo(({
               <Input 
                 value={shareLink} 
                 readOnly 
-                className="text-xs font-mono"
+                className="text-[11px] font-mono"
                 data-testid="share-link-input"
               />
               <Button 
@@ -537,11 +537,11 @@ export function CollaborationPanel({
           className="flex-1 flex flex-col min-h-0"
         >
           <TabsList className="grid w-full grid-cols-2 mx-4 mt-1" style={{ width: 'calc(100% - 32px)' }}>
-            <TabsTrigger value="collaborators" className="text-xs" data-testid="tab-people">
+            <TabsTrigger value="collaborators" className="text-[11px]" data-testid="tab-people">
               <Users className="h-3.5 w-3.5 mr-1.5" />
               People ({totalCount})
             </TabsTrigger>
-            <TabsTrigger value="chat" className="text-xs relative" data-testid="tab-chat">
+            <TabsTrigger value="chat" className="text-[11px] relative" data-testid="tab-chat">
               <MessageSquare className="h-3.5 w-3.5 mr-1.5" />
               Chat
               {chatMessages.length > 0 && (
@@ -561,7 +561,7 @@ export function CollaborationPanel({
                     type="text"
                     value={shareLink}
                     readOnly
-                    className="flex-1 bg-transparent text-xs text-muted-foreground outline-none min-w-0"
+                    className="flex-1 bg-transparent text-[11px] text-muted-foreground outline-none min-w-0"
                   />
                   <Button
                     size="sm"
@@ -583,8 +583,8 @@ export function CollaborationPanel({
                 {collaborators.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
                     <Users className="h-10 w-10 mx-auto mb-3 opacity-50" />
-                    <p className="text-sm">No other collaborators yet</p>
-                    <p className="text-xs mt-1">Invite someone to collaborate!</p>
+                    <p className="text-[13px]">No other collaborators yet</p>
+                    <p className="text-[11px] mt-1">Invite someone to collaborate!</p>
                   </div>
                 ) : (
                   <div className="space-y-2">
@@ -618,8 +618,8 @@ export function CollaborationPanel({
               {chatMessages.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <MessageSquare className="h-10 w-10 mx-auto mb-3 opacity-50" />
-                  <p className="text-sm">No messages yet</p>
-                  <p className="text-xs mt-1">Start the conversation!</p>
+                  <p className="text-[13px]">No messages yet</p>
+                  <p className="text-[11px] mt-1">Start the conversation!</p>
                 </div>
               ) : (
                 <div className="pb-2">
@@ -631,7 +631,7 @@ export function CollaborationPanel({
                     />
                   ))}
                   {typingUsers.length > 0 && (
-                    <div className="text-xs text-muted-foreground italic px-2 py-1">
+                    <div className="text-[11px] text-muted-foreground italic px-2 py-1">
                       {typingUsers.map(u => u.username).join(', ')} {typingUsers.length === 1 ? 'is' : 'are'} typing...
                     </div>
                   )}
@@ -646,7 +646,7 @@ export function CollaborationPanel({
                   value={chatInput}
                   onChange={handleChatInputChange}
                   placeholder="Type a message..."
-                  className="flex-1 h-9 text-sm"
+                  className="flex-1 h-9 text-[13px]"
                   data-testid="chat-input"
                 />
                 <Button 
@@ -664,7 +664,7 @@ export function CollaborationPanel({
         </Tabs>
         
         {error && (
-          <div className="p-3 border-t bg-destructive/10 text-destructive text-xs shrink-0">
+          <div className="p-3 border-t bg-destructive/10 text-destructive text-[11px] shrink-0">
             {error}
           </div>
         )}
@@ -672,7 +672,7 @@ export function CollaborationPanel({
         {isInCall && (
           <div className="p-4 bg-background border-t shrink-0">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">
+              <span className="text-[13px] text-muted-foreground">
                 In call with {activeCount} people
               </span>
               <Button

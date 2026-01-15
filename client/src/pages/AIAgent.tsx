@@ -216,7 +216,7 @@ export default function AIAgent() {
         <div className="container-responsive max-w-7xl relative">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             <div className="text-center lg:text-left">
-              <Badge variant="default" className="mb-6 text-sm px-5 py-2 bg-gradient-to-r from-primary to-primary/80 text-white">
+              <Badge variant="default" className="mb-6 text-[13px] px-5 py-2 bg-gradient-to-r from-primary to-primary/80 text-white">
                 <Sparkles className="h-4 w-4 mr-1.5" />
                 E-CODE AGENT 2.0 POWERED
               </Badge>
@@ -234,11 +234,11 @@ export default function AIAgent() {
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-8">
-                <Button size="lg" onClick={handleGetStarted} className="text-lg px-8 h-14 shadow-lg hover:shadow-xl transition-all bg-gradient-to-r from-primary to-primary/90">
+                <Button size="lg" onClick={handleGetStarted} className="text-[15px] px-8 h-14 shadow-lg hover:shadow-xl transition-all bg-gradient-to-r from-primary to-primary/90">
                   Launch Agent Studio
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
-                <Button size="lg" variant="outline" className="text-lg px-8 h-14" asChild>
+                <Button size="lg" variant="outline" className="text-[15px] px-8 h-14" asChild>
                   <a href="#agent-demo">
                     Watch Live Demo
                     <PlayCircle className="ml-2 h-5 w-5" />
@@ -246,7 +246,7 @@ export default function AIAgent() {
                 </Button>
               </div>
 
-              <div className="flex flex-wrap gap-6 justify-center lg:justify-start text-sm text-muted-foreground">
+              <div className="flex flex-wrap gap-6 justify-center lg:justify-start text-[13px] text-muted-foreground">
                 <div className="flex items-center gap-2">
                   <CheckCircle className="h-4 w-4 text-green-500" />
                   <span>No credit card required</span>
@@ -277,14 +277,14 @@ export default function AIAgent() {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-900/40 to-transparent" />
                 <div className="absolute bottom-6 left-6 right-6 flex flex-col gap-3 text-left">
-                  <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1 text-xs font-semibold text-white backdrop-blur">
+                  <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1 text-[11px] font-semibold text-white backdrop-blur">
                     <PlayCircle className="h-4 w-4" />
                     Trailer: E-Code Agent 2.0 builds a marketplace in minutes
                   </div>
-                  <p className="text-lg font-semibold text-white drop-shadow">
+                  <p className="text-[15px] font-semibold text-white drop-shadow">
                     Witness idea-to-deployment in a single take—captured directly from the live platform.
                   </p>
-                  <div className="flex flex-wrap gap-3 text-sm text-white/80">
+                  <div className="flex flex-wrap gap-3 text-[13px] text-white/80">
                     <span className="inline-flex items-center gap-1 rounded-full bg-black/40 px-3 py-1">
                       <Timer className="h-4 w-4" />
                       1:12 total runtime
@@ -310,7 +310,7 @@ export default function AIAgent() {
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
               Building apps is now as easy as having a conversation
             </h2>
-            <p className="text-lg text-muted-foreground">
+            <p className="text-[15px] text-muted-foreground">
               Just describe what you want. Watch it come to life.
             </p>
           </div>
@@ -379,7 +379,7 @@ export default function AIAgent() {
                   aria-label="E-Code Agent 2.0 builds a customer feedback portal"
                 />
               </div>
-              <div className="space-y-2 px-6 py-6 text-sm text-muted-foreground md:flex md:items-center md:justify-between md:gap-6">
+              <div className="space-y-2 px-6 py-6 text-[13px] text-muted-foreground md:flex md:items-center md:justify-between md:gap-6">
                 <p className="md:max-w-2xl">
                   The trailer showcases the agent drafting requirements, generating UI layouts, provisioning backend services,
                   and publishing the finished app—all without a single manual command.
@@ -423,7 +423,7 @@ export default function AIAgent() {
                   playsInline
                   aria-label={`${selectedSegment.title} — ${selectedSegment.description}`}
                 />
-                <div className="absolute inset-x-0 top-0 flex items-center justify-between bg-gradient-to-b from-black/70 via-black/20 to-transparent px-6 py-4 text-xs text-white">
+                <div className="absolute inset-x-0 top-0 flex items-center justify-between bg-gradient-to-b from-black/70 via-black/20 to-transparent px-6 py-4 text-[11px] text-white">
                   <span className="inline-flex items-center gap-2 font-semibold uppercase tracking-wide">
                     <PlayCircle className="h-4 w-4" /> Segment {selectedSegment.timestamp}
                   </span>
@@ -432,8 +432,8 @@ export default function AIAgent() {
                   </span>
                 </div>
                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-6 text-white">
-                  <h3 className="text-lg font-semibold">{selectedSegment.title}</h3>
-                  <p className="text-sm text-white/80">{selectedSegment.description}</p>
+                  <h3 className="text-[15px] font-semibold">{selectedSegment.title}</h3>
+                  <p className="text-[13px] text-white/80">{selectedSegment.description}</p>
                 </div>
               </div>
             </LazyMotionDiv>
@@ -446,7 +446,7 @@ export default function AIAgent() {
             >
               <Card className="hover:shadow-lg transition-all">
                 <CardHeader>
-                  <CardTitle className="text-lg">Featured Demos</CardTitle>
+                  <CardTitle className="text-[15px]">Featured Demos</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {trailerSegments.map((segment) => (
@@ -466,7 +466,7 @@ export default function AIAgent() {
                           loading="lazy"
                         />
                         <div className="flex-1">
-                          <div className="flex items-center justify-between text-xs text-muted-foreground">
+                          <div className="flex items-center justify-between text-[11px] text-muted-foreground">
                             <span className="inline-flex items-center gap-1">
                               <Timer className="h-3 w-3 text-primary" />
                               {segment.timestamp}
@@ -479,7 +479,7 @@ export default function AIAgent() {
                             )}
                           </div>
                           <p className="font-medium">{segment.title}</p>
-                          <p className="text-sm text-muted-foreground">{segment.description}</p>
+                          <p className="text-[13px] text-muted-foreground">{segment.description}</p>
                         </div>
                       </div>
                     </button>
@@ -489,13 +489,13 @@ export default function AIAgent() {
 
               <Card className="bg-primary/5 border-primary/20">
                 <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2">
+                  <CardTitle className="text-[15px] flex items-center gap-2">
                     <Sparkles className="h-5 w-5 text-primary" />
                     Live Demo Stats
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-3 text-sm">
+                  <div className="space-y-3 text-[13px]">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Average Build Time</span>
                       <span className="font-semibold">47 seconds</span>
@@ -547,8 +547,8 @@ export default function AIAgent() {
                           <Timer className="h-3 w-3" /> {reel.timestamp}
                         </span>
                       </div>
-                      <p className="text-sm text-muted-foreground">{reel.description}</p>
-                      <p className="text-xs font-semibold text-primary">Watch Now →</p>
+                      <p className="text-[13px] text-muted-foreground">{reel.description}</p>
+                      <p className="text-[11px] font-semibold text-primary">Watch Now →</p>
                     </CardContent>
                   </Card>
                 </div>
@@ -565,7 +565,7 @@ export default function AIAgent() {
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
               More than just code generation
             </h2>
-            <p className="text-lg text-muted-foreground">
+            <p className="text-[15px] text-muted-foreground">
               A complete development partner that thinks, designs, and builds
             </p>
           </div>
@@ -594,7 +594,7 @@ export default function AIAgent() {
                         {cap.examples.map((example, i) => (
                           <li key={i} className="flex items-start gap-2">
                             <CheckCircle className="h-4 w-4 text-green-600 mt-0.5" />
-                            <span className="text-sm">{example}</span>
+                            <span className="text-[13px]">{example}</span>
                           </li>
                         ))}
                       </ul>
@@ -635,7 +635,7 @@ export default function AIAgent() {
                     <p className="text-muted-foreground mb-4">
                       Makes intelligent decisions about structure
                     </p>
-                    <ul className="space-y-1 text-sm">
+                    <ul className="space-y-1 text-[13px]">
                       <li>• Proper file organization</li>
                       <li>• Best practice patterns</li>
                       <li>• Scalable architecture</li>
@@ -654,15 +654,15 @@ export default function AIAgent() {
                       Complete apps in under a minute
                     </p>
                     <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
+                      <div className="flex justify-between text-[13px]">
                         <span>Simple apps</span>
                         <span className="font-semibold">20-30s</span>
                       </div>
-                      <div className="flex justify-between text-sm">
+                      <div className="flex justify-between text-[13px]">
                         <span>Complex apps</span>
                         <span className="font-semibold">45-60s</span>
                       </div>
-                      <div className="flex justify-between text-sm">
+                      <div className="flex justify-between text-[13px]">
                         <span>With database</span>
                         <span className="font-semibold">+15s</span>
                       </div>
@@ -683,7 +683,7 @@ export default function AIAgent() {
                           <CardContent className="p-4">
                             <div className="flex items-center justify-between mb-2">
                               {app.icon}
-                              <Badge variant="outline" className="text-xs">
+                              <Badge variant="outline" className="text-[11px]">
                                 {app.time}
                               </Badge>
                             </div>
@@ -704,25 +704,25 @@ export default function AIAgent() {
                   <ul className="space-y-3">
                     <li className="flex items-start gap-3">
                       <div className="w-6 h-6 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center flex-shrink-0">
-                        <span className="text-red-600 dark:text-red-400 text-xs">✗</span>
+                        <span className="text-red-600 dark:text-red-400 text-[11px]">✗</span>
                       </div>
                       <span>Months to learn programming basics</span>
                     </li>
                     <li className="flex items-start gap-3">
                       <div className="w-6 h-6 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center flex-shrink-0">
-                        <span className="text-red-600 dark:text-red-400 text-xs">✗</span>
+                        <span className="text-red-600 dark:text-red-400 text-[11px]">✗</span>
                       </div>
                       <span>Hours to set up development environment</span>
                     </li>
                     <li className="flex items-start gap-3">
                       <div className="w-6 h-6 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center flex-shrink-0">
-                        <span className="text-red-600 dark:text-red-400 text-xs">✗</span>
+                        <span className="text-red-600 dark:text-red-400 text-[11px]">✗</span>
                       </div>
                       <span>Days to build a simple app</span>
                     </li>
                     <li className="flex items-start gap-3">
                       <div className="w-6 h-6 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center flex-shrink-0">
-                        <span className="text-red-600 dark:text-red-400 text-xs">✗</span>
+                        <span className="text-red-600 dark:text-red-400 text-[11px]">✗</span>
                       </div>
                       <span>Constant debugging and fixing errors</span>
                     </li>
@@ -733,25 +733,25 @@ export default function AIAgent() {
                   <ul className="space-y-3">
                     <li className="flex items-start gap-3">
                       <div className="w-6 h-6 rounded-full bg-green-100 dark:bg-green-900/20 flex items-center justify-center flex-shrink-0">
-                        <span className="text-green-600 dark:text-green-400 text-xs">✓</span>
+                        <span className="text-green-600 dark:text-green-400 text-[11px]">✓</span>
                       </div>
                       <span>Zero coding knowledge required</span>
                     </li>
                     <li className="flex items-start gap-3">
                       <div className="w-6 h-6 rounded-full bg-green-100 dark:bg-green-900/20 flex items-center justify-center flex-shrink-0">
-                        <span className="text-green-600 dark:text-green-400 text-xs">✓</span>
+                        <span className="text-green-600 dark:text-green-400 text-[11px]">✓</span>
                       </div>
                       <span>Instant setup, no installation needed</span>
                     </li>
                     <li className="flex items-start gap-3">
                       <div className="w-6 h-6 rounded-full bg-green-100 dark:bg-green-900/20 flex items-center justify-center flex-shrink-0">
-                        <span className="text-green-600 dark:text-green-400 text-xs">✓</span>
+                        <span className="text-green-600 dark:text-green-400 text-[11px]">✓</span>
                       </div>
                       <span>Complete apps in under a minute</span>
                     </li>
                     <li className="flex items-start gap-3">
                       <div className="w-6 h-6 rounded-full bg-green-100 dark:bg-green-900/20 flex items-center justify-center flex-shrink-0">
-                        <span className="text-green-600 dark:text-green-400 text-xs">✓</span>
+                        <span className="text-green-600 dark:text-green-400 text-[11px]">✓</span>
                       </div>
                       <span>Clean, working code every time</span>
                     </li>
@@ -811,7 +811,7 @@ export default function AIAgent() {
           <h2 className="text-3xl md:text-4xl font-bold mb-6">
             Stop dreaming. Start building.
           </h2>
-          <p className="text-lg text-muted-foreground mb-8">
+          <p className="text-[15px] text-muted-foreground mb-8">
             Your ideas deserve to exist. Let our AI bring them to life.
           </p>
           <Button size="lg" onClick={handleGetStarted} className="gap-2">

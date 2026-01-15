@@ -69,7 +69,7 @@ export function ConnectionStatusBanner() {
       data-testid="connection-status-banner"
       className={cn(
         'fixed top-0 left-0 right-0 z-[9999] px-4 py-2 flex items-center justify-between gap-4',
-        'text-sm font-medium transition-all duration-300 ease-in-out',
+        'text-[13px] font-medium transition-all duration-300 ease-in-out',
         variant === 'destructive' && 'bg-destructive text-destructive-foreground',
         variant === 'warning' && 'bg-yellow-500/90 text-yellow-50 dark:bg-yellow-600/90',
         variant === 'info' && 'bg-blue-500/90 text-blue-50 dark:bg-blue-600/90'
@@ -84,7 +84,7 @@ export function ConnectionStatusBanner() {
         />
         <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
           <span className="font-semibold">{title}</span>
-          <span className="text-xs sm:text-sm opacity-90">{description}</span>
+          <span className="text-[11px] sm:text-[13px] opacity-90">{description}</span>
         </div>
       </div>
       

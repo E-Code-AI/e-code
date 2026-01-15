@@ -215,7 +215,7 @@ export function ProjectManagement() {
                               <div>
                                 <div className="font-medium">{project.name}</div>
                                 {project.description && (
-                                  <div className="text-sm text-muted-foreground line-clamp-1">
+                                  <div className="text-[13px] text-muted-foreground line-clamp-1">
                                     {project.description}
                                   </div>
                                 )}
@@ -223,7 +223,7 @@ export function ProjectManagement() {
                             </div>
                           </TableCell>
                           <TableCell>
-                            <div className="text-sm">{project.owner?.username || 'Unknown'}</div>
+                            <div className="text-[13px]">{project.owner?.username || 'Unknown'}</div>
                           </TableCell>
                           <TableCell>
                             <Badge variant={project.visibility === 'public' ? 'default' : 'secondary'}>
@@ -234,14 +234,14 @@ export function ProjectManagement() {
                             <Badge variant="outline">{project.language || 'None'}</Badge>
                           </TableCell>
                           <TableCell>
-                            <div className="text-xs space-y-1">
+                            <div className="text-[11px] space-y-1">
                               <div>👁️ {project.views} views</div>
                               <div>❤️ {project.likes} likes</div>
                               <div>🔀 {project.forks} forks</div>
                             </div>
                           </TableCell>
                           <TableCell>
-                            <div className="text-sm text-muted-foreground">
+                            <div className="text-[13px] text-muted-foreground">
                               {new Date(project.createdAt).toLocaleDateString()}
                             </div>
                           </TableCell>
@@ -304,7 +304,7 @@ export function ProjectManagement() {
 
               {totalPages > 1 && (
                 <div className="flex items-center justify-between">
-                  <div className="text-sm text-muted-foreground">
+                  <div className="text-[13px] text-muted-foreground">
                     Showing {page * pageSize + 1} to {Math.min((page + 1) * pageSize, total)} of {total} projects
                   </div>
                   <div className="flex items-center gap-2">
@@ -317,7 +317,7 @@ export function ProjectManagement() {
                     >
                       Previous
                     </Button>
-                    <div className="text-sm">
+                    <div className="text-[13px]">
                       Page {page + 1} of {totalPages}
                     </div>
                     <Button

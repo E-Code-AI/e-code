@@ -28,7 +28,7 @@ const EditorFallback = () => (
   <div className="h-full flex items-center justify-center bg-muted/30">
     <div className="flex flex-col items-center gap-2">
       <Loader2 className="h-6 w-6 animate-spin text-primary" />
-      <p className="text-sm text-muted-foreground">Loading editor...</p>
+      <p className="text-[13px] text-muted-foreground">Loading editor...</p>
     </div>
   </div>
 );
@@ -497,7 +497,7 @@ export default function Editor(props: EditorProps = {}) {
             className="h-full"
           />
         ) : (
-          <div className="h-full flex items-center justify-center text-sm text-muted-foreground">
+          <div className="h-full flex items-center justify-center text-[13px] text-muted-foreground">
             Project preview unavailable
           </div>
         )
@@ -560,7 +560,7 @@ export default function Editor(props: EditorProps = {}) {
       className="h-full"
     />
   ) : (
-    <div className="h-full flex items-center justify-center text-sm text-muted-foreground">
+    <div className="h-full flex items-center justify-center text-[13px] text-muted-foreground">
       Open a project to view console output
     </div>
   );

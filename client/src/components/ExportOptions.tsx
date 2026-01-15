@@ -149,7 +149,7 @@ export function ExportOptions({ projectId }: ExportOptionsProps) {
                         <format.icon className="h-5 w-5 mt-0.5" />
                         <div className="flex-1">
                           <p className="font-medium">{format.label}</p>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-[11px] text-muted-foreground">
                             {format.description}
                           </p>
                         </div>
@@ -286,7 +286,7 @@ export function ExportOptions({ projectId }: ExportOptionsProps) {
           <CardContent>
             <div className="space-y-3">
               {exportHistory.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-8">
+                <p className="text-[13px] text-muted-foreground text-center py-8">
                   No exports yet
                 </p>
               ) : (
@@ -301,11 +301,11 @@ export function ExportOptions({ projectId }: ExportOptionsProps) {
                               {job.type.toUpperCase()} Export
                               {getStatusIcon(job.status)}
                             </p>
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-[11px] text-muted-foreground">
                               {new Date(job.createdAt).toLocaleString()}
                             </p>
                             {job.error && (
-                              <p className="text-xs text-red-600 mt-1">
+                              <p className="text-[11px] text-red-600 mt-1">
                                 {job.error}
                               </p>
                             )}
@@ -315,7 +315,7 @@ export function ExportOptions({ projectId }: ExportOptionsProps) {
                         {job.status === 'processing' && (
                           <div className="w-24">
                             <Progress value={job.progress} className="h-2" />
-                            <p className="text-xs text-center mt-1">
+                            <p className="text-[11px] text-center mt-1">
                               {job.progress}%
                             </p>
                           </div>
@@ -358,7 +358,7 @@ export function ExportOptions({ projectId }: ExportOptionsProps) {
                     <FileArchive className="h-5 w-5" />
                     <h4 className="font-medium">Quick Backup</h4>
                   </div>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-[11px] text-muted-foreground">
                     ZIP with all files, env vars, and database
                   </p>
                   <Button 
@@ -389,7 +389,7 @@ export function ExportOptions({ projectId }: ExportOptionsProps) {
                     <Box className="h-5 w-5" />
                     <h4 className="font-medium">Deploy Ready</h4>
                   </div>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-[11px] text-muted-foreground">
                     Docker image with production settings
                   </p>
                   <Button 
@@ -418,7 +418,7 @@ export function ExportOptions({ projectId }: ExportOptionsProps) {
                     <Github className="h-5 w-5" />
                     <h4 className="font-medium">Open Source</h4>
                   </div>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-[11px] text-muted-foreground">
                     Clean export for GitHub without secrets
                   </p>
                   <Button 

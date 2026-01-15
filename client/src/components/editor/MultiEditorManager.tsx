@@ -237,7 +237,7 @@ export function MultiEditorManager({
         <div className="absolute inset-0 z-10 flex items-center justify-center">
           <div className="text-center space-y-2">
             <Skeleton className="h-4 w-32 mx-auto" />
-            <p className="text-sm text-[var(--ecode-text-muted)]">
+            <p className="text-[13px] text-[var(--ecode-text-muted)]">
               Initializing editors...
             </p>
           </div>

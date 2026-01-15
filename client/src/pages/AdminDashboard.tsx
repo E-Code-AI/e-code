@@ -146,12 +146,12 @@ export default function AdminDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+                <CardTitle className="text-[13px] font-medium">Total Users</CardTitle>
                 <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{userStats?.totalUsers || 0}</div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-[11px] text-muted-foreground">
                   +{userStats?.newThisWeek || 0} this week
                 </p>
               </CardContent>
@@ -159,12 +159,12 @@ export default function AdminDashboard() {
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Active Projects</CardTitle>
+                <CardTitle className="text-[13px] font-medium">Active Projects</CardTitle>
                 <FileText className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{projectStats?.activeProjects || 0}</div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-[11px] text-muted-foreground">
                   of {projectStats?.totalProjects || 0} total
                 </p>
               </CardContent>
@@ -172,12 +172,12 @@ export default function AdminDashboard() {
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Storage Used</CardTitle>
+                <CardTitle className="text-[13px] font-medium">Storage Used</CardTitle>
                 <Database className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{projectStats?.totalStorage || '0 GB'}</div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-[11px] text-muted-foreground">
                   {projectStats?.totalFiles || 0} files
                 </p>
               </CardContent>
@@ -185,12 +185,12 @@ export default function AdminDashboard() {
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">System Health</CardTitle>
+                <CardTitle className="text-[13px] font-medium">System Health</CardTitle>
                 <Activity className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">Operational</div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-[11px] text-muted-foreground">
                   All systems running
                 </p>
               </CardContent>
@@ -230,31 +230,31 @@ export default function AdminDashboard() {
                 <div className="text-center p-4 border rounded-lg">
                   <Palette className="h-8 w-8 mx-auto mb-2 text-purple-600" />
                   <div className="text-2xl font-bold">{importStats?.figma || 0}</div>
-                  <div className="text-sm text-muted-foreground">Figma Imports</div>
+                  <div className="text-[13px] text-muted-foreground">Figma Imports</div>
                 </div>
                 <div className="text-center p-4 border rounded-lg">
                   <Zap className="h-8 w-8 mx-auto mb-2 text-yellow-600" />
                   <div className="text-2xl font-bold">{importStats?.bolt || 0}</div>
-                  <div className="text-sm text-muted-foreground">Bolt Imports</div>
+                  <div className="text-[13px] text-muted-foreground">Bolt Imports</div>
                 </div>
                 <div className="text-center p-4 border rounded-lg">
                   <Heart className="h-8 w-8 mx-auto mb-2 text-red-600" />
                   <div className="text-2xl font-bold">{importStats?.lovable || 0}</div>
-                  <div className="text-sm text-muted-foreground">Lovable Imports</div>
+                  <div className="text-[13px] text-muted-foreground">Lovable Imports</div>
                 </div>
                 <div className="text-center p-4 border rounded-lg">
                   <Globe className="h-8 w-8 mx-auto mb-2 text-blue-600" />
                   <div className="text-2xl font-bold">{importStats?.webContent || 0}</div>
-                  <div className="text-sm text-muted-foreground">Web Imports</div>
+                  <div className="text-[13px] text-muted-foreground">Web Imports</div>
                 </div>
               </div>
               
               {importStats?.recent && importStats.recent.length > 0 && (
                 <div>
-                  <h4 className="text-sm font-medium mb-2">Recent Imports</h4>
+                  <h4 className="text-[13px] font-medium mb-2">Recent Imports</h4>
                   <div className="space-y-2">
                     {importStats.recent.slice(0, 5).map((importItem) => (
-                      <div key={importItem.id} className="flex items-center justify-between text-sm p-2 border rounded">
+                      <div key={importItem.id} className="flex items-center justify-between text-[13px] p-2 border rounded">
                         <div className="flex items-center gap-2">
                           {importItem.type === 'figma' && <Palette className="h-4 w-4 text-purple-600" />}
                           {importItem.type === 'bolt' && <Zap className="h-4 w-4 text-yellow-600" />}
@@ -271,7 +271,7 @@ export default function AdminDashboard() {
                           <Badge variant={importItem.status === 'completed' ? 'default' : 'secondary'}>
                             {importItem.status}
                           </Badge>
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-[11px] text-muted-foreground">
                             {formatDistanceToNow(new Date(importItem.createdAt), { addSuffix: true })}
                           </span>
                         </div>
@@ -290,14 +290,14 @@ export default function AdminDashboard() {
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div>
-                      <CardTitle className="text-lg">Usage Analytics</CardTitle>
+                      <CardTitle className="text-[15px]">Usage Analytics</CardTitle>
                       <CardDescription>Monitor platform usage and resource consumption</CardDescription>
                     </div>
                     <TrendingUp className="h-8 w-8 text-primary" />
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-sm space-y-1">
+                  <div className="text-[13px] space-y-1">
                     <p>• View real-time usage statistics</p>
                     <p>• Monitor resource consumption by user</p>
                     <p>• Export usage reports</p>
@@ -311,14 +311,14 @@ export default function AdminDashboard() {
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div>
-                      <CardTitle className="text-lg">Billing Management</CardTitle>
+                      <CardTitle className="text-[15px]">Billing Management</CardTitle>
                       <CardDescription>Configure pricing plans and billing settings</CardDescription>
                     </div>
                     <DollarSign className="h-8 w-8 text-primary" />
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-sm space-y-1">
+                  <div className="text-[13px] space-y-1">
                     <p>• Manage pricing tiers</p>
                     <p>• Configure resource limits</p>
                     <p>• Update billing settings</p>
@@ -351,8 +351,8 @@ export default function AdminDashboard() {
                          <Activity className="h-4 w-4" />}
                       </div>
                       <div className="flex-1">
-                        <p className="text-sm font-medium">{activity.message}</p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-[13px] font-medium">{activity.message}</p>
+                        <p className="text-[11px] text-muted-foreground">
                           {formatDistanceToNow(new Date(activity.timestamp), { addSuffix: true })}
                         </p>
                       </div>
@@ -427,7 +427,7 @@ export default function AdminDashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-medium">Clear Cache</p>
-                  <p className="text-sm text-muted-foreground">Clear all application caches</p>
+                  <p className="text-[13px] text-muted-foreground">Clear all application caches</p>
                 </div>
                 <Button 
                   onClick={() => clearCacheMutation.mutate()}
@@ -440,7 +440,7 @@ export default function AdminDashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-medium">Run Maintenance</p>
-                  <p className="text-sm text-muted-foreground">Optimize database and clean up files</p>
+                  <p className="text-[13px] text-muted-foreground">Optimize database and clean up files</p>
                 </div>
                 <Button 
                   onClick={() => runMaintenanceMutation.mutate()}

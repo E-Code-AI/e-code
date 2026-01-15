@@ -271,11 +271,11 @@ export function ReplitMonacoEditor({
           <div className="flex items-center space-x-3">
             <div className="flex items-center space-x-2">
               <FileText className="h-4 w-4 text-[var(--ecode-text-secondary)]" />
-              <span className="text-sm font-medium text-[var(--ecode-text)]" data-testid="text-filename">{activeFile.name}</span>
+              <span className="text-[13px] font-medium text-[var(--ecode-text)]" data-testid="text-filename">{activeFile.name}</span>
               {hasUnsavedChanges && (
                 <div className="h-2 w-2 bg-[var(--ecode-warning)] rounded-full" data-testid="indicator-unsaved"></div>
               )}
-              <Badge variant="outline" className="text-xs" data-testid="badge-language">
+              <Badge variant="outline" className="text-[11px]" data-testid="badge-language">
                 {language}
               </Badge>
             </div>
@@ -315,7 +315,7 @@ export function ReplitMonacoEditor({
           </div>
 
           <div className="flex items-center space-x-3">
-            <div className="flex items-center space-x-1 text-xs text-[var(--ecode-text-secondary)]">
+            <div className="flex items-center space-x-1 text-[11px] text-[var(--ecode-text-secondary)]">
               <Clock className="h-3 w-3" />
               <span>Saved {formatLastSaved(lastSaved)}</span>
             </div>
@@ -328,7 +328,7 @@ export function ReplitMonacoEditor({
                     <Tooltip key={user.id}>
                       <TooltipTrigger asChild>
                         <div
-                          className="h-6 w-6 rounded-full border-2 border-[var(--ecode-surface)] flex items-center justify-center text-xs font-medium text-white"
+                          className="h-6 w-6 rounded-full border-2 border-[var(--ecode-surface)] flex items-center justify-center text-[11px] font-medium text-white"
                           style={{ backgroundColor: user.color }}
                         >
                           {user.username.charAt(0).toUpperCase()}
@@ -338,7 +338,7 @@ export function ReplitMonacoEditor({
                     </Tooltip>
                   ))}
                   {collaborators.length > 3 && (
-                    <div className="h-6 w-6 rounded-full bg-[var(--ecode-text-secondary)] border-2 border-[var(--ecode-surface)] flex items-center justify-center text-xs font-medium text-white">
+                    <div className="h-6 w-6 rounded-full bg-[var(--ecode-text-secondary)] border-2 border-[var(--ecode-surface)] flex items-center justify-center text-[11px] font-medium text-white">
                       +{collaborators.length - 3}
                     </div>
                   )}
@@ -392,7 +392,7 @@ export function ReplitMonacoEditor({
           />
           
           {isRunning && (
-            <div className="absolute top-2 right-2 flex items-center space-x-2 bg-[var(--ecode-green)] text-white px-3 py-1 rounded-md text-sm" data-testid="indicator-running">
+            <div className="absolute top-2 right-2 flex items-center space-x-2 bg-[var(--ecode-green)] text-white px-3 py-1 rounded-md text-[13px]" data-testid="indicator-running">
               <Zap className="h-3 w-3 animate-pulse" />
               <span>Running</span>
             </div>

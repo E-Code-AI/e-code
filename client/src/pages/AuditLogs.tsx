@@ -85,7 +85,7 @@ export function AuditLogs() {
       {/* Filters */}
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle className="text-lg">Filters</CardTitle>
+          <CardTitle className="text-[15px]">Filters</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -199,23 +199,23 @@ export function AuditLogs() {
                         <div className="flex items-center gap-2 mb-1">
                           <span className="font-medium">{log.username || 'System'}</span>
                           <span className="text-muted-foreground">performed</span>
-                          <code className="text-sm bg-muted px-1.5 py-0.5 rounded">
+                          <code className="text-[13px] bg-muted px-1.5 py-0.5 rounded">
                             {log.action}
                           </code>
                         </div>
                         
                         {log.resourceType && (
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-[13px] text-muted-foreground">
                             on {log.resourceType} {log.resourceId && `#${log.resourceId}`}
                           </p>
                         )}
                         
                         {log.details && Object.keys(log.details).length > 0 && (
                           <details className="mt-2">
-                            <summary className="text-sm text-muted-foreground cursor-pointer hover:text-foreground">
+                            <summary className="text-[13px] text-muted-foreground cursor-pointer hover:text-foreground">
                               View details
                             </summary>
-                            <pre className="mt-2 text-xs bg-muted p-2 rounded overflow-x-auto">
+                            <pre className="mt-2 text-[11px] bg-muted p-2 rounded overflow-x-auto">
                               {JSON.stringify(log.details, null, 2)}
                             </pre>
                           </details>
@@ -234,7 +234,7 @@ export function AuditLogs() {
                       </div>
                     </div>
                     
-                    <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-4 mt-2 text-[11px] text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <Clock className="h-3 w-3" />
                         {format(new Date(log.timestamp), 'MMM dd, yyyy HH:mm:ss')}

@@ -79,7 +79,7 @@ export function MessageMetadataFooter({
     <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
       <div className={cn("space-y-1.5", className)} data-testid={`metadata-footer-${messageId}`}>
         {/* Compact Summary Row */}
-        <div className="flex items-center flex-wrap gap-1.5 sm:gap-2 text-[10px] sm:text-xs text-muted-foreground">
+        <div className="flex items-center flex-wrap gap-1.5 sm:gap-2 text-[10px] sm:text-[11px] text-muted-foreground">
           {/* Model Badge */}
           {metadata.model && (
             <TooltipProvider>
@@ -94,7 +94,7 @@ export function MessageMetadataFooter({
                     {compact ? metadata.model.split('-').pop() : metadata.model}
                   </Badge>
                 </TooltipTrigger>
-                <TooltipContent side="top" className="text-xs">
+                <TooltipContent side="top" className="text-[11px]">
                   {metadata.provider && <p className="font-medium">{metadata.provider}</p>}
                   <p>{metadata.model}</p>
                 </TooltipContent>
@@ -183,7 +183,7 @@ export function MessageMetadataFooter({
 
         {/* Expanded Details */}
         <CollapsibleContent>
-          <div className="pt-2 border-t border-border/50 space-y-2 text-[10px] sm:text-xs text-muted-foreground" data-testid={`metadata-details-${messageId}`}>
+          <div className="pt-2 border-t border-border/50 space-y-2 text-[10px] sm:text-[11px] text-muted-foreground" data-testid={`metadata-details-${messageId}`}>
             {/* Token Breakdown */}
             {(metadata.promptTokens !== undefined || metadata.completionTokens !== undefined) && (
               <div className="flex items-center justify-between gap-4" data-testid={`metadata-detail-tokens-${messageId}`}>

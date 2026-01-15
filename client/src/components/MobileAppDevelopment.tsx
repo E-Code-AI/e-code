@@ -237,7 +237,7 @@ export function MobileAppDevelopment({ projectId }: MobileAppDevelopmentProps) {
               </Button>
             </div>
 
-            <div className="flex items-center gap-6 text-sm">
+            <div className="flex items-center gap-6 text-[13px]">
               <div className="flex items-center gap-2">
                 {networkSpeed === 'wifi' ? <Wifi className="h-4 w-4" /> : 
                  networkSpeed === 'offline' ? <WifiOff className="h-4 w-4" /> : 
@@ -553,7 +553,7 @@ export function MobileAppDevelopment({ projectId }: MobileAppDevelopmentProps) {
                 </CardHeader>
                 <CardContent>
                   <ScrollArea className="h-[200px] w-full rounded-md border p-4">
-                    <div className="space-y-1 font-mono text-sm">
+                    <div className="space-y-1 font-mono text-[13px]">
                       {buildLogs.map((log, index) => (
                         <div key={index} className="flex items-start gap-2">
                           <span className="text-muted-foreground">[{new Date().toLocaleTimeString()}]</span>
@@ -623,7 +623,7 @@ export function MobileAppDevelopment({ projectId }: MobileAppDevelopmentProps) {
                       <Smartphone className="h-5 w-5" />
                       <div>
                         <p className="font-medium">iPhone 14 Pro (Physical)</p>
-                        <p className="text-sm text-muted-foreground">iOS 17.0 • Connected via USB</p>
+                        <p className="text-[13px] text-muted-foreground">iOS 17.0 • Connected via USB</p>
                       </div>
                     </div>
                     <Badge variant="outline" className="bg-green-100 text-green-800">
@@ -637,7 +637,7 @@ export function MobileAppDevelopment({ projectId }: MobileAppDevelopmentProps) {
                       <Smartphone className="h-5 w-5" />
                       <div>
                         <p className="font-medium">Pixel 7 (Physical)</p>
-                        <p className="text-sm text-muted-foreground">Android 13 • Not connected</p>
+                        <p className="text-[13px] text-muted-foreground">Android 13 • Not connected</p>
                       </div>
                     </div>
                     <Badge variant="outline">

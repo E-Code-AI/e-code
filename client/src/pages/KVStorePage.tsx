@@ -331,13 +331,13 @@ export default function KVStorePage() {
         icon={Database}
         actions={
           <div className="flex flex-wrap gap-2 w-full sm:w-auto justify-end">
-            <Button variant="outline" onClick={handleExport} data-testid="button-export" className="min-h-[44px] text-sm sm:text-base">
+            <Button variant="outline" onClick={handleExport} data-testid="button-export" className="min-h-[44px] text-[13px] sm:text-base">
               <Download className="h-4 w-4 sm:mr-2" />
               <span className="hidden sm:inline">Export</span>
             </Button>
             <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
               <DialogTrigger asChild>
-                <Button variant="outline" data-testid="button-import" className="min-h-[44px] text-sm sm:text-base">
+                <Button variant="outline" data-testid="button-import" className="min-h-[44px] text-[13px] sm:text-base">
                   <Upload className="h-4 w-4 sm:mr-2" />
                   <span className="hidden sm:inline">Import</span>
                 </Button>
@@ -353,7 +353,7 @@ export default function KVStorePage() {
                   placeholder='{"key1": "value1", "key2": {"nested": true}}'
                   value={importData}
                   onChange={(e) => setImportData(e.target.value)}
-                  className="font-mono min-h-[150px] sm:min-h-[200px] text-sm"
+                  className="font-mono min-h-[150px] sm:min-h-[200px] text-[13px]"
                   data-testid="textarea-import"
                 />
                 <DialogFooter className="flex-col sm:flex-row gap-2">
@@ -373,7 +373,7 @@ export default function KVStorePage() {
             </Dialog>
             <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
               <DialogTrigger asChild>
-                <Button data-testid="button-add-entry" className="min-h-[44px] text-sm sm:text-base">
+                <Button data-testid="button-add-entry" className="min-h-[44px] text-[13px] sm:text-base">
                   <Plus className="h-4 w-4 sm:mr-2" />
                   <span className="hidden sm:inline">Add Entry</span>
                   <span className="sm:hidden">Add</span>
@@ -437,7 +437,7 @@ export default function KVStorePage() {
                   <div className="flex items-center justify-between p-4 rounded-lg border bg-muted/50">
                     <div className="flex items-center gap-2">
                       <Clock className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">Enable TTL (Time to Live)</span>
+                      <span className="text-[13px]">Enable TTL (Time to Live)</span>
                     </div>
                     <Switch
                       checked={newEntry.enableTTL}
@@ -457,7 +457,7 @@ export default function KVStorePage() {
                         onChange={(e) => setNewEntry(prev => ({ ...prev, ttl: e.target.value }))}
                         data-testid="input-ttl"
                       />
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-[11px] text-muted-foreground">
                         Key will automatically expire after the specified time
                       </p>
                     </div>
@@ -485,20 +485,20 @@ export default function KVStorePage() {
       <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <Card data-testid="card-stat-keys">
           <CardHeader className="pb-2 p-3 sm:p-6 sm:pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium flex items-center gap-2">
+            <CardTitle className="text-[11px] sm:text-[13px] font-medium flex items-center gap-2">
               <Key className="h-4 w-4" />
               Total Keys
             </CardTitle>
           </CardHeader>
           <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
             <div className="text-xl sm:text-2xl font-bold">{stats?.totalKeys || entries.length}</div>
-            <p className="text-xs text-muted-foreground">Active entries</p>
+            <p className="text-[11px] text-muted-foreground">Active entries</p>
           </CardContent>
         </Card>
 
         <Card data-testid="card-stat-storage">
           <CardHeader className="pb-2 p-3 sm:p-6 sm:pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium flex items-center gap-2">
+            <CardTitle className="text-[11px] sm:text-[13px] font-medium flex items-center gap-2">
               <HardDrive className="h-4 w-4" />
               Storage Used
             </CardTitle>
@@ -506,7 +506,7 @@ export default function KVStorePage() {
           <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
             <div className="text-xl sm:text-2xl font-bold">{formatSize(stats?.totalSize || 0)}</div>
             <Progress value={usagePercentage} className="h-1 mt-2" />
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-[11px] text-muted-foreground mt-1">
               {usagePercentage.toFixed(1)}% of {formatSize(stats?.maxSize || 50000000)}
             </p>
           </CardContent>
@@ -514,27 +514,27 @@ export default function KVStorePage() {
 
         <Card data-testid="card-stat-avg-size">
           <CardHeader className="pb-2 p-3 sm:p-6 sm:pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium flex items-center gap-2">
+            <CardTitle className="text-[11px] sm:text-[13px] font-medium flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
               Average Size
             </CardTitle>
           </CardHeader>
           <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
             <div className="text-xl sm:text-2xl font-bold">{formatSize(stats?.avgValueSize || 0)}</div>
-            <p className="text-xs text-muted-foreground">Per value</p>
+            <p className="text-[11px] text-muted-foreground">Per value</p>
           </CardContent>
         </Card>
 
         <Card data-testid="card-stat-expiring">
           <CardHeader className="pb-2 p-3 sm:p-6 sm:pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium flex items-center gap-2">
+            <CardTitle className="text-[11px] sm:text-[13px] font-medium flex items-center gap-2">
               <Clock className="h-4 w-4 text-yellow-500" />
               Expiring Soon
             </CardTitle>
           </CardHeader>
           <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
             <div className="text-xl sm:text-2xl font-bold text-yellow-500">{stats?.expiringKeys || 0}</div>
-            <p className="text-xs text-muted-foreground">Keys with TTL</p>
+            <p className="text-[11px] text-muted-foreground">Keys with TTL</p>
           </CardContent>
         </Card>
       </div>
@@ -547,7 +547,7 @@ export default function KVStorePage() {
               placeholder="Search keys or values..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 min-h-[44px] text-sm sm:text-base"
+              className="pl-10 min-h-[44px] text-[13px] sm:text-base"
               data-testid="input-search"
             />
           </div>
@@ -581,12 +581,12 @@ export default function KVStorePage() {
 
       <Card>
         <CardHeader className="p-4 sm:p-6">
-          <CardTitle className="text-sm sm:text-base flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <CardTitle className="text-[13px] sm:text-base flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <span className="flex items-center gap-2">
               <Table className="h-4 w-4" />
               Key-Value Entries
             </span>
-            <span className="text-xs sm:text-sm font-normal text-muted-foreground">
+            <span className="text-[11px] sm:text-[13px] font-normal text-muted-foreground">
               {filteredEntries.length} of {entries.length} entries
               {searchQuery && ` matching "${searchQuery}"`}
             </span>
@@ -598,7 +598,7 @@ export default function KVStorePage() {
               {searchQuery || filterType !== 'all' ? (
                 <>
                   <Search className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">No entries found</h3>
+                  <h3 className="text-[15px] font-semibold mb-2">No entries found</h3>
                   <p className="text-muted-foreground mb-4">
                     Try adjusting your search or filter criteria
                   </p>
@@ -609,7 +609,7 @@ export default function KVStorePage() {
               ) : (
                 <>
                   <Database className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">No entries yet</h3>
+                  <h3 className="text-[15px] font-semibold mb-2">No entries yet</h3>
                   <p className="text-muted-foreground mb-4">
                     Add your first key-value pair to get started
                   </p>
@@ -633,34 +633,34 @@ export default function KVStorePage() {
                       <div className="flex items-center gap-1.5 sm:gap-2 mb-2 flex-wrap">
                         <div className="flex items-center gap-1 sm:gap-1.5">
                           <Key className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-muted-foreground flex-shrink-0" />
-                          <span className="font-mono font-medium text-xs sm:text-sm truncate max-w-[150px] sm:max-w-[200px]" title={entry.key}>
+                          <span className="font-mono font-medium text-[11px] sm:text-[13px] truncate max-w-[150px] sm:max-w-[200px]" title={entry.key}>
                             {entry.key}
                           </span>
                         </div>
-                        <Badge className={cn("border text-xs", getTypeColor(entry.type))}>
+                        <Badge className={cn("border text-[11px]", getTypeColor(entry.type))}>
                           {getTypeIcon(entry.type)}
                           <span className="ml-1">{entry.type}</span>
                         </Badge>
                         {entry.ttl && (
-                          <Badge variant="outline" className="text-xs hidden sm:flex">
+                          <Badge variant="outline" className="text-[11px] hidden sm:flex">
                             <Clock className="h-3 w-3 mr-1" />
                             TTL: {entry.ttl}s
                           </Badge>
                         )}
-                        <Badge variant="secondary" className="text-xs">
+                        <Badge variant="secondary" className="text-[11px]">
                           {formatSize(entry.size)}
                         </Badge>
                       </div>
                       
                       <div className="bg-muted p-2 sm:p-3 rounded-lg overflow-x-auto">
                         <ScrollArea className="max-h-24">
-                          <pre className="text-xs sm:text-sm font-mono whitespace-pre-wrap break-all">
+                          <pre className="text-[11px] sm:text-[13px] font-mono whitespace-pre-wrap break-all">
                             {formatValue(entry.value, entry.type)}
                           </pre>
                         </ScrollArea>
                       </div>
                       
-                      <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-2 text-xs text-muted-foreground">
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-2 text-[11px] text-muted-foreground">
                         <span>Created: {new Date(entry.createdAt).toLocaleDateString()}</span>
                         {entry.updatedAt !== entry.createdAt && (
                           <span className="hidden sm:inline">Updated: {new Date(entry.updatedAt).toLocaleDateString()}</span>
@@ -727,7 +727,7 @@ export default function KVStorePage() {
 
       <Card>
         <CardHeader className="p-4 sm:p-6">
-          <CardTitle className="text-sm sm:text-base flex items-center gap-2">
+          <CardTitle className="text-[13px] sm:text-base flex items-center gap-2">
             <Info className="h-4 w-4" />
             Using E-Code KV Store in Your Code
           </CardTitle>
@@ -735,12 +735,12 @@ export default function KVStorePage() {
         <CardContent className="space-y-4 p-4 sm:p-6 pt-0 sm:pt-0">
           <Tabs defaultValue="javascript">
             <TabsList className="w-full sm:w-auto flex-wrap h-auto gap-1">
-              <TabsTrigger value="javascript" className="text-xs sm:text-sm flex-1 sm:flex-none min-h-[40px]">JavaScript/Node.js</TabsTrigger>
-              <TabsTrigger value="python" className="text-xs sm:text-sm flex-1 sm:flex-none min-h-[40px]">Python</TabsTrigger>
-              <TabsTrigger value="rest" className="text-xs sm:text-sm flex-1 sm:flex-none min-h-[40px]">REST API</TabsTrigger>
+              <TabsTrigger value="javascript" className="text-[11px] sm:text-[13px] flex-1 sm:flex-none min-h-[40px]">JavaScript/Node.js</TabsTrigger>
+              <TabsTrigger value="python" className="text-[11px] sm:text-[13px] flex-1 sm:flex-none min-h-[40px]">Python</TabsTrigger>
+              <TabsTrigger value="rest" className="text-[11px] sm:text-[13px] flex-1 sm:flex-none min-h-[40px]">REST API</TabsTrigger>
             </TabsList>
             <TabsContent value="javascript" className="mt-4">
-              <div className="bg-muted p-3 sm:p-4 rounded-lg font-mono text-xs sm:text-sm space-y-2 overflow-x-auto">
+              <div className="bg-muted p-3 sm:p-4 rounded-lg font-mono text-[11px] sm:text-[13px] space-y-2 overflow-x-auto">
                 <div className="text-muted-foreground">// Import the KV client</div>
                 <div>import {"{ kv }"} from '@ecode/kv';</div>
                 <div className="mt-3 text-muted-foreground">// Set a value</div>
@@ -754,7 +754,7 @@ export default function KVStorePage() {
               </div>
             </TabsContent>
             <TabsContent value="python" className="mt-4">
-              <div className="bg-muted p-3 sm:p-4 rounded-lg font-mono text-xs sm:text-sm space-y-2 overflow-x-auto">
+              <div className="bg-muted p-3 sm:p-4 rounded-lg font-mono text-[11px] sm:text-[13px] space-y-2 overflow-x-auto">
                 <div className="text-muted-foreground"># Import the KV client</div>
                 <div>from ecode import kv</div>
                 <div className="mt-3 text-muted-foreground"># Set a value</div>
@@ -768,7 +768,7 @@ export default function KVStorePage() {
               </div>
             </TabsContent>
             <TabsContent value="rest" className="mt-4">
-              <div className="bg-muted p-3 sm:p-4 rounded-lg font-mono text-xs sm:text-sm space-y-2 overflow-x-auto">
+              <div className="bg-muted p-3 sm:p-4 rounded-lg font-mono text-[11px] sm:text-[13px] space-y-2 overflow-x-auto">
                 <div className="text-muted-foreground"># Set a value</div>
                 <div>curl -X POST /api/kv-store \</div>
                 <div className="pl-4">-H "Content-Type: application/json" \</div>
@@ -786,9 +786,9 @@ export default function KVStorePage() {
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
         <DialogContent className="w-[95vw] max-w-lg sm:w-full max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-base sm:text-lg">Edit Entry</DialogTitle>
-            <DialogDescription className="text-sm">
-              Modify the value for key: <code className="font-mono bg-muted px-1 rounded text-xs sm:text-sm break-all">{selectedEntry?.key}</code>
+            <DialogTitle className="text-base sm:text-[15px]">Edit Entry</DialogTitle>
+            <DialogDescription className="text-[13px]">
+              Modify the value for key: <code className="font-mono bg-muted px-1 rounded text-[11px] sm:text-[13px] break-all">{selectedEntry?.key}</code>
             </DialogDescription>
           </DialogHeader>
           {selectedEntry && (
@@ -800,7 +800,7 @@ export default function KVStorePage() {
                     ? JSON.stringify(selectedEntry.value, null, 2) 
                     : String(selectedEntry.value)}
                   onChange={(e) => setSelectedEntry({ ...selectedEntry, value: e.target.value })}
-                  className="font-mono min-h-[120px] sm:min-h-[150px] text-sm"
+                  className="font-mono min-h-[120px] sm:min-h-[150px] text-[13px]"
                   data-testid="textarea-edit-value"
                 />
               </div>

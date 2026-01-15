@@ -328,7 +328,7 @@ export function ReplitDatabase({ projectId }: ReplitDatabaseProps) {
           />
         </div>
         
-        <div className="flex gap-4 text-sm text-muted-foreground">
+        <div className="flex gap-4 text-[13px] text-muted-foreground">
           <div className="flex items-center gap-1">
             <Table className="h-4 w-4" />
             {entries.length} entries
@@ -371,7 +371,7 @@ export function ReplitDatabase({ projectId }: ReplitDatabaseProps) {
               ) : (
                 <>
                   <Database className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">Database is empty</h3>
+                  <h3 className="text-[15px] font-semibold mb-2">Database is empty</h3>
                   <p className="text-muted-foreground mb-4">
                     Add your first key-value pair to get started
                   </p>
@@ -393,18 +393,18 @@ export function ReplitDatabase({ projectId }: ReplitDatabaseProps) {
                           <Key className="h-3 w-3 text-muted-foreground" />
                           <span className="font-mono font-medium">{entry.key}</span>
                         </div>
-                        <Badge className={`${getTypeColor(entry.type)} border text-xs`}>
+                        <Badge className={`${getTypeColor(entry.type)} border text-[11px]`}>
                           {entry.type}
                         </Badge>
                       </div>
                       
                       <div className="bg-muted p-3 rounded-lg">
-                        <pre className="text-sm font-mono whitespace-pre-wrap break-all max-h-32 overflow-y-auto">
+                        <pre className="text-[13px] font-mono whitespace-pre-wrap break-all max-h-32 overflow-y-auto">
                           {formatValue(entry.value, entry.type)}
                         </pre>
                       </div>
                       
-                      <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-4 mt-2 text-[11px] text-muted-foreground">
                         <span>Created {new Date(entry.createdAt).toLocaleDateString()}</span>
                         {entry.updatedAt !== entry.createdAt && (
                           <span>Updated {new Date(entry.updatedAt).toLocaleDateString()}</span>
@@ -453,7 +453,7 @@ export function ReplitDatabase({ projectId }: ReplitDatabaseProps) {
         <CardContent className="space-y-4">
           <div>
             <h4 className="font-medium mb-2">JavaScript/Node.js</h4>
-            <div className="bg-muted p-3 rounded-lg font-mono text-sm">
+            <div className="bg-muted p-3 rounded-lg font-mono text-[13px]">
               <div>// Read a value</div>
               <div>const value = await db.get('user_settings');</div>
               <div className="mt-2">// Set a value</div>
@@ -465,7 +465,7 @@ export function ReplitDatabase({ projectId }: ReplitDatabaseProps) {
           
           <div>
             <h4 className="font-medium mb-2">Python</h4>
-            <div className="bg-muted p-3 rounded-lg font-mono text-sm">
+            <div className="bg-muted p-3 rounded-lg font-mono text-[13px]">
               <div># Read a value</div>
               <div>value = db.get('user_settings')</div>
               <div className="mt-2"># Set a value</div>
@@ -477,7 +477,7 @@ export function ReplitDatabase({ projectId }: ReplitDatabaseProps) {
           
           <div>
             <h4 className="font-medium mb-2">Features</h4>
-            <ul className="text-sm text-muted-foreground space-y-1">
+            <ul className="text-[13px] text-muted-foreground space-y-1">
               <li>• Simple key-value storage with JSON support</li>
               <li>• Automatic data type detection and validation</li>
               <li>• Real-time updates across your application</li>

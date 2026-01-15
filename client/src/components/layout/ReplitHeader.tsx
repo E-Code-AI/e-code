@@ -407,7 +407,7 @@ export function ReplitHeader() {
             <span className="hidden xl:inline">Search or run a command...</span>
             <span className="xl:hidden">Search...</span>
             <kbd className="pointer-events-none ml-auto inline-flex h-5 select-none items-center gap-1 border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
-              <span className="text-xs">⌘</span>K
+              <span className="text-[11px]">⌘</span>K
             </kbd>
           </Button>
         </div>
@@ -443,7 +443,7 @@ export function ReplitHeader() {
             <div className="flex items-center justify-start gap-2 p-2">
               <div className="flex flex-col space-y-1 leading-none">
                 <p className="font-medium text-[var(--ecode-text)]">{user?.displayName || user?.username}</p>
-                <p className="w-[200px] truncate text-sm text-[var(--ecode-text-secondary)]">
+                <p className="w-[200px] truncate text-[13px] text-[var(--ecode-text-secondary)]">
                   {user?.email}
                 </p>
               </div>

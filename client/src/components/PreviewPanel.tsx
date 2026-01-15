@@ -143,7 +143,7 @@ export function PreviewPanel({ projectId, projectUrl, className }: PreviewPanelP
                 <Input
                   value={projectUrl || (typeof window !== 'undefined' ? window.location.origin : '')}
                   readOnly
-                  className="h-8 flex-1 font-mono text-sm"
+                  className="h-8 flex-1 font-mono text-[13px]"
                 />
                 <Button
                   variant="ghost"
@@ -182,7 +182,7 @@ export function PreviewPanel({ projectId, projectUrl, className }: PreviewPanelP
                 <div className="flex items-center justify-center h-96 text-muted-foreground">
                   <div className="text-center">
                     <Globe className="h-12 w-12 mx-auto mb-4" />
-                    <p className="text-sm">Run your project to see the preview</p>
+                    <p className="text-[13px]">Run your project to see the preview</p>
                   </div>
                 </div>
               )}
@@ -201,7 +201,7 @@ export function PreviewPanel({ projectId, projectUrl, className }: PreviewPanelP
 
           {/* Deployment Options */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold flex items-center gap-2">
+            <h3 className="text-[15px] font-semibold flex items-center gap-2">
               <Zap className="h-5 w-5" />
               Deployment Options
             </h3>
@@ -212,12 +212,12 @@ export function PreviewPanel({ projectId, projectUrl, className }: PreviewPanelP
                 <div className="space-y-1">
                   <h4 className="font-medium flex items-center gap-2">
                     Static Hosting
-                    <Badge variant="secondary" className="text-xs">Free</Badge>
+                    <Badge variant="secondary" className="text-[11px]">Free</Badge>
                   </h4>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-[13px] text-muted-foreground">
                     Perfect for static websites, SPAs, and frontend applications
                   </p>
-                  <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-4 mt-2 text-[11px] text-muted-foreground">
                     <span className="flex items-center gap-1">
                       <Check className="h-3 w-3 text-green-600" />
                       Instant deployment
@@ -245,12 +245,12 @@ export function PreviewPanel({ projectId, projectUrl, className }: PreviewPanelP
                 <div className="space-y-1">
                   <h4 className="font-medium flex items-center gap-2">
                     Autoscale
-                    <Badge className="text-xs bg-blue-600">Pro</Badge>
+                    <Badge className="text-[11px] bg-blue-600">Pro</Badge>
                   </h4>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-[13px] text-muted-foreground">
                     Automatically scales based on traffic with zero configuration
                   </p>
-                  <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-4 mt-2 text-[11px] text-muted-foreground">
                     <span className="flex items-center gap-1">
                       <Check className="h-3 w-3 text-green-600" />
                       Auto-scaling
@@ -287,7 +287,7 @@ export function PreviewPanel({ projectId, projectUrl, className }: PreviewPanelP
                   Configure
                 </Button>
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-[11px] text-muted-foreground">
                 Use your own domain name for your deployment
               </p>
             </div>

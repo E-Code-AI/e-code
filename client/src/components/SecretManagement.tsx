@@ -225,7 +225,7 @@ export function SecretManagement({ projectId }: SecretManagementProps) {
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               required
             />
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="text-[13px] text-muted-foreground mt-1">
               Use UPPER_SNAKE_CASE for environment variables
             </p>
           </div>
@@ -378,14 +378,14 @@ export function SecretManagement({ projectId }: SecretManagementProps) {
                       <TableCell className="font-mono font-medium">
                         {secret.name}
                         {secret.description && (
-                          <p className="text-sm text-muted-foreground font-sans">
+                          <p className="text-[13px] text-muted-foreground font-sans">
                             {secret.description}
                           </p>
                         )}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <code className="text-sm">
+                          <code className="text-[13px]">
                             {revealedSecrets.has(secret.id) 
                               ? secret.value 
                               : '•'.repeat(20)}
@@ -422,7 +422,7 @@ export function SecretManagement({ projectId }: SecretManagementProps) {
                           {secret.scope}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
+                      <TableCell className="text-[13px] text-muted-foreground">
                         {new Date(secret.lastUpdated).toLocaleDateString()}
                       </TableCell>
                       <TableCell>
@@ -498,7 +498,7 @@ export function SecretManagement({ projectId }: SecretManagementProps) {
           {/* Security notice */}
           <div className="mt-6 p-4 bg-muted rounded-lg flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-muted-foreground mt-0.5" />
-            <div className="text-sm text-muted-foreground">
+            <div className="text-[13px] text-muted-foreground">
               <p className="font-medium mb-1">Security Notice</p>
               <p>
                 Secrets are encrypted at rest and in transit. They are only accessible to your project 

@@ -71,9 +71,9 @@ export function SpotlightSettingsPanel({ projectId, className }: SpotlightSettin
             <ScrollArea className="h-full">
               <div className="p-4 space-y-6">
                 <div>
-                  <Label className="text-sm font-medium">Page URL</Label>
+                  <Label className="text-[13px] font-medium">Page URL</Label>
                   <div className="mt-2 flex items-center gap-2">
-                    <Input value={shareableUrl} readOnly className="font-mono text-xs" />
+                    <Input value={shareableUrl} readOnly className="font-mono text-[11px]" />
                     <Button size="sm" variant="outline" onClick={handleCopy}>
                       {copied ? (
                         <>
@@ -119,7 +119,7 @@ export function SpotlightSettingsPanel({ projectId, className }: SpotlightSettin
                 </div>
 
                 <div>
-                  <Label className="text-sm font-medium">Description</Label>
+                  <Label className="text-[13px] font-medium">Description</Label>
                   <Textarea
                     value={description}
                     onChange={(event) => setDescription(event.target.value)}
@@ -129,7 +129,7 @@ export function SpotlightSettingsPanel({ projectId, className }: SpotlightSettin
                 </div>
 
                 <div>
-                  <Label className="text-sm font-medium">Tags</Label>
+                  <Label className="text-[13px] font-medium">Tags</Label>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {tags.map((tag) => (
                       <Badge key={tag} variant="secondary">#{tag}</Badge>
@@ -149,16 +149,16 @@ export function SpotlightSettingsPanel({ projectId, className }: SpotlightSettin
               <div className="p-4 space-y-4">
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-lg">{shareableUrl.replace('https://', '')}</CardTitle>
+                    <CardTitle className="text-[15px]">{shareableUrl.replace('https://', '')}</CardTitle>
                     <CardDescription>
                       {description}
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="rounded border border-dashed p-6 text-center text-sm text-muted-foreground">
+                    <div className="rounded border border-dashed p-6 text-center text-[13px] text-muted-foreground">
                       Preview of your README, screenshot carousel, and live repl output will show here.
                     </div>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
                       <Share2 className="h-3 w-3" />
                       Public link visible to everyone
                     </div>
@@ -173,11 +173,11 @@ export function SpotlightSettingsPanel({ projectId, className }: SpotlightSettin
               <div className="p-4 space-y-3">
                 {[1, 2, 3].map((item) => (
                   <div key={item} className="rounded-md border border-border/60 p-3 bg-muted/20">
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <div className="flex items-center justify-between text-[11px] text-muted-foreground">
                       <span className="font-medium text-[var(--ecode-text)]">Viewer from San Francisco</span>
                       <span>2 minutes ago</span>
                     </div>
-                    <p className="text-sm text-[var(--ecode-text)] mt-2">
+                    <p className="text-[13px] text-[var(--ecode-text)] mt-2">
                       Starred the project and forked the repo to explore the workspace setup.
                     </p>
                   </div>
@@ -205,9 +205,9 @@ function ToggleRow({ label, description, checked, onCheckedChange, icon }: Toggl
       <div className="flex-1">
         <div className="flex items-center gap-2">
           {icon}
-          <p className="text-sm font-medium">{label}</p>
+          <p className="text-[13px] font-medium">{label}</p>
         </div>
-        <p className="text-xs text-muted-foreground mt-1">{description}</p>
+        <p className="text-[11px] text-muted-foreground mt-1">{description}</p>
       </div>
       <Switch checked={checked} onCheckedChange={onCheckedChange} />
     </div>

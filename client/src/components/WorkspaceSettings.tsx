@@ -72,7 +72,7 @@ export function WorkspaceSettings({ projectId }: WorkspaceSettingsProps) {
       <div className="p-6 space-y-6 max-w-3xl">
         <div>
           <h2 className="text-2xl font-bold mb-1">User Settings</h2>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-[13px] text-muted-foreground">
             The following settings apply to your account and will be used across all your Apps.
           </p>
         </div>
@@ -89,7 +89,7 @@ export function WorkspaceSettings({ projectId }: WorkspaceSettingsProps) {
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 <Label htmlFor="agent-audio">Agent Audio Notification</Label>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-[13px] text-muted-foreground">
                   Play a sound when the Agent needs your response.
                 </p>
               </div>
@@ -105,7 +105,7 @@ export function WorkspaceSettings({ projectId }: WorkspaceSettingsProps) {
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 <Label htmlFor="agent-push">Agent Push Notification</Label>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-[13px] text-muted-foreground">
                   Send a push notification when the Agent needs your response.
                 </p>
               </div>
@@ -121,7 +121,7 @@ export function WorkspaceSettings({ projectId }: WorkspaceSettingsProps) {
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 <Label htmlFor="assistant-push">Assistant Push Notification</Label>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-[13px] text-muted-foreground">
                   Send a push notification when the Assistant needs your response.
                 </p>
               </div>
@@ -146,7 +146,7 @@ export function WorkspaceSettings({ projectId }: WorkspaceSettingsProps) {
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 <Label htmlFor="auto-preview">Automatic Preview</Label>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-[13px] text-muted-foreground">
                   Open a web preview automatically when a port is open
                 </p>
               </div>
@@ -171,7 +171,7 @@ export function WorkspaceSettings({ projectId }: WorkspaceSettingsProps) {
                   <SelectItem value="none">none</SelectItem>
                 </SelectContent>
               </Select>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-[13px] text-muted-foreground">
                 Automatically configure detected newly opened ports.
               </p>
             </div>
@@ -199,7 +199,7 @@ export function WorkspaceSettings({ projectId }: WorkspaceSettingsProps) {
                   <SelectItem value="large">large</SelectItem>
                 </SelectContent>
               </Select>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-[13px] text-muted-foreground">
                 Change the font size of the editor.
               </p>
             </div>
@@ -218,7 +218,7 @@ export function WorkspaceSettings({ projectId }: WorkspaceSettingsProps) {
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 <Label htmlFor="ai-completion">AI Code Completion</Label>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-[13px] text-muted-foreground">
                   Code completion provides inline "ghost text" suggestions while you code.
                 </p>
               </div>
@@ -234,7 +234,7 @@ export function WorkspaceSettings({ projectId }: WorkspaceSettingsProps) {
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 <Label htmlFor="accept-commit">Accept Suggestion on Commit Character</Label>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-[13px] text-muted-foreground">
                   Controls whether suggestions should be accepted on commit characters.
                 </p>
               </div>
@@ -250,7 +250,7 @@ export function WorkspaceSettings({ projectId }: WorkspaceSettingsProps) {
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 <Label htmlFor="auto-brackets">Auto close brackets</Label>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-[13px] text-muted-foreground">
                   Controls whether the editor should automatically close brackets.
                 </p>
               </div>
@@ -274,7 +274,7 @@ export function WorkspaceSettings({ projectId }: WorkspaceSettingsProps) {
                   <SelectItem value="soft_wrap">soft wrap</SelectItem>
                 </SelectContent>
               </Select>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-[13px] text-muted-foreground">
                 Change whether the editor wraps lines or not.
               </p>
             </div>
@@ -284,7 +284,7 @@ export function WorkspaceSettings({ projectId }: WorkspaceSettingsProps) {
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 <Label htmlFor="indent-detection">Indentation Detection</Label>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-[13px] text-muted-foreground">
                   Automatically detect indentation settings when opening a file.
                 </p>
               </div>
@@ -300,7 +300,7 @@ export function WorkspaceSettings({ projectId }: WorkspaceSettingsProps) {
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 <Label htmlFor="format-paste">Format Pasted Text Indentation</Label>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-[13px] text-muted-foreground">
                   Automatically format the indentation of pasted text.
                 </p>
               </div>
@@ -324,7 +324,7 @@ export function WorkspaceSettings({ projectId }: WorkspaceSettingsProps) {
                   <SelectItem value="tabs">tabs</SelectItem>
                 </SelectContent>
               </Select>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-[13px] text-muted-foreground">
                 The character used for indenting lines.
               </p>
             </div>
@@ -341,7 +341,7 @@ export function WorkspaceSettings({ projectId }: WorkspaceSettingsProps) {
                 min="1"
                 max="8"
               />
-              <p className="text-sm text-muted-foreground">
+              <p className="text-[13px] text-muted-foreground">
                 The number of columns taken up by an indentation level.
               </p>
             </div>
@@ -351,7 +351,7 @@ export function WorkspaceSettings({ projectId }: WorkspaceSettingsProps) {
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 <Label htmlFor="code-intel">Code Intelligence</Label>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-[13px] text-muted-foreground">
                   Code intelligence gives you autocomplete, as well as hints as you type.
                 </p>
               </div>
@@ -367,7 +367,7 @@ export function WorkspaceSettings({ projectId }: WorkspaceSettingsProps) {
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 <Label htmlFor="semantic-tokens">Semantic Tokens</Label>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-[13px] text-muted-foreground">
                   Enables enhanced syntax highlighting from language servers.
                 </p>
               </div>
@@ -382,7 +382,7 @@ export function WorkspaceSettings({ projectId }: WorkspaceSettingsProps) {
             
             <div className="space-y-3">
               <Label>Show Whitespace</Label>
-              <p className="text-sm text-muted-foreground mb-2">
+              <p className="text-[13px] text-muted-foreground mb-2">
                 Make whitespace characters visible, such as tabs and spaces.
               </p>
               
@@ -446,7 +446,7 @@ export function WorkspaceSettings({ projectId }: WorkspaceSettingsProps) {
                   <SelectItem value="emacs">emacs</SelectItem>
                 </SelectContent>
               </Select>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-[13px] text-muted-foreground">
                 Use another keyboard mapping
               </p>
             </div>
@@ -465,7 +465,7 @@ export function WorkspaceSettings({ projectId }: WorkspaceSettingsProps) {
                   <SelectItem value="Cmd">Cmd</SelectItem>
                 </SelectContent>
               </Select>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-[13px] text-muted-foreground">
                 Modifier key for selecting multiple items in the filetree.
               </p>
             </div>
@@ -475,7 +475,7 @@ export function WorkspaceSettings({ projectId }: WorkspaceSettingsProps) {
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 <Label htmlFor="git-status">Filetree Git Status</Label>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-[13px] text-muted-foreground">
                   Show the Git status of files in the file tree.
                 </p>
               </div>
@@ -491,7 +491,7 @@ export function WorkspaceSettings({ projectId }: WorkspaceSettingsProps) {
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 <Label htmlFor="accessible-term">Accessible Terminal Output</Label>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-[13px] text-muted-foreground">
                   Enable this setting to use a screen reader. Warning: this can negatively affect performance.
                 </p>
               </div>
@@ -507,7 +507,7 @@ export function WorkspaceSettings({ projectId }: WorkspaceSettingsProps) {
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 <Label htmlFor="shell-bell">Shell Bell Audible Indicator</Label>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-[13px] text-muted-foreground">
                   Play sound in the Shell on issues like a failed tab completion.
                 </p>
               </div>
@@ -523,7 +523,7 @@ export function WorkspaceSettings({ projectId }: WorkspaceSettingsProps) {
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 <Label htmlFor="shortcut-hint">Keyboard Shortcut Hint</Label>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-[13px] text-muted-foreground">
                   Show available shortcuts when pressing modifier keys (Cmd/Ctrl/Alt/Shift).
                 </p>
               </div>
@@ -548,7 +548,7 @@ export function WorkspaceSettings({ projectId }: WorkspaceSettingsProps) {
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 <Label htmlFor="shortcut-tester">Keyboard Shortcut Tester</Label>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-[13px] text-muted-foreground">
                   Display last pressed keyboard shortcut (developer tool for debugging shortcuts).
                 </p>
               </div>

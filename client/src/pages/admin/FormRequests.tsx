@@ -220,7 +220,7 @@ export default function AdminFormRequests() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white" data-testid="heading-customer-requests">Customer Requests</h1>
-            <p className="text-xs sm:text-sm text-zinc-400" data-testid="text-requests-description">
+            <p className="text-[11px] sm:text-[13px] text-zinc-400" data-testid="text-requests-description">
               Track every form submission from marketing pages, trust &amp; safety, and support.
             </p>
           </div>
@@ -247,11 +247,11 @@ export default function AdminFormRequests() {
                 <CardContent className="p-2 sm:p-4">
                   <div className="flex items-start justify-between gap-2 sm:gap-3">
                     <div className="min-w-0 flex-1">
-                      <p className="text-xs sm:text-sm text-zinc-400 truncate">{item.label}</p>
-                      <p className="mt-1 sm:mt-2 text-lg sm:text-2xl font-semibold text-white">
+                      <p className="text-[11px] sm:text-[13px] text-zinc-400 truncate">{item.label}</p>
+                      <p className="mt-1 sm:mt-2 text-[15px] sm:text-2xl font-semibold text-white">
                         {item.value.toLocaleString()}
                       </p>
-                      <p className="text-xs text-zinc-500 mt-1 hidden sm:block">{item.description}</p>
+                      <p className="text-[11px] text-zinc-500 mt-1 hidden sm:block">{item.description}</p>
                     </div>
                     <div className="p-1.5 sm:p-2 rounded-full bg-zinc-800/60 flex-shrink-0">
                       <Icon className="h-4 w-4 sm:h-5 sm:w-5 text-zinc-300" />
@@ -301,14 +301,14 @@ export default function AdminFormRequests() {
                         <TabsTrigger
                           key={tab.value}
                           value={tab.value}
-                          className="flex-shrink-0 whitespace-nowrap px-2 sm:px-3 text-xs sm:text-sm data-[state=active]:bg-zinc-700 data-[state=active]:text-white"
+                          className="flex-shrink-0 whitespace-nowrap px-2 sm:px-3 text-[11px] sm:text-[13px] data-[state=active]:bg-zinc-700 data-[state=active]:text-white"
                         >
                           <span className="flex items-center gap-1 sm:gap-2">
                             <span className="hidden sm:inline">{tab.label}</span>
                             <span className="sm:hidden">{tab.label.split(' ')[0]}</span>
                             <Badge
                               variant="outline"
-                              className="border-zinc-700 bg-transparent text-[10px] sm:text-xs text-zinc-300 px-1.5"
+                              className="border-zinc-700 bg-transparent text-[10px] sm:text-[11px] text-zinc-300 px-1.5"
                             >
                               {Number(tabCounts[tab.value] || 0).toLocaleString()}
                           </Badge>
@@ -345,7 +345,7 @@ export default function AdminFormRequests() {
               <div className="py-16 flex flex-col items-center justify-center text-zinc-500">
                 <CheckCircle2 className="h-10 w-10 mb-3" />
                 <p className="font-medium">No requests to show</p>
-                <p className="text-sm text-zinc-500 mt-1 text-center max-w-md">
+                <p className="text-[13px] text-zinc-500 mt-1 text-center max-w-md">
                   {debouncedSearch || statusFilter !== 'all' || activeTab !== 'all'
                     ? 'No submissions match your current filters. Try adjusting the search or status filters.'
                     : 'Once customers reach out through sales, support, or trust & safety forms, their submissions will appear here.'}
@@ -370,38 +370,38 @@ export default function AdminFormRequests() {
                       const createdAt = request.createdAt ? new Date(request.createdAt) : null;
                       return (
                         <TableRow key={request.id} className="border-zinc-900 hover:bg-zinc-800/50" data-testid={`row-request-${request.id}`}>
-                          <TableCell className="text-sm text-zinc-300">
+                          <TableCell className="text-[13px] text-zinc-300">
                             {createdAt ? formatDistanceToNow(createdAt, { addSuffix: true }) : '—'}
                           </TableCell>
-                          <TableCell className="text-sm text-zinc-300">
+                          <TableCell className="text-[13px] text-zinc-300">
                             <div className="flex flex-col">
                               <span className="font-medium capitalize">
                                 {request.formType?.replace('_', ' ') || 'Request'}
                               </span>
-                              <span className="text-xs text-zinc-500">{request.pagePath || '—'}</span>
+                              <span className="text-[11px] text-zinc-500">{request.pagePath || '—'}</span>
                             </div>
                           </TableCell>
-                          <TableCell className="text-sm text-zinc-300">
+                          <TableCell className="text-[13px] text-zinc-300">
                             <div className="space-y-1">
                               <p className="font-medium text-white">{request.name || request.senderName || 'Unknown contact'}</p>
                               {request.senderCompany ? (
-                                <p className="text-xs text-zinc-500">{request.senderCompany}</p>
+                                <p className="text-[11px] text-zinc-500">{request.senderCompany}</p>
                               ) : null}
                               {request.email || request.senderEmail ? (
-                                <p className="flex items-center gap-2 text-xs text-blue-400">
+                                <p className="flex items-center gap-2 text-[11px] text-blue-400">
                                   <Mail className="h-3 w-3" />
                                   {request.email || request.senderEmail}
                                 </p>
                               ) : null}
                               {request.phone || request.senderPhone ? (
-                                <p className="flex items-center gap-2 text-xs text-zinc-500">
+                                <p className="flex items-center gap-2 text-[11px] text-zinc-500">
                                   <Phone className="h-3 w-3" />
                                   {request.phone || request.senderPhone}
                                 </p>
                               ) : null}
                             </div>
                           </TableCell>
-                          <TableCell className="text-sm text-zinc-300">
+                          <TableCell className="text-[13px] text-zinc-300">
                             <div className="space-y-1">
                               {request.subject ? (
                                 <p className="font-medium text-white">{request.subject}</p>
@@ -411,14 +411,14 @@ export default function AdminFormRequests() {
                                   {request.metadata.issueType.replace('_', ' ')}
                                 </Badge>
                               ) : null}
-                              <p className="text-xs text-zinc-400 whitespace-pre-wrap">
+                              <p className="text-[11px] text-zinc-400 whitespace-pre-wrap">
                                 {request.message?.slice(0, 200) || '—'}
                                 {request.message && request.message.length > 200 ? '…' : ''}
                               </p>
                               {request.metadata?.targetUrl ? (
                                 <a
                                   href={request.metadata.targetUrl}
-                                  className="inline-flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300"
+                                  className="inline-flex items-center gap-1 text-[11px] text-blue-400 hover:text-blue-300"
                                   target="_blank"
                                   rel="noreferrer"
                                 >
@@ -451,7 +451,7 @@ export default function AdminFormRequests() {
                                     ) : (
                                       <Icon className="mr-2 h-3 w-3" />
                                     )}
-                                    <span className="text-xs">{action.label}</span>
+                                    <span className="text-[11px]">{action.label}</span>
                                   </Button>
                                 );
                               })}
@@ -467,7 +467,7 @@ export default function AdminFormRequests() {
           </CardContent>
         </Card>
 
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between text-xs text-zinc-500">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between text-[11px] text-zinc-500">
           <div>
             {pagination.total > 0 ? (
               <span>

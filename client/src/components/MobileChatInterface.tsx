@@ -264,7 +264,7 @@ Would you like me to start building this for you?`;
         {/* Header matching Replit design */}
         <div className="flex items-center justify-between p-4 border-b bg-background">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center text-sm font-medium">
+            <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center text-[13px] font-medium">
               {user ? (user.displayName || user.username || 'You').slice(0, 2).toUpperCase() : 'GU'}
             </div>
             <span className="font-medium text-foreground">
@@ -284,7 +284,7 @@ Would you like me to start building this for you?`;
         {/* Demo Mode Banner */}
         <Alert className="mx-4 mt-3 border-blue-200 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-800">
           <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-          <AlertDescription className="text-sm text-blue-800 dark:text-blue-300 flex items-center justify-between">
+          <AlertDescription className="text-[13px] text-blue-800 dark:text-blue-300 flex items-center justify-between">
             <span>
               <strong>Demo Mode:</strong> Responses are simulated for demonstration.
             </span>
@@ -292,7 +292,7 @@ Would you like me to start building this for you?`;
               variant="outline" 
               size="sm" 
               onClick={handleTryRealAI}
-              className="ml-2 h-7 text-xs border-blue-300 hover:bg-blue-100 dark:border-blue-700 dark:hover:bg-blue-900/30"
+              className="ml-2 h-7 text-[11px] border-blue-300 hover:bg-blue-100 dark:border-blue-700 dark:hover:bg-blue-900/30"
               data-testid="button-try-real-ai"
             >
               <Zap className="h-3 w-3 mr-1" />
@@ -335,7 +335,7 @@ Would you like me to start building this for you?`;
                         {msg.attachments && msg.attachments.length > 0 && (
                           <div className="mt-2 flex flex-wrap gap-2">
                             {msg.attachments.map((file, index) => (
-                              <div key={index} className="flex items-center gap-1 text-xs bg-background/50 rounded px-2 py-1">
+                              <div key={index} className="flex items-center gap-1 text-[11px] bg-background/50 rounded px-2 py-1">
                                 {file.type.startsWith('image/') ? <Image className="h-3 w-3" /> : <FileText className="h-3 w-3" />}
                                 {file.name}
                               </div>
@@ -432,14 +432,14 @@ Would you like me to start building this for you?`;
 
               {/* Quick suggestions */}
               <div className="mb-6 space-y-2">
-                <p className="text-sm text-muted-foreground text-center">Try these ideas:</p>
+                <p className="text-[13px] text-muted-foreground text-center">Try these ideas:</p>
                 <div className="flex flex-wrap gap-2 justify-center">
                   {quickSuggestions.map((suggestion, index) => (
                     <Button 
                       key={index}
                       variant="outline" 
                       size="sm" 
-                      className="text-xs"
+                      className="text-[11px]"
                       onClick={() => setMessage(suggestion)}
                     >
                       {suggestion}
@@ -456,10 +456,10 @@ Would you like me to start building this for you?`;
               <div className="max-w-2xl mx-auto">
                 <div className="flex items-center gap-2 mb-2">
                   <Sparkles className="h-4 w-4 text-orange-500 animate-pulse" />
-                  <span className="text-sm font-medium">Building your application...</span>
+                  <span className="text-[13px] font-medium">Building your application...</span>
                 </div>
                 <Progress value={buildProgress} className="h-2" />
-                <div className="text-xs text-muted-foreground mt-1">
+                <div className="text-[11px] text-muted-foreground mt-1">
                   {Math.round(buildProgress)}% complete
                 </div>
               </div>
@@ -473,7 +473,7 @@ Would you like me to start building this for you?`;
               {attachments.length > 0 && (
                 <div className="mb-3 flex flex-wrap gap-2">
                   {attachments.map((file, index) => (
-                    <div key={index} className="flex items-center gap-2 bg-muted rounded-lg px-3 py-2 text-sm">
+                    <div key={index} className="flex items-center gap-2 bg-muted rounded-lg px-3 py-2 text-[13px]">
                       {file.type.startsWith('image/') ? <Image className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
                       <span className="max-w-32 truncate">{file.name}</span>
                       <Button
@@ -557,19 +557,19 @@ Would you like me to start building this for you?`;
               <div className="w-6 h-6 bg-muted rounded flex items-center justify-center">
                 <MessageSquare className="h-4 w-4 text-muted-foreground" />
               </div>
-              <span className="text-xs text-muted-foreground">My Apps</span>
+              <span className="text-[11px] text-muted-foreground">My Apps</span>
             </div>
             <div className="flex flex-col items-center gap-1">
               <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-sm">+</span>
+                <span className="text-primary-foreground font-bold text-[13px]">+</span>
               </div>
-              <span className="text-xs font-medium text-foreground">Create</span>
+              <span className="text-[11px] font-medium text-foreground">Create</span>
             </div>
             <div className="flex flex-col items-center gap-1">
               <div className="w-6 h-6 bg-muted rounded-full flex items-center justify-center">
                 <div className="w-4 h-4 bg-muted-foreground rounded-full" />
               </div>
-              <span className="text-xs text-muted-foreground">Account</span>
+              <span className="text-[11px] text-muted-foreground">Account</span>
             </div>
           </div>
         </div>

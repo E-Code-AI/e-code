@@ -35,12 +35,12 @@ export default function AIModels() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             <Card className="bg-zinc-800 border-zinc-700" data-testid="card-stat-total-models">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-zinc-300">Total Models</CardTitle>
+                <CardTitle className="text-[13px] font-medium text-zinc-300">Total Models</CardTitle>
                 <Brain className="h-4 w-4 text-zinc-400" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-white" data-testid="text-total-models">{totalModels}</div>
-                <p className="text-xs text-zinc-500">
+                <p className="text-[11px] text-zinc-500">
                   Across all providers
                 </p>
               </CardContent>
@@ -48,12 +48,12 @@ export default function AIModels() {
             
             <Card className="bg-zinc-800 border-zinc-700" data-testid="card-stat-active-models">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-zinc-300">Active Models</CardTitle>
+                <CardTitle className="text-[13px] font-medium text-zinc-300">Active Models</CardTitle>
                 <CheckCircle className="h-4 w-4 text-green-500" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-white" data-testid="text-active-models">{activeModels}</div>
-                <p className="text-xs text-zinc-500">
+                <p className="text-[11px] text-zinc-500">
                   Ready to use
                 </p>
               </CardContent>
@@ -61,12 +61,12 @@ export default function AIModels() {
             
             <Card className="bg-zinc-800 border-zinc-700" data-testid="card-stat-providers">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-zinc-300">Providers</CardTitle>
+                <CardTitle className="text-[13px] font-medium text-zinc-300">Providers</CardTitle>
                 <Zap className="h-4 w-4 text-yellow-500" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-white" data-testid="text-providers">{providers}</div>
-                <p className="text-xs text-zinc-500">
+                <p className="text-[11px] text-zinc-500">
                   Integrated services
                 </p>
               </CardContent>
@@ -74,14 +74,14 @@ export default function AIModels() {
             
             <Card className="bg-zinc-800 border-zinc-700" data-testid="card-stat-usage">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-zinc-300">Total Usage</CardTitle>
+                <CardTitle className="text-[13px] font-medium text-zinc-300">Total Usage</CardTitle>
                 <Activity className="h-4 w-4 text-blue-500" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-white" data-testid="text-usage">
                   {stats?.totalTokens ? (stats.totalTokens / 1000000).toFixed(2) + 'M' : '0'}
                 </div>
-                <p className="text-xs text-zinc-500">
+                <p className="text-[11px] text-zinc-500">
                   Tokens processed
                 </p>
               </CardContent>
@@ -100,47 +100,47 @@ export default function AIModels() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="flex items-center gap-2" data-testid="provider-openai">
                   <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span className="text-sm font-medium text-white">OpenAI</span>
+                  <span className="text-[13px] font-medium text-white">OpenAI</span>
                   <Badge variant="outline" className="ml-auto">4 models</Badge>
                 </div>
                 <div className="flex items-center gap-2" data-testid="provider-anthropic">
                   <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span className="text-sm font-medium text-white">Anthropic</span>
+                  <span className="text-[13px] font-medium text-white">Anthropic</span>
                   <Badge variant="outline" className="ml-auto">2 models</Badge>
                 </div>
                 <div className="flex items-center gap-2" data-testid="provider-together">
                   <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span className="text-sm font-medium text-white">Together AI</span>
+                  <span className="text-[13px] font-medium text-white">Together AI</span>
                   <Badge variant="outline" className="ml-auto">3 models</Badge>
                 </div>
                 <div className="flex items-center gap-2" data-testid="provider-replicate">
                   <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span className="text-sm font-medium text-white">Replicate</span>
+                  <span className="text-[13px] font-medium text-white">Replicate</span>
                   <Badge variant="outline" className="ml-auto">2 models</Badge>
                 </div>
                 <div className="flex items-center gap-2" data-testid="provider-huggingface">
                   <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span className="text-sm font-medium text-white">Hugging Face</span>
+                  <span className="text-[13px] font-medium text-white">Hugging Face</span>
                   <Badge variant="outline" className="ml-auto">2 models</Badge>
                 </div>
                 <div className="flex items-center gap-2" data-testid="provider-groq">
                   <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span className="text-sm font-medium text-white">Groq</span>
+                  <span className="text-[13px] font-medium text-white">Groq</span>
                   <Badge variant="outline" className="ml-auto">1 model</Badge>
                 </div>
                 <div className="flex items-center gap-2" data-testid="provider-anyscale">
                   <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span className="text-sm font-medium text-white">Anyscale</span>
+                  <span className="text-[13px] font-medium text-white">Anyscale</span>
                   <Badge variant="outline" className="ml-auto">1 model</Badge>
                 </div>
                 <div className="flex items-center gap-2" data-testid="provider-moonshot">
                   <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span className="text-sm font-medium text-white">Moonshot AI</span>
+                  <span className="text-[13px] font-medium text-white">Moonshot AI</span>
                   <Badge variant="outline" className="ml-auto">3 models</Badge>
                 </div>
                 <div className="flex items-center gap-2" data-testid="provider-mcp">
                   <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span className="text-sm font-medium text-white">MCP Integration</span>
+                  <span className="text-[13px] font-medium text-white">MCP Integration</span>
                   <Badge className="ml-auto">Active</Badge>
                 </div>
               </div>
@@ -162,7 +162,7 @@ export default function AIModels() {
               <div className="space-y-4">
                 <div className="border-l-4 border-green-500 pl-4">
                   <h3 className="font-semibold text-white">✅ Open-Source Models (100% Complete)</h3>
-                  <p className="text-sm text-zinc-400 mt-1">
+                  <p className="text-[13px] text-zinc-400 mt-1">
                     Successfully integrated 9 open-source models: Llama 3.1 405B, DeepSeek Coder 33B, 
                     Mixtral 8x7B, CodeLlama 70B, WizardCoder 34B, Phind CodeLlama 34B, Mistral 7B, 
                     StarCoder2 15B, and Qwen 2.5 Coder
@@ -171,28 +171,28 @@ export default function AIModels() {
                 
                 <div className="border-l-4 border-green-500 pl-4">
                   <h3 className="font-semibold text-white">✅ MCP Integration</h3>
-                  <p className="text-sm text-zinc-400 mt-1">
+                  <p className="text-[13px] text-zinc-400 mt-1">
                     All models available through MCP ai_complete tool with full billing integration
                   </p>
                 </div>
                 
                 <div className="border-l-4 border-green-500 pl-4">
                   <h3 className="font-semibold text-white">✅ API Endpoints</h3>
-                  <p className="text-sm text-zinc-400 mt-1">
+                  <p className="text-[13px] text-zinc-400 mt-1">
                     Complete REST API at /api/opensource/* for models, generation, code, pricing, and status
                   </p>
                 </div>
                 
                 <div className="border-l-4 border-green-500 pl-4">
                   <h3 className="font-semibold text-white">✅ Provider Support</h3>
-                  <p className="text-sm text-zinc-400 mt-1">
+                  <p className="text-[13px] text-zinc-400 mt-1">
                     Integrated with Together AI, Replicate, Hugging Face, Groq, and Anyscale for maximum availability
                   </p>
                 </div>
                 
                 <div className="border-l-4 border-green-500 pl-4">
                   <h3 className="font-semibold text-white">✅ Billing System</h3>
-                  <p className="text-sm text-zinc-400 mt-1">
+                  <p className="text-[13px] text-zinc-400 mt-1">
                     Full token tracking and credit-based billing for all open-source models with accurate pricing
                   </p>
                 </div>

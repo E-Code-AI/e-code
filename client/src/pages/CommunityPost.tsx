@@ -201,7 +201,7 @@ export default function CommunityPost() {
                 </Avatar>
                 <div>
                   <h3 className="font-semibold">{post.author.displayName}</h3>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-[13px] text-muted-foreground">
                     @{post.author.username} • {post.createdAt}
                   </p>
                 </div>
@@ -341,11 +341,11 @@ export default function CommunityPost() {
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
                         <h4 className="font-semibold">{comment.author.displayName}</h4>
-                        <span className="text-sm text-muted-foreground">
+                        <span className="text-[13px] text-muted-foreground">
                           • {comment.createdAt}
                         </span>
                       </div>
-                      <p className="text-sm text-muted-foreground mb-2">
+                      <p className="text-[13px] text-muted-foreground mb-2">
                         {comment.content}
                       </p>
                       <Button

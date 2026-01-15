@@ -678,7 +678,7 @@ export function CommandPalette({
             className="border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 h-12"
             autoComplete="off"
           />
-          <kbd className="ml-auto px-2 py-1 text-xs text-muted-foreground bg-muted rounded font-mono">
+          <kbd className="ml-auto px-2 py-1 text-[11px] text-muted-foreground bg-muted rounded font-mono">
             ESC
           </kbd>
         </div>
@@ -688,7 +688,7 @@ export function CommandPalette({
             {results.length === 0 ? (
               <div 
                 data-testid="text-command-palette-empty"
-                className="px-4 py-8 text-center text-sm text-muted-foreground"
+                className="px-4 py-8 text-center text-[13px] text-muted-foreground"
               >
                 No results found for "{search}"
               </div>
@@ -697,7 +697,7 @@ export function CommandPalette({
                 const config = categoryConfig[category];
                 return (
                   <div key={category}>
-                    <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                    <div className="px-4 py-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
                       {config.label}
                     </div>
                     {items.map((item) => {
@@ -734,18 +734,18 @@ export function CommandPalette({
                               </Badge>
                             </div>
                             {item.description && (
-                              <div className="text-xs text-muted-foreground truncate">
+                              <div className="text-[11px] text-muted-foreground truncate">
                                 {item.description}
                               </div>
                             )}
                           </div>
                           {item.shortcut && (
-                            <kbd className="hidden sm:inline-block px-2 py-1 text-xs rounded bg-muted font-mono text-muted-foreground">
+                            <kbd className="hidden sm:inline-block px-2 py-1 text-[11px] rounded bg-muted font-mono text-muted-foreground">
                               {item.shortcut}
                             </kbd>
                           )}
                           {isSelected && (
-                            <kbd className="sm:hidden px-2 py-1 text-xs rounded bg-muted font-mono text-muted-foreground">
+                            <kbd className="sm:hidden px-2 py-1 text-[11px] rounded bg-muted font-mono text-muted-foreground">
                               ↵
                             </kbd>
                           )}
@@ -759,7 +759,7 @@ export function CommandPalette({
           </div>
         </ScrollArea>
 
-        <div className="border-t px-4 py-2 text-xs text-muted-foreground bg-muted/50">
+        <div className="border-t px-4 py-2 text-[11px] text-muted-foreground bg-muted/50">
           <div className="flex items-center justify-between">
             <span className="flex items-center gap-3">
               <span className="flex items-center gap-1">

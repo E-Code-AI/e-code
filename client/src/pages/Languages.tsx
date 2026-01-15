@@ -525,15 +525,15 @@ export default function Languages() {
                     <div className={`p-3 rounded-lg ${language.color} bg-opacity-10`}>
                       {language.icon}
                     </div>
-                    <Badge variant="secondary" className="text-xs" data-testid={`badge-language-version-${langIndex}`}>
+                    <Badge variant="secondary" className="text-[11px]" data-testid={`badge-language-version-${langIndex}`}>
                       {language.version}
                     </Badge>
                   </div>
-                  <CardTitle className="text-lg flex items-center justify-between" data-testid={`text-language-name-${langIndex}`}>
+                  <CardTitle className="text-[15px] flex items-center justify-between" data-testid={`text-language-name-${langIndex}`}>
                     {language.name}
                     <Badge 
                       variant={language.popularity === 'Most Popular' ? 'default' : 'outline'}
-                      className="text-xs"
+                      className="text-[11px]"
                       data-testid={`badge-language-popularity-${langIndex}`}
                     >
                       {language.popularity}
@@ -544,7 +544,7 @@ export default function Languages() {
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     {language.features.map((feature, idx) => (
-                      <div key={idx} className="flex items-center gap-2 text-sm">
+                      <div key={idx} className="flex items-center gap-2 text-[13px]">
                         <CheckCircle className="h-3 w-3 text-green-600" />
                         <span className="text-muted-foreground">{feature}</span>
                       </div>
@@ -552,7 +552,7 @@ export default function Languages() {
                   </div>
                   
                   <div className="pt-2 flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground" data-testid={`text-language-templates-${langIndex}`}>
+                    <span className="text-[13px] text-muted-foreground" data-testid={`text-language-templates-${langIndex}`}>
                       {language.templates} templates
                     </span>
                     <Button 
@@ -592,10 +592,10 @@ export default function Languages() {
             <Card>
               <CardHeader>
                 <Package className="h-8 w-8 text-primary mb-2" />
-                <CardTitle className="text-lg">Package Managers</CardTitle>
+                <CardTitle className="text-[15px]">Package Managers</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-[13px] text-muted-foreground">
                   npm, pip, cargo, gem, and more. Install any package with one click.
                 </p>
               </CardContent>
@@ -604,10 +604,10 @@ export default function Languages() {
             <Card>
               <CardHeader>
                 <Zap className="h-8 w-8 text-primary mb-2" />
-                <CardTitle className="text-lg">Instant Setup</CardTitle>
+                <CardTitle className="text-[15px]">Instant Setup</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-[13px] text-muted-foreground">
                   No installation needed. Start coding immediately in your browser.
                 </p>
               </CardContent>
@@ -616,10 +616,10 @@ export default function Languages() {
             <Card>
               <CardHeader>
                 <Terminal className="h-8 w-8 text-primary mb-2" />
-                <CardTitle className="text-lg">Full Terminal</CardTitle>
+                <CardTitle className="text-[15px]">Full Terminal</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-[13px] text-muted-foreground">
                   Complete shell access with all the tools you need for development.
                 </p>
               </CardContent>
@@ -628,10 +628,10 @@ export default function Languages() {
             <Card>
               <CardHeader>
                 <Sparkles className="h-8 w-8 text-primary mb-2" />
-                <CardTitle className="text-lg">AI Assistance</CardTitle>
+                <CardTitle className="text-[15px]">AI Assistance</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-[13px] text-muted-foreground">
                   Get intelligent code completion and debugging help in any language.
                 </p>
               </CardContent>

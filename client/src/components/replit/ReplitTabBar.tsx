@@ -209,7 +209,7 @@ export function ReplitTabBar({
                     {getTabIcon(tab)}
                   </div>
                   
-                  <span className="truncate text-sm font-medium">
+                  <span className="truncate text-[13px] font-medium">
                     {tab.title}
                   </span>
                   

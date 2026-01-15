@@ -97,14 +97,14 @@ export function FileUpload({ projectId, parentId, onClose, className }: FileUplo
             <p className="text-[var(--ecode-text)] mb-2">
               Drag & drop files here, or click to select files
             </p>
-            <p className="text-sm text-[var(--ecode-text-muted)]">
+            <p className="text-[13px] text-[var(--ecode-text-muted)]">
               Upload multiple files to your project
             </p>
           </>
         )}
 
         {uploadMutation.isPending && (
-          <p className="mt-4 text-sm text-[var(--ecode-accent)]">
+          <p className="mt-4 text-[13px] text-[var(--ecode-accent)]">
             Uploading files...
           </p>
         )}

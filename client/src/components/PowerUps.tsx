@@ -147,7 +147,7 @@ export function PowerUps({ projectId }: PowerUpsProps) {
           </p>
         </div>
         <div className="text-right">
-          <p className="text-sm text-muted-foreground">Monthly Cost</p>
+          <p className="text-[13px] text-muted-foreground">Monthly Cost</p>
           <p className="text-2xl font-bold">${calculateMonthlyCost().toFixed(2)}</p>
         </div>
       </div>
@@ -168,8 +168,8 @@ export function PowerUps({ projectId }: PowerUpsProps) {
                       {powerUp.icon}
                     </div>
                     <div>
-                      <p className="font-medium text-sm">{powerUp.name}</p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="font-medium text-[13px]">{powerUp.name}</p>
+                      <p className="text-[11px] text-muted-foreground">
                         {powerUp.currentValue} {powerUp.unit}
                       </p>
                     </div>
@@ -205,8 +205,8 @@ export function PowerUps({ projectId }: PowerUpsProps) {
                     {powerUp.icon}
                   </div>
                   <div>
-                    <CardTitle className="text-lg">{powerUp.name}</CardTitle>
-                    <CardDescription className="text-xs">
+                    <CardTitle className="text-[15px]">{powerUp.name}</CardTitle>
+                    <CardDescription className="text-[11px]">
                       {powerUp.description}
                     </CardDescription>
                   </div>
@@ -221,7 +221,7 @@ export function PowerUps({ projectId }: PowerUpsProps) {
             <CardContent className="space-y-3">
               {powerUp.type === 'performance' || powerUp.type === 'capacity' ? (
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center justify-between text-[13px]">
                     <span>Current</span>
                     <span className="font-medium">
                       {powerUp.currentValue} / {powerUp.maxValue} {powerUp.unit}
@@ -244,7 +244,7 @@ export function PowerUps({ projectId }: PowerUpsProps) {
                 </div>
               ) : (
                 <div className="flex items-center justify-between">
-                  <span className="text-sm">Status</span>
+                  <span className="text-[13px]">Status</span>
                   <Switch 
                     checked={powerUp.active}
                     onCheckedChange={() => {
@@ -257,14 +257,14 @@ export function PowerUps({ projectId }: PowerUpsProps) {
               )}
 
               <div className="flex items-center justify-between pt-2 border-t">
-                <span className="text-sm text-muted-foreground">Cost</span>
+                <span className="text-[13px] text-muted-foreground">Cost</span>
                 <span className="font-medium">
                   ${(powerUp.price * (powerUp.currentValue || 1)).toFixed(2)}/hour
                 </span>
               </div>
 
               {powerUp.autoRenew && (
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
                   <CheckCircle className="h-3 w-3" />
                   Auto-renew enabled
                 </div>
@@ -293,13 +293,13 @@ export function PowerUps({ projectId }: PowerUpsProps) {
                 )}
               >
                 {bundle.popular && (
-                  <div className="absolute top-0 right-0 bg-primary text-primary-foreground px-2 py-1 text-xs rounded-bl">
+                  <div className="absolute top-0 right-0 bg-primary text-primary-foreground px-2 py-1 text-[11px] rounded-bl">
                     Popular
                   </div>
                 )}
                 <CardHeader>
-                  <CardTitle className="text-lg">{bundle.name}</CardTitle>
-                  <CardDescription className="text-sm">
+                  <CardTitle className="text-[15px]">{bundle.name}</CardTitle>
+                  <CardDescription className="text-[13px]">
                     {bundle.description}
                   </CardDescription>
                 </CardHeader>
@@ -309,7 +309,7 @@ export function PowerUps({ projectId }: PowerUpsProps) {
                       const powerUp = powerUps.find(p => p.id === powerUpId);
                       if (!powerUp) return null;
                       return (
-                        <div key={powerUpId} className="flex items-center gap-2 text-sm">
+                        <div key={powerUpId} className="flex items-center gap-2 text-[13px]">
                           <CheckCircle className="h-3 w-3 text-green-600" />
                           <span>{powerUp.name}</span>
                         </div>
@@ -319,10 +319,10 @@ export function PowerUps({ projectId }: PowerUpsProps) {
                   
                   <div className="pt-3 border-t">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-muted-foreground">Monthly</span>
+                      <span className="text-[13px] text-muted-foreground">Monthly</span>
                       <div className="text-right">
                         <p className="text-2xl font-bold">${bundle.price}</p>
-                        <p className="text-xs text-green-600">
+                        <p className="text-[11px] text-green-600">
                           Save {bundle.discount}%
                         </p>
                       </div>
@@ -357,12 +357,12 @@ export function PowerUps({ projectId }: PowerUpsProps) {
                       {powerUp.icon}
                       <span className="font-medium">{powerUp.name}</span>
                     </div>
-                    <span className="text-sm text-muted-foreground">
+                    <span className="text-[13px] text-muted-foreground">
                       {u.used} / {u.used + u.remaining} used
                     </span>
                   </div>
                   <Progress value={u.percentage} />
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-[11px] text-muted-foreground">
                     Resets {new Date(u.resetAt).toLocaleDateString()}
                   </p>
                 </div>

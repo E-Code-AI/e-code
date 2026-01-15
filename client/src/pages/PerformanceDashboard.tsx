@@ -303,7 +303,7 @@ export default function PerformanceDashboard() {
             </div>
             <div>
               <h3 className="font-semibold capitalize">System Status: {summaryMetrics.status}</h3>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-[13px] text-muted-foreground">
                 {summaryMetrics.activeAlerts} active alerts • 
                 {summaryMetrics.errorRate.toFixed(2)}% error rate • 
                 {summaryMetrics.avgResponseTime.toFixed(0)}ms avg response
@@ -390,15 +390,15 @@ export default function PerformanceDashboard() {
                     {slowEndpoints.endpoints.map((endpoint: any, index: number) => (
                       <div key={index} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
                         <div className="flex-1">
-                          <p className="font-mono text-sm">{endpoint.endpoint}</p>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="font-mono text-[13px]">{endpoint.endpoint}</p>
+                          <p className="text-[11px] text-muted-foreground">
                             {endpoint.count} calls
                           </p>
                         </div>
                         <div className="text-right">
                           <p className="font-semibold">{endpoint.avgTime.toFixed(0)}ms</p>
                           {endpoint.avgTime > 1000 && (
-                            <Badge variant="destructive" className="text-xs">Slow</Badge>
+                            <Badge variant="destructive" className="text-[11px]">Slow</Badge>
                           )}
                         </div>
                       </div>
@@ -455,7 +455,7 @@ function MetricCard({ title, value, trend, icon, color, inverse = false }: any) 
           </span>
           {trend !== 0 && (
             <span className={cn(
-              "text-xs flex items-center gap-1",
+              "text-[11px] flex items-center gap-1",
               isPositive ? "text-green-600" : "text-red-600"
             )}>
               {isPositive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
@@ -464,7 +464,7 @@ function MetricCard({ title, value, trend, icon, color, inverse = false }: any) 
           )}
         </div>
         <p className="text-2xl font-bold">{value}</p>
-        <p className="text-xs text-muted-foreground">{title}</p>
+        <p className="text-[11px] text-muted-foreground">{title}</p>
       </CardContent>
     </Card>
   );
@@ -477,7 +477,7 @@ function SystemInfoCard({ title, data, icon }: any) {
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="text-sm flex items-center gap-2">
+        <CardTitle className="text-[13px] flex items-center gap-2">
           {icon}
           {title}
         </CardTitle>
@@ -485,7 +485,7 @@ function SystemInfoCard({ title, data, icon }: any) {
       <CardContent>
         <div className="space-y-2">
           {Object.entries(data).map(([key, value]: [string, any]) => (
-            <div key={key} className="flex justify-between text-sm">
+            <div key={key} className="flex justify-between text-[13px]">
               <span className="text-muted-foreground capitalize">
                 {key.replace(/_/g, ' ')}
               </span>

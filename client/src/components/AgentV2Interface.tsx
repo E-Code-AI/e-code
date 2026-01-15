@@ -303,7 +303,7 @@ export function AgentV2Interface({ projectId }: AgentV2InterfaceProps) {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center justify-between text-[13px]">
                 <span>{progress.currentStep}</span>
                 <span>{progress.progress}%</span>
               </div>
@@ -313,22 +313,22 @@ export function AgentV2Interface({ projectId }: AgentV2InterfaceProps) {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="text-center">
                 <div className="text-2xl font-bold">{progress.filesModified}</div>
-                <div className="text-xs text-muted-foreground">Files Modified</div>
+                <div className="text-[11px] text-muted-foreground">Files Modified</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold">{progress.linesWritten}</div>
-                <div className="text-xs text-muted-foreground">Lines Written</div>
+                <div className="text-[11px] text-muted-foreground">Lines Written</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold">{progress.tokensUsed}</div>
-                <div className="text-xs text-muted-foreground">Tokens Used</div>
+                <div className="text-[11px] text-muted-foreground">Tokens Used</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold flex items-center justify-center gap-1">
                   <DollarSign className="h-4 w-4" />
                   {(progress.estimatedCost / 100).toFixed(2)}
                 </div>
-                <div className="text-xs text-muted-foreground">Estimated Cost</div>
+                <div className="text-[11px] text-muted-foreground">Estimated Cost</div>
               </div>
             </div>
 
@@ -343,10 +343,10 @@ export function AgentV2Interface({ projectId }: AgentV2InterfaceProps) {
 
             {/* Recent Actions */}
             <div className="space-y-2">
-              <h4 className="text-sm font-medium">Recent Actions</h4>
+              <h4 className="text-[13px] font-medium">Recent Actions</h4>
               <div className="space-y-1 max-h-40 overflow-y-auto">
                 {progress.actions.slice(-5).reverse().map((action, i) => (
-                  <div key={i} className="text-xs text-muted-foreground">
+                  <div key={i} className="text-[11px] text-muted-foreground">
                     <span className="font-mono">
                       {new Date(action.timestamp).toLocaleTimeString()}
                     </span>

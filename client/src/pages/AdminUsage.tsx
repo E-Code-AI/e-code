@@ -178,12 +178,12 @@ export default function AdminUsage() {
       <div className="grid gap-4 md:grid-cols-4">
         <Card className="bg-zinc-800 border-zinc-700" data-testid="card-total-users">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-zinc-300">Total Users</CardTitle>
+            <CardTitle className="text-[13px] font-medium text-zinc-300">Total Users</CardTitle>
             <Users className="h-4 w-4 text-zinc-400" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-white" data-testid="text-total-users">{platformStats?.totalUsers || 0}</div>
-            <p className="text-xs text-zinc-500">
+            <p className="text-[11px] text-zinc-500">
               {platformStats?.activeUsers || 0} active this month
             </p>
           </CardContent>
@@ -191,14 +191,14 @@ export default function AdminUsage() {
 
         <Card className="bg-zinc-800 border-zinc-700" data-testid="card-monthly-revenue">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-zinc-300">Monthly Revenue</CardTitle>
+            <CardTitle className="text-[13px] font-medium text-zinc-300">Monthly Revenue</CardTitle>
             <DollarSign className="h-4 w-4 text-zinc-400" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-white" data-testid="text-monthly-revenue">
               {formatCost(platformStats?.totalRevenue || 0)}
             </div>
-            <p className="text-xs text-zinc-500">
+            <p className="text-[11px] text-zinc-500">
               From subscriptions and usage
             </p>
           </CardContent>
@@ -206,12 +206,12 @@ export default function AdminUsage() {
 
         <Card className="bg-zinc-800 border-zinc-700" data-testid="card-usage-growth">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-zinc-300">Usage Growth</CardTitle>
+            <CardTitle className="text-[13px] font-medium text-zinc-300">Usage Growth</CardTitle>
             <TrendingUp className="h-4 w-4 text-zinc-400" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-white" data-testid="text-usage-growth">+12.5%</div>
-            <p className="text-xs text-zinc-500">
+            <p className="text-[11px] text-zinc-500">
               vs last month
             </p>
           </CardContent>
@@ -219,12 +219,12 @@ export default function AdminUsage() {
 
         <Card className="bg-zinc-800 border-zinc-700" data-testid="card-top-service">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-zinc-300">Top Service</CardTitle>
+            <CardTitle className="text-[13px] font-medium text-zinc-300">Top Service</CardTitle>
             <BarChart3 className="h-4 w-4 text-zinc-400" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-white" data-testid="text-top-service">AI Agent</div>
-            <p className="text-xs text-zinc-500">
+            <p className="text-[11px] text-zinc-500">
               Most used service
             </p>
           </CardContent>
@@ -244,12 +244,12 @@ export default function AdminUsage() {
                 {getUsageIcon(service)}
                 <div className="flex-1">
                   <div className="flex items-center justify-between">
-                    <span className="capitalize text-sm font-medium text-white">{service.replace(/([A-Z])/g, ' $1')}</span>
-                    <span className="text-sm text-zinc-400">
+                    <span className="capitalize text-[13px] font-medium text-white">{service.replace(/([A-Z])/g, ' $1')}</span>
+                    <span className="text-[13px] text-zinc-400">
                       {formatCost(data.cost)}
                     </span>
                   </div>
-                  <div className="text-xs text-zinc-500">
+                  <div className="text-[11px] text-zinc-500">
                     {formatUsage(data.total, service === 'agentRequests' ? 'requests' : 
                                service === 'deployments' ? 'deployments' :
                                service === 'databases' ? 'operations' : 'GB')}
@@ -283,7 +283,7 @@ export default function AdminUsage() {
               <select
                 value={selectedPlan}
                 onChange={(e) => setSelectedPlan(e.target.value)}
-                className="px-3 py-2 border rounded-md text-sm bg-zinc-900 border-zinc-700 text-white"
+                className="px-3 py-2 border rounded-md text-[13px] bg-zinc-900 border-zinc-700 text-white"
                 data-testid="select-plan-filter"
               >
                 <option value="all">All Plans</option>
@@ -314,7 +314,7 @@ export default function AdminUsage() {
                   <TableCell>
                     <div>
                       <div className="font-medium text-white">{user.username}</div>
-                      <div className="text-sm text-zinc-400">{user.email}</div>
+                      <div className="text-[13px] text-zinc-400">{user.email}</div>
                     </div>
                   </TableCell>
                   <TableCell>
@@ -323,33 +323,33 @@ export default function AdminUsage() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <div className="text-sm">
+                    <div className="text-[13px]">
                       {formatUsage(user.usage.compute.used, 'hours')}
-                      <div className="text-xs text-muted-foreground">
+                      <div className="text-[11px] text-muted-foreground">
                         {formatCost(user.usage.compute.cost)}
                       </div>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div className="text-sm">
+                    <div className="text-[13px]">
                       {formatUsage(user.usage.storage.used, 'GB')}
-                      <div className="text-xs text-muted-foreground">
+                      <div className="text-[11px] text-muted-foreground">
                         {formatCost(user.usage.storage.cost)}
                       </div>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div className="text-sm">
+                    <div className="text-[13px]">
                       {formatUsage(user.usage.bandwidth.used, 'GB')}
-                      <div className="text-xs text-muted-foreground">
+                      <div className="text-[11px] text-muted-foreground">
                         {formatCost(user.usage.bandwidth.cost)}
                       </div>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div className="text-sm">
+                    <div className="text-[13px]">
                       {formatUsage(user.usage.agentRequests.used, 'requests')}
-                      <div className="text-xs text-muted-foreground">
+                      <div className="text-[11px] text-muted-foreground">
                         {formatCost(user.usage.agentRequests.cost)}
                       </div>
                     </div>

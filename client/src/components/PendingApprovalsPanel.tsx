@@ -209,7 +209,7 @@ export function PendingApprovalsPanel({
             <Shield className="h-5 w-5 text-green-600" />
             <CardTitle className="text-base">Pending Approvals</CardTitle>
           </div>
-          <CardDescription className="text-xs">
+          <CardDescription className="text-[11px]">
             No actions waiting for approval
           </CardDescription>
         </CardHeader>
@@ -226,11 +226,11 @@ export function PendingApprovalsPanel({
               <Shield className="h-5 w-5 text-amber-600" />
               <CardTitle className="text-base">Pending Approvals</CardTitle>
             </div>
-            <Badge variant="secondary" className="text-xs" data-testid="pending-count">
+            <Badge variant="secondary" className="text-[11px]" data-testid="pending-count">
               {pendingActions.length}
             </Badge>
           </div>
-          <CardDescription className="text-xs">
+          <CardDescription className="text-[11px]">
             AI actions require your approval for security
           </CardDescription>
         </CardHeader>
@@ -251,15 +251,15 @@ export function PendingApprovalsPanel({
                           {getActionIcon(item.action.type)}
                         </div>
                         <div className="flex-1">
-                          <div className="font-medium text-sm">
+                          <div className="font-medium text-[13px]">
                             {getActionLabel(item.action)}
                           </div>
-                          <div className="text-xs text-muted-foreground">
+                          <div className="text-[11px] text-muted-foreground">
                             {item.action.type.replace('_', ' ')}
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
                         <Clock className="h-3 w-3" />
                         {getTimeRemaining(item.expiresAt)}
                       </div>
@@ -267,11 +267,11 @@ export function PendingApprovalsPanel({
 
                     {/* Security Badge */}
                     <div className="flex items-center gap-2 mb-3">
-                      <Badge variant="outline" className="text-xs">
+                      <Badge variant="outline" className="text-[11px]">
                         <AlertTriangle className="h-3 w-3 mr-1 text-amber-600" />
                         Requires Approval
                       </Badge>
-                      <Badge variant="outline" className="text-xs">
+                      <Badge variant="outline" className="text-[11px]">
                         <Shield className="h-3 w-3 mr-1 text-blue-600" />
                         Security Check
                       </Badge>
@@ -279,7 +279,7 @@ export function PendingApprovalsPanel({
 
                     {/* Preview (if file content) */}
                     {item.action.content && (
-                      <div className="mb-3 p-2 rounded bg-muted text-xs font-mono overflow-hidden">
+                      <div className="mb-3 p-2 rounded bg-muted text-[11px] font-mono overflow-hidden">
                         <div className="line-clamp-2">
                           {item.action.content}
                         </div>

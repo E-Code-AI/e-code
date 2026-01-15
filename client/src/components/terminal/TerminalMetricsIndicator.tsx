@@ -79,7 +79,7 @@ export function TerminalMetricsIndicator({
           <TooltipTrigger asChild>
             <div
               className={cn(
-                'inline-flex items-center gap-1.5 text-xs font-medium cursor-help rounded-md border px-2.5 py-0.5 transition-colors',
+                'inline-flex items-center gap-1.5 text-[11px] font-medium cursor-help rounded-md border px-2.5 py-0.5 transition-colors',
                 getHealthColor(),
                 className
               )}
@@ -94,16 +94,16 @@ export function TerminalMetricsIndicator({
           <TooltipContent side="bottom" className="max-w-xs">
             <div className="space-y-2">
               <div className="flex items-center justify-between gap-4">
-                <span className="text-xs text-muted-foreground">Terminal Health:</span>
-                <span className="text-xs font-medium capitalize">{health}</span>
+                <span className="text-[11px] text-muted-foreground">Terminal Health:</span>
+                <span className="text-[11px] font-medium capitalize">{health}</span>
               </div>
               <div className="flex items-center justify-between gap-4">
-                <span className="text-xs text-muted-foreground">Active Sessions:</span>
-                <span className="text-xs font-medium">{activeSessions} / {maxSessions}</span>
+                <span className="text-[11px] text-muted-foreground">Active Sessions:</span>
+                <span className="text-[11px] font-medium">{activeSessions} / {maxSessions}</span>
               </div>
               <div className="flex items-center justify-between gap-4">
-                <span className="text-xs text-muted-foreground">Capacity Used:</span>
-                <span className="text-xs font-medium">{utilizationPercent.toFixed(1)}%</span>
+                <span className="text-[11px] text-muted-foreground">Capacity Used:</span>
+                <span className="text-[11px] font-medium">{utilizationPercent.toFixed(1)}%</span>
               </div>
             </div>
           </TooltipContent>
@@ -129,18 +129,18 @@ export function TerminalMetricsIndicator({
           data-testid="badge-health-status"
         >
           {getHealthIcon()}
-          <span className="capitalize text-xs">{health}</span>
+          <span className="capitalize text-[11px]">{health}</span>
         </Badge>
       </div>
 
       {/* Capacity */}
-      <div className="flex items-center gap-2 text-sm">
+      <div className="flex items-center gap-2 text-[13px]">
         <Activity className="h-4 w-4 text-muted-foreground" data-testid="icon-activity" />
         <span className="text-muted-foreground">Capacity:</span>
         <span className={cn('font-medium', getCapacityColor())} data-testid="text-capacity-detailed">
           {activeSessions}/{maxSessions}
         </span>
-        <span className="text-muted-foreground text-xs">
+        <span className="text-muted-foreground text-[11px]">
           ({utilizationPercent.toFixed(1)}%)
         </span>
       </div>
@@ -153,13 +153,13 @@ export function TerminalMetricsIndicator({
           data-testid="badge-backpressure"
         >
           <TrendingUp className="h-3 w-3" />
-          <span className="text-xs">High Load</span>
+          <span className="text-[11px]">High Load</span>
         </Badge>
       )}
 
       {/* Session metrics (if available) */}
       {showDetailed && metricsData?.metrics?.sessions && metricsData.metrics.sessions.length > 0 && (
-        <div className="flex items-center gap-2 text-xs text-muted-foreground ml-auto">
+        <div className="flex items-center gap-2 text-[11px] text-muted-foreground ml-auto">
           <TrendingDown className="h-3 w-3" />
           <span data-testid="text-sessions-count">
             {metricsData.metrics.sessions.length} active sessions

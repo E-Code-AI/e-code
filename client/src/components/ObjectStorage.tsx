@@ -244,12 +244,12 @@ export function ObjectStorage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Storage Used</CardTitle>
+            <CardTitle className="text-[13px] font-medium">Storage Used</CardTitle>
             <HardDrive className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatFileSize(storageStats.usedStorage)}</div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[11px] text-muted-foreground">
               of {formatFileSize(storageStats.totalStorage)} total
             </p>
             <Progress 
@@ -261,12 +261,12 @@ export function ObjectStorage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Files</CardTitle>
+            <CardTitle className="text-[13px] font-medium">Total Files</CardTitle>
             <File className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{storageStats.totalFiles}</div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[11px] text-muted-foreground">
               {storageStats.publicFiles} public, {storageStats.privateFiles} private
             </p>
           </CardContent>
@@ -274,12 +274,12 @@ export function ObjectStorage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Bandwidth</CardTitle>
+            <CardTitle className="text-[13px] font-medium">Bandwidth</CardTitle>
             <Globe className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatFileSize(storageStats.totalBandwidth)}</div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[11px] text-muted-foreground">
               This month via global CDN
             </p>
           </CardContent>
@@ -287,12 +287,12 @@ export function ObjectStorage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Performance</CardTitle>
+            <CardTitle className="text-[13px] font-medium">Performance</CardTitle>
             <Zap className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">99.9%</div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[11px] text-muted-foreground">
               Uptime with edge caching
             </p>
           </CardContent>
@@ -333,14 +333,14 @@ export function ObjectStorage() {
                       ))}
                     </SelectContent>
                   </Select>
-                  <div className="text-sm text-muted-foreground">
+                  <div className="text-[13px] text-muted-foreground">
                     {currentPath}
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">
                   {selectedFiles.size > 0 && (
                     <div className="flex items-center space-x-2">
-                      <span className="text-sm text-muted-foreground">
+                      <span className="text-[13px] text-muted-foreground">
                         {selectedFiles.size} selected
                       </span>
                       <Button variant="outline" size="sm" onClick={() => handleBulkAction('makePublic')}>
@@ -385,8 +385,8 @@ export function ObjectStorage() {
                           {getFileIcon(file)}
                         </div>
                         <div className="text-center">
-                          <div className="text-sm font-medium truncate w-full">{file.name}</div>
-                          <div className="text-xs text-muted-foreground">
+                          <div className="text-[13px] font-medium truncate w-full">{file.name}</div>
+                          <div className="text-[11px] text-muted-foreground">
                             {file.type === 'file' ? formatFileSize(file.size) : '—'}
                           </div>
                         </div>
@@ -427,16 +427,16 @@ export function ObjectStorage() {
                         {getFileIcon(file)}
                         <div>
                           <div className="font-medium">{file.name}</div>
-                          <div className="text-sm text-muted-foreground">
+                          <div className="text-[13px] text-muted-foreground">
                             {file.owner} • {new Date(file.updatedAt).toLocaleDateString()}
                           </div>
                         </div>
                       </div>
                       <div className="flex items-center space-x-4">
-                        <div className="text-sm text-muted-foreground">
+                        <div className="text-[13px] text-muted-foreground">
                           {file.type === 'file' ? formatFileSize(file.size) : '—'}
                         </div>
-                        <div className="text-sm text-muted-foreground">
+                        <div className="text-[13px] text-muted-foreground">
                           {file.accessCount} views
                         </div>
                         <Badge variant={file.isPublic ? 'default' : 'secondary'}>
@@ -488,15 +488,15 @@ export function ObjectStorage() {
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
+                        <div className="flex justify-between text-[13px]">
                           <span>Storage Used:</span>
                           <span>{formatFileSize(bucket.size)}</span>
                         </div>
-                        <div className="flex justify-between text-sm">
+                        <div className="flex justify-between text-[13px]">
                           <span>Files:</span>
                           <span>{bucket.fileCount}</span>
                         </div>
-                        <div className="flex justify-between text-sm">
+                        <div className="flex justify-between text-[13px]">
                           <span>Created:</span>
                           <span>{new Date(bucket.createdAt).toLocaleDateString()}</span>
                         </div>
@@ -530,7 +530,7 @@ export function ObjectStorage() {
               <div className="space-y-6">
                 {/* Public/Private Files */}
                 <div>
-                  <h3 className="text-lg font-medium mb-3">File Visibility</h3>
+                  <h3 className="text-[15px] font-medium mb-3">File Visibility</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <Card>
                       <CardHeader className="pb-3">
@@ -541,7 +541,7 @@ export function ObjectStorage() {
                       </CardHeader>
                       <CardContent>
                         <div className="text-2xl font-bold">{storageStats.publicFiles}</div>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-[13px] text-muted-foreground">
                           Accessible via public URLs
                         </p>
                       </CardContent>
@@ -555,7 +555,7 @@ export function ObjectStorage() {
                       </CardHeader>
                       <CardContent>
                         <div className="text-2xl font-bold">{storageStats.privateFiles}</div>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-[13px] text-muted-foreground">
                           Require authentication
                         </p>
                       </CardContent>
@@ -565,14 +565,14 @@ export function ObjectStorage() {
 
                 {/* Access Policies */}
                 <div>
-                  <h3 className="text-lg font-medium mb-3">Access Policies</h3>
+                  <h3 className="text-[15px] font-medium mb-3">Access Policies</h3>
                   <div className="space-y-3">
                     <div className="flex items-center justify-between p-4 border rounded-lg">
                       <div className="flex items-center space-x-3">
                         <Shield className="h-5 w-5 text-blue-500" />
                         <div>
                           <div className="font-medium">Cross-Project Access</div>
-                          <div className="text-sm text-muted-foreground">
+                          <div className="text-[13px] text-muted-foreground">
                             Allow files to be shared between projects
                           </div>
                         </div>
@@ -584,7 +584,7 @@ export function ObjectStorage() {
                         <Globe className="h-5 w-5 text-green-500" />
                         <div>
                           <div className="font-medium">Public CDN Access</div>
-                          <div className="text-sm text-muted-foreground">
+                          <div className="text-[13px] text-muted-foreground">
                             Serve public files via global CDN
                           </div>
                         </div>
@@ -596,7 +596,7 @@ export function ObjectStorage() {
                         <Lock className="h-5 w-5 text-red-500" />
                         <div>
                           <div className="font-medium">Signed URL Access</div>
-                          <div className="text-sm text-muted-foreground">
+                          <div className="text-[13px] text-muted-foreground">
                             Generate temporary access URLs for private files
                           </div>
                         </div>
@@ -608,7 +608,7 @@ export function ObjectStorage() {
 
                 {/* Sharing Settings */}
                 <div>
-                  <h3 className="text-lg font-medium mb-3">Sharing Settings</h3>
+                  <h3 className="text-[15px] font-medium mb-3">Sharing Settings</h3>
                   <div className="space-y-4">
                     <div>
                       <Label>Default File Visibility</Label>
@@ -658,21 +658,21 @@ export function ObjectStorage() {
               <CardContent>
                 <div className="space-y-4">
                   <div>
-                    <div className="flex justify-between text-sm mb-2">
+                    <div className="flex justify-between text-[13px] mb-2">
                       <span>Storage Usage</span>
                       <span>{Math.round((storageStats.usedStorage / storageStats.totalStorage) * 100)}%</span>
                     </div>
                     <Progress value={(storageStats.usedStorage / storageStats.totalStorage) * 100} />
                   </div>
                   <div>
-                    <div className="flex justify-between text-sm mb-2">
+                    <div className="flex justify-between text-[13px] mb-2">
                       <span>Bandwidth (This Month)</span>
                       <span>{formatFileSize(storageStats.totalBandwidth)}</span>
                     </div>
                     <Progress value={52} />
                   </div>
                   <div>
-                    <div className="flex justify-between text-sm mb-2">
+                    <div className="flex justify-between text-[13px] mb-2">
                       <span>CDN Cache Hit Rate</span>
                       <span>94.2%</span>
                     </div>
@@ -701,13 +701,13 @@ export function ObjectStorage() {
                         <div className="flex items-center space-x-3">
                           {getFileIcon(file)}
                           <div>
-                            <div className="text-sm font-medium">{file.name}</div>
-                            <div className="text-xs text-muted-foreground">
+                            <div className="text-[13px] font-medium">{file.name}</div>
+                            <div className="text-[11px] text-muted-foreground">
                               {formatFileSize(file.size)}
                             </div>
                           </div>
                         </div>
-                        <div className="text-sm font-medium">
+                        <div className="text-[13px] font-medium">
                           {file.accessCount} views
                         </div>
                       </div>
@@ -729,19 +729,19 @@ export function ObjectStorage() {
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="text-center p-4 border rounded-lg">
                   <div className="text-2xl font-bold">12ms</div>
-                  <div className="text-sm text-muted-foreground">Avg Response Time</div>
+                  <div className="text-[13px] text-muted-foreground">Avg Response Time</div>
                 </div>
                 <div className="text-center p-4 border rounded-lg">
                   <div className="text-2xl font-bold">150+</div>
-                  <div className="text-sm text-muted-foreground">Edge Locations</div>
+                  <div className="text-[13px] text-muted-foreground">Edge Locations</div>
                 </div>
                 <div className="text-center p-4 border rounded-lg">
                   <div className="text-2xl font-bold">99.9%</div>
-                  <div className="text-sm text-muted-foreground">Uptime</div>
+                  <div className="text-[13px] text-muted-foreground">Uptime</div>
                 </div>
                 <div className="text-center p-4 border rounded-lg">
                   <div className="text-2xl font-bold">94%</div>
-                  <div className="text-sm text-muted-foreground">Cache Hit Rate</div>
+                  <div className="text-[13px] text-muted-foreground">Cache Hit Rate</div>
                 </div>
               </div>
             </CardContent>

@@ -132,18 +132,18 @@ export function DesktopQuickActions({
                   ) : (
                     <Icon className="w-4 h-4" />
                   )}
-                  <span className="hidden lg:inline text-sm">
+                  <span className="hidden lg:inline text-[13px]">
                     {action.label}
                   </span>
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="bottom" className="flex flex-col gap-1">
                 <p className="font-medium">{action.label}</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-[11px] text-muted-foreground">
                   {action.description}
                 </p>
                 {action.shortcut && (
-                  <p className="text-xs text-muted-foreground font-mono">
+                  <p className="text-[11px] text-muted-foreground font-mono">
                     {action.shortcut}
                   </p>
                 )}

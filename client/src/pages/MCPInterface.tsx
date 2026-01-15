@@ -239,7 +239,7 @@ export default function MCPInterface() {
                 <Badge variant={serverHealth.status === 'healthy' ? 'default' : 'destructive'}>
                   {serverHealth.status}
                 </Badge>
-                <span className="text-sm text-muted-foreground">
+                <span className="text-[13px] text-muted-foreground">
                   Server: {serverHealth.server} | Port: {serverHealth.port}
                 </span>
               </div>
@@ -297,7 +297,7 @@ export default function MCPInterface() {
                         {getToolIcon(tool.name)}
                         <span className="font-semibold">{tool.name}</span>
                       </div>
-                      <p className="text-sm text-muted-foreground">{tool.description}</p>
+                      <p className="text-[13px] text-muted-foreground">{tool.description}</p>
                     </div>
                   ))}
                 </div>
@@ -331,8 +331,8 @@ export default function MCPInterface() {
                         {resource.uri}
                       </Badge>
                     </div>
-                    <p className="text-sm text-muted-foreground">{resource.description}</p>
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="text-[13px] text-muted-foreground">{resource.description}</p>
+                    <p className="text-[11px] text-muted-foreground mt-1">
                       MIME: {resource.mimeType}
                     </p>
                   </div>
@@ -353,7 +353,7 @@ export default function MCPInterface() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <label className="text-sm font-medium mb-2 block">Select Tool</label>
+                <label className="text-[13px] font-medium mb-2 block">Select Tool</label>
                 <Select value={selectedTool} onValueChange={(value) => {
                   setSelectedTool(value);
                   setToolArgs(getQuickExample(value));
@@ -375,7 +375,7 @@ export default function MCPInterface() {
               </div>
 
               <div>
-                <label className="text-sm font-medium mb-2 block">Arguments (JSON)</label>
+                <label className="text-[13px] font-medium mb-2 block">Arguments (JSON)</label>
                 <Textarea
                   value={toolArgs}
                   onChange={(e) => setToolArgs(e.target.value)}
@@ -408,7 +408,7 @@ export default function MCPInterface() {
                             <span className="font-semibold">Success</span>
                           </div>
                           {executionResult.content?.map((item, idx) => (
-                            <pre key={idx} className="bg-muted p-2 rounded text-xs overflow-x-auto">
+                            <pre key={idx} className="bg-muted p-2 rounded text-[11px] overflow-x-auto">
                               {item.text}
                             </pre>
                           ))}

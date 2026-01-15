@@ -39,7 +39,7 @@ const TerminalFallback = () => (
   <div className="h-full flex items-center justify-center bg-background">
     <div className="flex flex-col items-center gap-2">
       <Loader2 className="h-5 w-5 animate-spin text-primary" />
-      <p className="text-xs text-muted-foreground">Loading terminal...</p>
+      <p className="text-[11px] text-muted-foreground">Loading terminal...</p>
     </div>
   </div>
 );
@@ -142,7 +142,7 @@ export default function MobileWorkspace() {
       default:
         return (
           <div className="flex-1 flex items-center justify-center p-6">
-            <p className="text-sm text-muted-foreground">Tab: {activeTab}</p>
+            <p className="text-[13px] text-muted-foreground">Tab: {activeTab}</p>
           </div>
         );
     }
@@ -172,7 +172,7 @@ export default function MobileWorkspace() {
             <div className="h-5 w-5 rounded bg-background flex items-center justify-center">
               <div className="h-2 w-2 rounded-full bg-primary" />
             </div>
-            <span className="text-sm font-medium">Agent 3</span>
+            <span className="text-[13px] font-medium">Agent 3</span>
           </div>
         </div>
 
@@ -230,7 +230,7 @@ export default function MobileWorkspace() {
           {activeTool === 'developer' && <MobileDebugPanel projectId={projectId} />}
           {!['database', 'auth', 'integrations', 'git', 'developer'].includes(activeTool || '') && (
             <div className="flex items-center justify-center h-full">
-              <p className="text-muted-foreground text-sm">
+              <p className="text-muted-foreground text-[13px]">
                 {activeTool} panel - Coming soon
               </p>
             </div>

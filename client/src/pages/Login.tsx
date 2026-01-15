@@ -243,19 +243,19 @@ export default function Login() {
             data-testid="button-back-home"
           >
             <ChevronLeft className="h-4 w-4" />
-            <span className="text-sm">Back to home</span>
+            <span className="text-[13px]">Back to home</span>
           </button>
 
           {/* Logo */}
           <div className="flex flex-col items-center justify-center mb-2">
             <ECodeLogo size="lg" showText={true} />
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Enterprise Development Platform</p>
+            <p className="text-[13px] text-gray-600 dark:text-gray-400 mt-2">Enterprise Development Platform</p>
           </div>
 
           {/* Welcome Message - Responsive Typography */}
           <div className="space-y-2">
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight">Welcome back</h2>
-            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
+            <p className="text-[13px] sm:text-base text-gray-600 dark:text-gray-400">
               Sign in to continue building amazing applications
             </p>
           </div>
@@ -264,7 +264,7 @@ export default function Login() {
           <form onSubmit={handleLogin} className="space-y-6">
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-medium">
+                <Label htmlFor="email" className="text-[13px] font-medium">
                   Username or Email
                 </Label>
                 <div className="relative">
@@ -274,7 +274,7 @@ export default function Login() {
                     name="email"
                     type="text"
                     placeholder="Enter your username or email"
-                    className="pl-10 h-12 sm:h-11 text-base sm:text-sm"
+                    className="pl-10 h-12 sm:h-11 text-base sm:text-[13px]"
                     value={formData.email}
                     onChange={handleInputChange}
                     disabled={isLoggingIn}
@@ -286,10 +286,10 @@ export default function Login() {
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="password" className="text-sm font-medium">
+                  <Label htmlFor="password" className="text-[13px] font-medium">
                     Password
                   </Label>
-                  <Link href="/forgot-password" className="text-sm text-orange-600 dark:text-orange-400 hover:underline">
+                  <Link href="/forgot-password" className="text-[13px] text-orange-600 dark:text-orange-400 hover:underline">
                     Forgot password?
                   </Link>
                 </div>
@@ -300,7 +300,7 @@ export default function Login() {
                     name="password"
                     type={showPassword ? "text" : "password"}
                     placeholder="Enter your password"
-                    className="pl-10 pr-12 h-12 sm:h-11 text-base sm:text-sm"
+                    className="pl-10 pr-12 h-12 sm:h-11 text-base sm:text-[13px]"
                     value={formData.password}
                     onChange={handleInputChange}
                     disabled={isLoggingIn}
@@ -328,7 +328,7 @@ export default function Login() {
                   />
                   <label 
                     htmlFor="remember" 
-                    className="text-sm text-gray-600 dark:text-gray-400 cursor-pointer"
+                    className="text-[13px] text-gray-600 dark:text-gray-400 cursor-pointer"
                   >
                     Remember me for 30 days
                   </label>
@@ -338,7 +338,7 @@ export default function Login() {
 
             <Button 
               type="submit" 
-              className="w-full h-12 sm:h-11 text-base sm:text-sm font-semibold"
+              className="w-full h-12 sm:h-11 text-base sm:text-[13px] font-semibold"
               style={{
                 background: 'linear-gradient(135deg, #F26207 0%, #F99D25 100%)',
               }}
@@ -369,7 +369,7 @@ export default function Login() {
               <div className="absolute inset-0 flex items-center">
                 <Separator />
               </div>
-              <div className="relative flex justify-center text-xs uppercase">
+              <div className="relative flex justify-center text-[11px] uppercase">
                 <span className="bg-background px-2 text-gray-500">Or continue with</span>
               </div>
             </div>
@@ -404,7 +404,7 @@ export default function Login() {
           </form>
 
           {/* Sign Up Link */}
-          <p className="text-center text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-center text-[13px] text-gray-600 dark:text-gray-400">
             Don't have an account?{' '}
             <Link href="/register" className="font-semibold text-violet-600 dark:text-violet-400 hover:underline" data-testid="link-register">
               Sign up for free
@@ -435,7 +435,7 @@ export default function Login() {
           )}
 
           {/* Terms */}
-          <p className="text-center text-xs text-gray-500">
+          <p className="text-center text-[11px] text-gray-500">
             By signing in, you agree to our{' '}
             <Link href="/terms" className="underline hover:text-gray-700 dark:hover:text-gray-300">
               Terms of Service
@@ -476,14 +476,14 @@ export default function Login() {
             <div className="space-y-4">
               <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
                 <Sparkles className="h-4 w-4" />
-                <span className="text-sm font-medium">AI-Powered Development</span>
+                <span className="text-[13px] font-medium">AI-Powered Development</span>
               </div>
               
               <h2 className="text-4xl font-bold leading-tight">
                 Build faster with enterprise-grade tools
               </h2>
               
-              <p className="text-lg opacity-90">
+              <p className="text-[15px] opacity-90">
                 Ship production-ready applications 10x faster with AI-powered development.
               </p>
             </div>
@@ -513,11 +513,11 @@ export default function Login() {
             <div className="grid grid-cols-2 gap-4 pt-8 border-t border-white/20">
               <div>
                 <div className="text-3xl font-bold">21</div>
-                <div className="text-sm opacity-75">AI Models</div>
+                <div className="text-[13px] opacity-75">AI Models</div>
               </div>
               <div>
                 <div className="text-3xl font-bold">29+</div>
-                <div className="text-sm opacity-75">Languages</div>
+                <div className="text-[13px] opacity-75">Languages</div>
               </div>
             </div>
           </div>

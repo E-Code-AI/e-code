@@ -135,9 +135,9 @@ export function ReplitResourcesPanel({ projectId, className }: ReplitResourcesPa
       <div className="flex items-center justify-between px-4 py-2 border-b border-border">
         <div className="flex items-center gap-2">
           <Activity className="w-4 h-4 text-warning" />
-          <span className="text-sm font-medium">Resources</span>
+          <span className="text-[13px] font-medium">Resources</span>
         </div>
-        <span className={cn('text-xs', wsRef.current?.readyState === WebSocket.OPEN ? 'text-status-success' : 'text-status-warning')}>
+        <span className={cn('text-[11px]', wsRef.current?.readyState === WebSocket.OPEN ? 'text-status-success' : 'text-status-warning')}>
           {wsRef.current?.readyState === WebSocket.OPEN ? '● Live' : '○ Connecting...'}
         </span>
       </div>
@@ -147,7 +147,7 @@ export function ReplitResourcesPanel({ projectId, className }: ReplitResourcesPa
         <div className="p-4 space-y-4">
           {/* CPU */}
           <div className="space-y-2">
-            <div className="flex items-center justify-between text-xs">
+            <div className="flex items-center justify-between text-[11px]">
               <div className="flex items-center gap-2">
                 <Cpu className="w-3 h-3" />
                 <span>CPU</span>
@@ -164,7 +164,7 @@ export function ReplitResourcesPanel({ projectId, className }: ReplitResourcesPa
 
           {/* Memory */}
           <div className="space-y-2">
-            <div className="flex items-center justify-between text-xs">
+            <div className="flex items-center justify-between text-[11px]">
               <div className="flex items-center gap-2">
                 <Activity className="w-3 h-3" />
                 <span>Memory</span>
@@ -181,7 +181,7 @@ export function ReplitResourcesPanel({ projectId, className }: ReplitResourcesPa
 
           {/* Disk */}
           <div className="space-y-2">
-            <div className="flex items-center justify-between text-xs">
+            <div className="flex items-center justify-between text-[11px]">
               <div className="flex items-center gap-2">
                 <HardDrive className="w-3 h-3" />
                 <span>Disk</span>
@@ -198,20 +198,20 @@ export function ReplitResourcesPanel({ projectId, className }: ReplitResourcesPa
 
           {/* Network */}
           <div className="space-y-2">
-            <div className="flex items-center justify-between text-xs">
+            <div className="flex items-center justify-between text-[11px]">
               <div className="flex items-center gap-2">
                 <Network className="w-3 h-3" />
                 <span>Network</span>
               </div>
             </div>
-            <div className="flex justify-between text-xs text-muted-foreground">
+            <div className="flex justify-between text-[11px] text-muted-foreground">
               <span>↓ {formatBytes(latest.networkRxBytes || 0)}</span>
               <span>↑ {formatBytes(latest.networkTxBytes || 0)}</span>
             </div>
           </div>
 
           {/* Active Connections */}
-          <div className="flex items-center justify-between text-xs pt-2 border-t border-border">
+          <div className="flex items-center justify-between text-[11px] pt-2 border-t border-border">
             <span className="text-muted-foreground">Active Connections</span>
             <span className="font-mono">{latest.activeConnections || 0}</span>
           </div>
@@ -219,7 +219,7 @@ export function ReplitResourcesPanel({ projectId, className }: ReplitResourcesPa
       )}
 
       {!latest && (
-        <div className="flex-1 flex items-center justify-center text-sm text-muted-foreground">
+        <div className="flex-1 flex items-center justify-center text-[13px] text-muted-foreground">
           No resource metrics available
         </div>
       )}

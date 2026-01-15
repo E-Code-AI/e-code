@@ -38,7 +38,7 @@ export function RichMessageContent({ content, className }: RichMessageContentPro
             </h1>
           ),
           h2: ({ children }) => (
-            <h2 className="text-lg font-bold text-foreground mt-3 mb-2 flex items-center gap-2">
+            <h2 className="text-[15px] font-bold text-foreground mt-3 mb-2 flex items-center gap-2">
               {children}
             </h2>
           ),
@@ -49,7 +49,7 @@ export function RichMessageContent({ content, className }: RichMessageContentPro
           ),
           
           p: ({ children }) => (
-            <p className="text-sm text-foreground leading-relaxed my-2">
+            <p className="text-[13px] text-foreground leading-relaxed my-2">
               {children}
             </p>
           ),
@@ -60,14 +60,14 @@ export function RichMessageContent({ content, className }: RichMessageContentPro
             </ul>
           ),
           li: ({ children }) => (
-            <li className="text-sm text-foreground flex items-start gap-2">
+            <li className="text-[13px] text-foreground flex items-start gap-2">
               <span className="text-violet-500 mt-1">•</span>
               <span className="flex-1">{children}</span>
             </li>
           ),
           
           ol: ({ children }) => (
-            <ol className="list-decimal list-inside space-y-1 my-2 text-sm text-foreground">
+            <ol className="list-decimal list-inside space-y-1 my-2 text-[13px] text-foreground">
               {children}
             </ol>
           ),
@@ -86,7 +86,7 @@ export function RichMessageContent({ content, className }: RichMessageContentPro
           code: ({ inline, className, children, ...props }: any) => {
             if (inline) {
               return (
-                <code className="px-1.5 py-0.5 rounded bg-muted text-violet-500 font-mono text-xs">
+                <code className="px-1.5 py-0.5 rounded bg-muted text-violet-500 font-mono text-[11px]">
                   {children}
                 </code>
               );
@@ -101,7 +101,7 @@ export function RichMessageContent({ content, className }: RichMessageContentPro
               <div className="relative group my-3 max-w-full">
                 <div className="flex items-center justify-between px-3 py-2 md:py-1.5 bg-[var(--ecode-terminal-bg)] border border-border rounded-t-lg">
                   {language && (
-                    <span className="text-xs font-mono text-muted-foreground uppercase">
+                    <span className="text-[11px] font-mono text-muted-foreground uppercase">
                       {language}
                     </span>
                   )}
@@ -144,7 +144,7 @@ export function RichMessageContent({ content, className }: RichMessageContentPro
           
           blockquote: ({ children }) => (
             <blockquote className="border-l-4 border-violet-500 pl-4 py-2 my-2 bg-violet-50 dark:bg-violet-950/10">
-              <div className="text-sm text-muted-foreground">
+              <div className="text-[13px] text-muted-foreground">
                 {children}
               </div>
             </blockquote>
@@ -163,12 +163,12 @@ export function RichMessageContent({ content, className }: RichMessageContentPro
             </thead>
           ),
           th: ({ children }) => (
-            <th className="px-3 py-2 text-left text-xs font-semibold text-foreground border-b border-border">
+            <th className="px-3 py-2 text-left text-[11px] font-semibold text-foreground border-b border-border">
               {children}
             </th>
           ),
           td: ({ children }) => (
-            <td className="px-3 py-2 text-sm text-foreground border-b border-border">
+            <td className="px-3 py-2 text-[13px] text-foreground border-b border-border">
               {children}
             </td>
           ),

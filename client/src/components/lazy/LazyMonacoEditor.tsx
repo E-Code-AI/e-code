@@ -19,7 +19,7 @@ function EditorFallback({ height = '100%' }: EditorFallbackProps) {
       data-testid="editor-loading"
     >
       <Loader2 className="h-8 w-8 animate-spin text-muted-foreground mb-2" />
-      <span className="text-sm text-muted-foreground">Loading editor...</span>
+      <span className="text-[13px] text-muted-foreground">Loading editor...</span>
     </div>
   );
 }

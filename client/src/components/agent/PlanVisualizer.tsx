@@ -123,8 +123,8 @@ export function PlanVisualizer({ plan, onTaskClick, onApprove, onReject }: PlanV
         <CardHeader>
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <CardTitle className="text-lg">{plan.goal}</CardTitle>
-              <CardDescription className="mt-2 flex items-center gap-4 text-sm">
+              <CardTitle className="text-[15px]">{plan.goal}</CardTitle>
+              <CardDescription className="mt-2 flex items-center gap-4 text-[13px]">
                 <span className="flex items-center gap-1">
                   <ListTodo className="h-4 w-4" />
                   {plan.tasks?.length ?? 0} tasks
@@ -156,7 +156,7 @@ export function PlanVisualizer({ plan, onTaskClick, onApprove, onReject }: PlanV
         {completedTasks > 0 && (
           <CardContent>
             <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center justify-between text-[13px]">
                 <span className="text-muted-foreground">Progress</span>
                 <span className="font-medium">{completedTasks} / {plan.tasks?.length ?? 0}</span>
               </div>
@@ -206,23 +206,23 @@ export function PlanVisualizer({ plan, onTaskClick, onApprove, onReject }: PlanV
                       
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="text-xs font-mono opacity-60">#{index + 1}</span>
-                          <span className="text-sm font-medium">{task.title}</span>
+                          <span className="text-[11px] font-mono opacity-60">#{index + 1}</span>
+                          <span className="text-[13px] font-medium">{task.title}</span>
                           {isOnCriticalPath && (
-                            <Badge variant="outline" className="text-xs">
+                            <Badge variant="outline" className="text-[11px]">
                               <Zap className="h-3 w-3 mr-1" />
                               Critical
                             </Badge>
                           )}
                           {canRunInParallel && (
-                            <Badge variant="outline" className="text-xs">
+                            <Badge variant="outline" className="text-[11px]">
                               <GitBranch className="h-3 w-3 mr-1" />
                               Parallel
                             </Badge>
                           )}
                         </div>
                         
-                        <div className="flex items-center gap-3 text-xs opacity-75">
+                        <div className="flex items-center gap-3 text-[11px] opacity-75">
                           <span>{TASK_TYPE_ICONS[task.type]} {task.type.replace('_', ' ')}</span>
                           <span>⏱️ {task.estimatedMinutes}min</span>
                           <span className={getRiskColor(task.riskScore)}>
@@ -240,7 +240,7 @@ export function PlanVisualizer({ plan, onTaskClick, onApprove, onReject }: PlanV
                   </CollapsibleTrigger>
                   
                   <CollapsibleContent className="mt-3 pt-3 border-t border-current/20">
-                    <div className="space-y-2 text-sm">
+                    <div className="space-y-2 text-[13px]">
                       <p className="opacity-90">{task.description}</p>
                       
                       {task.dependencies && task.dependencies.length > 0 && (
@@ -248,7 +248,7 @@ export function PlanVisualizer({ plan, onTaskClick, onApprove, onReject }: PlanV
                           <span className="font-medium">Dependencies:</span>
                           <div className="flex flex-wrap gap-1 mt-1">
                             {task.dependencies.map(depId => (
-                              <Badge key={depId} variant="secondary" className="text-xs">
+                              <Badge key={depId} variant="secondary" className="text-[11px]">
                                 {depId}
                               </Badge>
                             ))}
@@ -261,7 +261,7 @@ export function PlanVisualizer({ plan, onTaskClick, onApprove, onReject }: PlanV
                           <span className="font-medium">Tools:</span>
                           <div className="flex flex-wrap gap-1 mt-1">
                             {task.requiredTools.map(tool => (
-                              <Badge key={tool} variant="outline" className="text-xs">
+                              <Badge key={tool} variant="outline" className="text-[11px]">
                                 {tool}
                               </Badge>
                             ))}
@@ -288,7 +288,7 @@ export function PlanVisualizer({ plan, onTaskClick, onApprove, onReject }: PlanV
           </CardHeader>
           <CardContent className="space-y-2">
             {plan.riskAssessment.mitigationStrategies?.map((strategy, idx) => (
-              <div key={idx} className="flex items-start gap-2 text-sm">
+              <div key={idx} className="flex items-start gap-2 text-[13px]">
                 <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
                 <span>{strategy}</span>
               </div>
@@ -312,7 +312,7 @@ export function PlanVisualizer({ plan, onTaskClick, onApprove, onReject }: PlanV
             <CollapsibleContent>
               <CardContent className="space-y-2">
                 {plan.alternativeApproaches.map((approach, idx) => (
-                  <div key={idx} className="flex items-start gap-2 text-sm">
+                  <div key={idx} className="flex items-start gap-2 text-[13px]">
                     <GitBranch className="h-4 w-4 mt-0.5 flex-shrink-0 opacity-60" />
                     <span>{approach}</span>
                   </div>

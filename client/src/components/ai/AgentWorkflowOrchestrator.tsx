@@ -397,7 +397,7 @@ export function AgentWorkflowOrchestrator({
             className="flex flex-col items-center justify-center min-h-[400px]"
           >
             <Loader2 className="w-12 h-12 text-blue-500 animate-spin mb-4" />
-            <p className="text-lg text-gray-600 dark:text-gray-400">
+            <p className="text-[15px] text-gray-600 dark:text-gray-400">
               Analyzing your request and generating feature list...
             </p>
           </LazyMotionDiv>
@@ -423,10 +423,10 @@ export function AgentWorkflowOrchestrator({
             className="flex flex-col items-center justify-center min-h-[400px]"
           >
             <Sparkles className="w-12 h-12 text-blue-500 animate-pulse mb-4" />
-            <p className="text-lg text-gray-600 dark:text-gray-400">
+            <p className="text-[15px] text-gray-600 dark:text-gray-400">
               Creating visual prototype...
             </p>
-            <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">
+            <p className="text-[13px] text-gray-500 dark:text-gray-500 mt-2">
               This will take approximately 5-10 minutes
             </p>
           </LazyMotionDiv>
@@ -453,10 +453,10 @@ export function AgentWorkflowOrchestrator({
             className="flex flex-col items-center justify-center min-h-[400px]"
           >
             <Loader2 className="w-12 h-12 text-blue-500 animate-spin mb-4" />
-            <p className="text-lg text-gray-600 dark:text-gray-400">
+            <p className="text-[15px] text-gray-600 dark:text-gray-400">
               Building your application...
             </p>
-            <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">
+            <p className="text-[13px] text-gray-500 dark:text-gray-500 mt-2">
               This will take approximately 10-20 minutes
             </p>
           </LazyMotionDiv>
@@ -483,7 +483,7 @@ export function AgentWorkflowOrchestrator({
             className="flex flex-col items-center justify-center min-h-[400px]"
           >
             <Loader2 className="w-12 h-12 text-blue-500 animate-spin mb-4" />
-            <p className="text-lg text-gray-600 dark:text-gray-400 mb-4">
+            <p className="text-[15px] text-gray-600 dark:text-gray-400 mb-4">
               Extended build in progress...
             </p>
             <div className="w-full max-w-md">
@@ -493,7 +493,7 @@ export function AgentWorkflowOrchestrator({
                   style={{ transform: `scaleX(${buildProgress / 100})` }}
                 />
               </div>
-              <p className="text-sm text-gray-500 dark:text-gray-500 mt-2 text-center">
+              <p className="text-[13px] text-gray-500 dark:text-gray-500 mt-2 text-center">
                 {buildProgress}% complete
               </p>
             </div>

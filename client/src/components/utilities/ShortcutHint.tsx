@@ -90,19 +90,19 @@ export function ShortcutHint() {
           className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50 pointer-events-none"
         >
           <div className="bg-background/95 backdrop-blur-lg border border-border rounded-lg shadow-2xl p-4 max-w-md">
-            <div className="text-xs text-muted-foreground mb-2">
+            <div className="text-[11px] text-muted-foreground mb-2">
               Available shortcuts:
             </div>
             <div className="grid grid-cols-2 gap-2">
               {shortcuts.map((shortcut) => (
                 <div
                   key={shortcut.key}
-                  className="flex items-center gap-2 text-sm"
+                  className="flex items-center gap-2 text-[13px]"
                 >
-                  <kbd className="px-2 py-1 text-xs bg-muted border border-border rounded min-w-[24px] text-center">
+                  <kbd className="px-2 py-1 text-[11px] bg-muted border border-border rounded min-w-[24px] text-center">
                     {shortcut.key}
                   </kbd>
-                  <span className="text-xs text-muted-foreground truncate">
+                  <span className="text-[11px] text-muted-foreground truncate">
                     {shortcut.action}
                   </span>
                 </div>

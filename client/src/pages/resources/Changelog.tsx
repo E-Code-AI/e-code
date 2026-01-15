@@ -122,13 +122,13 @@ export default function Changelog() {
       <div className="container mx-auto px-4 py-12 sm:py-16 md:py-20" data-testid="page-changelog">
         {/* Hero Section */}
         <div className="text-center max-w-4xl mx-auto mb-12 sm:mb-16">
-          <Badge className="mb-4 px-4 py-1.5 text-sm font-medium bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0">
+          <Badge className="mb-4 px-4 py-1.5 text-[13px] font-medium bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0">
             Product Updates
           </Badge>
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400 bg-clip-text text-transparent" data-testid="heading-changelog">
             Changelog
           </h1>
-          <p className="text-lg sm:text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
+          <p className="text-[15px] sm:text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
             Stay updated with the latest E-Code features, improvements, and fixes.
             We ship new features every week.
           </p>
@@ -164,7 +164,7 @@ export default function Changelog() {
               <Card className={`p-6 ${release.featured ? 'border-2 border-purple-500/20 bg-gradient-to-r from-purple-50/50 to-pink-50/50 dark:from-purple-950/20 dark:to-pink-950/20' : ''}`}>
                 <div className="flex flex-wrap items-center gap-3 mb-4">
                   <Badge variant="secondary" className="font-mono">v{release.version}</Badge>
-                  <span className="text-sm text-muted-foreground">{release.date}</span>
+                  <span className="text-[13px] text-muted-foreground">{release.date}</span>
                   {release.featured && (
                     <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white">
                       Major Release
@@ -197,19 +197,19 @@ export default function Changelog() {
             <div className="flex flex-wrap gap-6">
               <div className="flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-purple-500" />
-                <span className="text-sm">New Feature</span>
+                <span className="text-[13px]">New Feature</span>
               </div>
               <div className="flex items-center gap-2">
                 <Zap className="h-4 w-4 text-blue-500" />
-                <span className="text-sm">Improvement</span>
+                <span className="text-[13px]">Improvement</span>
               </div>
               <div className="flex items-center gap-2">
                 <Bug className="h-4 w-4 text-orange-500" />
-                <span className="text-sm">Bug Fix</span>
+                <span className="text-[13px]">Bug Fix</span>
               </div>
               <div className="flex items-center gap-2">
                 <Shield className="h-4 w-4 text-green-500" />
-                <span className="text-sm">Security</span>
+                <span className="text-[13px]">Security</span>
               </div>
             </div>
           </Card>
@@ -220,7 +220,7 @@ export default function Changelog() {
           <div className="text-center">
             <Rocket className="h-12 w-12 mx-auto mb-6 opacity-80" />
             <h2 className="text-2xl sm:text-3xl font-bold mb-4">Try the Latest Features</h2>
-            <p className="text-lg text-white/90 mb-8">
+            <p className="text-[15px] text-white/90 mb-8">
               Experience the newest E-Code features. Start building today.
             </p>
             <Link href="/register">

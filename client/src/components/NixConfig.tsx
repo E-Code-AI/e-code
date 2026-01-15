@@ -152,14 +152,14 @@ export function NixConfig({ projectId }: { projectId: number }) {
                         <div>
                           <div className="flex items-center gap-2">
                             <p className="font-medium">{pkg.name}</p>
-                            <Badge variant="outline" className="text-xs">
+                            <Badge variant="outline" className="text-[11px]">
                               v{pkg.version}
                             </Badge>
                             {pkg.installed && (
                               <CheckCircle className="h-4 w-4 text-green-600" />
                             )}
                           </div>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-[13px] text-muted-foreground">
                             {pkg.description}
                           </p>
                         </div>
@@ -241,7 +241,7 @@ export function NixConfig({ projectId }: { projectId: number }) {
                 value={customConfig || defaultConfig}
                 onChange={(e) => setCustomConfig(e.target.value)}
                 readOnly={!isEditing}
-                className="font-mono text-sm h-[400px]"
+                className="font-mono text-[13px] h-[400px]"
               />
             </CardContent>
           </Card>
@@ -266,7 +266,7 @@ export function NixConfig({ projectId }: { projectId: number }) {
                       <Network className="h-5 w-5 text-muted-foreground" />
                       <div>
                         <p className="font-medium">{channel.name}</p>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-[13px] text-muted-foreground">
                           {channel.url}
                         </p>
                       </div>
@@ -297,7 +297,7 @@ export function NixConfig({ projectId }: { projectId: number }) {
                 <div className="flex items-center justify-between">
                   <div>
                     <Label>Pure Shell</Label>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-[13px] text-muted-foreground">
                       Isolate environment from host system
                     </p>
                   </div>
@@ -309,7 +309,7 @@ export function NixConfig({ projectId }: { projectId: number }) {
                 <div className="flex items-center justify-between">
                   <div>
                     <Label>Auto GC</Label>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-[13px] text-muted-foreground">
                       Automatically garbage collect unused packages
                     </p>
                   </div>
@@ -321,7 +321,7 @@ export function NixConfig({ projectId }: { projectId: number }) {
                 <div className="flex items-center justify-between">
                   <div>
                     <Label>Binary Cache</Label>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-[13px] text-muted-foreground">
                       Use binary cache for faster installations
                     </p>
                   </div>

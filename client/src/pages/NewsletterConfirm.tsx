@@ -77,7 +77,7 @@ export default function NewsletterConfirm() {
                   <CheckCircle className="h-12 w-12 mx-auto mb-4 text-green-600" />
                   <h2 className="text-2xl font-bold mb-2" data-testid="text-success-title">Success!</h2>
                   <p className="text-muted-foreground mb-6" data-testid="text-success-message">{message}</p>
-                  <p className="text-sm text-muted-foreground mb-6">
+                  <p className="text-[13px] text-muted-foreground mb-6">
                     You'll now receive our newsletter with the latest updates, tutorials, and community stories.
                   </p>
                   <Button onClick={() => navigate('/')} className="w-full" data-testid="button-go-home-success">

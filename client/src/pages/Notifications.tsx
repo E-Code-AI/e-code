@@ -262,7 +262,7 @@ export default function Notifications() {
                       <Label className="font-medium capitalize">
                         {key.replace(/([A-Z])/g, ' $1').trim()}
                       </Label>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-[13px] text-muted-foreground">
                         Get notified about {key.replace(/([A-Z])/g, ' $1').toLowerCase()}
                       </p>
                     </div>
@@ -293,7 +293,7 @@ export default function Notifications() {
                       <Label className="font-medium capitalize">
                         {key.replace(/([A-Z])/g, ' $1').trim()}
                       </Label>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-[13px] text-muted-foreground">
                         Get push notifications for {key.replace(/([A-Z])/g, ' $1').toLowerCase()}
                       </p>
                     </div>
@@ -413,7 +413,7 @@ export default function Notifications() {
             <Card>
               <CardContent className="py-12 text-center">
                 <Bell className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-lg font-medium mb-2">No notifications</h3>
+                <h3 className="text-[15px] font-medium mb-2">No notifications</h3>
                 <p className="text-muted-foreground">
                   {selectedTab === 'unread' 
                     ? "You're all caught up! No unread notifications." 
@@ -454,20 +454,20 @@ export default function Notifications() {
                             <h4 className={`font-medium ${!notification.read ? 'font-semibold' : ''}`}>
                               {notification.title}
                             </h4>
-                            <p className="text-sm text-muted-foreground mt-1">
+                            <p className="text-[13px] text-muted-foreground mt-1">
                               {notification.message}
                             </p>
                             <div className="flex items-center gap-4 mt-2">
-                              <span className="text-xs text-muted-foreground">
+                              <span className="text-[11px] text-muted-foreground">
                                 {formatTimestamp(notification.timestamp)}
                               </span>
                               {!notification.read && (
-                                <Badge variant="secondary" className="text-xs">
+                                <Badge variant="secondary" className="text-[11px]">
                                   New
                                 </Badge>
                               )}
                               {notification.actionUrl && (
-                                <Button variant="link" size="sm" className="text-xs p-0 h-auto">
+                                <Button variant="link" size="sm" className="text-[11px] p-0 h-auto">
                                   View →
                                 </Button>
                               )}

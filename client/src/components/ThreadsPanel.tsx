@@ -201,17 +201,17 @@ export function ThreadsPanel({ projectId, className }: ThreadsPanelProps) {
                     )}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium truncate">{thread.title}</span>
+                      <span className="text-[13px] font-medium truncate">{thread.title}</span>
                       <Badge variant={thread.status === 'resolved' ? 'secondary' : 'default'} className="text-[10px]">
                         {thread.status === 'resolved' ? 'Resolved' : 'Open'}
                       </Badge>
                     </div>
-                    <div className="mt-1 text-xs text-muted-foreground flex items-center gap-2">
+                    <div className="mt-1 text-[11px] text-muted-foreground flex items-center gap-2">
                       <span>{thread.filePath}</span>
                       <span>•</span>
                       <span>L{thread.line}</span>
                     </div>
-                    <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+                    <div className="mt-2 flex items-center gap-2 text-[11px] text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <Users className="h-3 w-3" />
                         {participantCount}
@@ -240,7 +240,7 @@ export function ThreadsPanel({ projectId, className }: ThreadsPanelProps) {
               })}
 
               {filteredThreads.length === 0 && (
-                <div className="text-xs text-muted-foreground text-center py-8">
+                <div className="text-[11px] text-muted-foreground text-center py-8">
                   No threads match your search yet.
                 </div>
               )}
@@ -254,7 +254,7 @@ export function ThreadsPanel({ projectId, className }: ThreadsPanelProps) {
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <h3 className="text-base font-semibold">{activeThread.title}</h3>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-[13px] text-muted-foreground">
                         {activeThread.filePath} • Line {activeThread.line}
                       </p>
                     </div>
@@ -273,11 +273,11 @@ export function ThreadsPanel({ projectId, className }: ThreadsPanelProps) {
                   <div className="p-4 space-y-4">
                     {activeThread.comments.map((comment) => (
                       <div key={comment.id} className="rounded-md border border-border/60 p-3 bg-muted/20">
-                        <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <div className="flex items-center justify-between text-[11px] text-muted-foreground">
                           <span className="font-medium text-[var(--ecode-text)]">{comment.author}</span>
                           <span>{comment.timestamp}</span>
                         </div>
-                        <p className="text-sm mt-2 text-[var(--ecode-text)] whitespace-pre-line">{comment.content}</p>
+                        <p className="text-[13px] mt-2 text-[var(--ecode-text)] whitespace-pre-line">{comment.content}</p>
                         {comment.resolved && (
                           <Badge variant="secondary" className="mt-3 text-[10px] inline-flex items-center">
                             <MessageSquareReply className="h-3 w-3 mr-1" />
@@ -297,7 +297,7 @@ export function ThreadsPanel({ projectId, className }: ThreadsPanelProps) {
                     className="min-h-[100px]"
                   />
                   <div className="mt-3 flex items-center justify-between">
-                    <div className="text-xs text-muted-foreground">
+                    <div className="text-[11px] text-muted-foreground">
                       Project ID: {projectId}
                     </div>
                     <Button size="sm" disabled={!newReply.trim()} onClick={() => setNewReply('')}>
@@ -310,8 +310,8 @@ export function ThreadsPanel({ projectId, className }: ThreadsPanelProps) {
             ) : (
               <div className="flex-1 flex flex-col items-center justify-center text-center p-6">
                 <MessageSquareText className="h-12 w-12 text-muted-foreground mb-3" />
-                <h3 className="font-semibold text-lg">No thread selected</h3>
-                <p className="text-sm text-muted-foreground mt-1">
+                <h3 className="font-semibold text-[15px]">No thread selected</h3>
+                <p className="text-[13px] text-muted-foreground mt-1">
                   Choose a thread on the left or start a new discussion.
                 </p>
               </div>

@@ -212,7 +212,7 @@ export function RollbackCellRenderer(params: ICellRendererParams) {
   
   if (data?.rolledBack) {
     return (
-      <Badge variant="outline" className="text-xs" data-testid="grid-rolled-back">
+      <Badge variant="outline" className="text-[11px]" data-testid="grid-rolled-back">
         Rolled Back
       </Badge>
     );
@@ -222,7 +222,7 @@ export function RollbackCellRenderer(params: ICellRendererParams) {
     <Button 
       variant="ghost" 
       size="sm" 
-      className="h-6 px-2 text-xs"
+      className="h-6 px-2 text-[11px]"
       onClick={(e) => {
         e.stopPropagation();
       }}
@@ -243,7 +243,7 @@ export function IdCellRenderer(params: ICellRendererParams) {
   
   return (
     <span 
-      className="font-mono text-xs text-muted-foreground hover:text-foreground cursor-pointer"
+      className="font-mono text-[11px] text-muted-foreground hover:text-foreground cursor-pointer"
       title={id}
       onClick={() => navigator.clipboard.writeText(id)}
       data-testid="grid-id"

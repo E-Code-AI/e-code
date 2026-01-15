@@ -182,29 +182,29 @@ function CheckpointNode({
           <div className="min-w-0">
             <div className="flex items-center gap-2 mb-1">
               <h4
-                className="font-medium text-sm truncate"
+                className="font-medium text-[13px] truncate"
                 data-testid={`text-checkpoint-name-${checkpoint.id}`}
               >
                 {checkpoint.name}
               </h4>
               {isCurrent && (
-                <Badge variant="default" className="text-xs" data-testid="current-checkpoint-badge">
+                <Badge variant="default" className="text-[11px]" data-testid="current-checkpoint-badge">
                   Current
                 </Badge>
               )}
-              <Badge variant="outline" className={cn("text-xs", config.color)}>
+              <Badge variant="outline" className={cn("text-[11px]", config.color)}>
                 {config.label}
               </Badge>
             </div>
             {checkpoint.description && (
               <p
-                className="text-xs text-muted-foreground line-clamp-2 mb-1"
+                className="text-[11px] text-muted-foreground line-clamp-2 mb-1"
                 data-testid={`checkpoint-description-${checkpoint.id}`}
               >
                 {checkpoint.description}
               </p>
             )}
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
               <Clock className="w-3 h-3" />
               <span data-testid={`checkpoint-timestamp-${checkpoint.id}`}>
                 {formatTimestamp(checkpoint.createdAt)}
@@ -387,7 +387,7 @@ export function CheckpointTimeline({ projectId, userId, className }: CheckpointT
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <History className="w-5 h-5 text-muted-foreground" />
-            <CardTitle className="text-lg">Checkpoint Timeline</CardTitle>
+            <CardTitle className="text-[15px]">Checkpoint Timeline</CardTitle>
           </div>
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
@@ -527,7 +527,7 @@ export function CheckpointTimeline({ projectId, userId, className }: CheckpointT
           </Tooltip>
         </TooltipProvider>
 
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="flex items-center gap-2 text-[13px] text-muted-foreground">
           {navigation?.currentCheckpoint ? (
             <>
               <Circle className="w-3 h-3 fill-primary text-primary" />
@@ -579,8 +579,8 @@ export function CheckpointTimeline({ projectId, userId, className }: CheckpointT
               data-testid="empty-checkpoints"
             >
               <History className="w-10 h-10 text-muted-foreground mb-2" />
-              <p className="text-sm text-muted-foreground">No checkpoints yet</p>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-[13px] text-muted-foreground">No checkpoints yet</p>
+              <p className="text-[11px] text-muted-foreground mt-1">
                 Create a checkpoint to save your project state
               </p>
             </div>

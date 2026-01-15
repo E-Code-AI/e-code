@@ -226,7 +226,7 @@ export default function FeaturePlaceholder({ featureKey }: FeaturePlaceholderPro
             {copy.estimatedDate && copy.status !== 'available' && ` - ${copy.estimatedDate}`}
           </Badge>
           <h1 className="text-4xl font-semibold text-white" data-testid="text-feature-title">{copy.title}</h1>
-          <p className="text-lg text-slate-300">{copy.subtitle}</p>
+          <p className="text-[15px] text-slate-300">{copy.subtitle}</p>
           <p className="mx-auto max-w-3xl text-slate-300 leading-relaxed">{copy.summary}</p>
           
           {copy.status === 'available' && copy.alternativeRoute && (
@@ -335,14 +335,14 @@ export default function FeaturePlaceholder({ featureKey }: FeaturePlaceholderPro
           }].map((item, index) => (
             <Card key={item.title} className="bg-white/5 border-white/10" data-testid={`card-benefit-${index}`}>
               <CardHeader>
-                <CardTitle className="text-lg text-white">{item.title}</CardTitle>
+                <CardTitle className="text-[15px] text-white">{item.title}</CardTitle>
                 <CardDescription className="text-slate-300 leading-relaxed">{item.description}</CardDescription>
               </CardHeader>
             </Card>
           ))}
         </div>
 
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-sm text-slate-300">
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-[13px] text-slate-300">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3 text-slate-200">
               <ShieldCheck className="h-5 w-5 text-emerald-300" />

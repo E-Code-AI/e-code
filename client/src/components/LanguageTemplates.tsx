@@ -242,11 +242,11 @@ export function LanguageTemplates({ onSelectTemplate }: { onSelectTemplate: (tem
                     {template.difficulty}
                   </Badge>
                 </div>
-                <CardTitle className="text-lg mt-3">{template.name}</CardTitle>
+                <CardTitle className="text-[15px] mt-3">{template.name}</CardTitle>
                 <CardDescription>{template.description}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2 text-[13px] text-muted-foreground">
                   <Terminal className="h-4 w-4" />
                   <span>{template.language}</span>
                   <span>•</span>
@@ -256,12 +256,12 @@ export function LanguageTemplates({ onSelectTemplate }: { onSelectTemplate: (tem
                 
                 <div className="flex flex-wrap gap-1">
                   {template.features.slice(0, 3).map((feature, index) => (
-                    <Badge key={index} variant="secondary" className="text-xs">
+                    <Badge key={index} variant="secondary" className="text-[11px]">
                       {feature}
                     </Badge>
                   ))}
                   {template.features.length > 3 && (
-                    <Badge variant="outline" className="text-xs">
+                    <Badge variant="outline" className="text-[11px]">
                       +{template.features.length - 3}
                     </Badge>
                   )}
@@ -281,7 +281,7 @@ export function LanguageTemplates({ onSelectTemplate }: { onSelectTemplate: (tem
         <div className="text-center py-12">
           <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
           <p className="text-muted-foreground">No templates found</p>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-[13px] text-muted-foreground mt-1">
             Try adjusting your filters or search query
           </p>
         </div>

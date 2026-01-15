@@ -318,7 +318,7 @@ export function CodeGenerationPanel() {
           {error && (
             <div className="flex items-center gap-2 p-3 bg-destructive/10 text-destructive rounded-md">
               <XCircle className="h-4 w-4 flex-shrink-0" />
-              <p className="text-sm">{error}</p>
+              <p className="text-[13px]">{error}</p>
             </div>
           )}
         </CardContent>

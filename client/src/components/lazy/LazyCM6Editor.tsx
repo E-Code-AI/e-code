@@ -20,7 +20,7 @@ function EditorFallback({ height = '100%' }: EditorFallbackProps) {
       style={{ height: typeof height === 'number' ? `${height}px` : height, minHeight: '200px' }}
     >
       <Loader2 className="h-8 w-8 animate-spin text-muted-foreground mb-2" />
-      <span className="text-sm text-muted-foreground">Loading editor...</span>
+      <span className="text-[13px] text-muted-foreground">Loading editor...</span>
     </div>
   );
 }

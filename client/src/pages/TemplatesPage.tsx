@@ -177,7 +177,7 @@ export default function TemplatesPage() {
             <h2 className="text-2xl font-bold">
               {selectedCategory === 'all' ? 'All Templates' : categories.find(c => c.id === selectedCategory)?.name}
             </h2>
-            <span className="text-sm text-muted-foreground">
+            <span className="text-[13px] text-muted-foreground">
               {filteredTemplates.length} template{filteredTemplates.length !== 1 ? 's' : ''}
             </span>
           </div>
@@ -200,7 +200,7 @@ export default function TemplatesPage() {
             <Card className="border-dashed">
               <CardContent className="flex flex-col items-center justify-center py-16">
                 <Code2 className="h-16 w-16 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No templates found</h3>
+                <h3 className="text-[15px] font-semibold mb-2">No templates found</h3>
                 <p className="text-muted-foreground text-center mb-4">
                   {searchQuery 
                     ? `No templates match "${searchQuery}". Try a different search term.`
@@ -272,19 +272,19 @@ function TemplateCard({ template, onUse, index }: { template: Template; onUse: (
           {template.technologies && template.technologies.length > 0 && (
             <div className="flex flex-wrap gap-1">
               {template.technologies.slice(0, 4).map((tech, i) => (
-                <Badge key={i} variant="secondary" className="text-xs">
+                <Badge key={i} variant="secondary" className="text-[11px]">
                   {tech}
                 </Badge>
               ))}
               {template.technologies.length > 4 && (
-                <Badge variant="secondary" className="text-xs">
+                <Badge variant="secondary" className="text-[11px]">
                   +{template.technologies.length - 4}
                 </Badge>
               )}
             </div>
           )}
 
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+          <div className="flex items-center gap-4 text-[13px] text-muted-foreground">
             {template.stars !== undefined && (
               <div className="flex items-center gap-1">
                 <Star className="h-3 w-3" />

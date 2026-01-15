@@ -83,7 +83,7 @@ export const PolyglotIndicator: React.FC<{ className?: string }> = ({ className 
       "flex items-center gap-3 p-2 bg-background/50 rounded-lg border",
       className
     )}>
-      <Badge variant="outline" className="text-xs">
+      <Badge variant="outline" className="text-[11px]">
         Polyglot Backend
       </Badge>
       
@@ -103,10 +103,10 @@ export const PolyglotIndicator: React.FC<{ className?: string }> = ({ className 
               </TooltipTrigger>
               <TooltipContent>
                 <div className="space-y-1">
-                  <p className="text-xs font-semibold capitalize">{name} Service</p>
-                  <p className="text-xs text-muted-foreground">Port: {service.port}</p>
-                  <p className="text-xs text-muted-foreground">{service.role}</p>
-                  <p className="text-xs">
+                  <p className="text-[11px] font-semibold capitalize">{name} Service</p>
+                  <p className="text-[11px] text-muted-foreground">Port: {service.port}</p>
+                  <p className="text-[11px] text-muted-foreground">{service.role}</p>
+                  <p className="text-[11px]">
                     Status: <span className={cn(
                       "font-semibold",
                       service.status === 'active' ? 'text-green-500' : 

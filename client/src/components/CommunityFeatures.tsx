@@ -312,7 +312,7 @@ export function CommunityFeatures() {
                 value={formData.codeSnippet}
                 onChange={(e) => setFormData({ ...formData, codeSnippet: e.target.value })}
                 rows={8}
-                className="font-mono text-sm"
+                className="font-mono text-[13px]"
               />
             </div>
 
@@ -360,12 +360,12 @@ export function CommunityFeatures() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Community Posts</CardTitle>
+            <CardTitle className="text-[13px] font-medium">Community Posts</CardTitle>
             <MessageSquare className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalPosts}</div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[11px] text-muted-foreground">
               {stats.totalReplies} total replies
             </p>
           </CardContent>
@@ -373,12 +373,12 @@ export function CommunityFeatures() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Members</CardTitle>
+            <CardTitle className="text-[13px] font-medium">Active Members</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalUsers}</div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[11px] text-muted-foreground">
               Growing developer community
             </p>
           </CardContent>
@@ -386,12 +386,12 @@ export function CommunityFeatures() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Code Showcases</CardTitle>
+            <CardTitle className="text-[13px] font-medium">Code Showcases</CardTitle>
             <Code className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalShowcases}</div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[11px] text-muted-foreground">
               Featured projects and demos
             </p>
           </CardContent>
@@ -399,12 +399,12 @@ export function CommunityFeatures() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Engagement</CardTitle>
+            <CardTitle className="text-[13px] font-medium">Engagement</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">92%</div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[11px] text-muted-foreground">
               Active participation rate
             </p>
           </CardContent>
@@ -493,13 +493,13 @@ export function CommunityFeatures() {
                             <span className="ml-1">{post.category}</span>
                           </Badge>
                           {post.tags.map((tag) => (
-                            <Badge key={tag} variant="secondary" className="text-xs">
+                            <Badge key={tag} variant="secondary" className="text-[11px]">
                               {tag}
                             </Badge>
                           ))}
                         </div>
                         
-                        <h3 className="text-lg font-semibold mb-2 hover:text-primary cursor-pointer">
+                        <h3 className="text-[15px] font-semibold mb-2 hover:text-primary cursor-pointer">
                           {post.title}
                         </h3>
                         
@@ -509,14 +509,14 @@ export function CommunityFeatures() {
 
                         {post.codeSnippet && (
                           <div className="bg-gray-50 rounded-lg p-3 mb-3">
-                            <pre className="text-sm overflow-x-auto">
+                            <pre className="text-[13px] overflow-x-auto">
                               <code>{post.codeSnippet.substring(0, 200)}...</code>
                             </pre>
                           </div>
                         )}
 
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                          <div className="flex items-center space-x-4 text-[13px] text-muted-foreground">
                             <div className="flex items-center space-x-1">
                               <Avatar className="h-6 w-6">
                                 <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${post.authorUsername}`} />
@@ -595,19 +595,19 @@ export function CommunityFeatures() {
                     </div>
                     
                     <h3 className="font-semibold mb-2">{showcase.title}</h3>
-                    <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                    <p className="text-[13px] text-muted-foreground mb-3 line-clamp-2">
                       {showcase.description}
                     </p>
                     
                     <div className="flex flex-wrap gap-1 mb-3">
                       {showcase.tags.slice(0, 3).map((tag) => (
-                        <Badge key={tag} variant="outline" className="text-xs">
+                        <Badge key={tag} variant="outline" className="text-[11px]">
                           {tag}
                         </Badge>
                       ))}
                     </div>
 
-                    <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center justify-between text-[13px]">
                       <div className="flex items-center space-x-1">
                         <Avatar className="h-5 w-5">
                           <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${showcase.authorUsername}`} />
@@ -684,13 +684,13 @@ export function CommunityFeatures() {
                           <div>
                             <div className="font-medium">{user.displayName || user.username}</div>
                             {user.badges && user.badges[0] && (
-                              <Badge variant="outline" className="text-xs">{user.badges[0]}</Badge>
+                              <Badge variant="outline" className="text-[11px]">{user.badges[0]}</Badge>
                             )}
                           </div>
                         </div>
                         <div className="text-right">
                           <div className="font-medium">{user.score}</div>
-                          <div className="text-xs text-muted-foreground">score</div>
+                          <div className="text-[11px] text-muted-foreground">score</div>
                         </div>
                       </div>
                     ))
@@ -721,8 +721,8 @@ export function CommunityFeatures() {
                   ].map((achievement) => (
                     <div key={achievement.name} className="text-center p-4 border rounded-lg">
                       <div className="text-2xl mb-2">{achievement.icon}</div>
-                      <div className="font-medium text-sm">{achievement.name}</div>
-                      <div className="text-xs text-muted-foreground">{achievement.count} earned</div>
+                      <div className="font-medium text-[13px]">{achievement.name}</div>
+                      <div className="text-[11px] text-muted-foreground">{achievement.count} earned</div>
                     </div>
                   ))}
                 </div>
@@ -776,7 +776,7 @@ export function CommunityFeatures() {
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
                               <h3 className="font-semibold mb-2">{event.title}</h3>
-                              <div className="flex items-center space-x-4 text-sm text-muted-foreground mb-2">
+                              <div className="flex items-center space-x-4 text-[13px] text-muted-foreground mb-2">
                                 <div className="flex items-center space-x-1">
                                   <Calendar className="h-4 w-4" />
                                   <span>{new Date(event.date).toLocaleDateString()}</span>
@@ -792,7 +792,7 @@ export function CommunityFeatures() {
                               </div>
                               <div className="flex items-center space-x-2">
                                 <Badge variant="outline">{event.type}</Badge>
-                                <span className="text-sm text-muted-foreground">
+                                <span className="text-[13px] text-muted-foreground">
                                   {event.attendees} attending
                                 </span>
                               </div>
@@ -835,19 +835,19 @@ export function CommunityFeatures() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="flex justify-between">
-                    <span className="text-sm">Active This Week</span>
+                    <span className="text-[13px]">Active This Week</span>
                     <span className="font-medium">2,341 users</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm">New Members</span>
+                    <span className="text-[13px]">New Members</span>
                     <span className="font-medium">156 this month</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm">Projects Shared</span>
+                    <span className="text-[13px]">Projects Shared</span>
                     <span className="font-medium">89 this week</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm">Helpful Answers</span>
+                    <span className="text-[13px]">Helpful Answers</span>
                     <span className="font-medium">234 today</span>
                   </div>
                 </CardContent>

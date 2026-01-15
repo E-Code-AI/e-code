@@ -98,7 +98,7 @@ export function ModeSelector({ mode, onChange, className }: ModeSelectorProps) {
           variant="ghost"
           size="sm"
           className={cn(
-            "h-7 px-2 gap-1 text-xs font-medium",
+            "h-7 px-2 gap-1 text-[11px] font-medium",
             getColorClasses(currentMode.color, 'trigger'),
             "border-0 rounded-full",
             className
@@ -134,7 +134,7 @@ export function ModeSelector({ mode, onChange, className }: ModeSelectorProps) {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
                   <span className={cn(
-                    "font-medium text-sm",
+                    "font-medium text-[13px]",
                     isActive ? getColorClasses(m.color, 'text') : "text-gray-900 dark:text-gray-100"
                   )}>
                     {m.label}

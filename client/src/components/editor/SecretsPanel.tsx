@@ -249,7 +249,7 @@ export function SecretsPanel({ projectId, className }: SecretsPanelProps) {
         data-testid="secrets-panel-no-project"
       >
         <Lock className="w-12 h-12 mb-4 text-muted-foreground opacity-40" />
-        <p className="text-sm text-muted-foreground">Select a project to manage secrets</p>
+        <p className="text-[13px] text-muted-foreground">Select a project to manage secrets</p>
       </div>
     );
   }
@@ -263,10 +263,10 @@ export function SecretsPanel({ projectId, className }: SecretsPanelProps) {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
           <div className="flex items-center gap-2">
             <Shield className="w-5 h-5 text-muted-foreground" />
-            <h3 className="text-base sm:text-lg font-semibold" data-testid="text-secrets-title">
+            <h3 className="text-base sm:text-[15px] font-semibold" data-testid="text-secrets-title">
               Secrets
             </h3>
-            <Badge variant="secondary" className="text-xs" data-testid="text-secrets-count">
+            <Badge variant="secondary" className="text-[11px]" data-testid="text-secrets-count">
               {secrets.length}
             </Badge>
           </div>
@@ -333,7 +333,7 @@ export function SecretsPanel({ projectId, className }: SecretsPanelProps) {
           ) : error ? (
             <div className="flex flex-col items-center justify-center py-8 text-center">
               <AlertCircle className="w-12 h-12 mb-3 text-destructive opacity-40" />
-              <p className="text-sm text-muted-foreground">Failed to load secrets</p>
+              <p className="text-[13px] text-muted-foreground">Failed to load secrets</p>
               <Button variant="link" className="mt-2" onClick={() => refetch()}>
                 Try again
               </Button>
@@ -344,7 +344,7 @@ export function SecretsPanel({ projectId, className }: SecretsPanelProps) {
               <h4 className="text-base font-medium mb-2">
                 {searchQuery ? 'No matching secrets' : 'No secrets configured'}
               </h4>
-              <p className="text-sm text-muted-foreground mb-4">
+              <p className="text-[13px] text-muted-foreground mb-4">
                 {searchQuery 
                   ? 'Try adjusting your search query' 
                   : 'Store sensitive data like API keys and tokens securely'}
@@ -372,7 +372,7 @@ export function SecretsPanel({ projectId, className }: SecretsPanelProps) {
                         <Key className="w-4 h-4 shrink-0 text-muted-foreground" />
                       )}
                       <span 
-                        className="font-mono text-sm font-medium truncate"
+                        className="font-mono text-[13px] font-medium truncate"
                         data-testid={`text-secret-key-${secret.key}`}
                       >
                         {secret.key}
@@ -391,7 +391,7 @@ export function SecretsPanel({ projectId, className }: SecretsPanelProps) {
                       )}
                     </div>
                     <div className="mt-2 flex items-center gap-2">
-                      <code className="text-xs font-mono px-2 py-1 rounded bg-muted max-w-[200px] sm:max-w-[300px] truncate">
+                      <code className="text-[11px] font-mono px-2 py-1 rounded bg-muted max-w-[200px] sm:max-w-[300px] truncate">
                         {revealedSecrets[secret.id] || secret.value}
                       </code>
                     </div>
@@ -485,7 +485,7 @@ export function SecretsPanel({ projectId, className }: SecretsPanelProps) {
                 className="font-mono"
                 data-testid="input-new-key"
               />
-              <p className="text-xs text-muted-foreground">Uppercase with underscores only</p>
+              <p className="text-[11px] text-muted-foreground">Uppercase with underscores only</p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="value">Value</Label>
@@ -557,7 +557,7 @@ export function SecretsPanel({ projectId, className }: SecretsPanelProps) {
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label>Key</Label>
-              <div className="font-mono text-sm px-3 py-2 rounded-md bg-muted">
+              <div className="font-mono text-[13px] px-3 py-2 rounded-md bg-muted">
                 {editingSecret?.key}
               </div>
             </div>
@@ -571,7 +571,7 @@ export function SecretsPanel({ projectId, className }: SecretsPanelProps) {
                 type={isSecretToggle ? 'password' : 'text'}
                 data-testid="input-edit-value"
               />
-              <p className="text-xs text-muted-foreground">Leave empty to keep current value</p>
+              <p className="text-[11px] text-muted-foreground">Leave empty to keep current value</p>
             </div>
             <div className="space-y-2">
               <Label>Environment</Label>

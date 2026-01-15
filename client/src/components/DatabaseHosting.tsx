@@ -217,7 +217,7 @@ export function DatabaseHosting({ projectId }: DatabaseHostingProps) {
                   <div className="flex items-center gap-2">
                     {getDatabaseIcon(database.type)}
                     <div>
-                      <CardTitle className="text-lg">{database.name}</CardTitle>
+                      <CardTitle className="text-[15px]">{database.name}</CardTitle>
                       <CardDescription>
                         {database.type} v{database.version}
                       </CardDescription>
@@ -230,20 +230,20 @@ export function DatabaseHosting({ projectId }: DatabaseHostingProps) {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center justify-between text-[13px]">
                     <span className="text-muted-foreground">Region</span>
                     <span className="font-medium">{database.region}</span>
                   </div>
 
                   <div className="space-y-1">
-                    <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center justify-between text-[13px]">
                       <span className="text-muted-foreground">Storage</span>
                       <span>{(database.metrics.storage / 1024).toFixed(1)} / {(database.metrics.maxStorage / 1024).toFixed(0)} GB</span>
                     </div>
                     <Progress value={storagePercentage} />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="grid grid-cols-2 gap-4 text-[13px]">
                     <div className="flex items-center gap-1">
                       <Users className="h-3 w-3" />
                       <span>{database.metrics.connections} conn</span>
@@ -254,7 +254,7 @@ export function DatabaseHosting({ projectId }: DatabaseHostingProps) {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center justify-between text-[13px]">
                     <span className="text-muted-foreground">Size</span>
                     <Badge variant="secondary">{specs.cpu} • {specs.memory}</Badge>
                   </div>
@@ -379,10 +379,10 @@ export function DatabaseHosting({ projectId }: DatabaseHostingProps) {
                       <CardContent className="p-3">
                         <div className="space-y-1">
                           <h4 className="font-medium capitalize">{size}</h4>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-[11px] text-muted-foreground">
                             {specs.cpu} • {specs.memory} • {specs.storage}
                           </p>
-                          <p className="text-sm font-medium">
+                          <p className="text-[13px] font-medium">
                             ${specs.price}/month
                           </p>
                         </div>
@@ -440,7 +440,7 @@ export function DatabaseHosting({ projectId }: DatabaseHostingProps) {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <Card>
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-sm">Status</CardTitle>
+                      <CardTitle className="text-[13px]">Status</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <Badge className={getStatusColor(selectedDatabase.status)}>
@@ -451,7 +451,7 @@ export function DatabaseHosting({ projectId }: DatabaseHostingProps) {
 
                   <Card>
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-sm">Type</CardTitle>
+                      <CardTitle className="text-[13px]">Type</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <p className="font-medium">
@@ -462,7 +462,7 @@ export function DatabaseHosting({ projectId }: DatabaseHostingProps) {
 
                   <Card>
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-sm">Region</CardTitle>
+                      <CardTitle className="text-[13px]">Region</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <p className="font-medium uppercase">{selectedDatabase.region}</p>
@@ -471,7 +471,7 @@ export function DatabaseHosting({ projectId }: DatabaseHostingProps) {
 
                   <Card>
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-sm">Size</CardTitle>
+                      <CardTitle className="text-[13px]">Size</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <p className="font-medium capitalize">{selectedDatabase.size}</p>
@@ -522,13 +522,13 @@ export function DatabaseHosting({ projectId }: DatabaseHostingProps) {
                           <div key={replica.id} className="flex items-center justify-between p-2 border rounded">
                             <div>
                               <p className="font-medium">{replica.name}</p>
-                              <p className="text-sm text-muted-foreground">{replica.region}</p>
+                              <p className="text-[13px] text-muted-foreground">{replica.region}</p>
                             </div>
                             <div className="text-right">
                               <Badge variant={replica.status === 'active' ? 'default' : 'secondary'}>
                                 {replica.status}
                               </Badge>
-                              <p className="text-xs text-muted-foreground mt-1">
+                              <p className="text-[11px] text-muted-foreground mt-1">
                                 Lag: {replica.lag}s
                               </p>
                             </div>
@@ -601,7 +601,7 @@ export function DatabaseHosting({ projectId }: DatabaseHostingProps) {
                     </div>
 
                     {selectedDatabase.sslRequired && (
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-2 text-[13px] text-muted-foreground">
                         <Shield className="h-4 w-4" />
                         SSL connection required
                       </div>
@@ -618,20 +618,20 @@ export function DatabaseHosting({ projectId }: DatabaseHostingProps) {
                     </CardHeader>
                     <CardContent className="space-y-3">
                       <div className="space-y-1">
-                        <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-center justify-between text-[13px]">
                           <span>CPU Usage</span>
                           <span>{selectedDatabase.metrics.cpu}%</span>
                         </div>
                         <Progress value={selectedDatabase.metrics.cpu} />
                       </div>
                       <div className="space-y-1">
-                        <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-center justify-between text-[13px]">
                           <span>Memory Usage</span>
                           <span>{selectedDatabase.metrics.memory}%</span>
                         </div>
                         <Progress value={selectedDatabase.metrics.memory} />
                       </div>
-                      <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center justify-between text-[13px]">
                         <span>IOPS</span>
                         <span className="font-medium">{selectedDatabase.metrics.iops}</span>
                       </div>
@@ -644,15 +644,15 @@ export function DatabaseHosting({ projectId }: DatabaseHostingProps) {
                     </CardHeader>
                     <CardContent className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm">Active Connections</span>
+                        <span className="text-[13px]">Active Connections</span>
                         <span className="font-medium">{selectedDatabase.metrics.connections}</span>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-sm">Queries/sec</span>
+                        <span className="text-[13px]">Queries/sec</span>
                         <span className="font-medium">{selectedDatabase.metrics.queries}</span>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-sm">Storage Used</span>
+                        <span className="text-[13px]">Storage Used</span>
                         <span className="font-medium">
                           {(selectedDatabase.metrics.storage / 1024).toFixed(1)} GB
                         </span>
@@ -664,7 +664,7 @@ export function DatabaseHosting({ projectId }: DatabaseHostingProps) {
 
               <TabsContent value="backups" className="space-y-4">
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-semibold">Database Backups</h3>
+                  <h3 className="text-[15px] font-semibold">Database Backups</h3>
                   <Button size="sm">Configure Schedule</Button>
                 </div>
 
@@ -676,7 +676,7 @@ export function DatabaseHosting({ projectId }: DatabaseHostingProps) {
                           <div className="flex items-center justify-between">
                             <div>
                               <p className="font-medium">{backup.name}</p>
-                              <p className="text-sm text-muted-foreground">
+                              <p className="text-[13px] text-muted-foreground">
                                 {new Date(backup.createdAt).toLocaleString()} • {backup.type}
                               </p>
                             </div>
@@ -684,7 +684,7 @@ export function DatabaseHosting({ projectId }: DatabaseHostingProps) {
                               <Badge variant={backup.status === 'completed' ? 'default' : 'secondary'}>
                                 {backup.status}
                               </Badge>
-                              <span className="text-sm font-medium">
+                              <span className="text-[13px] font-medium">
                                 {(backup.size / 1024).toFixed(1)} GB
                               </span>
                               <Button variant="outline" size="sm">
@@ -731,7 +731,7 @@ export function DatabaseHosting({ projectId }: DatabaseHostingProps) {
                       <div className="mt-4">
                         <h4 className="font-medium mb-2">Results</h4>
                         <div className="border rounded overflow-auto max-h-96">
-                          <pre className="p-4 text-xs">
+                          <pre className="p-4 text-[11px]">
                             {JSON.stringify(executeQueryMutation.data, null, 2)}
                           </pre>
                         </div>

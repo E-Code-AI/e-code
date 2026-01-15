@@ -206,11 +206,11 @@ export function ImportExport({ projectId, className }: ImportExportProps) {
         
         <CardContent className="space-y-4">
           <div>
-            <h4 className="text-sm font-medium mb-2 flex items-center">
+            <h4 className="text-[13px] font-medium mb-2 flex items-center">
               <Download className="h-3.5 w-3.5 mr-1" />
               Export Project
             </h4>
-            <p className="text-xs text-muted-foreground mb-3">
+            <p className="text-[11px] text-muted-foreground mb-3">
               Download your project with all files and configurations
             </p>
             <Button 
@@ -226,11 +226,11 @@ export function ImportExport({ projectId, className }: ImportExportProps) {
           <Separator />
 
           <div>
-            <h4 className="text-sm font-medium mb-2 flex items-center">
+            <h4 className="text-[13px] font-medium mb-2 flex items-center">
               <Upload className="h-3.5 w-3.5 mr-1" />
               Import Project
             </h4>
-            <p className="text-xs text-muted-foreground mb-3">
+            <p className="text-[11px] text-muted-foreground mb-3">
               Import files from a ZIP archive or GitHub repository
             </p>
             <Button 
@@ -246,7 +246,7 @@ export function ImportExport({ projectId, className }: ImportExportProps) {
 
           <Alert>
             <Info className="h-4 w-4" />
-            <AlertDescription className="text-xs">
+            <AlertDescription className="text-[11px]">
               Imports will merge with existing files. Export your project first to create a backup.
             </AlertDescription>
           </Alert>
@@ -265,23 +265,23 @@ export function ImportExport({ projectId, className }: ImportExportProps) {
           
           <div className="space-y-4">
             <div>
-              <Label className="text-sm mb-2">Export Format</Label>
+              <Label className="text-[13px] mb-2">Export Format</Label>
               <RadioGroup value={exportFormat} onValueChange={(v) => setExportFormat(v as ExportFormat)}>
                 <div className="flex items-center space-x-2 mb-2">
                   <RadioGroupItem value="zip" id="zip" />
-                  <Label htmlFor="zip" className="text-sm font-normal cursor-pointer">
+                  <Label htmlFor="zip" className="text-[13px] font-normal cursor-pointer">
                     ZIP Archive (.zip)
                   </Label>
                 </div>
                 <div className="flex items-center space-x-2 mb-2">
                   <RadioGroupItem value="tar" id="tar" />
-                  <Label htmlFor="tar" className="text-sm font-normal cursor-pointer">
+                  <Label htmlFor="tar" className="text-[13px] font-normal cursor-pointer">
                     TAR Archive (.tar.gz)
                   </Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="git-bundle" id="git-bundle" />
-                  <Label htmlFor="git-bundle" className="text-sm font-normal cursor-pointer">
+                  <Label htmlFor="git-bundle" className="text-[13px] font-normal cursor-pointer">
                     Git Bundle (.bundle)
                   </Label>
                 </div>
@@ -291,7 +291,7 @@ export function ImportExport({ projectId, className }: ImportExportProps) {
             <Separator />
 
             <div>
-              <Label className="text-sm mb-2">Include in Export</Label>
+              <Label className="text-[13px] mb-2">Include in Export</Label>
               <div className="space-y-2">
                 <div className="flex items-center space-x-2">
                   <Checkbox 
@@ -301,7 +301,7 @@ export function ImportExport({ projectId, className }: ImportExportProps) {
                       setExportOptions(prev => ({ ...prev, includeNodeModules: checked as boolean }))
                     }
                   />
-                  <Label htmlFor="node-modules" className="text-sm font-normal cursor-pointer">
+                  <Label htmlFor="node-modules" className="text-[13px] font-normal cursor-pointer">
                     <span className="flex items-center">
                       <Package className="h-3.5 w-3.5 mr-1" />
                       Node modules (may be large)
@@ -316,7 +316,7 @@ export function ImportExport({ projectId, className }: ImportExportProps) {
                       setExportOptions(prev => ({ ...prev, includeGitHistory: checked as boolean }))
                     }
                   />
-                  <Label htmlFor="git-history" className="text-sm font-normal cursor-pointer">
+                  <Label htmlFor="git-history" className="text-[13px] font-normal cursor-pointer">
                     <span className="flex items-center">
                       <GitBranch className="h-3.5 w-3.5 mr-1" />
                       Git history
@@ -331,7 +331,7 @@ export function ImportExport({ projectId, className }: ImportExportProps) {
                       setExportOptions(prev => ({ ...prev, includeEnvironmentVariables: checked as boolean }))
                     }
                   />
-                  <Label htmlFor="env-vars" className="text-sm font-normal cursor-pointer">
+                  <Label htmlFor="env-vars" className="text-[13px] font-normal cursor-pointer">
                     <span className="flex items-center">
                       <FileCode className="h-3.5 w-3.5 mr-1" />
                       Environment variables
@@ -346,7 +346,7 @@ export function ImportExport({ projectId, className }: ImportExportProps) {
                       setExportOptions(prev => ({ ...prev, includeDatabaseData: checked as boolean }))
                     }
                   />
-                  <Label htmlFor="db-data" className="text-sm font-normal cursor-pointer">
+                  <Label htmlFor="db-data" className="text-[13px] font-normal cursor-pointer">
                     <span className="flex items-center">
                       <Database className="h-3.5 w-3.5 mr-1" />
                       Database data
@@ -358,7 +358,7 @@ export function ImportExport({ projectId, className }: ImportExportProps) {
 
             {isExporting && (
               <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center justify-between text-[13px]">
                   <span>Exporting...</span>
                   <span>{exportProgress}%</span>
                 </div>
@@ -400,17 +400,17 @@ export function ImportExport({ projectId, className }: ImportExportProps) {
           
           <div className="space-y-4">
             <div>
-              <Label className="text-sm mb-2">Import Source</Label>
+              <Label className="text-[13px] mb-2">Import Source</Label>
               <RadioGroup value={importSource} onValueChange={(v) => setImportSource(v as ImportSource)}>
                 <div className="flex items-center space-x-2 mb-2">
                   <RadioGroupItem value="file" id="file" />
-                  <Label htmlFor="file" className="text-sm font-normal cursor-pointer">
+                  <Label htmlFor="file" className="text-[13px] font-normal cursor-pointer">
                     Upload ZIP/TAR file
                   </Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="github" id="github" />
-                  <Label htmlFor="github" className="text-sm font-normal cursor-pointer">
+                  <Label htmlFor="github" className="text-[13px] font-normal cursor-pointer">
                     Import from GitHub
                   </Label>
                 </div>
@@ -421,7 +421,7 @@ export function ImportExport({ projectId, className }: ImportExportProps) {
 
             {importSource === 'file' && (
               <div>
-                <Label htmlFor="file-upload" className="text-sm mb-2">Select File</Label>
+                <Label htmlFor="file-upload" className="text-[13px] mb-2">Select File</Label>
                 <div className="mt-1">
                   <input
                     id="file-upload"
@@ -435,12 +435,12 @@ export function ImportExport({ projectId, className }: ImportExportProps) {
                     className="flex items-center justify-center w-full px-4 py-2 border-2 border-dashed rounded-md cursor-pointer hover:border-primary"
                   >
                     {selectedFile ? (
-                      <span className="flex items-center text-sm">
+                      <span className="flex items-center text-[13px]">
                         <File className="h-4 w-4 mr-2" />
                         {selectedFile.name}
                       </span>
                     ) : (
-                      <span className="flex items-center text-sm text-muted-foreground">
+                      <span className="flex items-center text-[13px] text-muted-foreground">
                         <FolderOpen className="h-4 w-4 mr-2" />
                         Click to select file
                       </span>
@@ -452,21 +452,21 @@ export function ImportExport({ projectId, className }: ImportExportProps) {
 
             {importSource === 'github' && (
               <div>
-                <Label htmlFor="github-url" className="text-sm mb-2">GitHub Repository URL</Label>
+                <Label htmlFor="github-url" className="text-[13px] mb-2">GitHub Repository URL</Label>
                 <input
                   id="github-url"
                   type="url"
                   value={githubUrl}
                   onChange={(e) => setGithubUrl(e.target.value)}
                   placeholder="https://github.com/username/repository"
-                  className="w-full px-3 py-2 border rounded-md text-sm"
+                  className="w-full px-3 py-2 border rounded-md text-[13px]"
                 />
               </div>
             )}
 
             {isImporting && (
               <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center justify-between text-[13px]">
                   <span>Importing...</span>
                   <span>{importProgress}%</span>
                 </div>
@@ -476,7 +476,7 @@ export function ImportExport({ projectId, className }: ImportExportProps) {
 
             <Alert>
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription className="text-xs">
+              <AlertDescription className="text-[11px]">
                 Importing will merge files with your existing project. Conflicts will be overwritten.
               </AlertDescription>
             </Alert>

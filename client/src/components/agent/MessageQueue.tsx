@@ -50,10 +50,10 @@ export function MessageQueue({ sessionId, messages, isLoading, className }: Mess
     <div className={cn("bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-3", className)}>
       <div className="flex items-center gap-2 mb-2">
         <MessageSquare className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-        <span className="text-sm font-medium text-amber-900 dark:text-amber-100">
+        <span className="text-[13px] font-medium text-amber-900 dark:text-amber-100">
           Message Queue
         </span>
-        <Badge variant="outline" className="text-xs bg-amber-100 dark:bg-amber-900/30 border-amber-300 dark:border-amber-700">
+        <Badge variant="outline" className="text-[11px] bg-amber-100 dark:bg-amber-900/30 border-amber-300 dark:border-amber-700">
           {pendingMessages.length} pending
         </Badge>
       </div>
@@ -95,10 +95,10 @@ export function MessageQueue({ sessionId, messages, isLoading, className }: Mess
             </div>
             
             <div className="flex-1 min-w-0">
-              <p className="text-sm text-gray-900 dark:text-gray-100 line-clamp-2">
+              <p className="text-[13px] text-gray-900 dark:text-gray-100 line-clamp-2">
                 {message.content}
               </p>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-[11px] text-muted-foreground mt-1">
                 {new Date(message.createdAt).toLocaleTimeString()}
               </p>
             </div>

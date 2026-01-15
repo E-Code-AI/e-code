@@ -152,7 +152,7 @@ export function ReplitSearchBox({
       {/* Header */}
       <div className="p-3 border-b border-[var(--ecode-border)]">
         <div className="flex items-center justify-between mb-2">
-          <h3 className="text-sm font-medium text-[var(--ecode-text)]">Search</h3>
+          <h3 className="text-[13px] font-medium text-[var(--ecode-text)]">Search</h3>
           <div className="flex gap-1">
             <Button
               variant="ghost"
@@ -183,7 +183,7 @@ export function ReplitSearchBox({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
-            className="pr-20 text-sm"
+            className="pr-20 text-[13px]"
           />
           <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-1">
             <Button
@@ -231,7 +231,7 @@ export function ReplitSearchBox({
               placeholder="Replace"
               value={replaceQuery}
               onChange={(e) => setReplaceQuery(e.target.value)}
-              className="pr-16 text-sm"
+              className="pr-16 text-[13px]"
             />
             <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-1">
               <Button
@@ -261,7 +261,7 @@ export function ReplitSearchBox({
               <Button
                 variant={options.caseSensitive ? "default" : "outline"}
                 size="sm"
-                className="h-6 px-2 text-xs"
+                className="h-6 px-2 text-[11px]"
                 onClick={() => setOptions(prev => ({ ...prev, caseSensitive: !prev.caseSensitive }))}
               >
                 Aa
@@ -269,7 +269,7 @@ export function ReplitSearchBox({
               <Button
                 variant={options.wholeWord ? "default" : "outline"}
                 size="sm"
-                className="h-6 px-2 text-xs"
+                className="h-6 px-2 text-[11px]"
                 onClick={() => setOptions(prev => ({ ...prev, wholeWord: !prev.wholeWord }))}
               >
                 Ab
@@ -277,7 +277,7 @@ export function ReplitSearchBox({
               <Button
                 variant={options.regex ? "default" : "outline"}
                 size="sm"
-                className="h-6 px-2 text-xs"
+                className="h-6 px-2 text-[11px]"
                 onClick={() => setOptions(prev => ({ ...prev, regex: !prev.regex }))}
               >
                 .*
@@ -288,21 +288,21 @@ export function ReplitSearchBox({
               placeholder="files to include"
               value={options.include}
               onChange={(e) => setOptions(prev => ({ ...prev, include: e.target.value }))}
-              className="text-xs h-7"
+              className="text-[11px] h-7"
             />
             
             <Input
               placeholder="files to exclude"
               value={options.exclude}
               onChange={(e) => setOptions(prev => ({ ...prev, exclude: e.target.value }))}
-              className="text-xs h-7"
+              className="text-[11px] h-7"
             />
           </div>
         )}
 
         {/* Results summary */}
         {query && (
-          <div className="flex items-center gap-2 text-xs text-[var(--ecode-text-secondary)]">
+          <div className="flex items-center gap-2 text-[11px] text-[var(--ecode-text-secondary)]">
             {isLoading ? (
               <span>Searching...</span>
             ) : (
@@ -328,7 +328,7 @@ export function ReplitSearchBox({
           {results.length === 0 && query && !isLoading && (
             <div className="text-center py-8 text-[var(--ecode-text-secondary)]">
               <Search className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">No results found</p>
+              <p className="text-[13px]">No results found</p>
             </div>
           )}
 
@@ -348,13 +348,13 @@ export function ReplitSearchBox({
             >
               <div className="flex items-center gap-2 mb-1">
                 {getFileIcon(result.file)}
-                <span className="text-sm font-medium truncate">{result.file}</span>
-                <Badge variant="outline" className="ml-auto text-xs">
+                <span className="text-[13px] font-medium truncate">{result.file}</span>
+                <Badge variant="outline" className="ml-auto text-[11px]">
                   {result.line}:{result.column}
                 </Badge>
               </div>
               
-              <div className="text-xs font-mono bg-black/5 dark:bg-white/5 p-1 rounded">
+              <div className="text-[11px] font-mono bg-black/5 dark:bg-white/5 p-1 rounded">
                 {highlightMatch(result.preview, query)}
               </div>
             </div>

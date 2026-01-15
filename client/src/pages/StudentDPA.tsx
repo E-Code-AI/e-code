@@ -135,7 +135,7 @@ export default function StudentDPA() {
               </Button>
             </div>
 
-            <p className="text-sm text-muted-foreground mt-6">
+            <p className="text-[13px] text-muted-foreground mt-6">
               Effective Date: {effectiveDate.toLocaleDateString('en-US', { 
                 year: 'numeric', 
                 month: 'long', 
@@ -171,7 +171,7 @@ export default function StudentDPA() {
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
               Enhanced Student Privacy Protections
             </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-[15px] text-muted-foreground max-w-2xl mx-auto">
               We implement special safeguards for student data beyond our standard privacy practices
             </p>
           </div>
@@ -185,7 +185,7 @@ export default function StudentDPA() {
                     <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
                       <Icon className="h-6 w-6 text-primary" />
                     </div>
-                    <CardTitle className="text-lg">{protection.title}</CardTitle>
+                    <CardTitle className="text-[15px]">{protection.title}</CardTitle>
                     <CardDescription>{protection.description}</CardDescription>
                   </CardHeader>
                 </Card>
@@ -203,7 +203,7 @@ export default function StudentDPA() {
               <h2 className="text-3xl md:text-4xl font-bold mb-4">
                 Student Data Collection and Use
               </h2>
-              <p className="text-lg text-muted-foreground">
+              <p className="text-[15px] text-muted-foreground">
                 Transparent disclosure of what we collect and why
               </p>
             </div>
@@ -263,7 +263,7 @@ export default function StudentDPA() {
                         <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
                         <div>
                           <div className="font-medium">FERPA</div>
-                          <div className="text-sm text-muted-foreground">
+                          <div className="text-[13px] text-muted-foreground">
                             Family Educational Rights and Privacy Act
                           </div>
                         </div>
@@ -272,7 +272,7 @@ export default function StudentDPA() {
                         <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
                         <div>
                           <div className="font-medium">COPPA</div>
-                          <div className="text-sm text-muted-foreground">
+                          <div className="text-[13px] text-muted-foreground">
                             Children's Online Privacy Protection Act
                           </div>
                         </div>
@@ -283,7 +283,7 @@ export default function StudentDPA() {
                         <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
                         <div>
                           <div className="font-medium">GDPR</div>
-                          <div className="text-sm text-muted-foreground">
+                          <div className="text-[13px] text-muted-foreground">
                             General Data Protection Regulation (EU)
                           </div>
                         </div>
@@ -292,7 +292,7 @@ export default function StudentDPA() {
                         <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
                         <div>
                           <div className="font-medium">State Privacy Laws</div>
-                          <div className="text-sm text-muted-foreground">
+                          <div className="text-[13px] text-muted-foreground">
                             California, New York, and other state laws
                           </div>
                         </div>
@@ -307,7 +307,7 @@ export default function StudentDPA() {
                     Under this agreement, the educational institution acts as the data controller, 
                     and E-Code acts as the data processor. This means:
                   </p>
-                  <ul className="space-y-2 text-sm">
+                  <ul className="space-y-2 text-[13px]">
                     <li className="flex items-start gap-2">
                       <span className="text-primary">•</span>
                       Schools determine what data is collected and for what purpose
@@ -371,7 +371,7 @@ export default function StudentDPA() {
                   <CardTitle>Student Rights</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <ul className="space-y-2 text-sm">
+                  <ul className="space-y-2 text-[13px]">
                     <li>• Access their own data</li>
                     <li>• Request corrections</li>
                     <li>• Download their work</li>
@@ -387,7 +387,7 @@ export default function StudentDPA() {
                   <CardTitle>Parent/Guardian Rights</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <ul className="space-y-2 text-sm">
+                  <ul className="space-y-2 text-[13px]">
                     <li>• Review student data</li>
                     <li>• Request data deletion</li>
                     <li>• Withdraw consent</li>
@@ -403,7 +403,7 @@ export default function StudentDPA() {
                   <CardTitle>School Rights</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <ul className="space-y-2 text-sm">
+                  <ul className="space-y-2 text-[13px]">
                     <li>• Audit data practices</li>
                     <li>• Export all student data</li>
                     <li>• Terminate agreement</li>
@@ -432,7 +432,7 @@ export default function StudentDPA() {
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
                     <h4 className="font-semibold mb-3">Technical Safeguards</h4>
-                    <ul className="space-y-2 text-sm">
+                    <ul className="space-y-2 text-[13px]">
                       <li className="flex items-start gap-2">
                         <Lock className="h-4 w-4 text-muted-foreground mt-0.5" />
                         <span>256-bit encryption at rest and in transit</span>
@@ -454,7 +454,7 @@ export default function StudentDPA() {
 
                   <div>
                     <h4 className="font-semibold mb-3">Administrative Safeguards</h4>
-                    <ul className="space-y-2 text-sm">
+                    <ul className="space-y-2 text-[13px]">
                       <li className="flex items-start gap-2">
                         <UserCheck className="h-4 w-4 text-muted-foreground mt-0.5" />
                         <span>Background checks for staff with data access</span>
@@ -519,7 +519,7 @@ export default function StudentDPA() {
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
               Questions About Student Privacy?
             </h2>
-            <p className="text-lg text-muted-foreground">
+            <p className="text-[15px] text-muted-foreground">
               Our education team is here to help
             </p>
           </div>
@@ -529,7 +529,7 @@ export default function StudentDPA() {
               <CardContent className="py-8">
                 <Mail className="h-12 w-12 mx-auto mb-4 text-primary" />
                 <h3 className="font-semibold mb-2">Email Us</h3>
-                <p className="text-sm text-muted-foreground mb-4">
+                <p className="text-[13px] text-muted-foreground mb-4">
                   For DPA questions and execution
                 </p>
                 <Button variant="outline" asChild className="w-full">
@@ -544,7 +544,7 @@ export default function StudentDPA() {
               <CardContent className="py-8">
                 <Calendar className="h-12 w-12 mx-auto mb-4 text-primary" />
                 <h3 className="font-semibold mb-2">Schedule a Call</h3>
-                <p className="text-sm text-muted-foreground mb-4">
+                <p className="text-[13px] text-muted-foreground mb-4">
                   Discuss your school's needs
                 </p>
                 <Button variant="outline" asChild className="w-full">
@@ -559,7 +559,7 @@ export default function StudentDPA() {
               <CardContent className="py-8">
                 <BookOpen className="h-12 w-12 mx-auto mb-4 text-primary" />
                 <h3 className="font-semibold mb-2">Resources</h3>
-                <p className="text-sm text-muted-foreground mb-4">
+                <p className="text-[13px] text-muted-foreground mb-4">
                   Privacy guides and best practices
                 </p>
                 <Button variant="outline" asChild className="w-full">

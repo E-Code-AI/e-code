@@ -201,11 +201,11 @@ export default function UserSettings() {
           {/* Scrollable tabs on mobile */}
           <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 pb-2 sm:pb-0">
             <TabsList className="inline-flex w-auto min-w-full sm:grid sm:w-full sm:grid-cols-5 gap-1 bg-muted/50 p-1 rounded-lg">
-              <TabsTrigger value="profile" className="flex-shrink-0 px-4 sm:px-3 text-sm whitespace-nowrap" data-testid="tab-profile">Profile</TabsTrigger>
-              <TabsTrigger value="account" className="flex-shrink-0 px-4 sm:px-3 text-sm whitespace-nowrap" data-testid="tab-account">Account</TabsTrigger>
-              <TabsTrigger value="appearance" className="flex-shrink-0 px-4 sm:px-3 text-sm whitespace-nowrap" data-testid="tab-appearance">Appearance</TabsTrigger>
-              <TabsTrigger value="notifications" className="flex-shrink-0 px-4 sm:px-3 text-sm whitespace-nowrap" data-testid="tab-notifications">Notifications</TabsTrigger>
-              <TabsTrigger value="security" className="flex-shrink-0 px-4 sm:px-3 text-sm whitespace-nowrap" data-testid="tab-security">Security</TabsTrigger>
+              <TabsTrigger value="profile" className="flex-shrink-0 px-4 sm:px-3 text-[13px] whitespace-nowrap" data-testid="tab-profile">Profile</TabsTrigger>
+              <TabsTrigger value="account" className="flex-shrink-0 px-4 sm:px-3 text-[13px] whitespace-nowrap" data-testid="tab-account">Account</TabsTrigger>
+              <TabsTrigger value="appearance" className="flex-shrink-0 px-4 sm:px-3 text-[13px] whitespace-nowrap" data-testid="tab-appearance">Appearance</TabsTrigger>
+              <TabsTrigger value="notifications" className="flex-shrink-0 px-4 sm:px-3 text-[13px] whitespace-nowrap" data-testid="tab-notifications">Notifications</TabsTrigger>
+              <TabsTrigger value="security" className="flex-shrink-0 px-4 sm:px-3 text-[13px] whitespace-nowrap" data-testid="tab-security">Security</TabsTrigger>
             </TabsList>
           </div>
 
@@ -232,7 +232,7 @@ export default function UserSettings() {
                           <Upload className="h-4 w-4 mr-2" />
                           Change Avatar
                         </Button>
-                        <p className="text-xs text-muted-foreground mt-1">
+                        <p className="text-[11px] text-muted-foreground mt-1">
                           JPG, PNG or GIF. Max size 2MB
                         </p>
                       </div>
@@ -313,7 +313,7 @@ export default function UserSettings() {
                             <FormLabel>GitHub Username</FormLabel>
                             <FormControl>
                               <div className="flex">
-                                <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-input bg-muted text-sm text-muted-foreground">
+                                <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-input bg-muted text-[13px] text-muted-foreground">
                                   <Github className="h-4 w-4" />
                                 </span>
                                 <Input {...field} className="rounded-l-none" placeholder="username" data-testid="input-github" />
@@ -332,7 +332,7 @@ export default function UserSettings() {
                             <FormLabel>Twitter Handle</FormLabel>
                             <FormControl>
                               <div className="flex">
-                                <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-input bg-muted text-sm text-muted-foreground">
+                                <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-input bg-muted text-[13px] text-muted-foreground">
                                   <Twitter className="h-4 w-4" />
                                 </span>
                                 <Input {...field} className="rounded-l-none" placeholder="username" data-testid="input-twitter" />
@@ -463,7 +463,7 @@ export default function UserSettings() {
                     data-testid="button-theme-light"
                   >
                     <Sun className="h-8 w-8 mx-auto mb-2" />
-                    <p className="text-sm font-medium">Light</p>
+                    <p className="text-[13px] font-medium">Light</p>
                   </button>
                   <button
                     onClick={() => setTheme('dark')}
@@ -471,7 +471,7 @@ export default function UserSettings() {
                     data-testid="button-theme-dark"
                   >
                     <Moon className="h-8 w-8 mx-auto mb-2" />
-                    <p className="text-sm font-medium">Dark</p>
+                    <p className="text-[13px] font-medium">Dark</p>
                   </button>
                   <button
                     onClick={() => setTheme('system')}
@@ -479,7 +479,7 @@ export default function UserSettings() {
                     data-testid="button-theme-system"
                   >
                     <Monitor className="h-8 w-8 mx-auto mb-2" />
-                    <p className="text-sm font-medium">System</p>
+                    <p className="text-[13px] font-medium">System</p>
                   </button>
                 </div>
               </CardContent>
@@ -520,7 +520,7 @@ export default function UserSettings() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="font-medium">Font Size</p>
-                    <p className="text-sm text-muted-foreground">Editor font size in pixels</p>
+                    <p className="text-[13px] text-muted-foreground">Editor font size in pixels</p>
                   </div>
                   <Select defaultValue="14">
                     <SelectTrigger className="w-24" data-testid="select-font-size">
@@ -538,7 +538,7 @@ export default function UserSettings() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="font-medium">Tab Size</p>
-                    <p className="text-sm text-muted-foreground">Number of spaces per tab</p>
+                    <p className="text-[13px] text-muted-foreground">Number of spaces per tab</p>
                   </div>
                   <Select defaultValue="2">
                     <SelectTrigger className="w-24" data-testid="select-tab-size">
@@ -555,7 +555,7 @@ export default function UserSettings() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="font-medium">Word Wrap</p>
-                    <p className="text-sm text-muted-foreground">Wrap long lines in editor</p>
+                    <p className="text-[13px] text-muted-foreground">Wrap long lines in editor</p>
                   </div>
                   <Switch defaultChecked data-testid="switch-word-wrap" />
                 </div>
@@ -563,7 +563,7 @@ export default function UserSettings() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="font-medium">Minimap</p>
-                    <p className="text-sm text-muted-foreground">Show code minimap in editor</p>
+                    <p className="text-[13px] text-muted-foreground">Show code minimap in editor</p>
                   </div>
                   <Switch defaultChecked data-testid="switch-minimap" />
                 </div>
@@ -583,7 +583,7 @@ export default function UserSettings() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="font-medium">Project Updates</p>
-                    <p className="text-sm text-muted-foreground">Get notified when someone stars or forks your projects</p>
+                    <p className="text-[13px] text-muted-foreground">Get notified when someone stars or forks your projects</p>
                   </div>
                   <Switch defaultChecked data-testid="switch-project-updates" />
                 </div>
@@ -593,7 +593,7 @@ export default function UserSettings() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="font-medium">Collaboration Invites</p>
-                    <p className="text-sm text-muted-foreground">Receive emails when invited to collaborate</p>
+                    <p className="text-[13px] text-muted-foreground">Receive emails when invited to collaborate</p>
                   </div>
                   <Switch defaultChecked data-testid="switch-collaboration-invites" />
                 </div>
@@ -603,7 +603,7 @@ export default function UserSettings() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="font-medium">Security Alerts</p>
-                    <p className="text-sm text-muted-foreground">Important security updates and alerts</p>
+                    <p className="text-[13px] text-muted-foreground">Important security updates and alerts</p>
                   </div>
                   <Switch defaultChecked disabled data-testid="switch-security-alerts" />
                 </div>
@@ -613,7 +613,7 @@ export default function UserSettings() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="font-medium">Newsletter</p>
-                    <p className="text-sm text-muted-foreground">Product updates and announcements</p>
+                    <p className="text-[13px] text-muted-foreground">Product updates and announcements</p>
                   </div>
                   <Switch data-testid="switch-newsletter" />
                 </div>
@@ -631,7 +631,7 @@ export default function UserSettings() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="font-medium">Comments & Mentions</p>
-                    <p className="text-sm text-muted-foreground">When someone mentions you or comments</p>
+                    <p className="text-[13px] text-muted-foreground">When someone mentions you or comments</p>
                   </div>
                   <Switch defaultChecked data-testid="switch-comments-mentions" />
                 </div>
@@ -641,7 +641,7 @@ export default function UserSettings() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="font-medium">Deploy Status</p>
-                    <p className="text-sm text-muted-foreground">Updates on deployment status</p>
+                    <p className="text-[13px] text-muted-foreground">Updates on deployment status</p>
                   </div>
                   <Switch defaultChecked data-testid="switch-deploy-status" />
                 </div>
@@ -651,7 +651,7 @@ export default function UserSettings() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="font-medium">System Notifications</p>
-                    <p className="text-sm text-muted-foreground">Important system updates</p>
+                    <p className="text-[13px] text-muted-foreground">Important system updates</p>
                   </div>
                   <Switch defaultChecked data-testid="switch-system-notifications" />
                 </div>
@@ -758,7 +758,7 @@ export default function UserSettings() {
                       <Monitor className="h-5 w-5 text-muted-foreground" />
                       <div>
                         <p className="font-medium">Chrome on Windows</p>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-[13px] text-muted-foreground">
                           Current session · San Francisco, CA
                         </p>
                       </div>
@@ -771,7 +771,7 @@ export default function UserSettings() {
                       <Globe className="h-5 w-5 text-muted-foreground" />
                       <div>
                         <p className="font-medium">Safari on iPhone</p>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-[13px] text-muted-foreground">
                           Last active 2 hours ago · New York, NY
                         </p>
                       </div>

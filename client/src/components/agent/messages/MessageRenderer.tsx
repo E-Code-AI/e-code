@@ -39,7 +39,7 @@ export function MessageRenderer({ message, onApproveAction, onRejectAction }: Me
     return (
       <div className="px-4 py-2" data-testid="system-message">
         <div className={cn(
-          "text-xs flex items-center gap-2",
+          "text-[11px] flex items-center gap-2",
           message.type === 'progress' ? "text-[var(--ecode-accent)]" : "text-[var(--ecode-text-secondary)]"
         )}>
           {message.content}
@@ -114,7 +114,7 @@ export function MessageRenderer({ message, onApproveAction, onRejectAction }: Me
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <div className="h-px flex-1 bg-[var(--ecode-border)]" />
-              <span className="text-xs font-medium text-[var(--ecode-text-secondary)]">
+              <span className="text-[11px] font-medium text-[var(--ecode-text-secondary)]">
                 Checkpoint: {message.checkpoint.name}
               </span>
               <div className="h-px flex-1 bg-[var(--ecode-border)]" />
@@ -127,17 +127,17 @@ export function MessageRenderer({ message, onApproveAction, onRejectAction }: Me
         {message.error && (
           <div className="p-3 rounded-lg bg-red-50 dark:bg-red-950/10 border border-red-200 dark:border-red-800">
             <div className="flex items-start gap-2">
-              <div className="font-medium text-sm text-red-800 dark:text-red-200">
+              <div className="font-medium text-[13px] text-red-800 dark:text-red-200">
                 Error: {message.error.message}
               </div>
             </div>
             {message.error.stack && (
-              <pre className="mt-2 text-xs font-mono text-red-700 dark:text-red-300 overflow-x-auto">
+              <pre className="mt-2 text-[11px] font-mono text-red-700 dark:text-red-300 overflow-x-auto">
                 {message.error.stack}
               </pre>
             )}
             {message.error.recoverable && (
-              <div className="mt-2 text-xs text-red-700 dark:text-red-300">
+              <div className="mt-2 text-[11px] text-red-700 dark:text-red-300">
                 This error is recoverable. The agent can continue.
               </div>
             )}
@@ -148,13 +148,13 @@ export function MessageRenderer({ message, onApproveAction, onRejectAction }: Me
         {!isUser && (message.metadata || message.pricing) && (
           <div className="flex flex-wrap gap-3 pt-2 border-t border-[var(--ecode-border)]">
             {message.metadata?.tokensUsed !== undefined && (
-              <span className="text-xs text-[var(--ecode-text-secondary)] flex items-center gap-1">
+              <span className="text-[11px] text-[var(--ecode-text-secondary)] flex items-center gap-1">
                 <span className="font-medium">{message.metadata.tokensUsed.toLocaleString()}</span>
                 <span>tokens</span>
               </span>
             )}
             {message.pricing && (
-              <span className="text-xs text-[var(--ecode-text-secondary)] flex items-center gap-1">
+              <span className="text-[11px] text-[var(--ecode-text-secondary)] flex items-center gap-1">
                 <DollarSign className="h-3 w-3 text-green-600 dark:text-green-400" />
                 <span className="font-medium text-green-600 dark:text-green-400">
                   {message.pricing.costInDollars}
@@ -165,12 +165,12 @@ export function MessageRenderer({ message, onApproveAction, onRejectAction }: Me
               </span>
             )}
             {message.metadata?.executionTimeMs !== undefined && (
-              <span className="text-xs text-[var(--ecode-text-secondary)]">
+              <span className="text-[11px] text-[var(--ecode-text-secondary)]">
                 <span className="font-medium">{message.metadata.executionTimeMs}</span>ms
               </span>
             )}
             {message.metadata?.model && (
-              <span className="text-xs text-[var(--ecode-text-secondary)] font-mono">
+              <span className="text-[11px] text-[var(--ecode-text-secondary)] font-mono">
                 {message.metadata.model}
               </span>
             )}

@@ -459,7 +459,7 @@ export default function ExtensionsPage() {
           <div className="md:col-span-1 space-y-4">
             <Card className={cardClassName} data-testid="card-extension-categories">
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium">Categories</CardTitle>
+                <CardTitle className="text-[13px] font-medium">Categories</CardTitle>
               </CardHeader>
               <CardContent className="p-0">
                 <nav className="space-y-1 px-2 pb-4">
@@ -469,7 +469,7 @@ export default function ExtensionsPage() {
                     return (
                       <button
                         key={cat.id}
-                        className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-all ${
+                        className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-[13px] transition-all ${
                           isActive
                             ? 'bg-primary/10 text-primary font-medium'
                             : 'text-muted-foreground hover:bg-muted hover:text-foreground'
@@ -481,7 +481,7 @@ export default function ExtensionsPage() {
                           <Icon className="h-4 w-4" />
                           {cat.label}
                         </div>
-                        <Badge variant="secondary" className="text-xs">
+                        <Badge variant="secondary" className="text-[11px]">
                           {cat.count}
                         </Badge>
                       </button>
@@ -494,7 +494,7 @@ export default function ExtensionsPage() {
             <Card className={cardClassName} data-testid="card-installed-extensions">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm font-medium">Installed</CardTitle>
+                  <CardTitle className="text-[13px] font-medium">Installed</CardTitle>
                   <Badge variant="secondary">{installedExtensions.length}</Badge>
                 </div>
               </CardHeader>
@@ -510,8 +510,8 @@ export default function ExtensionsPage() {
                       >
                         <span className="text-xl">{ext.icon}</span>
                         <div className="flex-1 min-w-0">
-                          <div className="font-medium text-sm truncate">{ext.name}</div>
-                          <div className="text-xs text-muted-foreground">v{ext.version}</div>
+                          <div className="font-medium text-[13px] truncate">{ext.name}</div>
+                          <div className="text-[11px] text-muted-foreground">v{ext.version}</div>
                         </div>
                         <Button
                           variant="ghost"
@@ -606,17 +606,17 @@ export default function ExtensionsPage() {
                               <div className="flex items-center gap-2">
                                 <h3 className="font-semibold text-foreground truncate">{ext.name}</h3>
                                 {ext.verified && (
-                                  <Badge variant="secondary" className="bg-blue-500/10 text-blue-600 text-xs">
+                                  <Badge variant="secondary" className="bg-blue-500/10 text-blue-600 text-[11px]">
                                     <Check className="h-3 w-3 mr-0.5" />
                                     Verified
                                   </Badge>
                                 )}
                               </div>
-                              <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{ext.description}</p>
+                              <p className="text-[13px] text-muted-foreground mt-1 line-clamp-2">{ext.description}</p>
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-4 mt-4 text-xs text-muted-foreground">
+                          <div className="flex items-center gap-4 mt-4 text-[11px] text-muted-foreground">
                             <div className="flex items-center gap-1">
                               <Download className="h-3.5 w-3.5" />
                               {formatDownloads(ext.downloads)}
@@ -628,7 +628,7 @@ export default function ExtensionsPage() {
                           </div>
 
                           <div className="flex items-center justify-between mt-4 pt-3 border-t border-border">
-                            <span className="text-xs text-muted-foreground">{ext.author}</span>
+                            <span className="text-[11px] text-muted-foreground">{ext.author}</span>
                             <Button
                               size="sm"
                               variant={ext.installed ? 'outline' : 'default'}
@@ -671,13 +671,13 @@ export default function ExtensionsPage() {
                             <div className="flex items-center gap-2">
                               <h3 className="font-semibold text-foreground">{ext.name}</h3>
                               {ext.verified && (
-                                <Badge variant="secondary" className="bg-blue-500/10 text-blue-600 text-xs">Verified</Badge>
+                                <Badge variant="secondary" className="bg-blue-500/10 text-blue-600 text-[11px]">Verified</Badge>
                               )}
-                              <Badge variant="outline" className="text-xs">{ext.category}</Badge>
+                              <Badge variant="outline" className="text-[11px]">{ext.category}</Badge>
                             </div>
-                            <p className="text-sm text-muted-foreground mt-0.5 line-clamp-1">{ext.description}</p>
+                            <p className="text-[13px] text-muted-foreground mt-0.5 line-clamp-1">{ext.description}</p>
                           </div>
-                          <div className="hidden sm:flex items-center gap-6 text-sm text-muted-foreground">
+                          <div className="hidden sm:flex items-center gap-6 text-[13px] text-muted-foreground">
                             <div className="flex items-center gap-1">
                               <Download className="h-4 w-4" />
                               {formatDownloads(ext.downloads)}
@@ -685,7 +685,7 @@ export default function ExtensionsPage() {
                             <div className="flex items-center gap-1">
                               {renderStars(ext.rating)}
                             </div>
-                            <span className="text-xs">{ext.author}</span>
+                            <span className="text-[11px]">{ext.author}</span>
                           </div>
                           <Button
                             size="sm"
@@ -719,7 +719,7 @@ export default function ExtensionsPage() {
                           <span className="text-3xl">{ext.icon}</span>
                           <div className="flex-1 min-w-0">
                             <h3 className="font-semibold text-foreground truncate">{ext.name}</h3>
-                            <p className="text-xs text-muted-foreground">v{ext.version} • by {ext.author}</p>
+                            <p className="text-[11px] text-muted-foreground">v{ext.version} • by {ext.author}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-2 mt-4">
@@ -770,10 +770,10 @@ export default function ExtensionsPage() {
                             <span className="text-3xl">{ext.icon}</span>
                             <div className="flex-1 min-w-0">
                               <h3 className="font-semibold text-foreground truncate">{ext.name}</h3>
-                              <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{ext.description}</p>
+                              <p className="text-[13px] text-muted-foreground mt-1 line-clamp-2">{ext.description}</p>
                             </div>
                           </div>
-                          <div className="flex items-center gap-4 mt-4 text-xs text-muted-foreground">
+                          <div className="flex items-center gap-4 mt-4 text-[11px] text-muted-foreground">
                             <div className="flex items-center gap-1">
                               <TrendingUp className="h-3.5 w-3.5 text-green-500" />
                               {formatDownloads(ext.downloads)} downloads
@@ -837,7 +837,7 @@ export default function ExtensionsPage() {
 
               <ScrollArea className="max-h-[60vh] pr-4">
                 <div className="space-y-6">
-                  <div className="flex items-center gap-6 text-sm">
+                  <div className="flex items-center gap-6 text-[13px]">
                     <div className="flex items-center gap-2">
                       <Download className="h-4 w-4 text-muted-foreground" />
                       <span>{formatDownloads(selectedExtension.downloads)} downloads</span>
@@ -866,19 +866,19 @@ export default function ExtensionsPage() {
 
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div>
-                      <Label className="text-xs text-muted-foreground">License</Label>
+                      <Label className="text-[11px] text-muted-foreground">License</Label>
                       <p className="font-medium">{selectedExtension.license || 'MIT'}</p>
                     </div>
                     <div>
-                      <Label className="text-xs text-muted-foreground">Size</Label>
+                      <Label className="text-[11px] text-muted-foreground">Size</Label>
                       <p className="font-medium">{selectedExtension.size || 'N/A'}</p>
                     </div>
                     <div>
-                      <Label className="text-xs text-muted-foreground">Category</Label>
+                      <Label className="text-[11px] text-muted-foreground">Category</Label>
                       <p className="font-medium capitalize">{selectedExtension.category}</p>
                     </div>
                     <div>
-                      <Label className="text-xs text-muted-foreground">Version</Label>
+                      <Label className="text-[11px] text-muted-foreground">Version</Label>
                       <p className="font-medium">v{selectedExtension.version}</p>
                     </div>
                   </div>
@@ -895,9 +895,9 @@ export default function ExtensionsPage() {
                         <div key={v.version} className="p-3 rounded-lg border border-border" data-testid={`version-${v.version}`}>
                           <div className="flex items-center justify-between mb-2">
                             <Badge variant="outline">v{v.version}</Badge>
-                            <span className="text-xs text-muted-foreground">{formatDate(v.date)}</span>
+                            <span className="text-[11px] text-muted-foreground">{formatDate(v.date)}</span>
                           </div>
-                          <ul className="text-sm text-muted-foreground space-y-1">
+                          <ul className="text-[13px] text-muted-foreground space-y-1">
                             {v.changes.map((change, i) => (
                               <li key={i} className="flex items-start gap-2">
                                 <ChevronRight className="h-4 w-4 mt-0.5 shrink-0" />
@@ -928,11 +928,11 @@ export default function ExtensionsPage() {
                               <span className="font-medium">{review.author}</span>
                               {renderStars(review.rating)}
                             </div>
-                            <span className="text-xs text-muted-foreground">{formatDate(review.date)}</span>
+                            <span className="text-[11px] text-muted-foreground">{formatDate(review.date)}</span>
                           </div>
-                          <p className="text-sm text-muted-foreground">{review.content}</p>
-                          <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
-                            <Button variant="ghost" size="sm" className="h-6 px-2 text-xs">
+                          <p className="text-[13px] text-muted-foreground">{review.content}</p>
+                          <div className="flex items-center gap-2 mt-2 text-[11px] text-muted-foreground">
+                            <Button variant="ghost" size="sm" className="h-6 px-2 text-[11px]">
                               👍 {review.helpful} helpful
                             </Button>
                           </div>

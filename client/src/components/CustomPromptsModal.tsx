@@ -208,7 +208,7 @@ export function CustomPromptsModal({ projectId, isOpen, onClose }: CustomPrompts
                       value={formData.prompt}
                       onChange={(e) => setFormData({ ...formData, prompt: e.target.value })}
                       placeholder="Enter custom instructions for the AI..."
-                      className="min-h-[120px] font-mono text-sm"
+                      className="min-h-[120px] font-mono text-[13px]"
                       data-testid="textarea-rule-prompt"
                     />
                   </div>
@@ -273,14 +273,14 @@ export function CustomPromptsModal({ projectId, isOpen, onClose }: CustomPrompts
                             <div className="flex items-center gap-2">
                               <h4 className="font-semibold">{rule.name}</h4>
                               {rule.isActive && (
-                                <Badge variant="default" className="text-xs">
+                                <Badge variant="default" className="text-[11px]">
                                   Active
                                 </Badge>
                               )}
                             </div>
                           )}
                           {rule.description && !editingRule && (
-                            <p className="text-sm text-muted-foreground mt-1">
+                            <p className="text-[13px] text-muted-foreground mt-1">
                               {rule.description}
                             </p>
                           )}
@@ -343,11 +343,11 @@ export function CustomPromptsModal({ projectId, isOpen, onClose }: CustomPrompts
                           onChange={(e) =>
                             setEditingRule({ ...editingRule, prompt: e.target.value })
                           }
-                          className="min-h-[100px] font-mono text-sm"
+                          className="min-h-[100px] font-mono text-[13px]"
                           data-testid="textarea-edit-prompt"
                         />
                       ) : (
-                        <pre className="text-sm font-mono bg-muted/50 p-3 rounded whitespace-pre-wrap">
+                        <pre className="text-[13px] font-mono bg-muted/50 p-3 rounded whitespace-pre-wrap">
                           {rule.prompt}
                         </pre>
                       )}

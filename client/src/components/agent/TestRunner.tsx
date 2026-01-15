@@ -191,7 +191,7 @@ export function TestRunner({ sessionId, projectId, className }: TestRunnerProps)
                   value={testScript}
                   onChange={(e) => setTestScript(e.target.value)}
                   placeholder="Enter Playwright test script..."
-                  className="font-mono text-sm min-h-[200px] mt-2"
+                  className="font-mono text-[13px] min-h-[200px] mt-2"
                   data-testid="textarea-test-script"
                 />
               </div>
@@ -288,7 +288,7 @@ export function TestRunner({ sessionId, projectId, className }: TestRunnerProps)
 
         <TabsContent value="history" className="flex-1 flex flex-col mt-4">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold">Test Execution History</h3>
+            <h3 className="text-[15px] font-semibold">Test Execution History</h3>
             {executions.length > 0 && (
               <Button
                 variant="ghost"
@@ -324,7 +324,7 @@ export function TestRunner({ sessionId, projectId, className }: TestRunnerProps)
               <Card className="p-8 text-center">
                 <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                 <p className="text-muted-foreground">No test executions yet</p>
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="text-[13px] text-muted-foreground mt-1">
                   Run your first test to see results here
                 </p>
               </Card>
@@ -362,12 +362,12 @@ export function TestRunner({ sessionId, projectId, className }: TestRunnerProps)
                                   >
                                     {execution.status}
                                   </Badge>
-                                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                  <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
                                     {getBrowserIcon(execution.browserType)}
                                     <span>{execution.browserType}</span>
                                   </div>
                                 </div>
-                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
                                   <Clock className="h-3 w-3" />
                                   <span>
                                     {new Date(execution.startedAt).toLocaleString()}
@@ -395,10 +395,10 @@ export function TestRunner({ sessionId, projectId, className }: TestRunnerProps)
                         <div className="border-t p-4 space-y-4">
                           {/* Test Script */}
                           <div>
-                            <Label className="text-xs font-semibold text-muted-foreground mb-2 block">
+                            <Label className="text-[11px] font-semibold text-muted-foreground mb-2 block">
                               Test Script
                             </Label>
-                            <pre className="bg-muted p-3 rounded-md text-xs font-mono overflow-x-auto">
+                            <pre className="bg-muted p-3 rounded-md text-[11px] font-mono overflow-x-auto">
                               {execution.testScript}
                             </pre>
                           </div>
@@ -406,7 +406,7 @@ export function TestRunner({ sessionId, projectId, className }: TestRunnerProps)
                           {/* Errors */}
                           {execution.result?.errors && execution.result.errors.length > 0 && (
                             <div>
-                              <Label className="text-xs font-semibold text-destructive mb-2 block">
+                              <Label className="text-[11px] font-semibold text-destructive mb-2 block">
                                 Errors
                               </Label>
                               <div className="space-y-2">
@@ -415,11 +415,11 @@ export function TestRunner({ sessionId, projectId, className }: TestRunnerProps)
                                     key={idx}
                                     className="bg-destructive/10 border border-destructive/20 p-3 rounded-md"
                                   >
-                                    <p className="text-sm font-medium text-destructive">
+                                    <p className="text-[13px] font-medium text-destructive">
                                       {error.message}
                                     </p>
                                     {error.stack && (
-                                      <pre className="text-xs text-muted-foreground mt-2 overflow-x-auto">
+                                      <pre className="text-[11px] text-muted-foreground mt-2 overflow-x-auto">
                                         {error.stack}
                                       </pre>
                                     )}
@@ -432,7 +432,7 @@ export function TestRunner({ sessionId, projectId, className }: TestRunnerProps)
                           {/* Artifacts */}
                           {execution.artifacts && execution.artifacts.length > 0 && (
                             <div>
-                              <Label className="text-xs font-semibold text-muted-foreground mb-2 block">
+                              <Label className="text-[11px] font-semibold text-muted-foreground mb-2 block">
                                 Artifacts
                               </Label>
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -454,7 +454,7 @@ export function TestRunner({ sessionId, projectId, className }: TestRunnerProps)
                                     {artifact.type === 'trace' && (
                                       <FileText className="h-4 w-4 text-green-500" />
                                     )}
-                                    <span className="text-sm truncate flex-1">
+                                    <span className="text-[13px] truncate flex-1">
                                       {artifact.name}
                                     </span>
                                   </a>
@@ -465,7 +465,7 @@ export function TestRunner({ sessionId, projectId, className }: TestRunnerProps)
 
                           {/* Stats */}
                           {execution.result && (
-                            <div className="flex gap-4 text-sm">
+                            <div className="flex gap-4 text-[13px]">
                               <div>
                                 <span className="text-muted-foreground">Assertions:</span>{' '}
                                 <span className="font-medium">

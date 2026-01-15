@@ -213,7 +213,7 @@ export function TemplatePreview({
                           {template.features?.map((feature: string, i: number) => (
                             <li key={i} className="flex items-start gap-2">
                               <ChevronRight className="h-4 w-4 text-orange-500 mt-0.5" />
-                              <span className="text-sm">{feature}</span>
+                              <span className="text-[13px]">{feature}</span>
                             </li>
                           ))}
                         </ul>
@@ -255,17 +255,17 @@ export function TemplatePreview({
                                   }
                                 }}
                               >
-                                <h4 className="font-medium text-sm line-clamp-1">
+                                <h4 className="font-medium text-[13px] line-clamp-1">
                                   {similar.name}
                                 </h4>
-                                <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                                <p className="text-[11px] text-muted-foreground mt-1 line-clamp-2">
                                   {similar.description}
                                 </p>
                                 <div className="flex items-center gap-2 mt-2">
-                                  <Badge variant="outline" className="text-xs">
+                                  <Badge variant="outline" className="text-[11px]">
                                     {similar.category}
                                   </Badge>
-                                  <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                  <span className="text-[11px] text-muted-foreground flex items-center gap-1">
                                     <Star className="h-3 w-3 fill-current" />
                                     {similar.stats?.rating?.toFixed(1)}
                                   </span>
@@ -288,7 +288,7 @@ export function TemplatePreview({
                       <div className="aspect-video bg-gray-100 dark:bg-gray-900 rounded-lg flex items-center justify-center">
                         <div className="text-center">
                           <Play className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-[13px] text-muted-foreground">
                             Live preview would be embedded here
                           </p>
                           <Button
@@ -312,7 +312,7 @@ export function TemplatePreview({
                     </CardHeader>
                     <CardContent>
                       <pre className="bg-muted p-4 rounded-lg overflow-x-auto">
-                        <code className="text-sm">
+                        <code className="text-[13px]">
 {`├── src/
 │   ├── components/
 │   │   ├── Header.tsx
@@ -346,7 +346,7 @@ export function TemplatePreview({
                       </CardHeader>
                       <CardContent className="space-y-4">
                         <div>
-                          <Label className="text-sm mb-2 block">Your Rating</Label>
+                          <Label className="text-[13px] mb-2 block">Your Rating</Label>
                           <div className="flex gap-1">
                             {[1, 2, 3, 4, 5].map((star) => (
                               <Button
@@ -367,7 +367,7 @@ export function TemplatePreview({
                           </div>
                         </div>
                         <div>
-                          <Label className="text-sm mb-2 block">Your Review (Optional)</Label>
+                          <Label className="text-[13px] mb-2 block">Your Review (Optional)</Label>
                           <Textarea
                             placeholder="Share your experience with this template..."
                             value={review}
@@ -413,7 +413,7 @@ export function TemplatePreview({
                                   </AvatarFallback>
                                 </Avatar>
                                 <div>
-                                  <p className="text-sm font-medium">{review.user?.name}</p>
+                                  <p className="text-[13px] font-medium">{review.user?.name}</p>
                                   <div className="flex items-center gap-1">
                                     {[...Array(5)].map((_, i) => (
                                       <Star
@@ -427,12 +427,12 @@ export function TemplatePreview({
                                   </div>
                                 </div>
                               </div>
-                              <span className="text-xs text-muted-foreground">
+                              <span className="text-[11px] text-muted-foreground">
                                 {new Date(review.createdAt).toLocaleDateString()}
                               </span>
                             </div>
                             {review.review && (
-                              <p className="text-sm text-muted-foreground">
+                              <p className="text-[13px] text-muted-foreground">
                                 {review.review}
                               </p>
                             )}
@@ -513,33 +513,33 @@ export function TemplatePreview({
             {/* Stats */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground flex items-center gap-2">
+                <span className="text-[13px] text-muted-foreground flex items-center gap-2">
                   <Star className="h-4 w-4" />
                   Rating
                 </span>
                 <div className="flex items-center gap-1">
                   <span className="font-medium">{template.stats?.rating?.toFixed(1) || '0.0'}</span>
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-[13px] text-muted-foreground">
                     ({template.stats?.reviewCount || 0})
                   </span>
                 </div>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground flex items-center gap-2">
+                <span className="text-[13px] text-muted-foreground flex items-center gap-2">
                   <GitBranch className="h-4 w-4" />
                   Forks
                 </span>
                 <span className="font-medium">{template.stats?.forks || 0}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground flex items-center gap-2">
+                <span className="text-[13px] text-muted-foreground flex items-center gap-2">
                   <Download className="h-4 w-4" />
                   Downloads
                 </span>
                 <span className="font-medium">{template.stats?.downloads || 0}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground flex items-center gap-2">
+                <span className="text-[13px] text-muted-foreground flex items-center gap-2">
                   <Eye className="h-4 w-4" />
                   Views
                 </span>
@@ -552,7 +552,7 @@ export function TemplatePreview({
             {/* Author */}
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm">Created By</CardTitle>
+                <CardTitle className="text-[13px]">Created By</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center gap-3">
@@ -563,8 +563,8 @@ export function TemplatePreview({
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="font-medium text-sm">{template.author?.name}</p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="font-medium text-[13px]">{template.author?.name}</p>
+                    <p className="text-[11px] text-muted-foreground">
                       {template.author?.bio || 'Template developer'}
                     </p>
                   </div>
@@ -581,22 +581,22 @@ export function TemplatePreview({
             {/* Details */}
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm">Details</CardTitle>
+                <CardTitle className="text-[13px]">Details</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center justify-between text-[13px]">
                   <span className="text-muted-foreground">Category</span>
                   <Badge variant="secondary">{template.category}</Badge>
                 </div>
-                <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center justify-between text-[13px]">
                   <span className="text-muted-foreground">License</span>
                   <span>{template.license || 'MIT'}</span>
                 </div>
-                <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center justify-between text-[13px]">
                   <span className="text-muted-foreground">Version</span>
                   <span>{template.version || '1.0.0'}</span>
                 </div>
-                <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center justify-between text-[13px]">
                   <span className="text-muted-foreground">Updated</span>
                   <span>{template.updatedAt ? new Date(template.updatedAt).toLocaleDateString() : 'N/A'}</span>
                 </div>
@@ -607,7 +607,7 @@ export function TemplatePreview({
             {template.price && (
               <Card>
                 <CardContent className="flex items-center justify-between py-3">
-                  <span className="text-sm text-muted-foreground">Price</span>
+                  <span className="text-[13px] text-muted-foreground">Price</span>
                   <span className="text-2xl font-bold text-orange-500">
                     ${template.price}
                   </span>

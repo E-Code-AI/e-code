@@ -204,7 +204,7 @@ export function ResponsiveWebPreview({
 
           {/* URL Bar */}
           <div className="flex-1 flex items-center gap-2 max-w-lg">
-            <div className="flex-1 bg-[var(--ecode-background)] rounded px-2 py-1 text-xs truncate">
+            <div className="flex-1 bg-[var(--ecode-background)] rounded px-2 py-1 text-[11px] truncate">
               {previewUrl}
             </div>
           </div>
@@ -256,7 +256,7 @@ export function ResponsiveWebPreview({
             <p className="text-[var(--ecode-text-muted)] mb-2">
               You're offline
             </p>
-            <p className="text-sm text-[var(--ecode-text-muted)] mb-4">
+            <p className="text-[13px] text-[var(--ecode-text-muted)] mb-4">
               Check your internet connection and try again
             </p>
             <Button variant="outline" size="sm" onClick={handleRefresh} data-testid="button-retry-preview">
@@ -274,7 +274,7 @@ export function ResponsiveWebPreview({
               <Skeleton className="h-4 w-3/4 mx-auto mb-2" />
               <Skeleton className="h-3 w-1/2 mx-auto" />
             </div>
-            <p className="text-sm text-[var(--ecode-text-muted)] mt-4">Loading preview...</p>
+            <p className="text-[13px] text-[var(--ecode-text-muted)] mt-4">Loading preview...</p>
           </div>
         )}
 
@@ -285,7 +285,7 @@ export function ResponsiveWebPreview({
             <p className="text-[var(--ecode-text-muted)] mb-2">
               Starting preview server...
             </p>
-            <p className="text-sm text-[var(--ecode-text-muted)]">
+            <p className="text-[13px] text-[var(--ecode-text-muted)]">
               This may take a few seconds
             </p>
           </div>
@@ -304,7 +304,7 @@ export function ResponsiveWebPreview({
             <p className="text-[var(--ecode-text-muted)] mb-2">
               {navigator.onLine ? 'Failed to load preview' : 'No internet connection'}
             </p>
-            <p className="text-sm text-[var(--ecode-text-muted)] mb-4">
+            <p className="text-[13px] text-[var(--ecode-text-muted)] mb-4">
               {queryError instanceof Error ? queryError.message : 'Please try again'}
             </p>
             <Button variant="outline" size="sm" onClick={handleRefresh} data-testid="button-retry-preview">
@@ -320,7 +320,7 @@ export function ResponsiveWebPreview({
             <p className="text-[var(--ecode-text-muted)] mb-2">
               Add an HTML file to preview your project
             </p>
-            <p className="text-sm text-[var(--ecode-text-muted)]">
+            <p className="text-[13px] text-[var(--ecode-text-muted)]">
               The preview will appear automatically
             </p>
           </div>
@@ -335,7 +335,7 @@ export function ResponsiveWebPreview({
             <p className="text-[var(--ecode-text-muted)] mb-2">
               Failed to load preview page
             </p>
-            <p className="text-sm text-[var(--ecode-text-muted)] mb-4">
+            <p className="text-[13px] text-[var(--ecode-text-muted)] mb-4">
               The preview server may have stopped or the page has an error
             </p>
             <Button variant="outline" size="sm" onClick={handleRefresh} data-testid="button-retry-iframe">
@@ -363,7 +363,7 @@ export function ResponsiveWebPreview({
             {/* Device Frame (optional) */}
             {!isResponsive && !isMobile && (
               <div className="absolute -top-6 left-0 right-0 text-center">
-                <span className="text-xs text-[var(--ecode-text-muted)]">
+                <span className="text-[11px] text-[var(--ecode-text-muted)]">
                   {deviceSize.name} ({deviceSize.width} × {deviceSize.height})
                 </span>
               </div>
@@ -374,7 +374,7 @@ export function ResponsiveWebPreview({
               <div className="absolute inset-0 bg-[var(--ecode-background)] flex items-center justify-center z-10">
                 <div className="text-center">
                   <RefreshCw className="h-6 w-6 animate-spin mx-auto mb-2 text-[var(--ecode-accent)]" />
-                  <p className="text-sm text-[var(--ecode-text-muted)]">Loading preview...</p>
+                  <p className="text-[13px] text-[var(--ecode-text-muted)]">Loading preview...</p>
                 </div>
               </div>
             )}
@@ -384,7 +384,7 @@ export function ResponsiveWebPreview({
               <div className="absolute inset-0 bg-[var(--ecode-background)] flex items-center justify-center z-10">
                 <div className="text-center">
                   <AlertCircle className="h-6 w-6 mx-auto mb-2 text-red-500" />
-                  <p className="text-sm text-[var(--ecode-text-muted)] mb-2">Failed to load page</p>
+                  <p className="text-[13px] text-[var(--ecode-text-muted)] mb-2">Failed to load page</p>
                   <Button variant="outline" size="sm" onClick={handleRefresh}>
                     <RefreshCw className="h-3 w-3 mr-1" />
                     Retry

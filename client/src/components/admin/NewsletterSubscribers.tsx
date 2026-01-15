@@ -207,7 +207,7 @@ export default function NewsletterSubscribers() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold">{totalCount}</p>
-            <p className="text-xs text-muted-foreground">Contacts with a subscription record</p>
+            <p className="text-[11px] text-muted-foreground">Contacts with a subscription record</p>
           </CardContent>
         </Card>
 
@@ -220,7 +220,7 @@ export default function NewsletterSubscribers() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold">{activeCount}</p>
-            <p className="text-xs text-muted-foreground">{unsubscribedCount} opted out</p>
+            <p className="text-[11px] text-muted-foreground">{unsubscribedCount} opted out</p>
           </CardContent>
         </Card>
 
@@ -233,7 +233,7 @@ export default function NewsletterSubscribers() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold">{confirmedCount}</p>
-            <p className="text-xs text-muted-foreground">Double opt-in verified</p>
+            <p className="text-[11px] text-muted-foreground">Double opt-in verified</p>
           </CardContent>
         </Card>
 
@@ -246,7 +246,7 @@ export default function NewsletterSubscribers() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold">{campaignsSent}</p>
-            <p className="text-xs text-muted-foreground">Last send: {lastSentLabel}{statusSummary}</p>
+            <p className="text-[11px] text-muted-foreground">Last send: {lastSentLabel}{statusSummary}</p>
           </CardContent>
         </Card>
       </div>
@@ -282,7 +282,7 @@ export default function NewsletterSubscribers() {
           </CardHeader>
           <CardContent className="space-y-3">
             {topCountries.map(({ country, count }) => (
-              <div key={country} className="flex items-center justify-between text-sm">
+              <div key={country} className="flex items-center justify-between text-[13px]">
                 <div className="flex items-center gap-2">
                   <Globe2 className="h-4 w-4 text-muted-foreground" />
                   <span>{country}</span>
@@ -324,14 +324,14 @@ export default function NewsletterSubscribers() {
 
                   return (
                     <TableRow key={failureKey}>
-                      <TableCell className="font-mono text-xs">{failure.email}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
+                      <TableCell className="font-mono text-[11px]">{failure.email}</TableCell>
+                      <TableCell className="text-[13px] text-muted-foreground">
                         {failure.error || 'No error returned'}
                       </TableCell>
                       <TableCell>
                         <Badge variant="secondary">#{failure.campaignId}</Badge>
                       </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{whenLabel}</TableCell>
+                      <TableCell className="text-[13px] text-muted-foreground">{whenLabel}</TableCell>
                     </TableRow>
                   );
                 })}
@@ -362,7 +362,7 @@ export default function NewsletterSubscribers() {
                 checked={showUnsubscribed}
                 onCheckedChange={setShowUnsubscribed}
               />
-              <Label htmlFor="show-unsubscribed" className="text-sm text-muted-foreground">
+              <Label htmlFor="show-unsubscribed" className="text-[13px] text-muted-foreground">
                 Include unsubscribed contacts
               </Label>
             </div>
@@ -447,20 +447,20 @@ export default function NewsletterSubscribers() {
                           <Badge variant="outline">{countryLabel}</Badge>
                         </TableCell>
                         <TableCell>
-                          <span className="text-sm text-muted-foreground">{subscriber.ipAddress || '—'}</span>
+                          <span className="text-[13px] text-muted-foreground">{subscriber.ipAddress || '—'}</span>
                         </TableCell>
                         <TableCell>
-                          <span className="text-sm text-muted-foreground">{subscriber.source || '—'}</span>
+                          <span className="text-[13px] text-muted-foreground">{subscriber.source || '—'}</span>
                         </TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-1 text-[13px] text-muted-foreground">
                             <Calendar className="h-3 w-3" />
                             {format(new Date(subscriber.subscribedAt), 'MMM d, yyyy')}
                           </div>
                         </TableCell>
                         <TableCell>
                           {subscriber.lastActivityAt ? (
-                            <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                            <div className="flex items-center gap-1 text-[13px] text-muted-foreground">
                               <Clock className="h-3 w-3" />
                               {format(new Date(subscriber.lastActivityAt), 'MMM d, yyyy')}
                             </div>

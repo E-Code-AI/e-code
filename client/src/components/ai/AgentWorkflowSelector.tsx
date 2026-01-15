@@ -37,7 +37,7 @@ export function AgentWorkflowSelector({
             {safeFeatureList.map((feature, index) => (
               <div 
                 key={index}
-                className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300"
+                className="flex items-start gap-2 text-[13px] text-gray-700 dark:text-gray-300"
               >
                 <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
                 <span>{feature}</span>
@@ -89,10 +89,10 @@ export function AgentWorkflowSelector({
                   <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">
                     Build the entire app
                   </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                  <p className="text-[13px] text-gray-600 dark:text-gray-400 mb-2">
                     20+ mins
                   </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <p className="text-[13px] text-gray-600 dark:text-gray-400">
                     Best if you want Agent to build out the full functionality of your app
                   </p>
                 </div>
@@ -136,10 +136,10 @@ export function AgentWorkflowSelector({
                   <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">
                     Start with a design
                   </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                  <p className="text-[13px] text-gray-600 dark:text-gray-400 mb-2">
                     5-10 mins
                   </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <p className="text-[13px] text-gray-600 dark:text-gray-400">
                     Best if you want to see a design prototype first, then iterate on visuals or features
                   </p>
                 </div>

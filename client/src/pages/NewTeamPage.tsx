@@ -367,15 +367,15 @@ export default function NewTeamPage() {
 
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
-          <span className="text-sm text-muted-foreground">Step {currentStep} of {totalSteps}</span>
-          <span className="text-sm font-medium">{Math.round((currentStep / totalSteps) * 100)}% Complete</span>
+          <span className="text-[13px] text-muted-foreground">Step {currentStep} of {totalSteps}</span>
+          <span className="text-[13px] font-medium">{Math.round((currentStep / totalSteps) * 100)}% Complete</span>
         </div>
         <Progress value={(currentStep / totalSteps) * 100} className="h-2" data-testid="progress-steps" />
         <div className="flex justify-between mt-2">
-          <span className="text-xs text-muted-foreground">Team Details</span>
-          <span className="text-xs text-muted-foreground">Select Plan</span>
-          {formData.plan !== 'free' && <span className="text-xs text-muted-foreground">Billing</span>}
-          <span className="text-xs text-muted-foreground">Review & Create</span>
+          <span className="text-[11px] text-muted-foreground">Team Details</span>
+          <span className="text-[11px] text-muted-foreground">Select Plan</span>
+          {formData.plan !== 'free' && <span className="text-[11px] text-muted-foreground">Billing</span>}
+          <span className="text-[11px] text-muted-foreground">Review & Create</span>
         </div>
       </div>
 
@@ -395,7 +395,7 @@ export default function NewTeamPage() {
               <CardContent className="space-y-6">
                 <div className="flex items-start gap-6">
                   <div className="flex flex-col items-center gap-2">
-                    <Label className="text-sm mb-2">Team Avatar</Label>
+                    <Label className="text-[13px] mb-2">Team Avatar</Label>
                     <div className="relative">
                       <Avatar className="h-24 w-24 border-2 border-dashed border-border" data-testid="avatar-team">
                         {avatarPreview ? (
@@ -422,7 +422,7 @@ export default function NewTeamPage() {
                         />
                       </label>
                     </div>
-                    <p className="text-xs text-muted-foreground text-center mt-1">Max 5MB</p>
+                    <p className="text-[11px] text-muted-foreground text-center mt-1">Max 5MB</p>
                   </div>
 
                   <div className="flex-1 space-y-4">
@@ -437,7 +437,7 @@ export default function NewTeamPage() {
                         data-testid="input-team-name"
                       />
                       {errors.name && (
-                        <p className="text-sm text-destructive flex items-center gap-1">
+                        <p className="text-[13px] text-destructive flex items-center gap-1">
                           <AlertCircle className="h-3 w-3" />
                           {errors.name}
                         </p>
@@ -482,7 +482,7 @@ export default function NewTeamPage() {
                         <Lock className="h-5 w-5 text-muted-foreground mt-0.5" />
                         <div>
                           <span className="font-medium block">Private</span>
-                          <span className="text-sm text-muted-foreground">Only invited members can see this team</span>
+                          <span className="text-[13px] text-muted-foreground">Only invited members can see this team</span>
                         </div>
                       </Label>
                     </div>
@@ -500,7 +500,7 @@ export default function NewTeamPage() {
                         <Globe className="h-5 w-5 text-muted-foreground mt-0.5" />
                         <div>
                           <span className="font-medium block">Public</span>
-                          <span className="text-sm text-muted-foreground">Anyone can discover and request to join</span>
+                          <span className="text-[13px] text-muted-foreground">Anyone can discover and request to join</span>
                         </div>
                       </Label>
                     </div>
@@ -513,7 +513,7 @@ export default function NewTeamPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <Label>Invite Team Members</Label>
-                      <p className="text-sm text-muted-foreground">Add members by email address</p>
+                      <p className="text-[13px] text-muted-foreground">Add members by email address</p>
                     </div>
                     <Badge variant="outline">{formData.inviteEmails.length} invited</Badge>
                   </div>
@@ -532,7 +532,7 @@ export default function NewTeamPage() {
                         data-testid="input-invite-email"
                       />
                       {errors.email && (
-                        <p className="text-sm text-destructive flex items-center gap-1 mt-1">
+                        <p className="text-[13px] text-destructive flex items-center gap-1 mt-1">
                           <AlertCircle className="h-3 w-3" />
                           {errors.email}
                         </p>
@@ -616,19 +616,19 @@ export default function NewTeamPage() {
                             <div>
                               <span className="font-semibold block">{plan.name}</span>
                               <span className="text-2xl font-bold">{plan.price}</span>
-                              <span className="text-sm text-muted-foreground">{plan.period}</span>
+                              <span className="text-[13px] text-muted-foreground">{plan.period}</span>
                             </div>
                           </div>
-                          <p className="text-sm text-muted-foreground mb-4">{plan.description}</p>
+                          <p className="text-[13px] text-muted-foreground mb-4">{plan.description}</p>
                           <ul className="space-y-2 mt-auto">
                             {plan.features.slice(0, 5).map((feature, idx) => (
-                              <li key={idx} className="flex items-center gap-2 text-sm">
+                              <li key={idx} className="flex items-center gap-2 text-[13px]">
                                 <Check className="h-4 w-4 text-primary flex-shrink-0" />
                                 <span>{feature}</span>
                               </li>
                             ))}
                             {plan.features.length > 5 && (
-                              <li className="text-sm text-muted-foreground">
+                              <li className="text-[13px] text-muted-foreground">
                                 +{plan.features.length - 5} more features
                               </li>
                             )}
@@ -641,7 +641,7 @@ export default function NewTeamPage() {
 
                 <Accordion type="single" collapsible className="w-full">
                   <AccordionItem value="compare" data-testid="accordion-compare-plans">
-                    <AccordionTrigger className="text-sm">
+                    <AccordionTrigger className="text-[13px]">
                       <span className="flex items-center gap-2">
                         <HelpCircle className="h-4 w-4" />
                         Compare all features
@@ -649,7 +649,7 @@ export default function NewTeamPage() {
                     </AccordionTrigger>
                     <AccordionContent>
                       <div className="overflow-x-auto">
-                        <table className="w-full text-sm" data-testid="table-plan-comparison">
+                        <table className="w-full text-[13px]" data-testid="table-plan-comparison">
                           <thead>
                             <tr className="border-b">
                               <th className="text-left py-3 px-2 font-medium">Feature</th>
@@ -707,12 +707,12 @@ export default function NewTeamPage() {
                       <selectedPlan.icon className="h-5 w-5 text-primary" />
                       <div>
                         <span className="font-medium">{selectedPlan.name} Plan</span>
-                        <p className="text-sm text-muted-foreground">{selectedPlan.description}</p>
+                        <p className="text-[13px] text-muted-foreground">{selectedPlan.description}</p>
                       </div>
                     </div>
                     <div className="text-right">
                       <span className="text-xl font-bold">{selectedPlan.price}</span>
-                      <span className="text-sm text-muted-foreground">{selectedPlan.period}</span>
+                      <span className="text-[13px] text-muted-foreground">{selectedPlan.period}</span>
                     </div>
                   </div>
                 </div>
@@ -728,7 +728,7 @@ export default function NewTeamPage() {
                       className={`${inputClassName} ${errors.cardNumber ? 'border-destructive' : ''}`}
                       data-testid="input-card-number"
                     />
-                    {errors.cardNumber && <p className="text-sm text-destructive">{errors.cardNumber}</p>}
+                    {errors.cardNumber && <p className="text-[13px] text-destructive">{errors.cardNumber}</p>}
                   </div>
 
                   <div className="space-y-2">
@@ -742,7 +742,7 @@ export default function NewTeamPage() {
                       maxLength={5}
                       data-testid="input-expiry"
                     />
-                    {errors.expiryDate && <p className="text-sm text-destructive">{errors.expiryDate}</p>}
+                    {errors.expiryDate && <p className="text-[13px] text-destructive">{errors.expiryDate}</p>}
                   </div>
 
                   <div className="space-y-2">
@@ -757,7 +757,7 @@ export default function NewTeamPage() {
                       maxLength={4}
                       data-testid="input-cvv"
                     />
-                    {errors.cvv && <p className="text-sm text-destructive">{errors.cvv}</p>}
+                    {errors.cvv && <p className="text-[13px] text-destructive">{errors.cvv}</p>}
                   </div>
 
                   <div className="sm:col-span-2 space-y-2">
@@ -770,7 +770,7 @@ export default function NewTeamPage() {
                       className={`${inputClassName} ${errors.cardholderName ? 'border-destructive' : ''}`}
                       data-testid="input-cardholder"
                     />
-                    {errors.cardholderName && <p className="text-sm text-destructive">{errors.cardholderName}</p>}
+                    {errors.cardholderName && <p className="text-[13px] text-destructive">{errors.cardholderName}</p>}
                   </div>
 
                   <div className="sm:col-span-2 space-y-2">
@@ -829,7 +829,7 @@ export default function NewTeamPage() {
 
                 <div className="flex items-center gap-2 p-3 rounded-lg bg-green-500/10 border border-green-500/20">
                   <Shield className="h-5 w-5 text-green-500" />
-                  <span className="text-sm text-green-600 dark:text-green-400">Your payment information is encrypted and secure</span>
+                  <span className="text-[13px] text-green-600 dark:text-green-400">Your payment information is encrypted and secure</span>
                 </div>
               </CardContent>
             </Card>
@@ -852,14 +852,14 @@ export default function NewTeamPage() {
                     {avatarPreview ? (
                       <AvatarImage src={avatarPreview} alt="Team avatar" />
                     ) : (
-                      <AvatarFallback className="text-lg font-semibold bg-primary/10 text-primary">
+                      <AvatarFallback className="text-[15px] font-semibold bg-primary/10 text-primary">
                         {formData.name.slice(0, 2).toUpperCase() || 'T'}
                       </AvatarFallback>
                     )}
                   </Avatar>
                   <div className="flex-1">
                     <h3 className="text-xl font-semibold" data-testid="review-team-name">{formData.name || 'Untitled Team'}</h3>
-                    <p className="text-sm text-muted-foreground mt-1" data-testid="review-description">{formData.description || 'No description provided'}</p>
+                    <p className="text-[13px] text-muted-foreground mt-1" data-testid="review-description">{formData.description || 'No description provided'}</p>
                     <div className="flex items-center gap-2 mt-3">
                       <Badge variant="outline" className="gap-1" data-testid="review-visibility">
                         {formData.visibility === 'private' ? <Lock className="h-3 w-3" /> : <Globe className="h-3 w-3" />}
@@ -891,7 +891,7 @@ export default function NewTeamPage() {
                   <div className="p-4 rounded-lg bg-muted/50 border border-border">
                     <div className="flex items-center justify-between">
                       <span className="font-medium">Total</span>
-                      <span className="text-xl font-bold">{selectedPlan.price}<span className="text-sm font-normal text-muted-foreground">{selectedPlan.period}</span></span>
+                      <span className="text-xl font-bold">{selectedPlan.price}<span className="text-[13px] font-normal text-muted-foreground">{selectedPlan.period}</span></span>
                     </div>
                   </div>
                 )}
@@ -906,11 +906,11 @@ export default function NewTeamPage() {
                     data-testid="checkbox-terms"
                   />
                   <div>
-                    <Label htmlFor="terms" className="text-sm cursor-pointer">
+                    <Label htmlFor="terms" className="text-[13px] cursor-pointer">
                       I agree to the <a href="/terms" className="text-primary hover:underline">Terms of Service</a> and <a href="/privacy" className="text-primary hover:underline">Privacy Policy</a>
                     </Label>
                     {errors.terms && (
-                      <p className="text-sm text-destructive flex items-center gap-1 mt-1">
+                      <p className="text-[13px] text-destructive flex items-center gap-1 mt-1">
                         <AlertCircle className="h-3 w-3" />
                         {errors.terms}
                       </p>
@@ -983,7 +983,7 @@ export default function NewTeamPage() {
                 </Avatar>
                 <div>
                   <p className="font-medium" data-testid="summary-name">{formData.name || 'Team Name'}</p>
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
                     {formData.visibility === 'private' ? <Lock className="h-3 w-3" /> : <Globe className="h-3 w-3" />}
                     {formData.visibility === 'private' ? 'Private' : 'Public'}
                   </div>
@@ -993,19 +993,19 @@ export default function NewTeamPage() {
               <Separator />
 
               <div className="space-y-3">
-                <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center justify-between text-[13px]">
                   <span className="text-muted-foreground">Plan</span>
                   <Badge variant="outline" className="gap-1" data-testid="summary-plan">
                     <selectedPlan.icon className="h-3 w-3" />
                     {selectedPlan.name}
                   </Badge>
                 </div>
-                <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center justify-between text-[13px]">
                   <span className="text-muted-foreground">Members</span>
                   <span data-testid="summary-members">{formData.inviteEmails.length + 1}</span>
                 </div>
                 {formData.plan !== 'free' && (
-                  <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center justify-between text-[13px]">
                     <span className="text-muted-foreground">Monthly Cost</span>
                     <span className="font-medium" data-testid="summary-cost">
                       {formData.plan === 'pro' ? `$${15 * (formData.inviteEmails.length + 1)}` : 'Custom'}
@@ -1017,10 +1017,10 @@ export default function NewTeamPage() {
               <Separator />
 
               <div className="space-y-2">
-                <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">What's included</p>
+                <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">What's included</p>
                 <ul className="space-y-2">
                   {selectedPlan.features.slice(0, 4).map((feature, idx) => (
-                    <li key={idx} className="flex items-center gap-2 text-sm">
+                    <li key={idx} className="flex items-center gap-2 text-[13px]">
                       <Check className="h-3 w-3 text-primary flex-shrink-0" />
                       <span>{feature}</span>
                     </li>

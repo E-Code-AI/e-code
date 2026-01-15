@@ -220,7 +220,7 @@ export const EnhancedChatMessage = memo(forwardRef<EnhancedChatMessageRef, Enhan
           ) : (
             <p 
               className={cn(
-                "text-sm whitespace-pre-wrap break-words leading-relaxed",
+                "text-[13px] whitespace-pre-wrap break-words leading-relaxed",
                 isError && "text-destructive"
               )}
               data-testid={`enhanced-message-text-${message.id}`}
@@ -326,7 +326,7 @@ export const EnhancedChatMessage = memo(forwardRef<EnhancedChatMessageRef, Enhan
               onClick={() => setIsExpanded(!isExpanded)}
               data-testid={`enhanced-tools-toggle-${message.id}`}
             >
-              <span className="text-xs font-medium text-muted-foreground">
+              <span className="text-[11px] font-medium text-muted-foreground">
                 {message.toolExecutions!.length} tool execution{message.toolExecutions!.length !== 1 ? 's' : ''}
               </span>
               {isExpanded ? (
@@ -630,7 +630,7 @@ export const TypingIndicator = memo(function TypingIndicator({ text = "Thinking"
       </Avatar>
       
       <div className="bg-muted/80 rounded-2xl rounded-bl-md px-4 py-3 shadow-md border border-border/50 flex items-center gap-2">
-        <span className="text-sm text-muted-foreground">{text}</span>
+        <span className="text-[13px] text-muted-foreground">{text}</span>
         <div className="flex gap-1">
           {[0, 1, 2].map((i) => (
             <LazyMotionSpan
@@ -681,8 +681,8 @@ export const EmptyConversation = memo(function EmptyConversation({
         <Sparkles className="h-8 w-8 text-primary" />
       </LazyMotionDiv>
       
-      <h3 className="text-lg font-semibold mb-2">How can I help you today?</h3>
-      <p className="text-sm text-muted-foreground text-center mb-6 max-w-sm">
+      <h3 className="text-[15px] font-semibold mb-2">How can I help you today?</h3>
+      <p className="text-[13px] text-muted-foreground text-center mb-6 max-w-sm">
         I can help you build, debug, and improve your code with transparent reasoning.
       </p>
       
@@ -703,8 +703,8 @@ export const EmptyConversation = memo(function EmptyConversation({
               )}
               data-testid={`quick-action-${action.label.toLowerCase().replace(/\s+/g, '-')}`}
             >
-              <span className="text-lg">{action.icon}</span>
-              <span className="text-sm font-medium">{action.label}</span>
+              <span className="text-[15px]">{action.icon}</span>
+              <span className="text-[13px] font-medium">{action.label}</span>
             </LazyMotionButton>
           ))}
         </div>
@@ -734,7 +734,7 @@ export const ConversationSyncIndicator = memo(function ConversationSyncIndicator
     >
       <div
         className={cn(
-          "flex items-center justify-center gap-2 py-1.5 px-3 text-xs",
+          "flex items-center justify-center gap-2 py-1.5 px-3 text-[11px]",
           "bg-muted/50 border-b border-border/50"
         )}
       >

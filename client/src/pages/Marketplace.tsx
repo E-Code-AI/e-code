@@ -120,10 +120,10 @@ export default function Marketplace() {
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between mb-2">
               <div>
-                <h3 className="font-semibold text-lg group-hover:text-primary transition-colors" data-testid={`text-extension-name-${extension.id}`}>
+                <h3 className="font-semibold text-[15px] group-hover:text-primary transition-colors" data-testid={`text-extension-name-${extension.id}`}>
                   {extension.name}
                 </h3>
-                <p className="text-sm text-muted-foreground" data-testid={`text-extension-author-${extension.id}`}>by {extension.author}</p>
+                <p className="text-[13px] text-muted-foreground" data-testid={`text-extension-author-${extension.id}`}>by {extension.author}</p>
               </div>
               
               <div className="flex items-center gap-2">
@@ -142,20 +142,20 @@ export default function Marketplace() {
               </div>
             </div>
             
-            <p className="text-sm text-muted-foreground mb-3 line-clamp-2" data-testid={`text-extension-description-${extension.id}`}>
+            <p className="text-[13px] text-muted-foreground mb-3 line-clamp-2" data-testid={`text-extension-description-${extension.id}`}>
               {extension.description}
             </p>
             
             <div className="flex flex-wrap gap-1 mb-3">
               {extension.tags.map((tag: string, index: number) => (
-                <Badge key={index} variant="secondary" className="text-xs" data-testid={`badge-extension-tag-${extension.id}-${index}`}>
+                <Badge key={index} variant="secondary" className="text-[11px]" data-testid={`badge-extension-tag-${extension.id}-${index}`}>
                   {tag}
                 </Badge>
               ))}
             </div>
             
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+              <div className="flex items-center gap-4 text-[13px] text-muted-foreground">
                 <div className="flex items-center gap-1" data-testid={`text-extension-rating-${extension.id}`}>
                   <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                   <span>{extension.rating}</span>
@@ -168,7 +168,7 @@ export default function Marketplace() {
               </div>
               
               <div className="flex items-center gap-2">
-                <span className="font-semibold text-lg" data-testid={`text-extension-price-${extension.id}`}>{extension.price}</span>
+                <span className="font-semibold text-[15px]" data-testid={`text-extension-price-${extension.id}`}>{extension.price}</span>
                 <Button size="sm" variant={extension.installed ? "outline" : "default"} data-testid={`button-extension-install-${extension.id}`}>
                   {extension.installed ? 'Uninstall' : 'Install'}
                 </Button>
@@ -184,17 +184,17 @@ export default function Marketplace() {
     <Card className="group hover:shadow-md transition-shadow" data-testid={`card-template-${template.id}`}>
       <CardContent className="p-6">
         <div className="flex items-start gap-4">
-          <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-blue-600 rounded-lg flex items-center justify-center text-white font-semibold text-lg">
+          <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-blue-600 rounded-lg flex items-center justify-center text-white font-semibold text-[15px]">
             {template.framework.charAt(0)}
           </div>
           
           <div className="flex-1">
             <div className="flex items-start justify-between mb-2">
               <div>
-                <h3 className="font-semibold text-lg group-hover:text-primary transition-colors" data-testid={`text-template-name-${template.id}`}>
+                <h3 className="font-semibold text-[15px] group-hover:text-primary transition-colors" data-testid={`text-template-name-${template.id}`}>
                   {template.name}
                 </h3>
-                <p className="text-sm text-muted-foreground" data-testid={`text-template-author-${template.id}`}>by {template.author}</p>
+                <p className="text-[13px] text-muted-foreground" data-testid={`text-template-author-${template.id}`}>by {template.author}</p>
               </div>
               
               {template.featured && (
@@ -205,20 +205,20 @@ export default function Marketplace() {
               )}
             </div>
             
-            <p className="text-sm text-muted-foreground mb-3" data-testid={`text-template-description-${template.id}`}>
+            <p className="text-[13px] text-muted-foreground mb-3" data-testid={`text-template-description-${template.id}`}>
               {template.description}
             </p>
             
             <div className="flex flex-wrap gap-1 mb-3">
               {template.tags.map((tag: string, index: number) => (
-                <Badge key={index} variant="secondary" className="text-xs" data-testid={`badge-template-tag-${template.id}-${index}`}>
+                <Badge key={index} variant="secondary" className="text-[11px]" data-testid={`badge-template-tag-${template.id}-${index}`}>
                   {tag}
                 </Badge>
               ))}
             </div>
             
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+              <div className="flex items-center gap-4 text-[13px] text-muted-foreground">
                 <div className="flex items-center gap-1" data-testid={`text-template-rating-${template.id}`}>
                   <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                   <span>{template.rating}</span>
@@ -353,7 +353,7 @@ export default function Marketplace() {
                       <Code className={`h-8 w-8 ${theme.preview === 'dark' ? 'text-white' : 'text-gray-600'}`} />
                     </div>
                     <h3 className="font-semibold mb-1" data-testid={`text-theme-name-${index}`}>{theme.name}</h3>
-                    <div className="flex items-center justify-between text-sm text-muted-foreground">
+                    <div className="flex items-center justify-between text-[13px] text-muted-foreground">
                       <span data-testid={`text-theme-downloads-${index}`}>{theme.downloads.toLocaleString()} downloads</span>
                       <Button size="sm" data-testid={`button-apply-theme-${index}`}>Apply</Button>
                     </div>
@@ -383,7 +383,7 @@ export default function Marketplace() {
                       
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <h3 className="text-lg font-semibold" data-testid={`text-publisher-name-${publisher.id}`}>{publisher.name}</h3>
+                          <h3 className="text-[15px] font-semibold" data-testid={`text-publisher-name-${publisher.id}`}>{publisher.name}</h3>
                           {publisher.verified && (
                             <Badge variant="outline" className="text-blue-600 border-blue-600" data-testid={`badge-publisher-verified-${publisher.id}`}>
                               <CheckCircle2 className="h-3 w-3 mr-1" />
@@ -392,7 +392,7 @@ export default function Marketplace() {
                           )}
                         </div>
                         
-                        <div className="flex items-center gap-6 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-6 text-[13px] text-muted-foreground">
                           <span data-testid={`text-publisher-extensions-${publisher.id}`}>{publisher.extensions} extensions</span>
                           <span data-testid={`text-publisher-downloads-${publisher.id}`}>{publisher.downloads.toLocaleString()} total downloads</span>
                         </div>

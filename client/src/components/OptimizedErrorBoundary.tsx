@@ -262,8 +262,8 @@ export class OptimizedErrorBoundary extends Component<Props, State> {
             <div className="flex items-start gap-3">
               <Icon className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground">{classification.title}</p>
-                <p className="text-xs text-muted-foreground mt-1">{classification.userFriendlyMessage}</p>
+                <p className="text-[13px] font-medium text-foreground">{classification.title}</p>
+                <p className="text-[11px] text-muted-foreground mt-1">{classification.userFriendlyMessage}</p>
                 <div className="flex gap-2 mt-3">
                   {recoveryActions.slice(0, 2).map((action, index) => (
                     <Button
@@ -272,7 +272,7 @@ export class OptimizedErrorBoundary extends Component<Props, State> {
                       variant={action.variant || 'default'}
                       onClick={action.action}
                       disabled={this.state.isInCooldown && action.action === this.handleReset}
-                      className="text-xs"
+                      className="text-[11px]"
                       data-testid={action.testId}
                     >
                       <action.icon className="h-3 w-3 mr-1" />
@@ -306,7 +306,7 @@ export class OptimizedErrorBoundary extends Component<Props, State> {
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <p className="text-sm text-muted-foreground">
+              <p className="text-[13px] text-muted-foreground">
                 {classification.userFriendlyMessage}
               </p>
 
@@ -324,7 +324,7 @@ export class OptimizedErrorBoundary extends Component<Props, State> {
                 <Alert variant="destructive">
                   <AlertTitle>Developer Info</AlertTitle>
                   <AlertDescription className="mt-2">
-                    <pre className="text-xs overflow-auto p-2 bg-black/10 rounded max-h-40">
+                    <pre className="text-[11px] overflow-auto p-2 bg-black/10 rounded max-h-40">
                       {this.state.error.toString()}
                       {this.state.errorInfo && (
                         <>

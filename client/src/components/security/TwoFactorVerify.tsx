@@ -116,15 +116,15 @@ export function TwoFactorVerify({ challengeId, onSuccess, onCancel, email }: Two
       <CardContent>
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
           <TabsList className="grid w-full grid-cols-3 mb-6">
-            <TabsTrigger value="totp" className="text-xs sm:text-sm" data-testid="tab-totp">
+            <TabsTrigger value="totp" className="text-[11px] sm:text-[13px]" data-testid="tab-totp">
               <Key className="h-4 w-4 mr-1 sm:mr-2" />
               <span className="hidden sm:inline">App</span>
             </TabsTrigger>
-            <TabsTrigger value="backup" className="text-xs sm:text-sm" data-testid="tab-backup">
+            <TabsTrigger value="backup" className="text-[11px] sm:text-[13px]" data-testid="tab-backup">
               <Shield className="h-4 w-4 mr-1 sm:mr-2" />
               <span className="hidden sm:inline">Secours</span>
             </TabsTrigger>
-            <TabsTrigger value="emergency" className="text-xs sm:text-sm" data-testid="tab-emergency">
+            <TabsTrigger value="emergency" className="text-[11px] sm:text-[13px]" data-testid="tab-emergency">
               <Mail className="h-4 w-4 mr-1 sm:mr-2" />
               <span className="hidden sm:inline">Email</span>
             </TabsTrigger>
@@ -148,13 +148,13 @@ export function TwoFactorVerify({ challengeId, onSuccess, onCancel, email }: Two
                   autoComplete="one-time-code"
                   data-testid="input-totp-token"
                 />
-                <p className="text-xs text-muted-foreground text-center">
+                <p className="text-[11px] text-muted-foreground text-center">
                   Ouvrez votre application d'authentification et entrez le code à 6 chiffres
                 </p>
               </div>
               
               {attemptsRemaining < 3 && (
-                <p className="text-sm text-center text-yellow-600 dark:text-yellow-400">
+                <p className="text-[13px] text-center text-yellow-600 dark:text-yellow-400">
                   {attemptsRemaining} tentative{attemptsRemaining > 1 ? 's' : ''} restante{attemptsRemaining > 1 ? 's' : ''}
                 </p>
               )}
@@ -188,7 +188,7 @@ export function TwoFactorVerify({ challengeId, onSuccess, onCancel, email }: Two
                   autoFocus
                   data-testid="input-backup-token"
                 />
-                <p className="text-xs text-muted-foreground text-center">
+                <p className="text-[11px] text-muted-foreground text-center">
                   Utilisez l'un de vos codes de secours à 8 caractères
                 </p>
               </div>
@@ -211,7 +211,7 @@ export function TwoFactorVerify({ challengeId, onSuccess, onCancel, email }: Two
             <div className="space-y-4">
               {!emergencySent ? (
                 <>
-                  <p className="text-sm text-muted-foreground text-center">
+                  <p className="text-[13px] text-muted-foreground text-center">
                     Vous n'avez pas accès à votre application d'authentification ni à vos codes de secours ?
                   </p>
                   <Button
@@ -247,7 +247,7 @@ export function TwoFactorVerify({ challengeId, onSuccess, onCancel, email }: Two
                       autoFocus
                       data-testid="input-emergency-token"
                     />
-                    <p className="text-xs text-muted-foreground text-center">
+                    <p className="text-[11px] text-muted-foreground text-center">
                       Vérifiez votre boîte de réception
                     </p>
                   </div>
@@ -267,7 +267,7 @@ export function TwoFactorVerify({ challengeId, onSuccess, onCancel, email }: Two
                   <Button
                     type="button"
                     variant="ghost"
-                    className="w-full text-sm"
+                    className="w-full text-[13px]"
                     onClick={() => emergencyMutation.mutate()}
                     disabled={emergencyMutation.isPending}
                   >

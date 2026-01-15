@@ -106,7 +106,7 @@ export default function Deployments() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card data-testid="card-total-deployments">
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
+                <CardTitle className="text-[13px] font-medium text-muted-foreground">
                   Total Deployments
                 </CardTitle>
               </CardHeader>
@@ -119,7 +119,7 @@ export default function Deployments() {
 
             <Card data-testid="card-active-deployments">
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
+                <CardTitle className="text-[13px] font-medium text-muted-foreground">
                   Active
                 </CardTitle>
               </CardHeader>
@@ -132,7 +132,7 @@ export default function Deployments() {
 
             <Card data-testid="card-failed-deployments">
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
+                <CardTitle className="text-[13px] font-medium text-muted-foreground">
                   Failed
                 </CardTitle>
               </CardHeader>
@@ -183,7 +183,7 @@ export default function Deployments() {
             ) : filteredDeployments.length === 0 ? (
               <div className="text-center py-12">
                 <Rocket className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No deployments yet</h3>
+                <h3 className="text-[15px] font-semibold mb-2">No deployments yet</h3>
                 <p className="text-muted-foreground mb-4">
                   {searchQuery 
                     ? 'No deployments match your search.' 
@@ -235,7 +235,7 @@ export default function Deployments() {
                                 </Badge>
                               </div>
 
-                              <div className="text-sm text-muted-foreground space-y-1">
+                              <div className="text-[13px] text-muted-foreground space-y-1">
                                 {deployment.url && (
                                   <div className="flex items-center gap-2">
                                     <Globe className="h-3 w-3" />

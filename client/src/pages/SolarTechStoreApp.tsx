@@ -272,7 +272,7 @@ export default function SolarTechStoreApp() {
             </div>
             <div>
               <h2 className="text-xl font-bold">SolarTech Store</h2>
-              <p className="text-sm text-muted-foreground">Solar Equipment & Supplies</p>
+              <p className="text-[13px] text-muted-foreground">Solar Equipment & Supplies</p>
             </div>
           </div>
           
@@ -318,7 +318,7 @@ export default function SolarTechStoreApp() {
           {cart.length === 0 ? (
             <div className="text-center py-8">
               <ShoppingCart className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">Your cart is empty</p>
+              <p className="text-[13px] text-muted-foreground">Your cart is empty</p>
             </div>
           ) : (
             <ScrollArea className="h-64">
@@ -327,8 +327,8 @@ export default function SolarTechStoreApp() {
                   <Card key={item.product.id} className="p-3">
                     <div className="flex items-start gap-2">
                       <div className="flex-1">
-                        <h4 className="font-medium text-sm line-clamp-2">{item.product.name}</h4>
-                        <p className="text-xs text-muted-foreground">{formatCurrency(item.product.price)}</p>
+                        <h4 className="font-medium text-[13px] line-clamp-2">{item.product.name}</h4>
+                        <p className="text-[11px] text-muted-foreground">{formatCurrency(item.product.price)}</p>
                         <div className="flex items-center gap-2 mt-2">
                           <Button
                             size="sm"
@@ -338,7 +338,7 @@ export default function SolarTechStoreApp() {
                           >
                             <Minus className="h-3 w-3" />
                           </Button>
-                          <span className="text-sm font-medium">{item.quantity}</span>
+                          <span className="text-[13px] font-medium">{item.quantity}</span>
                           <Button
                             size="sm"
                             variant="outline"
@@ -360,7 +360,7 @@ export default function SolarTechStoreApp() {
             <div className="mt-4 pt-4 border-t">
               <div className="flex justify-between items-center mb-3">
                 <span className="font-semibold">Total:</span>
-                <span className="font-bold text-lg">{formatCurrency(getTotalPrice())}</span>
+                <span className="font-bold text-[15px]">{formatCurrency(getTotalPrice())}</span>
               </div>
               <Button className="w-full">
                 <ShoppingCart className="h-4 w-4 mr-2" />
@@ -436,36 +436,36 @@ export default function SolarTechStoreApp() {
                         <div className="flex items-start justify-between mb-2">
                           <div className="flex-1">
                             <h3 className="font-semibold line-clamp-2">{product.name}</h3>
-                            <p className="text-sm text-muted-foreground">{product.brand}</p>
+                            <p className="text-[13px] text-muted-foreground">{product.brand}</p>
                           </div>
                         </div>
 
                         <div className="flex items-center gap-2 mb-2">
                           <div className="flex items-center gap-1">
                             <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                            <span className="text-sm font-medium">{product.rating}</span>
+                            <span className="text-[13px] font-medium">{product.rating}</span>
                           </div>
-                          <span className="text-sm text-muted-foreground">({product.reviews} reviews)</span>
+                          <span className="text-[13px] text-muted-foreground">({product.reviews} reviews)</span>
                         </div>
 
                         {product.efficiency && (
-                          <div className="text-sm text-muted-foreground mb-2">
+                          <div className="text-[13px] text-muted-foreground mb-2">
                             Efficiency: {product.efficiency}
                           </div>
                         )}
 
                         <div className="flex items-center justify-between mb-3">
                           <div>
-                            <span className="text-lg font-bold">{formatCurrency(product.price)}</span>
+                            <span className="text-[15px] font-bold">{formatCurrency(product.price)}</span>
                             {product.originalPrice && (
-                              <span className="text-sm text-muted-foreground line-through ml-2">
+                              <span className="text-[13px] text-muted-foreground line-through ml-2">
                                 {formatCurrency(product.originalPrice)}
                               </span>
                             )}
                           </div>
                           <div className="flex items-center gap-1">
                             <Check className="h-4 w-4 text-green-500" />
-                            <span className="text-sm text-green-600">In Stock</span>
+                            <span className="text-[13px] text-green-600">In Stock</span>
                           </div>
                         </div>
 
@@ -505,27 +505,27 @@ export default function SolarTechStoreApp() {
                       <div className="flex items-start justify-between">
                         <div>
                           <h3 className="font-semibold">{product.name}</h3>
-                          <p className="text-sm text-muted-foreground">{product.brand}</p>
+                          <p className="text-[13px] text-muted-foreground">{product.brand}</p>
                           <div className="flex items-center gap-2 mt-1">
                             <div className="flex items-center gap-1">
                               <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                              <span className="text-sm">{product.rating}</span>
+                              <span className="text-[13px]">{product.rating}</span>
                             </div>
-                            <span className="text-sm text-muted-foreground">({product.reviews})</span>
+                            <span className="text-[13px] text-muted-foreground">({product.reviews})</span>
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className="text-lg font-bold">{formatCurrency(product.price)}</div>
+                          <div className="text-[15px] font-bold">{formatCurrency(product.price)}</div>
                           {product.originalPrice && (
-                            <div className="text-sm text-muted-foreground line-through">
+                            <div className="text-[13px] text-muted-foreground line-through">
                               {formatCurrency(product.originalPrice)}
                             </div>
                           )}
                         </div>
                       </div>
-                      <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{product.description}</p>
+                      <p className="text-[13px] text-muted-foreground mt-2 line-clamp-2">{product.description}</p>
                       <div className="flex items-center justify-between mt-3">
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-4 text-[13px] text-muted-foreground">
                           {product.efficiency && <span>Efficiency: {product.efficiency}</span>}
                           {product.capacity && <span>Capacity: {product.capacity}</span>}
                           {product.output && <span>Output: {product.output}</span>}

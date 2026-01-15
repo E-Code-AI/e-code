@@ -296,7 +296,7 @@ export default function TeamSettings() {
                   placeholder="My Awesome Team"
                   maxLength={50}
                 />
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-[11px] text-muted-foreground mt-1">
                   {teamName.length}/50 characters
                 </p>
               </div>
@@ -304,7 +304,7 @@ export default function TeamSettings() {
               <div>
                 <Label htmlFor="team-slug">Team URL</Label>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">e-code.ai/teams/</span>
+                  <span className="text-[13px] text-muted-foreground">e-code.ai/teams/</span>
                   <Input
                     id="team-slug"
                     data-testid="input-team-slug"
@@ -315,7 +315,7 @@ export default function TeamSettings() {
                     maxLength={30}
                   />
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-[11px] text-muted-foreground mt-1">
                   {teamSlug.length}/30 characters (lowercase letters, numbers, hyphens only)
                 </p>
               </div>
@@ -331,7 +331,7 @@ export default function TeamSettings() {
                   rows={3}
                   maxLength={500}
                 />
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-[11px] text-muted-foreground mt-1">
                   {teamDescription.length}/500 characters
                 </p>
               </div>
@@ -378,7 +378,7 @@ export default function TeamSettings() {
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label>New Member Notifications</Label>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-[13px] text-muted-foreground">
                     Notify team admins when new members join
                   </p>
                 </div>
@@ -392,7 +392,7 @@ export default function TeamSettings() {
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label>New Project Notifications</Label>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-[13px] text-muted-foreground">
                     Notify team members when new projects are created
                   </p>
                 </div>
@@ -417,7 +417,7 @@ export default function TeamSettings() {
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label>Require Approval</Label>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-[13px] text-muted-foreground">
                     New members must be approved by an admin
                   </p>
                 </div>
@@ -430,7 +430,7 @@ export default function TeamSettings() {
 
               <div className="pt-4 border-t">
                 <h4 className="font-medium mb-2">API Keys</h4>
-                <p className="text-sm text-muted-foreground mb-4">
+                <p className="text-[13px] text-muted-foreground mb-4">
                   Manage API keys for team integrations
                 </p>
                 <Button variant="outline" size="sm" data-testid="button-manage-api-keys">
@@ -466,8 +466,8 @@ export default function TeamSettings() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-lg font-medium capitalize">{team.plan} Plan</h3>
-                    <p className="text-sm text-muted-foreground">
+                    <h3 className="text-[15px] font-medium capitalize">{team.plan} Plan</h3>
+                    <p className="text-[13px] text-muted-foreground">
                       {team.plan === 'free' && 'Basic features for small teams'}
                       {team.plan === 'pro' && 'Advanced features for growing teams'}
                       {team.plan === 'enterprise' && 'Full features with priority support'}
@@ -503,16 +503,16 @@ export default function TeamSettings() {
             <CardContent>
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm">Team Members</span>
-                  <span className="text-sm font-medium">{team.memberCount} / {team.plan === 'free' ? '5' : team.plan === 'pro' ? '50' : 'Unlimited'}</span>
+                  <span className="text-[13px]">Team Members</span>
+                  <span className="text-[13px] font-medium">{team.memberCount} / {team.plan === 'free' ? '5' : team.plan === 'pro' ? '50' : 'Unlimited'}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm">Projects</span>
-                  <span className="text-sm font-medium">{team.projectCount} / {team.plan === 'free' ? '10' : team.plan === 'pro' ? '100' : 'Unlimited'}</span>
+                  <span className="text-[13px]">Projects</span>
+                  <span className="text-[13px] font-medium">{team.projectCount} / {team.plan === 'free' ? '10' : team.plan === 'pro' ? '100' : 'Unlimited'}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm">Workspaces</span>
-                  <span className="text-sm font-medium">{team.workspaceCount} / {team.plan === 'free' ? '3' : team.plan === 'pro' ? '20' : 'Unlimited'}</span>
+                  <span className="text-[13px]">Workspaces</span>
+                  <span className="text-[13px] font-medium">{team.workspaceCount} / {team.plan === 'free' ? '3' : team.plan === 'pro' ? '20' : 'Unlimited'}</span>
                 </div>
               </div>
             </CardContent>

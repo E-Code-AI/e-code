@@ -178,14 +178,14 @@ export default function SSH() {
         <Info className="h-4 w-4" />
         <AlertTitle>SSH Connection Details</AlertTitle>
         <AlertDescription className="mt-2 space-y-2">
-          <div className="font-mono text-sm">
+          <div className="font-mono text-[13px]">
             <p>Host: <span className="text-primary">ssh.ecode.app</span></p>
             <p>Port: <span className="text-primary">22</span></p>
             <p>Username: <span className="text-primary">{`<your-username>`}</span></p>
           </div>
           <div className="mt-3">
-            <p className="text-sm">Connect using:</p>
-            <code className="block mt-1 p-2 bg-muted rounded text-xs">
+            <p className="text-[13px]">Connect using:</p>
+            <code className="block mt-1 p-2 bg-muted rounded text-[11px]">
               ssh -i ~/.ssh/your_key username@ssh.ecode.app
             </code>
           </div>
@@ -233,7 +233,7 @@ export default function SSH() {
                       <Label htmlFor="public-key">Public Key</Label>
                       <textarea
                         id="public-key"
-                        className="w-full min-h-[100px] p-3 rounded-md border bg-background font-mono text-sm"
+                        className="w-full min-h-[100px] p-3 rounded-md border bg-background font-mono text-[13px]"
                         value={newKey.publicKey}
                         onChange={(e) => setNewKey({ ...newKey, publicKey: e.target.value })}
                         placeholder="ssh-rsa AAAAB3NzaC1yc2..."
@@ -340,7 +340,7 @@ export default function SSH() {
                 <CardHeader>
                   <div className="flex justify-between items-start">
                     <div>
-                      <CardTitle className="text-lg flex items-center gap-2">
+                      <CardTitle className="text-[15px] flex items-center gap-2">
                         <Key className="h-4 w-4" />
                         <span data-testid={`ssh-key-name-${key.id}`}>{key.name}</span>
                       </CardTitle>
@@ -360,7 +360,7 @@ export default function SSH() {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="grid grid-cols-2 gap-4 text-[13px]">
                     <div>
                       <p className="text-muted-foreground">Type</p>
                       <Badge variant="secondary" className="mt-1">
@@ -374,9 +374,9 @@ export default function SSH() {
                   </div>
                   
                   <div className="space-y-2">
-                    <p className="text-sm text-muted-foreground">Fingerprint</p>
+                    <p className="text-[13px] text-muted-foreground">Fingerprint</p>
                     <div className="flex items-center gap-2">
-                      <code className="text-xs font-mono bg-muted p-2 rounded flex-1 overflow-x-auto">
+                      <code className="text-[11px] font-mono bg-muted p-2 rounded flex-1 overflow-x-auto">
                         {key.fingerprint}
                       </code>
                       <Button
@@ -391,9 +391,9 @@ export default function SSH() {
                   </div>
 
                   <div className="space-y-2">
-                    <p className="text-sm text-muted-foreground">Public Key</p>
+                    <p className="text-[13px] text-muted-foreground">Public Key</p>
                     <div className="flex items-center gap-2">
-                      <code className="text-xs font-mono bg-muted p-2 rounded flex-1 truncate">
+                      <code className="text-[11px] font-mono bg-muted p-2 rounded flex-1 truncate">
                         {key.publicKey}
                       </code>
                       <Button
@@ -408,7 +408,7 @@ export default function SSH() {
                   </div>
 
                   {key.lastUsed && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-2 text-[13px] text-muted-foreground">
                       <Clock className="h-3 w-3" />
                       Last used {key.lastUsed}
                     </div>
@@ -421,7 +421,7 @@ export default function SSH() {
               <Card data-testid="empty-ssh-keys">
                 <CardContent className="text-center py-12">
                   <Key className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">No SSH keys yet</h3>
+                  <h3 className="text-[15px] font-semibold mb-2">No SSH keys yet</h3>
                   <p className="text-muted-foreground mb-4">
                     Add an SSH key to enable secure remote access
                   </p>
@@ -451,7 +451,7 @@ export default function SSH() {
                 <CardHeader>
                   <div className="flex justify-between items-start">
                     <div>
-                      <CardTitle className="text-lg flex items-center gap-2">
+                      <CardTitle className="text-[15px] flex items-center gap-2">
                         <Server className="h-4 w-4" />
                         <span data-testid={`session-host-${session.id}`}>{session.host}</span>
                       </CardTitle>
@@ -474,7 +474,7 @@ export default function SSH() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-3 gap-4 text-sm">
+                  <div className="grid grid-cols-3 gap-4 text-[13px]">
                     <div>
                       <p className="text-muted-foreground">Connected</p>
                       <p className="font-medium">{session.connectedAt}</p>
@@ -505,7 +505,7 @@ export default function SSH() {
               <Card data-testid="empty-ssh-sessions">
                 <CardContent className="text-center py-12">
                   <Server className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">No active sessions</h3>
+                  <h3 className="text-[15px] font-semibold mb-2">No active sessions</h3>
                   <p className="text-muted-foreground">
                     SSH sessions will appear here when you connect
                   </p>

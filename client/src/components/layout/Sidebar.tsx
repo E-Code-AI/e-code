@@ -49,7 +49,7 @@ export default function Sidebar() {
     >
       {/* Logo */}
       <div className="flex h-14 items-center border-b px-3">
-        {!isCollapsed && <h1 className="text-lg font-bold tracking-tight">PLOT</h1>}
+        {!isCollapsed && <h1 className="text-[15px] font-bold tracking-tight">PLOT</h1>}
         <button
           onClick={toggleSidebar}
           className={cn(
@@ -67,7 +67,7 @@ export default function Sidebar() {
         {navigationGroups.map((group) => (
           <Fragment key={group.key}>
             {!isCollapsed && (
-              <div className="px-2 pb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground" id={`nav-group-${group.key}`}>
+              <div className="px-2 pb-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground" id={`nav-group-${group.key}`}>
                 {group.label}
               </div>
             )}
@@ -106,7 +106,7 @@ export default function Sidebar() {
               </div>
             </TooltipTrigger>
             <TooltipContent side="right">
-              <div className="text-sm">{user?.username || "User"}</div>
+              <div className="text-[13px]">{user?.username || "User"}</div>
             </TooltipContent>
           </Tooltip>
         ) : (
@@ -118,10 +118,10 @@ export default function Sidebar() {
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium">{user?.username || "User"}</p>
+              <p className="truncate text-[13px] font-medium">{user?.username || "User"}</p>
               <button
                 onClick={() => logoutMutation.mutate?.()}
-                className="text-xs text-muted-foreground hover:text-foreground"
+                className="text-[11px] text-muted-foreground hover:text-foreground"
                 aria-label="Sign out of your account"
               >
                 Sign out
@@ -163,9 +163,9 @@ function NavigationItemRow({ item, isActive, isCollapsed }: NavigationItemProps)
             </button>
           </TooltipTrigger>
           <TooltipContent side="right">
-            <div className="text-sm font-medium">{item.label}</div>
+            <div className="text-[13px] font-medium">{item.label}</div>
             {item.description && (
-              <p className="max-w-[180px] text-xs text-muted-foreground">
+              <p className="max-w-[180px] text-[11px] text-muted-foreground">
                 {item.description}
               </p>
             )}
@@ -188,9 +188,9 @@ function NavigationItemRow({ item, isActive, isCollapsed }: NavigationItemProps)
               <item.icon className="h-4 w-4" aria-hidden="true" />
             </div>
             <div className="flex flex-col items-start">
-              <span className="text-sm font-medium leading-5">{item.label}</span>
+              <span className="text-[13px] font-medium leading-5">{item.label}</span>
               {item.description && (
-                <span className="text-xs text-muted-foreground">{item.description}</span>
+                <span className="text-[11px] text-muted-foreground">{item.description}</span>
               )}
             </div>
           </div>

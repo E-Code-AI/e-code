@@ -339,7 +339,7 @@ export default function TeamPage() {
                 >
                   <CardHeader>
                     <div className="flex items-start justify-between">
-                      <CardTitle className="text-lg">{project.name}</CardTitle>
+                      <CardTitle className="text-[15px]">{project.name}</CardTitle>
                       <Badge variant={project.visibility === 'public' ? 'default' : 'secondary'}>
                         {project.visibility}
                       </Badge>
@@ -347,7 +347,7 @@ export default function TeamPage() {
                     <CardDescription>{project.description}</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="flex items-center justify-between text-sm text-muted-foreground">
+                    <div className="flex items-center justify-between text-[13px] text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <GitBranch className="h-3 w-3" />
                         {project.language}
@@ -462,7 +462,7 @@ export default function TeamPage() {
                                   {member.role}
                                 </Badge>
                               </div>
-                              <p className="text-sm text-muted-foreground">{member.email}</p>
+                              <p className="text-[13px] text-muted-foreground">{member.email}</p>
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
@@ -590,11 +590,11 @@ export default function TeamPage() {
               {workspaces.map((workspace) => (
                 <Card key={workspace.id} className="hover:shadow-lg transition-shadow">
                   <CardHeader>
-                    <CardTitle className="text-lg">{workspace.name}</CardTitle>
+                    <CardTitle className="text-[15px]">{workspace.name}</CardTitle>
                     <CardDescription>{workspace.description}</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="flex items-center justify-between text-sm text-muted-foreground">
+                    <div className="flex items-center justify-between text-[13px] text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <Folder className="h-3 w-3" />
                         {workspace.projectCount} projects

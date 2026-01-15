@@ -343,7 +343,7 @@ export function UsageAlerts() {
             <>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2 text-[13px] text-muted-foreground">
                     <Cpu className="w-4 h-4" />
                     Compute
                   </div>
@@ -351,7 +351,7 @@ export function UsageAlerts() {
                   <Progress value={((currentUsage as any)?.computePercent ?? 0)} className="h-2" />
                 </div>
                 <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2 text-[13px] text-muted-foreground">
                     <Zap className="w-4 h-4" />
                     AI Usage
                   </div>
@@ -359,7 +359,7 @@ export function UsageAlerts() {
                   <Progress value={((currentUsage as any)?.aiPercent ?? 0)} className="h-2" />
                 </div>
                 <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2 text-[13px] text-muted-foreground">
                     <Database className="w-4 h-4" />
                     Database
                   </div>
@@ -367,7 +367,7 @@ export function UsageAlerts() {
                   <Progress value={((currentUsage as any)?.databasePercent ?? 0)} className="h-2" />
                 </div>
                 <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2 text-[13px] text-muted-foreground">
                     <Wifi className="w-4 h-4" />
                     Bandwidth
                   </div>
@@ -380,11 +380,11 @@ export function UsageAlerts() {
 
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-sm text-muted-foreground">Total Spent</div>
+                  <div className="text-[13px] text-muted-foreground">Total Spent</div>
                   <div className="text-3xl font-bold">${((currentUsage as any)?.totalSpent ?? 0).toFixed(2)}</div>
                 </div>
                 <div className="text-right">
-                  <div className="text-sm text-muted-foreground">Monthly Credits Remaining</div>
+                  <div className="text-[13px] text-muted-foreground">Monthly Credits Remaining</div>
                   <div className="text-xl font-semibold text-green-600">${((currentUsage as any)?.creditsRemaining ?? 0).toFixed(2)}</div>
                 </div>
               </div>
@@ -481,7 +481,7 @@ export function UsageAlerts() {
                   </div>
                   <div>
                     <div className="font-medium">{alert.name}</div>
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-[13px] text-muted-foreground">
                       {alert.metric} • {alert.frequency} notifications
                     </div>
                     <div className="flex items-center gap-4 mt-2">
@@ -489,12 +489,12 @@ export function UsageAlerts() {
                         value={(alert.currentValue / alert.threshold) * 100} 
                         className="w-32 h-2"
                       />
-                      <span className="text-sm">
+                      <span className="text-[13px]">
                         ${alert.currentValue.toFixed(2)} / ${alert.threshold.toFixed(2)}
                       </span>
                     </div>
                     {alert.lastTriggered && (
-                      <div className="text-xs text-muted-foreground mt-1">
+                      <div className="text-[11px] text-muted-foreground mt-1">
                         Last triggered: {new Date(alert.lastTriggered).toLocaleDateString()}
                       </div>
                     )}
@@ -551,7 +551,7 @@ export function UsageAlerts() {
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="font-medium">{budget.name}</div>
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-[13px] text-muted-foreground">
                       {budget.period} budget • Resets {new Date(budget.resetDate).toLocaleDateString()}
                     </div>
                   </div>
@@ -560,7 +560,7 @@ export function UsageAlerts() {
                   </Badge>
                 </div>
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center justify-between text-[13px]">
                     <span>Spent: ${budget.spent.toFixed(2)}</span>
                     <span>Budget: ${budget.amount.toFixed(2)}</span>
                   </div>
@@ -568,7 +568,7 @@ export function UsageAlerts() {
                 </div>
                 <div className="flex gap-2">
                   {budget.categories.map((cat) => (
-                    <Badge key={cat} variant="outline" className="text-xs">
+                    <Badge key={cat} variant="outline" className="text-[11px]">
                       {cat}
                     </Badge>
                   ))}

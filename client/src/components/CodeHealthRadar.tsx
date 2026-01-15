@@ -302,7 +302,7 @@ export function CodeHealthRadar() {
             {getOverallIcon()}
             <div>
               <h3 className="font-semibold">Overall System Health</h3>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-[13px] text-muted-foreground">
                 {overallStatus === 'excellent' ? 'All systems performing optimally' :
                  overallStatus === 'good' ? 'Systems running well with minor issues' :
                  overallStatus === 'warning' ? 'Some systems need attention' :
@@ -378,7 +378,7 @@ export function CodeHealthRadar() {
                   x={point.x + (point.x > 150 ? 10 : -10)}
                   y={point.y + 5}
                   textAnchor={point.x > 150 ? 'start' : 'end'}
-                  className="text-xs fill-current"
+                  className="text-[11px] fill-current"
                   style={{ fontSize: '10px' }}
                 >
                   {point.metric.name}
@@ -401,7 +401,7 @@ export function CodeHealthRadar() {
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <Icon className="h-4 w-4" />
-                      <h4 className="font-medium text-sm">{metric.name}</h4>
+                      <h4 className="font-medium text-[13px]">{metric.name}</h4>
                       {metric.isEstimated && (
                         <Tooltip>
                           <TooltipTrigger>
@@ -418,8 +418,8 @@ export function CodeHealthRadar() {
                   
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-lg font-bold">{metric.value}%</span>
-                      <div className={`flex items-center gap-1 text-xs ${
+                      <span className="text-[15px] font-bold">{metric.value}%</span>
+                      <div className={`flex items-center gap-1 text-[11px] ${
                         metric.trend === 'up' ? 'text-green-500' : 
                         metric.trend === 'down' ? 'text-red-500' : 
                         'text-muted-foreground'
@@ -440,7 +440,7 @@ export function CodeHealthRadar() {
                       } as React.CSSProperties}
                     />
                     
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-[11px] text-muted-foreground">
                       {metric.description}
                     </p>
                   </div>
@@ -464,7 +464,7 @@ export function CodeHealthRadar() {
                 {healthMetrics
                   .filter(m => m.status === 'warning' || m.status === 'critical')
                   .map(metric => (
-                    <div key={metric.name} className="flex items-center gap-2 text-sm">
+                    <div key={metric.name} className="flex items-center gap-2 text-[13px]">
                       <div className={`w-2 h-2 rounded-full ${
                         metric.status === 'critical' ? 'bg-red-500' : 'bg-amber-500'
                       }`} />

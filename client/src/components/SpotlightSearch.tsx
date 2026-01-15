@@ -351,7 +351,7 @@ export function SpotlightSearch({ open: controlledOpen, onOpenChange }: Spotligh
                 >
                   <FileText className="h-4 w-4 mr-2" />
                   <span>{project.name}</span>
-                  <span className="ml-auto text-xs text-muted-foreground">
+                  <span className="ml-auto text-[11px] text-muted-foreground">
                     {project.language}
                   </span>
                 </CommandItem>
@@ -367,17 +367,17 @@ export function SpotlightSearch({ open: controlledOpen, onOpenChange }: Spotligh
             <CommandItem onSelect={() => handleSelect(() => navigate('/projects?new=true'))}>
               <Plus className="h-4 w-4 mr-2" />
               <span>Create new project</span>
-              <span className="ml-auto text-xs text-muted-foreground">⌘N</span>
+              <span className="ml-auto text-[11px] text-muted-foreground">⌘N</span>
             </CommandItem>
             <CommandItem onSelect={() => handleSelect(() => navigate('/projects?new=true&agent=true'))}>
               <Bot className="h-4 w-4 mr-2" />
               <span>Open AI Agent</span>
-              <span className="ml-auto text-xs text-muted-foreground">⌘A</span>
+              <span className="ml-auto text-[11px] text-muted-foreground">⌘A</span>
             </CommandItem>
             <CommandItem onSelect={() => handleSelect(() => navigate('/shell'))}>
               <Terminal className="h-4 w-4 mr-2" />
               <span>Open Shell</span>
-              <span className="ml-auto text-xs text-muted-foreground">⌘T</span>
+              <span className="ml-auto text-[11px] text-muted-foreground">⌘T</span>
             </CommandItem>
             <CommandItem onSelect={() => handleSelect(() => navigate('/templates'))}>
               <Code className="h-4 w-4 mr-2" />
@@ -405,9 +405,9 @@ export function SpotlightSearch({ open: controlledOpen, onOpenChange }: Spotligh
                 >
                   {tool.icon}
                   <div className="ml-2 flex-1">
-                    <div className="text-sm font-medium">{tool.label}</div>
+                    <div className="text-[13px] font-medium">{tool.label}</div>
                     {tool.description && (
-                      <div className="text-xs text-muted-foreground">{tool.description}</div>
+                      <div className="text-[11px] text-muted-foreground">{tool.description}</div>
                     )}
                   </div>
                 </CommandItem>

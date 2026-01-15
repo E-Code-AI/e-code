@@ -214,7 +214,7 @@ export function MCPServersPanel() {
           <div className="grid gap-4">
             {Object.entries(groupedServers).map(([category, categoryServers]) => (
               <div key={category} className="space-y-4">
-                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                <h3 className="text-[13px] font-semibold text-muted-foreground uppercase tracking-wider">
                   {category}
                 </h3>
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -231,10 +231,10 @@ export function MCPServersPanel() {
                               {server.icon}
                             </div>
                             <div>
-                              <CardTitle className="text-lg">{server.name}</CardTitle>
+                              <CardTitle className="text-[15px]">{server.name}</CardTitle>
                               <div className="flex items-center gap-2 mt-1">
                                 {getStatusIcon(server.status)}
-                                <span className="text-xs text-muted-foreground">
+                                <span className="text-[11px] text-muted-foreground">
                                   {server.status}
                                 </span>
                               </div>
@@ -248,12 +248,12 @@ export function MCPServersPanel() {
                         </CardDescription>
                         <div className="flex flex-wrap gap-1">
                           {server.tools.slice(0, 3).map((tool) => (
-                            <Badge key={tool} variant="secondary" className="text-xs">
+                            <Badge key={tool} variant="secondary" className="text-[11px]">
                               {tool.replace(/_/g, ' ')}
                             </Badge>
                           ))}
                           {server.tools.length > 3 && (
-                            <Badge variant="outline" className="text-xs">
+                            <Badge variant="outline" className="text-[11px]">
                               +{server.tools.length - 3} more
                             </Badge>
                           )}
@@ -341,7 +341,7 @@ export function MCPServersPanel() {
           <CardContent>
             <div className="space-y-4">
               <div>
-                <h4 className="text-sm font-semibold mb-2">Available Tools</h4>
+                <h4 className="text-[13px] font-semibold mb-2">Available Tools</h4>
                 <div className="flex flex-wrap gap-2">
                   {servers.find(s => s.name === selectedServer)?.tools.map((tool) => (
                     <Badge key={tool} variant="outline">
@@ -351,10 +351,10 @@ export function MCPServersPanel() {
                 </div>
               </div>
               <div>
-                <h4 className="text-sm font-semibold mb-2">Connection Status</h4>
+                <h4 className="text-[13px] font-semibold mb-2">Connection Status</h4>
                 <div className="flex items-center gap-2">
                   <div className={`w-2 h-2 rounded-full ${getStatusColor(servers.find(s => s.name === selectedServer)?.status || 'inactive')}`}></div>
-                  <span className="text-sm">
+                  <span className="text-[13px]">
                     Server is {servers.find(s => s.name === selectedServer)?.status}
                   </span>
                 </div>

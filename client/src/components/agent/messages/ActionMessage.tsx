@@ -93,13 +93,13 @@ export function ActionMessage({ actions, onApprove, onReject, className }: Actio
                   <Icon className={cn("h-4 w-4", config.color)} />
                 </div>
                 <div>
-                  <div className="font-medium text-sm text-[var(--ecode-text)]">
+                  <div className="font-medium text-[13px] text-[var(--ecode-text)]">
                     {config.verb}{' '}
                     {action.path && <span className="font-mono">{action.path}</span>}
                     {action.command && <span className="font-mono">{action.command}</span>}
                     {action.package && <span className="font-mono">{action.package}</span>}
                   </div>
-                  <div className="text-xs text-[var(--ecode-text-secondary)]">
+                  <div className="text-[11px] text-[var(--ecode-text-secondary)]">
                     {action.description}
                   </div>
                 </div>
@@ -107,19 +107,19 @@ export function ActionMessage({ actions, onApprove, onReject, className }: Actio
 
               {/* Status Badge */}
               {isPending && (
-                <Badge variant="outline" className="text-xs flex items-center gap-1">
+                <Badge variant="outline" className="text-[11px] flex items-center gap-1">
                   <AlertCircle className="h-3 w-3 text-amber-600 dark:text-amber-400" />
                   Requires Approval
                 </Badge>
               )}
               {isExecuted && (
-                <Badge variant="outline" className="text-xs flex items-center gap-1 bg-green-100 dark:bg-green-950">
+                <Badge variant="outline" className="text-[11px] flex items-center gap-1 bg-green-100 dark:bg-green-950">
                   <CheckCircle className="h-3 w-3 text-green-600 dark:text-green-400" />
                   Executed
                 </Badge>
               )}
               {isRejected && (
-                <Badge variant="outline" className="text-xs flex items-center gap-1 bg-red-100 dark:bg-red-950">
+                <Badge variant="outline" className="text-[11px] flex items-center gap-1 bg-red-100 dark:bg-red-950">
                   <X className="h-3 w-3 text-red-600 dark:text-red-400" />
                   Rejected
                 </Badge>
@@ -144,7 +144,7 @@ export function ActionMessage({ actions, onApprove, onReject, className }: Actio
             {/* Code Preview (for create_file or when no diff available) */}
             {action.content && action.type !== 'delete_file' && !action.oldContent && (
               <div className="mt-2 p-2 rounded-md bg-[var(--ecode-surface)] border border-[var(--ecode-border)]">
-                <pre className="text-xs font-mono text-[var(--ecode-text)] overflow-x-auto max-h-40">
+                <pre className="text-[11px] font-mono text-[var(--ecode-text)] overflow-x-auto max-h-40">
                   <code>{action.content.substring(0, 300)}{action.content.length > 300 ? '...' : ''}</code>
                 </pre>
               </div>
@@ -153,14 +153,14 @@ export function ActionMessage({ actions, onApprove, onReject, className }: Actio
             {/* Result (if executed) */}
             {action.result && (
               <div className={cn(
-                "mt-2 p-2 rounded-md text-xs",
+                "mt-2 p-2 rounded-md text-[11px]",
                 action.result.success 
                   ? "bg-green-100 dark:bg-green-950/20 text-green-800 dark:text-green-200"
                   : "bg-red-100 dark:bg-red-950/20 text-red-800 dark:text-red-200"
               )}>
                 {action.result.message || (action.result.success ? 'Executed successfully' : 'Execution failed')}
                 {action.result.error && (
-                  <div className="mt-1 font-mono text-xs">{action.result.error}</div>
+                  <div className="mt-1 font-mono text-[11px]">{action.result.error}</div>
                 )}
               </div>
             )}
@@ -171,7 +171,7 @@ export function ActionMessage({ actions, onApprove, onReject, className }: Actio
                 <Button
                   size="sm"
                   variant="default"
-                  className="flex-1 bg-green-600 hover:bg-green-700 text-xs min-h-[44px] h-auto py-2 touch-manipulation"
+                  className="flex-1 bg-green-600 hover:bg-green-700 text-[11px] min-h-[44px] h-auto py-2 touch-manipulation"
                   onClick={() => onApprove(action)}
                   data-testid={`approve-action-${action.id}`}
                 >
@@ -181,7 +181,7 @@ export function ActionMessage({ actions, onApprove, onReject, className }: Actio
                 <Button
                   size="sm"
                   variant="destructive"
-                  className="text-xs min-h-[44px] h-auto py-2 touch-manipulation"
+                  className="text-[11px] min-h-[44px] h-auto py-2 touch-manipulation"
                   onClick={() => onReject(action)}
                   data-testid={`reject-action-${action.id}`}
                 >

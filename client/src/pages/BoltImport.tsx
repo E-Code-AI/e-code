@@ -43,7 +43,7 @@ export default function BoltImport() {
             <CardTitle className="flex items-center gap-2">
               <Zap className="h-5 w-5" />
               Import Options
-              <Badge variant="outline" className="ml-2 text-xs">Preview</Badge>
+              <Badge variant="outline" className="ml-2 text-[11px]">Preview</Badge>
             </CardTitle>
             <CardDescription>
               Choose how you want to import your Bolt project (available soon)
@@ -133,7 +133,7 @@ export default function BoltImport() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <ul className="space-y-2 text-sm text-muted-foreground">
+            <ul className="space-y-2 text-[13px] text-muted-foreground">
               <li className="flex items-start gap-2">
                 <Clock className="h-4 w-4 mt-0.5 text-blue-500" />
                 <span>Import all project files and folder structure</span>

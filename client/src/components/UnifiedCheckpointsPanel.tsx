@@ -153,7 +153,7 @@ function CheckpointTypeBadge({ type }: { type: string }) {
   const { label, variant, icon: Icon } = config[type] || config.auto;
   
   return (
-    <Badge variant={variant} className="gap-1 text-xs" data-testid={`badge-checkpoint-type-${type}`}>
+    <Badge variant={variant} className="gap-1 text-[11px]" data-testid={`badge-checkpoint-type-${type}`}>
       <Icon className="h-3 w-3" />
       {label}
     </Badge>
@@ -171,7 +171,7 @@ function CheckpointStatusBadge({ status }: { status: string }) {
   const { label, color, icon: Icon } = config[status] || config.pending;
   
   return (
-    <Badge variant="outline" className={cn("gap-1 text-xs", color)} data-testid={`badge-checkpoint-status-${status}`}>
+    <Badge variant="outline" className={cn("gap-1 text-[11px]", color)} data-testid={`badge-checkpoint-status-${status}`}>
       <Icon className={cn("h-3 w-3", status === 'creating' && 'animate-spin')} />
       {label}
     </Badge>
@@ -216,7 +216,7 @@ function CheckpointItem({
             {checkpoint.name && (
               <p className={cn(
                 "font-medium text-foreground truncate",
-                compact ? "text-xs" : "text-xs md:text-sm"
+                compact ? "text-[11px]" : "text-[11px] md:text-[13px]"
               )}>
                 {checkpoint.name}
               </p>
@@ -224,14 +224,14 @@ function CheckpointItem({
             
             <p className={cn(
               "text-muted-foreground leading-relaxed",
-              compact ? "text-xs line-clamp-1" : "text-xs md:text-sm line-clamp-2 md:line-clamp-none"
+              compact ? "text-[11px] line-clamp-1" : "text-[11px] md:text-[13px] line-clamp-2 md:line-clamp-none"
             )}>
               {checkpoint.description || checkpoint.aiSummary || 'Checkpoint created'}
             </p>
             
             <div className={cn(
               "flex items-center gap-2 text-muted-foreground flex-wrap",
-              compact ? "text-[9px] gap-1.5" : "text-[10px] md:text-xs md:gap-3"
+              compact ? "text-[9px] gap-1.5" : "text-[10px] md:text-[11px] md:gap-3"
             )}>
               <TooltipProvider>
                 <Tooltip>
@@ -253,7 +253,7 @@ function CheckpointItem({
               )}
               
               {checkpoint.includesDatabase && (
-                <Badge variant="outline" className={cn("py-0", compact ? "text-[9px] h-4" : "text-xs h-5")} data-testid={`badge-includes-db-${checkpoint.id}`}>
+                <Badge variant="outline" className={cn("py-0", compact ? "text-[9px] h-4" : "text-[11px] h-5")} data-testid={`badge-includes-db-${checkpoint.id}`}>
                   <Database className="h-2.5 w-2.5 mr-0.5" />
                   DB
                 </Badge>
@@ -344,7 +344,7 @@ function CreateCheckpointForm({
         placeholder="Checkpoint name (optional)"
         value={name}
         onChange={(e) => setName(e.target.value)}
-        className={compact ? "h-8 text-xs" : ""}
+        className={compact ? "h-8 text-[11px]" : ""}
         data-testid="input-checkpoint-name"
       />
       {!compact && (
@@ -359,7 +359,7 @@ function CreateCheckpointForm({
       <Button
         type="submit"
         disabled={createMutation.isPending}
-        className={cn("w-full", compact && "h-8 text-xs")}
+        className={cn("w-full", compact && "h-8 text-[11px]")}
         data-testid="button-create-checkpoint"
       >
         {createMutation.isPending ? (
@@ -415,13 +415,13 @@ export function UnifiedCheckpointsPanel({
     return (
       <Card className={cn("", className)} data-testid="card-unified-checkpoints-error">
         <CardHeader className={compact ? "pb-2 px-3" : "pb-3"}>
-          <CardTitle className={cn("flex items-center gap-2", compact ? "text-sm" : "text-base")}>
+          <CardTitle className={cn("flex items-center gap-2", compact ? "text-[13px]" : "text-base")}>
             <History className="h-4 w-4" />
             Checkpoints
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-2 text-sm text-destructive" data-testid="text-error-message">
+          <div className="flex items-center gap-2 text-[13px] text-destructive" data-testid="text-error-message">
             <AlertCircle className="h-4 w-4" />
             Failed to load checkpoints
           </div>
@@ -446,7 +446,7 @@ export function UnifiedCheckpointsPanel({
         <CardHeader className={cn("px-3 md:px-6", compact ? "pb-2" : "pb-2 md:pb-3")}>
           <div className="flex items-center justify-between">
             <div className={compact ? "space-y-0" : "space-y-0.5 md:space-y-1"}>
-              <CardTitle className={cn("flex items-center gap-1.5 md:gap-2", compact ? "text-sm" : "text-sm md:text-base")}>
+              <CardTitle className={cn("flex items-center gap-1.5 md:gap-2", compact ? "text-[13px]" : "text-[13px] md:text-base")}>
                 <History className={compact ? "h-3.5 w-3.5" : "h-3.5 w-3.5 md:h-4 md:w-4"} />
                 Checkpoints
               </CardTitle>
@@ -520,8 +520,8 @@ export function UnifiedCheckpointsPanel({
                 compact ? "py-4" : "py-6 md:py-8"
               )} data-testid="empty-state">
                 <History className={cn("mb-2 opacity-50", compact ? "h-5 w-5" : "h-6 w-6 md:h-8 md:w-8")} />
-                <p className={compact ? "text-xs" : "text-xs md:text-sm"}>No checkpoints yet</p>
-                <p className={compact ? "text-[9px]" : "text-[10px] md:text-xs"}>
+                <p className={compact ? "text-[11px]" : "text-[11px] md:text-[13px]"}>No checkpoints yet</p>
+                <p className={compact ? "text-[9px]" : "text-[10px] md:text-[11px]"}>
                   Create a checkpoint to save your project state
                 </p>
                 {showCreateForm && !showCreateSection && (
@@ -557,7 +557,7 @@ export function UnifiedCheckpointsPanel({
       <AlertDialog open={showRestoreDialog} onOpenChange={setShowRestoreDialog}>
         <AlertDialogContent className="max-w-[95vw] md:max-w-lg mx-auto" data-testid="dialog-restore-checkpoint">
           <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2 text-base md:text-lg">
+            <AlertDialogTitle className="flex items-center gap-2 text-base md:text-[15px]">
               <RotateCcw className="h-4 w-4 md:h-5 md:w-5" />
               Restore Checkpoint
             </AlertDialogTitle>
@@ -572,26 +572,26 @@ export function UnifiedCheckpointsPanel({
                       <div className="flex items-center gap-2 flex-wrap">
                         <CheckpointTypeBadge type={selectedCheckpoint.type} />
                         <CheckpointStatusBadge status={selectedCheckpoint.status} />
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-[11px] text-muted-foreground">
                           {format(new Date(selectedCheckpoint.createdAt), 'PPpp')}
                         </span>
                       </div>
                       {selectedCheckpoint.name && (
-                        <p className="text-sm font-medium text-foreground">
+                        <p className="text-[13px] font-medium text-foreground">
                           {selectedCheckpoint.name}
                         </p>
                       )}
-                      <p className="text-sm text-foreground">
+                      <p className="text-[13px] text-foreground">
                         {selectedCheckpoint.description || selectedCheckpoint.aiSummary || 'Checkpoint'}
                       </p>
                       {selectedCheckpoint.includesDatabase && (
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="outline" className="text-[11px]">
                           <Database className="h-3 w-3 mr-1" />
                           Includes database snapshot
                         </Badge>
                       )}
                     </div>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-[13px] text-muted-foreground">
                       A backup of your current state will be created before restoring.
                     </p>
                   </div>

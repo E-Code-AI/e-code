@@ -212,17 +212,17 @@ export default function ProblemsPage() {
             <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-destructive/10 border border-destructive/20">
               <AlertCircle className="h-5 w-5 text-destructive" />
               <span className="text-2xl font-bold text-destructive" data-testid="stat-errors">{stats.errors}</span>
-              <span className="text-sm text-muted-foreground">Errors</span>
+              <span className="text-[13px] text-muted-foreground">Errors</span>
             </div>
             <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
               <AlertTriangle className="h-5 w-5 text-yellow-500" />
               <span className="text-2xl font-bold text-yellow-600" data-testid="stat-warnings">{stats.warnings}</span>
-              <span className="text-sm text-muted-foreground">Warnings</span>
+              <span className="text-[13px] text-muted-foreground">Warnings</span>
             </div>
             <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-500/10 border border-blue-500/20">
               <Info className="h-5 w-5 text-blue-500" />
               <span className="text-2xl font-bold text-blue-600" data-testid="stat-info">{stats.info}</span>
-              <span className="text-sm text-muted-foreground">Info</span>
+              <span className="text-[13px] text-muted-foreground">Info</span>
             </div>
           </div>
         </PageHeader>
@@ -289,7 +289,7 @@ export default function ProblemsPage() {
             <div className="lg:col-span-2">
               <Card className={cardClassName} data-testid="card-problems-list">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm flex items-center justify-between">
+                  <CardTitle className="text-[13px] flex items-center justify-between">
                     <span>Problems by File</span>
                     <Badge variant="outline">{filteredProblems.length} issues</Badge>
                   </CardTitle>
@@ -300,7 +300,7 @@ export default function ProblemsPage() {
                       <div className="text-center py-12 text-muted-foreground">
                         <CheckCircle2 className="h-12 w-12 mx-auto mb-3 text-green-500 opacity-50" />
                         <p className="font-medium text-green-600">No problems found</p>
-                        <p className="text-xs mt-1">Your code is clean!</p>
+                        <p className="text-[11px] mt-1">Your code is clean!</p>
                       </div>
                     ) : (
                       <div className="space-y-2">
@@ -326,23 +326,23 @@ export default function ProblemsPage() {
                                 </div>
                                 <div className="flex items-center gap-2">
                                   {group.errorCount > 0 && (
-                                    <Badge variant="destructive" className="text-xs">
+                                    <Badge variant="destructive" className="text-[11px]">
                                       {group.errorCount}
                                     </Badge>
                                   )}
                                   {group.warningCount > 0 && (
-                                    <Badge className="bg-yellow-500 text-xs">
+                                    <Badge className="bg-yellow-500 text-[11px]">
                                       {group.warningCount}
                                     </Badge>
                                   )}
                                   {group.infoCount > 0 && (
-                                    <Badge className="bg-blue-500 text-xs">
+                                    <Badge className="bg-blue-500 text-[11px]">
                                       {group.infoCount}
                                     </Badge>
                                   )}
                                 </div>
                               </div>
-                              <div className="text-xs text-muted-foreground mt-1 ml-6">
+                              <div className="text-[11px] text-muted-foreground mt-1 ml-6">
                                 {group.path}
                               </div>
                             </CollapsibleTrigger>
@@ -363,19 +363,19 @@ export default function ProblemsPage() {
                                       {getSeverityIcon(problem.severity)}
                                       <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2">
-                                          <Badge variant="outline" className="text-xs">
+                                          <Badge variant="outline" className="text-[11px]">
                                             L{problem.line}:{problem.column}
                                           </Badge>
-                                          <Badge variant="secondary" className="text-xs">
+                                          <Badge variant="secondary" className="text-[11px]">
                                             {problem.source}
                                           </Badge>
                                           {problem.code && (
-                                            <code className="text-xs text-muted-foreground">
+                                            <code className="text-[11px] text-muted-foreground">
                                               {problem.code}
                                             </code>
                                           )}
                                         </div>
-                                        <p className="text-sm mt-1">{problem.message}</p>
+                                        <p className="text-[13px] mt-1">{problem.message}</p>
                                       </div>
                                       {problem.quickFixes && problem.quickFixes.length > 0 && (
                                         <Lightbulb className="h-4 w-4 text-yellow-500 flex-shrink-0" />
@@ -397,7 +397,7 @@ export default function ProblemsPage() {
             <div className="lg:col-span-1">
               <Card className={cardClassName} data-testid="card-problem-details">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm">Problem Details</CardTitle>
+                  <CardTitle className="text-[13px]">Problem Details</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ScrollArea className="h-[500px]">
@@ -411,33 +411,33 @@ export default function ProblemsPage() {
                         </div>
 
                         <div className="space-y-2">
-                          <Label className="text-xs text-muted-foreground">File</Label>
+                          <Label className="text-[11px] text-muted-foreground">File</Label>
                           <div className="flex items-center gap-2 p-2 bg-muted rounded">
                             <File className="h-4 w-4" />
-                            <span className="text-sm font-mono truncate">{selectedProblem.file}</span>
+                            <span className="text-[13px] font-mono truncate">{selectedProblem.file}</span>
                           </div>
-                          <div className="text-xs text-muted-foreground">{selectedProblem.path}</div>
+                          <div className="text-[11px] text-muted-foreground">{selectedProblem.path}</div>
                         </div>
 
                         <div className="flex gap-4">
                           <div className="space-y-1">
-                            <Label className="text-xs text-muted-foreground">Line</Label>
-                            <div className="font-mono text-sm">{selectedProblem.line}</div>
+                            <Label className="text-[11px] text-muted-foreground">Line</Label>
+                            <div className="font-mono text-[13px]">{selectedProblem.line}</div>
                           </div>
                           <div className="space-y-1">
-                            <Label className="text-xs text-muted-foreground">Column</Label>
-                            <div className="font-mono text-sm">{selectedProblem.column}</div>
+                            <Label className="text-[11px] text-muted-foreground">Column</Label>
+                            <div className="font-mono text-[13px]">{selectedProblem.column}</div>
                           </div>
                           <div className="space-y-1">
-                            <Label className="text-xs text-muted-foreground">Source</Label>
-                            <div className="font-mono text-sm">{selectedProblem.source}</div>
+                            <Label className="text-[11px] text-muted-foreground">Source</Label>
+                            <div className="font-mono text-[13px]">{selectedProblem.source}</div>
                           </div>
                         </div>
 
                         {selectedProblem.code && (
                           <div className="space-y-2">
-                            <Label className="text-xs text-muted-foreground">Rule Code</Label>
-                            <code className="block p-2 bg-muted rounded text-sm">
+                            <Label className="text-[11px] text-muted-foreground">Rule Code</Label>
+                            <code className="block p-2 bg-muted rounded text-[13px]">
                               {selectedProblem.code}
                             </code>
                           </div>
@@ -446,8 +446,8 @@ export default function ProblemsPage() {
                         <Separator />
 
                         <div className="space-y-2">
-                          <Label className="text-xs text-muted-foreground">Message</Label>
-                          <p className="text-sm p-3 bg-muted rounded-lg">{selectedProblem.message}</p>
+                          <Label className="text-[11px] text-muted-foreground">Message</Label>
+                          <p className="text-[13px] p-3 bg-muted rounded-lg">{selectedProblem.message}</p>
                           <Button
                             variant="ghost"
                             size="sm"
@@ -463,7 +463,7 @@ export default function ProblemsPage() {
                           <>
                             <Separator />
                             <div className="space-y-2">
-                              <Label className="text-xs text-muted-foreground flex items-center gap-2">
+                              <Label className="text-[11px] text-muted-foreground flex items-center gap-2">
                                 <Lightbulb className="h-3 w-3 text-yellow-500" />
                                 Quick Fixes
                               </Label>
@@ -480,10 +480,10 @@ export default function ProblemsPage() {
                                     <Zap className="h-4 w-4 mr-2" />
                                     <div className="text-left">
                                       <div className="font-medium">{fix.title}</div>
-                                      <div className="text-xs opacity-70">{fix.description}</div>
+                                      <div className="text-[11px] opacity-70">{fix.description}</div>
                                     </div>
                                     {fix.isPreferred && (
-                                      <Badge variant="secondary" className="ml-auto text-xs">
+                                      <Badge variant="secondary" className="ml-auto text-[11px]">
                                         Preferred
                                       </Badge>
                                     )}
@@ -533,7 +533,7 @@ export default function ProblemsPage() {
 }
 
 const Label = ({ className, children, ...props }: { className?: string; children: React.ReactNode }) => (
-  <label className={`text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${className || ''}`} {...props}>
+  <label className={`text-[13px] font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${className || ''}`} {...props}>
     {children}
   </label>
 );

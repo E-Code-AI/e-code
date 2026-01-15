@@ -184,7 +184,7 @@ export function ProjectSearch({ projectId, onFileSelect, className }: ProjectSea
           </div>
           
           {/* Search Options */}
-          <div className="flex gap-4 text-sm">
+          <div className="flex gap-4 text-[13px]">
             <label className="flex items-center gap-2 cursor-pointer">
               <Checkbox
                 checked={caseSensitive}
@@ -224,7 +224,7 @@ export function ProjectSearch({ projectId, onFileSelect, className }: ProjectSea
               </Button>
             </div>
             {selectedFiles.size > 0 && (
-              <p className="text-xs text-muted-foreground">
+              <p className="text-[11px] text-muted-foreground">
                 {selectedFiles.size} file{selectedFiles.size > 1 ? 's' : ''} selected
               </p>
             )}
@@ -250,9 +250,9 @@ export function ProjectSearch({ projectId, onFileSelect, className }: ProjectSea
                     )}
                     <div className="flex items-center gap-2 flex-1">
                       <FileText className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium text-sm">{result.fileName}</span>
-                      <span className="text-xs text-muted-foreground">{result.filePath}</span>
-                      <Badge variant="secondary" className="text-xs">
+                      <span className="font-medium text-[13px]">{result.fileName}</span>
+                      <span className="text-[11px] text-muted-foreground">{result.filePath}</span>
+                      <Badge variant="secondary" className="text-[11px]">
                         {result.matches.length} match{result.matches.length > 1 ? 'es' : ''}
                       </Badge>
                     </div>
@@ -262,7 +262,7 @@ export function ProjectSearch({ projectId, onFileSelect, className }: ProjectSea
                     {result.matches.map((match, index) => (
                       <div
                         key={index}
-                        className="flex items-start gap-2 p-1 rounded hover:bg-muted/50 cursor-pointer text-xs"
+                        className="flex items-start gap-2 p-1 rounded hover:bg-muted/50 cursor-pointer text-[11px]"
                         onClick={() => onFileSelect?.(result.fileId, match.line)}
                       >
                         <span className="text-muted-foreground font-mono w-10 text-right">
@@ -282,7 +282,7 @@ export function ProjectSearch({ projectId, onFileSelect, className }: ProjectSea
 
         {/* Results Summary */}
         {results.length > 0 && (
-          <div className="pt-2 border-t text-xs text-muted-foreground">
+          <div className="pt-2 border-t text-[11px] text-muted-foreground">
             Found {results.reduce((acc, r) => acc + r.matches.length, 0)} matches in {results.length} files
           </div>
         )}

@@ -136,14 +136,14 @@ export function SplitsEditorLayoutV2({
         ),
         console: (
           <div className="h-full bg-[var(--ecode-terminal-bg)] p-4">
-            <p className="text-[var(--ecode-terminal-text)] text-xs font-[family-name:var(--ecode-font-mono)]">
+            <p className="text-[var(--ecode-terminal-text)] text-[11px] font-[family-name:var(--ecode-font-mono)]">
               Console output will appear here...
             </p>
           </div>
         ),
         debugConsole: (
           <div className="h-full bg-[var(--ecode-terminal-bg)] p-4">
-            <p className="text-[var(--ecode-terminal-text)] text-xs font-[family-name:var(--ecode-font-mono)]">
+            <p className="text-[var(--ecode-terminal-text)] text-[11px] font-[family-name:var(--ecode-font-mono)]">
               Debug console ready. Start debugging to see output here.
             </p>
           </div>
@@ -158,7 +158,7 @@ export function SplitsEditorLayoutV2({
                 <div className="w-3 h-3 rounded-full bg-green-500/80" />
               </div>
               <div className="flex-1 flex items-center justify-center">
-                <div className="flex items-center gap-2 px-3 py-1 rounded bg-[var(--ecode-surface)] border border-[var(--ecode-border)] text-xs text-[var(--ecode-text-muted)]">
+                <div className="flex items-center gap-2 px-3 py-1 rounded bg-[var(--ecode-surface)] border border-[var(--ecode-border)] text-[11px] text-[var(--ecode-text-muted)]">
                   <span className="opacity-60">🔒</span>
                   <span>localhost:5000</span>
                 </div>
@@ -198,7 +198,7 @@ export function SplitsEditorLayoutV2({
                 {/* Build Status */}
                 <div className="flex items-center justify-center gap-2 p-4 rounded-lg border border-dashed border-[var(--ecode-accent)]/30 bg-[var(--ecode-accent)]/5">
                   <div className="w-2 h-2 rounded-full bg-[var(--ecode-accent)] animate-pulse" />
-                  <span className="text-sm text-[var(--ecode-text-muted)] font-[family-name:var(--ecode-font-sans)]">
+                  <span className="text-[13px] text-[var(--ecode-text-muted)] font-[family-name:var(--ecode-font-sans)]">
                     Your app preview will appear here when running
                   </span>
                 </div>
@@ -265,7 +265,7 @@ export function SplitsEditorLayoutV2({
         {/* Top Toolbar */}
         <div className="h-12 border-b border-[var(--ecode-border)] bg-[var(--ecode-surface)] flex items-center px-4 justify-between flex-shrink-0">
           <div className="flex items-center gap-3">
-            <h1 className="text-sm font-semibold text-[var(--ecode-text)] font-[family-name:var(--ecode-font-sans)]">
+            <h1 className="text-[13px] font-semibold text-[var(--ecode-text)] font-[family-name:var(--ecode-font-sans)]">
               {projectName}
             </h1>
           </div>

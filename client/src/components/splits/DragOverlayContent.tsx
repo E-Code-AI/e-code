@@ -22,7 +22,7 @@ export function DragOverlayContent({ item, className }: DragOverlayContentProps)
         exit={{ scale: 0.8, opacity: 0 }}
       >
         {item.tabInfo.icon || <FileText className="h-4 w-4" />}
-        <span className="text-sm font-medium">{item.tabInfo.title}</span>
+        <span className="text-[13px] font-medium">{item.tabInfo.title}</span>
       </LazyMotionDiv>
     );
   }
@@ -39,7 +39,7 @@ export function DragOverlayContent({ item, className }: DragOverlayContentProps)
         exit={{ scale: 0.8, opacity: 0 }}
       >
         <FileText className="h-4 w-4" />
-        <span className="text-sm font-medium">{item.fileName || 'File'}</span>
+        <span className="text-[13px] font-medium">{item.fileName || 'File'}</span>
       </LazyMotionDiv>
     );
   }
@@ -57,9 +57,9 @@ export function DragOverlayContent({ item, className }: DragOverlayContentProps)
       >
         <div className="flex items-center gap-2 mb-2">
           <Folder className="h-4 w-4" />
-          <span className="text-sm font-medium">Pane</span>
+          <span className="text-[13px] font-medium">Pane</span>
         </div>
-        <div className="text-xs text-gray-500">Drop to split or merge</div>
+        <div className="text-[11px] text-gray-500">Drop to split or merge</div>
       </LazyMotionDiv>
     );
   }

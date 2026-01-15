@@ -307,7 +307,7 @@ export function MultiTabEditor({
       <div ref={containerRef} className="flex-1 relative overflow-hidden bg-[var(--ecode-editor-bg)]">
         {!currentActiveFileId && (
           <div className="flex items-center justify-center h-full text-[var(--ecode-text-muted)]">
-            <p className="text-sm font-[family-name:var(--ecode-font-sans)]">Select a file to start editing</p>
+            <p className="text-[13px] font-[family-name:var(--ecode-font-sans)]">Select a file to start editing</p>
           </div>
         )}
       </div>

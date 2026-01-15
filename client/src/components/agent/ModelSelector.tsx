@@ -118,7 +118,7 @@ export function ModelSelector({ selectedModel, onModelChange, className }: Model
                     </div>
                     <div className="flex gap-1">
                       {model.capabilities.extendedThinking && (
-                        <Badge variant="secondary" className="text-xs">
+                        <Badge variant="secondary" className="text-[11px]">
                           <Brain className="h-3 w-3 mr-1" />
                           Thinking
                         </Badge>
@@ -126,7 +126,7 @@ export function ModelSelector({ selectedModel, onModelChange, className }: Model
                       <Badge 
                         variant="outline" 
                         className={cn(
-                          "text-xs",
+                          "text-[11px]",
                           model.capabilities.speed === 'fast' && "border-green-500 text-green-500",
                           model.capabilities.speed === 'medium' && "border-yellow-500 text-yellow-500",
                           model.capabilities.speed === 'slow' && "border-red-500 text-red-500"
@@ -136,10 +136,10 @@ export function ModelSelector({ selectedModel, onModelChange, className }: Model
                       </Badge>
                     </div>
                   </div>
-                  <p className="text-sm text-muted-foreground ml-6">
+                  <p className="text-[13px] text-muted-foreground ml-6">
                     {model.description}
                   </p>
-                  <div className="flex gap-2 ml-6 mt-1 text-xs text-muted-foreground">
+                  <div className="flex gap-2 ml-6 mt-1 text-[11px] text-muted-foreground">
                     <span>{model.capabilities.maxTokens.toLocaleString()} tokens</span>
                     <span>•</span>
                     <span>Cost: {model.capabilities.cost}</span>
@@ -176,7 +176,7 @@ export function ModelSelector({ selectedModel, onModelChange, className }: Model
                     </div>
                     <div className="flex gap-1">
                       {model.capabilities.extendedThinking && (
-                        <Badge variant="secondary" className="text-xs">
+                        <Badge variant="secondary" className="text-[11px]">
                           <Brain className="h-3 w-3 mr-1" />
                           Thinking
                         </Badge>
@@ -184,7 +184,7 @@ export function ModelSelector({ selectedModel, onModelChange, className }: Model
                       <Badge 
                         variant="outline" 
                         className={cn(
-                          "text-xs",
+                          "text-[11px]",
                           model.capabilities.speed === 'fast' && "border-green-500 text-green-500",
                           model.capabilities.speed === 'medium' && "border-yellow-500 text-yellow-500",
                           model.capabilities.speed === 'slow' && "border-red-500 text-red-500"
@@ -194,10 +194,10 @@ export function ModelSelector({ selectedModel, onModelChange, className }: Model
                       </Badge>
                     </div>
                   </div>
-                  <p className="text-sm text-muted-foreground ml-6">
+                  <p className="text-[13px] text-muted-foreground ml-6">
                     {model.description}
                   </p>
-                  <div className="flex gap-2 ml-6 mt-1 text-xs text-muted-foreground">
+                  <div className="flex gap-2 ml-6 mt-1 text-[11px] text-muted-foreground">
                     <span>{model.capabilities.maxTokens.toLocaleString()} tokens</span>
                     <span>•</span>
                     <span>Cost: {model.capabilities.cost}</span>
@@ -234,7 +234,7 @@ export function ModelSelector({ selectedModel, onModelChange, className }: Model
                     </div>
                     <div className="flex gap-1">
                       {model.capabilities.extendedThinking && (
-                        <Badge variant="secondary" className="text-xs">
+                        <Badge variant="secondary" className="text-[11px]">
                           <Brain className="h-3 w-3 mr-1" />
                           Thinking
                         </Badge>
@@ -242,7 +242,7 @@ export function ModelSelector({ selectedModel, onModelChange, className }: Model
                       <Badge 
                         variant="outline" 
                         className={cn(
-                          "text-xs",
+                          "text-[11px]",
                           model.capabilities.speed === 'fast' && "border-green-500 text-green-500",
                           model.capabilities.speed === 'medium' && "border-yellow-500 text-yellow-500",
                           model.capabilities.speed === 'slow' && "border-red-500 text-red-500"
@@ -252,10 +252,10 @@ export function ModelSelector({ selectedModel, onModelChange, className }: Model
                       </Badge>
                     </div>
                   </div>
-                  <p className="text-sm text-muted-foreground ml-6">
+                  <p className="text-[13px] text-muted-foreground ml-6">
                     {model.description}
                   </p>
-                  <div className="flex gap-2 ml-6 mt-1 text-xs text-muted-foreground">
+                  <div className="flex gap-2 ml-6 mt-1 text-[11px] text-muted-foreground">
                     <span>{model.capabilities.maxTokens.toLocaleString()} tokens</span>
                     <span>•</span>
                     <span>Cost: {model.capabilities.cost}</span>

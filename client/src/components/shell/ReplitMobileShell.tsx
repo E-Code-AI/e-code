@@ -328,7 +328,7 @@ export function ReplitMobileShell({ projectId, onClose, onBack }: ReplitMobileSh
         
         <div className="flex items-center gap-2">
           <ShellIcon className="h-4 w-4 text-primary" />
-          <span className="font-medium text-sm">Shell</span>
+          <span className="font-medium text-[13px]">Shell</span>
           <span className={`h-2 w-2 rounded-full ${activeTab.isConnected ? 'bg-[hsl(var(--chart-2))]' : 'bg-destructive'}`} />
         </div>
         
@@ -343,13 +343,13 @@ export function ReplitMobileShell({ projectId, onClose, onBack }: ReplitMobileSh
         </Button>
       </div>
 
-      <div className="flex items-center justify-between px-3 py-1.5 border-b bg-muted/30 text-xs">
+      <div className="flex items-center justify-between px-3 py-1.5 border-b bg-muted/30 text-[11px]">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button 
               variant="ghost" 
               size="sm" 
-              className="h-7 px-2 text-xs font-normal gap-1"
+              className="h-7 px-2 text-[11px] font-normal gap-1"
               data-testid="shell-tab-dropdown"
             >
               <ChevronDown className="h-3 w-3" />
@@ -362,14 +362,14 @@ export function ReplitMobileShell({ projectId, onClose, onBack }: ReplitMobileSh
               <DropdownMenuItem 
                 key={tab.id}
                 onClick={() => setActiveTabId(tab.id)}
-                className="text-xs"
+                className="text-[11px]"
                 data-testid={`shell-tab-${tab.id}`}
               >
                 <span className={`h-1.5 w-1.5 rounded-full mr-2 ${tab.isConnected ? 'bg-[hsl(var(--chart-2))]' : 'bg-destructive'}`} />
                 {tab.cwd}: {tab.name}
               </DropdownMenuItem>
             ))}
-            <DropdownMenuItem onClick={createNewTab} className="text-xs gap-2" data-testid="shell-new-tab">
+            <DropdownMenuItem onClick={createNewTab} className="text-[11px] gap-2" data-testid="shell-new-tab">
               <Plus className="h-3 w-3" />
               New Shell
             </DropdownMenuItem>
@@ -407,7 +407,7 @@ export function ReplitMobileShell({ projectId, onClose, onBack }: ReplitMobileSh
           <Button 
             variant="ghost" 
             size="sm" 
-            className="h-7 px-2 text-xs text-muted-foreground"
+            className="h-7 px-2 text-[11px] text-muted-foreground"
             onClick={openGenerateMode}
             data-testid="shell-generate-button"
           >
@@ -423,18 +423,18 @@ export function ReplitMobileShell({ projectId, onClose, onBack }: ReplitMobileSh
             value={findQuery}
             onChange={(e) => handleFindChange(e.target.value)}
             placeholder="Find"
-            className="h-7 text-xs flex-1"
+            className="h-7 text-[11px] flex-1"
             data-testid="shell-find-input"
           />
           {findMatches.length > 0 && (
-            <span className="text-xs text-muted-foreground">
+            <span className="text-[11px] text-muted-foreground">
               {currentMatchIndex + 1}/{findMatches.length}
             </span>
           )}
           <Button 
             variant="outline" 
             size="sm" 
-            className="h-7 text-xs"
+            className="h-7 text-[11px]"
             onClick={findNext}
             disabled={findMatches.length === 0}
             data-testid="shell-find-next"
@@ -444,7 +444,7 @@ export function ReplitMobileShell({ projectId, onClose, onBack }: ReplitMobileSh
           <Button 
             variant="outline" 
             size="sm" 
-            className="h-7 text-xs"
+            className="h-7 text-[11px]"
             onClick={findPrevious}
             disabled={findMatches.length === 0}
             data-testid="shell-find-prev"
@@ -454,7 +454,7 @@ export function ReplitMobileShell({ projectId, onClose, onBack }: ReplitMobileSh
           <Button 
             variant="ghost" 
             size="sm" 
-            className="h-7 text-xs"
+            className="h-7 text-[11px]"
             onClick={closeFindMode}
             data-testid="shell-find-close"
           >
@@ -465,7 +465,7 @@ export function ReplitMobileShell({ projectId, onClose, onBack }: ReplitMobileSh
 
       <div 
         ref={terminalRef}
-        className="flex-1 overflow-auto p-3 font-mono text-xs bg-background"
+        className="flex-1 overflow-auto p-3 font-mono text-[11px] bg-background"
         onClick={() => inputRef.current?.focus()}
         data-testid="shell-terminal-output"
       >
@@ -491,7 +491,7 @@ export function ReplitMobileShell({ projectId, onClose, onBack }: ReplitMobileSh
               onChange={(e) => setGeneratePrompt(e.target.value)}
               onKeyDown={handleGenerateKeyDown}
               placeholder="Enter a prompt to generate a shell command"
-              className="h-9 text-sm pr-10"
+              className="h-9 text-[13px] pr-10"
               data-testid="shell-generate-input"
             />
             <Button
@@ -508,7 +508,7 @@ export function ReplitMobileShell({ projectId, onClose, onBack }: ReplitMobileSh
               )}
             </Button>
           </div>
-          <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
+          <div className="flex items-center justify-between mt-2 text-[11px] text-muted-foreground">
             <div className="flex items-center gap-1">
               <Sparkles className="h-3 w-3" />
               <span>Generate with Assistant</span>
@@ -521,14 +521,14 @@ export function ReplitMobileShell({ projectId, onClose, onBack }: ReplitMobileSh
       {!isGenerateMode && (
         <div className="border-t bg-card p-2">
           <div className="flex items-center gap-2">
-            <span className="text-primary text-xs font-mono">{activeTab.cwd}$</span>
+            <span className="text-primary text-[11px] font-mono">{activeTab.cwd}$</span>
             <Input
               ref={inputRef}
               value={currentCommand}
               onChange={(e) => setCurrentCommand(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Enter command..."
-              className="h-8 text-xs font-mono flex-1 bg-transparent border-none focus-visible:ring-0"
+              className="h-8 text-[11px] font-mono flex-1 bg-transparent border-none focus-visible:ring-0"
               data-testid="shell-command-input"
             />
           </div>

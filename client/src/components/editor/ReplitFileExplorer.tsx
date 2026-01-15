@@ -417,7 +417,7 @@ export function ReplitFileExplorer({
                     {getFileIcon(node.name)}
                   </div>
                 )}
-                <span className="truncate text-sm">{node.name}</span>
+                <span className="truncate text-[13px]">{node.name}</span>
               </div>
             </ContextMenuTrigger>
             <ContextMenuContent className="w-48" data-testid={`file-context-menu-${node.id}`}>
@@ -481,7 +481,7 @@ export function ReplitFileExplorer({
         {/* Header */}
         <div className="p-3 border-b border-[var(--ecode-border)]">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-medium text-[var(--ecode-text)]">Files</h3>
+            <h3 className="text-[13px] font-medium text-[var(--ecode-text)]">Files</h3>
             <div className="flex items-center space-x-1">
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -568,7 +568,7 @@ export function ReplitFileExplorer({
               placeholder="Search files..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="h-7 pl-7 pr-7 text-xs bg-[var(--ecode-bg)] border-[var(--ecode-border)]"
+              className="h-7 pl-7 pr-7 text-[11px] bg-[var(--ecode-bg)] border-[var(--ecode-border)]"
               data-testid="input-search-files"
             />
             {searchQuery && (
@@ -593,7 +593,7 @@ export function ReplitFileExplorer({
                 <RefreshCw className="h-4 w-4 animate-spin mx-auto text-[var(--ecode-text-secondary)]" />
               </div>
             ) : filteredTree.length === 0 ? (
-              <div className="text-center py-4 text-[var(--ecode-text-secondary)] text-sm" data-testid="file-tree-empty">
+              <div className="text-center py-4 text-[var(--ecode-text-secondary)] text-[13px]" data-testid="file-tree-empty">
                 {searchQuery ? "No files found" : "No files in this project"}
               </div>
             ) : (

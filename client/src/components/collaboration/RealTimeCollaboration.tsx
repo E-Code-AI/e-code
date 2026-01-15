@@ -514,15 +514,15 @@ export function RealTimeCollaboration({
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="flex-1">
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="users" className="text-xs">
+            <TabsTrigger value="users" className="text-[11px]">
               <Users className="h-3.5 w-3.5 mr-1" />
               Users ({collaborators.length + 1})
             </TabsTrigger>
-            <TabsTrigger value="chat" className="text-xs">
+            <TabsTrigger value="chat" className="text-[11px]">
               <MessageSquare className="h-3.5 w-3.5 mr-1" />
               Chat
             </TabsTrigger>
-            <TabsTrigger value="call" className="text-xs">
+            <TabsTrigger value="call" className="text-[11px]">
               <Phone className="h-3.5 w-3.5 mr-1" />
               Call
             </TabsTrigger>
@@ -544,8 +544,8 @@ export function RealTimeCollaboration({
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="text-sm font-medium">{user?.username} (You)</p>
-                          <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+                          <p className="text-[13px] font-medium">{user?.username} (You)</p>
+                          <div className="flex items-center space-x-2 text-[11px] text-muted-foreground">
                             <Circle className="h-2 w-2 fill-green-500 text-green-500" />
                             <span>Online</span>
                           </div>
@@ -569,8 +569,8 @@ export function RealTimeCollaboration({
                             </AvatarFallback>
                           </Avatar>
                           <div>
-                            <p className="text-sm font-medium">{collaborator.username}</p>
-                            <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+                            <p className="text-[13px] font-medium">{collaborator.username}</p>
+                            <div className="flex items-center space-x-2 text-[11px] text-muted-foreground">
                               {collaborator.cursor && (
                                 <span className="flex items-center">
                                   <MousePointer className="h-3 w-3 mr-1" />
@@ -609,9 +609,9 @@ export function RealTimeCollaboration({
                           : 'bg-muted'
                       }`}
                     >
-                      <p className="text-xs font-medium mb-1">{message.username}</p>
-                      <p className="text-sm">{message.message}</p>
-                      <p className="text-xs opacity-70 mt-1">
+                      <p className="text-[11px] font-medium mb-1">{message.username}</p>
+                      <p className="text-[13px]">{message.message}</p>
+                      <p className="text-[11px] opacity-70 mt-1">
                         {new Date(message.timestamp).toLocaleTimeString()}
                       </p>
                     </div>
@@ -710,7 +710,7 @@ export function RealTimeCollaboration({
                   {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                 </Button>
               </div>
-              <div className="text-sm text-muted-foreground">
+              <div className="text-[13px] text-muted-foreground">
                 This link will expire in 24 hours for security reasons.
               </div>
             </div>

@@ -95,15 +95,15 @@ export function ThinkingDisplay({
               )}
               data-testid="thinking-icon"
             />
-            <h3 className="font-semibold text-sm" data-testid="thinking-title">AI Thinking</h3>
+            <h3 className="font-semibold text-[13px]" data-testid="thinking-title">AI Thinking</h3>
             {isActive && (
-              <Badge variant="secondary" className="text-xs animate-pulse" data-testid="thinking-status-active">
+              <Badge variant="secondary" className="text-[11px] animate-pulse" data-testid="thinking-status-active">
                 Active
               </Badge>
             )}
           </div>
           {mode === 'detailed' && safeSteps.length > 0 && (
-            <span className="text-xs text-muted-foreground" data-testid="thinking-progress">
+            <span className="text-[11px] text-muted-foreground" data-testid="thinking-progress">
               {safeSteps.filter(s => s.status === 'complete').length} / {safeSteps.length} steps
             </span>
           )}
@@ -158,14 +158,14 @@ export function ThinkingDisplay({
                 {/* Step Content */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <h4 className="font-medium text-sm truncate">{step.title}</h4>
-                    <Badge variant="outline" className="text-xs capitalize">
+                    <h4 className="font-medium text-[13px] truncate">{step.title}</h4>
+                    <Badge variant="outline" className="text-[11px] capitalize">
                       {step.type}
                     </Badge>
                   </div>
                   
                   {!isExpanded && mode === 'detailed' && (
-                    <p className="text-xs text-muted-foreground truncate mt-0.5">
+                    <p className="text-[11px] text-muted-foreground truncate mt-0.5">
                       {step.content}
                     </p>
                   )}
@@ -176,11 +176,11 @@ export function ThinkingDisplay({
                   {step.status === 'active' && step.isStreaming && (
                     <div className="flex items-center gap-1 text-primary">
                       <Zap className="h-3 w-3 animate-pulse" />
-                      <span className="text-xs font-medium">Streaming...</span>
+                      <span className="text-[11px] font-medium">Streaming...</span>
                     </div>
                   )}
                   {step.progress !== undefined && step.status === 'active' && (
-                    <span className="text-xs font-medium text-primary">
+                    <span className="text-[11px] font-medium text-primary">
                       {step.progress}%
                     </span>
                   )}
@@ -192,7 +192,7 @@ export function ThinkingDisplay({
                 <div className="px-4 pb-4 pt-2 bg-background space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
                   {/* Main Content */}
                   <div className="pl-12">
-                    <p className="text-sm text-foreground whitespace-pre-wrap">
+                    <p className="text-[13px] text-foreground whitespace-pre-wrap">
                       {step.content}
                       {step.isStreaming && (
                         <span className="inline-block w-1.5 h-4 bg-primary animate-pulse ml-1 align-middle" />
@@ -208,7 +208,7 @@ export function ThinkingDisplay({
                     {step.details && step.details.length > 0 && (
                       <div className="mt-3 space-y-1.5">
                         {step.details.map((detail, i) => (
-                          <div key={i} className="flex items-start gap-2 text-xs text-muted-foreground">
+                          <div key={i} className="flex items-start gap-2 text-[11px] text-muted-foreground">
                             <div className="mt-1.5 w-1 h-1 rounded-full bg-muted-foreground flex-shrink-0" />
                             <span className="flex-1">{detail}</span>
                           </div>
@@ -217,7 +217,7 @@ export function ThinkingDisplay({
                     )}
 
                     {/* Timestamp */}
-                    <div className="mt-2 text-xs text-muted-foreground">
+                    <div className="mt-2 text-[11px] text-muted-foreground">
                       {step.timestamp.toLocaleTimeString()}
                     </div>
                   </div>
@@ -242,7 +242,7 @@ export function ThinkingDisplay({
       {isActive && safeSteps.length === 0 && (
         <div className="px-4 py-8 text-center space-y-2" data-testid="thinking-initializing">
           <Loader2 className="h-6 w-6 animate-spin text-primary mx-auto" data-testid="thinking-loader" />
-          <p className="text-sm text-muted-foreground" data-testid="thinking-init-message">Initializing thinking process...</p>
+          <p className="text-[13px] text-muted-foreground" data-testid="thinking-init-message">Initializing thinking process...</p>
         </div>
       )}
     </Card>
@@ -272,7 +272,7 @@ export function ThinkingDisplayCompact({ steps, isActive, className }: ThinkingD
           <Brain className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" data-testid="thinking-compact-icon" />
         )}
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-medium truncate" data-testid="thinking-compact-text">
+          <p className="text-[11px] font-medium truncate" data-testid="thinking-compact-text">
             {activeStep ? activeStep.title : `Thinking (${completedCount}/${safeSteps.length})`}
           </p>
         </div>

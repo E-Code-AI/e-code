@@ -233,7 +233,7 @@ export default function PreviewPage() {
         <div className="lg:w-64 space-y-4">
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm flex items-center gap-2">
+              <CardTitle className="text-[13px] flex items-center gap-2">
                 <Settings className="h-4 w-4" />
                 Device Settings
               </CardTitle>
@@ -262,7 +262,7 @@ export default function PreviewPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">Mobile</div>
+                      <div className="px-2 py-1.5 text-[11px] font-semibold text-muted-foreground">Mobile</div>
                       {DEVICE_PRESETS.filter(d => d.type === 'mobile').map((device) => (
                         <SelectItem key={device.name} value={device.name}>
                           <span className="flex items-center gap-2">
@@ -272,7 +272,7 @@ export default function PreviewPage() {
                         </SelectItem>
                       ))}
                       <Separator className="my-1" />
-                      <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">Tablet</div>
+                      <div className="px-2 py-1.5 text-[11px] font-semibold text-muted-foreground">Tablet</div>
                       {DEVICE_PRESETS.filter(d => d.type === 'tablet').map((device) => (
                         <SelectItem key={device.name} value={device.name}>
                           <span className="flex items-center gap-2">
@@ -282,7 +282,7 @@ export default function PreviewPage() {
                         </SelectItem>
                       ))}
                       <Separator className="my-1" />
-                      <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">Desktop</div>
+                      <div className="px-2 py-1.5 text-[11px] font-semibold text-muted-foreground">Desktop</div>
                       {DEVICE_PRESETS.filter(d => d.type === 'desktop').map((device) => (
                         <SelectItem key={device.name} value={device.name}>
                           <span className="flex items-center gap-2">
@@ -295,7 +295,7 @@ export default function PreviewPage() {
                   </Select>
                   
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Orientation</span>
+                    <span className="text-[13px] text-muted-foreground">Orientation</span>
                     <Button 
                       variant="outline" 
                       size="sm" 
@@ -310,7 +310,7 @@ export default function PreviewPage() {
               ) : (
                 <div className="space-y-3">
                   <div className="space-y-2">
-                    <Label className="text-xs">Width (px)</Label>
+                    <Label className="text-[11px]">Width (px)</Label>
                     <Input
                       type="number"
                       value={customWidth}
@@ -319,7 +319,7 @@ export default function PreviewPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-xs">Height (px)</Label>
+                    <Label className="text-[11px]">Height (px)</Label>
                     <Input
                       type="number"
                       value={customHeight}
@@ -334,7 +334,7 @@ export default function PreviewPage() {
 
               <div className="space-y-3">
                 <div className="space-y-2">
-                  <Label className="text-xs">Zoom: {zoomLevel}%</Label>
+                  <Label className="text-[11px]">Zoom: {zoomLevel}%</Label>
                   <div className="flex items-center gap-2">
                     <ZoomOut className="h-4 w-4 text-muted-foreground" />
                     <Slider
@@ -355,7 +355,7 @@ export default function PreviewPage() {
 
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm flex items-center gap-2">
+              <CardTitle className="text-[13px] flex items-center gap-2">
                 <Layers className="h-4 w-4" />
                 Display Options
               </CardTitle>
@@ -364,7 +364,7 @@ export default function PreviewPage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Bug className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">Dev Tools</span>
+                  <span className="text-[13px]">Dev Tools</span>
                 </div>
                 <Switch 
                   checked={showDevTools} 
@@ -375,7 +375,7 @@ export default function PreviewPage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Ruler className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">Rulers</span>
+                  <span className="text-[13px]">Rulers</span>
                 </div>
                 <Switch 
                   checked={showRulers} 
@@ -386,7 +386,7 @@ export default function PreviewPage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   {isOnline ? <Wifi className="h-4 w-4 text-muted-foreground" /> : <WifiOff className="h-4 w-4 text-muted-foreground" />}
-                  <span className="text-sm">Online Mode</span>
+                  <span className="text-[13px]">Online Mode</span>
                 </div>
                 <Switch 
                   checked={isOnline} 
@@ -397,7 +397,7 @@ export default function PreviewPage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   {isDarkMode ? <Moon className="h-4 w-4 text-muted-foreground" /> : <Sun className="h-4 w-4 text-muted-foreground" />}
-                  <span className="text-sm">Dark Mode</span>
+                  <span className="text-[13px]">Dark Mode</span>
                 </div>
                 <Switch 
                   checked={isDarkMode} 
@@ -410,7 +410,7 @@ export default function PreviewPage() {
 
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm flex items-center gap-2">
+              <CardTitle className="text-[13px] flex items-center gap-2">
                 <Ruler className="h-4 w-4" />
                 Responsive Breakpoints
               </CardTitle>
@@ -421,7 +421,7 @@ export default function PreviewPage() {
                   <button
                     key={bp.name}
                     className={cn(
-                      "w-full flex items-center justify-between p-2 rounded-lg text-sm transition-colors",
+                      "w-full flex items-center justify-between p-2 rounded-lg text-[13px] transition-colors",
                       currentBreakpoint.name === bp.name 
                         ? "bg-primary/10 text-primary border border-primary/20" 
                         : "hover:bg-muted"
@@ -436,7 +436,7 @@ export default function PreviewPage() {
                       <div className={cn("w-2 h-2 rounded-full", bp.color)} />
                       <span className="font-medium">{bp.name}</span>
                     </div>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-[11px] text-muted-foreground">
                       {bp.maxWidth ? `${bp.minWidth}-${bp.maxWidth}` : `${bp.minWidth}+`}px
                     </span>
                   </button>
@@ -497,7 +497,7 @@ export default function PreviewPage() {
                       handleNavigate(inputUrl);
                     }
                   }}
-                  className="border-0 bg-transparent h-7 p-0 text-sm focus-visible:ring-0"
+                  className="border-0 bg-transparent h-7 p-0 text-[13px] focus-visible:ring-0"
                   data-testid="input-url"
                 />
                 <Button 
@@ -511,7 +511,7 @@ export default function PreviewPage() {
                 </Button>
               </div>
 
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
                 <Badge variant="outline" className="font-mono">
                   {width} × {height}
                 </Badge>
@@ -590,7 +590,7 @@ export default function PreviewPage() {
               )}
 
               {isRecording && (
-                <div className="absolute top-4 right-4 flex items-center gap-2 bg-red-600 text-white px-3 py-1.5 rounded-full text-sm animate-pulse">
+                <div className="absolute top-4 right-4 flex items-center gap-2 bg-red-600 text-white px-3 py-1.5 rounded-full text-[13px] animate-pulse">
                   <div className="w-2 h-2 bg-white rounded-full" />
                   Recording
                 </div>
@@ -601,7 +601,7 @@ export default function PreviewPage() {
           {showDevTools && (
             <Card className="mt-4">
               <CardHeader className="py-3">
-                <CardTitle className="text-sm flex items-center gap-2">
+                <CardTitle className="text-[13px] flex items-center gap-2">
                   <Terminal className="h-4 w-4" />
                   Developer Tools
                 </CardTitle>
@@ -614,7 +614,7 @@ export default function PreviewPage() {
                     <TabsTrigger value="elements">Elements</TabsTrigger>
                   </TabsList>
                   <TabsContent value="console" className="mt-2">
-                    <div className="bg-muted p-4 rounded-lg font-mono text-sm h-32 overflow-auto">
+                    <div className="bg-muted p-4 rounded-lg font-mono text-[13px] h-32 overflow-auto">
                       <div className="text-muted-foreground">[info] Preview loaded successfully</div>
                       <div className="text-muted-foreground">[info] Device: {deviceType === 'device' ? selectedDevice.name : 'Custom'} ({width}×{height})</div>
                       <div className="text-muted-foreground">[info] Breakpoint: {currentBreakpoint.name}</div>
@@ -622,14 +622,14 @@ export default function PreviewPage() {
                     </div>
                   </TabsContent>
                   <TabsContent value="network" className="mt-2">
-                    <div className="bg-muted p-4 rounded-lg text-sm h-32 overflow-auto">
+                    <div className="bg-muted p-4 rounded-lg text-[13px] h-32 overflow-auto">
                       <div className="grid grid-cols-4 gap-4 font-medium text-muted-foreground mb-2">
                         <span>Name</span>
                         <span>Status</span>
                         <span>Type</span>
                         <span>Time</span>
                       </div>
-                      <div className="grid grid-cols-4 gap-4 text-xs">
+                      <div className="grid grid-cols-4 gap-4 text-[11px]">
                         <span className="truncate">{url}</span>
                         <span className="text-green-600">200</span>
                         <span>document</span>
@@ -638,7 +638,7 @@ export default function PreviewPage() {
                     </div>
                   </TabsContent>
                   <TabsContent value="elements" className="mt-2">
-                    <div className="bg-muted p-4 rounded-lg font-mono text-sm h-32 overflow-auto">
+                    <div className="bg-muted p-4 rounded-lg font-mono text-[13px] h-32 overflow-auto">
                       <div>&lt;html&gt;</div>
                       <div className="pl-4">&lt;head&gt;...&lt;/head&gt;</div>
                       <div className="pl-4">&lt;body&gt;</div>

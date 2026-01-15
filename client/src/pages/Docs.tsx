@@ -87,7 +87,7 @@ const documentationArticles: Record<DocKey, DocArticle> = {
           className="rounded-lg border shadow-sm"
           loading="lazy"
         />
-        <figcaption className="mt-3 text-sm text-muted-foreground">
+        <figcaption className="mt-3 text-[13px] text-muted-foreground">
           The unified workspace pairs the Monaco editor with a live preview and terminals surfaced from <code>client/src/pages/IDEPage.tsx</code>.
         </figcaption>
       </figure>
@@ -104,28 +104,28 @@ const documentationArticles: Record<DocKey, DocArticle> = {
           <ul className="grid gap-4 md:grid-cols-2">
             <li className="rounded-lg border bg-background p-4 shadow-sm">
               <p className="font-medium">Unified experience</p>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="mt-1 text-[13px] text-muted-foreground">
                 A single-page client routes authenticated users through the dashboard, project editor, deployments, AI studio, and
                 admin surfaces using <code>wouter</code> for navigation.
               </p>
             </li>
             <li className="rounded-lg border bg-background p-4 shadow-sm">
               <p className="font-medium">Single-port topology</p>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="mt-1 text-[13px] text-muted-foreground">
                 <code>server/polyglot-routes.ts</code> fans requests to the Go and Python runtimes while keeping everything available behind
                 the primary Express process—matching the architecture described in <code>REPLIT_SINGLE_PORT_ARCHITECTURE.md</code>.
               </p>
             </li>
             <li className="rounded-lg border bg-background p-4 shadow-sm">
               <p className="font-medium">Data-driven UI</p>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="mt-1 text-[13px] text-muted-foreground">
                 Navigation, marketplace listings, and template catalogs are hydrated from JSON fixtures and server responses seeded by
                 <code>server/seed-templates.ts</code> and <code>server/seed-blog.ts</code>.
               </p>
             </li>
             <li className="rounded-lg border bg-background p-4 shadow-sm">
               <p className="font-medium">Enterprise controls</p>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="mt-1 text-[13px] text-muted-foreground">
                 Authentication hooks into <code>server/auth.ts</code>, audit logs stream through <code>server/security/audit-logger.ts</code>, and org-level
                 settings live under <code>client/src/pages/admin</code>.
               </p>
@@ -137,10 +137,10 @@ const documentationArticles: Record<DocKey, DocArticle> = {
           <div className="grid gap-4 md:grid-cols-3">
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-lg">Client</CardTitle>
+                <CardTitle className="text-[15px]">Client</CardTitle>
                 <CardDescription>React + Tailwind UI</CardDescription>
               </CardHeader>
-              <CardContent className="text-sm text-muted-foreground space-y-2">
+              <CardContent className="text-[13px] text-muted-foreground space-y-2">
                 <p>
                   <code>client/src/pages</code> hosts the feature views—from <code>Docs.tsx</code> to <code>Deployments.tsx</code>—powered by shared primitives in
                   <code>client/src/components</code>.
@@ -152,10 +152,10 @@ const documentationArticles: Record<DocKey, DocArticle> = {
             </Card>
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-lg">Server</CardTitle>
+                <CardTitle className="text-[15px]">Server</CardTitle>
                 <CardDescription>Express services</CardDescription>
               </CardHeader>
-              <CardContent className="text-sm text-muted-foreground space-y-2">
+              <CardContent className="text-[13px] text-muted-foreground space-y-2">
                 <p>
                   API routes in <code>server/routes</code> cover projects, auth, billing, and deployments while orchestration helpers live under
                   <code>server/orchestration</code>.
@@ -167,10 +167,10 @@ const documentationArticles: Record<DocKey, DocArticle> = {
             </Card>
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-lg">Infrastructure</CardTitle>
+                <CardTitle className="text-[15px]">Infrastructure</CardTitle>
                 <CardDescription>Runtime + tooling</CardDescription>
               </CardHeader>
-              <CardContent className="text-sm text-muted-foreground space-y-2">
+              <CardContent className="text-[13px] text-muted-foreground space-y-2">
                 <p>
                   Scripts such as <code>deploy-production.sh</code>, <code>fix-existing-deployment.sh</code>, and the Kubernetes manifests under <code>kubernetes/</code>
                   automate provisioning.
@@ -261,25 +261,25 @@ const documentationArticles: Record<DocKey, DocArticle> = {
           <ul className="grid gap-4 md:grid-cols-2">
             <li className="rounded-lg border bg-background p-4 shadow-sm">
               <p className="font-medium">AI Sidebar</p>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="mt-1 text-[13px] text-muted-foreground">
                 <code>client/src/pages/AI.tsx</code> injects context-aware prompts, code explanations, and test generation directly inside the editor.
               </p>
             </li>
             <li className="rounded-lg border bg-background p-4 shadow-sm">
               <p className="font-medium">Agent Studio</p>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="mt-1 text-[13px] text-muted-foreground">
                 <code>client/src/pages/AIAgentStudio.tsx</code> lets power users design workflow automations, schedule recurrent runs, and review execution logs.
               </p>
             </li>
             <li className="rounded-lg border bg-background p-4 shadow-sm">
               <p className="font-medium">MCP integrations</p>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="mt-1 text-[13px] text-muted-foreground">
                 Managed Connectors expose filesystem, Git, and deployment capabilities to the agent layer via <code>server/mcp</code>.
               </p>
             </li>
             <li className="rounded-lg border bg-background p-4 shadow-sm">
               <p className="font-medium">Reviews & guardrails</p>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="mt-1 text-[13px] text-muted-foreground">
                 Before code is merged, AI-authored changes run through <code>server/security/code-safety-checks.ts</code> and surface in the Review feed inside
                 <code>client/src/pages/Workflows.tsx</code>.
               </p>
@@ -384,7 +384,7 @@ const documentationArticles: Record<DocKey, DocArticle> = {
           <source src="/assets/platform-demo.mp4" type="video/mp4" />
           Your browser does not support the video tag.
         </video>
-        <figcaption className="mt-3 text-sm text-muted-foreground">
+        <figcaption className="mt-3 text-[13px] text-muted-foreground">
           End-to-end promotion from draft previews to production runs inside <code>client/src/pages/Deployments.tsx</code>.
         </figcaption>
       </figure>
@@ -451,14 +451,14 @@ const documentationArticles: Record<DocKey, DocArticle> = {
           <ul className="grid gap-4 md:grid-cols-2">
             <li className="rounded-lg border bg-background p-4 shadow-sm">
               <p className="font-medium">Polyglot adapters</p>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="mt-1 text-[13px] text-muted-foreground">
                 <code>server/polyglot-services.ts</code> exposes Go, Python, and Node executors. Client pages like <code>client/src/pages/RuntimesPage.tsx</code>
                 surface runtime availability and versions.
               </p>
             </li>
             <li className="rounded-lg border bg-background p-4 shadow-sm">
               <p className="font-medium">Sandboxing</p>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="mt-1 text-[13px] text-muted-foreground">
                 Commands run through the isolation layer in <code>server/sandbox</code>, which mounts ephemeral volumes, rewrites syscalls, and applies seccomp
                 profiles per container.
               </p>
@@ -1249,8 +1249,8 @@ export default function DocsPage(): JSX.Element {
             ) : (
               <div className="flex flex-col items-center justify-center py-16 text-center">
                 <Search className="mb-4 h-12 w-12 text-muted-foreground" />
-                <h3 className="text-lg font-semibold">No results found</h3>
-                <p className="text-sm text-muted-foreground">
+                <h3 className="text-[15px] font-semibold">No results found</h3>
+                <p className="text-[13px] text-muted-foreground">
                   Try adjusting your search or browse the categories below
                 </p>
               </div>

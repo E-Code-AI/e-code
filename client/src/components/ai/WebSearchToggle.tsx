@@ -56,7 +56,7 @@ export function WebSearchToggle({
         </div>
         {showLabel && (
           <span className={cn(
-            "text-sm font-medium",
+            "text-[13px] font-medium",
             enabled ? "text-foreground" : "text-muted-foreground"
           )}>
             Web Search
@@ -123,7 +123,7 @@ export function WebSearchToggle({
           </div>
           <div className="flex-1 text-left">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">Web Search</span>
+              <span className="text-[13px] font-medium">Web Search</span>
               <LazyAnimatePresence>
                 {enabled && (
                   <LazyMotionDiv
@@ -195,7 +195,7 @@ export function WebSearchToggle({
         </TooltipTrigger>
         <TooltipContent side="top" className="max-w-[200px]">
           <p className="font-medium">Web Search</p>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-[11px] text-muted-foreground">
             {enabled 
               ? "Currently searching the web for docs and APIs" 
               : "Enable to search for up-to-date information"

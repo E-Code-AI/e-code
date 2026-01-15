@@ -309,7 +309,7 @@ export default function IntegrationsPage() {
           <div className="md:col-span-1 space-y-4">
             <Card className={cardClassName} data-testid="card-integration-categories">
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium">Categories</CardTitle>
+                <CardTitle className="text-[13px] font-medium">Categories</CardTitle>
               </CardHeader>
               <CardContent className="p-0">
                 <nav className="space-y-1 px-2 pb-4">
@@ -319,7 +319,7 @@ export default function IntegrationsPage() {
                     return (
                       <button
                         key={cat.id}
-                        className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-all ${
+                        className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-[13px] transition-all ${
                           isActive
                             ? 'bg-primary/10 text-primary font-medium'
                             : 'text-muted-foreground hover:bg-muted hover:text-foreground'
@@ -331,7 +331,7 @@ export default function IntegrationsPage() {
                           <Icon className="h-4 w-4" />
                           {cat.label}
                         </div>
-                        <Badge variant="secondary" className="text-xs">
+                        <Badge variant="secondary" className="text-[11px]">
                           {cat.count}
                         </Badge>
                       </button>
@@ -344,7 +344,7 @@ export default function IntegrationsPage() {
             <Card className={cardClassName} data-testid="card-connected-integrations">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm font-medium">Connected</CardTitle>
+                  <CardTitle className="text-[13px] font-medium">Connected</CardTitle>
                   <Badge variant="secondary">{connectedIntegrations.length}</Badge>
                 </div>
               </CardHeader>
@@ -364,12 +364,12 @@ export default function IntegrationsPage() {
                             <Icon className="h-4 w-4" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className="font-medium text-sm truncate">{int.name}</div>
+                            <div className="font-medium text-[13px] truncate">{int.name}</div>
                             <div className="flex items-center gap-1">
                               {int.status === 'active' && <CheckCircle2 className="h-3 w-3 text-green-500" />}
                               {int.status === 'error' && <AlertCircle className="h-3 w-3 text-red-500" />}
                               {int.status === 'syncing' && <RefreshCw className="h-3 w-3 text-blue-500 animate-spin" />}
-                              <span className="text-xs text-muted-foreground capitalize">{int.status}</span>
+                              <span className="text-[11px] text-muted-foreground capitalize">{int.status}</span>
                             </div>
                           </div>
                         </div>
@@ -440,12 +440,12 @@ export default function IntegrationsPage() {
                                   </Badge>
                                 )}
                               </div>
-                              <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{int.description}</p>
+                              <p className="text-[13px] text-muted-foreground mt-1 line-clamp-2">{int.description}</p>
                             </div>
                           </div>
 
                           <div className="flex items-center justify-between mt-4 pt-3 border-t border-border">
-                            <Badge variant="outline" className="text-xs capitalize">{int.category}</Badge>
+                            <Badge variant="outline" className="text-[11px] capitalize">{int.category}</Badge>
                             <Button
                               size="sm"
                               variant={int.connected ? 'outline' : 'default'}
@@ -497,7 +497,7 @@ export default function IntegrationsPage() {
                                 {int.status}
                               </Badge>
                             </div>
-                            <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
+                            <div className="flex items-center gap-4 mt-1 text-[13px] text-muted-foreground">
                               {int.lastSync && <span>Last sync: {formatDate(int.lastSync)}</span>}
                               {int.webhooksCount && <span>{int.webhooksCount} webhooks</span>}
                               {int.eventsCount && <span>{int.eventsCount.toLocaleString()} events</span>}
@@ -565,10 +565,10 @@ export default function IntegrationsPage() {
                                   {webhook.active ? 'Active' : 'Paused'}
                                 </Badge>
                               </div>
-                              <div className="text-sm text-muted-foreground mt-0.5">
-                                <code className="bg-muted px-1 rounded text-xs">{webhook.url}</code>
+                              <div className="text-[13px] text-muted-foreground mt-0.5">
+                                <code className="bg-muted px-1 rounded text-[11px]">{webhook.url}</code>
                               </div>
-                              <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
+                              <div className="flex items-center gap-4 mt-1 text-[11px] text-muted-foreground">
                                 <span>{webhook.events.length} events</span>
                                 <span>{webhook.successRate}% success</span>
                                 {webhook.lastTriggered && <span>Last: {formatDate(webhook.lastTriggered)}</span>}
@@ -633,11 +633,11 @@ export default function IntegrationsPage() {
                               <div className="flex items-center gap-2">
                                 <span className="font-medium">{key.name}</span>
                                 {key.permissions.map(p => (
-                                  <Badge key={p} variant="outline" className="text-xs">{p}</Badge>
+                                  <Badge key={p} variant="outline" className="text-[11px]">{p}</Badge>
                                 ))}
                               </div>
                               <div className="flex items-center gap-2 mt-1">
-                                <code className="bg-muted px-2 py-0.5 rounded text-xs font-mono">
+                                <code className="bg-muted px-2 py-0.5 rounded text-[11px] font-mono">
                                   {showApiKey[key.id] ? key.key : `${key.prefix}${'•'.repeat(20)}`}
                                 </code>
                                 <Button
@@ -659,7 +659,7 @@ export default function IntegrationsPage() {
                                   <Copy className="h-3.5 w-3.5" />
                                 </Button>
                               </div>
-                              <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
+                              <div className="flex items-center gap-4 mt-1 text-[11px] text-muted-foreground">
                                 {key.lastUsed && <span>Last used: {formatDate(key.lastUsed)}</span>}
                                 {key.expiresAt && <span>Expires: {key.expiresAt.toLocaleDateString()}</span>}
                               </div>
@@ -703,7 +703,7 @@ export default function IntegrationsPage() {
                 {selectedIntegration.connected ? (
                   <>
                     <div className="flex items-center justify-between p-3 rounded-lg bg-muted">
-                      <span className="text-sm font-medium">Status</span>
+                      <span className="text-[13px] font-medium">Status</span>
                       <Badge className={
                         selectedIntegration.status === 'active' ? 'bg-green-500/10 text-green-600' :
                         selectedIntegration.status === 'error' ? 'bg-red-500/10 text-red-600' :
@@ -714,8 +714,8 @@ export default function IntegrationsPage() {
                     </div>
                     {selectedIntegration.lastSync && (
                       <div className="flex items-center justify-between p-3 rounded-lg bg-muted">
-                        <span className="text-sm font-medium">Last Synced</span>
-                        <span className="text-sm text-muted-foreground">{formatDate(selectedIntegration.lastSync)}</span>
+                        <span className="text-[13px] font-medium">Last Synced</span>
+                        <span className="text-[13px] text-muted-foreground">{formatDate(selectedIntegration.lastSync)}</span>
                       </div>
                     )}
                     <div>
@@ -904,8 +904,8 @@ export default function IntegrationsPage() {
                         <Radio className={`h-4 w-4 ${stream.active ? 'text-green-600' : 'text-muted-foreground'}`} />
                       </div>
                       <div>
-                        <div className="font-medium text-sm">{stream.name}</div>
-                        <div className="text-xs text-muted-foreground">
+                        <div className="font-medium text-[13px]">{stream.name}</div>
+                        <div className="text-[11px] text-muted-foreground">
                           {stream.destination} • {stream.throughput}/min
                         </div>
                       </div>

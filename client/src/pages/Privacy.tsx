@@ -13,7 +13,7 @@ export default function Privacy() {
             
             <div className="prose prose-gray dark:prose-invert max-w-none space-y-8">
               <section>
-                <p className="text-lg text-muted-foreground">
+                <p className="text-[15px] text-muted-foreground">
                   Last updated: {new Date().toLocaleDateString()}
                 </p>
               </section>

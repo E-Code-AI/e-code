@@ -17,7 +17,7 @@ export function GridFallback({ height = '400px', rows = 5 }: GridFallbackProps) 
       <div className="flex items-center gap-2 p-3 border-b bg-muted/30">
         <Table className="h-4 w-4 text-muted-foreground" />
         <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-        <span className="text-sm text-muted-foreground">Loading data grid...</span>
+        <span className="text-[13px] text-muted-foreground">Loading data grid...</span>
       </div>
       <div className="flex-1 p-2 space-y-2">
         <Skeleton className="h-8 w-full" />

@@ -258,7 +258,7 @@ export function RollbackPanel({ deploymentId, className }: RollbackPanelProps) {
               <h4 className="font-semibold" data-testid={`snapshot-version-${snapshot.id}`}>
                 Version {snapshot.version}
               </h4>
-              <p className="text-sm text-muted-foreground" data-testid={`snapshot-date-${snapshot.id}`}>
+              <p className="text-[13px] text-muted-foreground" data-testid={`snapshot-date-${snapshot.id}`}>
                 {formatDate(snapshot.createdAt)}
               </p>
             </div>
@@ -276,7 +276,7 @@ export function RollbackPanel({ deploymentId, className }: RollbackPanelProps) {
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
-        <div className="grid grid-cols-2 gap-2 text-sm">
+        <div className="grid grid-cols-2 gap-2 text-[13px]">
           {snapshot.metadata.commitHash && (
             <div className="flex items-center gap-1">
               <GitBranch className="h-3 w-3 text-muted-foreground" />
@@ -306,7 +306,7 @@ export function RollbackPanel({ deploymentId, className }: RollbackPanelProps) {
         </div>
         
         {snapshot.metadata.message && (
-          <div className="text-sm text-muted-foreground p-2 bg-muted/50 rounded" data-testid={`snapshot-message-${snapshot.id}`}>
+          <div className="text-[13px] text-muted-foreground p-2 bg-muted/50 rounded" data-testid={`snapshot-message-${snapshot.id}`}>
             {snapshot.metadata.message}
           </div>
         )}
@@ -314,7 +314,7 @@ export function RollbackPanel({ deploymentId, className }: RollbackPanelProps) {
         {snapshot.metadata.tags && snapshot.metadata.tags.length > 0 && (
           <div className="flex flex-wrap gap-1">
             {snapshot.metadata.tags.map((tag) => (
-              <Badge key={tag} variant="secondary" className="text-xs" data-testid={`snapshot-tag-${snapshot.id}-${tag}`}>
+              <Badge key={tag} variant="secondary" className="text-[11px]" data-testid={`snapshot-tag-${snapshot.id}-${tag}`}>
                 <Tag className="h-3 w-3 mr-1" />
                 {tag}
               </Badge>
@@ -365,7 +365,7 @@ export function RollbackPanel({ deploymentId, className }: RollbackPanelProps) {
           {index + 1}. {step.name}
         </p>
         {step.message && (
-          <p className="text-sm text-muted-foreground">{step.message}</p>
+          <p className="text-[13px] text-muted-foreground">{step.message}</p>
         )}
       </div>
     </div>
@@ -434,7 +434,7 @@ export function RollbackPanel({ deploymentId, className }: RollbackPanelProps) {
           <AlertTitle>Rollback In Progress</AlertTitle>
           <AlertDescription>
             <div className="space-y-3 mt-3">
-              <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center justify-between text-[13px]">
                 <span data-testid="text-rollback-versions">
                   Rolling back from {activeRollback.fromVersion} to {activeRollback.toVersion}
                 </span>
@@ -476,7 +476,7 @@ export function RollbackPanel({ deploymentId, className }: RollbackPanelProps) {
             <Card data-testid="card-no-snapshots">
               <CardContent className="flex flex-col items-center justify-center py-12">
                 <History className="h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No Snapshots Available</h3>
+                <h3 className="text-[15px] font-semibold mb-2">No Snapshots Available</h3>
                 <p className="text-muted-foreground text-center mb-4">
                   No deployment snapshots have been created yet
                 </p>
@@ -548,12 +548,12 @@ export function RollbackPanel({ deploymentId, className }: RollbackPanelProps) {
                           <p className="font-medium">
                             Rollback to {item.toVersion} {item.status}
                           </p>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-[13px] text-muted-foreground">
                             From {item.fromVersion} • {formatDate(item.startedAt)}
                             {item.initiatedBy && ` • By ${item.initiatedBy}`}
                           </p>
                           {item.error && (
-                            <p className="text-sm text-red-500 mt-1">{item.error}</p>
+                            <p className="text-[13px] text-red-500 mt-1">{item.error}</p>
                           )}
                         </div>
                       </div>
@@ -726,7 +726,7 @@ export function RollbackPanel({ deploymentId, className }: RollbackPanelProps) {
               {selectedSnapshot.metadata.commitHash && (
                 <div>
                   <Label className="text-muted-foreground">Commit</Label>
-                  <p className="font-mono text-sm" data-testid="text-detail-commit">
+                  <p className="font-mono text-[13px]" data-testid="text-detail-commit">
                     {selectedSnapshot.metadata.commitHash}
                   </p>
                 </div>
@@ -735,7 +735,7 @@ export function RollbackPanel({ deploymentId, className }: RollbackPanelProps) {
               {selectedSnapshot.metadata.message && (
                 <div>
                   <Label className="text-muted-foreground">Message</Label>
-                  <p className="text-sm p-2 bg-muted rounded" data-testid="text-detail-message">
+                  <p className="text-[13px] p-2 bg-muted rounded" data-testid="text-detail-message">
                     {selectedSnapshot.metadata.message}
                   </p>
                 </div>
@@ -744,7 +744,7 @@ export function RollbackPanel({ deploymentId, className }: RollbackPanelProps) {
               {selectedSnapshot.databaseSchema && (
                 <div>
                   <Label className="text-muted-foreground">Database</Label>
-                  <p className="text-sm" data-testid="text-detail-db">
+                  <p className="text-[13px]" data-testid="text-detail-db">
                     {selectedSnapshot.databaseSchema.tables.length} tables, {selectedSnapshot.databaseSchema.migrations.length} migrations
                   </p>
                 </div>

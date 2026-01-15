@@ -218,10 +218,10 @@ export function RAGToggle({ sessionId, enabled = true, onToggle, compact = false
           )} />
         </div>
         <div>
-          <Label htmlFor="rag-toggle" className="font-medium text-sm">
+          <Label htmlFor="rag-toggle" className="font-medium text-[13px]">
             Knowledge Retrieval (RAG)
           </Label>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-[11px] text-muted-foreground">
             {isAvailable ? 'Enhance responses with project context' : 'Configure API key to enable'}
           </p>
         </div>
@@ -252,7 +252,7 @@ export function RAGStatsDisplay({ variant = 'inline', className }: RAGStatsDispl
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
             <Icon className="h-3 w-3" />
             <span className="font-medium">{value}</span>
           </div>
@@ -277,7 +277,7 @@ export function RAGStatsDisplay({ variant = 'inline', className }: RAGStatsDispl
     return (
       <Card className={cn("", className)} data-testid="rag-stats-card">
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium flex items-center justify-between">
+          <CardTitle className="text-[13px] font-medium flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Brain className="h-4 w-4 text-orange-500" />
               Knowledge Graph Stats
@@ -298,29 +298,29 @@ export function RAGStatsDisplay({ variant = 'inline', className }: RAGStatsDispl
           <div className="flex items-center gap-2">
             <Database className="h-4 w-4 text-blue-500" />
             <div>
-              <p className="text-lg font-semibold">{stats.embeddingsCount}</p>
-              <p className="text-xs text-muted-foreground">Embeddings</p>
+              <p className="text-[15px] font-semibold">{stats.embeddingsCount}</p>
+              <p className="text-[11px] text-muted-foreground">Embeddings</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <Network className="h-4 w-4 text-green-500" />
             <div>
-              <p className="text-lg font-semibold">{stats.nodesCount}</p>
-              <p className="text-xs text-muted-foreground">Nodes</p>
+              <p className="text-[15px] font-semibold">{stats.nodesCount}</p>
+              <p className="text-[11px] text-muted-foreground">Nodes</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <Link2 className="h-4 w-4 text-purple-500" />
             <div>
-              <p className="text-lg font-semibold">{stats.edgesCount}</p>
-              <p className="text-xs text-muted-foreground">Edges</p>
+              <p className="text-[15px] font-semibold">{stats.edgesCount}</p>
+              <p className="text-[11px] text-muted-foreground">Edges</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-orange-500" />
             <div>
-              <p className="text-lg font-semibold">{stats.conversationsCount}</p>
-              <p className="text-xs text-muted-foreground">Conversations</p>
+              <p className="text-[15px] font-semibold">{stats.conversationsCount}</p>
+              <p className="text-[11px] text-muted-foreground">Conversations</p>
             </div>
           </div>
         </CardContent>
@@ -382,8 +382,8 @@ export function RetrievedContextPanel({ sessionId, query, className, maxHeight =
         >
           <div className="flex items-center gap-2">
             <Search className="h-4 w-4 text-orange-500" />
-            <span className="font-medium text-sm">Retrieved Context</span>
-            <Badge variant="secondary" className="text-xs">
+            <span className="font-medium text-[13px]">Retrieved Context</span>
+            <Badge variant="secondary" className="text-[11px]">
               {data?.totalCount ?? 0}
             </Badge>
           </div>
@@ -404,8 +404,8 @@ export function RetrievedContextPanel({ sessionId, query, className, maxHeight =
           ) : !data?.contexts?.length ? (
             <div className="text-center py-6 text-muted-foreground" data-testid="text-no-context">
               <Search className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">No context retrieved yet</p>
-              <p className="text-xs mt-1">Start a conversation to build context</p>
+              <p className="text-[13px]">No context retrieved yet</p>
+              <p className="text-[11px] mt-1">Start a conversation to build context</p>
             </div>
           ) : (
             <ScrollArea className="w-full" style={{ maxHeight }}>
@@ -422,11 +422,11 @@ export function RetrievedContextPanel({ sessionId, query, className, maxHeight =
                     <div className="flex items-start justify-between gap-2 mb-1.5">
                       <div className="flex items-center gap-2">
                         {getTypeIcon(ctx.type)}
-                        <Badge variant="outline" className="text-xs capitalize">
+                        <Badge variant="outline" className="text-[11px] capitalize">
                           {ctx.type}
                         </Badge>
                         {ctx.connections > 0 && (
-                          <Badge variant="secondary" className="text-xs">
+                          <Badge variant="secondary" className="text-[11px]">
                             <Link2 className="h-2.5 w-2.5 mr-1" />
                             {ctx.connections}
                           </Badge>
@@ -435,14 +435,14 @@ export function RetrievedContextPanel({ sessionId, query, className, maxHeight =
                       <Badge 
                         variant={ctx.relevanceScore > 0.7 ? "default" : "secondary"}
                         className={cn(
-                          "text-xs",
+                          "text-[11px]",
                           ctx.relevanceScore > 0.7 && "bg-green-950 text-green-600 border-green-500"
                         )}
                       >
                         {Math.round(ctx.relevanceScore * 100)}%
                       </Badge>
                     </div>
-                    <p className="text-sm text-foreground/90 line-clamp-3">
+                    <p className="text-[13px] text-foreground/90 line-clamp-3">
                       {ctx.content}
                     </p>
                   </div>
@@ -451,7 +451,7 @@ export function RetrievedContextPanel({ sessionId, query, className, maxHeight =
             </ScrollArea>
           )}
           <div className="flex items-center justify-between mt-3 pt-3 border-t">
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[11px] text-muted-foreground">
               {data?.retrievedAt ? `Retrieved ${new Date(data.retrievedAt).toLocaleTimeString()}` : 'Not retrieved'}
             </p>
             <Button
@@ -459,7 +459,7 @@ export function RetrievedContextPanel({ sessionId, query, className, maxHeight =
               size="sm"
               onClick={() => refetch()}
               disabled={isRefetching}
-              className="h-7 text-xs"
+              className="h-7 text-[11px]"
               data-testid="button-refresh-context"
             >
               <RefreshCw className={cn("h-3 w-3 mr-1.5", isRefetching && "animate-spin")} />

@@ -41,7 +41,7 @@ export default function LandingLanguages() {
                 <div className="w-16 h-16 rounded-xl bg-[var(--ecode-surface)] border border-[var(--ecode-border)] flex items-center justify-center transition-all duration-300 group-hover:border-ecode-accent/50 group-hover:scale-110">
                   <Icon className="h-8 w-8" style={{ color: lang.color }} />
                 </div>
-                <span className="text-sm text-[var(--ecode-text-muted)]">{lang.name}</span>
+                <span className="text-[13px] text-[var(--ecode-text-muted)]">{lang.name}</span>
               </div>
             );
           })}

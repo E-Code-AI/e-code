@@ -158,15 +158,15 @@ export function KeyboardShortcuts({
           <div className="space-y-6">
             {Object.entries(groupedShortcuts).map(([category, shortcuts]) => (
               <div key={category}>
-                <h3 className="font-semibold text-sm mb-3">{category}</h3>
+                <h3 className="font-semibold text-[13px] mb-3">{category}</h3>
                 <div className="space-y-2">
                   {shortcuts.map((shortcut, index) => (
                     <div
                       key={index}
                       className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-muted/50"
                     >
-                      <span className="text-sm">{shortcut.description}</span>
-                      <Badge variant="secondary" className="font-mono text-xs">
+                      <span className="text-[13px]">{shortcut.description}</span>
+                      <Badge variant="secondary" className="font-mono text-[11px]">
                         {shortcut.key}
                       </Badge>
                     </div>
@@ -179,8 +179,8 @@ export function KeyboardShortcuts({
         </ScrollArea>
 
         <div className="pt-4 border-t">
-          <p className="text-xs text-muted-foreground text-center">
-            Press <Badge variant="outline" className="text-xs">Cmd/Ctrl + ?</Badge> to show this dialog
+          <p className="text-[11px] text-muted-foreground text-center">
+            Press <Badge variant="outline" className="text-[11px]">Cmd/Ctrl + ?</Badge> to show this dialog
           </p>
         </div>
       </DialogContent>

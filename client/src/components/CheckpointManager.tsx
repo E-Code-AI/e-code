@@ -333,9 +333,9 @@ export function CheckpointManager({ projectId }: CheckpointManagerProps) {
                       </Badge>
                     </div>
                     {checkpoint.description && (
-                      <p className="text-sm text-muted-foreground">{checkpoint.description}</p>
+                      <p className="text-[13px] text-muted-foreground">{checkpoint.description}</p>
                     )}
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-4 text-[13px] text-muted-foreground">
                       <span>Created {formatDistanceToNow(new Date(checkpoint.createdAt), { addSuffix: true })}</span>
                       <span>•</span>
                       <span>{checkpoint.fileCount} files</span>

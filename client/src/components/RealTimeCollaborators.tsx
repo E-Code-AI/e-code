@@ -108,7 +108,7 @@ const CollaboratorAvatar = memo(({
             >
               <AvatarImage src={collaborator.avatar} />
               <AvatarFallback 
-                className="text-xs font-medium text-white"
+                className="text-[11px] font-medium text-white"
                 style={{ backgroundColor: collaborator.color }}
               >
                 {collaborator.username.slice(0, 2).toUpperCase()}
@@ -118,10 +118,10 @@ const CollaboratorAvatar = memo(({
           </div>
         </TooltipTrigger>
         <TooltipContent>
-          <div className="text-sm">
+          <div className="text-[13px]">
             <p className="font-medium">{collaborator.username}</p>
             {collaborator.currentFile && (
-              <p className="text-xs text-muted-foreground">
+              <p className="text-[11px] text-muted-foreground">
                 {collaborator.activity || 'Viewing'} {collaborator.currentFile}
               </p>
             )}
@@ -140,7 +140,7 @@ const ChatMessageItem = memo(({ message }: { message: ChatMessage }) => {
   if (isSystem) {
     return (
       <div className="flex justify-center py-1">
-        <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full">
+        <span className="text-[11px] text-muted-foreground bg-muted px-2 py-1 rounded-full">
           {message.content}
         </span>
       </div>
@@ -150,19 +150,19 @@ const ChatMessageItem = memo(({ message }: { message: ChatMessage }) => {
   return (
     <div className="flex gap-2 py-2" data-testid={`chat-message-${message.id}`}>
       <div 
-        className="h-6 w-6 rounded-full flex items-center justify-center text-xs font-medium text-white shrink-0"
+        className="h-6 w-6 rounded-full flex items-center justify-center text-[11px] font-medium text-white shrink-0"
         style={{ backgroundColor: message.senderColor }}
       >
         {message.senderName.slice(0, 1).toUpperCase()}
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-baseline gap-2">
-          <span className="text-sm font-medium">{message.senderName}</span>
-          <span className="text-xs text-muted-foreground">
+          <span className="text-[13px] font-medium">{message.senderName}</span>
+          <span className="text-[11px] text-muted-foreground">
             {formatDistanceToNow(new Date(message.timestamp), { addSuffix: true })}
           </span>
         </div>
-        <p className="text-sm break-words">{message.content}</p>
+        <p className="text-[13px] break-words">{message.content}</p>
       </div>
     </div>
   );
@@ -214,7 +214,7 @@ const ChatPanel = memo(({
           ))}
         </div>
         {typingUsers.length > 0 && (
-          <div className="text-xs text-muted-foreground italic py-2">
+          <div className="text-[11px] text-muted-foreground italic py-2">
             {typingUsers.map(u => u.username).join(', ')} {typingUsers.length === 1 ? 'is' : 'are'} typing...
           </div>
         )}
@@ -278,7 +278,7 @@ export function RealTimeCollaborators({
             "h-2 w-2 rounded-full",
             isConnected ? "bg-green-500" : "bg-red-500"
           )} />
-          <span className="text-xs text-muted-foreground">{activeCount} online</span>
+          <span className="text-[11px] text-muted-foreground">{activeCount} online</span>
         </div>
         <div className="flex -space-x-1.5">
           {collaborators.slice(0, 3).map(collab => (
@@ -291,7 +291,7 @@ export function RealTimeCollaborators({
           ))}
           {collaborators.length > 3 && (
             <div className="h-6 w-6 rounded-full bg-muted border-2 border-background flex items-center justify-center">
-              <span className="text-xs">+{collaborators.length - 3}</span>
+              <span className="text-[11px]">+{collaborators.length - 3}</span>
             </div>
           )}
         </div>
@@ -308,7 +308,7 @@ export function RealTimeCollaborators({
             isConnected ? "bg-green-500" : "bg-red-500"
           )} />
           <Users className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm font-medium" data-testid="collaborator-count">
+          <span className="text-[13px] font-medium" data-testid="collaborator-count">
             {totalCount} {totalCount === 1 ? 'person' : 'people'}
           </span>
           <div className="flex -space-x-2 ml-2">
@@ -324,7 +324,7 @@ export function RealTimeCollaborators({
               <Popover>
                 <PopoverTrigger asChild>
                   <div className="h-6 w-6 rounded-full bg-muted border-2 border-background flex items-center justify-center cursor-pointer hover:bg-muted/80">
-                    <span className="text-xs">+{collaborators.length - 4}</span>
+                    <span className="text-[11px]">+{collaborators.length - 4}</span>
                   </div>
                 </PopoverTrigger>
                 <PopoverContent className="w-48 p-2">
@@ -336,7 +336,7 @@ export function RealTimeCollaborators({
                         onClick={() => followUser(collab.odUserId.toString())}
                       >
                         <CollaboratorAvatar collaborator={collab} size="sm" />
-                        <span className="text-sm truncate">{collab.username}</span>
+                        <span className="text-[13px] truncate">{collab.username}</span>
                       </div>
                     ))}
                   </div>
@@ -367,7 +367,7 @@ export function RealTimeCollaborators({
                 >
                   <MessageSquare className="h-3.5 w-3.5" />
                   {chatMessages.length > 0 && (
-                    <span className="absolute -top-1 -right-1 h-4 w-4 bg-primary text-primary-foreground text-xs rounded-full flex items-center justify-center">
+                    <span className="absolute -top-1 -right-1 h-4 w-4 bg-primary text-primary-foreground text-[11px] rounded-full flex items-center justify-center">
                       {chatMessages.length > 99 ? '99+' : chatMessages.length}
                     </span>
                   )}
@@ -407,7 +407,7 @@ export function RealTimeCollaborators({
       {showDetails && collaborators.length > 0 && (
         <Card>
           <CardHeader className="py-3 px-4">
-            <CardTitle className="text-sm">Active Collaborators</CardTitle>
+            <CardTitle className="text-[13px]">Active Collaborators</CardTitle>
           </CardHeader>
           <CardContent className="py-2 px-4 space-y-2">
             {collaborators.map(collab => (
@@ -423,12 +423,12 @@ export function RealTimeCollaborators({
                   <CollaboratorAvatar collaborator={collab} size="md" />
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium">{collab.username}</span>
+                      <span className="text-[13px] font-medium">{collab.username}</span>
                       {followingUserId === collab.odUserId.toString() && (
-                        <Badge variant="secondary" className="text-xs">Following</Badge>
+                        <Badge variant="secondary" className="text-[11px]">Following</Badge>
                       )}
                     </div>
-                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
                       <ActivityIcon activity={collab.activity} />
                       <span>{collab.activity || 'Online'}</span>
                       {collab.currentFile && (

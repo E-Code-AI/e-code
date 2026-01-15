@@ -149,8 +149,8 @@ export function ReplitAnalytics({ projectId }: ReplitAnalyticsProps) {
             <div className="flex items-center gap-2">
               <Eye className="h-4 w-4 text-blue-600" />
               <div>
-                <p className="text-xs text-muted-foreground">Total Visits</p>
-                <p className="text-lg font-bold">{formatNumber(analytics.overview.totalVisits)}</p>
+                <p className="text-[11px] text-muted-foreground">Total Visits</p>
+                <p className="text-[15px] font-bold">{formatNumber(analytics.overview.totalVisits)}</p>
               </div>
             </div>
           </CardContent>
@@ -161,8 +161,8 @@ export function ReplitAnalytics({ projectId }: ReplitAnalyticsProps) {
             <div className="flex items-center gap-2">
               <Users className="h-4 w-4 text-green-600" />
               <div>
-                <p className="text-xs text-muted-foreground">Unique Visitors</p>
-                <p className="text-lg font-bold">{formatNumber(analytics.overview.uniqueVisitors)}</p>
+                <p className="text-[11px] text-muted-foreground">Unique Visitors</p>
+                <p className="text-[15px] font-bold">{formatNumber(analytics.overview.uniqueVisitors)}</p>
               </div>
             </div>
           </CardContent>
@@ -173,8 +173,8 @@ export function ReplitAnalytics({ projectId }: ReplitAnalyticsProps) {
             <div className="flex items-center gap-2">
               <MousePointer className="h-4 w-4 text-purple-600" />
               <div>
-                <p className="text-xs text-muted-foreground">Page Views</p>
-                <p className="text-lg font-bold">{formatNumber(analytics.overview.pageViews)}</p>
+                <p className="text-[11px] text-muted-foreground">Page Views</p>
+                <p className="text-[15px] font-bold">{formatNumber(analytics.overview.pageViews)}</p>
               </div>
             </div>
           </CardContent>
@@ -185,8 +185,8 @@ export function ReplitAnalytics({ projectId }: ReplitAnalyticsProps) {
             <div className="flex items-center gap-2">
               <TrendingDown className="h-4 w-4 text-orange-600" />
               <div>
-                <p className="text-xs text-muted-foreground">Bounce Rate</p>
-                <p className="text-lg font-bold">{analytics.overview.bounceRate.toFixed(1)}%</p>
+                <p className="text-[11px] text-muted-foreground">Bounce Rate</p>
+                <p className="text-[15px] font-bold">{analytics.overview.bounceRate.toFixed(1)}%</p>
               </div>
             </div>
           </CardContent>
@@ -197,8 +197,8 @@ export function ReplitAnalytics({ projectId }: ReplitAnalyticsProps) {
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4 text-red-600" />
               <div>
-                <p className="text-xs text-muted-foreground">Avg Session</p>
-                <p className="text-lg font-bold">{formatDuration(analytics.overview.avgSessionDuration)}</p>
+                <p className="text-[11px] text-muted-foreground">Avg Session</p>
+                <p className="text-[15px] font-bold">{formatDuration(analytics.overview.avgSessionDuration)}</p>
               </div>
             </div>
           </CardContent>
@@ -209,8 +209,8 @@ export function ReplitAnalytics({ projectId }: ReplitAnalyticsProps) {
             <div className="flex items-center gap-2">
               <Target className="h-4 w-4 text-pink-600" />
               <div>
-                <p className="text-xs text-muted-foreground">Conversion</p>
-                <p className="text-lg font-bold">{analytics.overview.conversionRate.toFixed(1)}%</p>
+                <p className="text-[11px] text-muted-foreground">Conversion</p>
+                <p className="text-[15px] font-bold">{analytics.overview.conversionRate.toFixed(1)}%</p>
               </div>
             </div>
           </CardContent>
@@ -242,11 +242,11 @@ export function ReplitAnalytics({ projectId }: ReplitAnalyticsProps) {
                           index === 1 ? 'bg-green-500' :
                           index === 2 ? 'bg-purple-500' : 'bg-gray-400'
                         }`} />
-                        <span className="text-sm">{source.name}</span>
+                        <span className="text-[13px]">{source.name}</span>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-medium">{formatNumber(source.visitors)}</p>
-                        <p className="text-xs text-muted-foreground">{source.percentage.toFixed(1)}%</p>
+                        <p className="text-[13px] font-medium">{formatNumber(source.visitors)}</p>
+                        <p className="text-[11px] text-muted-foreground">{source.percentage.toFixed(1)}%</p>
                       </div>
                     </div>
                   ))}
@@ -266,10 +266,10 @@ export function ReplitAnalytics({ projectId }: ReplitAnalyticsProps) {
                 <div className="space-y-3">
                   {analytics.traffic.countries.map((country, index) => (
                     <div key={index} className="flex items-center justify-between">
-                      <span className="text-sm">{country.name}</span>
+                      <span className="text-[13px]">{country.name}</span>
                       <div className="text-right">
-                        <p className="text-sm font-medium">{formatNumber(country.visitors)}</p>
-                        <p className="text-xs text-muted-foreground">{country.percentage.toFixed(1)}%</p>
+                        <p className="text-[13px] font-medium">{formatNumber(country.visitors)}</p>
+                        <p className="text-[11px] text-muted-foreground">{country.percentage.toFixed(1)}%</p>
                       </div>
                     </div>
                   ))}
@@ -290,11 +290,11 @@ export function ReplitAnalytics({ projectId }: ReplitAnalyticsProps) {
                         {device.name === 'Desktop' && <Monitor className="h-4 w-4" />}
                         {device.name === 'Mobile' && <Smartphone className="h-4 w-4" />}
                         {device.name === 'Tablet' && <Monitor className="h-4 w-4" />}
-                        <span className="text-sm">{device.name}</span>
+                        <span className="text-[13px]">{device.name}</span>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-medium">{formatNumber(device.visitors)}</p>
-                        <p className="text-xs text-muted-foreground">{device.percentage.toFixed(1)}%</p>
+                        <p className="text-[13px] font-medium">{formatNumber(device.visitors)}</p>
+                        <p className="text-[11px] text-muted-foreground">{device.percentage.toFixed(1)}%</p>
                       </div>
                     </div>
                   ))}
@@ -324,7 +324,7 @@ export function ReplitAnalytics({ projectId }: ReplitAnalyticsProps) {
                     <div key={index} className="flex items-center justify-between p-3 border rounded">
                       <div>
                         <p className="font-medium">{page.path}</p>
-                        <div className="flex gap-4 text-sm text-muted-foreground">
+                        <div className="flex gap-4 text-[13px] text-muted-foreground">
                           <span>{formatNumber(page.views)} views</span>
                           <span>{formatNumber(page.uniqueViews)} unique</span>
                           <span>{formatDuration(page.avgTime)} avg time</span>
@@ -375,19 +375,19 @@ export function ReplitAnalytics({ projectId }: ReplitAnalyticsProps) {
                     <div key={index} className="flex items-center justify-between">
                       <div>
                         <p className="font-medium">{item.source}</p>
-                        <p className="text-sm text-muted-foreground">{formatNumber(item.visitors)} visitors</p>
+                        <p className="text-[13px] text-muted-foreground">{formatNumber(item.visitors)} visitors</p>
                       </div>
                       
                       <div className="flex items-center gap-1">
                         {item.change > 0 ? (
                           <>
                             <TrendingUp className="h-4 w-4 text-green-600" />
-                            <span className="text-sm text-green-600">+{item.change}%</span>
+                            <span className="text-[13px] text-green-600">+{item.change}%</span>
                           </>
                         ) : (
                           <>
                             <TrendingDown className="h-4 w-4 text-red-600" />
-                            <span className="text-sm text-red-600">{item.change}%</span>
+                            <span className="text-[13px] text-red-600">{item.change}%</span>
                           </>
                         )}
                       </div>
@@ -412,12 +412,12 @@ export function ReplitAnalytics({ projectId }: ReplitAnalyticsProps) {
                   ].map((item, index) => (
                     <div key={index} className="space-y-1">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">{item.keyword}</span>
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-[13px] font-medium">{item.keyword}</span>
+                        <span className="text-[11px] text-muted-foreground">
                           {((item.clicks / item.impressions) * 100).toFixed(1)}% CTR
                         </span>
                       </div>
-                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-4 text-[11px] text-muted-foreground">
                         <span>{item.clicks} clicks</span>
                         <span>{formatNumber(item.impressions)} impressions</span>
                       </div>
@@ -436,7 +436,7 @@ export function ReplitAnalytics({ projectId }: ReplitAnalyticsProps) {
               <CardContent className="p-6 text-center">
                 <Activity className="h-8 w-8 mx-auto text-green-600 mb-2" />
                 <p className="text-3xl font-bold text-green-600">{analytics.realtime.activeUsers}</p>
-                <p className="text-sm text-muted-foreground">Active Users Right Now</p>
+                <p className="text-[13px] text-muted-foreground">Active Users Right Now</p>
               </CardContent>
             </Card>
 
@@ -444,7 +444,7 @@ export function ReplitAnalytics({ projectId }: ReplitAnalyticsProps) {
               <CardContent className="p-6 text-center">
                 <Eye className="h-8 w-8 mx-auto text-blue-600 mb-2" />
                 <p className="text-3xl font-bold">{analytics.realtime.pageViews}</p>
-                <p className="text-sm text-muted-foreground">Page Views (Last 30 min)</p>
+                <p className="text-[13px] text-muted-foreground">Page Views (Last 30 min)</p>
               </CardContent>
             </Card>
 
@@ -452,7 +452,7 @@ export function ReplitAnalytics({ projectId }: ReplitAnalyticsProps) {
               <CardContent className="p-6 text-center">
                 <Globe className="h-8 w-8 mx-auto text-purple-600 mb-2" />
                 <p className="text-3xl font-bold">{analytics.realtime.topPages.length}</p>
-                <p className="text-sm text-muted-foreground">Active Pages</p>
+                <p className="text-[13px] text-muted-foreground">Active Pages</p>
               </CardContent>
             </Card>
           </div>
@@ -474,14 +474,14 @@ export function ReplitAnalytics({ projectId }: ReplitAnalyticsProps) {
                     <div key={index} className="flex items-center justify-between p-3 border rounded">
                       <div>
                         <p className="font-medium">{page.path}</p>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-[13px] text-muted-foreground">
                           {page.activeUsers} active user{page.activeUsers !== 1 ? 's' : ''}
                         </p>
                       </div>
                       
                       <div className="flex items-center gap-1">
                         <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                        <span className="text-sm text-green-600">Live</span>
+                        <span className="text-[13px] text-green-600">Live</span>
                       </div>
                     </div>
                   ))}

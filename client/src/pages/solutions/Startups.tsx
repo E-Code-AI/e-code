@@ -84,13 +84,13 @@ export default function Startups() {
       <div className="container mx-auto px-4 py-12 sm:py-16 md:py-20">
         {/* Hero Section */}
         <div className="text-center max-w-4xl mx-auto mb-12 sm:mb-16 md:mb-20">
-          <Badge className="mb-4 px-4 py-1.5 text-sm font-medium bg-gradient-to-r from-orange-500 to-red-500 text-white border-0">
+          <Badge className="mb-4 px-4 py-1.5 text-[13px] font-medium bg-gradient-to-r from-orange-500 to-red-500 text-white border-0">
             For Startups & Founders
           </Badge>
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-6 bg-gradient-to-r from-orange-600 to-red-600 dark:from-orange-400 dark:to-red-400 bg-clip-text text-transparent">
             Ship Your MVP in Days
           </h1>
-          <p className="text-lg sm:text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
+          <p className="text-[15px] sm:text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
             Stop waiting months to launch. Build production-ready products with AI in days.
             Join 10,000+ startups shipping faster with E-Code.
           </p>
@@ -107,7 +107,7 @@ export default function Startups() {
               </Button>
             </Link>
           </div>
-          <p className="mt-4 text-sm text-muted-foreground">
+          <p className="mt-4 text-[13px] text-muted-foreground">
             No credit card required • Free tier forever • Cancel anytime
           </p>
         </div>
@@ -124,7 +124,7 @@ export default function Startups() {
               <div className="text-4xl font-bold text-orange-600 dark:text-orange-400 mb-1">
                 {benefit.stat}
               </div>
-              <div className="text-sm text-muted-foreground mb-4">{benefit.statLabel}</div>
+              <div className="text-[13px] text-muted-foreground mb-4">{benefit.statLabel}</div>
               <h3 className="text-xl font-semibold mb-2">{benefit.title}</h3>
               <p className="text-muted-foreground">{benefit.description}</p>
             </Card>
@@ -193,7 +193,7 @@ export default function Startups() {
                 <Badge variant="outline" className="mb-4">{story.stage}</Badge>
                 <h3 className="text-xl font-bold mb-2">{story.company}</h3>
                 <p className="text-muted-foreground mb-4">{story.description}</p>
-                <div className="text-lg font-semibold text-orange-600 dark:text-orange-400">
+                <div className="text-[15px] font-semibold text-orange-600 dark:text-orange-400">
                   {story.result}
                 </div>
               </Card>
@@ -219,7 +219,7 @@ export default function Startups() {
                 ].map((item) => (
                   <li key={item} className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-green-500" />
-                    <span className="text-sm">{item}</span>
+                    <span className="text-[13px]">{item}</span>
                   </li>
                 ))}
               </ul>
@@ -233,19 +233,19 @@ export default function Startups() {
             <div className="grid grid-cols-2 gap-4">
               <Card className="p-6 text-center bg-white dark:bg-slate-900">
                 <div className="text-3xl font-bold text-orange-600">90%</div>
-                <div className="text-sm text-muted-foreground">Discount</div>
+                <div className="text-[13px] text-muted-foreground">Discount</div>
               </Card>
               <Card className="p-6 text-center bg-white dark:bg-slate-900">
                 <div className="text-3xl font-bold text-orange-600">$10K</div>
-                <div className="text-sm text-muted-foreground">Credits</div>
+                <div className="text-[13px] text-muted-foreground">Credits</div>
               </Card>
               <Card className="p-6 text-center bg-white dark:bg-slate-900">
                 <div className="text-3xl font-bold text-orange-600">1:1</div>
-                <div className="text-sm text-muted-foreground">Mentorship</div>
+                <div className="text-[13px] text-muted-foreground">Mentorship</div>
               </Card>
               <Card className="p-6 text-center bg-white dark:bg-slate-900">
                 <div className="text-3xl font-bold text-orange-600">VIP</div>
-                <div className="text-sm text-muted-foreground">Support</div>
+                <div className="text-[13px] text-muted-foreground">Support</div>
               </Card>
             </div>
           </div>
@@ -256,7 +256,7 @@ export default function Startups() {
           <div className="text-center max-w-3xl mx-auto">
             <Sparkles className="h-12 w-12 mx-auto mb-6 opacity-80" />
             <h2 className="text-2xl sm:text-3xl font-bold mb-4">Ready to Ship Faster?</h2>
-            <p className="text-lg text-white/90 mb-8">
+            <p className="text-[15px] text-white/90 mb-8">
               Join 10,000+ startups building the future. Start free today.
             </p>
             <Link href="/register">

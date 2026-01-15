@@ -236,28 +236,28 @@ export function PackageManager({ projectId, language = 'javascript', className }
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <h4 className="font-medium text-sm">{pkg.name}</h4>
-                          <Badge variant="secondary" className="text-xs">
+                          <h4 className="font-medium text-[13px]">{pkg.name}</h4>
+                          <Badge variant="secondary" className="text-[11px]">
                             v{pkg.version}
                           </Badge>
                           {pkg.isDevDependency && (
-                            <Badge variant="outline" className="text-xs">
+                            <Badge variant="outline" className="text-[11px]">
                               Dev
                             </Badge>
                           )}
                           {pkg.outdated && (
-                            <Badge variant="destructive" className="text-xs">
+                            <Badge variant="destructive" className="text-[11px]">
                               Outdated
                             </Badge>
                           )}
                         </div>
                         {pkg.description && (
-                          <p className="text-xs text-muted-foreground mt-1">
+                          <p className="text-[11px] text-muted-foreground mt-1">
                             {pkg.description}
                           </p>
                         )}
                         {pkg.outdated && pkg.latest && (
-                          <p className="text-xs text-muted-foreground mt-1">
+                          <p className="text-[11px] text-muted-foreground mt-1">
                             Latest: v{pkg.latest}
                           </p>
                         )}
@@ -296,7 +296,7 @@ export function PackageManager({ projectId, language = 'javascript', className }
               </div>
             </ScrollArea>
 
-            <div className="pt-3 border-t mt-3 text-xs text-muted-foreground">
+            <div className="pt-3 border-t mt-3 text-[11px] text-muted-foreground">
               {packages.length} packages installed
               {packages.filter(p => p.isDevDependency).length > 0 && 
                 ` (${packages.filter(p => p.isDevDependency).length} dev)`
@@ -341,13 +341,13 @@ export function PackageManager({ projectId, language = 'javascript', className }
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
-                            <h4 className="font-medium text-sm">{pkg.name}</h4>
-                            <Badge variant="secondary" className="text-xs">
+                            <h4 className="font-medium text-[13px]">{pkg.name}</h4>
+                            <Badge variant="secondary" className="text-[11px]">
                               v{pkg.version}
                             </Badge>
                           </div>
                           {pkg.description && (
-                            <p className="text-xs text-muted-foreground mt-1">
+                            <p className="text-[11px] text-muted-foreground mt-1">
                               {pkg.description}
                             </p>
                           )}

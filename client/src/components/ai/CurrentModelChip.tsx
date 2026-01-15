@@ -73,7 +73,7 @@ export function CurrentModelChip({
           <Badge
             variant="outline"
             className={cn(
-              "text-xs cursor-pointer hover:bg-accent transition-colors",
+              "text-[11px] cursor-pointer hover:bg-accent transition-colors",
               compact && "px-1.5",
               className
             )}
@@ -87,7 +87,7 @@ export function CurrentModelChip({
           </Badge>
         </TooltipTrigger>
         <TooltipContent>
-          <p className="text-xs">{tooltipContent}</p>
+          <p className="text-[11px]">{tooltipContent}</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>

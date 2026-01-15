@@ -230,7 +230,7 @@ export function CustomRoles() {
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2">
-                            <h3 className="font-semibold text-lg">{role.name}</h3>
+                            <h3 className="font-semibold text-[15px]">{role.name}</h3>
                             {role.isSystem && (
                               <Badge variant="secondary">
                                 <Lock className="mr-1 h-3 w-3" />
@@ -244,15 +244,15 @@ export function CustomRoles() {
                               </Badge>
                             )}
                           </div>
-                          <p className="text-sm text-muted-foreground mb-3">{role.description}</p>
+                          <p className="text-[13px] text-muted-foreground mb-3">{role.description}</p>
                           <div className="flex flex-wrap gap-1">
                             {role.permissions.slice(0, 5).map((perm) => (
-                              <Badge key={perm} variant="secondary" className="text-xs">
+                              <Badge key={perm} variant="secondary" className="text-[11px]">
                                 {perm}
                               </Badge>
                             ))}
                             {role.permissions.length > 5 && (
-                              <Badge variant="secondary" className="text-xs">
+                              <Badge variant="secondary" className="text-[11px]">
                                 +{role.permissions.length - 5} more
                               </Badge>
                             )}
@@ -311,17 +311,17 @@ export function CustomRoles() {
                 <div className="space-y-6">
                   {Object.entries(groupPermissionsByCategory(permissions)).map(([category, perms]) => (
                     <div key={category}>
-                      <h3 className="font-semibold text-lg mb-3 capitalize">
+                      <h3 className="font-semibold text-[15px] mb-3 capitalize">
                         {category.replace(/_/g, ' ')}
                       </h3>
                       <div className="grid gap-2">
                         {perms.map((perm) => (
                           <div key={perm.id} className="flex items-center justify-between p-3 border rounded-lg">
                             <div>
-                              <code className="text-sm font-mono bg-muted px-2 py-1 rounded">
+                              <code className="text-[13px] font-mono bg-muted px-2 py-1 rounded">
                                 {perm.resource}:{perm.action}
                               </code>
-                              <p className="text-sm text-muted-foreground mt-1">{perm.description}</p>
+                              <p className="text-[13px] text-muted-foreground mt-1">{perm.description}</p>
                             </div>
                           </div>
                         ))}
@@ -423,11 +423,11 @@ export function CustomRoles() {
                               <div className="flex-1">
                                 <label
                                   htmlFor={permString}
-                                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                                  className="text-[13px] font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
                                 >
                                   {perm.description}
                                 </label>
-                                <p className="text-xs text-muted-foreground mt-1">
+                                <p className="text-[11px] text-muted-foreground mt-1">
                                   <code>{permString}</code>
                                 </p>
                               </div>

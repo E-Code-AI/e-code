@@ -152,11 +152,11 @@ export function BuildModeSelector({
         <DialogHeader className="px-6 pt-6 pb-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-muted dark:to-muted/70 border-b">
           <div className="flex items-center gap-2 mb-2">
             <Sparkles className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-            <DialogTitle className="text-lg font-semibold">
+            <DialogTitle className="text-[15px] font-semibold">
               How do you want to continue?
             </DialogTitle>
           </div>
-          <DialogDescription className="text-sm text-muted-foreground">
+          <DialogDescription className="text-[13px] text-muted-foreground">
             {projectName && <span className="font-medium">{projectName}: </span>}
             Choose your preferred build approach
           </DialogDescription>
@@ -166,7 +166,7 @@ export function BuildModeSelector({
             <div className="mt-4 p-3 bg-muted rounded-lg">
               <div className="flex items-center gap-2 mb-2">
                 <Layers className="h-4 w-4 text-muted-foreground" />
-                <span className="text-xs font-medium text-muted-foreground">Feature list created</span>
+                <span className="text-[11px] font-medium text-muted-foreground">Feature list created</span>
                 <Badge variant="secondary" className="text-[10px]">{featureList.length} features</Badge>
               </div>
               <div className="flex flex-wrap gap-1">
@@ -229,27 +229,27 @@ export function BuildModeSelector({
                     
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold text-sm">{option.title}</h3>
+                        <h3 className="font-semibold text-[13px]">{option.title}</h3>
                         {!option.recommended && option.badge && (
                           <Badge variant="secondary" className="text-[10px]">
                             {option.badge}
                           </Badge>
                         )}
                       </div>
-                      <p className="text-xs text-muted-foreground mb-3">
+                      <p className="text-[11px] text-muted-foreground mb-3">
                         {option.description}
                       </p>
                       
                       {/* Time Estimate */}
                       <div className="flex items-center gap-1 mb-3">
                         <Clock className="h-3 w-3 text-muted-foreground" />
-                        <span className="text-xs text-muted-foreground">{option.timeEstimate}</span>
+                        <span className="text-[11px] text-muted-foreground">{option.timeEstimate}</span>
                       </div>
                       
                       {/* Features with animated dots */}
                       <ul className="space-y-1.5">
                         {option.features.map((feature, i) => (
-                          <li key={i} className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <li key={i} className="flex items-center gap-2 text-[11px] text-muted-foreground">
                             <AnimatedDot 
                               color={option.color} 
                               delay={i * 150} 

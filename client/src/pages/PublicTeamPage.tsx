@@ -19,12 +19,12 @@ export default function PublicTeamPage() {
           </p>
           <div className="flex gap-4 justify-center">
             <Link href="/register">
-              <Button size="lg" className="text-lg px-8">
+              <Button size="lg" className="text-[15px] px-8">
                 Start Collaborating Free
               </Button>
             </Link>
             <Link href="/contact-sales">
-              <Button size="lg" variant="outline" className="text-lg px-8">
+              <Button size="lg" variant="outline" className="text-[15px] px-8">
                 Contact Sales
               </Button>
             </Link>
@@ -151,7 +151,7 @@ export default function PublicTeamPage() {
                 <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-500"></div>
                 <div>
                   <p className="font-semibold">Sarah Chen</p>
-                  <p className="text-sm text-gray-500">CTO, TechStart</p>
+                  <p className="text-[13px] text-gray-500">CTO, TechStart</p>
                 </div>
               </div>
             </div>
@@ -163,7 +163,7 @@ export default function PublicTeamPage() {
                 <div className="w-10 h-10 rounded-full bg-gradient-to-r from-green-500 to-blue-500"></div>
                 <div>
                   <p className="font-semibold">Marcus Johnson</p>
-                  <p className="text-sm text-gray-500">Engineering Lead, CloudScale</p>
+                  <p className="text-[13px] text-gray-500">Engineering Lead, CloudScale</p>
                 </div>
               </div>
             </div>
@@ -175,7 +175,7 @@ export default function PublicTeamPage() {
                 <div className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 to-pink-500"></div>
                 <div>
                   <p className="font-semibold">Dr. Emily Rodriguez</p>
-                  <p className="text-sm text-gray-500">CS Professor, Tech University</p>
+                  <p className="text-[13px] text-gray-500">CS Professor, Tech University</p>
                 </div>
               </div>
             </div>
@@ -194,12 +194,12 @@ export default function PublicTeamPage() {
           </p>
           <div className="flex gap-4 justify-center">
             <Link href="/register">
-              <Button size="lg" variant="secondary" className="text-lg px-8">
+              <Button size="lg" variant="secondary" className="text-[15px] px-8">
                 Start Free Trial
               </Button>
             </Link>
             <Link href="/pricing">
-              <Button size="lg" variant="outline" className="text-lg px-8 bg-transparent text-white border-white hover:bg-white hover:text-blue-600">
+              <Button size="lg" variant="outline" className="text-[15px] px-8 bg-transparent text-white border-white hover:bg-white hover:text-blue-600">
                 View Pricing
               </Button>
             </Link>

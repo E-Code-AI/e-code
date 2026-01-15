@@ -70,7 +70,7 @@ function getPriorityBadge(priority: string) {
   const v = variants[priority] || variants.medium;
   const Icon = v.icon;
   return (
-    <Badge variant="outline" className={cn("text-xs gap-1", v.color)}>
+    <Badge variant="outline" className={cn("text-[11px] gap-1", v.color)}>
       <Icon className="h-3 w-3" />
       {priority}
     </Badge>
@@ -146,11 +146,11 @@ export function TaskDecompositionDisplay({
                 <div>
                   <h3 className="font-semibold text-indigo-900 dark:text-indigo-100 flex items-center gap-2">
                     Task Decomposition
-                    <Badge variant="outline" className="text-xs bg-indigo-100 dark:bg-indigo-900/30 border-indigo-300 dark:border-indigo-700">
+                    <Badge variant="outline" className="text-[11px] bg-indigo-100 dark:bg-indigo-900/30 border-indigo-300 dark:border-indigo-700">
                       {completedCount}/{tasks.length}
                     </Badge>
                   </h3>
-                  <p className="text-xs text-indigo-600 dark:text-indigo-400">
+                  <p className="text-[11px] text-indigo-600 dark:text-indigo-400">
                     {failedCount > 0 ? `${failedCount} failed · ` : ''}{tasks.length - completedCount - failedCount} remaining
                   </p>
                 </div>
@@ -186,7 +186,7 @@ export function TaskDecompositionDisplay({
                 >
                   <div className="flex items-start gap-3">
                     <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-xs font-mono text-muted-foreground w-5">
+                      <span className="text-[11px] font-mono text-muted-foreground w-5">
                         {index + 1}.
                       </span>
                       {getStatusIcon(task.status, isCurrentTask)}
@@ -220,7 +220,7 @@ export function TaskDecompositionDisplay({
                                 <TooltipTrigger asChild>
                                   <Badge 
                                     variant="outline" 
-                                    className={cn("text-xs gap-1", getComplexityColor(task.complexityScore))}
+                                    className={cn("text-[11px] gap-1", getComplexityColor(task.complexityScore))}
                                   >
                                     <Zap className="h-3 w-3" />
                                     {task.complexityScore}/10
@@ -240,7 +240,7 @@ export function TaskDecompositionDisplay({
                                   <Badge 
                                     variant="outline" 
                                     className={cn(
-                                      "text-xs",
+                                      "text-[11px]",
                                       task.confidenceScore >= 0.8 && "text-green-600 dark:text-green-400",
                                       task.confidenceScore >= 0.5 && task.confidenceScore < 0.8 && "text-yellow-600 dark:text-yellow-400",
                                       task.confidenceScore < 0.5 && "text-red-600 dark:text-red-400"
@@ -259,12 +259,12 @@ export function TaskDecompositionDisplay({
                       </div>
                       
                       {isTaskExpanded && task.description && (
-                        <p className="mt-2 text-sm text-muted-foreground">
+                        <p className="mt-2 text-[13px] text-muted-foreground">
                           {task.description}
                         </p>
                       )}
                       
-                      <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
+                      <div className="mt-2 flex items-center gap-3 text-[11px] text-muted-foreground flex-wrap">
                         <span className="px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-800">
                           {task.type}
                         </span>
@@ -297,7 +297,7 @@ export function TaskDecompositionDisplay({
                             <button
                               key={idx}
                               onClick={() => {}}
-                              className="text-xs px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+                              className="text-[11px] px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
                               data-testid={`button-file-link-${task.id}-${idx}`}
                             >
                               {file.split('/').pop()}
@@ -315,7 +315,7 @@ export function TaskDecompositionDisplay({
                               href={citation.url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-xs px-2 py-0.5 rounded bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors flex items-center gap-1"
+                              className="text-[11px] px-2 py-0.5 rounded bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors flex items-center gap-1"
                               data-testid={`link-citation-${task.id}-${idx}`}
                             >
                               <ExternalLink className="h-3 w-3" />
@@ -326,7 +326,7 @@ export function TaskDecompositionDisplay({
                       )}
 
                       {task.metadata?.costUsd !== undefined && task.metadata.costUsd > 0 && (
-                        <span className="text-xs text-green-600 dark:text-green-400 ml-auto">
+                        <span className="text-[11px] text-green-600 dark:text-green-400 ml-auto">
                           ${task.metadata.costUsd.toFixed(4)}
                         </span>
                       )}

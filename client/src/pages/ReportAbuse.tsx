@@ -63,7 +63,7 @@ export default function ReportAbuse() {
           <div className="max-w-4xl mx-auto">
             <div className="flex items-center gap-2 mb-4">
               <Shield className="h-5 w-5" />
-              <span className="text-sm text-muted-foreground">Trust & Safety</span>
+              <span className="text-[13px] text-muted-foreground">Trust & Safety</span>
             </div>
 
             <h1 className="text-responsive-2xl font-bold tracking-tight mb-4" data-testid="heading-report-abuse">
@@ -89,7 +89,7 @@ export default function ReportAbuse() {
                         <AlertTriangle className="h-4 w-4 text-red-500" />
                         Illegal Content
                       </h3>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-[13px] text-muted-foreground">
                         Content that violates laws, including but not limited to copyright infringement, malware distribution, or illegal activities
                       </p>
                     </div>
@@ -99,7 +99,7 @@ export default function ReportAbuse() {
                         <AlertTriangle className="h-4 w-4 text-orange-500" />
                         Harmful or Malicious Code
                       </h3>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-[13px] text-muted-foreground">
                         Code designed to harm systems, steal data, or compromise security
                       </p>
                     </div>
@@ -109,7 +109,7 @@ export default function ReportAbuse() {
                         <AlertTriangle className="h-4 w-4 text-yellow-500" />
                         Harassment or Bullying
                       </h3>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-[13px] text-muted-foreground">
                         Targeted harassment, threats, or intimidation of other users
                       </p>
                     </div>
@@ -121,7 +121,7 @@ export default function ReportAbuse() {
                         <AlertTriangle className="h-4 w-4 text-purple-500" />
                         Spam or Scams
                       </h3>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-[13px] text-muted-foreground">
                         Unsolicited promotional content, phishing attempts, or fraudulent schemes
                       </p>
                     </div>
@@ -131,7 +131,7 @@ export default function ReportAbuse() {
                         <AlertTriangle className="h-4 w-4 text-blue-500" />
                         Privacy Violations
                       </h3>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-[13px] text-muted-foreground">
                         Sharing personal information without consent or doxxing
                       </p>
                     </div>
@@ -141,7 +141,7 @@ export default function ReportAbuse() {
                         <AlertTriangle className="h-4 w-4 text-green-500" />
                         Inappropriate Content
                       </h3>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-[13px] text-muted-foreground">
                         Adult content, graphic violence, or content inappropriate for our community
                       </p>
                     </div>
@@ -204,7 +204,7 @@ export default function ReportAbuse() {
                       className="mt-2 min-h-[44px]"
                       data-testid="input-abuse-url"
                     />
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="text-[11px] text-muted-foreground mt-1">
                       Please provide the direct link to the Repl, profile, or comment
                     </p>
                   </div>
@@ -243,14 +243,14 @@ export default function ReportAbuse() {
                       className="mt-2 min-h-[44px]"
                       data-testid="input-abuse-email"
                     />
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="text-[11px] text-muted-foreground mt-1">
                       Provide your email if you'd like us to follow up on this report
                     </p>
                   </div>
 
                   <div className="flex items-center space-x-2">
                     <Checkbox id="terms" required data-testid="checkbox-abuse-terms" />
-                    <Label htmlFor="terms" className="text-sm font-normal">
+                    <Label htmlFor="terms" className="text-[13px] font-normal">
                       I confirm that this report is made in good faith and the information provided is accurate
                     </Label>
                   </div>
@@ -272,10 +272,10 @@ export default function ReportAbuse() {
             <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">DMCA Takedown Requests</CardTitle>
+                  <CardTitle className="text-[15px]">DMCA Takedown Requests</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-muted-foreground mb-4">
+                  <p className="text-[13px] text-muted-foreground mb-4">
                     For copyright infringement claims, please submit a formal DMCA takedown notice.
                   </p>
                   <Button variant="outline" size="sm" className="w-full min-h-[44px]" data-testid="button-abuse-dmca">
@@ -287,10 +287,10 @@ export default function ReportAbuse() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Emergency Contact</CardTitle>
+                  <CardTitle className="text-[15px]">Emergency Contact</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-muted-foreground mb-4">
+                  <p className="text-[13px] text-muted-foreground mb-4">
                     For urgent safety concerns or illegal activity, contact us immediately.
                   </p>
                   <Button variant="outline" size="sm" className="w-full min-h-[44px]" data-testid="button-abuse-emergency">
@@ -303,7 +303,7 @@ export default function ReportAbuse() {
 
             <div className="mt-8 p-4 bg-muted rounded-lg">
               <h3 className="font-semibold mb-2">What happens after I submit a report?</h3>
-              <ul className="text-sm text-muted-foreground space-y-1 list-disc pl-5">
+              <ul className="text-[13px] text-muted-foreground space-y-1 list-disc pl-5">
                 <li>Our Trust & Safety team reviews all reports within 24-48 hours</li>
                 <li>We investigate the reported content against our Community Guidelines</li>
                 <li>Appropriate action is taken, which may include content removal or account suspension</li>
@@ -312,7 +312,7 @@ export default function ReportAbuse() {
             </div>
 
             <div className="mt-6 text-center">
-              <p className="text-sm text-muted-foreground">
+              <p className="text-[13px] text-muted-foreground">
                 False reports or abuse of the reporting system may result in account penalties.
                 <br />
                 For more information, see our <a href="/terms" className="text-primary hover:underline">Terms of Service</a> and <a href="/community-guidelines" className="text-primary hover:underline">Community Guidelines</a>.

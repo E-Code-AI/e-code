@@ -135,7 +135,7 @@ export function AuthenticationDemo() {
                   {isLogging ? 'Logging in...' : 'Login'}
                 </Button>
               </div>
-              <p className="text-sm text-gray-600">
+              <p className="text-[13px] text-gray-600">
                 Use credentials: admin / admin
               </p>
             </div>

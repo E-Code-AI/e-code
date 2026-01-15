@@ -685,20 +685,20 @@ export const CreateProjectModal = ({
             </div>
             
             <div className="text-center space-y-2 w-full max-w-sm">
-              <h3 className="text-lg font-semibold text-[var(--ecode-text)]">
+              <h3 className="text-[15px] font-semibold text-[var(--ecode-text)]">
                 {CREATION_STEPS[creationProgress.step].label}
               </h3>
-              <p className="text-sm text-[var(--ecode-text-secondary)]">
+              <p className="text-[13px] text-[var(--ecode-text-secondary)]">
                 {creationProgress.message}
               </p>
               {creationProgress.details && (
-                <p className="text-xs text-red-400 mt-2 break-words">{creationProgress.details}</p>
+                <p className="text-[11px] text-red-400 mt-2 break-words">{creationProgress.details}</p>
               )}
               
               {creationProgress.step !== 'error' && creationProgress.step !== 'ready' && (
                 <div className="pt-4">
                   <Progress value={creationProgress.progress} className="h-2" />
-                  <p className="text-xs text-[var(--ecode-muted)] mt-2">
+                  <p className="text-[11px] text-[var(--ecode-muted)] mt-2">
                     {creationProgress.progress}% complete
                   </p>
                 </div>
@@ -764,7 +764,7 @@ export const CreateProjectModal = ({
                     data-testid="input-project-name"
                   />
                   {form.formState.errors.name && (
-                    <p className="text-sm text-destructive">{form.formState.errors.name.message}</p>
+                    <p className="text-[13px] text-destructive">{form.formState.errors.name.message}</p>
                   )}
                 </div>
 
@@ -789,7 +789,7 @@ export const CreateProjectModal = ({
                                 <span>{template.icon}</span>
                                 <span>{template.name}</span>
                                 {template.isFeatured && (
-                                  <span className="text-xs bg-yellow-500/20 text-yellow-500 px-1.5 py-0.5 rounded">Featured</span>
+                                  <span className="text-[11px] bg-yellow-500/20 text-yellow-500 px-1.5 py-0.5 rounded">Featured</span>
                                 )}
                               </span>
                             </SelectItem>
@@ -869,7 +869,7 @@ export const CreateProjectModal = ({
                     {...form.register("githubUrl")}
                     className="bg-[var(--ecode-sidebar)] border-[var(--ecode-border)] text-[var(--ecode-text)]"
                   />
-                  <p className="text-xs text-[var(--ecode-muted)]">
+                  <p className="text-[11px] text-[var(--ecode-muted)]">
                     Import an existing repository to continue working on it
                   </p>
                 </div>
@@ -886,7 +886,7 @@ export const CreateProjectModal = ({
 
                 <div className="flex items-center gap-2 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-md">
                   <Upload className="h-4 w-4 text-yellow-500" />
-                  <span className="text-sm text-yellow-600 dark:text-yellow-400">
+                  <span className="text-[13px] text-yellow-600 dark:text-yellow-400">
                     GitHub import will clone the repository files
                   </span>
                 </div>
@@ -906,7 +906,7 @@ export const CreateProjectModal = ({
                           checked={field.value === 'public'}
                           onCheckedChange={(checked) => field.onChange(checked ? 'public' : 'private')}
                         />
-                        <Label htmlFor="visibility" className="text-sm text-[var(--ecode-text)] flex items-center gap-1.5 cursor-pointer">
+                        <Label htmlFor="visibility" className="text-[13px] text-[var(--ecode-text)] flex items-center gap-1.5 cursor-pointer">
                           {field.value === 'public' ? (
                             <>
                               <Globe className="h-4 w-4 text-green-500" />

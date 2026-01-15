@@ -108,22 +108,22 @@ export function InlineCheckpointMarker({
             >
               <div className="bg-popover border rounded-lg shadow-lg min-w-[180px]">
                 <div className="px-3 py-2 border-b border-border/50">
-                  <div className="flex items-center gap-2 text-sm font-medium">
+                  <div className="flex items-center gap-2 text-[13px] font-medium">
                     <DollarSign className="w-3.5 h-3.5 text-emerald-500" />
                     <span>Usage for this step</span>
                   </div>
                 </div>
                 <div className="px-3 py-2 space-y-1.5">
-                  <div className="flex justify-between text-xs">
+                  <div className="flex justify-between text-[11px]">
                     <span className="text-muted-foreground">Cost</span>
                     <span className="font-medium">{formatCost(cost)}</span>
                   </div>
-                  <div className="flex justify-between text-xs">
+                  <div className="flex justify-between text-[11px]">
                     <span className="text-muted-foreground">Tokens</span>
                     <span className="font-medium">{formatTokens(tokens)}</span>
                   </div>
                   {timestamp && (
-                    <div className="flex justify-between text-xs">
+                    <div className="flex justify-between text-[11px]">
                       <span className="text-muted-foreground">Time</span>
                       <span className="font-medium">{formatTime(timestamp)}</span>
                     </div>
@@ -133,11 +133,11 @@ export function InlineCheckpointMarker({
                   <div className="px-3 py-2 border-t border-border/50">
                     {showConfirm ? (
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground">Rollback?</span>
+                        <span className="text-[11px] text-muted-foreground">Rollback?</span>
                         <Button
                           size="sm"
                           variant="destructive"
-                          className="h-6 px-2 text-xs"
+                          className="h-6 px-2 text-[11px]"
                           onClick={handleRollback}
                           disabled={isRollingBack}
                         >
@@ -146,7 +146,7 @@ export function InlineCheckpointMarker({
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="h-6 px-2 text-xs"
+                          className="h-6 px-2 text-[11px]"
                           onClick={() => setShowConfirm(false)}
                         >
                           No
@@ -156,7 +156,7 @@ export function InlineCheckpointMarker({
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="w-full h-7 text-xs gap-1.5"
+                        className="w-full h-7 text-[11px] gap-1.5"
                         onClick={() => setShowConfirm(true)}
                       >
                         <RotateCcw className="w-3 h-3" />
@@ -215,7 +215,7 @@ export function CheckpointDivider({
               </div>
             </TooltipTrigger>
             {hasUsageData && (
-              <TooltipContent side="top" className="text-xs">
+              <TooltipContent side="top" className="text-[11px]">
                 <div className="flex items-center gap-2">
                   {formattedCost && <span>{formattedCost}</span>}
                   {tokens !== undefined && tokens > 0 && (

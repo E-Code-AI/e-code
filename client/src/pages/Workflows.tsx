@@ -146,7 +146,7 @@ function SortableTaskItem({
               <GripVertical className="w-5 h-5 sm:w-4 sm:h-4 text-muted-foreground" />
             </div>
             {getTaskIcon()}
-            <span className="text-sm sm:text-sm flex-1 truncate">{getTaskLabel()}</span>
+            <span className="text-[13px] sm:text-[13px] flex-1 truncate">{getTaskLabel()}</span>
             <ChevronDown className="w-5 h-5 sm:w-4 sm:h-4 text-muted-foreground" />
           </div>
         </CollapsibleTrigger>
@@ -157,7 +157,7 @@ function SortableTaskItem({
                 value={task.targetWorkflowId?.toString() || ''}
                 onValueChange={(value) => onUpdate({ ...task, targetWorkflowId: parseInt(value) })}
               >
-                <SelectTrigger className="h-12 sm:h-10 text-base sm:text-sm" data-testid={`task-workflow-select-${task.id}`}>
+                <SelectTrigger className="h-12 sm:h-10 text-base sm:text-[13px]" data-testid={`task-workflow-select-${task.id}`}>
                   <SelectValue placeholder="Select workflow..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -173,7 +173,7 @@ function SortableTaskItem({
                 value={task.command || ''}
                 onChange={(e) => onUpdate({ ...task, command: e.target.value })}
                 placeholder={task.taskType === 'shell' ? 'npm run dev' : 'all'}
-                className="h-12 sm:h-10 font-mono text-base sm:text-sm"
+                className="h-12 sm:h-10 font-mono text-base sm:text-[13px]"
                 data-testid={`task-command-${task.id}`}
               />
             )}
@@ -181,7 +181,7 @@ function SortableTaskItem({
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-destructive hover:text-destructive h-11 sm:h-9 text-sm sm:text-xs px-4 sm:px-3 touch-manipulation"
+                className="text-destructive hover:text-destructive h-11 sm:h-9 text-[13px] sm:text-[11px] px-4 sm:px-3 touch-manipulation"
                 onClick={onDelete}
                 data-testid={`delete-task-${task.id}`}
               >
@@ -192,7 +192,7 @@ function SortableTaskItem({
           </div>
         </CollapsibleContent>
       </div>
-      <div className="pl-6 text-xs text-muted-foreground py-1 truncate">
+      <div className="pl-6 text-[11px] text-muted-foreground py-1 truncate">
         {getTaskValue()}
       </div>
     </Collapsible>
@@ -383,7 +383,7 @@ export default function Workflows({ onBack, embedded = false, projectId }: Workf
                 >
                   <Play className="w-5 h-5 sm:w-4 sm:h-4 fill-current" />
                 </Button>
-                <span className="text-sm font-medium truncate">{workflow.name}</span>
+                <span className="text-[13px] font-medium truncate">{workflow.name}</span>
                 <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 flex-wrap">
                   {workflow.isRunButton && (
                     <Badge variant="default" className="bg-green-500 hover:bg-green-600 text-[10px] sm:text-[10px] px-1.5 py-0.5 sm:py-0" data-testid={`badge-run-button-${workflow.id}`}>
@@ -405,18 +405,18 @@ export default function Workflows({ onBack, embedded = false, projectId }: Workf
             <div className="px-4 pb-4 space-y-4 border-t bg-muted/20">
               {/* Workflow Name */}
               <div className="pt-4 space-y-2 sm:space-y-1.5">
-                <Label className="text-sm sm:text-xs text-muted-foreground">Workflow</Label>
+                <Label className="text-[13px] sm:text-[11px] text-muted-foreground">Workflow</Label>
                 <Input
                   value={workflow.name}
                   onChange={(e) => updateWorkflowMutation.mutate({ id: workflow.id, data: { name: e.target.value } })}
-                  className="h-12 sm:h-10 text-base sm:text-sm"
+                  className="h-12 sm:h-10 text-base sm:text-[13px]"
                   data-testid={`workflow-name-${workflow.id}`}
                 />
               </div>
 
               {/* Execution Mode */}
               <div className="space-y-2 sm:space-y-1.5">
-                <Label className="text-sm sm:text-xs text-muted-foreground">Mode</Label>
+                <Label className="text-[13px] sm:text-[11px] text-muted-foreground">Mode</Label>
                 <ToggleGroup
                   type="single"
                   value={workflow.executionMode}
@@ -427,10 +427,10 @@ export default function Workflows({ onBack, embedded = false, projectId }: Workf
                   }}
                   className="justify-start"
                 >
-                  <ToggleGroupItem value="sequential" className="text-sm sm:text-xs px-4 sm:px-3 h-11 sm:h-9 touch-manipulation" data-testid={`mode-sequential-${workflow.id}`}>
+                  <ToggleGroupItem value="sequential" className="text-[13px] sm:text-[11px] px-4 sm:px-3 h-11 sm:h-9 touch-manipulation" data-testid={`mode-sequential-${workflow.id}`}>
                     Sequential
                   </ToggleGroupItem>
-                  <ToggleGroupItem value="parallel" className="text-sm sm:text-xs px-4 sm:px-3 h-11 sm:h-9 touch-manipulation" data-testid={`mode-parallel-${workflow.id}`}>
+                  <ToggleGroupItem value="parallel" className="text-[13px] sm:text-[11px] px-4 sm:px-3 h-11 sm:h-9 touch-manipulation" data-testid={`mode-parallel-${workflow.id}`}>
                     Parallel
                   </ToggleGroupItem>
                 </ToggleGroup>
@@ -438,7 +438,7 @@ export default function Workflows({ onBack, embedded = false, projectId }: Workf
 
               {/* Tasks */}
               <div className="space-y-2">
-                <Label className="text-xs text-muted-foreground">Tasks</Label>
+                <Label className="text-[11px] text-muted-foreground">Tasks</Label>
                 <DndContext
                   sensors={sensors}
                   collisionDetection={closestCenter}
@@ -467,7 +467,7 @@ export default function Workflows({ onBack, embedded = false, projectId }: Workf
                   <Button
                     variant="outline"
                     size="sm"
-                    className="text-sm sm:text-xs h-11 sm:h-9 px-4 sm:px-3 justify-start sm:justify-center touch-manipulation"
+                    className="text-[13px] sm:text-[11px] h-11 sm:h-9 px-4 sm:px-3 justify-start sm:justify-center touch-manipulation"
                     onClick={() => handleAddTask(workflow, 'shell')}
                     data-testid={`add-shell-task-${workflow.id}`}
                   >
@@ -477,7 +477,7 @@ export default function Workflows({ onBack, embedded = false, projectId }: Workf
                   <Button
                     variant="outline"
                     size="sm"
-                    className="text-sm sm:text-xs h-11 sm:h-9 px-4 sm:px-3 justify-start sm:justify-center touch-manipulation"
+                    className="text-[13px] sm:text-[11px] h-11 sm:h-9 px-4 sm:px-3 justify-start sm:justify-center touch-manipulation"
                     onClick={() => handleAddTask(workflow, 'packages')}
                     data-testid={`add-packages-task-${workflow.id}`}
                   >
@@ -487,7 +487,7 @@ export default function Workflows({ onBack, embedded = false, projectId }: Workf
                   <Button
                     variant="outline"
                     size="sm"
-                    className="text-sm sm:text-xs h-11 sm:h-9 px-4 sm:px-3 justify-start sm:justify-center touch-manipulation"
+                    className="text-[13px] sm:text-[11px] h-11 sm:h-9 px-4 sm:px-3 justify-start sm:justify-center touch-manipulation"
                     onClick={() => handleAddTask(workflow, 'workflow')}
                     data-testid={`add-workflow-task-${workflow.id}`}
                   >
@@ -503,19 +503,19 @@ export default function Workflows({ onBack, embedded = false, projectId }: Workf
                   <Button
                     variant="outline"
                     size="sm"
-                    className="text-sm sm:text-xs h-11 sm:h-9 px-4 sm:px-3 touch-manipulation"
+                    className="text-[13px] sm:text-[11px] h-11 sm:h-9 px-4 sm:px-3 touch-manipulation"
                     onClick={() => setRunButtonMutation.mutate(workflow.id)}
                     data-testid={`set-run-button-${workflow.id}`}
                   >
                     Assign to Run Button
                   </Button>
                 ) : (
-                  <span className="text-sm sm:text-xs text-muted-foreground py-2">Assigned to Run Button</span>
+                  <span className="text-[13px] sm:text-[11px] text-muted-foreground py-2">Assigned to Run Button</span>
                 )}
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-sm sm:text-xs h-11 sm:h-9 px-4 sm:px-3 text-destructive hover:text-destructive touch-manipulation"
+                  className="text-[13px] sm:text-[11px] h-11 sm:h-9 px-4 sm:px-3 text-destructive hover:text-destructive touch-manipulation"
                   onClick={() => deleteWorkflowMutation.mutate(workflow.id)}
                   data-testid={`delete-workflow-${workflow.id}`}
                 >
@@ -554,7 +554,7 @@ export default function Workflows({ onBack, embedded = false, projectId }: Workf
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => setCreateDialogOpen(true)} className="min-h-[44px] text-sm">
+            <DropdownMenuItem onClick={() => setCreateDialogOpen(true)} className="min-h-[44px] text-[13px]">
               <Plus className="w-4 h-4 mr-2" />
               New Workflow
             </DropdownMenuItem>
@@ -570,13 +570,13 @@ export default function Workflows({ onBack, embedded = false, projectId }: Workf
             placeholder="Search for a workflow..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 sm:pl-9 h-12 sm:h-10 text-base sm:text-sm"
+            className="pl-10 sm:pl-9 h-12 sm:h-10 text-base sm:text-[13px]"
             data-testid="search-workflows"
           />
         </div>
         <Button 
           onClick={() => setCreateDialogOpen(true)}
-          className="bg-green-500 hover:bg-green-600 text-white shrink-0 h-12 sm:h-10 text-base sm:text-sm px-4 touch-manipulation"
+          className="bg-green-500 hover:bg-green-600 text-white shrink-0 h-12 sm:h-10 text-base sm:text-[13px] px-4 touch-manipulation"
           data-testid="new-workflow-button"
         >
           <Plus className="w-5 h-5 sm:w-4 sm:h-4 mr-2 sm:mr-1" />
@@ -589,7 +589,7 @@ export default function Workflows({ onBack, embedded = false, projectId }: Workf
         href="https://docs.replit.com/replit-workspace/workflows"
         target="_blank"
         rel="noopener noreferrer"
-        className="flex items-center gap-2 sm:gap-1 px-3 sm:px-4 py-4 sm:py-3 text-blue-500 hover:text-blue-600 text-base sm:text-sm font-medium border-b shrink-0 min-h-[52px] sm:min-h-[44px] touch-manipulation"
+        className="flex items-center gap-2 sm:gap-1 px-3 sm:px-4 py-4 sm:py-3 text-blue-500 hover:text-blue-600 text-base sm:text-[13px] font-medium border-b shrink-0 min-h-[52px] sm:min-h-[44px] touch-manipulation"
         data-testid="learn-more-link"
       >
         Learn more about configuring Workflows
@@ -601,7 +601,7 @@ export default function Workflows({ onBack, embedded = false, projectId }: Workf
         {/* Agent Workflows Section */}
         <Collapsible open={agentWorkflowsOpen} onOpenChange={setAgentWorkflowsOpen}>
           <CollapsibleTrigger className="flex items-center justify-between w-full px-3 sm:px-4 py-4 sm:py-3 text-left hover:bg-muted/50 transition-colors min-h-[52px] sm:min-h-[44px] touch-manipulation">
-            <span className="text-base sm:text-sm font-medium">Agent Workflows</span>
+            <span className="text-base sm:text-[13px] font-medium">Agent Workflows</span>
             {agentWorkflowsOpen ? (
               <ChevronDown className="w-6 h-6 sm:w-5 sm:h-5 text-muted-foreground" />
             ) : (
@@ -616,10 +616,10 @@ export default function Workflows({ onBack, embedded = false, projectId }: Workf
                 ))}
               </div>
             ) : (
-              <div className="px-4 py-6 text-center text-muted-foreground text-sm border-t">
+              <div className="px-4 py-6 text-center text-muted-foreground text-[13px] border-t">
                 <Zap className="w-8 h-8 mx-auto mb-2 opacity-50" />
                 <p>No agent workflows yet</p>
-                <p className="text-xs mt-1">Workflows created by AI agents will appear here</p>
+                <p className="text-[11px] mt-1">Workflows created by AI agents will appear here</p>
               </div>
             )}
           </CollapsibleContent>
@@ -629,7 +629,7 @@ export default function Workflows({ onBack, embedded = false, projectId }: Workf
         {userWorkflows.length > 0 && (
           <Collapsible defaultOpen>
             <CollapsibleTrigger className="flex items-center justify-between w-full px-3 sm:px-4 py-4 sm:py-3 text-left hover:bg-muted/50 transition-colors border-t min-h-[52px] sm:min-h-[44px] touch-manipulation">
-              <span className="text-base sm:text-sm font-medium">My Workflows</span>
+              <span className="text-base sm:text-[13px] font-medium">My Workflows</span>
               <ChevronDown className="w-6 h-6 sm:w-5 sm:h-5 text-muted-foreground" />
             </CollapsibleTrigger>
             <CollapsibleContent>
@@ -647,7 +647,7 @@ export default function Workflows({ onBack, embedded = false, projectId }: Workf
           <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
             <Search className="w-12 h-12 text-muted-foreground/50 mb-4" />
             <h3 className="text-base font-medium mb-1">No workflows found</h3>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-[13px] text-muted-foreground">
               Try a different search term or create a new workflow
             </p>
           </div>
@@ -658,13 +658,13 @@ export default function Workflows({ onBack, embedded = false, projectId }: Workf
             <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
               <Play className="w-8 h-8 text-primary" />
             </div>
-            <h3 className="text-lg sm:text-base font-medium mb-1">No workflows yet</h3>
-            <p className="text-base sm:text-sm text-muted-foreground mb-4">
+            <h3 className="text-[15px] sm:text-base font-medium mb-1">No workflows yet</h3>
+            <p className="text-base sm:text-[13px] text-muted-foreground mb-4">
               Create your first workflow to automate tasks
             </p>
             <Button 
               onClick={() => setCreateDialogOpen(true)}
-              className="bg-green-500 hover:bg-green-600 text-white h-12 sm:h-10 text-base sm:text-sm px-6 sm:px-4 touch-manipulation"
+              className="bg-green-500 hover:bg-green-600 text-white h-12 sm:h-10 text-base sm:text-[13px] px-6 sm:px-4 touch-manipulation"
               data-testid="create-first-workflow"
             >
               <Plus className="w-5 h-5 sm:w-4 sm:h-4 mr-2 sm:mr-1" />
@@ -685,18 +685,18 @@ export default function Workflows({ onBack, embedded = false, projectId }: Workf
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-3 sm:space-y-2">
-              <Label htmlFor="name" className="text-base sm:text-sm">Workflow Name</Label>
+              <Label htmlFor="name" className="text-base sm:text-[13px]">Workflow Name</Label>
               <Input
                 id="name"
                 value={newWorkflow.name}
                 onChange={(e) => setNewWorkflow({ ...newWorkflow, name: e.target.value })}
                 placeholder="My Workflow"
-                className="h-12 sm:h-10 text-base sm:text-sm"
+                className="h-12 sm:h-10 text-base sm:text-[13px]"
                 data-testid="workflow-name-input"
               />
             </div>
             <div className="space-y-3 sm:space-y-2">
-              <Label className="text-base sm:text-sm">Execution Mode</Label>
+              <Label className="text-base sm:text-[13px]">Execution Mode</Label>
               <ToggleGroup
                 type="single"
                 value={newWorkflow.executionMode}
@@ -707,14 +707,14 @@ export default function Workflows({ onBack, embedded = false, projectId }: Workf
                 }}
                 className="justify-start"
               >
-                <ToggleGroupItem value="sequential" className="text-sm sm:text-xs px-4 sm:px-3 h-11 sm:h-9 touch-manipulation">
+                <ToggleGroupItem value="sequential" className="text-[13px] sm:text-[11px] px-4 sm:px-3 h-11 sm:h-9 touch-manipulation">
                   Sequential
                 </ToggleGroupItem>
-                <ToggleGroupItem value="parallel" className="text-sm sm:text-xs px-4 sm:px-3 h-11 sm:h-9 touch-manipulation">
+                <ToggleGroupItem value="parallel" className="text-[13px] sm:text-[11px] px-4 sm:px-3 h-11 sm:h-9 touch-manipulation">
                   Parallel
                 </ToggleGroupItem>
               </ToggleGroup>
-              <p className="text-sm sm:text-xs text-muted-foreground">
+              <p className="text-[13px] sm:text-[11px] text-muted-foreground">
                 {newWorkflow.executionMode === 'sequential' 
                   ? 'Tasks run one after another, stopping if any task fails'
                   : 'All tasks run at the same time, independently'}
@@ -725,14 +725,14 @@ export default function Workflows({ onBack, embedded = false, projectId }: Workf
             <Button 
               variant="outline" 
               onClick={() => setCreateDialogOpen(false)}
-              className="w-full sm:w-auto h-12 sm:h-10 text-base sm:text-sm touch-manipulation"
+              className="w-full sm:w-auto h-12 sm:h-10 text-base sm:text-[13px] touch-manipulation"
             >
               Cancel
             </Button>
             <Button 
               onClick={() => createWorkflowMutation.mutate(newWorkflow)}
               disabled={!newWorkflow.name || createWorkflowMutation.isPending}
-              className="w-full sm:w-auto bg-green-500 hover:bg-green-600 text-white h-12 sm:h-10 text-base sm:text-sm touch-manipulation"
+              className="w-full sm:w-auto bg-green-500 hover:bg-green-600 text-white h-12 sm:h-10 text-base sm:text-[13px] touch-manipulation"
               data-testid="create-workflow-submit"
             >
               Create Workflow

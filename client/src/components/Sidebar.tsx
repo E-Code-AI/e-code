@@ -73,7 +73,7 @@ const Sidebar = () => {
           </Tooltip>
         </TooltipProvider>
         
-        <div className="mt-4 w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center text-white font-medium text-sm">
+        <div className="mt-4 w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center text-white font-medium text-[13px]">
           JS
         </div>
       </div>

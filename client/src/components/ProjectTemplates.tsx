@@ -263,7 +263,7 @@ export function ProjectTemplates({ onSelectTemplate, showCreateButton = true }: 
                     variant={selectedCategory === category.id ? 'default' : 'outline'}
                     size="sm"
                     onClick={() => setSelectedCategory(category.id)}
-                    className="flex items-center gap-1.5 sm:gap-2 whitespace-nowrap h-8 sm:h-9 px-3 text-xs sm:text-sm"
+                    className="flex items-center gap-1.5 sm:gap-2 whitespace-nowrap h-8 sm:h-9 px-3 text-[11px] sm:text-[13px]"
                   >
                     <category.icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                     <span className="hidden sm:inline">{category.name}</span>
@@ -296,14 +296,14 @@ export function ProjectTemplates({ onSelectTemplate, showCreateButton = true }: 
                     </div>
                     <div className="flex items-center gap-1 sm:gap-2">
                       {template.isFeatured && (
-                        <Badge variant="secondary" className="text-[10px] sm:text-xs">
+                        <Badge variant="secondary" className="text-[10px] sm:text-[11px]">
                           <Star className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5 sm:mr-1" />
                           <span className="hidden sm:inline">Featured</span>
                           <span className="sm:hidden">★</span>
                         </Badge>
                       )}
                       {template.isOfficial && (
-                        <Badge variant="secondary" className="text-[10px] sm:text-xs">
+                        <Badge variant="secondary" className="text-[10px] sm:text-[11px]">
                           <Shield className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5 sm:mr-1" />
                           <span className="hidden sm:inline">Official</span>
                           <span className="sm:hidden">✓</span>
@@ -311,14 +311,14 @@ export function ProjectTemplates({ onSelectTemplate, showCreateButton = true }: 
                       )}
                     </div>
                   </div>
-                  <CardTitle className="text-base sm:text-lg line-clamp-1">{template.name}</CardTitle>
-                  <CardDescription className="line-clamp-2 text-xs sm:text-sm mt-1">
+                  <CardTitle className="text-base sm:text-[15px] line-clamp-1">{template.name}</CardTitle>
+                  <CardDescription className="line-clamp-2 text-[11px] sm:text-[13px] mt-1">
                     {template.description}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="px-4 pb-4 sm:px-6 sm:pb-6 -mt-2">
                   <div className="space-y-3">
-                    <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-[11px] sm:text-[13px] text-muted-foreground">
                       <span className="flex items-center">
                         <Code className="h-3 w-3 mr-1" />
                         {template.language}
@@ -337,12 +337,12 @@ export function ProjectTemplates({ onSelectTemplate, showCreateButton = true }: 
                     
                     <div className="flex flex-wrap gap-1">
                       {template.tags.slice(0, 3).map(tag => (
-                        <Badge key={tag} variant="outline" className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0 sm:py-0.5">
+                        <Badge key={tag} variant="outline" className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0 sm:py-0.5">
                           {tag}
                         </Badge>
                       ))}
                       {template.tags.length > 3 && (
-                        <Badge variant="outline" className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0 sm:py-0.5">
+                        <Badge variant="outline" className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0 sm:py-0.5">
                           +{template.tags.length - 3}
                         </Badge>
                       )}
@@ -351,7 +351,7 @@ export function ProjectTemplates({ onSelectTemplate, showCreateButton = true }: 
                     <Separator />
 
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
+                      <div className="flex items-center gap-3 sm:gap-4 text-[11px] sm:text-[13px] text-muted-foreground">
                         <span className="flex items-center">
                           <Users className="h-3 w-3 mr-1" />
                           {template.stats.uses > 999 ? `${(template.stats.uses/1000).toFixed(1)}k` : template.stats.uses}
@@ -368,7 +368,7 @@ export function ProjectTemplates({ onSelectTemplate, showCreateButton = true }: 
                             {template.author.name.slice(0, 2).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
-                        <span className="text-[10px] sm:text-xs text-muted-foreground hidden sm:inline">
+                        <span className="text-[10px] sm:text-[11px] text-muted-foreground hidden sm:inline">
                           {template.author.name}
                         </span>
                         {template.author.verified && (
@@ -381,7 +381,7 @@ export function ProjectTemplates({ onSelectTemplate, showCreateButton = true }: 
                 {showCreateButton && (
                   <CardFooter className="p-4 sm:p-6 pt-0 sm:pt-0">
                     <Button 
-                      className="w-full h-8 sm:h-9 text-xs sm:text-sm"
+                      className="w-full h-8 sm:h-9 text-[11px] sm:text-[13px]"
                       onClick={(e) => {
                         e.stopPropagation();
                         createProjectMutation.mutate({ template, name: `My ${template.name}` });
@@ -416,10 +416,10 @@ export function ProjectTemplates({ onSelectTemplate, showCreateButton = true }: 
                             <Shield className="h-4 w-4 text-primary shrink-0" />
                           )}
                         </div>
-                        <p className="text-sm text-muted-foreground line-clamp-1">
+                        <p className="text-[13px] text-muted-foreground line-clamp-1">
                           {template.description}
                         </p>
-                        <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-4 mt-2 text-[11px] text-muted-foreground">
                           <span>{template.language}</span>
                           <span className={getDifficultyColor(template.difficulty)}>
                             {template.difficulty}
@@ -453,7 +453,7 @@ export function ProjectTemplates({ onSelectTemplate, showCreateButton = true }: 
         {filteredTemplates.length === 0 && (
           <div className="text-center py-12">
             <Package className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-            <h3 className="text-lg font-semibold mb-2">No templates found</h3>
+            <h3 className="text-[15px] font-semibold mb-2">No templates found</h3>
             <p className="text-muted-foreground">
               Try adjusting your search or filters
             </p>
@@ -492,14 +492,14 @@ export function ProjectTemplates({ onSelectTemplate, showCreateButton = true }: 
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="font-medium text-sm">{selectedTemplate.author.name}</p>
-                    <p className="text-xs text-muted-foreground">Template author</p>
+                    <p className="font-medium text-[13px]">{selectedTemplate.author.name}</p>
+                    <p className="text-[11px] text-muted-foreground">Template author</p>
                   </div>
                   {selectedTemplate.author.verified && (
                     <Shield className="h-4 w-4 text-primary" />
                   )}
                 </div>
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                <div className="flex items-center gap-4 text-[13px] text-muted-foreground">
                   <span className="flex items-center">
                     <Users className="h-4 w-4 mr-1" />
                     {selectedTemplate.stats.uses.toLocaleString()} uses
@@ -522,7 +522,7 @@ export function ProjectTemplates({ onSelectTemplate, showCreateButton = true }: 
                 <div className="space-y-4">
                   <div>
                     <h4 className="font-semibold mb-2">Technical Details</h4>
-                    <div className="space-y-2 text-sm">
+                    <div className="space-y-2 text-[13px]">
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Language</span>
                         <span>{selectedTemplate.language}</span>
@@ -550,7 +550,7 @@ export function ProjectTemplates({ onSelectTemplate, showCreateButton = true }: 
                     <h4 className="font-semibold mb-2">Tags</h4>
                     <div className="flex flex-wrap gap-1">
                       {selectedTemplate.tags.map(tag => (
-                        <Badge key={tag} variant="secondary" className="text-xs">
+                        <Badge key={tag} variant="secondary" className="text-[11px]">
                           {tag}
                         </Badge>
                       ))}
@@ -562,7 +562,7 @@ export function ProjectTemplates({ onSelectTemplate, showCreateButton = true }: 
                   <h4 className="font-semibold mb-2">Features</h4>
                   <ul className="space-y-1">
                     {selectedTemplate.features.map((feature, index) => (
-                      <li key={index} className="flex items-start text-sm">
+                      <li key={index} className="flex items-start text-[13px]">
                         <CheckCircle className="h-4 w-4 mr-2 text-green-500 shrink-0 mt-0.5" />
                         <span>{feature}</span>
                       </li>
@@ -634,8 +634,8 @@ export function ProjectTemplates({ onSelectTemplate, showCreateButton = true }: 
                   {React.cloneElement(selectedTemplate.icon as React.ReactElement, { className: 'h-5 w-5' })}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{selectedTemplate.name}</p>
-                  <p className="text-xs text-muted-foreground">{selectedTemplate.language}</p>
+                  <p className="text-[13px] font-medium truncate">{selectedTemplate.name}</p>
+                  <p className="text-[11px] text-muted-foreground">{selectedTemplate.language}</p>
                 </div>
               </div>
             </div>

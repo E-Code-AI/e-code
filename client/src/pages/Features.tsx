@@ -236,14 +236,14 @@ export default function Features() {
       <section className="py-12 sm:py-16 md:py-20 px-4 bg-gradient-to-b from-primary/5 to-transparent">
         <div className="container mx-auto max-w-6xl">
           <div className="text-center space-y-4 sm:space-y-6">
-            <Badge variant="secondary" className="mb-2 sm:mb-4 text-xs sm:text-sm">
+            <Badge variant="secondary" className="mb-2 sm:mb-4 text-[11px] sm:text-[13px]">
               <Zap className="h-3 w-3 mr-1" />
               Everything you need in one place
             </Badge>
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold">
               Features that empower developers
             </h1>
-            <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto px-4 sm:px-0">
+            <p className="text-base sm:text-[15px] md:text-xl text-muted-foreground max-w-3xl mx-auto px-4 sm:px-0">
               From writing your first line of code to deploying at scale, 
               E-Code provides all the tools you need in a single platform.
             </p>
@@ -280,7 +280,7 @@ export default function Features() {
                 <TabsTrigger 
                   key={category} 
                   value={category}
-                  className="text-xs sm:text-sm min-h-[44px]"
+                  className="text-[11px] sm:text-[13px] min-h-[44px]"
                   data-testid={`tab-features-${category.toLowerCase()}`}
                 >
                   {category}
@@ -304,13 +304,13 @@ export default function Features() {
                           <div className="p-2 sm:p-3 bg-primary/10 rounded-lg w-fit mb-3 sm:mb-4">
                             {feature.icon}
                           </div>
-                          <CardTitle className="text-base sm:text-lg">{feature.title}</CardTitle>
-                          <CardDescription className="text-xs sm:text-sm">{feature.description}</CardDescription>
+                          <CardTitle className="text-base sm:text-[15px]">{feature.title}</CardTitle>
+                          <CardDescription className="text-[11px] sm:text-[13px]">{feature.description}</CardDescription>
                         </CardHeader>
                         <CardContent className="p-4 sm:p-6 pt-0">
                           <ul className="space-y-1.5 sm:space-y-2">
                             {feature.details.map((detail, i) => (
-                              <li key={i} className="flex items-start gap-2 text-xs sm:text-sm">
+                              <li key={i} className="flex items-start gap-2 text-[11px] sm:text-[13px]">
                                 <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
                                 <span>{detail}</span>
                               </li>
@@ -338,7 +338,7 @@ export default function Features() {
               <h2 className="text-3xl font-bold mb-4">
                 Everything works together seamlessly
               </h2>
-              <p className="text-lg text-muted-foreground mb-6">
+              <p className="text-[15px] text-muted-foreground mb-6">
                 Our integrated platform means you spend less time configuring and more time building. 
                 Everything from development to deployment is designed to work together perfectly.
               </p>
@@ -349,7 +349,7 @@ export default function Features() {
                   </div>
                   <div>
                     <h3 className="font-semibold" data-testid="text-feature-overview-environments">Instant Environments</h3>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-[13px] text-muted-foreground">
                       Spin up development environments in seconds, not hours
                     </p>
                   </div>
@@ -360,7 +360,7 @@ export default function Features() {
                   </div>
                   <div>
                     <h3 className="font-semibold" data-testid="text-feature-overview-ecosystem">Connected Ecosystem</h3>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-[13px] text-muted-foreground">
                       All tools and services work together out of the box
                     </p>
                   </div>
@@ -371,7 +371,7 @@ export default function Features() {
                   </div>
                   <div>
                     <h3 className="font-semibold" data-testid="text-feature-overview-config">Zero Configuration</h3>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-[13px] text-muted-foreground">
                       Focus on coding, we handle the infrastructure
                     </p>
                   </div>
@@ -387,21 +387,21 @@ export default function Features() {
                       <Code className="h-8 w-8 text-primary" />
                       <div>
                         <p className="font-semibold">Write Code</p>
-                        <p className="text-sm text-muted-foreground">In any language</p>
+                        <p className="text-[13px] text-muted-foreground">In any language</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-4 p-4 bg-muted rounded-lg">
                       <Users className="h-8 w-8 text-primary" />
                       <div>
                         <p className="font-semibold">Collaborate</p>
-                        <p className="text-sm text-muted-foreground">In real-time</p>
+                        <p className="text-[13px] text-muted-foreground">In real-time</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-4 p-4 bg-muted rounded-lg">
                       <Rocket className="h-8 w-8 text-primary" />
                       <div>
                         <p className="font-semibold">Deploy</p>
-                        <p className="text-sm text-muted-foreground">With one click</p>
+                        <p className="text-[13px] text-muted-foreground">With one click</p>
                       </div>
                     </div>
                   </div>
@@ -418,7 +418,7 @@ export default function Features() {
           <h2 className="text-3xl font-bold mb-4">
             Experience the future of development
           </h2>
-          <p className="text-lg text-muted-foreground mb-8">
+          <p className="text-[15px] text-muted-foreground mb-8">
             Join developers worldwide who are building faster with E-Code
           </p>
           <div className="flex gap-4 justify-center">

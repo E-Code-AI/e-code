@@ -146,11 +146,11 @@ export function ReplitMinimap({
       {/* Hover overlay with line numbers */}
       {isHovering && (
         <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
-          <div className="absolute top-2 left-1 text-xs text-[var(--ecode-text-secondary)]">
+          <div className="absolute top-2 left-1 text-[11px] text-[var(--ecode-text-secondary)]">
             {lines.length} lines
           </div>
           {currentLine && (
-            <div className="absolute bottom-2 left-1 text-xs text-[var(--ecode-accent)]">
+            <div className="absolute bottom-2 left-1 text-[11px] text-[var(--ecode-accent)]">
               Line {currentLine}
             </div>
           )}

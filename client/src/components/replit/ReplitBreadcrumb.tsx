@@ -91,7 +91,7 @@ export function ReplitBreadcrumb({
 
   return (
     <div className={cn(
-      "flex items-center h-8 px-3 bg-[var(--ecode-surface)] border-b border-[var(--ecode-border)] text-sm",
+      "flex items-center h-8 px-3 bg-[var(--ecode-surface)] border-b border-[var(--ecode-border)] text-[13px]",
       className
     )}>
       <div className="flex items-center min-w-0 flex-1">

@@ -64,8 +64,8 @@ export default function LandingTemplates({ templates, isLoading }: LandingTempla
                         <IconComponent className="h-5 w-5 text-ecode-accent" />
                       </div>
                       <div>
-                        <CardTitle className="text-lg">{template.name}</CardTitle>
-                        <Badge variant="secondary" className="text-xs mt-1">{template.category}</Badge>
+                        <CardTitle className="text-[15px]">{template.name}</CardTitle>
+                        <Badge variant="secondary" className="text-[11px] mt-1">{template.category}</Badge>
                       </div>
                     </div>
                   </CardHeader>

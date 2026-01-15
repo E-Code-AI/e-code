@@ -209,8 +209,8 @@ export function GlobalSearch({ isOpen, onClose, projectId, onFileSelect }: Globa
             {getFileIcon(result.name)}
             <div className="flex-1">
               <div className="flex items-center space-x-2">
-                <span className="font-medium text-sm">{result.name}</span>
-                <span className="text-xs text-muted-foreground">{result.path}</span>
+                <span className="font-medium text-[13px]">{result.name}</span>
+                <span className="text-[11px] text-muted-foreground">{result.path}</span>
               </div>
               
               {result.matches.length > 0 && (
@@ -218,7 +218,7 @@ export function GlobalSearch({ isOpen, onClose, projectId, onFileSelect }: Globa
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-6 px-2 text-xs"
+                    className="h-6 px-2 text-[11px]"
                     onClick={(e) => {
                       e.stopPropagation();
                       toggleResultExpanded(result.id);
@@ -236,12 +236,12 @@ export function GlobalSearch({ isOpen, onClose, projectId, onFileSelect }: Globa
                 <div className="mt-2 space-y-2">
                   {result.matches.map((match, matchIndex) => (
                     <div key={matchIndex} className="pl-4 border-l-2 border-muted">
-                      <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+                      <div className="flex items-center space-x-2 text-[11px] text-muted-foreground">
                         <span>Line {match.line}</span>
                         <span>•</span>
                         <span>Column {match.column}</span>
                       </div>
-                      <pre className="text-xs mt-1 p-2 bg-muted rounded overflow-x-auto">
+                      <pre className="text-[11px] mt-1 p-2 bg-muted rounded overflow-x-auto">
                         <code>{match.context}</code>
                       </pre>
                     </div>
@@ -252,7 +252,7 @@ export function GlobalSearch({ isOpen, onClose, projectId, onFileSelect }: Globa
           </div>
           
           {result.language && (
-            <Badge variant="secondary" className="text-xs">
+            <Badge variant="secondary" className="text-[11px]">
               {result.language}
             </Badge>
           )}
@@ -310,7 +310,7 @@ export function GlobalSearch({ isOpen, onClose, projectId, onFileSelect }: Globa
                     setFilters({ ...filters, caseSensitive: !!checked })
                   }
                 />
-                <Label htmlFor="case-sensitive" className="text-xs">
+                <Label htmlFor="case-sensitive" className="text-[11px]">
                   Case sensitive
                 </Label>
               </div>
@@ -323,7 +323,7 @@ export function GlobalSearch({ isOpen, onClose, projectId, onFileSelect }: Globa
                     setFilters({ ...filters, wholeWord: !!checked })
                   }
                 />
-                <Label htmlFor="whole-word" className="text-xs">
+                <Label htmlFor="whole-word" className="text-[11px]">
                   Whole word
                 </Label>
               </div>
@@ -336,7 +336,7 @@ export function GlobalSearch({ isOpen, onClose, projectId, onFileSelect }: Globa
                     setFilters({ ...filters, useRegex: !!checked })
                   }
                 />
-                <Label htmlFor="use-regex" className="text-xs">
+                <Label htmlFor="use-regex" className="text-[11px]">
                   Regex
                 </Label>
               </div>
@@ -352,7 +352,7 @@ export function GlobalSearch({ isOpen, onClose, projectId, onFileSelect }: Globa
           <ScrollArea className="flex-1 p-4">
             {!searchQuery && recentSearches.length > 0 && (
               <div className="mb-6">
-                <h3 className="text-sm font-medium mb-3 flex items-center">
+                <h3 className="text-[13px] font-medium mb-3 flex items-center">
                   <Clock className="h-4 w-4 mr-2" />
                   Recent Searches
                 </h3>
@@ -377,7 +377,7 @@ export function GlobalSearch({ isOpen, onClose, projectId, onFileSelect }: Globa
               <div className="flex items-center justify-center py-8">
                 <div className="text-center">
                   <ECodeSpinner size={32} className="mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground">Searching...</p>
+                  <p className="text-[13px] text-muted-foreground">Searching...</p>
                 </div>
               </div>
             )}
@@ -386,8 +386,8 @@ export function GlobalSearch({ isOpen, onClose, projectId, onFileSelect }: Globa
               <div className="flex items-center justify-center py-8">
                 <div className="text-center">
                   <Search className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm text-muted-foreground">No results found</p>
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="text-[13px] text-muted-foreground">No results found</p>
+                  <p className="text-[11px] text-muted-foreground mt-1">
                     Try adjusting your search query or filters
                   </p>
                 </div>
@@ -403,7 +403,7 @@ export function GlobalSearch({ isOpen, onClose, projectId, onFileSelect }: Globa
 
           {/* Search Footer */}
           {results.length > 0 && (
-            <div className="px-4 py-2 border-t bg-muted text-xs text-muted-foreground">
+            <div className="px-4 py-2 border-t bg-muted text-[11px] text-muted-foreground">
               <div className="flex items-center justify-between">
                 <span>{results.length} results found</span>
                 <div className="flex items-center space-x-4">

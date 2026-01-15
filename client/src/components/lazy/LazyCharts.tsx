@@ -19,7 +19,7 @@ function ChartFallback({ height = '300px', width = '100%' }: ChartFallbackProps)
     >
       <BarChart3 className="h-8 w-8 text-muted-foreground mb-2" />
       <Loader2 className="h-5 w-5 animate-spin text-muted-foreground mb-2" />
-      <span className="text-sm text-muted-foreground">Loading chart...</span>
+      <span className="text-[13px] text-muted-foreground">Loading chart...</span>
     </div>
   );
 }

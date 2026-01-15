@@ -166,8 +166,8 @@ export function VideoReplayPlayer({
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2 bg-gray-900">
         <div className="flex items-center gap-3">
-          <h3 className="text-sm font-medium text-white">{testName}</h3>
-          <Badge className={cn("text-xs", statusColors[testStatus])}>
+          <h3 className="text-[13px] font-medium text-white">{testName}</h3>
+          <Badge className={cn("text-[11px]", statusColors[testStatus])}>
             {testStatus === 'passed' && <CheckCircle2 className="h-3 w-3 mr-1" />}
             {testStatus === 'failed' && <XCircle className="h-3 w-3 mr-1" />}
             {testStatus === 'running' && <Loader2 className="h-3 w-3 mr-1 animate-spin" />}
@@ -210,8 +210,8 @@ export function VideoReplayPlayer({
           ) : (
             <div className="text-center text-gray-500 p-8">
               <AlertCircle className="h-12 w-12 mx-auto mb-3 opacity-50" />
-              <p className="text-sm">No video recording available</p>
-              <p className="text-xs mt-1">Screenshots will be shown instead</p>
+              <p className="text-[13px]">No video recording available</p>
+              <p className="text-[11px] mt-1">Screenshots will be shown instead</p>
             </div>
           )}
 
@@ -231,7 +231,7 @@ export function VideoReplayPlayer({
         {/* Steps Timeline */}
         <div className="w-64 bg-gray-900 border-l border-gray-800 flex flex-col">
           <div className="px-3 py-2 border-b border-gray-800">
-            <div className="flex items-center gap-2 text-xs text-gray-400">
+            <div className="flex items-center gap-2 text-[11px] text-gray-400">
               <Clock className="h-3 w-3" />
               <span>Test Steps</span>
               <Badge variant="secondary" className="text-[10px] ml-auto">
@@ -247,7 +247,7 @@ export function VideoReplayPlayer({
                   key={step.id}
                   onClick={() => jumpToStep(step)}
                   className={cn(
-                    "w-full text-left p-2 rounded-md transition-colors text-xs",
+                    "w-full text-left p-2 rounded-md transition-colors text-[11px]",
                     activeStep === step.id
                       ? "bg-blue-600/20 border border-blue-500/50"
                       : "hover:bg-gray-800"
@@ -355,7 +355,7 @@ export function VideoReplayPlayer({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-8 px-2 text-xs text-gray-400 hover:text-white"
+                  className="h-8 px-2 text-[11px] text-gray-400 hover:text-white"
                   data-testid="button-speed"
                 >
                   {playbackSpeed}x
@@ -368,7 +368,7 @@ export function VideoReplayPlayer({
                     key={speed}
                     onClick={() => changeSpeed(speed)}
                     className={cn(
-                      "text-xs",
+                      "text-[11px]",
                       playbackSpeed === speed && "bg-accent"
                     )}
                   >

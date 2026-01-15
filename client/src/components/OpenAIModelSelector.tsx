@@ -104,7 +104,7 @@ export function OpenAIModelSelector({
     <div className="space-y-4">
       {/* Model Selector */}
       <div>
-        <label className="text-sm font-medium mb-2 block">AI Model</label>
+        <label className="text-[13px] font-medium mb-2 block">AI Model</label>
         <Select value={localSelectedModel} onValueChange={handleModelChange}>
           <SelectTrigger className="w-full">
             <SelectValue>
@@ -121,7 +121,7 @@ export function OpenAIModelSelector({
                   {getModelIcon(model.id)}
                   <div>
                     <div className="font-medium">{model.name}</div>
-                    <div className="text-xs text-gray-500">
+                    <div className="text-[11px] text-gray-500">
                       {model.contextWindow.toLocaleString()} tokens
                     </div>
                   </div>
@@ -141,7 +141,7 @@ export function OpenAIModelSelector({
               <h3 className="font-semibold">{selectedModelData.name}</h3>
             </div>
             {selectedPricing && (
-              <div className="text-sm text-gray-600">
+              <div className="text-[13px] text-gray-600">
                 <span className="font-medium">{selectedPricing.creditsPerThousand}</span> credits/1K tokens
               </div>
             )}
@@ -149,7 +149,7 @@ export function OpenAIModelSelector({
           
           {/* Capabilities */}
           <div>
-            <p className="text-sm text-gray-600 mb-2">Capabilities:</p>
+            <p className="text-[13px] text-gray-600 mb-2">Capabilities:</p>
             <div className="flex flex-wrap gap-1">
               {selectedModelData.capabilities.map(cap => getCapabilityBadge(cap))}
             </div>
@@ -158,11 +158,11 @@ export function OpenAIModelSelector({
           {/* Technical Details */}
           <div className="grid grid-cols-2 gap-4 pt-2 border-t">
             <div>
-              <p className="text-xs text-gray-500">Context Window</p>
+              <p className="text-[11px] text-gray-500">Context Window</p>
               <p className="font-medium">{selectedModelData.contextWindow.toLocaleString()} tokens</p>
             </div>
             <div>
-              <p className="text-xs text-gray-500">Max Output</p>
+              <p className="text-[11px] text-gray-500">Max Output</p>
               <p className="font-medium">{selectedModelData.maxOutput.toLocaleString()} tokens</p>
             </div>
           </div>
@@ -171,11 +171,11 @@ export function OpenAIModelSelector({
           {selectedPricing && (
             <div className="grid grid-cols-2 gap-4 pt-2 border-t">
               <div>
-                <p className="text-xs text-gray-500">Input Cost</p>
+                <p className="text-[11px] text-gray-500">Input Cost</p>
                 <p className="font-medium">{formatPrice(selectedPricing.input)}/1M tokens</p>
               </div>
               <div>
-                <p className="text-xs text-gray-500">Output Cost</p>
+                <p className="text-[11px] text-gray-500">Output Cost</p>
                 <p className="font-medium">{formatPrice(selectedPricing.output)}/1M tokens</p>
               </div>
             </div>
@@ -186,9 +186,9 @@ export function OpenAIModelSelector({
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
               <div className="flex items-center gap-2 text-amber-800">
                 <Brain className="h-4 w-4" />
-                <span className="text-sm font-medium">Advanced Reasoning Model</span>
+                <span className="text-[13px] font-medium">Advanced Reasoning Model</span>
               </div>
-              <p className="text-xs text-amber-700 mt-1">
+              <p className="text-[11px] text-amber-700 mt-1">
                 This model uses chain-of-thought reasoning for complex problems
               </p>
             </div>
@@ -198,9 +198,9 @@ export function OpenAIModelSelector({
             <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
               <div className="flex items-center gap-2 text-purple-800">
                 <Eye className="h-4 w-4" />
-                <span className="text-sm font-medium">Vision Capabilities</span>
+                <span className="text-[13px] font-medium">Vision Capabilities</span>
               </div>
-              <p className="text-xs text-purple-700 mt-1">
+              <p className="text-[11px] text-purple-700 mt-1">
                 Can analyze and understand images in addition to text
               </p>
             </div>

@@ -384,12 +384,12 @@ export function EnterpriseSSO() {
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">SSO Providers</CardTitle>
+            <CardTitle className="text-[13px] font-medium">SSO Providers</CardTitle>
             <Building className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{enterpriseStats.totalProviders}</div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[11px] text-muted-foreground">
               {enterpriseStats.enabledProviders} enabled
             </p>
           </CardContent>
@@ -397,12 +397,12 @@ export function EnterpriseSSO() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">SCIM Users</CardTitle>
+            <CardTitle className="text-[13px] font-medium">SCIM Users</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{enterpriseStats.totalUsers}</div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[11px] text-muted-foreground">
               {enterpriseStats.activeUsers} active
             </p>
           </CardContent>
@@ -410,12 +410,12 @@ export function EnterpriseSSO() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Groups</CardTitle>
+            <CardTitle className="text-[13px] font-medium">Groups</CardTitle>
             <UserCheck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{enterpriseStats.totalGroups}</div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[11px] text-muted-foreground">
               Group-based access control
             </p>
           </CardContent>
@@ -423,12 +423,12 @@ export function EnterpriseSSO() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Security Score</CardTitle>
+            <CardTitle className="text-[13px] font-medium">Security Score</CardTitle>
             <CheckCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{ssoHealthData?.securityScore ?? '--'}%</div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[11px] text-muted-foreground">
               Enterprise security compliance
             </p>
           </CardContent>
@@ -436,12 +436,12 @@ export function EnterpriseSSO() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Uptime</CardTitle>
+            <CardTitle className="text-[13px] font-medium">Uptime</CardTitle>
             <Globe className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{ssoHealthData?.uptime ?? '--'}%</div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[11px] text-muted-foreground">
               SSO service availability
             </p>
           </CardContent>
@@ -493,7 +493,7 @@ export function EnterpriseSSO() {
                               {provider.enabled ? 'Enabled' : 'Disabled'}
                             </Badge>
                           </div>
-                          <div className="text-sm text-muted-foreground">
+                          <div className="text-[13px] text-muted-foreground">
                             {provider.type.toUpperCase()} • {provider.domain} • {provider.usersCount} users
                           </div>
                         </div>
@@ -557,16 +557,16 @@ export function EnterpriseSSO() {
                               {user.active ? 'Active' : 'Inactive'}
                             </Badge>
                           </div>
-                          <div className="text-sm text-muted-foreground">
+                          <div className="text-[13px] text-muted-foreground">
                             {user.emails.find(e => e.primary)?.value || user.emails[0]?.value}
                           </div>
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-sm font-medium">
+                        <div className="text-[13px] font-medium">
                           {user.groups.length} groups
                         </div>
-                        <div className="text-xs text-muted-foreground">
+                        <div className="text-[11px] text-muted-foreground">
                           Created: {new Date(user.meta.created).toLocaleDateString()}
                         </div>
                       </div>
@@ -607,16 +607,16 @@ export function EnterpriseSSO() {
                         </div>
                         <div>
                           <div className="font-medium">{group.displayName}</div>
-                          <div className="text-sm text-muted-foreground">
+                          <div className="text-[13px] text-muted-foreground">
                             {group.members.length} members
                           </div>
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-xs text-muted-foreground">
+                        <div className="text-[11px] text-muted-foreground">
                           Created: {new Date(group.meta.created).toLocaleDateString()}
                         </div>
-                        <div className="text-xs text-muted-foreground">
+                        <div className="text-[11px] text-muted-foreground">
                           Modified: {new Date(group.meta.lastModified).toLocaleDateString()}
                         </div>
                       </div>
@@ -643,7 +643,7 @@ export function EnterpriseSSO() {
                 <div className="flex items-center justify-between">
                   <div>
                     <Label>Force SAML Authentication</Label>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-[13px] text-muted-foreground">
                       Require all users to authenticate via SSO
                     </p>
                   </div>
@@ -653,7 +653,7 @@ export function EnterpriseSSO() {
                 <div className="flex items-center justify-between">
                   <div>
                     <Label>Auto-provision Users</Label>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-[13px] text-muted-foreground">
                       Automatically create accounts for new SSO users
                     </p>
                   </div>
@@ -663,7 +663,7 @@ export function EnterpriseSSO() {
                 <div className="flex items-center justify-between">
                   <div>
                     <Label>Just-in-Time Provisioning</Label>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-[13px] text-muted-foreground">
                       Create user accounts during first login
                     </p>
                   </div>
@@ -673,7 +673,7 @@ export function EnterpriseSSO() {
                 <div className="flex items-center justify-between">
                   <div>
                     <Label>Enforce Group Membership</Label>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-[13px] text-muted-foreground">
                       Restrict access based on SSO group membership
                     </p>
                   </div>
@@ -696,7 +696,7 @@ export function EnterpriseSSO() {
                   <Input
                     value="https://e-code.ai/scim/v2"
                     readOnly
-                    className="font-mono text-sm"
+                    className="font-mono text-[13px]"
                   />
                 </div>
 
@@ -707,7 +707,7 @@ export function EnterpriseSSO() {
                       type={showSecrets.scimToken ? 'text' : 'password'}
                       value="scim_token_1a2b3c4d5e6f7g8h9i0j"
                       readOnly
-                      className="font-mono text-sm"
+                      className="font-mono text-[13px]"
                     />
                     <Button
                       variant="outline"
@@ -723,8 +723,8 @@ export function EnterpriseSSO() {
                 </div>
 
                 <div className="p-3 bg-gray-50 rounded-lg">
-                  <div className="text-sm font-medium mb-2">Supported Endpoints:</div>
-                  <div className="text-xs text-muted-foreground space-y-1">
+                  <div className="text-[13px] font-medium mb-2">Supported Endpoints:</div>
+                  <div className="text-[11px] text-muted-foreground space-y-1">
                     <div>• GET /scim/v2/Users</div>
                     <div>• POST /scim/v2/Users</div>
                     <div>• GET /scim/v2/Groups</div>
@@ -747,7 +747,7 @@ export function EnterpriseSSO() {
             <CardContent>
               <div className="space-y-3">
                 {auditLogsLoading ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">Loading audit logs...</p>
+                  <p className="text-[13px] text-muted-foreground text-center py-4">Loading audit logs...</p>
                 ) : auditLogs && auditLogs.length > 0 ? (
                   auditLogs.slice(0, 5).map((log, index) => (
                     <div key={log.id || index} className="flex items-center justify-between p-3 border rounded-lg">
@@ -757,19 +757,19 @@ export function EnterpriseSSO() {
                           log.status === 'error' ? 'bg-red-500' : 'bg-blue-500'
                         }`} />
                         <div>
-                          <div className="text-sm font-medium">{log.event}</div>
-                          <div className="text-xs text-muted-foreground">
+                          <div className="text-[13px] font-medium">{log.event}</div>
+                          <div className="text-[11px] text-muted-foreground">
                             {log.user} via {log.provider}
                           </div>
                         </div>
                       </div>
-                      <div className="text-xs text-muted-foreground">
+                      <div className="text-[11px] text-muted-foreground">
                         {log.time}
                       </div>
                     </div>
                   ))
                 ) : (
-                  <p className="text-sm text-muted-foreground text-center py-4">No audit log entries</p>
+                  <p className="text-[13px] text-muted-foreground text-center py-4">No audit log entries</p>
                 )}
               </div>
             </CardContent>

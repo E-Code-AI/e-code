@@ -384,11 +384,11 @@ export function ReplitPackageExplorer({ projectId, className }: PackageExplorerP
                       ×
                     </Button>
                   </div>
-                  <p className="text-sm text-muted-foreground mb-2">{selectedPackage.version}</p>
+                  <p className="text-[13px] text-muted-foreground mb-2">{selectedPackage.version}</p>
                   {selectedPackage.description && (
-                    <p className="text-sm mb-3">{selectedPackage.description}</p>
+                    <p className="text-[13px] mb-3">{selectedPackage.description}</p>
                   )}
-                  <div className="space-y-2 text-sm">
+                  <div className="space-y-2 text-[13px]">
                     {selectedPackage.size && (
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Size:</span>
@@ -435,10 +435,10 @@ export function ReplitPackageExplorer({ projectId, className }: PackageExplorerP
                           <div className="flex items-center gap-2">
                             <Package className="h-4 w-4 text-blue-500" />
                             <span className="font-medium">{name}</span>
-                            <Badge variant="secondary" className="text-xs">{pkg.version}</Badge>
+                            <Badge variant="secondary" className="text-[11px]">{pkg.version}</Badge>
                           </div>
                           {pkg.description && (
-                            <p className="text-sm text-muted-foreground mt-1 line-clamp-1">
+                            <p className="text-[13px] text-muted-foreground mt-1 line-clamp-1">
                               {pkg.description}
                             </p>
                           )}
@@ -499,14 +499,14 @@ export function ReplitPackageExplorer({ projectId, className }: PackageExplorerP
                             <div className="flex items-center gap-2">
                               <Package className="h-4 w-4 text-blue-500" />
                               <span className="font-medium">{pkg.name}</span>
-                              <Badge variant="secondary" className="text-xs">{pkg.version}</Badge>
+                              <Badge variant="secondary" className="text-[11px]">{pkg.version}</Badge>
                             </div>
                             {pkg.description && (
-                              <p className="text-sm text-muted-foreground mt-1">
+                              <p className="text-[13px] text-muted-foreground mt-1">
                                 {pkg.description}
                               </p>
                             )}
-                            <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                            <div className="flex items-center gap-4 mt-2 text-[11px] text-muted-foreground">
                               {pkg.downloads && (
                                 <div className="flex items-center gap-1">
                                   <Download className="h-3 w-3" />

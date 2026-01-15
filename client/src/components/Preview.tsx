@@ -596,17 +596,17 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
       {/* Preview header - Enhanced Replit style with responsive design */}
       <div className="flex items-center justify-between p-1.5 sm:p-2 border-b bg-background gap-1 sm:gap-2">
         <div className="flex items-center gap-1 sm:gap-2 min-w-0 flex-shrink">
-          <h3 className="text-xs sm:text-sm font-semibold whitespace-nowrap">Preview</h3>
+          <h3 className="text-[11px] sm:text-[13px] font-semibold whitespace-nowrap">Preview</h3>
           
           {/* Status indicator */}
           {previewStatus.status === 'running' && (
             <div className="flex items-center gap-1">
-              <span className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
+              <span className="flex items-center gap-1 text-[11px] text-green-600 dark:text-green-400">
                 <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-600 dark:bg-green-400 rounded-full animate-pulse" />
                 <span className="hidden xs:inline">Live</span>
               </span>
               {previewStatus.frameworkType && (
-                <Badge variant="secondary" className="text-[10px] sm:text-xs hidden sm:inline-flex">
+                <Badge variant="secondary" className="text-[10px] sm:text-[11px] hidden sm:inline-flex">
                   {previewStatus.frameworkType}
                 </Badge>
               )}
@@ -614,11 +614,11 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
           )}
           
           {previewStatus.status === 'starting' && (
-            <span className="text-[10px] sm:text-xs text-yellow-600 dark:text-yellow-400">Starting...</span>
+            <span className="text-[10px] sm:text-[11px] text-yellow-600 dark:text-yellow-400">Starting...</span>
           )}
           
           {previewStatus.status === 'error' && (
-            <span className="text-[10px] sm:text-xs text-red-600 dark:text-red-400">Error</span>
+            <span className="text-[10px] sm:text-[11px] text-red-600 dark:text-red-400">Error</span>
           )}
           
           {/* WebSocket connection status - hidden on very small screens */}
@@ -639,7 +639,7 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
               onValueChange={(value) => switchPort(parseInt(value))}
               disabled={switchPortMutation.isPending}
             >
-              <SelectTrigger className="h-7 sm:h-8 w-16 sm:w-20 text-xs">
+              <SelectTrigger className="h-7 sm:h-8 w-16 sm:w-20 text-[11px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -653,7 +653,7 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
                         <span className={`w-2 h-2 rounded-full ${isHealthy ? 'bg-green-500' : 'bg-red-500'}`} />
                         <span>{port}</span>
                         {service && (
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-[11px] text-muted-foreground">
                             {service.name}
                           </span>
                         )}
@@ -724,7 +724,7 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
                     {key.includes('mobile') && <Smartphone className="h-4 w-4" />}
                     <span>{preset.label}</span>
                     {preset.width !== '100%' && (
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-[11px] text-muted-foreground">
                         {preset.width} × {preset.height}
                       </span>
                     )}
@@ -844,7 +844,7 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
             <div className="w-full max-w-xs sm:max-w-sm md:max-w-md space-y-3 sm:space-y-4">
               <div className="flex items-center justify-center gap-3 mb-6">
                 <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                <span className="text-sm font-medium">Starting preview server...</span>
+                <span className="text-[13px] font-medium">Starting preview server...</span>
               </div>
               <Skeleton className="h-4 w-3/4" />
               <Skeleton className="h-4 w-full" />
@@ -874,10 +874,10 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
         ) : previewStatus.status !== 'starting' && (
           <div className="flex flex-col items-center justify-center h-full text-center p-4 sm:p-6 md:p-8 lg:p-12">
             <AlertCircle className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 text-muted-foreground mb-3 sm:mb-4" />
-            <h3 className="text-base sm:text-lg md:text-xl font-semibold mb-1.5 sm:mb-2">
+            <h3 className="text-base sm:text-[15px] md:text-xl font-semibold mb-1.5 sm:mb-2">
               {previewStatus.status === 'error' ? 'Preview Error' : 'Preview Server Offline'}
             </h3>
-            <p className="text-xs sm:text-sm md:text-base text-muted-foreground mb-3 sm:mb-4 max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg">
+            <p className="text-[11px] sm:text-[13px] md:text-base text-muted-foreground mb-3 sm:mb-4 max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg">
               {projectId 
                 ? previewStatus.status === 'error'
                   ? "There was an error starting the preview server. Check your project files and try again."
@@ -889,10 +889,10 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
             {/* Service status indicators */}
             {previewStatus.services && previewStatus.services.length > 0 && (
               <div className="mt-3 sm:mt-4 p-2 sm:p-3 bg-muted rounded-md max-w-sm sm:max-w-lg w-full">
-                <h4 className="text-xs sm:text-sm font-medium mb-1.5 sm:mb-2">Available Services:</h4>
+                <h4 className="text-[11px] sm:text-[13px] font-medium mb-1.5 sm:mb-2">Available Services:</h4>
                 <div className="space-y-1">
                   {previewStatus.services.map(service => (
-                    <div key={service.port} className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs">
+                    <div key={service.port} className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-[11px]">
                       <span className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full flex-shrink-0 ${
                         previewStatus.healthChecks?.[service.port] !== false ? 'bg-green-500 dark:bg-green-400' : 'bg-red-500 dark:bg-red-400'
                       }`} />
@@ -909,7 +909,7 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
             
             {/* Framework detection info */}
             {previewStatus.frameworkType && (
-              <div className="mt-1.5 sm:mt-2 text-[10px] sm:text-xs text-muted-foreground">
+              <div className="mt-1.5 sm:mt-2 text-[10px] sm:text-[11px] text-muted-foreground">
                 Detected: {previewStatus.frameworkType} project
               </div>
             )}

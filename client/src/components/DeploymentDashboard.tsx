@@ -193,7 +193,7 @@ export function DeploymentDashboard({ projectId }: DeploymentDashboardProps) {
             <div className="flex items-center gap-2">
               <Activity className="h-5 w-5 text-green-600" />
               <div>
-                <p className="text-sm text-muted-foreground">Active Deployments</p>
+                <p className="text-[13px] text-muted-foreground">Active Deployments</p>
                 <p className="text-2xl font-bold">
                   {deployments.filter(d => d.status === 'active').length}
                 </p>
@@ -207,7 +207,7 @@ export function DeploymentDashboard({ projectId }: DeploymentDashboardProps) {
             <div className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-blue-600" />
               <div>
-                <p className="text-sm text-muted-foreground">Total Requests</p>
+                <p className="text-[13px] text-muted-foreground">Total Requests</p>
                 <p className="text-2xl font-bold">
                   {deployments.reduce((acc, d) => acc + (d.metrics?.requests || 0), 0).toLocaleString()}
                 </p>
@@ -221,7 +221,7 @@ export function DeploymentDashboard({ projectId }: DeploymentDashboardProps) {
             <div className="flex items-center gap-2">
               <Users className="h-5 w-5 text-purple-600" />
               <div>
-                <p className="text-sm text-muted-foreground">Avg Response Time</p>
+                <p className="text-[13px] text-muted-foreground">Avg Response Time</p>
                 <p className="text-2xl font-bold">
                   {Math.round(deployments.reduce((acc, d, _, arr) => 
                     acc + (d.metrics?.responseTime || 0) / arr.length, 0
@@ -237,7 +237,7 @@ export function DeploymentDashboard({ projectId }: DeploymentDashboardProps) {
             <div className="flex items-center gap-2">
               <Shield className="h-5 w-5 text-orange-600" />
               <div>
-                <p className="text-sm text-muted-foreground">Uptime</p>
+                <p className="text-[13px] text-muted-foreground">Uptime</p>
                 <p className="text-2xl font-bold">
                   {deployments.length > 0 
                     ? (deployments.reduce((acc, d) => acc + (d.metrics?.uptime || 0), 0) / deployments.length).toFixed(1)
@@ -267,7 +267,7 @@ export function DeploymentDashboard({ projectId }: DeploymentDashboardProps) {
           ) : deployments.length === 0 ? (
             <div className="text-center py-8">
               <Monitor className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No deployments yet</h3>
+              <h3 className="text-[15px] font-semibold mb-2">No deployments yet</h3>
               <p className="text-muted-foreground mb-4">
                 Create your first deployment to get started
               </p>
@@ -301,7 +301,7 @@ export function DeploymentDashboard({ projectId }: DeploymentDashboardProps) {
                             </Badge>
                           </div>
                           
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-4 text-[13px] text-muted-foreground">
                             <div className="flex items-center gap-1">
                               <MapPin className="h-3 w-3" />
                               {deployment.regions.length} region{deployment.regions.length !== 1 ? 's' : ''}
@@ -348,20 +348,20 @@ export function DeploymentDashboard({ projectId }: DeploymentDashboardProps) {
                       <div className="mt-4 pt-4 border-t">
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                           <div>
-                            <p className="text-xs text-muted-foreground">Requests</p>
-                            <p className="text-lg font-semibold">{deployment.metrics.requests.toLocaleString()}</p>
+                            <p className="text-[11px] text-muted-foreground">Requests</p>
+                            <p className="text-[15px] font-semibold">{deployment.metrics.requests.toLocaleString()}</p>
                           </div>
                           <div>
-                            <p className="text-xs text-muted-foreground">Errors</p>
-                            <p className="text-lg font-semibold text-red-600">{deployment.metrics.errors}</p>
+                            <p className="text-[11px] text-muted-foreground">Errors</p>
+                            <p className="text-[15px] font-semibold text-red-600">{deployment.metrics.errors}</p>
                           </div>
                           <div>
-                            <p className="text-xs text-muted-foreground">Response Time</p>
-                            <p className="text-lg font-semibold">{deployment.metrics.responseTime}ms</p>
+                            <p className="text-[11px] text-muted-foreground">Response Time</p>
+                            <p className="text-[15px] font-semibold">{deployment.metrics.responseTime}ms</p>
                           </div>
                           <div>
-                            <p className="text-xs text-muted-foreground">Uptime</p>
-                            <p className="text-lg font-semibold text-green-600">{deployment.metrics.uptime.toFixed(1)}%</p>
+                            <p className="text-[11px] text-muted-foreground">Uptime</p>
+                            <p className="text-[15px] font-semibold text-green-600">{deployment.metrics.uptime.toFixed(1)}%</p>
                           </div>
                         </div>
                       </div>
@@ -372,7 +372,7 @@ export function DeploymentDashboard({ projectId }: DeploymentDashboardProps) {
                       <div className="mt-4 pt-4 border-t">
                         <div className="flex items-center gap-2 mb-2">
                           <RefreshCw className="h-4 w-4 animate-spin" />
-                          <span className="text-sm">
+                          <span className="text-[13px]">
                             {deployment.status === 'building' ? 'Building application...' : 'Deploying to regions...'}
                           </span>
                         </div>
@@ -414,19 +414,19 @@ export function DeploymentDashboard({ projectId }: DeploymentDashboardProps) {
               <TabsContent value="overview" className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-muted-foreground">Deployment ID</p>
-                    <p className="font-mono text-sm">{selectedDeployment.id}</p>
+                    <p className="text-[13px] text-muted-foreground">Deployment ID</p>
+                    <p className="font-mono text-[13px]">{selectedDeployment.id}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Type</p>
+                    <p className="text-[13px] text-muted-foreground">Type</p>
                     <p className="capitalize">{selectedDeployment.type.replace('-', ' ')}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Environment</p>
+                    <p className="text-[13px] text-muted-foreground">Environment</p>
                     <p className="capitalize">{selectedDeployment.environment}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Regions</p>
+                    <p className="text-[13px] text-muted-foreground">Regions</p>
                     <p>{selectedDeployment.regions.join(', ')}</p>
                   </div>
                 </div>
@@ -437,7 +437,7 @@ export function DeploymentDashboard({ projectId }: DeploymentDashboardProps) {
                       <Lock className="h-4 w-4 text-green-600" />
                       <span className="font-medium text-green-800">SSL Certificate Active</span>
                     </div>
-                    <div className="text-sm text-green-700">
+                    <div className="text-[13px] text-green-700">
                       <p>Provider: {selectedDeployment.sslCertificate.provider}</p>
                       <p>Expires: {new Date(selectedDeployment.sslCertificate.expires).toLocaleDateString()}</p>
                     </div>
@@ -446,7 +446,7 @@ export function DeploymentDashboard({ projectId }: DeploymentDashboardProps) {
               </TabsContent>
               
               <TabsContent value="logs" className="space-y-4">
-                <div className="bg-black text-green-400 p-4 rounded-lg font-mono text-sm max-h-96 overflow-y-auto">
+                <div className="bg-black text-green-400 p-4 rounded-lg font-mono text-[13px] max-h-96 overflow-y-auto">
                   {selectedDeployment.buildLog.map((log, index) => (
                     <div key={index}>{log}</div>
                   ))}
@@ -459,13 +459,13 @@ export function DeploymentDashboard({ projectId }: DeploymentDashboardProps) {
               <TabsContent value="domains" className="space-y-4">
                 <div>
                   <h4 className="font-medium mb-2">Default Domain</h4>
-                  <p className="text-sm text-muted-foreground">{selectedDeployment.url}</p>
+                  <p className="text-[13px] text-muted-foreground">{selectedDeployment.url}</p>
                 </div>
                 
                 {selectedDeployment.customUrl && (
                   <div>
                     <h4 className="font-medium mb-2">Custom Domain</h4>
-                    <p className="text-sm text-muted-foreground">{selectedDeployment.customUrl}</p>
+                    <p className="text-[13px] text-muted-foreground">{selectedDeployment.customUrl}</p>
                   </div>
                 )}
                 

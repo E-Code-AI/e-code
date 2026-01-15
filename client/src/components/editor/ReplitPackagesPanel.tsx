@@ -617,19 +617,19 @@ export function ReplitPackagesPanel({ projectId }: { projectId?: string | number
                 <>
                   <div className="grid grid-cols-4 gap-2 mb-4">
                     <div className="p-2 rounded-lg bg-red-600/10 border border-red-600/20 text-center">
-                      <div className="text-lg font-bold text-red-600">{auditSummary.critical}</div>
+                      <div className="text-[15px] font-bold text-red-600">{auditSummary.critical}</div>
                       <div className="text-[10px] uppercase text-red-600">Critical</div>
                     </div>
                     <div className="p-2 rounded-lg bg-orange-500/10 border border-orange-500/20 text-center">
-                      <div className="text-lg font-bold text-orange-500">{auditSummary.high}</div>
+                      <div className="text-[15px] font-bold text-orange-500">{auditSummary.high}</div>
                       <div className="text-[10px] uppercase text-orange-500">High</div>
                     </div>
                     <div className="p-2 rounded-lg bg-yellow-500/10 border border-yellow-500/20 text-center">
-                      <div className="text-lg font-bold text-yellow-600">{auditSummary.moderate}</div>
+                      <div className="text-[15px] font-bold text-yellow-600">{auditSummary.moderate}</div>
                       <div className="text-[10px] uppercase text-yellow-600">Moderate</div>
                     </div>
                     <div className="p-2 rounded-lg bg-blue-500/10 border border-blue-500/20 text-center">
-                      <div className="text-lg font-bold text-blue-500">{auditSummary.low}</div>
+                      <div className="text-[15px] font-bold text-blue-500">{auditSummary.low}</div>
                       <div className="text-[10px] uppercase text-blue-500">Low</div>
                     </div>
                   </div>

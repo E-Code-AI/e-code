@@ -343,7 +343,7 @@ export function AIAgentPanel({ projectId, onClose, selectedCode, currentFilePath
       {/* Settings Panel */}
       <Collapsible open={showSettings} onOpenChange={setShowSettings}>
         <CollapsibleTrigger asChild>
-          <Button variant="ghost" className="w-full justify-between p-2 text-sm">
+          <Button variant="ghost" className="w-full justify-between p-2 text-[13px]">
             Settings
             {showSettings ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
           </Button>
@@ -381,7 +381,7 @@ export function AIAgentPanel({ projectId, onClose, selectedCode, currentFilePath
             />
           </div>
           
-          <div className="text-xs text-muted-foreground">
+          <div className="text-[11px] text-muted-foreground">
             Tokens used: {tokenCount.toLocaleString()}
           </div>
         </CollapsibleContent>
@@ -394,7 +394,7 @@ export function AIAgentPanel({ projectId, onClose, selectedCode, currentFilePath
             key={qa.label}
             variant={activeCodeAction === qa.action ? 'default' : 'outline'}
             size="sm"
-            className="text-xs"
+            className="text-[11px]"
             onClick={() => handleCodeAction(qa.action)}
             disabled={isStreaming || isCodeActionStreaming}
             data-testid={`code-action-${qa.action}`}
@@ -411,7 +411,7 @@ export function AIAgentPanel({ projectId, onClose, selectedCode, currentFilePath
           <Button
             variant="destructive"
             size="sm"
-            className="text-xs"
+            className="text-[11px]"
             onClick={stopCodeActionStreaming}
             data-testid="stop-code-action"
           >
@@ -420,7 +420,7 @@ export function AIAgentPanel({ projectId, onClose, selectedCode, currentFilePath
           </Button>
         )}
         {selectedCode && (
-          <Badge variant="secondary" className="ml-auto text-xs">
+          <Badge variant="secondary" className="ml-auto text-[11px]">
             {selectedCode.length} chars selected
           </Badge>
         )}
@@ -432,8 +432,8 @@ export function AIAgentPanel({ projectId, onClose, selectedCode, currentFilePath
           {messages.length === 0 && (
             <div className="text-center py-8 text-muted-foreground">
               <Sparkles className="h-12 w-12 mx-auto mb-4 text-status-warning/20" />
-              <p className="text-sm">Ask me anything about your code!</p>
-              <p className="text-xs mt-2">I can help you build, debug, and improve your application.</p>
+              <p className="text-[13px]">Ask me anything about your code!</p>
+              <p className="text-[11px] mt-2">I can help you build, debug, and improve your application.</p>
             </div>
           )}
           
@@ -464,12 +464,12 @@ export function AIAgentPanel({ projectId, onClose, selectedCode, currentFilePath
                     Extended Thinking
                   </Badge>
                 )}
-                <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                <p className="text-[13px] whitespace-pre-wrap">{message.content}</p>
                 {message.actions && message.actions.length > 0 && (
                   <div className="mt-2 pt-2 border-t">
-                    <p className="text-xs font-medium mb-1">Actions:</p>
+                    <p className="text-[11px] font-medium mb-1">Actions:</p>
                     {message.actions.map((action, i) => (
-                      <Badge key={i} variant="outline" className="mr-1 text-xs">
+                      <Badge key={i} variant="outline" className="mr-1 text-[11px]">
                         {action.type}
                       </Badge>
                     ))}
@@ -491,7 +491,7 @@ export function AIAgentPanel({ projectId, onClose, selectedCode, currentFilePath
                 <Loader2 className="h-4 w-4 text-status-warning animate-spin" />
               </div>
               <div className="max-w-[80%] rounded-lg px-3 py-2 bg-muted dark:bg-muted">
-                <p className="text-sm whitespace-pre-wrap">{currentStreamMessage}</p>
+                <p className="text-[13px] whitespace-pre-wrap">{currentStreamMessage}</p>
               </div>
             </div>
           )}
@@ -503,14 +503,14 @@ export function AIAgentPanel({ projectId, onClose, selectedCode, currentFilePath
               </div>
               <div className="max-w-[80%] rounded-lg px-3 py-2 bg-muted dark:bg-muted">
                 <div className="flex items-center gap-2 mb-2">
-                  <Badge variant="secondary" className="text-xs">
+                  <Badge variant="secondary" className="text-[11px]">
                     {activeCodeAction}
                   </Badge>
-                  <span className="text-xs text-muted-foreground animate-pulse">
+                  <span className="text-[11px] text-muted-foreground animate-pulse">
                     Streaming...
                   </span>
                 </div>
-                <p className="text-sm whitespace-pre-wrap font-mono">{codeActionContent}<span className="animate-pulse">▌</span></p>
+                <p className="text-[13px] whitespace-pre-wrap font-mono">{codeActionContent}<span className="animate-pulse">▌</span></p>
               </div>
             </div>
           )}
@@ -569,7 +569,7 @@ export function AIAgentPanel({ projectId, onClose, selectedCode, currentFilePath
           >
             Clear Chat
           </Button>
-          <div className="text-xs text-muted-foreground">
+          <div className="text-[11px] text-muted-foreground">
             Press Enter to send, Shift+Enter for new line
           </div>
         </div>

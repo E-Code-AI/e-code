@@ -181,7 +181,7 @@ export function PostgreSQLMCPPanel({ projectId }: { projectId?: number }) {
 
           <TabsContent value="tables" className="space-y-4">
             <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-medium text-[var(--ecode-text)]">Database Tables</h3>
+              <h3 className="text-[13px] font-medium text-[var(--ecode-text)]">Database Tables</h3>
               <Button
                 variant="ghost"
                 size="sm"
@@ -220,11 +220,11 @@ export function PostgreSQLMCPPanel({ projectId }: { projectId?: number }) {
                               <TableIcon className="w-4 h-4 text-[var(--ecode-muted)]" />
                               <span className="font-medium text-[var(--ecode-text)]">{table.name}</span>
                             </div>
-                            <Badge variant="outline" className="text-xs">
+                            <Badge variant="outline" className="text-[11px]">
                               {table.rowCount} rows
                             </Badge>
                           </div>
-                          <div className="text-xs text-[var(--ecode-muted)] mt-1">
+                          <div className="text-[11px] text-[var(--ecode-muted)] mt-1">
                             Schema: {table.schema} • Size: {table.size}
                           </div>
                         </div>
@@ -258,17 +258,17 @@ export function PostgreSQLMCPPanel({ projectId }: { projectId?: number }) {
                           <TableBody>
                             {tableSchema?.map((col) => (
                               <TableRow key={col.column}>
-                                <TableCell className="font-mono text-sm">
+                                <TableCell className="font-mono text-[13px]">
                                   <div className="flex items-center gap-1">
                                     {col.isPrimary && <Key className="w-3 h-3 text-yellow-500" />}
                                     {col.column}
                                   </div>
                                 </TableCell>
-                                <TableCell className="text-sm text-[var(--ecode-muted)]">
+                                <TableCell className="text-[13px] text-[var(--ecode-muted)]">
                                   {col.type}
                                 </TableCell>
                                 <TableCell>
-                                  <Badge variant={col.nullable ? 'outline' : 'default'} className="text-xs">
+                                  <Badge variant={col.nullable ? 'outline' : 'default'} className="text-[11px]">
                                     {col.nullable ? 'Yes' : 'No'}
                                   </Badge>
                                 </TableCell>
@@ -292,7 +292,7 @@ export function PostgreSQLMCPPanel({ projectId }: { projectId?: number }) {
                 placeholder="SELECT * FROM users LIMIT 10;"
                 value={sqlQuery}
                 onChange={(e) => setSqlQuery(e.target.value)}
-                className="font-mono text-sm bg-[var(--ecode-sidebar)] border-[var(--ecode-border)] min-h-[200px]"
+                className="font-mono text-[13px] bg-[var(--ecode-sidebar)] border-[var(--ecode-border)] min-h-[200px]"
               />
             </div>
 
@@ -326,7 +326,7 @@ export function PostgreSQLMCPPanel({ projectId }: { projectId?: number }) {
 
             {queryHistory.length > 0 && (
               <div>
-                <h4 className="text-sm font-medium text-[var(--ecode-text)] mb-2">Query History</h4>
+                <h4 className="text-[13px] font-medium text-[var(--ecode-text)] mb-2">Query History</h4>
                 <ScrollArea className="h-[150px] border rounded-lg bg-[var(--ecode-sidebar)] p-2">
                   {queryHistory.map((query, index) => (
                     <div
@@ -334,7 +334,7 @@ export function PostgreSQLMCPPanel({ projectId }: { projectId?: number }) {
                       onClick={() => setSqlQuery(query)}
                       className="p-2 mb-1 rounded hover:bg-[var(--ecode-sidebar-hover)] cursor-pointer"
                     >
-                      <code className="text-xs text-[var(--ecode-muted)]">{query}</code>
+                      <code className="text-[11px] text-[var(--ecode-muted)]">{query}</code>
                     </div>
                   ))}
                 </ScrollArea>
@@ -346,7 +346,7 @@ export function PostgreSQLMCPPanel({ projectId }: { projectId?: number }) {
             {queryResult ? (
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <h4 className="text-sm font-medium text-[var(--ecode-text)]">
+                  <h4 className="text-[13px] font-medium text-[var(--ecode-text)]">
                     Query Results ({queryResult.rowCount} rows)
                   </h4>
                   <Badge variant="outline">
@@ -367,11 +367,11 @@ export function PostgreSQLMCPPanel({ projectId }: { projectId?: number }) {
                       {queryResult.rows.map((row, i) => (
                         <TableRow key={i}>
                           {row.map((cell, j) => (
-                            <TableCell key={j} className="font-mono text-sm">
+                            <TableCell key={j} className="font-mono text-[13px]">
                               {cell === null ? (
                                 <span className="text-[var(--ecode-muted)]">NULL</span>
                               ) : typeof cell === 'object' ? (
-                                <code className="text-xs">{JSON.stringify(cell)}</code>
+                                <code className="text-[11px]">{JSON.stringify(cell)}</code>
                               ) : (
                                 String(cell)
                               )}
@@ -387,7 +387,7 @@ export function PostgreSQLMCPPanel({ projectId }: { projectId?: number }) {
               <div className="text-center py-12 text-[var(--ecode-muted)]">
                 <Database className="w-12 h-12 mx-auto mb-2 opacity-50" />
                 <p>No query results yet</p>
-                <p className="text-sm mt-1">Execute a query to see results here</p>
+                <p className="text-[13px] mt-1">Execute a query to see results here</p>
               </div>
             )}
           </TabsContent>

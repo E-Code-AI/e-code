@@ -134,7 +134,7 @@ export function Gamification({ userId }: GamificationProps) {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Level</CardTitle>
+            <CardTitle className="text-[13px]">Level</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-baseline gap-2">
@@ -145,7 +145,7 @@ export function Gamification({ userId }: GamificationProps) {
               value={(userStats?.experience || 0) / (userStats?.experienceToNextLevel || 1) * 100} 
               className="mt-2"
             />
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-[11px] text-muted-foreground mt-1">
               {userStats?.experience} / {userStats?.experienceToNextLevel} XP
             </p>
           </CardContent>
@@ -153,20 +153,20 @@ export function Gamification({ userId }: GamificationProps) {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Current Streak</CardTitle>
+            <CardTitle className="text-[13px]">Current Streak</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
               <Flame className="h-8 w-8 text-orange-500" />
               <span className="text-3xl font-bold">{userStats?.streak}</span>
-              <span className="text-sm text-muted-foreground">days</span>
+              <span className="text-[13px] text-muted-foreground">days</span>
             </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Total Points</CardTitle>
+            <CardTitle className="text-[13px]">Total Points</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
@@ -180,14 +180,14 @@ export function Gamification({ userId }: GamificationProps) {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Global Rank</CardTitle>
+            <CardTitle className="text-[13px]">Global Rank</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
               <Trophy className="h-8 w-8 text-purple-500" />
               <div>
                 <p className="text-2xl font-bold">Top {userStats?.percentile}%</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-[11px] text-muted-foreground">
                   Better than {100 - (userStats?.percentile || 0)}% of users
                 </p>
               </div>
@@ -226,7 +226,7 @@ export function Gamification({ userId }: GamificationProps) {
                       </div>
                       <div className="flex-1">
                         <p className="font-medium">{achievement.name}</p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-[11px] text-muted-foreground">
                           +{achievement.points} points • {achievement.unlockedAt?.toLocaleDateString()}
                         </p>
                       </div>
@@ -251,8 +251,8 @@ export function Gamification({ userId }: GamificationProps) {
                     )}>
                       {badge.icon}
                     </div>
-                    <p className="text-sm font-medium mt-2">{badge.name}</p>
-                    <p className="text-xs text-muted-foreground capitalize">{badge.level}</p>
+                    <p className="text-[13px] font-medium mt-2">{badge.name}</p>
+                    <p className="text-[11px] text-muted-foreground capitalize">{badge.level}</p>
                   </div>
                 ))}
               </div>
@@ -289,7 +289,7 @@ export function Gamification({ userId }: GamificationProps) {
                           </div>
                           <div className="flex-1">
                             <h4 className="font-medium">{achievement.name}</h4>
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-[11px] text-muted-foreground">
                               {achievement.description}
                             </p>
                             <div className="mt-2">
@@ -299,23 +299,23 @@ export function Gamification({ userId }: GamificationProps) {
                                     value={(achievement.progress / achievement.maxProgress) * 100} 
                                     className="h-2"
                                   />
-                                  <p className="text-xs text-muted-foreground">
+                                  <p className="text-[11px] text-muted-foreground">
                                     {achievement.progress} / {achievement.maxProgress}
                                   </p>
                                 </div>
                               ) : achievement.unlockedAt ? (
-                                <Badge variant="secondary" className="text-xs">
+                                <Badge variant="secondary" className="text-[11px]">
                                   <CheckCircle className="h-3 w-3 mr-1" />
                                   Unlocked
                                 </Badge>
                               ) : (
-                                <Badge variant="outline" className="text-xs">
+                                <Badge variant="outline" className="text-[11px]">
                                   Locked
                                 </Badge>
                               )}
                             </div>
                           </div>
-                          <Badge variant="outline" className="text-xs">
+                          <Badge variant="outline" className="text-[11px]">
                             +{achievement.points}
                           </Badge>
                         </div>
@@ -360,14 +360,14 @@ export function Gamification({ userId }: GamificationProps) {
                           </Avatar>
                           <div>
                             <p className="font-medium">{user.username}</p>
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-[13px] text-muted-foreground">
                               Level {user.level}
                             </p>
                           </div>
                         </div>
                         <div className="text-right">
                           <p className="font-bold">{user.points.toLocaleString()}</p>
-                          <p className="text-xs text-muted-foreground flex items-center gap-1 justify-end">
+                          <p className="text-[11px] text-muted-foreground flex items-center gap-1 justify-end">
                             <Flame className="h-3 w-3" />
                             {user.streak} day streak
                           </p>
@@ -402,7 +402,7 @@ export function Gamification({ userId }: GamificationProps) {
                             <div className="flex items-start justify-between mb-3">
                               <div>
                                 <h4 className="font-medium">{challenge.name}</h4>
-                                <p className="text-sm text-muted-foreground">
+                                <p className="text-[13px] text-muted-foreground">
                                   {challenge.description}
                                 </p>
                               </div>
@@ -410,7 +410,7 @@ export function Gamification({ userId }: GamificationProps) {
                                 <Badge variant="secondary">
                                   +{challenge.points} pts
                                 </Badge>
-                                <p className="text-xs text-muted-foreground mt-1">
+                                <p className="text-[11px] text-muted-foreground mt-1">
                                   {hoursLeft}h left
                                 </p>
                               </div>
@@ -419,7 +419,7 @@ export function Gamification({ userId }: GamificationProps) {
                               <Progress 
                                 value={(challenge.progress / challenge.target) * 100} 
                               />
-                              <p className="text-xs text-muted-foreground">
+                              <p className="text-[11px] text-muted-foreground">
                                 {challenge.progress} / {challenge.target} completed
                               </p>
                             </div>

@@ -119,7 +119,7 @@ export function TemplateFilters({
       <Collapsible open={expandedSections.includes('category')}>
         <CollapsibleTrigger
           onClick={() => toggleSection('category')}
-          className="flex w-full items-center justify-between py-2 text-sm font-medium hover:text-foreground"
+          className="flex w-full items-center justify-between py-2 text-[13px] font-medium hover:text-foreground"
           data-testid="filter-category-toggle"
         >
           <span>Category</span>
@@ -165,7 +165,7 @@ export function TemplateFilters({
       <Collapsible open={expandedSections.includes('languages')}>
         <CollapsibleTrigger
           onClick={() => toggleSection('languages')}
-          className="flex w-full items-center justify-between py-2 text-sm font-medium hover:text-foreground"
+          className="flex w-full items-center justify-between py-2 text-[13px] font-medium hover:text-foreground"
           data-testid="filter-languages-toggle"
         >
           <span>Languages</span>
@@ -200,7 +200,7 @@ export function TemplateFilters({
                   className="cursor-pointer flex items-center justify-between flex-1"
                 >
                   {lang.label}
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-[11px] text-muted-foreground">
                     {lang.count}
                   </span>
                 </Label>
@@ -216,7 +216,7 @@ export function TemplateFilters({
       <Collapsible open={expandedSections.includes('frameworks')}>
         <CollapsibleTrigger
           onClick={() => toggleSection('frameworks')}
-          className="flex w-full items-center justify-between py-2 text-sm font-medium hover:text-foreground"
+          className="flex w-full items-center justify-between py-2 text-[13px] font-medium hover:text-foreground"
         >
           <span>Frameworks</span>
           {expandedSections.includes('frameworks') ? (
@@ -245,7 +245,7 @@ export function TemplateFilters({
                   className="cursor-pointer flex items-center justify-between flex-1"
                 >
                   {framework.label}
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-[11px] text-muted-foreground">
                     {framework.count}
                   </span>
                 </Label>
@@ -261,7 +261,7 @@ export function TemplateFilters({
       <Collapsible open={expandedSections.includes('difficulty')}>
         <CollapsibleTrigger
           onClick={() => toggleSection('difficulty')}
-          className="flex w-full items-center justify-between py-2 text-sm font-medium hover:text-foreground"
+          className="flex w-full items-center justify-between py-2 text-[13px] font-medium hover:text-foreground"
         >
           <span>Difficulty</span>
           {selectedDifficulty.length > 0 && (
@@ -310,7 +310,7 @@ export function TemplateFilters({
       <Collapsible open={expandedSections.includes('price')}>
         <CollapsibleTrigger
           onClick={() => toggleSection('price')}
-          className="flex w-full items-center justify-between py-2 text-sm font-medium hover:text-foreground"
+          className="flex w-full items-center justify-between py-2 text-[13px] font-medium hover:text-foreground"
         >
           <span>Price Range</span>
           {expandedSections.includes('price') ? (
@@ -321,7 +321,7 @@ export function TemplateFilters({
         </CollapsibleTrigger>
         <CollapsibleContent className="pt-2">
           <div className="space-y-4">
-            <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center justify-between text-[13px]">
               <span>Free</span>
               <span className="font-medium">
                 ${priceRange[1] === 100 ? '100+' : priceRange[1]}
@@ -366,7 +366,7 @@ export function TemplateFilters({
 
       {/* Popular Tags */}
       <div className="pt-2">
-        <p className="text-sm font-medium mb-3">Popular Tags</p>
+        <p className="text-[13px] font-medium mb-3">Popular Tags</p>
         <div className="flex flex-wrap gap-2">
           {tags?.slice(0, 10).map((tag) => (
             <Badge

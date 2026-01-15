@@ -103,7 +103,7 @@ export default function AuthPage() {
                 Welcome to E-Code
               </CardTitle>
             </div>
-            <CardDescription className="text-sm sm:text-base text-muted-foreground">
+            <CardDescription className="text-[13px] sm:text-base text-muted-foreground">
               Sign in to your account or create a new one to get started.
             </CardDescription>
             
@@ -112,18 +112,18 @@ export default function AuthPage() {
               <div className="mt-4 p-3 sm:p-4 bg-muted dark:bg-muted rounded-xl border border-border transition-colors duration-200" data-testid="section-quick-access">
                 <div className="flex items-center gap-2 mb-2">
                   <Shield className="h-4 w-4 text-primary" />
-                  <p className="text-sm font-medium text-foreground">Development Quick Access</p>
+                  <p className="text-[13px] font-medium text-foreground">Development Quick Access</p>
                 </div>
                 <div className="flex flex-col gap-2 mt-2">
                   <div className="flex flex-col xs:flex-row justify-between items-start xs:items-center gap-2">
-                    <div className="text-xs sm:text-sm text-muted-foreground">
-                      <span>Email: <code className="bg-primary/10 dark:bg-primary/20 text-primary px-1.5 py-0.5 rounded font-mono text-xs">admin@test.com</code></span><br/>
-                      <span>Password: <code className="bg-primary/10 dark:bg-primary/20 text-primary px-1.5 py-0.5 rounded font-mono text-xs">adminpass123</code></span>
+                    <div className="text-[11px] sm:text-[13px] text-muted-foreground">
+                      <span>Email: <code className="bg-primary/10 dark:bg-primary/20 text-primary px-1.5 py-0.5 rounded font-mono text-[11px]">admin@test.com</code></span><br/>
+                      <span>Password: <code className="bg-primary/10 dark:bg-primary/20 text-primary px-1.5 py-0.5 rounded font-mono text-[11px]">adminpass123</code></span>
                     </div>
                     <Button 
                       variant="secondary" 
                       size="sm" 
-                      className="min-h-[40px] text-xs sm:text-sm px-4 bg-primary/10 hover:bg-primary/20 text-primary border-0 font-medium transition-all duration-200"
+                      className="min-h-[40px] text-[11px] sm:text-[13px] px-4 bg-primary/10 hover:bg-primary/20 text-primary border-0 font-medium transition-all duration-200"
                       onClick={() => {
                         loginForm.setValue('email', 'admin@test.com');
                         loginForm.setValue('password', 'adminpass123');
@@ -166,7 +166,7 @@ export default function AuthPage() {
                       name="email"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-sm font-medium text-foreground">Email</FormLabel>
+                          <FormLabel className="text-[13px] font-medium text-foreground">Email</FormLabel>
                           <FormControl>
                             <Input 
                               type="email" 
@@ -176,7 +176,7 @@ export default function AuthPage() {
                               {...field} 
                             />
                           </FormControl>
-                          <FormMessage className="text-xs" data-testid="error-login-email" />
+                          <FormMessage className="text-[11px]" data-testid="error-login-email" />
                         </FormItem>
                       )}
                     />
@@ -185,7 +185,7 @@ export default function AuthPage() {
                       name="password"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-sm font-medium text-foreground">Password</FormLabel>
+                          <FormLabel className="text-[13px] font-medium text-foreground">Password</FormLabel>
                           <FormControl>
                             <Input 
                               type="password" 
@@ -195,7 +195,7 @@ export default function AuthPage() {
                               {...field} 
                             />
                           </FormControl>
-                          <FormMessage className="text-xs" data-testid="error-login-password" />
+                          <FormMessage className="text-[11px]" data-testid="error-login-password" />
                         </FormItem>
                       )}
                     />
@@ -220,7 +220,7 @@ export default function AuthPage() {
                         <div className="absolute inset-0 flex items-center">
                           <span className="w-full border-t border-border" />
                         </div>
-                        <div className="relative flex justify-center text-xs uppercase">
+                        <div className="relative flex justify-center text-[11px] uppercase">
                           <span className="bg-card px-3 text-muted-foreground">Quick access</span>
                         </div>
                       </div>
@@ -229,7 +229,7 @@ export default function AuthPage() {
                         <Button 
                           type="button" 
                           variant="outline" 
-                          className="flex-1 min-h-[44px] text-xs sm:text-sm border-primary/30 bg-primary/5 hover:bg-primary/10 hover:border-primary/50 text-primary font-medium transition-all duration-200 rounded-lg"
+                          className="flex-1 min-h-[44px] text-[11px] sm:text-[13px] border-primary/30 bg-primary/5 hover:bg-primary/10 hover:border-primary/50 text-primary font-medium transition-all duration-200 rounded-lg"
                           onClick={() => {
                             loginForm.setValue('email', 'admin@test.com');
                             loginForm.setValue('password', 'adminpass123');
@@ -243,7 +243,7 @@ export default function AuthPage() {
                         <Button 
                           type="button" 
                           variant="outline" 
-                          className="flex-1 min-h-[44px] text-xs sm:text-sm border-border hover:border-primary/30 hover:bg-primary/5 text-foreground font-medium transition-all duration-200 rounded-lg"
+                          className="flex-1 min-h-[44px] text-[11px] sm:text-[13px] border-border hover:border-primary/30 hover:bg-primary/5 text-foreground font-medium transition-all duration-200 rounded-lg"
                           onClick={() => {
                             loginForm.setValue('email', 'admin@test.com');
                             loginForm.setValue('password', 'adminpass123');
@@ -260,7 +260,7 @@ export default function AuthPage() {
                         <Button 
                           type="button" 
                           variant="outline" 
-                          className="w-full min-h-[44px] text-sm border-border hover:bg-muted text-foreground font-medium transition-all duration-200 rounded-lg"
+                          className="w-full min-h-[44px] text-[13px] border-border hover:bg-muted text-foreground font-medium transition-all duration-200 rounded-lg"
                           onClick={() => window.location.href = '/api/auth/github'}
                           data-testid="button-github-login"
                         >
@@ -270,7 +270,7 @@ export default function AuthPage() {
                         <Button 
                           type="button" 
                           variant="outline" 
-                          className="w-full min-h-[44px] text-sm border-border hover:bg-muted text-foreground font-medium transition-all duration-200 rounded-lg"
+                          className="w-full min-h-[44px] text-[13px] border-border hover:bg-muted text-foreground font-medium transition-all duration-200 rounded-lg"
                           onClick={() => window.location.href = '/api/auth/google'}
                           data-testid="button-google-login"
                         >
@@ -309,7 +309,7 @@ export default function AuthPage() {
                       name="username"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-sm font-medium text-foreground">Username</FormLabel>
+                          <FormLabel className="text-[13px] font-medium text-foreground">Username</FormLabel>
                           <FormControl>
                             <Input 
                               placeholder="Choose a username" 
@@ -318,7 +318,7 @@ export default function AuthPage() {
                               {...field} 
                             />
                           </FormControl>
-                          <FormMessage className="text-xs" data-testid="error-register-username" />
+                          <FormMessage className="text-[11px]" data-testid="error-register-username" />
                         </FormItem>
                       )}
                     />
@@ -327,7 +327,7 @@ export default function AuthPage() {
                       name="password"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-sm font-medium text-foreground">Password</FormLabel>
+                          <FormLabel className="text-[13px] font-medium text-foreground">Password</FormLabel>
                           <FormControl>
                             <Input 
                               type="password" 
@@ -337,7 +337,7 @@ export default function AuthPage() {
                               {...field} 
                             />
                           </FormControl>
-                          <FormMessage className="text-xs" data-testid="error-register-password" />
+                          <FormMessage className="text-[11px]" data-testid="error-register-password" />
                         </FormItem>
                       )}
                     />
@@ -346,7 +346,7 @@ export default function AuthPage() {
                       name="email"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-sm font-medium text-foreground">Email</FormLabel>
+                          <FormLabel className="text-[13px] font-medium text-foreground">Email</FormLabel>
                           <FormControl>
                             <Input 
                               type="email" 
@@ -356,7 +356,7 @@ export default function AuthPage() {
                               {...field} 
                             />
                           </FormControl>
-                          <FormMessage className="text-xs" data-testid="error-register-email" />
+                          <FormMessage className="text-[11px]" data-testid="error-register-email" />
                         </FormItem>
                       )}
                     />
@@ -365,7 +365,7 @@ export default function AuthPage() {
                       name="displayName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-sm font-medium text-foreground">Display Name</FormLabel>
+                          <FormLabel className="text-[13px] font-medium text-foreground">Display Name</FormLabel>
                           <FormControl>
                             <Input 
                               placeholder="Your display name" 
@@ -374,7 +374,7 @@ export default function AuthPage() {
                               {...field} 
                             />
                           </FormControl>
-                          <FormMessage className="text-xs" data-testid="error-register-displayname" />
+                          <FormMessage className="text-[11px]" data-testid="error-register-displayname" />
                         </FormItem>
                       )}
                     />
@@ -400,7 +400,7 @@ export default function AuthPage() {
           </CardContent>
           
           <CardFooter className="flex justify-center p-5 pt-0">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-[13px] text-muted-foreground">
               {activeTab === "login" ? (
                 <>
                   Don't have an account?{" "}
@@ -446,7 +446,7 @@ export default function AuthPage() {
             <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
               <Code2 className="h-6 w-6 text-white" />
             </div>
-            <span className="text-white/90 font-medium text-lg">E-Code Platform</span>
+            <span className="text-white/90 font-medium text-[15px]">E-Code Platform</span>
           </div>
           
           <h1 className="text-4xl lg:text-5xl font-extrabold tracking-tight text-white leading-tight">
@@ -457,7 +457,7 @@ export default function AuthPage() {
             </span>
           </h1>
           
-          <p className="text-lg lg:text-xl text-white/90 leading-relaxed">
+          <p className="text-[15px] lg:text-xl text-white/90 leading-relaxed">
             E-Code is a browser-based IDE that lets you write code with friends in real-time.
             Create projects, share them, and deploy them with just a few clicks.
           </p>
@@ -471,7 +471,7 @@ export default function AuthPage() {
                 <Users className="h-5 w-5 text-white" />
               </div>
               <h3 className="font-semibold mb-1.5 text-white">Real-time Collaboration</h3>
-              <p className="text-sm text-white/80 leading-relaxed">
+              <p className="text-[13px] text-white/80 leading-relaxed">
                 Work together with friends or colleagues in real-time on the same project.
               </p>
             </div>
@@ -484,7 +484,7 @@ export default function AuthPage() {
                 <Zap className="h-5 w-5 text-white" />
               </div>
               <h3 className="font-semibold mb-1.5 text-white">One-Click Deployment</h3>
-              <p className="text-sm text-white/80 leading-relaxed">
+              <p className="text-[13px] text-white/80 leading-relaxed">
                 Deploy your applications with a single click and share them with the world.
               </p>
             </div>
@@ -497,7 +497,7 @@ export default function AuthPage() {
                 <Code2 className="h-5 w-5 text-white" />
               </div>
               <h3 className="font-semibold mb-1.5 text-white">Multiple Languages</h3>
-              <p className="text-sm text-white/80 leading-relaxed">
+              <p className="text-[13px] text-white/80 leading-relaxed">
                 Support for JavaScript, Python, HTML, CSS, and many more languages.
               </p>
             </div>
@@ -510,7 +510,7 @@ export default function AuthPage() {
                 <Sparkles className="h-5 w-5 text-white" />
               </div>
               <h3 className="font-semibold mb-1.5 text-white">AI-Powered</h3>
-              <p className="text-sm text-white/80 leading-relaxed">
+              <p className="text-[13px] text-white/80 leading-relaxed">
                 Get AI assistance for code completion, debugging, and more.
               </p>
             </div>

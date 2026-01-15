@@ -524,7 +524,7 @@ export function ReplitWorkflows({ projectId }: ReplitWorkflowsProps) {
 
         <div className="flex items-center gap-3">
           {loading && (
-            <span className="inline-flex items-center text-sm text-muted-foreground">
+            <span className="inline-flex items-center text-[13px] text-muted-foreground">
               <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Syncing…
             </span>
           )}
@@ -575,8 +575,8 @@ export function ReplitWorkflows({ projectId }: ReplitWorkflowsProps) {
 
                   <div className="flex items-center justify-between rounded-lg border p-3">
                     <div>
-                      <p className="font-medium text-sm">Enable immediately</p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="font-medium text-[13px]">Enable immediately</p>
+                      <p className="text-[11px] text-muted-foreground">
                         Enabled workflows can be run manually and respond to their triggers.
                       </p>
                     </div>
@@ -611,8 +611,8 @@ export function ReplitWorkflows({ projectId }: ReplitWorkflowsProps) {
                           <div className="flex items-center gap-2">
                             {getTriggerIcon(trigger.type)}
                             <div>
-                              <p className="font-medium text-sm">{trigger.label}</p>
-                              <p className="text-xs text-muted-foreground">{trigger.desc}</p>
+                              <p className="font-medium text-[13px]">{trigger.label}</p>
+                              <p className="text-[11px] text-muted-foreground">{trigger.desc}</p>
                             </div>
                           </div>
                         </Card>
@@ -641,7 +641,7 @@ export function ReplitWorkflows({ projectId }: ReplitWorkflowsProps) {
                         value={newWorkflow.trigger.config?.cron || ''}
                         onChange={e => handleTriggerConfigChange('cron', e.target.value)}
                       />
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-[11px] text-muted-foreground">
                         Use standard cron syntax. For example, <code>0 0 * * *</code> runs nightly at midnight.
                       </p>
                     </div>
@@ -665,7 +665,7 @@ export function ReplitWorkflows({ projectId }: ReplitWorkflowsProps) {
                     {newWorkflow.steps.map((step, index) => (
                       <Card key={step.id} className="p-3">
                         <div className="flex items-start gap-3">
-                          <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center">
+                          <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-[11px] flex items-center justify-center">
                             {index + 1}
                           </div>
                           <div className="flex-1 space-y-2">
@@ -696,14 +696,14 @@ export function ReplitWorkflows({ projectId }: ReplitWorkflowsProps) {
                                 value={step.script || ''}
                                 onChange={e => handleStepUpdate(index, { script: e.target.value })}
                                 rows={3}
-                                className="font-mono text-sm"
+                                className="font-mono text-[13px]"
                               />
                             ) : (
                               <Input
                                 placeholder="Command to run (e.g. npm run build)"
                                 value={step.command || ''}
                                 onChange={e => handleStepUpdate(index, { command: e.target.value })}
-                                className="font-mono text-sm"
+                                className="font-mono text-[13px]"
                               />
                             )}
                           </div>
@@ -754,7 +754,7 @@ export function ReplitWorkflows({ projectId }: ReplitWorkflowsProps) {
         <TabsContent value="workflows" className="space-y-4">
           {loading && (
             <Card>
-              <CardContent className="flex items-center justify-center gap-2 py-6 text-sm text-muted-foreground">
+              <CardContent className="flex items-center justify-center gap-2 py-6 text-[13px] text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 Loading workflows…
               </CardContent>
@@ -765,7 +765,7 @@ export function ReplitWorkflows({ projectId }: ReplitWorkflowsProps) {
             <Card>
               <CardContent className="text-center py-12">
                 <Workflow className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No workflows yet</h3>
+                <h3 className="text-[15px] font-semibold mb-2">No workflows yet</h3>
                 <p className="text-muted-foreground mb-4">
                   Create your first workflow to automate your development process.
                 </p>
@@ -834,7 +834,7 @@ export function ReplitWorkflows({ projectId }: ReplitWorkflowsProps) {
                   </CardHeader>
 
                   <CardContent className="space-y-3">
-                    <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                    <div className="flex flex-wrap items-center gap-4 text-[13px] text-muted-foreground">
                       <div className="flex items-center gap-1">
                         {getTriggerIcon(workflow.trigger.type)}
                         <span className="capitalize">{workflow.trigger.type} trigger</span>
@@ -861,7 +861,7 @@ export function ReplitWorkflows({ projectId }: ReplitWorkflowsProps) {
 
                     <div className="flex flex-wrap gap-2">
                       {workflow.steps.map((step, index) => (
-                        <Badge key={step.id} variant="outline" className="text-xs">
+                        <Badge key={step.id} variant="outline" className="text-[11px]">
                           {index + 1}. {step.name}
                         </Badge>
                       ))}
@@ -896,7 +896,7 @@ export function ReplitWorkflows({ projectId }: ReplitWorkflowsProps) {
                         <p className="font-medium">
                           {workflows.find(workflow => workflow.id === run.workflowId)?.name || 'Unknown workflow'}
                         </p>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-[13px] text-muted-foreground">
                           Triggered by {run.trigger} • Started {new Date(run.startedAt).toLocaleString()}
                           {run.completedAt && (
                             <span>
@@ -934,7 +934,7 @@ export function ReplitWorkflows({ projectId }: ReplitWorkflowsProps) {
                 {selectedRunWorkflow?.name || 'Workflow run'}
               </DialogTitle>
               <DialogDescription className="space-y-1">
-                <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                <div className="flex flex-wrap items-center gap-2 text-[13px] text-muted-foreground">
                   <Badge className={`${getStatusColor(selectedRun.status)} border`}>
                     {getStatusIcon(selectedRun.status)}
                     <span className="ml-1 capitalize">{selectedRun.status}</span>
@@ -950,13 +950,13 @@ export function ReplitWorkflows({ projectId }: ReplitWorkflowsProps) {
               </DialogDescription>
             </DialogHeader>
 
-            <div className="bg-black text-green-400 p-4 rounded-lg font-mono text-sm max-h-96 overflow-y-auto space-y-1">
+            <div className="bg-black text-green-400 p-4 rounded-lg font-mono text-[13px] max-h-96 overflow-y-auto space-y-1">
               {selectedRun.logs && selectedRun.logs.length > 0 ? (
                 selectedRun.logs.map((line, index) => (
                   <div key={`${selectedRun.id}-log-${index}`}>{line}</div>
                 ))
               ) : (
-                <div className="text-muted-foreground text-xs">
+                <div className="text-muted-foreground text-[11px]">
                   No logs have been recorded for this run yet.
                 </div>
               )}

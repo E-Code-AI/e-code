@@ -72,7 +72,7 @@ export function ChatToolbar({
           </TooltipTrigger>
           <TooltipContent side="top" className="max-w-[200px]">
             <p className="font-medium">Extended Thinking</p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[11px] text-muted-foreground">
               Deeper reasoning for harder problems
             </p>
           </TooltipContent>
@@ -96,7 +96,7 @@ export function ChatToolbar({
           </TooltipTrigger>
           <TooltipContent side="top" className="max-w-[200px]">
             <p className="font-medium">High Power Mode</p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[11px] text-muted-foreground">
               Use sophisticated AI for complex tasks
             </p>
           </TooltipContent>
@@ -120,7 +120,7 @@ export function ChatToolbar({
             </TooltipTrigger>
             <TooltipContent side="top" className="max-w-[200px]">
               <p className="font-medium">Element Selector</p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-[11px] text-muted-foreground">
                 Click any element to edit it visually
               </p>
             </TooltipContent>
@@ -136,7 +136,7 @@ export function ChatToolbar({
                 variant="ghost"
                 size="sm"
                 onClick={onOpenUsage}
-                className="h-8 gap-1.5 px-2 text-xs"
+                className="h-8 gap-1.5 px-2 text-[11px]"
                 data-testid="toolbar-usage"
               >
                 <Coins className="h-3.5 w-3.5 text-amber-500" />
@@ -145,7 +145,7 @@ export function ChatToolbar({
             </TooltipTrigger>
             <TooltipContent side="top">
               <p className="font-medium">Credits remaining</p>
-              <p className="text-xs text-muted-foreground">Click to view usage</p>
+              <p className="text-[11px] text-muted-foreground">Click to view usage</p>
             </TooltipContent>
           </Tooltip>
         )}

@@ -174,23 +174,23 @@ export function StatusPage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Overall Uptime</CardTitle>
+            <CardTitle className="text-[13px]">Overall Uptime</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{averageUptime.toFixed(2)}%</div>
-            <p className="text-xs text-muted-foreground">Last 30 days</p>
+            <p className="text-[11px] text-muted-foreground">Last 30 days</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Active Incidents</CardTitle>
+            <CardTitle className="text-[13px]">Active Incidents</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
               {incidents.filter(i => i.status !== 'resolved').length}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[11px] text-muted-foreground">
               {incidents.filter(i => i.severity === 'critical').length} critical
             </p>
           </CardContent>
@@ -198,25 +198,25 @@ export function StatusPage() {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Services</CardTitle>
+            <CardTitle className="text-[13px]">Services</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
               {services.filter(s => s.status === 'operational').length}/{services.length}
             </div>
-            <p className="text-xs text-muted-foreground">Operational</p>
+            <p className="text-[11px] text-muted-foreground">Operational</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Response Time</CardTitle>
+            <CardTitle className="text-[13px]">Response Time</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
               {Math.round(services.reduce((sum, s) => sum + s.responseTime, 0) / services.length)}ms
             </div>
-            <p className="text-xs text-muted-foreground">Average</p>
+            <p className="text-[11px] text-muted-foreground">Average</p>
           </CardContent>
         </Card>
       </div>
@@ -247,20 +247,20 @@ export function StatusPage() {
                           <div>
                             <p className="font-medium">{service.name}</p>
                             {service.description && (
-                              <p className="text-sm text-muted-foreground">
+                              <p className="text-[13px] text-muted-foreground">
                                 {service.description}
                               </p>
                             )}
                           </div>
                         </div>
-                        <div className="flex items-center gap-4 text-sm">
+                        <div className="flex items-center gap-4 text-[13px]">
                           <div className="text-right">
                             <p className="font-medium">{service.uptime}%</p>
-                            <p className="text-xs text-muted-foreground">Uptime</p>
+                            <p className="text-[11px] text-muted-foreground">Uptime</p>
                           </div>
                           <div className="text-right">
                             <p className="font-medium">{service.responseTime}ms</p>
-                            <p className="text-xs text-muted-foreground">Response</p>
+                            <p className="text-[11px] text-muted-foreground">Response</p>
                           </div>
                           <Badge variant="outline" className={getStatusColor(service.status)}>
                             {service.status}
@@ -280,8 +280,8 @@ export function StatusPage() {
             <Card>
               <CardContent className="py-8 text-center">
                 <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold">No Active Incidents</h3>
-                <p className="text-sm text-muted-foreground">
+                <h3 className="text-[15px] font-semibold">No Active Incidents</h3>
+                <p className="text-[13px] text-muted-foreground">
                   All systems are operating normally
                 </p>
               </CardContent>
@@ -292,7 +292,7 @@ export function StatusPage() {
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div>
-                      <CardTitle className="text-lg flex items-center gap-2">
+                      <CardTitle className="text-[15px] flex items-center gap-2">
                         {incident.title}
                         <Badge className={getSeverityColor(incident.severity)}>
                           {incident.severity}
@@ -310,7 +310,7 @@ export function StatusPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="mb-3">
-                    <p className="text-sm text-muted-foreground mb-1">Affected Services:</p>
+                    <p className="text-[13px] text-muted-foreground mb-1">Affected Services:</p>
                     <div className="flex gap-2">
                       {incident.affectedServices.map(serviceId => {
                         const service = services.find(s => s.id === serviceId);
@@ -324,18 +324,18 @@ export function StatusPage() {
                   </div>
                   
                   <div className="space-y-2">
-                    <p className="text-sm font-medium">Updates:</p>
+                    <p className="text-[13px] font-medium">Updates:</p>
                     <ScrollArea className="h-40">
                       <div className="space-y-2">
                         {incident.updates
                           .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
                           .map(update => (
-                            <div key={update.id} className="flex gap-3 text-sm">
+                            <div key={update.id} className="flex gap-3 text-[13px]">
                               <span className="text-muted-foreground whitespace-nowrap">
                                 {new Date(update.timestamp).toLocaleTimeString()}
                               </span>
                               <div>
-                                <Badge variant="outline" className="text-xs mb-1">
+                                <Badge variant="outline" className="text-[11px] mb-1">
                                   {update.status}
                                 </Badge>
                                 <p>{update.message}</p>
@@ -356,8 +356,8 @@ export function StatusPage() {
             <Card>
               <CardContent className="py-8 text-center">
                 <Calendar className="h-12 w-12 text-blue-600 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold">No Scheduled Maintenance</h3>
-                <p className="text-sm text-muted-foreground">
+                <h3 className="text-[15px] font-semibold">No Scheduled Maintenance</h3>
+                <p className="text-[13px] text-muted-foreground">
                   No maintenance windows are currently scheduled
                 </p>
               </CardContent>
@@ -368,7 +368,7 @@ export function StatusPage() {
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div>
-                      <CardTitle className="text-lg">{window.title}</CardTitle>
+                      <CardTitle className="text-[15px]">{window.title}</CardTitle>
                       <CardDescription>{window.description}</CardDescription>
                     </div>
                     <Badge variant={window.status === 'scheduled' ? 'secondary' : 'default'}>
@@ -377,7 +377,7 @@ export function StatusPage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-[13px]">
                     <div>
                       <p className="text-muted-foreground">Scheduled For</p>
                       <p className="font-medium">
@@ -392,7 +392,7 @@ export function StatusPage() {
                       <p className="text-muted-foreground">Affected Services</p>
                       <div className="flex gap-1 mt-1">
                         {window.affectedServices.map(serviceId => (
-                          <Badge key={serviceId} variant="outline" className="text-xs">
+                          <Badge key={serviceId} variant="outline" className="text-[11px]">
                             {services.find(s => s.id === serviceId)?.name || serviceId}
                           </Badge>
                         ))}
@@ -413,7 +413,7 @@ export function StatusPage() {
                 <select
                   value={selectedTimeRange}
                   onChange={(e) => setSelectedTimeRange(e.target.value)}
-                  className="px-3 py-1 border rounded-md text-sm"
+                  className="px-3 py-1 border rounded-md text-[13px]"
                 >
                   <option value="24h">Last 24 hours</option>
                   <option value="7d">Last 7 days</option>
@@ -431,7 +431,7 @@ export function StatusPage() {
               <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm">Average Uptime</CardTitle>
+                    <CardTitle className="text-[13px]">Average Uptime</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <p className="text-2xl font-bold">99.95%</p>
@@ -440,7 +440,7 @@ export function StatusPage() {
                 
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm">Total Incidents</CardTitle>
+                    <CardTitle className="text-[13px]">Total Incidents</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <p className="text-2xl font-bold">3</p>
@@ -449,7 +449,7 @@ export function StatusPage() {
                 
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm">Total Downtime</CardTitle>
+                    <CardTitle className="text-[13px]">Total Downtime</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <p className="text-2xl font-bold">45m</p>

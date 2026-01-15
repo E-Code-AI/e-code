@@ -156,17 +156,17 @@ export function DeploymentMetrics({ deploymentId, className }: DeploymentMetrics
                 <Icon className="h-5 w-5 text-white" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">{title}</p>
+                <p className="text-[13px] text-muted-foreground">{title}</p>
                 <p className="text-2xl font-bold">
                   {typeof value === 'number' ? value.toFixed(1) : value}
-                  {unit && <span className="text-sm text-muted-foreground ml-1">{unit}</span>}
+                  {unit && <span className="text-[13px] text-muted-foreground ml-1">{unit}</span>}
                 </p>
               </div>
             </div>
             {trend !== undefined && (
               <div className={`flex items-center gap-1 ${trend >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                 {trend >= 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
-                <span className="text-sm font-medium">{Math.abs(trend).toFixed(1)}%</span>
+                <span className="text-[13px] font-medium">{Math.abs(trend).toFixed(1)}%</span>
               </div>
             )}
           </div>
@@ -508,7 +508,7 @@ export function DeploymentMetrics({ deploymentId, className }: DeploymentMetrics
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <h4 className="text-sm font-medium mb-4">Current Usage</h4>
+                  <h4 className="text-[13px] font-medium mb-4">Current Usage</h4>
                   <ResponsiveContainer width="100%" height={200}>
                     <RadialBarChart 
                       cx="50%" 
@@ -528,20 +528,20 @@ export function DeploymentMetrics({ deploymentId, className }: DeploymentMetrics
                   </ResponsiveContainer>
                 </div>
                 <div className="space-y-4">
-                  <h4 className="text-sm font-medium">Details</h4>
+                  <h4 className="text-[13px] font-medium">Details</h4>
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Active Connections</span>
+                      <span className="text-[13px] text-muted-foreground">Active Connections</span>
                       <span className="font-medium">{currentMetrics.activeConnections}</span>
                     </div>
                     <Separator />
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Container Count</span>
+                      <span className="text-[13px] text-muted-foreground">Container Count</span>
                       <span className="font-medium">{currentMetrics.containerCount}</span>
                     </div>
                     <Separator />
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Disk Usage</span>
+                      <span className="text-[13px] text-muted-foreground">Disk Usage</span>
                       <span className="font-medium">{currentMetrics.diskUsage.toFixed(1)}%</span>
                     </div>
                   </div>

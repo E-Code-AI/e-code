@@ -185,10 +185,10 @@ export function ShareSnippetDialog({
             </div>
 
             <div className="bg-muted p-3 rounded-md">
-              <p className="text-sm text-muted-foreground">
+              <p className="text-[13px] text-muted-foreground">
                 Preview: {lineEnd - lineStart + 1} lines of {language} code
               </p>
-              <pre className="text-xs mt-2 overflow-hidden">
+              <pre className="text-[11px] mt-2 overflow-hidden">
                 <code>{code.split('\n').slice(0, 3).join('\n')}...</code>
               </pre>
             </div>
@@ -196,11 +196,11 @@ export function ShareSnippetDialog({
         ) : (
           <div className="space-y-4">
             <div className="bg-green-50 dark:bg-green-950 p-4 rounded-md">
-              <p className="text-sm font-medium text-green-800 dark:text-green-200 mb-2">
+              <p className="text-[13px] font-medium text-green-800 dark:text-green-200 mb-2">
                 Your snippet has been shared!
               </p>
               <div className="flex items-center gap-2">
-                <Input value={shareUrl} readOnly className="font-mono text-sm" />
+                <Input value={shareUrl} readOnly className="font-mono text-[13px]" />
                 <Button
                   size="icon"
                   variant="outline"
@@ -215,7 +215,7 @@ export function ShareSnippetDialog({
               </div>
             </div>
 
-            <div className="text-sm text-muted-foreground">
+            <div className="text-[13px] text-muted-foreground">
               <p>Share this link with others to let them view your code snippet.</p>
               {expiresIn !== "never" && (
                 <p className="mt-1">This link will expire in {expiresIn.replace(/(\d+)/, "$1 ")}.</p>

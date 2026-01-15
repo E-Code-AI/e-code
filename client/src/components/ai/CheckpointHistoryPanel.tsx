@@ -78,7 +78,7 @@ function CheckpointTypeBadge({ type }: { type: string }) {
   const { label, variant, icon: Icon } = config[type as keyof typeof config] || config.auto;
   
   return (
-    <Badge variant={variant} className="gap-1 text-xs" data-testid={`badge-checkpoint-type-${type}`}>
+    <Badge variant={variant} className="gap-1 text-[11px]" data-testid={`badge-checkpoint-type-${type}`}>
       <Icon className="h-3 w-3" />
       {label}
     </Badge>
@@ -96,7 +96,7 @@ function CheckpointStatusBadge({ status }: { status: string }) {
   const { label, color, icon: Icon } = config[status as keyof typeof config] || config.pending;
   
   return (
-    <Badge variant="outline" className={cn("gap-1 text-xs", color)} data-testid={`badge-checkpoint-status-${status}`}>
+    <Badge variant="outline" className={cn("gap-1 text-[11px]", color)} data-testid={`badge-checkpoint-status-${status}`}>
       <Icon className={cn("h-3 w-3", status === 'creating' && 'animate-spin')} />
       {label}
     </Badge>
@@ -133,11 +133,11 @@ function CheckpointItem({
               <CheckpointStatusBadge status={checkpoint.status} />
             </div>
             
-            <p className="text-xs md:text-sm text-foreground leading-relaxed line-clamp-2 md:line-clamp-none">
+            <p className="text-[11px] md:text-[13px] text-foreground leading-relaxed line-clamp-2 md:line-clamp-none">
               {checkpoint.aiSummary || 'Checkpoint created'}
             </p>
             
-            <div className="flex items-center gap-2 md:gap-3 text-[10px] md:text-xs text-muted-foreground flex-wrap">
+            <div className="flex items-center gap-2 md:gap-3 text-[10px] md:text-[11px] text-muted-foreground flex-wrap">
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger className="flex items-center gap-1">
@@ -158,7 +158,7 @@ function CheckpointItem({
               )}
               
               {checkpoint.includesDatabase && (
-                <Badge variant="outline" className="text-xs py-0 h-5">
+                <Badge variant="outline" className="text-[11px] py-0 h-5">
                   +DB
                 </Badge>
               )}
@@ -254,7 +254,7 @@ export function CheckpointHistoryPanel({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-2 text-sm text-destructive">
+          <div className="flex items-center gap-2 text-[13px] text-destructive">
             <AlertCircle className="h-4 w-4" />
             Failed to load checkpoints
           </div>
@@ -269,7 +269,7 @@ export function CheckpointHistoryPanel({
         <CardHeader className="pb-2 md:pb-3 px-3 md:px-6">
           <div className="flex items-center justify-between">
             <div className="space-y-0.5 md:space-y-1">
-              <CardTitle className="flex items-center gap-1.5 md:gap-2 text-sm md:text-base">
+              <CardTitle className="flex items-center gap-1.5 md:gap-2 text-[13px] md:text-base">
                 <History className="h-3.5 w-3.5 md:h-4 md:w-4" />
                 Checkpoint History
               </CardTitle>
@@ -310,8 +310,8 @@ export function CheckpointHistoryPanel({
             ) : checkpoints.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-6 md:py-8 text-center text-muted-foreground">
                 <History className="h-6 w-6 md:h-8 md:w-8 mb-2 opacity-50" />
-                <p className="text-xs md:text-sm">No checkpoints yet</p>
-                <p className="text-[10px] md:text-xs">Checkpoints are created automatically as you build</p>
+                <p className="text-[11px] md:text-[13px]">No checkpoints yet</p>
+                <p className="text-[10px] md:text-[11px]">Checkpoints are created automatically as you build</p>
               </div>
             ) : (
               <div className="space-y-1">
@@ -332,7 +332,7 @@ export function CheckpointHistoryPanel({
       <AlertDialog open={showRestoreDialog} onOpenChange={setShowRestoreDialog}>
         <AlertDialogContent className="max-w-[95vw] md:max-w-lg mx-auto" data-testid="dialog-restore-checkpoint">
           <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2 text-base md:text-lg">
+            <AlertDialogTitle className="flex items-center gap-2 text-base md:text-[15px]">
               <RotateCcw className="h-4 w-4 md:h-5 md:w-5" />
               Restore Checkpoint
             </AlertDialogTitle>
@@ -345,15 +345,15 @@ export function CheckpointHistoryPanel({
                   <div className="bg-muted p-2 md:p-3 rounded-lg space-y-1.5 md:space-y-2">
                     <div className="flex items-center gap-2">
                       <CheckpointTypeBadge type={selectedCheckpoint.type} />
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-[11px] text-muted-foreground">
                         {format(new Date(selectedCheckpoint.createdAt), 'PPpp')}
                       </span>
                     </div>
-                    <p className="text-sm text-foreground">
+                    <p className="text-[13px] text-foreground">
                       {selectedCheckpoint.aiSummary || 'Checkpoint'}
                     </p>
                   </div>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-[13px] text-muted-foreground">
                     A backup of your current state will be created before restoring.
                   </p>
                 </div>

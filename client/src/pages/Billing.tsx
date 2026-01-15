@@ -192,41 +192,41 @@ export default function Billing() {
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
+            <CardTitle className="text-[13px] font-medium flex items-center gap-2">
               <Crown className="h-4 w-4 text-yellow-500" /> Current Plan
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold capitalize">{currentTier}</div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[11px] text-muted-foreground">
               {subscriptionStatus?.subscriptionStatus === 'active' ? 'Active subscription' : 'Free tier'}
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
+            <CardTitle className="text-[13px] font-medium flex items-center gap-2">
               <Zap className="h-4 w-4 text-green-500" /> Credits Balance
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">${creditsBalance.toFixed(2)}</div>
             <Progress value={creditsPercentage} className="mt-2 h-2" />
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-[11px] text-muted-foreground mt-1">
               ${creditsUsed.toFixed(2)} used of ${creditsAllowance.toFixed(2)} allowance
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
+            <CardTitle className="text-[13px] font-medium flex items-center gap-2">
               <Activity className="h-4 w-4 text-blue-500" /> Status
             </CardTitle>
           </CardHeader>
           <CardContent>
             {getStatusBadge(subscriptionStatus?.subscriptionStatus || null)}
             {subscriptionStatus?.currentPeriodEnd && (
-              <p className="text-xs text-muted-foreground mt-2">
+              <p className="text-[11px] text-muted-foreground mt-2">
                 Renews: {new Date(subscriptionStatus.currentPeriodEnd).toLocaleDateString()}
               </p>
             )}
@@ -234,13 +234,13 @@ export default function Billing() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
+            <CardTitle className="text-[13px] font-medium flex items-center gap-2">
               <CreditCard className="h-4 w-4 text-purple-500" /> Invoices
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{invoices.length}</div>
-            <p className="text-xs text-muted-foreground">Total invoices</p>
+            <p className="text-[11px] text-muted-foreground">Total invoices</p>
           </CardContent>
         </Card>
       </div>
@@ -268,7 +268,7 @@ export default function Billing() {
                     <div className="flex justify-between items-center p-4 bg-muted rounded-lg">
                       <div>
                         <p className="font-medium capitalize">{currentTier} Plan</p>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-[13px] text-muted-foreground">
                           ${creditsAllowance}/month in credits included
                         </p>
                       </div>
@@ -294,7 +294,7 @@ export default function Billing() {
                     <div className="p-4 bg-muted rounded-lg">
                       <Crown className="h-12 w-12 mx-auto text-yellow-500 mb-2" />
                       <p className="font-medium">You're on the Free tier</p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-[13px] text-muted-foreground">
                         Upgrade to unlock more features and credits
                       </p>
                     </div>
@@ -360,7 +360,7 @@ export default function Billing() {
                   <p className="text-2xl font-bold">
                     {usageData?.ai_tokens ? (usageData.ai_tokens / 1000).toFixed(1) : 0}K
                   </p>
-                  <p className="text-sm text-muted-foreground">tokens used</p>
+                  <p className="text-[13px] text-muted-foreground">tokens used</p>
                 </div>
                 <div className="p-4 rounded-lg border">
                   <div className="flex items-center gap-2 mb-2">
@@ -368,7 +368,7 @@ export default function Billing() {
                     <span className="font-medium">Compute</span>
                   </div>
                   <p className="text-2xl font-bold">{usageData?.compute_hours?.toFixed(2) || 0}</p>
-                  <p className="text-sm text-muted-foreground">hours</p>
+                  <p className="text-[13px] text-muted-foreground">hours</p>
                 </div>
                 <div className="p-4 rounded-lg border">
                   <div className="flex items-center gap-2 mb-2">
@@ -376,7 +376,7 @@ export default function Billing() {
                     <span className="font-medium">Storage</span>
                   </div>
                   <p className="text-2xl font-bold">{usageData?.storage?.toFixed(2) || 0}</p>
-                  <p className="text-sm text-muted-foreground">GB</p>
+                  <p className="text-[13px] text-muted-foreground">GB</p>
                 </div>
                 <div className="p-4 rounded-lg border">
                   <div className="flex items-center gap-2 mb-2">
@@ -384,7 +384,7 @@ export default function Billing() {
                     <span className="font-medium">Bandwidth</span>
                   </div>
                   <p className="text-2xl font-bold">{usageData?.bandwidth?.toFixed(2) || 0}</p>
-                  <p className="text-sm text-muted-foreground">GB</p>
+                  <p className="text-[13px] text-muted-foreground">GB</p>
                 </div>
                 <div className="p-4 rounded-lg border">
                   <div className="flex items-center gap-2 mb-2">
@@ -392,7 +392,7 @@ export default function Billing() {
                     <span className="font-medium">Deployments</span>
                   </div>
                   <p className="text-2xl font-bold">{usageData?.deployments || 0}</p>
-                  <p className="text-sm text-muted-foreground">this month</p>
+                  <p className="text-[13px] text-muted-foreground">this month</p>
                 </div>
               </div>
 
@@ -410,7 +410,7 @@ export default function Billing() {
                       ];
                       return limitItems.map(item => (
                         <div key={item.label} className="space-y-1">
-                          <div className="flex justify-between text-sm">
+                          <div className="flex justify-between text-[13px]">
                             <span>{item.label}</span>
                             <span className="text-muted-foreground">
                               {item.current.toFixed(2)} / {item.limit === -1 ? 'Unlimited' : item.limit} {item.unit}
@@ -457,7 +457,7 @@ export default function Billing() {
                   <TableBody>
                     {invoices.map((inv) => (
                       <TableRow key={inv.id}>
-                        <TableCell className="font-mono text-sm">
+                        <TableCell className="font-mono text-[13px]">
                           {inv.number || inv.id.slice(0, 12)}
                         </TableCell>
                         <TableCell className="font-medium">
@@ -493,7 +493,7 @@ export default function Billing() {
                 <div className="text-center py-8">
                   <CreditCard className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                   <p className="text-muted-foreground">No invoices yet</p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-[13px] text-muted-foreground">
                     Invoices will appear here after you subscribe to a paid plan
                   </p>
                 </div>
@@ -525,13 +525,13 @@ export default function Billing() {
                     <div>
                       <p className="text-3xl font-bold">
                         ${plan.price}
-                        <span className="text-sm font-normal text-muted-foreground">/{plan.interval}</span>
+                        <span className="text-[13px] font-normal text-muted-foreground">/{plan.interval}</span>
                       </p>
-                      <p className="text-sm text-green-500 flex items-center gap-1">
+                      <p className="text-[13px] text-green-500 flex items-center gap-1">
                         <Zap className="h-3 w-3" /> ${plan.creditsMonthly} credits/month
                       </p>
                     </div>
-                    <ul className="space-y-2 text-sm">
+                    <ul className="space-y-2 text-[13px]">
                       {plan.features.slice(0, 5).map((feature, i) => (
                         <li key={i} className="flex items-start gap-2">
                           <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />

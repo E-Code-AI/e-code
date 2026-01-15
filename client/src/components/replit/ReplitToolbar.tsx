@@ -157,7 +157,7 @@ export function ReplitToolbar({
       variant={action.active ? "secondary" : "ghost"}
       size="sm"
       className={cn(
-        "h-8 px-2 text-xs",
+        "h-8 px-2 text-[11px]",
         action.variant === 'success' && "hover:bg-green-500/10 hover:text-green-600",
         action.variant === 'destructive' && "hover:bg-red-500/10 hover:text-red-600",
         action.disabled && "opacity-50 cursor-not-allowed"
@@ -202,7 +202,7 @@ export function ReplitToolbar({
         <div className="flex items-center gap-2 min-w-0">
           <div className="min-w-0">
             <div className="flex items-center gap-1">
-              <span className="text-sm font-medium text-[var(--ecode-text)] truncate max-w-[150px]">
+              <span className="text-[13px] font-medium text-[var(--ecode-text)] truncate max-w-[150px]">
                 {projectName}
               </span>
               {isStarred && (
@@ -210,14 +210,14 @@ export function ReplitToolbar({
               )}
             </div>
             <div className="flex items-center gap-1">
-              <Badge variant="outline" className="text-xs">
+              <Badge variant="outline" className="text-[11px]">
                 {language}
               </Badge>
               {getVisibilityIcon()}
               {collaborators > 0 && (
                 <div className="flex items-center gap-1">
                   <Users className="h-3 w-3 text-[var(--ecode-text-secondary)]" />
-                  <span className="text-xs text-[var(--ecode-text-secondary)]">
+                  <span className="text-[11px] text-[var(--ecode-text-secondary)]">
                     {collaborators}
                   </span>
                 </div>
@@ -241,7 +241,7 @@ export function ReplitToolbar({
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1">
             <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse" />
-            <span className="text-xs text-[var(--ecode-text-secondary)]">
+            <span className="text-[11px] text-[var(--ecode-text-secondary)]">
               Running
             </span>
           </div>
@@ -270,7 +270,7 @@ export function ReplitToolbar({
         <Button
           variant="default"
           size="sm"
-          className="h-8 px-3 text-xs bg-[var(--ecode-accent)] hover:bg-[var(--ecode-accent)]/90"
+          className="h-8 px-3 text-[11px] bg-[var(--ecode-accent)] hover:bg-[var(--ecode-accent)]/90"
           onClick={onShare}
         >
           <Share2 className="h-3 w-3 mr-1" />

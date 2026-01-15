@@ -14,7 +14,7 @@ export default function CommercialAgreement() {
           <div className="max-w-4xl mx-auto">
             <div className="flex items-center gap-2 mb-4">
               <Building2 className="h-5 w-5" />
-              <span className="text-sm text-muted-foreground">Enterprise</span>
+              <span className="text-[13px] text-muted-foreground">Enterprise</span>
             </div>
 
             <h1 className="text-responsive-2xl font-bold tracking-tight mb-4" data-testid="heading-commercial-agreement">
@@ -27,7 +27,7 @@ export default function CommercialAgreement() {
 
             <Card className="p-8 mb-8">
               <h2 className="text-2xl font-semibold mb-6">1. Services</h2>
-              <div className="space-y-4 text-sm">
+              <div className="space-y-4 text-[13px]">
                 <h3 className="font-semibold text-base">1.1 Service Description</h3>
                 <p>E-Code will provide Customer with access to the E-Code platform and related services as described in the applicable Order Form(s) (the "Services").</p>
                 
@@ -47,7 +47,7 @@ export default function CommercialAgreement() {
 
             <Card className="p-8 mb-8">
               <h2 className="text-2xl font-semibold mb-6">2. Customer Obligations</h2>
-              <div className="space-y-4 text-sm">
+              <div className="space-y-4 text-[13px]">
                 <h3 className="font-semibold text-base">2.1 Acceptable Use</h3>
                 <p>Customer will use the Services only for lawful purposes and in accordance with this Agreement and the Acceptable Use Policy.</p>
                 
@@ -61,7 +61,7 @@ export default function CommercialAgreement() {
 
             <Card className="p-8 mb-8">
               <h2 className="text-2xl font-semibold mb-6">3. Fees and Payment</h2>
-              <div className="space-y-4 text-sm">
+              <div className="space-y-4 text-[13px]">
                 <h3 className="font-semibold text-base">3.1 Fees</h3>
                 <p>Customer will pay E-Code the fees set forth in the applicable Order Form(s).</p>
                 
@@ -81,7 +81,7 @@ export default function CommercialAgreement() {
 
             <Card className="p-8 mb-8">
               <h2 className="text-2xl font-semibold mb-6">4. Proprietary Rights</h2>
-              <div className="space-y-4 text-sm">
+              <div className="space-y-4 text-[13px]">
                 <h3 className="font-semibold text-base">4.1 E-Code Technology</h3>
                 <p>E-Code retains all right, title, and interest in and to the Services, including all software, technology, and intellectual property rights therein.</p>
                 
@@ -101,7 +101,7 @@ export default function CommercialAgreement() {
 
             <Card className="p-8 mb-8">
               <h2 className="text-2xl font-semibold mb-6">5. Confidentiality</h2>
-              <div className="space-y-4 text-sm">
+              <div className="space-y-4 text-[13px]">
                 <h3 className="font-semibold text-base">5.1 Definition</h3>
                 <p>"Confidential Information" means all non-public information disclosed by one party to the other, whether orally or in writing, that is designated as confidential or that reasonably should be understood to be confidential.</p>
                 
@@ -118,7 +118,7 @@ export default function CommercialAgreement() {
 
             <Card className="p-8 mb-8">
               <h2 className="text-2xl font-semibold mb-6">6. Warranties and Disclaimers</h2>
-              <div className="space-y-4 text-sm">
+              <div className="space-y-4 text-[13px]">
                 <h3 className="font-semibold text-base">6.1 Mutual Warranties</h3>
                 <p>Each party warrants that it has the legal power and authority to enter into this Agreement.</p>
                 
@@ -132,7 +132,7 @@ export default function CommercialAgreement() {
 
             <Card className="p-8 mb-8">
               <h2 className="text-2xl font-semibold mb-6">7. Indemnification</h2>
-              <div className="space-y-4 text-sm">
+              <div className="space-y-4 text-[13px]">
                 <h3 className="font-semibold text-base">7.1 By E-Code</h3>
                 <p>E-Code will defend Customer against any third-party claim that the Services infringe any patent, copyright, or trademark, and will indemnify Customer for any damages awarded.</p>
                 
@@ -143,7 +143,7 @@ export default function CommercialAgreement() {
 
             <Card className="p-8 mb-8">
               <h2 className="text-2xl font-semibold mb-6">8. Limitation of Liability</h2>
-              <div className="space-y-4 text-sm">
+              <div className="space-y-4 text-[13px]">
                 <p className="uppercase">IN NO EVENT WILL EITHER PARTY BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, OR ANY LOSS OF PROFITS, REVENUE, DATA, OR USE.</p>
                 <p className="uppercase mt-4">EACH PARTY'S TOTAL LIABILITY WILL NOT EXCEED THE FEES PAID BY CUSTOMER IN THE 12 MONTHS PRECEDING THE CLAIM.</p>
               </div>
@@ -151,7 +151,7 @@ export default function CommercialAgreement() {
 
             <Card className="p-8 mb-8">
               <h2 className="text-2xl font-semibold mb-6">9. Term and Termination</h2>
-              <div className="space-y-4 text-sm">
+              <div className="space-y-4 text-[13px]">
                 <h3 className="font-semibold text-base">9.1 Term</h3>
                 <p>This Agreement begins on the Effective Date and continues for the Initial Term specified in the Order Form, automatically renewing for successive Renewal Terms unless either party provides 90 days' notice of non-renewal.</p>
                 
@@ -171,7 +171,7 @@ export default function CommercialAgreement() {
 
             <Card className="p-8 mb-8">
               <h2 className="text-2xl font-semibold mb-6">10. General Provisions</h2>
-              <div className="space-y-4 text-sm">
+              <div className="space-y-4 text-[13px]">
                 <h3 className="font-semibold text-base">10.1 Governing Law</h3>
                 <p>This Agreement is governed by the laws of Delaware, USA, without regard to conflict of law principles.</p>
                 
@@ -198,7 +198,7 @@ export default function CommercialAgreement() {
             </div>
 
             <div className="mt-8 p-4 bg-muted rounded-lg">
-              <p className="text-sm text-muted-foreground">
+              <p className="text-[13px] text-muted-foreground">
                 <strong>Version:</strong> 2.0<br />
                 <strong>Last Updated:</strong> January 1, 2025<br />
                 For questions about this agreement, please contact <a href="mailto:enterprise@e-code.ai" className="text-primary hover:underline">enterprise@e-code.ai</a>

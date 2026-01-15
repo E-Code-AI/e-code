@@ -153,7 +153,7 @@ export default function Subprocessors() {
               E-Code partners with industry-leading service providers to deliver 
               a secure, reliable, and performant platform
             </p>
-            <Badge variant="outline" className="text-sm">
+            <Badge variant="outline" className="text-[13px]">
               <CheckCircle className="h-4 w-4 mr-1" />
               Last Updated: {lastUpdated.toLocaleDateString('en-US', { 
                 year: 'numeric', 
@@ -187,7 +187,7 @@ export default function Subprocessors() {
                 <li>Limit data processing to the specific purposes outlined below</li>
                 <li>Delete or return data upon termination of services</li>
               </ul>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-[13px] text-muted-foreground">
                 We continuously monitor our subprocessors to ensure they maintain these standards.
               </p>
             </CardContent>
@@ -224,7 +224,7 @@ export default function Subprocessors() {
                             </div>
                             <div>
                               <div className="font-medium">{sp.name}</div>
-                              <div className="text-sm text-muted-foreground">{sp.service}</div>
+                              <div className="text-[13px] text-muted-foreground">{sp.service}</div>
                             </div>
                           </div>
                         </TableCell>
@@ -238,12 +238,12 @@ export default function Subprocessors() {
                           </div>
                         </TableCell>
                         <TableCell className="max-w-xs">
-                          <p className="text-sm">{sp.purpose}</p>
+                          <p className="text-[13px]">{sp.purpose}</p>
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-wrap gap-1">
                             {sp.compliance.map((cert) => (
-                              <Badge key={cert} variant="outline" className="text-xs">
+                              <Badge key={cert} variant="outline" className="text-[11px]">
                                 {cert}
                               </Badge>
                             ))}
@@ -253,7 +253,7 @@ export default function Subprocessors() {
                               href={sp.website} 
                               target="_blank" 
                               rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-1"
+                              className="inline-flex items-center gap-1 text-[11px] text-primary hover:underline mt-1"
                             >
                               View details
                               <ExternalLink className="h-3 w-3" />
@@ -281,7 +281,7 @@ export default function Subprocessors() {
                 <CardHeader>
                   <div className="flex items-center gap-2">
                     <Globe className="h-5 w-5 text-primary" />
-                    <CardTitle className="text-lg">Primary Regions</CardTitle>
+                    <CardTitle className="text-[15px]">Primary Regions</CardTitle>
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -310,14 +310,14 @@ export default function Subprocessors() {
                 <CardHeader>
                   <div className="flex items-center gap-2">
                     <Database className="h-5 w-5 text-primary" />
-                    <CardTitle className="text-lg">Data Residency</CardTitle>
+                    <CardTitle className="text-[15px]">Data Residency</CardTitle>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm mb-3">
+                  <p className="text-[13px] mb-3">
                     Customer data is stored in the region closest to your primary usage location.
                   </p>
-                  <ul className="space-y-2 text-sm">
+                  <ul className="space-y-2 text-[13px]">
                     <li className="flex items-center gap-2">
                       <Lock className="h-4 w-4 text-muted-foreground" />
                       <span>Data encrypted at rest and in transit</span>
@@ -358,7 +358,7 @@ export default function Subprocessors() {
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
                     <h4 className="font-semibold mb-2">Notification Process</h4>
-                    <ul className="space-y-2 text-sm">
+                    <ul className="space-y-2 text-[13px]">
                       <li className="flex items-start gap-2">
                         <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
                         <span>30-day advance notice for new subprocessors</span>
@@ -380,7 +380,7 @@ export default function Subprocessors() {
                   
                   <div>
                     <h4 className="font-semibold mb-2">Subscribe to Updates</h4>
-                    <p className="text-sm mb-3">
+                    <p className="text-[13px] mb-3">
                       Stay informed about changes to our subprocessor list
                     </p>
                     <Button className="w-full min-h-[44px]" asChild data-testid="button-subprocessors-subscribe">
@@ -410,7 +410,7 @@ export default function Subprocessors() {
             <Card className="hover:shadow-lg transition-shadow">
               <CardHeader>
                 <FileText className="h-8 w-8 text-primary mb-2" />
-                <CardTitle className="text-lg">Privacy Policy</CardTitle>
+                <CardTitle className="text-[15px]">Privacy Policy</CardTitle>
                 <CardDescription>
                   How we collect, use, and protect your data
                 </CardDescription>
@@ -425,7 +425,7 @@ export default function Subprocessors() {
             <Card className="hover:shadow-lg transition-shadow">
               <CardHeader>
                 <FileText className="h-8 w-8 text-primary mb-2" />
-                <CardTitle className="text-lg">Data Processing Agreement</CardTitle>
+                <CardTitle className="text-[15px]">Data Processing Agreement</CardTitle>
                 <CardDescription>
                   Our commitments for processing personal data
                 </CardDescription>
@@ -440,7 +440,7 @@ export default function Subprocessors() {
             <Card className="hover:shadow-lg transition-shadow">
               <CardHeader>
                 <Shield className="h-8 w-8 text-primary mb-2" />
-                <CardTitle className="text-lg">Security Overview</CardTitle>
+                <CardTitle className="text-[15px]">Security Overview</CardTitle>
                 <CardDescription>
                   Our security measures and certifications
                 </CardDescription>
