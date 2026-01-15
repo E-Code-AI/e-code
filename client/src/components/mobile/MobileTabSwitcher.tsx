@@ -90,7 +90,8 @@ export const MobileTabSwitcher = memo(function MobileTabSwitcher({
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
-  const firstFocusableRef = useRef<HTMLButtonElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const firstTabRef = useRef<HTMLDivElement>(null);
 
   const debouncedSetQuery = useDebouncedCallback((value: string) => {
     setDebouncedQuery(value);
@@ -103,11 +104,16 @@ export const MobileTabSwitcher = memo(function MobileTabSwitcher({
 
   useEffect(() => {
     if (isOpen) {
-      firstFocusableRef.current?.focus();
+      // Focus first element (button if no tabs, first tab if tabs exist)
+      if (openTabs.length === 0) {
+        buttonRef.current?.focus();
+      } else {
+        firstTabRef.current?.focus();
+      }
       setSearchQuery('');
       setDebouncedQuery('');
     }
-  }, [isOpen]);
+  }, [isOpen, openTabs.length]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -161,7 +167,7 @@ export const MobileTabSwitcher = memo(function MobileTabSwitcher({
     onClose();
   }, [onTabSelect, onClose]);
 
-  const handleTabClose = useCallback((e: React.MouseEvent, tabId: string) => {
+  const handleTabClose = useCallback((e: React.MouseEvent | React.KeyboardEvent, tabId: string) => {
     e.stopPropagation();
     if ('vibrate' in navigator) navigator.vibrate(10);
     onTabClose(tabId);
@@ -215,7 +221,7 @@ export const MobileTabSwitcher = memo(function MobileTabSwitcher({
                 Open a tool to get started
               </p>
               <button
-                ref={firstFocusableRef}
+                ref={buttonRef}
                 onClick={handleNewTab}
                 className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg"
                 aria-label="Open a new tool"
@@ -232,7 +238,7 @@ export const MobileTabSwitcher = memo(function MobileTabSwitcher({
                   key={tab.id}
                   role="button"
                   tabIndex={0}
-                  ref={index === 0 ? firstFocusableRef as React.RefObject<HTMLDivElement> : undefined}
+                  ref={index === 0 ? firstTabRef : undefined}
                   onClick={() => handleTabSelect(tab.id)}
                   onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleTabSelect(tab.id); }}
                   className={cn(
