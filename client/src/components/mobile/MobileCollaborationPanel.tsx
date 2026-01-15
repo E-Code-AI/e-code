@@ -69,7 +69,7 @@ const MobileCollaboratorItem = memo(({
         >
           <AvatarImage src={collaborator.avatar} />
           <AvatarFallback 
-            className="text-sm font-bold text-white"
+            className="text-[13px] font-bold text-white"
             style={{ backgroundColor: collaborator.color }}
           >
             {collaborator.username.slice(0, 2).toUpperCase()}
@@ -91,7 +91,7 @@ const MobileCollaboratorItem = memo(({
             <Badge variant="secondary" className="text-[10px] py-0 px-1.5">Following</Badge>
           )}
         </div>
-        <p className="text-xs text-muted-foreground truncate">
+        <p className="text-[11px] text-muted-foreground truncate">
           {collaborator.activity || 'Online'}
           {collaborator.currentFile && ` · ${collaborator.currentFile}`}
         </p>
@@ -108,7 +108,7 @@ const MobileChatBubble = memo(({ message, isOwn }: { message: ChatMessage; isOwn
   if (message.type === 'system' || message.type === 'file-change') {
     return (
       <div className="flex justify-center my-3">
-        <span className="text-xs text-muted-foreground bg-muted px-3 py-1.5 rounded-full">
+        <span className="text-[11px] text-muted-foreground bg-muted px-3 py-1.5 rounded-full">
           {message.content}
         </span>
       </div>
@@ -122,21 +122,21 @@ const MobileChatBubble = memo(({ message, isOwn }: { message: ChatMessage; isOwn
       className={cn("flex gap-2 my-3", isOwn && "flex-row-reverse")}
     >
       <div 
-        className="h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
+        className="h-8 w-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0"
         style={{ backgroundColor: message.senderColor }}
       >
         {message.senderName.slice(0, 1).toUpperCase()}
       </div>
       <div className={cn("max-w-[75%]", isOwn && "text-right")}>
         <div className="flex items-baseline gap-2 mb-1">
-          <span className="text-xs font-medium">{message.senderName}</span>
+          <span className="text-[11px] font-medium">{message.senderName}</span>
           <span className="text-[10px] text-muted-foreground">
             {format(new Date(message.timestamp), 'HH:mm')}
           </span>
         </div>
         <div 
           className={cn(
-            "text-sm px-4 py-2.5 rounded-2xl",
+            "text-[13px] px-4 py-2.5 rounded-2xl",
             isOwn 
               ? "bg-primary text-primary-foreground rounded-br-md" 
               : "bg-muted rounded-bl-md"
@@ -255,7 +255,7 @@ export function MobileCollaborationPanel({
                     "h-2.5 w-2.5 rounded-full",
                     isConnected ? "bg-green-500" : "bg-red-500"
                   )} />
-                  <h2 className="text-lg font-semibold">Collaboration</h2>
+                  <h2 className="text-[15px] font-semibold">Collaboration</h2>
                   <Badge variant="secondary">{totalCount}</Badge>
                 </div>
                 
@@ -316,8 +316,8 @@ export function MobileCollaborationPanel({
                       {collaborators.length === 0 ? (
                         <div className="text-center py-12 text-muted-foreground">
                           <Users className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-                          <p className="text-base">No collaborators yet</p>
-                          <p className="text-sm mt-1">Invite someone to collaborate!</p>
+                          <p className="text-[13px]">No collaborators yet</p>
+                          <p className="text-[13px] mt-1">Invite someone to collaborate!</p>
                           <Button
                             className="mt-4"
                             onClick={() => setShowShareSheet(true)}
@@ -344,8 +344,8 @@ export function MobileCollaborationPanel({
                       {chatMessages.length === 0 ? (
                         <div className="text-center py-12 text-muted-foreground">
                           <MessageSquare className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-                          <p className="text-base">No messages yet</p>
-                          <p className="text-sm mt-1">Start the conversation!</p>
+                          <p className="text-[13px]">No messages yet</p>
+                          <p className="text-[13px] mt-1">Start the conversation!</p>
                         </div>
                       ) : (
                         <div className="pb-4">
@@ -357,7 +357,7 @@ export function MobileCollaborationPanel({
                             />
                           ))}
                           {typingUsers.length > 0 && (
-                            <div className="text-xs text-muted-foreground italic px-2 py-1">
+                            <div className="text-[11px] text-muted-foreground italic px-2 py-1">
                               {typingUsers.map(u => u.username).join(', ')} typing...
                             </div>
                           )}
@@ -374,7 +374,7 @@ export function MobileCollaborationPanel({
                             setTyping(e.target.value.length > 0);
                           }}
                           placeholder="Type a message..."
-                          className="flex-1 h-11 text-base rounded-xl"
+                          className="flex-1 h-11 text-[13px] rounded-xl"
                           data-testid="mobile-chat-input"
                         />
                         <Button 
@@ -402,7 +402,7 @@ export function MobileCollaborationPanel({
                   className="absolute inset-0 bg-background rounded-t-3xl p-4 z-10"
                 >
                   <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-lg font-semibold">Share Project</h3>
+                    <h3 className="text-[15px] font-semibold">Share Project</h3>
                     <Button
                       size="icon"
                       variant="ghost"
@@ -415,9 +415,9 @@ export function MobileCollaborationPanel({
                   
                   <div className="space-y-4">
                     <div className="p-4 bg-muted rounded-xl">
-                      <p className="text-xs text-muted-foreground mb-2">Share Link</p>
+                      <p className="text-[11px] text-muted-foreground mb-2">Share Link</p>
                       <div className="flex items-center gap-2">
-                        <p className="text-sm font-mono truncate flex-1">{shareLink}</p>
+                        <p className="text-[13px] font-mono truncate flex-1">{shareLink}</p>
                         <Button
                           size="icon"
                           variant="outline"

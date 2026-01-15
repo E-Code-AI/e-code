@@ -47,7 +47,7 @@ export function MobileSlidePanel({
             !prefersReducedMotion && "animate-stagger-1"
           )}
         >
-          <h2 className="font-semibold text-foreground text-lg" data-testid="mobile-slide-panel-title">
+          <h2 className="font-semibold text-foreground text-[15px]" data-testid="mobile-slide-panel-title">
             {title}
           </h2>
           <Button

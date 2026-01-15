@@ -315,7 +315,7 @@ export const ReplitMobileNavigation = memo(function ReplitMobileNavigation({
                   aria-label={`Show ${openTabs.length - 3} more tabs`}
                   data-testid="button-more-tabs"
                 >
-                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                  <span className="text-[11px] font-medium text-gray-500 dark:text-gray-400">
                     +{openTabs.length - 3}
                   </span>
                 </button>

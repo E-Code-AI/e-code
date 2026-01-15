@@ -214,7 +214,7 @@ export function MobileModal({
             >
               {title && (
                 <div className="px-4 py-3 border-b">
-                  <h2 className="text-lg font-semibold">{title}</h2>
+                  <h2 className="text-[15px] font-semibold">{title}</h2>
                 </div>
               )}
               <div className="overflow-auto max-h-[calc(80vh-4rem)]">
@@ -235,7 +235,7 @@ export function MobileModal({
             >
               {title && (
                 <div className="px-4 py-3 border-b">
-                  <h2 className="text-lg font-semibold">{title}</h2>
+                  <h2 className="text-[15px] font-semibold">{title}</h2>
                 </div>
               )}
               {children}

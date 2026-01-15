@@ -235,9 +235,9 @@ export function MobileNotifications() {
               <ChevronLeft className="h-5 w-5" />
             </Button>
             <div>
-              <h1 className="text-lg font-semibold">Notifications</h1>
+              <h1 className="text-[15px] font-semibold">Notifications</h1>
               {unreadCount > 0 && (
-                <p className="text-xs text-muted-foreground">
+                <p className="text-[11px] text-muted-foreground">
                   {unreadCount} unread
                 </p>
               )}
@@ -286,8 +286,8 @@ export function MobileNotifications() {
             <div className="p-4 bg-surface-solid rounded-full mb-4">
               <Bell className="h-8 w-8 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-semibold mb-2">No notifications</h3>
-            <p className="text-sm text-muted-foreground text-center">
+            <h3 className="text-[15px] font-semibold mb-2">No notifications</h3>
+            <p className="text-[13px] text-muted-foreground text-center">
               When you receive notifications, they'll appear here
             </p>
           </div>
@@ -295,7 +295,7 @@ export function MobileNotifications() {
           Object.entries(groupedNotifications).map(([date, notifs]) => (
             <div key={date}>
               <div className="px-4 py-2 bg-surface-solid sticky top-0 z-10">
-                <h2 className="text-xs font-medium text-muted-foreground">
+                <h2 className="text-[11px] font-medium text-muted-foreground">
                   {date}
                 </h2>
               </div>
@@ -337,7 +337,7 @@ export function MobileNotifications() {
                         {notification.user ? (
                           <Avatar className="h-10 w-10">
                             <AvatarImage src={notification.user.avatar} />
-                            <AvatarFallback className="text-xs">
+                            <AvatarFallback className="text-[11px]">
                               {notification.user.name.slice(0, 2).toUpperCase()}
                             </AvatarFallback>
                           </Avatar>
@@ -358,18 +358,18 @@ export function MobileNotifications() {
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex-1">
                             <p className={cn(
-                              "text-sm font-medium",
+                              "text-[13px] font-medium",
                               !notification.read && "text-foreground"
                             )}>
                               {notification.title}
                             </p>
-                            <p className="text-sm text-muted-foreground mt-0.5">
+                            <p className="text-[13px] text-muted-foreground mt-0.5">
                               {notification.description}
                             </p>
                             {notification.projectName && (
                               <Badge 
                                 variant="secondary" 
-                                className="mt-2 text-xs"
+                                className="mt-2 text-[11px]"
                               >
                                 {notification.projectName}
                               </Badge>
@@ -381,7 +381,7 @@ export function MobileNotifications() {
                           )}
                         </div>
                         
-                        <p className="text-xs text-muted-foreground mt-2">
+                        <p className="text-[11px] text-muted-foreground mt-2">
                           {formatDistanceToNow(notification.timestamp, { addSuffix: true })}
                         </p>
                       </div>

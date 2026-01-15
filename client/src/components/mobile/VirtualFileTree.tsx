@@ -192,7 +192,7 @@ export function VirtualFileTree({
                   item.type === 'folder' ? 'text-blue-400' : 'text-muted-foreground'
                 )} />
                 
-                <span className="text-sm text-foreground truncate">
+                <span className="text-[13px] text-foreground truncate">
                   {item.name}
                 </span>
               </div>

@@ -184,7 +184,7 @@ export function ReplitToolsSheet({ open, onOpenChange, onToolSelect }: ReplitToo
               <SheetTitle className="text-base">Search for tools and files</SheetTitle>
               <button
                 onClick={() => onOpenChange(false)}
-                className="text-muted-foreground hover:text-foreground text-sm font-medium"
+                className="text-muted-foreground hover:text-foreground text-[13px] font-medium"
                 data-testid="button-close-tools"
               >
                 Close
@@ -210,7 +210,7 @@ export function ReplitToolsSheet({ open, onOpenChange, onToolSelect }: ReplitToo
             {filteredSearchTools.length > 0 && (
               <div className="py-3">
                 <div className="px-4 mb-2">
-                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
                     Search
                   </h3>
                 </div>
@@ -226,8 +226,8 @@ export function ReplitToolsSheet({ open, onOpenChange, onToolSelect }: ReplitToo
                       >
                         <Search className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                         <div className="flex-1 min-w-0">
-                          <div className="font-medium text-sm">{tool.name}</div>
-                          <div className="text-xs text-muted-foreground">{tool.description}</div>
+                          <div className="font-medium text-[13px]">{tool.name}</div>
+                          <div className="text-[11px] text-muted-foreground">{tool.description}</div>
                         </div>
                         <span className="text-muted-foreground">›</span>
                       </button>
@@ -241,7 +241,7 @@ export function ReplitToolsSheet({ open, onOpenChange, onToolSelect }: ReplitToo
             {filteredRegularTools.length > 0 && (
               <div className="py-3">
                 <div className="px-4 mb-2">
-                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
                     Tools
                   </h3>
                 </div>
@@ -273,8 +273,8 @@ export function ReplitToolsSheet({ open, onOpenChange, onToolSelect }: ReplitToo
                           )} />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="font-medium text-sm mb-0.5">{tool.name}</div>
-                          <div className="text-xs text-muted-foreground leading-relaxed">
+                          <div className="font-medium text-[13px] mb-0.5">{tool.name}</div>
+                          <div className="text-[11px] text-muted-foreground leading-relaxed">
                             {tool.description}
                           </div>
                         </div>
@@ -289,7 +289,7 @@ export function ReplitToolsSheet({ open, onOpenChange, onToolSelect }: ReplitToo
             {searchQuery && filteredSearchTools.length === 0 && filteredRegularTools.length === 0 && (
               <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
                 <Search className="h-12 w-12 text-muted-foreground mb-3" />
-                <p className="text-sm text-muted-foreground">
+                <p className="text-[13px] text-muted-foreground">
                   No tools found for "{searchQuery}"
                 </p>
               </div>

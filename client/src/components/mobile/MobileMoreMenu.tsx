@@ -410,7 +410,7 @@ export function MobileMoreMenu({
                     </Badge>
                   )}
                 </div>
-                <span className="text-xs text-muted-foreground font-medium text-center">
+                <span className="text-[11px] text-muted-foreground font-medium text-center">
                   {item.label}
                 </span>
               </button>
@@ -507,7 +507,7 @@ export function MobileMoreMenu({
                         </Badge>
                       )}
                     </div>
-                    <span className="text-xs text-muted-foreground font-medium text-center">
+                    <span className="text-[11px] text-muted-foreground font-medium text-center">
                       {item.label}
                     </span>
                   </LazyMotionButton>

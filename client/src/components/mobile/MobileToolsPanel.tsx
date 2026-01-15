@@ -139,7 +139,7 @@ export function MobileToolsPanel({
                 {searchItems.length > 0 && (
                   <div className="mb-2">
                     <div className="px-4 py-1.5">
-                      <span className="text-xs font-medium text-[var(--ecode-text-muted)] uppercase tracking-wider">
+                      <span className="text-[11px] font-medium text-[var(--ecode-text-muted)] uppercase tracking-wider">
                         Search
                       </span>
                     </div>
@@ -153,7 +153,7 @@ export function MobileToolsPanel({
                 {toolItems.length > 0 && (
                   <div>
                     <div className="px-4 py-1.5">
-                      <span className="text-xs font-medium text-[var(--ecode-text-muted)] uppercase tracking-wider">
+                      <span className="text-[11px] font-medium text-[var(--ecode-text-muted)] uppercase tracking-wider">
                         Tools
                       </span>
                     </div>
@@ -167,7 +167,7 @@ export function MobileToolsPanel({
                 {filteredTools.length === 0 && (
                   <div className="px-4 py-8 text-center">
                     <Search className="h-8 w-8 mx-auto mb-3 text-[var(--ecode-text-muted)]" />
-                    <p className="text-sm text-[var(--ecode-text-muted)]">
+                    <p className="text-[13px] text-[var(--ecode-text-muted)]">
                       No tools found for "{searchQuery}"
                     </p>
                   </div>
@@ -205,10 +205,10 @@ function ToolRow({
         <Icon className="h-4 w-4 text-[var(--ecode-text-muted)]" />
       </div>
       <div className="flex-1 min-w-0">
-        <div className="font-medium text-sm text-[var(--ecode-text)]">
+        <div className="font-medium text-[13px] text-[var(--ecode-text)]">
           {tool.title}
         </div>
-        <div className="text-xs text-[var(--ecode-text-muted)] line-clamp-2 mt-0.5">
+        <div className="text-[11px] text-[var(--ecode-text-muted)] line-clamp-2 mt-0.5">
           {tool.description}
         </div>
       </div>

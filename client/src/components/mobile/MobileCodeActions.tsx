@@ -341,10 +341,10 @@ export function MobileCodeActions({ editor, className }: MobileCodeActionsProps)
               <div className="p-4 border-b border-[var(--ecode-border)]">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-lg font-semibold text-[var(--ecode-text)]">
+                    <h3 className="text-[15px] font-semibold text-[var(--ecode-text)]">
                       Code Actions
                     </h3>
-                    <p className="text-sm text-[var(--ecode-text-secondary)]">
+                    <p className="text-[13px] text-[var(--ecode-text-secondary)]">
                       {activePanel ? 'Back to actions' : 'Touch-optimized shortcuts'}
                     </p>
                   </div>
@@ -389,16 +389,16 @@ export function MobileCodeActions({ editor, className }: MobileCodeActionsProps)
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2">
-                                <span className="text-sm font-medium text-[var(--ecode-text)] truncate">
+                                <span className="text-[13px] font-medium text-[var(--ecode-text)] truncate">
                                   {action.label}
                                 </span>
                                 {action.badge && (
-                                  <Badge variant="secondary" className="text-xs">
+                                  <Badge variant="secondary" className="text-[11px]">
                                     {action.badge}
                                   </Badge>
                                 )}
                               </div>
-                              <p className="text-xs text-[var(--ecode-text-secondary)] mt-1">
+                              <p className="text-[11px] text-[var(--ecode-text-secondary)] mt-1">
                                 {action.description}
                               </p>
                             </div>
@@ -415,7 +415,7 @@ export function MobileCodeActions({ editor, className }: MobileCodeActionsProps)
                       className="p-4 space-y-4"
                     >
                       <div>
-                        <label className="text-sm font-medium text-[var(--ecode-text)] mb-2 block">
+                        <label className="text-[13px] font-medium text-[var(--ecode-text)] mb-2 block">
                           Find
                         </label>
                         <Input
@@ -428,7 +428,7 @@ export function MobileCodeActions({ editor, className }: MobileCodeActionsProps)
                         />
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-[var(--ecode-text)] mb-2 block">
+                        <label className="text-[13px] font-medium text-[var(--ecode-text)] mb-2 block">
                           Replace with
                         </label>
                         <Input

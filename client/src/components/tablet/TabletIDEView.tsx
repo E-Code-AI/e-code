@@ -72,7 +72,7 @@ const TerminalFallback = () => (
   <div className="h-full flex items-center justify-center bg-background">
     <div className="flex flex-col items-center gap-2">
       <Loader2 className="h-5 w-5 animate-spin text-primary" />
-      <p className="text-xs text-muted-foreground">Loading terminal...</p>
+      <p className="text-[11px] text-muted-foreground">Loading terminal...</p>
     </div>
   </div>
 );
@@ -312,7 +312,7 @@ export function TabletIDEView({ projectId, className, bootstrapToken, onWorkspac
         data-testid="button-editor-panel"
       >
         <Code className="h-4 w-4 mr-1" />
-        <span className="text-xs">Editor</span>
+        <span className="text-[11px]">Editor</span>
       </Button>
       <Button
         variant={rightPanel === 'preview' ? 'default' : 'ghost'}
@@ -322,7 +322,7 @@ export function TabletIDEView({ projectId, className, bootstrapToken, onWorkspac
         data-testid="button-preview-panel"
       >
         <Monitor className="h-4 w-4 mr-1" />
-        <span className="text-xs">Preview</span>
+        <span className="text-[11px]">Preview</span>
       </Button>
       <Button
         variant={rightPanel === 'terminal' ? 'default' : 'ghost'}
@@ -332,7 +332,7 @@ export function TabletIDEView({ projectId, className, bootstrapToken, onWorkspac
         data-testid="button-terminal-panel"
       >
         <Terminal className="h-4 w-4 mr-1" />
-        <span className="text-xs">Terminal</span>
+        <span className="text-[11px]">Terminal</span>
       </Button>
       <Button
         variant={rightPanel === 'agent' ? 'default' : 'ghost'}
@@ -342,7 +342,7 @@ export function TabletIDEView({ projectId, className, bootstrapToken, onWorkspac
         data-testid="button-agent-panel"
       >
         <Bot className="h-4 w-4 mr-1" />
-        <span className="text-xs">Agent</span>
+        <span className="text-[11px]">Agent</span>
       </Button>
     </div>
   );
@@ -413,7 +413,7 @@ export function TabletIDEView({ projectId, className, bootstrapToken, onWorkspac
           >
             {/* Drawer Header */}
             <div className="flex items-center justify-between h-14 px-4 border-b border-border bg-muted/30">
-              <h2 className="text-sm font-semibold">File Explorer</h2>
+              <h2 className="text-[13px] font-semibold">File Explorer</h2>
               <Button
                 variant="ghost"
                 size="icon"
@@ -490,7 +490,7 @@ export function TabletIDEView({ projectId, className, bootstrapToken, onWorkspac
           
           <div className="flex-1 flex items-center gap-2">
             <Code className="h-5 w-5 text-muted-foreground" />
-            <span className="text-sm font-medium truncate">
+            <span className="text-[13px] font-medium truncate">
               {selectedFileId ? `File ${selectedFileId}` : 'No file selected'}
             </span>
           </div>
@@ -500,13 +500,13 @@ export function TabletIDEView({ projectId, className, bootstrapToken, onWorkspac
             {errorsCount > 0 && (
               <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-red-500/10 text-red-500">
                 <AlertCircle className="h-3 w-3" />
-                <span className="text-xs font-medium">{errorsCount}</span>
+                <span className="text-[11px] font-medium">{errorsCount}</span>
               </div>
             )}
             {gitChangesCount > 0 && (
               <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-muted text-muted-foreground">
                 <GitBranch className="h-3 w-3" />
-                <span className="text-xs font-medium">{gitChangesCount}</span>
+                <span className="text-[11px] font-medium">{gitChangesCount}</span>
               </div>
             )}
           </div>

@@ -104,12 +104,12 @@ export const AppNotReadyPlaceholder = memo(function AppNotReadyPlaceholder({
       </div>
 
       {/* Title */}
-      <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5 text-center">
+      <h3 className="text-[13px] font-semibold text-gray-700 dark:text-gray-300 mb-1.5 text-center">
         {isWarming ? 'Preparing Your App' : 'App Not Ready Yet'}
       </h3>
 
       {/* Message - reduced font for mobile */}
-      <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 text-center max-w-[240px] leading-relaxed">
+      <p className="text-[11px] sm:text-[11px] text-gray-500 dark:text-gray-400 text-center max-w-[240px] leading-relaxed">
         {message.split('\n\n')[0]}
       </p>
 

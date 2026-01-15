@@ -86,7 +86,7 @@ export function MobileIDEHeader({
               className="flex items-center gap-1.5 min-w-0 px-2 py-1 rounded-lg hover:bg-[var(--ecode-surface-hover)] transition-colors"
               data-testid="button-project-dropdown"
             >
-              <span className="font-semibold text-sm text-[var(--ecode-text)] truncate max-w-[140px]">
+              <span className="font-semibold text-[13px] text-[var(--ecode-text)] truncate max-w-[140px]">
                 {projectName}
               </span>
               <ChevronDown className={cn(
@@ -161,7 +161,7 @@ export function MobileIDEHeader({
                   className="flex items-center gap-1.5"
                 >
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  <span className="text-xs">Stop</span>
+                  <span className="text-[11px]">Stop</span>
                 </LazyMotionDiv>
               ) : (
                 <LazyMotionDiv
@@ -172,7 +172,7 @@ export function MobileIDEHeader({
                   className="flex items-center gap-1.5"
                 >
                   <Play className="h-3.5 w-3.5 fill-current" />
-                  <span className="text-xs">Run</span>
+                  <span className="text-[11px]">Run</span>
                 </LazyMotionDiv>
               )}
             </LazyAnimatePresence>

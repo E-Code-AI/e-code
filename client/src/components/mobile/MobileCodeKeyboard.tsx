@@ -253,7 +253,7 @@ export function MobileCodeKeyboard({
             variant="ghost"
             size="sm"
             onClick={() => setShowSymbols(!showSymbols)}
-            className="h-6 px-2 text-xs"
+            className="h-6 px-2 text-[11px]"
             data-testid="toggle-symbols"
           >
             {showSymbols ? 'Snippets' : 'Symbols'}
@@ -359,7 +359,7 @@ export function MobileCodeKeyboard({
                 key={i}
                 variant="outline"
                 size="sm"
-                className="h-9 min-w-[36px] px-2 font-mono text-sm shrink-0"
+                className="h-9 min-w-[36px] px-2 font-mono text-[13px] shrink-0"
                 onClick={() => handleInsert(sym.insert)}
                 data-testid={`symbol-${i}`}
               >
@@ -374,7 +374,7 @@ export function MobileCodeKeyboard({
                   key={i}
                   variant="outline"
                   size="sm"
-                  className="h-9 px-2.5 text-xs shrink-0"
+                  className="h-9 px-2.5 text-[11px] shrink-0"
                   onClick={() => handleSnippetClick(snippet)}
                   data-testid={`snippet-${snippet.label}`}
                 >

@@ -153,7 +153,7 @@ export function TerminalSkeleton({ className }: MobileLoadingSkeletonProps) {
         <SkeletonLine width="60px" height="h-3" className="ml-2" animate={animate} />
       </div>
       
-      <div className="flex-1 p-3 font-mono text-sm">
+      <div className="flex-1 p-3 font-mono text-[13px]">
         <div className="flex flex-col gap-2">
           {lines.map((line, index) => (
             <div key={index} className="flex items-center gap-2">

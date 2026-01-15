@@ -235,7 +235,7 @@ export const ReplitMobileInputBar = memo(function ReplitMobileInputBar({
             disabled={isDisabled}
             rows={1}
             className={cn(
-              "w-full px-4 pt-3 pb-12 text-sm resize-none bg-transparent",
+              "w-full px-4 pt-3 pb-12 text-[13px] resize-none bg-transparent",
               "text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500",
               "focus:outline-none min-h-[48px] max-h-[120px]",
               isDisabled && "opacity-50 cursor-not-allowed"
@@ -248,7 +248,7 @@ export const ReplitMobileInputBar = memo(function ReplitMobileInputBar({
               <button
                 onClick={handleBuildModeClick}
                 className={cn(
-                  "flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all",
+                  "flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all",
                   "bg-gray-100 dark:bg-[#2A2A2A] active:bg-gray-200 dark:active:bg-[#3A3A3A]",
                   "text-gray-700 dark:text-gray-300 active:scale-95 touch-manipulation"
                 )}
@@ -325,7 +325,7 @@ export const ReplitMobileInputBar = memo(function ReplitMobileInputBar({
                   key={mode}
                   onClick={() => selectBuildMode(mode)}
                   className={cn(
-                    "w-full px-3 py-2 text-left text-sm rounded-lg transition-colors touch-manipulation",
+                    "w-full px-3 py-2 text-left text-[13px] rounded-lg transition-colors touch-manipulation",
                     buildMode === mode
                       ? "bg-[#7C65C1]/10 text-[#7C65C1]"
                       : "active:bg-gray-100 dark:active:bg-[#2A2A2A] text-gray-700 dark:text-gray-300"
@@ -333,7 +333,7 @@ export const ReplitMobileInputBar = memo(function ReplitMobileInputBar({
                   data-testid={`mode-${mode}`}
                 >
                   <span className="capitalize font-medium">{mode}</span>
-                  <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">
+                  <span className="text-[11px] text-gray-500 dark:text-gray-400 ml-2">
                     {mode === 'build' && '- Create new features'}
                     {mode === 'edit' && '- Modify existing code'}
                     {mode === 'chat' && '- Ask questions'}

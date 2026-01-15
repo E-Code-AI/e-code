@@ -45,7 +45,7 @@ export function MobileDeployPanel({ projectId, className }: MobileDeployPanelPro
     },
   });
 
-  const publishMutation = useMutation({
+  const publishMutation = useMutation<PublishState, Error, void>({
     mutationFn: async () => {
       return apiRequest<PublishState>('POST', `/api/projects/${projectId}/publish`);
     },
@@ -72,7 +72,7 @@ export function MobileDeployPanel({ projectId, className }: MobileDeployPanelPro
     },
   });
 
-  const republishMutation = useMutation({
+  const republishMutation = useMutation<PublishState, Error, void>({
     mutationFn: async () => {
       return apiRequest<PublishState>('POST', `/api/projects/${projectId}/republish`);
     },
@@ -130,7 +130,7 @@ export function MobileDeployPanel({ projectId, className }: MobileDeployPanelPro
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Rocket className="h-5 w-5 text-[var(--ecode-accent)]" />
-              <h2 className="text-lg font-semibold text-[var(--ecode-text)]">Deploy</h2>
+              <h2 className="text-[15px] font-semibold text-[var(--ecode-text)]">Deploy</h2>
             </div>
             <Badge 
               variant={isLive ? "default" : isFailed ? "destructive" : "secondary"}
@@ -156,7 +156,7 @@ export function MobileDeployPanel({ projectId, className }: MobileDeployPanelPro
 
           {isLive && publishState?.url && (
             <div className="bg-[var(--ecode-background)] rounded-lg p-3 space-y-2">
-              <div className="flex items-center gap-2 text-sm text-[var(--ecode-text-muted)]">
+              <div className="flex items-center gap-2 text-[13px] text-[var(--ecode-text-muted)]">
                 <Globe className="h-4 w-4" />
                 <span>Your app is live at:</span>
               </div>
@@ -165,7 +165,7 @@ export function MobileDeployPanel({ projectId, className }: MobileDeployPanelPro
                   href={publishState.url} 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="flex-1 text-sm text-[var(--ecode-accent)] hover:underline truncate"
+                  className="flex-1 text-[13px] text-[var(--ecode-accent)] hover:underline truncate"
                   data-testid="link-published-url"
                 >
                   {publishState.url}
@@ -194,7 +194,7 @@ export function MobileDeployPanel({ projectId, className }: MobileDeployPanelPro
                 </Button>
               </div>
               {publishState.deployedAt && (
-                <p className="text-xs text-[var(--ecode-text-muted)]">
+                <p className="text-[11px] text-[var(--ecode-text-muted)]">
                   Last deployed: {new Date(publishState.deployedAt).toLocaleString()}
                 </p>
               )}
@@ -203,11 +203,11 @@ export function MobileDeployPanel({ projectId, className }: MobileDeployPanelPro
 
           {isFailed && publishState?.errorMessage && (
             <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3">
-              <div className="flex items-center gap-2 text-sm text-red-400">
+              <div className="flex items-center gap-2 text-[13px] text-red-400">
                 <XCircle className="h-4 w-4" />
                 <span>Deployment failed</span>
               </div>
-              <p className="text-xs text-red-300 mt-1">{publishState.errorMessage}</p>
+              <p className="text-[11px] text-red-300 mt-1">{publishState.errorMessage}</p>
             </div>
           )}
 
@@ -245,7 +245,7 @@ export function MobileDeployPanel({ projectId, className }: MobileDeployPanelPro
 
       <Card className="bg-[var(--ecode-surface)] border-[var(--ecode-border)]">
         <CardContent className="p-4 space-y-3">
-          <h3 className="text-sm font-medium text-[var(--ecode-text)]">Deployment Info</h3>
+          <h3 className="text-[13px] font-medium text-[var(--ecode-text)]">Deployment Info</h3>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-[var(--ecode-text-muted)]">Environment</span>

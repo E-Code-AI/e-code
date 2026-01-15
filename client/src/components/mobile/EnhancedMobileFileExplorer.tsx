@@ -97,8 +97,8 @@ function NoFilesEmptyState({ onCreateFile }: { onCreateFile: () => void }) {
       <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
         <Folder className="h-8 w-8 text-muted-foreground" />
       </div>
-      <h3 className="text-lg font-semibold mb-2">No files yet</h3>
-      <p className="text-sm text-muted-foreground mb-4">
+      <h3 className="text-[15px] font-semibold mb-2">No files yet</h3>
+      <p className="text-[13px] text-muted-foreground mb-4">
         Create your first file to get started
       </p>
       <Button 
@@ -343,7 +343,7 @@ export function EnhancedMobileFileExplorer({
             item.type === 'folder' ? 'text-amber-500' : 'text-muted-foreground'
           )} />
           
-          <span className="flex-1 truncate text-sm">{item.name}</span>
+          <span className="flex-1 truncate text-[13px]">{item.name}</span>
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

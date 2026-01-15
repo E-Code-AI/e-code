@@ -91,8 +91,8 @@ function NoFilesEmptyState({ onCreateFile }: { onCreateFile?: () => void }) {
       <div className="w-16 h-16 rounded-full bg-[var(--ecode-surface-hover)] flex items-center justify-center mb-4">
         <Folder className="h-8 w-8 text-[var(--ecode-text-muted)]" />
       </div>
-      <h3 className="text-lg font-semibold mb-2 text-[var(--ecode-text)]">No files yet</h3>
-      <p className="text-sm text-[var(--ecode-text-muted)] mb-4">
+      <h3 className="text-[15px] font-semibold mb-2 text-[var(--ecode-text)]">No files yet</h3>
+      <p className="text-[13px] text-[var(--ecode-text-muted)] mb-4">
         Create your first file to get started
       </p>
       {onCreateFile && (
@@ -172,7 +172,7 @@ function FileTreeItem({
           "h-4 w-4 flex-shrink-0",
           isFolder ? "text-[var(--ecode-accent)]" : "text-[var(--ecode-text-muted)]"
         )} />
-        <span className="truncate text-sm font-medium">{file.name}</span>
+        <span className="truncate text-[13px] font-medium">{file.name}</span>
       </LazyMotionButton>
 
       {isFolder && file.children && file.children.length > 0 && (
@@ -313,7 +313,7 @@ export function InlineMobileFileExplorer({
         )}
       </ScrollArea>
 
-      <div className="p-3 border-t border-[var(--ecode-border)] text-xs text-[var(--ecode-text-muted)] text-center">
+      <div className="p-3 border-t border-[var(--ecode-border)] text-[11px] text-[var(--ecode-text-muted)] text-center">
         {files?.length || 0} files • Tap a file to edit
       </div>
     </div>

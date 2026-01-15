@@ -146,14 +146,14 @@ export function MobileBuildDashboard() {
             <p>
               EAS Build token is not configured. To enable mobile app builds, you need to set up an Expo account and configure the EAS_BUILD_TOKEN environment variable.
             </p>
-            <p className="text-sm">
+            <p className="text-[13px]">
               1. Create an Expo account at{' '}
               <a href="https://expo.dev" target="_blank" rel="noopener noreferrer" className="underline inline-flex items-center gap-1">
                 expo.dev <ExternalLink className="h-3 w-3" />
               </a>
             </p>
-            <p className="text-sm">2. Generate an access token from your Expo account settings</p>
-            <p className="text-sm">3. Set <code className="bg-red-100 dark:bg-red-900 px-1 rounded">EAS_BUILD_TOKEN</code> in your environment variables</p>
+            <p className="text-[13px]">2. Generate an access token from your Expo account settings</p>
+            <p className="text-[13px]">3. Set <code className="bg-red-100 dark:bg-red-900 px-1 rounded">EAS_BUILD_TOKEN</code> in your environment variables</p>
             <Button variant="outline" size="sm" className="mt-4" asChild>
               <a href={config?.documentationUrl || 'https://docs.expo.dev/build/setup/'} target="_blank" rel="noopener noreferrer">
                 <ExternalLink className="h-4 w-4 mr-2" />
@@ -311,7 +311,7 @@ export function MobileBuildDashboard() {
               <div className="text-center py-8 text-muted-foreground" data-testid="builds-empty">
                 <Smartphone className="h-12 w-12 mx-auto mb-3 opacity-50" />
                 <p>No builds yet</p>
-                <p className="text-sm">Submit your first build to get started</p>
+                <p className="text-[13px]">Submit your first build to get started</p>
               </div>
             ) : (
               <ScrollArea className="h-[350px]">
@@ -333,7 +333,7 @@ export function MobileBuildDashboard() {
                             ) : (
                               <SiAndroid className="h-4 w-4" />
                             )}
-                            <span className="font-medium text-sm">{build.bundleId}</span>
+                            <span className="font-medium text-[13px]">{build.bundleId}</span>
                           </div>
                           <Badge className={statusConfig[build.status].color} data-testid={`status-badge-${build.id}`}>
                             <StatusIcon className={`h-3 w-3 mr-1 ${build.status === 'building' ? 'animate-spin' : ''}`} />
@@ -341,13 +341,13 @@ export function MobileBuildDashboard() {
                           </Badge>
                         </div>
 
-                        <div className="flex items-center justify-between text-sm text-muted-foreground">
+                        <div className="flex items-center justify-between text-[13px] text-muted-foreground">
                           <span>v{build.version} ({build.buildNumber || '1'})</span>
                           <span>{new Date(build.createdAt).toLocaleDateString()}</span>
                         </div>
 
                         {build.errorMessage && (
-                          <p className="text-sm text-red-600 dark:text-red-400" data-testid={`error-message-${build.id}`}>
+                          <p className="text-[13px] text-red-600 dark:text-red-400" data-testid={`error-message-${build.id}`}>
                             {build.errorMessage}
                           </p>
                         )}

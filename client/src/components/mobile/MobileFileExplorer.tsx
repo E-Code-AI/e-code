@@ -185,14 +185,14 @@ function FileTreeItem({
         )} />
         
         <span className={cn(
-          'flex-1 text-sm truncate',
+          'flex-1 text-[13px] truncate',
           isActive && 'font-medium text-[var(--ecode-accent)]'
         )}>
           {item.name}
         </span>
         
         {item.type === 'file' && item.size && (
-          <span className="text-xs text-muted-foreground">
+          <span className="text-[11px] text-muted-foreground">
             {formatFileSize(item.size)}
           </span>
         )}
@@ -414,7 +414,7 @@ export function MobileFileExplorer({
         onTouchEnd={handleTouchEnd}
       >
         <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--ecode-border)] bg-[var(--ecode-surface)]">
-          <h2 className="text-lg font-semibold text-foreground">Fichiers</h2>
+          <h2 className="text-[15px] font-semibold text-foreground">Fichiers</h2>
           <Button
             variant="ghost"
             size="icon"
@@ -434,7 +434,7 @@ export function MobileFileExplorer({
               placeholder="Rechercher..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 h-9 text-sm touch-manipulation"
+              className="pl-9 h-9 text-[13px] touch-manipulation"
               data-testid="mobile-file-search"
             />
           </div>
@@ -533,8 +533,8 @@ export function MobileFileExplorer({
             data-testid="mobile-file-context-menu"
           >
             <div className="mb-3">
-              <p className="text-sm font-medium text-foreground">{selectedItem.name}</p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-[13px] font-medium text-foreground">{selectedItem.name}</p>
+              <p className="text-[11px] text-muted-foreground">
                 {selectedItem.type === 'folder' ? 'Dossier' : `Fichier${selectedItem.size ? ` · ${formatFileSize(selectedItem.size)}` : ''}`}
               </p>
             </div>

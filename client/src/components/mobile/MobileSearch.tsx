@@ -111,8 +111,9 @@ export function MobileSearch({ isOpen, onClose, onSearch }: MobileSearchProps) {
     recognition.interimResults = false;
     recognition.lang = 'en-US';
 
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
-      const transcript = event.results[0][0].transcript;
+    recognition.onresult = (event: Event) => {
+      const speechEvent = event as unknown as { results: { 0: { 0: { transcript: string } } } };
+      const transcript = speechEvent.results[0][0].transcript;
       setQuery(transcript);
       setIsListening(false);
       handleSearch(transcript);
@@ -194,7 +195,7 @@ export function MobileSearch({ isOpen, onClose, onSearch }: MobileSearchProps) {
               if ('vibrate' in navigator) navigator.vibrate(5);
             }}
             className={cn(
-              "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200",
+              "px-4 py-2 rounded-full text-[13px] font-medium whitespace-nowrap transition-all duration-200",
               "mobile-touch-target active:scale-95",
               activeCategory === category.value
                 ? "bg-primary text-primary-foreground"
@@ -212,12 +213,12 @@ export function MobileSearch({ isOpen, onClose, onSearch }: MobileSearchProps) {
             {recentSearches.length > 0 && (
               <div className="mb-6">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-medium text-muted-foreground">
+                  <h3 className="text-[13px] font-medium text-muted-foreground">
                     Recent
                   </h3>
                   <button
                     onClick={clearRecentSearches}
-                    className="text-xs text-muted-foreground hover:text-foreground active:scale-95 transition-transform"
+                    className="text-[11px] text-muted-foreground hover:text-foreground active:scale-95 transition-transform"
                   >
                     Clear
                   </button>
@@ -237,8 +238,8 @@ export function MobileSearch({ isOpen, onClose, onSearch }: MobileSearchProps) {
                     )}
                   >
                     <Clock className="h-4 w-4 text-muted-foreground" />
-                    <span className="flex-1 text-sm">{search.query}</span>
-                    <Badge variant="secondary" className="text-xs">
+                    <span className="flex-1 text-[13px]">{search.query}</span>
+                    <Badge variant="secondary" className="text-[11px]">
                       {search.category}
                     </Badge>
                   </button>
@@ -247,7 +248,7 @@ export function MobileSearch({ isOpen, onClose, onSearch }: MobileSearchProps) {
             )}
 
             <div>
-              <h3 className="text-sm font-medium text-muted-foreground mb-3">
+              <h3 className="text-[13px] font-medium text-muted-foreground mb-3">
                 Trending searches
               </h3>
               
@@ -270,11 +271,11 @@ export function MobileSearch({ isOpen, onClose, onSearch }: MobileSearchProps) {
                       ? "text-primary" 
                       : "text-muted-foreground"
                   )} />
-                  <span className="flex-1 text-sm">{suggestion.text}</span>
+                  <span className="flex-1 text-[13px]">{suggestion.text}</span>
                   <Badge 
                     variant={suggestion.trending ? "default" : "secondary"}
                     className={cn(
-                      "text-xs",
+                      "text-[11px]",
                       suggestion.trending && "bg-primary/10 text-primary border-primary/20"
                     )}
                   >
@@ -287,12 +288,12 @@ export function MobileSearch({ isOpen, onClose, onSearch }: MobileSearchProps) {
         ) : (
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-medium text-muted-foreground">
+              <h3 className="text-[13px] font-medium text-muted-foreground">
                 Results for "{query}"
               </h3>
               <button
                 onClick={() => setShowResults(false)}
-                className="text-xs text-primary active:scale-95 transition-transform"
+                className="text-[11px] text-primary active:scale-95 transition-transform"
               >
                 New search
               </button>

@@ -135,8 +135,8 @@ export function MobileSessionsPanel({ className }: MobileSessionsPanelProps) {
         <div className="flex flex-col items-center justify-center text-center py-8 space-y-4">
           <AlertTriangle className="h-12 w-12 text-destructive" />
           <div>
-            <h3 className="font-semibold text-lg">Failed to load sessions</h3>
-            <p className="text-muted-foreground text-sm">Please try again later</p>
+            <h3 className="font-semibold text-[15px]">Failed to load sessions</h3>
+            <p className="text-muted-foreground text-[13px]">Please try again later</p>
           </div>
           <Button variant="outline" onClick={() => refetch()} data-testid="button-retry-sessions">
             <RefreshCw className="h-4 w-4 mr-2" />
@@ -173,8 +173,8 @@ export function MobileSessionsPanel({ className }: MobileSessionsPanelProps) {
       {sessions.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center p-8 text-center" data-testid="empty-state-sessions">
           <Tablet className="h-16 w-16 text-muted-foreground/50 mb-4" />
-          <h3 className="font-medium text-lg mb-1">No active sessions</h3>
-          <p className="text-muted-foreground text-sm max-w-xs">
+          <h3 className="font-medium text-[15px] mb-1">No active sessions</h3>
+          <p className="text-muted-foreground text-[13px] max-w-xs">
             Your mobile app sessions will appear here when you log in from a mobile device.
           </p>
         </div>
@@ -195,8 +195,8 @@ export function MobileSessionsPanel({ className }: MobileSessionsPanelProps) {
                     <p className="font-medium" data-testid={`text-device-name-${session.deviceId}`}>
                       {session.deviceName || `${session.platform === 'ios' ? 'iPhone' : 'Android'} Device`}
                     </p>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Badge variant="outline" className="text-xs capitalize" data-testid={`badge-platform-${session.deviceId}`}>
+                    <div className="flex items-center gap-2 text-[13px] text-muted-foreground">
+                      <Badge variant="outline" className="text-[11px] capitalize" data-testid={`badge-platform-${session.deviceId}`}>
                         {session.platform}
                       </Badge>
                       <span className="flex items-center gap-1" data-testid={`text-last-active-${session.deviceId}`}>

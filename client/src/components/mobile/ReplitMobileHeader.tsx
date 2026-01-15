@@ -129,7 +129,7 @@ export const ReplitMobileHeader = memo(function ReplitMobileHeader({
               style={{ color: config.iconColor || '#6B7280' }} 
             />
           )}
-          <span className="font-medium text-gray-900 dark:text-white text-sm">
+          <span className="font-medium text-gray-900 dark:text-white text-[13px]">
             {displayTitle}
           </span>
         </div>
