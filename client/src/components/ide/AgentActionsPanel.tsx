@@ -99,7 +99,7 @@ export function AgentActionsPanel({ projectId }: AgentActionsPanelProps) {
     <div className="h-full flex flex-col bg-background">
       <div className="p-4 border-b">
         <h3 className="font-semibold">Agent Actions</h3>
-        <p className="text-xs text-muted-foreground mt-1">
+        <p className="text-[11px] text-muted-foreground mt-1">
           Review and approve AI-generated changes
         </p>
       </div>
@@ -109,21 +109,21 @@ export function AgentActionsPanel({ projectId }: AgentActionsPanelProps) {
           {/* Pending Actions */}
           {pendingActions.length > 0 && (
             <div className="space-y-2">
-              <h4 className="text-sm font-medium text-muted-foreground">Pending Approval</h4>
+              <h4 className="text-[13px] font-medium text-muted-foreground">Pending Approval</h4>
               {pendingActions.map((action) => (
                 <Card key={action.id} data-testid={`action-${action.id}`}>
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-2">
                         {getActionIcon(action.type)}
-                        <CardTitle className="text-sm">{action.type.replace('_', ' ')}</CardTitle>
+                        <CardTitle className="text-[13px]">{action.type.replace('_', ' ')}</CardTitle>
                       </div>
                       <Badge variant="secondary" className="shrink-0">
                         <Clock className="h-3 w-3 mr-1" />
                         Pending
                       </Badge>
                     </div>
-                    <CardDescription className="text-xs">
+                    <CardDescription className="text-[11px]">
                       {action.description}
                     </CardDescription>
                   </CardHeader>
@@ -160,27 +160,27 @@ export function AgentActionsPanel({ projectId }: AgentActionsPanelProps) {
           {/* Completed Actions */}
           {completedActions.length > 0 && (
             <div className="space-y-2">
-              <h4 className="text-sm font-medium text-muted-foreground">History</h4>
+              <h4 className="text-[13px] font-medium text-muted-foreground">History</h4>
               {completedActions.slice(0, 10).map((action) => (
                 <Card key={action.id} className="bg-surface-tertiary-solid">
                   <CardHeader className="pb-2">
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-2">
                         {getActionIcon(action.type)}
-                        <CardTitle className="text-sm">{action.type.replace('_', ' ')}</CardTitle>
+                        <CardTitle className="text-[13px]">{action.type.replace('_', ' ')}</CardTitle>
                       </div>
                       <Badge
                         variant={action.status === 'approved' ? 'default' : 'destructive'}
-                        className="shrink-0 text-xs"
+                        className="shrink-0 text-[11px]"
                       >
                         {action.status === 'approved' ? <Check className="h-3 w-3 mr-1" /> : <X className="h-3 w-3 mr-1" />}
                         {action.status}
                       </Badge>
                     </div>
-                    <CardDescription className="text-xs">
+                    <CardDescription className="text-[11px]">
                       {action.description}
                     </CardDescription>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-[11px] text-muted-foreground">
                       {formatDistanceToNow(new Date(action.createdAt), { addSuffix: true })}
                     </p>
                   </CardHeader>
@@ -193,8 +193,8 @@ export function AgentActionsPanel({ projectId }: AgentActionsPanelProps) {
           {actions.length === 0 && !isLoading && (
             <div className="text-center py-8 text-muted-foreground">
               <Clock className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">No actions yet</p>
-              <p className="text-xs mt-1">AI actions will appear here for approval</p>
+              <p className="text-[13px]">No actions yet</p>
+              <p className="text-[11px] mt-1">AI actions will appear here for approval</p>
             </div>
           )}
         </div>

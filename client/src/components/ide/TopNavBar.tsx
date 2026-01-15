@@ -342,7 +342,7 @@ export function TopNavBar({
             >
               <Avatar className="h-7 w-7">
                 <AvatarImage src={user?.profileImageUrl || undefined} />
-                <AvatarFallback className="text-xs">
+                <AvatarFallback className="text-[11px]">
                   {user?.username?.charAt(0).toUpperCase() || 'U'}
                 </AvatarFallback>
               </Avatar>

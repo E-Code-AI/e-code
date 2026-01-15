@@ -644,7 +644,7 @@ export function ReplitDeploymentPanel({
           <Rocket className="h-4 w-4" />
           Deployments
           {wsConnected && activeTab === 'logs' && (
-            <Badge variant="outline" className="ml-auto text-xs bg-green-500/10 text-green-500">
+            <Badge variant="outline" className="ml-auto text-[11px] bg-green-500/10 text-green-500">
               <Wifi className="h-3 w-3 mr-1" />
               Live
             </Badge>
@@ -687,7 +687,7 @@ export function ReplitDeploymentPanel({
                       <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
                         <div className="flex items-center gap-2">
                           {getStatusIcon(displayStatus)}
-                          <span className="font-medium text-sm sm:text-base">Current Deployment</span>
+                          <span className="font-medium text-[13px] sm:text-base">Current Deployment</span>
                         </div>
                         <Badge 
                           className={getStatusBadgeClass(displayStatus)}
@@ -704,7 +704,7 @@ export function ReplitDeploymentPanel({
                             href={deployment.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-sm text-primary hover:underline flex items-center gap-1 break-all"
+                            className="text-[13px] text-primary hover:underline flex items-center gap-1 break-all"
                             data-testid="link-deployment-url"
                           >
                             {deployment.url}
@@ -723,7 +723,7 @@ export function ReplitDeploymentPanel({
                       )}
 
                       {deployment.customDomain && (
-                        <div className="flex items-center gap-2 mb-3 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-2 mb-3 text-[13px] text-muted-foreground">
                           <span>Custom Domain:</span>
                           <span className="text-foreground">{deployment.customDomain}</span>
                         </div>
@@ -731,7 +731,7 @@ export function ReplitDeploymentPanel({
 
                       {isInProgress && (
                         <div className="mb-3">
-                          <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+                          <div className="flex items-center justify-between text-[11px] text-muted-foreground mb-1">
                             <span>{deployment.status === 'building' ? 'Building...' : 'Deploying...'}</span>
                             <span>{deployment.status === 'building' ? '40%' : '80%'}</span>
                           </div>
@@ -892,9 +892,9 @@ export function ReplitDeploymentPanel({
                     
                     {deployment?.url && (
                       <div className="p-3 bg-muted/50 rounded-md border">
-                        <div className="text-xs text-muted-foreground mb-1">Generated URL</div>
+                        <div className="text-[11px] text-muted-foreground mb-1">Generated URL</div>
                         <div className="flex items-center gap-2">
-                          <code className="text-sm font-mono text-primary break-all flex-1">
+                          <code className="text-[13px] font-mono text-primary break-all flex-1">
                             {deployment.url}
                           </code>
                           <Button
@@ -942,7 +942,7 @@ export function ReplitDeploymentPanel({
                     
                     {dnsVerificationStatus !== 'idle' && (
                       <div className={cn(
-                        'p-3 rounded-md border text-sm',
+                        'p-3 rounded-md border text-[13px]',
                         dnsVerificationStatus === 'verified' && 'bg-green-500/10 border-green-500/20 text-green-600',
                         dnsVerificationStatus === 'verifying' && 'bg-blue-500/10 border-blue-500/20 text-blue-600',
                         dnsVerificationStatus === 'failed' && 'bg-red-500/10 border-red-500/20 text-red-600'
@@ -960,9 +960,9 @@ export function ReplitDeploymentPanel({
                         
                         {dnsRecords.length > 0 && (
                           <div className="space-y-2 mt-2">
-                            <div className="text-xs font-medium text-muted-foreground">Required DNS Records:</div>
+                            <div className="text-[11px] font-medium text-muted-foreground">Required DNS Records:</div>
                             {dnsRecords.map((record, idx) => (
-                              <div key={idx} className="p-2 bg-background rounded text-xs font-mono">
+                              <div key={idx} className="p-2 bg-background rounded text-[11px] font-mono">
                                 <div className="flex items-center gap-2">
                                   {record.verified ? (
                                     <CheckCircle className="h-3 w-3 text-green-500" />
@@ -1041,7 +1041,7 @@ export function ReplitDeploymentPanel({
                                     <div className="flex-1 min-w-0">
                                       <div className="flex items-center gap-2 mb-1">
                                         {getStatusIcon(depStatus)}
-                                        <span className="text-xs font-mono truncate">
+                                        <span className="text-[11px] font-mono truncate">
                                           {depId?.substring(0, 12)}...
                                         </span>
                                         <Badge variant="outline" className={cn('text-[10px] shrink-0', getStatusBadgeClass(depStatus))}>
@@ -1053,7 +1053,7 @@ export function ReplitDeploymentPanel({
                                           </Badge>
                                         )}
                                       </div>
-                                      <div className="text-xs text-muted-foreground">
+                                      <div className="text-[11px] text-muted-foreground">
                                         {dep.createdAt ? new Date(dep.createdAt).toLocaleString() : 'Unknown date'}
                                       </div>
                                     </div>
@@ -1090,7 +1090,7 @@ export function ReplitDeploymentPanel({
                             </div>
                           </ScrollArea>
                         ) : (
-                          <div className="text-center py-4 text-muted-foreground text-sm">
+                          <div className="text-center py-4 text-muted-foreground text-[13px]">
                             No deployment history yet
                           </div>
                         )}
@@ -1170,7 +1170,7 @@ export function ReplitDeploymentPanel({
                 </Select>
                 
                 {!wsConnected && (
-                  <Badge variant="outline" className="text-xs bg-yellow-500/10 text-yellow-500">
+                  <Badge variant="outline" className="text-[11px] bg-yellow-500/10 text-yellow-500">
                     <WifiOff className="h-3 w-3 mr-1" />
                     Offline
                   </Badge>
@@ -1213,30 +1213,30 @@ export function ReplitDeploymentPanel({
             </div>
 
             <div className="flex gap-2 shrink-0">
-              <Badge variant="outline" className="text-xs">
+              <Badge variant="outline" className="text-[11px]">
                 <FileText className="h-3 w-3 mr-1" />
                 Build: {logs.filter(l => l.type === 'build').length}
               </Badge>
-              <Badge variant="outline" className="text-xs">
+              <Badge variant="outline" className="text-[11px]">
                 <Terminal className="h-3 w-3 mr-1" />
                 Deploy: {logs.filter(l => l.type === 'deploy').length}
               </Badge>
             </div>
 
             <ScrollArea className="flex-1 rounded-md border bg-muted/30" ref={logsContainerRef}>
-              <div className="p-2 font-mono text-xs space-y-1" data-testid="logs-container">
+              <div className="p-2 font-mono text-[11px] space-y-1" data-testid="logs-container">
                 {filteredLogs.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                     <Terminal className="h-8 w-8 mb-2 opacity-50" />
                     <p>No logs available</p>
-                    <p className="text-xs mt-1">Logs will appear here during deployment</p>
+                    <p className="text-[11px] mt-1">Logs will appear here during deployment</p>
                   </div>
                 ) : (
                   filteredLogs.map((log) => (
                     <div
                       key={log.id}
                       className={cn(
-                        'flex items-start gap-2 p-1.5 rounded text-xs',
+                        'flex items-start gap-2 p-1.5 rounded text-[11px]',
                         getLogLevelClass(log.level)
                       )}
                       data-testid={`log-entry-${log.id}`}
@@ -1268,7 +1268,7 @@ export function ReplitDeploymentPanel({
 
           <TabsContent value="analytics" className="flex-1 overflow-auto p-4 space-y-4 m-0" data-testid="analytics-tab-content">
             <div className="flex items-center justify-between flex-wrap gap-2">
-              <h3 className="font-medium text-sm">Deployment Analytics</h3>
+              <h3 className="font-medium text-[13px]">Deployment Analytics</h3>
               <div className="flex items-center gap-2">
                 <Select value={timePeriod} onValueChange={(v) => setTimePeriod(v as TimePeriod)}>
                   <SelectTrigger className="w-[100px] h-8" data-testid="select-time-period">
@@ -1311,9 +1311,9 @@ export function ReplitDeploymentPanel({
                     <CardContent className="p-3">
                       <div className="flex items-center justify-between">
                         <TrendingUp className="h-4 w-4 text-blue-500" />
-                        <span className="text-xs text-muted-foreground">Requests</span>
+                        <span className="text-[11px] text-muted-foreground">Requests</span>
                       </div>
-                      <p className="text-lg font-bold mt-1">
+                      <p className="text-[15px] font-bold mt-1">
                         {formatNumber(analyticsData.analytics.summary.totalRequests)}
                       </p>
                     </CardContent>
@@ -1323,9 +1323,9 @@ export function ReplitDeploymentPanel({
                     <CardContent className="p-3">
                       <div className="flex items-center justify-between">
                         <AlertTriangle className="h-4 w-4 text-red-500" />
-                        <span className="text-xs text-muted-foreground">Error Rate</span>
+                        <span className="text-[11px] text-muted-foreground">Error Rate</span>
                       </div>
-                      <p className="text-lg font-bold mt-1">
+                      <p className="text-[15px] font-bold mt-1">
                         {analyticsData.analytics.summary.errorRate.toFixed(2)}%
                       </p>
                     </CardContent>
@@ -1335,9 +1335,9 @@ export function ReplitDeploymentPanel({
                     <CardContent className="p-3">
                       <div className="flex items-center justify-between">
                         <Timer className="h-4 w-4 text-green-500" />
-                        <span className="text-xs text-muted-foreground">Avg Response</span>
+                        <span className="text-[11px] text-muted-foreground">Avg Response</span>
                       </div>
-                      <p className="text-lg font-bold mt-1">
+                      <p className="text-[15px] font-bold mt-1">
                         {Math.round(analyticsData.analytics.summary.avgResponseTime)}ms
                       </p>
                     </CardContent>
@@ -1347,9 +1347,9 @@ export function ReplitDeploymentPanel({
                     <CardContent className="p-3">
                       <div className="flex items-center justify-between">
                         <Activity className="h-4 w-4 text-purple-500" />
-                        <span className="text-xs text-muted-foreground">Uptime</span>
+                        <span className="text-[11px] text-muted-foreground">Uptime</span>
                       </div>
-                      <p className="text-lg font-bold mt-1">
+                      <p className="text-[15px] font-bold mt-1">
                         {analyticsData.analytics.summary.uptime.toFixed(2)}%
                       </p>
                     </CardContent>
@@ -1358,7 +1358,7 @@ export function ReplitDeploymentPanel({
 
                 <Card data-testid="chart-latency">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium">Latency Percentiles (ms)</CardTitle>
+                    <CardTitle className="text-[13px] font-medium">Latency Percentiles (ms)</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <ChartContainer config={chartConfig} className="h-[180px] w-full">
@@ -1378,7 +1378,7 @@ export function ReplitDeploymentPanel({
 
                 <Card data-testid="chart-requests">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium">Requests & Errors Over Time</CardTitle>
+                    <CardTitle className="text-[13px] font-medium">Requests & Errors Over Time</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <ChartContainer config={chartConfig} className="h-[180px] w-full">
@@ -1410,31 +1410,31 @@ export function ReplitDeploymentPanel({
 
                 <Card data-testid="cost-breakdown">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium flex items-center gap-2">
+                    <CardTitle className="text-[13px] font-medium flex items-center gap-2">
                       <DollarSign className="h-4 w-4" />
                       Cost Breakdown ({analyticsData.analytics.costs.period})
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      <div className="flex justify-between items-center text-sm">
+                      <div className="flex justify-between items-center text-[13px]">
                         <span className="text-muted-foreground">Compute</span>
                         <span className="font-medium">${analyticsData.analytics.costs.compute.toFixed(2)}</span>
                       </div>
-                      <div className="flex justify-between items-center text-sm">
+                      <div className="flex justify-between items-center text-[13px]">
                         <span className="text-muted-foreground">Bandwidth</span>
                         <span className="font-medium">${analyticsData.analytics.costs.bandwidth.toFixed(2)}</span>
                       </div>
-                      <div className="flex justify-between items-center text-sm">
+                      <div className="flex justify-between items-center text-[13px]">
                         <span className="text-muted-foreground">Storage</span>
                         <span className="font-medium">${analyticsData.analytics.costs.storage.toFixed(2)}</span>
                       </div>
                       <Separator />
                       <div className="flex justify-between items-center">
                         <span className="font-medium">Total</span>
-                        <span className="font-bold text-lg">${analyticsData.analytics.costs.total.toFixed(2)}</span>
+                        <span className="font-bold text-[15px]">${analyticsData.analytics.costs.total.toFixed(2)}</span>
                       </div>
-                      <div className="flex justify-between items-center text-xs text-muted-foreground">
+                      <div className="flex justify-between items-center text-[11px] text-muted-foreground">
                         <span>Projected Monthly</span>
                         <span>${analyticsData.analytics.costs.projectedMonthly.toFixed(2)}/mo</span>
                       </div>
@@ -1446,7 +1446,7 @@ export function ReplitDeploymentPanel({
               <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                 <BarChart3 className="h-12 w-12 mb-3 opacity-50" />
                 <p>No analytics data available</p>
-                <p className="text-xs mt-1">Deploy your app to see analytics</p>
+                <p className="text-[11px] mt-1">Deploy your app to see analytics</p>
               </div>
             )}
           </TabsContent>

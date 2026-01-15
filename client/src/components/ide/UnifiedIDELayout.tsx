@@ -1094,7 +1094,7 @@ function UnifiedIDELayout({
       return (
         <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Tests..." /></div>}>
           <div className="h-full overflow-auto p-4">
-            <h2 className="text-lg font-semibold mb-4">Test Runner</h2>
+            <h2 className="text-[15px] font-semibold mb-4">Test Runner</h2>
             <p className="text-muted-foreground">Run and manage your tests here.</p>
           </div>
         </Suspense>
@@ -1105,7 +1105,7 @@ function UnifiedIDELayout({
     if (currentTab.id === 'problems') {
       return (
         <div className="h-full overflow-auto p-4">
-          <h2 className="text-lg font-semibold mb-4">Problems</h2>
+          <h2 className="text-[15px] font-semibold mb-4">Problems</h2>
           <p className="text-muted-foreground">View errors and warnings in your code.</p>
         </div>
       );
@@ -1115,7 +1115,7 @@ function UnifiedIDELayout({
     if (currentTab.id === 'output') {
       return (
         <div className="h-full overflow-auto p-4">
-          <h2 className="text-lg font-semibold mb-4">Output</h2>
+          <h2 className="text-[15px] font-semibold mb-4">Output</h2>
           <p className="text-muted-foreground">View build and runtime output here.</p>
         </div>
       );
@@ -1125,7 +1125,7 @@ function UnifiedIDELayout({
     if (currentTab.id === 'resources') {
       return (
         <div className="h-full overflow-auto p-4">
-          <h2 className="text-lg font-semibold mb-4">Resources</h2>
+          <h2 className="text-[15px] font-semibold mb-4">Resources</h2>
           <p className="text-muted-foreground">View CPU, memory, and storage usage.</p>
         </div>
       );
@@ -1135,7 +1135,7 @@ function UnifiedIDELayout({
     if (currentTab.id === 'logs') {
       return (
         <div className="h-full overflow-auto p-4">
-          <h2 className="text-lg font-semibold mb-4">Logs Viewer</h2>
+          <h2 className="text-[15px] font-semibold mb-4">Logs Viewer</h2>
           <p className="text-muted-foreground">View application logs here.</p>
         </div>
       );
@@ -1168,7 +1168,7 @@ function UnifiedIDELayout({
     if (currentTab.id === 'progress') {
       return (
         <div className="h-full overflow-auto p-4">
-          <h2 className="text-lg font-semibold mb-4">Progress</h2>
+          <h2 className="text-[15px] font-semibold mb-4">Progress</h2>
           <p className="text-muted-foreground">View task progress and status.</p>
         </div>
       );
@@ -1178,7 +1178,7 @@ function UnifiedIDELayout({
     if (currentTab.id === 'video-replay') {
       return (
         <div className="h-full overflow-auto p-4">
-          <h2 className="text-lg font-semibold mb-4">Video Replay</h2>
+          <h2 className="text-[15px] font-semibold mb-4">Video Replay</h2>
           <p className="text-muted-foreground">Review recorded sessions.</p>
         </div>
       );
@@ -1188,7 +1188,7 @@ function UnifiedIDELayout({
     if (currentTab.id === 'billing') {
       return (
         <div className="h-full overflow-auto p-4">
-          <h2 className="text-lg font-semibold mb-4">Billing</h2>
+          <h2 className="text-[15px] font-semibold mb-4">Billing</h2>
           <p className="text-muted-foreground">Manage your subscription and usage.</p>
         </div>
       );
@@ -1198,7 +1198,7 @@ function UnifiedIDELayout({
     if (currentTab.id === 'import-export') {
       return (
         <div className="h-full overflow-auto p-4">
-          <h2 className="text-lg font-semibold mb-4">Import / Export</h2>
+          <h2 className="text-[15px] font-semibold mb-4">Import / Export</h2>
           <p className="text-muted-foreground">Import or export project files.</p>
         </div>
       );
@@ -1389,7 +1389,7 @@ function UnifiedIDELayout({
           data-testid="tablet-drawer"
         >
           <div className="flex items-center justify-between h-14 px-4 border-b border-border bg-muted/30">
-            <h2 className="text-sm font-semibold">Files</h2>
+            <h2 className="text-[13px] font-semibold">Files</h2>
             <Button
               variant="ghost"
               size="icon"
@@ -1437,7 +1437,7 @@ function UnifiedIDELayout({
             </div>
             
             <div className="flex items-center gap-2">
-              <span className="font-medium text-gray-900 dark:text-white text-sm capitalize">
+              <span className="font-medium text-gray-900 dark:text-white text-[13px] capitalize">
                 {mobileActiveTab}
               </span>
             </div>
@@ -1716,7 +1716,7 @@ function UnifiedIDELayout({
               <ResizablePanel defaultSize={18} minSize={15} maxSize={30} data-testid="desktop-right-panel">
                 <div className="h-full flex flex-col border-l">
                   <div className="h-10 border-b flex items-center justify-between px-3">
-                    <h3 className="font-semibold text-sm">Files</h3>
+                    <h3 className="font-semibold text-[13px]">Files</h3>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -1837,7 +1837,7 @@ function UnifiedIDELayout({
           <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center" data-testid="workspace-viewer-loading">
             <div className="text-center space-y-4">
               <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-              <p className="text-sm text-muted-foreground">Loading workspace viewer...</p>
+              <p className="text-[13px] text-muted-foreground">Loading workspace viewer...</p>
             </div>
           </div>
         }>

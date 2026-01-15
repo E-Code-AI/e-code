@@ -208,7 +208,7 @@ export function EnhancedRunButton({ projectId, onRunStateChange, className }: En
 
               <div className="px-2 flex items-center gap-1.5">
                 <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                <span className="text-xs font-medium text-green-600 dark:text-green-400">
+                <span className="text-[11px] font-medium text-green-600 dark:text-green-400">
                   Running
                 </span>
                 {runDuration > 0 && (
@@ -242,7 +242,7 @@ export function EnhancedRunButton({ projectId, onRunStateChange, className }: En
               </Tooltip>
 
               <div className="px-2 flex items-center gap-1">
-                <span className="text-xs font-medium truncate max-w-[100px]">
+                <span className="text-[11px] font-medium truncate max-w-[100px]">
                   {selectedWorkflow.name}
                 </span>
               </div>
@@ -278,9 +278,9 @@ export function EnhancedRunButton({ projectId, onRunStateChange, className }: En
                     <div className="flex items-center gap-2">
                       <Icon className="h-3.5 w-3.5" />
                       <div>
-                        <p className="text-sm font-medium">{workflow.name}</p>
+                        <p className="text-[13px] font-medium">{workflow.name}</p>
                         {workflow.description && (
-                          <p className="text-xs text-muted-foreground">{workflow.description}</p>
+                          <p className="text-[11px] text-muted-foreground">{workflow.description}</p>
                         )}
                       </div>
                     </div>

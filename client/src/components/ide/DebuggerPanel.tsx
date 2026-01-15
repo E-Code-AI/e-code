@@ -226,7 +226,7 @@ export function DebuggerPanel({ projectId, onFileSelect }: DebuggerPanelProps) {
       {/* Debug Controls */}
       <div className="p-4 border-b space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold flex items-center gap-2">
+          <h3 className="text-[13px] font-semibold flex items-center gap-2">
             <Bug className="h-4 w-4" />
             Debugger
           </h3>
@@ -234,7 +234,7 @@ export function DebuggerPanel({ projectId, onFileSelect }: DebuggerPanelProps) {
             <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
           )}
           {!isLoading && isDebugging && (
-            <Badge variant={isPaused ? "secondary" : "default"} className="text-xs">
+            <Badge variant={isPaused ? "secondary" : "default"} className="text-[11px]">
               {isPaused ? 'Paused' : 'Running'}
             </Badge>
           )}
@@ -345,7 +345,7 @@ export function DebuggerPanel({ projectId, onFileSelect }: DebuggerPanelProps) {
         </TabsList>
 
         <TabsContent value="breakpoints" className="flex-1 overflow-auto m-0 p-4 space-y-2">
-          <h4 className="text-sm font-semibold mb-2">Active Breakpoints</h4>
+          <h4 className="text-[13px] font-semibold mb-2">Active Breakpoints</h4>
           
           {isLoading && (
             <div className="flex items-center justify-center py-8">
@@ -354,10 +354,10 @@ export function DebuggerPanel({ projectId, onFileSelect }: DebuggerPanelProps) {
           )}
 
           {!isLoading && breakpoints.length === 0 && (
-            <div className="text-center text-sm text-muted-foreground py-8">
+            <div className="text-center text-[13px] text-muted-foreground py-8">
               <Bug className="h-8 w-8 mx-auto mb-2 opacity-20" />
               <p>No breakpoints set</p>
-              <p className="text-xs mt-1">Click line numbers in editor to add</p>
+              <p className="text-[11px] mt-1">Click line numbers in editor to add</p>
             </div>
           )}
 
@@ -381,16 +381,16 @@ export function DebuggerPanel({ projectId, onFileSelect }: DebuggerPanelProps) {
                     <Circle className={`h-4 w-4 ${bp.isEnabled ? 'fill-current' : ''}`} />
                   </button>
                   <div className="flex-1 min-w-0">
-                    <div className="font-mono text-sm truncate">{bp.file}</div>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <div className="font-mono text-[13px] truncate">{bp.file}</div>
+                    <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
                       <span>Line {bp.line}</span>
                       {bp.hitCount > 0 && (
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="outline" className="text-[11px]">
                           Hit {bp.hitCount}×
                         </Badge>
                       )}
                       {bp.condition && (
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="outline" className="text-[11px]">
                           Condition: {bp.condition}
                         </Badge>
                       )}
@@ -415,9 +415,9 @@ export function DebuggerPanel({ projectId, onFileSelect }: DebuggerPanelProps) {
         </TabsContent>
 
         <TabsContent value="variables" className="flex-1 overflow-auto m-0 p-4 space-y-2">
-          <h4 className="text-sm font-semibold mb-2">Local Variables</h4>
+          <h4 className="text-[13px] font-semibold mb-2">Local Variables</h4>
           {!isPaused ? (
-            <div className="text-center text-sm text-muted-foreground py-8">
+            <div className="text-center text-[13px] text-muted-foreground py-8">
               <Pause className="h-8 w-8 mx-auto mb-2 opacity-20" />
               <p>Pause execution to view variables</p>
             </div>
@@ -430,7 +430,7 @@ export function DebuggerPanel({ projectId, onFileSelect }: DebuggerPanelProps) {
               )}
               
               {!isLoading && variables.length === 0 && (
-                <div className="text-center text-sm text-muted-foreground py-8">
+                <div className="text-center text-[13px] text-muted-foreground py-8">
                   <Bug className="h-8 w-8 mx-auto mb-2 opacity-20" />
                   <p>No variables in current scope</p>
                 </div>
@@ -440,10 +440,10 @@ export function DebuggerPanel({ projectId, onFileSelect }: DebuggerPanelProps) {
                 <Card key={idx} className="p-3" data-testid={`variable-${variable.name}`}>
                   <div className="space-y-1">
                     <div className="flex items-center justify-between">
-                      <span className="font-mono font-semibold text-sm">{variable.name}</span>
-                      <Badge variant="secondary" className="text-xs">{variable.type}</Badge>
+                      <span className="font-mono font-semibold text-[13px]">{variable.name}</span>
+                      <Badge variant="secondary" className="text-[11px]">{variable.type}</Badge>
                     </div>
-                    <code className="text-xs text-muted-foreground break-all">
+                    <code className="text-[11px] text-muted-foreground break-all">
                       {renderValue(variable.value)}
                     </code>
                   </div>
@@ -454,9 +454,9 @@ export function DebuggerPanel({ projectId, onFileSelect }: DebuggerPanelProps) {
         </TabsContent>
 
         <TabsContent value="call-stack" className="flex-1 overflow-auto m-0 p-4 space-y-2">
-          <h4 className="text-sm font-semibold mb-2">Call Stack</h4>
+          <h4 className="text-[13px] font-semibold mb-2">Call Stack</h4>
           {!isPaused ? (
-            <div className="text-center text-sm text-muted-foreground py-8">
+            <div className="text-center text-[13px] text-muted-foreground py-8">
               <Pause className="h-8 w-8 mx-auto mb-2 opacity-20" />
               <p>Pause execution to view call stack</p>
             </div>
@@ -469,7 +469,7 @@ export function DebuggerPanel({ projectId, onFileSelect }: DebuggerPanelProps) {
               )}
 
               {!isLoading && callStack.length === 0 && (
-                <div className="text-center text-sm text-muted-foreground py-8">
+                <div className="text-center text-[13px] text-muted-foreground py-8">
                   <Bug className="h-8 w-8 mx-auto mb-2 opacity-20" />
                   <p>No call stack available</p>
                 </div>
@@ -483,8 +483,8 @@ export function DebuggerPanel({ projectId, onFileSelect }: DebuggerPanelProps) {
                   data-testid={`stack-frame-${idx}`}
                 >
                   <div className="space-y-1">
-                    <div className="font-mono text-sm">{frame.name}</div>
-                    <div className="text-xs text-muted-foreground">
+                    <div className="font-mono text-[13px]">{frame.name}</div>
+                    <div className="text-[11px] text-muted-foreground">
                       {frame.file}:{frame.line}
                     </div>
                   </div>
@@ -511,7 +511,7 @@ export function DebuggerPanel({ projectId, onFileSelect }: DebuggerPanelProps) {
               <Eye className="h-4 w-4" />
             </Button>
           </div>
-          <div className="text-center text-sm text-muted-foreground py-8">
+          <div className="text-center text-[13px] text-muted-foreground py-8">
             <Eye className="h-8 w-8 mx-auto mb-2 opacity-20" />
             <p>Add expressions to watch</p>
           </div>

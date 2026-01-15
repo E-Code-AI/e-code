@@ -361,9 +361,9 @@ export function VisualEditorPanel({ projectId, onCodeChange, className }: Visual
       <div className="h-10 border-b flex items-center justify-between px-3 gap-2">
         <div className="flex items-center gap-2">
           <Globe className="h-4 w-4 shrink-0" />
-          <span className="text-sm font-medium">Visual Editor</span>
+          <span className="text-[13px] font-medium">Visual Editor</span>
           {isPreviewRunning && (
-            <Badge variant="secondary" className="text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">
+            <Badge variant="secondary" className="text-[11px] bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">
               Live
             </Badge>
           )}
@@ -378,14 +378,14 @@ export function VisualEditorPanel({ projectId, onCodeChange, className }: Visual
             data-testid="toggle-edit-mode"
           >
             <MousePointer2 className="h-3.5 w-3.5" />
-            <span className="text-xs hidden sm:inline">{isEditMode ? 'Editing' : 'Edit'}</span>
+            <span className="text-[11px] hidden sm:inline">{isEditMode ? 'Editing' : 'Edit'}</span>
           </Button>
 
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline" size="sm" className="h-7 gap-1 px-2">
                 {viewportPreset.icon && <viewportPreset.icon className="h-3.5 w-3.5" />}
-                <span className="text-xs hidden md:inline">{viewportPreset.name}</span>
+                <span className="text-[11px] hidden md:inline">{viewportPreset.name}</span>
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-48 p-2" align="end">
@@ -399,8 +399,8 @@ export function VisualEditorPanel({ projectId, onCodeChange, className }: Visual
                     onClick={() => setViewportPreset(preset)}
                   >
                     <preset.icon className="h-3.5 w-3.5" />
-                    <span className="text-xs">{preset.name}</span>
-                    <span className="text-xs text-muted-foreground ml-auto">{preset.width}×{preset.height}</span>
+                    <span className="text-[11px]">{preset.name}</span>
+                    <span className="text-[11px] text-muted-foreground ml-auto">{preset.width}×{preset.height}</span>
                   </Button>
                 ))}
               </div>
@@ -411,7 +411,7 @@ export function VisualEditorPanel({ projectId, onCodeChange, className }: Visual
             <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => setZoom(Math.max(25, zoom - 25))}>
               <ZoomOut className="h-3 w-3" />
             </Button>
-            <span className="text-xs w-10 text-center">{zoom}%</span>
+            <span className="text-[11px] w-10 text-center">{zoom}%</span>
             <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => setZoom(Math.min(200, zoom + 25))}>
               <ZoomIn className="h-3 w-3" />
             </Button>
@@ -456,8 +456,8 @@ export function VisualEditorPanel({ projectId, onCodeChange, className }: Visual
           ) : (
             <div className="text-center p-8">
               <Globe className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
-              <h3 className="text-lg font-semibold mb-2">Preview not available</h3>
-              <p className="text-sm text-muted-foreground mb-4">Start the preview to use the visual editor</p>
+              <h3 className="text-[15px] font-semibold mb-2">Preview not available</h3>
+              <p className="text-[13px] text-muted-foreground mb-4">Start the preview to use the visual editor</p>
               <Button onClick={() => startPreviewMutation.mutate(undefined)}>
                 <Play className="h-4 w-4 mr-2" />
                 Start Preview
@@ -470,7 +470,7 @@ export function VisualEditorPanel({ projectId, onCodeChange, className }: Visual
           <div className="w-72 border-l bg-card flex flex-col">
             <div className="p-3 border-b">
               <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-semibold">Element Inspector</h3>
+                <h3 className="text-[13px] font-semibold">Element Inspector</h3>
                 <div className="flex items-center gap-1">
                   <Button variant="ghost" size="sm" className="h-6 w-6 p-0" disabled={undoStack.length === 0}>
                     <Undo2 className="h-3.5 w-3.5" />
@@ -480,7 +480,7 @@ export function VisualEditorPanel({ projectId, onCodeChange, className }: Visual
                   </Button>
                 </div>
               </div>
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
                 <Switch checked={showOutlines} onCheckedChange={setShowOutlines} className="scale-75" />
                 <span>Show element outlines</span>
               </div>
@@ -492,7 +492,7 @@ export function VisualEditorPanel({ projectId, onCodeChange, className }: Visual
                   <div className="p-2 bg-surface-tertiary-solid rounded-lg">
                     <div className="flex items-center gap-2 mb-1">
                       <Code className="h-3.5 w-3.5 text-purple-500" />
-                      <span className="text-xs font-medium">{selectedElement.tagName}</span>
+                      <span className="text-[11px] font-medium">{selectedElement.tagName}</span>
                       {selectedElement.id && (
                         <Badge variant="outline" className="text-[10px] h-4">#{selectedElement.id}</Badge>
                       )}
@@ -502,13 +502,13 @@ export function VisualEditorPanel({ projectId, onCodeChange, className }: Visual
 
                   {selectedElement.canEdit && selectedElement.text && (
                     <div className="space-y-1.5">
-                      <Label className="text-xs flex items-center gap-1.5">
+                      <Label className="text-[11px] flex items-center gap-1.5">
                         <Type className="w-3 h-3" /> Text Content
                       </Label>
                       <Input
                         value={editedText}
                         onChange={(e) => setEditedText(e.target.value)}
-                        className="h-8 text-xs"
+                        className="h-8 text-[11px]"
                         data-testid="text-content-input"
                       />
                     </div>
@@ -517,7 +517,7 @@ export function VisualEditorPanel({ projectId, onCodeChange, className }: Visual
                   <Separator />
 
                   <div className="space-y-3">
-                    <Label className="text-xs flex items-center gap-1.5">
+                    <Label className="text-[11px] flex items-center gap-1.5">
                       <Palette className="w-3 h-3" /> Colors
                     </Label>
                     
@@ -528,7 +528,7 @@ export function VisualEditorPanel({ projectId, onCodeChange, className }: Visual
                           <PopoverTrigger asChild>
                             <Button variant="outline" size="sm" className="w-full h-8 justify-start gap-2">
                               <div className="w-4 h-4 rounded border" style={{ backgroundColor: currentStyles.color }} />
-                              <span className="text-xs truncate">{currentStyles.color}</span>
+                              <span className="text-[11px] truncate">{currentStyles.color}</span>
                             </Button>
                           </PopoverTrigger>
                           <PopoverContent className="w-48 p-2">
@@ -558,7 +558,7 @@ export function VisualEditorPanel({ projectId, onCodeChange, className }: Visual
                           <PopoverTrigger asChild>
                             <Button variant="outline" size="sm" className="w-full h-8 justify-start gap-2">
                               <div className="w-4 h-4 rounded border" style={{ backgroundColor: currentStyles.backgroundColor }} />
-                              <span className="text-xs truncate">BG</span>
+                              <span className="text-[11px] truncate">BG</span>
                             </Button>
                           </PopoverTrigger>
                           <PopoverContent className="w-48 p-2">
@@ -587,7 +587,7 @@ export function VisualEditorPanel({ projectId, onCodeChange, className }: Visual
                   <Separator />
 
                   <div className="space-y-2">
-                    <Label className="text-xs">Typography</Label>
+                    <Label className="text-[11px]">Typography</Label>
                     <div className="flex gap-1">
                       {[
                         { value: 'left', icon: AlignLeft },
@@ -628,7 +628,7 @@ export function VisualEditorPanel({ projectId, onCodeChange, className }: Visual
                   <Separator />
 
                   <div className="space-y-2">
-                    <Label className="text-xs">Font Size</Label>
+                    <Label className="text-[11px]">Font Size</Label>
                     <div className="flex items-center gap-2">
                       <Slider
                         value={[parseInt(currentStyles.fontSize) || 16]}
@@ -638,12 +638,12 @@ export function VisualEditorPanel({ projectId, onCodeChange, className }: Visual
                         step={1}
                         className="flex-1"
                       />
-                      <span className="text-xs w-10 text-right">{currentStyles.fontSize}</span>
+                      <span className="text-[11px] w-10 text-right">{currentStyles.fontSize}</span>
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-xs">Border Radius</Label>
+                    <Label className="text-[11px]">Border Radius</Label>
                     <div className="flex items-center gap-2">
                       <Slider
                         value={[parseInt(currentStyles.borderRadius) || 0]}
@@ -653,12 +653,12 @@ export function VisualEditorPanel({ projectId, onCodeChange, className }: Visual
                         step={1}
                         className="flex-1"
                       />
-                      <span className="text-xs w-10 text-right">{currentStyles.borderRadius}</span>
+                      <span className="text-[11px] w-10 text-right">{currentStyles.borderRadius}</span>
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-xs">Opacity</Label>
+                    <Label className="text-[11px]">Opacity</Label>
                     <div className="flex items-center gap-2">
                       <Slider
                         value={[parseFloat(currentStyles.opacity) * 100 || 100]}
@@ -668,7 +668,7 @@ export function VisualEditorPanel({ projectId, onCodeChange, className }: Visual
                         step={5}
                         className="flex-1"
                       />
-                      <span className="text-xs w-10 text-right">{Math.round(parseFloat(currentStyles.opacity) * 100)}%</span>
+                      <span className="text-[11px] w-10 text-right">{Math.round(parseFloat(currentStyles.opacity) * 100)}%</span>
                     </div>
                   </div>
 
@@ -691,8 +691,8 @@ export function VisualEditorPanel({ projectId, onCodeChange, className }: Visual
               ) : (
                 <div className="p-8 text-center text-muted-foreground">
                   <MousePointer2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p className="text-sm font-medium mb-1">Click an element to edit</p>
-                  <p className="text-xs">Select any element in the preview to modify its styles</p>
+                  <p className="text-[13px] font-medium mb-1">Click an element to edit</p>
+                  <p className="text-[11px]">Select any element in the preview to modify its styles</p>
                 </div>
               )}
             </ScrollArea>
@@ -701,7 +701,7 @@ export function VisualEditorPanel({ projectId, onCodeChange, className }: Visual
               <div className="p-2 border-t bg-muted/30">
                 <div className="flex items-center gap-2">
                   <Layers className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground truncate">{hoveredElement.tagName} - {hoveredElement.path}</span>
+                  <span className="text-[11px] text-muted-foreground truncate">{hoveredElement.tagName} - {hoveredElement.path}</span>
                 </div>
               </div>
             )}

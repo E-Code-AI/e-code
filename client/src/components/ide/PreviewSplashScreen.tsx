@@ -153,7 +153,7 @@ function RotatingTip() {
       <LazyAnimatePresence mode="wait">
         <LazyMotionDiv
           key={tipIndex}
-          className="flex items-center gap-2 text-sm text-muted-foreground dark:text-gray-400"
+          className="flex items-center gap-2 text-[13px] text-muted-foreground dark:text-gray-400"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
@@ -231,7 +231,7 @@ export function PreviewSplashScreen({
             transition={{ delay: 0.2 }}
             className="flex flex-col items-center gap-4"
           >
-            <p className="text-sm text-muted-foreground dark:text-gray-400">
+            <p className="text-[13px] text-muted-foreground dark:text-gray-400">
               Your app is not running. Click below to start it.
             </p>
             <Button
@@ -250,7 +250,7 @@ export function PreviewSplashScreen({
                 initial={{ y: 10, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.15 }}
-                className="text-sm text-muted-foreground dark:text-gray-400 mb-4"
+                className="text-[13px] text-muted-foreground dark:text-gray-400 mb-4"
                 data-testid="splash-current-task"
               >
                 {currentTask}
@@ -272,7 +272,7 @@ export function PreviewSplashScreen({
                     data-testid="splash-progress-bar"
                   />
                 </div>
-                <p className="text-xs text-muted-foreground dark:text-gray-500 mt-2">
+                <p className="text-[11px] text-muted-foreground dark:text-gray-500 mt-2">
                   {progress}% complete
                 </p>
               </LazyMotionDiv>
@@ -293,7 +293,7 @@ export function PreviewSplashScreen({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4 }}
-            className="mt-8 text-xs text-muted-foreground/60 dark:text-gray-600"
+            className="mt-8 text-[11px] text-muted-foreground/60 dark:text-gray-600"
             data-testid="splash-app-name"
           >
             Building: {appName}

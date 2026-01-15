@@ -22,10 +22,10 @@ export function ProfessionalCodeEditor({
     <div className="h-full flex flex-col">
       {/* File Toolbar */}
       <div className="h-10 border-b flex items-center px-3 gap-3 bg-muted/30">
-        <span className="text-sm font-medium">{fileName}</span>
-        <span className="text-xs text-muted-foreground">{language}</span>
-        <span className="text-xs text-muted-foreground">UTF-8</span>
-        <span className="text-xs text-muted-foreground">LF</span>
+        <span className="text-[13px] font-medium">{fileName}</span>
+        <span className="text-[11px] text-muted-foreground">{language}</span>
+        <span className="text-[11px] text-muted-foreground">UTF-8</span>
+        <span className="text-[11px] text-muted-foreground">LF</span>
       </div>
       
       {/* Monaco Editor */}

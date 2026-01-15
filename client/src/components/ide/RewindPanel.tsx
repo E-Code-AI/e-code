@@ -180,8 +180,8 @@ export function RewindPanel({ projectId, onRestore, className }: RewindPanelProp
       <div className="h-10 border-b flex items-center justify-between px-3">
         <div className="flex items-center gap-2">
           <History className="h-4 w-4" />
-          <span className="text-sm font-medium">Rewind</span>
-          <Badge variant="secondary" className="text-xs">
+          <span className="text-[13px] font-medium">Rewind</span>
+          <Badge variant="secondary" className="text-[11px]">
             {checkpoints?.length || 0} checkpoints
           </Badge>
         </div>
@@ -190,7 +190,7 @@ export function RewindPanel({ projectId, onRestore, className }: RewindPanelProp
           size="sm"
           onClick={() => createCheckpointMutation.mutate('Manual checkpoint')}
           disabled={createCheckpointMutation.isPending}
-          className="h-7 text-xs"
+          className="h-7 text-[11px]"
           data-testid="create-checkpoint"
         >
           <Save className="h-3.5 w-3.5 mr-1" />
@@ -298,12 +298,12 @@ export function RewindPanel({ projectId, onRestore, className }: RewindPanelProp
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2">
-                          <p className="text-sm font-medium truncate">{checkpoint.description}</p>
+                          <p className="text-[13px] font-medium truncate">{checkpoint.description}</p>
                           {isCurrent && (
                             <Badge variant="outline" className="text-[10px] shrink-0">Current</Badge>
                           )}
                         </div>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-[11px] text-muted-foreground">
                           {formatDistanceToNow(new Date(checkpoint.timestamp), { addSuffix: true })}
                         </p>
                         {checkpoint.files.length > 0 && (
@@ -331,8 +331,8 @@ export function RewindPanel({ projectId, onRestore, className }: RewindPanelProp
         ) : (
           <div className="flex flex-col items-center justify-center h-48 p-4 text-center">
             <History className="h-12 w-12 text-muted-foreground mb-4 opacity-50" />
-            <p className="text-sm font-medium mb-1">No checkpoints yet</p>
-            <p className="text-xs text-muted-foreground mb-3">
+            <p className="text-[13px] font-medium mb-1">No checkpoints yet</p>
+            <p className="text-[11px] text-muted-foreground mb-3">
               Checkpoints are created automatically as you work
             </p>
             <Button variant="outline" size="sm" onClick={() => createCheckpointMutation.mutate('Initial checkpoint')}>
@@ -348,7 +348,7 @@ export function RewindPanel({ projectId, onRestore, className }: RewindPanelProp
           {showConfirmRestore ? (
             <Alert variant="destructive" className="mb-2">
               <AlertTriangle className="h-4 w-4" />
-              <AlertDescription className="text-xs">
+              <AlertDescription className="text-[11px]">
                 This will restore your project to this checkpoint. Any unsaved changes will be lost.
               </AlertDescription>
             </Alert>

@@ -160,7 +160,7 @@ export function SecretsPanel({ projectId }: SecretsPanelProps) {
                       <span className="font-mono text-[13px] font-medium text-foreground">
                         {secret.key}
                       </span>
-                      <Badge variant="outline" className="text-xs px-1 py-0">
+                      <Badge variant="outline" className="text-[11px] px-1 py-0">
                         {new Date(secret.createdAt).toLocaleDateString()}
                       </Badge>
                     </div>

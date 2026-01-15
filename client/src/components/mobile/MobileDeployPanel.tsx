@@ -135,7 +135,7 @@ export function MobileDeployPanel({ projectId, className }: MobileDeployPanelPro
             <Badge 
               variant={isLive ? "default" : isFailed ? "destructive" : "secondary"}
               className={cn(
-                "text-xs font-medium",
+                "text-[11px] font-medium",
                 isLive && "bg-green-500/20 text-green-400 border-green-500/30",
                 needsRepublish && "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
               )}
@@ -246,7 +246,7 @@ export function MobileDeployPanel({ projectId, className }: MobileDeployPanelPro
       <Card className="bg-[var(--ecode-surface)] border-[var(--ecode-border)]">
         <CardContent className="p-4 space-y-3">
           <h3 className="text-[13px] font-medium text-[var(--ecode-text)]">Deployment Info</h3>
-          <div className="space-y-2 text-sm">
+          <div className="space-y-2 text-[13px]">
             <div className="flex justify-between">
               <span className="text-[var(--ecode-text-muted)]">Environment</span>
               <span className="text-[var(--ecode-text)]">Production</span>
@@ -257,7 +257,7 @@ export function MobileDeployPanel({ projectId, className }: MobileDeployPanelPro
             </div>
             <div className="flex justify-between">
               <span className="text-[var(--ecode-text-muted)]">SSL</span>
-              <Badge variant="secondary" className="text-xs bg-green-500/20 text-green-400">
+              <Badge variant="secondary" className="text-[11px] bg-green-500/20 text-green-400">
                 <CheckCircle className="h-3 w-3 mr-1" /> Enabled
               </Badge>
             </div>

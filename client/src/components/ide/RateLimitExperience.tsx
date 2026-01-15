@@ -163,18 +163,18 @@ function RateLimitModal({ info, isOpen, countdown, onDismiss }: RateLimitModalPr
               <Badge variant="secondary" className={`${tier.bgColor} ${tier.color}`}>
                 {tier.label}
               </Badge>
-              <span className="text-sm text-muted-foreground">
+              <span className="text-[13px] text-muted-foreground">
                 {info.limit} requests/min
               </span>
             </div>
-            <div className="flex items-center gap-1.5 text-sm font-medium">
+            <div className="flex items-center gap-1.5 text-[13px] font-medium">
               <AlertTriangle className="h-4 w-4 text-orange-500" />
               <span>Limit reached</span>
             </div>
           </div>
 
           <div className="space-y-2">
-            <div className="flex justify-between text-sm">
+            <div className="flex justify-between text-[13px]">
               <span className="text-muted-foreground">Ready in</span>
               <span className="font-medium" data-testid="rate-limit-countdown">
                 {countdown}s
@@ -183,7 +183,7 @@ function RateLimitModal({ info, isOpen, countdown, onDismiss }: RateLimitModalPr
             <Progress value={progressPercent} className="h-2" />
           </div>
 
-          <p className="text-sm text-center text-muted-foreground px-4">
+          <p className="text-[13px] text-center text-muted-foreground px-4">
             Your code is safe and you can continue viewing. 
             Requests will resume automatically when the timer completes.
           </p>
@@ -251,13 +251,13 @@ export function RateLimitBanner() {
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Clock className="h-4 w-4 text-orange-600" />
-          <span className="text-sm text-orange-800 dark:text-orange-200">
+          <span className="text-[13px] text-orange-800 dark:text-orange-200">
             Rate limit reached ({tier.label}). Ready in <strong>{countdown}s</strong>
           </span>
         </div>
         <div className="flex items-center gap-2">
           <Link href={rateLimitInfo.upgradeUrl}>
-            <Button size="sm" variant="outline" className="text-xs h-7 border-orange-300 text-orange-700 hover:bg-orange-100">
+            <Button size="sm" variant="outline" className="text-[11px] h-7 border-orange-300 text-orange-700 hover:bg-orange-100">
               <Zap className="h-3 w-3 mr-1" />
               Upgrade
             </Button>

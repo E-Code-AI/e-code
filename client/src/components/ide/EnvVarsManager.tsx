@@ -164,7 +164,7 @@ export function EnvVarsManager({ projectId }: EnvVarsManagerProps) {
     <div className="flex flex-col h-full bg-background p-4" data-testid="env-vars-manager">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold">Environment Variables</h3>
+        <h3 className="text-[15px] font-semibold">Environment Variables</h3>
         <div className="flex gap-2">
           <Button
             variant="outline"
@@ -200,7 +200,7 @@ export function EnvVarsManager({ projectId }: EnvVarsManagerProps) {
                     }}
                     data-testid="input-env-key"
                   />
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="text-[11px] text-muted-foreground mt-1">
                     Use UPPERCASE with underscores (e.g., API_KEY)
                   </p>
                 </div>
@@ -225,7 +225,7 @@ export function EnvVarsManager({ projectId }: EnvVarsManagerProps) {
                     data-testid="checkbox-is-secret"
                   />
                   <Lock className="h-4 w-4" />
-                  <span className="text-sm">Mark as secret (encrypted)</span>
+                  <span className="text-[13px]">Mark as secret (encrypted)</span>
                 </label>
               </div>
               <DialogFooter>
@@ -247,8 +247,8 @@ export function EnvVarsManager({ projectId }: EnvVarsManagerProps) {
         {variables.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
             <Lock className="h-12 w-12 mb-4 opacity-20" />
-            <p className="text-sm">No environment variables</p>
-            <p className="text-xs">Add one to get started</p>
+            <p className="text-[13px]">No environment variables</p>
+            <p className="text-[11px]">Add one to get started</p>
           </div>
         ) : (
           variables.map((envVar) => (
@@ -258,14 +258,14 @@ export function EnvVarsManager({ projectId }: EnvVarsManagerProps) {
                   <div className="flex items-center gap-2 mb-2">
                     <code className="font-mono font-semibold">{envVar.key}</code>
                     {envVar.isSecret && (
-                      <Badge variant="secondary" className="text-xs">
+                      <Badge variant="secondary" className="text-[11px]">
                         <Lock className="h-3 w-3 mr-1" />
                         Secret
                       </Badge>
                     )}
                   </div>
                   <div className="flex items-center gap-2">
-                    <code className="text-sm bg-muted px-2 py-1 rounded font-mono">
+                    <code className="text-[13px] bg-muted px-2 py-1 rounded font-mono">
                       {revealedSecrets.has(envVar.id) ? envVar.value : envVar.value}
                     </code>
                     {envVar.isSecret && (
@@ -283,7 +283,7 @@ export function EnvVarsManager({ projectId }: EnvVarsManagerProps) {
                       </Button>
                     )}
                   </div>
-                  <p className="text-xs text-muted-foreground mt-2">
+                  <p className="text-[11px] text-muted-foreground mt-2">
                     Updated: {new Date(envVar.updatedAt).toLocaleString()}
                   </p>
                 </div>

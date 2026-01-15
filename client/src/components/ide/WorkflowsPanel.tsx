@@ -263,7 +263,7 @@ export function WorkflowsPanel({ projectId, onRunWorkflow, className }: Workflow
           value={formData.name}
           onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
           placeholder="e.g., Deploy to Production"
-          className="h-8 text-sm"
+          className="h-8 text-[13px]"
         />
       </div>
 
@@ -273,7 +273,7 @@ export function WorkflowsPanel({ projectId, onRunWorkflow, className }: Workflow
           value={formData.command}
           onChange={(e) => setFormData(prev => ({ ...prev, command: e.target.value }))}
           placeholder="e.g., npm run deploy"
-          className="h-8 text-sm font-mono"
+          className="h-8 text-[13px] font-mono"
         />
       </div>
 
@@ -283,7 +283,7 @@ export function WorkflowsPanel({ projectId, onRunWorkflow, className }: Workflow
           value={formData.description}
           onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
           placeholder="Brief description of what this workflow does"
-          className="h-8 text-sm"
+          className="h-8 text-[13px]"
         />
       </div>
 
@@ -328,7 +328,7 @@ export function WorkflowsPanel({ projectId, onRunWorkflow, className }: Workflow
         <div className="flex items-center gap-2">
           <Zap className="h-4 w-4" />
           <span className="text-[13px] font-medium">Workflows</span>
-          <Badge variant="secondary" className="text-xs">
+          <Badge variant="secondary" className="text-[11px]">
             {allWorkflows.length}
           </Badge>
         </div>

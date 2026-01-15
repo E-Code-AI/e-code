@@ -482,7 +482,7 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
           <Button
             variant="ghost"
             size="sm"
-            className="h-7 text-xs gap-1"
+            className="h-7 text-[11px] gap-1"
             onClick={handleRefresh}
             data-testid="button-refresh"
           >
@@ -495,7 +495,7 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
       <ScrollArea className="flex-1">
         <div className="p-4 space-y-6">
           <div>
-            <h4 className="text-sm font-semibold text-foreground mb-3">Databases</h4>
+            <h4 className="text-[13px] font-semibold text-foreground mb-3">Databases</h4>
             <div className="space-y-2">
               <button
                 onClick={() => setCurrentView('development')}
@@ -1046,21 +1046,21 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
         </div>
 
         <div>
-          <h4 className="text-sm font-semibold text-foreground mb-2">Storage Used</h4>
+          <h4 className="text-[13px] font-semibold text-foreground mb-2">Storage Used</h4>
           <Progress value={storagePercentage} className="h-2 mb-2" data-testid="progress-storage" />
-          <div className="flex justify-between text-sm text-muted-foreground">
+          <div className="flex justify-between text-[13px] text-muted-foreground">
             <span>Total usage: {storageUsedMb.toFixed(1)}MB</span>
             <span>Max usage: {(storageLimitMb / 1024).toFixed(0)}GB</span>
           </div>
         </div>
 
         <div>
-          <h4 className="text-sm font-semibold text-foreground mb-3">Environment variables</h4>
+          <h4 className="text-[13px] font-semibold text-foreground mb-3">Environment variables</h4>
           <div className="space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-              <span className="text-xs sm:text-sm font-mono text-muted-foreground shrink-0">DATABASE_URL</span>
+              <span className="text-[11px] sm:text-[13px] font-mono text-muted-foreground shrink-0">DATABASE_URL</span>
               <div className="flex items-center gap-1 min-w-0">
-                <code className="text-xs sm:text-sm bg-muted px-2 py-1 rounded max-w-[120px] sm:max-w-[200px] truncate">
+                <code className="text-[11px] sm:text-[13px] bg-muted px-2 py-1 rounded max-w-[120px] sm:max-w-[200px] truncate">
                   {showDatabaseUrl ? credentials?.connectionUrl : '••••••••••••••••••'}
                 </code>
                 <Button
@@ -1083,9 +1083,9 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
             </div>
 
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-              <span className="text-xs sm:text-sm font-mono text-muted-foreground shrink-0">PGDATABASE</span>
+              <span className="text-[11px] sm:text-[13px] font-mono text-muted-foreground shrink-0">PGDATABASE</span>
               <div className="flex items-center gap-1 min-w-0">
-                <code className="text-xs sm:text-sm bg-muted px-2 py-1 rounded truncate">
+                <code className="text-[11px] sm:text-[13px] bg-muted px-2 py-1 rounded truncate">
                   {credentials?.databaseName || 'neondb'}
                 </code>
                 <Button
@@ -1100,9 +1100,9 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
             </div>
 
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-              <span className="text-xs sm:text-sm font-mono text-muted-foreground shrink-0">PGHOST</span>
+              <span className="text-[11px] sm:text-[13px] font-mono text-muted-foreground shrink-0">PGHOST</span>
               <div className="flex items-center gap-1 min-w-0">
-                <code className="text-xs sm:text-sm bg-muted px-2 py-1 rounded max-w-[120px] sm:max-w-[200px] truncate">
+                <code className="text-[11px] sm:text-[13px] bg-muted px-2 py-1 rounded max-w-[120px] sm:max-w-[200px] truncate">
                   {credentials?.host || 'ep-lively-resonance-a6vcsxeu.u'}
                 </code>
                 <Button
@@ -1117,9 +1117,9 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
             </div>
 
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-              <span className="text-xs sm:text-sm font-mono text-muted-foreground shrink-0">PGPORT</span>
+              <span className="text-[11px] sm:text-[13px] font-mono text-muted-foreground shrink-0">PGPORT</span>
               <div className="flex items-center gap-1 min-w-0">
-                <code className="text-xs sm:text-sm bg-muted px-2 py-1 rounded">
+                <code className="text-[11px] sm:text-[13px] bg-muted px-2 py-1 rounded">
                   {credentials?.port || '5432'}
                 </code>
                 <Button
@@ -1134,9 +1134,9 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
             </div>
 
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-              <span className="text-xs sm:text-sm font-mono text-muted-foreground shrink-0">PGUSER</span>
+              <span className="text-[11px] sm:text-[13px] font-mono text-muted-foreground shrink-0">PGUSER</span>
               <div className="flex items-center gap-1 min-w-0">
-                <code className="text-xs sm:text-sm bg-muted px-2 py-1 rounded truncate">
+                <code className="text-[11px] sm:text-[13px] bg-muted px-2 py-1 rounded truncate">
                   {credentials?.username || 'neondb_owner'}
                 </code>
                 <Button
@@ -1151,9 +1151,9 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
             </div>
 
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-              <span className="text-xs sm:text-sm font-mono text-muted-foreground shrink-0">PGPASSWORD</span>
+              <span className="text-[11px] sm:text-[13px] font-mono text-muted-foreground shrink-0">PGPASSWORD</span>
               <div className="flex items-center gap-1 min-w-0">
-                <code className="text-xs sm:text-sm bg-muted px-2 py-1 rounded truncate">
+                <code className="text-[11px] sm:text-[13px] bg-muted px-2 py-1 rounded truncate">
                   {showPassword ? credentials?.password : '••••••••••••••••'}
                 </code>
                 <Button
@@ -1240,7 +1240,7 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
           </DropdownMenu>
         </div>
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1 text-sm">
+          <div className="flex items-center gap-1 text-[13px]">
             <button
               onClick={() => setCurrentView('all')}
               className="text-muted-foreground hover:text-foreground"
@@ -1268,7 +1268,7 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
           <Button
             variant="ghost"
             size="sm"
-            className="h-7 text-xs gap-1"
+            className="h-7 text-[11px] gap-1"
             onClick={handleRefresh}
           >
             <RefreshCw className="h-3 w-3" />
@@ -1282,7 +1282,7 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
           <button
             onClick={() => setActiveDetailTab('overview')}
             className={cn(
-              "flex items-center gap-1.5 px-3 py-2 text-sm border-b-2 -mb-px transition-colors",
+              "flex items-center gap-1.5 px-3 py-2 text-[13px] border-b-2 -mb-px transition-colors",
               activeDetailTab === 'overview'
                 ? "border-primary text-foreground"
                 : "border-transparent text-muted-foreground hover:text-foreground"
@@ -1295,7 +1295,7 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
           <button
             onClick={() => setActiveDetailTab('mydata')}
             className={cn(
-              "flex items-center gap-1.5 px-3 py-2 text-sm border-b-2 -mb-px transition-colors",
+              "flex items-center gap-1.5 px-3 py-2 text-[13px] border-b-2 -mb-px transition-colors",
               activeDetailTab === 'mydata'
                 ? "border-primary text-foreground"
                 : "border-transparent text-muted-foreground hover:text-foreground"
@@ -1308,7 +1308,7 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
           <button
             onClick={() => setActiveDetailTab('settings')}
             className={cn(
-              "flex items-center gap-1.5 px-3 py-2 text-sm border-b-2 -mb-px transition-colors",
+              "flex items-center gap-1.5 px-3 py-2 text-[13px] border-b-2 -mb-px transition-colors",
               activeDetailTab === 'settings'
                 ? "border-primary text-foreground"
                 : "border-transparent text-muted-foreground hover:text-foreground"

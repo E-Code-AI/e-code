@@ -277,7 +277,7 @@ export function ResourcesPanel({ projectId, className }: ResourcesPanelProps) {
                 {metrics.processes.map((process) => (
                   <div
                     key={process.pid}
-                    className="flex items-center justify-between p-2 bg-muted/30 rounded text-xs"
+                    className="flex items-center justify-between p-2 bg-muted/30 rounded text-[11px]"
                   >
                     <div className="flex items-center gap-2">
                       <div className={cn(

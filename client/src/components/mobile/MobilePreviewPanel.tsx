@@ -768,12 +768,12 @@ export function MobilePreviewPanel({
             ) : isPreviewStarting ? (
               <div className="absolute inset-0 flex flex-col items-center justify-center bg-white dark:bg-gray-900">
                 <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-                <p className="text-sm text-muted-foreground">Starting preview...</p>
+                <p className="text-[13px] text-muted-foreground">Starting preview...</p>
               </div>
             ) : previewStatus?.status === 'no_runnable_files' ? (
               <div className="absolute inset-0 flex flex-col items-center justify-center bg-white dark:bg-gray-900 text-center p-4">
                 <Globe className="h-12 w-12 text-muted-foreground mb-4 opacity-50" />
-                <p className="text-sm text-muted-foreground">No preview available. Add an HTML file or package.json.</p>
+                <p className="text-[13px] text-muted-foreground">No preview available. Add an HTML file or package.json.</p>
               </div>
             ) : !isPreviewRunning && !hasError ? (
               <AppNotRunningState onRun={handleRun} />

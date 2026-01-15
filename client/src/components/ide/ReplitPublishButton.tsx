@@ -274,7 +274,7 @@ export function ReplitPublishButton({
       disabled={isPublishing}
       data-testid="publish-button"
       className={cn(
-        'h-7 px-2.5 gap-1.5 text-xs font-medium transition-all shadow-sm',
+        'h-7 px-2.5 gap-1.5 text-[11px] font-medium transition-all shadow-sm',
         getButtonStyles()
       )}
     >
@@ -289,9 +289,9 @@ export function ReplitPublishButton({
   const tooltipContent = publishState?.url ? (
     <div className="flex flex-col gap-1">
       <span className="font-medium">Deployed at:</span>
-      <span className="text-xs opacity-90">{publishState.url}</span>
+      <span className="text-[11px] opacity-90">{publishState.url}</span>
       {publishState.deployedAt && (
-        <span className="text-xs opacity-70">
+        <span className="text-[11px] opacity-70">
           {new Date(publishState.deployedAt).toLocaleString()}
         </span>
       )}
@@ -299,7 +299,7 @@ export function ReplitPublishButton({
   ) : isFailed && publishState?.errorMessage ? (
     <div className="flex flex-col gap-1">
       <span className="font-medium text-red-500">Deployment failed</span>
-      <span className="text-xs">{publishState.errorMessage}</span>
+      <span className="text-[11px]">{publishState.errorMessage}</span>
     </div>
   ) : null;
 

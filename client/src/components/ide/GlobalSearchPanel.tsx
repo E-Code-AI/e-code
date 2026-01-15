@@ -157,7 +157,7 @@ export function GlobalSearchPanel({ projectId, onFileSelect }: GlobalSearchPanel
       {/* Search Header */}
       <div className="p-4 border-b space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold flex items-center gap-2">
+          <h3 className="text-[13px] font-semibold flex items-center gap-2">
             <Search className="h-4 w-4" />
             Global Search
           </h3>
@@ -178,7 +178,7 @@ export function GlobalSearchPanel({ projectId, onFileSelect }: GlobalSearchPanel
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-            className="font-mono text-sm"
+            className="font-mono text-[13px]"
             data-testid="input-search-query"
           />
 
@@ -188,7 +188,7 @@ export function GlobalSearchPanel({ projectId, onFileSelect }: GlobalSearchPanel
                 placeholder="Replace with..."
                 value={replacement}
                 onChange={(e) => setReplacement(e.target.value)}
-                className="font-mono text-sm"
+                className="font-mono text-[13px]"
                 data-testid="input-replacement"
               />
             </div>
@@ -196,7 +196,7 @@ export function GlobalSearchPanel({ projectId, onFileSelect }: GlobalSearchPanel
         </div>
 
         {/* Options */}
-        <div className="flex flex-wrap gap-3 text-sm">
+        <div className="flex flex-wrap gap-3 text-[13px]">
           <label className="flex items-center gap-2 cursor-pointer">
             <Checkbox
               checked={caseSensitive}
@@ -229,14 +229,14 @@ export function GlobalSearchPanel({ projectId, onFileSelect }: GlobalSearchPanel
             placeholder="Files to include (e.g., *.ts,*.tsx)"
             value={filePattern}
             onChange={(e) => setFilePattern(e.target.value)}
-            className="text-xs"
+            className="text-[11px]"
             data-testid="input-file-pattern"
           />
           <Input
             placeholder="Files to exclude"
             value={excludePattern}
             onChange={(e) => setExcludePattern(e.target.value)}
-            className="text-xs"
+            className="text-[11px]"
             data-testid="input-exclude-pattern"
           />
         </div>
@@ -290,7 +290,7 @@ export function GlobalSearchPanel({ projectId, onFileSelect }: GlobalSearchPanel
         {results.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
             <Search className="h-12 w-12 mb-4 opacity-20" />
-            <p className="text-sm">No results</p>
+            <p className="text-[13px]">No results</p>
           </div>
         ) : (
           <div className="space-y-1" data-testid="search-results">
@@ -307,8 +307,8 @@ export function GlobalSearchPanel({ projectId, onFileSelect }: GlobalSearchPanel
                     <ChevronRight className="h-4 w-4" />
                   )}
                   <FileText className="h-4 w-4" />
-                  <span className="text-sm font-medium flex-1">{result.filePath}</span>
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-[13px] font-medium flex-1">{result.filePath}</span>
+                  <span className="text-[11px] text-muted-foreground">
                     {result.totalMatches} matches
                   </span>
                 </button>
@@ -319,7 +319,7 @@ export function GlobalSearchPanel({ projectId, onFileSelect }: GlobalSearchPanel
                       <button
                         key={idx}
                         onClick={() => onFileSelect?.(result.filePath, match.line)}
-                        className="block w-full text-left hover:bg-accent p-2 rounded text-xs font-mono"
+                        className="block w-full text-left hover:bg-accent p-2 rounded text-[11px] font-mono"
                         data-testid={`match-line-${match.line}`}
                       >
                         <div className="flex gap-2">

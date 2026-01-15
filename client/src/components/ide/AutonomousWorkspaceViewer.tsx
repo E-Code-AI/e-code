@@ -444,7 +444,7 @@ export function AutonomousWorkspaceViewer({
     }}>
       <DialogContent className="w-[calc(100vw-1rem)] max-w-[98vw] sm:max-w-2xl lg:max-w-3xl max-h-[95vh] sm:max-h-[85vh] flex flex-col p-3 sm:p-6 overflow-y-auto" data-testid="autonomous-workspace-viewer">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
+          <DialogTitle className="flex items-center gap-2 text-base sm:text-[15px]">
             {isComplete ? (
               <>
                 <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-green-500 flex-shrink-0" />
@@ -462,7 +462,7 @@ export function AutonomousWorkspaceViewer({
               </>
             )}
           </DialogTitle>
-          <DialogDescription className="text-xs sm:text-sm">
+          <DialogDescription className="text-[11px] sm:text-[13px]">
             {isComplete 
               ? 'Your AI-powered workspace has been created successfully!'
               : errorMessage
@@ -473,7 +473,7 @@ export function AutonomousWorkspaceViewer({
         </DialogHeader>
 
         {/* Connection Status */}
-        <div className="flex items-center gap-2 text-xs sm:text-sm">
+        <div className="flex items-center gap-2 text-[11px] sm:text-[13px]">
           <div className={cn(
             "h-2 w-2 rounded-full flex-shrink-0",
             connectionStatus === 'connected' && "bg-green-500 animate-pulse",
@@ -495,7 +495,7 @@ export function AutonomousWorkspaceViewer({
             {phase === 'planning' ? '🧠 Planning' : phase === 'executing' ? '⚡ Executing' : '✅ Complete'}
           </Badge>
           {generatedPlan && (
-            <span className="text-xs text-muted-foreground">
+            <span className="text-[11px] text-muted-foreground">
               {generatedPlan.tasks?.length || 0} tasks • {generatedPlan.estimatedTime || 'Calculating...'}
             </span>
           )}
@@ -503,7 +503,7 @@ export function AutonomousWorkspaceViewer({
 
         {/* Overall Progress */}
         <div className="space-y-2">
-          <div className="flex items-center justify-between text-xs sm:text-sm gap-2">
+          <div className="flex items-center justify-between text-[11px] sm:text-[13px] gap-2">
             <span className="font-medium truncate flex-1 min-w-0">{currentTask}</span>
             <span className="text-muted-foreground flex-shrink-0">{Math.round(overallProgress)}%</span>
           </div>
@@ -513,12 +513,12 @@ export function AutonomousWorkspaceViewer({
         {/* Streaming Plan Text (during planning phase) - ALWAYS VISIBLE ON MOBILE */}
         {phase === 'planning' && (
           <div className="space-y-2 min-h-0">
-            <h4 className="text-xs sm:text-sm font-medium flex items-center gap-2 bg-background py-1">
+            <h4 className="text-[11px] sm:text-[13px] font-medium flex items-center gap-2 bg-background py-1">
               <Code2 className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
               <span>Generating Plan...</span>
               {!planText && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
             </h4>
-            <ScrollArea className="h-32 sm:h-40 md:h-48 border rounded-md bg-card font-mono text-[10px] sm:text-xs">
+            <ScrollArea className="h-32 sm:h-40 md:h-48 border rounded-md bg-card font-mono text-[10px] sm:text-[11px]">
               <div className="p-2 sm:p-3 text-foreground whitespace-pre-wrap break-words">
                 {planText || 'Analyzing your request and generating an execution plan...'}
                 <span className="inline-block w-2 h-3 sm:h-4 bg-primary animate-pulse ml-0.5" />
@@ -530,11 +530,11 @@ export function AutonomousWorkspaceViewer({
         {/* Generated Plan Summary */}
         {generatedPlan && phase !== 'planning' && (
           <div className="space-y-2 min-h-0">
-            <h4 className="text-xs sm:text-sm font-medium flex items-center gap-2">
+            <h4 className="text-[11px] sm:text-[13px] font-medium flex items-center gap-2">
               <FileCode className="h-3 w-3 sm:h-4 sm:w-4" />
               Execution Plan
             </h4>
-            <div className="text-xs text-muted-foreground border rounded-md p-2 bg-muted/30">
+            <div className="text-[11px] text-muted-foreground border rounded-md p-2 bg-muted/30">
               <p className="font-medium text-foreground">{generatedPlan.summary}</p>
               {generatedPlan.technologies?.length > 0 && (
                 <div className="flex flex-wrap gap-1 mt-2">
@@ -550,14 +550,14 @@ export function AutonomousWorkspaceViewer({
         {/* Tasks List - Responsive height for mobile */}
         {tasks.length > 0 && (
           <div className="space-y-2 min-h-0">
-            <h4 className="text-xs sm:text-sm font-medium flex items-center gap-2">
+            <h4 className="text-[11px] sm:text-[13px] font-medium flex items-center gap-2">
               <Package className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
               Tasks ({tasks.filter(t => t.status === 'completed').length}/{tasks.length})
             </h4>
             <ScrollArea className="h-20 sm:h-28 md:h-32 border rounded-md">
               <div className="p-2 space-y-1">
                 {tasks.map((task) => (
-                  <div key={task.id} className="flex items-center gap-2 py-0.5 text-[11px] sm:text-sm" data-testid={`task-${task.id}`}>
+                  <div key={task.id} className="flex items-center gap-2 py-0.5 text-[11px] sm:text-[13px]" data-testid={`task-${task.id}`}>
                     {task.status === 'completed' ? (
                       <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4 text-green-500 flex-shrink-0" />
                     ) : task.status === 'error' ? (
@@ -569,7 +569,7 @@ export function AutonomousWorkspaceViewer({
                     )}
                     <span className="flex-1 truncate min-w-0">{task.name}</span>
                     {task.progress !== undefined && task.status === 'in_progress' && (
-                      <span className="text-[10px] sm:text-xs text-muted-foreground flex-shrink-0">{task.progress}%</span>
+                      <span className="text-[10px] sm:text-[11px] text-muted-foreground flex-shrink-0">{task.progress}%</span>
                     )}
                   </div>
                 ))}
@@ -580,11 +580,11 @@ export function AutonomousWorkspaceViewer({
 
         {/* Logs - Compact on mobile, limited to last 30 entries */}
         <div className="space-y-2 min-h-0">
-          <h4 className="text-xs sm:text-sm font-medium flex items-center gap-2 bg-background py-1 sticky top-0 z-10">
+          <h4 className="text-[11px] sm:text-[13px] font-medium flex items-center gap-2 bg-background py-1 sticky top-0 z-10">
             <Terminal className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
             Activity Log ({Math.min(logs.length, 30)}{logs.length > 30 ? '+' : ''})
           </h4>
-          <ScrollArea className="h-20 sm:h-24 md:h-28 border rounded-md bg-muted font-mono text-[9px] sm:text-xs" data-testid="activity-logs">
+          <ScrollArea className="h-20 sm:h-24 md:h-28 border rounded-md bg-muted font-mono text-[9px] sm:text-[11px]" data-testid="activity-logs">
             <div className="p-2 space-y-0.5">
               {logs.slice(-30).map((log, index) => (
                 <div key={index} className="text-muted-foreground whitespace-pre-wrap break-words leading-tight">
@@ -598,7 +598,7 @@ export function AutonomousWorkspaceViewer({
 
         {/* Error Message */}
         {errorMessage && (
-          <div className="rounded-md bg-destructive/10 border border-destructive p-2 sm:p-3 text-xs sm:text-sm text-destructive">
+          <div className="rounded-md bg-destructive/10 border border-destructive p-2 sm:p-3 text-[11px] sm:text-[13px] text-destructive">
             {errorMessage}
           </div>
         )}
@@ -606,21 +606,21 @@ export function AutonomousWorkspaceViewer({
         {/* Action Buttons */}
         <div className="flex justify-end gap-2">
           {isComplete ? (
-            <Button onClick={handleClose} className="text-xs sm:text-sm" data-testid="button-close">
+            <Button onClick={handleClose} className="text-[11px] sm:text-[13px]" data-testid="button-close">
               <Rocket className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
               <span className="hidden sm:inline">Open Workspace</span>
               <span className="sm:hidden">Open</span>
             </Button>
           ) : errorMessage ? (
-            <Button variant="outline" onClick={handleClose} className="text-xs sm:text-sm" data-testid="button-close-error">
+            <Button variant="outline" onClick={handleClose} className="text-[11px] sm:text-[13px]" data-testid="button-close-error">
               Close
             </Button>
           ) : (
             <>
-              <Button variant="ghost" onClick={handleHide} className="text-xs sm:text-sm" data-testid="button-hide">
+              <Button variant="ghost" onClick={handleHide} className="text-[11px] sm:text-[13px]" data-testid="button-hide">
                 <span>Hide Progress</span>
               </Button>
-              <Button variant="outline" disabled className="text-xs sm:text-sm" data-testid="button-cancel">
+              <Button variant="outline" disabled className="text-[11px] sm:text-[13px]" data-testid="button-cancel">
                 <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 animate-spin" />
                 Building...
               </Button>

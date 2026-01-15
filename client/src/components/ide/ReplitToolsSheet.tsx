@@ -170,7 +170,7 @@ export const ReplitToolsSheet = memo(function ReplitToolsSheet({
           <div className="py-2">
             {searchItems.length > 0 && (
               <div className="mb-2">
-                <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1 px-4">
+                <h3 className="text-[11px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1 px-4">
                   Search
                 </h3>
                 <div>
@@ -188,7 +188,7 @@ export const ReplitToolsSheet = memo(function ReplitToolsSheet({
 
             {toolItems.length > 0 && (
               <div>
-                <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1 px-4">
+                <h3 className="text-[11px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1 px-4">
                   Tools
                 </h3>
                 <div>

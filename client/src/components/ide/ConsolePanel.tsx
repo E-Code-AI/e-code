@@ -490,7 +490,7 @@ export function ConsolePanel({ projectId, userId, isRunning, executionId, classN
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="h-6 px-2 text-xs gap-1" 
+                className="h-6 px-2 text-[11px] gap-1" 
                 onClick={() => setIsGenerateMode(!isGenerateMode)}
                 data-testid="shell-generate-toggle"
               >

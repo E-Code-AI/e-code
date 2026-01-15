@@ -79,11 +79,11 @@ export function KeyboardShortcutsOverlay({
                     key={index}
                     className="flex items-center justify-between py-2 border-b last:border-0"
                   >
-                    <span className="text-sm">{shortcut.description}</span>
+                    <span className="text-[13px]">{shortcut.description}</span>
                     <div className="flex items-center gap-1">
                       {shortcut.keys.map((key, keyIndex) => (
                         <span key={keyIndex} className="flex items-center gap-1">
-                          <Badge variant="secondary" className="font-mono text-xs">
+                          <Badge variant="secondary" className="font-mono text-[11px]">
                             {key}
                           </Badge>
                           {keyIndex < shortcut.keys.length - 1 && (

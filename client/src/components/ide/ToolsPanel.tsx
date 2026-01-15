@@ -144,7 +144,7 @@ export function ToolsPanel({
                     {category}
                   </span>
                   <div className="flex items-center gap-2">
-                    <Badge variant="secondary" className="h-4 text-xs px-1.5">
+                    <Badge variant="secondary" className="h-4 text-[11px] px-1.5">
                       {tools.length}
                     </Badge>
                     {expandedCategories.has(category) ? (
@@ -191,7 +191,7 @@ export function ToolsPanel({
                             {tool.badge && (
                               <Badge 
                                 variant={tool.badge === 'PRO' ? 'default' : 'secondary'}
-                                className="h-4 text-xs px-1.5 flex-shrink-0"
+                                className="h-4 text-[11px] px-1.5 flex-shrink-0"
                               >
                                 {tool.badge}
                               </Badge>
@@ -216,7 +216,7 @@ export function ToolsPanel({
 
       {/* Footer Stats */}
       <div className="px-4 py-2 border-t border-[var(--ecode-border)] bg-[var(--ecode-sidebar-bg)]">
-        <div className="flex items-center justify-between text-xs text-[var(--ecode-text-muted)]">
+        <div className="flex items-center justify-between text-[11px] text-[var(--ecode-text-muted)]">
           <span>
             {filteredTools.length} tool{filteredTools.length !== 1 ? 's' : ''} available
           </span>
