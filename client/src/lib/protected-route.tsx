@@ -12,7 +12,7 @@ function RedirectToLogin({ path }: { path: string }) {
   return (
     <div className="flex items-center justify-center min-h-screen">
       <Loader2 className="h-8 w-8 animate-spin text-border" />
-      <div className="ml-2 text-sm text-muted-foreground">Redirecting to login...</div>
+      <div className="ml-2 text-[13px] text-muted-foreground">Redirecting to login...</div>
     </div>
   );
 }
@@ -32,7 +32,7 @@ export function ProtectedRoute({
         isLoading ? (
           <div className="flex items-center justify-center min-h-screen">
             <Loader2 className="h-8 w-8 animate-spin text-border" />
-            <div className="ml-2 text-sm text-muted-foreground">Loading authentication...</div>
+            <div className="ml-2 text-[13px] text-muted-foreground">Loading authentication...</div>
           </div>
         ) : user ? (
           <Component params={params} {...params} />

@@ -236,10 +236,10 @@ export function OptimizedImage({
           <svg className="w-12 h-12 mx-auto text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
-          <p className="text-sm text-gray-600">Failed to load image</p>
+          <p className="text-[13px] text-gray-600">Failed to load image</p>
           <button
             onClick={retry}
-            className="mt-2 text-sm text-blue-600 hover:text-blue-800 underline"
+            className="mt-2 text-[13px] text-blue-600 hover:text-blue-800 underline"
           >
             Retry
           </button>

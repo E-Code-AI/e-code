@@ -142,7 +142,7 @@ export function AnimationDebugPanel() {
   }
 
   return (
-    <div className="fixed bottom-4 left-4 bg-black/80 text-white text-xs p-2 rounded-lg font-mono z-50">
+    <div className="fixed bottom-4 left-4 bg-black/80 text-white text-[11px] p-2 rounded-lg font-mono z-50">
       <div>FPS: {metrics.averageFPS}</div>
       <div>Drops: {metrics.frameDrops}</div>
       <div>Jank: {metrics.jankScore}%</div>

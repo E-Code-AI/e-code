@@ -711,19 +711,19 @@ textarea:focus {
   
   /* Responsive Typography */
   .text-responsive-xs {
-    @apply text-xs sm:text-sm;
+    @apply text-[11px] sm:text-[13px];
   }
   
   .text-responsive-sm {
-    @apply text-sm sm:text-base;
+    @apply text-[13px] sm:text-base;
   }
   
   .text-responsive-base {
-    @apply text-base sm:text-lg;
+    @apply text-base sm:text-[15px];
   }
   
   .text-responsive-lg {
-    @apply text-lg sm:text-xl lg:text-2xl;
+    @apply text-[15px] sm:text-xl lg:text-2xl;
   }
   
   .text-responsive-xl {
@@ -744,11 +744,11 @@ textarea:focus {
   }
   
   .button-responsive {
-    @apply h-12 sm:h-10 px-4 sm:px-6 text-base sm:text-sm;
+    @apply h-12 sm:h-10 px-4 sm:px-6 text-base sm:text-[13px];
   }
   
   .input-responsive {
-    @apply h-12 sm:h-11 text-base sm:text-sm;
+    @apply h-12 sm:h-11 text-base sm:text-[13px];
   }
   
   /* E-Code Brand Colors */
@@ -976,19 +976,19 @@ textarea:focus {
   
   /* Responsive text sizes */
   .text-responsive-xs {
-    @apply text-xs sm:text-sm;
+    @apply text-[11px] sm:text-[13px];
   }
   
   .text-responsive-sm {
-    @apply text-sm sm:text-base;
+    @apply text-[13px] sm:text-base;
   }
   
   .text-responsive-base {
-    @apply text-base sm:text-lg;
+    @apply text-base sm:text-[15px];
   }
   
   .text-responsive-lg {
-    @apply text-lg sm:text-xl lg:text-2xl;
+    @apply text-[15px] sm:text-xl lg:text-2xl;
   }
   
   /* Hide scrollbar but keep functionality */

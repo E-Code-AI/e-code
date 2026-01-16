@@ -15,11 +15,11 @@ export const breakpoints = {
 
 // Responsive text sizes with mobile-first approach
 export const responsiveText = {
-  xs: 'text-xs sm:text-sm',
-  sm: 'text-sm sm:text-base',
-  base: 'text-sm sm:text-base lg:text-base',
-  lg: 'text-base sm:text-lg lg:text-lg',
-  xl: 'text-lg sm:text-xl lg:text-xl',
+  xs: 'text-[11px] sm:text-[13px]',
+  sm: 'text-[13px] sm:text-base',
+  base: 'text-[13px] sm:text-base lg:text-base',
+  lg: 'text-base sm:text-[15px] lg:text-[15px]',
+  xl: 'text-[15px] sm:text-xl lg:text-xl',
   '2xl': 'text-xl sm:text-2xl lg:text-2xl',
   '3xl': 'text-2xl sm:text-3xl lg:text-3xl',
   '4xl': 'text-3xl sm:text-4xl lg:text-4xl',
@@ -110,9 +110,9 @@ export const responsiveVisibility = {
 
 // Button sizes responsive
 export const responsiveButton = {
-  sm: 'h-8 px-3 text-xs sm:h-9 sm:px-4 sm:text-sm',
-  default: 'h-9 px-4 text-sm sm:h-10 sm:px-6',
-  lg: 'h-10 px-6 text-sm sm:h-11 sm:px-8 sm:text-base',
+  sm: 'h-8 px-3 text-[11px] sm:h-9 sm:px-4 sm:text-[13px]',
+  default: 'h-9 px-4 text-[13px] sm:h-10 sm:px-6',
+  lg: 'h-10 px-6 text-[13px] sm:h-11 sm:px-8 sm:text-base',
   icon: 'h-9 w-9 sm:h-10 sm:w-10',
   iconSm: 'h-8 w-8 sm:h-9 sm:w-9',
   iconLg: 'h-10 w-10 sm:h-11 sm:w-11',
