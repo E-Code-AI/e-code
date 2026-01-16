@@ -256,7 +256,7 @@ export default function HomePage() {
         Your full-stack application is ready to customize.
       </p>
       <div className="bg-white rounded-lg shadow p-6" data-testid="card-status">
-        <h2 className="text-lg font-semibold mb-2">Server Status</h2>
+        <h2 className="text-[15px] font-semibold mb-2">Server Status</h2>
         {isLoading ? (
           <p className="text-gray-500">Loading...</p>
         ) : (

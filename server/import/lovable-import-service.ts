@@ -164,7 +164,7 @@ export function ${component.name}() {
     <section className="py-16 px-4">
       <div className="max-w-7xl mx-auto">
         <h2 className="text-3xl font-bold mb-8">${component.name}</h2>
-        <p className="text-lg text-gray-600">
+        <p className="text-[15px] text-gray-600">
           This is the ${component.name} component imported from Lovable.
         </p>
       </div>
