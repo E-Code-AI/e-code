@@ -1,11 +1,9 @@
 import { useState, useRef, useCallback, memo, useEffect } from 'react';
 import { 
-  ChevronUp, Paperclip, Mic, SlidersHorizontal, ArrowUp, Loader2
+  ChevronUp, Paperclip, Mic, ArrowUp, Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SlashCommandMenu, DEFAULT_MCP_SERVERS, type MCPServer } from '../ai/SlashCommandMenu';
-import { AgentToolsBottomSheet } from '../ai/AgentToolsBottomSheet';
-import type { AgentToolsSettings } from '@/hooks/useAgentTools';
 
 type BuildMode = 'build' | 'edit' | 'chat';
 
@@ -26,8 +24,6 @@ interface ReplitMobileInputBarProps {
   agentMode?: string;
   onSlashCommand?: () => void;
   onSlashSelect?: (server: MCPServer) => void;
-  agentToolsSettings?: AgentToolsSettings;
-  onAgentToolsSettingsChange?: (settings: AgentToolsSettings) => void;
 }
 
 const BuildModeIcon = memo(() => (
@@ -57,25 +53,13 @@ export const ReplitMobileInputBar = memo(function ReplitMobileInputBar({
   agentMode = 'build',
   onSlashCommand,
   onSlashSelect,
-  agentToolsSettings,
-  onAgentToolsSettingsChange,
 }: ReplitMobileInputBarProps) {
   const [inputValue, setInputValue] = useState(value);
   const [showBuildMenu, setShowBuildMenu] = useState(false);
   const [showSlashMenu, setShowSlashMenu] = useState(false);
   const [slashSearchQuery, setSlashSearchQuery] = useState('');
   const [slashSelectedIndex, setSlashSelectedIndex] = useState(0);
-  const [showAgentTools, setShowAgentTools] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-
-  const defaultSettings: AgentToolsSettings = {
-    maxAutonomy: false,
-    appTesting: true,
-    extendedThinking: false,
-    highPowerModels: false,
-    webSearch: true,
-  };
-  const effectiveSettings = agentToolsSettings ?? defaultSettings;
 
   // Sync external value prop with internal state
   useEffect(() => {
@@ -281,22 +265,6 @@ export const ReplitMobileInputBar = memo(function ReplitMobileInputBar({
 
             <div className="flex items-center gap-1">
               <button
-                onClick={() => setShowAgentTools(true)}
-                className={cn(
-                  "p-2 rounded-lg active:bg-gray-100 dark:active:bg-[#2A2A2A] active:scale-95 transition-all touch-manipulation",
-                  effectiveSettings.maxAutonomy && "bg-amber-100 dark:bg-amber-900/30"
-                )}
-                data-testid="button-agent-tools"
-              >
-                <SlidersHorizontal className={cn(
-                  "h-4 w-4",
-                  effectiveSettings.maxAutonomy 
-                    ? "text-amber-600 dark:text-amber-400" 
-                    : "text-gray-500 dark:text-gray-400"
-                )} />
-              </button>
-
-              <button
                 onClick={handleSubmit}
                 disabled={!hasContent || isDisabled}
                 className={cn(
@@ -344,13 +312,6 @@ export const ReplitMobileInputBar = memo(function ReplitMobileInputBar({
           </div>
         )}
       </div>
-
-      <AgentToolsBottomSheet
-        open={showAgentTools}
-        onOpenChange={setShowAgentTools}
-        settings={effectiveSettings}
-        onSettingsChange={onAgentToolsSettingsChange ?? (() => {})}
-      />
     </div>
   );
 });
