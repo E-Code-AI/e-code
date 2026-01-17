@@ -496,7 +496,7 @@ Would you like me to start building this for you?`;
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     placeholder={messages.length > 0 ? "Continue the conversation..." : "Describe a website or app you want to make..."}
-                    className="w-full min-h-[44px] max-h-32 text-base resize-none border rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary focus:border-primary bg-background"
+                    className="w-full min-h-[44px] max-h-32 text-[13px] resize-none border rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary focus:border-primary bg-background placeholder:text-[13px]"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !e.shiftKey) {
                         e.preventDefault();

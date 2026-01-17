@@ -181,7 +181,7 @@ export function ReplitToolsSheet({ open, onOpenChange, onToolSelect }: ReplitToo
           {/* Header */}
           <SheetHeader className="p-4 border-b border-border space-y-3 bg-background">
             <div className="flex items-center justify-between">
-              <SheetTitle className="text-base">Search for tools and files</SheetTitle>
+              <SheetTitle className="text-[15px]">Search for tools and files</SheetTitle>
               <button
                 onClick={() => onOpenChange(false)}
                 className="text-muted-foreground hover:text-foreground text-[13px] font-medium"

@@ -132,7 +132,7 @@ export function MobileEmptyState({
         <h3 
           className={cn(
             'font-semibold text-foreground',
-            compact ? 'text-[13px]' : 'text-base'
+            compact ? 'text-[13px]' : 'text-[15px]'
           )}
         >
           {title}

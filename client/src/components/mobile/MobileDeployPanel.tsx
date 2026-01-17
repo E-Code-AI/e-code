@@ -212,7 +212,7 @@ export function MobileDeployPanel({ projectId, className }: MobileDeployPanelPro
           )}
 
           <Button
-            className="w-full min-h-[48px] text-base font-semibold"
+            className="w-full min-h-[48px] text-[15px] font-semibold"
             disabled={isPublishing}
             onClick={() => {
               if (isLive || needsRepublish) {

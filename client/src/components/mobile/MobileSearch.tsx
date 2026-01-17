@@ -165,7 +165,7 @@ export function MobileSearch({ isOpen, onClose, onSearch }: MobileSearchProps) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-            className="pl-10 pr-10 h-10 bg-surface-solid border-none text-base"
+            className="pl-10 pr-10 h-10 bg-surface-solid border-none text-[13px] placeholder:text-[13px]"
             autoComplete="off"
             autoCorrect="off"
             autoCapitalize="off"
