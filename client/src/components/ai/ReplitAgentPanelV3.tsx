@@ -256,6 +256,8 @@ export interface ExternalInputHandlers {
   isWorking: boolean;
   agentMode: string;
   conversationId: number | null;
+  agentToolsSettings: AgentToolsSettings;
+  onAgentToolsSettingsChange: (settings: AgentToolsSettings) => void;
 }
 
 interface ReplitAgentPanelV3Props {
@@ -555,19 +557,6 @@ export function ReplitAgentPanelV3({
     }, 0);
   }, [isWorking]);
   
-  // Expose handlers to parent for external input bar (mobile)
-  useEffect(() => {
-    if (onExternalInput) {
-      onExternalInput({
-        handleSubmit: handleExternalSubmit,
-        handleSlashCommand: () => slashCommand.open(),
-        isWorking,
-        agentMode,
-        conversationId,
-      });
-    }
-  }, [onExternalInput, handleExternalSubmit, slashCommand, isWorking, agentMode, conversationId]);
-  
   // Optimistic UI updates and debounced streaming for faster perceived response
   const { addOptimisticMessage, hasPendingMessages } = useOptimisticMessages(messages, setMessages);
   // Note: debouncedStreaming hook removed - using direct setStreamingContent for simplicity
@@ -593,6 +582,21 @@ export function ReplitAgentPanelV3({
   
   // Ref to track previous settings for toast comparison (avoids stale closure issues)
   const agentToolsSettingsRef = useRef<AgentToolsSettings>(agentToolsSettings);
+  
+  // Expose handlers to parent for external input bar (mobile)
+  useEffect(() => {
+    if (onExternalInput) {
+      onExternalInput({
+        handleSubmit: handleExternalSubmit,
+        handleSlashCommand: () => slashCommand.open(),
+        isWorking,
+        agentMode,
+        conversationId,
+        agentToolsSettings: agentToolsSettings,
+        onAgentToolsSettingsChange: setAgentToolsSettings,
+      });
+    }
+  }, [onExternalInput, handleExternalSubmit, slashCommand, isWorking, agentMode, conversationId, agentToolsSettings, setAgentToolsSettings]);
   
   // Element Editor state
   const [elementEditorActive, setElementEditorActive] = useState(false);
