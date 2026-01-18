@@ -352,65 +352,107 @@ Focus on planning, design, and collaboration - not implementation.`
     }
     
     // ============================================================
-    // RAG + MEMORY BANK INTEGRATION - Skip for quick questions (Replit-speed optimization)
+    // RAG + MEMORY BANK INTEGRATION - Optimized with config respect
     // ============================================================
     let ragContextPrompt = '';
     let memoryBankContext = '';
+    const ragSessionId = conversationId || `session_${userId}_${projectId}`;
     
     // ✅ REPLIT-SPEED: Skip heavy context for quick questions
-    if (!isQuickQuestion) {
-      const ragSessionId = conversationId || `session_${userId}_${projectId}`;
-      
-      // Load RAG and Memory Bank in parallel for maximum speed
-      const [ragResult, memoryResult] = await Promise.all([
-        // RAG context loading with timeout
-        (async () => {
-          try {
-            const searchQuery = message && message.length > 0 ? message.substring(0, 300) : '';
-            const ragContexts = await Promise.race([
-              memoryMCP.searchNodes(searchQuery, undefined, 2), // Reduced from 3 to 2
-              new Promise<never>((_, reject) => setTimeout(() => reject(new Error('RAG timeout')), 3000)) // 3s timeout
-            ]);
-            
-            if (ragContexts && ragContexts.length > 0) {
-              const ragItems = ragContexts.slice(0, 2).map((node: any, index: number) => 
-                `[${index + 1}] ${node.type}: ${node.content.substring(0, 500)}`
-              ).join('\n');
-              sendSSE(res, 'rag_status', { enabled: true, nodesRetrieved: ragContexts.length, status: 'success' });
-              return `\n=== CONTEXT ===\n${ragItems}\n===============\n`;
-            }
-            sendSSE(res, 'rag_status', { enabled: true, nodesRetrieved: 0, status: 'no_results' });
-            return '';
-          } catch (e: any) {
-            logger.debug(`[RAG] Skipped: ${e.message}`);
-            return '';
-          }
-        })(),
-        // Memory Bank loading with timeout
-        (async () => {
-          if (!projectId) return '';
-          try {
-            const projectBasePath = path.join(process.cwd(), 'projects', String(projectId));
-            memoryBankService.setProjectBasePath(Number(projectId), projectBasePath);
-            const context = await Promise.race([
-              memoryBankService.getContextForAgent(projectId),
-              new Promise<string>((resolve) => setTimeout(() => resolve(''), 2000)) // 2s timeout
-            ]);
-            if (context) {
-              sendSSE(res, 'memory_bank_status', { enabled: true, projectId, hasContext: true });
-              return context.substring(0, 2000); // Limit to 2k chars for speed
-            }
-            return '';
-          } catch {
-            return '';
-          }
-        })()
-      ]);
-      
-      ragContextPrompt = ragResult;
-      memoryBankContext = memoryResult;
-    } else {
+    if (isQuickQuestion) {
       logger.info('[AI Stream] Quick question - skipping RAG and Memory Bank');
+      sendSSE(res, 'rag_status', { enabled: false, nodesRetrieved: 0, status: 'skipped_quick' });
+    } else {
+      // Lookup RAG session config first (respects user settings)
+      let ragEnabled = true;
+      let retrievalDepth = 3;
+      let includeConversationHistory = false;
+      
+      try {
+        const [session] = await db.select()
+          .from(agentSessions)
+          .where(eq(agentSessions.sessionToken, ragSessionId))
+          .limit(1);
+        
+        if (session?.context && (session.context as any).ragConfig) {
+          const ragConfig = (session.context as any).ragConfig;
+          ragEnabled = ragConfig?.enabled ?? true;
+          retrievalDepth = ragConfig?.retrievalDepth ?? 3;
+          includeConversationHistory = ragConfig?.includeConversationHistory ?? false;
+        }
+      } catch {
+        // Use defaults on error
+      }
+      
+      if (!ragEnabled) {
+        sendSSE(res, 'rag_status', { enabled: false, nodesRetrieved: 0, sessionId: ragSessionId, status: 'disabled' });
+      } else {
+        // Load RAG and Memory Bank in parallel for maximum speed
+        const [ragResult, memoryResult] = await Promise.all([
+          // RAG context loading with timeout (respects session config)
+          (async () => {
+            try {
+              const searchQuery = message && message.length > 0 ? message.substring(0, 300) : '';
+              const ragContexts = await Promise.race([
+                memoryMCP.searchNodes(searchQuery, undefined, Math.min(retrievalDepth, 3)),
+                new Promise<never>((_, reject) => setTimeout(() => reject(new Error('RAG timeout')), 3000))
+              ]);
+              
+              if (ragContexts && ragContexts.length > 0) {
+                const ragItems = ragContexts.slice(0, 3).map((node: any, index: number) => 
+                  `[${index + 1}] ${node.type}: ${node.content.substring(0, 500)}`
+                ).join('\n');
+                sendSSE(res, 'rag_status', { enabled: true, nodesRetrieved: ragContexts.length, sessionId: ragSessionId, status: 'success' });
+                
+                // Fetch conversation history if enabled
+                let historyContext = '';
+                if (includeConversationHistory) {
+                  try {
+                    const history = await memoryMCP.getConversationHistory(String(userId), ragSessionId, 3);
+                    if (history.length > 0) {
+                      historyContext = '\n=== CONVERSATION MEMORY ===\n' + 
+                        history.map(h => `${h.role}: ${h.content.substring(0, 200)}...`).join('\n') + '\n===========================\n';
+                    }
+                  } catch {}
+                }
+                
+                return `\n=== CONTEXT ===\n${ragItems}\n===============\n${historyContext}`;
+              }
+              sendSSE(res, 'rag_status', { enabled: true, nodesRetrieved: 0, sessionId: ragSessionId, status: 'no_results' });
+              return '';
+            } catch (e: any) {
+              const status = e.message === 'RAG timeout' ? 'timeout' : 'error';
+              sendSSE(res, 'rag_status', { enabled: true, nodesRetrieved: 0, sessionId: ragSessionId, status, error: e.message });
+              logger.debug(`[RAG] ${status}: ${e.message}`);
+              return '';
+            }
+          })(),
+          // Memory Bank loading with timeout
+          (async () => {
+            if (!projectId) return '';
+            try {
+              const projectBasePath = path.join(process.cwd(), 'projects', String(projectId));
+              memoryBankService.setProjectBasePath(Number(projectId), projectBasePath);
+              const context = await Promise.race([
+                memoryBankService.getContextForAgent(projectId),
+                new Promise<string>((resolve) => setTimeout(() => resolve(''), 2000))
+              ]);
+              if (context) {
+                sendSSE(res, 'memory_bank_status', { enabled: true, projectId, hasContext: true, contextLength: context.length });
+                return context.substring(0, 2000);
+              }
+              sendSSE(res, 'memory_bank_status', { enabled: false, projectId, hasContext: false });
+              return '';
+            } catch (e: any) {
+              sendSSE(res, 'memory_bank_status', { enabled: false, projectId, hasContext: false, error: e.message });
+              return '';
+            }
+          })()
+        ]);
+        
+        ragContextPrompt = ragResult;
+        memoryBankContext = memoryResult;
+      }
     }
     
     // Build messages array with context (including RAG and Memory Bank if enabled)
