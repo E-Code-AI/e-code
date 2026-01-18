@@ -258,6 +258,10 @@ export interface ExternalInputHandlers {
   conversationId: number | null;
   agentToolsSettings: AgentToolsSettings;
   onAgentToolsSettingsChange: (settings: AgentToolsSettings) => void;
+  onAttach: () => void;
+  onVoice: () => void;
+  isRecording: boolean;
+  isUploadingFiles: boolean;
 }
 
 interface ReplitAgentPanelV3Props {
@@ -582,21 +586,6 @@ export function ReplitAgentPanelV3({
   
   // Ref to track previous settings for toast comparison (avoids stale closure issues)
   const agentToolsSettingsRef = useRef<AgentToolsSettings>(agentToolsSettings);
-  
-  // Expose handlers to parent for external input bar (mobile)
-  useEffect(() => {
-    if (onExternalInput) {
-      onExternalInput({
-        handleSubmit: handleExternalSubmit,
-        handleSlashCommand: () => slashCommand.open(),
-        isWorking,
-        agentMode,
-        conversationId,
-        agentToolsSettings: agentToolsSettings,
-        onAgentToolsSettingsChange: setAgentToolsSettings,
-      });
-    }
-  }, [onExternalInput, handleExternalSubmit, slashCommand, isWorking, agentMode, conversationId, agentToolsSettings, setAgentToolsSettings]);
   
   // Element Editor state
   const [elementEditorActive, setElementEditorActive] = useState(false);
@@ -1135,6 +1124,25 @@ export function ReplitAgentPanelV3({
       }
     };
   }, []);
+
+  // Expose handlers to parent for external input bar (mobile)
+  useEffect(() => {
+    if (onExternalInput) {
+      onExternalInput({
+        handleSubmit: handleExternalSubmit,
+        handleSlashCommand: () => slashCommand.open(),
+        isWorking,
+        agentMode,
+        conversationId,
+        agentToolsSettings: agentToolsSettings,
+        onAgentToolsSettingsChange: setAgentToolsSettings,
+        onAttach: handleAttachmentClick,
+        onVoice: handleVoiceClick,
+        isRecording,
+        isUploadingFiles,
+      });
+    }
+  }, [onExternalInput, handleExternalSubmit, slashCommand, isWorking, agentMode, conversationId, agentToolsSettings, setAgentToolsSettings, handleAttachmentClick, handleVoiceClick, isRecording, isUploadingFiles]);
 
   // ✅ FIX (Dec 14, 2025): Fortune 500-grade scroll behavior
   // Track if user is near bottom to prevent jumping when user is reading history
