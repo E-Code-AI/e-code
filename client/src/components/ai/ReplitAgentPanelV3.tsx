@@ -262,6 +262,8 @@ export interface ExternalInputHandlers {
   onVoice: () => void;
   isRecording: boolean;
   isUploadingFiles: boolean;
+  pendingAttachmentsCount: number;
+  onRemoveAttachment?: (id: string) => void;
 }
 
 interface ReplitAgentPanelV3Props {
@@ -1140,9 +1142,11 @@ export function ReplitAgentPanelV3({
         onVoice: handleVoiceClick,
         isRecording,
         isUploadingFiles,
+        pendingAttachmentsCount: pendingAttachments.length,
+        onRemoveAttachment: handleRemoveAttachment,
       });
     }
-  }, [onExternalInput, handleExternalSubmit, slashCommand, isWorking, agentMode, conversationId, agentToolsSettings, setAgentToolsSettings, handleAttachmentClick, handleVoiceClick, isRecording, isUploadingFiles]);
+  }, [onExternalInput, handleExternalSubmit, slashCommand, isWorking, agentMode, conversationId, agentToolsSettings, setAgentToolsSettings, handleAttachmentClick, handleVoiceClick, isRecording, isUploadingFiles, pendingAttachments.length, handleRemoveAttachment]);
 
   // ✅ FIX (Dec 14, 2025): Fortune 500-grade scroll behavior
   // Track if user is near bottom to prevent jumping when user is reading history
@@ -2699,6 +2703,17 @@ export function ReplitAgentPanelV3({
             </div>
           )}
           
+          {/* Hidden file input for attachment button - ALWAYS rendered (required for mobile) */}
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            className="hidden"
+            multiple
+            accept="image/*,.pdf,.txt,.md,.json,.js,.ts,.jsx,.tsx,.py,.html,.css,.sql,.sh,.go,.rs,.java,.cpp,.c,.rb,.php"
+            data-testid="input-file-hidden"
+          />
+          
           {/* Chat input with inline toolbar - Replit-style with attachment/voice/send */}
           {/* Hidden when hideInput=true (mobile uses external ReplitMobileInputBar) */}
           {!hideInput && (
@@ -2716,17 +2731,6 @@ export function ReplitAgentPanelV3({
               searchQuery={slashSearchQuery}
               onSearchChange={setSlashSearchQuery}
               selectedIndex={slashSelectedIndex}
-            />
-            
-            {/* Hidden file input for attachment button */}
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileChange}
-              className="hidden"
-              multiple
-              accept="image/*,.pdf,.txt,.md,.json,.js,.ts,.jsx,.tsx,.py,.html,.css,.sql,.sh,.go,.rs,.java,.cpp,.c,.rb,.php"
-              data-testid="input-file-hidden"
             />
             
             {/* Pending attachments display */}

@@ -1270,6 +1270,7 @@ function UnifiedIDELayout({
             onVoice={() => mobileAgentHandlers?.onVoice?.()}
             isRecording={mobileAgentHandlers?.isRecording}
             isUploadingFiles={mobileAgentHandlers?.isUploadingFiles}
+            pendingAttachmentsCount={mobileAgentHandlers?.pendingAttachmentsCount}
           />
         )}
 
@@ -1494,6 +1495,7 @@ function UnifiedIDELayout({
               onVoice={() => mobileAgentHandlers?.onVoice?.()}
               isRecording={mobileAgentHandlers?.isRecording}
               isUploadingFiles={mobileAgentHandlers?.isUploadingFiles}
+              pendingAttachmentsCount={mobileAgentHandlers?.pendingAttachmentsCount}
             />
           )}
 

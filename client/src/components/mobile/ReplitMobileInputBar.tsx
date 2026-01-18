@@ -30,6 +30,7 @@ interface ReplitMobileInputBarProps {
   onAgentToolsSettingsChange?: (settings: AgentToolsSettings) => void;
   isRecording?: boolean;
   isUploadingFiles?: boolean;
+  pendingAttachmentsCount?: number;
 }
 
 const BuildModeIcon = memo(() => (
@@ -63,6 +64,7 @@ export const ReplitMobileInputBar = memo(function ReplitMobileInputBar({
   onAgentToolsSettingsChange,
   isRecording = false,
   isUploadingFiles = false,
+  pendingAttachmentsCount = 0,
 }: ReplitMobileInputBarProps) {
   const [inputValue, setInputValue] = useState(value);
   const [showBuildMenu, setShowBuildMenu] = useState(false);
@@ -270,17 +272,27 @@ export const ReplitMobileInputBar = memo(function ReplitMobileInputBar({
                 onClick={onAttach}
                 disabled={isUploadingFiles}
                 className={cn(
-                  "p-2 rounded-lg active:scale-95 transition-all touch-manipulation",
+                  "p-2 rounded-lg active:scale-95 transition-all touch-manipulation relative",
                   isUploadingFiles 
                     ? "bg-primary/10 dark:bg-primary/20" 
-                    : "active:bg-gray-100 dark:active:bg-[#2A2A2A]"
+                    : pendingAttachmentsCount > 0
+                      ? "bg-primary/10 dark:bg-primary/20"
+                      : "active:bg-gray-100 dark:active:bg-[#2A2A2A]"
                 )}
                 data-testid="button-attach"
               >
                 {isUploadingFiles ? (
                   <Loader2 className="h-4 w-4 text-primary animate-spin" />
                 ) : (
-                  <Paperclip className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                  <Paperclip className={cn(
+                    "h-4 w-4",
+                    pendingAttachmentsCount > 0 ? "text-primary" : "text-gray-500 dark:text-gray-400"
+                  )} />
+                )}
+                {pendingAttachmentsCount > 0 && !isUploadingFiles && (
+                  <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-primary text-[10px] font-medium text-primary-foreground flex items-center justify-center">
+                    {pendingAttachmentsCount > 9 ? '9+' : pendingAttachmentsCount}
+                  </span>
                 )}
               </button>
 
