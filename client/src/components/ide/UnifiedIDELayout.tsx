@@ -1266,6 +1266,10 @@ function UnifiedIDELayout({
             onSlashCommand={() => mobileAgentHandlers?.handleSlashCommand?.()}
             agentToolsSettings={mobileAgentHandlers?.agentToolsSettings}
             onAgentToolsSettingsChange={mobileAgentHandlers?.onAgentToolsSettingsChange}
+            onAttach={() => mobileAgentHandlers?.onAttach?.()}
+            onVoice={() => mobileAgentHandlers?.onVoice?.()}
+            isRecording={mobileAgentHandlers?.isRecording}
+            isUploadingFiles={mobileAgentHandlers?.isUploadingFiles}
           />
         )}
 
@@ -1486,6 +1490,10 @@ function UnifiedIDELayout({
               onSlashCommand={() => mobileAgentHandlers?.handleSlashCommand?.()}
               agentToolsSettings={mobileAgentHandlers?.agentToolsSettings}
               onAgentToolsSettingsChange={mobileAgentHandlers?.onAgentToolsSettingsChange}
+              onAttach={() => mobileAgentHandlers?.onAttach?.()}
+              onVoice={() => mobileAgentHandlers?.onVoice?.()}
+              isRecording={mobileAgentHandlers?.isRecording}
+              isUploadingFiles={mobileAgentHandlers?.isUploadingFiles}
             />
           )}
 

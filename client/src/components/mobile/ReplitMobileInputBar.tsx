@@ -28,6 +28,8 @@ interface ReplitMobileInputBarProps {
   onSlashSelect?: (server: MCPServer) => void;
   agentToolsSettings?: AgentToolsSettings;
   onAgentToolsSettingsChange?: (settings: AgentToolsSettings) => void;
+  isRecording?: boolean;
+  isUploadingFiles?: boolean;
 }
 
 const BuildModeIcon = memo(() => (
@@ -59,6 +61,8 @@ export const ReplitMobileInputBar = memo(function ReplitMobileInputBar({
   onSlashSelect,
   agentToolsSettings,
   onAgentToolsSettingsChange,
+  isRecording = false,
+  isUploadingFiles = false,
 }: ReplitMobileInputBarProps) {
   const [inputValue, setInputValue] = useState(value);
   const [showBuildMenu, setShowBuildMenu] = useState(false);
@@ -264,18 +268,38 @@ export const ReplitMobileInputBar = memo(function ReplitMobileInputBar({
 
               <button
                 onClick={onAttach}
-                className="p-2 rounded-lg active:bg-gray-100 dark:active:bg-[#2A2A2A] active:scale-95 transition-all touch-manipulation"
+                disabled={isUploadingFiles}
+                className={cn(
+                  "p-2 rounded-lg active:scale-95 transition-all touch-manipulation",
+                  isUploadingFiles 
+                    ? "bg-primary/10 dark:bg-primary/20" 
+                    : "active:bg-gray-100 dark:active:bg-[#2A2A2A]"
+                )}
                 data-testid="button-attach"
               >
-                <Paperclip className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                {isUploadingFiles ? (
+                  <Loader2 className="h-4 w-4 text-primary animate-spin" />
+                ) : (
+                  <Paperclip className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                )}
               </button>
 
               <button
                 onClick={onVoice}
-                className="p-2 rounded-lg active:bg-gray-100 dark:active:bg-[#2A2A2A] active:scale-95 transition-all touch-manipulation"
+                className={cn(
+                  "p-2 rounded-lg active:scale-95 transition-all touch-manipulation",
+                  isRecording 
+                    ? "bg-red-500/10 dark:bg-red-500/20" 
+                    : "active:bg-gray-100 dark:active:bg-[#2A2A2A]"
+                )}
                 data-testid="button-voice"
               >
-                <Mic className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                <Mic className={cn(
+                  "h-4 w-4",
+                  isRecording 
+                    ? "text-red-500 animate-pulse" 
+                    : "text-gray-500 dark:text-gray-400"
+                )} />
               </button>
             </div>
 
