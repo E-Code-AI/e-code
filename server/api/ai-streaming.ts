@@ -15,7 +15,7 @@ import { memoryMCP } from '../mcp/servers/memory-mcp';
 import { memoryBankService } from '../services/memory-bank.service';
 import { workspaceSnapshotService } from '../services/workspace-snapshot.service';
 import { db } from '../db';
-import { agentSessions } from '../../shared/schema';
+import { agentSessions, aiConversations } from '../../shared/schema';
 import { eq } from 'drizzle-orm';
 import * as path from 'path';
 
@@ -268,6 +268,14 @@ router.post('/api/agent/chat/stream', ensureAuthenticated, async (req, res) => {
   let tokensOutput = 0;
   let agentMode: 'plan' | 'build' | 'edit' = 'build';
   
+  // ✅ REPLIT-SPEED: Detect quick questions that don't need heavy context
+  const isQuickQuestion = message && message.length < 150 && 
+    !message.toLowerCase().includes('build') && 
+    !message.toLowerCase().includes('create') && 
+    !message.toLowerCase().includes('code') &&
+    !message.toLowerCase().includes('file') &&
+    !message.toLowerCase().includes('project');
+  
   // ✅ FORTUNE 500: Enhanced telemetry for streaming reliability tracking
   const streamStartTime = Date.now();
   logger.info('[AI Stream] Starting chat stream', {
@@ -278,228 +286,131 @@ router.post('/api/agent/chat/stream', ensureAuthenticated, async (req, res) => {
     conversationId: conversationId || 'new',
     hasMessage: !!message,
     messageLength: message?.length || 0,
+    isQuickQuestion,
     streamStartTime: new Date(streamStartTime).toISOString()
   });
   
   try {
-    // PLAN MODE ENFORCEMENT: Check agent mode from database
-    let enforcedTools: any[] | undefined = undefined; // undefined = use defaults, [] = explicitly none
+    // ✅ REPLIT-SPEED: Parallel context loading for maximum performance
+    let enforcedTools: any[] | undefined = undefined;
     let modeSystemPrompt = '';
+    let contextPrompt = '';
     
-    if (conversationId) {
-      try {
-        // Query conversation to get agent_mode
-        const { db } = await import('../db');
-        const { aiConversations } = await import('../../shared/schema');
-        const { eq } = await import('drizzle-orm');
-        
-        const [conversation] = await db
-          .select({ agentMode: aiConversations.agentMode })
-          .from(aiConversations)
-          .where(eq(aiConversations.id, conversationId))
-          .limit(1);
-        
-        if (conversation?.agentMode) {
-          agentMode = conversation.agentMode;
-          
-          // PLAN MODE: Explicitly disable all tool execution
-          if (agentMode === 'plan') {
-            enforcedTools = []; // Explicitly empty = no tools allowed
-            modeSystemPrompt = `
-IMPORTANT: You are in PLAN MODE. Do NOT execute any code changes or file modifications.
-Your role is to:
-- Brainstorm ideas and explore approaches
-- Break down complex projects into task lists
-- Provide architectural guidance and planning
-- Discuss pros/cons of different solutions
-- Answer questions and provide strategic advice
-
-When the user is ready to implement, they will switch to BUILD MODE.
-Focus on planning, design, and collaboration - not implementation.`;
-          } else {
-            // BUILD MODE: Use client-provided tools or leave undefined for defaults
-            enforcedTools = tools && tools.length > 0 ? tools : undefined;
-            modeSystemPrompt = `
-You are in BUILD MODE. You can execute actions like creating files, running commands, and modifying code.`;
-          }
-        }
-      } catch (convError) {
-        logger.warn('Failed to load conversation mode, defaulting to build:', convError);
-        // On error, default to build mode with client tools or defaults
-        enforcedTools = tools && tools.length > 0 ? tools : undefined;
-      }
-    } else {
-      // No conversation ID = new conversation, default to build mode
+    // For quick questions, skip heavy context loading entirely
+    if (isQuickQuestion) {
+      logger.info('[AI Stream] Quick mode - skipping heavy context loading');
       enforcedTools = tools && tools.length > 0 ? tools : undefined;
+      modeSystemPrompt = 'You are a helpful AI assistant. Respond concisely and quickly.';
+      contextPrompt = '';
+    } else {
+      // ✅ PARALLEL: Load conversation mode and project context simultaneously
+      const [conversationResult, projectContextResult] = await Promise.all([
+        // Task 1: Load conversation mode from database
+        (async () => {
+          if (!conversationId) return { mode: 'build' as const, enforcedTools: tools && tools.length > 0 ? tools : undefined };
+          try {
+            const [conversation] = await db
+              .select({ agentMode: aiConversations.agentMode })
+              .from(aiConversations)
+              .where(eq(aiConversations.id, conversationId))
+              .limit(1);
+            
+            if (conversation?.agentMode === 'plan') {
+              return { 
+                mode: 'plan' as const, 
+                enforcedTools: [] as any[],
+                prompt: `IMPORTANT: You are in PLAN MODE. Do NOT execute any code changes.
+Focus on planning, design, and collaboration - not implementation.`
+              };
+            }
+            return { 
+              mode: conversation?.agentMode || 'build' as const, 
+              enforcedTools: tools && tools.length > 0 ? tools : undefined,
+              prompt: 'You are in BUILD MODE. You can execute actions like creating files and modifying code.'
+            };
+          } catch {
+            return { mode: 'build' as const, enforcedTools: tools && tools.length > 0 ? tools : undefined };
+          }
+        })(),
+        // Task 2: Load project context (only if projectId exists)
+        (async () => {
+          if (!projectId) return '';
+          try {
+            const contextProvider = new ProjectContextProvider(projectId);
+            const projectContext = await contextProvider.getContext();
+            return ProjectContextProvider.formatAsSystemPrompt(projectContext);
+          } catch {
+            return '';
+          }
+        })()
+      ]);
+      
+      agentMode = conversationResult.mode;
+      enforcedTools = conversationResult.enforcedTools;
+      modeSystemPrompt = conversationResult.prompt || '';
+      contextPrompt = projectContextResult;
     }
     
-    // Get project context
-    const contextProvider = new ProjectContextProvider(projectId);
-    const projectContext = await contextProvider.getContext();
-    const contextPrompt = ProjectContextProvider.formatAsSystemPrompt(projectContext);
-    
     // ============================================================
-    // RAG CONTEXT INTEGRATION - Fetch and inject knowledge graph context
+    // RAG + MEMORY BANK INTEGRATION - Skip for quick questions (Replit-speed optimization)
     // ============================================================
     let ragContextPrompt = '';
-    let ragEnabled = false;
-    let ragNodesCount = 0;
-    
-    // Use client-provided conversationId as sessionId for RAG config lookup
-    // This aligns with how /api/rag/session-config stores configs
-    const ragSessionId = conversationId || `session_${userId}_${projectId}`;
-    
-    // Default RAG config for new sessions (RAG enabled by default for better context)
-    const defaultRagConfig = {
-      enabled: true,
-      mode: 'auto' as const,
-      retrievalDepth: 3,
-      includeConversationHistory: false,
-      maxContextTokens: 2000
-    };
-    
-    try {
-      // Check if RAG is enabled for this session - try multiple lookup strategies
-      let ragConfig = defaultRagConfig;
-      
-      // Strategy 1: Look up by conversationId (client-provided sessionId from /api/rag/session-config)
-      const [session] = await db.select()
-        .from(agentSessions)
-        .where(eq(agentSessions.sessionToken, ragSessionId))
-        .limit(1);
-      
-      if (session?.context && (session.context as any).ragConfig) {
-        ragConfig = (session.context as any).ragConfig;
-        logger.info(`[RAG] Found session RAG config for ${ragSessionId}`);
-      } else {
-        // No session found - use default config (RAG enabled)
-        logger.info(`[RAG] No session config found for ${ragSessionId}, using defaults (RAG enabled)`);
-      }
-      
-      ragEnabled = ragConfig?.enabled ?? true; // Default to true for better UX
-      
-      if (ragEnabled) {
-        logger.info(`[RAG] RAG enabled for session ${ragSessionId}, fetching context...`);
-        
-        // Fetch relevant knowledge from the knowledge graph
-        // Safely handle empty message (avoid substring on empty string)
-        const searchQuery = message && message.length > 0 ? message.substring(0, 500) : '';
-        const ragContexts = await memoryMCP.searchNodes(
-          searchQuery, // Use user message as search query
-          undefined, // No type filter
-          ragConfig?.retrievalDepth || 3 // Number of relevant nodes to fetch
-        );
-        
-        ragNodesCount = ragContexts.length;
-        
-        if (ragContexts.length > 0) {
-          // Build RAG context prompt
-          const ragItems = ragContexts.map((node, index) => {
-            return `[${index + 1}] ${node.type.toUpperCase()}: ${node.content}`;
-          }).join('\n\n');
-          
-          ragContextPrompt = `
-=== KNOWLEDGE GRAPH CONTEXT (RAG) ===
-The following relevant information has been retrieved from your knowledge graph memory:
-
-${ragItems}
-
-Use this context to provide more accurate and informed responses.
-=====================================
-`;
-          
-          logger.info(`[RAG] Injected ${ragContexts.length} knowledge nodes into context`);
-          
-          // Send RAG status event to client - success with nodes
-          sendSSE(res, 'rag_status', {
-            enabled: true,
-            nodesRetrieved: ragContexts.length,
-            sessionId: ragSessionId,
-            status: 'success'
-          });
-        } else {
-          logger.info(`[RAG] No relevant knowledge nodes found for query`);
-          // Send RAG status event to client - enabled but no results
-          sendSSE(res, 'rag_status', {
-            enabled: true,
-            nodesRetrieved: 0,
-            sessionId: ragSessionId,
-            status: 'no_results'
-          });
-        }
-        
-        // Also fetch recent conversation history if enabled
-        if (ragConfig?.includeConversationHistory) {
-          const history = await memoryMCP.getConversationHistory(
-            String(userId),
-            ragSessionId,
-            3 // Last 3 conversation turns
-          );
-          
-          if (history.length > 0) {
-            const historyItems = history.map(h => `${h.role}: ${h.content.substring(0, 200)}...`).join('\n');
-            ragContextPrompt += `
-=== CONVERSATION MEMORY ===
-Previous conversation context:
-${historyItems}
-===========================
-`;
-          }
-        }
-      } else {
-        // RAG disabled for this session - notify client
-        logger.info(`[RAG] RAG disabled for session ${ragSessionId}`);
-        sendSSE(res, 'rag_status', {
-          enabled: false,
-          nodesRetrieved: 0,
-          sessionId: ragSessionId,
-          status: 'disabled'
-        });
-      }
-    } catch (ragError: any) {
-      // RAG errors should not block the chat - log and continue
-      logger.warn(`[RAG] Failed to fetch RAG context: ${ragError.message}`);
-      // Send error status to client
-      sendSSE(res, 'rag_status', {
-        enabled: false,
-        nodesRetrieved: 0,
-        sessionId: ragSessionId,
-        status: 'error',
-        error: ragError.message
-      });
-    }
-    
-    // ============================================================
-    // MEMORY BANK INTEGRATION - Persistent project context across sessions
-    // ============================================================
     let memoryBankContext = '';
     
-    if (projectId) {
-      try {
-        // ✅ Ensure project-specific path is set before fetching context
-        const projectBasePath = path.join(process.cwd(), 'projects', String(projectId));
-        memoryBankService.setProjectBasePath(Number(projectId), projectBasePath);
-        
-        memoryBankContext = await memoryBankService.getContextForAgent(projectId);
-        if (memoryBankContext) {
-          logger.info(`[MemoryBank] Injected memory bank context for project ${projectId} (${memoryBankContext.length} chars)`);
-          sendSSE(res, 'memory_bank_status', {
-            enabled: true,
-            projectId,
-            hasContext: true,
-            contextLength: memoryBankContext.length
-          });
-        } else {
-          logger.info(`[MemoryBank] No memory bank initialized for project ${projectId}`);
-          sendSSE(res, 'memory_bank_status', {
-            enabled: false,
-            projectId,
-            hasContext: false
-          });
-        }
-      } catch (mbError: any) {
-        logger.warn(`[MemoryBank] Failed to fetch memory bank context: ${mbError.message}`);
-      }
+    // ✅ REPLIT-SPEED: Skip heavy context for quick questions
+    if (!isQuickQuestion) {
+      const ragSessionId = conversationId || `session_${userId}_${projectId}`;
+      
+      // Load RAG and Memory Bank in parallel for maximum speed
+      const [ragResult, memoryResult] = await Promise.all([
+        // RAG context loading with timeout
+        (async () => {
+          try {
+            const searchQuery = message && message.length > 0 ? message.substring(0, 300) : '';
+            const ragContexts = await Promise.race([
+              memoryMCP.searchNodes(searchQuery, undefined, 2), // Reduced from 3 to 2
+              new Promise<never>((_, reject) => setTimeout(() => reject(new Error('RAG timeout')), 3000)) // 3s timeout
+            ]);
+            
+            if (ragContexts && ragContexts.length > 0) {
+              const ragItems = ragContexts.slice(0, 2).map((node: any, index: number) => 
+                `[${index + 1}] ${node.type}: ${node.content.substring(0, 500)}`
+              ).join('\n');
+              sendSSE(res, 'rag_status', { enabled: true, nodesRetrieved: ragContexts.length, status: 'success' });
+              return `\n=== CONTEXT ===\n${ragItems}\n===============\n`;
+            }
+            sendSSE(res, 'rag_status', { enabled: true, nodesRetrieved: 0, status: 'no_results' });
+            return '';
+          } catch (e: any) {
+            logger.debug(`[RAG] Skipped: ${e.message}`);
+            return '';
+          }
+        })(),
+        // Memory Bank loading with timeout
+        (async () => {
+          if (!projectId) return '';
+          try {
+            const projectBasePath = path.join(process.cwd(), 'projects', String(projectId));
+            memoryBankService.setProjectBasePath(Number(projectId), projectBasePath);
+            const context = await Promise.race([
+              memoryBankService.getContextForAgent(projectId),
+              new Promise<string>((resolve) => setTimeout(() => resolve(''), 2000)) // 2s timeout
+            ]);
+            if (context) {
+              sendSSE(res, 'memory_bank_status', { enabled: true, projectId, hasContext: true });
+              return context.substring(0, 2000); // Limit to 2k chars for speed
+            }
+            return '';
+          } catch {
+            return '';
+          }
+        })()
+      ]);
+      
+      ragContextPrompt = ragResult;
+      memoryBankContext = memoryResult;
+    } else {
+      logger.info('[AI Stream] Quick question - skipping RAG and Memory Bank');
     }
     
     // Build messages array with context (including RAG and Memory Bank if enabled)
