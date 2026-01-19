@@ -78,8 +78,9 @@ export function CurrentModelChip({
               className
             )}
             onClick={onClick}
+            data-testid="current-model-chip"
           >
-            <ProviderIcon className={cn("h-3 w-3", !compact && "mr-1", providerColor)} />
+            <ProviderIcon className={cn("h-3 w-3 pointer-events-none", !compact && "mr-1", providerColor)} />
             {!compact && <span className="max-w-20 truncate">{shortModelName}</span>}
             {showWarning && (
               <AlertCircle className="h-3 w-3 ml-1 text-yellow-500" />
