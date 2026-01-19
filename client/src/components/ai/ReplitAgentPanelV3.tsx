@@ -441,6 +441,8 @@ export function ReplitAgentPanelV3({
   // Autonomous chat integration - bridges WebSocket events to inline chat messages
   // This hook connects to the autonomous workspace WebSocket and pushes messages to the chat
   // MUST be called before messages retrieval to use effectiveConversationId
+  // ✅ FIX (Jan 2026): Don't extract effectiveConversationId from hook - use local definition
+  // The hook just returns conversationId, but we need conversationId ?? -projectIdNum
   const { 
     sendBuildModeSelection, 
     requestPlanChange, 
@@ -448,9 +450,7 @@ export function ReplitAgentPanelV3({
     isConnected: wsIsConnected,
     connectionError,
     reconnectAttempt,
-    maxReconnectAttempts,
-    effectiveConversationId,
-    isUsingTempConversationId 
+    maxReconnectAttempts
   } = useAutonomousChatIntegration({
     conversationId,
     projectId: typeof projectId === 'string' ? parseInt(projectId, 10) : projectId,
@@ -2231,29 +2231,10 @@ export function ReplitAgentPanelV3({
 
   const isCompactMode = mode === 'mobile' || mode === 'tablet';
 
-  // ✅ FIX (Dec 19, 2025): Unified loading state during initialization
-  // Show single loading indicator instead of multiple spinners when bootstrapping
-  // ✅ FIX (Dec 25, 2025): Exit loading state if bootstrap failed or timed out
-  const isInitializing = isBootstrapping && !conversationId && !bootstrapFailed;
-  
-  if (isInitializing && isCompactMode) {
-    return (
-      <div className={cn("h-full flex flex-col bg-background items-center justify-center", className)} data-testid="replit-agent-panel-v3-loading">
-        <div className="flex flex-col items-center gap-3 text-center px-4">
-          <div className="relative">
-            <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-              <Sparkles className="h-6 w-6 text-primary animate-pulse" />
-            </div>
-            <Loader2 className="h-5 w-5 text-primary animate-spin absolute -bottom-1 -right-1" />
-          </div>
-          <div className="space-y-1">
-            <p className="text-[13px] font-medium">Initializing Agent</p>
-            <p className="text-[11px] text-muted-foreground">Setting up your workspace...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // ✅ FIX (Jan 2026): NEVER block the UI - Replit-style always-ready pattern
+  // Users can ALWAYS send messages immediately using temp conversationId (-projectId)
+  // Messages are stored locally and migrated when real conversationId is available
+  // This completely removes the "Initializing Agent" blocking screen
 
   return (
     <div className={cn("h-full flex flex-col bg-background", className)} data-testid="replit-agent-panel-v3">
