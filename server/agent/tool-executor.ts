@@ -1,12 +1,16 @@
 /**
  * Agent Tool Executor
  * Executes tool calls from the AI agent autonomously
+ * 
+ * ✅ FIXED Jan 2026: Now saves files to BOTH filesystem AND database
+ * This ensures files appear in the UI Files panel immediately
  */
 
 import fs from 'fs/promises';
 import path from 'path';
 import { spawn } from 'child_process';
 import winston from 'winston';
+import { storage } from '../storage';
 
 const ALLOWED_COMMANDS = new Set([
   'npm', 'npx', 'node', 'git', 'grep', 'find', 'ls', 'cat', 'echo', 
@@ -77,8 +81,11 @@ export interface ToolExecutionResult {
  */
 export class ToolExecutor {
   private projectRoot: string;
+  private projectId: string;
 
   constructor(projectId: string) {
+    // Store projectId for database operations
+    this.projectId = projectId;
     // In production, map projectId to actual project directory
     // For now, use current working directory
     this.projectRoot = process.cwd();
@@ -188,9 +195,7 @@ export class ToolExecutor {
         success: false,
         error: error.message,
         metadata: {
-          executionTime: Date.now() - startTime,
-          stack: error.stack, // Include stack in metadata for debugging
-          originalError: error.name || 'Error'
+          executionTime: Date.now() - startTime
         }
       };
     }
@@ -198,6 +203,7 @@ export class ToolExecutor {
 
   /**
    * File Operations
+   * ✅ FIXED Jan 2026: Now saves files to BOTH filesystem AND database
    */
   private async createFile(params: { path: string; content: string; description?: string }): Promise<ToolExecutionResult> {
     const filePath = this.validatePath(params.path);
@@ -206,8 +212,34 @@ export class ToolExecutor {
     // Create directory if it doesn't exist
     await fs.mkdir(dir, { recursive: true });
 
-    // Write file
+    // Write file to filesystem
     await fs.writeFile(filePath, params.content, 'utf-8');
+
+    // ✅ CRITICAL: Also save to database so file appears in UI Files panel
+    const projectIdStr = this.projectId;
+    if (projectIdStr && projectIdStr !== 'default') {
+      try {
+        // Use getFileByPath for efficient lookup
+        const existingFile = await storage.getFileByPath(projectIdStr, params.path);
+        
+        if (existingFile) {
+          // Update existing file
+          await storage.updateFile(existingFile.id, { content: params.content });
+          logger.info(`[AgentExecutor] Updated file in database: ${params.path} (project ${projectIdStr})`);
+        } else {
+          // Create new file in database (simple signature: projectId/path/content)
+          await storage.createFile({
+            projectId: projectIdStr,
+            path: params.path,
+            content: params.content
+          });
+          logger.info(`[AgentExecutor] Created file in database: ${params.path} (project ${projectIdStr})`);
+        }
+      } catch (dbError: any) {
+        // Log but don't fail - filesystem write already succeeded
+        logger.warn(`[AgentExecutor] Failed to save file to database: ${dbError.message}`);
+      }
+    }
 
     return {
       success: true,
@@ -238,6 +270,30 @@ export class ToolExecutor {
 
     const newContent = currentContent.replace(params.old_content, params.new_content);
     await fs.writeFile(filePath, newContent, 'utf-8');
+
+    // ✅ FIXED Jan 2026: Also update in database (create if not exists)
+    const projectIdStr = this.projectId;
+    if (projectIdStr && projectIdStr !== 'default') {
+      try {
+        // Use getFileByPath for efficient lookup
+        const existingFile = await storage.getFileByPath(projectIdStr, params.path);
+        
+        if (existingFile) {
+          await storage.updateFile(existingFile.id, { content: newContent });
+          logger.info(`[AgentExecutor] Updated file in database: ${params.path} (project ${projectIdStr})`);
+        } else {
+          // File exists on FS but not in DB - create it to keep UI in sync
+          await storage.createFile({
+            projectId: projectIdStr,
+            path: params.path,
+            content: newContent
+          });
+          logger.info(`[AgentExecutor] Created file in database (via edit): ${params.path} (project ${projectIdStr})`);
+        }
+      } catch (dbError: any) {
+        logger.warn(`[AgentExecutor] Failed to update file in database: ${dbError.message}`);
+      }
+    }
 
     return {
       success: true,
