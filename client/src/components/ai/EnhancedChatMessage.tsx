@@ -162,6 +162,7 @@ export const EnhancedChatMessage = memo(forwardRef<EnhancedChatMessageRef, Enhan
         isUser && "flex-row-reverse"
       )}
       data-testid={`enhanced-message-${message.id}`}
+      data-message-role={message.role}
     >
       
 
