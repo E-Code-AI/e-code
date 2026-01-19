@@ -1,7 +1,7 @@
 # Project Brief
 
 ## Overview
-Test
+Mobile verification
 
 ## Core Requirements
 [To be extracted from requirements]
