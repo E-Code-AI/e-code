@@ -231,7 +231,7 @@ export async function startProjectRuntime(req: Request, res: Response) {
             : 'log';
           
           await storage.createTerminalLog({
-            projectId,
+            projectId: parseInt(projectId, 10),
             userId,
             type: logType,
             message: logMessage.replace(/^\[ERROR\]\s*/, ''),
