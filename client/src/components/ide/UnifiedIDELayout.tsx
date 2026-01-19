@@ -55,7 +55,7 @@ import { ReplitMobileNavigation, ReplitMobileInputBar, ReplitMobileHeader, type 
 const ReplitMonacoEditor = instrumentedLazy(() => import('@/components/editor/ReplitMonacoEditor').then(mod => ({ default: mod.ReplitMonacoEditor })), 'ReplitMonacoEditor');
 const ReplitTerminalPanel = instrumentedLazy(() => import('@/components/editor/ReplitTerminalPanel').then(mod => ({ default: mod.ReplitTerminalPanel })), 'ReplitTerminalPanel');
 const ReplitDeploymentPanel = instrumentedLazy(() => import('@/components/ide/ReplitDeploymentPanel').then(mod => ({ default: mod.ReplitDeploymentPanel })), 'ReplitDeploymentPanel');
-const ReplitAgentPanelV3 = instrumentedLazy(() => import('@/components/ai/ReplitAgentPanelV3').then(mod => ({ default: mod.ReplitAgentPanelV3 })), 'ReplitAgentPanelV3');
+import { ReplitAgentPanelV3 } from '@/components/ai/ReplitAgentPanelV3';
 import { AgentPanelErrorBoundary } from '@/components/ai/AgentPanelErrorBoundary';
 import type { ExternalInputHandlers } from '@/components/ai/ReplitAgentPanelV3';
 const ResponsiveWebPreview = instrumentedLazy(() => import('@/components/editor/ResponsiveWebPreview').then(mod => ({ default: mod.ResponsiveWebPreview })), 'ResponsiveWebPreview');
@@ -616,21 +616,19 @@ function UnifiedIDELayout({
         );
       case 'agent':
         return (
-          <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Agent..." /></div>}>
-            <AgentPanelErrorBoundary>
-              <ReplitAgentPanelV3
-                projectId={projectId}
-                mode="mobile"
-                agentToolsSettings={agentToolsSettings}
-                onAgentToolsSettingsChange={setAgentToolsSettings}
-                isBootstrapping={!!bootstrapToken}
-                bootstrapToken={bootstrapToken}
-                hideInput={true}
-                onExternalInput={setMobileAgentHandlers}
-                onBootstrapFailure={onBootstrapFailure}
-              />
-            </AgentPanelErrorBoundary>
-          </Suspense>
+          <AgentPanelErrorBoundary>
+            <ReplitAgentPanelV3
+              projectId={projectId}
+              mode="mobile"
+              agentToolsSettings={agentToolsSettings}
+              onAgentToolsSettingsChange={setAgentToolsSettings}
+              isBootstrapping={!!bootstrapToken}
+              bootstrapToken={bootstrapToken}
+              hideInput={true}
+              onExternalInput={setMobileAgentHandlers}
+              onBootstrapFailure={onBootstrapFailure}
+            />
+          </AgentPanelErrorBoundary>
         );
       case 'deploy':
         // Gate deploy with AppNotReadyPlaceholder until schema is ready
@@ -1660,18 +1658,16 @@ function UnifiedIDELayout({
                   </TabsList>
                   
                   <TabsContent value="agent" className="flex-1 mt-0 overflow-hidden" forceMount>
-                    <Suspense fallback={<div className="flex items-center justify-center h-full text-muted-foreground">Loading AI Agent...</div>}>
-                      <ReplitAgentPanelV3
-                        key={`agent-${projectId}`}
-                        projectId={projectId}
-                        mode="desktop"
-                        agentToolsSettings={agentToolsSettings}
-                        onAgentToolsSettingsChange={setAgentToolsSettings}
-                        isBootstrapping={!!bootstrapToken}
-                        bootstrapToken={bootstrapToken}
-                        onBootstrapFailure={onBootstrapFailure}
-                      />
-                    </Suspense>
+                    <ReplitAgentPanelV3
+                      key={`agent-${projectId}`}
+                      projectId={projectId}
+                      mode="desktop"
+                      agentToolsSettings={agentToolsSettings}
+                      onAgentToolsSettingsChange={setAgentToolsSettings}
+                      isBootstrapping={!!bootstrapToken}
+                      bootstrapToken={bootstrapToken}
+                      onBootstrapFailure={onBootstrapFailure}
+                    />
                   </TabsContent>
                   
                   <TabsContent value="actions" className="flex-1 mt-0 overflow-hidden">
