@@ -475,13 +475,10 @@ export function ReplitAgentPanelV3({
     progress: schemaProgress
   } = useSchemaWarmingStore();
   
-  // Use effective conversation ID for displaying autonomous build messages during bootstrap
-  // This allows messages to be shown even before the backend provides a real conversation ID
-  const displayConversationId = conversationId ?? effectiveConversationId;
-  
-  // Get messages from store when conversationId is available
-  // During autonomous bootstrap, use effectiveConversationId from the hook to display progress messages
-  const messages = displayConversationId ? getMessages(displayConversationId) : [{
+  // ✅ FIX (Jan 2026): Use effectiveConversationId directly for Replit-style always-ready chat
+  // This is always defined (conversationId or -projectIdNum as temp ID)
+  // Get messages from store - effectiveConversationId is never null so always has messages
+  const messages = getMessages(effectiveConversationId) || [{
     id: '1',
     role: 'assistant' as const,
     content: "Hi! I'm your AI assistant with extended thinking capabilities. I can help you build, debug, and improve your code with transparent reasoning. What would you like to create today?",
@@ -490,19 +487,20 @@ export function ReplitAgentPanelV3({
   
   // DEBUG: Log message count for debugging (dev only)
   devLog('[ReplitAgentPanelV3] 📊 Messages:', {
-    displayConversationId,
     effectiveConversationId,
     conversationId,
+    isUsingTempConversation,
     messageCount: messages.length,
     firstMessageId: messages[0]?.id
   });
   
-  // Wrapper to update messages in zustand store
+  // ✅ FIX (Jan 2026): Wrapper to update messages in zustand store
+  // Uses effectiveConversationId to support Replit-style always-ready chat
+  // Messages are stored with temp ID (-projectId) and migrated when real ID is available
   const setMessages = useCallback((updater: Message[] | ((prev: Message[]) => Message[])) => {
-    if (!conversationId) return;
     const newMessages = typeof updater === 'function' ? updater(messages) : updater;
-    setStoreMessages(conversationId, newMessages);
-  }, [conversationId, messages, setStoreMessages]);
+    setStoreMessages(effectiveConversationId, newMessages);
+  }, [effectiveConversationId, messages, setStoreMessages]);
   const [input, setInput] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [pendingAttachments, setPendingAttachments] = useState<FileAttachment[]>([]);
@@ -1774,8 +1772,9 @@ export function ReplitAgentPanelV3({
       // Use selected provider from model preference (fallback to openai)
       const selectedProvider = provider || 'openai';
       
-      // Use actual conversationId for RAG session alignment
-      const chatConversationId = conversationId ? String(conversationId) : `conv-${Date.now()}`;
+      // ✅ FIX (Jan 2026): Use effectiveConversationId for Replit-style always-ready chat
+      // This uses -projectId as temp ID when real conversation not yet created
+      const chatConversationId = String(effectiveConversationId);
       
       // Prepare image attachments for vision-capable models
       const imageAttachments = currentAttachments
