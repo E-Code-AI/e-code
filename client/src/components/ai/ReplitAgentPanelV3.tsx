@@ -400,6 +400,12 @@ export function ReplitAgentPanelV3({
   const [agentMode, setAgentMode] = useState<AgentMode>('build');
   const [autonomySessionId, setAutonomySessionId] = useState<string | null>(null);
   
+  // ✅ FIX (Jan 2026): Replit-style always-ready chat
+  // Use temp conversationId (-projectId) when real ID not yet available
+  // This ensures the Send button is NEVER blocked by bootstrap delays
+  const effectiveConversationId = conversationId ?? -projectIdNum;
+  const isUsingTempConversation = conversationId === null;
+  
   // ✅ FIX (Jan 2026): Use Zustand store for bootstrap failure state - survives component remounts
   // This prevents mobile users from being stuck on "Initializing Agent" forever
   const { bootstrapTimedOut, startBootstrapTimer, setBootstrapTimedOut } = useAutonomousBuildStore();
@@ -2897,16 +2903,16 @@ export function ReplitAgentPanelV3({
                 <Button
                   size="icon"
                   onClick={handleSend}
-                  disabled={!input.trim() || isWorking || !conversationId}
+                  disabled={!input.trim() || isWorking}
                   className={cn(
                     "h-7 w-7 rounded-lg",
                     "transition-all duration-200",
-                    input.trim() && conversationId && !isWorking 
+                    input.trim() && !isWorking 
                       ? "bg-primary hover:bg-primary/90 text-primary-foreground" 
                       : "bg-muted text-muted-foreground"
                   )}
                   data-testid="button-send"
-                  title={!conversationId ? "Initializing conversation..." : "Send message"}
+                  title="Send message"
                 >
                   {isWorking ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
