@@ -1,7 +1,7 @@
 # Project Brief
 
 ## Overview
-IDE-Test-OFepk8
+Agent-Test-gsRmHB
 
 ## Core Requirements
 [To be extracted from requirements]
