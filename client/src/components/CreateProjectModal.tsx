@@ -441,65 +441,30 @@ export const CreateProjectModal = ({
     },
     onSuccess: async (project, values) => {
       setCreatedProjectId(project.id);
-      setCreationProgress({ step: 'creating', progress: 25, message: 'Project created...' });
+      setCreationProgress({ step: 'creating', progress: 50, message: 'Project created!' });
       
-      try {
-        const progressPromise = subscribeToCreationProgress(project.id);
-
-        if (creationTab === 'github' && values.githubUrl) {
-          await importFromGitHub(project.id, values.githubUrl);
-        } else {
-          setCreationProgress({ step: 'scaffolding', progress: 40, message: 'Scaffolding template files...' });
-          await scaffoldTemplateFiles(project.id, values.template);
-        }
-
-        try {
-          await progressPromise;
-          setCreationProgress({ step: 'ready', progress: 100, message: 'Project ready!' });
-        } catch (progressError) {
-          console.warn('Progress stream ended with error:', progressError);
-          setCreationProgress({ 
-            step: 'error', 
-            progress: 0, 
-            message: 'Project setup incomplete',
-            details: progressError instanceof Error ? progressError.message : 'Please check your project and try again'
-          });
-          toast({
-            title: "Project setup issue",
-            description: "Project created but setup may be incomplete. Check your project files.",
-            variant: "default",
-          });
-          queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
-          setTimeout(() => {
-            onSubmit?.(project.name, project.id);
-            navigate(`/editor/${project.id}`);
-            onClose();
-            resetState();
-          }, 2000);
-          return;
-        }
-        
-        queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
-        
-        setTimeout(() => {
-          onSubmit?.(project.name, project.id);
-          navigate(`/editor/${project.id}`);
-          onClose();
-          resetState();
-        }, 800);
-      } catch (error) {
-        console.error('Project setup error:', error);
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-        setCreationProgress({ 
-          step: 'error', 
-          progress: 0, 
-          message: 'Failed to set up project',
-          details: errorMessage
+      // Invalidate projects cache immediately
+      queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
+      
+      // Navigate to IDE immediately - scaffolding happens in background
+      setCreationProgress({ step: 'ready', progress: 100, message: 'Opening workspace...' });
+      
+      // Short delay for visual feedback, then navigate
+      setTimeout(() => {
+        onSubmit?.(project.name, project.id);
+        navigate(`/ide/${project.id}`);
+        onClose();
+        resetState();
+      }, 300);
+      
+      // Scaffold files in background (non-blocking)
+      if (creationTab === 'github' && values.githubUrl) {
+        importFromGitHub(project.id, values.githubUrl).catch(err => {
+          console.warn('Background GitHub import failed:', err);
         });
-        toast({
-          title: "Project setup failed",
-          description: errorMessage,
-          variant: "destructive",
+      } else {
+        scaffoldTemplateFiles(project.id, values.template).catch(err => {
+          console.warn('Background scaffolding failed:', err);
         });
       }
     },

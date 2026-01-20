@@ -67,6 +67,11 @@ export default function Home() {
 
   const { data: projects, isLoading, error: projectsError } = useQuery<Project[]>({
     queryKey: ['/api/projects'],
+    queryFn: async () => {
+      const res = await apiRequest('GET', '/api/projects');
+      // Handle both paginated and direct array formats
+      return (res.projects && Array.isArray(res.projects)) ? res.projects : (Array.isArray(res) ? res : []);
+    },
     retry: 2,
   });
 

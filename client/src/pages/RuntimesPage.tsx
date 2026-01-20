@@ -24,6 +24,13 @@ export default function RuntimesPage() {
 
   const { data: projects, isLoading: isLoadingProjects } = useQuery({
     queryKey: ['/api/projects'],
+    queryFn: async () => {
+      const response = await fetch('/api/projects', { credentials: 'include' });
+      if (!response.ok) return [];
+      const res = await response.json();
+      // Handle paginated response format
+      return (res.projects && Array.isArray(res.projects)) ? res.projects : (Array.isArray(res) ? res : []);
+    },
     refetchInterval: false,
   });
 

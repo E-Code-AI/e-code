@@ -102,8 +102,8 @@ export default function Dashboard() {
         url += `&search=${encodeURIComponent(debouncedSearchQuery)}`;
       }
       const res = await apiRequest('GET', url);
-      // Handle both paginated and direct array formats
-      return (res.projects && Array.isArray(res.projects)) ? res.projects : res;
+      // Handle both paginated and direct array formats, with fallback to empty array
+      return (res.projects && Array.isArray(res.projects)) ? res.projects : (Array.isArray(res) ? res : []);
     },
     enabled: !!user,
     staleTime: 30000, // 30 seconds - prevent excessive refetches
