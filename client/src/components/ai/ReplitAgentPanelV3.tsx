@@ -2292,7 +2292,10 @@ export function ReplitAgentPanelV3({
             {/* Model chip with dropdown for quick model selection */}
             <DropdownMenu open={isModelSelectorOpen} onOpenChange={setIsModelSelectorOpen}>
               <DropdownMenuTrigger asChild>
-                <button className="focus:outline-none focus:ring-2 focus:ring-primary/50 rounded-md flex-shrink-0">
+                <button 
+                  className="focus:outline-none focus:ring-2 focus:ring-primary/50 rounded-md flex-shrink-0 relative z-10"
+                  data-testid="model-selector-button"
+                >
                   <CurrentModelChip
                     modelName={model?.name}
                     provider={provider || undefined}
