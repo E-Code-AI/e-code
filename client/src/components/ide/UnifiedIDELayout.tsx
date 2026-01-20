@@ -193,6 +193,10 @@ function UnifiedIDELayout({
       case 'files':
         setShowFileExplorer((prev: boolean) => !prev);
         break;
+      case 'search':
+        // Open global search as inline tab
+        handleAddTool('search');
+        break;
       case 'git':
         // Open git as inline tab instead of overlay
         handleAddTool('git');

@@ -110,10 +110,15 @@ export function GlobalSearch({ isOpen, onClose, projectId, onFileSelect }: Globa
   const performSearch = async () => {
     setIsSearching(true);
     try {
-      const response = await apiRequest('POST', `/api/search/${projectId}`, {
+      const response = await apiRequest('POST', `/api/search/global`, {
         query: debouncedQuery,
+        projectId: String(projectId),
         type: searchType,
-        filters
+        caseSensitive: filters.caseSensitive,
+        wholeWord: filters.wholeWord,
+        useRegex: filters.useRegex,
+        excludePattern: filters.excludePaths?.join(','),
+        filePattern: filters.fileTypes?.join(',')
       });
 
       if (!response.ok) throw new Error('Search failed');

@@ -167,6 +167,7 @@ export const availableTools: AvailableTool[] = [
   { id: 'visual-editor', label: 'Visual Editor', icon: '🎨' },
   { id: 'rewind', label: 'Rewind', icon: '⏪' },
   { id: 'workflows', label: 'Workflows', icon: '⚡' },
+  { id: 'collaboration', label: 'Collaboration', icon: '👥' },
 ];
 
 export function useIDEWorkspace(projectId: string) {

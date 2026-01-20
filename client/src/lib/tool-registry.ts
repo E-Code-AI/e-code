@@ -34,6 +34,7 @@ import {
   ScrollText,
   Activity,
   Video,
+  Users,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -300,6 +301,17 @@ export const TOOL_REGISTRY: Record<string, ToolMetadata> = {
     description: 'AI-powered coding assistant',
     keywords: ['chatgpt', 'copilot', 'ai'],
     badge: 'PRO',
+  },
+
+  // Collaboration
+  'collaboration': {
+    id: 'collaboration',
+    label: 'Collaboration',
+    icon: Users,
+    emoji: '👥',
+    category: 'Tools',
+    description: 'Share and collaborate with others',
+    keywords: ['share', 'invite', 'multiplayer', 'team'],
   },
 
   // Deployment & Monitoring

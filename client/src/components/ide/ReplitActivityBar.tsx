@@ -22,10 +22,12 @@ import {
   Eye,
   ChevronLeft,
   ChevronRight,
+  Search,
 } from 'lucide-react';
 
 export type ActivityItem = 
   | 'files'
+  | 'search'
   | 'git'
   | 'packages'
   | 'debug'
@@ -60,6 +62,7 @@ interface ReplitActivityBarProps {
 
 const defaultItems: ActivityBarItem[] = [
   { id: 'files', icon: FileText, label: 'Files', shortcut: '⌘⇧E' },
+  { id: 'search', icon: Search, label: 'Search', shortcut: '⌘⇧F' },
   { id: 'git', icon: GitBranch, label: 'Git', shortcut: '⌘⇧G' },
   { id: 'packages', icon: Package, label: 'Packages' },
   { id: 'debug', icon: Bug, label: 'Debug', shortcut: '⌘⇧D', separator: true },
