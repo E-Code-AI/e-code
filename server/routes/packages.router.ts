@@ -1077,7 +1077,7 @@ router.get('/:projectId/dependencies', ensureAuthenticated, ensureProjectAccess,
       } catch {
         return res.json({
           success: true,
-          dependencies: {},
+          dependencies: [],
           language: 'unknown',
           message: 'No package files found',
         });
