@@ -476,6 +476,61 @@ export class FilesRouter {
       }
     });
 
+    // PUT route for file update (same as PATCH, for frontend compatibility)
+    this.router.put("/api/files/:fileId", this.ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
+      try {
+        const fileIdResult = fileIdSchema.safeParse(req.params.fileId);
+        if (!fileIdResult.success) {
+          return res.status(400).json({
+            message: "Invalid file ID",
+            code: "INVALID_FILE_ID",
+            errors: fileIdResult.error.errors
+          });
+        }
+        const fileId = fileIdResult.data;
+        const userId = req.user!.id;
+        const { content, name } = req.body;
+
+        const result = await withScopedTransaction(userId, userId, async (scopedQueries) => {
+          const projects = await scopedQueries.getProjects();
+          
+          for (const project of projects) {
+            const file = await scopedQueries.getFileById(project.id, fileId);
+            if (file) {
+              const updated = await scopedQueries.updateFile(project.id, fileId, { content, name });
+              return { file: updated, projectId: project.id, originalPath: file.path || file.name };
+            }
+          }
+          
+          throw new Error('FILE_NOT_FOUND');
+        });
+
+        if (!result.success) {
+          if (result.error?.message === 'FILE_NOT_FOUND') {
+            return res.status(404).json({
+              message: "File not found",
+              code: "FILE_NOT_FOUND"
+            });
+          }
+          console.error('Failed to update file:', result.error);
+          return res.status(500).json({ 
+            message: "Failed to update file",
+            code: "UPDATE_ERROR"
+          });
+        }
+        
+        res.json(result.data!.file);
+        
+        this.emitFileChange(String(result.data!.projectId), result.data!.originalPath, 'update');
+      } catch (error) {
+        console.error('Error updating file:', error);
+        res.status(500).json({ 
+          message: "Failed to update file",
+          code: "UPDATE_ERROR"
+        });
+      }
+    });
+
     this.router.delete("/api/files/:fileId", this.ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
       try {
         const fileIdResult = fileIdSchema.safeParse(req.params.fileId);

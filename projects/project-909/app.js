@@ -4,22 +4,22 @@ console.log('[TodoApp] Application loaded successfully');
 let todos = [];
 let currentFilter = 'all';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', () =&gt; {
     console.log('[TodoApp] DOM ready, initializing...');
     loadTodos();
     setupEventListeners();
     renderTodos();
     console.log('[TodoApp] Initialization complete');
 });
-
+// Test save qAAazm
 function setupEventListeners() {
-    document.getElementById('todoInput').addEventListener('keypress', (e) => {
+    document.getElementById('todoInput').addEventListener('keypress', (e) =&gt; {
         if (e.key === 'Enter') addTodo();
     });
 
-    document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.filter-btn').forEach(btn =&gt; {
+        btn.addEventListener('click', () =&gt; {
+            document.querySelectorAll('.filter-btn').forEach(b =&gt; b.classList.remove('active'));
             btn.classList.add('active');
             currentFilter = btn.dataset.filter;
             renderTodos();
@@ -52,7 +52,7 @@ function addTodo() {
 }
 
 function toggleTodo(id) {
-    const todo = todos.find(t => t.id === id);
+    const todo = todos.find(t =&gt; t.id === id);
     if (todo) {
         todo.completed = !todo.completed;
         saveTodos();
@@ -62,7 +62,7 @@ function toggleTodo(id) {
 }
 
 function deleteTodo(id) {
-    todos = todos.filter(t => t.id !== id);
+    todos = todos.filter(t =&gt; t.id !== id);
     saveTodos();
     renderTodos();
     console.log('[TodoApp] Deleted todo:', id);
@@ -73,16 +73,14 @@ function renderTodos() {
     const filteredTodos = getFilteredTodos();
     
     if (filteredTodos.length === 0) {
-        list.innerHTML = '<li style="text-align:center;color:#888;padding:20px;">No tasks found</li>';
+        list.innerHTML = 'No tasks found';
     } else {
-        list.innerHTML = filteredTodos.map(todo => `
-            <li class="todo-item ${todo.completed ? 'completed' : ''}" data-id="${todo.id}">
-                <input type="checkbox" class="todo-checkbox" 
-                       ${todo.completed ? 'checked' : ''} 
-                       onchange="toggleTodo(${todo.id})">
-                <span class="todo-text">${escapeHtml(todo.text)}</span>
-                <button class="delete-btn" onclick="deleteTodo(${todo.id})">×</button>
-            </li>
+        list.innerHTML = filteredTodos.map(todo =&gt; `
+            
+                
+                ${escapeHtml(todo.text)}
+                ×
+            
         `).join('');
     }
     
@@ -91,15 +89,15 @@ function renderTodos() {
 
 function getFilteredTodos() {
     switch (currentFilter) {
-        case 'active': return todos.filter(t => !t.completed);
-        case 'completed': return todos.filter(t => t.completed);
+        case 'active': return todos.filter(t =&gt; !t.completed);
+        case 'completed': return todos.filter(t =&gt; t.completed);
         default: return todos;
     }
 }
 
 function updateStats() {
     const total = todos.length;
-    const completed = todos.filter(t => t.completed).length;
+    const completed = todos.filter(t =&gt; t.completed).length;
     
     document.getElementById('totalCount').textContent = `${total} task${total !== 1 ? 's' : ''}`;
     document.getElementById('completedCount').textContent = `${completed} completed`;
