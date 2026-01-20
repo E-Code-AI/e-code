@@ -252,7 +252,12 @@ router.get('/leaderboard', async (_req: Request, res: Response) => {
     }));
 
     res.json(rankedLeaderboard);
-  } catch (error) {
+  } catch (error: any) {
+    // Handle missing table gracefully (code 42P01 = relation does not exist)
+    if (error?.code === '42P01') {
+      console.warn('[Community] challenge_leaderboard table not found, returning empty leaderboard');
+      return res.json([]);
+    }
     console.error('[Community] Failed to fetch leaderboard:', error);
     res.status(500).json({ error: 'Failed to fetch leaderboard' });
   }
