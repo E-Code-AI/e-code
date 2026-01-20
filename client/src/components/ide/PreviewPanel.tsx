@@ -69,8 +69,7 @@ export function PreviewPanel({
   // Start preview mutation
   const startPreviewMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest('POST', `/api/preview/projects/${projectId}/preview/start`, {});
-      return response.json();
+      return apiRequest('POST', `/api/preview/projects/${projectId}/preview/start`, {});
     },
     onSuccess: () => {
       toast({ title: 'Preview starting...', description: 'Your app is being built and started.' });
@@ -89,8 +88,7 @@ export function PreviewPanel({
   // Stop preview mutation
   const stopPreviewMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest('POST', `/api/preview/projects/${projectId}/preview/stop`, {});
-      return response.json();
+      return apiRequest('POST', `/api/preview/projects/${projectId}/preview/stop`, {});
     },
     onSuccess: () => {
       toast({ title: 'Preview stopped' });

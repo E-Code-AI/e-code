@@ -49,10 +49,15 @@ const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 // SECURE DEFAULT: Require Docker unless explicitly disabled (dev only)
 // The ONLY way to allow local PTY is to set ALLOW_INSECURE_LOCAL_PTY=true
 // This cannot happen accidentally - it requires deliberate action
-const ALLOW_INSECURE_LOCAL_PTY = process.env.ALLOW_INSECURE_LOCAL_PTY === 'true' && !IS_PRODUCTION;
+// NOTE: Read dynamically to support env vars loaded after module load
+function getAllowInsecureLocalPty(): boolean {
+  return process.env.ALLOW_INSECURE_LOCAL_PTY === 'true' && !IS_PRODUCTION;
+}
 
 // Require Docker in all cases except when explicitly allowing insecure local PTY
-const REQUIRE_DOCKER_TERMINAL = !ALLOW_INSECURE_LOCAL_PTY;
+function getRequireDockerTerminal(): boolean {
+  return !getAllowInsecureLocalPty();
+}
 
 // Security validation: Check if Docker is available (called at startup)
 // FIXED: Use static import instead of dynamic require for ESM compatibility
@@ -137,23 +142,26 @@ export class PTYTerminalService {
     // Always check Docker availability at startup
     dockerAvailable = await validateDockerAvailable();
     
-    // Log security configuration
-    logger.info(`[SECURITY] Terminal configuration:`);
-    logger.info(`  - IS_PRODUCTION: ${IS_PRODUCTION}`);
-    logger.info(`  - REQUIRE_DOCKER_TERMINAL: ${REQUIRE_DOCKER_TERMINAL}`);
-    logger.info(`  - ALLOW_INSECURE_LOCAL_PTY: ${ALLOW_INSECURE_LOCAL_PTY}`);
-    logger.info(`  - Docker available: ${dockerAvailable}`);
+    // Log security configuration (read dynamically)
+    const allowInsecure = getAllowInsecureLocalPty();
+    const requireDocker = getRequireDockerTerminal();
+    
+    console.log(`[Terminal] Security configuration:`);
+    console.log(`  - IS_PRODUCTION: ${IS_PRODUCTION}`);
+    console.log(`  - REQUIRE_DOCKER_TERMINAL: ${requireDocker}`);
+    console.log(`  - ALLOW_INSECURE_LOCAL_PTY: ${allowInsecure}`);
+    console.log(`  - Docker available: ${dockerAvailable}`);
     
     // CRITICAL SECURITY: If Docker is required but unavailable, log fatal error
-    if (REQUIRE_DOCKER_TERMINAL && !dockerAvailable) {
-      logger.error('[SECURITY] CRITICAL: Docker is REQUIRED but NOT available!');
-      logger.error('[SECURITY] All terminal connections will be REJECTED.');
-      logger.error('[SECURITY] To fix: Install Docker OR set ALLOW_INSECURE_LOCAL_PTY=true (dev only)');
+    if (requireDocker && !dockerAvailable) {
+      console.error('[Terminal] CRITICAL: Docker is REQUIRED but NOT available!');
+      console.error('[Terminal] All terminal connections will be REJECTED.');
+      console.error('[Terminal] To fix: Install Docker OR set ALLOW_INSECURE_LOCAL_PTY=true (dev only)');
       // Don't throw - let the service start but reject all connections
     } else if (dockerAvailable) {
-      logger.info('[SECURITY] Docker validated - terminal sessions will be isolated');
-    } else if (ALLOW_INSECURE_LOCAL_PTY) {
-      logger.warn('[DEV] INSECURE: Local PTY allowed - this should NEVER happen in production');
+      console.log('[Terminal] Docker validated - terminal sessions will be isolated');
+    } else if (allowInsecure) {
+      console.warn('[Terminal] DEV MODE: Local PTY allowed - this should NEVER happen in production');
     }
 
     this.wss = new WebSocketServer({
@@ -181,11 +189,13 @@ export class PTYTerminalService {
   }
 
   private handleTerminalUpgrade(request: IncomingMessage, socket: Duplex, head: Buffer): void {
-    markSocketAsHandled(request, socket);
+    // Note: Socket is already marked as handled by central dispatcher
+    // Don't call markSocketAsHandled again to avoid conflicts
     
-    logger.debug('[PTY Terminal] Handling upgrade via central dispatcher');
+    logger.info('[PTY Terminal] Handling upgrade via central dispatcher');
     
     this.wss!.handleUpgrade(request, socket as Socket, head, (ws) => {
+      logger.info('[PTY Terminal] WebSocket upgrade completed, emitting connection event');
       this.wss!.emit('connection', ws, request);
     });
   }
@@ -282,11 +292,18 @@ export class PTYTerminalService {
 
   private async createSession(projectId: string): Promise<PTYSession | null> {
     try {
+      // Read security settings dynamically
+      const requireDocker = getRequireDockerTerminal();
+      const allowInsecure = getAllowInsecureLocalPty();
+      
+      console.log(`[Terminal] Creating session for project ${projectId}`);
+      console.log(`[Terminal] requireDocker=${requireDocker}, allowInsecure=${allowInsecure}, dockerAvailable=${dockerAvailable}`);
+      
       // CRITICAL SECURITY: If Docker is required (default), only allow Docker sessions
-      if (REQUIRE_DOCKER_TERMINAL) {
+      if (requireDocker) {
         if (!dockerAvailable) {
-          logger.error(`[SECURITY] BLOCKED: Terminal session rejected - Docker required but unavailable`);
-          logger.error(`[SECURITY] Set ALLOW_INSECURE_LOCAL_PTY=true ONLY in development to allow local PTY`);
+          console.error(`[Terminal] BLOCKED: Terminal session rejected - Docker required but unavailable`);
+          console.error(`[Terminal] Set ALLOW_INSECURE_LOCAL_PTY=true ONLY in development to allow local PTY`);
           return null;
         }
         return await this.createDockerSession(projectId);
@@ -299,7 +316,7 @@ export class PTYTerminalService {
         return await this.createDockerSession(projectId);
       }
       
-      logger.warn(`[DEV ONLY] Creating local PTY session - INSECURE MODE ACTIVE`);
+      console.warn(`[Terminal] DEV ONLY: Creating local PTY session - INSECURE MODE ACTIVE`);
       return await this.createLocalSession(projectId);
 
     } catch (error) {
@@ -425,7 +442,7 @@ export class PTYTerminalService {
         }
         
         // ALLOW_INSECURE_LOCAL_PTY=true and not production: Try local PTY fallback
-        if (ALLOW_INSECURE_LOCAL_PTY) {
+        if (getAllowInsecureLocalPty()) {
           logger.warn('[DEV] Docker failed, attempting local PTY fallback (INSECURE MODE)');
           try {
             const fallbackSession = await this.createLocalSession(projectId);
@@ -456,7 +473,9 @@ export class PTYTerminalService {
    */
   private async createLocalSession(projectId: string): Promise<PTYSession | null> {
     // CRITICAL SECURITY GUARD: Only allow if explicitly enabled AND not in production
-    if (!ALLOW_INSECURE_LOCAL_PTY) {
+    // Read dynamically to handle late environment variable loading
+    const allowInsecure = getAllowInsecureLocalPty();
+    if (!allowInsecure) {
       logger.error('[SECURITY] CRITICAL: Attempted to create local PTY without ALLOW_INSECURE_LOCAL_PTY - BLOCKED');
       logger.error('[SECURITY] This is a security violation - terminal access denied');
       throw new Error('Local PTY is forbidden - set ALLOW_INSECURE_LOCAL_PTY=true only in development');

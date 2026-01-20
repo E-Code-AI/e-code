@@ -1104,9 +1104,16 @@ export function ReplitAgentPanelV3({
       setIsRecording(false);
       recognitionRef.current = null;
       if (event.error !== 'aborted') {
+        const errorMessages: Record<string, string> = {
+          'not-allowed': 'Microphone access denied. Please allow microphone access in your browser settings and try again.',
+          'no-speech': 'No speech detected. Please speak clearly and try again.',
+          'audio-capture': 'No microphone found. Please connect a microphone and try again.',
+          'network': 'Network error. Please check your connection and try again.',
+          'service-not-allowed': 'Speech service not available. Please try again later.',
+        };
         toast({
           title: "Voice Input Error",
-          description: `Error: ${event.error}. Please try again.`,
+          description: errorMessages[event.error] || `Error: ${event.error}. Please try again.`,
           variant: "destructive"
         });
       }

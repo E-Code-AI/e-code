@@ -125,11 +125,10 @@ export function ReplitConsolePanel({
 
   const runWorkflowMutation = useMutation({
     mutationFn: async (workflow: Workflow) => {
-      const response = await apiRequest('POST', `/api/preview/projects/${projectId}/preview/start`, {
+      return apiRequest('POST', `/api/preview/projects/${projectId}/preview/start`, {
         workflow: workflow.id,
         command: workflow.command
       });
-      return response.json();
     },
     onMutate: (workflow) => {
       setRunningWorkflowIds(prev => new Set(prev).add(workflow.id));
@@ -151,10 +150,9 @@ export function ReplitConsolePanel({
 
   const stopWorkflowMutation = useMutation({
     mutationFn: async (workflowId: string) => {
-      const response = await apiRequest('POST', `/api/preview/projects/${projectId}/preview/stop`, {
+      return apiRequest('POST', `/api/preview/projects/${projectId}/preview/stop`, {
         workflow: workflowId
       });
-      return response.json();
     },
     onSuccess: (_, workflowId) => {
       setRunningWorkflowIds(prev => {

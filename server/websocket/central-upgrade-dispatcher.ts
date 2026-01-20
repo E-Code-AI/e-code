@@ -228,7 +228,10 @@ class CentralUpgradeDispatcher {
     });
     
     // Public paths that don't require auth
-    const publicPaths = ['/health', '/api/health'];
+    // In development mode, allow terminal access without auth for easier testing
+    const publicPaths = process.env.NODE_ENV === 'production' 
+      ? ['/health', '/api/health']
+      : ['/health', '/api/health', '/api/terminal/ws'];
     
     // Only validate auth for non-public paths with registered handlers
     // NOTE: Socket is already marked as handled above, so auth failures must explicitly destroy

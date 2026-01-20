@@ -88,11 +88,10 @@ export function WorkflowsPanel({ projectId, onRunWorkflow, className }: Workflow
 
   const createMutation = useMutation({
     mutationFn: async (workflow: Omit<Workflow, 'id'>) => {
-      const response = await apiRequest('POST', '/api/workflows', {
+      return apiRequest('POST', '/api/workflows', {
         ...workflow,
         projectId
       });
-      return response.json();
     },
     onSuccess: () => {
       toast({ title: 'Workflow created' });
@@ -107,11 +106,10 @@ export function WorkflowsPanel({ projectId, onRunWorkflow, className }: Workflow
 
   const updateMutation = useMutation({
     mutationFn: async (workflow: Workflow) => {
-      const response = await apiRequest('PUT', `/api/workflows/${workflow.id}`, {
+      return apiRequest('PUT', `/api/workflows/${workflow.id}`, {
         ...workflow,
         projectId
       });
-      return response.json();
     },
     onSuccess: () => {
       toast({ title: 'Workflow updated' });
@@ -122,8 +120,7 @@ export function WorkflowsPanel({ projectId, onRunWorkflow, className }: Workflow
 
   const deleteMutation = useMutation({
     mutationFn: async (workflowId: string) => {
-      const response = await apiRequest('DELETE', `/api/workflows/${workflowId}`, {});
-      return response.json();
+      return apiRequest('DELETE', `/api/workflows/${workflowId}`, {});
     },
     onSuccess: () => {
       toast({ title: 'Workflow deleted' });
@@ -133,11 +130,10 @@ export function WorkflowsPanel({ projectId, onRunWorkflow, className }: Workflow
 
   const runMutation = useMutation({
     mutationFn: async (workflow: Workflow) => {
-      const response = await apiRequest('POST', `/api/preview/projects/${projectId}/preview/start`, {
+      return apiRequest('POST', `/api/preview/projects/${projectId}/preview/start`, {
         workflow: workflow.id,
         command: workflow.command
       });
-      return response.json();
     },
     onSuccess: (_, workflow) => {
       toast({ title: `Running: ${workflow.name}` });

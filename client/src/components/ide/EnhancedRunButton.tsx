@@ -85,11 +85,10 @@ export function EnhancedRunButton({ projectId, onRunStateChange, className }: En
 
   const startMutation = useMutation({
     mutationFn: async (workflow: Workflow) => {
-      const response = await apiRequest('POST', `/api/preview/projects/${projectId}/preview/start`, {
+      return apiRequest('POST', `/api/preview/projects/${projectId}/preview/start`, {
         workflow: workflow.id,
         command: workflow.command
       });
-      return response.json();
     },
     onSuccess: () => {
       toast({ title: `Running: ${selectedWorkflow.name}` });
@@ -103,8 +102,7 @@ export function EnhancedRunButton({ projectId, onRunStateChange, className }: En
 
   const stopMutation = useMutation({
     mutationFn: async (_unused?: undefined) => {
-      const response = await apiRequest('POST', `/api/preview/projects/${projectId}/preview/stop`, {});
-      return response.json();
+      return apiRequest('POST', `/api/preview/projects/${projectId}/preview/stop`, {});
     },
     onSuccess: () => {
       toast({ title: 'Stopped' });
@@ -125,11 +123,10 @@ export function EnhancedRunButton({ projectId, onRunStateChange, className }: En
         body: JSON.stringify({})
       });
       await new Promise(resolve => setTimeout(resolve, 500));
-      const response = await apiRequest('POST', `/api/preview/projects/${projectId}/preview/start`, {
+      return apiRequest('POST', `/api/preview/projects/${projectId}/preview/start`, {
         workflow: selectedWorkflow.id,
         command: selectedWorkflow.command
       });
-      return response.json();
     },
     onSuccess: () => {
       toast({ title: 'Restarted' });

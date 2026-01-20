@@ -415,8 +415,7 @@ export function MobilePreviewPanel({
   // Start preview mutation
   const startPreviewMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest('POST', `/api/preview/projects/${projectId}/preview/start`, {});
-      return response.json();
+      return apiRequest('POST', `/api/preview/projects/${projectId}/preview/start`, {});
     },
     onSuccess: () => {
       toast({ title: 'Starting preview...', description: 'Your app is being built and started.' });
