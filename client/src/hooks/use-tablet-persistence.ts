@@ -126,8 +126,8 @@ export function useDrawerPersistence(projectId: string | number) {
 export function usePanelPersistence(projectId: string | number, canSplitView: boolean) {
   const [rightPanel, setRightPanelState] = useState<TabletPanel>(() => {
     const state = loadState(projectId);
-    // Default to preview in split-view, editor in single-panel
-    return state.rightPanel || (canSplitView ? 'preview' : 'editor');
+    // Default to deploy for tablet/mobile as per IDE Tab Defaults (replit.md)
+    return state.rightPanel || 'deploy';
   });
 
   useEffect(() => {
