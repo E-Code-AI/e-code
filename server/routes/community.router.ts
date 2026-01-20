@@ -16,14 +16,23 @@ import { eq, desc, sql, and, ilike, or } from 'drizzle-orm';
 const router = Router();
 
 router.get('/categories', async (_req: Request, res: Response) => {
+  // Default categories to return when database is unavailable
+  const defaultCategories = [
+    { id: 'showcase', name: 'Showcase', icon: 'Star', postCount: 0 },
+    { id: 'help', name: 'Help & Questions', icon: 'MessageSquare', postCount: 0 },
+    { id: 'tutorials', name: 'Tutorials', icon: 'Code', postCount: 0 },
+    { id: 'challenges', name: 'Challenges', icon: 'Trophy', postCount: 0 },
+    { id: 'jobs', name: 'Jobs & Hiring', icon: 'Users', postCount: 0 },
+  ];
+  
   try {
+    // Query without position column to avoid schema mismatch errors
     const categories = await db.select({
       id: communityCategories.id,
       name: communityCategories.name,
       icon: communityCategories.icon,
       description: communityCategories.description,
-    }).from(communityCategories)
-      .orderBy(communityCategories.position);
+    }).from(communityCategories);
 
     const categoriesWithCounts = await Promise.all(
       categories.map(async (cat) => {
@@ -40,17 +49,17 @@ router.get('/categories', async (_req: Request, res: Response) => {
     );
 
     if (categoriesWithCounts.length === 0) {
-      return res.json([
-        { id: 'showcase', name: 'Showcase', icon: 'Star', postCount: 0 },
-        { id: 'help', name: 'Help & Questions', icon: 'MessageSquare', postCount: 0 },
-        { id: 'tutorials', name: 'Tutorials', icon: 'Code', postCount: 0 },
-        { id: 'challenges', name: 'Challenges', icon: 'Trophy', postCount: 0 },
-        { id: 'jobs', name: 'Jobs & Hiring', icon: 'Users', postCount: 0 },
-      ]);
+      return res.json(defaultCategories);
     }
 
     res.json(categoriesWithCounts);
-  } catch (error) {
+  } catch (error: any) {
+    // Handle missing table/column gracefully (42P01 = relation not exist, 42703 = column not exist)
+    const pgCode = error?.code || error?.cause?.code;
+    if (pgCode === '42P01' || pgCode === '42703') {
+      console.warn('[Community] community_categories table/column missing, returning defaults');
+      return res.json(defaultCategories);
+    }
     console.error('[Community] Failed to fetch categories:', error);
     res.status(500).json({ error: 'Failed to fetch categories' });
   }
@@ -168,7 +177,16 @@ router.get('/posts', async (req: Request, res: Response) => {
         hasMore: offset + pageSizeNum < total,
       },
     });
-  } catch (error) {
+  } catch (error: any) {
+    // Handle missing table/column gracefully - preserve requested pagination values
+    const pgCode = error?.code || error?.cause?.code;
+    if (pgCode === '42P01' || pgCode === '42703') {
+      const { page = '1', pageSize = '20' } = req.query;
+      const pageNum = parseInt(String(page), 10);
+      const pageSizeNum = parseInt(String(pageSize), 10);
+      console.warn('[Community] community_posts table/column missing, returning empty');
+      return res.json({ posts: [], pagination: { page: pageNum, pageSize: pageSizeNum, total: 0, totalPages: 0, hasMore: false } });
+    }
     console.error('[Community] Failed to fetch posts:', error);
     res.status(500).json({ error: 'Failed to fetch posts' });
   }
@@ -218,7 +236,13 @@ router.get('/challenges', async (_req: Request, res: Response) => {
     );
 
     res.json(challengesWithStats);
-  } catch (error) {
+  } catch (error: any) {
+    // Handle missing table/column gracefully
+    const pgCode = error?.code || error?.cause?.code;
+    if (pgCode === '42P01' || pgCode === '42703') {
+      console.warn('[Community] challenges table/column missing, returning empty');
+      return res.json([]);
+    }
     console.error('[Community] Failed to fetch challenges:', error);
     res.status(500).json({ error: 'Failed to fetch challenges' });
   }
