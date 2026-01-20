@@ -514,9 +514,8 @@ function UnifiedIDELayout({
       }
       if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'f') {
         e.preventDefault();
-        // Search is now handled by AI Agent - focus the agent panel
-        setIsSidebarCollapsed(false);
-        setLeftPanelTab('agent');
+        // Open Global Search tab
+        handleAddOpenTab('search');
       }
       if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'p') {
         e.preventDefault();
@@ -526,7 +525,7 @@ function UnifiedIDELayout({
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [setShowQuickFileSearch]);
+  }, [setShowQuickFileSearch, handleAddOpenTab]);
 
   const mobileSwipeHandlers = useMemo(() => createPanHandlers({
     axis: 'x',
@@ -1453,7 +1452,7 @@ function UnifiedIDELayout({
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => setShowQuickFileSearch(true)}
+                onClick={() => handleAddOpenTab('search')}
                 className="h-9 w-9"
                 data-testid="button-quick-search"
               >

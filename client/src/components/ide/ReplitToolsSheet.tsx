@@ -61,7 +61,7 @@ const defaultTools: ToolItem[] = [
   { id: 'developer', icon: Code, title: 'Developer', description: 'Advanced developer tools and settings', section: 'tools' },
   { id: 'git', icon: GitBranch, title: 'Git', description: 'Version control for your App', section: 'tools', iconColor: 'text-orange-500' },
   { id: 'integrations', icon: Puzzle, title: 'Integrations', description: 'Connect to Replit-native and external services', section: 'tools' },
-  { id: 'multiplayer', icon: Users, title: 'Multiplayer', description: 'Invite real-time collaborators and manage access to your App', section: 'tools', iconColor: 'text-pink-500' },
+  { id: 'collaboration', icon: Users, title: 'Collaboration', description: 'Share and collaborate with others on your App', section: 'tools', iconColor: 'text-pink-500' },
   { id: 'preview', icon: Eye, title: 'Preview', description: 'Preview your App', section: 'tools' },
   { id: 'kv-store', icon: Store, title: 'Replit Key-Value Store', description: 'Free, easy-to-use key value store suitable for unstructured data, caching, session management, fast lookups, and flexible data models', section: 'tools' },
   { id: 'secrets', icon: Key, title: 'Secrets', description: 'Store sensitive information (like API keys) securely in your App', section: 'tools' },
