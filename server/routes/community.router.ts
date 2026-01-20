@@ -254,7 +254,8 @@ router.get('/leaderboard', async (_req: Request, res: Response) => {
     res.json(rankedLeaderboard);
   } catch (error: any) {
     // Handle missing table gracefully (code 42P01 = relation does not exist)
-    if (error?.code === '42P01') {
+    const pgCode = error?.code || error?.cause?.code;
+    if (pgCode === '42P01') {
       console.warn('[Community] challenge_leaderboard table not found, returning empty leaderboard');
       return res.json([]);
     }
