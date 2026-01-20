@@ -72,11 +72,11 @@ export default function TemplatesPage() {
 
   const useTemplateMutation = useMutation({
     mutationFn: async (templateId: number) => {
-      const res = await apiRequest('POST', '/api/projects', {
+      const data = await apiRequest('POST', '/api/projects', {
         name: `Project from Template #${templateId}`,
         templateId
       });
-      return await res.json();
+      return data;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
