@@ -1,7 +1,7 @@
 # Project Brief
 
 ## Overview
-Agent-Test-gsRmHB
+Mobile-Test-7c9B
 
 ## Core Requirements
 [To be extracted from requirements]
