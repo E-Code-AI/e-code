@@ -55,9 +55,41 @@ export default function Blog() {
     }
   }, [postsError, featuredError, toast]);
 
-  // Ensure we always have arrays (API may return null)
-  const allPosts = Array.isArray(rawPosts) ? rawPosts : [];
-  const featuredPosts = Array.isArray(rawFeatured) ? rawFeatured : [];
+  // Fallback demo content when API is unavailable
+  const fallbackPosts: BlogPost[] = [
+    {
+      id: '1',
+      title: 'Introducing E-Code AI Agent 2.0',
+      excerpt: 'Our most powerful AI coding assistant yet, now with multi-file editing and autonomous debugging capabilities.',
+      author: 'E-Code Team',
+      date: '2026-01-15',
+      readTime: '5 min',
+      category: 'Product',
+      featured: true
+    },
+    {
+      id: '2',
+      title: 'Building at Scale: How We Handle 10M+ Requests',
+      excerpt: 'A deep dive into our distributed architecture and the lessons we learned scaling E-Code.',
+      author: 'Engineering Team',
+      date: '2026-01-10',
+      readTime: '8 min',
+      category: 'Engineering'
+    },
+    {
+      id: '3',
+      title: 'Getting Started with E-Code in 5 Minutes',
+      excerpt: 'A quick tutorial to help you build and deploy your first app using E-Code.',
+      author: 'Developer Relations',
+      date: '2026-01-05',
+      readTime: '4 min',
+      category: 'Tutorial'
+    }
+  ];
+
+  // Ensure we always have arrays (API may return null) - use fallback on error
+  const allPosts = (postsError || !rawPosts) ? fallbackPosts : (Array.isArray(rawPosts) ? rawPosts : []);
+  const featuredPosts = (featuredError || !rawFeatured) ? fallbackPosts.filter(p => p.featured) : (Array.isArray(rawFeatured) ? rawFeatured : []);
 
   // Filter posts by category
   const filteredPosts = selectedCategory === 'All' 
@@ -124,8 +156,8 @@ export default function Blog() {
         </div>
       </section>
 
-      {/* Loading State */}
-      {isLoading ? (
+      {/* Loading State - don't show loading if we have errors (use fallback) */}
+      {isLoading && !postsError ? (
         <ECodeLoading centered size="lg" />
       ) : (
         <>

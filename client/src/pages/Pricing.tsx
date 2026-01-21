@@ -63,8 +63,9 @@ export default function Pricing() {
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('yearly');
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
 
-  const { data: apiPlans, isLoading } = useQuery<any[]>({
+  const { data: apiPlans, isLoading, error } = useQuery<any[]>({
     queryKey: ['/api/payments/plans'],
+    retry: 1, // Don't retry too much - use fallback data
   });
 
   // UI metadata for each tier (icons, gradients, descriptions) - static display properties
@@ -262,7 +263,8 @@ export default function Pricing() {
     return Math.round(((monthlyPrice - yearlyPrice) / monthlyPrice) * 100);
   };
 
-  if (isLoading) {
+  // Show loading only if actually loading AND no error (use fallback on error)
+  if (isLoading && !error) {
     return (
       <div 
         className="min-h-screen flex flex-col bg-[var(--ecode-background)]"
