@@ -166,15 +166,8 @@ export class PTYTerminalService {
 
     this.wss = new WebSocketServer({
       noServer: true,
-      perMessageDeflate: {
-        zlibDeflateOptions: { chunkSize: 1024, memLevel: 7, level: 3 },
-        zlibInflateOptions: { chunkSize: 10 * 1024 },
-        clientNoContextTakeover: true,
-        serverNoContextTakeover: true,
-        serverMaxWindowBits: 10,
-        concurrencyLimit: 10,
-        threshold: 1024
-      }
+      // Disable perMessageDeflate - can cause issues with some proxies (e.g., Replit)
+      perMessageDeflate: false
     });
 
     centralUpgradeDispatcher.register(
@@ -192,24 +185,39 @@ export class PTYTerminalService {
     // Note: Socket is already marked as handled by central dispatcher
     // Don't call markSocketAsHandled again to avoid conflicts
     
-    logger.info('[PTY Terminal] Handling upgrade via central dispatcher');
-    
-    this.wss!.handleUpgrade(request, socket as Socket, head, (ws) => {
-      logger.info('[PTY Terminal] WebSocket upgrade completed, emitting connection event');
-      this.wss!.emit('connection', ws, request);
+    console.log('[PTY Terminal] handleTerminalUpgrade called');
+    console.log('[PTY Terminal] Socket state:', {
+      readable: socket.readable,
+      writable: socket.writable,
+      destroyed: socket.destroyed,
     });
+    
+    try {
+      this.wss!.handleUpgrade(request, socket as Socket, head, (ws) => {
+        console.log('[PTY Terminal] WebSocket upgrade completed successfully');
+        console.log('[PTY Terminal] ws.readyState:', ws.readyState);
+        this.wss!.emit('connection', ws, request);
+      });
+    } catch (error) {
+      console.error('[PTY Terminal] handleUpgrade error:', error);
+    }
   }
 
   private async handleConnection(ws: WebSocket, request: any): Promise<void> {
     try {
       const url = new URL(request.url || '', `http://${request.headers.host}`);
-      const projectId = url.searchParams.get('projectId');
+      // Allow connections without projectId by using 'default' workspace
+      const projectId = url.searchParams.get('projectId') || 'default';
 
-      if (!projectId) {
-        logger.warn('Terminal connection rejected: missing projectId');
-        ws.close(1008, 'Missing projectId');
-        return;
-      }
+      console.log(`[Terminal] handleConnection called for project ${projectId}`);
+
+      // Send immediate acknowledgment to keep connection alive
+      // This is critical - delays can cause WebSocket to fail through proxies
+      ws.send(JSON.stringify({
+        type: 'connected',
+        data: 'Connected to terminal'
+      }));
+      console.log(`[Terminal] Sent immediate connected message to client`);
 
       // Extract token from query params or Authorization header
       const queryToken = url.searchParams.get('token');
@@ -245,21 +253,28 @@ export class PTYTerminalService {
           return;
         }
 
+        console.log(`[Terminal] Creating new session for project ${projectId}`);
         const newSession = await this.createSession(projectId);
         if (!newSession) {
+          ws.send(JSON.stringify({
+            type: 'error',
+            data: 'Failed to create terminal session'
+          }));
           ws.close(1011, 'Failed to create terminal session');
           return;
         }
         session = newSession;
         this.sessions.set(projectId, session);
+        console.log(`[Terminal] Session created successfully for project ${projectId}`);
       }
 
       session.clients.add(ws);
       session.lastActivity = Date.now();
 
+      // Session is ready - notify client
       ws.send(JSON.stringify({
-        type: 'connected',
-        data: 'Connected to terminal'
+        type: 'ready',
+        data: 'Terminal session ready'
       }));
 
       // 8.4 FIX: Send recent terminal history to new clients
