@@ -61,7 +61,6 @@
     "extract-zip": "^2.0.1",
     "file-type": "^21.1.1",
     "firebase-admin": "^13.5.0",
-    "fuse": {},
     "fuse.js": "^7.1.0",
     "glob": "^11.0.3",
     "google-auth-library": "^10.5.0",
@@ -95,7 +94,6 @@
     "sharp": "^0.34.5",
     "simple-peer": "^9.11.1",
     "snack-sdk": "^6.6.0",
-    "socket": {},
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
     "speakeasy": "^2.0.0",
@@ -259,9 +257,6 @@
     "esbuild": "^0.27.0",
     "eslint": "^9.38.0",
     "framer-motion": "^11.13.1",
-    "fuse": {
-      "js": "{}"
-    },
     "globals": "^16.4.0",
     "i18next": "^25.7.3",
     "i18next-browser-languagedetector": "^8.2.0",
@@ -295,9 +290,6 @@
     "remark-gfm": "^4.0.1",
     "rollup": "^4.53.2",
     "rollup-plugin-visualizer": "^6.0.5",
-    "socket": {
-      "io-client": "{}"
-    },
     "sonner": "^2.0.7",
     "supertest": "^7.1.4",
     "swagger-jsdoc": "^6.2.8",
