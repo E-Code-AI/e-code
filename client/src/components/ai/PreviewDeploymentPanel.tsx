@@ -485,7 +485,22 @@ export function PreviewDeploymentPanel({
                       variant="default"
                       size="sm"
                       className="flex-1 gap-1.5"
-                      onClick={() => {}}
+                      onClick={async () => {
+                        try {
+                          await apiRequest('POST', `/api/projects/${projectId}/publish`, {});
+                          toast({
+                            title: 'Deployment Started',
+                            description: 'Your app is being published to production.',
+                          });
+                          queryClient.invalidateQueries({ queryKey: ['/api/deployments', projectId] });
+                        } catch (error: unknown) {
+                          toast({
+                            title: 'Deployment Failed',
+                            description: (error as Error).message || 'Failed to start deployment',
+                            variant: 'destructive',
+                          });
+                        }
+                      }}
                       data-testid="button-publish"
                     >
                       <Rocket className="h-4 w-4" />

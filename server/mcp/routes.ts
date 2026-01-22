@@ -76,7 +76,9 @@ router.use('/memory', memoryRoutes);
 let httpServer: MCPHttpServer | null = null;
 let mcpServerInstance: MCPServer | null = null;
 
-export function initializeMCPRoutes(app: any) {
+import type { Express, Request, Response, NextFunction } from 'express';
+
+export function initializeMCPRoutes(app: Express) {
   // Create MCP server instance
   mcpServerInstance = new MCPServer();
   
@@ -92,27 +94,27 @@ export function initializeMCPRoutes(app: any) {
   app.use('/mcp', router);
   
   // Protected endpoints (require authentication)
-  app.post('/mcp/connect', authenticateMCP, async (req: any, res: any, next: any) => {
+  app.post('/mcp/connect', authenticateMCP, async (req: Request, res: Response, next: NextFunction) => {
     // Connection handled by http-transport
     next();
   });
   
-  app.post('/mcp/message', authenticateMCP, async (req: any, res: any, next: any) => {
+  app.post('/mcp/message', authenticateMCP, async (req: Request, res: Response, next: NextFunction) => {
     // Message handling by http-transport
     next();
   });
   
-  app.get('/mcp/tools', authenticateMCP, async (req: any, res: any, next: any) => {
+  app.get('/mcp/tools', authenticateMCP, async (req: Request, res: Response, next: NextFunction) => {
     // Tools listing by http-transport
     next();
   });
   
-  app.get('/mcp/resources', authenticateMCP, async (req: any, res: any, next: any) => {
+  app.get('/mcp/resources', authenticateMCP, async (req: Request, res: Response, next: NextFunction) => {
     // Resources listing by http-transport
     next();
   });
   
-  app.get('/mcp/events', authenticateMCP, async (req: any, res: any, next: any) => {
+  app.get('/mcp/events', authenticateMCP, async (req: Request, res: Response, next: NextFunction) => {
     // Events SSE by http-transport
     next();
   });

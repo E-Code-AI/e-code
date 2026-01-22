@@ -8,13 +8,24 @@ import { apiRequest } from '@/lib/queryClient';
 
 export default function PowerUps() {
   const { toast } = useToast();
-  const { data: powerUps, isLoading } = useQuery({
+  const { data: powerUps, isLoading, error } = useQuery({
     queryKey: ['/api/powerups']
   });
 
   const { data: userPowerUps } = useQuery({
     queryKey: ['/api/user/powerups']
   });
+
+  // Error state handling
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen gap-4">
+        <div className="text-destructive text-lg">Failed to load PowerUps</div>
+        <p className="text-muted-foreground">{(error as Error).message || 'An unexpected error occurred'}</p>
+        <Button onClick={() => window.location.reload()}>Retry</Button>
+      </div>
+    );
+  }
 
   const handleActivate = async (powerUpId: string) => {
     try {

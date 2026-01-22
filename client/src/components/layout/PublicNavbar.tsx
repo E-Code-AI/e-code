@@ -81,7 +81,7 @@ export function PublicNavbar() {
         <NavigationMenuItem>
           <NavigationMenuTrigger>Product</NavigationMenuTrigger>
           <NavigationMenuContent>
-            <ul className="grid w-[480px] gap-3 p-4 md:w-[520px] md:grid-cols-2 lg:w-[640px]">
+            <ul className="grid w-[calc(100vw-2rem)] sm:w-[480px] gap-3 p-4 md:w-[520px] md:grid-cols-2 lg:w-[640px]">
               {productItems.map((item) => (
                 <li key={item.title}>
                   <Link
@@ -105,7 +105,7 @@ export function PublicNavbar() {
         <NavigationMenuItem>
           <NavigationMenuTrigger>Solutions</NavigationMenuTrigger>
           <NavigationMenuContent>
-            <ul className="grid w-[480px] gap-3 p-4 md:w-[520px] md:grid-cols-2 lg:w-[640px]">
+            <ul className="grid w-[calc(100vw-2rem)] sm:w-[480px] gap-3 p-4 md:w-[520px] md:grid-cols-2 lg:w-[640px]">
               {solutionsItems.map((item) => (
                 <li key={item.title}>
                   <Link
@@ -129,7 +129,7 @@ export function PublicNavbar() {
         <NavigationMenuItem>
           <NavigationMenuTrigger>Resources</NavigationMenuTrigger>
           <NavigationMenuContent>
-            <ul className="grid w-[480px] gap-3 p-4 md:w-[520px] md:grid-cols-2 lg:w-[640px]">
+            <ul className="grid w-[calc(100vw-2rem)] sm:w-[480px] gap-3 p-4 md:w-[520px] md:grid-cols-2 lg:w-[640px]">
               {resourcesItems.map((item) => (
                 <li key={item.title}>
                   <Link

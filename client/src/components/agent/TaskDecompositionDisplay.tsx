@@ -296,9 +296,13 @@ export function TaskDecompositionDisplay({
                           {task.metadata.filesModified.map((file, idx) => (
                             <button
                               key={idx}
-                              onClick={() => {}}
+                              onClick={() => {
+                                // Dispatch event to open file in editor
+                                window.dispatchEvent(new CustomEvent('open-file', { detail: { path: file } }));
+                              }}
                               className="text-[11px] px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
                               data-testid={`button-file-link-${task.id}-${idx}`}
+                              title={`Open ${file}`}
                             >
                               {file.split('/').pop()}
                             </button>

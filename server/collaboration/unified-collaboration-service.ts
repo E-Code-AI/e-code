@@ -92,6 +92,8 @@ export class UnifiedCollaborationService {
   private userColorMap: Map<string, string> = new Map();
   private colorIndex = 0;
   private httpServer: HttpServer;
+  // Track WebSocket clients by room for proper broadcast isolation
+  private wsClientsByRoom: Map<string, Set<WebSocket>> = new Map();
   
   constructor(server: HttpServer) {
     this.httpServer = server;
@@ -421,6 +423,12 @@ export class UnifiedCollaborationService {
       
       const room = this.getOrCreateRoom(roomId, projectIdNum);
       
+      // Track this WebSocket client in the room for proper broadcast isolation
+      if (!this.wsClientsByRoom.has(roomId)) {
+        this.wsClientsByRoom.set(roomId, new Set());
+      }
+      this.wsClientsByRoom.get(roomId)!.add(ws);
+      
       // Emit connection event to trigger the connection handler
       this.yjsWss.emit('connection', ws, request);
       
@@ -464,6 +472,14 @@ export class UnifiedCollaborationService {
       
       ws.on('close', () => {
         room.lastActivity = new Date();
+        // Remove client from room tracking
+        const roomClients = this.wsClientsByRoom.get(roomId);
+        if (roomClients) {
+          roomClients.delete(ws);
+          if (roomClients.size === 0) {
+            this.wsClientsByRoom.delete(roomId);
+          }
+        }
       });
     });
   }
@@ -489,11 +505,15 @@ export class UnifiedCollaborationService {
       syncProtocol.writeSyncStep2(broadcastEncoder, room.doc);
       const update = encoding.toUint8Array(broadcastEncoder);
       
-      this.yjsWss.clients.forEach((client: WebSocket) => {
-        if (client !== ws && client.readyState === WebSocket.OPEN) {
-          client.send(update);
-        }
-      });
+      // FIX: Only broadcast to clients in the same room (not all clients)
+      const roomClients = this.wsClientsByRoom.get(room.id);
+      if (roomClients) {
+        roomClients.forEach((client: WebSocket) => {
+          if (client !== ws && client.readyState === WebSocket.OPEN) {
+            client.send(update);
+          }
+        });
+      }
     }
   }
   
@@ -501,14 +521,18 @@ export class UnifiedCollaborationService {
     const update = decoding.readVarUint8Array(decoder);
     awarenessProtocol.applyAwarenessUpdate(room.awareness, update, null);
     
-    this.yjsWss.clients.forEach((client: WebSocket) => {
-      if (client !== ws && client.readyState === WebSocket.OPEN) {
-        const encoder = encoding.createEncoder();
-        encoding.writeVarUint(encoder, 1);
-        encoding.writeVarUint8Array(encoder, update);
-        client.send(encoding.toUint8Array(encoder));
-      }
-    });
+    // FIX: Only broadcast to clients in the same room (not all clients)
+    const roomClients = this.wsClientsByRoom.get(room.id);
+    if (roomClients) {
+      roomClients.forEach((client: WebSocket) => {
+        if (client !== ws && client.readyState === WebSocket.OPEN) {
+          const encoder = encoding.createEncoder();
+          encoding.writeVarUint(encoder, 1);
+          encoding.writeVarUint8Array(encoder, update);
+          client.send(encoding.toUint8Array(encoder));
+        }
+      });
+    }
   }
   
   private async verifyProjectAccess(userId: string, projectId: number): Promise<boolean> {
