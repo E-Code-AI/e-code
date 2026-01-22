@@ -1399,8 +1399,8 @@ ipcMain.handle('append-file', async (event, filePath, content) => {
   }
 });
 
-// File watchers registry
-const fileWatchers = new Map();
+// File watchers registry - Use module-scope fileWatchers (line 199)
+// REMOVED: const fileWatchers = new Map(); - was shadowing module-scope variable
 let watcherId = 0;
 
 ipcMain.handle('watch-file', async (event, filePath) => {

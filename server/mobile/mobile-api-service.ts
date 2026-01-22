@@ -3,7 +3,7 @@ import { storage } from '../storage';
 import { CodeExecutor } from '../execution/executor';
 import { createLogger } from '../utils/logger';
 import jwt from 'jsonwebtoken';
-// import bcrypt from 'bcrypt';
+import { compare } from '../utils/bcrypt-compat';
 
 const logger = createLogger('mobile-api');
 
@@ -49,13 +49,24 @@ export class MobileAPIService {
         return res.status(400).json({ error: 'Missing required fields' });
       }
 
-      // For demo purposes, create a demo user session
-      const user = {
-        id: 1,
-        username: username || 'demo',
-        email: 'demo@example.com',
-        hashedPassword: 'demo'
-      };
+      // SECURITY FIX: Validate credentials against database (not demo mode)
+      // Find user by email or username
+      const user = await storage.getUserByEmail(username) || 
+                   await storage.getUserByUsername?.(username);
+      
+      if (!user) {
+        logger.warn(`[Mobile Auth] Failed login attempt for: ${username}`);
+        return res.status(401).json({ error: 'Invalid credentials' });
+      }
+
+      // Verify password
+      const isValidPassword = await compare(password, user.hashedPassword || '');
+      if (!isValidPassword) {
+        logger.warn(`[Mobile Auth] Invalid password for user: ${user.id}`);
+        return res.status(401).json({ error: 'Invalid credentials' });
+      }
+
+      logger.info(`[Mobile Auth] Successful login for user: ${user.id}`);
 
       // Generate mobile JWT token - SECURITY: Use centralized secrets manager
       const { getJwtSecret } = await import('../utils/secrets-manager');

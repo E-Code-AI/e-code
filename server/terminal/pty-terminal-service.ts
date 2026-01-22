@@ -442,7 +442,7 @@ export class PTYTerminalService {
         this.sessions.delete(projectId);
         
         // CRITICAL SECURITY: If Docker is required, NEVER fallback to local PTY
-        if (REQUIRE_DOCKER_TERMINAL) {
+        if (getRequireDockerTerminal()) {
           logger.error('[SECURITY] Docker failed - terminal unavailable (NO fallback allowed)');
           for (const client of session.clients) {
             if (client.readyState === WebSocket.OPEN) {
