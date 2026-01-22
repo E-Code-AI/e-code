@@ -101,6 +101,7 @@ export function ShellPanel({ projectId, className }: ShellPanelProps) {
         reconnectionAttempts: 5,
         reconnectionDelay: 1000,
         reconnectionDelayMax: 5000,
+        withCredentials: true, // Send session cookies for authentication
       });
       
       console.log('[Shell] Socket.IO instance created');
