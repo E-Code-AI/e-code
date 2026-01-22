@@ -92,16 +92,18 @@ export function ShellPanel({ projectId, className }: ShellPanelProps) {
     console.log('[Shell] Socket.IO connecting with projectId:', projectParam);
 
     try {
+      // Use polling first for better proxy compatibility (Replit, etc.)
       const socket = io({
         path: '/socket.io/terminal',
         query: { projectId: projectParam, sessionId },
-        transports: ['websocket', 'polling'],
-        timeout: 20000,
+        transports: ['polling', 'websocket'], // Polling first for proxy compatibility
+        timeout: 30000, // Increased timeout for slower connections
         reconnection: true,
         reconnectionAttempts: 5,
         reconnectionDelay: 1000,
         reconnectionDelayMax: 5000,
         withCredentials: true, // Send session cookies for authentication
+        forceNew: true, // Force new connection to avoid stale sockets
       });
       
       console.log('[Shell] Socket.IO instance created');

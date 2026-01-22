@@ -66,14 +66,20 @@ export class SocketIOTerminalService {
   private cleanupInterval: NodeJS.Timeout | null = null;
 
   initialize(httpServer: HTTPServer) {
+    // In development, allow all origins for easier testing
+    // In production, use ALLOWED_ORIGINS or restrictive list
+    const corsOrigin = IS_PRODUCTION 
+      ? (process.env.ALLOWED_ORIGINS?.split(',') || ['https://e-code.ai'])
+      : true; // Allow all origins in development
+
     this.io = new SocketIOServer(httpServer, {
       path: '/socket.io/terminal',
       cors: {
-        origin: process.env.ALLOWED_ORIGINS?.split(',') || '*',
+        origin: corsOrigin,
         methods: ['GET', 'POST'],
         credentials: true
       },
-      transports: ['websocket', 'polling'],
+      transports: ['polling', 'websocket'], // Polling first for proxy compatibility
       pingTimeout: 60000,
       pingInterval: 25000,
       connectTimeout: 45000,
