@@ -864,6 +864,12 @@ app.get('/api/cors-health', async (_req, res) => {
       console.log('[HTTP Server] 🔓 Temporarily restored upgrade listeners for Vite HMR initialization');
     }
     
+    // ✅ Initialize Socket.IO terminal service (uses both WebSocket and HTTP polling)
+    // This provides better proxy compatibility than raw WebSocket
+    const { socketIOTerminalService } = await import('./terminal/socket-io-terminal');
+    socketIOTerminalService.initialize(httpServer);
+    console.log('[SocketIO Terminal] ✅ Terminal service initialized with WebSocket + polling fallback');
+    
     const { safeSetupVite, setupFallbackServer } = await import("./vite-loader");
     const viteSuccess = await safeSetupVite(app, httpServer);
     

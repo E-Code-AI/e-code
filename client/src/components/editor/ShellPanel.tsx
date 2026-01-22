@@ -31,6 +31,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
+import { io, Socket } from 'socket.io-client';
 
 interface ShellPanelProps {
   projectId: string | number;
@@ -49,7 +50,7 @@ interface ShellTab {
 interface TerminalInstance {
   term: XTerm;
   fitAddon: FitAddon;
-  ws: WebSocket | null;
+  socket: Socket | null;
   commandHistory: string[];
   historyIndex: number;
   currentInput: string;
@@ -74,51 +75,44 @@ export function ShellPanel({ projectId, className }: ShellPanelProps) {
     return sessionId;
   }, [projectId]);
 
-  const connectWebSocket = useCallback((tabId: string, sessionId: string) => {
-    console.log('[Shell] connectWebSocket called', { tabId, sessionId });
+  const connectSocket = useCallback((tabId: string, sessionId: string) => {
+    console.log('[Shell] connectSocket called', { tabId, sessionId });
     const instance = terminalsRef.current.get(tabId);
     if (!instance) {
       console.warn('[Shell] No terminal instance found for tab', tabId);
       return;
     }
-    console.log('[Shell] Terminal instance found, creating WebSocket');
+    console.log('[Shell] Terminal instance found, creating Socket.IO connection');
 
     setTabs(prev => prev.map(tab => 
       tab.id === tabId ? { ...tab, isConnecting: true, isConnected: false } : tab
     ));
 
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    // Use projectId if valid, otherwise connect without it (uses default workspace)
-    const projectParam = projectId && projectId !== 'undefined' ? `&projectId=${projectId}` : '';
-    const wsUrl = `${protocol}//${window.location.host}/api/terminal/ws?sessionId=${sessionId}${projectParam}`;
-    console.log('[Shell] WebSocket URL:', wsUrl);
+    const projectParam = projectId && projectId !== 'undefined' ? projectId : 'default';
+    console.log('[Shell] Socket.IO connecting with projectId:', projectParam);
 
     try {
-      const ws = new WebSocket(wsUrl);
-      console.log('[Shell] WebSocket created, state:', ws.readyState);
-      instance.ws = ws;
+      const socket = io({
+        path: '/socket.io/terminal',
+        query: { projectId: projectParam, sessionId },
+        transports: ['websocket', 'polling'],
+        timeout: 20000,
+        reconnection: true,
+        reconnectionAttempts: 5,
+        reconnectionDelay: 1000,
+        reconnectionDelayMax: 5000,
+      });
+      
+      console.log('[Shell] Socket.IO instance created');
+      instance.socket = socket;
 
-      // Add timeout to detect stuck connections
-      const connectionTimeout = setTimeout(() => {
-        if (ws.readyState === WebSocket.CONNECTING) {
-          console.error('[Shell] WebSocket connection timeout - stuck in CONNECTING state');
-          console.log('[Shell] Connection details:', { url: wsUrl, readyState: ws.readyState });
-          instance.term.writeln('\x1b[1;31mConnection timeout - retrying...\x1b[0m');
-          ws.close();
-          // Clear the initiated flag to allow retry
-          wsInitiatedRef.current.delete(tabId);
-        }
-      }, 10000);
-
-      ws.onopen = () => {
-        clearTimeout(connectionTimeout);
-        console.log('[Shell] WebSocket opened for tab', tabId);
+      socket.on('connect', () => {
+        console.log('[Shell] Socket.IO connected for tab', tabId);
         setTabs(prev => prev.map(tab => 
           tab.id === tabId ? { ...tab, isConnected: true, isConnecting: false } : tab
         ));
 
         instance.term.writeln('\x1b[1;32m✓ Connected to shell\x1b[0m');
-        instance.term.write('\x1b[1;36muser@project\x1b[0m:\x1b[1;34m~/workspace\x1b[0m$ ');
         console.log('[Shell] Wrote connection success message to terminal');
 
         const existingTimeout = reconnectTimeoutsRef.current.get(tabId);
@@ -126,86 +120,71 @@ export function ShellPanel({ projectId, className }: ShellPanelProps) {
           clearTimeout(existingTimeout);
           reconnectTimeoutsRef.current.delete(tabId);
         }
-      };
+      });
 
-      ws.onmessage = (event) => {
-        console.log('[Shell] WebSocket message received:', event.data.slice(0, 100));
-        try {
-          const message = JSON.parse(event.data);
-          switch (message.type) {
-            case 'connected':
-              console.log('[Shell] Server connected message:', message.data);
-              instance.term.writeln(`\r\n\x1b[1;32m✓ ${message.data}\x1b[0m`);
-              break;
-            case 'history':
-              if (message.data) {
-                instance.term.write(message.data);
-              }
-              break;
-            case 'output':
-              instance.term.write(message.data);
-              break;
-            case 'error':
-              instance.term.write(`\x1b[1;31m${message.data}\x1b[0m`);
-              break;
-            case 'exit':
-              instance.term.writeln(`\r\n\x1b[90mProcess exited with code ${message.code || message.data}\x1b[0m`);
-              break;
-            case 'cwd':
-              setTabs(prev => prev.map(tab => 
-                tab.id === tabId ? { ...tab, cwd: message.data } : tab
-              ));
-              break;
-            case 'pong':
-              break;
-            default:
-              if (message.data) {
-                instance.term.write(message.data);
-              }
-          }
-        } catch {
-          instance.term.write(event.data);
+      socket.on('connected', (data: { message: string }) => {
+        console.log('[Shell] Server connected message:', data.message);
+      });
+
+      socket.on('ready', (data: { message: string }) => {
+        console.log('[Shell] Server ready message:', data.message);
+        instance.term.writeln(`\x1b[1;32m✓ ${data.message}\x1b[0m`);
+        instance.term.write('\x1b[1;36muser@project\x1b[0m:\x1b[1;34m~/workspace\x1b[0m$ ');
+      });
+
+      socket.on('history', (data: { data: string }) => {
+        if (data?.data) {
+          instance.term.write(data.data);
         }
-      };
+      });
 
-      ws.onclose = (event) => {
-        clearTimeout(connectionTimeout);
-        console.log('[Shell] WebSocket closed for tab', tabId, 'code:', event.code, 'reason:', event.reason);
+      socket.on('output', (data: { data: string }) => {
+        if (data?.data) {
+          instance.term.write(data.data);
+        }
+      });
+
+      socket.on('error', (data: { message: string }) => {
+        console.error('[Shell] Socket.IO error:', data.message);
+        instance.term.writeln(`\r\n\x1b[1;31m✗ ${data.message}\x1b[0m`);
+      });
+
+      socket.on('exit', (data: { code: number; signal: number }) => {
+        instance.term.writeln(`\r\n\x1b[90mProcess exited with code ${data.code}\x1b[0m`);
+      });
+
+      socket.on('disconnect', (reason) => {
+        console.log('[Shell] Socket.IO disconnected for tab', tabId, 'reason:', reason);
         setTabs(prev => prev.map(tab => 
           tab.id === tabId ? { ...tab, isConnected: false, isConnecting: false } : tab
         ));
-        // Clear the ws reference to allow reconnection
-        instance.ws = null;
 
         instance.term.writeln('\r\n\x1b[1;33m⚠ Connection closed\x1b[0m');
 
-        const timeout = setTimeout(() => {
-          const currentTab = tabs.find(t => t.id === tabId);
-          if (currentTab && (!instance.ws || instance.ws.readyState === WebSocket.CLOSED)) {
+        if (reason === 'io server disconnect') {
+          const timeout = setTimeout(() => {
             instance.term.writeln('\x1b[90mReconnecting...\x1b[0m');
-            connectWebSocket(tabId, sessionId);
-          }
-        }, 3000);
-        reconnectTimeoutsRef.current.set(tabId, timeout);
-      };
+            socket.connect();
+          }, 3000);
+          reconnectTimeoutsRef.current.set(tabId, timeout);
+        }
+      });
 
-      ws.onerror = (error) => {
-        clearTimeout(connectionTimeout);
-        console.error('[Shell] WebSocket error for tab', tabId, error);
-        // Clear the ws reference to allow reconnection
-        instance.ws = null;
+      socket.on('connect_error', (error) => {
+        console.error('[Shell] Socket.IO connect_error for tab', tabId, error.message);
         setTabs(prev => prev.map(tab => 
           tab.id === tabId ? { ...tab, isConnecting: false } : tab
         ));
-        instance.term.writeln('\r\n\x1b[1;31m✗ Connection error\x1b[0m');
-      };
+        instance.term.writeln(`\r\n\x1b[1;31m✗ Connection error: ${error.message}\x1b[0m`);
+      });
+
     } catch (error) {
-      console.error('[Shell] WebSocket connection error:', error);
+      console.error('[Shell] Socket.IO connection error:', error);
       setTabs(prev => prev.map(tab => 
         tab.id === tabId ? { ...tab, isConnecting: false } : tab
       ));
     }
-  }, [projectId, tabs]);
+  }, [projectId]);
 
   const initializeTerminal = useCallback((tabId: string, container: HTMLDivElement) => {
     if (terminalsRef.current.has(tabId)) return;
@@ -252,7 +231,7 @@ export function ShellPanel({ projectId, className }: ShellPanelProps) {
     const instance: TerminalInstance = {
       term,
       fitAddon,
-      ws: null,
+      socket: null,
       commandHistory: [],
       historyIndex: -1,
       currentInput: '',
@@ -265,7 +244,7 @@ export function ShellPanel({ projectId, className }: ShellPanelProps) {
     term.writeln('');
 
     term.onData((data) => {
-      if (!instance.ws || instance.ws.readyState !== WebSocket.OPEN) {
+      if (!instance.socket || !instance.socket.connected) {
         return;
       }
 
@@ -305,10 +284,7 @@ export function ShellPanel({ projectId, className }: ShellPanelProps) {
         instance.currentInput += data;
       }
 
-      instance.ws.send(JSON.stringify({
-        type: 'input',
-        data: data
-      }));
+      instance.socket.emit('input', { data });
     });
 
     terminalsRef.current.set(tabId, instance);
@@ -351,7 +327,7 @@ export function ShellPanel({ projectId, className }: ShellPanelProps) {
 
     const instance = terminalsRef.current.get(tabId);
     if (instance) {
-      instance.ws?.close();
+      instance.socket?.disconnect();
       instance.term.dispose();
       terminalsRef.current.delete(tabId);
     }
@@ -398,7 +374,7 @@ export function ShellPanel({ projectId, className }: ShellPanelProps) {
     
     if (!tab || !instance) return;
 
-    instance.ws?.close();
+    instance.socket?.disconnect();
     instance.term.reset();
     instance.term.writeln('\x1b[1;32m╭─────────────────────────────────────────╮\x1b[0m');
     instance.term.writeln('\x1b[1;32m│\x1b[0m \x1b[1;36mShell\x1b[0m                                   \x1b[1;32m│\x1b[0m');
@@ -406,8 +382,8 @@ export function ShellPanel({ projectId, className }: ShellPanelProps) {
     instance.term.writeln('\x1b[1;32m╰─────────────────────────────────────────╯\x1b[0m');
     instance.term.writeln('');
 
-    setTimeout(() => connectWebSocket(activeTabId, tab.sessionId), 500);
-  }, [activeTabId, connectWebSocket, tabs]);
+    setTimeout(() => connectSocket(activeTabId, tab.sessionId), 500);
+  }, [activeTabId, connectSocket, tabs]);
 
   useEffect(() => {
     if (tabs.length === 0) {
@@ -451,21 +427,21 @@ export function ShellPanel({ projectId, className }: ShellPanelProps) {
     // Small delay to ensure terminal is fully initialized
     const timer = setTimeout(() => {
       const instance = terminalsRef.current.get(activeTabId);
-      if (instance && !instance.ws) {
-        console.log('[Shell] Initiating WebSocket for tab', activeTabId, 'sessionId:', tab.sessionId);
+      if (instance && !instance.socket) {
+        console.log('[Shell] Initiating Socket.IO for tab', activeTabId, 'sessionId:', tab.sessionId);
         wsInitiatedRef.current.add(activeTabId);
-        connectWebSocket(activeTabId, tab.sessionId);
+        connectSocket(activeTabId, tab.sessionId);
       } else {
-        console.log('[Shell] Skipping WebSocket connection', { 
+        console.log('[Shell] Skipping Socket.IO connection', { 
           hasInstance: !!instance, 
-          hasWs: !!instance?.ws,
-          wsState: instance?.ws?.readyState 
+          hasSocket: !!instance?.socket,
+          connected: instance?.socket?.connected 
         });
       }
     }, 200);
     
     return () => clearTimeout(timer);
-  }, [activeTabId, tabs, connectWebSocket]);
+  }, [activeTabId, tabs, connectSocket]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -473,12 +449,11 @@ export function ShellPanel({ projectId, className }: ShellPanelProps) {
       if (instance) {
         instance.fitAddon.fit();
         
-        if (instance.ws?.readyState === WebSocket.OPEN) {
-          instance.ws.send(JSON.stringify({
-            type: 'resize',
+        if (instance.socket?.connected) {
+          instance.socket.emit('resize', {
             cols: instance.term.cols,
             rows: instance.term.rows,
-          }));
+          });
         }
       }
     };
@@ -502,7 +477,7 @@ export function ShellPanel({ projectId, className }: ShellPanelProps) {
   useEffect(() => {
     return () => {
       terminalsRef.current.forEach((instance) => {
-        instance.ws?.close();
+        instance.socket?.disconnect();
         instance.term.dispose();
       });
       terminalsRef.current.clear();
