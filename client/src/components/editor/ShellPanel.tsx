@@ -552,7 +552,7 @@ export function ShellPanel({ projectId, className }: ShellPanelProps) {
           )}
 
           {tabs.length > 1 && (
-            <ScrollArea className="flex-1 max-w-[200px] sm:max-w-[300px] lg:max-w-[400px]" orientation="horizontal">
+            <ScrollArea className="flex-1 max-w-[200px] sm:max-w-[300px] lg:max-w-[400px]">
               <Tabs value={activeTabId} onValueChange={setActiveTabId} className="w-full">
                 <TabsList className="h-7 bg-transparent p-0 gap-1">
                   {tabs.map((tab) => (
