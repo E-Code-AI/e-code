@@ -1,13 +1,23 @@
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
-import { Redirect, Route, useLocation } from "wouter";
-import { useEffect } from "react";
+import { Route, useLocation } from "wouter";
+import { useEffect, useRef } from "react";
 
-// Component to handle redirects safely
+// Component to handle redirects safely with proper ?next= parameter
 function RedirectToLogin({ path }: { path: string }) {
+  const [, navigate] = useLocation();
+  const hasRedirectedRef = useRef(false);
+  
   useEffect(() => {
-    window.location.href = '/login';
-  }, [path]);
+    // Prevent double redirects
+    if (hasRedirectedRef.current) return;
+    hasRedirectedRef.current = true;
+    
+    // Use wouter navigate for SPA navigation (no page reload)
+    // Include next parameter to return to original page after login
+    const nextPath = encodeURIComponent(path);
+    navigate(`/login?next=${nextPath}`, { replace: true });
+  }, [path, navigate]);
 
   return (
     <div className="flex items-center justify-center min-h-screen">
