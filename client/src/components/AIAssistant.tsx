@@ -221,7 +221,7 @@ export function AIAssistant({ projectId, selectedFile, selectedCode, className }
           projectId,
           file: selectedFile,
           code: selectedCode,
-          history: messages.slice(-5)
+          history: messages.slice(-20)
         }
       });
 

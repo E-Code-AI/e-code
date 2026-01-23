@@ -97,7 +97,7 @@ export function AIAgentPanel({ projectId, onClose, selectedCode, currentFilePath
         projectId,
         conversationId,
         provider: selectedModel,
-        context: messages.slice(-10), // Send last 10 messages as context
+        context: messages.slice(-20), // Send last 20 messages as context for better memory
         systemPrompt: extendedThinking ? 
           'Think step by step through the problem. Show your reasoning process.' : 
           undefined,
