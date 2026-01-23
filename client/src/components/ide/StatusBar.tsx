@@ -73,8 +73,8 @@ export function StatusBar({
     <TooltipProvider>
       <div 
         className={cn(
-          'h-[22px] flex items-center text-[11px]',
-          'bg-[var(--ecode-sidebar-bg)] border-t border-[var(--ecode-border)]',
+          'h-[20px] flex items-center text-[10px]',
+          'bg-[var(--ecode-surface)] border-t border-[var(--ecode-border)]',
           'font-[var(--ecode-font-sans)]'
         )}
         data-testid="status-bar"
@@ -86,17 +86,17 @@ export function StatusBar({
             <TooltipTrigger asChild>
               <button 
                 className={cn(
-                  'flex items-center gap-1.5 h-full px-2.5',
+                  'flex items-center gap-1 h-full px-2',
                   'text-[var(--ecode-text-muted)] hover:text-[var(--ecode-text)]',
                   'hover:bg-[var(--ecode-sidebar-hover)] transition-colors'
                 )}
                 data-testid="status-git-branch"
               >
-                <GitBranch className="h-3 w-3" />
+                <GitBranch className="h-2.5 w-2.5" />
                 <span className="font-medium">{gitBranch}</span>
               </button>
             </TooltipTrigger>
-            <TooltipContent side="top" className="text-[11px]">
+            <TooltipContent side="top" className="text-[10px]">
               Current branch: {gitBranch}
             </TooltipContent>
           </Tooltip>
@@ -106,18 +106,18 @@ export function StatusBar({
             <TooltipTrigger asChild>
               <div 
                 className={cn(
-                  'flex items-center gap-1 h-full px-2',
+                  'flex items-center gap-1 h-full px-1.5',
                   'hover:bg-[var(--ecode-sidebar-hover)] transition-colors cursor-default'
                 )}
               >
                 {isConnected ? (
-                  <Wifi className="h-3 w-3 text-[hsl(var(--ecode-green))]" />
+                  <Wifi className="h-2.5 w-2.5 text-[hsl(142,72%,42%)]" />
                 ) : (
-                  <WifiOff className="h-3 w-3 text-[hsl(var(--ecode-danger))]" />
+                  <WifiOff className="h-2.5 w-2.5 text-red-500" />
                 )}
               </div>
             </TooltipTrigger>
-            <TooltipContent side="top" className="text-[11px]">
+            <TooltipContent side="top" className="text-[10px]">
               {isConnected ? 'Connected' : 'Disconnected'}
             </TooltipContent>
           </Tooltip>
@@ -127,25 +127,25 @@ export function StatusBar({
             <TooltipTrigger asChild>
               <div 
                 className={cn(
-                  'flex items-center gap-1.5 h-full px-2',
+                  'flex items-center gap-1 h-full px-1.5',
                   'hover:bg-[var(--ecode-sidebar-hover)] transition-colors cursor-default'
                 )}
                 data-testid="status-running"
               >
                 {isRunning ? (
                   <>
-                    <Loader2 className="h-3 w-3 text-[hsl(var(--ecode-green))] animate-spin" />
-                    <span className="text-[hsl(var(--ecode-green))]">Running</span>
+                    <Loader2 className="h-2.5 w-2.5 text-[hsl(142,72%,42%)] animate-spin" />
+                    <span className="text-[hsl(142,72%,42%)]">Running</span>
                   </>
                 ) : (
                   <>
-                    <Circle className="h-2.5 w-2.5 fill-[var(--ecode-text-muted)] text-[var(--ecode-text-muted)]" />
+                    <Circle className="h-2 w-2 fill-[var(--ecode-text-muted)] text-[var(--ecode-text-muted)]" />
                     <span className="text-[var(--ecode-text-muted)]">Stopped</span>
                   </>
                 )}
               </div>
             </TooltipTrigger>
-            <TooltipContent side="top" className="text-[11px]">
+            <TooltipContent side="top" className="text-[10px]">
               {isRunning ? 'Server is running' : 'Server is stopped'}
             </TooltipContent>
           </Tooltip>
@@ -285,17 +285,17 @@ export function StatusBar({
             <TooltipTrigger asChild>
               <button 
                 className={cn(
-                  'flex items-center gap-1 h-full px-2',
+                  'flex items-center gap-1 h-full px-1.5',
                   'text-[var(--ecode-text-muted)] hover:text-[var(--ecode-text)]',
                   'hover:bg-[var(--ecode-sidebar-hover)] transition-colors',
-                  'font-mono text-[10px]'
+                  'font-mono text-[9px]'
                 )}
                 data-testid="status-cursor"
               >
                 <span>Ln {cursorPosition.line}, Col {cursorPosition.column}</span>
               </button>
             </TooltipTrigger>
-            <TooltipContent side="top" className="text-[11px]">
+            <TooltipContent side="top" className="text-[10px]">
               Go to Line
             </TooltipContent>
           </Tooltip>
@@ -305,7 +305,7 @@ export function StatusBar({
             <TooltipTrigger asChild>
               <button 
                 className={cn(
-                  'flex items-center h-full px-2',
+                  'flex items-center h-full px-1.5',
                   'text-[var(--ecode-text-muted)] hover:text-[var(--ecode-text)]',
                   'hover:bg-[var(--ecode-sidebar-hover)] transition-colors'
                 )}
@@ -314,7 +314,7 @@ export function StatusBar({
                 {language}
               </button>
             </TooltipTrigger>
-            <TooltipContent side="top" className="text-[11px]">
+            <TooltipContent side="top" className="text-[10px]">
               Select Language Mode
             </TooltipContent>
           </Tooltip>
@@ -324,7 +324,7 @@ export function StatusBar({
             <TooltipTrigger asChild>
               <button 
                 className={cn(
-                  'flex items-center h-full px-2',
+                  'flex items-center h-full px-1.5',
                   'text-[var(--ecode-text-muted)] hover:text-[var(--ecode-text)]',
                   'hover:bg-[var(--ecode-sidebar-hover)] transition-colors'
                 )}
@@ -333,7 +333,7 @@ export function StatusBar({
                 {encoding}
               </button>
             </TooltipTrigger>
-            <TooltipContent side="top" className="text-[11px]">
+            <TooltipContent side="top" className="text-[10px]">
               Select Encoding
             </TooltipContent>
           </Tooltip>

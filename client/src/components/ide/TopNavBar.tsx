@@ -132,15 +132,19 @@ export function TopNavBar({
   const isAdmin = user?.role === 'admin' || user?.role === 'super_admin';
   
   return (
-    <div className="h-12 border-b border-[var(--ecode-border)] bg-[var(--ecode-surface)] flex items-center px-3 gap-2 shadow-sm" data-testid="top-nav">
+    <div className="h-11 border-b border-[var(--ecode-border)] bg-[var(--ecode-surface)] flex items-center px-2 gap-1" data-testid="top-nav">
       {/* Main Menu Dropdown */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="sm" className="h-7 px-1.5 hover:bg-[var(--ecode-sidebar-hover)] transition-colors">
-            <Menu className="w-3.5 h-3.5" />
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-8 w-8 p-0 hover:bg-[var(--ecode-sidebar-hover)] transition-colors rounded-md"
+          >
+            <Menu className="w-4 h-4 text-[var(--ecode-text-muted)]" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-64" align="start">
+        <DropdownMenuContent className="w-56" align="start">
           <DropdownMenuItem onClick={() => navigate('/dashboard')}>
             <Home className="w-4 h-4 mr-2" />
             Home
@@ -150,14 +154,14 @@ export function TopNavBar({
             <>
               <DropdownMenuSeparator />
               <DropdownMenuItem 
-                className="py-2 bg-surface-solid"
+                className="py-2"
                 onClick={() => navigate('/admin')}
               >
                 <Shield className="w-4 h-4 mr-2 text-[var(--ecode-accent)]" />
                 <span className="font-medium">Admin Dashboard</span>
                 <Badge 
                   variant="default"
-                  className="ml-auto text-[11px] h-5"
+                  className="ml-auto text-[10px] h-4 px-1.5"
                 >
                   ADMIN
                 </Badge>
@@ -167,12 +171,11 @@ export function TopNavBar({
         </DropdownMenuContent>
       </DropdownMenu>
       
-      {/* Logo & Project Name */}
-      <div className="flex items-center gap-2">
-        <span className="text-[11px] text-[var(--ecode-accent)] font-semibold">E-Code</span>
-        
-        {/* Project Name */}
-        <span className="text-[11px] font-medium truncate max-w-[150px]">{projectName}</span>
+      {/* Logo & Project Name - Replit style */}
+      <div className="flex items-center gap-1.5 pl-1">
+        <span className="text-[12px] text-[var(--ecode-accent)] font-bold tracking-tight">E-Code</span>
+        <span className="text-[var(--ecode-text-muted)] text-[10px]">/</span>
+        <span className="text-[12px] font-medium truncate max-w-[140px] text-[var(--ecode-text)]">{projectName}</span>
       </div>
       
       {/* Tabs with Drag-and-Drop Reorder - All tabs visible with scroll */}
@@ -236,7 +239,7 @@ export function TopNavBar({
       )}
       
       {/* Right Actions */}
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-0.5">
         {/* Collaboration Toggle */}
         {onToggleCollaboration && (
           <Button
@@ -245,13 +248,13 @@ export function TopNavBar({
             onClick={onToggleCollaboration}
             data-testid="button-toggle-collaboration"
             className={cn(
-              "h-7 px-2 gap-1.5",
+              "h-8 w-8 p-0 rounded-md",
               showCollaboration && "bg-[var(--ecode-sidebar-hover)]"
             )}
           >
-            <Users className="h-3.5 w-3.5" />
+            <Users className="h-4 w-4" />
             {collaboratorCount > 0 && (
-              <Badge variant="secondary" className="h-4 px-1 text-[10px] font-medium">
+              <Badge variant="secondary" className="absolute -top-1 -right-1 h-4 min-w-4 px-1 text-[9px] font-bold">
                 {collaboratorCount}
               </Badge>
             )}
@@ -264,32 +267,35 @@ export function TopNavBar({
           size="sm"
           onClick={onToggleFileExplorer}
           data-testid="button-toggle-explorer"
-          className="h-7 px-2"
+          className="h-8 w-8 p-0 rounded-md hover:bg-[var(--ecode-sidebar-hover)]"
         >
-          <Menu className="h-3.5 w-3.5" />
+          <FileCode className="h-4 w-4 text-[var(--ecode-text-muted)]" />
         </Button>
         
-        {/* Run/Stop Button */}
+        {/* Divider */}
+        <div className="h-5 w-px bg-[var(--ecode-border)] mx-1" />
+        
+        {/* Run/Stop Button - Replit style green */}
         <Button
           variant={isRunning ? "destructive" : "default"}
           size="sm"
           onClick={onRun}
           data-testid="button-run-stop"
           className={cn(
-            "h-7 px-2.5 gap-1.5 text-[11px] transition-all shadow-sm",
+            "h-7 px-3 gap-1.5 text-[12px] font-semibold rounded-md transition-all",
             isRunning 
-              ? "bg-[hsl(var(--ecode-danger))] hover:bg-[hsl(var(--ecode-danger))]" 
-              : "bg-[var(--ecode-accent)] hover:bg-[var(--ecode-accent-hover)]"
+              ? "bg-red-500 hover:bg-red-600 text-white" 
+              : "bg-[hsl(142,72%,42%)] hover:bg-[hsl(142,72%,38%)] text-white"
           )}
         >
           {isRunning ? (
             <>
-              <Square className="h-3.5 w-3.5 fill-current" />
+              <Square className="h-3 w-3 fill-current" />
               <span>Stop</span>
             </>
           ) : (
             <>
-              <Play className="h-3.5 w-3.5" />
+              <Play className="h-3 w-3 fill-current" />
               <span>Run</span>
             </>
           )}
@@ -305,26 +311,30 @@ export function TopNavBar({
         {/* Theme Switcher */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="h-7 px-2 gap-1.5">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-8 w-8 p-0 rounded-md hover:bg-[var(--ecode-sidebar-hover)]"
+            >
               {theme === "light" ? (
-                <Sun className="h-3.5 w-3.5" />
+                <Sun className="h-4 w-4 text-[var(--ecode-text-muted)]" />
               ) : theme === "dark" ? (
-                <Moon className="h-3.5 w-3.5" />
+                <Moon className="h-4 w-4 text-[var(--ecode-text-muted)]" />
               ) : (
-                <Monitor className="h-3.5 w-3.5" />
+                <Monitor className="h-4 w-4 text-[var(--ecode-text-muted)]" />
               )}
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => setTheme("light")}>
+          <DropdownMenuContent align="end" className="w-36">
+            <DropdownMenuItem onClick={() => setTheme("light")} className="text-[13px]">
               <Sun className="w-4 h-4 mr-2" />
               Light
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setTheme("dark")}>
+            <DropdownMenuItem onClick={() => setTheme("dark")} className="text-[13px]">
               <Moon className="w-4 h-4 mr-2" />
               Dark
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setTheme("system")}>
+            <DropdownMenuItem onClick={() => setTheme("system")} className="text-[13px]">
               <Monitor className="w-4 h-4 mr-2" />
               System
             </DropdownMenuItem>
@@ -337,35 +347,37 @@ export function TopNavBar({
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 w-7 rounded-full p-0"
+              className="h-8 w-8 rounded-full p-0 hover:ring-2 hover:ring-[var(--ecode-accent)]/30 transition-all"
               data-testid="button-user-menu"
             >
               <Avatar className="h-7 w-7">
                 <AvatarImage src={user?.profileImageUrl || undefined} />
-                <AvatarFallback className="text-[11px]">
+                <AvatarFallback className="text-[11px] bg-[var(--ecode-accent)] text-white font-semibold">
                   {user?.username?.charAt(0).toUpperCase() || 'U'}
                 </AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuItem disabled>
-              <User className="mr-2 h-4 w-4" />
-              <span>{user?.username || 'User'}</span>
-            </DropdownMenuItem>
+          <DropdownMenuContent align="end" className="w-52">
+            <DropdownMenuLabel className="font-normal">
+              <div className="flex flex-col gap-1">
+                <p className="text-[13px] font-medium">{user?.username || 'User'}</p>
+                <p className="text-[11px] text-[var(--ecode-text-muted)]">{user?.email || ''}</p>
+              </div>
+            </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => navigate('/profile')}>
+            <DropdownMenuItem onClick={() => navigate('/profile')} className="text-[13px]">
               <User className="mr-2 h-4 w-4" />
-              <span>Profile</span>
+              Profile
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setShowSettings(true)}>
+            <DropdownMenuItem onClick={() => setShowSettings(true)} className="text-[13px]">
               <Settings className="mr-2 h-4 w-4" />
-              <span>Settings</span>
+              Settings
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout} className="text-destructive">
+            <DropdownMenuItem onClick={handleLogout} className="text-[13px] text-destructive">
               <LogOut className="mr-2 h-4 w-4" />
-              <span>Logout</span>
+              Logout
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

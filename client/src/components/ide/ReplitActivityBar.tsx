@@ -96,7 +96,7 @@ export function ReplitActivityBar({
     return (
       <div key={item.id} className="relative">
         {item.separator && (
-          <div className="mx-2.5 my-1.5 border-t border-border" />
+          <div className="mx-2 my-1 border-t border-[var(--ecode-border)]/50" />
         )}
         <Tooltip delayDuration={0}>
           <TooltipTrigger asChild>
@@ -106,35 +106,33 @@ export function ReplitActivityBar({
               onClick={() => onItemClick(item.id)}
               data-testid={`activity-${item.id}`}
               className={cn(
-                'relative w-9 h-9 p-0 rounded-md transition-all duration-150',
-                'hover:bg-[var(--ecode-sidebar-hover)] active:scale-95',
+                'relative w-9 h-9 p-0 rounded-lg transition-all duration-100',
+                'hover:bg-[var(--ecode-sidebar-hover)] active:scale-[0.97]',
                 'focus-visible:ring-2 focus-visible:ring-[var(--ecode-accent)] focus-visible:ring-offset-0',
                 isActive && [
-                  'bg-surface-tertiary-solid',
+                  'bg-[var(--ecode-accent)]/10',
                   'text-[var(--ecode-accent)]',
-                  'shadow-sm',
                 ],
                 !isActive && 'text-[var(--ecode-text-muted)] hover:text-[var(--ecode-text)]'
               )}
             >
               {isActive && (
                 <span 
-                  className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-[var(--ecode-accent)] shadow-[0_0_8px_var(--ecode-accent)]"
-                  style={{ marginLeft: '-2px' }}
+                  className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-4 rounded-r-full bg-[var(--ecode-accent)]"
+                  style={{ marginLeft: '-1px' }}
                 />
               )}
               <Icon className={cn(
-                "h-[18px] w-[18px] transition-transform duration-150",
-                isActive && "scale-105"
+                "h-[17px] w-[17px] transition-colors duration-100",
+                isActive && "text-[var(--ecode-accent)]"
               )} />
               {badge !== undefined && badge !== 0 && (
                 <span className={cn(
-                  'absolute -top-1 -right-1 min-w-[16px] h-4 px-1',
+                  'absolute -top-0.5 -right-0.5 min-w-[14px] h-3.5 px-1',
                   'flex items-center justify-center',
                   'text-[9px] font-bold rounded-full',
                   'bg-[var(--ecode-accent)] text-white',
-                  'shadow-md animate-in fade-in zoom-in-50 duration-200',
-                  'border border-[var(--ecode-sidebar-bg)]'
+                  'border border-[var(--ecode-surface)]'
                 )}>
                   {typeof badge === 'number' && badge > 99 ? '99+' : badge}
                 </span>
@@ -162,18 +160,17 @@ export function ReplitActivityBar({
     <TooltipProvider delayDuration={0}>
       <div
         className={cn(
-          'flex flex-col h-full w-12 py-1.5',
+          'flex flex-col h-full w-11 py-2',
           'bg-[var(--ecode-sidebar-bg)] border-r border-[var(--ecode-border)]',
-          'transition-all duration-200',
           className
         )}
         data-testid="activity-bar"
       >
-        <div className="flex flex-col items-center gap-0.5 flex-1 px-1.5">
+        <div className="flex flex-col items-center gap-0.5 flex-1 px-1">
           {defaultItems.map(renderItem)}
         </div>
         
-        <div className="flex flex-col items-center gap-0.5 mt-auto pt-1.5 border-t border-[var(--ecode-border)] mx-1.5 px-0">
+        <div className="flex flex-col items-center gap-0.5 mt-auto pt-2 border-t border-[var(--ecode-border)]/50 mx-1 px-0">
           {bottomItems.map(renderItem)}
           
           {onToggleCollapse && (
@@ -185,16 +182,16 @@ export function ReplitActivityBar({
                   onClick={onToggleCollapse}
                   data-testid="activity-collapse-toggle"
                   className={cn(
-                    'w-9 h-9 p-0 rounded-md mt-0.5',
+                    'w-9 h-9 p-0 rounded-lg mt-1',
                     'text-[var(--ecode-text-muted)] hover:text-[var(--ecode-text)]',
-                    'hover:bg-[var(--ecode-sidebar-hover)] active:scale-95',
-                    'transition-all duration-150'
+                    'hover:bg-[var(--ecode-sidebar-hover)] active:scale-[0.97]',
+                    'transition-all duration-100'
                   )}
                 >
                   {isCollapsed ? (
-                    <ChevronRight className="h-4 w-4" />
+                    <ChevronRight className="h-3.5 w-3.5" />
                   ) : (
-                    <ChevronLeft className="h-4 w-4" />
+                    <ChevronLeft className="h-3.5 w-3.5" />
                   )}
                 </Button>
               </TooltipTrigger>

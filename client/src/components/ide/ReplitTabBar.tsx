@@ -188,31 +188,25 @@ export function ReplitTabBar({
             onClick={() => onTabClick(tab.id)}
             data-testid={`tab-${tab.id}`}
             className={cn(
-              'group relative flex items-center gap-1.5 h-[34px] px-3 cursor-pointer select-none',
-              'text-[13px] font-medium',
-              'border-r border-[var(--ecode-border)]',
-              // Smooth transition for background, border, and transform
-              'transition-all duration-150 ease-out',
-              tab.pinned && 'min-w-[40px] max-w-[40px] justify-center px-0',
-              !tab.pinned && 'min-w-[100px] max-w-[180px]',
+              'group relative flex items-center gap-1.5 h-[32px] px-2.5 cursor-pointer select-none',
+              'text-[12px] font-medium',
+              'transition-colors duration-100 ease-out',
+              tab.pinned && 'min-w-[36px] max-w-[36px] justify-center px-0',
+              !tab.pinned && 'min-w-[90px] max-w-[160px]',
               isActive && [
                 'bg-[var(--ecode-editor-bg)] text-[var(--ecode-text)]',
-                'border-t-2 border-t-[var(--ecode-accent)] -mt-[2px]',
-                // Subtle scale effect on active tab
-                'transform scale-[1.02]',
+                'border-b-2 border-b-[var(--ecode-accent)]',
               ],
               !isActive && [
-                'bg-[var(--ecode-sidebar-bg)] text-[var(--ecode-text-muted)]',
-                'hover:bg-[var(--ecode-sidebar-hover)] hover:text-[var(--ecode-text)]',
-                'hover:border-t-2 hover:border-t-[var(--ecode-accent)]/50 hover:-mt-[2px]',
-                'transform scale-100',
+                'bg-transparent text-[var(--ecode-text-muted)]',
+                'hover:bg-[var(--ecode-sidebar-hover)]/50 hover:text-[var(--ecode-text)]',
               ],
-              isDragging && 'opacity-50',
-              isDragOver && 'bg-surface-tertiary-solid border-l-2 border-l-[var(--ecode-accent)]'
+              isDragging && 'opacity-40',
+              isDragOver && 'bg-[var(--ecode-accent)]/10'
             )}
           >
             <Icon className={cn(
-              'h-4 w-4 flex-shrink-0',
+              'h-3.5 w-3.5 flex-shrink-0 transition-colors',
               isActive ? 'text-[var(--ecode-accent)]' : 'text-[var(--ecode-text-muted)]'
             )} />
             
@@ -221,7 +215,7 @@ export function ReplitTabBar({
                 <span className="truncate flex-1">{tab.label}</span>
                 
                 {tab.modified && (
-                  <span className="w-2 h-2 rounded-full bg-[var(--ecode-accent)] flex-shrink-0" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-[var(--ecode-accent)] flex-shrink-0" />
                 )}
                 
                 {tab.closable !== false && (
@@ -231,13 +225,13 @@ export function ReplitTabBar({
                       onTabClose(tab.id);
                     }}
                     className={cn(
-                      'flex-shrink-0 p-0.5 rounded-sm transition-all',
-                      'opacity-0 group-hover:opacity-100',
-                      'hover:bg-surface-hover-solid'
+                      'flex-shrink-0 p-0.5 rounded-sm transition-opacity',
+                      'opacity-0 group-hover:opacity-70 hover:opacity-100',
+                      'hover:bg-[var(--ecode-sidebar-hover)]'
                     )}
                     data-testid={`tab-close-${tab.id}`}
                   >
-                    <X className="h-3.5 w-3.5" />
+                    <X className="h-3 w-3" />
                   </button>
                 )}
               </>
@@ -313,7 +307,7 @@ export function ReplitTabBar({
   return (
     <div
       className={cn(
-        'flex items-center h-[36px] bg-[var(--ecode-sidebar-bg)]',
+        'flex items-center h-[34px] bg-[var(--ecode-surface)]',
         'border-b border-[var(--ecode-border)]',
         className
       )}
@@ -324,20 +318,20 @@ export function ReplitTabBar({
           variant="ghost"
           size="sm"
           onClick={scrollLeft}
-          className="h-full w-6 p-0 rounded-none hover:bg-[var(--ecode-sidebar-hover)] flex-shrink-0"
+          className="h-full w-5 p-0 rounded-none hover:bg-[var(--ecode-sidebar-hover)] flex-shrink-0 text-[var(--ecode-text-muted)]"
         >
-          <ChevronLeft className="h-4 w-4" />
+          <ChevronLeft className="h-3.5 w-3.5" />
         </Button>
       )}
       
       <div
         ref={scrollRef}
-        className="flex items-center flex-1 overflow-x-auto scrollbar-none"
+        className="flex items-center flex-1 overflow-x-auto scrollbar-none gap-0"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
         {pinnedTabs.map(renderTab)}
         {pinnedTabs.length > 0 && unpinnedTabs.length > 0 && (
-          <div className="w-px h-[20px] bg-[var(--ecode-border)] mx-1" />
+          <div className="w-px h-[18px] bg-[var(--ecode-border)] mx-0.5" />
         )}
         {unpinnedTabs.map(renderTab)}
       </div>
@@ -347,9 +341,9 @@ export function ReplitTabBar({
           variant="ghost"
           size="sm"
           onClick={scrollRight}
-          className="h-full w-6 p-0 rounded-none hover:bg-[var(--ecode-sidebar-hover)] flex-shrink-0"
+          className="h-full w-5 p-0 rounded-none hover:bg-[var(--ecode-sidebar-hover)] flex-shrink-0 text-[var(--ecode-text-muted)]"
         >
-          <ChevronRight className="h-4 w-4" />
+          <ChevronRight className="h-3.5 w-3.5" />
         </Button>
       )}
       
@@ -358,10 +352,10 @@ export function ReplitTabBar({
           variant="ghost"
           size="sm"
           onClick={onAddTab}
-          className="h-full w-8 p-0 rounded-none hover:bg-[var(--ecode-sidebar-hover)] flex-shrink-0 border-l border-[var(--ecode-border)]"
+          className="h-full w-7 p-0 rounded-none hover:bg-[var(--ecode-sidebar-hover)] flex-shrink-0 text-[var(--ecode-text-muted)]"
           data-testid="tab-add"
         >
-          <Plus className="h-4 w-4" />
+          <Plus className="h-3.5 w-3.5" />
         </Button>
       )}
     </div>
