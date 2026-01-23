@@ -744,23 +744,42 @@
   box-shadow: 0 0 0 2px var(--ecode-accent);
 }
 
-/* Scrollbars E-Code style */
+/* Scrollbars E-Code style - Minimal Replit-like */
 .replit-scrollbar::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 .replit-scrollbar::-webkit-scrollbar-track {
-  background: var(--ecode-surface);
+  background: transparent;
 }
 
 .replit-scrollbar::-webkit-scrollbar-thumb {
   background: var(--ecode-border);
-  border-radius: 0px;
+  border-radius: 3px;
 }
 
 .replit-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: var(--ecode-text-secondary);
+  background: var(--ecode-text-muted);
+}
+
+/* Thin scrollbar variant for panels */
+.replit-scrollbar-thin::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+.replit-scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.replit-scrollbar-thin::-webkit-scrollbar-thumb {
+  background: var(--ecode-border);
+  border-radius: 2px;
+}
+
+.replit-scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: var(--ecode-text-muted);
 }
 
 /* Layout helpers */
