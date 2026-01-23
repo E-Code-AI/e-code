@@ -159,28 +159,28 @@ export function PreviewPanel({
   return (
     <div className="h-full flex flex-col bg-background">
       {/* Toolbar */}
-      <div className="h-10 border-b flex items-center justify-between px-3 gap-2">
-        <div className="flex items-center gap-2 flex-1 min-w-0">
-          <Globe className="h-4 w-4 shrink-0" />
-          <span className="text-[13px] font-medium">Preview</span>
+      <div className="h-9 border-b border-[var(--ecode-border)] flex items-center justify-between px-2.5 gap-2 bg-[var(--ecode-surface)]">
+        <div className="flex items-center gap-1.5 flex-1 min-w-0">
+          <Globe className="h-3.5 w-3.5 shrink-0 text-[var(--ecode-text-muted)]" />
+          <span className="text-xs font-medium text-[var(--ecode-text)]">Preview</span>
           {isPreviewRunning && (
-            <Badge variant="secondary" className="text-[11px] bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">
+            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 bg-[hsl(142,72%,42%)]/10 text-[hsl(142,72%,42%)] border-[hsl(142,72%,42%)]/20">
               Running
             </Badge>
           )}
           {isPreviewStarting && (
-            <Badge variant="secondary" className="text-[11px] bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100">
+            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border-yellow-500/20">
               Starting...
             </Badge>
           )}
           {previewStatus?.frameworkType && (
-            <Badge variant="outline" className="text-[11px]">
+            <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4">
               {previewStatus.frameworkType}
             </Badge>
           )}
         </div>
         
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5">
           {/* Start/Stop buttons */}
           {!isPreviewRunning && !isPreviewStarting && previewStatus?.status !== 'no_runnable_files' && (
             <Button
@@ -189,10 +189,10 @@ export function PreviewPanel({
               onClick={handleStartPreview}
               disabled={startPreviewMutation.isPending}
               data-testid="button-start-preview"
-              className="h-7 px-2 gap-1"
+              className="h-7 px-2 gap-1 rounded-md text-[var(--ecode-text-muted)] hover:text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
             >
               <Play className="h-3.5 w-3.5" />
-              <span className="text-[11px]">Run</span>
+              <span className="text-[10px]">Run</span>
             </Button>
           )}
           
@@ -203,16 +203,16 @@ export function PreviewPanel({
               onClick={handleStopPreview}
               disabled={stopPreviewMutation.isPending}
               data-testid="button-stop-preview"
-              className="h-7 px-2 gap-1"
+              className="h-7 px-2 gap-1 rounded-md text-[var(--ecode-text-muted)] hover:text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
             >
               <Square className="h-3.5 w-3.5" />
-              <span className="text-[11px]">Stop</span>
+              <span className="text-[10px]">Stop</span>
             </Button>
           )}
           
           {canShowPreview && (
             <>
-              <div className="text-[11px] text-muted-foreground truncate max-w-[150px] hidden sm:block">
+              <div className="text-[10px] text-[var(--ecode-text-muted)] truncate max-w-[120px] hidden sm:block">
                 {displayUrl}
               </div>
               <Button
@@ -221,7 +221,7 @@ export function PreviewPanel({
                 onClick={handleRefresh}
                 disabled={isRefreshing}
                 data-testid="button-refresh-preview"
-                className="h-7 w-7 p-0"
+                className="h-7 w-7 p-0 rounded-md text-[var(--ecode-text-muted)] hover:text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
               >
                 <RefreshCw className={cn("h-3.5 w-3.5", isRefreshing && "animate-spin")} />
               </Button>
@@ -230,7 +230,7 @@ export function PreviewPanel({
                 size="sm"
                 onClick={handleOpenInNewTab}
                 data-testid="button-open-preview"
-                className="h-7 w-7 p-0"
+                className="h-7 w-7 p-0 rounded-md text-[var(--ecode-text-muted)] hover:text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
               >
                 <ExternalLink className="h-3.5 w-3.5" />
               </Button>

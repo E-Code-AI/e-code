@@ -33,18 +33,18 @@ export function FileExplorerPanel({
   const selectedFileId = selectedFile ? parseInt(selectedFile.id, 10) : undefined;
   
   return (
-    <div className="h-full flex flex-col border-l">
+    <div className="h-full flex flex-col border-l border-[var(--ecode-border)]">
       {/* Header */}
-      <div className="h-10 border-b flex items-center justify-between px-3">
-        <h3 className="font-semibold text-[13px]">Files</h3>
+      <div className="h-9 border-b border-[var(--ecode-border)] flex items-center justify-between px-2.5 bg-[var(--ecode-surface)]">
+        <h3 className="font-medium text-xs text-[var(--ecode-text-muted)]">Files</h3>
         <Button
           variant="ghost"
           size="sm"
           onClick={onClose}
-          className="h-6 w-6 p-0"
+          className="h-6 w-6 p-0 rounded-md text-[var(--ecode-text-muted)] hover:text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
           data-testid="button-close-explorer"
         >
-          <X className="h-4 w-4" />
+          <X className="h-3.5 w-3.5" />
         </Button>
       </div>
       
