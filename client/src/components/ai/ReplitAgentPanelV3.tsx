@@ -1361,7 +1361,7 @@ export function ReplitAgentPanelV3({
                 ...(chatConversationId && { conversationId: chatConversationId }),
                 provider: selectedProvider,
                 modelId: modelId || undefined,
-                context: messages.slice(-5).map(m => ({
+                context: messages.slice(-20).map(m => ({
                   role: m.role,
                   content: m.content
                 })),
@@ -1805,7 +1805,7 @@ export function ReplitAgentPanelV3({
           provider: selectedProvider,
           modelId: modelId || undefined,
           fastMode: fastMode,
-          context: messages.slice(-5).map(m => ({
+          context: messages.slice(-20).map(m => ({
             role: m.role,
             content: m.content
           })),

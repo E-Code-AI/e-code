@@ -113,9 +113,9 @@ Always generate complete, production-ready code. No placeholders or TODOs.`;
       // Build messages array (no system role messages)
       const messages: any[] = [];
 
-      // Add history if provided
+      // Add history if provided - use last 20 messages for better conversation memory
       if (context?.history) {
-        messages.push(...context.history.slice(-5));
+        messages.push(...context.history.slice(-20));
       }
 
       // Add user message
