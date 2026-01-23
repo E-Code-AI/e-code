@@ -1634,28 +1634,40 @@ function UnifiedIDELayout({
         <ResizablePanelGroup direction="horizontal" className="flex-1" data-testid="desktop-panel-group">
           {!isSidebarCollapsed && (
             <ResizablePanel defaultSize={30} minSize={20} maxSize={40} data-testid="desktop-left-panel">
-              <div className="h-full flex flex-col border-r">
+              <div className="h-full flex flex-col border-r border-[var(--ecode-border)]">
                 <Tabs value={leftPanelTab} onValueChange={setLeftPanelTab} className="h-full flex flex-col">
-                  <TabsList className="w-full justify-start rounded-none border-b">
-                    <TabsTrigger value="agent" className="gap-2" data-testid="tab-agent">
-                      <Brain className="h-4 w-4" />
+                  <TabsList className="w-full h-9 justify-start rounded-none border-b border-[var(--ecode-border)] bg-transparent p-0 px-1">
+                    <TabsTrigger 
+                      value="agent" 
+                      className="gap-1.5 h-7 px-2.5 text-xs font-medium data-[state=active]:bg-[var(--ecode-surface)] data-[state=active]:shadow-none rounded-md" 
+                      data-testid="tab-agent"
+                    >
+                      <Brain className="h-3.5 w-3.5" />
                       Agent
                     </TabsTrigger>
-                    <TabsTrigger value="actions" className="gap-2" data-testid="tab-actions">
-                      <Zap className="h-4 w-4" />
+                    <TabsTrigger 
+                      value="actions" 
+                      className="gap-1.5 h-7 px-2.5 text-xs font-medium data-[state=active]:bg-[var(--ecode-surface)] data-[state=active]:shadow-none rounded-md" 
+                      data-testid="tab-actions"
+                    >
+                      <Zap className="h-3.5 w-3.5" />
                       Actions
                     </TabsTrigger>
-                    <TabsTrigger value="tools" className="gap-2" data-testid="tab-tools">
-                      <Layers className="h-4 w-4" />
+                    <TabsTrigger 
+                      value="tools" 
+                      className="gap-1.5 h-7 px-2.5 text-xs font-medium data-[state=active]:bg-[var(--ecode-surface)] data-[state=active]:shadow-none rounded-md" 
+                      data-testid="tab-tools"
+                    >
+                      <Layers className="h-3.5 w-3.5" />
                       Tools
                     </TabsTrigger>
                     <TabsTrigger 
                       value="deployment" 
-                      className="gap-2" 
+                      className="gap-1.5 h-7 px-2.5 text-xs font-medium data-[state=active]:bg-[var(--ecode-surface)] data-[state=active]:shadow-none rounded-md" 
                       data-testid="tab-deployment"
                       onClick={() => setDeploymentTab('deploy')}
                     >
-                      <Rocket className="h-4 w-4" />
+                      <Rocket className="h-3.5 w-3.5" />
                       Deploy
                     </TabsTrigger>
                   </TabsList>
@@ -1723,16 +1735,16 @@ function UnifiedIDELayout({
               <ResizableHandle withHandle />
               
               <ResizablePanel defaultSize={18} minSize={15} maxSize={30} data-testid="desktop-right-panel">
-                <div className="h-full flex flex-col border-l">
-                  <div className="h-10 border-b flex items-center justify-between px-3">
-                    <h3 className="font-semibold text-[13px]">Files</h3>
+                <div className="h-full flex flex-col border-l border-[var(--ecode-border)]">
+                  <div className="h-9 border-b border-[var(--ecode-border)] flex items-center justify-between px-2.5">
+                    <h3 className="font-medium text-xs text-[var(--ecode-text-muted)]">Files</h3>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => setShowFileExplorer(false)}
-                      className="h-6 w-6 p-0"
+                      className="h-6 w-6 p-0 text-[var(--ecode-text-muted)] hover:text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
                     >
-                      <X className="h-4 w-4" />
+                      <X className="h-3.5 w-3.5" />
                     </Button>
                   </div>
                   <ReplitFileExplorer
