@@ -39,26 +39,26 @@ function ShimmerSkeleton({ className }: { className?: string }) {
 function ConnectionBadge({ isConnecting, isConnected }: { isConnecting: boolean; isConnected: boolean }) {
   if (isConnecting) {
     return (
-      <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-muted border border-border">
-        <Loader2 className="w-[18px] h-[18px] animate-spin text-primary" />
-        <span className="text-[13px] text-muted-foreground">Connecting</span>
+      <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-[var(--ecode-surface)] border border-[var(--ecode-border)]">
+        <Loader2 className="w-3 h-3 animate-spin text-[hsl(142,72%,42%)]" />
+        <span className="text-[10px] text-[var(--ecode-text-muted)]">Connecting</span>
       </div>
     );
   }
   
   if (isConnected) {
     return (
-      <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-muted border border-border">
-        <Wifi className="w-[18px] h-[18px] text-primary" />
-        <span className="text-[13px] text-primary">Connected</span>
+      <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-[var(--ecode-surface)] border border-[var(--ecode-border)]">
+        <Wifi className="w-3 h-3 text-[hsl(142,72%,42%)]" />
+        <span className="text-[10px] text-[hsl(142,72%,42%)]">Connected</span>
       </div>
     );
   }
   
   return (
-    <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-muted border border-border">
-      <WifiOff className="w-[18px] h-[18px] text-muted-foreground" />
-      <span className="text-[13px] text-muted-foreground">Disconnected</span>
+    <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-[var(--ecode-surface)] border border-[var(--ecode-border)]">
+      <WifiOff className="w-3 h-3 text-[var(--ecode-text-muted)]" />
+      <span className="text-[10px] text-[var(--ecode-text-muted)]">Disconnected</span>
     </div>
   );
 }
@@ -347,11 +347,11 @@ export function ReplitTerminalPanel({ projectId, className }: ReplitTerminalPane
       )} 
       data-testid="replit-terminal-panel"
     >
-      <div className="min-h-[48px] p-3 flex items-center justify-between bg-card border-b border-border">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <Terminal className="w-[18px] h-[18px] text-muted-foreground" />
-            <span className="text-[17px] font-medium leading-tight text-foreground">Shell</span>
+      <div className="h-9 px-2.5 flex items-center justify-between bg-[var(--ecode-surface)] border-b border-[var(--ecode-border)]">
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
+            <Terminal className="w-3.5 h-3.5 text-[var(--ecode-text-muted)]" />
+            <span className="text-xs font-medium text-[var(--ecode-text)]">Shell</span>
           </div>
           
           <ConnectionBadge isConnecting={isConnecting} isConnected={isConnected} />
@@ -359,54 +359,54 @@ export function ReplitTerminalPanel({ projectId, className }: ReplitTerminalPane
           <TerminalMetricsIndicator compact data-testid="replit-terminal-panel-metrics" />
         </div>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5">
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            className="h-7 w-7 rounded-md text-[var(--ecode-text-muted)] hover:text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
             onClick={handleCopy}
             data-testid="button-terminal-copy"
           >
-            <Copy className="w-[18px] h-[18px]" />
+            <Copy className="w-3.5 h-3.5" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            className="h-7 w-7 rounded-md text-[var(--ecode-text-muted)] hover:text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
             onClick={handleClear}
             data-testid="button-terminal-clear"
           >
-            <X className="w-[18px] h-[18px]" />
+            <X className="w-3.5 h-3.5" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            className="h-7 w-7 rounded-md text-[var(--ecode-text-muted)] hover:text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
             onClick={handleReset}
             data-testid="button-terminal-reset"
           >
-            <RotateCcw className="w-[18px] h-[18px]" />
+            <RotateCcw className="w-3.5 h-3.5" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            className="h-7 w-7 rounded-md text-[var(--ecode-text-muted)] hover:text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
             onClick={() => setIsFullscreen(!isFullscreen)}
             data-testid="button-terminal-fullscreen"
           >
             {isFullscreen ? (
-              <Minimize2 className="w-[18px] h-[18px]" />
+              <Minimize2 className="w-3.5 h-3.5" />
             ) : (
-              <Maximize2 className="w-[18px] h-[18px]" />
+              <Maximize2 className="w-3.5 h-3.5" />
             )}
           </Button>
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            className="h-7 w-7 rounded-md text-[var(--ecode-text-muted)] hover:text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
             data-testid="button-terminal-new"
           >
-            <Plus className="w-[18px] h-[18px]" />
+            <Plus className="w-3.5 h-3.5" />
           </Button>
         </div>
       </div>
