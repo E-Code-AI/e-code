@@ -47,11 +47,12 @@ interface AnimationMonitorProps {
 
 export function AnimationMonitor({ 
   children, 
-  frameDropThreshold = 5,
+  frameDropThreshold = 10,
   measurementInterval = 5000 
 }: AnimationMonitorProps) {
   const [metrics, setMetrics] = useState<AnimationMetrics>(defaultMetrics);
   const [shouldUseCSS, setShouldUseCSS] = useState(false);
+  const [hasLoggedCSSSwitch, setHasLoggedCSSSwitch] = useState(false);
 
   const reportFrameDrop = useCallback(() => {
     setMetrics(prev => ({
@@ -93,9 +94,12 @@ export function AnimationMonitor({
         isPerformanceGood
       });
 
-      if (droppedFrames > frameDropThreshold) {
+      if (droppedFrames > frameDropThreshold && !shouldUseCSS) {
         setShouldUseCSS(true);
-        console.warn('[AnimationMonitor] High frame drops detected, switching to CSS animations');
+        if (!hasLoggedCSSSwitch && process.env.NODE_ENV === 'development') {
+          setHasLoggedCSSSwitch(true);
+          console.debug('[AnimationMonitor] Optimizing: using CSS animations for better performance');
+        }
       }
 
       frameCount = 0;
@@ -106,7 +110,7 @@ export function AnimationMonitor({
       cancelAnimationFrame(animationId);
       clearInterval(interval);
     };
-  }, [frameDropThreshold, measurementInterval]);
+  }, [frameDropThreshold, measurementInterval, shouldUseCSS, hasLoggedCSSSwitch]);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && 'PerformanceObserver' in window) {

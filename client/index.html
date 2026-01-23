@@ -193,6 +193,21 @@
                                window.location.hostname.includes('picard.replit.dev') ||
                                window.location.hostname.includes('riker.replit.dev');
         
+        // Suppress Vite HMR WebSocket error messages on Replit mobile
+        if (isReplitRemote) {
+          const originalConsoleError = console.error;
+          console.error = function(...args) {
+            const msg = args.length > 0 && typeof args[0] === 'string' ? args[0] : '';
+            // Suppress Vite HMR connection error (expected on mobile/external devices)
+            if (msg.includes('[vite] failed to connect to websocket') ||
+                msg.includes('localhost:5173') && msg.includes('WebSocket')) {
+              // Silently suppress - HMR doesn't work on mobile anyway
+              return;
+            }
+            return originalConsoleError.apply(console, args);
+          };
+        }
+        
         const OriginalWebSocket = window.WebSocket;
         
         // Create a mock WebSocket that fails silently in development

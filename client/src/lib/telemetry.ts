@@ -195,6 +195,20 @@ class FrontendTelemetry {
   private setupConsoleInterceptors(): void {
     const levels: LogLevel[] = ['error', 'warn', 'info', 'debug'];
     
+    // Patterns to suppress from telemetry (dev-only noise)
+    const suppressPatterns = [
+      '[vite] failed to connect to websocket',
+      'localhost:5173',
+      'localhost:24678',
+      '[AnimationMonitor] Optimizing',
+      '[AnimationMonitor] High frame drops',
+      'WebSocket handshake',
+    ];
+    
+    const shouldSuppress = (message: string): boolean => {
+      return suppressPatterns.some(pattern => message.includes(pattern));
+    };
+    
     levels.forEach((level) => {
       this.originalConsole[level] = console[level];
       console[level] = (...args: unknown[]) => {
@@ -204,6 +218,12 @@ class FrontendTelemetry {
           const message = args.map(arg => 
             typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
           ).join(' ');
+          
+          // Skip dev-only noise from telemetry
+          if (shouldSuppress(message)) {
+            return;
+          }
+          
           this.log(level, `Console ${level}: ${message}`);
         }
       };
