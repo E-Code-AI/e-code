@@ -395,11 +395,17 @@ router.post('/conversation/:id/mode', async (req, res) => {
 });
 
 // GET /api/agent/conversation/:id/messages - Load existing messages for a conversation
+// Supports pagination with ?limit=N&offset=N query params (Replit-style "Show Previous Messages")
 router.get('/conversation/:id/messages', async (req, res) => {
   try {
     const conversationIdStr = req.params.id;
     const conversationId = parseInt(conversationIdStr, 10);
     const userId = req.user!.id;
+    
+    // Pagination params - default to loading last 20 messages like Replit
+    const limit = parseInt(req.query.limit as string, 10) || 20;
+    const offset = parseInt(req.query.offset as string, 10) || 0;
+    const loadAll = req.query.all === 'true'; // ?all=true bypasses pagination for initial full load
 
     if (isNaN(conversationId)) {
       return res.status(400).json({
@@ -408,7 +414,7 @@ router.get('/conversation/:id/messages', async (req, res) => {
     }
 
     const { aiConversations, agentMessages } = await import('@shared/schema');
-    const { eq, and, desc } = await import('drizzle-orm');
+    const { eq, and, desc, asc, count } = await import('drizzle-orm');
 
     // First get the conversation to find its projectId
     const [conversation] = await db
@@ -428,13 +434,38 @@ router.get('/conversation/:id/messages', async (req, res) => {
 
     const projectId = conversation.projectId;
 
-    // Helper function to get messages
+    // Helper function to get messages with pagination support
     const getMessages = async () => {
-      const dbMessages = await db
-        .select()
+      // Get total count first
+      const [countResult] = await db
+        .select({ count: count() })
         .from(agentMessages)
-        .where(eq(agentMessages.conversationId, conversationId))
-        .orderBy(agentMessages.createdAt);
+        .where(eq(agentMessages.conversationId, conversationId));
+      
+      const totalCount = countResult?.count || 0;
+      
+      // Get messages with pagination (Replit-style: load most recent N messages)
+      // When user requests more, they increase the limit to get more older messages
+      let dbMessages;
+      if (loadAll || totalCount <= limit) {
+        // Load all messages if requested or if count is small
+        dbMessages = await db
+          .select()
+          .from(agentMessages)
+          .where(eq(agentMessages.conversationId, conversationId))
+          .orderBy(asc(agentMessages.createdAt));
+      } else {
+        // Return the last N messages (skip oldest ones)
+        // Frontend increases limit incrementally to load more history
+        const skipCount = Math.max(0, totalCount - limit);
+        dbMessages = await db
+          .select()
+          .from(agentMessages)
+          .where(eq(agentMessages.conversationId, conversationId))
+          .orderBy(asc(agentMessages.createdAt))
+          .offset(skipCount)
+          .limit(limit);
+      }
 
       if (dbMessages.length > 0) {
         const messages = dbMessages.map(msg => ({
@@ -453,15 +484,22 @@ router.get('/conversation/:id/messages', async (req, res) => {
           messages,
           source: 'agentMessages',
           count: messages.length,
+          totalCount,
+          hasMore: totalCount > messages.length,
         };
       }
 
       if (conversation.messages && Array.isArray(conversation.messages) && conversation.messages.length > 0) {
+        const allMsgs = conversation.messages;
+        const total = allMsgs.length;
+        const paginatedMsgs = loadAll ? allMsgs : allMsgs.slice(Math.max(0, total - limit - offset));
         return {
           conversationId,
-          messages: conversation.messages,
+          messages: paginatedMsgs,
           source: 'aiConversations',
-          count: conversation.messages.length,
+          count: paginatedMsgs.length,
+          totalCount: total,
+          hasMore: total > paginatedMsgs.length,
         };
       }
 
@@ -470,6 +508,8 @@ router.get('/conversation/:id/messages', async (req, res) => {
         messages: [],
         source: 'none',
         count: 0,
+        totalCount: 0,
+        hasMore: false,
       };
     };
 

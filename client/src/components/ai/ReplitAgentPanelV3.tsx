@@ -612,6 +612,11 @@ export function ReplitAgentPanelV3({
   // ✅ Memory Bank works 100% transparently - no UI needed
   // Context auto-injected into AI prompts on server side
   
+  // Replit-style "Show Previous Messages" feature
+  const [hasMoreMessages, setHasMoreMessages] = useState(false);
+  const [totalMessageCount, setTotalMessageCount] = useState(0);
+  const [isLoadingPrevious, setIsLoadingPrevious] = useState(false);
+  
   // Derive validation step from autonomousBuildStore current task (Task 6)
   useEffect(() => {
     const currentTask = autonomousBuildStore.currentTask?.toLowerCase() || '';
@@ -814,8 +819,51 @@ export function ReplitAgentPanelV3({
       setStoreMessages(conversationId, fetchedMessages);
       setLastSyncedAt(conversationId, Date.now());
       initialSyncDoneRef.current = conversationId;
+      
+      // Track "Show Previous Messages" state from backend response
+      if (backendMessages.hasMore !== undefined) {
+        setHasMoreMessages(backendMessages.hasMore);
+      }
+      if (backendMessages.totalCount !== undefined) {
+        setTotalMessageCount(backendMessages.totalCount);
+      }
     }
   }, [backendMessages, conversationId, setStoreMessages, setLastSyncedAt]);
+  
+  // Handler for "Show Previous Messages" button (Replit-style incremental loading)
+  const handleLoadPreviousMessages = useCallback(async () => {
+    if (!conversationId || isLoadingPrevious) return;
+    
+    setIsLoadingPrevious(true);
+    try {
+      // Calculate how many more messages to load (20 at a time)
+      const currentCount = messages.length;
+      const batchSize = 20;
+      const newLimit = currentCount + batchSize;
+      
+      // Load incrementally by increasing the limit
+      const response = await fetch(`/api/agent/conversation/${conversationId}/messages?limit=${newLimit}`, {
+        credentials: 'include',
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.messages && Array.isArray(data.messages)) {
+          // Prepend older messages to the existing list (backend returns chronologically ordered)
+          setStoreMessages(conversationId, data.messages as Message[]);
+          
+          // Update hasMore based on whether there are still more messages
+          const remainingCount = (data.totalCount || 0) - data.messages.length;
+          setHasMoreMessages(remainingCount > 0);
+          setTotalMessageCount(data.totalCount || data.messages.length);
+        }
+      }
+    } catch (error) {
+      console.error('[LoadPrevious] Failed to load previous messages:', error);
+    } finally {
+      setIsLoadingPrevious(false);
+    }
+  }, [conversationId, isLoadingPrevious, messages.length, setStoreMessages]);
 
   // Track context injection to prevent duplicates
   const contextInjectedRef = useRef<string | null>(null);
@@ -2474,6 +2522,31 @@ export function ReplitAgentPanelV3({
               />
             )}
           </LazyAnimatePresence>
+          
+          {/* Replit-style "Show Previous Messages" button */}
+          {hasMoreMessages && totalMessageCount > messages.length && (
+            <div className="flex justify-center py-2 mb-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleLoadPreviousMessages}
+                disabled={isLoadingPrevious}
+                className="text-xs text-muted-foreground hover:text-foreground gap-1.5"
+              >
+                {isLoadingPrevious ? (
+                  <>
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    Loading...
+                  </>
+                ) : (
+                  <>
+                    <History className="h-3 w-3" />
+                    Show Previous Messages ({totalMessageCount - messages.length} more)
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
           
           {/* Conditionally use virtualized list for long conversations (>20 messages) */}
           {useVirtualization ? (
