@@ -1,7 +1,7 @@
 # Project Brief
 
 ## Overview
-TabDef-pXaQ
+Created by automated test
 
 ## Core Requirements
 [To be extracted from requirements]
