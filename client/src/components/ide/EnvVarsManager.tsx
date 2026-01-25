@@ -161,25 +161,26 @@ export function EnvVarsManager({ projectId }: EnvVarsManagerProps) {
   const variables = data?.variables || [];
 
   return (
-    <div className="flex flex-col h-full bg-background p-4" data-testid="env-vars-manager">
+    <div className="flex flex-col h-full bg-[var(--ecode-surface)]" data-testid="env-vars-manager">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-[15px] font-semibold">Environment Variables</h3>
-        <div className="flex gap-2">
+      <div className="h-9 border-b border-[var(--ecode-border)] flex items-center justify-between px-2.5 bg-[var(--ecode-surface)]">
+        <h3 className="text-xs font-medium text-[var(--ecode-text-muted)]">Environment Variables</h3>
+        <div className="flex gap-1">
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
             onClick={handleExport}
+            className="h-6 px-2 text-[10px] text-[var(--ecode-text-muted)] hover:text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
             data-testid="button-export-env"
           >
-            <Download className="h-4 w-4 mr-2" />
-            Export .env
+            <Download className="h-3 w-3 mr-1" />
+            Export
           </Button>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
-              <Button size="sm" data-testid="button-add-env-var">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Variable
+              <Button size="sm" className="h-6 px-2 text-[10px]" data-testid="button-add-env-var">
+                <Plus className="h-3 w-3 mr-1" />
+                Add
               </Button>
             </DialogTrigger>
             <DialogContent>

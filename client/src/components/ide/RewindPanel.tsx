@@ -176,25 +176,25 @@ export function RewindPanel({ projectId, onRestore, className }: RewindPanelProp
   };
 
   return (
-    <div className={cn("h-full flex flex-col bg-background", className)}>
-      <div className="h-10 border-b flex items-center justify-between px-3">
-        <div className="flex items-center gap-2">
-          <History className="h-4 w-4" />
-          <span className="text-[13px] font-medium">Rewind</span>
-          <Badge variant="secondary" className="text-[11px]">
-            {checkpoints?.length || 0} checkpoints
+    <div className={cn("h-full flex flex-col bg-[var(--ecode-surface)]", className)}>
+      <div className="h-9 border-b border-[var(--ecode-border)] flex items-center justify-between px-2.5 bg-[var(--ecode-surface)]">
+        <div className="flex items-center gap-1.5">
+          <History className="h-3.5 w-3.5 text-[var(--ecode-text-muted)]" />
+          <span className="text-xs font-medium text-[var(--ecode-text-muted)]">Rewind</span>
+          <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
+            {checkpoints?.length || 0}
           </Badge>
         </div>
         <Button
-          variant="outline"
+          variant="ghost"
           size="sm"
           onClick={() => createCheckpointMutation.mutate('Manual checkpoint')}
           disabled={createCheckpointMutation.isPending}
-          className="h-7 text-[11px]"
+          className="h-6 px-2 text-[10px] text-[var(--ecode-text-muted)] hover:text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
           data-testid="create-checkpoint"
         >
-          <Save className="h-3.5 w-3.5 mr-1" />
-          Save Now
+          <Save className="h-3 w-3 mr-1" />
+          Save
         </Button>
       </div>
 

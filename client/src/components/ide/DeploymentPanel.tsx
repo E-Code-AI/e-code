@@ -128,10 +128,10 @@ export function DeploymentPanel({ projectId, className }: DeploymentPanelProps) 
   };
 
   return (
-    <Card className={cn('h-full flex flex-col', className)}>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base font-medium flex items-center gap-2">
-          <Rocket className="h-4 w-4" />
+    <Card className={cn('h-full flex flex-col bg-[var(--ecode-surface)] border-[var(--ecode-border)]', className)}>
+      <CardHeader className="h-9 flex-none flex items-center justify-between px-2.5 py-0 border-b border-[var(--ecode-border)]">
+        <CardTitle className="text-xs font-medium text-[var(--ecode-text-muted)] flex items-center gap-1.5">
+          <Rocket className="h-3.5 w-3.5" />
           Deployments
         </CardTitle>
       </CardHeader>
