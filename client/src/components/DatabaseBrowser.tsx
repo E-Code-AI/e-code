@@ -163,15 +163,15 @@ export function DatabaseBrowser({ projectId }: { projectId: string }) {
 
       <div className="flex-1 flex">
         {/* Tables Sidebar */}
-        <div className="w-64 border-r bg-muted/10">
-          <div className="p-4 border-b">
+        <div className="w-64 border-r border-[var(--ecode-border)] bg-[var(--ecode-surface)]">
+          <div className="px-2.5 py-1.5 border-b border-[var(--ecode-border)] shrink-0">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-[var(--ecode-text-muted)]" />
               <Input
-                placeholder="Search tables..."
+                placeholder="Search..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9 h-9"
+                className="pl-7 h-7 text-xs bg-[var(--ecode-sidebar-hover)] border-[var(--ecode-border)]"
               />
             </div>
           </div>
