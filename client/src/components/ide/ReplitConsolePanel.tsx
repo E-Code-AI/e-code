@@ -336,8 +336,8 @@ export function ReplitConsolePanel({
   const hasAnyRunning = isRunning || runningWorkflowIds.size > 0;
 
   return (
-    <div className={cn("flex flex-col h-full bg-background", className)} data-testid="replit-console-panel">
-      <div className="h-9 flex items-center justify-between px-2 border-b bg-card">
+    <div className={cn("flex flex-col h-full bg-[var(--ecode-surface)]", className)} data-testid="replit-console-panel">
+      <div className="h-9 flex items-center justify-between px-2.5 border-b border-[var(--ecode-border)] bg-[var(--ecode-surface)]">
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-muted border border-border">
             <Terminal className="w-4 h-4 text-primary" />
@@ -400,7 +400,7 @@ export function ReplitConsolePanel({
         </div>
       </div>
 
-      <div className="h-9 flex items-center gap-1 sm:gap-2 px-1 sm:px-2 border-b bg-muted/30 overflow-x-auto">
+      <div className="h-9 flex items-center gap-1 sm:gap-2 px-1 sm:px-2.5 border-b border-[var(--ecode-border)] bg-[var(--ecode-surface)] overflow-x-auto">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm" className="h-7 text-[11px] gap-1 shrink-0" data-testid="workflows-dropdown">

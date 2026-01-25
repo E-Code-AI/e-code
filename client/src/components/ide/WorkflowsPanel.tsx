@@ -319,11 +319,11 @@ export function WorkflowsPanel({ projectId, onRunWorkflow, className }: Workflow
   );
 
   return (
-    <div className={cn("h-full flex flex-col bg-background", className)}>
-      <div className="h-10 border-b flex items-center justify-between px-3">
-        <div className="flex items-center gap-2">
-          <Zap className="h-4 w-4" />
-          <span className="text-[13px] font-medium">Workflows</span>
+    <div className={cn("h-full flex flex-col bg-[var(--ecode-surface)]", className)}>
+      <div className="h-9 border-b border-[var(--ecode-border)] flex items-center justify-between px-2.5 bg-[var(--ecode-surface)]">
+        <div className="flex items-center gap-1.5">
+          <Zap className="h-3.5 w-3.5 text-[var(--ecode-text-muted)]" />
+          <span className="text-xs font-medium text-[var(--ecode-text-muted)]">Workflows</span>
           <Badge variant="secondary" className="text-[11px]">
             {allWorkflows.length}
           </Badge>

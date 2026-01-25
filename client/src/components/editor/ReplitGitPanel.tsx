@@ -424,10 +424,10 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
 
   if (viewMode === 'settings') {
     return (
-      <div className={cn("flex flex-col h-full bg-background", className)} data-testid="git-settings">
+      <div className={cn("flex flex-col h-full bg-[var(--ecode-surface)]", className)} data-testid="git-settings">
         <div className={cn(
-          "flex items-center gap-3 border-b border-border",
-          touchMode ? "px-4 min-h-[56px]" : "px-3 min-h-[48px]"
+          "flex items-center gap-2 border-b border-[var(--ecode-border)] bg-[var(--ecode-surface)]",
+          touchMode ? "px-4 min-h-[56px]" : "px-2.5 h-9"
         )}>
           <button
             onClick={() => setViewMode('main')}
@@ -608,10 +608,10 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
   }
 
   return (
-    <div className={cn("flex flex-col h-full bg-background relative", className)} data-testid="git-panel">
+    <div className={cn("flex flex-col h-full bg-[var(--ecode-surface)] relative", className)} data-testid="git-panel">
       <div className={cn(
-        "flex items-center justify-between border-b border-border",
-        touchMode ? "px-4 min-h-[56px]" : "px-3 min-h-[48px]"
+        "flex items-center justify-between border-b border-[var(--ecode-border)] bg-[var(--ecode-surface)]",
+        touchMode ? "px-4 min-h-[56px]" : "px-2.5 h-9"
       )}>
         <button
           onClick={() => setShowBranchDropdown(!showBranchDropdown)}

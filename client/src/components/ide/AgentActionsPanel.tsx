@@ -96,12 +96,9 @@ export function AgentActionsPanel({ projectId }: AgentActionsPanelProps) {
   const completedActions = actions.filter(a => a.status !== 'pending');
   
   return (
-    <div className="h-full flex flex-col bg-background">
-      <div className="p-4 border-b">
-        <h3 className="font-semibold">Agent Actions</h3>
-        <p className="text-[11px] text-muted-foreground mt-1">
-          Review and approve AI-generated changes
-        </p>
+    <div className="h-full flex flex-col bg-[var(--ecode-surface)]">
+      <div className="h-9 border-b border-[var(--ecode-border)] flex items-center px-2.5 bg-[var(--ecode-surface)]">
+        <h3 className="text-xs font-medium text-[var(--ecode-text-muted)]">Agent Actions</h3>
       </div>
       
       <ScrollArea className="flex-1 p-4">
