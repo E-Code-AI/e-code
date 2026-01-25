@@ -613,33 +613,33 @@ export function ReplitMultiplayers({
   };
 
   return (
-    <div className={cn("h-full flex flex-col bg-background", className)} data-testid="multiplayers-panel">
-      <div className="p-4 border-b border-border">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
-            <Users className="h-4 w-4" />
-            Multiplayers
-          </h3>
-          <div className="flex items-center gap-2">
-            {isConnected ? (
-              <Badge variant="outline" className="gap-1 text-green-600 border-green-600/50">
-                <Wifi className="h-3 w-3" />
-                Live
-              </Badge>
-            ) : (
-              <Badge variant="outline" className="gap-1 text-gray-500">
-                <WifiOff className="h-3 w-3" />
-                Offline
-              </Badge>
-            )}
-            <Badge variant="secondary" className="gap-1">
-              {onlineCount} online
-            </Badge>
-          </div>
+    <div className={cn("h-full flex flex-col bg-[var(--ecode-surface)]", className)} data-testid="multiplayers-panel">
+      <div className="h-9 px-2.5 flex items-center justify-between border-b border-[var(--ecode-border)] shrink-0">
+        <div className="flex items-center gap-1.5">
+          <Users className="w-3.5 h-3.5 text-[var(--ecode-text-muted)]" />
+          <span className="text-xs font-medium text-[var(--ecode-text)]">Multiplayers</span>
         </div>
-        
-        <p className="text-[13px] text-muted-foreground mb-3">
-          Add people by username or email
+        <div className="flex items-center gap-1">
+          {isConnected ? (
+            <Badge className="h-4 px-1 text-[9px] gap-0.5 bg-[hsl(142,72%,42%)]/10 text-[hsl(142,72%,42%)] rounded">
+              <Wifi className="w-2.5 h-2.5" />
+              Live
+            </Badge>
+          ) : (
+            <Badge className="h-4 px-1 text-[9px] gap-0.5 bg-[var(--ecode-sidebar-hover)] text-[var(--ecode-text-muted)] rounded">
+              <WifiOff className="w-2.5 h-2.5" />
+              Off
+            </Badge>
+          )}
+          <Badge className="h-4 px-1 text-[9px] bg-[var(--ecode-sidebar-hover)] text-[var(--ecode-text-muted)] rounded">
+            {onlineCount}
+          </Badge>
+        </div>
+      </div>
+      
+      <div className="px-2.5 py-1.5 border-b border-[var(--ecode-border)] shrink-0">
+        <p className="text-[10px] text-[var(--ecode-text-muted)] mb-1.5">
+          Add by username or email
         </p>
         
         <div className="space-y-2">

@@ -478,79 +478,80 @@ export function ReplitFileExplorer({
   return (
     <TooltipProvider>
       <div className="flex flex-col h-full bg-[var(--ecode-sidebar-bg)]" data-testid="file-explorer">
-        {/* Header */}
-        <div className="p-3 border-b border-[var(--ecode-border)]">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-[13px] font-medium text-[var(--ecode-text)]">Files</h3>
-            <div className="flex items-center space-x-1">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6"
-                    onClick={() => setNewItemDialog({ parentId: null, type: "file", name: "" })}
-                    data-testid="button-new-file"
-                  >
-                    <FilePlus className="h-3 w-3" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>New File</TooltipContent>
-              </Tooltip>
-              
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6"
-                    onClick={() => setNewItemDialog({ parentId: null, type: "folder", name: "" })}
-                    data-testid="button-new-folder"
-                  >
-                    <FolderPlus className="h-3 w-3" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>New Folder</TooltipContent>
-              </Tooltip>
-              
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6"
-                    onClick={() => fileInputRef.current?.click()}
-                    data-testid="button-upload-files"
-                  >
-                    <Upload className="h-3 w-3" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Upload Files</TooltipContent>
-              </Tooltip>
-              
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6"
-                    onClick={() => setShowHidden(!showHidden)}
-                    data-testid="button-toggle-hidden"
-                  >
-                    {showHidden ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>{showHidden ? "Hide" : "Show"} Hidden Files</TooltipContent>
-              </Tooltip>
-              
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6"
-                    onClick={() => refetch()}
-                    data-testid="button-refresh-files"
+        <div className="h-9 px-2.5 flex items-center justify-between border-b border-[var(--ecode-border)] shrink-0">
+          <div className="flex items-center gap-1.5">
+            <Folder className="w-3.5 h-3.5 text-[var(--ecode-text-muted)]" />
+            <span className="text-xs font-medium text-[var(--ecode-text)]">Files</span>
+          </div>
+          <div className="flex items-center gap-0.5">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 rounded-md text-[var(--ecode-text-muted)] hover:text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
+                  onClick={() => setNewItemDialog({ parentId: null, type: "file", name: "" })}
+                  data-testid="button-new-file"
+                >
+                  <FilePlus className="w-3.5 h-3.5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>New File</TooltipContent>
+            </Tooltip>
+            
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 rounded-md text-[var(--ecode-text-muted)] hover:text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
+                  onClick={() => setNewItemDialog({ parentId: null, type: "folder", name: "" })}
+                  data-testid="button-new-folder"
+                >
+                  <FolderPlus className="w-3.5 h-3.5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>New Folder</TooltipContent>
+            </Tooltip>
+            
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 rounded-md text-[var(--ecode-text-muted)] hover:text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
+                  onClick={() => fileInputRef.current?.click()}
+                  data-testid="button-upload-files"
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Upload Files</TooltipContent>
+            </Tooltip>
+            
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 rounded-md text-[var(--ecode-text-muted)] hover:text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
+                  onClick={() => setShowHidden(!showHidden)}
+                  data-testid="button-toggle-hidden"
+                >
+                  {showHidden ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{showHidden ? "Hide" : "Show"} Hidden Files</TooltipContent>
+            </Tooltip>
+            
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 rounded-md text-[var(--ecode-text-muted)] hover:text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
+                  onClick={() => refetch()}
+                  data-testid="button-refresh-files"
                   >
                     <RefreshCw className="h-3 w-3" />
                   </Button>
@@ -559,8 +560,9 @@ export function ReplitFileExplorer({
               </Tooltip>
             </div>
           </div>
-          
-          {/* Search */}
+        
+        {/* Search */}
+        <div className="px-2.5 py-1.5 shrink-0">
           <div className="relative">
             <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3 w-3 text-[var(--ecode-text-secondary)]" />
             <Input
