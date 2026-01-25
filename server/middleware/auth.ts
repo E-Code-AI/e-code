@@ -37,3 +37,38 @@ export const optionalAuth = (req: Request, res: Response, next: NextFunction) =>
   // Just pass through - Passport middleware already populates req.user if session exists
   next();
 };
+
+/**
+ * SECURITY FIX: Role-based admin check
+ * Uses the 'role' field in the users table instead of weak email string matching
+ * 
+ * Allowed admin roles: 'admin', 'superadmin', 'owner'
+ */
+export const ensureAdmin = (req: Request, res: Response, next: NextFunction) => {
+  // First check authentication
+  const isAuthenticated = typeof req.isAuthenticated === 'function' && req.isAuthenticated();
+  const hasUser = !!req.user;
+  
+  if (!isAuthenticated || !hasUser) {
+    return res.status(401).json({ 
+      error: 'Authentication required',
+      code: 'AUTH_REQUIRED'
+    });
+  }
+  
+  // Check for admin role using database field (not email string matching)
+  const user = req.user as { id: number; role?: string; email?: string };
+  const adminRoles = ['admin', 'superadmin', 'owner'];
+  
+  if (user.role && adminRoles.includes(user.role.toLowerCase())) {
+    return next();
+  }
+  
+  // Denied - log for security audit
+  console.warn(`[SECURITY] Admin access denied for user ${user.id} with role "${user.role || 'undefined'}"`);
+  
+  res.status(403).json({ 
+    error: 'Admin access required',
+    code: 'ADMIN_REQUIRED'
+  });
+};

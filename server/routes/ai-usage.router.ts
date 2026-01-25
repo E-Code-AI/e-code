@@ -8,6 +8,7 @@ import { db } from '../db';
 import { aiUsageMetering, users } from '@shared/schema';
 import { eq, and, gte, lte, desc, sql } from 'drizzle-orm';
 import { createLogger } from '../utils/logger';
+import { ensureAdmin } from '../middleware/auth';
 
 const logger = createLogger('ai-usage-router');
 const router = Router();
@@ -275,12 +276,10 @@ router.get('/history', async (req, res) => {
 /**
  * GET /api/admin/ai-usage/all
  * Admin endpoint: Get all AI usage across platform
+ * SECURITY FIX: Uses role-based auth instead of email string matching
  */
-router.get('/admin/all', async (req, res) => {
+router.get('/admin/all', ensureAdmin, async (req, res) => {
   try {
-    if (!req.user || !req.user.email?.includes('admin')) {
-      return res.status(403).json({ error: 'Admin access required' });
-    }
 
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 100;
@@ -339,12 +338,10 @@ router.get('/admin/all', async (req, res) => {
 /**
  * GET /api/admin/ai-usage/stats
  * Admin endpoint: Get platform-wide AI usage statistics
+ * SECURITY FIX: Uses role-based auth instead of email string matching
  */
-router.get('/admin/stats', async (req, res) => {
+router.get('/admin/stats', ensureAdmin, async (req, res) => {
   try {
-    if (!req.user || !req.user.email?.includes('admin')) {
-      return res.status(403).json({ error: 'Admin access required' });
-    }
 
     const period = req.query.period as string || 'month'; // month, week, day
     const now = new Date();

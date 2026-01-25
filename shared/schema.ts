@@ -351,7 +351,11 @@ export const apiUsage = pgTable("api_usage", {
   statusCode: integer("status_code").notNull(),
   responseTime: integer("response_time"),
   timestamp: timestamp("timestamp").defaultNow(),
-}, (table) => [index("api_usage_key_idx").on(table.apiKeyId), index("api_usage_timestamp_idx").on(table.timestamp)]);
+}, (table) => [
+  index("api_usage_key_idx").on(table.apiKeyId), 
+  index("api_usage_timestamp_idx").on(table.timestamp),
+  index("api_usage_endpoint_idx").on(table.endpoint), // Performance: Filter by endpoint
+]);
 
 // Security logs table for audit logging
 export const securityLogs = pgTable("security_logs", {
@@ -564,7 +568,9 @@ export const userCredits = pgTable("user_credits", {
   extraCredits: decimal("extra_credits", { precision: 10, scale: 2 }).notNull().default('0.00'),
   resetDate: timestamp("reset_date").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => [
+  index("user_credits_reset_date_idx").on(table.resetDate), // Performance: Credit reset queries
+]);
 
 export const budgetLimits = pgTable("budget_limits", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
@@ -2148,7 +2154,10 @@ export const performanceMetrics = pgTable("performance_metrics", {
   tags: jsonb("tags"),
   context: jsonb("context"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+}, (table) => [
+  index("performance_metrics_deployment_timestamp_idx").on(table.deploymentId, table.timestamp), // Performance: Time-series queries
+  index("performance_metrics_type_idx").on(table.type),
+]);
 
 export const errorLogs = pgTable("error_logs", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
@@ -2166,7 +2175,11 @@ export const errorLogs = pgTable("error_logs", {
   resolvedAt: timestamp("resolved_at"),
   resolvedBy: integer("resolved_by").references(() => users.id, { onDelete: 'set null' }),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+}, (table) => [
+  index("error_logs_severity_idx").on(table.severity), // Performance: Filter by severity
+  index("error_logs_severity_resolved_idx").on(table.severity, table.resolved), // Performance: Unresolved errors by severity
+  index("error_logs_timestamp_idx").on(table.timestamp),
+]);
 
 // Collaborative Editing Sessions
 export const collaborationSessions = pgTable("collaboration_sessions", {
