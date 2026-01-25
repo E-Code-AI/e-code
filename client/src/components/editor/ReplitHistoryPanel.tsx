@@ -579,13 +579,13 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
         </div>
 
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'checkpoints' | 'files')} className="w-full">
-          <TabsList className="w-full grid grid-cols-2 h-10 sm:h-9 bg-gray-100 dark:bg-[#1c2333]">
-            <TabsTrigger value="files" className="text-[11px] data-[state=active]:bg-white dark:data-[state=active]:bg-[#242b3d] min-h-[44px] sm:min-h-0 touch-manipulation">
-              <FileText className="w-3.5 h-3.5 mr-1 sm:mr-1.5" />
+          <TabsList className="w-full grid grid-cols-2 h-9 bg-[var(--ecode-surface)] border-b border-[var(--ecode-border)] rounded-none overflow-x-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+            <TabsTrigger value="files" className="text-xs gap-1 whitespace-nowrap data-[state=active]:bg-[hsl(142,72%,42%)]/10 data-[state=active]:text-[hsl(142,72%,42%)] min-h-[44px] sm:min-h-0 touch-manipulation">
+              <FileText className="w-3.5 h-3.5" />
               Files
             </TabsTrigger>
-            <TabsTrigger value="checkpoints" className="text-[11px] data-[state=active]:bg-white dark:data-[state=active]:bg-[#242b3d] min-h-[44px] sm:min-h-0 touch-manipulation">
-              <GitCommit className="w-3.5 h-3.5 mr-1 sm:mr-1.5" />
+            <TabsTrigger value="checkpoints" className="text-xs gap-1 whitespace-nowrap data-[state=active]:bg-[hsl(142,72%,42%)]/10 data-[state=active]:text-[hsl(142,72%,42%)] min-h-[44px] sm:min-h-0 touch-manipulation">
+              <GitCommit className="w-3.5 h-3.5" />
               Checkpoints
             </TabsTrigger>
           </TabsList>

@@ -657,17 +657,17 @@ export function ReplitDeploymentPanel({
           onValueChange={setActiveTab} 
           className="h-full flex flex-col"
         >
-          <TabsList className="mx-4 grid grid-cols-3 shrink-0" data-testid="deployment-tabs">
-            <TabsTrigger value="deploy" data-testid="tab-deploy">
-              <Rocket className="h-4 w-4 mr-1.5 hidden sm:inline" />
+          <TabsList className="h-9 mx-2.5 flex overflow-x-auto bg-[var(--ecode-surface)] border-b border-[var(--ecode-border)] rounded-none shrink-0" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }} data-testid="deployment-tabs">
+            <TabsTrigger value="deploy" className="flex-1 text-xs gap-1 whitespace-nowrap data-[state=active]:border-b-2 data-[state=active]:border-[hsl(142,72%,42%)]" data-testid="tab-deploy">
+              <Rocket className="h-3.5 w-3.5 hidden sm:inline" />
               Deploy
             </TabsTrigger>
-            <TabsTrigger value="logs" data-testid="tab-logs">
-              <Terminal className="h-4 w-4 mr-1.5 hidden sm:inline" />
+            <TabsTrigger value="logs" className="flex-1 text-xs gap-1 whitespace-nowrap data-[state=active]:border-b-2 data-[state=active]:border-[hsl(142,72%,42%)]" data-testid="tab-logs">
+              <Terminal className="h-3.5 w-3.5 hidden sm:inline" />
               Logs
             </TabsTrigger>
-            <TabsTrigger value="analytics" data-testid="tab-analytics">
-              <BarChart3 className="h-4 w-4 mr-1.5 hidden sm:inline" />
+            <TabsTrigger value="analytics" className="flex-1 text-xs gap-1 whitespace-nowrap data-[state=active]:border-b-2 data-[state=active]:border-[hsl(142,72%,42%)]" data-testid="tab-analytics">
+              <BarChart3 className="h-3.5 w-3.5 hidden sm:inline" />
               Analytics
             </TabsTrigger>
           </TabsList>

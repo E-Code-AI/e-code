@@ -333,17 +333,17 @@ export function DebuggerPanel({ projectId, onFileSelect }: DebuggerPanelProps) {
 
       {/* Debug Info */}
       <Tabs defaultValue="breakpoints" className="flex-1 flex flex-col">
-        <TabsList className="w-full justify-start border-b rounded-none p-0 h-auto">
-          <TabsTrigger value="breakpoints" className="rounded-none" data-testid="tab-breakpoints">
+        <TabsList className="h-9 w-full justify-start border-b border-[var(--ecode-border)] bg-[var(--ecode-surface)] rounded-none p-0 overflow-x-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+          <TabsTrigger value="breakpoints" className="h-full rounded-none text-xs px-2.5 whitespace-nowrap data-[state=active]:border-b-2 data-[state=active]:border-[hsl(142,72%,42%)]" data-testid="tab-breakpoints">
             Breakpoints {breakpoints.length > 0 && `(${breakpoints.length})`}
           </TabsTrigger>
-          <TabsTrigger value="variables" className="rounded-none" data-testid="tab-variables">
+          <TabsTrigger value="variables" className="h-full rounded-none text-xs px-2.5 whitespace-nowrap data-[state=active]:border-b-2 data-[state=active]:border-[hsl(142,72%,42%)]" data-testid="tab-variables">
             Variables
           </TabsTrigger>
-          <TabsTrigger value="call-stack" className="rounded-none" data-testid="tab-call-stack">
+          <TabsTrigger value="call-stack" className="h-full rounded-none text-xs px-2.5 whitespace-nowrap data-[state=active]:border-b-2 data-[state=active]:border-[hsl(142,72%,42%)]" data-testid="tab-call-stack">
             Call Stack
           </TabsTrigger>
-          <TabsTrigger value="watch" className="rounded-none" data-testid="tab-watch">
+          <TabsTrigger value="watch" className="h-full rounded-none text-xs px-2.5 whitespace-nowrap data-[state=active]:border-b-2 data-[state=active]:border-[hsl(142,72%,42%)]" data-testid="tab-watch">
             Watch
           </TabsTrigger>
         </TabsList>

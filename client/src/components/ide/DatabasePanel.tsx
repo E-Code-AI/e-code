@@ -1246,45 +1246,45 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
         </Button>
       </div>
 
-      <div className="border-b border-border">
-        <div className="flex px-4">
+      <div className="h-9 border-b border-[var(--ecode-border)] bg-[var(--ecode-surface)]">
+        <div className="flex px-2.5 overflow-x-auto scrollbar-none h-full items-center" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
           <button
             onClick={() => setActiveDetailTab('overview')}
             className={cn(
-              "flex items-center gap-1.5 px-3 py-2 text-[13px] border-b-2 -mb-px transition-colors",
+              "flex items-center gap-1 px-2.5 h-full text-xs border-b-2 -mb-px transition-colors whitespace-nowrap",
               activeDetailTab === 'overview'
-                ? "border-primary text-foreground"
-                : "border-transparent text-muted-foreground hover:text-foreground"
+                ? "border-[hsl(142,72%,42%)] text-[var(--ecode-text)]"
+                : "border-transparent text-[var(--ecode-text-muted)] hover:text-[var(--ecode-text)]"
             )}
             data-testid="tab-overview"
           >
-            <Info className="h-4 w-4" />
+            <Info className="h-3.5 w-3.5" />
             Overview
           </button>
           <button
             onClick={() => setActiveDetailTab('mydata')}
             className={cn(
-              "flex items-center gap-1.5 px-3 py-2 text-[13px] border-b-2 -mb-px transition-colors",
+              "flex items-center gap-1 px-2.5 h-full text-xs border-b-2 -mb-px transition-colors whitespace-nowrap",
               activeDetailTab === 'mydata'
-                ? "border-primary text-foreground"
-                : "border-transparent text-muted-foreground hover:text-foreground"
+                ? "border-[hsl(142,72%,42%)] text-[var(--ecode-text)]"
+                : "border-transparent text-[var(--ecode-text-muted)] hover:text-[var(--ecode-text)]"
             )}
             data-testid="tab-mydata"
           >
-            <Database className="h-4 w-4" />
+            <Database className="h-3.5 w-3.5" />
             My Data
           </button>
           <button
             onClick={() => setActiveDetailTab('settings')}
             className={cn(
-              "flex items-center gap-1.5 px-3 py-2 text-[13px] border-b-2 -mb-px transition-colors",
+              "flex items-center gap-1 px-2.5 h-full text-xs border-b-2 -mb-px transition-colors whitespace-nowrap",
               activeDetailTab === 'settings'
-                ? "border-primary text-foreground"
-                : "border-transparent text-muted-foreground hover:text-foreground"
+                ? "border-[hsl(142,72%,42%)] text-[var(--ecode-text)]"
+                : "border-transparent text-[var(--ecode-text-muted)] hover:text-[var(--ecode-text)]"
             )}
             data-testid="tab-settings"
           >
-            <Settings className="h-4 w-4" />
+            <Settings className="h-3.5 w-3.5" />
             Settings
           </button>
         </div>

@@ -369,19 +369,19 @@ export function ConsolePanel({ projectId, userId, isRunning, executionId, classN
       <div className="h-9 flex items-center justify-between px-2.5 border-b border-[var(--ecode-border)] bg-[var(--ecode-surface)]">
         <div className="flex items-center gap-2">
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'output' | 'shell')}>
-            <TabsList className="h-7 bg-muted">
+            <TabsList className="h-7 bg-[var(--ecode-surface)] border border-[var(--ecode-border)] rounded overflow-x-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
               <TabsTrigger 
                 value="output" 
-                className="text-[11px] px-3 h-6 gap-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                className="text-[10px] px-2.5 h-6 gap-1 whitespace-nowrap data-[state=active]:bg-[hsl(142,72%,42%)]/10 data-[state=active]:text-[hsl(142,72%,42%)]"
                 data-testid="console-tab-output"
               >
                 <Play className="h-3 w-3" />
                 Output
-                {isRunning && <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />}
+                {isRunning && <span className="w-1.5 h-1.5 rounded-full bg-[hsl(142,72%,42%)] animate-pulse" />}
               </TabsTrigger>
               <TabsTrigger 
                 value="shell" 
-                className="text-[11px] px-3 h-6 gap-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                className="text-[10px] px-2.5 h-6 gap-1 whitespace-nowrap data-[state=active]:bg-[hsl(142,72%,42%)]/10 data-[state=active]:text-[hsl(142,72%,42%)]"
                 onClick={() => {
                   if (shellSessions.length === 0) {
                     createNewShell();
@@ -391,7 +391,7 @@ export function ConsolePanel({ projectId, userId, isRunning, executionId, classN
               >
                 <Terminal className="h-3 w-3" />
                 Shell
-                {activeShell?.isConnected && <span className="w-1.5 h-1.5 rounded-full bg-green-500" />}
+                {activeShell?.isConnected && <span className="w-1.5 h-1.5 rounded-full bg-[hsl(142,72%,42%)]" />}
               </TabsTrigger>
             </TabsList>
           </Tabs>

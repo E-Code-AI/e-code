@@ -1636,7 +1636,7 @@ function UnifiedIDELayout({
             <ResizablePanel defaultSize={30} minSize={20} maxSize={40} data-testid="desktop-left-panel">
               <div className="h-full flex flex-col border-r border-[var(--ecode-border)]">
                 <Tabs value={leftPanelTab} onValueChange={setLeftPanelTab} className="h-full flex flex-col">
-                  <TabsList className="w-full h-9 justify-start rounded-none border-b border-[var(--ecode-border)] bg-transparent p-0 px-1">
+                  <TabsList className="w-full h-9 justify-start rounded-none border-b border-[var(--ecode-border)] bg-[var(--ecode-surface)] p-0 px-1 overflow-x-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                     <TabsTrigger 
                       value="agent" 
                       className="gap-1.5 h-7 px-2.5 text-xs font-medium data-[state=active]:bg-[var(--ecode-surface)] data-[state=active]:shadow-none rounded-md" 

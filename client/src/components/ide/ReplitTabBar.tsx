@@ -307,7 +307,7 @@ export function ReplitTabBar({
   return (
     <div
       className={cn(
-        'flex items-center h-[34px] bg-[var(--ecode-surface)]',
+        'flex items-center h-9 bg-[var(--ecode-surface)]',
         'border-b border-[var(--ecode-border)]',
         className
       )}

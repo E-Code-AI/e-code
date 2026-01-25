@@ -280,11 +280,11 @@ export function ReplitDatabasePanel({ projectId }: { projectId?: string }) {
       </div>
 
       <Tabs value={activeTab} onValueChange={(v: any) => setActiveTab(v)} className="flex-1 flex flex-col">
-        <TabsList className="w-full justify-start rounded-none border-b border-border bg-transparent p-0 h-auto">
-          <TabsTrigger value="status" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary px-4 py-2 text-[13px]" data-testid="tab-status">
+        <TabsList className="h-9 w-full justify-start rounded-none border-b border-[var(--ecode-border)] bg-[var(--ecode-surface)] p-0 overflow-x-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+          <TabsTrigger value="status" className="h-full rounded-none border-b-2 border-transparent data-[state=active]:border-[hsl(142,72%,42%)] px-2.5 text-xs whitespace-nowrap" data-testid="tab-status">
             Status
           </TabsTrigger>
-          <TabsTrigger value="credentials" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary px-4 py-2 text-[13px]" data-testid="tab-credentials">
+          <TabsTrigger value="credentials" className="h-full rounded-none border-b-2 border-transparent data-[state=active]:border-[hsl(142,72%,42%)] px-2.5 text-xs whitespace-nowrap" data-testid="tab-credentials">
             Credentials
           </TabsTrigger>
         </TabsList>

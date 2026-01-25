@@ -532,12 +532,12 @@ export function ShellPanel({ projectId, className }: ShellPanelProps) {
           {tabs.length > 1 && (
             <ScrollArea className="flex-1 max-w-[200px] sm:max-w-[300px] lg:max-w-[400px]">
               <Tabs value={activeTabId} onValueChange={setActiveTabId} className="w-full">
-                <TabsList className="h-7 bg-transparent p-0 gap-1">
+                <TabsList className="h-7 bg-[var(--ecode-surface)] border border-[var(--ecode-border)] rounded p-0 gap-0.5 overflow-x-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                   {tabs.map((tab) => (
                     <TabsTrigger
                       key={tab.id}
                       value={tab.id}
-                      className="h-6 px-2 text-[11px] gap-1 data-[state=active]:bg-muted rounded"
+                      className="h-6 px-2 text-[10px] gap-1 whitespace-nowrap data-[state=active]:bg-[var(--ecode-sidebar-hover)] rounded"
                       data-testid={`tab-shell-${tab.id}`}
                     >
                       <span className="truncate max-w-[60px] sm:max-w-[80px]">{tab.name}</span>

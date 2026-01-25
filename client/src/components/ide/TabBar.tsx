@@ -25,7 +25,7 @@ export function TabBar({ tabs, activeTab, onTabChange, onTabClose }: TabBarProps
           <span>Tip: Multiple tabs help you work efficiently</span>
         </div>
       )}
-      <div className="flex items-center gap-0 overflow-x-auto flex-1">
+      <div className="flex items-center gap-0 overflow-x-auto flex-1 scrollbar-none" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
         {tabs.map((tab) => (
           <button
             key={tab.id}

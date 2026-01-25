@@ -137,10 +137,10 @@ export function DeploymentPanel({ projectId, className }: DeploymentPanelProps) 
       </CardHeader>
       <CardContent className="flex-1 overflow-hidden p-0">
         <Tabs defaultValue="deploy" className="h-full flex flex-col">
-          <TabsList className="mx-4 grid grid-cols-3">
-            <TabsTrigger value="deploy" data-testid="tab-deploy">Deploy</TabsTrigger>
-            <TabsTrigger value="history" data-testid="tab-history">History</TabsTrigger>
-            <TabsTrigger value="settings" data-testid="tab-settings">Settings</TabsTrigger>
+          <TabsList className="h-9 mx-2.5 flex overflow-x-auto bg-[var(--ecode-surface)] border-b border-[var(--ecode-border)] rounded-none" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+            <TabsTrigger value="deploy" className="flex-1 text-xs whitespace-nowrap data-[state=active]:border-b-2 data-[state=active]:border-[hsl(142,72%,42%)]" data-testid="tab-deploy">Deploy</TabsTrigger>
+            <TabsTrigger value="history" className="flex-1 text-xs whitespace-nowrap data-[state=active]:border-b-2 data-[state=active]:border-[hsl(142,72%,42%)]" data-testid="tab-history">History</TabsTrigger>
+            <TabsTrigger value="settings" className="flex-1 text-xs whitespace-nowrap data-[state=active]:border-b-2 data-[state=active]:border-[hsl(142,72%,42%)]" data-testid="tab-settings">Settings</TabsTrigger>
           </TabsList>
 
           <TabsContent value="deploy" className="flex-1 overflow-auto p-4 space-y-4">
