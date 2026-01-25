@@ -515,20 +515,20 @@ export function ReplitCoreServices() {
               </div>
 
               <div className="space-y-2">
-                <h3 className="font-semibold">SSH Keys</h3>
-                <ScrollArea className="h-64 border rounded-md">
+                <h3 className="text-xs font-medium text-[var(--ecode-text)]">SSH Keys</h3>
+                <ScrollArea className="h-64 border border-[var(--ecode-border)] rounded-md">
                   {sshKeys.map((key) => (
-                    <div key={key.id} className="flex items-center justify-between p-4 border-b">
+                    <div key={key.id} className="flex items-center justify-between px-2.5 py-2 border-b border-[var(--ecode-border)]">
                       <div className="flex-1">
-                        <p className="font-medium">{key.name}</p>
-                        <p className="text-[11px] text-muted-foreground">
+                        <p className="text-xs font-medium text-[var(--ecode-text)]">{key.name}</p>
+                        <p className="text-[10px] text-[var(--ecode-text-muted)]">
                           {key.type.toUpperCase()} • {key.fingerprint}
                         </p>
-                        <p className="text-[11px] text-muted-foreground">
+                        <p className="text-[10px] text-[var(--ecode-text-muted)]">
                           Created {new Date(key.created).toLocaleDateString()}
                         </p>
                       </div>
-                      <Badge className={key.isActive ? 'bg-green-500' : 'bg-gray-500'}>
+                      <Badge className={`text-[10px] h-5 ${key.isActive ? 'bg-green-500' : 'bg-gray-500'}`}>
                         {key.isActive ? 'Active' : 'Inactive'}
                       </Badge>
                     </div>
@@ -653,20 +653,20 @@ export function ReplitCoreServices() {
               </div>
 
               <div className="space-y-2">
-                <h3 className="font-semibold">Database Instances</h3>
-                <ScrollArea className="h-64 border rounded-md">
+                <h3 className="text-xs font-medium text-[var(--ecode-text)]">Database Instances</h3>
+                <ScrollArea className="h-64 border border-[var(--ecode-border)] rounded-md">
                   {databases.map((db) => (
-                    <div key={db.id} className="flex items-center justify-between p-4 border-b">
+                    <div key={db.id} className="flex items-center justify-between px-2.5 py-2 border-b border-[var(--ecode-border)]">
                       <div className="flex-1">
-                        <p className="font-medium">{db.name}</p>
-                        <p className="text-[11px] text-muted-foreground">
+                        <p className="text-xs font-medium text-[var(--ecode-text)]">{db.name}</p>
+                        <p className="text-[10px] text-[var(--ecode-text-muted)]">
                           {db.type.toUpperCase()} • {db.plan} plan • {db.region}
                         </p>
-                        <p className="text-[11px] text-muted-foreground">
+                        <p className="text-[10px] text-[var(--ecode-text-muted)]">
                           Created {new Date(db.created).toLocaleDateString()}
                         </p>
                       </div>
-                      <Badge className={getStatusColor(db.status)}>
+                      <Badge className={`text-[10px] h-5 ${getStatusColor(db.status)}`}>
                         {db.status}
                       </Badge>
                     </div>

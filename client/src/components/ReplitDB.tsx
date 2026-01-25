@@ -382,26 +382,26 @@ export function ReplitDB({ projectId, className }: ReplitDBProps) {
 
         <CardContent className="p-0">
           {/* Search and Stats */}
-          <div className="p-4 border-b space-y-3">
+          <div className="px-2.5 py-2 border-b border-[var(--ecode-border)] space-y-2">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-[var(--ecode-text-muted)]" />
               <Input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search keys or values..."
-                className="pl-9 h-8"
+                className="pl-7 h-7 text-xs bg-[var(--ecode-sidebar-hover)] border-[var(--ecode-border)]"
               />
             </div>
             
             {stats && (
-              <div className="grid grid-cols-2 gap-2 text-[11px]">
+              <div className="grid grid-cols-2 gap-1.5 text-[10px]">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Total Keys:</span>
-                  <span className="font-medium">{stats.totalKeys}</span>
+                  <span className="text-[var(--ecode-text-muted)]">Total Keys:</span>
+                  <span className="font-medium text-[var(--ecode-text)]">{stats.totalKeys}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Total Size:</span>
-                  <span className="font-medium">{stats.totalSize}</span>
+                  <span className="text-[var(--ecode-text-muted)]">Total Size:</span>
+                  <span className="font-medium text-[var(--ecode-text)]">{stats.totalSize}</span>
                 </div>
               </div>
             )}

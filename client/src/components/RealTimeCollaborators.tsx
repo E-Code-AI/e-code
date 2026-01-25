@@ -374,9 +374,9 @@ export function RealTimeCollaborators({
                 </Button>
               </SheetTrigger>
               <SheetContent side="right" className="w-80 sm:w-96 p-0">
-                <SheetHeader className="p-4 border-b">
-                  <SheetTitle className="flex items-center gap-2">
-                    <MessageSquare className="h-4 w-4" />
+                <SheetHeader className="h-9 px-2.5 flex items-center border-b border-[var(--ecode-border)]">
+                  <SheetTitle className="flex items-center gap-1.5 text-xs font-medium">
+                    <MessageSquare className="w-3.5 h-3.5 text-[var(--ecode-text-muted)]" />
                     Team Chat
                   </SheetTitle>
                 </SheetHeader>

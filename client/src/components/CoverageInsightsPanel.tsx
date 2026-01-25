@@ -77,7 +77,7 @@ export function CoverageInsightsPanel({ projectId, className }: CoverageInsights
       </CardHeader>
 
       <CardContent className="p-0 h-full flex flex-col">
-        <div className="grid grid-cols-1 gap-4 p-4 border-b bg-muted/10 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-2 px-2.5 py-2 border-b border-[var(--ecode-border)] bg-[var(--ecode-sidebar-hover)] md:grid-cols-2">
           <CoverageSummaryCard
             title="Statements"
             value={coverage.statements}
