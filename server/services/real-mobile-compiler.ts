@@ -758,16 +758,16 @@ export class RealMobileCompiler {
     status: string;
     url?: string;
   }> {
-    // In production, this would start a real device simulator
-    // For now, return mock data
+    // Device simulator requires dedicated infrastructure (cloud VMs or local emulators)
+    // Currently returns development mode response indicating feature is not available
     const simulatorId = crypto.randomUUID();
     
-    logger.info(`Starting ${platform} simulator ${deviceId} for project ${projectId}`);
+    logger.warn(`Device simulator not available: ${platform} simulator ${deviceId} for project ${projectId}. Feature requires dedicated infrastructure.`);
 
     return {
       simulatorId,
-      status: 'running',
-      url: `wss://simulator.e-code.ai/${simulatorId}`
+      status: 'unavailable',
+      url: undefined
     };
   }
 }

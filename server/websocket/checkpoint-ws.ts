@@ -274,6 +274,16 @@ export function setupCheckpointWebSocket(httpServer: Server) {
     ws.on('message', async (data) => {
       try {
         const message = JSON.parse(data.toString());
+        
+        // SECURITY: Validate message schema before processing
+        if (!validateMessage(message)) {
+          ws.send(JSON.stringify({
+            type: 'error',
+            message: 'Invalid message format',
+            timestamp: new Date().toISOString()
+          }));
+          return;
+        }
 
         switch (message.type) {
           case 'auth':

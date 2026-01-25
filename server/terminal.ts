@@ -120,9 +120,26 @@ export function setupTerminalWebsocket(server: Server) {
       }));
       
       // Handle messages from the client
+      // SECURITY: Message size limit to prevent memory exhaustion (1MB)
+      const MAX_MESSAGE_SIZE = 1024 * 1024;
+      
       ws.on('message', async (message) => {
         try {
+          // SECURITY: Reject oversized messages
+          const messageSize = Buffer.isBuffer(message) ? message.length : message.toString().length;
+          if (messageSize > MAX_MESSAGE_SIZE) {
+            logger.warn(`Terminal message too large (${messageSize} bytes) for project ${projectId}`);
+            ws.send(JSON.stringify({ type: 'error', data: 'Message too large' }));
+            return;
+          }
+          
           const data = JSON.parse(message.toString());
+          
+          // SECURITY: Validate message has required type field
+          if (!data || typeof data !== 'object' || typeof data.type !== 'string') {
+            ws.send(JSON.stringify({ type: 'error', data: 'Invalid message format' }));
+            return;
+          }
           
           if (data.type === 'replace_line') {
             // Atomic replace: clear current line and set new command (prevents race conditions)
@@ -495,13 +512,17 @@ async function executeCommand(projectId: string, command: string) {
     
     if (command.startsWith('cd ')) {
       const newDir = command.substring(3).trim();
-      if (newDir === '..') {
-        const parts = session.currentDirectory.split('/');
-        if (parts.length > 2) {
-          parts.pop();
-          session.currentDirectory = parts.join('/');
-        }
-      } else if (newDir.startsWith('/')) {
+      
+      // SECURITY: Block path traversal attempts
+      if (newDir.includes('..')) {
+        broadcast(projectId, JSON.stringify({
+          type: 'output',
+          data: `Error: Path traversal not allowed\r\n$ `
+        }));
+        return;
+      }
+      
+      if (newDir.startsWith('/')) {
         session.currentDirectory = newDir;
       } else {
         session.currentDirectory = path.join(session.currentDirectory, newDir);

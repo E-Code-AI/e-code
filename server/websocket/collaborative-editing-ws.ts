@@ -295,6 +295,24 @@ export class CollaborativeEditingWebSocketHandler {
       return;
     }
 
+    // SECURITY: Validate required fields
+    if (!data || typeof data.projectId !== 'string' || typeof data.fileId !== 'number') {
+      ws.send(JSON.stringify({
+        type: 'error',
+        data: { message: 'Invalid session data' },
+      }));
+      return;
+    }
+
+    // SECURITY: Block path traversal in projectId
+    if (data.projectId.includes('..')) {
+      ws.send(JSON.stringify({
+        type: 'error',
+        data: { message: 'Invalid projectId' },
+      }));
+      return;
+    }
+
     try {
       // Join or create collaborative session
       const result = await collaborativeEditingService.createOrJoinSession(

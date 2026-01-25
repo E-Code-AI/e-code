@@ -300,6 +300,16 @@ class BackgroundTestingWebSocketService {
         try {
           const data = JSON.parse(message.toString());
           
+          // SECURITY: Validate message has required type field
+          if (!data || typeof data !== 'object' || typeof data.type !== 'string') {
+            ws.send(JSON.stringify({
+              type: 'error',
+              message: 'Invalid message format',
+              timestamp: new Date().toISOString()
+            }));
+            return;
+          }
+          
           switch (data.type) {
             case 'auth':
               await handleAuth(ws, data);

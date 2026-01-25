@@ -28,16 +28,12 @@ class SSLRenewalService {
       return false;
     }
 
-    // TODO: Implement ACME/Let's Encrypt integration when deploying outside Replit
-    // This requires:
-    // 1. npm install acme-client
-    // 2. DNS or HTTP challenge setup
-    // 3. Certificate storage (database or file system)
-    
     logger.info('SSL renewal requested for domain:', config.domain);
     
-    // Placeholder - actual implementation depends on deployment environment
-    throw new Error('SSL renewal not implemented - use Replit or configure ACME manually');
+    // SSL auto-renewal is not configured for this environment
+    // On Replit: SSL is handled automatically by the platform
+    // Self-hosted: Configure ACME/Let's Encrypt with acme-client package
+    throw new Error(`SSL auto-renewal is not configured for domain ${config.domain}. On Replit, SSL is managed automatically. For self-hosted deployments, configure ACME/Let's Encrypt integration.`);
   }
 
   isEnabled(): boolean {

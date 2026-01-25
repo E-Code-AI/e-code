@@ -118,7 +118,25 @@ export class MobileWebSocketService {
     terminalNs.use(jwtAuthMiddleware);
     terminalNs.on('connection', (socket) => {
       socket.on('command', async (data) => {
+        // SECURITY: Validate message payload
+        if (!data || typeof data !== 'object') {
+          socket.emit('error', { message: 'Invalid message format' });
+          return;
+        }
+        
         const { command, projectId } = data;
+        
+        // SECURITY: Validate required fields
+        if (typeof command !== 'string' || typeof projectId !== 'string') {
+          socket.emit('error', { message: 'Missing required fields' });
+          return;
+        }
+        
+        // SECURITY: Block path traversal in projectId
+        if (projectId.includes('..')) {
+          socket.emit('error', { message: 'Invalid projectId' });
+          return;
+        }
         
         try {
           wsMetrics.recordMessageReceived('mobile-terminal');
@@ -143,7 +161,26 @@ export class MobileWebSocketService {
     aiNs.use(jwtAuthMiddleware);
     aiNs.on('connection', (socket) => {
       socket.on('message', async (data) => {
+        // SECURITY: Validate message payload
+        if (!data || typeof data !== 'object') {
+          socket.emit('error', { message: 'Invalid message format' });
+          return;
+        }
+        
         const { message, projectId } = data;
+        
+        // SECURITY: Validate required fields
+        if (typeof message !== 'string') {
+          socket.emit('error', { message: 'Missing required fields' });
+          return;
+        }
+        
+        // SECURITY: Block path traversal in projectId
+        if (projectId && projectId.includes('..')) {
+          socket.emit('error', { message: 'Invalid projectId' });
+          return;
+        }
+        
         wsMetrics.recordMessageReceived('mobile-ai');
         
         socket.emit('ai-streaming', { chunk: 'I understand you need help with ' });
@@ -174,17 +211,40 @@ export class MobileWebSocketService {
     collaborationNs.use(jwtAuthMiddleware);
     collaborationNs.on('connection', (socket) => {
       socket.on('join-project', (projectId) => {
+        // SECURITY: Validate projectId
+        if (typeof projectId !== 'string' || projectId.includes('..')) {
+          socket.emit('error', { message: 'Invalid projectId' });
+          return;
+        }
         socket.join(`project-${projectId}`);
         socket.to(`project-${projectId}`).emit('user-joined', { userId: (socket as any).userId });
         wsMetrics.recordMessageReceived('mobile-collaboration');
       });
 
       socket.on('code-change', (data) => {
+        // SECURITY: Validate payload
+        if (!data || typeof data !== 'object' || !data.projectId) {
+          socket.emit('error', { message: 'Invalid message format' });
+          return;
+        }
+        // SECURITY: Block path traversal
+        if (String(data.projectId).includes('..')) {
+          socket.emit('error', { message: 'Invalid projectId' });
+          return;
+        }
         socket.to(`project-${data.projectId}`).emit('code-update', data);
         wsMetrics.recordMessageSent('mobile-collaboration');
       });
 
       socket.on('cursor-move', (data) => {
+        // SECURITY: Validate payload
+        if (!data || typeof data !== 'object' || !data.projectId) {
+          return;
+        }
+        // SECURITY: Block path traversal
+        if (String(data.projectId).includes('..')) {
+          return;
+        }
         socket.to(`project-${data.projectId}`).emit('cursor-update', data);
       });
 

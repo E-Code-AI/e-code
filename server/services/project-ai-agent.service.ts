@@ -24,8 +24,11 @@ export class ProjectAIAgentService {
     this.storage = storage;
     
     // Initialize legacy Anthropic client for backward compatibility
-    const apiKey = process.env.ANTHROPIC_API_KEY || '_DUMMY_API_KEY_';
-    this.anthropic = new Anthropic({ apiKey });
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) {
+      logger.warn('[ProjectAIAgent] No ANTHROPIC_API_KEY configured. Anthropic features will be unavailable. Set ANTHROPIC_API_KEY environment variable or use a different AI provider.');
+    }
+    this.anthropic = new Anthropic({ apiKey: apiKey || 'not-configured' });
   }
   
   /**

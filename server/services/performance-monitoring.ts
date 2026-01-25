@@ -244,8 +244,9 @@ export class PerformanceMonitoringService extends EventEmitter {
   }
 
   private getActiveConnections(): number {
-    // Placeholder - integrate with actual server stats
-    return Math.floor(Math.random() * 100);
+    // Active connections metric requires external server integration
+    // Returns -1 to indicate metric is not available
+    return -1;
   }
 
   private calculateThroughput(): number {
@@ -254,13 +255,15 @@ export class PerformanceMonitoringService extends EventEmitter {
   }
 
   private calculateWebSocketMessagesPerSecond(): number {
-    // Placeholder - integrate with actual WebSocket stats
-    return Math.floor(Math.random() * 50);
+    // WebSocket message rate requires WebSocket server integration
+    // Returns -1 to indicate metric is not available
+    return -1;
   }
 
   private getDbActiveConnections(): number {
-    // Placeholder - integrate with database pool stats
-    return Math.floor(Math.random() * 20);
+    // Database connection pool stats require pool integration
+    // Returns -1 to indicate metric is not available
+    return -1;
   }
 
   private calculateAvgQueryTime(): number {
@@ -268,8 +271,9 @@ export class PerformanceMonitoringService extends EventEmitter {
   }
 
   private getSlowQueryCount(): number {
-    // Count queries > 1000ms
-    return Math.floor(Math.random() * 5);
+    // Slow query tracking requires pg_stat_statements extension
+    // Returns -1 to indicate metric is not available
+    return -1;
   }
 
   private resetCounters() {

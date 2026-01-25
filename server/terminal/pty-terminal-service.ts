@@ -286,7 +286,17 @@ export class PTYTerminalService {
         }));
       }
 
+      // SECURITY: Message size limit to prevent memory exhaustion (1MB)
+      const MAX_MESSAGE_SIZE = 1024 * 1024;
+      
       ws.on('message', (data) => {
+        // SECURITY: Reject oversized messages
+        const messageSize = Buffer.isBuffer(data) ? data.length : data.toString().length;
+        if (messageSize > MAX_MESSAGE_SIZE) {
+          logger.warn(`PTY message too large (${messageSize} bytes) for project ${projectId}`);
+          ws.send(JSON.stringify({ type: 'error', data: 'Message too large' }));
+          return;
+        }
         this.handleMessage(projectId, ws, data);
       });
 

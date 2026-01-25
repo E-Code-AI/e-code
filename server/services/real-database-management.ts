@@ -166,8 +166,8 @@ export class RealDatabaseManagementService {
               config.metrics = {
                 size: parseInt(sizeResult.rows[0].size) / (1024 * 1024), // Convert to MB
                 connections: parseInt(sizeResult.rows[0].connections),
-                cpu: Math.random() * 20, // Mock CPU usage
-                memory: Math.random() * 512, // Mock memory usage
+                cpu: -1, // PostgreSQL does not expose per-database CPU usage; use external monitoring
+                memory: -1, // PostgreSQL does not expose per-database memory usage; use external monitoring
               };
             }
           } catch (error) {
