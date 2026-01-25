@@ -212,28 +212,16 @@ export class NeonProvider implements IDatabaseProvider {
   }
   
   async rotateCredentials(databaseId: number): Promise<DatabaseCredentials> {
-    logger.info(`Rotating credentials for database ${databaseId}`);
-    
-    const newPassword = crypto.randomBytes(24).toString('base64url');
-    
-    return {
-      host: 'placeholder',
-      port: 5432,
-      database: 'neondb',
-      username: 'user',
-      password: newPassword,
-      connectionUrl: `postgresql://user:${newPassword}@placeholder:5432/neondb?sslmode=require`,
-      sslEnabled: true
-    };
+    logger.warn(`Credential rotation not implemented for database ${databaseId} - requires Neon API integration`);
+    throw new Error('Credential rotation requires Neon API integration. Please rotate credentials via the Neon dashboard.');
   }
   
   async getMetrics(databaseId: number): Promise<DatabaseMetrics> {
-    logger.info(`Getting metrics for database ${databaseId}`);
-    
+    logger.warn(`Metrics not available for database ${databaseId} - requires Neon API integration`);
     return {
-      storageUsedMb: 0,
-      connectionCount: 0,
-      activeQueries: 0
+      storageUsedMb: -1,
+      connectionCount: -1,
+      activeQueries: -1
     };
   }
   

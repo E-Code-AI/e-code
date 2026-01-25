@@ -143,7 +143,8 @@ export class StatusPageService {
     try {
       // Check if service is actually responding
       const axios = require('axios');
-      const checkUrl = service.endpoint || `http://localhost:5000/api/health`;
+      const baseUrl = process.env.APP_URL || process.env.VITE_PUBLIC_URL || 'http://localhost:5000';
+      const checkUrl = service.endpoint || `${baseUrl}/api/health`;
       const response = await axios.get(checkUrl, { timeout: 5000 });
       isHealthy = response.status === 200;
     } catch (error) {

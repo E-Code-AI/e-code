@@ -166,13 +166,14 @@ export class MobileContainerService {
 
   async getPreviewUrl(projectId: number): Promise<string> {
     const container = this.containers.get(projectId);
+    const host = process.env.CONTAINER_HOST || 'localhost';
     if (container && container.status === 'running') {
-      return `http://localhost:${container.port}`;
+      return `http://${host}:${container.port}`;
     }
     
     // Start container if not running
     await this.createContainer(projectId, 'javascript');
-    return `http://localhost:${this.containers.get(projectId)?.port}`;
+    return `http://${host}:${this.containers.get(projectId)?.port}`;
   }
 }
 

@@ -343,12 +343,13 @@ export class ScreenshotService {
   }
 
   private getProjectPreviewUrl(projectId: number): string {
-    // In production, this would return the actual preview URL
-    return `http://localhost:3100/preview/${projectId}`;
+    const baseUrl = process.env.PREVIEW_SERVICE_URL || process.env.APP_URL || 'http://localhost:3100';
+    return `${baseUrl}/preview/${projectId}`;
   }
 
   private getWorkflowPreviewUrl(projectId: number, workflow: string): string {
-    return `http://localhost:3100/preview/${projectId}/${workflow}`;
+    const baseUrl = process.env.PREVIEW_SERVICE_URL || process.env.APP_URL || 'http://localhost:3100';
+    return `${baseUrl}/preview/${projectId}/${workflow}`;
   }
 
   private async generateProjectPreview(projectId: number): Promise<string> {

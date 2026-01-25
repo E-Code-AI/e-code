@@ -5,9 +5,9 @@ import fetch from 'node-fetch';
 
 export class PolyglotIntegration {
   private services = {
-    go: 'http://localhost:8080',
-    python: 'http://localhost:8081',
-    typescript: 'http://localhost:5000'
+    go: process.env.GO_SERVICE_URL || 'http://localhost:8080',
+    python: process.env.PYTHON_SERVICE_URL || 'http://localhost:8081',
+    typescript: process.env.APP_URL || process.env.VITE_PUBLIC_URL || 'http://localhost:5000'
   };
 
   // Container Operations - Route through Go service for performance
