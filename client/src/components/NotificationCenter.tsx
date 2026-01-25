@@ -202,22 +202,24 @@ export function NotificationCenter() {
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-96 p-0" align="end">
-        <div className="flex items-center justify-between p-4 border-b">
-          <h3 className="font-semibold">Notifications</h3>
-          <div className="flex items-center gap-2">
+        <div className="h-9 px-2.5 flex items-center justify-between border-b border-[var(--ecode-border)] shrink-0">
+          <span className="text-xs font-medium text-[var(--ecode-text)]">Notifications</span>
+          <div className="flex items-center gap-0.5">
             <Button
               variant="ghost"
               size="icon"
+              className="h-7 w-7 text-[var(--ecode-text-muted)]"
               onClick={handleSettingsClick}
             >
-              <Settings className="h-4 w-4" />
+              <Settings className="w-3.5 h-3.5" />
             </Button>
             <Button
               variant="ghost"
               size="icon"
+              className="h-7 w-7 text-[var(--ecode-text-muted)]"
               onClick={() => setIsOpen(false)}
             >
-              <X className="h-4 w-4" />
+              <X className="w-3.5 h-3.5" />
             </Button>
           </div>
         </div>

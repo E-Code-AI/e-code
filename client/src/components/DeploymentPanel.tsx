@@ -207,7 +207,7 @@ export const DeploymentPanel: React.FC<DeploymentPanelProps> = ({ projectId }) =
 
       {/* Build Failed Alert */}
       {hasErrors && deployment?.buildErrors && deployment.buildErrors.length > 0 && (
-        <div className="p-4 border-b">
+        <div className="px-2.5 py-2 border-b border-[var(--ecode-border)]">
           <Alert className="bg-red-50 border-red-200">
             <AlertCircle className="h-4 w-4 text-red-600" />
             <AlertDescription className="text-red-800">
@@ -236,16 +236,16 @@ export const DeploymentPanel: React.FC<DeploymentPanelProps> = ({ projectId }) =
 
       {/* Agent Suggestions */}
       {hasErrors && deployment?.buildErrors && deployment.buildErrors.length > 0 && (
-        <div className="p-4 border-b">
+        <div className="px-2.5 py-2 border-b border-[var(--ecode-border)]">
           <button
             onClick={() => setShowAgentSuggestions(!showAgentSuggestions)}
             className="flex items-center justify-between w-full text-left"
           >
-            <h4 className="font-medium flex items-center gap-2">
+            <h4 className="text-xs font-medium flex items-center gap-1.5 text-[var(--ecode-text)]">
               <span className="text-purple-600">🤖</span>
               Agent suggestions
             </h4>
-            {showAgentSuggestions ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            {showAgentSuggestions ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
           </button>
           
           {showAgentSuggestions && (

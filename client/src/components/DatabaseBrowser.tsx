@@ -220,16 +220,14 @@ export function DatabaseBrowser({ projectId }: { projectId: string }) {
             <TabsContent value="data" className="m-0 flex-1 flex flex-col">
               {selectedTable ? (
                 <>
-                  <div className="p-4 border-b flex items-center justify-between">
-                    <h3 className="font-semibold">{selectedTable}</h3>
-                    <div className="flex items-center gap-2">
-                      <Button variant="outline" size="sm" onClick={exportTable}>
-                        <Download className="h-4 w-4 mr-1" />
-                        Export
+                  <div className="h-9 px-2.5 flex items-center justify-between border-b border-[var(--ecode-border)] shrink-0">
+                    <span className="text-xs font-medium text-[var(--ecode-text)]">{selectedTable}</span>
+                    <div className="flex items-center gap-1">
+                      <Button variant="ghost" size="icon" onClick={exportTable} className="h-7 w-7 text-[var(--ecode-text-muted)]">
+                        <Download className="w-3.5 h-3.5" />
                       </Button>
-                      <Button variant="outline" size="sm">
-                        <Plus className="h-4 w-4 mr-1" />
-                        Insert Row
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-[hsl(142,72%,42%)]">
+                        <Plus className="w-3.5 h-3.5" />
                       </Button>
                     </div>
                   </div>

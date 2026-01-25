@@ -187,12 +187,12 @@ export function ApplicationIDEWrapper({
           <ResizablePanelGroup direction="horizontal" className="flex-1">
             {/* File Explorer Panel */}
             <ResizablePanel defaultSize={20} minSize={15} maxSize={30}>
-              <div className="h-full flex flex-col border-r">
-                <div className="p-3 border-b flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-[13px] font-medium">Files</h3>
+              <div className="h-full flex flex-col border-r border-[var(--ecode-border)]">
+                <div className="h-9 px-2.5 flex items-center justify-between border-b border-[var(--ecode-border)] shrink-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-medium text-[var(--ecode-text)]">Files</span>
                     {files.length > 0 && (
-                      <span className="text-[11px] text-muted-foreground">
+                      <span className="text-[10px] text-[var(--ecode-text-muted)]">
                         ({files.length})
                       </span>
                     )}
@@ -200,10 +200,10 @@ export function ApplicationIDEWrapper({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-6 w-6"
+                    className="h-7 w-7 text-[var(--ecode-text-muted)] hover:bg-[var(--ecode-sidebar-hover)]"
                     onClick={() => setShowSidebar(!showSidebar)}
                   >
-                    {showSidebar ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeft className="h-4 w-4" />}
+                    {showSidebar ? <PanelLeftClose className="w-3.5 h-3.5" /> : <PanelLeft className="w-3.5 h-3.5" />}
                   </Button>
                 </div>
                 <div className="flex-1 overflow-auto p-2">
@@ -304,19 +304,19 @@ export function ApplicationIDEWrapper({
             {/* AI Chat Panel */}
             {showAIChat && (
               <ResizablePanel defaultSize={30} minSize={20} maxSize={40}>
-                <div className="h-full flex flex-col border-l">
-                  <div className="p-3 border-b flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Bot className="h-4 w-4" />
-                      <h3 className="text-[13px] font-medium">AI Assistant</h3>
+                <div className="h-full flex flex-col border-l border-[var(--ecode-border)]">
+                  <div className="h-9 px-2.5 flex items-center justify-between border-b border-[var(--ecode-border)] shrink-0">
+                    <div className="flex items-center gap-1.5">
+                      <Bot className="w-3.5 h-3.5 text-[var(--ecode-text-muted)]" />
+                      <span className="text-xs font-medium text-[var(--ecode-text)]">AI Assistant</span>
                     </div>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-6 w-6"
+                      className="h-7 w-7 text-[var(--ecode-text-muted)] hover:bg-[var(--ecode-sidebar-hover)]"
                       onClick={() => setShowAIChat(false)}
                     >
-                      <X className="h-3 w-3" />
+                      <X className="w-3 h-3" />
                     </Button>
                   </div>
                   <div className="flex-1 overflow-hidden">

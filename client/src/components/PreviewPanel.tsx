@@ -107,39 +107,39 @@ export function PreviewPanel({ projectId, projectUrl, className }: PreviewPanelP
         {/* Preview Tab */}
         <TabsContent value="preview" className="flex-1 flex flex-col mt-0">
           {/* Preview Header */}
-          <div className="flex items-center justify-between p-3 border-b">
-            <div className="flex items-center gap-3">
+          <div className="h-9 px-2.5 flex items-center justify-between border-b border-[var(--ecode-border)] shrink-0">
+            <div className="flex items-center gap-2">
               {/* Device Selector */}
-              <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded p-1">
+              <div className="flex items-center gap-0.5 bg-[var(--ecode-sidebar-hover)] rounded p-0.5">
                 <Button
                   variant={device === 'desktop' ? 'default' : 'ghost'}
                   size="sm"
                   onClick={() => setDevice('desktop')}
-                  className="h-7 px-2"
+                  className="h-6 px-1.5"
                 >
-                  <Monitor className="h-4 w-4" />
+                  <Monitor className="w-3.5 h-3.5" />
                 </Button>
                 <Button
                   variant={device === 'tablet' ? 'default' : 'ghost'}
                   size="sm"
                   onClick={() => setDevice('tablet')}
-                  className="h-7 px-2"
+                  className="h-6 px-1.5"
                 >
-                  <Tablet className="h-4 w-4" />
+                  <Tablet className="w-3.5 h-3.5" />
                 </Button>
                 <Button
                   variant={device === 'mobile' ? 'default' : 'ghost'}
                   size="sm"
                   onClick={() => setDevice('mobile')}
-                  className="h-7 px-2"
+                  className="h-6 px-1.5"
                 >
-                  <Smartphone className="h-4 w-4" />
+                  <Smartphone className="w-3.5 h-3.5" />
                 </Button>
               </div>
 
               {/* URL Bar */}
-              <div className="flex items-center gap-2 flex-1">
-                <Shield className="h-4 w-4 text-green-600" />
+              <div className="flex items-center gap-1.5 flex-1">
+                <Shield className="w-3 h-3 text-green-600" />
                 <Input
                   value={projectUrl || (typeof window !== 'undefined' ? window.location.origin : '')}
                   readOnly

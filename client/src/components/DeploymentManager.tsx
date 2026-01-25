@@ -543,15 +543,15 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
 
           {/* Container Status */}
           {containerStatus && (
-            <div className="p-4 border-b">
+            <div className="px-2.5 py-2 border-b border-[var(--ecode-border)]">
               <div className="flex items-center justify-between">
-                <Label className="text-[11px]">Container Status</Label>
-                <Badge variant={containerStatus?.deployment?.ready ? "default" : "secondary"}>
+                <Label className="text-[10px] text-[var(--ecode-text-muted)]">Container Status</Label>
+                <Badge variant={containerStatus?.deployment?.ready ? "default" : "secondary"} className="text-[10px] h-5">
                   {containerStatus?.deployment?.ready ? "Running" : "Stopped"}
                 </Badge>
               </div>
               {containerStatus?.deployment?.availableReplicas !== undefined && (
-                <div className="mt-2 text-[11px] text-muted-foreground">
+                <div className="mt-1.5 text-[10px] text-[var(--ecode-text-muted)]">
                   {containerStatus.deployment.availableReplicas}/{containerStatus.deployment.replicas} replicas active
                 </div>
               )}
@@ -563,9 +563,9 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
             initial={{ y: -10, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.2 }}
-            className="p-4 border-b"
+            className="px-2.5 py-2 border-b border-[var(--ecode-border)]"
           >
-            <Label className="text-[13px] font-semibold mb-3 text-primary">Active Deployments</Label>
+            <Label className="text-xs font-medium mb-2 text-[var(--ecode-text)]">Active Deployments</Label>
             <div className="space-y-3">
               {deployments.length === 0 && !stats ? (
                 // Skeleton Loaders for Deployments
