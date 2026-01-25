@@ -967,38 +967,38 @@ export function ReplitAgentPanelV3({
     });
   }, [toast]);
 
-  // Handler for mode changes (Build/Plan/Edit - 3 modes only)
+  // Handler for mode changes (Build/Plan/Edit/Fast - 4 modes)
+  // Uses optimistic update: always update local state immediately, sync to server when possible
   const handleModeChange = async (newMode: AgentMode) => {
-    if (!conversationId || !Number.isInteger(conversationId) || conversationId <= 0) {
-      console.error('Cannot change mode: invalid conversationId', { conversationId });
-      return;
-    }
+    // Always update local state immediately (optimistic update)
+    setAgentMode(newMode);
+    
+    const modeDescriptions: Record<AgentMode, string> = {
+      build: "Agent will autonomously make changes",
+      plan: "Agent will brainstorm without making code changes",
+      edit: "Targeted changes to specific files with precise control",
+      fast: "Quick responses with reduced reasoning for speed"
+    };
+    
+    toast({
+      title: `Switched to ${newMode.charAt(0).toUpperCase() + newMode.slice(1)} Mode`,
+      description: modeDescriptions[newMode],
+    });
 
-    try {
-      await apiRequest('POST', `/api/agent/conversation/${conversationId}/mode`, {
-        mode: newMode
-      });
-
-      setAgentMode(newMode);
-      
-      const modeDescriptions: Record<AgentMode, string> = {
-        build: "Agent will autonomously make changes",
-        plan: "Agent will brainstorm without making code changes",
-        edit: "Targeted changes to specific files with precise control",
-        fast: "Quick responses with reduced reasoning for speed"
-      };
-      
-      toast({
-        title: `Switched to ${newMode.charAt(0).toUpperCase() + newMode.slice(1)} Mode`,
-        description: modeDescriptions[newMode],
-      });
-    } catch (error) {
-      console.error('Failed to update mode:', error);
-      toast({
-        title: "Mode Update Failed",
-        description: "Could not switch agent mode",
-        variant: "destructive"
-      });
+    // If we have a valid conversationId, sync to server
+    if (conversationId && Number.isInteger(conversationId) && conversationId > 0) {
+      try {
+        await apiRequest('POST', `/api/agent/conversation/${conversationId}/mode`, {
+          mode: newMode
+        });
+      } catch (error) {
+        // Server sync failed, but local state is already updated
+        // Log but don't show error to user since mode is working locally
+        console.warn('[ModeChange] Server sync failed, using local mode:', error);
+      }
+    } else {
+      // No valid conversationId yet - mode will be used when conversation is created
+      console.log('[ModeChange] No conversationId yet, mode will apply when conversation starts');
     }
   };
 
