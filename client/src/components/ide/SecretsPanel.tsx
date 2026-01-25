@@ -95,27 +95,29 @@ export function SecretsPanel({ projectId }: SecretsPanelProps) {
   }
 
   return (
-    <div className="h-full flex flex-col bg-background">
+    <div className="h-full flex flex-col bg-[var(--ecode-surface)]">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-border">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <Shield className="h-5 w-5 text-muted-foreground" />
-            <h3 className="font-semibold text-foreground">Secrets</h3>
-            <Badge variant="secondary" className="text-[11px]">
-              {secrets.length}
-            </Badge>
-          </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7"
-            onClick={() => refetch()}
-            data-testid="button-refresh-secrets"
-          >
-            <RefreshCw className="h-4 w-4" />
-          </Button>
+      <div className="h-9 border-b border-[var(--ecode-border)] flex items-center justify-between px-2.5 bg-[var(--ecode-surface)]">
+        <div className="flex items-center gap-1.5">
+          <Shield className="h-3.5 w-3.5 text-[var(--ecode-text-muted)]" />
+          <h3 className="text-xs font-medium text-[var(--ecode-text-muted)]">Secrets</h3>
+          <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
+            {secrets.length}
+          </Badge>
         </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6 text-[var(--ecode-text-muted)] hover:text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
+          onClick={() => refetch()}
+          data-testid="button-refresh-secrets"
+        >
+          <RefreshCw className="h-3.5 w-3.5" />
+        </Button>
+      </div>
+      
+      {/* Search and Controls */}
+      <div className="p-2.5 border-b border-[var(--ecode-border)]">
 
         {/* Search */}
         <div className="relative">

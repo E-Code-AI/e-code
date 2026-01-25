@@ -113,35 +113,39 @@ export function LogsViewerPanel({ deploymentId, buildId, projectId }: LogsViewer
   const logs = data?.logs || [];
 
   return (
-    <div className="flex flex-col h-full bg-background" data-testid="logs-viewer-panel">
+    <div className="flex flex-col h-full bg-[var(--ecode-surface)]" data-testid="logs-viewer-panel">
       {/* Header */}
-      <div className="p-4 border-b space-y-3">
-        <div className="flex items-center justify-between">
-          <h3 className="text-[13px] font-semibold flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            Deployment Logs
-          </h3>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleExport('json')}
-              data-testid="button-export-json"
-            >
-              <Download className="h-4 w-4 mr-2" />
-              JSON
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleExport('csv')}
-              data-testid="button-export-csv"
-            >
-              <Download className="h-4 w-4 mr-2" />
-              CSV
-            </Button>
-          </div>
+      <div className="h-9 border-b border-[var(--ecode-border)] flex items-center justify-between px-2.5 bg-[var(--ecode-surface)]">
+        <h3 className="text-xs font-medium text-[var(--ecode-text-muted)] flex items-center gap-1.5">
+          <FileText className="h-3.5 w-3.5" />
+          Logs
+        </h3>
+        <div className="flex gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleExport('json')}
+            className="h-6 px-2 text-[10px] text-[var(--ecode-text-muted)] hover:text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
+            data-testid="button-export-json"
+          >
+            <Download className="h-3 w-3 mr-1" />
+            JSON
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleExport('csv')}
+            className="h-6 px-2 text-[10px] text-[var(--ecode-text-muted)] hover:text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
+            data-testid="button-export-csv"
+          >
+            <Download className="h-3 w-3 mr-1" />
+            CSV
+          </Button>
         </div>
+      </div>
+      
+      {/* Controls */}
+      <div className="p-2.5 border-b border-[var(--ecode-border)] space-y-2">
 
         {/* Search and Filters */}
         <div className="flex gap-2">
