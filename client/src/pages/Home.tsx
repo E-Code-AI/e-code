@@ -52,6 +52,7 @@ import { ECodeLoading } from '@/components/ECodeLoading';
 import { AuthModal } from '@/components/AuthModal';
 import { getProjectUrl } from '@/lib/utils';
 import { AIModelSelector } from '@/components/ai/AIModelSelector';
+import { SEOHead, structuredData } from '@/components/seo/SEOHead';
 
 export default function Home() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -217,10 +218,40 @@ export default function Home() {
     return a.name.localeCompare(b.name);
   });
 
+  const homeStructuredData = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      structuredData.organization(),
+      structuredData.website(),
+      structuredData.softwareApplication(
+        'E-Code AI IDE',
+        'AI-powered cloud-based integrated development environment for rapid application development. Build, deploy, and scale applications with AI assistance.',
+        'DeveloperApplication'
+      )
+    ]
+  };
+
   return (
-    <AppLayout>
-      <div className="flex flex-col h-full">
-        {/* Hero Section with Chat Input - E-Code Style */}
+    <>
+      <SEOHead
+        title="E-Code - AI-Powered Cloud IDE for Enterprise Development"
+        description="Build, deploy, and scale applications with AI assistance. E-Code is the Fortune 500-grade cloud IDE supporting 28 programming languages with real-time collaboration."
+        keywords={['AI IDE', 'cloud development', 'enterprise IDE', 'AI coding assistant', 'collaborative IDE', 'web development platform', 'code editor', 'DevOps']}
+        canonicalUrl="https://e-code.ai"
+        ogType="website"
+        structuredData={homeStructuredData}
+        alternateLanguages={[
+          { lang: 'en', url: 'https://e-code.ai' },
+          { lang: 'fr', url: 'https://e-code.ai/fr' },
+          { lang: 'de', url: 'https://e-code.ai/de' },
+          { lang: 'es', url: 'https://e-code.ai/es' },
+          { lang: 'it', url: 'https://e-code.ai/it' },
+          { lang: 'x-default', url: 'https://e-code.ai' }
+        ]}
+      />
+      <AppLayout>
+        <div className="flex flex-col h-full">
+          {/* Hero Section with Chat Input - E-Code Style */}
         <div className="bg-gradient-to-r from-orange-500 to-yellow-500 p-8 text-white">
           <div className="max-w-5xl mx-auto">
             <h1 className="text-4xl font-bold mb-4" data-testid="text-home-hero-title">Let's build something amazing</h1>
@@ -641,5 +672,6 @@ export default function Home() {
         }}
       />
     </AppLayout>
+    </>
   );
 }

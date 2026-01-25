@@ -134,20 +134,25 @@ export function SEOHead({
       setLink('alternate', url, lang);
     });
 
-    // Structured data (JSON-LD)
+    // Structured data (JSON-LD) - unique per page with cleanup
+    const scriptId = `ld-json-${fullCanonicalUrl.replace(/[^a-zA-Z0-9]/g, '-')}`;
     if (structuredData) {
-      let script = document.querySelector('script[type="application/ld+json"]') as HTMLScriptElement;
-      if (!script) {
-        script = document.createElement('script');
-        script.type = 'application/ld+json';
-        document.head.appendChild(script);
-      }
+      // Remove any existing JSON-LD scripts to avoid duplicates
+      document.querySelectorAll('script[type="application/ld+json"]').forEach(s => s.remove());
+      
+      const script = document.createElement('script');
+      script.type = 'application/ld+json';
+      script.id = scriptId;
       script.textContent = JSON.stringify(structuredData);
+      document.head.appendChild(script);
     }
 
-    // Cleanup function
+    // Cleanup function - remove page-specific JSON-LD on unmount
     return () => {
-      // Reset to default title on unmount if needed
+      const existingScript = document.getElementById(scriptId);
+      if (existingScript) {
+        existingScript.remove();
+      }
     };
   }, [
     fullTitle,
@@ -169,15 +174,23 @@ export function SEOHead({
   return null;
 }
 
-// Pre-built structured data generators
+// Pre-built structured data generators with @id for graph linking
 export const structuredData = {
   organization: () => ({
     '@context': 'https://schema.org',
     '@type': 'Organization',
+    '@id': `${BASE_URL}/#organization`,
     name: 'E-Code',
     url: BASE_URL,
-    logo: `${BASE_URL}/assets/logo.svg`,
-    description: 'AI-powered enterprise development platform',
+    logo: {
+      '@type': 'ImageObject',
+      '@id': `${BASE_URL}/#logo`,
+      url: `${BASE_URL}/assets/logo.svg`,
+      width: 512,
+      height: 512
+    },
+    image: `${BASE_URL}/assets/og-default.png`,
+    description: 'AI-powered enterprise development platform for Fortune 500 companies',
     foundingDate: '2024',
     sameAs: [
       'https://twitter.com/ecode_dev',
@@ -188,15 +201,17 @@ export const structuredData = {
       '@type': 'ContactPoint',
       telephone: '+1-800-ECODE',
       contactType: 'sales',
-      availableLanguage: ['English', 'French', 'Spanish']
+      availableLanguage: ['English', 'French', 'German', 'Spanish', 'Italian']
     }
   }),
 
   website: () => ({
     '@context': 'https://schema.org',
     '@type': 'WebSite',
+    '@id': `${BASE_URL}/#website`,
     name: 'E-Code',
     url: BASE_URL,
+    publisher: { '@id': `${BASE_URL}/#organization` },
     potentialAction: {
       '@type': 'SearchAction',
       target: {
@@ -204,26 +219,33 @@ export const structuredData = {
         urlTemplate: `${BASE_URL}/search?q={search_term_string}`
       },
       'query-input': 'required name=search_term_string'
-    }
+    },
+    inLanguage: ['en', 'fr', 'de', 'es', 'it']
   }),
 
   softwareApplication: (name: string, description: string, category: string) => ({
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication',
+    '@id': `${BASE_URL}/#software`,
     name,
     description,
+    url: BASE_URL,
+    image: `${BASE_URL}/assets/og-default.png`,
     applicationCategory: category,
     operatingSystem: 'Web, Windows, macOS, Linux',
+    author: { '@id': `${BASE_URL}/#organization` },
     offers: {
       '@type': 'Offer',
       price: '0',
-      priceCurrency: 'USD'
+      priceCurrency: 'USD',
+      availability: 'https://schema.org/InStock'
     },
     aggregateRating: {
       '@type': 'AggregateRating',
       ratingValue: '4.9',
       ratingCount: '15000',
-      bestRating: '5'
+      bestRating: '5',
+      worstRating: '1'
     }
   }),
 
