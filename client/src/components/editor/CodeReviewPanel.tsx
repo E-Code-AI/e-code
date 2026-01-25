@@ -244,53 +244,47 @@ export default function CodeReviewPanel({
   };
 
   return (
-    <Card className={cn('w-full bg-background/95 backdrop-blur', className)}>
-      <CardHeader className="pb-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2 text-[15px]">
-              <Activity className="w-5 h-5 text-status-warning" />
-              Code Review Panel
-            </CardTitle>
-            <CardDescription>
-              Manage and track all code review issues
-            </CardDescription>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => queryClient.invalidateQueries({ queryKey: ['/api/code-review/issues', projectId] })}
-              data-testid="button-refresh-reviews"
-            >
-              <RefreshCw className="w-4 h-4" />
-            </Button>
-            
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" data-testid="button-export-menu">
-                  <Download className="w-4 h-4 mr-1" />
-                  Export
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem onClick={() => exportReportMutation.mutate('json')}>
-                  Export as JSON
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => exportReportMutation.mutate('html')}>
-                  Export as HTML
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => exportReportMutation.mutate('markdown')}>
-                  Export as Markdown
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+    <div className={cn('h-full flex flex-col bg-[var(--ecode-surface)]', className)}>
+      <div className="h-9 px-2.5 flex items-center justify-between border-b border-[var(--ecode-border)] shrink-0">
+        <div className="flex items-center gap-1.5">
+          <Activity className="w-3.5 h-3.5 text-[var(--ecode-text-muted)]" />
+          <span className="text-xs font-medium text-[var(--ecode-text)]">Review</span>
         </div>
         
-        {/* Summary Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
+        <div className="flex items-center gap-0.5">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 rounded-md text-[var(--ecode-text-muted)] hover:text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
+            onClick={() => queryClient.invalidateQueries({ queryKey: ['/api/code-review/issues', projectId] })}
+            data-testid="button-refresh-reviews"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+          </Button>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-7 w-7 rounded-md text-[var(--ecode-text-muted)] hover:text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]" data-testid="button-export-menu">
+                <Download className="w-3.5 h-3.5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onClick={() => exportReportMutation.mutate('json')}>
+                Export as JSON
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => exportReportMutation.mutate('html')}>
+                Export as HTML
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => exportReportMutation.mutate('markdown')}>
+                Export as Markdown
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+        
+      <div className="flex-1 overflow-y-auto p-2.5 space-y-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
           <div className="p-3 rounded-lg bg-gradient-to-r from-status-info/10 to-blue-600/10 border border-status-info/20">
             <div className="flex items-center justify-between">
               <div>
@@ -335,11 +329,9 @@ export default function CodeReviewPanel({
             </div>
           </div>
         </div>
-      </CardHeader>
-      
-      <CardContent>
-        <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as any)}>
-          <TabsList className="grid grid-cols-3 w-full mb-4">
+
+        <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as any)} className="flex-1 flex flex-col">
+          <TabsList className="h-8 w-full justify-start rounded-none bg-[var(--ecode-sidebar-hover)] p-0 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
             <TabsTrigger value="list">Issues List</TabsTrigger>
             <TabsTrigger value="metrics">Metrics</TabsTrigger>
             <TabsTrigger value="history">History</TabsTrigger>
@@ -686,7 +678,7 @@ export default function CodeReviewPanel({
             </ScrollArea>
           </TabsContent>
         </Tabs>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

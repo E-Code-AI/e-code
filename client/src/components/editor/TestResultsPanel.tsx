@@ -319,61 +319,45 @@ export function TestResultsPanel({
   const hasTests = allTests.length > 0;
 
   return (
-    <div className={cn("flex flex-col h-full bg-background", className)} data-testid="test-results-panel">
-      <div className="p-3 border-b space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Terminal className="h-4 w-4" />
-            <h3 className="text-[13px] font-semibold">Background Tests</h3>
-          </div>
-          <div className="flex items-center gap-1">
-            {isConnected ? (
-              <Badge variant="outline" className="text-[11px] bg-green-500/10 text-green-600" data-testid="status-connection">
-                <Wifi className="h-3 w-3 mr-1" />
-                Connected
-              </Badge>
-            ) : (
-              <Badge variant="outline" className="text-[11px] bg-red-500/10 text-red-600" data-testid="status-connection">
-                <WifiOff className="h-3 w-3 mr-1" />
-                Disconnected
-              </Badge>
-            )}
-          </div>
+    <div className={cn("flex flex-col h-full bg-[var(--ecode-surface)]", className)} data-testid="test-results-panel">
+      <div className="h-9 px-2.5 flex items-center justify-between border-b border-[var(--ecode-border)] shrink-0">
+        <div className="flex items-center gap-1.5">
+          <Terminal className="w-3.5 h-3.5 text-[var(--ecode-text-muted)]" />
+          <span className="text-xs font-medium text-[var(--ecode-text)]">Tests</span>
+          {isConnected ? (
+            <Badge className="h-4 px-1 text-[9px] bg-[hsl(142,72%,42%)]/10 text-[hsl(142,72%,42%)] rounded" data-testid="status-connection">
+              Live
+            </Badge>
+          ) : (
+            <Badge className="h-4 px-1 text-[9px] bg-red-500/10 text-red-500 rounded" data-testid="status-connection">
+              Offline
+            </Badge>
+          )}
         </div>
-
-        {connectionError && (
-          <div className="flex items-center gap-2 text-[11px] text-red-600 bg-red-500/10 rounded-md p-2" data-testid="text-test-error">
-            <AlertTriangle className="h-3 w-3" />
-            {connectionError}
-          </div>
-        )}
-
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-0.5">
           <Button
-            size="sm"
-            variant="default"
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 rounded-md text-[hsl(142,72%,42%)] hover:bg-[hsl(142,72%,42%)]/10"
             onClick={handleRerun}
             disabled={isRerunning || !isConnected}
-            className="h-7 px-3 text-[11px]"
             data-testid="button-rerun-tests"
           >
             {isRerunning ? (
-              <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
             ) : (
-              <Play className="h-3 w-3 mr-1" />
+              <Play className="w-3.5 h-3.5" />
             )}
-            Run Tests
           </Button>
           <Button
-            size="sm"
-            variant="outline"
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 rounded-md text-[var(--ecode-text-muted)] hover:text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
             onClick={handleClear}
             disabled={!hasTests}
-            className="h-7 px-3 text-[11px]"
             data-testid="button-clear-results"
           >
-            <Trash2 className="h-3 w-3 mr-1" />
-            Clear
+            <Trash2 className="w-3.5 h-3.5" />
           </Button>
           <Button
             size="sm"

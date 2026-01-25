@@ -236,33 +236,26 @@ export function AutonomyControlPanel({ projectId, onBack }: AutonomyControlPanel
 
   return (
     <TooltipProvider>
-      <Card className="border-[var(--ecode-border)] h-full flex flex-col" data-testid="autonomy-control-panel">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              {onBack && (
-                <Button variant="ghost" size="icon" onClick={onBack} data-testid="button-back">
-                  <ArrowLeft className="h-4 w-4" />
-                </Button>
-              )}
-              <div>
-                <CardTitle className="flex items-center gap-2 text-[15px]">
-                  <Zap className="h-5 w-5 text-yellow-500" />
-                  Max Autonomy Mode
-                </CardTitle>
-                <CardDescription className="text-[11px]">
-                  200+ minute autonomous sessions with AI
-                </CardDescription>
-              </div>
-            </div>
-            
+      <div className="h-full flex flex-col bg-[var(--ecode-surface)]" data-testid="autonomy-control-panel">
+        <div className="h-9 px-2.5 flex items-center justify-between border-b border-[var(--ecode-border)] shrink-0">
+          <div className="flex items-center gap-1.5">
+            {onBack && (
+              <Button variant="ghost" size="icon" className="h-7 w-7 rounded-md text-[var(--ecode-text-muted)] hover:text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]" onClick={onBack} data-testid="button-back">
+                <ArrowLeft className="w-3.5 h-3.5" />
+              </Button>
+            )}
+            <Zap className="w-3.5 h-3.5 text-yellow-500" />
+            <span className="text-xs font-medium text-[var(--ecode-text)]">Autonomy</span>
+          </div>
+          
+          <div className="flex items-center gap-1">
             {session && (
-              <div className="flex items-center gap-2">
+              <>
                 {isPolling && (
                   <Tooltip>
                     <TooltipTrigger>
-                      <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                        <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                      <div className="flex items-center gap-1 text-[9px] text-[var(--ecode-text-muted)]">
+                        <div className="h-1.5 w-1.5 rounded-full bg-[hsl(142,72%,42%)] animate-pulse" />
                         Live
                       </div>
                     </TooltipTrigger>
@@ -270,17 +263,17 @@ export function AutonomyControlPanel({ projectId, onBack }: AutonomyControlPanel
                   </Tooltip>
                 )}
                 <Badge 
-                  className={cn(STATUS_CONFIG[session.status].color, "text-white")}
+                  className={cn("h-4 px-1 text-[9px] rounded", STATUS_CONFIG[session.status].color, "text-white")}
                   data-testid="badge-session-status"
                 >
                   {STATUS_CONFIG[session.status].label}
                 </Badge>
-              </div>
+              </>
             )}
           </div>
-        </CardHeader>
+        </div>
 
-        <CardContent className="flex-1 overflow-hidden flex flex-col gap-4">
+        <div className="flex-1 overflow-y-auto p-2.5 space-y-3">
           {error && (
             <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 flex items-start gap-2" data-testid="error-display">
               <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
@@ -637,8 +630,8 @@ export function AutonomyControlPanel({ projectId, onBack }: AutonomyControlPanel
               )}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </TooltipProvider>
   );
 }

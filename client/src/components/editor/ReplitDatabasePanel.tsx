@@ -169,12 +169,17 @@ export function ReplitDatabasePanel({ projectId }: { projectId?: string }) {
   // No project ID - show message
   if (!projectId) {
     return (
-      <div className="h-full flex flex-col items-center justify-center bg-card p-4" data-testid="database-panel">
-        <Database className="w-12 h-12 text-muted-foreground opacity-40 mb-4" />
-        <h4 className="text-[17px] font-medium text-foreground mb-2">No Project Selected</h4>
-        <p className="text-[13px] text-muted-foreground text-center">
-          Open a project to manage its database
-        </p>
+      <div className="h-full flex flex-col bg-[var(--ecode-surface)]" data-testid="database-panel">
+        <div className="h-9 px-2.5 flex items-center border-b border-[var(--ecode-border)] shrink-0">
+          <Database className="w-3.5 h-3.5 text-[var(--ecode-text-muted)]" />
+          <span className="text-xs font-medium text-[var(--ecode-text)] ml-1.5">Database</span>
+        </div>
+        <div className="flex-1 flex flex-col items-center justify-center p-4">
+          <Database className="w-8 h-8 text-[var(--ecode-text-muted)] opacity-40 mb-3" />
+          <p className="text-xs text-[var(--ecode-text-muted)] text-center">
+            Open a project to manage its database
+          </p>
+        </div>
       </div>
     );
   }
@@ -182,10 +187,10 @@ export function ReplitDatabasePanel({ projectId }: { projectId?: string }) {
   // Loading state
   if (databaseLoading) {
     return (
-      <div className="h-full flex flex-col bg-card" data-testid="database-panel">
-        <div className="p-3 border-b border-border flex items-center gap-2">
-          <Database className="w-[18px] h-[18px] text-muted-foreground" />
-          <h3 className="text-[17px] font-medium text-foreground">Database</h3>
+      <div className="h-full flex flex-col bg-[var(--ecode-surface)]" data-testid="database-panel">
+        <div className="h-9 px-2.5 flex items-center border-b border-[var(--ecode-border)] shrink-0">
+          <Database className="w-3.5 h-3.5 text-[var(--ecode-text-muted)]" />
+          <span className="text-xs font-medium text-[var(--ecode-text)] ml-1.5">Database</span>
         </div>
         <LoadingSkeleton />
       </div>
@@ -195,38 +200,38 @@ export function ReplitDatabasePanel({ projectId }: { projectId?: string }) {
   // Not provisioned - show provisioning UI
   if (!databaseInfo?.provisioned) {
     return (
-      <div className="h-full flex flex-col bg-card" data-testid="database-panel">
-        <div className="p-3 border-b border-border flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Database className="w-[18px] h-[18px] text-muted-foreground" />
-            <h3 className="text-[17px] font-medium text-foreground">Database</h3>
+      <div className="h-full flex flex-col bg-[var(--ecode-surface)]" data-testid="database-panel">
+        <div className="h-9 px-2.5 flex items-center justify-between border-b border-[var(--ecode-border)] shrink-0">
+          <div className="flex items-center gap-1.5">
+            <Database className="w-3.5 h-3.5 text-[var(--ecode-text-muted)]" />
+            <span className="text-xs font-medium text-[var(--ecode-text)]">Database</span>
           </div>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleRefresh}>
-            <RefreshCw className="w-[18px] h-[18px] text-muted-foreground" />
+          <Button variant="ghost" size="icon" className="h-7 w-7 rounded-md text-[var(--ecode-text-muted)] hover:text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]" onClick={handleRefresh}>
+            <RefreshCw className="w-3.5 h-3.5" />
           </Button>
         </div>
 
         <div className="flex-1 flex flex-col items-center justify-center p-4">
-          <Database className="w-12 h-12 text-muted-foreground opacity-40 mb-4" />
-          <h4 className="text-[17px] font-medium text-foreground mb-2">No Database</h4>
-          <p className="text-[13px] text-muted-foreground text-center mb-6 max-w-[280px]">
-            Provision a dedicated PostgreSQL database for this project
+          <Database className="w-8 h-8 text-[var(--ecode-text-muted)] opacity-40 mb-3" />
+          <p className="text-xs font-medium text-[var(--ecode-text)] mb-1">No Database</p>
+          <p className="text-[10px] text-[var(--ecode-text-muted)] text-center mb-4 max-w-[240px]">
+            Provision a PostgreSQL database for this project
           </p>
 
-          <div className="w-full max-w-[280px] space-y-4">
+          <div className="w-full max-w-[240px] space-y-3">
             <div>
-              <label className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium mb-2 block">
+              <label className="text-[9px] uppercase tracking-wider text-[var(--ecode-text-muted)] font-medium mb-1.5 block">
                 Plan
               </label>
               <Select value={selectedPlan} onValueChange={(v: any) => setSelectedPlan(v)}>
-                <SelectTrigger className="h-10 bg-muted border-border text-foreground" data-testid="plan-selector">
+                <SelectTrigger className="h-8 text-xs bg-[var(--ecode-sidebar-hover)] border-[var(--ecode-border)]" data-testid="plan-selector">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-card border-border">
-                  <SelectItem value="free">Free (500MB, 10 conn)</SelectItem>
-                  <SelectItem value="starter">Starter (2GB, 25 conn)</SelectItem>
-                  <SelectItem value="pro">Pro (10GB, 100 conn)</SelectItem>
-                  <SelectItem value="enterprise">Enterprise (100GB, 500 conn)</SelectItem>
+                <SelectContent>
+                  <SelectItem value="free">Free (500MB)</SelectItem>
+                  <SelectItem value="starter">Starter (2GB)</SelectItem>
+                  <SelectItem value="pro">Pro (10GB)</SelectItem>
+                  <SelectItem value="enterprise">Enterprise (100GB)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -234,18 +239,18 @@ export function ReplitDatabasePanel({ projectId }: { projectId?: string }) {
             <Button
               onClick={() => provisionMutation.mutate()}
               disabled={provisionMutation.isPending}
-              className="w-full h-10 bg-primary hover:bg-primary/90 text-primary-foreground"
+              className="w-full h-7 text-xs bg-[hsl(142,72%,42%)] hover:bg-[hsl(142,72%,38%)] text-white"
               data-testid="provision-database-button"
             >
               {provisionMutation.isPending ? (
                 <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  <Loader2 className="w-3 h-3 mr-1.5 animate-spin" />
                   Provisioning...
                 </>
               ) : (
                 <>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Provision Database
+                  <Plus className="w-3 h-3 mr-1.5" />
+                  Provision
                 </>
               )}
             </Button>
@@ -262,20 +267,20 @@ export function ReplitDatabasePanel({ projectId }: { projectId?: string }) {
   const connectionPercent = db.maxConnections > 0 ? (db.connectionCount / db.maxConnections) * 100 : 0;
 
   return (
-    <div className="h-full flex flex-col bg-card" data-testid="database-panel">
-      <div className="p-3 border-b border-border flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Database className="w-[18px] h-[18px] text-muted-foreground" />
-          <h3 className="text-[17px] font-medium text-foreground">Database</h3>
-          <Badge variant="outline" className={cn(
-            "text-[11px] px-1.5",
-            db.status === 'running' ? 'border-green-500 text-green-500' : 'border-yellow-500 text-yellow-500'
+    <div className="h-full flex flex-col bg-[var(--ecode-surface)]" data-testid="database-panel">
+      <div className="h-9 px-2.5 flex items-center justify-between border-b border-[var(--ecode-border)] shrink-0">
+        <div className="flex items-center gap-1.5">
+          <Database className="w-3.5 h-3.5 text-[var(--ecode-text-muted)]" />
+          <span className="text-xs font-medium text-[var(--ecode-text)]">Database</span>
+          <Badge className={cn(
+            "h-4 px-1 text-[9px] rounded",
+            db.status === 'running' ? 'bg-[hsl(142,72%,42%)]/10 text-[hsl(142,72%,42%)]' : 'bg-yellow-500/10 text-yellow-500'
           )}>
             {db.status}
           </Badge>
         </div>
-        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleRefresh}>
-          <RefreshCw className={cn("w-[18px] h-[18px] text-muted-foreground", databaseLoading && "animate-spin")} />
+        <Button variant="ghost" size="icon" className="h-7 w-7 rounded-md text-[var(--ecode-text-muted)] hover:text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]" onClick={handleRefresh}>
+          <RefreshCw className={cn("w-3.5 h-3.5", databaseLoading && "animate-spin")} />
         </Button>
       </div>
 

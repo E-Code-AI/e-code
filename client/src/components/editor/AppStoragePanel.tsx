@@ -432,72 +432,68 @@ export function AppStoragePanel({ projectId, className }: AppStoragePanelProps) 
 
   return (
     <div 
-      className={cn("h-full flex flex-col bg-background", className)}
+      className={cn("h-full flex flex-col bg-[var(--ecode-surface)]", className)}
       data-testid="app-storage-panel"
       {...getRootProps()}
     >
       <input {...getInputProps()} data-testid="input-file-upload" />
       
-      <div className="p-3 sm:p-4 border-b border-border">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
-          <div className="flex items-center gap-2">
-            <HardDrive className="w-5 h-5 text-muted-foreground" />
-            <h3 className="text-base sm:text-[15px] font-semibold" data-testid="text-storage-title">
-              App Storage
-            </h3>
-            {storageData?.stats && (
-              <Badge variant="secondary" className="text-[11px]" data-testid="text-file-count">
-                {storageData.stats.fileCount} files
-              </Badge>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => refetch()}
-              disabled={isLoading}
-              data-testid="button-refresh-storage"
-            >
-              <RefreshCw className={cn("w-4 h-4", isLoading && "animate-spin")} />
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowNewFolderDialog(true)}
-              data-testid="button-new-folder"
-            >
-              <FolderPlus className="w-4 h-4 mr-1" />
-              <span className="hidden sm:inline">New Folder</span>
-            </Button>
-            <Button
-              size="sm"
-              onClick={open}
-              disabled={uploadingFiles.length > 0}
-              data-testid="button-upload"
-            >
-              <Upload className="w-4 h-4 mr-1" />
-              <span className="hidden sm:inline">Upload</span>
-              <span className="sm:hidden">Upload</span>
-            </Button>
-          </div>
+      <div className="h-9 px-2.5 flex items-center justify-between border-b border-[var(--ecode-border)] shrink-0">
+        <div className="flex items-center gap-1.5">
+          <HardDrive className="w-3.5 h-3.5 text-[var(--ecode-text-muted)]" />
+          <span className="text-xs font-medium text-[var(--ecode-text)]" data-testid="text-storage-title">Storage</span>
+          {storageData?.stats && (
+            <Badge className="h-4 px-1 text-[9px] bg-[var(--ecode-sidebar-hover)] text-[var(--ecode-text-muted)] rounded" data-testid="text-file-count">
+              {storageData.stats.fileCount}
+            </Badge>
+          )}
         </div>
-
-        {storageData?.stats && (
-          <div className="space-y-1">
-            <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-              <span data-testid="text-storage-used">{storageData.stats.totalSizeFormatted} used</span>
-              <span data-testid="text-storage-max">{storageData.stats.maxStorageFormatted}</span>
-            </div>
-            <Progress 
-              value={storageData.stats.usagePercent} 
-              className="h-2"
-              data-testid="progress-storage-usage"
-            />
-          </div>
-        )}
+        <div className="flex items-center gap-0.5">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 rounded-md text-[var(--ecode-text-muted)] hover:text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
+            onClick={() => refetch()}
+            disabled={isLoading}
+            data-testid="button-refresh-storage"
+          >
+            <RefreshCw className={cn("w-3.5 h-3.5", isLoading && "animate-spin")} />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 rounded-md text-[var(--ecode-text-muted)] hover:text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
+            onClick={() => setShowNewFolderDialog(true)}
+            data-testid="button-new-folder"
+          >
+            <FolderPlus className="w-3.5 h-3.5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 rounded-md text-[hsl(142,72%,42%)] hover:bg-[hsl(142,72%,42%)]/10"
+            onClick={open}
+            disabled={uploadingFiles.length > 0}
+            data-testid="button-upload"
+          >
+            <Upload className="w-3.5 h-3.5" />
+          </Button>
+        </div>
       </div>
+
+      {storageData?.stats && (
+        <div className="px-2.5 py-1 border-b border-[var(--ecode-border)] shrink-0">
+          <div className="flex items-center justify-between text-[9px] text-[var(--ecode-text-muted)]">
+            <span data-testid="text-storage-used">{storageData.stats.totalSizeFormatted}</span>
+            <span data-testid="text-storage-max">{storageData.stats.maxStorageFormatted}</span>
+          </div>
+          <Progress 
+            value={storageData.stats.usagePercent} 
+            className="h-1 mt-1"
+            data-testid="progress-storage-usage"
+          />
+        </div>
+      )}
 
       <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
         <ScrollArea className="flex-1 lg:w-1/2 border-r border-border">
