@@ -2993,39 +2993,45 @@ export function ReplitAgentPanelV3({
           )}
           
           {/* Chat Toolbar - Replit Agent 3 inline icons for quick toggle access */}
-          {isCompactMode ? (
-            <ChatToolbarMobile
-              extendedThinking={agentToolsSettings.extendedThinking}
-              highPowerModels={agentToolsSettings.highPowerModels}
-              onToggleExtendedThinking={() => handleAgentToolsChange({ ...agentToolsSettings, extendedThinking: !agentToolsSettings.extendedThinking })}
-              onToggleHighPowerModels={() => handleAgentToolsChange({ ...agentToolsSettings, highPowerModels: !agentToolsSettings.highPowerModels })}
-              isUpdating={false}
-            />
-          ) : (
-            <ChatToolbar
-              extendedThinking={agentToolsSettings.extendedThinking}
-              highPowerModels={agentToolsSettings.highPowerModels}
-              onToggleExtendedThinking={() => handleAgentToolsChange({ ...agentToolsSettings, extendedThinking: !agentToolsSettings.extendedThinking })}
-              onToggleHighPowerModels={() => handleAgentToolsChange({ ...agentToolsSettings, highPowerModels: !agentToolsSettings.highPowerModels })}
-              onToggleElementSelector={() => setElementEditorActive(!elementEditorActive)}
-              elementSelectorActive={elementEditorActive}
-              isUpdating={false}
-            />
+          {/* Hidden on mobile when external input bar is used (has its own toolbar) */}
+          {!hideInput && (
+            isCompactMode ? (
+              <ChatToolbarMobile
+                extendedThinking={agentToolsSettings.extendedThinking}
+                highPowerModels={agentToolsSettings.highPowerModels}
+                onToggleExtendedThinking={() => handleAgentToolsChange({ ...agentToolsSettings, extendedThinking: !agentToolsSettings.extendedThinking })}
+                onToggleHighPowerModels={() => handleAgentToolsChange({ ...agentToolsSettings, highPowerModels: !agentToolsSettings.highPowerModels })}
+                isUpdating={false}
+              />
+            ) : (
+              <ChatToolbar
+                extendedThinking={agentToolsSettings.extendedThinking}
+                highPowerModels={agentToolsSettings.highPowerModels}
+                onToggleExtendedThinking={() => handleAgentToolsChange({ ...agentToolsSettings, extendedThinking: !agentToolsSettings.extendedThinking })}
+                onToggleHighPowerModels={() => handleAgentToolsChange({ ...agentToolsSettings, highPowerModels: !agentToolsSettings.highPowerModels })}
+                onToggleElementSelector={() => setElementEditorActive(!elementEditorActive)}
+                elementSelectorActive={elementEditorActive}
+                isUpdating={false}
+              />
+            )
           )}
           
           {/* RAG Context - Automatic (Replit-style: no visible toggle, always enabled) */}
           {/* Knowledge retrieval happens automatically behind the scenes like Replit's Agent */}
           
           {/* Agent Tools Panel - Replit Agent 3 toggles: Max Autonomy, App Testing, Extended Thinking, High Power Models, Web Search */}
-          <AgentToolsPanel
-            projectId={projectIdNum}
-            settings={agentToolsSettings}
-            onSettingsChange={handleAgentToolsChange}
-            onViewVideoReplays={handleViewVideoReplays}
-            videoReplayCount={videoReplayCount}
-            compact={mode !== 'desktop'}
-            actualModelName={model?.name}
-          />
+          {/* Hidden on mobile when external input bar is used (has its own Agent Tools trigger) */}
+          {!hideInput && (
+            <AgentToolsPanel
+              projectId={projectIdNum}
+              settings={agentToolsSettings}
+              onSettingsChange={handleAgentToolsChange}
+              onViewVideoReplays={handleViewVideoReplays}
+              videoReplayCount={videoReplayCount}
+              compact={mode !== 'desktop'}
+              actualModelName={model?.name}
+            />
+          )}
         </div>
       </div>
         </>
