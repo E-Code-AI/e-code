@@ -418,7 +418,10 @@ export class DatabaseHostingService {
     if (!instance) return null;
 
     const { connection } = instance;
-    const password = includePassword ? 'generated_password' : '***';
+    // Get password from secure storage (environment variable pattern)
+    const passwordEnvKey = `DB_PASSWORD_${instanceId.toUpperCase().replace(/-/g, '_')}`;
+    const actualPassword = process.env[passwordEnvKey];
+    const password = includePassword ? (actualPassword || '[PASSWORD_NOT_CONFIGURED]') : '***';
 
     switch (instance.type) {
       case 'postgresql':
@@ -755,7 +758,10 @@ export class DatabaseHostingService {
     
     // Get password from secure storage (environment variable pattern)
     const passwordEnvKey = `DB_PASSWORD_${instance.id.toUpperCase().replace(/-/g, '_')}`;
-    const dbPassword = process.env[passwordEnvKey] || 'defaultpass';
+    const dbPassword = process.env[passwordEnvKey];
+    if (!dbPassword) {
+      throw new Error(`Database password not configured. Set ${passwordEnvKey} environment variable.`);
+    }
     
     // Perform actual database backup based on type
     switch (instance.type) {
@@ -826,22 +832,26 @@ export class DatabaseHostingService {
       // Stop database process
       await execAsync(`systemctl stop ${instance.type}-${instance.id}`);
       
+      // Get password from secure storage
+      const passwordEnvKey = `DB_PASSWORD_${instance.id.toUpperCase().replace(/-/g, '_')}`;
+      const dbPassword = process.env[passwordEnvKey];
+      if (!dbPassword) {
+        throw new Error(`Database password not configured. Set ${passwordEnvKey} environment variable.`);
+      }
+      
       // Restore based on database type
       switch(instance.type) {
         case 'postgresql':
-          await execAsync(`PGPASSWORD=${process.env[`DB_PASSWORD_${instance.id.toUpperCase().replace(/-/g, '_')}`] || 'defaultpass'} pg_restore -h ${instance.connection.host} -p ${instance.connection.port} -U ${instance.connection.username} -d ${instance.connection.database} ${backupPath}`);
+          await execAsync(`PGPASSWORD=${dbPassword} pg_restore -h ${instance.connection.host} -p ${instance.connection.port} -U ${instance.connection.username} -d ${instance.connection.database} ${backupPath}`);
           break;
         case 'mysql':
-          const mysqlPassword = process.env[`DB_PASSWORD_${instance.id.toUpperCase().replace(/-/g, '_')}`] || 'defaultpass';
-          await execAsync(`mysql -h ${instance.connection.host} -P ${instance.connection.port} -u${instance.connection.username} -p${mysqlPassword} ${instance.connection.database} < ${backupPath}`);
+          await execAsync(`mysql -h ${instance.connection.host} -P ${instance.connection.port} -u${instance.connection.username} -p${dbPassword} ${instance.connection.database} < ${backupPath}`);
           break;
         case 'redis':
-          const redisPassword = process.env[`DB_PASSWORD_${instance.id.toUpperCase().replace(/-/g, '_')}`] || 'defaultpass';
-          await execAsync(`redis-cli -h ${instance.connection.host} -p ${instance.connection.port} -a ${redisPassword} --rdb ${backupPath}`);
+          await execAsync(`redis-cli -h ${instance.connection.host} -p ${instance.connection.port} -a ${dbPassword} --rdb ${backupPath}`);
           break;
         case 'mongodb':
-          const mongoPassword = process.env[`DB_PASSWORD_${instance.id.toUpperCase().replace(/-/g, '_')}`] || 'defaultpass';
-          await execAsync(`mongorestore --host ${instance.connection.host}:${instance.connection.port} --username ${instance.connection.username} --password ${mongoPassword} --db ${instance.connection.database} --archive=${backupPath}`);
+          await execAsync(`mongorestore --host ${instance.connection.host}:${instance.connection.port} --username ${instance.connection.username} --password ${dbPassword} --db ${instance.connection.database} --archive=${backupPath}`);
           break;
       }
       
@@ -867,7 +877,11 @@ export class DatabaseHostingService {
     
     try {
       // Connect to database and execute migration
-      const dbPassword = process.env[`DB_PASSWORD_${instance.id.toUpperCase().replace(/-/g, '_')}`] || 'defaultpass';
+      const passwordEnvKey = `DB_PASSWORD_${instance.id.toUpperCase().replace(/-/g, '_')}`;
+      const dbPassword = process.env[passwordEnvKey];
+      if (!dbPassword) {
+        throw new Error(`Database password not configured. Set ${passwordEnvKey} environment variable.`);
+      }
       
       // SECURITY: Validate SQL contains only safe characters
       // Reject shell metacharacters, newlines, and escape sequences
