@@ -495,17 +495,17 @@ export function ShellPanel({ projectId, className }: ShellPanelProps) {
   return (
     <div 
       className={cn(
-        "h-full flex flex-col bg-background",
+        "h-full flex flex-col bg-[var(--ecode-surface)]",
         isFullscreen && "fixed inset-0 z-50",
         className
       )}
       data-testid="shell-panel"
     >
-      <div className="min-h-[40px] sm:min-h-[44px] flex items-center justify-between px-2 sm:px-3 border-b border-border bg-card">
-        <div className="flex items-center gap-2 overflow-hidden flex-1">
-          <div className="flex items-center gap-1.5 shrink-0">
-            <Terminal className="w-4 h-4 text-muted-foreground" />
-            <span className="text-[13px] font-medium hidden sm:inline">Shell</span>
+      <div className="h-9 flex items-center justify-between px-2.5 border-b border-[var(--ecode-border)] bg-[var(--ecode-surface)] shrink-0">
+        <div className="flex items-center gap-1.5 overflow-hidden flex-1">
+          <div className="flex items-center gap-1 shrink-0">
+            <Terminal className="w-3.5 h-3.5 text-[var(--ecode-text-muted)]" />
+            <span className="text-xs font-medium text-[var(--ecode-text)] hidden sm:inline">Shell</span>
           </div>
 
           {activeTab && (

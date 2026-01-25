@@ -218,38 +218,33 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
   }, [projectId, queryClient]);
 
   return (
-    <div className={cn('flex flex-col h-full bg-background', className)} data-testid="security-panel">
-      <div className="flex-1 overflow-y-auto">
-        <div className="p-3 space-y-3">
-          <div className="space-y-2 min-h-[48px]">
-            <div className="flex items-center gap-2">
-              <h1 className="text-[17px] font-medium leading-tight text-foreground">
-                Security and Privacy Scanner
-              </h1>
-              <Badge 
-                className="bg-primary text-primary-foreground uppercase text-[10px] tracking-wide font-medium px-2 py-0.5 rounded"
-                data-testid="beta-badge"
-              >
-                Beta
-              </Badge>
-            </div>
-            
-            <p className="text-[15px] leading-[20px] text-muted-foreground">
-              Run a scan to check for potential security risks and privacy leaks in your application. 
-              Scans are typically complete within minutes.{' '}
-              <a 
-                href="https://docs.replit.com/programming-ide/security-scanner" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-primary hover:underline"
-                data-testid="learn-more-link"
-              >
-                Learn more
-              </a>
-            </p>
-          </div>
+    <div className={cn('flex flex-col h-full bg-[var(--ecode-surface)]', className)} data-testid="security-panel">
+      <div className="h-9 px-2.5 flex items-center justify-between border-b border-[var(--ecode-border)] shrink-0">
+        <div className="flex items-center gap-1.5">
+          <ShieldCheck className="w-3.5 h-3.5 text-[var(--ecode-text-muted)]" />
+          <span className="text-xs font-medium text-[var(--ecode-text)]">Security</span>
+          <Badge className="h-4 px-1 text-[9px] bg-[hsl(142,72%,42%)] text-white rounded" data-testid="beta-badge">
+            Beta
+          </Badge>
+        </div>
+      </div>
 
-          <div className="flex gap-3">
+      <div className="flex-1 overflow-y-auto">
+        <div className="p-2.5 space-y-2">
+          <p className="text-[10px] text-[var(--ecode-text-muted)]">
+            Scan for security risks and privacy leaks.{' '}
+            <a 
+              href="https://docs.replit.com/programming-ide/security-scanner" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-[hsl(142,72%,42%)] hover:underline"
+              data-testid="learn-more-link"
+            >
+              Learn more
+            </a>
+          </p>
+
+          <div className="flex gap-1">
             <Button
               variant="outline"
               size="sm"

@@ -296,27 +296,25 @@ export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string })
   }
 
   return (
-    <div className="h-full flex flex-col bg-card">
-      {/* Header */}
-      <div className="p-3 min-h-[48px] border-b border-border">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <Bug className="w-[18px] h-[18px] text-primary" />
-            <h3 className="text-[17px] font-medium leading-tight text-foreground">
-              Debugger
-            </h3>
-            {isRunning && (
-              <Badge className={cn(
-                "text-[11px] uppercase tracking-wider rounded-lg",
-                isPaused 
-                  ? "bg-muted text-muted-foreground border border-border" 
-                  : "bg-card text-primary border border-primary"
-              )}>
-                {isPaused ? 'Paused' : 'Running'}
-              </Badge>
-            )}
-          </div>
+    <div className="h-full flex flex-col bg-[var(--ecode-surface)]">
+      <div className="h-9 px-2.5 flex items-center justify-between border-b border-[var(--ecode-border)] shrink-0">
+        <div className="flex items-center gap-1.5">
+          <Bug className="w-3.5 h-3.5 text-[var(--ecode-text-muted)]" />
+          <span className="text-xs font-medium text-[var(--ecode-text)]">Debugger</span>
+          {isRunning && (
+            <Badge className={cn(
+              "h-4 px-1 text-[9px] rounded",
+              isPaused 
+                ? "bg-[var(--ecode-sidebar-hover)] text-[var(--ecode-text-muted)]" 
+                : "bg-[hsl(142,72%,42%)]/10 text-[hsl(142,72%,42%)]"
+            )}>
+              {isPaused ? 'Paused' : 'Running'}
+            </Badge>
+          )}
         </div>
+      </div>
+
+      <div className="px-2.5 py-1.5 border-b border-[var(--ecode-border)] shrink-0">
 
         {/* Debug Controls */}
         <div className="flex items-center gap-2">

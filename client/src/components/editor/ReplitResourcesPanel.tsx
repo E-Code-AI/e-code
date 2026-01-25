@@ -130,15 +130,14 @@ export function ReplitResourcesPanel({ projectId, className }: ReplitResourcesPa
   };
 
   return (
-    <div className={cn('flex flex-col h-full bg-background text-foreground', className)} data-testid="resources-panel">
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-border">
-        <div className="flex items-center gap-2">
-          <Activity className="w-4 h-4 text-warning" />
-          <span className="text-[13px] font-medium">Resources</span>
+    <div className={cn('flex flex-col h-full bg-[var(--ecode-surface)]', className)} data-testid="resources-panel">
+      <div className="h-9 px-2.5 flex items-center justify-between border-b border-[var(--ecode-border)] shrink-0">
+        <div className="flex items-center gap-1.5">
+          <Activity className="w-3.5 h-3.5 text-[hsl(142,72%,42%)]" />
+          <span className="text-xs font-medium text-[var(--ecode-text)]">Resources</span>
         </div>
-        <span className={cn('text-[11px]', wsRef.current?.readyState === WebSocket.OPEN ? 'text-status-success' : 'text-status-warning')}>
-          {wsRef.current?.readyState === WebSocket.OPEN ? '● Live' : '○ Connecting...'}
+        <span className={cn('text-[9px]', wsRef.current?.readyState === WebSocket.OPEN ? 'text-[hsl(142,72%,42%)]' : 'text-[var(--ecode-text-muted)]')}>
+          {wsRef.current?.readyState === WebSocket.OPEN ? '● Live' : '○ Connecting'}
         </span>
       </div>
 

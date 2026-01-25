@@ -224,44 +224,43 @@ export function ReplitOutputPanel({ projectId }: ReplitOutputPanelProps) {
   const showNoMatches = !isLoading && output.length > 0 && filteredOutput.length === 0;
 
   return (
-    <div className="h-full flex flex-col bg-background">
-      <div className="p-3 border-b border-border flex-shrink-0 min-h-[48px]">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <Terminal className="w-[18px] h-[18px] text-muted-foreground" />
-            <h3 className="text-[17px] font-medium leading-tight text-foreground">
-              Output
-            </h3>
-            <span className="text-[11px] uppercase tracking-wider font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
-              {filteredOutput.length} lines
-            </span>
-          </div>
-
-          <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setAutoScroll(!autoScroll)}
-              className="h-8 w-8 p-0 rounded-lg hover:bg-muted"
-              data-testid="button-toggle-autoscroll"
-            >
-              {autoScroll ? (
-                <Unlock className="w-[18px] h-[18px] text-muted-foreground" />
-              ) : (
-                <Lock className="w-[18px] h-[18px] text-muted-foreground" />
-              )}
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={clearOutput}
-              className="h-8 w-8 p-0 rounded-lg hover:bg-muted"
-              data-testid="button-clear-output"
-            >
-              <Trash2 className="w-[18px] h-[18px] text-muted-foreground" />
-            </Button>
-          </div>
+    <div className="h-full flex flex-col bg-[var(--ecode-surface)]">
+      <div className="h-9 px-2.5 flex items-center justify-between border-b border-[var(--ecode-border)] shrink-0">
+        <div className="flex items-center gap-1.5">
+          <Terminal className="w-3.5 h-3.5 text-[var(--ecode-text-muted)]" />
+          <span className="text-xs font-medium text-[var(--ecode-text)]">Output</span>
+          <span className="text-[9px] px-1 rounded bg-[var(--ecode-sidebar-hover)] text-[var(--ecode-text-muted)]">
+            {filteredOutput.length}
+          </span>
         </div>
+
+        <div className="flex items-center gap-0.5">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setAutoScroll(!autoScroll)}
+            className="h-7 w-7 p-0 rounded hover:bg-[var(--ecode-sidebar-hover)]"
+            data-testid="button-toggle-autoscroll"
+          >
+            {autoScroll ? (
+              <Unlock className="w-3.5 h-3.5 text-[var(--ecode-text-muted)]" />
+            ) : (
+              <Lock className="w-3.5 h-3.5 text-[var(--ecode-text-muted)]" />
+            )}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={clearOutput}
+            className="h-7 w-7 p-0 rounded hover:bg-[var(--ecode-sidebar-hover)]"
+            data-testid="button-clear-output"
+          >
+            <Trash2 className="w-3.5 h-3.5 text-[var(--ecode-text-muted)]" />
+          </Button>
+        </div>
+      </div>
+
+      <div className="px-2.5 py-1 border-b border-[var(--ecode-border)] shrink-0">
 
         <div className="flex items-center gap-2">
           <Select value={selectedSource} onValueChange={setSelectedSource}>

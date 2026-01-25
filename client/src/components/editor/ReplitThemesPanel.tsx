@@ -241,16 +241,16 @@ export function ReplitThemesPanel({ projectId }: { projectId?: string }) {
   };
 
   return (
-    <div className="h-full flex flex-col bg-background">
-      {/* Header */}
-      <div className="px-4 py-3 border-b border-border">
-        <div className="flex items-center gap-2 mb-3">
-          <Palette className="h-5 w-5 text-muted-foreground" />
-          <h3 className="font-semibold text-foreground">Themes</h3>
+    <div className="h-full flex flex-col bg-[var(--ecode-surface)]">
+      <div className="h-9 px-2.5 flex items-center border-b border-[var(--ecode-border)] shrink-0">
+        <div className="flex items-center gap-1.5">
+          <Palette className="w-3.5 h-3.5 text-[var(--ecode-text-muted)]" />
+          <span className="text-xs font-medium text-[var(--ecode-text)]">Themes</span>
         </div>
+      </div>
 
-        {/* Mode Selector */}
-        <div className="flex gap-1 p-1 bg-muted rounded">
+      <div className="px-2.5 py-1.5 border-b border-[var(--ecode-border)] shrink-0">
+        <div className="flex gap-0.5 p-0.5 bg-[var(--ecode-sidebar-hover)] rounded">
           <button
             className={cn(
               "flex-1 px-3 py-1.5 text-[13px] rounded transition-colors",

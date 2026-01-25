@@ -552,45 +552,40 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
   }
 
   return (
-    <div className="h-full flex flex-col bg-gray-50 dark:bg-[#0e1525]" data-testid="history-panel">
-      <div className="p-2 sm:p-3 min-h-[44px] sm:min-h-[48px] border-b border-gray-200 dark:border-[#3d4452]">
-        <div className="flex items-center justify-between mb-2 sm:mb-3">
-          <div className="flex items-center gap-2">
-            <History className="w-4 sm:w-[18px] h-4 sm:h-[18px] text-gray-500 dark:text-[#9da2a6]" />
-            <h3 className="text-[15px] sm:text-[17px] font-medium leading-tight text-gray-900 dark:text-white">
-              History
-            </h3>
-          </div>
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-9 sm:h-8 min-w-[44px] rounded-lg text-[11px] sm:text-[13px] border-gray-300 dark:border-[#3d4452] text-gray-700 dark:text-[#d4d8dd] bg-transparent hover:bg-gray-100 dark:hover:bg-[#242b3d] touch-manipulation"
-            data-testid="button-save-checkpoint"
-            onClick={handleSaveCheckpoint}
-            disabled={createCheckpointMutation.isPending || !numericProjectId}
-          >
-            {createCheckpointMutation.isPending ? (
-              <Loader2 className="w-4 sm:w-[18px] h-4 sm:h-[18px] sm:mr-1.5 animate-spin" />
-            ) : (
-              <Save className="w-4 sm:w-[18px] h-4 sm:h-[18px] sm:mr-1.5" />
-            )}
-            <span className="hidden sm:inline">{createCheckpointMutation.isPending ? 'Saving...' : 'Save'}</span>
-          </Button>
+    <div className="h-full flex flex-col bg-[var(--ecode-surface)]" data-testid="history-panel">
+      <div className="h-9 px-2.5 flex items-center justify-between border-b border-[var(--ecode-border)] shrink-0">
+        <div className="flex items-center gap-1.5">
+          <History className="w-3.5 h-3.5 text-[var(--ecode-text-muted)]" />
+          <span className="text-xs font-medium text-[var(--ecode-text)]">History</span>
         </div>
-
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'checkpoints' | 'files')} className="w-full">
-          <TabsList className="w-full grid grid-cols-2 h-9 bg-[var(--ecode-surface)] border-b border-[var(--ecode-border)] rounded-none overflow-x-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-            <TabsTrigger value="files" className="text-xs gap-1 whitespace-nowrap data-[state=active]:bg-[hsl(142,72%,42%)]/10 data-[state=active]:text-[hsl(142,72%,42%)] min-h-[44px] sm:min-h-0 touch-manipulation">
-              <FileText className="w-3.5 h-3.5" />
-              Files
-            </TabsTrigger>
-            <TabsTrigger value="checkpoints" className="text-xs gap-1 whitespace-nowrap data-[state=active]:bg-[hsl(142,72%,42%)]/10 data-[state=active]:text-[hsl(142,72%,42%)] min-h-[44px] sm:min-h-0 touch-manipulation">
-              <GitCommit className="w-3.5 h-3.5" />
-              Checkpoints
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <Button
+          size="sm"
+          variant="ghost"
+          className="h-7 px-2 rounded text-[10px] text-[var(--ecode-text-muted)] hover:bg-[var(--ecode-sidebar-hover)]"
+          data-testid="button-save-checkpoint"
+          onClick={handleSaveCheckpoint}
+          disabled={createCheckpointMutation.isPending || !numericProjectId}
+        >
+          {createCheckpointMutation.isPending ? (
+            <Loader2 className="w-3.5 h-3.5 mr-0.5 animate-spin" />
+          ) : (
+            <Save className="w-3.5 h-3.5 mr-0.5" />
+          )}
+          <span className="hidden sm:inline">{createCheckpointMutation.isPending ? 'Saving' : 'Save'}</span>
+        </Button>
       </div>
+
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'checkpoints' | 'files')} className="flex-1 flex flex-col">
+        <TabsList className="h-9 w-full flex justify-start px-2.5 bg-[var(--ecode-surface)] border-b border-[var(--ecode-border)] rounded-none overflow-x-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+          <TabsTrigger value="files" className="text-[10px] px-2 gap-1 whitespace-nowrap data-[state=active]:border-b-2 data-[state=active]:border-[hsl(142,72%,42%)] data-[state=active]:text-[var(--ecode-text)] text-[var(--ecode-text-muted)] rounded-none">
+            <FileText className="w-3 h-3" />
+            Files
+          </TabsTrigger>
+          <TabsTrigger value="checkpoints" className="text-[10px] px-2 gap-1 whitespace-nowrap data-[state=active]:border-b-2 data-[state=active]:border-[hsl(142,72%,42%)] data-[state=active]:text-[var(--ecode-text)] text-[var(--ecode-text-muted)] rounded-none">
+            <GitCommit className="w-3 h-3" />
+            Checkpoints
+          </TabsTrigger>
+        </TabsList>
 
       {activeTab === 'files' && (
         <div className="flex-1 flex flex-col sm:flex-row overflow-hidden">
@@ -908,6 +903,7 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
           )}
         </ScrollArea>
       )}
+      </Tabs>
 
       <Dialog open={showRestoreDialog} onOpenChange={setShowRestoreDialog}>
         <DialogContent className="bg-white dark:bg-[#1c2333] border border-gray-200 dark:border-[#3d4452] w-[calc(100vw-32px)] sm:w-full max-w-md mx-auto">
