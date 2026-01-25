@@ -19,10 +19,10 @@ interface TabBarProps {
 
 export function TabBar({ tabs, activeTab, onTabChange, onTabClose }: TabBarProps) {
   return (
-    <div className="h-10 bg-background border-b flex items-center">
+    <div className="h-9 bg-[var(--ecode-surface)] border-b border-[var(--ecode-border)] flex items-center">
       {tabs.length === 1 && (
-        <div className="flex items-center gap-2 px-3 py-1 text-[11px] text-muted-foreground bg-surface-solid border border-[var(--ecode-surface-tertiary)] rounded-md ml-2 mr-2 flex-shrink-0">
-          <span>💡 Tip: Multiple tabs help you work efficiently</span>
+        <div className="flex items-center gap-1.5 px-2.5 py-0.5 text-[10px] text-[var(--ecode-text-muted)] bg-[var(--ecode-surface)] border border-[var(--ecode-border)] rounded ml-2 mr-2 flex-shrink-0">
+          <span>Tip: Multiple tabs help you work efficiently</span>
         </div>
       )}
       <div className="flex items-center gap-0 overflow-x-auto flex-1">
@@ -31,12 +31,12 @@ export function TabBar({ tabs, activeTab, onTabChange, onTabClose }: TabBarProps
             key={tab.id}
             onClick={() => onTabChange(tab.id)}
             className={`
-              group flex items-center gap-2 px-4 py-2 border-r border-border
-              transition-colors text-[13px] font-medium min-w-[120px] max-w-[200px]
+              group flex items-center gap-1.5 px-2.5 py-1.5 border-r border-[var(--ecode-border)]
+              transition-colors text-xs font-medium min-w-[100px] max-w-[180px]
               ${
                 activeTab === tab.id
-                  ? 'bg-background text-foreground'
-                  : 'bg-surface-tertiary-solid text-muted-foreground hover:bg-surface-hover-solid'
+                  ? 'bg-[var(--ecode-surface)] text-[var(--ecode-text)]'
+                  : 'bg-transparent text-[var(--ecode-text-muted)] hover:bg-[var(--ecode-sidebar-hover)]'
               }
             `}
             data-testid={`tab-${tab.id}`}

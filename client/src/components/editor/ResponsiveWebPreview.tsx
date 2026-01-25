@@ -170,7 +170,7 @@ export function ResponsiveWebPreview({
       className
     )}>
       {/* Preview Header */}
-      <div className="h-10 flex items-center justify-between px-2 border-b border-[var(--ecode-border)] bg-[var(--ecode-surface)]">
+      <div className="h-9 flex items-center justify-between px-2.5 border-b border-[var(--ecode-border)] bg-[var(--ecode-surface)]">
         <div className="flex items-center gap-2">
           {/* Device Type Selector */}
           {!isMobile && (

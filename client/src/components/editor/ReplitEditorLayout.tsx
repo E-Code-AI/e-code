@@ -429,9 +429,9 @@ export function ReplitEditorLayout({
               maxSize={40}
               className="bg-background"
             >
-              <div className="h-full bg-background border-l border-border flex flex-col">
+              <div className="h-full bg-[var(--ecode-surface)] border-l border-[var(--ecode-border)] flex flex-col">
                 {/* Right Panel Tab Headers - Replit Style */}
-                <div className="h-10 flex items-center border-b border-border bg-background px-2">
+                <div className="h-9 flex items-center border-b border-[var(--ecode-border)] bg-[var(--ecode-surface)] px-2.5">
                   {enhancedRightPanels.map((panel, index) => {
                     const isActive = activeRightPanel === panel.id;
                     return (
@@ -439,10 +439,10 @@ export function ReplitEditorLayout({
                         key={panel.id}
                         onClick={() => handleRightPanelChange(panel.id)}
                         className={cn(
-                          "px-3 py-1 text-[13px] font-medium transition-colors rounded-md mr-1",
+                          "px-2.5 py-1 text-xs font-medium transition-colors rounded-md mr-1",
                           isActive
-                            ? "bg-muted text-foreground"
-                            : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                            ? "bg-[var(--ecode-sidebar-hover)] text-[var(--ecode-text)]"
+                            : "text-[var(--ecode-text-muted)] hover:text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
                         )}
                       >
                         {panel.title}

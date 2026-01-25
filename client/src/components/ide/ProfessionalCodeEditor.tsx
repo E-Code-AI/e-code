@@ -21,11 +21,11 @@ export function ProfessionalCodeEditor({
   return (
     <div className="h-full flex flex-col">
       {/* File Toolbar */}
-      <div className="h-10 border-b flex items-center px-3 gap-3 bg-muted/30">
-        <span className="text-[13px] font-medium">{fileName}</span>
-        <span className="text-[11px] text-muted-foreground">{language}</span>
-        <span className="text-[11px] text-muted-foreground">UTF-8</span>
-        <span className="text-[11px] text-muted-foreground">LF</span>
+      <div className="h-9 border-b border-[var(--ecode-border)] flex items-center px-2.5 gap-2.5 bg-[var(--ecode-surface)]">
+        <span className="text-xs font-medium text-[var(--ecode-text)]">{fileName}</span>
+        <span className="text-[10px] text-[var(--ecode-text-muted)]">{language}</span>
+        <span className="text-[10px] text-[var(--ecode-text-muted)]">UTF-8</span>
+        <span className="text-[10px] text-[var(--ecode-text-muted)]">LF</span>
       </div>
       
       {/* Monaco Editor */}
