@@ -1,5 +1,6 @@
 import { useState, useDeferredValue, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import DOMPurify from 'dompurify';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -239,10 +240,10 @@ export function ReplitSearchPanel({ projectId }: { projectId?: string }) {
                     <div className="mt-1 font-mono text-[13px] text-muted-foreground truncate">
                       <span className="text-muted-foreground">{result.line}: </span>
                       <span dangerouslySetInnerHTML={{
-                        __html: result.preview.replace(
+                        __html: DOMPurify.sanitize(result.preview.replace(
                           new RegExp(result.match.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'),
                           `<mark class="bg-accent text-foreground rounded px-0.5">${result.match}</mark>`
-                        )
+                        ))
                       }} />
                     </div>
                   </div>

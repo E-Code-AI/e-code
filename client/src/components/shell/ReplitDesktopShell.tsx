@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import DOMPurify from 'dompurify';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -563,7 +564,7 @@ export function ReplitDesktopShell({
         <div 
           className="text-gray-200 dark:text-[#d4d4d4]"
           dangerouslySetInnerHTML={{ 
-            __html: parseAnsiToHtml(activeTab.output.join(''), isFindMode ? findQuery : undefined) 
+            __html: DOMPurify.sanitize(parseAnsiToHtml(activeTab.output.join(''), isFindMode ? findQuery : undefined))
           }} 
         />
         

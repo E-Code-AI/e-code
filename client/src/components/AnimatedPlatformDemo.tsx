@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import DOMPurify from 'dompurify';
 import { Card } from '@/components/ui/card';
 
 interface DemoStep {
@@ -270,7 +271,7 @@ export function AnimatedPlatformDemo() {
             </div>
             <div 
               className="border border-gray-200 dark:border-gray-700 rounded p-3 h-[160px] bg-gray-50 dark:bg-gray-900 overflow-auto"
-              dangerouslySetInnerHTML={{ __html: currentStepData?.preview || '' }}
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(currentStepData?.preview || '') }}
             />
           </div>
 

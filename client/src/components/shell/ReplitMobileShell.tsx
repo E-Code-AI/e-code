@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import DOMPurify from 'dompurify';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { 
@@ -471,7 +472,7 @@ export function ReplitMobileShell({ projectId, onClose, onBack }: ReplitMobileSh
       >
         <div 
           dangerouslySetInnerHTML={{ 
-            __html: parseAnsiToHtml(activeTab.output.join(''), isFindMode ? findQuery : undefined) 
+            __html: DOMPurify.sanitize(parseAnsiToHtml(activeTab.output.join(''), isFindMode ? findQuery : undefined))
           }} 
         />
         

@@ -3,6 +3,22 @@ import { projects, users } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 import { Pool } from 'pg';
 import crypto from 'crypto';
+
+// SQL identifier escaping to prevent SQL injection in DDL statements
+function escapeIdentifier(str: string): string {
+  // Only allow alphanumeric and underscores for identifiers
+  const sanitized = str.replace(/[^a-zA-Z0-9_]/g, '');
+  if (sanitized.length === 0) throw new Error('Invalid identifier');
+  if (/^\d/.test(sanitized)) throw new Error('Identifier cannot start with digit');
+  // Double-quote escape for PostgreSQL identifiers
+  return `"${sanitized.replace(/"/g, '""')}"`;
+}
+
+// SQL string literal escaping for passwords
+function escapeLiteral(str: string): string {
+  // PostgreSQL dollar-quoting for safe string literals
+  return `$$${str.replace(/\$/g, '\\$')}$$`;
+}
 const logger = {
   info: (message: string, ...args: any[]) => {},
   error: (message: string, ...args: any[]) => console.error(`[real-database-management] ERROR: ${message}`, ...args),
@@ -66,12 +82,16 @@ export class RealDatabaseManagementService {
     });
 
     try {
-      // Create new database
-      await adminPool.query(`CREATE DATABASE ${dbName}`);
+      // Create new database with proper escaping to prevent SQL injection
+      const safeDbName = escapeIdentifier(dbName);
+      const safeUsername = escapeIdentifier(username);
+      const safePassword = escapeLiteral(password);
       
-      // Create user with permissions
-      await adminPool.query(`CREATE USER ${username} WITH PASSWORD '${password}'`);
-      await adminPool.query(`GRANT ALL PRIVILEGES ON DATABASE ${dbName} TO ${username}`);
+      await adminPool.query(`CREATE DATABASE ${safeDbName}`);
+      
+      // Create user with permissions using safe escaping
+      await adminPool.query(`CREATE USER ${safeUsername} WITH PASSWORD ${safePassword}`);
+      await adminPool.query(`GRANT ALL PRIVILEGES ON DATABASE ${safeDbName} TO ${safeUsername}`);
       
       const host = process.env.PGHOST || 'localhost';
       const port = parseInt(process.env.PGPORT || '5432');

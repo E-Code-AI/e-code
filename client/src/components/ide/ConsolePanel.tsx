@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import DOMPurify from 'dompurify';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -632,7 +633,7 @@ export function ConsolePanel({ projectId, userId, isRunning, executionId, classN
               <>
                 <div 
                   dangerouslySetInnerHTML={{ 
-                    __html: parseAnsiToHtml(activeShell.output.join(''), isFindMode ? findQuery : undefined) 
+                    __html: DOMPurify.sanitize(parseAnsiToHtml(activeShell.output.join(''), isFindMode ? findQuery : undefined))
                   }} 
                 />
                 <div className="flex items-start gap-1 mt-1">
