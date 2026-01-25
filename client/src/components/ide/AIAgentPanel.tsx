@@ -149,9 +149,20 @@ export function AIAgentPanel({ projectId, onFileCreate }: AIAgentPanelProps) {
   };
   
   return (
-    <div className="h-full flex flex-col bg-background">
+    <div className="h-full flex flex-col bg-[var(--ecode-surface)]">
+      {/* Header */}
+      <div className="h-9 border-b border-[var(--ecode-border)] flex items-center justify-between px-2.5 bg-[var(--ecode-surface)]">
+        <h3 className="text-xs font-medium text-[var(--ecode-text-muted)] flex items-center gap-1.5">
+          <Bot className="h-3.5 w-3.5" />
+          AI Assistant
+        </h3>
+        {isStreaming && (
+          <Loader2 className="h-3.5 w-3.5 animate-spin text-[var(--ecode-text-muted)]" />
+        )}
+      </div>
+      
       {/* Messages */}
-      <ScrollArea className="flex-1 p-4" ref={scrollRef}>
+      <ScrollArea className="flex-1 p-3" ref={scrollRef}>
         <div className="space-y-4">
           {messages.map((message) => (
             <div

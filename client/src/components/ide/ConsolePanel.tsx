@@ -365,8 +365,8 @@ export function ConsolePanel({ projectId, userId, isRunning, executionId, classN
   };
 
   return (
-    <div className={cn("flex flex-col h-full bg-background", className)}>
-      <div className="h-9 flex items-center justify-between px-2 border-b bg-card">
+    <div className={cn("flex flex-col h-full bg-[var(--ecode-surface)]", className)}>
+      <div className="h-9 flex items-center justify-between px-2.5 border-b border-[var(--ecode-border)] bg-[var(--ecode-surface)]">
         <div className="flex items-center gap-2">
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'output' | 'shell')}>
             <TabsList className="h-7 bg-muted">
