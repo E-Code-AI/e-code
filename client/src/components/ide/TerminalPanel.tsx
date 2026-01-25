@@ -7,10 +7,10 @@ const ReplitTerminalPanel = instrumentedLazy(() =>
 );
 
 const TerminalFallback = () => (
-  <div className="h-full flex items-center justify-center bg-background">
+  <div className="h-full flex items-center justify-center bg-[var(--ecode-surface)]">
     <div className="flex flex-col items-center gap-2">
       <Loader2 className="h-5 w-5 animate-spin text-primary" />
-      <p className="text-[11px] text-muted-foreground">Loading terminal...</p>
+      <p className="text-[11px] text-[var(--ecode-text-muted)]">Loading terminal...</p>
     </div>
   </div>
 );

@@ -458,27 +458,12 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
 
   const AllDatabasesView = () => (
     <div className="flex flex-col h-full">
-      <div className="px-4 py-3 border-b border-border">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <ChevronLeft className="h-5 w-5 text-muted-foreground cursor-pointer hover:text-foreground" />
-            <Database className="h-5 w-5 text-primary" />
-            <h3 className="font-semibold text-foreground">Database</h3>
-          </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={handleRefresh}>Refresh All</DropdownMenuItem>
-              <DropdownMenuItem>Documentation</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+      <div className="h-9 px-2.5 border-b border-[var(--ecode-border)] bg-[var(--ecode-surface)] flex items-center justify-between">
+        <div className="flex items-center gap-1.5">
+          <Database className="h-3.5 w-3.5 text-[var(--ecode-text-muted)]" />
+          <h3 className="text-xs font-medium text-[var(--ecode-text-muted)]">Database</h3>
         </div>
-        <div className="flex items-center justify-between">
-          <span className="text-[13px] text-muted-foreground">All Databases</span>
+        <div className="flex items-center gap-1">
           <Button
             variant="ghost"
             size="sm"
@@ -487,8 +472,18 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
             data-testid="button-refresh"
           >
             <RefreshCw className="h-3 w-3" />
-            Refresh
           </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-7 w-7">
+                <MoreVertical className="h-3.5 w-3.5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleRefresh}>Refresh All</DropdownMenuItem>
+              <DropdownMenuItem>Documentation</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
@@ -1213,68 +1208,42 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
 
   const DatabaseDetailView = () => (
     <div className="flex flex-col h-full">
-      <div className="px-4 py-3 border-b border-border">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => setCurrentView('all')}
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </Button>
-            <Database className="h-5 w-5 text-primary" />
-            <h3 className="font-semibold text-foreground">Database</h3>
-          </div>
+      <div className="h-9 px-2.5 border-b border-[var(--ecode-border)] bg-[var(--ecode-surface)] flex items-center justify-between">
+        <div className="flex items-center gap-1.5">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={() => setCurrentView('all')}
+          >
+            <ChevronLeft className="h-3.5 w-3.5" />
+          </Button>
+          <Database className="h-3.5 w-3.5 text-[var(--ecode-text-muted)]" />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <MoreVertical className="h-4 w-4" />
-              </Button>
+              <button className="flex items-center gap-1 text-xs font-medium text-[var(--ecode-text-muted)] hover:text-foreground">
+                {currentView === 'development' ? 'Development' : 'Production'}
+                <ChevronDown className="h-3 w-3" />
+              </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={handleRefresh}>Refresh</DropdownMenuItem>
-              <DropdownMenuItem>Documentation</DropdownMenuItem>
+            <DropdownMenuContent>
+              <DropdownMenuItem onClick={() => setCurrentView('development')}>
+                Development Database
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setCurrentView('production')}>
+                Production Database
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1 text-[13px]">
-            <button
-              onClick={() => setCurrentView('all')}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              All Databases
-            </button>
-            <ChevronRight className="h-3 w-3 text-muted-foreground" />
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-1 text-foreground hover:text-primary">
-                  {currentView === 'development' ? 'Development Database' : 'Production Database'}
-                  <ChevronDown className="h-3 w-3" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem onClick={() => setCurrentView('development')}>
-                  Development Database
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setCurrentView('production')}>
-                  Production Database
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 text-[11px] gap-1"
-            onClick={handleRefresh}
-          >
-            <RefreshCw className="h-3 w-3" />
-            Refresh
-          </Button>
-        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-7 text-[11px] gap-1"
+          onClick={handleRefresh}
+        >
+          <RefreshCw className="h-3 w-3" />
+        </Button>
       </div>
 
       <div className="border-b border-border">
@@ -1338,7 +1307,7 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
   }
 
   return (
-    <div className="h-full flex flex-col bg-background">
+    <div className="h-full flex flex-col bg-[var(--ecode-surface)]">
       {currentView === 'all' ? <AllDatabasesView /> : <DatabaseDetailView />}
     </div>
   );
