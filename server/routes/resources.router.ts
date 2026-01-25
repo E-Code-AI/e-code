@@ -81,8 +81,18 @@ function getStorageMetrics(): { used: number; total: number; percentage: number 
     if (lines.length >= 2) {
       const parts = lines[1].split(/\s+/);
       if (parts.length >= 4) {
-        const total = parseInt(parts[1], 10) || 10737418240;
-        const used = parseInt(parts[2], 10) || 0;
+        const total = parseInt(parts[1], 10);
+        const used = parseInt(parts[2], 10);
+        
+        // Return unavailable if parsing failed or values are invalid
+        if (isNaN(total) || isNaN(used) || total <= 0) {
+          return {
+            used: -1,
+            total: -1,
+            percentage: -1
+          };
+        }
+        
         const percentage = (used / total) * 100;
         return { used, total, percentage };
       }
@@ -90,10 +100,11 @@ function getStorageMetrics(): { used: number; total: number; percentage: number 
   } catch (error) {
   }
   
+  // Return unavailable indicator instead of synthetic data
   return {
-    used: 1073741824,
-    total: 10737418240,
-    percentage: 10
+    used: -1,
+    total: -1,
+    percentage: -1
   };
 }
 
@@ -124,7 +135,7 @@ function getNetworkMetrics(): { bytesIn: number; bytesOut: number; latency: numb
   
   return {
     ...networkStats,
-    latency: Math.random() * 20 + 5
+    latency: -1 // -1 indicates unavailable - network latency requires external monitoring
   };
 }
 

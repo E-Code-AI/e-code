@@ -1,10 +1,10 @@
 import { WebSocketServer, WebSocket } from 'ws';
-import { Server } from 'http';
+import { Server, IncomingMessage } from 'http';
 import os from 'os';
 import path from 'path';
 import fs from 'fs';
 import { spawn, ChildProcess } from 'child_process';
-import { storage } from './storage';
+import { storage, sessionStore } from './storage';
 import { File } from '@shared/schema';
 import readline from 'readline';
 import { createLogger } from './utils/logger';
@@ -12,6 +12,9 @@ import { ContainerExecutor } from './execution/container-executor';
 import { terminalScalabilityManager } from './terminal/scalability-manager';
 import { websocketHeartbeatManager } from './terminal/websocket-heartbeat';
 import { redisSessionManager, TerminalSession as RedisTerminalSession } from './terminal/redis-session-manager';
+import { parse as parseCookie } from 'cookie';
+import jwt from 'jsonwebtoken';
+import { getJwtSecret } from './utils/secrets-manager';
 
 // Create a logger for the terminal module
 const logger = createLogger('terminal');
@@ -34,6 +37,36 @@ const terminalSessions = new Map<string, {
   outputBuffer: string;
 }>();
 
+async function validateTerminalConnection(req: IncomingMessage): Promise<{ isValid: boolean; userId?: number }> {
+  const cookies = req.headers.cookie;
+  if (cookies) {
+    const parsedCookies = parseCookie(cookies);
+    const sessionId = parsedCookies['connect.sid'];
+    if (sessionId) {
+      const sid = sessionId.startsWith('s:') ? sessionId.slice(2).split('.')[0] : sessionId;
+      const session = await new Promise<any>((resolve) => {
+        sessionStore.get(sid, (err, session) => resolve(session || null));
+      });
+      if (session?.passport?.user) {
+        return { isValid: true, userId: session.passport.user };
+      }
+    }
+  }
+  
+  const url = new URL(req.url || '', `http://${req.headers.host}`);
+  const token = url.searchParams.get('token') || url.searchParams.get('bootstrap');
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, getJwtSecret()) as any;
+      if (decoded.userId || decoded.projectId) {
+        return { isValid: true, userId: decoded.userId };
+      }
+    } catch { }
+  }
+  
+  return { isValid: false };
+}
+
 // Setup the terminal WebSocket server
 export function setupTerminalWebsocket(server: Server) {
   const wss = new WebSocketServer({
@@ -51,6 +84,30 @@ export function setupTerminalWebsocket(server: Server) {
 
       if (!projectId) {
         ws.close(1008, 'Missing or invalid projectId');
+        return;
+      }
+
+      const authResult = await validateTerminalConnection(req);
+      if (!authResult.isValid) {
+        ws.close(1008, 'Authentication required');
+        return;
+      }
+      logger.info(`Terminal auth validated for user ${authResult.userId}`);
+
+      // Verify project access - ensure user owns/has access to this project
+      try {
+        const project = await storage.getProject(projectId);
+        if (!project) {
+          ws.close(1008, 'Project not found');
+          return;
+        }
+        if (project.ownerId !== authResult.userId) {
+          ws.close(1008, 'Access denied - not your project');
+          return;
+        }
+      } catch (error) {
+        logger.error(`Failed to verify project access for project ${projectId}: ${error}`);
+        ws.close(1008, 'Failed to verify project access');
         return;
       }
 

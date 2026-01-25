@@ -1,12 +1,14 @@
 import { WebSocketServer, WebSocket } from 'ws';
-import { Server } from 'http';
+import { Server, IncomingMessage } from 'http';
 import { collaborativeEditingService } from '../services/collaborative-editing';
 import jwt from 'jsonwebtoken';
-import { storage } from '../storage';
+import { storage, sessionStore } from '../storage';
 import * as Y from 'yjs';
 import { applyUpdate } from 'yjs';
 import { createLogger } from '../utils/logger';
 import { wsMetrics } from './ws-metrics';
+import { parse as parseCookie } from 'cookie';
+import { getJwtSecret } from '../utils/secrets-manager';
 
 const logger = createLogger('collaborative-editing-ws');
 
@@ -73,6 +75,71 @@ function getClientId(ws: AuthenticatedWebSocket): string {
   return ws.clientId;
 }
 
+// SECURITY FIX: Connection-level authentication validation
+// Validates authentication BEFORE accepting any messages to prevent protocol-ordering bypass attacks
+async function validateConnection(req: IncomingMessage): Promise<{ isValid: boolean; userId?: number; username?: string }> {
+  const url = new URL(req.url || '', `http://${req.headers.host}`);
+  
+  // Check session cookie first
+  const cookies = req.headers.cookie;
+  if (cookies) {
+    const parsedCookies = parseCookie(cookies);
+    const sessionId = parsedCookies['connect.sid'];
+    if (sessionId) {
+      const sid = sessionId.startsWith('s:') ? sessionId.slice(2).split('.')[0] : sessionId;
+      const session = await new Promise<any>((resolve) => {
+        sessionStore.get(sid, (err, session) => resolve(session || null));
+      });
+      if (session?.passport?.user) {
+        const user = await storage.getUser(session.passport.user);
+        if (user) {
+          return { isValid: true, userId: user.id, username: user.username || 'Anonymous' };
+        }
+      }
+    }
+  }
+  
+  // Check JWT token in query params
+  const token = url.searchParams.get('token');
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, getJwtSecret()) as { userId: number };
+      if (decoded.userId) {
+        const user = await storage.getUser(decoded.userId);
+        if (user) {
+          return { isValid: true, userId: user.id, username: user.username || 'Anonymous' };
+        }
+      }
+    } catch {
+      // Token verification failed, continue to check other methods
+    }
+  }
+  
+  // Check WebSocket subprotocol for token (some clients send auth this way)
+  const protocols = req.headers['sec-websocket-protocol'];
+  if (protocols) {
+    const protocolList = protocols.split(',').map(p => p.trim());
+    for (const protocol of protocolList) {
+      if (protocol.startsWith('auth-')) {
+        const authToken = protocol.substring(5);
+        try {
+          const decoded = jwt.verify(authToken, getJwtSecret()) as { userId: number };
+          if (decoded.userId) {
+            const user = await storage.getUser(decoded.userId);
+            if (user) {
+              return { isValid: true, userId: user.id, username: user.username || 'Anonymous' };
+            }
+          }
+        } catch {
+          // Token verification failed
+        }
+      }
+    }
+  }
+  
+  return { isValid: false };
+}
+
 export class CollaborativeEditingWebSocketHandler {
   private wss: WebSocketServer;
   private connections: Map<string, Set<AuthenticatedWebSocket>> = new Map(); // Changed to Set for multiple connections
@@ -103,11 +170,54 @@ export class CollaborativeEditingWebSocketHandler {
     this.wss.on('connection', this.handleConnection.bind(this));
   }
 
-  private async handleConnection(ws: AuthenticatedWebSocket, request: any) {
+  private async handleConnection(ws: AuthenticatedWebSocket, request: IncomingMessage) {
     ws.lastActivity = new Date();
     wsMetrics.recordConnection('collaborative-editing');
     
     const clientId = getClientId(ws);
+    
+    // SECURITY FIX: Validate authentication at connection time BEFORE processing any messages
+    // This prevents protocol-ordering bypass attacks where unauthenticated clients could send messages
+    const authResult = await validateConnection(request);
+    if (!authResult.isValid || !authResult.userId) {
+      logger.warn(`Connection rejected: authentication failed for client ${clientId}`);
+      ws.close(4001, 'Authentication required');
+      return;
+    }
+    
+    const userId = String(authResult.userId);
+    
+    // Check connection limit per user
+    const currentCount = userConnectionCounts.get(userId) || 0;
+    if (currentCount >= MAX_CONNECTIONS_PER_USER) {
+      logger.warn(`User ${userId} exceeded max connections (${MAX_CONNECTIONS_PER_USER})`);
+      ws.close(4004, 'Maximum connections exceeded');
+      return;
+    }
+    
+    // Set authenticated user info on websocket
+    ws.userId = userId;
+    ws.username = authResult.username || 'Anonymous';
+    
+    // Track connection count
+    userConnectionCounts.set(userId, currentCount + 1);
+    
+    // Store connection (using Set for multiple connections per user)
+    if (!this.connections.has(ws.userId)) {
+      this.connections.set(ws.userId, new Set());
+    }
+    this.connections.get(ws.userId)!.add(ws);
+    
+    logger.info(`User ${userId} authenticated at connection time, connections: ${currentCount + 1}/${MAX_CONNECTIONS_PER_USER}`);
+    
+    // Send auth-success message to client
+    ws.send(JSON.stringify({
+      type: 'auth-success',
+      data: {
+        userId: ws.userId,
+        username: ws.username,
+      },
+    }));
     
     // 8.2 FIX: Set up ping/pong with timeout tracking
     ws.pingInterval = setInterval(() => {
@@ -179,7 +289,15 @@ export class CollaborativeEditingWebSocketHandler {
   private async handleMessage(ws: AuthenticatedWebSocket, message: WebSocketMessage) {
     switch (message.type) {
       case 'auth':
-        await this.handleAuth(ws, message.data);
+        // SECURITY FIX: Authentication is now done at connection time.
+        // For backward compatibility, respond with auth-success if client sends auth message
+        ws.send(JSON.stringify({
+          type: 'auth-success',
+          data: {
+            userId: ws.userId,
+            username: ws.username,
+          },
+        }));
         break;
       case 'join-session':
         await this.handleJoinSession(ws, message.data);
@@ -201,85 +319,6 @@ export class CollaborativeEditingWebSocketHandler {
         break;
       default:
         logger.warn('Unknown message type:', message.type);
-    }
-  }
-
-  private async handleAuth(ws: AuthenticatedWebSocket, data: { token: string }) {
-    try {
-      if (!data.token) {
-        ws.send(JSON.stringify({
-          type: 'auth-failed',
-          data: { message: 'Authentication token required' },
-        }));
-        ws.close(4001, 'Authentication token required');
-        return;
-      }
-
-      let decoded: { userId: number };
-      try {
-        decoded = jwt.verify(data.token, process.env.JWT_SECRET || 'dev-secret') as { userId: number };
-      } catch (jwtError) {
-        logger.error('JWT verification failed:', jwtError);
-        ws.send(JSON.stringify({
-          type: 'auth-failed',
-          data: { message: 'Invalid or expired token' },
-        }));
-        ws.close(4002, 'Invalid or expired token');
-        return;
-      }
-
-      const user = await storage.getUser(decoded.userId);
-      if (!user) {
-        ws.send(JSON.stringify({
-          type: 'auth-failed',
-          data: { message: 'User not found' },
-        }));
-        ws.close(4003, 'User not found');
-        return;
-      }
-
-      const userId = String(user.id);
-      
-      // Check connection limit per user
-      const currentCount = userConnectionCounts.get(userId) || 0;
-      if (currentCount >= MAX_CONNECTIONS_PER_USER) {
-        logger.warn(`User ${userId} exceeded max connections (${MAX_CONNECTIONS_PER_USER})`);
-        ws.send(JSON.stringify({
-          type: 'auth-failed',
-          data: { message: 'Maximum connections exceeded' },
-        }));
-        ws.close(4004, 'Maximum connections exceeded');
-        return;
-      }
-
-      ws.userId = userId;
-      ws.username = user.username || 'Anonymous';
-      
-      // Track connection count
-      userConnectionCounts.set(userId, currentCount + 1);
-      
-      // Store connection (using Set for multiple connections per user)
-      if (!this.connections.has(ws.userId)) {
-        this.connections.set(ws.userId, new Set());
-      }
-      this.connections.get(ws.userId)!.add(ws);
-
-      logger.info(`User ${userId} authenticated, connections: ${currentCount + 1}/${MAX_CONNECTIONS_PER_USER}`);
-
-      ws.send(JSON.stringify({
-        type: 'auth-success',
-        data: {
-          userId: ws.userId,
-          username: ws.username,
-        },
-      }));
-    } catch (error) {
-      logger.error('Authentication error:', error);
-      ws.send(JSON.stringify({
-        type: 'auth-failed',
-        data: { message: 'Authentication failed' },
-      }));
-      ws.close(4000, 'Authentication failed');
     }
   }
 

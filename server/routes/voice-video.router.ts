@@ -15,6 +15,18 @@ const createSessionSchema = z.object({
   roomName: z.string().min(1).max(100).optional()
 });
 
+const roomIdSchema = z.object({
+  roomId: z.string().min(1).max(100)
+});
+
+const recordingToggleSchema = z.object({
+  enable: z.boolean()
+});
+
+const projectIdSchema = z.object({
+  projectId: z.string().regex(/^\d+$/).transform(Number)
+});
+
 const router = Router();
 
 // Create a new voice/video session
@@ -54,11 +66,15 @@ router.post('/api/voice-video/sessions', ensureAuthenticated, async (req: Reques
 // Get active sessions for a project
 router.get('/api/voice-video/projects/:projectId/sessions', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
-    const projectId = parseInt(req.params.projectId);
-
-    if (isNaN(projectId)) {
-      return res.status(400).json({ error: 'Invalid project ID' });
+    const parseResult = projectIdSchema.safeParse(req.params);
+    if (!parseResult.success) {
+      return res.status(400).json({ 
+        error: 'Validation failed',
+        details: parseResult.error.errors
+      });
     }
+
+    const { projectId } = parseResult.data;
 
     const sessions = await voiceVideoService.getActiveSessions(projectId);
 
@@ -78,7 +94,15 @@ router.get('/api/voice-video/projects/:projectId/sessions', ensureAuthenticated,
 // Get session details
 router.get('/api/voice-video/sessions/:roomId', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
-    const { roomId } = req.params;
+    const parseResult = roomIdSchema.safeParse(req.params);
+    if (!parseResult.success) {
+      return res.status(400).json({ 
+        error: 'Validation failed',
+        details: parseResult.error.errors
+      });
+    }
+
+    const { roomId } = parseResult.data;
 
     const session = voiceVideoService.getSession(roomId);
 
@@ -109,8 +133,16 @@ router.get('/api/voice-video/sessions/:roomId', ensureAuthenticated, async (req:
 // End a session
 router.post('/api/voice-video/sessions/:roomId/end', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
+    const parseResult = roomIdSchema.safeParse(req.params);
+    if (!parseResult.success) {
+      return res.status(400).json({ 
+        error: 'Validation failed',
+        details: parseResult.error.errors
+      });
+    }
+
     const userId = (req.user as any)?.id;
-    const { roomId } = req.params;
+    const { roomId } = parseResult.data;
 
     const session = voiceVideoService.getSession(roomId);
 
@@ -141,9 +173,25 @@ router.post('/api/voice-video/sessions/:roomId/end', ensureAuthenticated, async 
 // Toggle recording
 router.post('/api/voice-video/sessions/:roomId/recording', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
+    const paramsResult = roomIdSchema.safeParse(req.params);
+    if (!paramsResult.success) {
+      return res.status(400).json({ 
+        error: 'Validation failed',
+        details: paramsResult.error.errors
+      });
+    }
+
+    const payloadResult = recordingToggleSchema.safeParse(req.body);
+    if (!payloadResult.success) {
+      return res.status(400).json({ 
+        error: 'Validation failed',
+        details: payloadResult.error.errors
+      });
+    }
+
     const userId = (req.user as any)?.id;
-    const { roomId } = req.params;
-    const { enable } = req.body;
+    const { roomId } = paramsResult.data;
+    const { enable } = payloadResult.data;
 
     const session = voiceVideoService.getSession(roomId);
 
@@ -178,7 +226,15 @@ router.post('/api/voice-video/sessions/:roomId/recording', ensureAuthenticated, 
 // Get session statistics
 router.get('/api/voice-video/sessions/:roomId/stats', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
-    const { roomId } = req.params;
+    const parseResult = roomIdSchema.safeParse(req.params);
+    if (!parseResult.success) {
+      return res.status(400).json({ 
+        error: 'Validation failed',
+        details: parseResult.error.errors
+      });
+    }
+
+    const { roomId } = parseResult.data;
 
     const stats = await voiceVideoService.getSessionStats(roomId);
 
