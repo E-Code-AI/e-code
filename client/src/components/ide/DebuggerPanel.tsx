@@ -222,23 +222,27 @@ export function DebuggerPanel({ projectId, onFileSelect }: DebuggerPanelProps) {
   };
 
   return (
-    <div className="flex flex-col h-full bg-background" data-testid="debugger-panel">
-      {/* Debug Controls */}
-      <div className="p-4 border-b space-y-3">
-        <div className="flex items-center justify-between">
-          <h3 className="text-[13px] font-semibold flex items-center gap-2">
-            <Bug className="h-4 w-4" />
-            Debugger
-          </h3>
+    <div className="flex flex-col h-full bg-[var(--ecode-surface)]" data-testid="debugger-panel">
+      {/* Header */}
+      <div className="h-9 border-b border-[var(--ecode-border)] flex items-center justify-between px-2.5 bg-[var(--ecode-surface)]">
+        <h3 className="text-xs font-medium text-[var(--ecode-text-muted)] flex items-center gap-1.5">
+          <Bug className="h-3.5 w-3.5" />
+          Debugger
+        </h3>
+        <div className="flex items-center gap-1.5">
           {isLoading && (
-            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            <Loader2 className="h-3.5 w-3.5 animate-spin text-[var(--ecode-text-muted)]" />
           )}
           {!isLoading && isDebugging && (
-            <Badge variant={isPaused ? "secondary" : "default"} className="text-[11px]">
+            <Badge variant={isPaused ? "secondary" : "default"} className="text-[10px] h-4 px-1.5">
               {isPaused ? 'Paused' : 'Running'}
             </Badge>
           )}
         </div>
+      </div>
+      
+      {/* Debug Controls */}
+      <div className="p-2.5 border-b border-[var(--ecode-border)] space-y-2">
 
         <div className="flex gap-2">
           {!isDebugging ? (

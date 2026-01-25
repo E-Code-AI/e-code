@@ -80,26 +80,26 @@ export function ToolsPanel({
   return (
     <div className="h-full flex flex-col bg-[var(--ecode-surface)] border-l border-[var(--ecode-border)]">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-[var(--ecode-border)] bg-[var(--ecode-sidebar-bg)]">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-[var(--ecode-accent)]" />
-            <h2 className="text-[13px] font-semibold text-[var(--ecode-text)]">Tools</h2>
-          </div>
-          {onClose && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClose}
-              className="h-6 w-6 p-0"
-              data-testid="button-close-tools-panel"
-            >
-              <X className="w-3.5 h-3.5" />
-            </Button>
-          )}
+      <div className="h-9 border-b border-[var(--ecode-border)] flex items-center justify-between px-2.5 bg-[var(--ecode-surface)]">
+        <div className="flex items-center gap-1.5">
+          <Sparkles className="w-3.5 h-3.5 text-[var(--ecode-accent)]" />
+          <h2 className="text-xs font-medium text-[var(--ecode-text-muted)]">Tools</h2>
         </div>
-        
-        {/* Search */}
+        {onClose && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onClose}
+            className="h-6 w-6 p-0 text-[var(--ecode-text-muted)] hover:text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
+            data-testid="button-close-tools-panel"
+          >
+            <X className="w-3.5 h-3.5" />
+          </Button>
+        )}
+      </div>
+      
+      {/* Search */}
+      <div className="p-2.5 border-b border-[var(--ecode-border)]">
         <div className="relative">
           <Search className="absolute left-2.5 top-2 w-3.5 h-3.5 text-[var(--ecode-text-muted)]" />
           <Input

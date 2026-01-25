@@ -167,15 +167,15 @@ export function ResourcesPanel({ projectId, className }: ResourcesPanelProps) {
   );
 
   return (
-    <div className={cn("h-full flex flex-col bg-background", className)}>
-      <div className="h-10 border-b flex items-center justify-between px-3">
-        <div className="flex items-center gap-2">
-          <Activity className="h-4 w-4" />
-          <span className="text-[13px] font-medium">Resources</span>
+    <div className={cn("h-full flex flex-col bg-[var(--ecode-surface)]", className)}>
+      <div className="h-9 border-b border-[var(--ecode-border)] flex items-center justify-between px-2.5 bg-[var(--ecode-surface)]">
+        <div className="flex items-center gap-1.5">
+          <Activity className="h-3.5 w-3.5 text-[var(--ecode-text-muted)]" />
+          <span className="text-xs font-medium text-[var(--ecode-text-muted)]">Resources</span>
           {metrics && (
-            <Badge variant="outline" className="text-[10px]">
+            <Badge variant="outline" className="text-[10px] h-4 px-1.5">
               <Clock className="h-2.5 w-2.5 mr-1" />
-              Up {formatDuration(metrics.uptime)}
+              {formatDuration(metrics.uptime)}
             </Badge>
           )}
         </div>
@@ -184,7 +184,7 @@ export function ResourcesPanel({ projectId, className }: ResourcesPanelProps) {
           size="sm"
           onClick={() => refetch()}
           disabled={isLoading}
-          className="h-7 w-7 p-0"
+          className="h-6 w-6 p-0 text-[var(--ecode-text-muted)] hover:text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
         >
           <RefreshCw className={cn("h-3.5 w-3.5", isLoading && "animate-spin")} />
         </Button>
