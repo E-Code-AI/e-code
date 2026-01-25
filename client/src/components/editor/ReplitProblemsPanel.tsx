@@ -111,63 +111,59 @@ export function ReplitProblemsPanel({ projectId, onFileNavigate }: ReplitProblem
   return (
     <div className="h-full flex flex-col bg-[var(--ecode-surface)]">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-[var(--ecode-border)] flex-shrink-0">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <AlertCircle className="h-5 w-5 text-[var(--ecode-text-secondary)]" />
-            <h3 className="font-semibold text-[var(--ecode-text)] font-[family-name:var(--ecode-font-sans)]">
-              Problems
-            </h3>
-          </div>
-          
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setGroupByFile(!groupByFile)}
-            className="text-[11px]"
-          >
-            <Filter className="h-3.5 w-3.5 mr-1" />
-            {groupByFile ? 'Ungroup' : 'Group by File'}
-          </Button>
+      <div className="h-9 px-2.5 flex items-center justify-between border-b border-[var(--ecode-border)] shrink-0">
+        <div className="flex items-center gap-1.5">
+          <AlertCircle className="h-3.5 w-3.5 text-[var(--ecode-text-muted)]" />
+          <span className="text-xs font-medium text-[var(--ecode-text)]">Problems</span>
         </div>
+        
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setGroupByFile(!groupByFile)}
+          className="h-7 px-2 text-[10px]"
+        >
+          <Filter className="h-3 w-3 mr-1" />
+          {groupByFile ? 'Ungroup' : 'Group'}
+        </Button>
+      </div>
 
-        {/* Filter Tabs */}
-        <div className="flex gap-2">
-          <Badge
-            variant={filter === 'all' ? 'default' : 'outline'}
-            className="cursor-pointer"
-            onClick={() => setFilter('all')}
-          >
-            All ({problems.length})
-          </Badge>
-          <Badge
-            variant={filter === 'errors' ? 'destructive' : 'outline'}
-            className="cursor-pointer"
-            onClick={() => setFilter('errors')}
-          >
-            Errors ({problemCounts.errors})
-          </Badge>
-          <Badge
-            variant={filter === 'warnings' ? 'default' : 'outline'}
-            className={cn(
-              "cursor-pointer",
-              filter === 'warnings' && "bg-status-warning/100 hover:bg-status-warning"
-            )}
-            onClick={() => setFilter('warnings')}
-          >
-            Warnings ({problemCounts.warnings})
-          </Badge>
-          <Badge
-            variant={filter === 'info' ? 'default' : 'outline'}
-            className={cn(
-              "cursor-pointer",
-              filter === 'info' && "bg-status-info hover:bg-status-info"
-            )}
-            onClick={() => setFilter('info')}
-          >
-            Info ({problemCounts.info})
-          </Badge>
-        </div>
+      {/* Filter Tabs */}
+      <div className="h-8 px-2.5 flex items-center gap-1.5 border-b border-[var(--ecode-border)] shrink-0 overflow-x-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+        <Badge
+          variant={filter === 'all' ? 'default' : 'outline'}
+          className="cursor-pointer text-[10px] h-5 px-1.5 whitespace-nowrap"
+          onClick={() => setFilter('all')}
+        >
+          All ({problems.length})
+        </Badge>
+        <Badge
+          variant={filter === 'errors' ? 'destructive' : 'outline'}
+          className="cursor-pointer text-[10px] h-5 px-1.5 whitespace-nowrap"
+          onClick={() => setFilter('errors')}
+        >
+          Errors ({problemCounts.errors})
+        </Badge>
+        <Badge
+          variant={filter === 'warnings' ? 'default' : 'outline'}
+          className={cn(
+            "cursor-pointer text-[10px] h-5 px-1.5 whitespace-nowrap",
+            filter === 'warnings' && "bg-status-warning/100 hover:bg-status-warning"
+          )}
+          onClick={() => setFilter('warnings')}
+        >
+          Warnings ({problemCounts.warnings})
+        </Badge>
+        <Badge
+          variant={filter === 'info' ? 'default' : 'outline'}
+          className={cn(
+            "cursor-pointer text-[10px] h-5 px-1.5 whitespace-nowrap",
+            filter === 'info' && "bg-status-info hover:bg-status-info"
+          )}
+          onClick={() => setFilter('info')}
+        >
+          Info ({problemCounts.info})
+        </Badge>
       </div>
 
       {/* Problems List */}

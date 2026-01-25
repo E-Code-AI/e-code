@@ -212,79 +212,81 @@ export function ReplitTestingPanel({ projectId = 'default-project', className }:
   const skippedTests = latestRun?.skippedTests || 0;
 
   return (
-    <div className={cn("flex flex-col h-full bg-card", className)}>
-      <div className="p-3 border-b border-border space-y-3 min-h-[48px]">
-        <div className="flex items-center justify-between">
-          <h3 className="text-[17px] font-medium leading-tight text-foreground">
-            Testing
-          </h3>
-          <div className="flex items-center gap-2">
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => refetch()}
-              className="h-8 px-3 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-[13px]"
-              data-testid="button-run-tests"
-            >
-              <PlayCircle className="w-[18px] h-[18px] mr-1.5" />
-              Run All
-            </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button size="sm" variant="ghost" className="h-8 w-8 p-0 rounded-lg hover:bg-accent">
-                  <Settings className="w-[18px] h-[18px] text-muted-foreground" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="bg-card border-border">
-                <DropdownMenuItem className="text-[15px] leading-[20px] text-foreground hover:bg-accent">Configure Test Runner</DropdownMenuItem>
-                <DropdownMenuItem className="text-[15px] leading-[20px] text-foreground hover:bg-accent">Watch Mode</DropdownMenuItem>
-                <DropdownMenuItem className="text-[15px] leading-[20px] text-foreground hover:bg-accent">Coverage Report</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+    <div className={cn("flex flex-col h-full bg-[var(--ecode-surface)]", className)}>
+      <div className="h-9 px-2.5 flex items-center justify-between border-b border-[var(--ecode-border)] shrink-0">
+        <div className="flex items-center gap-1.5">
+          <FlaskConical className="h-3.5 w-3.5 text-[var(--ecode-text-muted)]" />
+          <span className="text-xs font-medium text-[var(--ecode-text)]">Testing</span>
         </div>
+        <div className="flex items-center gap-1">
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => refetch()}
+            className="h-7 px-2 rounded bg-[hsl(142,72%,42%)] hover:bg-[hsl(142,72%,38%)] text-white text-[10px]"
+            data-testid="button-run-tests"
+          >
+            <PlayCircle className="w-3.5 h-3.5 mr-1" />
+            Run
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" variant="ghost" className="h-7 w-7 p-0 rounded hover:bg-[var(--ecode-sidebar-hover)]">
+                <Settings className="w-3.5 h-3.5 text-[var(--ecode-text-muted)]" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="bg-[var(--ecode-surface)] border-[var(--ecode-border)]">
+              <DropdownMenuItem className="text-xs text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">Configure Test Runner</DropdownMenuItem>
+              <DropdownMenuItem className="text-xs text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">Watch Mode</DropdownMenuItem>
+              <DropdownMenuItem className="text-xs text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">Coverage Report</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+
+      <div className="px-2.5 py-1.5 border-b border-[var(--ecode-border)] space-y-1.5 shrink-0">
 
         {latestRun && (
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-[11px] uppercase tracking-wider text-muted-foreground">Results:</span>
-            <Badge variant="outline" className="bg-muted border-border text-foreground text-[13px]">
-              Total: {totalTests}
+          <div className="flex items-center gap-1 flex-wrap">
+            <span className="text-[10px] uppercase tracking-wider text-[var(--ecode-text-muted)]">Results:</span>
+            <Badge variant="outline" className="h-5 text-[10px] px-1.5 border-[var(--ecode-border)] text-[var(--ecode-text)]">
+              {totalTests}
             </Badge>
             {passedTests > 0 && (
-              <Badge variant="outline" className="bg-card text-green-500 border-green-500 text-[13px]">
-                Passed: {passedTests}
+              <Badge variant="outline" className="h-5 text-[10px] px-1.5 text-[hsl(142,72%,42%)] border-[hsl(142,72%,42%)]">
+                {passedTests} pass
               </Badge>
             )}
             {failedTests > 0 && (
-              <Badge variant="outline" className="bg-card text-destructive border-destructive text-[13px]">
-                Failed: {failedTests}
+              <Badge variant="outline" className="h-5 text-[10px] px-1.5 text-destructive border-destructive">
+                {failedTests} fail
               </Badge>
             )}
             {skippedTests > 0 && (
-              <Badge variant="outline" className="bg-card text-yellow-500 border-yellow-500 text-[13px]">
-                Skipped: {skippedTests}
+              <Badge variant="outline" className="h-5 text-[10px] px-1.5 text-yellow-500 border-yellow-500">
+                {skippedTests} skip
               </Badge>
             )}
             {latestRun.duration && (
-              <Badge variant="outline" className="bg-muted border-border text-muted-foreground text-[13px]">
+              <Badge variant="outline" className="h-5 text-[10px] px-1.5 border-[var(--ecode-border)] text-[var(--ecode-text-muted)]">
                 {latestRun.duration}ms
               </Badge>
             )}
           </div>
         )}
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <Input
             placeholder="Search tests..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="h-8 rounded-lg text-[15px] leading-[20px] bg-muted border-border text-foreground placeholder:text-muted-foreground"
+            className="h-7 rounded text-xs bg-[var(--ecode-surface)] border-[var(--ecode-border)] text-[var(--ecode-text)] placeholder:text-[var(--ecode-text-muted)]"
             data-testid="input-search-tests"
           />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button size="sm" variant="outline" className="h-8 px-3 rounded-lg border-border bg-muted hover:bg-accent text-[13px] text-foreground">
-                <Filter className="w-[18px] h-[18px] mr-1.5 text-muted-foreground" />
+              <Button size="sm" variant="outline" className="h-7 px-2 rounded border-[var(--ecode-border)] bg-[var(--ecode-surface)] hover:bg-[var(--ecode-sidebar-hover)] text-[10px] text-[var(--ecode-text)]">
+                <Filter className="w-3.5 h-3.5 mr-1 text-[var(--ecode-text-muted)]" />
                 {filter === 'all' ? 'All' : filter.charAt(0).toUpperCase() + filter.slice(1)}
               </Button>
             </DropdownMenuTrigger>

@@ -454,11 +454,11 @@ export function ReplitSettingsPanel({ projectId }: { projectId?: string }) {
   };
 
   return (
-    <div className="h-full flex flex-col bg-background">
-      <div className="min-h-[48px] flex items-center px-3 border-b border-border">
-        <div className="flex items-center gap-2">
-          <Settings className="w-[18px] h-[18px] text-muted-foreground" />
-          <h3 className="text-[17px] font-medium leading-tight text-foreground">Settings</h3>
+    <div className="h-full flex flex-col bg-[var(--ecode-surface)]">
+      <div className="h-9 px-2.5 flex items-center border-b border-[var(--ecode-border)] shrink-0">
+        <div className="flex items-center gap-1.5">
+          <Settings className="w-3.5 h-3.5 text-[var(--ecode-text-muted)]" />
+          <span className="text-xs font-medium text-[var(--ecode-text)]">Settings</span>
         </div>
       </div>
 

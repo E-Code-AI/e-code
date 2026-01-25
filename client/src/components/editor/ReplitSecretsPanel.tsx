@@ -410,60 +410,57 @@ export function ReplitSecretsPanel({ projectId }: { projectId?: string | number 
 
   return (
     <div 
-      className="h-full flex flex-col bg-gray-50 dark:bg-[#0e1525]" 
+      className="h-full flex flex-col bg-[var(--ecode-surface)]" 
       data-testid="secrets-panel"
     >
-      <div className="p-3 min-h-[48px] border-b border-gray-200 dark:border-[#3d4452]">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <Shield className="w-[18px] h-[18px] text-gray-500 dark:text-[#9da2a6]" />
-            <h3 className="text-[17px] font-medium leading-tight text-gray-900 dark:text-white">
-              Secrets
-            </h3>
-            <Badge 
-              className="text-[11px] uppercase tracking-wider px-2 py-0.5 rounded bg-gray-200 dark:bg-[#242b3d] text-gray-600 dark:text-[#9da2a6] border-none"
-            >
-              {variables.length}
-            </Badge>
-          </div>
-          <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              className="h-8 w-8 rounded-lg p-0 text-gray-500 dark:text-[#9da2a6] hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-[#242b3d]"
-              onClick={() => setShowImportDialog(true)}
-              title="Import from .env file"
-              data-testid="button-import-secrets"
-            >
-              <Upload className="w-[18px] h-[18px]" />
-            </Button>
-            <Button
-              variant="ghost"
-              className="h-8 w-8 rounded-lg p-0 text-gray-500 dark:text-[#9da2a6] hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-[#242b3d]"
-              onClick={() => setShowExportWarning(true)}
-              title="Export to .env file"
-              data-testid="button-export-secrets"
-            >
-              <Download className="w-[18px] h-[18px]" />
-            </Button>
-            <Button
-              variant="ghost"
-              className="h-8 w-8 rounded-lg p-0 text-gray-500 dark:text-[#9da2a6] hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-[#242b3d]"
-              onClick={() => refetch()}
-              disabled={isLoading}
-              data-testid="button-refresh-secrets"
-            >
-              <RefreshCw className={cn("w-[18px] h-[18px]", isLoading && "animate-spin")} />
-            </Button>
-            <Button
-              className="h-8 rounded-lg px-3 text-[13px] bg-blue-600 hover:bg-blue-700 text-white"
-              onClick={() => setShowAddDialog(true)}
-              data-testid="button-add-secret"
-            >
-              <Plus className="w-[18px] h-[18px] mr-1" />
-              Add
-            </Button>
-          </div>
+      <div className="h-9 px-2.5 flex items-center justify-between border-b border-[var(--ecode-border)] shrink-0">
+        <div className="flex items-center gap-1.5">
+          <Shield className="w-3.5 h-3.5 text-[var(--ecode-text-muted)]" />
+          <span className="text-xs font-medium text-[var(--ecode-text)]">Secrets</span>
+          <Badge className="h-4 text-[9px] px-1 bg-[var(--ecode-sidebar-hover)] text-[var(--ecode-text-muted)] border-none">
+            {variables.length}
+          </Badge>
         </div>
+        <div className="flex items-center gap-0.5">
+          <Button
+            variant="ghost"
+            className="h-7 w-7 rounded p-0 text-[var(--ecode-text-muted)] hover:text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
+            onClick={() => setShowImportDialog(true)}
+            title="Import from .env file"
+            data-testid="button-import-secrets"
+          >
+            <Upload className="w-3.5 h-3.5" />
+          </Button>
+          <Button
+            variant="ghost"
+            className="h-7 w-7 rounded p-0 text-[var(--ecode-text-muted)] hover:text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
+            onClick={() => setShowExportWarning(true)}
+            title="Export to .env file"
+            data-testid="button-export-secrets"
+          >
+            <Download className="w-3.5 h-3.5" />
+          </Button>
+          <Button
+            variant="ghost"
+            className="h-7 w-7 rounded p-0 text-[var(--ecode-text-muted)] hover:text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
+            onClick={() => refetch()}
+            disabled={isLoading}
+            data-testid="button-refresh-secrets"
+          >
+            <RefreshCw className={cn("w-3.5 h-3.5", isLoading && "animate-spin")} />
+          </Button>
+          <Button
+            className="h-7 rounded px-2 text-[10px] bg-[hsl(142,72%,42%)] hover:bg-[hsl(142,72%,38%)] text-white"
+            onClick={() => setShowAddDialog(true)}
+            data-testid="button-add-secret"
+          >
+            <Plus className="w-3.5 h-3.5 mr-0.5" />
+            Add
+          </Button>
+        </div>
+      </div>
+
+      <div className="px-2.5 py-1.5 border-b border-[var(--ecode-border)] shrink-0">
 
         <div className="flex gap-2">
           <div className="relative flex-1">

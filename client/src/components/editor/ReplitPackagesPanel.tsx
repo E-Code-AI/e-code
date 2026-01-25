@@ -377,47 +377,47 @@ export function ReplitPackagesPanel({ projectId }: { projectId?: string | number
   }
 
   return (
-    <div className="h-full flex flex-col bg-background" data-testid="packages-panel">
-      <div className="p-3 border-b border-border min-h-[48px]">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <Package className="w-[18px] h-[18px] text-muted-foreground" />
-            <h3 className="text-[17px] font-medium leading-tight text-foreground">Packages</h3>
-            {projectLanguage && (
-              <Badge variant="outline" className="text-[11px] uppercase tracking-wider border-border text-muted-foreground bg-transparent">
-                {projectLanguage}
-              </Badge>
-            )}
-          </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 rounded-lg hover:bg-muted"
-            onClick={() => {
-              refetch();
-              refetchAudit();
-              refetchOutdated();
-            }}
-            disabled={isLoading}
-            data-testid="button-refresh-packages"
-          >
-            <RefreshCw className={cn("w-[18px] h-[18px] text-muted-foreground", isLoading && "animate-spin")} />
-          </Button>
+    <div className="h-full flex flex-col bg-[var(--ecode-surface)]" data-testid="packages-panel">
+      <div className="h-9 px-2.5 flex items-center justify-between border-b border-[var(--ecode-border)] shrink-0">
+        <div className="flex items-center gap-1.5">
+          <Package className="w-3.5 h-3.5 text-[var(--ecode-text-muted)]" />
+          <span className="text-xs font-medium text-[var(--ecode-text)]">Packages</span>
+          {projectLanguage && (
+            <Badge variant="outline" className="h-4 text-[9px] px-1 border-[var(--ecode-border)] text-[var(--ecode-text-muted)]">
+              {projectLanguage}
+            </Badge>
+          )}
         </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7 rounded hover:bg-[var(--ecode-sidebar-hover)]"
+          onClick={() => {
+            refetch();
+            refetchAudit();
+            refetchOutdated();
+          }}
+          disabled={isLoading}
+          data-testid="button-refresh-packages"
+        >
+          <RefreshCw className={cn("w-3.5 h-3.5 text-[var(--ecode-text-muted)]", isLoading && "animate-spin")} />
+        </Button>
+      </div>
 
-        <div className="flex gap-2">
+      <div className="px-2.5 py-1.5 border-b border-[var(--ecode-border)] shrink-0">
+        <div className="flex gap-1">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-muted-foreground" />
+            <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--ecode-text-muted)]" />
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={`Search ${searchLanguage === 'pypi' ? 'PyPI' : 'npm'} packages...`}
-              className="pl-10 h-8 rounded-lg text-[15px] leading-[20px] bg-muted border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary"
+              placeholder={`Search ${searchLanguage === 'pypi' ? 'PyPI' : 'npm'}...`}
+              className="pl-7 h-7 rounded text-xs bg-[var(--ecode-surface)] border-[var(--ecode-border)] text-[var(--ecode-text)] placeholder:text-[var(--ecode-text-muted)]"
               data-testid="input-package-search"
             />
           </div>
           <Select value={searchLanguage} onValueChange={(v: 'npm' | 'pypi') => setSearchLanguage(v)}>
-            <SelectTrigger className="w-[90px] h-8 text-[13px]">
+            <SelectTrigger className="w-[70px] h-7 text-[10px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -429,37 +429,37 @@ export function ReplitPackagesPanel({ projectId }: { projectId?: string | number
       </div>
 
       <Tabs defaultValue="installed" className="flex-1 flex flex-col">
-        <TabsList className="grid w-full grid-cols-5 p-1 mx-3 mt-2 bg-muted rounded-lg" style={{ width: 'calc(100% - 24px)' }}>
-          <TabsTrigger value="installed" className="text-[11px] rounded-lg data-[state=active]:bg-card data-[state=active]:text-foreground text-muted-foreground" data-testid="tab-installed">
+        <TabsList className="h-9 w-full flex justify-start px-2.5 bg-[var(--ecode-surface)] border-b border-[var(--ecode-border)] rounded-none overflow-x-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+          <TabsTrigger value="installed" className="text-[10px] px-2 whitespace-nowrap data-[state=active]:border-b-2 data-[state=active]:border-[hsl(142,72%,42%)] data-[state=active]:text-[var(--ecode-text)] text-[var(--ecode-text-muted)] rounded-none" data-testid="tab-installed">
             Installed
-            <Badge variant="secondary" className="ml-1 px-1 py-0 text-[10px] bg-muted text-muted-foreground">
+            <Badge variant="secondary" className="ml-1 h-4 px-1 text-[9px] bg-[var(--ecode-sidebar-hover)] text-[var(--ecode-text-muted)]">
               {installedPackages.length}
             </Badge>
           </TabsTrigger>
-          <TabsTrigger value="search" className="text-[11px] rounded-lg data-[state=active]:bg-card data-[state=active]:text-foreground text-muted-foreground" data-testid="tab-search">
+          <TabsTrigger value="search" className="text-[10px] px-2 whitespace-nowrap data-[state=active]:border-b-2 data-[state=active]:border-[hsl(142,72%,42%)] data-[state=active]:text-[var(--ecode-text)] text-[var(--ecode-text-muted)] rounded-none" data-testid="tab-search">
             Search
-            {isSearching && <Loader2 className="ml-1 w-3 h-3 animate-spin text-primary" />}
+            {isSearching && <Loader2 className="ml-1 w-3 h-3 animate-spin text-[hsl(142,72%,42%)]" />}
           </TabsTrigger>
-          <TabsTrigger value="security" className="text-[11px] rounded-lg data-[state=active]:bg-card data-[state=active]:text-foreground text-muted-foreground">
-            <Shield className="w-3 h-3 mr-1" />
-            Security
+          <TabsTrigger value="security" className="text-[10px] px-2 whitespace-nowrap data-[state=active]:border-b-2 data-[state=active]:border-[hsl(142,72%,42%)] data-[state=active]:text-[var(--ecode-text)] text-[var(--ecode-text-muted)] rounded-none">
+            <Shield className="w-3 h-3 mr-0.5" />
+            Sec
             {auditSummary.critical + auditSummary.high > 0 && (
-              <Badge className="ml-1 px-1 py-0 text-[10px] bg-red-600 text-white">
+              <Badge className="ml-0.5 h-4 px-1 text-[9px] bg-red-600 text-white">
                 {auditSummary.critical + auditSummary.high}
               </Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="updates" className="text-[11px] rounded-lg data-[state=active]:bg-card data-[state=active]:text-foreground text-muted-foreground">
-            <ArrowUpCircle className="w-3 h-3 mr-1" />
-            Updates
+          <TabsTrigger value="updates" className="text-[10px] px-2 whitespace-nowrap data-[state=active]:border-b-2 data-[state=active]:border-[hsl(142,72%,42%)] data-[state=active]:text-[var(--ecode-text)] text-[var(--ecode-text-muted)] rounded-none">
+            <ArrowUpCircle className="w-3 h-3 mr-0.5" />
+            Up
             {outdatedPackages.length > 0 && (
-              <Badge variant="secondary" className="ml-1 px-1 py-0 text-[10px]">
+              <Badge variant="secondary" className="ml-0.5 h-4 px-1 text-[9px]">
                 {outdatedPackages.length}
               </Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="deps" className="text-[11px] rounded-lg data-[state=active]:bg-card data-[state=active]:text-foreground text-muted-foreground">
-            <GitBranch className="w-3 h-3 mr-1" />
+          <TabsTrigger value="deps" className="text-[10px] px-2 whitespace-nowrap data-[state=active]:border-b-2 data-[state=active]:border-[hsl(142,72%,42%)] data-[state=active]:text-[var(--ecode-text)] text-[var(--ecode-text-muted)] rounded-none">
+            <GitBranch className="w-3 h-3 mr-0.5" />
             Tree
           </TabsTrigger>
         </TabsList>
