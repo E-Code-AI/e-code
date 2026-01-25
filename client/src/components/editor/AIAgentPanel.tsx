@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Send, Sparkles, User, Bot, Loader2, Settings, History, Zap, Code, MessageSquare, X, ChevronDown, ChevronUp, Bug, TestTube, FileCode } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -321,22 +322,25 @@ export function AIAgentPanel({ projectId, onClose, selectedCode, currentFilePath
   ];
 
   return (
-    <div className="flex flex-col h-full bg-background">
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b">
-        <div className="flex items-center gap-2">
-          <Sparkles className="h-5 w-5 text-status-warning" />
-          <h2 className="font-semibold">AI Agent</h2>
-          <Badge variant="secondary" className="ml-2">
-            {isStreaming ? 'Streaming' : 'Ready'}
+    <div className="flex flex-col h-full bg-[var(--ecode-surface)]">
+      <div className="h-9 px-2.5 flex items-center justify-between border-b border-[var(--ecode-border)] shrink-0">
+        <div className="flex items-center gap-1.5">
+          <Sparkles className="w-3.5 h-3.5 text-yellow-500" />
+          <span className="text-xs font-medium text-[var(--ecode-text)]">AI Agent</span>
+          <Badge className={cn(
+            "h-4 px-1 text-[9px] rounded",
+            isStreaming ? "bg-[hsl(142,72%,42%)]/10 text-[hsl(142,72%,42%)]" : "bg-[var(--ecode-sidebar-hover)] text-[var(--ecode-text-muted)]"
+          )}>
+            {isStreaming ? 'Live' : 'Ready'}
           </Badge>
         </div>
         <Button
           variant="ghost"
           size="icon"
+          className="h-7 w-7 rounded-md text-[var(--ecode-text-muted)] hover:text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
           onClick={onClose}
         >
-          <X className="h-4 w-4" />
+          <X className="w-3.5 h-3.5" />
         </Button>
       </div>
 

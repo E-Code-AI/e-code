@@ -256,51 +256,49 @@ export function SecretsPanel({ projectId, className }: SecretsPanelProps) {
 
   return (
     <div 
-      className={cn("h-full flex flex-col bg-background", className)}
+      className={cn("h-full flex flex-col bg-[var(--ecode-surface)]", className)}
       data-testid="secrets-panel"
     >
-      <div className="p-3 sm:p-4 border-b border-border">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
-          <div className="flex items-center gap-2">
-            <Shield className="w-5 h-5 text-muted-foreground" />
-            <h3 className="text-base sm:text-[15px] font-semibold" data-testid="text-secrets-title">
-              Secrets
-            </h3>
-            <Badge variant="secondary" className="text-[11px]" data-testid="text-secrets-count">
-              {secrets.length}
-            </Badge>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => refetch()}
-              disabled={isLoading}
-              data-testid="button-refresh-secrets"
-            >
-              <RefreshCw className={cn("w-4 h-4", isLoading && "animate-spin")} />
-            </Button>
-            <Button
-              size="sm"
-              onClick={() => setShowAddDialog(true)}
-              data-testid="button-add-secret"
-            >
-              <Plus className="w-4 h-4 mr-1" />
-              <span className="hidden sm:inline">Add Secret</span>
-              <span className="sm:hidden">Add</span>
-            </Button>
-          </div>
+      <div className="h-9 px-2.5 flex items-center justify-between border-b border-[var(--ecode-border)] shrink-0">
+        <div className="flex items-center gap-1.5">
+          <Shield className="w-3.5 h-3.5 text-[var(--ecode-text-muted)]" />
+          <span className="text-xs font-medium text-[var(--ecode-text)]" data-testid="text-secrets-title">Secrets</span>
+          <Badge className="h-4 px-1 text-[9px] bg-[var(--ecode-sidebar-hover)] text-[var(--ecode-text-muted)] rounded" data-testid="text-secrets-count">
+            {secrets.length}
+          </Badge>
         </div>
+        <div className="flex items-center gap-0.5">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 rounded-md text-[var(--ecode-text-muted)] hover:text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
+            onClick={() => refetch()}
+            disabled={isLoading}
+            data-testid="button-refresh-secrets"
+          >
+            <RefreshCw className={cn("w-3.5 h-3.5", isLoading && "animate-spin")} />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 rounded-md text-[hsl(142,72%,42%)] hover:bg-[hsl(142,72%,42%)]/10"
+            onClick={() => setShowAddDialog(true)}
+            data-testid="button-add-secret"
+          >
+            <Plus className="w-3.5 h-3.5" />
+          </Button>
+        </div>
+      </div>
 
-        <div className="flex flex-col sm:flex-row gap-2">
+      <div className="px-2.5 py-1.5 border-b border-[var(--ecode-border)] shrink-0">
+        <div className="flex gap-1.5">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-[var(--ecode-text-muted)]" />
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search secrets..."
-              className="pl-9 h-9"
+              placeholder="Search..."
+              className="pl-7 h-7 text-xs bg-[var(--ecode-sidebar-hover)] border-[var(--ecode-border)]"
               data-testid="input-search-secrets"
             />
           </div>
@@ -308,8 +306,8 @@ export function SecretsPanel({ projectId, className }: SecretsPanelProps) {
             value={selectedEnvironment}
             onValueChange={(v) => setSelectedEnvironment(v as Environment)}
           >
-            <SelectTrigger className="w-full sm:w-[180px] h-9" data-testid="select-environment-filter">
-              <SelectValue placeholder="Environment" />
+            <SelectTrigger className="w-24 h-7 text-xs bg-[var(--ecode-sidebar-hover)] border-[var(--ecode-border)]" data-testid="select-environment-filter">
+              <SelectValue placeholder="Env" />
             </SelectTrigger>
             <SelectContent>
               {ENVIRONMENTS.map(env => (
