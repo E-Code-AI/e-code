@@ -56,7 +56,7 @@ export class PlanGeneratorService extends EventEmitter {
     // Initialize OpenAI with Replit AI Integrations
     this.openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY || 'replit',
-      baseURL: process.env.OPENAI_BASE_URL || 'http://localhost:1106/modelfarm/openai'
+      baseURL: process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1'
     });
     
     logger.info('Plan Generator initialized');

@@ -1,22 +1,26 @@
 import { Router } from 'express';
 import { backgroundTestingService } from '../services/background-testing-service';
-import { ensureAuthenticated } from '../middleware/auth';
+import { ensureAuthenticated, ensureAdmin } from '../middleware/auth';
+import { z } from 'zod';
 import type { Request, Response } from 'express';
 
 const router = Router();
 
+// Validation schemas
+const scheduleTestSchema = z.object({
+  projectId: z.number().int().positive(),
+  changedFiles: z.array(z.string().min(1).max(500)).max(100)
+});
+
 // Schedule a background test for a project
 router.post('/schedule', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
-    const { projectId, changedFiles } = req.body;
-    
-    if (!projectId) {
-      return res.status(400).json({ error: 'projectId is required' });
+    const parseResult = scheduleTestSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      return res.status(400).json({ error: 'Invalid request', details: parseResult.error.issues });
     }
     
-    if (!changedFiles || !Array.isArray(changedFiles)) {
-      return res.status(400).json({ error: 'changedFiles must be an array' });
-    }
+    const { projectId, changedFiles } = parseResult.data;
     
     // Schedule the test
     await backgroundTestingService.scheduleTest(projectId, changedFiles);
@@ -54,11 +58,14 @@ router.get('/status/:projectId', ensureAuthenticated, async (req: Request, res: 
   }
 });
 
-// Get all tests (admin/debug endpoint)
-router.get('/all', ensureAuthenticated, async (req: Request, res: Response) => {
+// Get all tests (admin/debug endpoint) - SECURITY: Requires admin role
+router.get('/all', ensureAdmin, async (req: Request, res: Response) => {
   try {
     const allTests = backgroundTestingService.getAllTests();
-    res.json(allTests);
+    res.json({
+      tests: allTests,
+      count: Array.isArray(allTests) ? allTests.length : 0
+    });
   } catch (error: any) {
     console.error('[BackgroundTests] Error getting all tests:', error);
     res.status(500).json({ error: error.message || 'Failed to get all tests' });

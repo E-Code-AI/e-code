@@ -641,7 +641,9 @@ export const mentorshipSessions = pgTable("mentorship_sessions", {
   rating: integer("rating"), // 1-5 stars
   feedback: text("feedback"),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => [
+  index("mentorship_sessions_status_scheduled_idx").on(table.status, table.scheduledAt),
+]);
 
 // Challenges Tables
 export const challenges = pgTable("challenges", {
@@ -671,7 +673,9 @@ export const challengeSubmissions = pgTable("challenge_submissions", {
   executionTime: integer("execution_time"), // in milliseconds
   testResults: jsonb("test_results").$type<any[]>().default([]),
   submittedAt: timestamp("submitted_at").defaultNow(),
-});
+}, (table) => [
+  index("challenge_submissions_status_idx").on(table.status),
+]);
 
 export const challengeLeaderboard = pgTable("challenge_leaderboard", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
@@ -1000,6 +1004,7 @@ export const checkpoints = pgTable('checkpoints', {
   index('checkpoints_project_environment_idx').on(table.projectId, table.environment), // Fast filtering by project + environment
   index('checkpoints_created_at_idx').on(table.createdAt), // Timeline queries
   index('checkpoints_parent_id_idx').on(table.parentCheckpointId), // Rollback chain traversal
+  index('checkpoints_type_idx').on(table.type), // Filter by checkpoint type
 ]);
 
 // Checkpoint files for storing file snapshots
@@ -1337,6 +1342,7 @@ export const aiConversations = pgTable('ai_conversations', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 }, (table) => [
   index("idx_ai_conversations_user").on(table.userId), // #103 FIXED: Added user_id index
+  index("ai_conversations_model_idx").on(table.model), // Filter conversations by model
 ]);
 
 // Dynamic Intelligence settings
@@ -2472,6 +2478,7 @@ export const authAttempts = pgTable('auth_attempts', {
   index('auth_attempts_username_idx').on(table.username),
   index('auth_attempts_ip_idx').on(table.ipAddress),
   index('auth_attempts_created_at_idx').on(table.createdAt),
+  index('auth_attempts_username_created_idx').on(table.username, table.createdAt), // Composite index for rate limiting queries
 ]);
 
 // User sessions for enhanced session management

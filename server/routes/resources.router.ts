@@ -1,6 +1,12 @@
 import { Router, Request, Response } from 'express';
 import os from 'os';
+import { z } from 'zod';
 import { ensureAuthenticated } from '../middleware/auth';
+import { resourcesRateLimiter } from '../middleware/custom-rate-limiter';
+
+const resourcesQuerySchema = z.object({
+  projectId: z.coerce.number().int().positive().optional()
+});
 
 const router = Router();
 
@@ -165,9 +171,17 @@ function getProcesses(): Array<{ name: string; pid: number; cpu: number; memory:
   return processes.slice(0, 10);
 }
 
-router.get('/api/resources', ensureAuthenticated, async (req: Request, res: Response) => {
+router.get('/api/resources', resourcesRateLimiter, ensureAuthenticated, async (req: Request, res: Response) => {
   try {
-    const projectId = req.query.projectId as string;
+    const parseResult = resourcesQuerySchema.safeParse(req.query);
+    if (!parseResult.success) {
+      return res.status(400).json({ 
+        error: 'Validation failed',
+        details: parseResult.error.errors
+      });
+    }
+    
+    const { projectId } = parseResult.data;
     
     const cpu = getCpuUsage();
     const memory = getMemoryMetrics();

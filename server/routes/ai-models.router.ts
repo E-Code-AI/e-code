@@ -1,7 +1,13 @@
 import express from 'express';
+import { z } from 'zod';
 import { ensureAuthenticated } from '../middleware/auth';
 import { aiProviderManager } from '../ai/ai-provider-manager';
 import { getStorage } from '../storage';
+import { aiModelsRateLimiter } from '../middleware/custom-rate-limiter';
+
+const preferredModelSchema = z.object({
+  modelId: z.string().min(1).max(100)
+});
 
 const router = express.Router();
 
@@ -38,8 +44,9 @@ router.get('/health', (req, res) => {
 /**
  * GET /api/models
  * Get all available AI models across providers (public endpoint)
+ * Rate limit: 100 req/min per IP
  */
-router.get('/', (req, res) => {
+router.get('/', aiModelsRateLimiter, (req, res) => {
   try {
     const models = aiProviderManager.getAvailableModels();
     res.json({
@@ -100,12 +107,16 @@ router.get('/preferred', async (req, res) => {
  */
 router.post('/preferred', ensureAuthenticated, async (req, res) => {
   try {
-    const userId = req.user!.id.toString();
-    const { modelId } = req.body;
-    
-    if (!modelId) {
-      return res.status(400).json({ error: 'modelId is required' });
+    const parseResult = preferredModelSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      return res.status(400).json({ 
+        error: 'Validation failed', 
+        details: parseResult.error.errors 
+      });
     }
+    
+    const userId = req.user!.id.toString();
+    const { modelId } = parseResult.data;
     
     // Validate model exists
     const model = aiProviderManager.getAvailableModels().find(m => m.id === modelId);

@@ -4,34 +4,38 @@
  */
 
 import { Router, Request, Response } from 'express';
+import { z } from 'zod';
 import { ensureAuthenticated } from '../middleware/auth';
 import { voiceVideoService } from '../webrtc/voice-video-service';
+
+const createSessionSchema = z.object({
+  projectId: z.union([z.string().min(1), z.number()]),
+  sessionType: z.enum(['voice', 'video', 'screen']),
+  maxParticipants: z.number().int().min(2).max(100).optional().default(10),
+  roomName: z.string().min(1).max(100).optional()
+});
 
 const router = Router();
 
 // Create a new voice/video session
 router.post('/api/voice-video/sessions', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
+    const parseResult = createSessionSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      return res.status(400).json({ 
+        error: 'Validation failed',
+        details: parseResult.error.errors
+      });
+    }
+
     const userId = (req.user as any)?.id;
-    const { projectId, sessionType, maxParticipants } = req.body;
-
-    if (!projectId || !sessionType) {
-      return res.status(400).json({ 
-        error: 'projectId and sessionType are required' 
-      });
-    }
-
-    if (!['voice', 'video', 'screen'].includes(sessionType)) {
-      return res.status(400).json({ 
-        error: 'sessionType must be voice, video, or screen' 
-      });
-    }
+    const { projectId, sessionType, maxParticipants } = parseResult.data;
 
     const session = await voiceVideoService.createSession(
       projectId,
       userId,
       sessionType,
-      maxParticipants || 10
+      maxParticipants
     );
 
     res.json({

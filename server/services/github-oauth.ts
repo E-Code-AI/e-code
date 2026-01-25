@@ -48,7 +48,7 @@ export class GitHubOAuthService {
     // Environment variables are required for GitHub OAuth
     this.clientId = process.env.GITHUB_CLIENT_ID || '';
     this.clientSecret = process.env.GITHUB_CLIENT_SECRET || '';
-    this.redirectUri = process.env.GITHUB_REDIRECT_URI || 'http://localhost:5000/api/auth/github/callback';
+    this.redirectUri = process.env.GITHUB_REDIRECT_URI || `${process.env.APP_URL || 'http://localhost:5000'}/api/auth/github/callback`;
     
     // Validate configuration on initialization
     if (!this.clientId || !this.clientSecret) {

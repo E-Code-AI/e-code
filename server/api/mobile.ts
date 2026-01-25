@@ -11,6 +11,7 @@ import * as jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { getJwtSecret, getJwtRefreshSecret } from '../utils/secrets-manager';
 import { createLogger } from '../utils/logger';
+import { mobileOAuthRateLimiter } from '../middleware/custom-rate-limiter';
 
 const logger = createLogger('mobile-api');
 const router = Router();
@@ -599,7 +600,8 @@ function getBaseUrl(): string {
 }
 
 // Initiate GitHub OAuth for mobile
-router.get('/mobile/auth/oauth/github', async (req, res) => {
+// Rate limit: 10 req/min per IP
+router.get('/mobile/auth/oauth/github', mobileOAuthRateLimiter, async (req, res) => {
   try {
     const state = crypto.randomUUID();
     
@@ -723,7 +725,8 @@ router.get('/mobile/auth/oauth/github/callback', async (req, res) => {
 });
 
 // Initiate Google OAuth for mobile
-router.get('/mobile/auth/oauth/google', async (req, res) => {
+// Rate limit: 10 req/min per IP
+router.get('/mobile/auth/oauth/google', mobileOAuthRateLimiter, async (req, res) => {
   try {
     const state = crypto.randomUUID();
     

@@ -274,7 +274,7 @@ export class AgentOrchestratorService extends EventEmitter {
   constructor() {
     super();
     // Use Replit AI Integrations for OpenAI
-    const baseUrl = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL || 'http://localhost:1106/modelfarm/openai';
+    const baseUrl = process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1';
     const apiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY || '_DUMMY_API_KEY_';
     
     this.openai = new OpenAI({

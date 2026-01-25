@@ -14,6 +14,7 @@ import { redisCache } from '../services/redis-cache.service';
 import { ensureAdmin } from '../middleware/admin-auth';
 import { ensureAuthenticated } from '../middleware/auth';
 import { createLogger } from '../utils/logger';
+import { cacheFlushRateLimiter } from '../middleware/custom-rate-limiter';
 
 const router = Router();
 const logger = createLogger('monitoring-routes');
@@ -115,8 +116,9 @@ router.get('/api/monitoring/cache/stats', ensureAuthenticated, ensureAdmin, asyn
 /**
  * Flush Redis cache (admin only)
  * SECURITY: Critical destructive operation - requires admin authentication + audit trail
+ * Rate limit: 5 req/hour per user
  */
-router.post('/api/monitoring/cache/flush', ensureAuthenticated, ensureAdmin, async (req: Request, res: Response) => {
+router.post('/api/monitoring/cache/flush', ensureAuthenticated, cacheFlushRateLimiter, ensureAdmin, async (req: Request, res: Response) => {
   try {
     const success = await redisCache.flushAll();
     

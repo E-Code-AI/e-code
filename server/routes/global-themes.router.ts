@@ -32,6 +32,11 @@ const createThemeSchema = z.object({
   }).optional()
 });
 
+const paginationQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(50)
+});
+
 const editorThemes = [
   {
     id: 'dark-pro',
@@ -118,7 +123,33 @@ router.get('/settings', (req, res) => {
 });
 
 router.get('/installed', (req, res) => {
-  res.json(['dark-pro', 'one-dark', 'monokai']);
+  const parseResult = paginationQuerySchema.safeParse(req.query);
+  if (!parseResult.success) {
+    return res.status(400).json({ error: 'Invalid query parameters', details: parseResult.error.issues });
+  }
+
+  const { page, limit } = parseResult.data;
+  const installedThemes = ['dark-pro', 'one-dark', 'monokai'];
+  const total = installedThemes.length;
+  const totalPages = Math.ceil(total / limit);
+  const offset = (page - 1) * limit;
+
+  // Validate page number
+  if (page > totalPages && total > 0) {
+    return res.status(400).json({ error: 'Page number exceeds total pages' });
+  }
+
+  const items = installedThemes.slice(offset, offset + limit);
+
+  res.json({
+    items,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages
+    }
+  });
 });
 
 router.put('/settings', ensureAuthenticated, (req, res) => {
