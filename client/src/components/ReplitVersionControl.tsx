@@ -363,9 +363,9 @@ export function ReplitVersionControl({ projectId, className }: VersionControlPro
               <div className="flex-1">
                 {selectedCommit ? (
                   <div className="h-full flex flex-col">
-                    <div className="p-4 border-b">
-                      <h3 className="font-semibold">{selectedCommit.message}</h3>
-                      <p className="text-[13px] text-muted-foreground mt-1">
+                    <div className="px-2.5 py-2 border-b border-[var(--ecode-border)] shrink-0">
+                      <span className="text-xs font-medium text-[var(--ecode-text)]">{selectedCommit.message}</span>
+                      <p className="text-[10px] text-[var(--ecode-text-muted)] mt-0.5">
                         {selectedCommit.author.name} committed on {new Date(selectedCommit.date).toLocaleString()}
                       </p>
                     </div>

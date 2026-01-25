@@ -250,22 +250,22 @@ export function ThreadsPanel({ projectId, className }: ThreadsPanelProps) {
           <div className="flex flex-col">
             {activeThread ? (
               <div className="flex flex-col h-full">
-                <div className="p-4 border-b border-border/60">
-                  <div className="flex items-center justify-between gap-3">
+                <div className="h-9 px-2.5 flex items-center justify-between border-b border-[var(--ecode-border)] shrink-0">
+                  <div className="flex items-center gap-2">
                     <div>
-                      <h3 className="text-base font-semibold">{activeThread.title}</h3>
-                      <p className="text-[13px] text-muted-foreground">
+                      <span className="text-xs font-medium text-[var(--ecode-text)]">{activeThread.title}</span>
+                      <p className="text-[10px] text-[var(--ecode-text-muted)]">
                         {activeThread.filePath} • Line {activeThread.line}
                       </p>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant={activeThread.status === 'resolved' ? 'secondary' : 'default'}>
-                        {activeThread.status === 'resolved' ? 'Resolved' : 'Open'}
-                      </Badge>
-                      <Button size="sm" variant="outline">
-                        Resolve
-                      </Button>
-                    </div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Badge variant={activeThread.status === 'resolved' ? 'secondary' : 'default'} className="text-[10px] h-5">
+                      {activeThread.status === 'resolved' ? 'Resolved' : 'Open'}
+                    </Badge>
+                    <Button size="sm" variant="outline" className="h-6 px-2 text-[10px]">
+                      Resolve
+                    </Button>
                   </div>
                 </div>
 

@@ -254,29 +254,29 @@ export function UnifiedAIInterface({
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b">
-        <div className="flex items-center gap-2">
-          <Bot className="h-5 w-5 text-primary" />
-          <h2 className="font-semibold">Unified AI Assistant</h2>
-          <Badge variant="secondary" className="text-[11px]">
+      <div className="h-9 px-2.5 flex items-center justify-between border-b border-[var(--ecode-border)] shrink-0">
+        <div className="flex items-center gap-1.5">
+          <Bot className="w-3.5 h-3.5 text-[var(--ecode-text-muted)]" />
+          <span className="text-xs font-medium text-[var(--ecode-text)]">AI Assistant</span>
+          <Badge variant="secondary" className="text-[10px] h-5">
             Claude 4.0
           </Badge>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <Tabs
             value={mode}
             onValueChange={(v) => setMode(v as any)}
             className="w-auto"
           >
-            <TabsList className="grid w-full grid-cols-3 h-8">
-              <TabsTrigger value="agent" className="text-[11px]">
+            <TabsList className="grid w-full grid-cols-3 h-6">
+              <TabsTrigger value="agent" className="text-[10px] px-2">
                 Agent
               </TabsTrigger>
-              <TabsTrigger value="assistant" className="text-[11px]">
+              <TabsTrigger value="assistant" className="text-[10px] px-2">
                 Assistant
               </TabsTrigger>
-              <TabsTrigger value="advanced" className="text-[11px]">
+              <TabsTrigger value="advanced" className="text-[10px] px-2">
                 Advanced
               </TabsTrigger>
             </TabsList>
@@ -286,7 +286,7 @@ export function UnifiedAIInterface({
 
       {/* Settings Bar */}
       {(mode === "advanced" || mode === "agent") && (
-        <div className="p-3 border-b bg-muted/50">
+        <div className="px-2.5 py-1.5 border-b border-[var(--ecode-border)] bg-[var(--ecode-sidebar-hover)]">
           <div className="flex items-center gap-4">
             {mode === "advanced" && (
               <Select value={model} onValueChange={setModel}>

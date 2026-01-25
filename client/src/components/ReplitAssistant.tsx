@@ -210,20 +210,19 @@ export function ReplitAssistant({
   };
 
   return (
-    <div className={cn("flex flex-col h-full bg-[var(--ecode-bg-secondary)]", className)}>
+    <div className={cn("flex flex-col h-full bg-[var(--ecode-surface)]", className)}>
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--ecode-border)]">
-        <div className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center">
-            <Sparkles className="h-4 w-4 text-white" />
+      <div className="h-9 px-2.5 flex items-center justify-between border-b border-[var(--ecode-border)] shrink-0">
+        <div className="flex items-center gap-1.5">
+          <div className="h-6 w-6 rounded-md bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center">
+            <Sparkles className="w-3 h-3 text-white" />
           </div>
           <div>
-            <h3 className="text-[13px] font-semibold text-[var(--ecode-text-primary)]">AI Assistant</h3>
-            <p className="text-[11px] text-[var(--ecode-text-secondary)]">Powered by Claude</p>
+            <span className="text-xs font-medium text-[var(--ecode-text)]">AI Assistant</span>
           </div>
         </div>
         {currentFile && (
-          <Badge variant="secondary" className="text-[11px]">
+          <Badge variant="secondary" className="text-[10px] h-5">
             {currentFile}
           </Badge>
         )}
