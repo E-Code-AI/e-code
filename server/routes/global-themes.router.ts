@@ -1,8 +1,36 @@
 import { Router } from 'express';
 import { createLogger } from '../utils/logger';
+import { ensureAuthenticated } from '../middleware/auth';
+import { z } from 'zod';
 
 const router = Router();
 const logger = createLogger('global-themes');
+
+// Validation schemas
+const themeSettingsSchema = z.object({
+  activeEditorTheme: z.string().optional(),
+  systemTheme: z.enum(['dark', 'light', 'midnight']).optional(),
+  customSettings: z.object({
+    fontSize: z.string().optional(),
+    lineHeight: z.string().optional(),
+    tabSize: z.string().optional(),
+    wordWrap: z.enum(['on', 'off', 'wordWrapColumn', 'bounded']).optional()
+  }).optional()
+});
+
+const themeIdSchema = z.object({
+  themeId: z.string().min(1).max(100).regex(/^[a-zA-Z0-9-_]+$/, 'Invalid theme ID format')
+});
+
+const createThemeSchema = z.object({
+  name: z.string().min(1).max(100),
+  description: z.string().max(500).optional(),
+  preview: z.object({
+    bg: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
+    fg: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
+    accent: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional()
+  }).optional()
+});
 
 const editorThemes = [
   {
@@ -93,23 +121,38 @@ router.get('/installed', (req, res) => {
   res.json(['dark-pro', 'one-dark', 'monokai']);
 });
 
-router.put('/settings', (req, res) => {
-  logger.info('Theme settings updated', { body: req.body });
+router.put('/settings', ensureAuthenticated, (req, res) => {
+  const parseResult = themeSettingsSchema.safeParse(req.body);
+  if (!parseResult.success) {
+    return res.status(400).json({ error: 'Invalid settings', details: parseResult.error.issues });
+  }
+  
+  logger.info('Theme settings updated', { body: parseResult.data, userId: (req.user as any)?.id });
   res.json({
-    ...req.body,
+    ...parseResult.data,
     updatedAt: new Date().toISOString()
   });
 });
 
-router.post('/install', (req, res) => {
-  const { themeId } = req.body;
-  logger.info('Theme installed', { themeId });
+router.post('/install', ensureAuthenticated, (req, res) => {
+  const parseResult = themeIdSchema.safeParse(req.body);
+  if (!parseResult.success) {
+    return res.status(400).json({ error: 'Invalid theme ID', details: parseResult.error.issues });
+  }
+  
+  const { themeId } = parseResult.data;
+  logger.info('Theme installed', { themeId, userId: (req.user as any)?.id });
   res.json({ success: true, themeId, installedAt: new Date().toISOString() });
 });
 
-router.post('/create', (req, res) => {
-  const theme = req.body;
-  logger.info('Custom theme created', { theme });
+router.post('/create', ensureAuthenticated, (req, res) => {
+  const parseResult = createThemeSchema.safeParse(req.body);
+  if (!parseResult.success) {
+    return res.status(400).json({ error: 'Invalid theme data', details: parseResult.error.issues });
+  }
+  
+  const theme = parseResult.data;
+  logger.info('Custom theme created', { theme, userId: (req.user as any)?.id });
   res.json({ 
     id: `custom-${Date.now()}`,
     ...theme,
@@ -117,7 +160,7 @@ router.post('/create', (req, res) => {
   });
 });
 
-router.get('/export', (req, res) => {
+router.get('/export', ensureAuthenticated, (req, res) => {
   const settings = {
     activeEditorTheme: 'dark-pro',
     systemTheme: 'dark',
@@ -135,9 +178,13 @@ router.get('/export', (req, res) => {
   res.json(settings);
 });
 
-router.post('/import', (req, res) => {
-  const { settings } = req.body;
-  logger.info('Theme settings imported', { settings });
+router.post('/import', ensureAuthenticated, (req, res) => {
+  const parseResult = themeSettingsSchema.safeParse(req.body?.settings);
+  if (!parseResult.success) {
+    return res.status(400).json({ error: 'Invalid settings format', details: parseResult.error.issues });
+  }
+  
+  logger.info('Theme settings imported', { settings: parseResult.data, userId: (req.user as any)?.id });
   res.json({ success: true, importedAt: new Date().toISOString() });
 });
 

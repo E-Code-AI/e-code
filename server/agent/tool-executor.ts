@@ -54,8 +54,36 @@ function parseCommand(commandString: string): string[] {
   return args;
 }
 
+/**
+ * Secure command sanitization for use with spawn() (shell: false)
+ * Even though spawn without shell prevents shell injection, we add defense-in-depth
+ */
 function sanitizeCommand(cmd: string): string {
-  return cmd.replace(/[;&|`$(){}[\]<>\\]/g, '');
+  // Remove all shell metacharacters and potential injection vectors
+  const sanitized = cmd.replace(/[;&|`$(){}[\]<>\\!#~'"*?\n\r\t]/g, '');
+  
+  // Block path traversal attempts in arguments
+  if (sanitized.includes('../') || sanitized.includes('..\\')) {
+    throw new Error('Path traversal not allowed in command arguments');
+  }
+  
+  return sanitized;
+}
+
+/**
+ * Validate that a command argument doesn't contain path traversal
+ */
+function sanitizeArgument(arg: string): string {
+  // Allow quoted strings to pass through but check for dangerous patterns
+  const unquoted = arg.replace(/^["']|["']$/g, '');
+  
+  // Block path traversal in non-path arguments
+  if (arg.startsWith('-') && (unquoted.includes('../') || unquoted.includes('..\\'))) {
+    throw new Error('Path traversal not allowed in command flags');
+  }
+  
+  // Remove null bytes and other control characters
+  return arg.replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g, '');
 }
 
 // Create logger
@@ -450,7 +478,7 @@ export class ToolExecutor {
           return;
         }
 
-        const sanitizedArgs = args.map(arg => sanitizeCommand(arg));
+        const sanitizedArgs = args.map(arg => sanitizeArgument(arg));
         
         let stdout = '';
         let stderr = '';
