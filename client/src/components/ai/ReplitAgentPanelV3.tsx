@@ -255,6 +255,7 @@ export interface ExternalInputHandlers {
   handleSlashCommand: () => void;
   isWorking: boolean;
   agentMode: string;
+  onModeChange: (mode: string) => void;
   conversationId: number | null;
   agentToolsSettings: AgentToolsSettings;
   onAgentToolsSettingsChange: (settings: AgentToolsSettings) => void;
@@ -1194,6 +1195,7 @@ export function ReplitAgentPanelV3({
         handleSlashCommand: () => slashCommand.open(),
         isWorking,
         agentMode,
+        onModeChange: handleModeChange,
         conversationId,
         agentToolsSettings: agentToolsSettings,
         onAgentToolsSettingsChange: setAgentToolsSettings,
@@ -1205,7 +1207,7 @@ export function ReplitAgentPanelV3({
         onRemoveAttachment: handleRemoveAttachment,
       });
     }
-  }, [onExternalInput, handleExternalSubmit, slashCommand, isWorking, agentMode, conversationId, agentToolsSettings, setAgentToolsSettings, handleAttachmentClick, handleVoiceClick, isRecording, isUploadingFiles, pendingAttachments.length, handleRemoveAttachment]);
+  }, [onExternalInput, handleExternalSubmit, slashCommand, isWorking, agentMode, handleModeChange, conversationId, agentToolsSettings, setAgentToolsSettings, handleAttachmentClick, handleVoiceClick, isRecording, isUploadingFiles, pendingAttachments.length, handleRemoveAttachment]);
 
   // ✅ FIX (Dec 14, 2025): Fortune 500-grade scroll behavior
   // Track if user is near bottom to prevent jumping when user is reading history
@@ -2675,7 +2677,8 @@ export function ReplitAgentPanelV3({
       {/* Input area */}
       <div className="p-4 border-t border-border">
         <div className="space-y-2">
-          {/* Mode selector and Element Editor row - always visible like Replit Agent 3 */}
+          {/* Mode selector and Element Editor row - hidden on mobile when external input bar is used */}
+          {!hideInput && (
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <ModeSelector 
@@ -2705,6 +2708,7 @@ export function ReplitAgentPanelV3({
               />
             </div>
           </div>
+          )}
           
           {/* Max Autonomy Progress with Orchestrator Display - shown when toggle is on */}
           {agentToolsSettings.maxAutonomy && autonomySessionId && (

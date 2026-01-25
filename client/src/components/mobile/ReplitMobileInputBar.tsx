@@ -1,21 +1,20 @@
 import { useState, useRef, useCallback, memo, useEffect } from 'react';
 import { 
-  ChevronUp, Paperclip, Mic, SlidersHorizontal, ArrowUp, Loader2
+  ChevronUp, Paperclip, Mic, SlidersHorizontal, ArrowUp, Loader2,
+  Hammer, MessageSquare, Pencil, Zap
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SlashCommandMenu, DEFAULT_MCP_SERVERS, type MCPServer } from '../ai/SlashCommandMenu';
 import { AgentToolsBottomSheet } from '../ai/AgentToolsBottomSheet';
 import type { AgentToolsSettings } from '@/hooks/useAgentTools';
 
-type BuildMode = 'build' | 'edit' | 'chat';
+type AgentMode = 'build' | 'plan' | 'edit' | 'fast';
 
 interface ReplitMobileInputBarProps {
   placeholder?: string;
   value?: string;
   onChange?: (value: string) => void;
   onSubmit?: (value: string) => void;
-  buildMode?: BuildMode;
-  onBuildModeChange?: (mode: BuildMode) => void;
   onAttach?: () => void;
   onVoice?: () => void;
   onQuickActions?: () => void;
@@ -24,6 +23,7 @@ interface ReplitMobileInputBarProps {
   isLoading?: boolean;
   isWorking?: boolean;
   agentMode?: string;
+  onModeChange?: (mode: string) => void;
   onSlashCommand?: () => void;
   onSlashSelect?: (server: MCPServer) => void;
   agentToolsSettings?: AgentToolsSettings;
@@ -33,23 +33,12 @@ interface ReplitMobileInputBarProps {
   pendingAttachmentsCount?: number;
 }
 
-const BuildModeIcon = memo(() => (
-  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor">
-    <circle cx="7" cy="7" r="2.5" />
-    <circle cx="17" cy="7" r="2.5" />
-    <circle cx="7" cy="17" r="2.5" />
-    <circle cx="17" cy="17" r="2.5" />
-  </svg>
-));
-BuildModeIcon.displayName = 'BuildModeIcon';
 
 export const ReplitMobileInputBar = memo(function ReplitMobileInputBar({
   placeholder,
   value = "",
   onChange,
   onSubmit,
-  buildMode = 'build',
-  onBuildModeChange,
   onAttach,
   onVoice,
   onQuickActions,
@@ -58,6 +47,7 @@ export const ReplitMobileInputBar = memo(function ReplitMobileInputBar({
   isLoading = false,
   isWorking = false,
   agentMode = 'build',
+  onModeChange,
   onSlashCommand,
   onSlashSelect,
   agentToolsSettings,
@@ -202,13 +192,50 @@ export const ReplitMobileInputBar = memo(function ReplitMobileInputBar({
     setShowBuildMenu(prev => !prev);
   }, []);
 
-  const selectBuildMode = useCallback((mode: BuildMode) => {
-    onBuildModeChange?.(mode);
+  const selectMode = useCallback((mode: AgentMode) => {
+    onModeChange?.(mode);
     setShowBuildMenu(false);
     if ('vibrate' in navigator) {
       navigator.vibrate(10);
     }
-  }, [onBuildModeChange]);
+  }, [onModeChange]);
+
+  // Mode configurations matching ModeSelector.tsx
+  const modes = [
+    {
+      id: 'build' as AgentMode,
+      label: 'Build',
+      icon: Hammer,
+      description: 'Make, test, iterate autonomously',
+      badge: 'Auto',
+      color: 'emerald'
+    },
+    {
+      id: 'plan' as AgentMode,
+      label: 'Plan',
+      icon: MessageSquare,
+      description: 'Ask questions, plan your work',
+      color: 'blue'
+    },
+    {
+      id: 'edit' as AgentMode,
+      label: 'Edit',
+      icon: Pencil,
+      description: 'Targeted changes to specific files',
+      color: 'purple'
+    },
+    {
+      id: 'fast' as AgentMode,
+      label: 'Fast',
+      icon: Zap,
+      description: 'Quick, precise changes in seconds',
+      badge: 'Speed',
+      color: 'amber'
+    }
+  ];
+
+  const currentMode = modes.find(m => m.id === agentMode) || modes[0];
+  const CurrentModeIcon = currentMode.icon;
 
   const hasContent = inputValue.trim().length > 0;
   const isDisabled = disabled || isLoading || isWorking;
@@ -254,14 +281,17 @@ export const ReplitMobileInputBar = memo(function ReplitMobileInputBar({
               <button
                 onClick={handleBuildModeClick}
                 className={cn(
-                  "flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all",
-                  "bg-gray-100 dark:bg-[#2A2A2A] active:bg-gray-200 dark:active:bg-[#3A3A3A]",
-                  "text-gray-700 dark:text-gray-300 active:scale-95 touch-manipulation"
+                  "flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all touch-manipulation",
+                  currentMode.color === 'emerald' && "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400",
+                  currentMode.color === 'blue' && "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400",
+                  currentMode.color === 'purple' && "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400",
+                  currentMode.color === 'amber' && "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400",
+                  "active:scale-95"
                 )}
                 data-testid="button-build-mode"
               >
-                <BuildModeIcon />
-                <span className="capitalize">{buildMode}</span>
+                <CurrentModeIcon className="h-3.5 w-3.5" />
+                <span>{currentMode.label}</span>
                 <ChevronUp className={cn(
                   "h-3 w-3 transition-transform duration-200",
                   showBuildMenu && "rotate-180"
@@ -356,26 +386,74 @@ export const ReplitMobileInputBar = memo(function ReplitMobileInputBar({
         {showBuildMenu && (
           <div className="border-t border-gray-200 dark:border-gray-700 animate-in slide-in-from-top-2 duration-200">
             <div className="p-2 space-y-1">
-              {(['build', 'edit', 'chat'] as BuildMode[]).map((mode) => (
-                <button
-                  key={mode}
-                  onClick={() => selectBuildMode(mode)}
-                  className={cn(
-                    "w-full px-3 py-2 text-left text-[13px] rounded-lg transition-colors touch-manipulation",
-                    buildMode === mode
-                      ? "bg-[#7C65C1]/10 text-[#7C65C1]"
-                      : "active:bg-gray-100 dark:active:bg-[#2A2A2A] text-gray-700 dark:text-gray-300"
-                  )}
-                  data-testid={`mode-${mode}`}
-                >
-                  <span className="capitalize font-medium">{mode}</span>
-                  <span className="text-[11px] text-gray-500 dark:text-gray-400 ml-2">
-                    {mode === 'build' && '- Create new features'}
-                    {mode === 'edit' && '- Modify existing code'}
-                    {mode === 'chat' && '- Ask questions'}
-                  </span>
-                </button>
-              ))}
+              {modes.map((mode) => {
+                const ModeIcon = mode.icon;
+                const isActive = agentMode === mode.id;
+                return (
+                  <button
+                    key={mode.id}
+                    onClick={() => selectMode(mode.id)}
+                    className={cn(
+                      "w-full px-3 py-2.5 text-left rounded-lg transition-colors touch-manipulation flex items-center gap-3",
+                      isActive
+                        ? mode.color === 'emerald' ? "bg-emerald-100 dark:bg-emerald-900/30" :
+                          mode.color === 'blue' ? "bg-blue-100 dark:bg-blue-900/30" :
+                          mode.color === 'purple' ? "bg-purple-100 dark:bg-purple-900/30" :
+                          "bg-amber-100 dark:bg-amber-900/30"
+                        : "active:bg-gray-100 dark:active:bg-[#2A2A2A]"
+                    )}
+                    data-testid={`mode-${mode.id}`}
+                  >
+                    <div className={cn(
+                      "p-1.5 rounded-lg",
+                      mode.color === 'emerald' && "bg-emerald-200 dark:bg-emerald-800/50",
+                      mode.color === 'blue' && "bg-blue-200 dark:bg-blue-800/50",
+                      mode.color === 'purple' && "bg-purple-200 dark:bg-purple-800/50",
+                      mode.color === 'amber' && "bg-amber-200 dark:bg-amber-800/50"
+                    )}>
+                      <ModeIcon className={cn(
+                        "h-4 w-4",
+                        mode.color === 'emerald' && "text-emerald-600 dark:text-emerald-400",
+                        mode.color === 'blue' && "text-blue-600 dark:text-blue-400",
+                        mode.color === 'purple' && "text-purple-600 dark:text-purple-400",
+                        mode.color === 'amber' && "text-amber-600 dark:text-amber-400"
+                      )} />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className={cn(
+                          "font-medium text-[13px]",
+                          isActive 
+                            ? mode.color === 'emerald' ? "text-emerald-700 dark:text-emerald-400" :
+                              mode.color === 'blue' ? "text-blue-700 dark:text-blue-400" :
+                              mode.color === 'purple' ? "text-purple-700 dark:text-purple-400" :
+                              "text-amber-700 dark:text-amber-400"
+                            : "text-gray-800 dark:text-gray-200"
+                        )}>{mode.label}</span>
+                        {mode.badge && (
+                          <span className={cn(
+                            "px-1.5 py-0.5 text-[9px] font-semibold rounded uppercase text-white",
+                            mode.color === 'emerald' && "bg-emerald-500",
+                            mode.color === 'amber' && "bg-amber-500"
+                          )}>{mode.badge}</span>
+                        )}
+                        {isActive && (
+                          <span className={cn(
+                            "w-2 h-2 rounded-full ml-auto",
+                            mode.color === 'emerald' && "bg-emerald-500",
+                            mode.color === 'blue' && "bg-blue-500",
+                            mode.color === 'purple' && "bg-purple-500",
+                            mode.color === 'amber' && "bg-amber-500"
+                          )} />
+                        )}
+                      </div>
+                      <span className="text-[11px] text-gray-500 dark:text-gray-400">
+                        {mode.description}
+                      </span>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}
