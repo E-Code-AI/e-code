@@ -212,6 +212,7 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
           description: enhancedPrompt,
           slug,
           ownerId: userId,
+          tenantId: userId, // Required for tenant-scoped file operations
           language: options.language || 'typescript',
           visibility: options.visibility || 'private'
         })
