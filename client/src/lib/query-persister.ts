@@ -11,21 +11,25 @@ const CACHE_KEY = 'ecode-tanstack-query-cache';
 const CACHE_VERSION = 1;
 const MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24 hours
 
-function isStorageAvailable(): boolean {
+let queryStore: ReturnType<typeof createStore> | null = null;
+let storageAvailable = false;
+
+function initializeStorage(): void {
   try {
-    if (typeof window === 'undefined') return false;
-    if (!window.indexedDB) return false;
+    if (typeof window === 'undefined') return;
+    if (!window.indexedDB) return;
     const testKey = '__storage_test__';
     localStorage.setItem(testKey, testKey);
     localStorage.removeItem(testKey);
-    return true;
+    queryStore = createStore('ecode-query-cache', 'tanstack-queries');
+    storageAvailable = true;
   } catch {
-    return false;
+    storageAvailable = false;
+    queryStore = null;
   }
 }
 
-const storageAvailable = isStorageAvailable();
-const queryStore = storageAvailable ? createStore('ecode-query-cache', 'tanstack-queries') : null;
+initializeStorage();
 
 interface CacheMetadata {
   version: number;
@@ -63,6 +67,7 @@ export function createIDBPersister(): Persister {
 
   return {
     persistClient: async (client: PersistedClient) => {
+      if (!queryStore) return;
       try {
         const metadata: CacheMetadata = {
           version: CACHE_VERSION,
@@ -71,13 +76,14 @@ export function createIDBPersister(): Persister {
         };
         
         await set(CACHE_KEY, { client, metadata }, queryStore);
-        console.log('[QueryPersister] Cache persisted to IndexedDB');
-      } catch (error) {
-        console.error('[QueryPersister] Failed to persist cache:', error);
+      } catch {
+        // Silently fail - IndexedDB may be corrupted after cache clear
+        // This is non-critical functionality
       }
     },
     
     restoreClient: async (): Promise<PersistedClient | undefined> => {
+      if (!queryStore) return undefined;
       try {
         const data = await get<{ client: PersistedClient; metadata: CacheMetadata }>(
           CACHE_KEY,
@@ -85,39 +91,35 @@ export function createIDBPersister(): Persister {
         );
         
         if (!data) {
-          console.log('[QueryPersister] No cached data found');
           return undefined;
         }
         
         const { client, metadata } = data;
         
         if (metadata.version !== CACHE_VERSION) {
-          console.log('[QueryPersister] Cache version mismatch, clearing');
-          await del(CACHE_KEY, queryStore);
+          await del(CACHE_KEY, queryStore).catch(() => {});
           return undefined;
         }
         
         const age = Date.now() - metadata.timestamp;
         if (age > MAX_AGE_MS) {
-          console.log('[QueryPersister] Cache expired, clearing');
-          await del(CACHE_KEY, queryStore);
+          await del(CACHE_KEY, queryStore).catch(() => {});
           return undefined;
         }
         
-        console.log(`[QueryPersister] Cache restored (age: ${Math.round(age / 1000)}s)`);
         return client;
-      } catch (error) {
-        console.error('[QueryPersister] Failed to restore cache:', error);
+      } catch {
+        // Silently fail - IndexedDB may be corrupted after cache clear
         return undefined;
       }
     },
     
     removeClient: async () => {
+      if (!queryStore) return;
       try {
         await del(CACHE_KEY, queryStore);
-        console.log('[QueryPersister] Cache cleared');
-      } catch (error) {
-        console.error('[QueryPersister] Failed to clear cache:', error);
+      } catch {
+        // Silently fail
       }
     },
   };
