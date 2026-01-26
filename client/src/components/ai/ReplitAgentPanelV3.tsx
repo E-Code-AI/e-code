@@ -1195,7 +1195,7 @@ export function ReplitAgentPanelV3({
         handleSlashCommand: () => slashCommand.open(),
         isWorking,
         agentMode,
-        onModeChange: handleModeChange,
+        onModeChange: (mode: string) => handleModeChange(mode as AgentMode),
         conversationId,
         agentToolsSettings: agentToolsSettings,
         onAgentToolsSettingsChange: setAgentToolsSettings,

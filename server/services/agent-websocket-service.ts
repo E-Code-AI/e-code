@@ -1066,6 +1066,26 @@ class AgentWebSocketService {
   }
 
   /**
+   * Send a plan card with app type and features
+   * Renders as InlinePlanCard in the chat
+   */
+  sendPlan(projectId: number, sessionId: string, plan: {
+    appType?: string;
+    features?: string[];
+    description?: string;
+    showBuildOptions?: boolean;
+    onSelectBuildMode?: (mode: 'fast' | 'balanced' | 'thorough') => void;
+    onChangePlan?: () => void;
+  }) {
+    this.broadcastToSession(projectId, sessionId, {
+      type: 'autonomous_plan',
+      projectId: projectId.toString(),
+      sessionId,
+      plan
+    });
+  }
+
+  /**
    * Send preview window update
    * Renders as InlinePreviewWindow in the chat
    */

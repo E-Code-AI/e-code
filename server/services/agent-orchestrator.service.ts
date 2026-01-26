@@ -1131,7 +1131,7 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
           streamingDuration: responseTime,
           finishReason: 'stop',
           cacheHit: false,
-          extendedThinking: selectedModel.includes('thinking') || selectedModel.includes('opus') || false,
+          extendedThinking: (selectedModel?.includes('thinking') || selectedModel?.includes('opus')) || false,
           webSearchUsed: false,
           delegation: {
             mode: delegationDecision.mode,

@@ -1,4 +1,4 @@
-import { useState, useCallback, memo, forwardRef } from 'react';
+import { useState, useCallback, memo, forwardRef, useMemo } from 'react';
 import { LazyMotionDiv, LazyMotionSpan, LazyMotionButton, LazyAnimatePresence } from '@/lib/motion';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -23,6 +23,7 @@ import {
   type Task,
   type Action
 } from '@/components/agent/messages';
+import { extractAndFormatTasks, containsPlanOrTasks } from '@/lib/task-extractor';
 import {
   InlineWorkingIndicator,
   InlineSearchIndicator,
@@ -144,10 +145,32 @@ export const EnhancedChatMessage = memo(forwardRef<EnhancedChatMessageRef, Enhan
   const isError = message.status === 'error' || message.metadata?.error;
   const hasThinking = message.thinking && message.thinking.length > 0;
   const hasTools = message.toolExecutions && message.toolExecutions.length > 0;
-  const hasTasks = message.tasks && message.tasks.length > 0;
+  const hasStructuredTasks = message.tasks && message.tasks.length > 0;
   const hasActions = message.actions && message.actions.length > 0;
   const isAutonomousMessage = message.type?.startsWith('autonomous_');
   const autonomousPayload = message.autonomousPayload;
+  
+  // Extract tasks from message content when no structured tasks exist (Replit-like task extraction)
+  const extractedTasks = useMemo(() => {
+    // Only extract from assistant messages that look like plans
+    if (isUser || hasStructuredTasks || isAutonomousMessage) return [];
+    if (!message.content || message.content.length < 50) return [];
+    if (!containsPlanOrTasks(message.content)) return [];
+    
+    const isComplete = message.status === 'complete' || message.status === 'sent';
+    const tasks = extractAndFormatTasks(message.content, isComplete);
+    
+    // Only return if we found meaningful tasks (at least 2)
+    return tasks.length >= 2 ? tasks : [];
+  }, [message.content, message.status, isUser, hasStructuredTasks, isAutonomousMessage]);
+  
+  const hasTasks = hasStructuredTasks || extractedTasks.length > 0;
+  const displayTasks = hasStructuredTasks ? message.tasks : extractedTasks.map(t => ({
+    id: t.id,
+    title: t.title,
+    description: t.description,
+    status: t.status
+  })) as Task[];
   
   return (
     <LazyMotionDiv
@@ -286,7 +309,7 @@ export const EnhancedChatMessage = memo(forwardRef<EnhancedChatMessageRef, Enhan
           </LazyAnimatePresence>
         </LazyMotionDiv>
 
-        {hasTasks && (
+        {hasTasks && displayTasks && displayTasks.length > 0 && (
           <LazyMotionDiv 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -294,7 +317,7 @@ export const EnhancedChatMessage = memo(forwardRef<EnhancedChatMessageRef, Enhan
             className="w-full mt-2"
             data-testid={`enhanced-tasks-${message.id}`}
           >
-            <TaskMessage tasks={message.tasks!} />
+            <TaskMessage tasks={displayTasks} />
           </LazyMotionDiv>
         )}
 
