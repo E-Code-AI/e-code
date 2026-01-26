@@ -15,12 +15,13 @@ else
   echo "🔧 Development build"
 fi
 
-# Check if pre-built assets exist (built within last 24 hours)
+# Check if pre-built assets exist (skip rebuild if dist exists - saves deployment time)
 SKIP_BUILD=0
 if [ -f "dist/index.js" ] && [ -f "dist/public/index.html" ]; then
-  DIST_AGE=$(( $(date +%s) - $(stat -c %Y dist/index.js 2>/dev/null || echo 0) ))
-  if [ "$DIST_AGE" -lt 86400 ]; then
-    echo "✅ Recent build found ($(($DIST_AGE / 3600))h old), using pre-built assets"
+  DIST_SIZE=$(stat -c %s dist/index.js 2>/dev/null || echo 0)
+  # Skip if dist/index.js is > 1MB (valid build)
+  if [ "$DIST_SIZE" -gt 1000000 ]; then
+    echo "✅ Valid pre-built assets found ($(($DIST_SIZE / 1048576))MB), skipping rebuild for fast deployment"
     SKIP_BUILD=1
   fi
 fi
