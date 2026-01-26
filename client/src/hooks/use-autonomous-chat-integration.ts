@@ -186,6 +186,8 @@ export function useAutonomousChatIntegration({
   const lastMessageIdRef = useRef<string | null>(null);
   const planTextRef = useRef<string>('');
   const hasConnectedRef = useRef(false);
+  // ✅ NEW (Jan 26, 2026): Track task list message ID for in-place updates (Fortune 500 UX)
+  const taskListMessageIdRef = useRef<string | null>(null);
   const hasAddedUserPromptRef = useRef(false);
   const effectRanRef = useRef(false);
   const layoutEffectConnectedRef = useRef(false);
@@ -430,6 +432,8 @@ export function useAutonomousChatIntegration({
       if (bootstrapToken) {
         bootstrapActiveRef.current = true;
         buildCompletedRef.current = false;
+        // ✅ NEW (Jan 26, 2026): Reset task list message ID for new builds
+        taskListMessageIdRef.current = null;
         console.log('[AutonomousChatIntegration] 🔒 Bootstrap ACTIVE - protecting from transient enabled toggles');
       }
       setConnectionState({ isConnected: true, error: null, reconnectAttempt: 0, maxReconnectAttempts: 10 });
@@ -1389,20 +1393,35 @@ export function useAutonomousChatIntegration({
       }
 
       // Handle task list with progress
+      // ✅ NEW (Jan 26, 2026): Update existing task list message in-place for Fortune 500 UX
       case 'autonomous_task_list': {
         const taskListData = event.taskList;
         if (taskListData) {
-          const msg = createAutonomousMessage(
-            'autonomous_task_list',
-            taskListData.title || 'Task Progress',
-            {
-              phase: 'executing',
-              progress: store.progress,
-              taskList: taskListData
-            }
-          );
-          addMessage(conversationId, msg);
-          console.log('[AutonomousChatIntegration] ✅ Task list:', taskListData.items?.length, 'items');
+          if (taskListMessageIdRef.current) {
+            // Update existing task list message in-place (no chat flooding)
+            updateMessage(conversationId, taskListMessageIdRef.current, {
+              autonomousPayload: {
+                phase: 'executing',
+                progress: store.progress,
+                taskList: taskListData
+              }
+            });
+            console.log('[AutonomousChatIntegration] ✅ Task list updated:', taskListData.items?.length, 'items');
+          } else {
+            // First task list message - create and track ID
+            const msg = createAutonomousMessage(
+              'autonomous_task_list',
+              taskListData.title || 'Task Progress',
+              {
+                phase: 'executing',
+                progress: store.progress,
+                taskList: taskListData
+              }
+            );
+            taskListMessageIdRef.current = msg.id;
+            addMessage(conversationId, msg);
+            console.log('[AutonomousChatIntegration] ✅ Task list created:', taskListData.items?.length, 'items');
+          }
         }
         break;
       }
