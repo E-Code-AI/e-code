@@ -1724,8 +1724,39 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
 
       // Define scoped event handlers (captured in closure for cleanup)
       let currentTaskIndex = 0;
+      
+      // ✅ NEW (Jan 26, 2026): Track task statuses for real-time InlineTaskListEnhanced updates
+      const taskStatuses: Array<'pending' | 'in_progress' | 'completed' | 'error'> = 
+        plan.tasks.map(() => 'pending');
+      
+      // Helper to send full task list with current statuses (Replit-like display)
+      const sendRealTimeTaskList = () => {
+        const taskItems = plan.tasks.map((task, idx) => ({
+          id: task.id,
+          title: task.title,
+          status: taskStatuses[idx],
+          filePath: task.files?.[0]?.path,
+          duration: undefined
+        }));
+        
+        agentWebSocketService.sendTaskList(parseInt(projectId), sessionId, {
+          title: 'Building Your App',
+          items: taskItems,
+          showProgress: true,
+          compact: false
+        });
+      };
+      
+      // Send initial task list (all pending)
+      sendRealTimeTaskList();
 
       const handleStepStart = (event: any) => {
+        // ✅ NEW (Jan 26, 2026): Update task status to in_progress and send real-time list
+        if (currentTaskIndex < taskStatuses.length) {
+          taskStatuses[currentTaskIndex] = 'in_progress';
+          sendRealTimeTaskList();
+        }
+        
         // NEW: Broadcast task started with index and task details
         agentWebSocketService.broadcastTaskStarted(projectId, sessionId, currentTaskIndex, {
           type: event.stepType || 'unknown',
@@ -1746,6 +1777,12 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
       };
 
       const handleStepComplete = (event: any) => {
+        // ✅ NEW (Jan 26, 2026): Update task status to completed and send real-time list
+        if (currentTaskIndex < taskStatuses.length) {
+          taskStatuses[currentTaskIndex] = 'completed';
+          sendRealTimeTaskList();
+        }
+        
         // NEW: Broadcast task completed
         agentWebSocketService.broadcastTaskCompleted(
           projectId,
@@ -1770,6 +1807,12 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
       };
 
       const handleStepFailed = (event: any) => {
+        // ✅ NEW (Jan 26, 2026): Update task status to error and send real-time list
+        if (currentTaskIndex < taskStatuses.length) {
+          taskStatuses[currentTaskIndex] = 'error';
+          sendRealTimeTaskList();
+        }
+        
         // NEW: Broadcast plan failed
         agentWebSocketService.broadcastPlanFailed(
           projectId,
