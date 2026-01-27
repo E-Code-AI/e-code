@@ -5,9 +5,22 @@
 # Large user data directories (1.6GB+)
 projects/
 uploads/
+backups/
 
 # Dependencies (installed at deploy time)
 node_modules/
+.npm/
+.pnpm-store/
+
+# Source maps and type declarations (not needed in prod)
+*.map
+*.d.ts
+
+# Development dependencies
+scripts/
+test/
+*.test.*
+*.spec.*
 
 # Git repository
 .git/
