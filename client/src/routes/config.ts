@@ -82,6 +82,7 @@ export const publicRoutes: RouteConfig[] = [
   { path: "/share/:shareId", component: Pages.SharedSnippet },
   { path: "/u/:username/:projectname", component: Pages.ProjectPage, layout: "replit" },
   { path: "/u/:username", component: Pages.UserProfile, layout: "replit" },
+  { path: "/ide/new", component: Pages.Dashboard, layout: "replit" },
   { path: "/ide/:id", component: Pages.IDEPage },
 ];
 
@@ -123,7 +124,6 @@ export const protectedRoutes: RouteConfig[] = [
   { path: "/projects", component: Pages.ProjectsPage, layout: "replit" },
   { path: "/projects/:id", component: Pages.ProjectPage, layout: "replit" },
   { path: "/project/:id", component: Pages.ProjectPage, layout: "replit" },
-  { path: "/ide/new", component: Pages.Dashboard, layout: "replit" },
   { path: "/editor/:id", component: Pages.EditorRedirect },
   { path: "/runtimes", component: Pages.RuntimesPage, layout: "replit" },
   { path: "/runtime-diagnostics", component: Pages.RuntimeDiagnosticsPage, layout: "replit" },
