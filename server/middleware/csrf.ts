@@ -114,9 +114,13 @@ function isAllowedOrigin(origin: string | undefined): boolean {
   // In development, allow any Replit domain pattern
   if (process.env.NODE_ENV === 'development') {
     const replitPatterns = [
-      /^https:\/\/[a-f0-9-]+\.replit\.dev$/,
-      /^https:\/\/[a-f0-9-]+-\d+-[a-z0-9]+\.riker\.replit\.dev$/,
+      // Fixed: Use [a-z0-9-]+ to match all alphanumeric characters, not just hex
+      /^https:\/\/[a-z0-9-]+\.replit\.dev$/,
+      /^https:\/\/[a-z0-9-]+-\d+-[a-z0-9]+\.riker\.replit\.dev$/,
       /^https:\/\/[a-z0-9-]+\.repl\.co$/,
+      // Also allow http for local development
+      /^http:\/\/127\.0\.0\.1(:\d+)?$/,
+      /^http:\/\/localhost(:\d+)?$/,
     ];
     if (replitPatterns.some(pattern => pattern.test(origin))) {
       return true;
