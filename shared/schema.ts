@@ -4526,6 +4526,33 @@ export const workflowWithTasksSchema = z.object({
 export type WorkflowWithTasks = z.infer<typeof workflowWithTasksSchema>;
 
 // ============================================
+// SYSTEM METRICS HISTORY (Fortune 500 Monitoring)
+// ============================================
+
+export const storageMetricsHistory = pgTable('storage_metrics_history', {
+  id: serial('id').primaryKey(),
+  recordedAt: timestamp('recorded_at').notNull().defaultNow(),
+  databaseSizeBytes: decimal('database_size_bytes', { precision: 20, scale: 0 }).notNull(),
+  totalProjects: integer('total_projects').notNull().default(0),
+  totalUsers: integer('total_users').notNull().default(0),
+  totalFiles: integer('total_files').notNull().default(0),
+  poolConnectionsActive: integer('pool_connections_active').default(0),
+  memoryHeapUsedBytes: decimal('memory_heap_used_bytes', { precision: 20, scale: 0 }),
+  memoryRssBytes: decimal('memory_rss_bytes', { precision: 20, scale: 0 }),
+  cpuLoadAverage1m: real('cpu_load_average_1m'),
+}, (table) => [
+  index('storage_metrics_recorded_at_idx').on(table.recordedAt),
+]);
+
+export const insertStorageMetricsHistorySchema = createInsertSchema(storageMetricsHistory).omit({
+  id: true,
+  recordedAt: true,
+});
+
+export type StorageMetricsHistory = typeof storageMetricsHistory.$inferSelect;
+export type InsertStorageMetricsHistory = z.infer<typeof insertStorageMetricsHistorySchema>;
+
+// ============================================
 // DRIZZLE ORM RELATIONS
 // ============================================
 

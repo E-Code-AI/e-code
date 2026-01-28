@@ -988,6 +988,15 @@ app.get('/api/cors-health', async (_req, res) => {
     console.warn('[WORKING SERVER] Mobile session cleanup initialization failed (non-critical):', error.message);
   }
 
+  // ✅ Start Storage Metrics Collector (Fortune 500 Monitoring)
+  try {
+    const { startStorageMetricsCollector } = await import('./jobs/storage-metrics-collector');
+    startStorageMetricsCollector();
+    console.log('✅ Storage Metrics Collector started - running every hour');
+  } catch (error: any) {
+    console.warn('[WORKING SERVER] Storage metrics collector initialization failed (non-critical):', error.message);
+  }
+
   // ✅ CRITICAL FIX (Dec 1, 2025): Removed manual handleAgentUpgrade flow
   // The agent WebSocket now uses the standard { server, path, verifyClient } pattern
   // in agent-websocket-service.ts, which automatically short-circuits Express/Vite

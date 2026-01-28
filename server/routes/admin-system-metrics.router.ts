@@ -11,6 +11,7 @@ import { ensureAuthenticated } from '../middleware/auth';
 import { ensureAdmin } from '../middleware/admin-auth';
 import { dbPool } from '../db/index';
 import os from 'os';
+import { getStorageGrowthRate } from '../jobs/storage-metrics-collector';
 
 const router = Router();
 
@@ -375,7 +376,8 @@ router.get('/capacity-forecast', async (req, res) => {
       console.error('Failed to get database size for forecast:', e);
     }
 
-    const dailyGrowthRateGB = 0.05;
+    const growthData = await getStorageGrowthRate();
+    const dailyGrowthRateGB = growthData.dailyGrowthGB > 0 ? growthData.dailyGrowthGB : 0.05;
     const remainingGB = STORAGE_LIMIT_GB - storageUsedGB;
     const daysUntilFull = dailyGrowthRateGB > 0 
       ? Math.round(remainingGB / dailyGrowthRateGB) 
@@ -460,7 +462,12 @@ router.get('/capacity-forecast', async (req, res) => {
       forecast: {
         storageDaysRemaining: daysUntilFull,
         estimatedDailyGrowthGB: dailyGrowthRateGB,
+        weeklyGrowthGB: growthData.weeklyGrowthGB,
         projectedFullDate: new Date(Date.now() + daysUntilFull * 24 * 60 * 60 * 1000).toISOString(),
+        dataPoints: growthData.dataPoints,
+        oldestDataPoint: growthData.oldestRecord?.toISOString() || null,
+        newestDataPoint: growthData.newestRecord?.toISOString() || null,
+        isEstimated: growthData.dataPoints < 24,
       },
       recommendations: recommendations.sort((a, b) => {
         const priorityOrder = { high: 0, medium: 1, low: 2 };
