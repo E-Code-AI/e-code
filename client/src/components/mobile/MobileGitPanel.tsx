@@ -139,8 +139,10 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
   const [remoteUrl, setRemoteUrl] = useState('');
   const [showChanges, setShowChanges] = useState(true);
 
-  const { data: status, refetch: refetchStatus, isLoading } = useQuery<GitStatus>({
+  const { data: status, refetch: refetchStatus, isLoading, isError, error } = useQuery<GitStatus>({
     queryKey: ['/api/git/status'],
+    retry: 1, // Only retry once to avoid long loading states
+    staleTime: 30000, // 30 seconds
   });
 
   const { data: remotesData } = useQuery<{ remotes: { name: string; url: string; type: 'fetch' | 'push' }[] }>({
@@ -314,6 +316,34 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
     return (
       <div className={cn("flex items-center justify-center h-full bg-card", className)}>
         <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (isError) {
+    const errorMessage = (error as any)?.message || 'Failed to load Git status';
+    const isAuthError = errorMessage.includes('Authentication') || errorMessage.includes('401');
+    
+    return (
+      <div className={cn("flex flex-col items-center justify-center h-full bg-card p-4", className)} data-testid="mobile-git-error-state">
+        <GitBranch className="w-10 h-10 text-muted-foreground/40 mb-3" />
+        <h3 className="text-[14px] font-medium text-foreground mb-0.5">
+          {isAuthError ? 'Sign in required' : 'Unable to load Git'}
+        </h3>
+        <p className="text-[12px] text-muted-foreground text-center mb-4">
+          {isAuthError 
+            ? 'Please sign in to access Git features' 
+            : 'There was an error loading the Git panel'}
+        </p>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={() => refetchStatus()}
+          className="gap-2"
+        >
+          <RefreshCw className="w-4 h-4" />
+          Try again
+        </Button>
       </div>
     );
   }
