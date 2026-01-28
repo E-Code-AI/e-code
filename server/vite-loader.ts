@@ -173,8 +173,12 @@ export async function safeSetupVite(app: Application, server: Server): Promise<b
         const pathModule = await import('path');
         const fsModule = await import('fs');
         
-        // Production build outputs to dist/public (relative to project root)
-        const distPath = pathModule.resolve(process.cwd(), 'dist', 'public');
+        // Production build outputs to dist/public
+        // Use __dirname for production (bundle is at dist/index.js, assets at dist/public/)
+        // In production bundle, __dirname points to dist/, so public/ is adjacent
+        const distPath = process.env.NODE_ENV === 'production' 
+          ? pathModule.resolve(__dirname, 'public')
+          : pathModule.resolve(process.cwd(), 'dist', 'public');
         const indexHtmlPath = pathModule.join(distPath, 'index.html');
         
         if (!fsModule.existsSync(distPath)) {
@@ -241,7 +245,10 @@ export async function setupFallbackServer(app: Application): Promise<void> {
   const fs = await import('fs');
   
   // Serve static assets from dist/public (built CSS, JS, images, index.html)
-  const publicPath = path.resolve(process.cwd(), 'dist/public');
+  // Use __dirname in production (bundle is at dist/index.js)
+  const publicPath = process.env.NODE_ENV === 'production'
+    ? path.resolve(__dirname, 'public')
+    : path.resolve(process.cwd(), 'dist/public');
   const builtIndexPath = path.join(publicPath, 'index.html');
   
   if (fs.existsSync(publicPath) && fs.existsSync(builtIndexPath)) {
