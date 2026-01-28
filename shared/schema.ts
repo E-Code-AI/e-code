@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm';
 import {
   index,
+  uniqueIndex,
   jsonb,
   pgTable,
   timestamp,
@@ -293,7 +294,10 @@ export const files = pgTable("files", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
   // Note: DB also has is_folder, but is_directory is the canonical boolean
-}, (table) => [index("files_project_id_idx").on(table.projectId)]);
+}, (table) => [
+  index("files_project_id_idx").on(table.projectId),
+  uniqueIndex("files_project_path_unique").on(table.projectId, table.path),
+]);
 
 // File Versions table - tracks per-file version history
 export const fileVersions = pgTable("file_versions", {
