@@ -10,7 +10,8 @@ import {
   Activity,
   Settings,
   LogOut,
-  Brain
+  Brain,
+  Server
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -19,6 +20,7 @@ export function AdminSidebar() {
 
   const navItems = [
     { path: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
+    { path: '/admin/system-monitoring', icon: Server, label: 'System Monitoring' },
     { path: '/admin/users', icon: Users, label: 'Users' },
     { path: '/admin/ai-models', icon: Brain, label: 'AI Models' },
     { path: '/admin/api-keys', icon: Key, label: 'API Keys' },

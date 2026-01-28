@@ -50,6 +50,7 @@ import aiModelsRouter from "./ai-models.router";
 import featureFlagsRouter from "./feature-flags.router";
 import workspaceBootstrapRouter from "./workspace-bootstrap.router";
 import adminMonitoringRouter from "./admin-monitoring.router";
+import adminSystemMetricsRouter from "./admin-system-metrics.router";
 import adminBillingRouter from "./admin-billing.router";
 import aiUsageRouter from "./ai-usage.router";
 import { tierRateLimiters } from "../middleware/tier-rate-limiter";
@@ -264,6 +265,9 @@ export class MainRouter {
 
     // Admin Monitoring routes (Fortune 500 Rate Limit Dashboard)
     app.use('/api/admin/monitoring', tierRateLimiters.api, adminMonitoringRouter);
+
+    // Admin System Metrics routes (Fortune 500 System Monitoring Dashboard)
+    app.use('/api/admin/system', tierRateLimiters.api, adminSystemMetricsRouter);
 
     // Admin Billing routes (Stripe integration, pricing plans, invoices)
     app.use('/api/admin/billing', tierRateLimiters.api, adminBillingRouter);

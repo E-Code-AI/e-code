@@ -1,0 +1,1138 @@
+1.2 Connexion DB sans retry ni warmup
+Fichier: /home/user/e-code/server/db/index.ts (lignes 62-67)
+Problème: Pas de logique de retry si la connexion échoue, pas de warmup du pool.
+Solution:
+
+// Ajouter retry avec exponential backoff
+async function connectWithRetry(maxRetries = 5) {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      await pool.query('SELECT 1');
+      console.log('Database connected successfully');
+      return;
+    } catch (error) {
+      const delay = Math.pow(2, i) * 1000;
+      console.log(`DB connection failed, retrying in ${delay}ms...`);
+      await new Promise(r => setTimeout(r, delay));
+    }
+  }
+  throw new Error('Failed to connect to database after retries');
+}
+
+1.3 Provider Neon non implémenté
+Fichier: /home/user/e-code/server/services/providers/neon.provider.ts (lignes 203-215)
+Problème: Les méthodes deprovision et rotateCredentials ne font rien (juste un log warning).
+Solution:
+
+// Implémenter les méthodes réelles:
+async deprovision(databaseId: string): Promise<void> {
+  const neonClient = await this.getNeonClient();
+  await neonClient.databases.delete({ 
+    projectId: this.projectId, 
+    branchId: this.branchId,
+    databaseId 
+  });
+  await this.cleanupConnections(databaseId);
+}
+
+async rotateCredentials(databaseId: string): Promise<Credentials> {
+  // Générer nouvelles credentials et mettre à jour Neon
+  const newPassword = crypto.randomBytes(32).toString('hex');
+  // ... implémentation complète
+}
+
+1.4 Mobile API retourne des données mock
+Fichier: /home/user/e-code/server/api/mobile.ts (ligne 509)
+Problème: Les notifications mobiles retournent des données placeholder.
+Solution:
+
+// Remplacer par une vraie requête DB:
+app.get('/api/mobile/notifications', requireAuth, async (req, res) => {
+  const notifications = await db.select()
+    .from(notifications)
+    .where(eq(notifications.userId, req.user.id))
+    .orderBy(desc(notifications.createdAt))
+    .limit(50);
+  res.json(notifications);
+});
+
+1.5 Task Scheduler non implémenté
+Fichier: /home/user/e-code/server/distributed/task-scheduler.ts (ligne 161)
+Problème: Le cron scheduling dit "not yet implemented".
+Solution: Implémenter avec node-cron ou un système de queue comme BullMQ.
+
+🟠 MAJEURS
+1.6 N+1 Queries dans storage.ts
+Fichier: /home/user/e-code/server/storage.ts (lignes 1856, 1978, 2036)
+Problème: sessions.map(async ...) sans Promise.all correctement utilisé.
+Solution:
+
+// Remplacer:
+const results = sessions.map(async (session) => { ... });
+// Par:
+const results = await Promise.all(sessions.map(async (session) => { ... }));
+
+1.7 CORS permet tous les localhost en dev
+Fichier: /home/user/e-code/server/middleware/cors-config.ts (lignes 209-220)
+Problème: Mode dev accepte tous les origins localhost.
+Solution:
+
+// Définir explicitement les origins autorisés:
+const devOrigins = [
+  'http://localhost:3000',
+  'http://localhost:5000',
+  'http://localhost:5173'
+];
+
+1.8 Git credentials dans les logs
+Fichier: /home/user/e-code/server/git.ts (ligne 539)
+Problème: Les credentials Git peuvent apparaître dans les logs.
+Solution:
+
+// Masquer les credentials avant logging:
+const sanitizedUrl = gitUrl.replace(/:\/\/[^@]+@/, '://***@');
+logger.info(`Cloning repository: ${sanitizedUrl}`);
+
+1.9 Pas de timeout sur opérations Git
+Fichier: /home/user/e-code/server/git.ts
+Problème: Les opérations Git peuvent bloquer indéfiniment.
+Solution:
+
+import { execSync } from 'child_process';
+// Ajouter timeout:
+execSync(gitCommand, { 
+  timeout: 120000, // 2 minutes
+  maxBuffer: 50 * 1024 * 1024 // 50MB
+});
+
+1.10 Docker executor charge paresseusement
+Fichier: /home/user/e-code/server/docker-executor.ts (lignes 22-31)
+Problème: Docker est chargé lazily, échoue silencieusement au runtime.
+Solution:
+
+// Valider Docker au démarrage:
+import Docker from 'dockerode';
+
+const docker = new Docker();
+try {
+  await docker.ping();
+  console.log('Docker connection verified');
+} catch (error) {
+  console.error('Docker not available:', error.message);
+  // Désactiver les fonctionnalités Docker
+}
+
+1.11 Ports Docker hardcodés
+Fichier: /home/user/e-code/server/docker-executor.ts (lignes 72-74)
+Problème: Range de ports 3000-4000 hardcodé.
+Solution:
+
+const PORT_RANGE_START = parseInt(process.env.DOCKER_PORT_START || '3000');
+const PORT_RANGE_END = parseInt(process.env.DOCKER_PORT_END || '4000');
+
+1.12 Stripe webhooks incomplets
+Fichier: /home/user/e-code/server/payments/stripe-service.ts (lignes 566-595)
+Problème: Manque plusieurs événements Stripe critiques.
+Solution:
+
+// Ajouter les handlers manquants:
+case 'invoice.created':
+case 'invoice.finalized':
+case 'payment_method.attached':
+case 'payment_method.detached':
+case 'customer.updated':
+case 'charge.failed':
+case 'charge.dispute.closed':
+  // Implémenter chaque handler
+
+1.13 Rate limiting pas par utilisateur
+Fichier: /home/user/e-code/server/services/agent-tool-framework.service.ts (ligne 62)
+Problème: Rate limit vérifie par outil, pas par utilisateur+outil.
+Solution:
+
+// Changer la clé de rate limit:
+const rateLimitKey = `${userId}:${toolName}`;
+if (this.rateLimits.get(rateLimitKey) > MAX_RATE) {
+  throw new Error('Rate limit exceeded');
+}
+
+1.14 Circuit breaker non intégré
+Fichier: /home/user/e-code/server/services/agent-workflow-engine.service.ts (lignes 144-150)
+Problème: Circuit breaker défini mais jamais utilisé dans le flow d'exécution.
+Solution:
+
+// Avant chaque appel AI:
+if (this.circuitBreaker.isOpen()) {
+  throw new Error('Service temporarily unavailable');
+}
+try {
+  const result = await this.callAIProvider();
+  this.circuitBreaker.recordSuccess();
+  return result;
+} catch (error) {
+  this.circuitBreaker.recordFailure();
+  throw error;
+}
+
+1.15 Models Groq dépréciés
+Fichier: /home/user/e-code/server/ai/ai-providers.ts (ligne 140)
+Problème: Utilise mixtral-8x7b-32768 qui a été supprimé par Groq en mars 2025.
+Solution:
+
+// Remplacer par les modèles actuels:
+const GROQ_MODELS = [
+  'llama-3.3-70b-versatile',
+  'llama-3.1-8b-instant',
+  'gemma2-9b-it'
+];
+
+2️⃣ PROBLÈMES FRONTEND
+🔴 CRITIQUES
+2.1 Erreurs de sauvegarde silencieuses
+Fichier: /home/user/e-code/client/src/components/CodeEditor.tsx (lignes 149-172)
+Problème: saveFile() log les erreurs mais n'informe pas l'utilisateur.
+Solution:
+
+catch (error) {
+  console.error('Save failed:', error);
+  toast({
+    title: "Échec de la sauvegarde",
+    description: "Impossible de sauvegarder le fichier. Vérifiez votre connexion.",
+    variant: "destructive"
+  });
+}
+
+2.2 EventSource sans validation JSON
+Fichier: /home/user/e-code/client/src/components/CreateProjectModal.tsx (lignes 279-325)
+Problème: JSON.parse(event.data) peut crasher si données malformées.
+Solution:
+
+eventSource.onmessage = (event) => {
+  try {
+    const data = JSON.parse(event.data);
+    // ... traitement
+  } catch (e) {
+    console.error('Invalid JSON from server:', event.data);
+    // Ignorer ou afficher erreur
+  }
+};
+
+2.3 Upload sans retry
+Fichier: /home/user/e-code/client/src/components/FileUploadDropzone.tsx (lignes 68-134)
+Problème: Un fichier qui échoue stoppe tout l'upload.
+Solution:
+
+const uploadWithRetry = async (file: File, maxRetries = 3) => {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await uploadFile(file);
+    } catch (error) {
+      if (i === maxRetries - 1) throw error;
+      await new Promise(r => setTimeout(r, 1000 * (i + 1)));
+    }
+  }
+};
+
+2.4 aria-labelledby undefined
+Fichier: /home/user/e-code/client/src/components/layout/Sidebar.tsx (ligne 74)
+Problème: aria-labelledby devient undefined quand sidebar collapse.
+Solution:
+
+// Remplacer:
+aria-labelledby={!isCollapsed ? `nav-group-${group.key}` : undefined}
+// Par:
+aria-label={isCollapsed ? group.label : undefined}
+aria-labelledby={!isCollapsed ? `nav-group-${group.key}` : undefined}
+
+🟠 MAJEURS
+2.5 Support langage incomplet dans l'éditeur
+Fichier: /home/user/e-code/client/src/components/CodeEditor.tsx (lignes 254, 551-580)
+Problème: Extensions manquantes: .go, .kotlin, .scala, .swift, .lua, .perl
+Solution:
+
+const languageMap: Record<string, string> = {
+  // Ajouter:
+  '.go': 'go',
+  '.kt': 'kotlin',
+  '.scala': 'scala',
+  '.swift': 'swift',
+  '.lua': 'lua',
+  '.pl': 'perl',
+  '.clj': 'clojure',
+  '.elm': 'elm',
+  '.dart': 'dart',
+  '.r': 'r',
+  '.R': 'r',
+};
+
+2.6 Validation mot de passe sans feedback
+Fichier: /home/user/e-code/client/src/components/AuthModal.tsx (lignes 25-42)
+Problème: L'utilisateur ne sait pas quelle exigence du mot de passe échoue.
+Solution:
+
+const getPasswordErrors = (password: string) => {
+  const errors = [];
+  if (password.length < 8) errors.push('Au moins 8 caractères');
+  if (!/[A-Z]/.test(password)) errors.push('Une majuscule');
+  if (!/[a-z]/.test(password)) errors.push('Une minuscule');
+  if (!/[0-9]/.test(password)) errors.push('Un chiffre');
+  return errors;
+};
+
+2.7 Notifications polling excessif
+Fichier: /home/user/e-code/client/src/components/MobileNavigation.tsx (lignes 24-33)
+Problème: Refresh toutes les 30 secondes sans backoff.
+Solution:
+
+// Utiliser exponential backoff:
+const { data } = useQuery({
+  queryKey: ['notifications'],
+  queryFn: fetchNotifications,
+  refetchInterval: (data) => {
+    // Plus rapide si nouvelles notifs, plus lent sinon
+    return data?.hasNew ? 10000 : 60000;
+  },
+  staleTime: 30000,
+});
+
+2.8 Nombreuses pages placeholder
+Fichier: /home/user/e-code/client/src/pages/FeaturePlaceholder.tsx (ligne 179)
+Problème: Plusieurs fonctionnalités sont "coming_soon" ou "beta".
+Solution: Implémenter chaque fonctionnalité:
+
+Database Studio
+Code Search
+Package Intelligence
+Extensions
+Integration Hub
+KV Store
+Collaboration Threads
+2.9 Type any utilisé 535+ fois
+Fichiers: Multiples composants
+Problème: Pas de type safety, risque d'erreurs runtime.
+Solution: Définir des interfaces propres pour chaque composant.
+
+2.10 211 console.log en production
+Fichiers: Multiples
+Problème: Debug statements laissés dans le code.
+Solution:
+
+// Dans vite.config.ts, ajouter:
+esbuild: {
+  drop: process.env.NODE_ENV === 'production' ? ['console', 'debugger'] : []
+}
+
+2.11 Responsive manquant pour tablettes
+Fichiers: MobileApp.tsx, MobileChatInterface.tsx, MobileHeader.tsx
+Problème: Pas de breakpoint sm: (640-768px).
+Solution:
+
+/* Ajouter les classes sm: */
+className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+
+2.12 Drop zone sans aria-label
+Fichier: /home/user/e-code/client/src/components/FileUploadDropzone.tsx (lignes 106-124)
+Problème: Zone de drop inaccessible aux lecteurs d'écran.
+Solution:
+
+<div
+  role="region"
+  aria-label="Zone de dépôt de fichiers"
+  aria-describedby="dropzone-instructions"
+  {...getRootProps()}
+>
+  <p id="dropzone-instructions" className="sr-only">
+    Glissez et déposez des fichiers ou cliquez pour sélectionner
+  </p>
+</div>
+
+3️⃣ PROBLÈMES BASE DE DONNÉES
+🔴 CRITIQUES
+3.1 237 FK sans index
+Fichier: /home/user/e-code/shared/schema.ts
+Problème: Colonnes FK sans index = scans complets de table.
+Solution:
+
+// Ajouter index pour chaque FK:
+export const commentsProjectIdIdx = index('comments_project_id_idx')
+  .on(comments.projectId);
+export const commentsAuthorIdIdx = index('comments_author_id_idx')
+  .on(comments.authorId);
+// Répéter pour les 237 FK
+
+3.2 userId en TEXT au lieu de INTEGER
+Fichier: /home/user/e-code/shared/schema.ts (ligne 846)
+Problème: conversationMemory.userId est TEXT mais users.id est serial (INTEGER).
+Solution:
+
+// Changer:
+userId: text("user_id")
+// En:
+userId: integer("user_id").references(() => users.id)
+
+3.3 FK self-référentielles sans .references()
+Fichier: /home/user/e-code/shared/schema.ts (ligne 289)
+Problème: files.parentId sans contrainte FK.
+Solution:
+
+parentId: integer("parent_id").references(() => files.id, { onDelete: 'cascade' })
+
+🟠 MAJEURS
+3.4 Tables team_projects manquantes
+Fichier: Migration existe mais pas dans schema.ts
+Problème: Tables définies en SQL mais pas dans le schéma Drizzle.
+Solution: Ajouter dans schema.ts:
+
+export const teamProjects = pgTable('team_projects', {
+  teamId: integer('team_id').notNull().references(() => teams.id),
+  projectId: integer('project_id').notNull().references(() => projects.id),
+});
+
+3.5 onDelete manquant sur imports
+Fichier: /home/user/e-code/shared/schema/imports.ts (lignes 7-8)
+Problème: FK sans onDelete: 'cascade'.
+Solution:
+
+projectId: integer('project_id')
+  .notNull()
+  .references(() => projects.id, { onDelete: 'cascade' }),
+
+3.6 169 tables mais seulement 10 relations définies
+Fichier: /home/user/e-code/shared/schema.ts
+Problème: La plupart des relations Drizzle manquent.
+Solution: Définir toutes les relations pour permettre les queries avec .with().
+
+4️⃣ PROBLÈMES APPLICATION MOBILE
+🔴 CRITIQUES
+4.1 Fichier .env manquant
+Fichier: /home/user/e-code/mobile/.env (n'existe pas)
+Problème: Variables d'environnement non configurées.
+Solution: Créer .env basé sur .env.example:
+
+EXPO_PUBLIC_ENV=production
+EXPO_PUBLIC_API_BASE=https://e-code.ai
+
+4.2 Credentials Firebase placeholder
+Fichier: /home/user/e-code/mobile/GoogleService-Info.plist
+Problème: Contient YOUR_CLIENT_ID, YOUR_API_KEY, etc.
+Solution: Remplacer par les vraies credentials Firebase depuis la console Google Cloud.
+
+4.3 google-services.json manquant
+Fichier: Référencé mais n'existe pas
+Problème: Build Android échouera.
+Solution: Télécharger depuis Firebase Console et placer dans /mobile/.
+
+4.4 Error reporting non implémenté
+Fichier: /home/user/e-code/mobile/src/components/ErrorBoundary.tsx (ligne 33)
+Problème: TODO: "Log to error reporting service"
+Solution:
+
+import * as Sentry from '@sentry/react-native';
+
+componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  Sentry.captureException(error, { extra: errorInfo });
+}
+
+4.5 Avatar upload non implémenté
+Fichier: /home/user/e-code/mobile/src/screens/ProfileScreen.tsx (lignes 51-53)
+Problème: Affiche "Coming Soon" au lieu de fonctionner.
+Solution: Implémenter avec expo-image-picker et upload API.
+
+🟠 MAJEURS
+4.6 Plugins Expo array vide
+Fichier: /home/user/e-code/mobile/app.config.js (lignes 106-109)
+Problème: plugins: [] vide donc modules natifs non compilés.
+Solution:
+
+plugins: [
+  'expo-notifications',
+  'expo-background-fetch',
+  'expo-task-manager',
+],
+
+4.7 EAS submission placeholders
+Fichier: /home/user/e-code/mobile/eas.json (lignes 59-61)
+Problème: appleId, ascAppId, appleTeamId sont des placeholders.
+Solution: Configurer via EAS secrets ou remplacer par vraies valeurs.
+
+4.8 Dépendances manquantes
+Fichier: /home/user/e-code/mobile/package.json
+Problème: expo-task-manager et expo-background-fetch utilisés mais non déclarés.
+Solution:
+
+npx expo install expo-task-manager expo-background-fetch
+
+4.9 Expo SDK outdated
+Fichier: /home/user/e-code/mobile/package.json (ligne 30)
+Problème: expo: "~54.0.0" est de début 2024.
+Solution:
+
+npx expo upgrade
+
+4.10 CodeEditor sans syntax highlighting
+Fichier: /home/user/e-code/mobile/src/components/CodeEditor.tsx
+Problème: Tous les langages highlight en JavaScript.
+Solution: Intégrer une librairie comme react-native-code-highlighter.
+
+4.11 Terminal sans history
+Fichier: /home/user/e-code/mobile/src/components/Terminal.tsx
+Problème: Pas de persistance des commandes.
+Solution: Sauvegarder dans AsyncStorage.
+
+4.12 Pas de certificate pinning
+Problème: Vulnérable aux attaques MITM.
+Solution: Implémenter avec react-native-ssl-pinning.
+
+5️⃣ PROBLÈMES APPLICATION DESKTOP
+🔴 CRITIQUES
+5.1 Session API importée mais non utilisée
+Fichier: /home/user/e-code/desktop/main.js (ligne 15)
+Problème: session importé mais jamais utilisé = pas d'injection de tokens.
+Solution:
+
+session.defaultSession.webRequest.onBeforeSendHeaders((details, callback) => {
+  details.requestHeaders['Authorization'] = `Bearer ${getAuthToken()}`;
+  callback({ requestHeaders: details.requestHeaders });
+});
+
+5.2 Pas de beforeUnload handler
+Fichier: /home/user/e-code/desktop/main.js
+Problème: Fermeture sans prompt pour changements non sauvegardés.
+Solution:
+
+mainWindow.on('close', (e) => {
+  if (hasUnsavedChanges()) {
+    e.preventDefault();
+    dialog.showMessageBox(mainWindow, {
+      type: 'question',
+      buttons: ['Sauvegarder', 'Ne pas sauvegarder', 'Annuler'],
+      message: 'Voulez-vous sauvegarder les modifications?'
+    }).then(result => {
+      if (result.response === 0) saveAndClose();
+      else if (result.response === 1) mainWindow.destroy();
+    });
+  }
+});
+
+5.3 Pas de rate limiting sur IPC
+Fichier: /home/user/e-code/desktop/preload.js
+Problème: Le renderer peut spam les opérations fichiers.
+Solution:
+
+const rateLimiter = new Map();
+const RATE_LIMIT_MS = 100;
+
+contextBridge.exposeInMainWorld('api', {
+  readFile: async (path) => {
+    const now = Date.now();
+    if (rateLimiter.get('readFile') > now - RATE_LIMIT_MS) {
+      throw new Error('Rate limit exceeded');
+    }
+    rateLimiter.set('readFile', now);
+    return ipcRenderer.invoke('read-file', path);
+  }
+});
+
+5.4 Code signing incomplet macOS
+Fichier: /home/user/e-code/desktop/package.json (ligne 69)
+Problème: ${env.APPLE_TEAM_ID} sans fallback.
+Solution:
+
+"notarize": {
+  "teamId": "${env.APPLE_TEAM_ID:-}",
+}
+
+Et valider avant build:
+
+if (process.platform === 'darwin' && !process.env.APPLE_TEAM_ID) {
+  console.error('APPLE_TEAM_ID required for macOS builds');
+  process.exit(1);
+}
+
+🟠 MAJEURS
+5.5 Auto-update sans canal alpha/beta
+Fichier: /home/user/e-code/desktop/main.js (ligne 1061)
+Problème: channel: 'latest' hardcodé.
+Solution:
+
+const channel = process.env.UPDATE_CHANNEL || 'latest';
+autoUpdater.channel = channel;
+
+5.6 Timeout fichiers trop court
+Fichier: /home/user/e-code/desktop/main.js (lignes 1281, 1293)
+Problème: 10 secondes trop court pour gros fichiers.
+Solution:
+
+const timeout = Math.max(10000, fileSize / 1024 * 10); // 10ms par KB minimum
+
+5.7 Service Worker jamais activé
+Fichier: /home/user/e-code/desktop/renderer/sw.js
+Problème: SW défini mais jamais enregistré en production.
+Solution:
+
+// Dans renderer/index.html
+if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
+  navigator.serviceWorker.register('/sw.js');
+}
+
+5.8 Tray icon template manquant macOS
+Fichier: /home/user/e-code/desktop/main.js (ligne 861)
+Problème: macOS nécessite une image template (monochrome).
+Solution:
+
+const trayIcon = process.platform === 'darwin' 
+  ? path.join(__dirname, 'resources/icon-trayTemplate.png')
+  : path.join(__dirname, 'resources/icon-tray.png');
+
+5.9 Deep link XSS sanitization insuffisante
+Fichier: /home/user/e-code/desktop/main.js (ligne 985)
+Problème: Sanitization basique, ne protège pas contexte HTML.
+Solution:
+
+const sanitize = (str) => {
+  return str
+    .replace(/[<>'"&]/g, '')
+    .replace(/javascript:/gi, '')
+    .replace(/data:/gi, '');
+};
+
+5.10 Crash log rotation manquante
+Fichier: /home/user/e-code/desktop/main.js (lignes 41-43)
+Problème: crash.log grandit indéfiniment.
+Solution:
+
+const rotateLogs = () => {
+  const maxSize = 10 * 1024 * 1024; // 10MB
+  const logPath = path.join(app.getPath('userData'), 'crash.log');
+  if (fs.existsSync(logPath) && fs.statSync(logPath).size > maxSize) {
+    fs.renameSync(logPath, logPath + '.old');
+  }
+};
+
+6️⃣ PROBLÈMES DÉPLOIEMENT
+🔴 CRITIQUES
+6.1 PostgreSQL single replica (NO HA)
+Fichier: /home/user/e-code/kubernetes/postgres-deployment.yaml (ligne 66)
+Problème: replicas: 1 = single point of failure.
+Solution:
+
+# Utiliser CloudNativePG Operator:
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+spec:
+  instances: 3
+  primaryUpdateStrategy: unsupervised
+
+6.2 Domaine incohérent dans les configs
+Problème:
+
+.replit: e-code.ai
+kubernetes/configmap.yaml: ecode.cloud
+kubernetes/ingress.yaml: ecode.cloud
+Solution: Standardiser sur e-code.ai partout:
+# Dans tous les fichiers K8s:
+CORS_ORIGIN: "https://e-code.ai,https://*.e-code.ai"
+
+6.3 Stripe live keys dans source control
+Fichier: /home/user/e-code/.replit (ligne 69)
+Problème: pk_live_51QPg0B2... visible.
+Solution: Déplacer vers Replit Secrets et référencer:
+
+VITE_STRIPE_PUBLIC_KEY = "$STRIPE_PUBLIC_KEY"
+
+6.4 Image registry non substitué
+Fichier: /home/user/e-code/kubernetes/app-deployment.yaml (lignes 100, 164, 238, 302)
+Problème: ${CONTAINER_REGISTRY}/${PROJECT_ID} jamais remplacé.
+Solution:
+
+# Script de déploiement:
+envsubst < app-deployment.yaml | kubectl apply -f -
+
+6.5 Secrets.yaml template appliqué directement
+Fichier: /home/user/e-code/kubernetes/secrets.yaml
+Problème: Avertissement ignoré, risque d'exposer des secrets.
+Solution:
+
+# Utiliser External Secrets Operator ou:
+kubectl create secret generic app-secrets \
+  --from-literal=DATABASE_URL="$DATABASE_URL" \
+  --from-literal=JWT_SECRET="$JWT_SECRET"
+
+🟠 MAJEURS
+6.6 Redis sans réplication
+Fichier: /home/user/e-code/kubernetes/redis-deployment.yaml (lignes 59-60)
+Problème: 3 pods indépendants, pas un cluster.
+Solution:
+
+# Utiliser Redis Sentinel ou Cluster mode:
+apiVersion: databases.spotahome.com/v1
+kind: RedisFailover
+spec:
+  sentinel:
+    replicas: 3
+  redis:
+    replicas: 3
+
+6.7 Health check paths incohérents
+Problème:
+
+docker-entrypoint.sh: /api/monitoring/health
+.replit: /health/liveness
+kubernetes/ingress.yaml: /api/monitoring/health
+Solution: Standardiser sur /api/monitoring/health et créer alias /health/liveness.
+6.8 nginx.conf unsafe-inline CSP
+Fichier: /home/user/e-code/nginx.conf (ligne 75)
+Problème: 'unsafe-inline' pour styles.
+Solution:
+
+# Utiliser nonces ou hashes:
+add_header Content-Security-Policy "style-src 'self' 'nonce-$request_id'";
+
+6.9 WebSocket timeout de 7 jours
+Fichier: /home/user/e-code/nginx.conf (lignes 105-107)
+Problème: proxy_read_timeout 7d trop long.
+Solution:
+
+proxy_read_timeout 2h;
+proxy_send_timeout 2h;
+
+6.10 Frontend désactivé dans start-dev.sh
+Fichier: /home/user/e-code/start-dev.sh (lignes 109-124)
+Problème: Startup frontend commenté.
+Solution: Décommenter ou documenter pourquoi c'est désactivé.
+
+6.11 docker-entrypoint.sh --force sur migrations
+Fichier: /home/user/e-code/docker-entrypoint.sh (ligne 16)
+Problème: npm run db:push --force peut causer perte de données.
+Solution:
+
+# En production, utiliser migrations explicites:
+if [ "$NODE_ENV" = "production" ]; then
+  npm run db:migrate
+else
+  npm run db:push
+fi
+
+7️⃣ PROBLÈMES SÉCURITÉ
+🔴 CRITIQUES
+7.1 Admin check par username au lieu de role
+Fichier: /home/user/e-code/server/admin/routes.ts (lignes 12-23)
+Problème: req.user.username !== 'admin' au lieu de vérifier le rôle.
+Solution:
+
+const adminRoles = ['admin', 'superadmin', 'owner'];
+if (!req.user.role || !adminRoles.includes(req.user.role.toLowerCase())) {
+  return res.status(403).json({ message: 'Admin access required' });
+}
+
+7.2 SAML auto-provisioning sans validation domaine
+Fichier: /home/user/e-code/server/sso/enterprise-sso-service.ts (lignes 353-366)
+Problème: N'importe quel email peut être auto-provisionné.
+Solution:
+
+// Valider que le domaine email correspond au provider SAML:
+const emailDomain = email.split('@')[1];
+const allowedDomains = samlConfig.allowedDomains;
+if (!allowedDomains.includes(emailDomain)) {
+  throw new Error('Email domain not authorized for this SSO provider');
+}
+
+7.3 JWT secret fallback hardcodé
+Fichier: /home/user/e-code/server/utils/secrets-manager.ts (lignes 36-40)
+Problème: 'dev-only-jwt-secret-do-not-use-in-prod' utilisé si variable manquante.
+Solution:
+
+if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
+  throw new Error('JWT_SECRET is required in production');
+}
+
+7.4 Password reset tokens en clair
+Fichier: /home/user/e-code/server/auth/auth-complete.ts (lignes 585-595)
+Problème: Token stocké sans hash.
+Solution:
+
+const hashedToken = await bcrypt.hash(resetToken, 10);
+await db.update(users).set({ 
+  passwordResetToken: hashedToken,
+  passwordResetExpiry: resetExpiry,
+}).where(eq(users.id, user.id));
+
+7.5 SCIM endpoints sans authentification
+Fichier: /home/user/e-code/server/sso/enterprise-sso-service.ts (lignes 650-689)
+Problème: Endpoints SCIM accessibles sans validation Bearer token.
+Solution:
+
+const scimAuthMiddleware = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'SCIM authentication required' });
+  }
+  const token = authHeader.substring(7);
+  // Valider le token SCIM
+  if (!validateScimToken(token)) {
+    return res.status(401).json({ error: 'Invalid SCIM token' });
+  }
+  next();
+};
+
+7.6 Helmet CSP avec unsafe-inline/unsafe-eval
+Fichier: /home/user/e-code/server/middleware/helmet-config.ts (lignes 12-28)
+Problème: Permet XSS.
+Solution:
+
+// Retirer unsafe-inline et unsafe-eval, utiliser nonces:
+scriptSrc: ["'self'", (req, res) => `'nonce-${res.locals.cspNonce}'`],
+
+7.7 CSRF désactivable via env var
+Fichier: /home/user/e-code/server/middleware/csrf.ts (lignes 282-286)
+Problème: DISABLE_CSRF=true bypass toute protection.
+Solution:
+
+if (process.env.DISABLE_CSRF === 'true') {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('Cannot disable CSRF in production');
+  }
+  console.warn('⚠️  CSRF protection bypassed in development mode');
+  return next();
+}
+
+7.8 Token revocation non intégré aux sessions
+Fichier: /home/user/e-code/server/auth/token-revocation.ts
+Problème: Revocation uniquement en mémoire, pas vérifiée par Passport.
+Solution:
+
+// Middleware à ajouter après Passport:
+app.use(async (req, res, next) => {
+  if (req.user && await isTokenRevoked(req.sessionID)) {
+    req.logout();
+    return res.status(401).json({ error: 'Session revoked' });
+  }
+  next();
+});
+
+8️⃣ PROBLÈMES WEBSOCKET/TEMPS RÉEL
+🔴 CRITIQUES
+8.1 Terminal: process par commande (pas de PTY)
+Fichier: /home/user/e-code/server/websocket/mobile-websocket.ts (lignes 264-298)
+Problème: Chaque commande spawn un nouveau process, pas de session persistante.
+Solution:
+
+import * as pty from 'node-pty';
+
+const terminals = new Map<string, pty.IPty>();
+
+function createTerminal(sessionId: string, projectPath: string) {
+  const shell = process.platform === 'win32' ? 'powershell.exe' : 'bash';
+  const term = pty.spawn(shell, [], {
+    name: 'xterm-color',
+    cwd: projectPath,
+    env: process.env,
+  });
+  terminals.set(sessionId, term);
+  return term;
+}
+
+8.2 Output DoS vulnerability
+Fichier: /home/user/e-code/server/websocket/mobile-websocket.ts (ligne 144)
+Problème: Pas de limite sur la taille d'output envoyée.
+Solution:
+
+const MAX_OUTPUT_SIZE = 1024 * 1024; // 1MB
+let output = '';
+child.stdout.on('data', (data) => {
+  if (output.length < MAX_OUTPUT_SIZE) {
+    output += data.toString().slice(0, MAX_OUTPUT_SIZE - output.length);
+  }
+});
+
+8.3 Mutex CRDT non atomique
+Fichier: /home/user/e-code/server/realtime/collaboration-server.ts (lignes 80-93)
+Problème: Lock peut être relâché prématurément.
+Solution:
+
+class AsyncMutex {
+  private locked = false;
+  private queue: (() => void)[] = [];
+
+  async acquire(): Promise<() => void> {
+    return new Promise((resolve) => {
+      const tryAcquire = () => {
+        if (!this.locked) {
+          this.locked = true;
+          resolve(() => {
+            this.locked = false;
+            if (this.queue.length > 0) {
+              this.queue.shift()!();
+            }
+          });
+        } else {
+          this.queue.push(tryAcquire);
+        }
+      };
+      tryAcquire();
+    });
+  }
+}
+
+8.4 Yjs documents memory leak
+Fichier: /home/user/e-code/server/collaboration/real-collaboration.ts (ligne 34)
+Problème: Map docs grandit sans limite.
+Solution:
+
+// Ajouter cleanup périodique:
+setInterval(() => {
+  for (const [docName, doc] of docs.entries()) {
+    if (doc.conns.size === 0 && Date.now() - doc.lastAccess > 30 * 60 * 1000) {
+      doc.destroy();
+      docs.delete(docName);
+    }
+  }
+}, 5 * 60 * 1000); // Toutes les 5 minutes
+
+8.5 Terminal sessions jamais trackées
+Fichier: /home/user/e-code/server/websocket/mobile-websocket.ts (lignes 31, 154)
+Problème: Map terminalSessions créée mais jamais populée.
+Solution:
+
+// Dans executeCommand:
+const sessionId = `${socket.id}:${Date.now()}`;
+terminalSessions.set(sessionId, {
+  process: child,
+  startTime: Date.now(),
+  projectId
+});
+
+// Cleanup sur disconnect:
+socket.on('disconnect', () => {
+  for (const [id, session] of terminalSessions) {
+    if (id.startsWith(socket.id)) {
+      session.process.kill();
+      terminalSessions.delete(id);
+    }
+  }
+});
+
+🟠 MAJEURS
+8.6 Whitelist terminal insuffisante
+Fichier: /home/user/e-code/server/websocket/mobile-websocket.ts (ligne 265)
+Problème: npm et node permettent exécution arbitraire.
+Solution:
+
+// Utiliser une sandbox Docker au lieu d'une whitelist:
+const ALLOWED_COMMANDS = ['ls', 'pwd', 'echo', 'cat'];
+// OU
+// Exécuter dans un container isolé
+
+8.7 Auth WebSocket conflictuelle
+Fichier: /home/user/e-code/server/websocket/collaborative-editing-ws.ts (lignes 80-141)
+Problème: 3 méthodes d'auth, logique confuse.
+Solution:
+
+// Ordre de priorité clair:
+async function authenticateWebSocket(req) {
+  // 1. JWT dans query param (priorité haute)
+  if (req.query.token) {
+    return verifyJWT(req.query.token);
+  }
+  // 2. Cookie de session
+  if (req.cookies['connect.sid']) {
+    return verifySession(req.cookies['connect.sid']);
+  }
+  // 3. Subprotocol
+  // ...
+  throw new Error('No valid authentication');
+}
+
+8.8 Cursor pas validé
+Fichier: /home/user/e-code/server/websocket/collaborative-editing-ws.ts (ligne 428)
+Problème: Coordonnées curseur acceptées sans validation.
+Solution:
+
+function validateCursor(cursor: { line: number; column: number }, fileContent: string) {
+  const lines = fileContent.split('\n');
+  if (cursor.line < 0 || cursor.line >= lines.length) return false;
+  if (cursor.column < 0 || cursor.column > lines[cursor.line].length) return false;
+  return true;
+}
+
+8.9 Broadcast cross-projects
+Fichier: /home/user/e-code/server/collaboration/real-collaboration.ts (lignes 44-63)
+Problème: Même nom de doc = broadcast croisé entre projets.
+Solution:
+
+// Préfixer le nom du doc avec projectId:
+const docName = `${projectId}:${filePath}`;
+
+8.10 Memory leak throttles
+Fichier: /home/user/e-code/server/websocket/collaborative-editing-ws.ts (lignes 27-43, 535)
+Problème: clientThrottles cleanup incomplet.
+Solution:
+
+// Ajouter TTL aux entrées:
+const THROTTLE_TTL = 60000;
+setInterval(() => {
+  const now = Date.now();
+  for (const [clientId, data] of clientThrottles) {
+    if (now - data.lastUpdate > THROTTLE_TTL) {
+      clientThrottles.delete(clientId);
+    }
+  }
+}, THROTTLE_TTL);
+
+9️⃣ PROBLÈMES BILLING/PAIEMENTS
+🔴 CRITIQUES
+9.1 Pas de trial period
+Fichier: /home/user/e-code/server/billing/subscription-manager.ts
+Problème: Aucun support pour période d'essai.
+Solution:
+
+const checkoutSession = await stripe.checkout.sessions.create({
+  // ... autres options
+  subscription_data: {
+    trial_period_days: 14,
+  },
+});
+
+9.2 Deux systèmes de crédits conflictuels
+Fichiers:
+
+/home/user/e-code/server/services/credits-service.ts
+/home/user/e-code/server/services/billing-service.ts
+Problème: Deux implémentations parallèles peuvent conflicted.
+Solution: Supprimer billing-service.ts et utiliser uniquement credits-service.ts.
+9.3 Pas de calcul de taxes
+Fichier: /home/user/e-code/server/routes/admin-billing.router.ts (ligne 71)
+Problème: taxRate: 0 hardcodé.
+Solution:
+
+// Utiliser Stripe Tax:
+const taxRates = await stripe.taxRates.list({ active: true });
+// Ou Stripe Automatic Tax
+
+9.4 Pas d'endpoint pour initier refunds
+Fichier: /home/user/e-code/server/payments/stripe-service.ts
+Problème: Seul le webhook charge.refunded existe.
+Solution:
+
+app.post('/api/billing/refund', requireAdmin, async (req, res) => {
+  const { chargeId, amount, reason } = req.body;
+  const refund = await stripe.refunds.create({
+    charge: chargeId,
+    amount,
+    reason,
+  });
+  // Log audit trail
+  await logRefund(req.user.id, chargeId, amount, reason);
+  res.json(refund);
+});
+
+9.5 Usage metering en double
+Fichiers:
+
+/home/user/e-code/server/payments/stripe-service.ts (ligne 497)
+/home/user/e-code/server/services/stripe-billing-service.ts (ligne 159)
+Problème: Même usage peut être reporté deux fois.
+Solution: Centraliser dans un seul service avec idempotency keys.
+🟠 MAJEURS
+9.6 Proration behavior hardcodé
+Fichier: /home/user/e-code/server/payments/stripe-service.ts (ligne 384)
+Problème: Toujours 'create_prorations'.
+Solution:
+
+const prorationBehavior = options.prorationBehavior || 'create_prorations';
+
+9.7 Payment method card-only
+Fichier: /home/user/e-code/server/billing/simple-payment-processor.ts (ligne 194)
+Problème: type: 'card' hardcodé.
+Solution: Supporter PayPal, Apple Pay, Google Pay via Stripe.
+
+9.8 Invoices non trackées en DB
+Problème: Invoices récupérées de Stripe à chaque fois.
+Solution:
+
+// Créer table invoices:
+export const invoices = pgTable('invoices', {
+  id: serial('id').primaryKey(),
+  stripeInvoiceId: text('stripe_invoice_id').notNull().unique(),
+  userId: integer('user_id').references(() => users.id),
+  amount: integer('amount').notNull(),
+  status: text('status').notNull(),
+  paidAt: timestamp('paid_at'),
+  // ...
+});
+
+9.9 Enterprise pricing hardcodé
+Fichier: /home/user/e-code/server/payments/pricing-constants.ts (ligne 149)
+Problème: $200/mois fixe pour tous les enterprise.
+Solution: Permettre pricing custom par client dans DB.
+
+9.10 Pas de team billing
+Problème: Pas de facturation centralisée par équipe.
+Solution: Ajouter teamBillingOwner et permettre seat-based billing.
+
+🔟 PROBLÈMES TESTS
+🔴 CRITIQUES
+10.1 Coverage de 3%
+Problème: 29 fichiers de test pour 1400+ fichiers source.
+Solution: Objectif minimum 60% coverage sur paths critiques:
+
+Authentication
+Payments
+File operations
+Deployments
+10.2 Tests dupliqués
+Fichiers: 5 modules ont .test.ts ET .spec.ts
+Solution: Garder uniquement .spec.ts (Vitest) et supprimer .test.ts (Jest legacy).
+
+10.3 Framework inconsistant
+Problème: Mix de Jest, Vitest, Playwright avec configs multiples.
+Solution:
+
+// Standardiser sur Vitest:
+// vitest.config.ts pour unit/integration
+// playwright.config.ts pour E2E uniquement
+
+🟠 MAJEURS
+10.4 Tests qui acceptent tout
+Fichier: /home/user/e-code/tests/backend/admin.test.ts
+Problème: if (![200, 401, 403, 404, 501].includes(response.status)) accepte presque tout.
+Solution:
+
+// Tests spécifiques:
+expect(response.status).toBe(200);
+expect(response.body).toHaveProperty('data');
+
+10.5 Pas de mocks pour services externes
+Problème: Tests hit vrais APIs (Stripe, AI, etc.)
+Solution:
+
+// Utiliser MSW (Mock Service Worker):
+import { setupServer } from 'msw/node';
+
+const server = setupServer(
+  rest.post('https://api.stripe.com/*', (req, res, ctx) => {
+    return res(ctx.json({ id: 'mock_charge_id' }));
+  })
+);
+
+10.6 15+ tests qui échouent
+Fichier: /home/user/e-code/tests/PHASE_1_SUMMARY.md
+Problème: Auth: 5/21 passing, 16 échouent.
+Solution: Fixer chaque test ou les marquer comme skip avec TODO.
+
+10.7 10 tests skipped sans raison
+Problème: Tests désactivés sans documentation.
+Solution: Soit fixer, soit documenter pourquoi skip avec issue tracker.
+
+10.8 Client: 1 seul test
+Problème: 871 fichiers client, 1 fichier test.
+Solution: Minimum 1 test par composant principal avec React Testing Library.
+
+10.9 Pas de tests E2E pour flows critiques
+Problème: Seuls tests layout (desktop, mobile, tablet).
+Solution: Ajouter tests Playwright pour:
+
+Login/Register flow
+Create project flow
+Deploy project flow
+Payment flow

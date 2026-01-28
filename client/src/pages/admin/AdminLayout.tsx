@@ -35,6 +35,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     { path: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
     { path: '/admin/ai-optimization', icon: Zap, label: 'AI Optimization' },
     { path: '/admin/monitoring', icon: HeartPulse, label: 'Monitoring' },
+    { path: '/admin/system-monitoring', icon: Activity, label: 'System Monitoring' },
     { path: '/admin/requests', icon: Inbox, label: 'Customer Requests' },
     { path: '/admin/users', icon: Users, label: 'Users' },
     { path: '/admin/api-keys', icon: Key, label: 'API Keys' },

@@ -44,6 +44,7 @@ export const AdminFormRequests = instrumentedLazy(() => import("@/pages/admin/Fo
 export const AdminAIOptimization = instrumentedLazy(() => import("@/pages/admin/AIOptimizationDashboard"), "AdminAIOptimization");
 export const AdminSEOManagement = instrumentedLazy(() => import("@/pages/admin/SEOManagement"), "AdminSEOManagement");
 export const AdminMonitoring = instrumentedLazy(() => import("@/pages/admin/AdminMonitoring"), "AdminMonitoring");
+export const AdminSystemMonitoring = instrumentedLazy(() => import("@/pages/admin/SystemMonitoring"), "AdminSystemMonitoring");
 export const PitchDeck = instrumentedLazy(() => import("@/pages/admin/PitchDeck"), "PitchDeck");
 export const ChatGPTAdmin = instrumentedLazy(() => import("@/pages/ChatGPTAdmin"), "ChatGPTAdmin");
 

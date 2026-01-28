@@ -155,6 +155,7 @@ export const protectedRoutes: RouteConfig[] = [
   { path: "/admin/ai-optimization", component: Pages.AdminAIOptimization, layout: "replit" },
   { path: "/admin/seo", component: Pages.AdminSEOManagement, layout: "replit" },
   { path: "/admin/monitoring", component: Pages.AdminMonitoring, layout: "replit" },
+  { path: "/admin/system-monitoring", component: Pages.AdminSystemMonitoring, layout: "replit" },
   { path: "/admin/pitch-deck", component: Pages.PitchDeck, layout: "replit" },
   { path: "/admin/chatgpt", component: Pages.ChatGPTAdmin },
   { path: "/account", component: Pages.Account, layout: "replit" },
