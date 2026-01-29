@@ -49,13 +49,11 @@ class OfflineStorageManager {
       const request = indexedDB.open(DB_NAME, DB_VERSION);
 
       request.onerror = () => {
-        console.error('[Offline] Failed to open IndexedDB:', request.error);
         reject(request.error);
       };
 
       request.onsuccess = () => {
         this.db = request.result;
-        console.log('[Offline] IndexedDB initialized successfully');
         resolve();
       };
 
@@ -84,8 +82,6 @@ class OfflineStorageManager {
           opStore.createIndex('timestamp', 'timestamp', { unique: false });
           opStore.createIndex('resourceType', 'resourceType', { unique: false });
         }
-
-        console.log('[Offline] IndexedDB schema created');
       };
     });
 
@@ -121,7 +117,6 @@ class OfflineStorageManager {
     await this.transaction('projects', 'readwrite', (store) =>
       store.put({ ...project, lastModified: Date.now() })
     );
-    console.log('[Offline] Project saved:', project.id);
   }
 
   async getProject(id: number): Promise<Project | null> {
@@ -139,7 +134,6 @@ class OfflineStorageManager {
     await this.transaction('projects', 'readwrite', (store) => store.delete(id));
     // Also delete all files in this project
     await this.deleteFilesByProject(id);
-    console.log('[Offline] Project deleted:', id);
   }
 
   async getProjectsByStatus(status: 'synced' | 'pending' | 'conflict'): Promise<Project[]> {
@@ -165,7 +159,6 @@ class OfflineStorageManager {
     await this.transaction('files', 'readwrite', (store) =>
       store.put({ ...file, lastModified: Date.now() })
     );
-    console.log('[Offline] File saved:', file.path);
   }
 
   async getFile(id: number): Promise<File | null> {
@@ -190,7 +183,6 @@ class OfflineStorageManager {
 
   async deleteFile(id: number): Promise<void> {
     await this.transaction('files', 'readwrite', (store) => store.delete(id));
-    console.log('[Offline] File deleted:', id);
   }
 
   async deleteFilesByProject(projectId: number): Promise<void> {
@@ -228,7 +220,6 @@ class OfflineStorageManager {
     };
 
     await this.transaction('pendingOperations', 'readwrite', (store) => store.put(op));
-    console.log('[Offline] Pending operation added:', op.type, op.resourceType, op.resourceId);
   }
 
   async getPendingOperations(): Promise<PendingOperation[]> {
@@ -239,7 +230,6 @@ class OfflineStorageManager {
 
   async removePendingOperation(id: string): Promise<void> {
     await this.transaction('pendingOperations', 'readwrite', (store) => store.delete(id));
-    console.log('[Offline] Pending operation removed:', id);
   }
 
   async incrementOperationRetries(id: string): Promise<void> {
@@ -280,8 +270,6 @@ class OfflineStorageManager {
     for (const storeName of stores) {
       await this.transaction(storeName, 'readwrite', (store) => store.clear());
     }
-
-    console.log('[Offline] All offline data cleared');
   }
 
   /**
@@ -305,7 +293,6 @@ class OfflineStorageManager {
       this.db.close();
       this.db = null;
       this.initPromise = null;
-      console.log('[Offline] IndexedDB closed');
     }
   }
 }
@@ -314,6 +301,4 @@ class OfflineStorageManager {
 export const offlineStorage = new OfflineStorageManager();
 
 // Auto-initialize on import
-offlineStorage.init().catch((err) => {
-  console.error('[Offline] Failed to auto-initialize:', err);
-});
+offlineStorage.init().catch(() => {});

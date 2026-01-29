@@ -386,8 +386,7 @@ export function useIDEWorkspace(projectId: string) {
         timeout: 30000
       }).then(() => {
         setIsRunning(true);
-      }).catch((err) => {
-        console.log('[useIDEWorkspace] Auto-start runtime failed:', err.message);
+      }).catch(() => {
       });
     }
   }, [projectId, project, isLoadingProject, runtimeAutoStarted]);

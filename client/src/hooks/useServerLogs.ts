@@ -112,12 +112,10 @@ export function useServerLogs(options: UseServerLogsOptions = {}): UseServerLogs
     
     const wsUrl = `${protocol}//${window.location.host}/api/server/logs/ws?${params.toString()}`;
 
-    console.log('[ServerLogs] Connecting to:', wsUrl);
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
 
     ws.onopen = () => {
-      console.log('[ServerLogs] Connected to server logs stream');
       setIsConnected(true);
       setConnectionError(null);
       reconnectAttemptsRef.current = 0;
@@ -135,7 +133,6 @@ export function useServerLogs(options: UseServerLogsOptions = {}): UseServerLogs
         const data = JSON.parse(event.data);
 
         if (data.type === 'connected') {
-          console.log('[ServerLogs] Server confirmed connection');
           return;
         }
 
@@ -162,25 +159,20 @@ export function useServerLogs(options: UseServerLogsOptions = {}): UseServerLogs
           return;
         }
       } catch (err) {
-        console.error('[ServerLogs] Failed to parse message:', err);
       }
     };
 
     ws.onerror = (event) => {
-      console.error('[ServerLogs] WebSocket error:', event);
       setConnectionError('Connection error');
       onError?.(event);
     };
 
     ws.onclose = (event) => {
-      console.log('[ServerLogs] Disconnected:', event.code, event.reason);
-      
       if (!isMountedRef.current) {
         return;
       }
       
       if (wsRef.current !== ws) {
-        console.log('[ServerLogs] Old socket closed, ignoring (new socket already assigned)');
         return;
       }
       
@@ -199,7 +191,6 @@ export function useServerLogs(options: UseServerLogsOptions = {}): UseServerLogs
           isMountedRef.current &&
           reconnectAttemptsRef.current < maxReconnectAttempts) {
         reconnectAttemptsRef.current++;
-        console.log(`[ServerLogs] Attempting reconnect ${reconnectAttemptsRef.current}/${maxReconnectAttempts}`);
         reconnectTimeoutRef.current = setTimeout(() => {
           if (isMountedRef.current && !isManualDisconnectRef.current) {
             connect();

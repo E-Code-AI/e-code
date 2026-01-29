@@ -329,7 +329,6 @@ function UnifiedIDELayout({
   // Force agent tab when bootstrapToken is present for inline chat experience
   useEffect(() => {
     if (bootstrapToken) {
-      console.log('[UnifiedIDELayout] Bootstrap token detected - forcing agent tab and ensuring sidebar is visible');
       setLeftPanelTab('agent');
       setMobileActiveTab('agent');
       setIsSidebarCollapsed(false);

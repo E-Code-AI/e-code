@@ -204,11 +204,9 @@ export function useAgentTools(projectId?: number) {
   // Update preferences mutation
   const updatePreferencesMutation = useMutation({
     mutationFn: async (updates: Partial<AgentPreferences>) => {
-      console.log('[useAgentTools] Updating preferences:', updates);
       return apiRequest<AgentPreferences>("PUT", "/api/agent/preferences", updates);
     },
     onSuccess: (data, variables) => {
-      console.log('[useAgentTools] Preferences updated successfully:', data);
       queryClient.invalidateQueries({ queryKey: ['/api/agent/preferences'] });
       queryClient.invalidateQueries({ queryKey: ['/api/agent/effective-model'] });
       
@@ -229,7 +227,6 @@ export function useAgentTools(projectId?: number) {
       }
     },
     onError: (error: Error) => {
-      console.error('[useAgentTools] Failed to update preferences:', error);
       toast({
         title: "Failed to update settings",
         description: error.message,

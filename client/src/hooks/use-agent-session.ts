@@ -51,14 +51,11 @@ export function useAgentSession(projectId: string | number): UseAgentSessionRetu
         const maxAge = 24 * 60 * 60 * 1000; // 24 hours
         if (parsed.timestamp && Date.now() - parsed.timestamp < maxAge) {
           setSession(parsed);
-          console.log(`[useAgentSession] Loaded session for project ${projectId}`);
         } else {
-          console.log(`[useAgentSession] Session expired for project ${projectId}, clearing`);
           sessionStorage.removeItem(storageKey);
         }
       }
     } catch (error) {
-      console.error(`[useAgentSession] Failed to load session:`, error);
       sessionStorage.removeItem(storageKey);
     } finally {
       setIsLoading(false);
@@ -77,9 +74,7 @@ export function useAgentSession(projectId: string | number): UseAgentSessionRetu
       
       sessionStorage.setItem(storageKey, JSON.stringify(updated));
       setSession(updated);
-      console.log(`[useAgentSession] Saved session for project ${projectId}`);
     } catch (error) {
-      console.error(`[useAgentSession] Failed to save session:`, error);
     }
   }, [session, storageKey, projectId]);
 
@@ -88,9 +83,7 @@ export function useAgentSession(projectId: string | number): UseAgentSessionRetu
     try {
       sessionStorage.removeItem(storageKey);
       setSession(null);
-      console.log(`[useAgentSession] Cleared session for project ${projectId}`);
     } catch (error) {
-      console.error(`[useAgentSession] Failed to clear session:`, error);
     }
   }, [storageKey, projectId]);
 

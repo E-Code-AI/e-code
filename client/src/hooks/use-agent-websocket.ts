@@ -121,14 +121,12 @@ export function useAgentWebSocket({
   // Schedule a reconnection attempt
   const scheduleReconnect = useCallback(() => {
     if (reconnectAttempt >= RECONNECT_CONFIG.maxRetries) {
-      console.error('[WebSocket] Max reconnection attempts reached');
       setConnectionStatus('disconnected');
       setError(new Error(`Connection failed after ${RECONNECT_CONFIG.maxRetries} attempts`));
       return;
     }
 
     const delay = calculateReconnectDelay(reconnectAttempt);
-    console.log(`[WebSocket] Scheduling reconnect attempt ${reconnectAttempt + 1} in ${Math.round(delay)}ms`);
     setConnectionStatus('reconnecting');
 
     reconnectTimeoutRef.current = setTimeout(() => {
@@ -145,7 +143,6 @@ export function useAgentWebSocket({
         lastEventTimestamp: lastEventTimestampRef.current,
         deviceId: currentDeviceId
       }));
-      console.log('[WebSocket] Requested state reconciliation');
     }
   }, [currentDeviceId]);
 
@@ -175,7 +172,6 @@ export function useAgentWebSocket({
       wsRef.current = ws;
       
       ws.onopen = () => {
-        console.log('[WebSocket] Connected successfully');
         setIsConnected(true);
         setConnectionStatus('connected');
         setError(null);
@@ -194,13 +190,6 @@ export function useAgentWebSocket({
           
           // Handle presence updates separately
           if (update.type === 'connected') {
-            console.log('[WebSocket] Connected to agent session', {
-              deviceId: update.deviceId,
-              deviceType: update.deviceType,
-              sessionId: update.sessionId,
-              totalDevices: update.totalDevices
-            });
-            
             // Store server's authoritative total
             if (typeof update.totalDevices === 'number') {
               setServerTotalDevices(update.totalDevices);
@@ -215,10 +204,7 @@ export function useAgentWebSocket({
             };
             
             setConnectedDevices([...roster, currentDevice]);
-            console.log('[WebSocket] Hydrated device roster (including self):', [...roster, currentDevice]);
           } else if (update.type === 'device_connected') {
-            console.log('[WebSocket] New device connected', update);
-            
             // Update server's authoritative total
             if (typeof update.totalDevices === 'number') {
               setServerTotalDevices(update.totalDevices);
@@ -240,8 +226,6 @@ export function useAgentWebSocket({
               ];
             });
           } else if (update.type === 'device_disconnected') {
-            console.log('[WebSocket] Device disconnected', update);
-            
             // Update server's authoritative total
             if (typeof update.totalDevices === 'number') {
               setServerTotalDevices(update.totalDevices);
@@ -304,18 +288,15 @@ export function useAgentWebSocket({
           setLastUpdate(update);
           onUpdate?.(update);
         } catch (err) {
-          console.error('Failed to parse WebSocket message:', err);
         }
       };
       
       ws.onerror = (event) => {
-        console.error('[WebSocket] Connection error', event);
         setError(new Error('WebSocket connection error'));
         setIsConnected(false);
       };
       
       ws.onclose = (event) => {
-        console.log('[WebSocket] Connection closed', { code: event.code, reason: event.reason });
         setIsConnected(false);
         wsRef.current = null;
         
@@ -329,7 +310,6 @@ export function useAgentWebSocket({
       
       return ws;
     } catch (err) {
-      console.error('[WebSocket] Failed to create connection', err);
       setError(err as Error);
       setConnectionStatus('disconnected');
       scheduleReconnect();

@@ -266,7 +266,6 @@ export function VisualEditorPanel({ projectId, onCodeChange, className }: Visual
         doc.body.appendChild(scriptEl);
       }
     } catch (error) {
-      console.warn('[VisualEditor] Could not inject script (cross-origin):', error);
     }
   }, []);
 

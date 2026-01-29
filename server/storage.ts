@@ -296,6 +296,7 @@ export interface IStorage {
 
   // Notification operations
   getNotifications(userId: string | number, unreadOnly?: boolean): Promise<NotificationRecord[]>;
+  getNotificationsForUser(userId: string | number, limit?: number): Promise<NotificationRecord[]>;
   getUnreadNotificationCount(userId: string | number): Promise<number>;
   getNotificationPreferences(userId: string | number): Promise<NotificationPreferenceRecord>;
   updateNotificationPreferences(

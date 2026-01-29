@@ -994,11 +994,9 @@ export function ReplitAgentPanelV3({
       } catch (error) {
         // Server sync failed, but local state is already updated
         // Log but don't show error to user since mode is working locally
-        console.warn('[ModeChange] Server sync failed, using local mode:', error);
       }
     } else {
       // No valid conversationId yet - mode will be used when conversation is created
-      console.log('[ModeChange] No conversationId yet, mode will apply when conversation starts');
     }
   };
 

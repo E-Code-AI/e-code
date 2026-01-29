@@ -33,8 +33,6 @@ class CacheReconciliationService {
     this.setupServiceWorkerListener();
     this.setupNetworkListeners();
     this.initialized = true;
-    
-    console.log('[CacheReconciliation] Service initialized');
   }
 
   private setupServiceWorkerListener(): void {
@@ -63,17 +61,14 @@ class CacheReconciliationService {
 
   private setupNetworkListeners(): void {
     this.onlineHandler = () => {
-      console.log('[CacheReconciliation] Back online');
       this.isOnline = true;
       if (this.wasOffline) {
-        console.log('[CacheReconciliation] Was offline - triggering stale query refresh');
         this.wasOffline = false;
         this.refreshStaleQueries();
       }
     };
 
     this.offlineHandler = () => {
-      console.log('[CacheReconciliation] Went offline');
       this.isOnline = false;
       this.wasOffline = true;
     };
@@ -108,7 +103,6 @@ class CacheReconciliationService {
     const queryKey = this.urlToQueryKey(data.url);
     if (queryKey) {
       queryClient.invalidateQueries({ queryKey, refetchType: 'none' });
-      console.log('[CacheReconciliation] Background sync invalidated:', queryKey);
     }
   }
 
@@ -123,7 +117,6 @@ class CacheReconciliationService {
     }
     
     queryClient.invalidateQueries();
-    console.log('[CacheReconciliation] Full sync complete - all queries invalidated');
   }
 
   private handleCacheInvalidated(data: SWMessage): void {
@@ -156,7 +149,6 @@ class CacheReconciliationService {
       stale: true,
       type: 'active',
     });
-    console.log('[CacheReconciliation] Stale queries refreshed');
   }
 
   notifyServiceWorker(type: string, data?: Record<string, unknown>): void {
@@ -175,8 +167,6 @@ class CacheReconciliationService {
     queryClient.clear();
     
     this.notifyServiceWorker('CLEAR_ALL_CACHES');
-    
-    console.log('[CacheReconciliation] All caches cleared');
   }
 
   destroy(): void {
@@ -193,7 +183,6 @@ class CacheReconciliationService {
     }
 
     this.initialized = false;
-    console.log('[CacheReconciliation] Service destroyed');
   }
 
   getStatus(): { initialized: boolean; isOnline: boolean } {

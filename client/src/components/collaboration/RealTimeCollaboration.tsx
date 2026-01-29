@@ -151,7 +151,6 @@ export function RealTimeCollaboration({
     wsProvider.on('status', ({ status }: { status: string }) => {
       if (status === 'disconnected' && attempts < 10) {
         const backoffMs = Math.min(1000 * Math.pow(2, attempts), 30000);
-        console.log(`[Collaboration] Reconnecting in ${backoffMs}ms (attempt ${attempts + 1}/10)`);
         setTimeout(() => {
           if (providerRef.current === wsProvider) {
             wsProvider.connect();
@@ -162,7 +161,6 @@ export function RealTimeCollaboration({
 
     wsProvider.on('sync', (isSynced: boolean) => {
       if (isSynced) {
-        console.log('[Collaboration] Document synced');
       }
     });
 
@@ -312,7 +310,6 @@ export function RealTimeCollaboration({
           setChatMessages(formattedMessages);
         }
       } catch (error) {
-        console.warn('[Collaboration] Failed to load chat history:', error);
       }
     };
 
@@ -361,10 +358,8 @@ export function RealTimeCollaboration({
             : msg
         ));
       } else {
-        console.warn('[Collaboration] Failed to persist chat message');
       }
     } catch (error) {
-      console.error('[Collaboration] Chat persistence error:', error);
     }
 
     // Also send via awareness for real-time sync (backup)

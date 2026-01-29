@@ -106,12 +106,10 @@ export function useRealTimeCollaboration({ projectId, autoConnect = true }: UseR
       setIsConnected(true);
       setError(null);
       reconnectAttemptsRef.current = 0;
-      console.log('[Collaboration] Connected to collaboration server');
     });
 
     socket.on('disconnect', (reason) => {
       setIsConnected(false);
-      console.log('[Collaboration] Disconnected:', reason);
     });
 
     socket.on('connect_error', (err) => {
@@ -119,7 +117,6 @@ export function useRealTimeCollaboration({ projectId, autoConnect = true }: UseR
       if (reconnectAttemptsRef.current >= maxReconnectAttempts) {
         setError('Unable to connect to collaboration server');
       }
-      console.error('[Collaboration] Connection error:', err.message);
     });
 
     socket.on('error', (data: { message: string }) => {
@@ -182,13 +179,9 @@ export function useRealTimeCollaboration({ projectId, autoConnect = true }: UseR
     });
 
     socket.on('file:changed', (data: FileChangeNotification) => {
-      console.log('[Collaboration] File changed:', data);
     });
 
     socket.on('follow:requested', (data: { followerId: string; followerName: string; targetUserId: string }) => {
-      if (data.targetUserId === user.id.toString()) {
-        console.log(`${data.followerName} is following your cursor`);
-      }
     });
 
     socketRef.current = socket;

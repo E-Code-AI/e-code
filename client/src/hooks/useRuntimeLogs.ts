@@ -97,12 +97,10 @@ export function useRuntimeLogs(options: UseRuntimeLogsOptions): UseRuntimeLogsRe
     }
     const wsUrl = `${protocol}//${window.location.host}/api/runtime/logs/ws?${params.toString()}`;
     
-    console.log('[RuntimeLogs] Connecting to:', wsUrl);
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
 
     ws.onopen = () => {
-      console.log('[RuntimeLogs] Connected');
       setIsConnected(true);
       onConnect?.();
     };
@@ -110,7 +108,6 @@ export function useRuntimeLogs(options: UseRuntimeLogsOptions): UseRuntimeLogsRe
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
-        console.log('[RuntimeLogs] Message:', data);
         
         if (data.type === 'initial' && Array.isArray(data.logs)) {
           const entries: RuntimeLogEntry[] = data.logs.map((log: any) => ({
@@ -169,17 +166,14 @@ export function useRuntimeLogs(options: UseRuntimeLogsOptions): UseRuntimeLogsRe
           return;
         }
       } catch (err) {
-        console.error('[RuntimeLogs] Failed to parse message:', err);
       }
     };
 
     ws.onerror = (event) => {
-      console.error('[RuntimeLogs] WebSocket error:', event);
       onError?.(event);
     };
 
     ws.onclose = (event) => {
-      console.log('[RuntimeLogs] Disconnected:', event.code, event.reason);
       setIsConnected(false);
       wsRef.current = null;
       onDisconnect?.();

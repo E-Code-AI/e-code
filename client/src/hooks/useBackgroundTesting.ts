@@ -112,7 +112,6 @@ export function useBackgroundTesting({
       const response = await apiRequest<{ token: string }>('GET', '/api/auth/ws-token');
       return response?.token || null;
     } catch (error) {
-      console.error('[BackgroundTesting] Failed to get auth token:', error);
       return null;
     }
   }, []);
@@ -131,7 +130,6 @@ export function useBackgroundTesting({
 
   const connect = useCallback(async () => {
     if (!isMountedRef.current) {
-      console.log('[BackgroundTesting] Skipping connection - component unmounted');
       return;
     }
 
@@ -152,8 +150,6 @@ export function useBackgroundTesting({
       const host = window.location.host;
       const wsUrl = `${protocol}//${host}/ws/testing`;
       
-      console.log('[BackgroundTesting] Connecting to', wsUrl);
-      
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
 
@@ -163,7 +159,6 @@ export function useBackgroundTesting({
           return;
         }
 
-        console.log('[BackgroundTesting] WebSocket connected');
         setIsConnected(true);
         setConnectionError(null);
         reconnectAttemptsRef.current = 0;
@@ -180,7 +175,6 @@ export function useBackgroundTesting({
             token
           }));
         } else {
-          console.error('[BackgroundTesting] No auth token available');
           setConnectionError('Authentication token not available');
         }
       };
@@ -190,15 +184,12 @@ export function useBackgroundTesting({
 
         try {
           const message = JSON.parse(event.data);
-          console.log('[BackgroundTesting] Received:', message.type);
 
           switch (message.type) {
             case 'connected':
-              console.log('[BackgroundTesting] Server confirmed connection');
               break;
 
             case 'auth-success':
-              console.log('[BackgroundTesting] Authentication successful');
               setIsAuthenticated(true);
               ws.send(JSON.stringify({
                 type: 'subscribe',
@@ -207,13 +198,11 @@ export function useBackgroundTesting({
               break;
 
             case 'auth-failed':
-              console.error('[BackgroundTesting] Authentication failed:', message.message);
               setConnectionError(message.message || 'Authentication failed');
               setIsAuthenticated(false);
               break;
 
             case 'subscribed':
-              console.log('[BackgroundTesting] Subscribed to project', message.projectId);
               setIsSubscribed(true);
               break;
 
@@ -291,29 +280,22 @@ export function useBackgroundTesting({
             }
 
             case 'error':
-              console.error('[BackgroundTesting] Server error:', message.message);
               setConnectionError(message.message);
               break;
 
             default:
-              console.log('[BackgroundTesting] Unknown message type:', message.type);
           }
         } catch (error) {
-          console.error('[BackgroundTesting] Error parsing message:', error);
         }
       };
 
       ws.onerror = (error) => {
         if (!isMountedRef.current) return;
-        console.error('[BackgroundTesting] WebSocket error:', error);
         setConnectionError('WebSocket connection error');
       };
 
       ws.onclose = (event) => {
-        console.log('[BackgroundTesting] WebSocket closed:', event.code, event.reason);
-        
         if (!isMountedRef.current) {
-          console.log('[BackgroundTesting] Skipping reconnection - component unmounted');
           return;
         }
 
@@ -324,7 +306,6 @@ export function useBackgroundTesting({
 
         if (enabled && isMountedRef.current && reconnectAttemptsRef.current < maxReconnectAttempts) {
           const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), 30000);
-          console.log(`[BackgroundTesting] Reconnecting in ${delay}ms...`);
           reconnectTimeoutRef.current = setTimeout(() => {
             if (isMountedRef.current) {
               reconnectAttemptsRef.current++;
@@ -334,7 +315,6 @@ export function useBackgroundTesting({
         }
       };
     } catch (error) {
-      console.error('[BackgroundTesting] Connection error:', error);
       if (isMountedRef.current) {
         setConnectionError('Failed to establish WebSocket connection');
       }
@@ -356,7 +336,6 @@ export function useBackgroundTesting({
         changedFiles: ['*']
       });
     } catch (error) {
-      console.error('[BackgroundTesting] Failed to trigger test run:', error);
       throw error;
     }
   }, [projectId]);
@@ -367,7 +346,6 @@ export function useBackgroundTesting({
     connect();
 
     return () => {
-      console.log('[BackgroundTesting] Cleanup: unmounting component');
       isMountedRef.current = false;
       
       if (reconnectTimeoutRef.current) {

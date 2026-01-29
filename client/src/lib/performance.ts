@@ -213,7 +213,6 @@ export class PerformanceMonitor {
   
   logMeasure(startMark: string, endMark?: string, label?: string) {
     const duration = this.measure(startMark, endMark);
-    console.log(`${label || startMark}: ${duration.toFixed(2)}ms`);
     return duration;
   }
   

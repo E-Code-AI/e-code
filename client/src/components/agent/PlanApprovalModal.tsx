@@ -93,7 +93,6 @@ export function PlanApprovalModal({
         <PlanVisualizer
           plan={plan}
           onTaskClick={(taskId) => {
-            console.log('Task clicked:', taskId);
           }}
         />
       </div>

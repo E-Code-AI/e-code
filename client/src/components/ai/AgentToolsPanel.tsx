@@ -110,15 +110,11 @@ export function AgentToolsPanel({
 
   // Toggle handler - simply notifies parent (fully controlled component)
   const handleToggle = useCallback((key: keyof AgentToolsSettings, newValue: boolean) => {
-    console.log('[AgentToolsPanel] handleToggle:', key, '=', newValue);
-    
     // Build new settings object with the toggled value
     const newSettings: AgentToolsSettings = {
       ...effectiveSettings,
       [key]: newValue,
     };
-    
-    console.log('[AgentToolsPanel] Notifying parent with:', JSON.stringify(newSettings));
     
     // Notify parent - parent owns the state
     updateSettingsRef.current(newSettings);

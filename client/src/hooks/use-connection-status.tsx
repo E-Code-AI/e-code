@@ -58,8 +58,6 @@ export function ConnectionStatusProvider({ children }: { children: ReactNode }) 
   }, []);
 
   const handleOnline = useCallback(async () => {
-    console.log('[ConnectionStatus] Network online detected');
-    
     setState(prev => ({
       ...prev,
       isOnline: true,
@@ -91,7 +89,6 @@ export function ConnectionStatusProvider({ children }: { children: ReactNode }) 
   }, [checkBackendHealth, toast]);
 
   const handleOffline = useCallback(() => {
-    console.log('[ConnectionStatus] Network offline detected');
     wasOfflineRef.current = true;
     
     setState(prev => ({

@@ -25,10 +25,7 @@ class OfflineSyncService {
     // Listen for online/offline events
     this.onlineStatusHandler = () => {
       if (navigator.onLine) {
-        console.log('[Sync] Device is online, starting sync...');
         this.syncAll();
-      } else {
-        console.log('[Sync] Device is offline');
       }
     };
 
@@ -46,8 +43,6 @@ class OfflineSyncService {
     if (navigator.onLine) {
       this.syncAll();
     }
-
-    console.log('[Sync] Offline sync service initialized');
   }
 
   /**
@@ -78,7 +73,6 @@ class OfflineSyncService {
    */
   async syncAll(): Promise<SyncResult> {
     if (this.syncInProgress) {
-      console.log('[Sync] Sync already in progress, skipping');
       return {
         success: false,
         syncedProjects: 0,
@@ -89,7 +83,6 @@ class OfflineSyncService {
     }
 
     if (!this.isOnline()) {
-      console.log('[Sync] Device is offline, cannot sync');
       return {
         success: false,
         syncedProjects: 0,
@@ -100,7 +93,6 @@ class OfflineSyncService {
     }
 
     this.syncInProgress = true;
-    console.log('[Sync] Starting full sync...');
 
     const result: SyncResult = {
       success: true,
@@ -113,8 +105,6 @@ class OfflineSyncService {
     try {
       // Get all pending operations
       const operations = await offlineStorage.getPendingOperations();
-
-      console.log(`[Sync] Found ${operations.length} pending operations`);
 
       // Process each operation
       for (const op of operations) {
@@ -130,7 +120,6 @@ class OfflineSyncService {
           // Remove from queue
           await offlineStorage.removePendingOperation(op.id);
         } catch (error) {
-          console.error('[Sync] Failed to process operation:', op, error);
 
           // Check if it's a conflict (409)
           if ((error as any).status === 409) {
@@ -148,7 +137,6 @@ class OfflineSyncService {
 
           // Remove operation if too many retries (max 5)
           if (op.retries >= 5) {
-            console.warn('[Sync] Operation exceeded max retries, removing:', op);
             await offlineStorage.removePendingOperation(op.id);
           }
         }
@@ -156,10 +144,7 @@ class OfflineSyncService {
 
       // Sync projects and files status
       await this.syncPendingResources();
-
-      console.log('[Sync] Sync completed:', result);
     } catch (error) {
-      console.error('[Sync] Sync failed:', error);
       result.success = false;
     } finally {
       this.syncInProgress = false;
@@ -300,9 +285,7 @@ class OfflineSyncService {
       try {
         const registration = await navigator.serviceWorker.ready;
         await registration.sync.register('offline-sync');
-        console.log('[Sync] Background sync registered');
       } catch (error) {
-        console.error('[Sync] Failed to register background sync:', error);
       }
     }
   }

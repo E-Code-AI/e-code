@@ -354,7 +354,6 @@ export function ElementSelector({ sessionId, projectId, previewUrl, onCodeChange
         doc.body.appendChild(scriptEl);
       }
     } catch (error) {
-      console.warn('[ElementSelector] Could not inject script (cross-origin):', error);
     }
   }, []);
 
