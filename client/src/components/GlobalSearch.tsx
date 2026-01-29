@@ -203,91 +203,94 @@ export function GlobalSearch({ isOpen, onClose, projectId, onFileSelect }: Globa
     return (
       <div
         key={result.id}
-        className={`p-3 border rounded-lg cursor-pointer transition-colors ${
-          isSelected ? 'bg-accent border-accent' : 'hover:bg-surface-hover-solid'
+        className={`px-2 py-1.5 rounded cursor-pointer transition-colors ${
+          isSelected ? 'bg-accent' : 'hover:bg-muted/50'
         }`}
         onClick={() => handleResultClick(result)}
         onMouseEnter={() => setSelectedResult(index)}
       >
-        <div className="flex items-start justify-between">
-          <div className="flex items-start space-x-2 flex-1">
-            {getFileIcon(result.name)}
-            <div className="flex-1">
-              <div className="flex items-center space-x-2">
-                <span className="font-medium text-[13px]">{result.name}</span>
-                <span className="text-[11px] text-muted-foreground">{result.path}</span>
-              </div>
-              
-              {result.matches.length > 0 && (
-                <div className="mt-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 px-2 text-[11px]"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleResultExpanded(result.id);
-                    }}
-                  >
-                    <ChevronRight className={`h-3 w-3 mr-1 transition-transform ${
-                      isExpanded ? 'rotate-90' : ''
-                    }`} />
-                    {result.matches.length} match{result.matches.length !== 1 ? 'es' : ''}
-                  </Button>
-                </div>
-              )}
-
-              {isExpanded && result.matches.length > 0 && (
-                <div className="mt-2 space-y-2">
-                  {result.matches.map((match, matchIndex) => (
-                    <div key={matchIndex} className="pl-4 border-l-2 border-muted">
-                      <div className="flex items-center space-x-2 text-[11px] text-muted-foreground">
-                        <span>Line {match.line}</span>
-                        <span>•</span>
-                        <span>Column {match.column}</span>
-                      </div>
-                      <pre className="text-[11px] mt-1 p-2 bg-muted rounded overflow-x-auto">
-                        <code>{match.context}</code>
-                      </pre>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-          
+        <div className="flex items-center gap-2">
+          <span className="shrink-0">{getFileIcon(result.name)}</span>
+          <span className="font-medium text-xs truncate">{result.name}</span>
+          <span className="text-[10px] text-muted-foreground truncate flex-1">{result.path}</span>
           {result.language && (
-            <Badge variant="secondary" className="text-[11px]">
+            <Badge variant="secondary" className="text-[9px] px-1 py-0 h-4 shrink-0">
               {result.language}
             </Badge>
           )}
         </div>
+        
+        {result.matches.length > 0 && (
+          <div className="ml-6 mt-1">
+            <button
+              className="flex items-center text-[10px] text-muted-foreground hover:text-foreground"
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleResultExpanded(result.id);
+              }}
+            >
+              <ChevronRight className={`h-3 w-3 mr-0.5 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+              {result.matches.length} match{result.matches.length !== 1 ? 'es' : ''}
+            </button>
+            
+            {isExpanded && (
+              <div className="mt-1 space-y-1">
+                {result.matches.slice(0, 3).map((match, matchIndex) => (
+                  <div key={matchIndex} className="pl-3 border-l border-muted">
+                    <span className="text-[10px] text-muted-foreground">L{match.line}:{match.column}</span>
+                    <pre className="text-[10px] mt-0.5 p-1 bg-muted/50 rounded text-xs overflow-x-auto">
+                      <code>{match.context}</code>
+                    </pre>
+                  </div>
+                ))}
+                {result.matches.length > 3 && (
+                  <span className="text-[10px] text-muted-foreground pl-3">
+                    +{result.matches.length - 3} more
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     );
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[80vh] p-0">
-        <div className="flex flex-col h-full">
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-2xl max-h-[70vh] p-0 flex flex-col overflow-hidden gap-0">
+        {/* Close button area - ensure it's clickable */}
+        <div className="absolute right-2 top-2 z-10">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            className="h-6 w-6 rounded-sm opacity-70 hover:opacity-100"
+          >
+            <X className="h-4 w-4" />
+            <span className="sr-only">Close</span>
+          </Button>
+        </div>
+        
+        <div className="flex flex-col h-full min-h-0">
           {/* Search Header */}
-          <div className="px-2.5 py-2 border-b border-[var(--ecode-border)]">
-            <div className="relative">
-              <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--ecode-text-muted)]" />
+          <div className="px-3 pt-3 pb-2 border-b border-border shrink-0">
+            <div className="relative pr-8">
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
               <Input
                 ref={searchInputRef}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Search files, content, or symbols..."
-                className="pl-8 pr-8 h-7 text-xs bg-[var(--ecode-sidebar-hover)] border-[var(--ecode-border)]"
+                className="pl-8 pr-8 h-8 text-sm"
               />
               {searchQuery && (
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-1 top-1/2 -translate-y-1/2 h-5 w-5 text-[var(--ecode-text-muted)]"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 text-muted-foreground"
                 >
                   <X className="w-3 h-3" />
                 </Button>
@@ -295,58 +298,49 @@ export function GlobalSearch({ isOpen, onClose, projectId, onFileSelect }: Globa
             </div>
 
             {/* Search Type Tabs */}
-            <Tabs value={searchType} onValueChange={(v) => setSearchType(v as any)} className="mt-4">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="files">Files</TabsTrigger>
-                <TabsTrigger value="content">Content</TabsTrigger>
-                <TabsTrigger value="symbols">Symbols</TabsTrigger>
+            <Tabs value={searchType} onValueChange={(v) => setSearchType(v as any)} className="mt-2">
+              <TabsList className="grid w-full grid-cols-3 h-8">
+                <TabsTrigger value="files" className="text-xs">Files</TabsTrigger>
+                <TabsTrigger value="content" className="text-xs">Content</TabsTrigger>
+                <TabsTrigger value="symbols" className="text-xs">Symbols</TabsTrigger>
               </TabsList>
             </Tabs>
           </div>
 
           {/* Search Filters */}
-          <div className="px-4 py-2 border-b bg-muted">
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
+          <div className="px-3 py-1.5 border-b bg-muted/50 shrink-0">
+            <div className="flex items-center gap-3 text-xs">
+              <label className="flex items-center gap-1.5 cursor-pointer">
                 <Checkbox
                   id="case-sensitive"
                   checked={filters.caseSensitive}
-                  onCheckedChange={(checked) => 
-                    setFilters({ ...filters, caseSensitive: !!checked })
-                  }
+                  onCheckedChange={(checked) => setFilters({ ...filters, caseSensitive: !!checked })}
+                  className="h-3.5 w-3.5"
                 />
-                <Label htmlFor="case-sensitive" className="text-[11px]">
-                  Case sensitive
-                </Label>
-              </div>
+                <span className="text-[11px]">Case sensitive</span>
+              </label>
               
-              <div className="flex items-center space-x-2">
+              <label className="flex items-center gap-1.5 cursor-pointer">
                 <Checkbox
                   id="whole-word"
                   checked={filters.wholeWord}
-                  onCheckedChange={(checked) => 
-                    setFilters({ ...filters, wholeWord: !!checked })
-                  }
+                  onCheckedChange={(checked) => setFilters({ ...filters, wholeWord: !!checked })}
+                  className="h-3.5 w-3.5"
                 />
-                <Label htmlFor="whole-word" className="text-[11px]">
-                  Whole word
-                </Label>
-              </div>
+                <span className="text-[11px]">Whole word</span>
+              </label>
 
-              <div className="flex items-center space-x-2">
+              <label className="flex items-center gap-1.5 cursor-pointer">
                 <Checkbox
                   id="use-regex"
                   checked={filters.useRegex}
-                  onCheckedChange={(checked) => 
-                    setFilters({ ...filters, useRegex: !!checked })
-                  }
+                  onCheckedChange={(checked) => setFilters({ ...filters, useRegex: !!checked })}
+                  className="h-3.5 w-3.5"
                 />
-                <Label htmlFor="use-regex" className="text-[11px]">
-                  Regex
-                </Label>
-              </div>
+                <span className="text-[11px]">Regex</span>
+              </label>
 
-              <Button variant="ghost" size="sm" className="ml-auto">
+              <Button variant="ghost" size="sm" className="ml-auto h-6 px-2 text-[11px]">
                 <Filter className="h-3 w-3 mr-1" />
                 More filters
               </Button>
@@ -354,66 +348,68 @@ export function GlobalSearch({ isOpen, onClose, projectId, onFileSelect }: Globa
           </div>
 
           {/* Search Results */}
-          <ScrollArea className="flex-1 p-4">
-            {!searchQuery && recentSearches.length > 0 && (
-              <div className="mb-6">
-                <h3 className="text-[13px] font-medium mb-3 flex items-center">
-                  <Clock className="h-4 w-4 mr-2" />
-                  Recent Searches
-                </h3>
-                <div className="space-y-1">
-                  {recentSearches.map((search, index) => (
-                    <Button
-                      key={index}
-                      variant="ghost"
-                      size="sm"
-                      className="justify-start w-full"
-                      onClick={() => setSearchQuery(search)}
-                    >
-                      <Search className="h-3 w-3 mr-2" />
-                      {search}
-                    </Button>
-                  ))}
+          <ScrollArea className="flex-1 min-h-0">
+            <div className="p-3">
+              {!searchQuery && recentSearches.length > 0 && (
+                <div className="mb-4">
+                  <h3 className="text-xs font-medium mb-2 flex items-center text-muted-foreground">
+                    <Clock className="h-3 w-3 mr-1.5" />
+                    Recent Searches
+                  </h3>
+                  <div className="space-y-0.5">
+                    {recentSearches.slice(0, 5).map((search, index) => (
+                      <Button
+                        key={index}
+                        variant="ghost"
+                        size="sm"
+                        className="justify-start w-full h-7 text-xs"
+                        onClick={() => setSearchQuery(search)}
+                      >
+                        <Search className="h-3 w-3 mr-2 opacity-50" />
+                        {search}
+                      </Button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {isSearching && (
-              <div className="flex items-center justify-center py-8">
-                <div className="text-center">
-                  <ECodeSpinner size={32} className="mx-auto mb-2" />
-                  <p className="text-[13px] text-muted-foreground">Searching...</p>
+              {isSearching && (
+                <div className="flex items-center justify-center py-6">
+                  <div className="text-center">
+                    <ECodeSpinner size={24} className="mx-auto mb-2" />
+                    <p className="text-xs text-muted-foreground">Searching...</p>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {!isSearching && searchQuery && results.length === 0 && (
-              <div className="flex items-center justify-center py-8">
-                <div className="text-center">
-                  <Search className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-[13px] text-muted-foreground">No results found</p>
-                  <p className="text-[11px] text-muted-foreground mt-1">
-                    Try adjusting your search query or filters
-                  </p>
+              {!isSearching && searchQuery && results.length === 0 && (
+                <div className="flex items-center justify-center py-6">
+                  <div className="text-center">
+                    <Search className="h-6 w-6 mx-auto mb-2 opacity-30" />
+                    <p className="text-xs text-muted-foreground">No results found</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                      Try different keywords or filters
+                    </p>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {results.length > 0 && (
-              <div className="space-y-2" ref={resultsRef}>
-                {results.map((result, index) => renderSearchResult(result, index))}
-              </div>
-            )}
+              {results.length > 0 && (
+                <div className="space-y-1.5" ref={resultsRef}>
+                  {results.map((result, index) => renderSearchResult(result, index))}
+                </div>
+              )}
+            </div>
           </ScrollArea>
 
           {/* Search Footer */}
           {results.length > 0 && (
-            <div className="px-4 py-2 border-t bg-muted text-[11px] text-muted-foreground">
+            <div className="px-3 py-1.5 border-t bg-muted/50 text-[10px] text-muted-foreground shrink-0">
               <div className="flex items-center justify-between">
-                <span>{results.length} results found</span>
-                <div className="flex items-center space-x-4">
+                <span>{results.length} result{results.length !== 1 ? 's' : ''}</span>
+                <div className="flex items-center gap-3">
                   <span>↑↓ Navigate</span>
-                  <span>Enter Open</span>
+                  <span>↵ Open</span>
                   <span>Esc Close</span>
                 </div>
               </div>
