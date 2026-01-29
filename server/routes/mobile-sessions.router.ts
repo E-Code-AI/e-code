@@ -1,5 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
+import crypto from 'crypto';
 import { storage } from '../storage';
 import { ensureAuthenticated as requireAuth } from '../middleware/auth';
 import { insertMobileSessionSchema, MobileSession } from '@shared/schema';
@@ -197,7 +198,8 @@ router.post('/push-token', requireAuth, asyncHandler(async (req: Request, res: R
   }
 
   const { pushToken, platform, deviceId } = validation.data;
-  const actualDeviceId = deviceId || `${platform}-${Date.now()}`;
+  // SECURITY: Use cryptographically secure random ID instead of predictable timestamp
+  const actualDeviceId = deviceId || `${platform}-${crypto.randomUUID()}`;
 
   try {
     const existingSession = await storage.getMobileSession(userId, actualDeviceId);

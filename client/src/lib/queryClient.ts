@@ -42,8 +42,25 @@ async function handleRateLimitResponse(res: Response): Promise<RateLimitInfo | n
 
 async function throwIfResNotOk(res: Response, url?: string): Promise<void> {
   if (!res.ok) {
-    // Handle 401 specially - redirect to login
+    // Handle 401 specially - but check for 2FA requirement first
     if (res.status === 401) {
+      // Try to parse response to check for 2FA requirement
+      try {
+        const clonedRes = res.clone();
+        const data = await clonedRes.json();
+        // If this is a 2FA challenge, throw a special error that preserves the data
+        if (data.requires2FA && data.code === '2FA_REQUIRED') {
+          const error = new Error('2FA_REQUIRED') as HttpError & { data: any };
+          error.status = 401;
+          (error as any).data = data;
+          (error as any).is2FARequired = true;
+          throw error;
+        }
+      } catch (e: any) {
+        // If parsing failed or it's already our 2FA error, just rethrow
+        if (e.is2FARequired) throw e;
+      }
+      // Not a 2FA challenge - redirect to login
       handleUnauthorized(url);
       const error = new Error('Unauthorized') as HttpError;
       error.status = 401;

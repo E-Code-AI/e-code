@@ -329,11 +329,22 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction) 
     const headerToken = req.headers['x-csrf-token'] as string;
     const cookieToken = (req as any).cookies?.['csrf-token'];
     
-    // For API requests, also check for Bearer token auth
+    // For API requests, only skip CSRF if request has a valid session
+    // SECURITY: Never skip CSRF based on Bearer token alone - must verify authentication
     const authHeader = req.headers.authorization;
     if (authHeader?.startsWith('Bearer ')) {
-      // Skip CSRF check for authenticated API requests
-      return next();
+      // Check if the request has an authenticated session (set by passport)
+      const user = (req as any).user;
+      if (user && user.id) {
+        // User is authenticated via session, safe to skip CSRF for API requests
+        return next();
+      }
+      // No valid session - continue with CSRF validation
+      // This prevents attackers from bypassing CSRF with fake Bearer tokens
+      logger.warn('Bearer token without valid session, requiring CSRF validation', {
+        ip: req.ip,
+        path: req.path
+      });
     }
     
     if (!headerToken || headerToken !== cookieToken) {

@@ -138,6 +138,15 @@ export default function Login() {
         description: `Welcome back, ${displayName}!`
       });
     } catch (error: any) {
+      // Handle 2FA requirement (now returns 401 with code 2FA_REQUIRED)
+      if (error.is2FARequired && error.data) {
+        setTwoFactorChallenge({
+          challengeId: error.data.challengeId,
+          email: error.data.email || formData.email
+        });
+        setIsLoggingIn(false);
+        return;
+      }
       console.error('Login error:', error);
       toast({
         title: 'Login failed',

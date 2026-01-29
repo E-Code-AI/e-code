@@ -285,11 +285,13 @@ export class AuthRouter {
         if (user.twoFactorEnabled && user.twoFactorSecret) {
           const challengeId = createTwoFactorChallenge(user.id);
           logger.info(`2FA challenge created for user ${user.id}`);
-          return res.status(200).json({
+          // SECURITY: Return 401 to indicate authentication is incomplete
+          return res.status(401).json({
             requires2FA: true,
             challengeId,
             email: user.email,
-            message: "Two-factor authentication required"
+            message: "Two-factor authentication required",
+            code: "2FA_REQUIRED"
           });
         }
         
@@ -629,11 +631,13 @@ export class AuthRouter {
         if (user.twoFactorEnabled && user.twoFactorSecret) {
           const challengeId = createTwoFactorChallenge(user.id);
           logger.info(`2FA challenge created for user ${user.id}`);
-          return res.status(200).json({
+          // SECURITY: Return 401 to indicate authentication is incomplete
+          return res.status(401).json({
             requires2FA: true,
             challengeId,
             email: user.email,
-            message: "Two-factor authentication required"
+            message: "Two-factor authentication required",
+            code: "2FA_REQUIRED"
           });
         }
         

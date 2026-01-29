@@ -12,6 +12,51 @@ const router = Router();
 
 const PROJECT_ROOT = process.cwd();
 
+// SECURITY: Centralized file path validation to prevent command injection and path traversal
+function validateFilePath(filePath: string): { valid: boolean; error?: string } {
+  if (typeof filePath !== 'string' || filePath.length === 0) {
+    return { valid: false, error: 'Invalid file path' };
+  }
+  
+  // Block path traversal
+  if (filePath.includes('..')) {
+    return { valid: false, error: 'Path traversal not allowed' };
+  }
+  
+  // SECURITY: Block option injection - reject paths starting with "-" or "--"
+  if (filePath.startsWith('-')) {
+    return { valid: false, error: 'Invalid file path format' };
+  }
+  
+  // Block dangerous shell characters (except spaces which are valid)
+  const dangerousChars = /[;&|`$(){}[\]<>\\'"!#*?\x00-\x1f]/;
+  if (dangerousChars.test(filePath)) {
+    return { valid: false, error: 'Invalid characters in file path' };
+  }
+  
+  // Ensure file is within project directory
+  const resolvedPath = path.resolve(PROJECT_ROOT, filePath);
+  const relativePath = path.relative(PROJECT_ROOT, resolvedPath);
+  if (relativePath.startsWith('..') || path.isAbsolute(relativePath)) {
+    return { valid: false, error: 'File path outside project directory' };
+  }
+  
+  return { valid: true };
+}
+
+// Validate an array of file paths
+function validateFilePaths(files: any[]): { valid: boolean; validatedFiles: string[]; error?: string } {
+  const validatedFiles: string[] = [];
+  for (const file of files) {
+    const result = validateFilePath(file);
+    if (!result.valid) {
+      return { valid: false, validatedFiles: [], error: result.error };
+    }
+    validatedFiles.push(file);
+  }
+  return { valid: true, validatedFiles };
+}
+
 async function getGitCredentials(userId: number): Promise<{ username: string; password: string } | null> {
   return await githubOAuth.getGitCredentials(userId);
 }
@@ -126,6 +171,12 @@ router.get('/diff/:filePath(*)', ensureAuthenticated, async (req: Request, res: 
     const { filePath } = req.params;
     const { staged, stream } = req.query;
 
+    // SECURITY: Validate file path
+    const validation = validateFilePath(filePath);
+    if (!validation.valid) {
+      return res.status(400).json({ error: validation.error });
+    }
+
     const isRepo = await ensureGitRepo();
     if (!isRepo) {
       return res.status(400).json({ error: 'Not a git repository' });
@@ -216,12 +267,19 @@ router.post('/stage', ensureAuthenticated, csrfProtection, async (req: Request, 
       return res.status(400).json({ error: 'Files array required' });
     }
 
+    // SECURITY: Use centralized file validation
+    const validation = validateFilePaths(files);
+    if (!validation.valid) {
+      return res.status(400).json({ error: validation.error });
+    }
+
     const isRepo = await ensureGitRepo();
     if (!isRepo) {
       return res.status(400).json({ error: 'Not a git repository' });
     }
 
-    await execa('git', ['add', ...files], { cwd: PROJECT_ROOT });
+    // SECURITY: Use '--' to separate options from file paths to prevent option injection
+    await execa('git', ['add', '--', ...validation.validatedFiles], { cwd: PROJECT_ROOT });
 
     res.json({ success: true, staged: files });
   } catch (error: any) {
@@ -238,12 +296,19 @@ router.post('/unstage', ensureAuthenticated, csrfProtection, async (req: Request
       return res.status(400).json({ error: 'Files array required' });
     }
 
+    // SECURITY: Use centralized file validation
+    const validation = validateFilePaths(files);
+    if (!validation.valid) {
+      return res.status(400).json({ error: validation.error });
+    }
+
     const isRepo = await ensureGitRepo();
     if (!isRepo) {
       return res.status(400).json({ error: 'Not a git repository' });
     }
 
-    await execa('git', ['reset', 'HEAD', ...files], { cwd: PROJECT_ROOT });
+    // SECURITY: Use '--' to separate options from file paths to prevent option injection
+    await execa('git', ['reset', 'HEAD', '--', ...validation.validatedFiles], { cwd: PROJECT_ROOT });
 
     res.json({ success: true, unstaged: files });
   } catch (error: any) {
@@ -897,6 +962,12 @@ router.get('/diff/stream/:filePath(*)', ensureAuthenticated, async (req: Request
     const { filePath } = req.params;
     const { staged } = req.query;
 
+    // SECURITY: Validate file path
+    const validation = validateFilePath(filePath);
+    if (!validation.valid) {
+      return res.status(400).json({ error: validation.error });
+    }
+
     const isRepo = await ensureGitRepo();
     if (!isRepo) {
       return res.status(400).json({ error: 'Not a git repository' });
@@ -1015,6 +1086,12 @@ router.get('/blame/:filePath(*)', ensureAuthenticated, async (req: Request, res:
     
     if (!filePath) {
       return res.status(400).json({ error: 'File path required' });
+    }
+    
+    // SECURITY: Validate file path
+    const validation = validateFilePath(filePath);
+    if (!validation.valid) {
+      return res.status(400).json({ error: validation.error });
     }
     
     const isRepo = await ensureGitRepo();

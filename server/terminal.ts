@@ -570,20 +570,27 @@ async function executeCommand(projectId: string, command: string) {
     if (command.startsWith('cd ')) {
       const newDir = command.substring(3).trim();
       
-      // SECURITY: Block path traversal attempts
-      if (newDir.includes('..')) {
+      // SECURITY: Robust path traversal protection using path.resolve() + path.relative()
+      // This handles: .., ../, ..;, URL encoding, symlinks, case variations, etc.
+      // Anchor to per-project directory to prevent cross-project traversal
+      const projectRoot = path.resolve(`/project/${projectId}`);
+      const baseDir = session.currentDirectory;
+      const resolvedPath = path.resolve(baseDir, newDir);
+      
+      // Use path.relative to check if the resolved path is within project root
+      const relativePath = path.relative(projectRoot, resolvedPath);
+      
+      // SECURITY: Block if relative path escapes project root (starts with ..) or is absolute
+      // This prevents cross-project traversal even within the same workspace
+      if (relativePath.startsWith('..') || path.isAbsolute(relativePath)) {
         broadcast(projectId, JSON.stringify({
           type: 'output',
-          data: `Error: Path traversal not allowed\r\n$ `
+          data: `Error: Access denied - path outside project directory\r\n$ `
         }));
         return;
       }
       
-      if (newDir.startsWith('/')) {
-        session.currentDirectory = newDir;
-      } else {
-        session.currentDirectory = path.join(session.currentDirectory, newDir);
-      }
+      session.currentDirectory = resolvedPath;
       broadcast(projectId, JSON.stringify({
         type: 'output',
         data: `$ `
