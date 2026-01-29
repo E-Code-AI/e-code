@@ -4039,6 +4039,16 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(pushNotifications.createdAt));
   }
 
+  async getNotificationsForUser(userId: string | number, limit: number = 50): Promise<NotificationRecord[]> {
+    const normalizedUserId = normalizeUserId(userId);
+    return await this.db
+      .select()
+      .from(pushNotifications)
+      .where(eq(pushNotifications.userId, normalizedUserId))
+      .orderBy(desc(pushNotifications.createdAt))
+      .limit(limit);
+  }
+
   async getUnreadNotificationCount(userId: string | number): Promise<number> {
     const normalizedUserId = normalizeUserId(userId);
     const [result] = await this.db

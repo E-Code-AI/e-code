@@ -506,35 +506,15 @@ router.get('/mobile/explore', async (req, res) => {
 router.get('/mobile/notifications', mobileEnsureAuthenticated, async (req, res) => {
   try {
     const userId = req.user.id;
-    // Return mock notifications for now - in production, fetch from DB
-    const notifications = [
-      {
-        id: '1',
-        type: 'follow',
-        fromUser: { username: 'johndoe', avatarUrl: null },
-        message: 'started following you',
-        createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
-        read: false
-      },
-      {
-        id: '2',
-        type: 'like',
-        fromUser: { username: 'alice', avatarUrl: null },
-        message: 'liked your project',
-        createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000),
-        read: true
-      }
-    ];
+    const notifications = await storage.getNotificationsForUser(userId, 50);
     
     res.json(notifications.map(n => ({
-      id: n.id,
+      id: String(n.id),
       type: n.type,
-      user: {
-        username: n.fromUser?.username,
-        avatar: n.fromUser?.avatarUrl
-      },
-      message: n.message,
-      time: formatTimeAgo(n.createdAt),
+      title: n.title,
+      message: n.body,
+      actionUrl: n.actionUrl,
+      time: formatTimeAgo(n.createdAt ? new Date(n.createdAt) : new Date()),
       read: n.read
     })));
   } catch (error) {
