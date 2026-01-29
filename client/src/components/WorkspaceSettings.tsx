@@ -1,20 +1,15 @@
 import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
   Sparkles, 
   Eye, 
   Palette, 
   Code, 
-  Settings2,
-  Zap,
-  Bell,
-  Monitor
+  Settings2
 } from 'lucide-react';
 
 interface WorkspaceSettingsProps {
@@ -22,19 +17,12 @@ interface WorkspaceSettingsProps {
 }
 
 export function WorkspaceSettings({ projectId }: WorkspaceSettingsProps) {
-  // Agent & Assistant Settings
   const [agentAudioNotification, setAgentAudioNotification] = useState(false);
   const [agentPushNotification, setAgentPushNotification] = useState(true);
   const [assistantPushNotification, setAssistantPushNotification] = useState(true);
-
-  // App Preview Settings
   const [automaticPreview, setAutomaticPreview] = useState(true);
   const [forwardPorts, setForwardPorts] = useState('all_ports_except_localhost');
-
-  // Appearance Settings
   const [fontSize, setFontSize] = useState('normal');
-
-  // Code Editing Settings
   const [aiCodeCompletion, setAiCodeCompletion] = useState(true);
   const [acceptOnCommitChar, setAcceptOnCommitChar] = useState(true);
   const [autoCloseBrackets, setAutoCloseBrackets] = useState(true);
@@ -45,14 +33,10 @@ export function WorkspaceSettings({ projectId }: WorkspaceSettingsProps) {
   const [indentationSize, setIndentationSize] = useState('2');
   const [codeIntelligence, setCodeIntelligence] = useState(true);
   const [semanticTokens, setSemanticTokens] = useState(true);
-
-  // Show Whitespace Settings
   const [showWhitespaceLeading, setShowWhitespaceLeading] = useState(false);
   const [showWhitespaceEnclosed, setShowWhitespaceEnclosed] = useState(false);
   const [showWhitespaceTrailing, setShowWhitespaceTrailing] = useState(false);
   const [showWhitespaceSelected, setShowWhitespaceSelected] = useState(false);
-
-  // Advanced Developer Settings
   const [keybinds, setKeybinds] = useState('default');
   const [multiselectModifier, setMultiselectModifier] = useState('Alt');
   const [filetreeGitStatus, setFiletreeGitStatus] = useState(true);
@@ -67,508 +51,139 @@ export function WorkspaceSettings({ projectId }: WorkspaceSettingsProps) {
     return localStorage.getItem('keyboard-shortcut-tester') === 'true';
   });
 
+  const SettingRow = ({ id, label, description, checked, onCheckedChange }: {
+    id: string; label: string; description: string; checked: boolean; onCheckedChange: (v: boolean) => void;
+  }) => (
+    <div className="flex items-center justify-between py-1.5">
+      <div className="flex-1 min-w-0 pr-3">
+        <Label htmlFor={id} className="text-xs font-medium">{label}</Label>
+        <p className="text-[11px] text-muted-foreground truncate">{description}</p>
+      </div>
+      <Switch id={id} checked={checked} onCheckedChange={onCheckedChange} className="shrink-0 scale-90" />
+    </div>
+  );
+
+  const SelectRow = ({ id, label, description, value, onValueChange, options }: {
+    id: string; label: string; description: string; value: string; onValueChange: (v: string) => void;
+    options: { value: string; label: string }[];
+  }) => (
+    <div className="py-1.5">
+      <Label htmlFor={id} className="text-xs font-medium">{label}</Label>
+      <Select value={value} onValueChange={onValueChange}>
+        <SelectTrigger id={id} className="h-7 text-xs mt-1">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {options.map(o => <SelectItem key={o.value} value={o.value} className="text-xs">{o.label}</SelectItem>)}
+        </SelectContent>
+      </Select>
+      <p className="text-[11px] text-muted-foreground mt-0.5">{description}</p>
+    </div>
+  );
+
+  const Section = ({ icon: Icon, title, children }: { icon: any; title: string; children: React.ReactNode }) => (
+    <div className="space-y-1">
+      <h3 className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+        <Icon className="h-3 w-3" />
+        {title}
+      </h3>
+      <div className="rounded-md border bg-card/50 px-3 py-1 divide-y divide-border/50">
+        {children}
+      </div>
+    </div>
+  );
+
   return (
     <ScrollArea className="h-full">
-      <div className="p-6 space-y-6 max-w-3xl">
-        <div>
-          <h2 className="text-2xl font-bold mb-1">User Settings</h2>
-          <p className="text-[13px] text-muted-foreground">
-            The following settings apply to your account and will be used across all your Apps.
-          </p>
-        </div>
+      <div className="p-4 space-y-4 max-w-xl">
+        <p className="text-[11px] text-muted-foreground">
+          Settings apply to your account across all Apps.
+        </p>
 
-        {/* Agent & Assistant */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5" />
-              Agent & Assistant
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <Label htmlFor="agent-audio">Agent Audio Notification</Label>
-                <p className="text-[13px] text-muted-foreground">
-                  Play a sound when the Agent needs your response.
-                </p>
-              </div>
-              <Switch
-                id="agent-audio"
-                checked={agentAudioNotification}
-                onCheckedChange={setAgentAudioNotification}
-              />
-            </div>
-            
-            <Separator />
-            
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <Label htmlFor="agent-push">Agent Push Notification</Label>
-                <p className="text-[13px] text-muted-foreground">
-                  Send a push notification when the Agent needs your response.
-                </p>
-              </div>
-              <Switch
-                id="agent-push"
-                checked={agentPushNotification}
-                onCheckedChange={setAgentPushNotification}
-              />
-            </div>
-            
-            <Separator />
-            
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <Label htmlFor="assistant-push">Assistant Push Notification</Label>
-                <p className="text-[13px] text-muted-foreground">
-                  Send a push notification when the Assistant needs your response.
-                </p>
-              </div>
-              <Switch
-                id="assistant-push"
-                checked={assistantPushNotification}
-                onCheckedChange={setAssistantPushNotification}
-              />
-            </div>
-          </CardContent>
-        </Card>
+        <Section icon={Sparkles} title="Agent & Assistant">
+          <SettingRow id="agent-audio" label="Agent Audio Notification" description="Play sound when Agent needs response" checked={agentAudioNotification} onCheckedChange={setAgentAudioNotification} />
+          <SettingRow id="agent-push" label="Agent Push Notification" description="Push notification when Agent needs response" checked={agentPushNotification} onCheckedChange={setAgentPushNotification} />
+          <SettingRow id="assistant-push" label="Assistant Push Notification" description="Push notification when Assistant needs response" checked={assistantPushNotification} onCheckedChange={setAssistantPushNotification} />
+        </Section>
 
-        {/* App Preview */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Eye className="h-5 w-5" />
-              App Preview
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <Label htmlFor="auto-preview">Automatic Preview</Label>
-                <p className="text-[13px] text-muted-foreground">
-                  Open a web preview automatically when a port is open
-                </p>
-              </div>
-              <Switch
-                id="auto-preview"
-                checked={automaticPreview}
-                onCheckedChange={setAutomaticPreview}
-              />
-            </div>
-            
-            <Separator />
-            
-            <div className="space-y-2">
-              <Label htmlFor="forward-ports">Forward Opened Ports Automatically</Label>
-              <Select value={forwardPorts} onValueChange={setForwardPorts}>
-                <SelectTrigger id="forward-ports">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all_ports_except_localhost">all ports except localhost</SelectItem>
-                  <SelectItem value="all_ports">all ports</SelectItem>
-                  <SelectItem value="none">none</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-[13px] text-muted-foreground">
-                Automatically configure detected newly opened ports.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        <Section icon={Eye} title="App Preview">
+          <SettingRow id="auto-preview" label="Automatic Preview" description="Open preview when a port is open" checked={automaticPreview} onCheckedChange={setAutomaticPreview} />
+          <SelectRow id="forward-ports" label="Forward Ports" description="Auto-configure detected ports" value={forwardPorts} onValueChange={setForwardPorts}
+            options={[
+              { value: 'all_ports_except_localhost', label: 'All except localhost' },
+              { value: 'all_ports', label: 'All ports' },
+              { value: 'none', label: 'None' }
+            ]} />
+        </Section>
 
-        {/* Appearance */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Palette className="h-5 w-5" />
-              Appearance
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="font-size">Font Size</Label>
-              <Select value={fontSize} onValueChange={setFontSize}>
-                <SelectTrigger id="font-size">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="small">small</SelectItem>
-                  <SelectItem value="normal">normal</SelectItem>
-                  <SelectItem value="large">large</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-[13px] text-muted-foreground">
-                Change the font size of the editor.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        <Section icon={Palette} title="Appearance">
+          <SelectRow id="font-size" label="Font Size" description="Editor font size" value={fontSize} onValueChange={setFontSize}
+            options={[
+              { value: 'small', label: 'Small' },
+              { value: 'normal', label: 'Normal' },
+              { value: 'large', label: 'Large' }
+            ]} />
+        </Section>
 
-        {/* Code Editing */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Code className="h-5 w-5" />
-              Code Editing
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <Label htmlFor="ai-completion">AI Code Completion</Label>
-                <p className="text-[13px] text-muted-foreground">
-                  Code completion provides inline "ghost text" suggestions while you code.
-                </p>
-              </div>
-              <Switch
-                id="ai-completion"
-                checked={aiCodeCompletion}
-                onCheckedChange={setAiCodeCompletion}
-              />
+        <Section icon={Code} title="Code Editing">
+          <SettingRow id="ai-completion" label="AI Code Completion" description="Inline ghost text suggestions" checked={aiCodeCompletion} onCheckedChange={setAiCodeCompletion} />
+          <SettingRow id="accept-commit" label="Accept on Commit Char" description="Accept suggestions on commit characters" checked={acceptOnCommitChar} onCheckedChange={setAcceptOnCommitChar} />
+          <SettingRow id="auto-brackets" label="Auto Close Brackets" description="Auto-close brackets and quotes" checked={autoCloseBrackets} onCheckedChange={setAutoCloseBrackets} />
+          <SelectRow id="wrapping" label="Wrapping" description="Line wrapping behavior" value={wrapping} onValueChange={setWrapping}
+            options={[{ value: 'no_wrap', label: 'No wrap' }, { value: 'soft_wrap', label: 'Soft wrap' }]} />
+          <SettingRow id="indent-detection" label="Indentation Detection" description="Auto-detect file indentation" checked={indentationDetection} onCheckedChange={setIndentationDetection} />
+          <SettingRow id="format-paste" label="Format Pasted Text" description="Auto-format pasted text indentation" checked={formatPastedText} onCheckedChange={setFormatPastedText} />
+          <SelectRow id="indent-char" label="Indentation Character" description="Spaces or tabs" value={indentationChar} onValueChange={setIndentationChar}
+            options={[{ value: 'spaces', label: 'Spaces' }, { value: 'tabs', label: 'Tabs' }]} />
+          <div className="py-1.5">
+            <Label htmlFor="indent-size" className="text-xs font-medium">Indentation Size</Label>
+            <Input id="indent-size" type="number" value={indentationSize} onChange={(e) => setIndentationSize(e.target.value)} min="1" max="8" className="h-7 text-xs mt-1 w-16" />
+            <p className="text-[11px] text-muted-foreground mt-0.5">Columns per indent level</p>
+          </div>
+          <SettingRow id="code-intel" label="Code Intelligence" description="Autocomplete and hints" checked={codeIntelligence} onCheckedChange={setCodeIntelligence} />
+          <SettingRow id="semantic-tokens" label="Semantic Tokens" description="Enhanced syntax highlighting" checked={semanticTokens} onCheckedChange={setSemanticTokens} />
+          <div className="py-1.5">
+            <Label className="text-xs font-medium">Show Whitespace</Label>
+            <p className="text-[11px] text-muted-foreground mb-1">Make whitespace visible</p>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+              {[
+                { id: 'whitespace-leading', label: 'Leading', checked: showWhitespaceLeading, onChange: setShowWhitespaceLeading },
+                { id: 'whitespace-enclosed', label: 'Enclosed', checked: showWhitespaceEnclosed, onChange: setShowWhitespaceEnclosed },
+                { id: 'whitespace-trailing', label: 'Trailing', checked: showWhitespaceTrailing, onChange: setShowWhitespaceTrailing },
+                { id: 'whitespace-selected', label: 'Selected', checked: showWhitespaceSelected, onChange: setShowWhitespaceSelected },
+              ].map(w => (
+                <div key={w.id} className="flex items-center justify-between">
+                  <Label htmlFor={w.id} className="text-[11px] font-normal">{w.label}</Label>
+                  <Switch id={w.id} checked={w.checked} onCheckedChange={w.onChange} className="scale-75" />
+                </div>
+              ))}
             </div>
-            
-            <Separator />
-            
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <Label htmlFor="accept-commit">Accept Suggestion on Commit Character</Label>
-                <p className="text-[13px] text-muted-foreground">
-                  Controls whether suggestions should be accepted on commit characters.
-                </p>
-              </div>
-              <Switch
-                id="accept-commit"
-                checked={acceptOnCommitChar}
-                onCheckedChange={setAcceptOnCommitChar}
-              />
-            </div>
-            
-            <Separator />
-            
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <Label htmlFor="auto-brackets">Auto close brackets</Label>
-                <p className="text-[13px] text-muted-foreground">
-                  Controls whether the editor should automatically close brackets.
-                </p>
-              </div>
-              <Switch
-                id="auto-brackets"
-                checked={autoCloseBrackets}
-                onCheckedChange={setAutoCloseBrackets}
-              />
-            </div>
-            
-            <Separator />
-            
-            <div className="space-y-2">
-              <Label htmlFor="wrapping">Wrapping</Label>
-              <Select value={wrapping} onValueChange={setWrapping}>
-                <SelectTrigger id="wrapping">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="no_wrap">no wrap</SelectItem>
-                  <SelectItem value="soft_wrap">soft wrap</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-[13px] text-muted-foreground">
-                Change whether the editor wraps lines or not.
-              </p>
-            </div>
-            
-            <Separator />
-            
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <Label htmlFor="indent-detection">Indentation Detection</Label>
-                <p className="text-[13px] text-muted-foreground">
-                  Automatically detect indentation settings when opening a file.
-                </p>
-              </div>
-              <Switch
-                id="indent-detection"
-                checked={indentationDetection}
-                onCheckedChange={setIndentationDetection}
-              />
-            </div>
-            
-            <Separator />
-            
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <Label htmlFor="format-paste">Format Pasted Text Indentation</Label>
-                <p className="text-[13px] text-muted-foreground">
-                  Automatically format the indentation of pasted text.
-                </p>
-              </div>
-              <Switch
-                id="format-paste"
-                checked={formatPastedText}
-                onCheckedChange={setFormatPastedText}
-              />
-            </div>
-            
-            <Separator />
-            
-            <div className="space-y-2">
-              <Label htmlFor="indent-char">Indentation Character</Label>
-              <Select value={indentationChar} onValueChange={setIndentationChar}>
-                <SelectTrigger id="indent-char">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="spaces">spaces</SelectItem>
-                  <SelectItem value="tabs">tabs</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-[13px] text-muted-foreground">
-                The character used for indenting lines.
-              </p>
-            </div>
-            
-            <Separator />
-            
-            <div className="space-y-2">
-              <Label htmlFor="indent-size">Indentation Size</Label>
-              <Input
-                id="indent-size"
-                type="number"
-                value={indentationSize}
-                onChange={(e) => setIndentationSize(e.target.value)}
-                min="1"
-                max="8"
-              />
-              <p className="text-[13px] text-muted-foreground">
-                The number of columns taken up by an indentation level.
-              </p>
-            </div>
-            
-            <Separator />
-            
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <Label htmlFor="code-intel">Code Intelligence</Label>
-                <p className="text-[13px] text-muted-foreground">
-                  Code intelligence gives you autocomplete, as well as hints as you type.
-                </p>
-              </div>
-              <Switch
-                id="code-intel"
-                checked={codeIntelligence}
-                onCheckedChange={setCodeIntelligence}
-              />
-            </div>
-            
-            <Separator />
-            
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <Label htmlFor="semantic-tokens">Semantic Tokens</Label>
-                <p className="text-[13px] text-muted-foreground">
-                  Enables enhanced syntax highlighting from language servers.
-                </p>
-              </div>
-              <Switch
-                id="semantic-tokens"
-                checked={semanticTokens}
-                onCheckedChange={setSemanticTokens}
-              />
-            </div>
-            
-            <Separator />
-            
-            <div className="space-y-3">
-              <Label>Show Whitespace</Label>
-              <p className="text-[13px] text-muted-foreground mb-2">
-                Make whitespace characters visible, such as tabs and spaces.
-              </p>
-              
-              <div className="flex items-center justify-between">
-                <Label htmlFor="whitespace-leading" className="font-normal">Leading</Label>
-                <Switch
-                  id="whitespace-leading"
-                  checked={showWhitespaceLeading}
-                  onCheckedChange={setShowWhitespaceLeading}
-                />
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <Label htmlFor="whitespace-enclosed" className="font-normal">Enclosed</Label>
-                <Switch
-                  id="whitespace-enclosed"
-                  checked={showWhitespaceEnclosed}
-                  onCheckedChange={setShowWhitespaceEnclosed}
-                />
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <Label htmlFor="whitespace-trailing" className="font-normal">Trailing</Label>
-                <Switch
-                  id="whitespace-trailing"
-                  checked={showWhitespaceTrailing}
-                  onCheckedChange={setShowWhitespaceTrailing}
-                />
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <Label htmlFor="whitespace-selected" className="font-normal">Selected</Label>
-                <Switch
-                  id="whitespace-selected"
-                  checked={showWhitespaceSelected}
-                  onCheckedChange={setShowWhitespaceSelected}
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+          </div>
+        </Section>
 
-        {/* Advanced Developer Settings */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Settings2 className="h-5 w-5" />
-              Advanced Developer Settings
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="keybinds">Keybinds</Label>
-              <Select value={keybinds} onValueChange={setKeybinds}>
-                <SelectTrigger id="keybinds">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="default">default</SelectItem>
-                  <SelectItem value="vim">vim</SelectItem>
-                  <SelectItem value="emacs">emacs</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-[13px] text-muted-foreground">
-                Use another keyboard mapping
-              </p>
-            </div>
-            
-            <Separator />
-            
-            <div className="space-y-2">
-              <Label htmlFor="multiselect">Multiselect Modifier Key</Label>
-              <Select value={multiselectModifier} onValueChange={setMultiselectModifier}>
-                <SelectTrigger id="multiselect">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Alt">Alt</SelectItem>
-                  <SelectItem value="Ctrl">Ctrl</SelectItem>
-                  <SelectItem value="Cmd">Cmd</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-[13px] text-muted-foreground">
-                Modifier key for selecting multiple items in the filetree.
-              </p>
-            </div>
-            
-            <Separator />
-            
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <Label htmlFor="git-status">Filetree Git Status</Label>
-                <p className="text-[13px] text-muted-foreground">
-                  Show the Git status of files in the file tree.
-                </p>
-              </div>
-              <Switch
-                id="git-status"
-                checked={filetreeGitStatus}
-                onCheckedChange={setFiletreeGitStatus}
-              />
-            </div>
-            
-            <Separator />
-            
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <Label htmlFor="accessible-term">Accessible Terminal Output</Label>
-                <p className="text-[13px] text-muted-foreground">
-                  Enable this setting to use a screen reader. Warning: this can negatively affect performance.
-                </p>
-              </div>
-              <Switch
-                id="accessible-term"
-                checked={accessibleTerminal}
-                onCheckedChange={setAccessibleTerminal}
-              />
-            </div>
-            
-            <Separator />
-            
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <Label htmlFor="shell-bell">Shell Bell Audible Indicator</Label>
-                <p className="text-[13px] text-muted-foreground">
-                  Play sound in the Shell on issues like a failed tab completion.
-                </p>
-              </div>
-              <Switch
-                id="shell-bell"
-                checked={shellBellIndicator}
-                onCheckedChange={setShellBellIndicator}
-              />
-            </div>
-            
-            <Separator />
-            
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <Label htmlFor="shortcut-hint">Keyboard Shortcut Hint</Label>
-                <p className="text-[13px] text-muted-foreground">
-                  Show available shortcuts when pressing modifier keys (Cmd/Ctrl/Alt/Shift).
-                </p>
-              </div>
-              <Switch
-                id="shortcut-hint"
-                checked={keyboardShortcutHint}
-                onCheckedChange={(checked) => {
-                  setKeyboardShortcutHint(checked);
-                  localStorage.setItem('keyboard-shortcut-hint', String(checked));
-                  window.dispatchEvent(new CustomEvent('keyboard-settings-changed', {
-                    detail: {
-                      shortcutHint: String(checked),
-                      shortcutTester: localStorage.getItem('keyboard-shortcut-tester')
-                    }
-                  }));
-                }}
-              />
-            </div>
-            
-            <Separator />
-            
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <Label htmlFor="shortcut-tester">Keyboard Shortcut Tester</Label>
-                <p className="text-[13px] text-muted-foreground">
-                  Display last pressed keyboard shortcut (developer tool for debugging shortcuts).
-                </p>
-              </div>
-              <Switch
-                id="shortcut-tester"
-                checked={keyboardShortcutTester}
-                onCheckedChange={(checked) => {
-                  setKeyboardShortcutTester(checked);
-                  localStorage.setItem('keyboard-shortcut-tester', String(checked));
-                  window.dispatchEvent(new CustomEvent('keyboard-settings-changed', {
-                    detail: {
-                      shortcutHint: localStorage.getItem('keyboard-shortcut-hint'),
-                      shortcutTester: String(checked)
-                    }
-                  }));
-                }}
-              />
-            </div>
-          </CardContent>
-        </Card>
+        <Section icon={Settings2} title="Advanced">
+          <SelectRow id="keybinds" label="Keybinds" description="Keyboard mapping" value={keybinds} onValueChange={setKeybinds}
+            options={[{ value: 'default', label: 'Default' }, { value: 'vim', label: 'Vim' }, { value: 'emacs', label: 'Emacs' }]} />
+          <SelectRow id="multiselect" label="Multiselect Modifier" description="Key for multi-select in filetree" value={multiselectModifier} onValueChange={setMultiselectModifier}
+            options={[{ value: 'Alt', label: 'Alt' }, { value: 'Ctrl', label: 'Ctrl' }, { value: 'Cmd', label: 'Cmd' }]} />
+          <SettingRow id="git-status" label="Filetree Git Status" description="Show Git status in file tree" checked={filetreeGitStatus} onCheckedChange={setFiletreeGitStatus} />
+          <SettingRow id="accessible-term" label="Accessible Terminal" description="Screen reader support (may affect performance)" checked={accessibleTerminal} onCheckedChange={setAccessibleTerminal} />
+          <SettingRow id="shell-bell" label="Shell Bell Sound" description="Play sound on shell bell" checked={shellBellIndicator} onCheckedChange={setShellBellIndicator} />
+          <SettingRow id="shortcut-hint" label="Shortcut Hints" description="Show shortcuts on modifier press"
+            checked={keyboardShortcutHint}
+            onCheckedChange={(checked) => {
+              setKeyboardShortcutHint(checked);
+              localStorage.setItem('keyboard-shortcut-hint', String(checked));
+              window.dispatchEvent(new CustomEvent('keyboard-settings-changed', { detail: { shortcutHint: String(checked), shortcutTester: localStorage.getItem('keyboard-shortcut-tester') } }));
+            }} />
+          <SettingRow id="shortcut-tester" label="Shortcut Tester" description="Display last pressed shortcut (debug)"
+            checked={keyboardShortcutTester}
+            onCheckedChange={(checked) => {
+              setKeyboardShortcutTester(checked);
+              localStorage.setItem('keyboard-shortcut-tester', String(checked));
+              window.dispatchEvent(new CustomEvent('keyboard-settings-changed', { detail: { shortcutHint: localStorage.getItem('keyboard-shortcut-hint'), shortcutTester: String(checked) } }));
+            }} />
+        </Section>
       </div>
     </ScrollArea>
   );

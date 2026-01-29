@@ -182,11 +182,13 @@ const TopNavbar = ({
       
       {/* Settings Dialog */}
       <Dialog open={showSettings} onOpenChange={setShowSettings}>
-        <DialogContent className="max-w-4xl max-h-[90vh] p-0">
-          <DialogHeader className="px-6 pt-6 pb-0">
-            <DialogTitle>User Settings</DialogTitle>
+        <DialogContent className="max-w-2xl max-h-[80vh] p-0 flex flex-col overflow-hidden">
+          <DialogHeader className="px-4 pt-4 pb-2 shrink-0 border-b border-border">
+            <DialogTitle className="text-base">User Settings</DialogTitle>
           </DialogHeader>
-          <WorkspaceSettings />
+          <div className="flex-1 min-h-0 overflow-hidden">
+            <WorkspaceSettings />
+          </div>
         </DialogContent>
       </Dialog>
     </div>
