@@ -379,7 +379,7 @@ export class AuthRouter {
           });
         }
         
-        const user = await this.storage.getUser(userId);
+        const user = await this.storage.getUser(String(userId));
         if (!user) {
           return res.status(401).json({
             message: "User not found",
@@ -1022,8 +1022,8 @@ export class AuthRouter {
           );
           emailSent = true;
         } catch (emailError: any) {
-          console.error('[Email] Failed to send password reset email:', emailError);
           logger.error('Failed to send reset email', { message: emailError.message });
+          emailSent = false;
         }
 
         // Log reset request (emailSent tracked in metadata, response stays same to prevent enumeration)

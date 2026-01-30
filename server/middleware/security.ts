@@ -544,7 +544,7 @@ export const ipSecurity = {
     // SECURITY: Strict IP enforcement for Fortune 500 standards
     // No bypass even in development unless explicitly enabled with token
     if (process.env.NODE_ENV === 'development' && process.env.ALLOW_ALL_ADMIN_IPS === 'true') {
-      console.warn('⚠️  SECURITY WARNING: Admin IP whitelist bypassed in development mode');
+      logger.warn('⚠️  SECURITY WARNING: Admin IP whitelist bypassed in development mode');
       return true;
     }
     
