@@ -929,13 +929,15 @@ app.get('/api/cors-health', async (_req, res) => {
     console.warn('[WORKING SERVER] Database initialization failed (non-critical):', error.message);
   }
 
-  // Seed database with test user for E2E testing
-  try {
-    const { seedDatabase } = await import("./db-seed");
-    await seedDatabase();
-    console.log('✅ Test user seeded (testuser@test.com / testpass123)');
-  } catch (error) {
-    console.warn('[WORKING SERVER] Database seeding failed (non-critical):', error.message);
+  // Seed database with test user for E2E testing (development only)
+  if (process.env.NODE_ENV !== 'production') {
+    try {
+      const { seedDatabase } = await import("./db-seed");
+      await seedDatabase();
+      console.log('✅ Test user seeded (testuser@test.com / testpass123)');
+    } catch (error) {
+      console.warn('[WORKING SERVER] Database seeding failed (non-critical):', error.message);
+    }
   }
 
   // ✅ Initialize billing workers ONLY in production (reduces log spam + CPU in dev)
