@@ -14,10 +14,10 @@ build = ["sh", "-c", "npm ci --omit=dev && bash scripts/smart-build.sh"]
 # Health check configuration for Cloud Run
 [[deployment.healthCheck]]
 path = "/health/liveness"
-initialDelaySeconds = 30
-periodSeconds = 10
-timeoutSeconds = 5
-failureThreshold = 3
+initialDelaySeconds = 90
+periodSeconds = 15
+timeoutSeconds = 10
+failureThreshold = 5
 
 [workflows]
 runButton = "Project"
