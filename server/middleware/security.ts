@@ -16,7 +16,7 @@ import {
   outputEncoding,
   tokenSecurity
 } from '../utils/security';
-import { securityMonitoring } from '../services/security-monitoring';
+import { securityMonitoring as securityMonitoringService } from '../services/security-monitoring';
 
 const logger = createLogger('security');
 
@@ -81,7 +81,7 @@ const productionCSPDirectives: CSPDirectives = {
     "https://*.googleapis.com"
   ],
   upgradeInsecureRequests: [],
-  reportUri: '/api/security/csp-report'
+  reportUri: ['/api/security/csp-report']
 };
 
 // DEVELOPMENT CSP: More permissive for rapid development
@@ -119,7 +119,7 @@ const developmentCSPDirectives: CSPDirectives = {
     "https://api.anthropic.com",
     "https://*.googleapis.com"
   ],
-  reportUri: '/api/security/csp-report'
+  reportUri: ['/api/security/csp-report']
 };
 
 /**
@@ -225,6 +225,7 @@ export const securityMiddleware = (): RequestHandler[] => {
   middlewares.push(applyCSP);
 
   // 3. Enhanced Helmet configuration (CSP handled separately)
+  // Note: Helmet v8+ removed deprecated options: expectCt, ieNoOpen, xssFilter
   middlewares.push(helmet({
     contentSecurityPolicy: false, // We handle CSP ourselves for nonce support
     crossOriginEmbedderPolicy: isProduction,
@@ -237,17 +238,11 @@ export const securityMiddleware = (): RequestHandler[] => {
       preload: true
     },
     dnsPrefetchControl: { allow: false },
-    expectCt: {
-      maxAge: 86400,
-      enforce: true
-    },
-    frameguard: { action: 'deny' },
-    hidePoweredBy: true,
-    ieNoOpen: true,
-    noSniff: true,
-    permittedCrossDomainPolicies: false,
+    xFrameOptions: { action: 'deny' },
+    xPoweredBy: false,
+    xContentTypeOptions: true,
     referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
-    xssFilter: true
+    xPermittedCrossDomainPolicies: { permittedPolicies: 'none' }
   }));
 
   // Enhanced security headers
@@ -296,7 +291,7 @@ export const securityMiddleware = (): RequestHandler[] => {
     // Add request ID for tracing
     const requestId = crypto.randomBytes(16).toString('hex');
     res.setHeader('X-Request-ID', requestId);
-    req['requestId'] = requestId;
+    (req as any).requestId = requestId;
     
     next();
   });
@@ -562,7 +557,7 @@ export const ipSecurity = {
 
   // Middleware
   middleware: (req: Request, res: Response, next: NextFunction) => {
-    const clientIp = req.ip;
+    const clientIp = req.ip || req.socket?.remoteAddress || 'unknown';
 
     if (ipSecurity.blacklist.has(clientIp)) {
       logger.warn('Blocked IP attempted access', { ip: clientIp });
