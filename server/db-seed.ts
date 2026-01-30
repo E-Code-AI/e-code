@@ -32,6 +32,12 @@ async function hashPassword(password: string) {
 
 // Seed database with test user and test projects
 export async function seedDatabase() {
+  // SECURITY: Block test user creation in production to prevent security risks
+  if (isProduction) {
+    logger.info('[DB Seed] Skipping test user seed in production environment');
+    return;
+  }
+  
   try {
     // Check if test user already exists
     let testUser = await storage.getUserByUsername("testuser");

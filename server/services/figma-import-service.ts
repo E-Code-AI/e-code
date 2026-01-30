@@ -223,22 +223,25 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         });
         
         if (!response.ok) {
-          logger.warn(`Figma API request failed: ${response.status}, falling back to demo data`);
-          return this.getMockFigmaFile();
+          const errorMsg = `Figma API request failed with status ${response.status}. Please verify your Figma token is valid.`;
+          logger.error(errorMsg);
+          throw new Error(errorMsg);
         }
         
         const data = await response.json();
         logger.info(`Successfully fetched Figma file: ${fileKey}`);
         return data as FigmaFile;
       } catch (error) {
-        logger.error(`Figma API error: ${error}, falling back to demo data`);
-        return this.getMockFigmaFile();
+        const errorMsg = `Figma API error: ${error instanceof Error ? error.message : 'Unknown error'}`;
+        logger.error(errorMsg);
+        throw new Error(errorMsg);
       }
     }
     
-    // Fallback to demo data if no API key configured
-    logger.info('Using demo Figma data (no API key configured)');
-    return this.getMockFigmaFile();
+    // No API key configured - throw clear error
+    const errorMsg = 'Figma API key not configured. Please add your Figma token in Settings > Integrations.';
+    logger.error(errorMsg);
+    throw new Error(errorMsg);
   }
 
   private getMockFigmaFile(): FigmaFile {

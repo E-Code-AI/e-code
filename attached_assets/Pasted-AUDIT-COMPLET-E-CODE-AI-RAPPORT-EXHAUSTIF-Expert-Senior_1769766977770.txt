@@ -1,0 +1,636 @@
+AUDIT COMPLET E-CODE.AI — RAPPORT EXHAUSTIF
+Expert Senior Engineer — 40 ans d'expérience
+Plateforme : E-Code.ai (Clone Replit)
+Domaine : https://e-code.ai / https://replit-clone-henri45.replit.app
+Date : 30 janvier 2026
+Fichiers analysés : 5,901 fichiers | 76,074+ lignes de code serveur | 879 fichiers frontend
+Scope : Backend, Frontend, Mobile, Desktop, DevOps, Sécurité, Production
+
+TABLE DES MATIÈRES
+BACKEND — Erreurs & Incomplétions
+FRONTEND — UI/UX Web
+RESPONSIVE — Mobile & Tablet Web
+APPLICATION MOBILE (React Native/Expo)
+APPLICATION DESKTOP (Electron)
+SÉCURITÉ
+DÉPLOIEMENT & PRODUCTION
+FEATURES MANQUANTES vs REPLIT
+BASE DE DONNÉES
+PERFORMANCE & SCALABILITÉ
+1. BACKEND — Erreurs & Incomplétions <a name="1-backend"></a>
+PROBLÈME B-01 : Web Search Agent retourne un stub
+Fichier : server/agent/tool-executor.ts:777
+Détail : La fonctionnalité de recherche web de l'agent AI retourne un stub au lieu d'un vrai résultat.
+Solution : Intégrer l'API Tavily (déjà dans les dépendances) ou SerpAPI. Implémenter la méthode executeWebSearch() avec un vrai appel HTTP, parsing des résultats, et formatage pour l'agent.
+
+PROBLÈME B-02 : Deployment Manager — stubs pour regional deployment et monitoring
+Fichier : server/services/deployment-manager.ts:568 et :634
+Détail : Les méthodes de déploiement régional et setup monitoring sont des stubs vides.
+Solution : Implémenter le déploiement multi-région avec sélection de zone (Cloudflare Workers, AWS Lambda@Edge ou Fly.io regions). Pour le monitoring, connecter Prometheus/Grafana ou Datadog via leur SDK déjà installé.
+
+PROBLÈME B-03 : JSON.parse() sans try-catch dans plusieurs services
+Fichiers : server/services/project-context.ts, server/services/repo-overview-service.ts, server/services/advanced-ai-service.ts
+Détail : JSON.parse() peut lancer une SyntaxError si le JSON est invalide, crashant le processus.
+Solution : Envelopper chaque JSON.parse() dans un try-catch ou créer un utilitaire safeJsonParse(str, fallback) :
+
+function safeJsonParse<T>(str: string, fallback: T): T {
+  try { return JSON.parse(str); } catch { return fallback; }
+}
+
+PROBLÈME B-04 : Bug documenté dans AI Usage Tracker
+Fichier : server/middleware/ai-usage-tracker.ts
+Détail : Commentaire "Bug: body.model type mismatch" — le type du modèle dans le body ne correspond pas au type attendu.
+Solution : Ajouter une validation Zod du champ model dans le middleware. S'assurer que le type est normalisé (string) avant d'être passé au tracker :
+
+const model = typeof req.body?.model === 'string' ? req.body.model : String(req.body?.model ?? 'unknown');
+
+PROBLÈME B-05 : Sessions agent bloquées en état "planning"
+Fichier : server/services/agent-orchestrator.service.ts:1657
+Détail : Commentaire "BUG: Sessions were stuck in 'planning' because this method never updated workflowStatus". Le fix est documenté mais vérifier qu'il est complet.
+Solution : Vérifier que chaque transition d'état (planning → executing → completed/failed) est systématiquement mise à jour dans la DB ET émise via WebSocket. Ajouter un timeout watchdog (ex: 5min max en planning) qui force la transition vers failed.
+
+PROBLÈME B-06 : Cron scheduling non implémenté dans le task scheduler distribué
+Fichier : server/distributed/task-scheduler.ts:161
+Détail : logger.info('Cron scheduling not yet implemented for task ${taskId}') — les tâches planifiées ne fonctionnent pas.
+Solution : Intégrer node-cron ou bull (déjà utilisé pour les queues) pour le scheduling. Implémenter scheduleCronTask(taskId, cronExpression, handler).
+
+PROBLÈME B-07 : Cluster Manager — découverte et consensus non implémentés
+Fichier : server/distributed/cluster-manager.ts:291 et :332
+Détail : "Implement UDP broadcast for node discovery" et "Implement Raft consensus for leader election" sont des commentaires sans implémentation.
+Solution : Pour un déploiement Replit VM unique, ce n'est pas bloquant. Pour le scaling horizontal, implémenter via Redis Pub/Sub pour la découverte et redlock pour l'élection de leader (plus simple que Raft).
+
+PROBLÈME B-08 : Figma Import utilise des données mock en fallback
+Fichier : server/services/figma-import-service.ts:227
+Détail : Quand l'API Figma échoue, la méthode retourne getMockFigmaFile() — l'utilisateur reçoit de fausses données.
+Solution : Retourner une erreur claire au lieu du mock : throw new AppError(502, 'Figma API unavailable. Please check your Figma token and try again.'). Supprimer la méthode getMockFigmaFile().
+
+PROBLÈME B-09 : Object Storage — endpoints hardcodés sans variable d'environnement
+Fichiers : server/objectStorage.ts et server/services/real-object-storage.ts
+Détail : const REPLIT_SIDECAR_ENDPOINT = "http://127.0.0.1:1106" est hardcodé sans fallback vers process.env.
+Solution : Remplacer par :
+
+const REPLIT_SIDECAR_ENDPOINT = process.env.REPLIT_SIDECAR_ENDPOINT || "http://127.0.0.1:1106";
+
+Et s'assurer que REPLIT_SIDECAR_ENDPOINT est documenté dans .env.example.
+
+PROBLÈME B-10 : Secrets auto-générés ne persistent pas entre redémarrages sur Replit
+Fichier : server/utils/secrets-manager.ts
+Détail : Quand JWT_SECRET ou SESSION_SECRET manquent, ils sont générés avec crypto.randomBytes(32). Mais au prochain redémarrage, de nouveaux secrets sont générés → toutes les sessions existantes deviennent invalides.
+Solution : Stocker les secrets générés dans la base de données (table system_config) ou dans Replit Secrets via l'API. Au démarrage, vérifier d'abord la DB avant de régénérer.
+
+PROBLÈME B-11 : Placeholder dans storage.ts pour les likes de projets
+Fichier : server/storage.ts:2733 et :2748
+Détail : "Placeholder - would use a project_likes table" — les likes ne sont pas réellement persistés.
+Solution : Créer la table project_likes dans le schéma Drizzle :
+
+export const projectLikes = pgTable('project_likes', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  projectId: uuid('project_id').references(() => projects.id),
+  userId: integer('user_id').references(() => users.id),
+  createdAt: timestamp('created_at').defaultNow(),
+}, (table) => ({ unique: uniqueIndex().on(table.projectId, table.userId) }));
+
+PROBLÈME B-12 : Web Import Service retourne un placeholder
+Fichier : server/tools/web-import-service.ts:220
+Détail : "For now, return a placeholder" — l'import de sites web ne fonctionne pas réellement.
+Solution : Implémenter avec puppeteer ou playwright pour scraper le site, extraire le HTML/CSS/JS, et les convertir en fichiers de projet. Ou utiliser une API comme web.scraper.workers.dev.
+
+PROBLÈME B-13 : Services Python ML et Go Runtime en mode mock
+Fichiers : services/python-ml/server.js:10 et services/go-runtime/server.js:22
+Détail : Ces runtimes ne sont que des serveurs Express qui retournent des messages mock. Le vrai support Python/Go n'est pas implémenté.
+Solution : Pour une vraie exécution :
+
+Python : Utiliser Docker avec une image Python, exécuter via child_process.spawn('docker', ['run', '--rm', '-v', ...]) ou un sandbox comme Pyodide (WASM).
+Go : Même approche Docker avec image Go, ou compilation WASM avec TinyGo.
+PROBLÈME B-14 : Load Testing Service utilise des mock WebSocket connections
+Fichier : server/services/load-testing.service.ts:216 et :305
+Détail : createMockWebSocketConnection() — les tests de charge ne testent pas de vraies connexions.
+Solution : Remplacer par de vraies connexions WebSocket via la librairie ws déjà installée. Ou utiliser artillery ou k6 pour le load testing en externe.
+
+PROBLÈME B-15 : SendGrid email en mode mock
+Fichier : server/utils/sendgrid-email-service.ts:273 et :326
+Détail : En mode test, les emails sont mockés et non envoyés.
+Solution : C'est normal pour le test, mais s'assurer qu'en production NODE_ENV=production et SENDGRID_API_KEY sont définis. Ajouter un check au démarrage qui log un warning si le service email est en mode mock en production.
+
+PROBLÈME B-16 : docker-entrypoint.sh utilise --force pour les migrations
+Fichier : docker-entrypoint.sh:16
+Détail : npm run db:push --force peut appliquer des changements destructifs (drop columns, etc.) sans confirmation.
+Solution : Séparer le processus :
+
+En dev : db:push --force acceptable
+En production : utiliser drizzle-kit generate + drizzle-kit migrate avec des fichiers de migration versionnés et revue manuelle.
+PROBLÈME B-17 : Validation d'input manquante sur certaines routes
+Détail : Certaines routes accèdent directement à req.body / req.params sans middleware de validation Zod.
+Solution : Auditer chaque route et ajouter validateBody(schema) et validateParams(schema) systématiquement. Créer un script d'audit :
+
+grep -rn "req.body\." server/routes/ | grep -v "validate"
+
+2. FRONTEND — UI/UX Web <a name="2-frontend"></a>
+PROBLÈME F-01 : Pas d'IntelliSense / Autocomplete dans l'éditeur de code
+Détail : L'éditeur utilise CodeMirror 6 mais aucune intégration LSP (Language Server Protocol) n'est visible. Replit offre l'autocomplete intelligent.
+Solution : Intégrer le LSP client dans CodeMirror via @codemirror/autocomplete et connecter à un serveur LSP (TypeScript: typescript-language-server, Python: pyright). Communication via WebSocket.
+
+PROBLÈME F-02 : Pas de highlighting d'erreurs syntaxiques en temps réel
+Détail : Aucun linting en temps réel visible dans l'éditeur.
+Solution : Intégrer @codemirror/lint avec des linters par langage. Pour TypeScript, utiliser le compilateur TS en WebWorker. Pour Python, utiliser Pyflakes via WASM.
+
+PROBLÈME F-03 : Debugger UI incomplet
+Fichier : client/src/components/ide/ReplitDebuggerPanel.tsx
+Détail : Le panel existe mais pas de gestion de breakpoints, watch expressions, ou call stack.
+Solution : Implémenter le DAP (Debug Adapter Protocol) :
+
+Ajouter breakpointStore avec positions fichier:ligne
+UI pour ajouter/supprimer breakpoints (clic sur la marge de l'éditeur)
+Panel Watch avec évaluation d'expressions
+Panel Call Stack avec navigation
+Contrôles Step In/Over/Out/Continue
+PROBLÈME F-04 : Pas d'intégration de test runner dans l'UI
+Fichier : client/src/components/ide/ReplitTestingPanel.tsx
+Détail : Le panel testing existe mais aucune connexion à un vrai test runner (Jest, Vitest, pytest).
+Solution : Créer un service backend qui détecte le test framework du projet, exécute les tests via terminal, parse la sortie (TAP, JUnit XML), et stream les résultats via WebSocket au panel frontend.
+
+PROBLÈME F-05 : Code Coverage panel minimal
+Fichier : client/src/components/ide/CoverageInsightsPanel.tsx
+Détail : Aucune collecte de données de couverture réelle.
+Solution : Après exécution des tests avec --coverage, parser le rapport coverage/lcov.info, l'envoyer au frontend, et afficher les lignes couvertes/non-couvertes dans l'éditeur avec des marqueurs ColorMirror.
+
+PROBLÈME F-06 : Git panel — fonctionnalités avancées manquantes
+Fichier : client/src/components/ide/ReplitGitPanel.tsx
+Détail : Pas de UI pour :
+
+Gestion de branches (create, switch, delete)
+Visualisation/résolution de conflits de merge
+Historique de commits avec diff
+Intégration Pull Request GitHub
+Solution : Implémenter chaque fonctionnalité :
+Branch selector dropdown avec boutons create/delete
+Diff viewer (3-way merge) avec diff3
+Commit log avec pagination et diff inline
+PR panel avec API GitHub (gh CLI ou API REST)
+PROBLÈME F-07 : Admin Log Viewer est un placeholder
+Fichier : client/src/pages/AdminDashboard.tsx:467
+Détail : "Log viewer interface coming soon. Check server logs for now."
+Solution : Créer un composant LogViewer qui :
+
+Se connecte via WebSocket au stream de logs Winston
+Affiche les logs avec filtrage par niveau (error, warn, info, debug)
+Supporte la recherche full-text
+Auto-scroll avec pause au scroll up
+PROBLÈME F-08 : Database Browser/Panel incomplet
+Fichier : client/src/components/ide/ReplitDatabasePanel.tsx
+Détail : "Database panel coming soon" — pas de visualisation du schéma, pas de query editor.
+Solution :
+
+Créer un schema visualizer (diagramme ER) avec reactflow
+Query editor avec CodeMirror (mode SQL)
+Table browser avec pagination (AG Grid déjà intégré)
+Migration history viewer
+PROBLÈME F-09 : Fichiers audio de notification sont des placeholders vides (0 bytes)
+Fichier : client/src/hooks/use-agent-audio-notifications.ts:11
+Détail : "The current MP3 files are placeholders (0 bytes)"
+Solution : Remplacer par de vrais fichiers audio. Utiliser des sons libres de droits (ex: notification-sound.mp3 depuis freesound.org). Taille recommandée : < 50KB par son.
+
+PROBLÈME F-10 : Pas de loading skeleton pour les opérations de fichiers
+Détail : Quand on crée, supprime ou renomme un fichier dans le file explorer, il n'y a pas de feedback visuel pendant l'opération.
+Solution : Ajouter un optimistic update avec rollback :
+
+// Optimistic: ajouter immédiatement au state
+setFiles(prev => [...prev, newFile]);
+try {
+  await api.createFile(newFile);
+} catch {
+  // Rollback on error
+  setFiles(prev => prev.filter(f => f.id !== newFile.id));
+  toast.error('Failed to create file');
+}
+
+PROBLÈME F-11 : Mélange éditeurs CM6 et Monaco — incohérence
+Fichiers : client/src/components/editor/CM6Editor.tsx et client/src/components/ide/ReplitMonacoEditor.tsx
+Détail : Deux éditeurs différents coexistent, créant de la confusion et du code dupliqué.
+Solution : Choisir UN seul éditeur et standardiser. Recommandation : garder CodeMirror 6 (plus léger, meilleure intégration mobile) et supprimer Monaco. Ou garder Monaco (meilleur IntelliSense natif) et migrer CM6 vers Monaco.
+
+PROBLÈME F-12 : Gestion de la déconnexion WebSocket insuffisante
+Détail : Quand le WebSocket se déconnecte, le feedback utilisateur est limité. Pas de banner persistant "Reconnecting...".
+Solution : Utiliser le ConnectionStatusProvider existant pour afficher un banner fixe en haut de l'IDE quand la connexion est perdue :
+
+{!isConnected && (
+  <div className="bg-yellow-500 text-black text-center py-1 text-sm">
+    Connection lost. Reconnecting...
+  </div>
+)}
+
+PROBLÈME F-13 : Pas de confirmation de suppression pour les fichiers/projets
+Détail : Les actions destructives (delete file, delete project) manquent de dialogue de confirmation cohérent.
+Solution : Ajouter un AlertDialog (shadcn/ui déjà disponible) avant chaque opération destructive avec le nom de l'élément et un avertissement clair.
+
+PROBLÈME F-14 : Multi-Factor Authentication absent de l'UI
+Détail : Le backend supporte 2FA (TOTP) mais aucun composant frontend ne permet de l'activer/gérer.
+Solution : Créer une page Settings > Security avec :
+
+Bouton "Enable 2FA"
+Affichage QR code (via qrcode npm)
+Input pour le code de vérification
+Liste de recovery codes
+Bouton "Disable 2FA"
+PROBLÈME F-15 : Password Reset flow non visible dans l'UI
+Détail : Le backend a les routes /api/auth/forgot-password et /api/auth/reset-password mais aucune page frontend correspondante.
+Solution : Créer deux pages :
+
+/forgot-password — formulaire avec champ email, bouton "Send Reset Link"
+/reset-password?token=xxx — formulaire nouveau mot de passe avec validation
+PROBLÈME F-16 : Token refresh pas géré côté client
+Détail : Pas de mécanisme visible de refresh automatique du JWT avant expiration.
+Solution : Implémenter un interceptor dans le client API :
+
+api.interceptors.response.use(null, async (error) => {
+  if (error.response?.status === 401 && !error.config._retry) {
+    error.config._retry = true;
+    const { token } = await api.post('/api/auth/refresh');
+    error.config.headers.Authorization = `Bearer ${token}`;
+    return api(error.config);
+  }
+  throw error;
+});
+
+PROBLÈME F-17 : Session timeout non géré dans le frontend
+Détail : Quand la session expire (30 min), l'utilisateur n'est pas redirigé vers le login.
+Solution : Ajouter un listener sur les réponses 401 qui redirige vers /login avec un message "Session expired. Please log in again."
+
+PROBLÈME F-18 : Custom Roles — "User role management coming soon"
+Fichier : client/src/pages/CustomRoles.tsx:351
+Solution : Implémenter le CRUD des rôles personnalisés : créer, modifier, supprimer des rôles avec permissions granulaires (read, write, admin, deploy, billing).
+
+PROBLÈME F-19 : Team Activity — "Activity tracking coming soon"
+Fichier : client/src/pages/TeamPage.tsx:620
+Solution : Créer un feed d'activité d'équipe basé sur la table audit_logs. Afficher les dernières actions (commits, deploys, file changes) avec avatars et timestamps.
+
+PROBLÈME F-20 : Profile Activity — "Full activity timeline coming soon"
+Fichier : client/src/pages/Profile.tsx:440
+Solution : Requêter les audit_logs filtrés par userId et afficher une timeline avec icônes par type d'action.
+
+PROBLÈME F-21 : SSO User Management — "SSO user management coming soon"
+Fichier : client/src/pages/SSOConfiguration.tsx:300
+Solution : Implémenter la liste des utilisateurs SSO avec leur provider, date de dernière connexion, et actions (révoquer, réinitialiser).
+
+PROBLÈME F-22 : Referral Program — "Referral program coming soon!"
+Fichier : client/src/pages/ReferralsPage.tsx:167
+Solution : Implémenter le système de parrainage :
+
+Générer un code unique par utilisateur
+Tracker les inscriptions via ce code
+Créditer des récompenses (crédits gratuits ou réduction)
+Afficher les stats de parrainage
+PROBLÈME F-23 : Bolt Import — "Coming Soon"
+Fichier : client/src/pages/BoltImport.tsx:24-35
+Solution : Implémenter l'import depuis Bolt.new :
+
+Demander l'URL du projet Bolt
+Cloner les fichiers via API ou scraping
+Adapter la structure au format E-Code
+PROBLÈME F-24 : ChatGPT Admin — Git et Database tabs "coming soon"
+Fichier : client/src/pages/ChatGPTAdmin.tsx:980-992
+Solution : Implémenter les onglets Git (historique de commits de l'admin) et Database (vue admin des tables, stats, queries lentes).
+
+PROBLÈME F-25 : Compare Page — "Demo video coming soon"
+Fichier : client/src/pages/compare/ComparePage.tsx:706
+Solution : Créer ou enregistrer une vidéo démo de la plateforme et la remplacer par un vrai <video> ou embed YouTube.
+
+3. RESPONSIVE — Mobile & Tablet Web <a name="3-responsive"></a>
+PROBLÈME R-01 : Touch targets parfois trop petits
+Détail : Les WCAG requièrent un minimum de 44x44px pour les cibles tactiles. Certains boutons de l'IDE (tabs, actions du file explorer) sont plus petits.
+Solution : Auditer tous les boutons interactifs et s'assurer d'un min-height: 44px; min-width: 44px sur mobile. Utiliser le hook useIsMobile() pour augmenter la taille des cibles sur petit écran.
+
+PROBLÈME R-02 : Pas de layout optimisé spécifique pour tablette
+Détail : La plupart des composants ont un mode "mobile" et un mode "desktop" mais pas de mode intermédiaire pour les tablettes (768-1024px).
+Solution : Ajouter un breakpoint tablette dans le design system :
+
+@media (min-width: 768px) and (max-width: 1024px) {
+  /* Layout tablette : side panel réduit + éditeur plein écran */
+}
+
+PROBLÈME R-03 : Valeurs en pixels hardcodées dans certains styles mobiles
+Détail : Certains composants utilisent des valeurs en px fixes au lieu de valeurs relatives.
+Solution : Remplacer les px par des rem ou des classes Tailwind responsive (w-full, max-w-screen-sm, etc.).
+
+PROBLÈME R-04 : Orientation paysage sur téléphone — edge cases
+Détail : Le hook useIsMobile() utilise height < 500px pour détecter le paysage, ce qui peut causer des faux positifs sur certains appareils.
+Solution : Utiliser screen.orientation?.type en complément :
+
+const isLandscapePhone = isMobile && window.innerHeight < window.innerWidth;
+
+PROBLÈME R-05 : RTL (Right-to-Left) non supporté
+Détail : Aucun support pour les langues RTL (arabe, hébreu) — important pour l'internationalisation.
+Solution : Ajouter dir="auto" sur le <html> tag. Utiliser les propriétés CSS logiques (margin-inline-start au lieu de margin-left). Tailwind a un plugin RTL.
+
+4. APPLICATION MOBILE (React Native / Expo) <a name="4-mobile"></a>
+PROBLÈME M-01 : Dépendances non installées
+Fichier : mobile/package.json
+Détail : node_modules absent — l'app ne peut pas être buildée.
+Solution :
+
+cd mobile && npm install
+
+PROBLÈME M-02 : EAS CLI non installé
+Détail : Nécessaire pour les builds iOS/Android.
+Solution :
+
+npm install -g eas-cli
+eas login
+
+PROBLÈME M-03 : google-services.json manquant pour Firebase (Android)
+Détail : Les notifications push Android nécessitent ce fichier.
+Solution :
+
+Aller sur Firebase Console → Project Settings
+Ajouter une app Android avec le package com.ecode.mobile
+Télécharger google-services.json
+Le placer dans mobile/
+L'ajouter dans app.config.js :
+android: { googleServicesFile: './google-services.json' }
+
+PROBLÈME M-04 : Certificats iOS non configurés
+Détail : Requis pour la publication sur l'App Store.
+Solution :
+
+Créer un compte Apple Developer ($99/an)
+Configurer via EAS : eas credentials
+EAS gère automatiquement les provisioning profiles
+PROBLÈME M-05 : Android Keystore non créé
+Détail : Requis pour signer l'APK/AAB de production.
+Solution : EAS le génère automatiquement lors du premier build :
+
+eas build --platform android --profile production
+
+PROBLÈME M-06 : Edit Profile — "Coming Soon" alert
+Fichier : mobile/src/screens/SettingsScreen.tsx:259
+Solution : Implémenter la navigation vers ProfileScreen avec édition :
+
+onPress={() => navigation.navigate('Profile')}
+
+PROBLÈME M-07 : Change Password — "Coming Soon" alert
+Fichier : mobile/src/screens/SettingsScreen.tsx:267
+Solution : Créer un ChangePasswordScreen avec :
+
+Champ mot de passe actuel
+Champ nouveau mot de passe
+Champ confirmation
+Appel API POST /api/auth/change-password
+PROBLÈME M-08 : Change Avatar — "Coming Soon" alert
+Fichier : mobile/src/screens/ProfileScreen.tsx:52
+Solution : Intégrer expo-image-picker :
+
+import * as ImagePicker from 'expo-image-picker';
+const result = await ImagePicker.launchImageLibraryAsync({ allowsEditing: true, aspect: [1, 1] });
+if (!result.canceled) await api.uploadAvatar(result.assets[0].uri);
+
+PROBLÈME M-09 : ErrorBoundary mobile — TODO log to Sentry
+Fichier : mobile/src/components/ErrorBoundary.tsx:33
+Détail : // TODO: Log to error reporting service (Sentry, etc.)
+Solution :
+
+import * as Sentry from '@sentry/react-native';
+componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  Sentry.captureException(error, { extra: errorInfo });
+}
+
+PROBLÈME M-10 : Variable d'environnement API_BASE requise
+Détail : EXPO_PUBLIC_API_BASE doit être configuré pour pointer vers le bon serveur.
+Solution : Créer un fichier .env dans /mobile/ :
+
+EXPO_PUBLIC_API_BASE=https://e-code.ai
+
+5. APPLICATION DESKTOP (Electron) <a name="5-desktop"></a>
+PROBLÈME D-01 : Dépendances non installées
+Fichier : desktop/package.json
+Solution :
+
+cd desktop && npm install
+
+PROBLÈME D-02 : Build du renderer (React) non configuré
+Détail : Le main process charge renderer/index.html mais le dossier renderer/ doit contenir la build Vite du client web.
+Solution : Ajouter un script de build dans desktop/package.json :
+
+"build:renderer": "cd ../client && npm run build -- --outDir=../desktop/renderer",
+"build": "npm run build:renderer && electron-builder"
+
+PROBLÈME D-03 : Code Signing — certificats non configurés
+Détail : Les variables APPLE_TEAM_ID, CSC_LINK, WIN_CSC_LINK sont des placeholders.
+Solution :
+
+macOS : Obtenir un Apple Developer Certificate, exporter en .p12, définir CSC_LINK et CSC_KEY_PASSWORD
+Windows : Obtenir un certificat code signing (DigiCert, Sectigo), même processus
+Linux : Pas de signing requis pour AppImage
+PROBLÈME D-04 : Auto-Update URL non configuré
+Fichier : desktop/main.js
+Détail : L'auto-updater utilise GitHub Releases par défaut mais peut être personnalisé via UPDATE_SERVER_URL.
+Solution : Créer un repo GitHub pour les releases desktop, ou configurer un serveur de mise à jour privé. Publier avec :
+
+GH_TOKEN=xxx npm run publish
+
+PROBLÈME D-05 : Extension deactivate() vide
+Fichiers : github-copilot-extension/src/extension.ts:520 et vscode-extension/src/extension.ts:407
+Détail : export function deactivate() {} — aucun cleanup.
+Solution : Ajouter le cleanup des disposables, listeners, et connexions :
+
+export function deactivate() {
+  disposables.forEach(d => d.dispose());
+  webSocket?.close();
+}
+
+6. SÉCURITÉ <a name="6-securite"></a>
+PROBLÈME S-01 : CSP utilise 'unsafe-inline' pour les styles
+Fichier : nginx.conf:75
+Détail : TODO dans le fichier : "Replace 'unsafe-inline' with nonces or hashes in styles"
+Solution : Implémenter des nonces pour les styles :
+
+Générer un nonce côté serveur : crypto.randomBytes(16).toString('base64')
+L'injecter dans le HTML : <style nonce="xxx">
+Le mettre dans le header CSP : style-src 'nonce-xxx'
+PROBLÈME S-02 : Clés Stripe de test exposées dans .replit
+Fichier : .replit:82-83
+Détail : TESTING_STRIPE_SECRET_KEY = "sk_test_51QPg0B..." visible en clair.
+Solution : Déplacer vers Replit Secrets (UI Replit → Secrets tab). Même si ce sont des clés de test, c'est une mauvaise pratique.
+
+PROBLÈME S-03 : dangerouslySetInnerHTML utilisé dans plusieurs composants
+Fichiers : AnimatedPlatformDemo.tsx, ConsolePanel.tsx, et 3+ autres
+Détail : Bien que protégé par DOMPurify, l'utilisation de dangerouslySetInnerHTML reste un vecteur XSS potentiel.
+Solution : Migrer vers des composants React purs. Pour le markdown, utiliser react-markdown (déjà installé). Pour le HTML dynamique, utiliser un parser comme html-react-parser avec sanitization.
+
+PROBLÈME S-04 : Dev fallback secrets hardcodés
+Fichier : server/utils/secrets-manager.ts:36-40
+Détail :
+
+JWT_SECRET: 'dev-only-jwt-secret-do-not-use-in-prod'
+
+Solution : Vérifier que ces fallbacks sont IMPOSSIBLE à atteindre en production. Ajouter un check :
+
+if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
+  throw new Error('JWT_SECRET is required in production');
+}
+
+PROBLÈME S-05 : Test user dans le seed de la DB
+Fichier : server/db-seed.ts
+Détail : testuser@test.com / testpass123 seedé en dev.
+Solution : S'assurer que le seed ne s'exécute JAMAIS en production. Ajouter en première ligne :
+
+if (process.env.NODE_ENV === 'production') {
+  throw new Error('DB seed cannot run in production');
+}
+
+PROBLÈME S-06 : Webhook CSRF exclusion sans protection alternative
+Détail : Les webhooks (Stripe, GitHub) sont exclus du middleware CSRF mais n'ont pas de vérification HMAC systématique.
+Solution : Pour chaque webhook endpoint :
+
+const signature = req.headers['stripe-signature'];
+const event = stripe.webhooks.constructEvent(req.body, signature, endpointSecret);
+
+7. DÉPLOIEMENT & PRODUCTION <a name="7-deploiement"></a>
+PROBLÈME P-01 : Domaine hardcodé dans le script de déploiement
+Fichier : scripts/deploy-production.sh:157
+Détail : server_name e-code.ai www.e-code.ai; hardcodé.
+Solution : Utiliser une variable d'environnement :
+
+server_name ${DOMAIN:-e-code.ai} www.${DOMAIN:-e-code.ai};
+
+PROBLÈME P-02 : Username DB hardcodé dans le script de backup
+Fichier : deploy.sh:151
+Détail : docker exec ecode-postgres pg_dump -U ecode ecode
+Solution : Utiliser des variables :
+
+docker exec ${DB_CONTAINER:-ecode-postgres} pg_dump -U ${PGUSER:-ecode} ${PGDATABASE:-ecode}
+
+PROBLÈME P-03 : ESLint config référence un fichier problématique
+Fichier : eslint.config.mjs:33
+Détail : "Known problematic file (TODO: fix this file)"
+Solution : Identifier le fichier problématique, le corriger, et supprimer l'exclusion.
+
+PROBLÈME P-04 : Nginx — unsafe-inline dans le style-src du CSP
+Fichier : nginx.conf:74
+Détail : TODO explicite dans le fichier.
+Solution : Voir S-01 ci-dessus.
+
+PROBLÈME P-05 : Pas de stratégie de backup automatisé
+Détail : Le script deploy.sh permet des backups manuels mais il n'y a pas de cron job pour des backups automatiques.
+Solution : Ajouter un cron job ou un container dédié :
+
+# crontab
+0 */6 * * * /opt/e-code/scripts/backup-db.sh >> /var/log/backup.log 2>&1
+
+8. FEATURES MANQUANTES vs REPLIT <a name="8-features"></a>
+PROBLÈME FL-01 : Package Manager UI non fonctionnel
+Statut : Marqué "Coming Soon (Q2)"
+Ce que Replit offre : Installation de packages npm/pip/cargo directement depuis l'UI avec recherche et versioning.
+Solution : Créer un composant PackageManagerPanel qui :
+
+Détecte le runtime du projet (Node, Python, etc.)
+Affiche les dépendances actuelles depuis package.json/requirements.txt
+Permet la recherche dans le registry (npm API, PyPI API)
+Installe/désinstalle via terminal backend
+Affiche les vulnérabilités connues
+PROBLÈME FL-02 : Preview Environments — pas de preview par PR
+Statut : Marqué "Coming Soon (Q2)"
+Ce que Replit offre : Preview automatique de chaque branche/PR.
+Solution : Implémenter un service qui :
+
+Détecte les PR GitHub via webhook
+Clone la branche dans un container temporaire
+Build et déploie sur un sous-domaine unique (pr-123.preview.e-code.ai)
+Ajoute un commentaire sur la PR avec le lien
+PROBLÈME FL-03 : Extensions Marketplace non implémenté
+Statut : Marqué "Coming Soon (Q3)"
+Ce que Replit offre : Extensions communautaires installables.
+Solution : Architecture plugin :
+
+Définir une API d'extension (hooks: onFileChange, onBuild, onDeploy)
+Marketplace pour publier/installer
+Sandbox d'exécution pour les extensions
+Système de review/rating
+PROBLÈME FL-04 : Exécution de code multi-langage limitée
+Détail : Seul Node.js semble réellement exécutable. Python, Go, Rust, Java ne sont que des mocks.
+Solution : Pour chaque langage :
+
+Docker approach : Image par langage avec timeout et resource limits
+WASM approach : Pyodide (Python), TinyGo (Go), emscripten (C/C++)
+Nix approach : Comme Replit, utiliser Nix pour gérer les runtimes
+PROBLÈME FL-05 : Pas de gestion de domaines custom pour les déploiements utilisateur
+Ce que Replit offre : Custom domains pour les apps déployées.
+Solution : Implémenter via :
+
+API pour ajouter un domaine custom
+Vérification DNS (CNAME ou A record)
+Provisioning SSL via Let's Encrypt (Caddy ou Certbot)
+Reverse proxy dynamique (Nginx template ou Caddy)
+PROBLÈME FL-06 : Pas de shell/Nix environment configurator
+Ce que Replit offre : Configuration .replit + replit.nix pour l'environnement.
+Solution : Créer un configurateur d'environnement :
+
+Fichier .ecode.toml pour la config du projet
+UI pour sélectionner le runtime et les dépendances système
+Build d'un Dockerfile à partir de la config
+PROBLÈME FL-07 : Pas de multiplayer avec curseurs en temps réel testable
+Détail : La collaboration Yjs est implémentée mais peut ne pas fonctionner en production sans configuration WebSocket appropriée.
+Solution : Tester end-to-end avec 2 navigateurs simultanés. S'assurer que :
+
+Le WebSocket de collaboration est correctement routé par Nginx
+Les curseurs des autres utilisateurs sont visibles
+Les conflits de texte se résolvent automatiquement (CRDT)
+PROBLÈME FL-08 : Secrets management UI limité
+Détail : Le panel SecretsPanel.tsx existe mais pas de rotation, pas d'audit trail.
+Solution : Ajouter :
+
+Historique des modifications de secrets
+Expiration automatique configurable
+Audit log des accès aux secrets
+Mask/reveal toggle dans l'UI
+9. BASE DE DONNÉES <a name="9-database"></a>
+PROBLÈME DB-01 : Table project_likes n'existe pas
+Fichier : server/storage.ts:2733
+Détail : Les likes utilisent des placeholders au lieu d'une vraie table.
+Solution : Voir B-11 ci-dessus. Créer la table et les routes CRUD associées.
+
+PROBLÈME DB-02 : Migrations forcées en production
+Fichier : docker-entrypoint.sh
+Détail : db:push --force peut être dangereux en production.
+Solution : Voir B-16 ci-dessus. Utiliser des migrations versionnées.
+
+PROBLÈME DB-03 : Pas de strategy de database backup automatisée
+Solution : Configurer pg_dump automatique toutes les 6h avec rétention de 30 jours. Pour Neon (serverless), utiliser leur API de branching pour les snapshots.
+
+10. PERFORMANCE & SCALABILITÉ <a name="10-performance"></a>
+PROBLÈME PF-01 : Query client cache peut grossir indéfiniment
+Détail : Le cache React Query n'a pas de limite de taille configurée.
+Solution : Ajouter gcTime (garbage collection) et limiter le nombre de queries cachées :
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: { gcTime: 1000 * 60 * 30, staleTime: 1000 * 60 * 5 }
+  }
+});
+
+PROBLÈME PF-02 : Service Worker cache non purgé
+Détail : Le SW cache les assets statiques mais ne purge pas les anciennes versions.
+Solution : Ajouter une stratégie de nettoyage dans activate :
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then(keys => 
+      Promise.all(keys.filter(k => k !== CURRENT_CACHE).map(k => caches.delete(k)))
+    )
+  );
+});
+
+PROBLÈME PF-03 : localStorage/sessionStorage utilisé massivement (241+ références)
+Détail : Risque de dépassement du quota localStorage (5-10MB selon le navigateur).
+Solution : Migrer les données volumineuses vers IndexedDB (via idb ou localforage). Garder localStorage uniquement pour les petits tokens/préférences.
+
+PROBLÈME PF-04 : Animations agent potentiellement coûteuses
+Détail : Les animations de messages de l'agent ne sont pas throttlées et peuvent causer du jank.
+Solution : Utiliser requestAnimationFrame et vérifier useReducedMotion() avant chaque animation complexe. Limiter les animations à 60fps.
+
+PROBLÈME PF-05 : setInterval non registrés dans certains services
+Détail : Certains setInterval peuvent ne pas être enregistrés dans l'interval-registry, causant des fuites mémoire.
+Solution : Auditer tous les setInterval dans le backend :
+
+grep -rn "setInterval" server/ --include="*.ts"
+
+Et s'assurer que chacun est enregistré dans interval-registry.ts pour cleanup au shutdown.
