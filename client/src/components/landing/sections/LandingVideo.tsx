@@ -1,8 +1,7 @@
 import { useState, useRef } from 'react';
 import { Play, Pause, Volume2, VolumeX, Maximize } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-
-const modernSoftwareImg = '/attached_assets/stock_images/modern_software_deve_ff7f5fd4.jpg';
+import modernSoftwareImg from '@assets/stock_images/modern_software_deve_ff7f5fd4.jpg';
 
 export default function LandingVideo() {
   const [isPlaying, setIsPlaying] = useState(false);

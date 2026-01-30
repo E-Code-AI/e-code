@@ -32,10 +32,9 @@ import {
   SiAmazon, SiGoogle
 } from 'react-icons/si';
 
-// Stock images - use URL paths to avoid blocking module load
-const cloudComputingImg = '/attached_assets/stock_images/cloud_computing_tech_ffd053c9.jpg';
-const modernSoftwareImg = '/attached_assets/stock_images/modern_software_deve_ff7f5fd4.jpg';
-const codingWorkspaceImg = '/attached_assets/stock_images/coding_programming_l_3c65a90d.jpg';
+import cloudComputingImg from '@assets/stock_images/cloud_computing_tech_ffd053c9.jpg';
+import modernSoftwareImg from '@assets/stock_images/modern_software_deve_ff7f5fd4.jpg';
+import codingWorkspaceImg from '@assets/stock_images/coding_programming_l_3c65a90d.jpg';
 
 // Animation variants
 const fadeInUp = {
