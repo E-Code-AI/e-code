@@ -1,0 +1,77 @@
+2026-01-30T08:58:41Z info: Build: 43076899-d4c6-401f-b519-329b3bd1eefa
+2026-01-30T08:58:41Z info: Running Security Scan
+2026-01-30T09:01:38Z warn: Security scan skipped: UNCAUGHT_ERROR
+2026-01-30T09:01:38Z info: Preparing development database
+2026-01-30T09:02:03Z info: Copying development database to production database
+2026-01-30T09:04:02Z info: Successfully copied development database to production database
+2026-01-30T09:04:02Z info: Connecting to builder
+2026-01-30T09:04:02Z info: Builder connected
+2026-01-30T09:04:02Z info: Installing packages
+2026-01-30T09:04:02Z info: Starting Build
+npm warn config optional Use `--omit=optional` to exclude optional dependencies, or
+npm warn config `--include=optional` to include them.
+npm warn config
+npm warn config       Default value does install optional deps unless otherwise omitted.
+npm warn config production Use `--omit=dev` instead.
+
+npm warn EBADENGINE Unsupported engine {
+npm warn EBADENGINE   package: '@capacitor/cli@8.0.2',
+npm warn EBADENGINE   required: { node: '>=22.0.0' },
+npm warn EBADENGINE   current: { node: 'v20.20.0', npm: '10.8.2' }
+npm warn EBADENGINE }
+
+npm warn EBADENGINE Unsupported engine {
+npm warn EBADENGINE   package: '@capacitor/cli@8.0.2',
+npm warn EBADENGINE   required: { node: '>=22.0.0' },
+npm warn EBADENGINE   current: { node: 'v20.20.0', npm: '10.8.2' }
+npm warn EBADENGINE }
+
+npm warn EBADENGINE Unsupported engine {
+npm warn EBADENGINE   package: '@capacitor/cli@8.0.2',
+npm warn EBADENGINE   required: { node: '>=22.0.0' },
+npm warn EBADENGINE   current: { node: 'v20.20.0', npm: '10.8.2' }
+npm warn EBADENGINE }
+
+npm warn deprecated xterm-addon-fit@0.8.0: This package is now deprecated. Move to @xterm/addon-fit instead.
+
+npm warn deprecated lodash.get@4.4.2: This package is deprecated. Use the optional chaining (?.) operator instead.
+
+npm warn deprecated lodash.isequal@4.5.0: This package is deprecated. Use require('node:util').isDeepStrictEqual instead.
+
+npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+
+npm warn deprecated xterm-addon-web-links@0.9.0: This package is now deprecated. Move to @xterm/addon-web-links instead.
+
+npm warn deprecated node-domexception@1.0.0: Use your platform's native DOMException instead
+
+npm warn deprecated @esbuild-kit/esm-loader@2.6.5: Merged into tsx: https://tsx.is
+
+npm warn deprecated @esbuild-kit/core-utils@3.3.2: Merged into tsx: https://tsx.is
+
+npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+
+npm warn deprecated glob@7.1.6: Glob versions prior to v9 are no longer supported
+
+npm warn deprecated superagent@8.1.2: Please upgrade to superagent v10.2.2+, see release notes at https://github.com/forwardemail/superagent/releases/tag/v10.2.2 - maintenance is supported by Forward Email @ https://forwardemail.net
+
+npm warn deprecated xterm@5.3.0: This package is now deprecated. Move to @xterm/xterm instead.
+
+
+added 2065 packages in 1m
+
+🔧 Development build
+
+✅ Build complete!
+
+2026-01-30T09:05:16Z info: Pushing pid1 binary layer...
+2026-01-30T09:05:17Z info: Created pid1 binary layer
+2026-01-30T09:05:18Z info: Pushing Repl layer...
+2026-01-30T09:05:18Z info: Pushing nix-0 layer...
+2026-01-30T09:05:18Z info: Created hosting layer
+2026-01-30T09:06:28Z info: Created nix-0 layer
+2026-01-30T09:06:28Z info: uploading image for cached layer
+2026-01-30T09:06:28Z info: pushed cache image manifest
+2026-01-30T09:06:29Z info: pushed cache soci index manifest
+2026-01-30T09:06:29Z info: uploading cached layer
+2026-01-30T09:06:29Z info: successfully uploaded cached layer
+Deployment timed out. Check the Logs tab for more details. - 2026-01-30T09:07:41.625Z
