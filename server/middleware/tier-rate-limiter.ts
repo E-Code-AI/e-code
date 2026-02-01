@@ -203,6 +203,45 @@ export function createTierRateLimitMiddleware(limitType: LimitType | 'streaming'
     if (isViteDevPath(path)) {
       return next();
     }
+    
+    // ✅ PRODUCTION FIX (Jan 30, 2026): Skip rate limiting for public pages and assets
+    // These routes should be accessible without rate limiting for anonymous users
+    const publicPaths = [
+      '/',
+      '/auth',
+      '/login',
+      '/register',
+      '/pricing',
+      '/explore',
+      '/about',
+      '/contact',
+      '/privacy',
+      '/terms',
+      '/docs',
+      '/blog',
+      '/favicon.ico',
+      '/robots.txt',
+      '/sitemap.xml',
+      '/manifest.json',
+    ];
+    
+    // Skip rate limiting for public frontend routes and static files
+    if (!path.startsWith('/api') || publicPaths.includes(path)) {
+      return next();
+    }
+    
+    // Skip rate limiting for public API endpoints (health checks, public data)
+    const publicApiPaths = [
+      '/api/health',
+      '/health',
+      '/api/docs',
+      '/api/marketplace/templates',
+      '/api/ai/models',
+    ];
+    
+    if (publicApiPaths.some(p => path.startsWith(p))) {
+      return next();
+    }
 
     try {
       // Determine user tier (default to 'free' if not authenticated or no tier)

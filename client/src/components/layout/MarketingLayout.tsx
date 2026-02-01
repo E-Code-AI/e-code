@@ -9,7 +9,7 @@ interface MarketingLayoutProps extends PropsWithChildren {
 
 export function MarketingLayout({ children, className }: MarketingLayoutProps) {
   return (
-    <div className="min-h-screen flex flex-col bg-marketing-surface text-foreground">
+    <div className="min-h-screen flex flex-col bg-marketing-surface text-foreground overscroll-none">
       <div className="relative">
         <div className="marketing-backdrop" aria-hidden />
         <PublicNavbar />
