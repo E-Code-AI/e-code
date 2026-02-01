@@ -204,42 +204,30 @@ export function createTierRateLimitMiddleware(limitType: LimitType | 'streaming'
       return next();
     }
     
-    // ✅ PRODUCTION FIX (Jan 30, 2026): Skip rate limiting for public pages and assets
-    // These routes should be accessible without rate limiting for anonymous users
-    const publicPaths = [
-      '/',
-      '/auth',
-      '/login',
-      '/register',
-      '/pricing',
-      '/explore',
-      '/about',
-      '/contact',
-      '/privacy',
-      '/terms',
-      '/docs',
-      '/blog',
-      '/favicon.ico',
-      '/robots.txt',
-      '/sitemap.xml',
-      '/manifest.json',
-    ];
-    
-    // Skip rate limiting for public frontend routes and static files
-    if (!path.startsWith('/api') || publicPaths.includes(path)) {
-      return next();
-    }
-    
-    // Skip rate limiting for public API endpoints (health checks, public data)
+    // ✅ PRODUCTION FIX (Jan 30, 2026): Skip rate limiting for public API endpoints
+    // These endpoints are accessed by the landing page and should allow higher traffic
     const publicApiPaths = [
       '/api/health',
       '/health',
       '/api/docs',
       '/api/marketplace/templates',
       '/api/ai/models',
+      '/api/me', // User check on every page load
     ];
     
-    if (publicApiPaths.some(p => path.startsWith(p))) {
+    if (publicApiPaths.some(p => path === p || path.startsWith(p + '/'))) {
+      return next();
+    }
+    
+    // Skip rate limiting for static assets served by Express (not Vite)
+    if (path.startsWith('/assets/') || 
+        path.endsWith('.js') || 
+        path.endsWith('.css') || 
+        path.endsWith('.ico') ||
+        path.endsWith('.png') ||
+        path.endsWith('.jpg') ||
+        path.endsWith('.svg') ||
+        path.endsWith('.woff2')) {
       return next();
     }
 
