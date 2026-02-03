@@ -10,6 +10,7 @@ packages = ["glibcLocales", "jq", "libxcrypt", "deno", "python3", "gnumake", "gc
 deploymentTarget = "gce"
 run = ["sh", "-c", "npm run start"]
 build = ["sh", "-c", "npm ci --omit=dev && bash scripts/smart-build.sh"]
+ignorePorts = true
 
 # Health check configuration for Cloud Run
 [[deployment.healthCheck]]
