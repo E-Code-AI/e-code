@@ -27,6 +27,14 @@ if [ -f "dist/index.js" ] && [ -f "dist/public/index.html" ]; then
 fi
 
 if [ "$SKIP_BUILD" = "0" ]; then
+  # In deployment mode, install build tools if missing
+  if [ "$REPLIT_DEPLOYMENT" = "1" ] || [ "$NODE_ENV" = "production" ]; then
+    if ! command -v npx &> /dev/null || ! npx vite --version &> /dev/null 2>&1; then
+      echo "📦 Installing build dependencies..."
+      npm install --no-save vite esbuild @vitejs/plugin-react @replit/vite-plugin-shadcn-theme-json 2>/dev/null || true
+    fi
+  fi
+
   # Build frontend if needed
   if [ -d "dist/public" ] && [ -f "dist/public/index.html" ]; then
     echo "✅ Pre-built frontend found, skipping Vite build"
