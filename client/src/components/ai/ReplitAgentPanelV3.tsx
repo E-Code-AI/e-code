@@ -1665,7 +1665,7 @@ export function ReplitAgentPanelV3({
             }
           }
         })();
-      }, 500); // 500ms delay for smooth UX (reduced from 1000ms since we now wait for conversationId)
+      }, 100); // Minimal delay for state propagation - speed is priority
       
     // Remove URL params to clean up the URL
     const newUrl = window.location.pathname;
