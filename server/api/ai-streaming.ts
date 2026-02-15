@@ -362,6 +362,9 @@ Focus on planning, design, and collaboration - not implementation.`
     if (isQuickQuestion) {
       logger.info('[AI Stream] Quick question - skipping RAG and Memory Bank');
       sendSSE(res, 'rag_status', { enabled: false, nodesRetrieved: 0, status: 'skipped_quick' });
+    } else if (context && context.length >= 4) {
+      logger.info('[AI Stream] Skipping RAG - frontend context already provided');
+      sendSSE(res, 'rag_status', { enabled: false, nodesRetrieved: 0, status: 'skipped_context_provided' });
     } else {
       // Lookup RAG session config first (respects user settings)
       let ragEnabled = true;
@@ -395,7 +398,7 @@ Focus on planning, design, and collaboration - not implementation.`
               const searchQuery = message && message.length > 0 ? message.substring(0, 300) : '';
               const ragContexts = await Promise.race([
                 memoryMCP.searchNodes(searchQuery, undefined, Math.min(retrievalDepth, 3)),
-                new Promise<never>((_, reject) => setTimeout(() => reject(new Error('RAG timeout')), 3000))
+                new Promise<never>((_, reject) => setTimeout(() => reject(new Error('RAG timeout')), 500))
               ]);
               
               if (ragContexts && ragContexts.length > 0) {
@@ -435,7 +438,7 @@ Focus on planning, design, and collaboration - not implementation.`
               memoryBankService.setProjectBasePath(Number(projectId), projectBasePath);
               const context = await Promise.race([
                 memoryBankService.getContextForAgent(projectId),
-                new Promise<string>((resolve) => setTimeout(() => resolve(''), 2000))
+                new Promise<string>((resolve) => setTimeout(() => resolve(''), 500))
               ]);
               if (context) {
                 sendSSE(res, 'memory_bank_status', { enabled: true, projectId, hasContext: true, contextLength: context.length });
@@ -574,183 +577,6 @@ Focus on planning, design, and collaboration - not implementation.`
       tokensOutput = usage.tokensOutput;
     }
     
-    // ============================================================
-    // AUTO-UPDATE MEMORY BANK - Log AI activity to activeContext.md
-    // ============================================================
-    if (projectId && agentMode === 'build') {
-      try {
-        await memoryBankService.updateActiveContext(Number(projectId), {
-          action: 'AI assistant interaction completed'
-        });
-        logger.info(`[MemoryBank] Auto-updated activeContext.md for project ${projectId}`);
-      } catch (mbError: any) {
-        logger.warn(`[MemoryBank] Failed to auto-update: ${mbError.message}`);
-      }
-    }
-    
-    // ============================================================
-    // AUTO-CHECKPOINT - Create checkpoint after successful AI response
-    // Captures actual file content, database snapshot, and conversation history
-    // ============================================================
-    if (projectId && agentMode === 'build') {
-      try {
-        const { checkpointService } = await import('../services/checkpoint.service');
-        const { exec } = await import('child_process');
-        const { promisify } = await import('util');
-        const fs = await import('fs/promises');
-        const execAsync = promisify(exec);
-        
-        const projectIdNum = Number(projectId);
-        
-        // Compute project base path (relative to cwd where projects are stored)
-        const projectBasePath = path.join(process.cwd(), 'projects', String(projectIdNum));
-        
-        // Capture actual file state from the project directory
-        const snapshot = await workspaceSnapshotService.captureFileState(
-          projectBasePath,
-          projectIdNum,
-          { includeHidden: false } // Skip hidden files like .git
-        );
-        
-        // Build filesSnapshot metadata for the checkpoint record
-        const filesSnapshot: Record<string, { hash: string; size: number }> = {};
-        for (const file of snapshot.files) {
-          filesSnapshot[file.path] = { hash: file.hash, size: file.size };
-        }
-        
-        // Create the checkpoint record with metadata
-        const checkpoint = await checkpointService.createCheckpoint(projectIdNum, {
-          type: 'auto',
-          triggerSource: 'ai_response',
-          aiSummary: `AI build checkpoint - ${snapshot.totalFiles} files captured`,
-          filesSnapshot,
-        });
-        
-        // Store actual file content in autoCheckpointFiles table for restore
-        if (snapshot.files.length > 0) {
-          const filesToStore = snapshot.files.map(file => ({
-            filePath: file.path,
-            fileHash: file.hash,
-            fileContent: file.content,
-          }));
-          
-          await checkpointService.addCheckpointFiles(checkpoint.id, filesToStore);
-          logger.info(`[Checkpoint] Stored ${filesToStore.length} files for checkpoint ${checkpoint.id}`);
-        }
-        
-        // ============================================================
-        // DATABASE SNAPSHOT - Capture database state with pg_dump
-        // SECURITY: Use spawn with args array to prevent command injection
-        // ============================================================
-        let includesDatabase = false;
-        let dbSnapshotPath: string | undefined;
-        const databaseUrl = process.env.DATABASE_URL;
-        if (databaseUrl) {
-          try {
-            const { spawn } = await import('child_process');
-            const checkpointDir = path.join(process.cwd(), '.checkpoints', String(checkpoint.id));
-            await fs.mkdir(checkpointDir, { recursive: true });
-            
-            const dumpFile = path.join(checkpointDir, 'database.sql');
-            
-            // Parse DATABASE_URL safely to extract components
-            const dbUrlParsed = new URL(databaseUrl);
-            const pgDumpArgs = [
-              '-h', dbUrlParsed.hostname,
-              '-p', dbUrlParsed.port || '5432',
-              '-U', dbUrlParsed.username,
-              '-d', dbUrlParsed.pathname.slice(1), // remove leading /
-              '--schema=public',
-              '--no-owner',
-              '--no-acl',
-              '-f', dumpFile
-            ];
-            
-            // Execute pg_dump using spawn with args array (secure - no shell injection)
-            await new Promise<void>((resolve, reject) => {
-              const child = spawn('pg_dump', pgDumpArgs, {
-                env: { ...process.env, PGPASSWORD: dbUrlParsed.password },
-                stdio: ['pipe', 'pipe', 'pipe']
-              });
-              
-              let stderr = '';
-              child.stderr?.on('data', (data) => { stderr += data.toString(); });
-              
-              child.on('close', (code) => {
-                if (code === 0) {
-                  resolve();
-                } else {
-                  reject(new Error(`pg_dump exited with code ${code}: ${stderr}`));
-                }
-              });
-              
-              child.on('error', (err) => reject(err));
-            });
-            
-            includesDatabase = true;
-            dbSnapshotPath = dumpFile;
-            logger.info(`[Checkpoint] Database snapshot saved to ${dumpFile}`);
-          } catch (dbError: any) {
-            logger.warn(`[Checkpoint] Database snapshot failed (non-fatal): ${dbError.message}`);
-          }
-        }
-        
-        // ============================================================
-        // CONVERSATION SNAPSHOT - Capture AI conversation history
-        // ============================================================
-        let conversationSnapshot: Array<{ role: string; content: string; timestamp?: string }> | undefined;
-        if (conversationId) {
-          try {
-            const { aiConversations, agentMessages } = await import('../../shared/schema');
-            const { eq, desc } = await import('drizzle-orm');
-            
-            // Get conversation messages from agentMessages table
-            const messages = await db
-              .select({
-                role: agentMessages.role,
-                content: agentMessages.content,
-                createdAt: agentMessages.createdAt,
-              })
-              .from(agentMessages)
-              .where(eq(agentMessages.conversationId, Number(conversationId)))
-              .orderBy(agentMessages.createdAt)
-              .limit(100); // Limit to prevent huge snapshots
-            
-            if (messages.length > 0) {
-              conversationSnapshot = messages.map(m => ({
-                role: m.role,
-                content: m.content,
-                timestamp: m.createdAt?.toISOString(),
-              }));
-              logger.info(`[Checkpoint] Captured ${messages.length} conversation messages`);
-            }
-          } catch (convError: any) {
-            logger.warn(`[Checkpoint] Conversation snapshot failed (non-fatal): ${convError.message}`);
-          }
-        }
-        
-        // Update checkpoint with database and conversation data
-        // RELIABILITY: Persist dbSnapshotPath and conversationId for reliable restore
-        if (includesDatabase || conversationSnapshot || dbSnapshotPath) {
-          await checkpointService.updateCheckpointData(checkpoint.id, {
-            includesDatabase,
-            conversationSnapshot,
-            dbSnapshotPath,
-            conversationId: conversationId ? Number(conversationId) : undefined,
-          });
-        }
-        
-        logger.info(`[Checkpoint] Auto-created checkpoint ${checkpoint.id} for project ${projectId} with ${snapshot.totalFiles} files, db=${includesDatabase}, conv=${!!conversationSnapshot}`);
-      } catch (cpError: any) {
-        // Handle rate-limited checkpoints silently - this is expected behavior
-        if (cpError.code === 'RATE_LIMITED') {
-          logger.debug(`[Checkpoint] Rate-limited auto-checkpoint for project ${projectId} - skipping silently`);
-        } else {
-          logger.warn(`[Checkpoint] Failed to create auto-checkpoint: ${cpError.message}`);
-        }
-      }
-    }
-    
     // ✅ FORTUNE 500: Skip final events if client disconnected
     if (isConnectionClosed) {
       logger.info('[AI Stream] Client disconnected - skipping final done event');
@@ -774,6 +600,192 @@ Focus on planning, design, and collaboration - not implementation.`
     });
     
     res.end();
+    
+    // Fire-and-forget: post-response background work
+    (async () => {
+      try {
+        // ============================================================
+        // AUTO-UPDATE MEMORY BANK - Log AI activity to activeContext.md
+        // ============================================================
+        if (projectId && agentMode === 'build') {
+          try {
+            await memoryBankService.updateActiveContext(Number(projectId), {
+              action: 'AI assistant interaction completed'
+            });
+            logger.info(`[MemoryBank] Auto-updated activeContext.md for project ${projectId}`);
+          } catch (mbError: any) {
+            logger.warn(`[MemoryBank] Failed to auto-update: ${mbError.message}`);
+          }
+        }
+        
+        // ============================================================
+        // AUTO-CHECKPOINT - Create checkpoint after successful AI response
+        // Captures actual file content, database snapshot, and conversation history
+        // Only checkpoint when tools were available (build mode with actions)
+        // ============================================================
+        const shouldCheckpoint = enforcedTools && enforcedTools.length > 0;
+        if (projectId && agentMode === 'build' && shouldCheckpoint) {
+          try {
+            const { checkpointService } = await import('../services/checkpoint.service');
+            const { exec } = await import('child_process');
+            const { promisify } = await import('util');
+            const fs = await import('fs/promises');
+            const execAsync = promisify(exec);
+            
+            const projectIdNum = Number(projectId);
+            
+            // Compute project base path (relative to cwd where projects are stored)
+            const projectBasePath = path.join(process.cwd(), 'projects', String(projectIdNum));
+            
+            // Capture actual file state from the project directory
+            const snapshot = await workspaceSnapshotService.captureFileState(
+              projectBasePath,
+              projectIdNum,
+              { includeHidden: false } // Skip hidden files like .git
+            );
+            
+            // Build filesSnapshot metadata for the checkpoint record
+            const filesSnapshot: Record<string, { hash: string; size: number }> = {};
+            for (const file of snapshot.files) {
+              filesSnapshot[file.path] = { hash: file.hash, size: file.size };
+            }
+            
+            // Create the checkpoint record with metadata
+            const checkpoint = await checkpointService.createCheckpoint(projectIdNum, {
+              type: 'auto',
+              triggerSource: 'ai_response',
+              aiSummary: `AI build checkpoint - ${snapshot.totalFiles} files captured`,
+              filesSnapshot,
+            });
+            
+            // Store actual file content in autoCheckpointFiles table for restore
+            if (snapshot.files.length > 0) {
+              const filesToStore = snapshot.files.map(file => ({
+                filePath: file.path,
+                fileHash: file.hash,
+                fileContent: file.content,
+              }));
+              
+              await checkpointService.addCheckpointFiles(checkpoint.id, filesToStore);
+              logger.info(`[Checkpoint] Stored ${filesToStore.length} files for checkpoint ${checkpoint.id}`);
+            }
+            
+            // ============================================================
+            // DATABASE SNAPSHOT - Capture database state with pg_dump
+            // SECURITY: Use spawn with args array to prevent command injection
+            // ============================================================
+            let includesDatabase = false;
+            let dbSnapshotPath: string | undefined;
+            const databaseUrl = process.env.DATABASE_URL;
+            if (databaseUrl) {
+              try {
+                const { spawn } = await import('child_process');
+                const checkpointDir = path.join(process.cwd(), '.checkpoints', String(checkpoint.id));
+                await fs.mkdir(checkpointDir, { recursive: true });
+                
+                const dumpFile = path.join(checkpointDir, 'database.sql');
+                
+                // Parse DATABASE_URL safely to extract components
+                const dbUrlParsed = new URL(databaseUrl);
+                const pgDumpArgs = [
+                  '-h', dbUrlParsed.hostname,
+                  '-p', dbUrlParsed.port || '5432',
+                  '-U', dbUrlParsed.username,
+                  '-d', dbUrlParsed.pathname.slice(1), // remove leading /
+                  '--schema=public',
+                  '--no-owner',
+                  '--no-acl',
+                  '-f', dumpFile
+                ];
+                
+                // Execute pg_dump using spawn with args array (secure - no shell injection)
+                await new Promise<void>((resolve, reject) => {
+                  const child = spawn('pg_dump', pgDumpArgs, {
+                    env: { ...process.env, PGPASSWORD: dbUrlParsed.password },
+                    stdio: ['pipe', 'pipe', 'pipe']
+                  });
+                  
+                  let stderr = '';
+                  child.stderr?.on('data', (data) => { stderr += data.toString(); });
+                  
+                  child.on('close', (code) => {
+                    if (code === 0) {
+                      resolve();
+                    } else {
+                      reject(new Error(`pg_dump exited with code ${code}: ${stderr}`));
+                    }
+                  });
+                  
+                  child.on('error', (err) => reject(err));
+                });
+                
+                includesDatabase = true;
+                dbSnapshotPath = dumpFile;
+                logger.info(`[Checkpoint] Database snapshot saved to ${dumpFile}`);
+              } catch (dbError: any) {
+                logger.warn(`[Checkpoint] Database snapshot failed (non-fatal): ${dbError.message}`);
+              }
+            }
+            
+            // ============================================================
+            // CONVERSATION SNAPSHOT - Capture AI conversation history
+            // ============================================================
+            let conversationSnapshot: Array<{ role: string; content: string; timestamp?: string }> | undefined;
+            if (conversationId) {
+              try {
+                const { aiConversations, agentMessages } = await import('../../shared/schema');
+                const { eq, desc } = await import('drizzle-orm');
+                
+                // Get conversation messages from agentMessages table
+                const messages = await db
+                  .select({
+                    role: agentMessages.role,
+                    content: agentMessages.content,
+                    createdAt: agentMessages.createdAt,
+                  })
+                  .from(agentMessages)
+                  .where(eq(agentMessages.conversationId, Number(conversationId)))
+                  .orderBy(agentMessages.createdAt)
+                  .limit(100); // Limit to prevent huge snapshots
+                
+                if (messages.length > 0) {
+                  conversationSnapshot = messages.map(m => ({
+                    role: m.role,
+                    content: m.content,
+                    timestamp: m.createdAt?.toISOString(),
+                  }));
+                  logger.info(`[Checkpoint] Captured ${messages.length} conversation messages`);
+                }
+              } catch (convError: any) {
+                logger.warn(`[Checkpoint] Conversation snapshot failed (non-fatal): ${convError.message}`);
+              }
+            }
+            
+            // Update checkpoint with database and conversation data
+            // RELIABILITY: Persist dbSnapshotPath and conversationId for reliable restore
+            if (includesDatabase || conversationSnapshot || dbSnapshotPath) {
+              await checkpointService.updateCheckpointData(checkpoint.id, {
+                includesDatabase,
+                conversationSnapshot,
+                dbSnapshotPath,
+                conversationId: conversationId ? Number(conversationId) : undefined,
+              });
+            }
+            
+            logger.info(`[Checkpoint] Auto-created checkpoint ${checkpoint.id} for project ${projectId} with ${snapshot.totalFiles} files, db=${includesDatabase}, conv=${!!conversationSnapshot}`);
+          } catch (cpError: any) {
+            // Handle rate-limited checkpoints silently - this is expected behavior
+            if (cpError.code === 'RATE_LIMITED') {
+              logger.debug(`[Checkpoint] Rate-limited auto-checkpoint for project ${projectId} - skipping silently`);
+            } else {
+              logger.warn(`[Checkpoint] Failed to create auto-checkpoint: ${cpError.message}`);
+            }
+          }
+        }
+      } catch (bgErr: any) {
+        logger.warn('[AI Stream] Background post-response work failed (non-fatal):', bgErr.message);
+      }
+    })();
     
   } catch (error: any) {
     logger.error('Streaming chat error:', error);
