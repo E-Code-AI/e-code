@@ -157,7 +157,7 @@ export const EnhancedChatMessage = memo(forwardRef<EnhancedChatMessageRef, Enhan
     if (!message.content || message.content.length < 50) return [];
     if (!containsPlanOrTasks(message.content)) return [];
     
-    const isComplete = message.status === 'complete' || message.status === 'sent';
+    const isComplete = (message.status as string) === 'complete' || message.status === 'sent';
     const tasks = extractAndFormatTasks(message.content, isComplete);
     
     // Only return if we found meaningful tasks (at least 2)
@@ -190,7 +190,7 @@ export const EnhancedChatMessage = memo(forwardRef<EnhancedChatMessageRef, Enhan
       
 
       <div className={cn(
-        "flex-1 space-y-2 max-w-[85%] sm:max-w-[80%]",
+        "flex-1 space-y-2 max-w-[95%] sm:max-w-[85%] md:max-w-[80%]",
         isUser && "flex flex-col items-end"
       )}>
         {hasThinking && (
@@ -613,7 +613,7 @@ export const StreamingSkeleton = memo(function StreamingSkeleton() {
         </AvatarFallback>
       </Avatar>
       
-      <div className="flex-1 space-y-2 sm:space-y-3 max-w-[85%] sm:max-w-[80%]">
+      <div className="flex-1 space-y-2 sm:space-y-3 max-w-[95%] sm:max-w-[85%] md:max-w-[80%]">
         <div className="bg-muted/80 rounded-xl sm:rounded-2xl rounded-bl-md px-3 py-3 sm:px-4 sm:py-4 shadow-md border border-border/50">
           <div className="space-y-1.5 sm:space-y-2">
             <LazyMotionDiv 

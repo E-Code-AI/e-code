@@ -2296,7 +2296,7 @@ export function ReplitAgentPanelV3({
       {/* Header - Optimized for all screen sizes */}
       <div className="px-2 sm:px-4 py-2 border-b border-border bg-card">
         <div className="flex items-center justify-between gap-1">
-          <div className="flex items-center gap-1 sm:gap-2 min-w-0 flex-shrink">
+          <div className="flex items-center gap-1 sm:gap-2 min-w-0 shrink overflow-hidden">
             <ECodeLogo size="xs" showText={!isCompactMode} />
             {isWorking && (
               <Badge variant="secondary" className="text-[10px] sm:text-[11px] animate-pulse flex-shrink-0" data-testid="header-badge-working">
@@ -2637,7 +2637,7 @@ export function ReplitAgentPanelV3({
               </Avatar>
               <div className="flex-1">
                 <LazyMotionDiv 
-                  className="bg-muted/80 text-foreground rounded-2xl rounded-bl-md px-4 py-3 max-w-[85%] shadow-md border border-border/50" 
+                  className="bg-muted/80 text-foreground rounded-2xl rounded-bl-md px-4 py-3 max-w-[95%] sm:max-w-[85%] shadow-md border border-border/50" 
                   data-testid="streaming-content"
                   initial={{ scale: 0.95 }}
                   animate={{ scale: 1 }}
@@ -2886,7 +2886,7 @@ export function ReplitAgentPanelV3({
                 "Ask a question or describe what you want to plan... Type / for integrations"
               }
               className={cn(
-                "pr-24 resize-none text-[13px] min-h-[52px] max-h-[200px]",
+                "pr-[132px] resize-none text-[13px] min-h-[52px] max-h-[200px]",
                 "rounded-xl border border-border/50 focus:border-primary/50",
                 "transition-all duration-200 shadow-sm focus:shadow-md",
                 "placeholder:text-muted-foreground/70"
