@@ -1,0 +1,1 @@
+import"./index-2qiwhdSf.js";function i(n){n.forEach(a=>{const e=document.createElement("link");e.rel="preload",e.as="image",e.href=a,a.endsWith(".webp")&&(e.type="image/webp"),document.head.appendChild(e)})}export{i as addImagePreloadLinks};

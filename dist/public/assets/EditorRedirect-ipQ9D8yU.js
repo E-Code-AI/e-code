@@ -1,0 +1,1 @@
+import{a$ as r,u as c,r as n,j as i,M as u}from"./index-2qiwhdSf.js";function f(){const{id:t}=r(),[,e]=c();return n.useEffect(()=>{if(t){const o=window.location.search,s=window.location.hash,a=`/ide/${t}${o}${s}`;e(a,{replace:!0})}},[t,e]),i.jsx(u,{fullScreen:!0,size:"lg",text:"Redirecting to workspace..."})}export{f as default};
