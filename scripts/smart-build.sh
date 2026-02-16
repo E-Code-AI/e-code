@@ -19,15 +19,13 @@ fi
 SKIP_BUILD=0
 if [ -f "dist/index.js" ] && [ -f "dist/public/index.html" ]; then
   DIST_SIZE=$(stat -c %s dist/index.js 2>/dev/null || echo 0)
-  # Skip if dist/index.js is > 1MB (valid build)
   if [ "$DIST_SIZE" -gt 1000000 ]; then
-    echo "✅ Valid pre-built assets found ($(($DIST_SIZE / 1048576))MB), skipping rebuild for fast deployment"
+    echo "✅ Valid pre-built assets found ($(($DIST_SIZE / 1048576))MB), skipping rebuild"
     SKIP_BUILD=1
   fi
 fi
 
 if [ "$SKIP_BUILD" = "0" ]; then
-  # In deployment mode, install build tools if missing
   if [ "$REPLIT_DEPLOYMENT" = "1" ] || [ "$NODE_ENV" = "production" ]; then
     if ! command -v npx &> /dev/null || ! npx vite --version &> /dev/null 2>&1; then
       echo "📦 Installing build dependencies..."
@@ -35,7 +33,6 @@ if [ "$SKIP_BUILD" = "0" ]; then
     fi
   fi
 
-  # Build frontend if needed
   if [ -d "dist/public" ] && [ -f "dist/public/index.html" ]; then
     echo "✅ Pre-built frontend found, skipping Vite build"
   else
@@ -43,7 +40,6 @@ if [ "$SKIP_BUILD" = "0" ]; then
     npx vite build
   fi
 
-  # Build server bundle if needed
   if [ -f "dist/index.js" ]; then
     echo "✅ Pre-built server bundle found, skipping esbuild"
   else
@@ -52,7 +48,7 @@ if [ "$SKIP_BUILD" = "0" ]; then
   fi
 fi
 
-# Run cleanup ONLY in deployment mode
+# Run aggressive cleanup in deployment mode
 if [ "$REPLIT_DEPLOYMENT" = "1" ] || [ "$NODE_ENV" = "production" ]; then
   if [ -f "scripts/cleanup-for-deploy.sh" ]; then
     echo "🧹 Running production cleanup..."
