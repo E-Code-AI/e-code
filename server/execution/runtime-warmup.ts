@@ -149,14 +149,22 @@ class RuntimeWarmupManager {
     const results = await Promise.all(
       bundle.languages.map(async (lang) => {
         const available = await this.checkLanguageAvailability(lang);
-        console.log(`[RuntimeWarmup] ${lang.name}: ${available ? '✅ ready' : '❌ not available'}`);
         return { lang, available };
       })
     );
 
-    const allReady = results.every(r => r.available);
+    const ready = results.filter(r => r.available).map(r => r.lang.name);
+    const notAvailable = results.filter(r => !r.available).map(r => r.lang.name);
+    const allReady = notAvailable.length === 0;
     this.bundleStatus.set(bundle.name, allReady ? 'ready' : 'failed');
-    console.log(`[RuntimeWarmup] Bundle ${bundle.name}: ${allReady ? '✅ complete' : '⚠️ partial'}`);
+
+    if (allReady) {
+      console.log(`[RuntimeWarmup] Bundle ${bundle.name}: ✅ complete (${ready.join(', ')})`);
+    } else if (ready.length > 0) {
+      console.log(`[RuntimeWarmup] Bundle ${bundle.name}: ⚠️ partial (ready: ${ready.join(', ')})`);
+    } else {
+      console.log(`[RuntimeWarmup] Bundle ${bundle.name}: skipped (no runtimes installed)`);
+    }
   }
 
   async warmup(): Promise<void> {
