@@ -87,6 +87,7 @@ ALLOW_INSECURE_LOCAL_PTY = "true"
 
 [userenv.production]
 NODE_ENV = "production"
+PATH = "/nix/store/1lagpgadaybvs1n2312gysg2phjk89y8-nodejs-20.20.0-wrapped/bin:/home/runner/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
 [[ports]]
 localPort = 5000

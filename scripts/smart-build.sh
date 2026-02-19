@@ -22,9 +22,37 @@ fi
 
 if [ "$HAS_DIST" = "1" ] && [ "$IS_DEPLOY" = "1" ]; then
   echo "⚡ Fast path: dist exists, running cleanup only"
+  
+  # Save node/npm paths BEFORE cleanup
+  NODE_BIN_PATH=$(which node 2>/dev/null || echo "")
+  NPM_BIN_PATH=$(which npm 2>/dev/null || echo "")
+  NODE_BIN_DIR=""
+  if [ -n "$NODE_BIN_PATH" ]; then
+    NODE_BIN_DIR=$(dirname "$NODE_BIN_PATH")
+  fi
+  echo "📍 node at: $NODE_BIN_PATH"
+  echo "📍 npm at: $NPM_BIN_PATH"
+  echo "📍 node dir: $NODE_BIN_DIR"
+  
   echo "🧹 Running production cleanup..."
   chmod +x scripts/cleanup-for-deploy.sh
   REPLIT_DEPLOYMENT=1 NODE_ENV=production bash scripts/cleanup-for-deploy.sh
+  
+  # CRITICAL: Create a startup wrapper that works without npm in PATH
+  # The .replit run command is: sh -c "npm run start"
+  # If npm isn't in PATH, we need a fallback
+  if [ -n "$NODE_BIN_PATH" ]; then
+    # Create a self-contained start script with hardcoded node path
+    cat > ./start.sh << STARTEOF
+#!/bin/sh
+export NODE_ENV=production
+export PATH="$NODE_BIN_DIR:\$PATH"
+exec $NODE_BIN_PATH dist/index.js
+STARTEOF
+    chmod +x ./start.sh
+    echo "📝 Created start.sh with node at $NODE_BIN_PATH"
+  fi
+  
   echo "✅ Build complete! (fast path)"
   exit 0
 fi

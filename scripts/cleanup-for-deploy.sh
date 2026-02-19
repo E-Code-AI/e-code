@@ -49,7 +49,7 @@ rm -rf node_modules/@opentelemetry 2>/dev/null || true
 
 # ===== 4. Clean caches and temp directories =====
 echo "🧹 Phase 4: Cleaning caches and temp files..."
-rm -rf node_modules/.cache .npm .cache .local 2>/dev/null || true
+rm -rf node_modules/.cache .npm .cache 2>/dev/null || true
 rm -rf test-results playwright-report 2>/dev/null || true
 rm -rf .cache/ms-playwright 2>/dev/null || true
 
@@ -73,6 +73,39 @@ rm -f attached_assets/Pasted-*.txt attached_assets/Capture* 2>/dev/null || true
 rm -f attached_assets/IMG_*.png attached_assets/screenshot* 2>/dev/null || true
 rm -f *.png *.jpg 2>/dev/null || true
 rm -f build.log deployment.log 2>/dev/null || true
+
+# ===== 9. Ensure node/npm are in PATH at runtime =====
+echo "🔗 Phase 9: Ensuring runtime binaries are accessible..."
+NODE_BIN=$(which node 2>/dev/null)
+NPM_BIN=$(which npm 2>/dev/null)
+NODE_DIR=""
+if [ -n "$NODE_BIN" ]; then
+  NODE_DIR=$(dirname "$NODE_BIN")
+  echo "  node at: $NODE_BIN"
+  echo "  npm at: $NPM_BIN"
+  
+  # Try /usr/local/bin first
+  mkdir -p /usr/local/bin 2>/dev/null || true
+  ln -sf "$NODE_BIN" /usr/local/bin/node 2>/dev/null || true
+  ln -sf "$NPM_BIN" /usr/local/bin/npm 2>/dev/null || true
+  
+  # Also try ~/.local/bin as fallback
+  mkdir -p "$HOME/.local/bin" 2>/dev/null || true
+  ln -sf "$NODE_BIN" "$HOME/.local/bin/node" 2>/dev/null || true
+  ln -sf "$NPM_BIN" "$HOME/.local/bin/npm" 2>/dev/null || true
+  
+  # Also try /home/runner/.local/bin explicitly  
+  mkdir -p /home/runner/.local/bin 2>/dev/null || true
+  ln -sf "$NODE_BIN" /home/runner/.local/bin/node 2>/dev/null || true
+  ln -sf "$NPM_BIN" /home/runner/.local/bin/npm 2>/dev/null || true
+  
+  # Create a PATH setup script for runtime
+  cat > /home/runner/workspace/.env.deploy 2>/dev/null << ENVEOF || true
+export PATH="$NODE_DIR:/home/runner/.local/bin:\$PATH"
+ENVEOF
+  
+  echo "  Symlinks and .env.deploy created"
+fi
 
 echo ""
 echo "✅ Production cleanup complete!"
