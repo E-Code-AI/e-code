@@ -216,47 +216,44 @@ export default function AuthPage() {
                         )}
                       </Button>
                       
+                      {import.meta.env.DEV && (
+                        <>
+                          <div className="relative my-4">
+                            <div className="absolute inset-0 flex items-center">
+                              <span className="w-full border-t border-border" />
+                            </div>
+                            <div className="relative flex justify-center text-[11px] uppercase">
+                              <span className="bg-card px-3 text-muted-foreground">Dev quick access</span>
+                            </div>
+                          </div>
+                          
+                          <Button 
+                            type="button" 
+                            variant="outline" 
+                            className="w-full min-h-[44px] text-[11px] sm:text-[13px] border-primary/30 bg-primary/5 hover:bg-primary/10 hover:border-primary/50 text-primary font-medium transition-all duration-200 rounded-lg"
+                            onClick={() => {
+                              loginForm.setValue('email', 'admin@test.com');
+                              loginForm.setValue('password', 'adminpass123');
+                              loginForm.handleSubmit(onLoginSubmit)();
+                            }}
+                            data-testid="button-oneclick-admin"
+                          >
+                            <Zap className="h-4 w-4 mr-1.5" />
+                            One-Click Admin Login
+                          </Button>
+                        </>
+                      )}
+                      
                       <div className="relative my-4">
                         <div className="absolute inset-0 flex items-center">
                           <span className="w-full border-t border-border" />
                         </div>
                         <div className="relative flex justify-center text-[11px] uppercase">
-                          <span className="bg-card px-3 text-muted-foreground">Quick access</span>
+                          <span className="bg-card px-3 text-muted-foreground">Or continue with</span>
                         </div>
                       </div>
-                      
-                      <div className="flex flex-col xs:flex-row gap-2 w-full">
-                        <Button 
-                          type="button" 
-                          variant="outline" 
-                          className="flex-1 min-h-[44px] text-[11px] sm:text-[13px] border-primary/30 bg-primary/5 hover:bg-primary/10 hover:border-primary/50 text-primary font-medium transition-all duration-200 rounded-lg"
-                          onClick={() => {
-                            loginForm.setValue('email', 'admin@test.com');
-                            loginForm.setValue('password', 'adminpass123');
-                            loginForm.handleSubmit(onLoginSubmit)();
-                          }}
-                          data-testid="button-oneclick-admin"
-                        >
-                          <Zap className="h-4 w-4 mr-1.5" />
-                          One-Click Admin
-                        </Button>
-                        <Button 
-                          type="button" 
-                          variant="outline" 
-                          className="flex-1 min-h-[44px] text-[11px] sm:text-[13px] border-border hover:border-primary/30 hover:bg-primary/5 text-foreground font-medium transition-all duration-200 rounded-lg"
-                          onClick={() => {
-                            loginForm.setValue('email', 'admin@test.com');
-                            loginForm.setValue('password', 'adminpass123');
-                            loginForm.handleSubmit(onLoginSubmit)();
-                          }}
-                          data-testid="button-oneclick-demo"
-                        >
-                          <Sparkles className="h-4 w-4 mr-1.5" />
-                          Demo Account
-                        </Button>
-                      </div>
-                      
-                      <div className="grid grid-cols-1 xs:grid-cols-2 gap-3 mt-2">
+
+                      <div className="grid grid-cols-2 gap-3">
                         <Button 
                           type="button" 
                           variant="outline" 

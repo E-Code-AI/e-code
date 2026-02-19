@@ -198,7 +198,7 @@ export function PublicNavbar() {
   const primaryCta = (
     <Button
       onClick={() => window.location.href = '/register'}
-      className="hidden sm:inline-flex shrink-0 bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 text-white hover:from-sky-300 hover:via-blue-400 hover:to-indigo-400 shadow-lg shadow-blue-500/30 min-h-[44px] px-3 sm:px-4 text-[13px] whitespace-nowrap"
+      className="hidden sm:inline-flex shrink-0 bg-ecode-accent hover:bg-ecode-accent-hover text-white min-h-[44px] px-3 sm:px-4 text-[13px] whitespace-nowrap"
       data-testid="link-get-started"
     >
       Get started
@@ -261,14 +261,14 @@ export function PublicNavbar() {
                     <Menu className="h-5 w-5" aria-hidden="true" />
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="right" className="w-full sm:w-[380px] p-0 border-l border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950">
+                <SheetContent side="right" className="w-full sm:w-[380px] p-0 border-l border-border bg-background">
                   <VisuallyHidden.Root asChild>
                     <SheetHeader>
                       <SheetTitle>Mobile Navigation Menu</SheetTitle>
                       <SheetDescription>Navigate through E-Code platform sections</SheetDescription>
                     </SheetHeader>
                   </VisuallyHidden.Root>
-                  <div className="sticky top-0 z-10 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 px-4 py-3">
+                  <div className="sticky top-0 z-10 border-b border-border bg-background px-4 py-3">
                     <div className="flex items-center justify-between">
                       <ECodeLogo size="sm" />
                       <Button
@@ -276,23 +276,23 @@ export function PublicNavbar() {
                         size="icon"
                         onClick={() => setMobileMenuOpen(false)}
                         aria-label="Close mobile menu"
-                        className="hover:bg-gray-100 dark:hover:bg-gray-800"
+                        className="hover:bg-muted"
                       >
-                        <X className="h-4 w-4 text-gray-600 dark:text-gray-400" aria-hidden="true" />
+                        <X className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                       </Button>
                     </div>
                   </div>
 
-                  <div className="p-4 border-b border-gray-200 dark:border-gray-800">
+                  <div className="p-4 border-b border-border">
                     <Button
-                      className="w-full bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 text-white hover:from-sky-300 hover:via-blue-400 hover:to-indigo-400"
+                      className="w-full bg-ecode-accent hover:bg-ecode-accent-hover text-white"
                       onClick={() => window.location.href = '/register'}
                     >
                       Get Started
                     </Button>
                     <Button
                       variant="outline"
-                      className="mt-2 w-full border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-800"
+                      className="mt-2 w-full border-border text-foreground hover:bg-muted"
                       onClick={() => window.location.href = '/login'}
                     >
                       Sign In
@@ -302,7 +302,7 @@ export function PublicNavbar() {
                   <ScrollArea className="h-[calc(100vh-180px)]">
                     <div className="p-4 space-y-6">
                       <div>
-                        <h3 className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
+                        <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-3">
                           Product
                         </h3>
                         <div className="space-y-1">
@@ -313,12 +313,12 @@ export function PublicNavbar() {
                                 setMobileMenuOpen(false);
                                 navigate(item.href);
                               }}
-                              className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                              className="w-full text-left px-3 py-2 rounded-lg hover:bg-muted transition-colors"
                             >
-                              <div className="text-[13px] font-medium text-gray-900 dark:text-gray-100">
+                              <div className="text-[13px] font-medium text-foreground">
                                 {item.title}
                               </div>
-                              <div className="text-[11px] text-gray-600 dark:text-gray-400 mt-0.5">
+                              <div className="text-[11px] text-muted-foreground mt-0.5">
                                 {item.description}
                               </div>
                             </button>
@@ -327,7 +327,7 @@ export function PublicNavbar() {
                       </div>
 
                       <div>
-                        <h3 className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
+                        <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-3">
                           Solutions
                         </h3>
                         <div className="space-y-1">
@@ -338,12 +338,12 @@ export function PublicNavbar() {
                                 setMobileMenuOpen(false);
                                 navigate(item.href);
                               }}
-                              className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                              className="w-full text-left px-3 py-2 rounded-lg hover:bg-muted transition-colors"
                             >
-                              <div className="text-[13px] font-medium text-gray-900 dark:text-gray-100">
+                              <div className="text-[13px] font-medium text-foreground">
                                 {item.title}
                               </div>
-                              <div className="text-[11px] text-gray-600 dark:text-gray-400 mt-0.5">
+                              <div className="text-[11px] text-muted-foreground mt-0.5">
                                 {item.description}
                               </div>
                             </button>
@@ -352,7 +352,7 @@ export function PublicNavbar() {
                       </div>
 
                       <div>
-                        <h3 className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
+                        <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-3">
                           Resources
                         </h3>
                         <div className="space-y-1">
@@ -363,12 +363,12 @@ export function PublicNavbar() {
                                 setMobileMenuOpen(false);
                                 navigate(item.href);
                               }}
-                              className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                              className="w-full text-left px-3 py-2 rounded-lg hover:bg-muted transition-colors"
                             >
-                              <div className="text-[13px] font-medium text-gray-900 dark:text-gray-100">
+                              <div className="text-[13px] font-medium text-foreground">
                                 {item.title}
                               </div>
-                              <div className="text-[11px] text-gray-600 dark:text-gray-400 mt-0.5">
+                              <div className="text-[11px] text-muted-foreground mt-0.5">
                                 {item.description}
                               </div>
                             </button>
@@ -377,7 +377,7 @@ export function PublicNavbar() {
                       </div>
 
                       <div>
-                        <h3 className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
+                        <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-3">
                           Company
                         </h3>
                         <div className="space-y-1">
@@ -388,12 +388,12 @@ export function PublicNavbar() {
                                 setMobileMenuOpen(false);
                                 navigate(item.href);
                               }}
-                              className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                              className="w-full text-left px-3 py-2 rounded-lg hover:bg-muted transition-colors"
                             >
-                              <div className="text-[13px] font-medium text-gray-900 dark:text-gray-100">
+                              <div className="text-[13px] font-medium text-foreground">
                                 {item.title}
                               </div>
-                              <div className="text-[11px] text-gray-600 dark:text-gray-400 mt-0.5">
+                              <div className="text-[11px] text-muted-foreground mt-0.5">
                                 {item.description}
                               </div>
                             </button>
@@ -401,14 +401,14 @@ export function PublicNavbar() {
                         </div>
                       </div>
 
-                      <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
+                      <div className="pt-4 border-t border-border">
                         <div className="grid grid-cols-2 gap-2">
                           <button
                             onClick={() => {
                               setMobileMenuOpen(false);
                               navigate('/pricing');
                             }}
-                            className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 text-[13px] font-medium text-gray-900 dark:text-gray-100 transition-colors"
+                            className="px-3 py-2 rounded-lg border border-border hover:bg-muted text-[13px] font-medium text-foreground transition-colors"
                           >
                             Pricing
                           </button>
@@ -417,7 +417,7 @@ export function PublicNavbar() {
                               setMobileMenuOpen(false);
                               navigate('/team');
                             }}
-                            className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 text-[13px] font-medium text-gray-900 dark:text-gray-100 transition-colors"
+                            className="px-3 py-2 rounded-lg border border-border hover:bg-muted text-[13px] font-medium text-foreground transition-colors"
                           >
                             Teams
                           </button>
