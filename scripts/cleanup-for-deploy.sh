@@ -12,9 +12,6 @@ if [ "$NODE_ENV" != "production" ] && [ "$REPLIT_DEPLOYMENT" != "1" ]; then
 fi
 
 echo "🧹 Production cleanup starting..."
-echo "Before cleanup:"
-du -sh . --exclude=.git 2>/dev/null || true
-du -sh node_modules 2>/dev/null || true
 
 # ===== 1. Remove dev-only node_modules (biggest impact) =====
 echo "📦 Phase 1: Removing dev-only packages..."
@@ -49,9 +46,8 @@ rm -rf node_modules/@opentelemetry 2>/dev/null || true
 
 # ===== 4. Clean caches and temp directories =====
 echo "🧹 Phase 4: Cleaning caches and temp files..."
-rm -rf node_modules/.cache .npm .cache 2>/dev/null || true
+rm -rf node_modules/.cache .npm 2>/dev/null || true
 rm -rf test-results playwright-report 2>/dev/null || true
-rm -rf .cache/ms-playwright 2>/dev/null || true
 
 # ===== 5. Remove non-essential project directories =====
 echo "📂 Phase 5: Removing non-essential directories..."
@@ -109,6 +105,3 @@ fi
 
 echo ""
 echo "✅ Production cleanup complete!"
-echo "After cleanup:"
-du -sh node_modules 2>/dev/null || true
-du -sh . --exclude=.git 2>/dev/null || true
