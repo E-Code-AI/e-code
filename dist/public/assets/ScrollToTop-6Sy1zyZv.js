@@ -1,0 +1,1 @@
+import{u as t,r as c}from"./index-CVg7HvcT.js";function r(){const[o]=t();return c.useEffect(()=>{const e=window.matchMedia("(prefers-reduced-motion: reduce)").matches;window.scrollTo({top:0,left:0,behavior:e?"auto":"smooth"}),document.documentElement&&(document.documentElement.scrollTop=0),document.body&&(document.body.scrollTop=0)},[o]),null}export{r as ScrollToTop};

@@ -51,6 +51,7 @@ import { sanitizeInput } from './middleware/input-validation';
 import { loggingMiddleware, securityLoggingMiddleware, performanceLoggingMiddleware } from './logging/logging-middleware';
 import { createCentralizedLogger } from './logging/centralized-logger';
 import { centralUpgradeDispatcher } from './websocket/central-upgrade-dispatcher';
+import { installFinalUpgradeGuard } from './websocket/upgrade-guard';
 import { performanceHeaders, earlyHints } from './middleware/performance-headers';
 import { isViteDevPath } from './utils/security';
 
@@ -1006,8 +1007,6 @@ app.get('/api/cors-health', async (_req, res) => {
   // Previous noServer mode with manual handleUpgrade leaked requests back to Express,
   // causing Vite to write HTML after the WebSocket handshake (resulting in "Invalid 
   // frame header" errors with 1006 closures)
-  
-  const { installFinalUpgradeGuard } = await import('./websocket/upgrade-guard');
   
   // NOW start listening - ONLY after all middleware and routes are registered
   // This prevents the race condition where requests arrive before Vite middleware is ready
