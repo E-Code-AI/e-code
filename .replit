@@ -8,18 +8,9 @@ packages = ["glibcLocales", "jq", "libxcrypt", "deno", "python3", "gnumake", "gc
 
 [deployment]
 deploymentTarget = "gce"
-run = ["sh", "-c", "npm run start"]
+run = ["sh", "-c", "NODE_ENV=production node dist/index.js"]
 build = ["sh", "-c", "npm ci --omit=dev && bash scripts/smart-build.sh"]
 publicDir = "dist/public"
-ignorePorts = true
-
-# Health check configuration for Cloud Run
-[[deployment.healthCheck]]
-path = "/health/liveness"
-initialDelaySeconds = 90
-periodSeconds = 15
-timeoutSeconds = 10
-failureThreshold = 5
 
 [workflows]
 runButton = "Project"
@@ -91,8 +82,4 @@ PATH = "/nix/store/1lagpgadaybvs1n2312gysg2phjk89y8-nodejs-20.20.0-wrapped/bin:/
 
 [[ports]]
 localPort = 5000
-externalPort = 5000
-
-[[ports]]
-localPort = 24678
 externalPort = 80
