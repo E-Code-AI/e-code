@@ -1,0 +1,72 @@
+import React from 'react';
+import * as Sentry from '@sentry/react';
+import { Button } from '@/components/ui/button';
+import { AlertTriangle } from 'lucide-react';
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+}
+
+class ErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  ErrorBoundaryState
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    Sentry.captureException(error, { extra: errorInfo });
+    console.error('Error caught by boundary:', {
+      message: error?.message || 'Unknown error',
+      name: error?.name || 'Unknown',
+      stack: error?.stack || 'No stack trace',
+      errorInfo: errorInfo?.componentStack || 'No component stack'
+    });
+  }
+
+  handleReset = () => {
+    this.setState({ hasError: false, error: null });
+  };
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-background" role="alert" aria-live="assertive">
+          <div className="max-w-md w-full px-6 py-8 text-center">
+            <AlertTriangle className="h-12 w-12 text-destructive mx-auto mb-4" aria-hidden="true" />
+            <h1 className="text-2xl font-bold mb-2">Something went wrong</h1>
+            <p className="text-muted-foreground mb-4">
+              We encountered an unexpected error. Please try refreshing the page.
+            </p>
+            {this.state.error && (
+              <pre className="text-[11px] text-left bg-muted p-3 rounded-md mb-4 overflow-auto max-h-32" aria-label="Error details">
+                {this.state.error.message}
+              </pre>
+            )}
+            <div className="flex gap-2 justify-center">
+              <Button onClick={this.handleReset} data-testid="button-error-retry">Try Again</Button>
+              <Button
+                variant="outline"
+                onClick={() => window.location.reload()}
+                data-testid="button-error-refresh"
+              >
+                Refresh Page
+              </Button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+export default ErrorBoundary;
