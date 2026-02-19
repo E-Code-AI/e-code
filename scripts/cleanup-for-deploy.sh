@@ -56,18 +56,8 @@ rm -rf docs introspected 2>/dev/null || true
 rm -rf tests 2>/dev/null || true
 rm -rf memory-bank 2>/dev/null || true
 
-# ===== 6. Remove source files (bundled in dist/) =====
-echo "📝 Phase 6: Removing source files..."
-rm -rf client/src 2>/dev/null || true
-
-# ===== 7. Remove build config not needed at runtime =====
-rm -f vite.config.ts tsconfig.json tailwind.config.ts postcss.config.js 2>/dev/null || true
-rm -f drizzle.config.ts components.json theme.json 2>/dev/null || true
-
-# ===== 8. Clean up screenshot/paste attachments =====
-rm -f attached_assets/Pasted-*.txt attached_assets/Capture* 2>/dev/null || true
-rm -f attached_assets/IMG_*.png attached_assets/screenshot* 2>/dev/null || true
-rm -f *.png *.jpg 2>/dev/null || true
+# ===== 6. Clean up temp files (keep source and config for dev safety) =====
+echo "📝 Phase 6: Cleaning temp files..."
 rm -f build.log deployment.log 2>/dev/null || true
 
 # ===== 9. Ensure node/npm are in PATH at runtime =====
