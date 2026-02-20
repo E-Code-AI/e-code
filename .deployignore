@@ -67,15 +67,26 @@ vitest.config.ts
 generated-icon.png
 package-lock.json
 
-# === SCRIPTS ===
-*.sh
-*.mjs
+# === SCRIPTS (root-level only, no wildcards that could hit node_modules) ===
 build-prod.js
 deploy.js
 start.js
 test-shell-socket.mjs
 test-socket-direct.js
 test-socket-direct.mjs
+build.sh
+deploy.sh
+deploy-build.sh
+deploy-production.sh
+deploy-start.sh
+start.sh
+start-dev.sh
+start-workspace.sh
+monitor-dashboard.sh
+run-production-checks.sh
+setup-api-keys.sh
+test-sendgrid-webhook.sh
+eslint.config.mjs
 
 # === ENV FILES ===
 .env
@@ -93,7 +104,7 @@ cookies*.txt
 cookie_store
 
 # === PRIVATE ===
-Prive pour moi (a ne pas consulter)/
+Prive pour moi (a ne pas consulter)
 
 # === SPECIAL FILENAMES ===
 ✅_.env.production.example
