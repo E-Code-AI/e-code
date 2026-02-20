@@ -1,16 +1,41 @@
 #!/bin/bash
 set -e
 
-echo "🔍 Smart Build - Production optimization..."
+echo "============================================"
+echo "  E-Code.AI Deployment Build"
+echo "============================================"
 
-if [ ! -f "dist/index.js" ] || [ ! -f "dist/public/index.html" ]; then
-  echo "❌ ERROR: dist/ not found. Run build in development first."
-  exit 1
+echo ""
+echo "Step 1/3: Checking pre-built dist..."
+
+if [ -f "dist/index.js" ] && [ -f "dist/public/index.html" ]; then
+  echo "  dist/ already built - skipping compilation"
+else
+  echo "  dist/ not found - attempting build..."
+  if [ -f "vite.config.ts" ] && [ -f "scripts/build-server.mjs" ]; then
+    echo "  Building frontend (Vite)..."
+    npx vite build
+    echo "  Building backend (esbuild)..."
+    node scripts/build-server.mjs
+  else
+    echo "FATAL: dist/ not found and source files not available for build"
+    echo "  Run 'npm run build' in development before deploying"
+    exit 1
+  fi
 fi
 
-echo "✅ Pre-built dist found"
+if [ ! -f "dist/index.js" ]; then
+  echo "FATAL: dist/index.js missing after build"
+  exit 1
+fi
+if [ ! -f "dist/public/index.html" ]; then
+  echo "FATAL: dist/public/index.html missing after build"
+  exit 1
+fi
+echo "  Build output verified"
 
-echo "🧹 AGGRESSIVE node_modules cleanup - whitelist approach..."
+echo ""
+echo "Step 2/3: Optimizing node_modules..."
 
 KEEP_PACKAGES=(
   "node-pty"
@@ -104,9 +129,10 @@ KEEP_PACKAGES=(
   "tweetnacl"
 )
 
+rm -rf /tmp/node_modules_keep 2>/dev/null
 mkdir -p /tmp/node_modules_keep
 
-echo "  Moving required packages..."
+echo "  Extracting required packages..."
 for pkg in "${KEEP_PACKAGES[@]}"; do
   if [ -d "node_modules/$pkg" ]; then
     mkdir -p "/tmp/node_modules_keep/$pkg"
@@ -124,25 +150,34 @@ echo "  Replacing node_modules with minimal set..."
 rm -rf node_modules
 mv /tmp/node_modules_keep node_modules
 
-echo "✅ Production node_modules cleaned"
-echo "📦 Final sizes:"
-du -sh dist/ 2>/dev/null || true
-du -sh node_modules/ 2>/dev/null || true
-echo "📏 Total deployment payload:"
-du -shc dist/ node_modules/ 2>/dev/null | tail -1
+echo "  node_modules optimized"
 
-echo "🔬 Verifying critical modules exist..."
+echo ""
+echo "Step 3/3: Verification..."
+
 MISSING=0
-for pkg in node-pty bcrypt jsdom isomorphic-dompurify ws; do
+for pkg in node-pty bcrypt jsdom isomorphic-dompurify ws debug ms uuid; do
   if [ ! -d "node_modules/$pkg" ]; then
-    echo "  ❌ MISSING: $pkg"
+    echo "  MISSING: $pkg"
     MISSING=1
   fi
 done
 if [ "$MISSING" = "1" ]; then
-  echo "❌ Critical modules missing! Build failed."
+  echo "FATAL: Critical modules missing after optimization"
   exit 1
 fi
-echo "  ✅ All critical modules present"
+echo "  All critical modules present"
 
-echo "✅ Build complete!"
+echo ""
+echo "============================================"
+echo "  Build Summary"
+echo "============================================"
+DIST_SIZE=$(du -sh dist/ 2>/dev/null | cut -f1)
+NM_SIZE=$(du -sh node_modules/ 2>/dev/null | cut -f1)
+TOTAL=$(du -shc dist/ node_modules/ 2>/dev/null | tail -1 | cut -f1)
+echo "  dist/:         $DIST_SIZE"
+echo "  node_modules/: $NM_SIZE"
+echo "  Total:         $TOTAL"
+echo "============================================"
+echo "  Ready for deployment"
+echo "============================================"
