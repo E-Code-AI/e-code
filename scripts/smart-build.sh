@@ -10,10 +10,8 @@ fi
 
 echo "✅ Pre-built dist found - ready to run"
 
-if [ -n "$REPLIT_DEPLOYMENT" ] || [ "$NODE_ENV" = "production" ]; then
-  echo "🧹 Pruning dev dependencies..."
-  npm prune --omit=dev --no-audit --no-fund 2>/dev/null || true
-  echo "✅ Production dependencies only"
-fi
+echo "🧹 Pruning dev dependencies for production..."
+npm prune --omit=dev --no-audit --no-fund 2>/dev/null || true
+echo "✅ Production dependencies only"
 
 echo "✅ Build complete!"
