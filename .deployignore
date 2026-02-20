@@ -1,8 +1,18 @@
+# === DIRECTORIES ===
 .local/
 .git/
 .cache/
 .config/
 .upm/
+.ai-memory/
+.checkpoints/
+.ecode/
+.executions/
+.exports/
+.github/
+.pythonlibs/
+.replitdb/
+.well-known/
 client/
 server/
 shared/
@@ -28,60 +38,62 @@ test/
 types/
 vscode-extension/
 cookie_store/
+
+# === DOCUMENTATION ===
 *.md
-*.tar.gz
-*.zip
 *.txt
-sedE52NgH
-sedomaJgw
-package-lock.json
+SECURITY_AUDIT_SUMMARY.txt
+
+# === CONFIG FILES ===
 app.json
 Dockerfile
 docker-entrypoint.sh
-docker-compose.yml
-docker-compose.prod.yml
-docker-compose.production.yml
-docker-compose.replit-vm.yml
+docker-compose*.yml
 ecosystem.config.js
 nginx.conf
 capacitor.config.ts
-tsconfig.json
-tsconfig.core.json
-tsconfig.server.json
+tsconfig*.json
 vite.config.ts
 drizzle.config.ts
 tailwind.config.ts
 postcss.config.js
 components.json
 theme.json
-generated-icon.png
 eslint.config.mjs
 introspect.config.ts
-jest.config.js
-jest.config.enterprise.js
+jest.config.*
 playwright.config.ts
 vitest.config.ts
-build.sh
+generated-icon.png
+package-lock.json
+
+# === SCRIPTS ===
+*.sh
+*.mjs
 build-prod.js
-deploy.sh
 deploy.js
-deploy-build.sh
-deploy-production.sh
-deploy-start.sh
-start.sh
 start.js
-start-dev.sh
-start-workspace.sh
-monitor-dashboard.sh
-run-production-checks.sh
-setup-api-keys.sh
-test-sendgrid-webhook.sh
 test-shell-socket.mjs
 test-socket-direct.js
 test-socket-direct.mjs
-cookies.txt
-cookies2.txt
-cookies3.txt
+
+# === ENV FILES ===
 .env
 .env.*
 .gitignore
+.dockerignore
+.npmrc
+.replitignore
+.deployignore
+
+# === TEMP/JUNK ===
+sedE52NgH
+sedomaJgw
+cookies*.txt
+cookie_store
+
+# === PRIVATE ===
+Prive pour moi (a ne pas consulter)/
+
+# === SPECIAL FILENAMES ===
+✅_.env.production.example
