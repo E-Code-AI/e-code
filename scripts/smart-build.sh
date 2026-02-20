@@ -53,7 +53,6 @@ REMOVE_PACKAGES=(
   "@esbuild-kit"
   "@esbuild"
   "@types"
-  "@babel"
   "@vitejs"
   "@swc"
 )
