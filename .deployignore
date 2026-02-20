@@ -13,6 +13,7 @@
 .pythonlibs/
 .replitdb/
 .well-known/
+node_modules/
 client/
 server/
 shared/
@@ -78,7 +79,6 @@ jest.config.*
 playwright.config.ts
 vitest.config.ts
 generated-icon.png
-package-lock.json
 
 # === SCRIPTS (root-level only, no wildcards that could hit node_modules) ===
 build-prod.js
