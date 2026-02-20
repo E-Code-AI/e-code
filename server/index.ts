@@ -317,6 +317,17 @@ const serverState = {
   errors: [] as string[]
 };
 
+app.use((req, res, next) => {
+  if (serverState.phase !== 'ready') {
+    const path = req.path;
+    if (path.startsWith('/health') || path === '/') {
+      return next();
+    }
+    return res.status(503).json({ status: 'starting', message: 'Server is initializing, please retry shortly' });
+  }
+  next();
+});
+
 // Main health check - responds with detailed status (dynamic service counts)
 app.get('/health', (_req, res) => {
   const uptime = Date.now() - serverState.startTime;
@@ -391,6 +402,13 @@ app.get('/api/cors-health', async (_req, res) => {
       environment: process.env.NODE_ENV
     });
   }
+});
+
+// ✅ EARLY BIND: Start listening IMMEDIATELY so health checks respond within Replit's 5s timeout
+// Services will load in the background after the server is already accepting connections
+httpServer.listen(port, "0.0.0.0", () => {
+  console.log(`🚀 E-Code Platform listening on port ${port}`);
+  console.log(`[Server] Environment: ${process.env.NODE_ENV || 'development'}`);
 });
 
 // Now load the rest of the application asynchronously after server is listening
@@ -1008,54 +1026,47 @@ app.get('/api/cors-health', async (_req, res) => {
   // causing Vite to write HTML after the WebSocket handshake (resulting in "Invalid 
   // frame header" errors with 1006 closures)
   
-  // NOW start listening - ONLY after all middleware and routes are registered
-  // This prevents the race condition where requests arrive before Vite middleware is ready
+  // ✅ All services loaded - perform post-initialization tasks
   
-  httpServer.listen(port, "0.0.0.0", () => {
-    // ✅ CRITICAL: Log that server is listening - this is what Replit workflow monitors for
-    console.log(`🚀 E-Code Platform listening on port ${port}`);
-    console.log(`[Server] Environment: ${process.env.NODE_ENV || 'development'}`);
-    
-    // ✅ Initialize language runtime warmup asynchronously
-    setImmediate(() => {
-      console.log('[RuntimeWarmup] Starting background runtime initialization...');
-      initializeRuntimes().catch(err => {
-        console.error('[RuntimeWarmup] Failed to initialize runtimes:', err);
-      });
+  // ✅ Initialize language runtime warmup asynchronously
+  setImmediate(() => {
+    console.log('[RuntimeWarmup] Starting background runtime initialization...');
+    initializeRuntimes().catch(err => {
+      console.error('[RuntimeWarmup] Failed to initialize runtimes:', err);
     });
-    
-    // ✅ Restore original methods to allow adding the final guard
-    if ((global as any).__restoreUpgradeListenerMethods) {
-      (global as any).__restoreUpgradeListenerMethods();
-      console.log('[HTTP Server] Restored original methods to add final guard');
-    }
-    
-    // ✅ Re-enable final guard (Nov 20, 2025)  
-    // Root cause was Vite HMR, not the guard - guard correctly preserved /ws/agent sockets
-    // Now that Vite HMR is on separate port 24678, guard can safely destroy orphan sockets
-    httpServer.on('upgrade', installFinalUpgradeGuard);
-    
-    // ✅ Re-block upgrade listeners after adding guard (prevents late additions)
-    const blockUpgradeListener = (method: typeof httpServer.on) => {
-      return function(event: string, listener: (...args: any[]) => void) {
-        if (event === 'upgrade') {
-          console.log('[HTTP Server] ⚠️ Blocked late upgrade listener');
-          return httpServer;
-        }
-        return method(event, listener);
-      } as typeof httpServer.on;
-    };
-    httpServer.on = blockUpgradeListener(httpServer.on.bind(httpServer));
-    httpServer.addListener = blockUpgradeListener(httpServer.addListener.bind(httpServer)) as typeof httpServer.addListener;
-    httpServer.prependListener = blockUpgradeListener(httpServer.prependListener.bind(httpServer)) as typeof httpServer.prependListener;
-    
-    console.log('[Upgrade Guard] Final catch-all guard registered for orphan socket cleanup');
-    console.log('[HTTP Server] ✅ Upgrade listeners locked: only dispatcher + guard active');
-    
-    // ✅ Mark server as fully ready for health probes
-    serverState.phase = 'ready';
-    console.log(`[Startup] ✅ Server ready (${Date.now() - serverState.startTime}ms startup time)`);
   });
+  
+  // ✅ Restore original methods to allow adding the final guard
+  if ((global as any).__restoreUpgradeListenerMethods) {
+    (global as any).__restoreUpgradeListenerMethods();
+    console.log('[HTTP Server] Restored original methods to add final guard');
+  }
+  
+  // ✅ Re-enable final guard (Nov 20, 2025)  
+  // Root cause was Vite HMR, not the guard - guard correctly preserved /ws/agent sockets
+  // Now that Vite HMR is on separate port 24678, guard can safely destroy orphan sockets
+  httpServer.on('upgrade', installFinalUpgradeGuard);
+  
+  // ✅ Re-block upgrade listeners after adding guard (prevents late additions)
+  const blockUpgradeListenerFinal = (method: typeof httpServer.on) => {
+    return function(event: string, listener: (...args: any[]) => void) {
+      if (event === 'upgrade') {
+        console.log('[HTTP Server] ⚠️ Blocked late upgrade listener');
+        return httpServer;
+      }
+      return method(event, listener);
+    } as typeof httpServer.on;
+  };
+  httpServer.on = blockUpgradeListenerFinal(httpServer.on.bind(httpServer));
+  httpServer.addListener = blockUpgradeListenerFinal(httpServer.addListener.bind(httpServer)) as typeof httpServer.addListener;
+  httpServer.prependListener = blockUpgradeListenerFinal(httpServer.prependListener.bind(httpServer)) as typeof httpServer.prependListener;
+  
+  console.log('[Upgrade Guard] Final catch-all guard registered for orphan socket cleanup');
+  console.log('[HTTP Server] ✅ Upgrade listeners locked: only dispatcher + guard active');
+  
+  // ✅ Mark server as fully ready for health probes
+  serverState.phase = 'ready';
+  console.log(`[Startup] ✅ Server ready (${Date.now() - serverState.startTime}ms startup time)`);
 
   // ✅ PRODUCTION OPTIMIZATION: Graceful shutdown handler
   const gracefulShutdown = async (signal: string) => {

@@ -59,9 +59,10 @@ function getRequireDockerTerminal(): boolean {
   return !getAllowInsecureLocalPty();
 }
 
-// Security validation: Check if Docker is available (called at startup)
-// FIXED: Use static import instead of dynamic require for ESM compatibility
 async function validateDockerAvailable(): Promise<boolean> {
+  if (process.env.REPL_ID || process.env.REPLIT_DEPLOYMENT) {
+    return false;
+  }
   return new Promise((resolve) => {
     try {
       const docker = spawn('docker', ['info'], { stdio: 'pipe' });
@@ -70,7 +71,7 @@ async function validateDockerAvailable(): Promise<boolean> {
       setTimeout(() => {
         docker.kill();
         resolve(false);
-      }, 5000); // 5s timeout
+      }, 3000);
     } catch (error) {
       resolve(false);
     }
