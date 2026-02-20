@@ -339,8 +339,8 @@ app.get('/health', (_req, res) => {
   const uptime = Date.now() - serverState.startTime;
   const { total, ready } = getServiceCounts();
   
-  res.json({
-    status: serverState.phase === 'ready' ? 'ok' : 'starting',
+  res.status(200).json({
+    status: 'ok',
     phase: serverState.phase,
     uptime: `${Math.round(uptime / 1000)}s`,
     services: `${ready}/${total}`,
