@@ -318,9 +318,9 @@ const serverState = {
 };
 
 app.use((req, res, next) => {
-  if (serverState.phase !== 'ready') {
+  if (serverState.phase !== 'ready' && process.env.NODE_ENV === 'production') {
     const path = req.path;
-    if (path.startsWith('/health') || path === '/') {
+    if (path.startsWith('/health') || path === '/' || !path.startsWith('/api/')) {
       return next();
     }
     return res.status(503).json({ status: 'starting', message: 'Server is initializing, please retry shortly' });
