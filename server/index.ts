@@ -320,10 +320,16 @@ const serverState = {
 app.use((req, res, next) => {
   if (serverState.phase !== 'ready' && process.env.NODE_ENV === 'production') {
     const path = req.path;
-    if (path.startsWith('/health') || path === '/' || !path.startsWith('/api/')) {
+    if (path.startsWith('/health')) {
       return next();
     }
-    return res.status(503).json({ status: 'starting', message: 'Server is initializing, please retry shortly' });
+    if (path.startsWith('/api/')) {
+      return res.status(503).json({ status: 'starting', message: 'Server is initializing, please retry shortly' });
+    }
+    if (path.match(/\.(js|css|png|jpg|jpeg|svg|ico|woff2?|ttf|eot|map|json)$/)) {
+      return next();
+    }
+    return res.status(200).set({ 'Content-Type': 'text/html' }).end(`<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>E-Code.AI</title><style>body{margin:0;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#0d1117;color:#c9d1d9;font-family:-apple-system,BlinkMacSystemFont,sans-serif}div{text-align:center}.spinner{width:40px;height:40px;border:3px solid #21262d;border-top:3px solid #58a6ff;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 16px}@keyframes spin{to{transform:rotate(360deg)}}h1{font-size:20px;margin:0 0 8px}p{font-size:14px;color:#8b949e;margin:0}</style><meta http-equiv="refresh" content="2"></head><body><div><div class="spinner"></div><h1>E-Code.AI</h1><p>Loading platform...</p></div></body></html>`);
   }
   next();
 });
