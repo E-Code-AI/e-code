@@ -10,6 +10,7 @@ packages = ["glibcLocales", "jq", "libxcrypt", "deno", "python3", "gnumake", "gc
 deploymentTarget = "gce"
 run = ["sh", "-c", "NODE_ENV=production node dist/index.js"]
 build = ["sh", "-c", "bash scripts/smart-build.sh"]
+publicDir = "dist/public"
 
 [workflows]
 runButton = "Project"
@@ -82,3 +83,7 @@ PATH = "/nix/store/1lagpgadaybvs1n2312gysg2phjk89y8-nodejs-20.20.0-wrapped/bin:/
 [[ports]]
 localPort = 5000
 externalPort = 80
+
+[[ports]]
+localPort = 24678
+externalPort = 3000

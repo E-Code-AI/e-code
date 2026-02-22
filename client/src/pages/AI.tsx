@@ -333,13 +333,13 @@ export default function AI() {
 
       
       {/* Hero Section - Fortune 500 Style */}
-      <section className="relative min-h-[90vh] flex items-center overflow-hidden bg-gradient-to-b from-background to-muted/20">
+      <section className="relative min-h-[60vh] md:min-h-[80vh] flex items-center overflow-hidden bg-gradient-to-b from-background to-muted/20 py-16 md:py-0">
         <div className="absolute inset-0">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-background to-background" />
           <div className="absolute inset-0 bg-grid-pattern opacity-5" />
         </div>
         
-        <div className="container-responsive relative">
+        <div className="container-responsive relative z-10">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <LazyMotionDiv
               initial={{ opacity: 0, x: -50 }}
@@ -378,13 +378,12 @@ export default function AI() {
               </div>
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                {stats.map((stat, idx) => (
+                {stats.map((stat) => (
                   <div 
                     key={stat.label} 
-                    className="text-center animate-slide-in-up opacity-0"
-                    style={{ animationDelay: `${400 + idx * 100}ms`, animationFillMode: 'forwards' }}
+                    className="text-center"
                   >
-                    <div className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                    <div className="text-3xl md:text-4xl font-bold text-primary">
                       {stat.value}
                     </div>
                     <div className="text-[13px] text-muted-foreground font-medium">{stat.label}</div>
@@ -564,10 +563,7 @@ export default function AI() {
           </div>
 
           <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            <div
-              className="text-center animate-slide-in-up opacity-0"
-              style={{ animationDelay: '100ms', animationFillMode: 'forwards' }}
-            >
+            <div className="text-center">
               <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-violet-500 to-fuchsia-500 rounded-2xl flex items-center justify-center text-white">
                 <MessageSquare className="h-10 w-10" />
               </div>
@@ -577,10 +573,7 @@ export default function AI() {
               </p>
             </div>
 
-            <div
-              className="text-center animate-slide-in-up opacity-0"
-              style={{ animationDelay: '200ms', animationFillMode: 'forwards' }}
-            >
+            <div className="text-center">
               <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-fuchsia-500 to-orange-500 rounded-2xl flex items-center justify-center text-white">
                 <Brain className="h-10 w-10" />
               </div>
@@ -590,10 +583,7 @@ export default function AI() {
               </p>
             </div>
 
-            <div
-              className="text-center animate-slide-in-up opacity-0"
-              style={{ animationDelay: '300ms', animationFillMode: 'forwards' }}
-            >
+            <div className="text-center">
               <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-orange-500 to-amber-500 rounded-2xl flex items-center justify-center text-white">
                 <Globe className="h-10 w-10" />
               </div>
