@@ -412,6 +412,18 @@ app.get('/api/cors-health', async (_req, res) => {
 
 // ✅ EARLY BIND: Start listening IMMEDIATELY so health checks respond within Replit's 5s timeout
 // Services will load in the background after the server is already accepting connections
+console.log(`[Server] Attempting to bind to port ${port} on 0.0.0.0...`);
+httpServer.on('error', (err: any) => {
+  console.error(`[Server] FATAL: Failed to bind to port ${port}:`, err.message);
+  if (err.code === 'EADDRINUSE') {
+    console.error(`[Server] Port ${port} is already in use. Trying port 0 (auto-assign)...`);
+    httpServer.listen(0, "0.0.0.0", () => {
+      const addr = httpServer.address();
+      const actualPort = typeof addr === 'object' && addr ? addr.port : 'unknown';
+      console.log(`🚀 E-Code Platform listening on auto-assigned port ${actualPort}`);
+    });
+  }
+});
 httpServer.listen(port, "0.0.0.0", () => {
   console.log(`🚀 E-Code Platform listening on port ${port}`);
   console.log(`[Server] Environment: ${process.env.NODE_ENV || 'development'}`);
