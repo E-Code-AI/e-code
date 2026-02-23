@@ -33,8 +33,7 @@ else
     npm install --omit=dev --ignore-scripts 2>&1 | tail -5
   fi
 
-  echo "  Rebuilding native modules..."
-  npm rebuild bcrypt node-pty sharp 2>&1 | tail -5 || echo "  (some native rebuilds skipped - using JS fallbacks)"
+  echo "  Skipping native module rebuild (using JS fallbacks for bcrypt/node-pty/sharp)"
 
   touch node_modules/.production-optimized
   echo "  Production dependencies installed"
@@ -44,7 +43,7 @@ echo ""
 echo "Step 3/3: Verification..."
 
 MISSING=0
-CRITICAL_PACKAGES="pg bcrypt jsdom isomorphic-dompurify node-pty sharp socket.io"
+CRITICAL_PACKAGES="pg jsdom isomorphic-dompurify socket.io"
 for pkg in $CRITICAL_PACKAGES; do
   if [ ! -d "node_modules/$pkg" ]; then
     echo "  MISSING: $pkg"
