@@ -8,23 +8,16 @@ import * as esbuild from 'esbuild';
 
 const nativeModules = [
   'node-pty',
-  'dockerode',
+  'bcrypt',
+  'canvas',
+  'cpu-features',
+  'pg-cloudflare',
+  'sharp',
   'playwright',
   'playwright-core',
   '@playwright/test',
-  'sharp',
-  'bcrypt',
-  'cpu-features',
   'ssh2',
-  'pg-cloudflare',
-  'lightningcss',
-  '@babel/preset-typescript',
-  '@babel/core',
-  'jsdom',
-  'isomorphic-dompurify',
-  'canvas',
-  // Note: dotenv is NOT externalized - it's eliminated via dead code elimination
-  // because we define process.env.NODE_ENV='production' at build time
+  'dockerode',
 ];
 
 const nodeBuiltins = [

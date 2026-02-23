@@ -43,7 +43,7 @@ echo ""
 echo "Step 3/3: Verification..."
 
 MISSING=0
-CRITICAL_PACKAGES="pg jsdom isomorphic-dompurify socket.io"
+CRITICAL_PACKAGES="pg socket.io"
 for pkg in $CRITICAL_PACKAGES; do
   if [ ! -d "node_modules/$pkg" ]; then
     echo "  MISSING: $pkg"
