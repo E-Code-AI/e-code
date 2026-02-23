@@ -18,6 +18,7 @@ client/
 server/
 shared/
 scripts/backup-database.ts
+scripts/build-server.mjs
 scripts/crawl-site.ts
 scripts/db-push-non-interactive.ts
 scripts/db-push.ts
@@ -109,6 +110,10 @@ eslint.config.mjs
 .npmrc
 .replitignore
 .deployignore
+
+# === LARGE FILES NOT NEEDED ===
+package-lock.json
+sedVkyNvv
 
 # === TEMP/JUNK ===
 sedE52NgH
