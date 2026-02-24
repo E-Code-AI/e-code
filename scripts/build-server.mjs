@@ -18,6 +18,8 @@ const nativeModules = [
   '@playwright/test',
   'ssh2',
   'dockerode',
+  'jsdom',
+  'isomorphic-dompurify',
 ];
 
 const nodeBuiltins = [
@@ -42,6 +44,7 @@ async function build() {
     const result = await esbuild.build({
       entryPoints: ['server/index.ts'],
       bundle: true,
+      splitting: true,
       platform: 'node',
       target: 'node20',
       format: 'esm',
@@ -54,8 +57,6 @@ async function build() {
       legalComments: 'none',
       keepNames: false,
       drop: ['debugger'],
-      // Define NODE_ENV at build time to enable dead code elimination
-      // This removes the dotenv import block entirely from production builds
       define: {
         'process.env.NODE_ENV': '"production"',
       },

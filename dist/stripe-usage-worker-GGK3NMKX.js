@@ -1,0 +1,20 @@
+
+import { createRequire as __esbuild_createRequire } from 'module';
+import { fileURLToPath as __esbuild_fileURLToPath } from 'url';
+import { dirname as __esbuild_dirname } from 'path';
+const require = __esbuild_createRequire(import.meta.url);
+const __filename = __esbuild_fileURLToPath(import.meta.url);
+const __dirname = __esbuild_dirname(__filename);
+
+import{a as m}from"./chunk-5ABLWTKO.js";import{b as g}from"./chunk-QBLJH3OW.js";import{i as a}from"./chunk-LOJN5Z32.js";import"./chunk-NRIEQZ4F.js";import{Ce as d,Ee as n,t as u}from"./chunk-5VBXYHR2.js";import"./chunk-SUGQP5BU.js";import{Ca as o,F as c}from"./chunk-2LLTIQNM.js";import"./chunk-ERKIQN6P.js";import"./chunk-SLCWITGS.js";import"./chunk-3JUZXZ3L.js";import"./chunk-E6Z4GF7P.js";import"./chunk-INICBF4H.js";import"./chunk-G3YIGMP2.js";import{d as p,f}from"./chunk-BEGAQUQV.js";import"./chunk-G6E5POTQ.js";import"./chunk-UXMHOPI6.js";import"./chunk-KVTR5VNS.js";import"./chunk-B6UHYZUF.js";import"./chunk-5OWZ6DYH.js";import"./chunk-5D5JQLUE.js";f();var s=p("stripe-usage-worker"),E=process.env.STRIPE_SECRET_KEY?new m(process.env.STRIPE_SECRET_KEY,{apiVersion:"2025-08-27.basil"}):null;function S(e){let r=5*Math.pow(3,e),i=new Date;return i.setMinutes(i.getMinutes()+r),i}async function _(e){try{s.info(`Processing Stripe queue item ${e.id}`,{meteringId:e.metering_id,userId:e.user_id,attempts:e.attempts});let t=await a.select().from(u).where(o(u.id,e.user_id)).limit(1);if(!t||t.length===0)throw new Error(`User ${e.user_id} not found`);let r=t[0].stripeCustomerId;if(!r)throw new Error("No Stripe Customer ID - user may not have active subscription");let i=await E.billing.meterEvents.create({event_name:"ai_api_usage",payload:{stripe_customer_id:r,value:String(Math.ceil(parseFloat(e.cost_usd)*100))},timestamp:Math.floor(Date.now()/1e3)});s.info("\u2705 Stripe meter event created successfully",{queueId:e.id,meteringId:e.metering_id,meterEventId:i.identifier,customerId:r}),await a.update(n).set({status:"completed",updatedAt:new Date}).where(o(n.id,e.id)),await a.update(d).set({billed:!0,billedAt:new Date,stripeUsageRecordId:i.identifier}).where(o(d.id,e.metering_id))}catch(t){let r=e.attempts+1;if(s.error(`\u274C Stripe queue processing failed (attempt ${r}/${e.max_attempts})`,{queueId:e.id,meteringId:e.metering_id,error:t.message}),r>=e.max_attempts)s.error(`\u{1F6A8} Stripe queue EXHAUSTED for item ${e.id} - Manual intervention required!`),await a.update(n).set({status:"failed",attempts:r,lastError:t.message||"Unknown error",updatedAt:new Date}).where(o(n.id,e.id)),await g.stripeQueueExhausted(e.metering_id,r,t.message||"Unknown error");else{let i=S(r);await a.update(n).set({status:"pending",attempts:r,lastError:t.message||"Unknown error",nextRetryAt:i,updatedAt:new Date}).where(o(n.id,e.id)),s.info(`Scheduled retry for queue item ${e.id} at ${i.toISOString()}`)}}}async function l(){try{if(!process.env.STRIPE_SECRET_KEY){s.debug("Stripe API key not configured - skipping queue processing");return}if(!E){s.error("Stripe client not initialized despite STRIPE_SECRET_KEY being set");return}let e=await a.execute(c`
+      UPDATE ${n}
+      SET status = 'processing'
+      WHERE id IN (
+        SELECT id FROM ${n}
+        WHERE status = 'pending' AND next_retry_at <= NOW()
+        ORDER BY created_at ASC
+        LIMIT 10
+        FOR UPDATE SKIP LOCKED
+      )
+      RETURNING *
+    `),t=Array.isArray(e)?e:e.rows||[];if(t.length===0){s.debug("No pending Stripe queue items to process");return}s.info(`Processing ${t.length} pending Stripe queue items`);for(let r of t)await _(r)}catch(e){let t=e instanceof Error?{message:e.message,stack:e.stack,code:e.code,detail:e.detail}:e;s.error("Stripe usage worker error",{error:t})}}function D(){return s.info("Starting Stripe usage worker (interval: 30000ms)"),l().catch(t=>{s.error("Initial Stripe queue processing failed",{error:t})}),setInterval(()=>{l().catch(t=>{s.error("Stripe queue processing failed",{error:t})})},3e4)}export{l as processStripeUsageQueue,D as startStripeUsageWorker};
