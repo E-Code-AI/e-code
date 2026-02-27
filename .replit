@@ -10,6 +10,7 @@ packages = ["glibcLocales", "jq", "libxcrypt", "deno", "python3", "gnumake", "gc
 deploymentTarget = "gce"
 run = ["sh", "-c", "NODE_ENV=production node dist/index.js"]
 build = ["sh", "-c", "bash scripts/smart-build.sh"]
+publicDir = "dist/public"
 
 [workflows]
 runButton = "Project"
