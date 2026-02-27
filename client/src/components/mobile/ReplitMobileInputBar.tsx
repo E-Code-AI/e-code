@@ -268,7 +268,7 @@ export const ReplitMobileInputBar = memo(function ReplitMobileInputBar({
             disabled={isDisabled}
             rows={1}
             className={cn(
-              "w-full px-4 pt-3 pb-12 text-[13px] resize-none bg-transparent",
+              "w-full px-4 pt-3 pb-12 text-[11px] resize-none bg-transparent",
               "text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500",
               "focus:outline-none min-h-[48px] max-h-[120px]",
               isDisabled && "opacity-50 cursor-not-allowed"
