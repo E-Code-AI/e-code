@@ -290,12 +290,14 @@
                                            url.includes('/ws/background-tests') ||
                                            url.includes('/api/runtime/logs/ws');
               
-              // CRITICAL FIX: Rewrite localhost Vite HMR URLs when on Replit remote domain
-              if (isReplitRemote && isViteHMR && (url.includes('localhost:5173') || url.includes('127.0.0.1:5173'))) {
-                url = rewriteViteHMRUrl(url);
-              }
-              
               console.log('[WebSocket] Connection:', url.substring(0, 80), '| HMR:', isViteHMR, '| Essential:', isEssentialWebSocket);
+
+              // On Replit remote: block ALL HMR connections silently
+              // HMR requires port 24678 which is not accessible externally.
+              // Letting real WS fail triggers Vite's error overlay (blank page).
+              if (isReplitRemote && isViteHMR) {
+                return new MockWebSocket(url, protocols);
+              }
               
               if (isDevelopment && !isViteHMR && !isEssentialWebSocket) {
                 console.log('[WebSocket] Suppressed non-essential connection');
@@ -315,6 +317,20 @@
         window.WebSocket = ProxyWebSocket;
         
         console.log('[WebSocket] Interceptor installed | Dev:', isDevelopment, '| Replit:', isReplitRemote);
+      })();
+    </script>
+    <script>
+      // Remove Vite connection-error overlays on Replit (HMR blocked = no connection)
+      // Only removes WS connection errors, not real build errors
+      (function() {
+        if (!window.location.hostname.includes('replit.dev') && 
+            !window.location.hostname.includes('repl.co')) return;
+        var _origDefine = window.customElements && window.customElements.define.bind(window.customElements);
+        if (!_origDefine) return;
+        window.customElements.define = function(name, cls, opts) {
+          if (name === 'vite-error-overlay') return; // suppress connection overlay
+          return _origDefine(name, cls, opts);
+        };
       })();
     </script>
     <script type="module" src="/src/main.tsx"></script>
