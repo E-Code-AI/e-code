@@ -188,7 +188,17 @@ function App() {
     <ErrorBoundary>
       <PersistQueryClientProvider 
         client={queryClient} 
-        persistOptions={{ persister: queryPersister, maxAge: 24 * 60 * 60 * 1000, buster: 'v1' }}
+        persistOptions={{ 
+          persister: queryPersister, 
+          maxAge: 24 * 60 * 60 * 1000, 
+          buster: 'v1',
+          dehydrateOptions: {
+            shouldDehydrateQuery: (query) => {
+              const key = query.queryKey[0];
+              return key !== '/api/me' && key !== 'user' && key !== 'auth';
+            }
+          }
+        }}
       >
         <Suspense fallback={<ECodeLoading fullScreen size="lg" text="Loading..." />}>
           <OptimizedMotionProvider>

@@ -32,7 +32,7 @@ const fadeInUp = {
 export default function Login() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
-  const { user, loginMutation } = useAuth();
+  const { user, isLoading: authLoading, loginMutation } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [formData, setFormData] = useState({
@@ -70,8 +70,9 @@ export default function Login() {
   };
 
   // Redirect after successful login - handle pending workspace creation (Replit-style flow)
+  // IMPORTANT: Wait for authLoading=false to avoid redirecting on stale IndexedDB cached data
   useEffect(() => {
-    if (user) {
+    if (!authLoading && user) {
       const pendingAppDescription = sessionStorage.getItem('pendingAppDescription');
       const triggerBuild = sessionStorage.getItem('triggerBuildOnLanding');
       
@@ -101,7 +102,7 @@ export default function Login() {
       // Default: go to dashboard
       navigate('/dashboard');
     }
-  }, [user, navigate]);
+  }, [user, authLoading, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
