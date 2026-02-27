@@ -14,16 +14,15 @@ import { ReplitLayout } from "@/components/layout/ReplitLayout";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { publicRoutes, protectedRoutes, placeholderRoutes, solarTechApps, Pages } from "./routes/config";
 import { instrumentedLazy } from "@/utils/instrumented-lazy";
+import { LazyAnimatedRoutes } from "@/components/LazyAnimatedRoutes";
+import { OptimizedMotionProvider, AnimationMonitor } from "@/lib/motion";
 
 import { Toaster } from "@/components/ui/toaster";
 import { AppToaster } from "@/components/ui/AppToaster";
 const ScrollToTop = instrumentedLazy(() => import("@/components/ScrollToTop").then(m => ({ default: m.ScrollToTop })), 'ScrollToTop');
-const LazyAnimatedRoutes = instrumentedLazy(() => import("@/components/LazyAnimatedRoutes").then(m => ({ default: m.LazyAnimatedRoutes })), 'LazyAnimatedRoutes');
 const ConnectionStatusBanner = instrumentedLazy(() => import("./components/ConnectionStatusBanner").then(m => ({ default: m.ConnectionStatusBanner })), 'ConnectionStatusBanner');
 const LazyShellWidgets = instrumentedLazy(() => import("@/components/LazyShellWidgets").then(m => ({ default: m.LazyShellWidgets })), 'LazyShellWidgets');
 const OfflineFallback = instrumentedLazy(() => import("@/components/OfflineFallback").then(m => ({ default: m.OfflineFallback })), 'OfflineFallback');
-const OptimizedMotionProvider = instrumentedLazy(() => import("@/lib/motion").then(m => ({ default: m.OptimizedMotionProvider })), 'OptimizedMotionProvider');
-const AnimationMonitor = instrumentedLazy(() => import("@/lib/motion").then(m => ({ default: m.AnimationMonitor })), 'AnimationMonitor');
 
 function PageLoader() {
   return <ECodeLoading fullScreen size="lg" text="Loading..." />;

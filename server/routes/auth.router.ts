@@ -62,7 +62,8 @@ export class AuthRouter {
       linkedinUsername: user.linkedinUsername,
       reputation: user.reputation,
       isMentor: user.isMentor,
-      isAdmin: user.role === 'admin',
+      role: user.role,
+      isAdmin: user.role === 'admin' || user.role === 'super_admin',
       emailVerified: user.emailVerified,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt

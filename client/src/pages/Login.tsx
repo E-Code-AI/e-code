@@ -94,7 +94,7 @@ export default function Login() {
       }
       
       // PRIORITY 3: Admin redirect
-      if (user.role === 'admin' || user.role === 'super_admin') {
+      if (user.role === 'admin' || user.role === 'super_admin' || (user as any).isAdmin) {
         navigate('/admin/chatgpt');
         return;
       }

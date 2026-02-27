@@ -8,8 +8,8 @@ export const EditorRedirect = instrumentedLazy(() => import("@/pages/EditorRedir
 export const AuthPage = instrumentedLazy(() => import("@/pages/auth-page"), "AuthPage");
 export const ProjectsPage = instrumentedLazy(() => import("@/pages/ProjectsPage"), "ProjectsPage");
 
-export const Login = instrumentedLazy(() => import("@/pages/Login"), "Login");
-export const Register = instrumentedLazy(() => import("@/pages/Register"), "Register");
+export { default as Login } from "@/pages/Login";
+export { default as Register } from "@/pages/Register";
 export const ProjectPage = instrumentedLazy(() => import("@/pages/ProjectPage"), "ProjectPage");
 export const RuntimesPage = instrumentedLazy(() => import("@/pages/RuntimesPage"), "RuntimesPage");
 export const RuntimeDiagnosticsPage = instrumentedLazy(() => import("@/pages/RuntimeDiagnosticsPage"), "RuntimeDiagnosticsPage");
