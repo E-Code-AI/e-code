@@ -1,10 +1,14 @@
 #!/usr/bin/env node
 /**
  * Production server build script
- * Bundles all dependencies except native modules that can't run in Replit production
+ * Bundles all dependencies into a SINGLE file to avoid security scan timeouts
+ * splitting: false + outfile = one dist/index.js instead of 600+ chunks
  */
 
 import * as esbuild from 'esbuild';
+import { execSync } from 'child_process';
+import { existsSync, rmSync, readdirSync } from 'fs';
+import { join } from 'path';
 
 const nativeModules = [
   'node-pty',
@@ -36,19 +40,32 @@ const external = [
   ...nodeBuiltins.map(m => `node:${m}`),
 ];
 
+async function cleanOldChunks() {
+  if (!existsSync('dist')) return;
+  const files = readdirSync('dist');
+  let removed = 0;
+  for (const f of files) {
+    if (f !== 'index.js' && f !== 'public' && f.endsWith('.js')) {
+      rmSync(join('dist', f));
+      removed++;
+    }
+  }
+  if (removed > 0) console.log(`  Removed ${removed} old chunk files`);
+}
+
 async function build() {
-  console.log('Building server bundle...');
+  console.log('Building server bundle (single-file mode)...');
   console.log('External modules:', nativeModules.join(', '));
-  
+
   try {
     const result = await esbuild.build({
       entryPoints: ['server/index.ts'],
       bundle: true,
-      splitting: true,
+      splitting: false,
       platform: 'node',
       target: 'node20',
       format: 'esm',
-      outdir: 'dist',
+      outfile: 'dist/index.js',
       external,
       minify: true,
       treeShaking: true,
@@ -74,10 +91,12 @@ const __dirname = __esbuild_dirname(__filename);
 
     const outputSize = Object.values(result.metafile.outputs)
       .reduce((acc, o) => acc + o.bytes, 0);
-    
+
     console.log(`✅ Server bundle built successfully`);
-    console.log(`   Output size: ${(outputSize / 1024 / 1024).toFixed(2)} MB`);
-    
+    console.log(`   Output: dist/index.js (${(outputSize / 1024 / 1024).toFixed(2)} MB)`);
+
+    await cleanOldChunks();
+
   } catch (error) {
     console.error('❌ Build failed:', error);
     process.exit(1);

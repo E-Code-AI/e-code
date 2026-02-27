@@ -1,9 +1,0 @@
-
-import { createRequire as __esbuild_createRequire } from 'module';
-import { fileURLToPath as __esbuild_fileURLToPath } from 'url';
-import { dirname as __esbuild_dirname } from 'path';
-const require = __esbuild_createRequire(import.meta.url);
-const __filename = __esbuild_fileURLToPath(import.meta.url);
-const __dirname = __esbuild_dirname(__filename);
-
-import{c as h}from"./chunk-5D5JQLUE.js";var w=h((g,o)=>{var n=1e3,t=n*60,c=t*60,a=c*24,f=a*7,m=a*365.25;o.exports=function(e,r){r=r||{};var s=typeof e;if(s==="string"&&e.length>0)return y(e);if(s==="number"&&isFinite(e))return r.long?v(e):l(e);throw new Error("val is not a non-empty string or a valid number. val="+JSON.stringify(e))};function y(e){if(e=String(e),!(e.length>100)){var r=/^(-?(?:\d+)?\.?\d+) *(milliseconds?|msecs?|ms|seconds?|secs?|s|minutes?|mins?|m|hours?|hrs?|h|days?|d|weeks?|w|years?|yrs?|y)?$/i.exec(e);if(r){var s=parseFloat(r[1]),i=(r[2]||"ms").toLowerCase();switch(i){case"years":case"year":case"yrs":case"yr":case"y":return s*m;case"weeks":case"week":case"w":return s*f;case"days":case"day":case"d":return s*a;case"hours":case"hour":case"hrs":case"hr":case"h":return s*c;case"minutes":case"minute":case"mins":case"min":case"m":return s*t;case"seconds":case"second":case"secs":case"sec":case"s":return s*n;case"milliseconds":case"millisecond":case"msecs":case"msec":case"ms":return s;default:return}}}}function l(e){var r=Math.abs(e);return r>=a?Math.round(e/a)+"d":r>=c?Math.round(e/c)+"h":r>=t?Math.round(e/t)+"m":r>=n?Math.round(e/n)+"s":e+"ms"}function v(e){var r=Math.abs(e);return r>=a?u(e,r,a,"day"):r>=c?u(e,r,c,"hour"):r>=t?u(e,r,t,"minute"):r>=n?u(e,r,n,"second"):e+" ms"}function u(e,r,s,i){var d=r>=s*1.5;return Math.round(e/s)+" "+i+(d?"s":"")}});export{w as a};

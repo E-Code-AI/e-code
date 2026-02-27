@@ -1,9 +1,0 @@
-
-import { createRequire as __esbuild_createRequire } from 'module';
-import { fileURLToPath as __esbuild_fileURLToPath } from 'url';
-import { dirname as __esbuild_dirname } from 'path';
-const require = __esbuild_createRequire(import.meta.url);
-const __filename = __esbuild_fileURLToPath(import.meta.url);
-const __dirname = __esbuild_dirname(__filename);
-
-import{a as u}from"./chunk-BREQ6HW5.js";import{g as m}from"./chunk-RDSVFM4O.js";import"./chunk-LOJN5Z32.js";import"./chunk-NRIEQZ4F.js";import"./chunk-5VBXYHR2.js";import"./chunk-SUGQP5BU.js";import"./chunk-2LLTIQNM.js";import"./chunk-ERKIQN6P.js";import"./chunk-SLCWITGS.js";import"./chunk-3JUZXZ3L.js";import"./chunk-E6Z4GF7P.js";import"./chunk-BEGAQUQV.js";import"./chunk-G6E5POTQ.js";import"./chunk-UXMHOPI6.js";import"./chunk-KVTR5VNS.js";import"./chunk-B6UHYZUF.js";import"./chunk-5OWZ6DYH.js";import"./chunk-5D5JQLUE.js";function g(d){let t=new m.default({server:d,path:"/webrtc"}),o=new u;t.on("connection",async(e,i)=>{let n=new URL(i.url||"",`http://${i.headers.host}`),a=parseInt(n.searchParams.get("userId")||"0"),l=n.searchParams.get("username")||"Anonymous",s=n.searchParams.get("roomId")||"";if(!a||!s){e.close(1008,"Missing userId or roomId");return}e.userId=a,e.username=l,e.roomId=s,e.isAlive=!0;try{await o.joinSession(s,a,l,e)}catch(r){console.error("[WebRTC] Failed to join session:",r),e.close(1008,r.message);return}e.on("message",async r=>{try{let c=JSON.parse(r.toString());await o.handleMessage(e,c)}catch(c){console.error("[WebRTC] Error handling message:",c)}}),e.on("pong",()=>{e.isAlive=!0}),e.on("close",async()=>{await o.leaveSession(e)}),e.on("error",async r=>{console.error("[WebRTC] WebSocket error:",r),await o.leaveSession(e)})});let S=setInterval(()=>{t.clients.forEach(e=>{if(e.isAlive===!1)return e.terminate();e.isAlive=!1,e.ping()})},3e4);return t.on("close",()=>{clearInterval(S)}),o}export{g as setupWebRTCServer};

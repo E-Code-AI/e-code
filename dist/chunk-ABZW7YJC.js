@@ -1,9 +1,0 @@
-
-import { createRequire as __esbuild_createRequire } from 'module';
-import { fileURLToPath as __esbuild_fileURLToPath } from 'url';
-import { dirname as __esbuild_dirname } from 'path';
-const require = __esbuild_createRequire(import.meta.url);
-const __filename = __esbuild_fileURLToPath(import.meta.url);
-const __dirname = __esbuild_dirname(__filename);
-
-var o=class{constructor(n=10,t=6e4){this.limits=new Map;this.maxConnections=n,this.windowMs=t,this.cleanupInterval=setInterval(()=>{this.cleanup()},6e4)}checkLimit(n){let t=Date.now(),e=this.limits.get(n);return!e||t>e.resetTime?(this.limits.set(n,{count:1,resetTime:t+this.windowMs}),!0):e.count<this.maxConnections?(e.count++,!0):!1}reset(n){this.limits.delete(n)}getCount(n){let t=this.limits.get(n);return!t||Date.now()>t.resetTime?0:t.count}getTimeUntilReset(n){let t=this.limits.get(n);if(!t)return 0;let e=Date.now();return e>t.resetTime?0:t.resetTime-e}cleanup(){let n=Date.now(),t=[];for(let[e,i]of this.limits.entries())n>i.resetTime&&t.push(e);for(let e of t)this.limits.delete(e)}getStats(){let n=Date.now(),t=0,e=0,i=0;for(let r of this.limits.values())n<=r.resetTime&&(i++,e+=r.count,r.count>=this.maxConnections&&t++);return{totalEntries:this.limits.size,activelyLimited:t,averageConnections:i>0?e/i:0}}destroy(){clearInterval(this.cleanupInterval),this.limits.clear()}},c=new o(parseInt(process.env.WS_MAX_CONNECTIONS_PER_MINUTE||"10"),6e4),m=new o(parseInt(process.env.WS_MAX_CONNECTIONS_PER_IP||"50"),6e4);function l(s){if(process.env.BEHIND_PROXY==="true"||!0){let e=s.headers["x-forwarded-for"];if(e){let r=typeof e=="string"?e.split(",").map(a=>a.trim()):e;if(r.length>0&&r[0])return r[0]}let i=s.headers["x-real-ip"];if(i&&typeof i=="string")return i}return s.socket.remoteAddress||"unknown"}export{o as a,c as b,m as c,l as d};
