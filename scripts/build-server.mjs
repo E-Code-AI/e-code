@@ -1,44 +1,17 @@
 #!/usr/bin/env node
 /**
  * Production server build script
- * Bundles all dependencies into a SINGLE file to avoid security scan timeouts
- * splitting: false + outfile = one dist/index.js instead of 600+ chunks
+ *
+ * Strategy: packages:'external' — all npm packages are loaded from node_modules
+ * at runtime (node_modules is included in the GCE deployment workspace).
+ * Only the server TypeScript application code is compiled into dist/index.js.
+ *
+ * Result: ~1-3 MB bundle (vs 14 MB fully-bundled) → security scan completes
  */
 
 import * as esbuild from 'esbuild';
-import { execSync } from 'child_process';
 import { existsSync, rmSync, readdirSync } from 'fs';
 import { join } from 'path';
-
-const nativeModules = [
-  'node-pty',
-  'bcrypt',
-  'canvas',
-  'cpu-features',
-  'pg-cloudflare',
-  'sharp',
-  'playwright',
-  'playwright-core',
-  '@playwright/test',
-  'ssh2',
-  'dockerode',
-  'jsdom',
-  'isomorphic-dompurify',
-];
-
-const nodeBuiltins = [
-  'fs', 'path', 'os', 'crypto', 'http', 'https', 'net', 'tls', 'stream',
-  'util', 'events', 'buffer', 'url', 'querystring', 'zlib', 'child_process',
-  'cluster', 'dgram', 'dns', 'readline', 'repl', 'tty', 'v8', 'vm', 'worker_threads',
-  'assert', 'async_hooks', 'console', 'constants', 'domain', 'inspector',
-  'module', 'perf_hooks', 'process', 'punycode', 'string_decoder', 'timers',
-  'trace_events', 'wasi'
-];
-
-const external = [
-  ...nativeModules,
-  ...nodeBuiltins.map(m => `node:${m}`),
-];
 
 async function cleanOldChunks() {
   if (!existsSync('dist')) return;
@@ -50,23 +23,22 @@ async function cleanOldChunks() {
       removed++;
     }
   }
-  if (removed > 0) console.log(`  Removed ${removed} old chunk files`);
+  if (removed > 0) console.log(`  Cleaned ${removed} old chunk files`);
 }
 
 async function build() {
-  console.log('Building server bundle (single-file mode)...');
-  console.log('External modules:', nativeModules.join(', '));
+  console.log('Building server bundle (packages-external mode)...');
 
   try {
     const result = await esbuild.build({
       entryPoints: ['server/index.ts'],
       bundle: true,
+      packages: 'external',
       splitting: false,
       platform: 'node',
       target: 'node20',
       format: 'esm',
       outfile: 'dist/index.js',
-      external,
       minify: true,
       treeShaking: true,
       sourcemap: false,
@@ -94,6 +66,7 @@ const __dirname = __esbuild_dirname(__filename);
 
     console.log(`✅ Server bundle built successfully`);
     console.log(`   Output: dist/index.js (${(outputSize / 1024 / 1024).toFixed(2)} MB)`);
+    console.log(`   Mode: packages=external (npm packages loaded from node_modules at runtime)`);
 
     await cleanOldChunks();
 

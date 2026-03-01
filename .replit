@@ -7,7 +7,7 @@ channel = "stable-24_05"
 packages = ["glibcLocales", "jq", "libxcrypt", "deno", "python3", "gnumake", "gcc"]
 
 [deployment]
-deploymentTarget = "gce"
+deploymentTarget = "vm"
 run = ["sh", "-c", "NODE_ENV=production node dist/index.js"]
 build = ["sh", "-c", "bash scripts/smart-build.sh"]
 publicDir = "dist/public"
