@@ -82,8 +82,8 @@ export const ReplitMobileInputBar = memo(function ReplitMobileInputBar({
 
   // Dynamic placeholder based on agentMode
   const dynamicPlaceholder = placeholder || (
-    agentMode === 'build' ? "What would you like me to build? Type / for integrations" :
-    agentMode === 'edit' ? "Describe the changes you want to make..." :
+    agentMode === 'build' ? "What would you like to build?" :
+    agentMode === 'edit' ? "Describe the changes to make..." :
     agentMode === 'chat' ? "Ask a question..." :
     "Make, test, iterate..."
   );

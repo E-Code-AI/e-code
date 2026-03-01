@@ -1255,7 +1255,7 @@ function UnifiedIDELayout({
         {/* Replit-style Floating Input Bar - Only shown on Agent tab */}
         {mobileActiveTab === 'agent' && (
           <ReplitMobileInputBar
-            placeholder={mobileAgentHandlers?.agentMode === 'build' ? "What would you like me to build? Type / for integrations" : undefined}
+            placeholder={mobileAgentHandlers?.agentMode === 'build' ? "What would you like to build?" : undefined}
             onSubmit={(value) => {
               if (mobileAgentHandlers?.handleSubmit) {
                 mobileAgentHandlers.handleSubmit(value);
@@ -1481,7 +1481,7 @@ function UnifiedIDELayout({
           {/* Replit-style Floating Input Bar for Agent Tab */}
           {mobileActiveTab === 'agent' && (
             <ReplitMobileInputBar
-              placeholder={mobileAgentHandlers?.agentMode === 'build' ? "What would you like me to build? Type / for integrations" : undefined}
+              placeholder={mobileAgentHandlers?.agentMode === 'build' ? "What would you like to build?" : undefined}
               onSubmit={(value) => {
                 if (mobileAgentHandlers?.handleSubmit) {
                   mobileAgentHandlers.handleSubmit(value);

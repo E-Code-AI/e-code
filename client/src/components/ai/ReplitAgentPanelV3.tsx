@@ -2881,9 +2881,9 @@ export function ReplitAgentPanelV3({
               }}
               onKeyDown={handleKeyPress}
               placeholder={
-                agentMode === 'build' ? "What would you like me to build? Type / for integrations" :
-                agentMode === 'edit' ? "Describe the changes you want to make... Type / for integrations" :
-                "Ask a question or describe what you want to plan... Type / for integrations"
+                agentMode === 'build' ? "What would you like to build?" :
+                agentMode === 'edit' ? "Describe the changes to make..." :
+                "Ask a question or describe your plan..."
               }
               className={cn(
                 "pr-[132px] resize-none text-[13px] min-h-[52px] max-h-[200px]",
