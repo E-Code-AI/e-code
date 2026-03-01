@@ -31,7 +31,7 @@ const defaultMetrics: AnimationMetrics = {
 
 const AnimationMonitorContext = createContext<AnimationMonitorContextType>({
   metrics: defaultMetrics,
-  shouldUseCSS: false,
+  shouldUseCSS: true,
   reportFrameDrop: () => {}
 });
 
@@ -51,7 +51,7 @@ export function AnimationMonitor({
   measurementInterval = 5000 
 }: AnimationMonitorProps) {
   const [metrics, setMetrics] = useState<AnimationMetrics>(defaultMetrics);
-  const [shouldUseCSS, setShouldUseCSS] = useState(false);
+  const [shouldUseCSS, setShouldUseCSS] = useState(true);
   const [hasLoggedCSSSwitch, setHasLoggedCSSSwitch] = useState(false);
 
   const reportFrameDrop = useCallback(() => {
