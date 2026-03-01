@@ -9,7 +9,7 @@ packages = ["glibcLocales", "jq", "libxcrypt", "deno", "python3", "gnumake", "gc
 [deployment]
 deploymentTarget = "vm"
 run = ["node", "dist/index.js"]
-build = ["node", "scripts/build-server.mjs"]
+build = ["npm", "run", "build"]
 publicDir = "dist/public"
 
 [workflows]

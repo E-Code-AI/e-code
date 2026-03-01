@@ -33,3 +33,6 @@ desktop/*.pfxdesktop/dist/
 .checkpoints/
 backups/
 desktop/dist/
+
+# Build output - rebuilt during deployment
+dist/
