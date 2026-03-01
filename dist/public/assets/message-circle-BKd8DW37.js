@@ -1,1 +1,0 @@
-import{D as e}from"./index--UcL9vU0.js";const a=e("MessageCircle",[["path",{d:"M7.9 20A9 9 0 1 0 4 16.1L2 22Z",key:"vv11sd"}]]);export{a as M};

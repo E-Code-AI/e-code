@@ -1,0 +1,1 @@
+import{j as s}from"./index-D1H3m0sF.js";import{P as e,a as r}from"./PublicFooter-DNGYH9Fk.js";function l({children:a}){return s.jsxs("div",{className:"min-h-screen flex flex-col",children:[s.jsx(e,{}),s.jsx("main",{className:"flex-1",children:a}),s.jsx(r,{})]})}export{l as P};

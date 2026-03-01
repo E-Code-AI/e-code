@@ -8,8 +8,8 @@ packages = ["glibcLocales", "jq", "libxcrypt", "deno", "python3", "gnumake", "gc
 
 [deployment]
 deploymentTarget = "vm"
-run = ["sh", "-c", "NODE_ENV=production node dist/index.js"]
-build = ["sh", "-c", "bash scripts/smart-build.sh"]
+run = ["node", "dist/index.js"]
+build = ["node", "scripts/build-server.mjs"]
 publicDir = "dist/public"
 
 [workflows]
