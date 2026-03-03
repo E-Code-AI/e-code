@@ -645,7 +645,7 @@ export const sessionSecurity = {
       secure: process.env.NODE_ENV === 'production',
       httpOnly: true,
       maxAge: 30 * 60 * 1000, // 30 minutes
-      sameSite: 'strict' as const,
+      sameSite: 'lax' as const, // A7-FIX: 'strict' breaks OAuth redirects (GitHub/Google won't send cookie back)
       path: '/',
     },
   }),

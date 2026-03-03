@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -75,6 +76,7 @@ interface Plan {
 const COLORS = ['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6'];
 
 export default function Billing() {
+  const [, navigate] = useLocation();
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -547,7 +549,7 @@ export default function Billing() {
                           if (subscriptionStatus?.hasSubscription) {
                             upgradeMutation.mutate(plan.id);
                           } else {
-                            window.location.href = `/subscribe?plan=${plan.tier}`;
+                            navigate(`/subscribe?plan=${plan.tier}`);
                           }
                         }}
                         disabled={upgradeMutation.isPending}

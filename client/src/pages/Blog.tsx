@@ -167,7 +167,7 @@ export default function Blog() {
               <div className="container mx-auto max-w-6xl">
                 <Card 
                   className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
-                  onClick={() => window.location.href = `/blog/${featuredPost.slug}`}
+                  onClick={() => navigate(`/blog/${featuredPost.slug}`)}
                 >
                   <div className="grid md:grid-cols-2 gap-0">
                     <div className="relative h-64 md:h-auto bg-gradient-to-br from-primary/20 to-purple-600/20">
@@ -242,7 +242,7 @@ export default function Blog() {
               <Card 
                 key={post.id} 
                 className="hover:shadow-lg transition-shadow cursor-pointer" 
-                onClick={() => window.location.href = `/blog/${post.slug}`}
+                onClick={() => navigate(`/blog/${post.slug}`)}
                 data-testid={`card-blog-post-${post.id || index}`}
               >
                 <CardHeader className="p-4 sm:p-6">

@@ -70,6 +70,24 @@ export function validateProductionEnvironment(): void {
     warnings.push('No AI API keys configured (Anthropic, OpenAI, or Google). AI features will be disabled.');
   }
 
+  // 6. Guard: ALLOW_INSECURE_LOCAL_PTY must NEVER be true in production
+  // This flag enables un-isolated local PTY terminals — a critical security breach
+  // in a multi-tenant environment where every user shares the same host filesystem.
+  if (isProduction && process.env.ALLOW_INSECURE_LOCAL_PTY === 'true') {
+    errors.push(
+      'FATAL SECURITY: ALLOW_INSECURE_LOCAL_PTY=true is forbidden in production. ' +
+      'This flag allows un-sandboxed host terminal access. Remove it from environment immediately.'
+    );
+  }
+
+  // 7. Guard: TESTING_STRIPE_SECRET_KEY must never exist in production
+  if (isProduction && process.env.TESTING_STRIPE_SECRET_KEY) {
+    errors.push(
+      'SECURITY: TESTING_STRIPE_SECRET_KEY is set in production. ' +
+      'This Stripe test key must be removed from production environment variables.'
+    );
+  }
+
   // Final reporting
   if (warnings.length > 0) {
     warnings.forEach(warn => logger.warn(`[Config Warning] ${warn}`));

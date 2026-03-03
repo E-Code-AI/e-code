@@ -39,7 +39,7 @@ const DATABASE_URL = getDatabaseUrl();
 
 // Enhanced postgres client with enterprise-grade connection management
 const baseClient = postgres(DATABASE_URL, {
-  max: 20, // Connection pool size optimized for concurrent users
+  max: parseInt(process.env.DB_POOL_SIZE || '10'), // 7.2-FIX: configurable pool, default 10 for Replit VM
   idle_timeout: 60, // Keep connections alive for 1 minute when idle
   max_lifetime: 60 * 60, // 1 hour connection lifetime to prevent stale connections
   connect_timeout: 10, // 10 second connection timeout

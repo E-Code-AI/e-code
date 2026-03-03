@@ -317,6 +317,9 @@ export function notFoundHandler(
   res: Response,
   next: NextFunction
 ): void {
+  if (!req.path.startsWith('/api')) {
+    return next();
+  }
   const error = new NotFoundError(`Route not found: ${req.method} ${req.path}`);
   next(error);
 }

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useLocation } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -53,6 +54,7 @@ interface DeploymentPanelProps {
 }
 
 export const DeploymentPanel: React.FC<DeploymentPanelProps> = ({ projectId }) => {
+  const [, navigate] = useLocation();
   const [showAgentSuggestions, setShowAgentSuggestions] = React.useState(true);
   const [showBuildErrors, setShowBuildErrors] = React.useState(true);
 
@@ -294,7 +296,7 @@ export const DeploymentPanel: React.FC<DeploymentPanelProps> = ({ projectId }) =
             variant="link" 
             size="sm" 
             className="text-blue-600 p-0 h-auto flex items-center gap-1"
-            onClick={() => window.location.href = `/projects/${projectId}/deployments`}
+            onClick={() => navigate(`/projects/${projectId}/deployments`)}
           >
             View logs
             {deployment?.id && (

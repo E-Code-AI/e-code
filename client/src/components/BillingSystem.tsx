@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'wouter';
 import { 
   CreditCard, Zap, TrendingUp, Package, Shield, 
   Check, X, Loader2, AlertCircle, Info, ChevronRight,
@@ -144,6 +145,7 @@ const FALLBACK_PLANS: Plan[] = [
 ];
 
 export function BillingSystem({ userId, className }: BillingSystemProps) {
+  const [, navigate] = useLocation();
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [usage, setUsage] = useState<Usage | null>(null);
   const [allStripePlans, setAllStripePlans] = useState<StripePlan[]>([]);
@@ -389,7 +391,7 @@ export function BillingSystem({ userId, className }: BillingSystemProps) {
                 <Button 
                   variant="outline" 
                   className="w-full"
-                  onClick={() => window.location.href = '/account'}
+                  onClick={() => navigate('/account')}
                 >
                   <Clock className="h-4 w-4 mr-2" />
                   Billing History
@@ -397,7 +399,7 @@ export function BillingSystem({ userId, className }: BillingSystemProps) {
                 <Button 
                   variant="outline" 
                   className="w-full"
-                  onClick={() => window.location.href = '/account'}
+                  onClick={() => navigate('/account')}
                 >
                   <CreditCard className="h-4 w-4 mr-2" />
                   Payment Methods

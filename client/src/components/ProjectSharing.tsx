@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useLocation } from 'wouter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -50,6 +51,7 @@ interface Collaborator {
 type SharePermission = 'private' | 'unlisted' | 'public';
 
 export function ProjectSharing({ projectId, projectName, className }: ProjectSharingProps) {
+  const [, navigate] = useLocation();
   const [sharePermission, setSharePermission] = useState<SharePermission>('private');
   const [shareLink, setShareLink] = useState(`https://e-code.ai/u/user/${projectName}`);
   const [inviteEmail, setInviteEmail] = useState('');
@@ -121,7 +123,7 @@ export function ProjectSharing({ projectId, projectName, className }: ProjectSha
           variant="outline"
           size="sm"
           onClick={() => {
-            window.location.href = '/teams';
+            navigate('/teams');
           }}
         >
           Go to Teams

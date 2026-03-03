@@ -290,7 +290,7 @@ export default function About() {
               <Button
                 size="lg"
                 variant="outline"
-                onClick={() => (user ? navigate('/dashboard') : window.location.href = '/login')}
+                onClick={() => (user ? navigate('/dashboard') : navigate('/login'))}
                 data-testid="button-about-start-building"
               >
                 Start building now

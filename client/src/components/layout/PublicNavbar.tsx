@@ -197,7 +197,7 @@ export function PublicNavbar() {
 
   const primaryCta = (
     <Button
-      onClick={() => window.location.href = '/register'}
+      onClick={() => navigate('/register')}
       className="hidden sm:inline-flex shrink-0 bg-ecode-accent hover:bg-ecode-accent-hover text-white min-h-[44px] px-3 sm:px-4 text-[13px] whitespace-nowrap"
       data-testid="link-get-started"
     >
@@ -247,7 +247,7 @@ export function PublicNavbar() {
               <Button
                 variant="ghost"
                 className="text-[var(--ecode-text)] dark:text-slate-200 hover:text-[var(--ecode-accent)] dark:hover:text-white min-h-[44px] px-3 sm:px-4"
-                onClick={() => window.location.href = '/login'}
+                onClick={() => navigate('/login')}
                 data-testid="link-login"
               >
                 <LogIn className="mr-1 sm:mr-2 h-4 w-4" />
@@ -286,14 +286,14 @@ export function PublicNavbar() {
                   <div className="p-4 border-b border-border">
                     <Button
                       className="w-full bg-ecode-accent hover:bg-ecode-accent-hover text-white"
-                      onClick={() => window.location.href = '/register'}
+                      onClick={() => navigate('/register')}
                     >
                       Get Started
                     </Button>
                     <Button
                       variant="outline"
                       className="mt-2 w-full border-border text-foreground hover:bg-muted"
-                      onClick={() => window.location.href = '/login'}
+                      onClick={() => navigate('/login')}
                     >
                       Sign In
                     </Button>

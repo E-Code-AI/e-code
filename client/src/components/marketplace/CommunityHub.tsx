@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useLocation } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { 
   Users, Trophy, TrendingUp, Upload, MessageSquare, 
@@ -57,6 +58,7 @@ const COLLECTION_ICONS: Record<string, React.ComponentType<{ className?: string 
 };
 
 export function CommunityHub() {
+  const [, navigate] = useLocation();
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
 
@@ -174,7 +176,7 @@ export function CommunityHub() {
               <Button
                 size="sm"
                 className="bg-orange-500 hover:bg-orange-600"
-                onClick={() => window.location.href = '/templates/submit'}
+                onClick={() => navigate('/templates/submit')}
               >
                 <Upload className="h-3 w-3 mr-1" />
                 Submit

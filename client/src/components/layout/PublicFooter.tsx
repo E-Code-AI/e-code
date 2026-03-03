@@ -1,4 +1,4 @@
-import { Link } from 'wouter';
+import { Link, useLocation } from 'wouter';
 import {
   Twitter,
   Github,
@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
 export function PublicFooter() {
+  const [, navigate] = useLocation();
   const footerLinks = {
     product: [
       { label: 'AI Agent', href: '/ai-agent' },
@@ -89,7 +90,7 @@ export function PublicFooter() {
             <div className="flex flex-wrap gap-3">
               <Button
                 className="bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 text-white shadow-lg shadow-blue-500 min-h-[44px]"
-                onClick={() => (window.location.href = '/contact-sales')}
+                onClick={() => navigate('/contact-sales')}
                 data-testid="button-footer-contact-sales"
               >
                 Talk to sales
@@ -98,7 +99,7 @@ export function PublicFooter() {
               <Button
                 variant="outline"
                 className="border-[var(--ecode-border)] text-[var(--ecode-text)] hover:text-[var(--ecode-accent)] dark:border-border dark:text-slate-100 dark:hover:text-white min-h-[44px]"
-                onClick={() => (window.location.href = '/register')}
+                onClick={() => navigate('/register')}
                 data-testid="button-footer-start-building"
               >
                 Start building

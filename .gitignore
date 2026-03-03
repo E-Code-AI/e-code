@@ -46,3 +46,13 @@ cookie_store
 cookie_store/
 .executions/
 previews/
+
+# User project files (should be in object storage, not Git)
+projects/
+
+# Replit key-value DB (local dev only)
+.replitdb/
+
+# Shell artifacts
+sed*
+backups/*.sql

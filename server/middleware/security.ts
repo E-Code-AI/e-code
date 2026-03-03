@@ -358,26 +358,41 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction) 
 }
 
 // Input sanitization
+// A9-FIX: Code-content fields must NOT have angle brackets stripped.
+// Stripping <> from code/content fields corrupts HTML, JSX, TypeScript generics (Array<string>),
+// SQL (<, >), and any markup. Sanitise execution vectors (script tags, JS protocol, event handlers)
+// for all fields, but preserve angle brackets in fields that carry code or markup content.
+const CODE_CONTENT_FIELDS = new Set([
+  'content', 'code', 'source', 'body', 'template', 'html', 'css', 'js',
+  'typescript', 'javascript', 'python', 'markup', 'text', 'data', 'value',
+  'message', 'description', 'snippet', 'script', 'sql', 'query', 'expression',
+  'output', 'input', 'prompt', 'response', 'result',
+]);
+
 export const sanitizeInput = (req: Request, res: Response, next: NextFunction) => {
-  // Sanitize common XSS vectors
-  const sanitize = (value: any): any => {
+  const sanitize = (value: any, fieldKey?: string): any => {
     if (typeof value === 'string') {
       let sanitized = value
-        .replace(/<\s*\/??\s*script.*?>/gi, '') // Remove script tags
-        .replace(/javascript:/gi, '') // Remove javascript protocol
-        .replace(/on\w+\s*=/gi, '') // Remove event handlers
-        .replace(/[<>]/g, ''); // Remove remaining angle brackets
+        .replace(/<\s*\/??\s*script[^>]*>/gi, '') // Remove script tags (always)
+        .replace(/javascript:/gi, '')               // Remove javascript: protocol (always)
+        .replace(/on\w+\s*=/gi, '');               // Remove inline event handlers (always)
 
-      sanitized = sanitized.replace(/\s{2,}/g, ' ').trim();
+      // Only strip bare angle brackets from non-code fields.
+      // Code fields (content, source, html, css, etc.) preserve <> for markup & generics.
+      const isCodeField = fieldKey && CODE_CONTENT_FIELDS.has(fieldKey.toLowerCase());
+      if (!isCodeField) {
+        sanitized = sanitized.replace(/[<>]/g, '');
+      }
+
       return sanitized;
     }
     if (Array.isArray(value)) {
-      return value.map(sanitize);
+      return value.map((item) => sanitize(item, fieldKey));
     }
     if (value && typeof value === 'object') {
       const sanitized: any = {};
       for (const key in value) {
-        sanitized[key] = sanitize(value[key]);
+        sanitized[key] = sanitize(value[key], key);
       }
       return sanitized;
     }
@@ -385,7 +400,7 @@ export const sanitizeInput = (req: Request, res: Response, next: NextFunction) =
   };
 
   req.body = sanitize(req.body);
-  req.query = sanitize(req.query);
+  req.query = sanitize(req.query as any);
   req.params = sanitize(req.params);
 
   next();

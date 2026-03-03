@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useLocation } from 'wouter';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { z } from 'zod';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -343,7 +344,7 @@ function BountyCard({ bounty, onApply }: { bounty: Bounty; onApply: (id: number)
       <CardFooter className="flex justify-between pt-4 border-t">
         <Button 
           variant="outline" 
-          onClick={() => window.location.href = `/bounties/${bounty.id}`}
+          onClick={() => navigate(`/bounties/${bounty.id}`)}
           data-testid={`view-bounty-${bounty.id}`}
         >
           View Details
@@ -529,6 +530,7 @@ function BountyCardSkeleton() {
 }
 
 export default function BountiesMarketplace() {
+  const [, navigate] = useLocation();
   const { toast } = useToast();
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<BountyFilters>({

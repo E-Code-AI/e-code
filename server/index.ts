@@ -62,8 +62,9 @@ const app = express();
 configureCors(app);
 
 // Trust proxy for production deployment (Replit, load balancers, reverse proxies)
-// This enables proper IP detection for rate limiting and security
-app.set('trust proxy', true);
+// A6-FIX: Use numeric '1' — trust only the first proxy. 'true' trusts ALL proxies
+// and would allow attackers to spoof X-Forwarded-For headers to bypass rate limiting.
+app.set('trust proxy', 1);
 
 // Security middleware (CSP, HSTS, etc.) - apply BEFORE other middleware
 securityMiddleware().forEach(middleware => app.use(middleware));
@@ -814,15 +815,6 @@ httpServer.listen(port, "0.0.0.0", () => {
       console.log('[WebSocket Metrics] Routes registered at /api/websocket - Cache stats available');
     } catch (error) {
       console.error('[WORKING SERVER] Failed to register websocket metrics routes:', error);
-    }
-
-    // ✅ AUTONOMOUS WORKSPACE CREATION: Bootstrap routes
-    try {
-      const workspaceBootstrapRouter = (await import('./routes/workspace-bootstrap.router')).default;
-      app.use('/api/workspace', workspaceBootstrapRouter);
-      console.log('[Workspace Bootstrap] Routes registered at /api/workspace');
-    } catch (error) {
-      console.error('[WORKING SERVER] Failed to register workspace bootstrap routes:', error);
     }
 
     // ✅ TEMPLATES MARKETPLACE: Templates routes

@@ -16,6 +16,7 @@ export const publicRoutes: RouteConfig[] = [
   { path: "/login", component: Pages.Login },
   { path: "/register", component: Pages.Register },
   { path: "/forgot-password", component: Pages.ForgotPassword },
+  { path: "/reset-password", component: Pages.ResetPassword },
   { path: "/runtime-test", component: Pages.RuntimePublicPage },
   { path: "/", component: Pages.Landing },
   { path: "/pricing", component: Pages.Pricing },

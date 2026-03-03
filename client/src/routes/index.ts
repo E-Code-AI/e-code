@@ -11,6 +11,7 @@ export const ProjectsPage = instrumentedLazy(() => import("@/pages/ProjectsPage"
 export { default as Login } from "@/pages/Login";
 export { default as Register } from "@/pages/Register";
 export { default as ForgotPassword } from "@/pages/ForgotPassword";
+export { default as ResetPassword } from "@/pages/ResetPassword";
 export const ProjectPage = instrumentedLazy(() => import("@/pages/ProjectPage"), "ProjectPage");
 export const RuntimesPage = instrumentedLazy(() => import("@/pages/RuntimesPage"), "RuntimesPage");
 export const RuntimeDiagnosticsPage = instrumentedLazy(() => import("@/pages/RuntimeDiagnosticsPage"), "RuntimeDiagnosticsPage");
