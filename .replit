@@ -7,9 +7,9 @@ channel = "stable-24_05"
 packages = ["glibcLocales", "jq", "libxcrypt", "deno", "python3", "gnumake", "gcc"]
 
 [deployment]
-deploymentTarget = "autoscale"
-run = ["node", "dist/index.js"]
-build = ["bash", "-c", "npm install && npm run build"]
+deploymentTarget = "vm"
+run = ["npm", "run", "start"]
+build = ["npm", "run", "build"]
 publicDir = "dist/public"
 
 [workflows]
@@ -81,4 +81,8 @@ PATH = "/nix/store/1lagpgadaybvs1n2312gysg2phjk89y8-nodejs-20.20.0-wrapped/bin:/
 [[ports]]
 localPort = 5000
 externalPort = 80
+
+[[ports]]
+localPort = 24678
+externalPort = 3000
 

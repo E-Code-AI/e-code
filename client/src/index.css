@@ -1464,3 +1464,15 @@ body.landscape-mode .mobile-navigation {
   0%, 100% { box-shadow: 0 0 4px color-mix(in srgb, var(--status-error) 50%, transparent); }
   50% { box-shadow: 0 0 12px color-mix(in srgb, var(--status-error) 80%, transparent); }
 }
+
+/* =====================================================
+ * CENTERING OVERRIDE — outside any @layer so it has
+ * maximum cascade priority over all layered styles.
+ * This ensures container-responsive is ALWAYS centered.
+ * ===================================================== */
+.container-responsive,
+.container-responsive-nav {
+  margin-left: auto !important;
+  margin-right: auto !important;
+  width: 100% !important;
+}
