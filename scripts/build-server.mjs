@@ -2,13 +2,16 @@
 /**
  * Production server build script
  *
- * Strategy: packages:'bundle' — all npm packages are inlined into dist/index.js.
- * Only native .node addons are marked external (bcrypt, node-pty).
+ * Strategy: packages:'external' — npm packages stay in node_modules (installed
+ * during the build phase by `npm install`). Only application TypeScript code is
+ * compiled into dist/index.js.
  *
- * Result: self-contained single file → NO npm install required on VM →
- * deployment completes in <60s instead of timing out at 9min.
+ * Result: small dist/index.js (~400KB instead of 19MB) → security scanner
+ * finishes in seconds instead of timing out. node_modules/ installed by the
+ * build step is available on the same filesystem at runtime.
  *
- * Security scanner: 1 file to scan (vs 651 files with splitting) → no timeout.
+ * Native .node addons (bcrypt, node-pty) are handled separately: they live in
+ * node_modules and are resolved at runtime via the normal require() path.
  */
 
 import * as esbuild from 'esbuild';
@@ -29,7 +32,7 @@ async function cleanOldChunks() {
 }
 
 async function build() {
-  console.log('Building server bundle (self-contained mode)...');
+  console.log('Building server bundle (external-packages mode)...');
 
   try {
     const result = await esbuild.build({
@@ -40,6 +43,8 @@ async function build() {
       target: 'node20',
       format: 'esm',
       outfile: 'dist/index.js',
+      // Mark ALL npm packages as external — they live in node_modules at runtime.
+      packages: 'external',
       minify: true,
       treeShaking: true,
       sourcemap: false,
@@ -47,27 +52,6 @@ async function build() {
       legalComments: 'none',
       keepNames: false,
       drop: ['debugger'],
-      // Mark only native .node addons and dev/build tools as external.
-      // Everything else gets bundled — no npm install needed on the VM.
-      external: [
-        // Native addons (have .node binary files, cannot be bundled)
-        'bcrypt',
-        'node-pty',
-        'ssh2',
-        '@rollup/rollup-linux-x64-gnu',
-        '@rollup/rollup-linux-x64-musl',
-        // Optional cloudflare pg adapter (not needed on GCE VM)
-        'pg-cloudflare',
-        // Dev/build tools (not needed at runtime)
-        'vite',
-        'esbuild',
-        'playwright',
-        'electron',
-        // Optional peer deps that may or may not be installed
-        'fsevents',
-        'canvas',
-        'sharp',
-      ],
       define: {
         'process.env.NODE_ENV': '"production"',
       },
@@ -88,7 +72,7 @@ const __dirname = __esbuild_dirname(__filename);
 
     console.log(`✅ Server bundle built successfully`);
     console.log(`   Output: dist/index.js (${(outputSize / 1024 / 1024).toFixed(2)} MB)`);
-    console.log(`   Mode: self-contained (no npm install required on VM)`);
+    console.log(`   Mode: external-packages (node_modules resolved at runtime)`);
 
     await cleanOldChunks();
 
