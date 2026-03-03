@@ -80,6 +80,11 @@ app.use(compression({ level: 6 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: false, limit: '10mb' }));
 
+// ✅ P0 FIX: cookie-parser MUST be mounted for CSRF double-submit cookie pattern to work
+// Without this, req.cookies is always undefined, breaking CSRF token validation
+import cookieParser from 'cookie-parser';
+app.use(cookieParser());
+
 // ✅ PERFORMANCE FIX (Jan 2026): Early bypass for static assets
 // Skip ALL heavy middleware for Vite dev paths and static assets
 // This MUST run BEFORE monitoring, prometheus, logging, and sanitization
@@ -878,6 +883,26 @@ httpServer.listen(port, "0.0.0.0", () => {
     }
     next(err);
   });
+
+  // ✅ P0 FIX: Global error handler — must be registered AFTER all routes
+  // Prevents unhandled errors from exposing stack traces in production
+  try {
+    const { errorHandler, notFoundHandler, initializeErrorHandlers } = await import('./middleware/error-handler');
+    initializeErrorHandlers();
+    app.use(notFoundHandler);
+    app.use(errorHandler);
+    console.log('[Error Handler] ✅ Global error handler registered');
+  } catch (err) {
+    console.error('[Error Handler] Failed to register global error handler:', err);
+    // Fallback error handler if import fails
+    app.use((err: any, req: any, res: any, _next: any) => {
+      const isProd = process.env.NODE_ENV === 'production';
+      res.status(err.statusCode || err.status || 500).json({
+        error: isProd ? 'Internal Server Error' : err.message,
+        code: err.code || 'INTERNAL_ERROR'
+      });
+    });
+  }
 
   // Serve attached_assets as static files (stock images, user uploads, etc.)
   const path = await import('path');

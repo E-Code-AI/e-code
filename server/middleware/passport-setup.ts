@@ -35,8 +35,8 @@ export function setupPassportAuth(app: Application) {
     cookie: {
       secure: process.env.NODE_ENV === 'production',
       httpOnly: true,
-      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-      sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax'
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours (P1-04 fix: 30 days was excessive for a code platform with payments)
+      sameSite: 'lax' as const // P1-03 fix: 'strict' broke OAuth redirects (GitHub/Google won't send cookie on redirect)
     },
     name: 'ecode.sid'
   }));
