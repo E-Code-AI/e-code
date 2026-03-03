@@ -36,3 +36,13 @@ desktop/dist/
 
 # Build output - rebuilt during deployment
 dist/
+
+# SECURITY: Credential files - NEVER commit
+Prive*
+cookies.txt
+cookies2.txt
+cookies3.txt
+cookie_store
+cookie_store/
+.executions/
+previews/
