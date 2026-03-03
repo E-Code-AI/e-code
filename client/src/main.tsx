@@ -1,5 +1,6 @@
 import { createRoot } from "react-dom/client";
 import App from "./App";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import "./critical.css";
 
 const deferredInit = () => {
@@ -55,26 +56,11 @@ if (typeof window !== 'undefined') {
   }
 }
 
-function ErrorFallback() {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="max-w-md w-full px-6 py-8 text-center">
-        <h1 className="text-2xl font-bold mb-2">Something went wrong</h1>
-        <p className="text-muted-foreground mb-4">
-          We encountered an unexpected error. Please try refreshing the page.
-        </p>
-        <button
-          onClick={() => window.location.reload()}
-          className="px-4 py-2 bg-primary text-primary-foreground rounded-md"
-        >
-          Refresh Page
-        </button>
-      </div>
-    </div>
-  );
-}
-
-createRoot(document.getElementById("root")!).render(<App />);
+createRoot(document.getElementById("root")!).render(
+  <ErrorBoundary>
+    <App />
+  </ErrorBoundary>
+);
 
 const initialLoader = document.getElementById('initial-loader');
 if (initialLoader) {

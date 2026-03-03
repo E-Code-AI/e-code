@@ -7,10 +7,15 @@ import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import { Application } from "express";
 import session from "express-session";
+import { LRUCache } from "lru-cache";
 import { getStorage, sessionStore } from "../storage";
 import { User } from "@shared/schema";
 import bcrypt from "../utils/bcrypt-compat";
 import { sessionSecretRotation } from "../auth/session-rotation";
+
+// ✅ P1-05 FIX: LRU cache for deserializeUser — prevents DB query on every authenticated request
+// Cache 1000 users, TTL 5 minutes. On logout/user update, cache auto-expires.
+const userCache = new LRUCache<string, User>({ max: 1000, ttl: 5 * 60 * 1000 });
 
 export function setupPassportAuth(app: Application) {
   const storage = getStorage();
@@ -79,10 +84,13 @@ export function setupPassportAuth(app: Application) {
     done(null, user.id);
   });
   
-  // Deserialize user from session
+  // Deserialize user from session — with LRU cache to avoid DB hit on every request
   passport.deserializeUser(async (id: string, done) => {
     try {
+      const cached = userCache.get(id);
+      if (cached) return done(null, cached);
       const user = await storage.getUser(id);
+      if (user) userCache.set(id, user as User);
       done(null, user);
     } catch (error) {
       done(error, null);

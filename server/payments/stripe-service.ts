@@ -1,4 +1,5 @@
 import Stripe from 'stripe';
+import { getStripe } from '../lib/stripe-client';
 import crypto from 'crypto';
 import { storage } from '../storage';
 import { getSubscriptionPeriodBoundary } from '../services/stripe-utils';
@@ -14,9 +15,7 @@ function generateIdempotencyKey(prefix: string, ...parts: (string | number)[]): 
 
 const logger = createLogger('stripe-service');
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-08-27.basil',  // ✅ FIXED: Updated to latest Stripe API version
-});
+const stripe = getStripe();
 
 export interface SubscriptionPlan {
   id: string;

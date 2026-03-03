@@ -445,6 +445,17 @@ httpServer.listen(port, "0.0.0.0", () => {
     console.error('[WORKING SERVER] Failed to setup passport:', error);
   }
 
+  // ✅ P0-06 FIX: Apply CSRF protection GLOBALLY to all /api routes
+  // Must be AFTER session+passport setup (CSRF tokens stored in session)
+  // Frontend in queryClient.ts already handles fetching + sending tokens
+  try {
+    const { csrfProtection } = await import('./middleware/csrf');
+    app.use('/api', csrfProtection);
+    console.log('[CSRF] ✅ Global CSRF protection enabled for all /api routes');
+  } catch (error) {
+    console.error('[CSRF] Failed to apply global CSRF protection:', error);
+  }
+
   // SECURITY: Validate origin configuration BEFORE initializing ANY WebSocket servers
   // This ensures all WebSocket servers have proper origin validation configured
   try {

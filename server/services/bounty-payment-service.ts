@@ -1,4 +1,5 @@
 import Stripe from 'stripe';
+import { getStripe } from '../lib/stripe-client';
 import { storage } from '../storage';
 import { createLogger } from '../utils/logger';
 import { creditsService } from './credits-service';
@@ -6,12 +7,7 @@ import { creditsService } from './credits-service';
 const logger = createLogger('bounty-payments');
 
 function getStripeClient(): Stripe {
-  if (!process.env.STRIPE_SECRET_KEY) {
-    throw new Error('STRIPE_SECRET_KEY is required for bounty payments');
-  }
-  return new Stripe(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: '2025-08-27.basil',
-  });
+  return getStripe();
 }
 
 const PLATFORM_FEE_PERCENTAGE = 0.10;

@@ -4,19 +4,14 @@ import { createLogger } from '../utils/logger';
 import { PLANS, METERED_PRICES } from '../payments/pricing-constants';
 import { StripePaymentService } from '../payments/stripe-service';
 import Stripe from 'stripe';
+import { getStripe } from '../lib/stripe-client';
 
 const router = Router();
 const logger = createLogger('admin-billing-router');
 const paymentService = new StripePaymentService();
 
-let stripe: Stripe | null = null;
-if (process.env.STRIPE_SECRET_KEY) {
-  stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: '2025-08-27.basil',
-  });
-} else {
-  logger.warn('STRIPE_SECRET_KEY not configured - billing features will be limited');
-}
+const stripe: Stripe | null = process.env.STRIPE_SECRET_KEY ? getStripe() : null;
+if (!stripe) logger.warn('STRIPE_SECRET_KEY not configured - billing features will be limited');
 
 async function ensureAdmin(req: Request, res: Response, next: Function) {
   try {

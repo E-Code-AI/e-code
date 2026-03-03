@@ -15,6 +15,7 @@ import { createLogger } from '../utils/logger';
 import { normalizeModelName } from '../utils/model-normalizer';
 import { AlertService } from './alert-service';
 import Stripe from 'stripe';
+import { getStripe } from '../lib/stripe-client';
 import { getModelPricing, calculateRequestCost } from '../config/ai-pricing';
 
 const logger = createLogger('ai-metering');
@@ -42,9 +43,7 @@ export class AiMeteringService {
 
   constructor() {
     if (process.env.STRIPE_SECRET_KEY) {
-      this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-        apiVersion: '2025-08-27.basil',  // ✅ FIXED: Updated to latest Stripe API version
-      });
+      this.stripe = getStripe();
     } else {
       logger.warn('STRIPE_SECRET_KEY not found - Stripe metering disabled');
     }

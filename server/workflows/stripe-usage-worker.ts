@@ -11,15 +11,13 @@ import { db } from '../db';
 import { aiStripeUsageQueue, aiUsageMetering, users } from '@shared/schema';
 import { eq, sql } from 'drizzle-orm';
 import Stripe from 'stripe';
+import { getStripe } from '../lib/stripe-client';
 import { createLogger } from '../utils/logger';
 import { AlertService } from '../services/alert-service';
 
 const logger = createLogger('stripe-usage-worker');
 
-// Initialize Stripe client (guardrail at runtime in processStripeUsageQueue)
-const stripe = process.env.STRIPE_SECRET_KEY
-  ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2025-08-27.basil' })
-  : null;
+const stripe = process.env.STRIPE_SECRET_KEY ? getStripe() : null;
 
 /**
  * Calculate next retry delay with exponential backoff

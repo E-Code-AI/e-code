@@ -4,6 +4,7 @@ import { eq, and, gte, lte, desc, sql } from 'drizzle-orm';
 import { createLogger } from '../utils/logger';
 import { agentUsageTrackingService } from './agent-usage-tracking-service';
 import Stripe from 'stripe';
+import { getStripe } from '../lib/stripe-client';
 
 const logger = createLogger('effort-pricing-service');
 
@@ -80,9 +81,7 @@ export class EffortPricingService {
 
   constructor() {
     if (process.env.STRIPE_SECRET_KEY) {
-      this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-        apiVersion: '2023-10-16',
-      });
+      this.stripe = getStripe();
     }
   }
 

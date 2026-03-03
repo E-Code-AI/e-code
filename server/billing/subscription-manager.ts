@@ -1,4 +1,5 @@
 import Stripe from 'stripe';
+import { getStripe } from '../lib/stripe-client';
 import { storage } from '../storage';
 import { getSubscriptionPeriodBoundary } from '../services/stripe-utils';
 
@@ -104,9 +105,7 @@ export class SubscriptionManager {
 
   constructor() {
     if (process.env.STRIPE_SECRET_KEY) {
-      this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-        apiVersion: '2025-08-27.basil'  // ✅ FIXED: Updated to latest Stripe API version
-      });
+      this.stripe = getStripe();
     }
   }
 

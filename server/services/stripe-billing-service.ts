@@ -1,4 +1,5 @@
 import Stripe from 'stripe';
+import { getStripe } from '../lib/stripe-client';
 import crypto from 'crypto';
 import { storage } from '../storage';
 import { createLogger } from '../utils/logger';
@@ -29,13 +30,7 @@ export class StripeBillingService {
   private priceIds: Map<string, string> = new Map();
   
   constructor() {
-    if (!process.env.STRIPE_SECRET_KEY) {
-      throw new Error('STRIPE_SECRET_KEY is required');
-    }
-    
-    this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-      apiVersion: '2025-08-27.basil',  // ✅ FIXED: Updated to latest Stripe API version
-    });
+    this.stripe = getStripe();
     
     // Initialize price IDs for metered billing
     this.initializePriceIds();
