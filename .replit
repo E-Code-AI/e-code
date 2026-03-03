@@ -7,9 +7,9 @@ channel = "stable-24_05"
 packages = ["glibcLocales", "jq", "libxcrypt", "deno", "python3", "gnumake", "gcc"]
 
 [deployment]
-deploymentTarget = "gce"
+deploymentTarget = "autoscale"
 run = ["node", "dist/index.js"]
-build = ["npm", "run", "build"]
+build = ["bash", "-c", "npm install && npm run build"]
 publicDir = "dist/public"
 
 [workflows]
