@@ -1,7 +1,7 @@
 # E-Code Platform
 
 ## Overview
-E-Code is an AI-assisted web-based IDE for rapid prototyping, education, and enterprise application development. It revolutionizes development and deployment with AI-driven features like automated workspace generation, live previews, real-time progress streaming, multi-provider AI model selection, and collaborative tools. The platform focuses on user experience, enterprise-grade testing, robust security, AI task decomposition, auto-execution, and cost tracking.
+E-Code is an AI-assisted web-based IDE for rapid prototyping, education, and enterprise application development. It offers AI-driven features like automated workspace generation, live previews, real-time progress streaming, multi-provider AI model selection, and collaborative tools. The platform aims to revolutionize development with a focus on user experience, enterprise-grade testing, robust security, AI task decomposition, auto-execution, and cost tracking.
 
 ## User Preferences
 - **Communication:** Simple, everyday language

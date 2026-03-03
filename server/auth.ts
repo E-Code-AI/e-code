@@ -1,4 +1,4 @@
-import { scrypt, randomBytes, timingSafeEqual } from "crypto";
+import { scrypt, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import bcrypt from "./utils/bcrypt-compat";
 
@@ -12,14 +12,12 @@ declare module 'express-session' {
   }
 }
 
-// Promisify scrypt
+// Promisify scrypt (kept for comparePasswords legacy path only)
 const scryptAsync = promisify(scrypt);
 
-// Password hashing function
+// Password hashing — uses bcrypt (cost factor 12) for all new passwords
 export async function hashPassword(password: string) {
-  const salt = randomBytes(16).toString("hex");
-  const buf = (await scryptAsync(password, salt, 64)) as Buffer;
-  return `${buf.toString("hex")}.${salt}`;
+  return bcrypt.hash(password, 12);
 }
 
 // Password comparison function

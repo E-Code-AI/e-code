@@ -315,8 +315,8 @@ export class ABTestingService extends EventEmitter {
         }
     }
 
-    // SECURITY: Sandboxed condition evaluator using vm2
-    // Provides complete isolation for dynamic expression evaluation
+    // SECURITY: Sandboxed condition evaluator using structured object pattern matching
+    // Does NOT use vm2 — evaluates only predefined operators (eq, gt, lt, contains, etc.)
     private safeEvaluateCondition(condition: any, context: any): boolean {
         // Handle structured object format (preferred for new rules)
         if (typeof condition === 'object' && condition.property && condition.operator) {
