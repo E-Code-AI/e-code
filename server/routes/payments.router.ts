@@ -1,8 +1,7 @@
 import { Router, Request, Response } from 'express';
 import express from 'express';
 import rateLimit from 'express-rate-limit';
-import { StripePaymentService } from '../payments/stripe-service';
-import { StripeBillingService } from '../services/stripe-billing-service';
+import { stripeService as paymentService } from '../payments/stripe-service';
 import { ensureAuthenticated } from '../middleware/auth';
 import { createLogger } from '../utils/logger';
 import { retryFailedQueueItems, getQueueHealthMetrics } from '../workflows/payg-queue-processor';
@@ -24,8 +23,6 @@ const adminPaymentRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
-const paymentService = new StripePaymentService();
-const billingService = new StripeBillingService();
 const logger = createLogger('payments-router');
 
 // Get available subscription plans
