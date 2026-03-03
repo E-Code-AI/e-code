@@ -666,46 +666,38 @@ textarea:focus {
     @apply gap-4 sm:gap-6 lg:gap-8;
   }
   
-  /* Responsive Container Widths */
+  /* Responsive Container — single authoritative definition */
   .container-responsive {
-    @apply w-full px-4 sm:px-6 lg:px-8 mx-auto;
-    max-width: 100%;
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1rem;
+    padding-right: 1rem;
   }
-  
+
   /* Navigation-specific container that allows dropdown overflow */
   .container-responsive-nav {
-    @apply w-full px-4 sm:px-6 lg:px-8 mx-auto;
-    max-width: 100%;
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1rem;
+    padding-right: 1rem;
     overflow: visible;
   }
-  
+
   @screen sm {
-    .container-responsive {
-      max-width: 640px;
+    .container-responsive,
+    .container-responsive-nav {
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
     }
   }
-  
-  @screen md {
-    .container-responsive {
-      max-width: 768px;
-    }
-  }
-  
+
   @screen lg {
-    .container-responsive {
-      max-width: 1024px;
-    }
-  }
-  
-  @screen xl {
-    .container-responsive {
-      max-width: 1280px;
-    }
-  }
-  
-  @screen 2xl {
-    .container-responsive {
-      max-width: 1536px;
+    .container-responsive,
+    .container-responsive-nav {
+      padding-left: 2rem;
+      padding-right: 2rem;
     }
   }
   
@@ -1031,14 +1023,17 @@ textarea:focus {
     @apply hidden sm:block;
   }
   
-  /* Responsive containers */
-  .container-responsive {
-    @apply container mx-auto px-4 sm:px-6 lg:px-8;
-  }
-  
   /* Responsive max widths */
   .max-w-responsive {
     @apply max-w-full sm:max-w-xl md:max-w-2xl lg:max-w-4xl xl:max-w-6xl mx-auto;
+  }
+
+  .bg-gradient-subtle {
+    background: linear-gradient(
+      to bottom,
+      var(--ecode-surface-secondary, hsl(var(--muted))),
+      var(--ecode-background, hsl(var(--background)))
+    );
   }
 
   .bg-marketing-surface {
@@ -1083,13 +1078,6 @@ textarea:focus {
   /* Mobile table scroll */
   table {
     @apply block overflow-x-auto;
-  }
-}
-
-/* Tablet adjustments */
-@media (min-width: 641px) and (max-width: 1024px) {
-  .container-responsive {
-    @apply px-6;
   }
 }
 
@@ -1167,15 +1155,14 @@ textarea:focus {
   outline: 2px solid var(--ecode-accent);
   outline-offset: 2px;
 }
-@media (min-width: 1025px) {
-  .container-responsive {
-    @apply px-8;
-  }
-}
-
-/* Smooth transitions */
-* {
-  @apply transition-all duration-200 ease-in-out;
+/* Smooth transitions — scoped to interactive elements only */
+button, a, [role="button"], input, select, textarea,
+.transition-interactive {
+  transition: color 150ms ease-in-out,
+              background-color 150ms ease-in-out,
+              border-color 150ms ease-in-out,
+              box-shadow 150ms ease-in-out,
+              opacity 150ms ease-in-out;
 }
 
 /* Gradient animation for mobile menu */
