@@ -1,3 +1,4 @@
+import PublicLayout from "@/components/layout/PublicLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
@@ -47,7 +48,7 @@ export default function Compare() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
+    <PublicLayout>
       <div className="container mx-auto px-4 py-8 sm:py-12 max-w-7xl">
         {/* Header */}
         <div className="text-center mb-8 sm:mb-12">
@@ -127,6 +128,6 @@ export default function Compare() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </PublicLayout>
   );
 }
