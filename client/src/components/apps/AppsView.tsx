@@ -47,7 +47,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { toast } from "sonner";
+import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -59,6 +59,7 @@ interface AppsViewProps {
 }
 
 export function AppsView({ onOpenApp, onBack }: AppsViewProps) {
+  const { toast } = useToast();
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterTab, setFilterTab] = useState<"all" | "private" | "public" | "unlisted">("all");
@@ -91,13 +92,13 @@ export function AppsView({ onOpenApp, onBack }: AppsViewProps) {
       return await apiRequest<Project>("POST", "/api/projects", data);
     },
     onSuccess: () => {
-      toast.success("Project created successfully");
+      toast({ title: "Project created successfully" });
       setShowCreateDialog(false);
       resetForm();
       queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
     },
     onError: (error: Error) => {
-      toast.error(`Error creating project: ${error.message}`);
+      toast({ title: "Error", description: `Error creating project: ${error.message}`, variant: "destructive" });
     },
   });
 
@@ -106,14 +107,14 @@ export function AppsView({ onOpenApp, onBack }: AppsViewProps) {
       return await apiRequest<Project>("PATCH", `/api/projects/${id}`, data);
     },
     onSuccess: () => {
-      toast.success("Project updated successfully");
+      toast({ title: "Project updated successfully" });
       setShowCreateDialog(false);
       setEditingProject(null);
       resetForm();
       queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
     },
     onError: (error: Error) => {
-      toast.error(`Error updating project: ${error.message}`);
+      toast({ title: "Error", description: `Error updating project: ${error.message}`, variant: "destructive" });
     },
   });
 
@@ -122,19 +123,19 @@ export function AppsView({ onOpenApp, onBack }: AppsViewProps) {
       return await apiRequest("DELETE", `/api/projects/${id}`);
     },
     onSuccess: () => {
-      toast.success("Project deleted successfully");
+      toast({ title: "Project deleted successfully" });
       setDeletingProject(null);
       setConfirmDelete("");
       queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
     },
     onError: (error: Error) => {
-      toast.error(`Error deleting project: ${error.message}`);
+      toast({ title: "Error", description: `Error deleting project: ${error.message}`, variant: "destructive" });
     },
   });
 
   const handleSaveProject = async () => {
     if (!projectForm.name.trim()) {
-      toast.error("Project name is required");
+      toast({ title: "Error", description: "Project name is required", variant: "destructive" });
       return;
     }
 
@@ -147,7 +148,7 @@ export function AppsView({ onOpenApp, onBack }: AppsViewProps) {
 
   const handleDeleteProject = async () => {
     if (!deletingProject || confirmDelete !== deletingProject.name) {
-      toast.error("Project name doesn't match");
+      toast({ title: "Error", description: "Project name doesn't match", variant: "destructive" });
       return;
     }
     deleteMutation.mutate(deletingProject.id);

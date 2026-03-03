@@ -118,7 +118,7 @@ export default function Login() {
 
     setIsLoggingIn(true);
     try {
-      const response = await apiRequest<any>('POST', '/api/login', formData);
+      const response = await apiRequest<any>('POST', '/api/login', { ...formData, rememberMe });
       
       if (response.requires2FA && response.challengeId) {
         setTwoFactorChallenge({

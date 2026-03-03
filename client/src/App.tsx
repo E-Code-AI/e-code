@@ -18,7 +18,6 @@ import { LazyAnimatedRoutes } from "@/components/LazyAnimatedRoutes";
 import { OptimizedMotionProvider, AnimationMonitor } from "@/lib/motion";
 
 import { Toaster } from "@/components/ui/toaster";
-import { AppToaster } from "@/components/ui/AppToaster";
 const ScrollToTop = instrumentedLazy(() => import("@/components/ScrollToTop").then(m => ({ default: m.ScrollToTop })), 'ScrollToTop');
 const ConnectionStatusBanner = instrumentedLazy(() => import("./components/ConnectionStatusBanner").then(m => ({ default: m.ConnectionStatusBanner })), 'ConnectionStatusBanner');
 const LazyShellWidgets = instrumentedLazy(() => import("@/components/LazyShellWidgets").then(m => ({ default: m.LazyShellWidgets })), 'LazyShellWidgets');
@@ -130,7 +129,6 @@ function AppContent() {
             <ConnectionStatusBanner />
             <ScrollToTop />
             <Toaster />
-            <AppToaster />
             <LazyShellWidgets />
             <LazyAnimatedRoutes>
               <Suspense fallback={<PageLoader />}>

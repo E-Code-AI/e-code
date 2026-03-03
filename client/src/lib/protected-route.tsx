@@ -3,21 +3,16 @@ import { Loader2 } from "lucide-react";
 import { Route, useLocation } from "wouter";
 import { useEffect, useRef } from "react";
 
-// Component to handle redirects safely with proper ?next= parameter
-function RedirectToLogin({ path }: { path: string }) {
-  const [, navigate] = useLocation();
+function RedirectToLogin() {
+  const [location, navigate] = useLocation();
   const hasRedirectedRef = useRef(false);
-  
+
   useEffect(() => {
-    // Prevent double redirects
     if (hasRedirectedRef.current) return;
     hasRedirectedRef.current = true;
-    
-    // Use wouter navigate for SPA navigation (no page reload)
-    // Include next parameter to return to original page after login
-    const nextPath = encodeURIComponent(path);
+    const nextPath = encodeURIComponent(location);
     navigate(`/login?next=${nextPath}`, { replace: true });
-  }, [path, navigate]);
+  }, [location, navigate]);
 
   return (
     <div className="flex items-center justify-center min-h-screen">
@@ -47,7 +42,7 @@ export function ProtectedRoute({
         ) : user ? (
           <Component params={params} {...params} />
         ) : (
-          <RedirectToLogin path={path} />
+          <RedirectToLogin />
         )
       )}
     </Route>
