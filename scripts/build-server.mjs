@@ -2,21 +2,42 @@
 /**
  * Production server build script
  *
- * Strategy: packages:'external' — npm packages stay in node_modules (installed
- * during the build phase by `npm install`). Only application TypeScript code is
- * compiled into dist/index.js.
+ * Strategy: Bundle all pure-JS packages into dist/index.js. Only packages with
+ * native .node binaries (bcrypt, node-pty, sharp) remain external and stay in
+ * node_modules. When BUILD_DEPLOY=1 is set (Replit deployment context), the
+ * post-build cleanup deletes everything from node_modules except the 3 native
+ * addon packages — reducing 40,000+ files to ~200, which the security scanner
+ * can process in seconds instead of timing out.
  *
- * Result: small dist/index.js (~400KB instead of 19MB) → security scanner
- * finishes in seconds instead of timing out. node_modules/ installed by the
- * build step is available on the same filesystem at runtime.
- *
- * Native .node addons (bcrypt, node-pty) are handled separately: they live in
- * node_modules and are resolved at runtime via the normal require() path.
+ * Dev workflow: npm run dev (never calls this script — no impact)
+ * Prod build:   npm run build (bundles, no cleanup in dev)
+ * Deploy build: BUILD_DEPLOY=1 npm run build (bundles + prunes node_modules)
  */
 
 import * as esbuild from 'esbuild';
 import { existsSync, rmSync, readdirSync } from 'fs';
 import { join } from 'path';
+import { execSync } from 'child_process';
+
+const IS_DEPLOY = process.env.BUILD_DEPLOY === '1';
+
+const NATIVE_EXTERNAL = [
+  'bcrypt',
+  'node-pty',
+  'sharp',
+  'pg-native',
+  'pg-cloudflare',
+  'ssh2',
+  'playwright',
+  'playwright-core',
+  '@playwright/test',
+];
+
+const KEEP_IN_NODE_MODULES = new Set([
+  'bcrypt',
+  'node-pty',
+  'sharp',
+]);
 
 async function cleanOldChunks() {
   if (!existsSync('dist')) return;
@@ -31,8 +52,43 @@ async function cleanOldChunks() {
   if (removed > 0) console.log(`  Cleaned ${removed} old chunk files`);
 }
 
+async function pruneNodeModules() {
+  if (!IS_DEPLOY) return;
+
+  console.log('  [deploy] Pruning node_modules to native addon packages only...');
+
+  if (!existsSync('node_modules')) return;
+
+  const allEntries = readdirSync('node_modules').filter(f => !f.startsWith('.'));
+  let removed = 0;
+
+  for (const entry of allEntries) {
+    if (!KEEP_IN_NODE_MODULES.has(entry)) {
+      try {
+        rmSync(join('node_modules', entry), { recursive: true, force: true });
+        removed++;
+      } catch (_) {}
+    }
+  }
+
+  console.log(`  [deploy] Removed ${removed} packages — kept ${KEEP_IN_NODE_MODULES.size} native addon packages`);
+
+  const remainingFiles = countFiles('node_modules');
+  console.log(`  [deploy] node_modules now has ~${remainingFiles} files`);
+}
+
+function countFiles(dir) {
+  if (!existsSync(dir)) return 0;
+  try {
+    const out = execSync(`find ${dir} -type f | wc -l`, { encoding: 'utf8', stdio: ['pipe', 'pipe', 'ignore'] });
+    return parseInt(out.trim(), 10) || 0;
+  } catch (_) {
+    return -1;
+  }
+}
+
 async function build() {
-  console.log('Building server bundle (external-packages mode)...');
+  console.log(`Building server bundle (bundle-all-except-native mode)${IS_DEPLOY ? ' [DEPLOY]' : ''}...`);
 
   try {
     const result = await esbuild.build({
@@ -43,8 +99,7 @@ async function build() {
       target: 'node20',
       format: 'esm',
       outfile: 'dist/index.js',
-      // Mark ALL npm packages as external — they live in node_modules at runtime.
-      packages: 'external',
+      external: NATIVE_EXTERNAL,
       minify: true,
       treeShaking: true,
       sourcemap: false,
@@ -72,9 +127,10 @@ const __dirname = __esbuild_dirname(__filename);
 
     console.log(`✅ Server bundle built successfully`);
     console.log(`   Output: dist/index.js (${(outputSize / 1024 / 1024).toFixed(2)} MB)`);
-    console.log(`   Mode: external-packages (node_modules resolved at runtime)`);
+    console.log(`   Bundled: all pure-JS packages  |  External: ${NATIVE_EXTERNAL.join(', ')}`);
 
     await cleanOldChunks();
+    await pruneNodeModules();
 
   } catch (error) {
     console.error('❌ Build failed:', error);

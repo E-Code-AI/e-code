@@ -342,8 +342,8 @@ export default function AI() {
         <div className="container-responsive relative z-10">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <LazyMotionDiv
-              initial={{ opacity: 0, x: -50 }}
-              animate={{ opacity: 1, x: 0 }}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
             >
               <Badge variant="default" className="mb-6 text-[13px] px-4 py-1.5 bg-primary/90">
@@ -393,8 +393,8 @@ export default function AI() {
             </LazyMotionDiv>
 
             <LazyMotionDiv
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
               className="relative hidden md:block"
             >

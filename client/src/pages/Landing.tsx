@@ -902,8 +902,8 @@ export default function Landing() {
         <div className="container-responsive max-w-7xl">
           <div className="grid lg:grid-cols-2 gap-12 items-center mb-20">
             <LazyMotionDiv
-              initial={{ opacity: 0, x: -50 }}
-              whileInView={{ opacity: 1, x: 0 }}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
               className="order-2 lg:order-1"
@@ -917,8 +917,8 @@ export default function Landing() {
             </LazyMotionDiv>
             
             <LazyMotionDiv
-              initial={{ opacity: 0, x: 50 }}
-              whileInView={{ opacity: 1, x: 0 }}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
               className="space-y-6 order-1 lg:order-2"
@@ -951,8 +951,8 @@ export default function Landing() {
 
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <LazyMotionDiv
-              initial={{ opacity: 0, x: -50 }}
-              whileInView={{ opacity: 1, x: 0 }}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
               className="space-y-6"
@@ -983,8 +983,8 @@ export default function Landing() {
             </LazyMotionDiv>
             
             <LazyMotionDiv
-              initial={{ opacity: 0, x: 50 }}
-              whileInView={{ opacity: 1, x: 0 }}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
             >
