@@ -238,9 +238,7 @@ const ProjectsPage = () => {
 
   const createProjectMutation = useMutation({
     mutationFn: async (values: ProjectFormValues) => {
-      const res = await apiRequest('POST', '/api/projects', values);
-      if (!res.ok) throw new Error('Failed to create project');
-      return res.json();
+      return await apiRequest('POST', '/api/projects', values);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
@@ -255,9 +253,7 @@ const ProjectsPage = () => {
 
   const deleteProjectMutation = useMutation({
     mutationFn: async (projectId: string) => {
-      const res = await apiRequest('DELETE', `/api/projects/${projectId}`);
-      if (!res.ok) throw new Error('Failed to delete project');
-      return res.json();
+      return await apiRequest('DELETE', `/api/projects/${projectId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/projects'] });

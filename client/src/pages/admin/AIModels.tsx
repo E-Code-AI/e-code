@@ -16,6 +16,11 @@ export default function AIModels() {
     retry: false
   });
 
+  const { data: healthData } = useQuery({
+    queryKey: ['/api/health/providers'],
+    refetchInterval: 30000
+  });
+
   // Calculate totals
   const totalModels = 2 + 4 + 9 + 3; // Anthropic + OpenAI + Open-source + Moonshot
   const activeModels = 18; // All models are active
@@ -98,51 +103,27 @@ export default function AIModels() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="flex items-center gap-2" data-testid="provider-openai">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span className="text-[13px] font-medium text-white">OpenAI</span>
-                  <Badge variant="outline" className="ml-auto">4 models</Badge>
-                </div>
-                <div className="flex items-center gap-2" data-testid="provider-anthropic">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span className="text-[13px] font-medium text-white">Anthropic</span>
-                  <Badge variant="outline" className="ml-auto">2 models</Badge>
-                </div>
-                <div className="flex items-center gap-2" data-testid="provider-together">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span className="text-[13px] font-medium text-white">Together AI</span>
-                  <Badge variant="outline" className="ml-auto">3 models</Badge>
-                </div>
-                <div className="flex items-center gap-2" data-testid="provider-replicate">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span className="text-[13px] font-medium text-white">Replicate</span>
-                  <Badge variant="outline" className="ml-auto">2 models</Badge>
-                </div>
-                <div className="flex items-center gap-2" data-testid="provider-huggingface">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span className="text-[13px] font-medium text-white">Hugging Face</span>
-                  <Badge variant="outline" className="ml-auto">2 models</Badge>
-                </div>
-                <div className="flex items-center gap-2" data-testid="provider-groq">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span className="text-[13px] font-medium text-white">Groq</span>
-                  <Badge variant="outline" className="ml-auto">1 model</Badge>
-                </div>
-                <div className="flex items-center gap-2" data-testid="provider-anyscale">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span className="text-[13px] font-medium text-white">Anyscale</span>
-                  <Badge variant="outline" className="ml-auto">1 model</Badge>
-                </div>
-                <div className="flex items-center gap-2" data-testid="provider-moonshot">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span className="text-[13px] font-medium text-white">Moonshot AI</span>
-                  <Badge variant="outline" className="ml-auto">3 models</Badge>
-                </div>
-                <div className="flex items-center gap-2" data-testid="provider-mcp">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span className="text-[13px] font-medium text-white">MCP Integration</span>
-                  <Badge className="ml-auto">Active</Badge>
-                </div>
+                {healthData?.providers?.map((p: any) => (
+                  <div key={p.provider} className="flex items-center gap-2" data-testid={`provider-${p.provider}`}>
+                    <CheckCircle className={`h-4 w-4 ${p.status === 'healthy' ? 'text-green-500' : 'text-red-500'}`} />
+                    <span className="text-[13px] font-medium text-white capitalize">{p.provider}</span>
+                    <Badge variant="outline" className="ml-auto">{p.status}</Badge>
+                  </div>
+                ))}
+                {!healthData && (
+                  <>
+                    <div className="flex items-center gap-2" data-testid="provider-openai">
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                      <span className="text-[13px] font-medium text-white">OpenAI</span>
+                      <Badge variant="outline" className="ml-auto">4 models</Badge>
+                    </div>
+                    <div className="flex items-center gap-2" data-testid="provider-anthropic">
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                      <span className="text-[13px] font-medium text-white">Anthropic</span>
+                      <Badge variant="outline" className="ml-auto">2 models</Badge>
+                    </div>
+                  </>
+                )}
               </div>
             </CardContent>
           </Card>

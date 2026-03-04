@@ -149,6 +149,7 @@ export default function AdminMonitoring() {
       case 'ok':
       case 'up':
       case 'ready':
+      case 'active':
         return <Badge className="bg-green-600"><CheckCircle2 className="h-3 w-3 mr-1" /> Healthy</Badge>;
       case 'degraded':
         return <Badge className="bg-yellow-600"><AlertTriangle className="h-3 w-3 mr-1" /> Degraded</Badge>;

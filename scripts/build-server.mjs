@@ -55,6 +55,15 @@ async function cleanOldChunks() {
 async function pruneNodeModules() {
   if (!IS_DEPLOY) return;
 
+  // Safety: only prune when actually deploying (REPLIT_DEPLOYMENT set by Replit infra)
+  // This prevents accidental pruning during local dev builds with BUILD_DEPLOY=1
+  const isReplitDeployment = !!process.env.REPLIT_DEPLOYMENT || !!process.env.REPL_DEPLOYMENT_KEY;
+  if (!isReplitDeployment) {
+    console.log('  [deploy] SKIPPING prune — BUILD_DEPLOY=1 set but not in Replit deployment context.');
+    console.log('  [deploy] Set REPLIT_DEPLOYMENT=1 only when deploying. This protects dev node_modules.');
+    return;
+  }
+
   console.log('  [deploy] Pruning node_modules to native addon packages only...');
 
   if (!existsSync('node_modules')) return;

@@ -1,7 +1,7 @@
 # Project Brief
 
 ## Overview
-TestModalProject
+audit-test-js
 
 ## Core Requirements
 [To be extracted from requirements]

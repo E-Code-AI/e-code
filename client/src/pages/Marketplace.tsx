@@ -61,7 +61,7 @@ export default function Marketplace() {
       return response.json();
     }
   });
-  const templates = templatesData?.templates || [];
+  const templates = Array.isArray(templatesData) ? templatesData : templatesData?.templates || [];
 
   const { data: categoriesData = [] } = useQuery({
     queryKey: ['/api/marketplace/categories'],

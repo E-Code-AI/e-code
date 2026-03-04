@@ -127,9 +127,9 @@ export function WebSearchToggle({
               <LazyAnimatePresence>
                 {enabled && (
                   <LazyMotionDiv
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -10 }}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
                   >
                     <Badge 
                       variant="secondary" 

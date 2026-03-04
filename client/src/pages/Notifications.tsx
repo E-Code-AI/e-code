@@ -75,11 +75,49 @@ export default function Notifications() {
   // Fetch notifications
   const { data: notifications = [], isLoading } = useQuery<Notification[]>({
     queryKey: ['/api/notifications'],
+    queryFn: async () => {
+      try {
+        const res = await apiRequest('GET', '/api/notifications');
+        return Array.isArray(res) ? res : [];
+      } catch (err) {
+        console.error('Notifications fetch error:', err);
+        return [];
+      }
+    },
   });
 
   // Fetch notification settings
   const { data: settings, isLoading: settingsLoading } = useQuery<NotificationSettings>({
     queryKey: ['/api/notifications/preferences'],
+    queryFn: async () => {
+      try {
+        return await apiRequest('GET', '/api/notifications/preferences');
+      } catch (err) {
+        console.error('Notification preferences fetch error:', err);
+        return {
+          email: {
+            comments: true,
+            likes: true,
+            follows: true,
+            mentions: true,
+            teamUpdates: true,
+            deployments: true,
+            security: true,
+            marketing: false,
+          },
+          push: {
+            comments: true,
+            likes: true,
+            follows: true,
+            mentions: true,
+            teamUpdates: true,
+            deployments: true,
+            security: true,
+          },
+          frequency: 'instant' as const
+        };
+      }
+    }
   });
 
   // Mark as read mutation

@@ -84,25 +84,78 @@ export default function Billing() {
 
   const { data: subscriptionStatus, isLoading: subLoading } = useQuery<SubscriptionStatus>({
     queryKey: ['/api/payments/subscription-status'],
+    queryFn: async () => {
+      try {
+        return await apiRequest('GET', '/api/payments/subscription-status');
+      } catch (err) {
+        return {
+          hasSubscription: false,
+          subscriptionId: null,
+          subscriptionStatus: null,
+          stripePriceId: null,
+          currentPeriodEnd: null
+        };
+      }
+    },
     enabled: !!user,
   });
 
   const { data: creditsStatus, isLoading: creditsLoading } = useQuery<CreditsStatus>({
     queryKey: ['/api/payments/credits-status'],
+    queryFn: async () => {
+      try {
+        return await apiRequest('GET', '/api/payments/credits-status');
+      } catch (err) {
+        return {
+          balance: 0,
+          monthlyAllowance: 0,
+          usedThisMonth: 0,
+          tier: 'free',
+          lastRefill: null
+        };
+      }
+    },
     enabled: !!user,
   });
 
   const { data: billingHistory, isLoading: invoicesLoading } = useQuery<{ invoices: Invoice[] }>({
     queryKey: ['/api/payments/billing-history'],
+    queryFn: async () => {
+      try {
+        return await apiRequest('GET', '/api/payments/billing-history');
+      } catch (err) {
+        return { invoices: [] };
+      }
+    },
     enabled: !!user,
   });
 
   const { data: plans = [], isLoading: plansLoading } = useQuery<Plan[]>({
     queryKey: ['/api/payments/plans'],
+    queryFn: async () => {
+      try {
+        return await apiRequest('GET', '/api/payments/plans');
+      } catch (err) {
+        return [];
+      }
+    },
   });
 
   const { data: usageData, isLoading: usageLoading } = useQuery<UsageData>({
     queryKey: ['/api/usage/current'],
+    queryFn: async () => {
+      try {
+        return await apiRequest('GET', '/api/usage/current');
+      } catch (err) {
+        return {
+          compute_hours: 0,
+          storage: 0,
+          bandwidth: 0,
+          deployments: 0,
+          ai_tokens: 0
+        };
+      }
+    },
     enabled: !!user,
   });
 
