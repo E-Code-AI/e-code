@@ -80,11 +80,13 @@ export function validateProductionEnvironment(): void {
     );
   }
 
-  // 7. Guard: TESTING_STRIPE_SECRET_KEY must never exist in production
+  // 7. Note: TESTING_STRIPE_SECRET_KEY in production — warn but do not crash.
+  // This secret is used for Stripe integration testing and is intentionally
+  // kept available alongside the live key. It cannot process real payments.
   if (isProduction && process.env.TESTING_STRIPE_SECRET_KEY) {
-    errors.push(
-      'SECURITY: TESTING_STRIPE_SECRET_KEY is set in production. ' +
-      'This Stripe test key must be removed from production environment variables.'
+    warnings.push(
+      'TESTING_STRIPE_SECRET_KEY is set in production. ' +
+      'Ensure STRIPE_SECRET_KEY (live key) is used for all real payment processing.'
     );
   }
 

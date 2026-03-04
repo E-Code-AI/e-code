@@ -1,7 +1,7 @@
 # E-Code Platform
 
 ## Overview
-E-Code is an AI-assisted web-based IDE designed to enhance software development efficiency. It offers automated workspace generation, live previews, real-time progress streaming, multi-provider AI model selection, collaborative tools, enterprise-grade testing, and robust security. The platform aims to provide an advanced user experience for rapid prototyping, education, and enterprise application development, focusing on delivering a cutting-edge development environment.
+E-Code is an AI-assisted web-based IDE designed to enhance software development efficiency. It offers automated workspace generation, live previews, real-time progress streaming, multi-provider AI model selection, collaborative tools, enterprise-grade testing, and robust security. The platform aims to provide an advanced user experience for rapid prototyping, education, and enterprise application development, with a vision for market leadership.
 
 ## User Preferences
 - **Communication:** Simple, everyday language
@@ -42,7 +42,7 @@ E-Code is an AI-assisted web-based IDE designed to enhance software development 
 ## System Architecture
 
 ### UI/UX Decisions
-The frontend utilizes Shadcn/UI with Tailwind CSS and Monaco Editor, adhering to the Replit RUI Design System. It supports responsiveness, mobile-first design, light/dark modes, a unified IDE layout, spring animations, loading skeletons, and touch enhancements.
+The frontend uses Shadcn/UI with Tailwind CSS and Monaco Editor, adhering to the Replit RUI Design System. It supports responsiveness, mobile-first design, light/dark modes, a unified IDE layout, spring animations, loading skeletons, and touch enhancements.
 
 ### Technical Implementations
 The frontend is built with React 18, TypeScript, Vite, TanStack Query, and Wouter. The backend uses Node.js/Express.js in TypeScript with Drizzle ORM for PostgreSQL and Passport.js for authentication, providing RESTful APIs and WebSockets. AI optimizations include Task Classifier, Circuit Breaker, Priority Queue, Intelligent Caching, and Observability. Environment variables are secured with AES-256-GCM encryption. Server-Sent Events (SSE) are used for real-time code generation. Anonymous bootstrap authentication supports ephemeral guest users. AI Agent enhancements include structured XML-based system prompts, a repository overview service, a context window manager, a unified AI provider system, and AI-powered inline code actions. The platform includes a Checkpoints & Rollback System for atomic transactions and a Background Auto-Testing System using Playwright. Max Autonomy Mode provides extended autonomous sessions with AI task decomposition, auto-execution, ETA estimation, and cost tracking. Process-based code execution utilizes native Nix-managed language runtimes. Logging is managed by a centralized Winston-based system with correlation IDs and multi-transport support. An Agent Step Cache system provides database-backed intermediate step caching. Persistent chat history uses a dual-layer architecture: Zustand store with localStorage for instant local loading, augmented by PostgreSQL for server backup and cross-device synchronization. Fast Bootstrap Optimization provides intelligent fast model recommendations, parallel session+scaffold execution, and background npm install.
