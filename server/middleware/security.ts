@@ -308,6 +308,11 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction) 
     return next();
   }
 
+  // Skip CSRF for anonymous telemetry ingestion (fire-and-forget, no state-change)
+  if (req.path === '/api/logs/ingest') {
+    return next();
+  }
+
   // Generate CSRF token for GET requests
   if (req.method === 'GET' && !isApiRequest) {
     const token = crypto.randomBytes(32).toString('hex');

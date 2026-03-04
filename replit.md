@@ -1,7 +1,7 @@
 # E-Code Platform
 
 ## Overview
-E-Code is an AI-assisted web-based IDE designed to boost software development efficiency. It provides automated workspace generation, real-time code execution and previews, multi-provider AI model integration, collaborative tools, enterprise-grade testing, and robust security. The platform aims to be a leading AI-powered development environment, focusing on rapid prototyping, education, and complex enterprise application development, ultimately enhancing software delivery and market responsiveness.
+E-Code is an AI-assisted web-based IDE designed to enhance software development efficiency and accelerate the software delivery lifecycle. It offers automated workspace generation, real-time code execution and previews, multi-provider AI model integration, collaborative tools, enterprise-grade testing, and robust security. The platform aims to be a leading AI-powered development environment for rapid prototyping, educational use, and complex enterprise application development.
 
 ## User Preferences
 - **Communication:** Simple, everyday language
@@ -32,7 +32,7 @@ E-Code is an AI-assisted web-based IDE designed to boost software development ef
 - **Tenant Isolation (Critical):** Personal projects MUST have `tenantId = ownerId` (the user's ID) — NOT NULL. The `createProject` route in `projects.router.ts` sets `tenantId: validatedData.tenantId ?? userId`. The persistence engine's `withScopedTransaction` checks `WHERE tenant_id = userId`, so NULL tenantId causes 403 on all file operations. If projects have NULL tenant_id in DB, run: `UPDATE projects SET tenant_id = owner_id WHERE tenant_id IS NULL`.
 - **Project Starter Files:** When a new project is created via `POST /api/projects`, a language-appropriate starter file (e.g. `main.js`, `main.py`) is auto-created in the `files` DB table so the IDE has something to show immediately. This is done synchronously in the project creation route before returning the response. Never skip this — empty file tree on new project creation is a poor UX.
 - **Notification Preferences Schema:** The `notification_preferences` table uses `email` (jsonb), `push` (jsonb), and `frequency` (varchar) columns — NOT individual boolean columns.
-- **Animation Safety:** Never use horizontal x-shift animations (`initial={{ x: -50 }}`) on public marketing pages — if `whileInView` fires late or not at all, content appears shifted 50px to the left creating perceived layout misalignment. Always use vertical y-shift (`initial={{ y: 30 }}`) for `whileInView` animations on public pages.
+- **Animation Safety:** Never use horizontal x-shift animations (`initial={{ x: -50 }}`) on public marketing pages — if `whileInView` fires late or not at all, content appears shifted 50px to the left creating perceived layout misalignment. Always use vertical y-shift (`initial={{ y: 30 }})` for `whileInView` animations on public pages.
 - **Environment Configuration:** Zod-validated environment variables via `server/utils/env-config.ts`. Required vars validated at startup, optional vars have defaults. Categories: required, security, monitoring, cache, ai, payments, email, notifications, storage, performance, rateLimit, replit. Import `envConfig` for typed access.
 - **API Versioning:** Current API version is `v1` (implicit`). Supports URL-based (`/api/v1/users`) and header-based (`Accept-Version: v1`). Deprecation middleware available via `deprecationWarning(version, sunsetDate)`.
 - **Server Logs Streaming:** Real-time Winston log streaming via WebSocket at `/api/server/logs/ws`. Uses session-based authentication (derives userId ONLY from verified session cookie, never from query params). Registered with central upgrade dispatcher at priority 45. Frontend hook `useServerLogs` includes reconnection guards (`isMountedRef`, `isManualDisconnectRef`) and stale socket protection (`if (wsRef.current !== ws)` in onclose).
@@ -48,10 +48,10 @@ E-Code is an AI-assisted web-based IDE designed to boost software development ef
 ## System Architecture
 
 ### UI/UX Decisions
-The frontend uses Shadcn/UI, Tailwind CSS, and the Monaco Editor, following the Replit RUI Design System. Principles include responsiveness, mobile-first design, light/dark modes, unified IDE layout, spring animations, loading skeletons, and touch-optimized interactions.
+The frontend uses Shadcn/UI, Tailwind CSS, and the Monaco Editor, following the Replit RUI Design System. It emphasizes responsiveness, mobile-first design, light/dark modes, a unified IDE layout, spring animations, loading skeletons, and touch-optimized interactions.
 
 ### Technical Implementations
-The platform employs a two-service architecture: a Main Platform (React 18, TypeScript, Vite, TanStack Query, Wouter for frontend; Node.js/Express.js, TypeScript, Drizzle ORM, Passport.js for backend) and an independent Runner microservice for isolated workspace execution. AI optimizations include Task Classifier, Circuit Breaker, Priority Queue, Intelligent Caching, and Observability. Environment variables are AES-256-GCM encrypted. Server-Sent Events facilitate real-time code generation. The AI Agent system features structured XML prompts, a context window manager, a unified AI provider, and inline code actions. Reliability is supported by Checkpoints & Rollback and Background Auto-Testing (Playwright). Max Autonomy Mode enables advanced AI task decomposition. Code execution uses native Nix-managed runtimes, with Winston for logging and correlation IDs. An Agent Step Cache and persistent chat history are implemented, alongside Fast Bootstrap Optimization for quick model recommendations and parallel execution.
+The platform uses a two-service architecture: a Main Platform (React 18, TypeScript, Vite, TanStack Query, Wouter; Node.js/Express.js, TypeScript, Drizzle ORM, Passport.js) and an independent Runner microservice for isolated workspace execution. AI optimizations include Task Classifier, Circuit Breaker, Priority Queue, Intelligent Caching, and Observability. Environment variables are AES-256-GCM encrypted. Server-Sent Events enable real-time code generation. The AI Agent system features structured XML prompts, a context window manager, a unified AI provider, and inline code actions. Reliability is supported by Checkpoints & Rollback and Background Auto-Testing (Playwright). Max Autonomy Mode allows advanced AI task decomposition. Code execution uses native Nix-managed runtimes, with Winston for logging and correlation IDs. An Agent Step Cache and persistent chat history are implemented, alongside Fast Bootstrap Optimization for quick model recommendations and parallel execution.
 
 ### System Design Choices
 PostgreSQL is the primary data store. Security features include CSRF protection, input sanitization, tier-based rate limiting, API versioning, session-based authentication, and encrypted environment variables. The AI agent system provides SSE streaming, multi-provider AI model selection, database-backed conversation history, circuit breakers, and retry logic. Health monitoring integrates Kubernetes probes and a Provider Health API with Prometheus metrics. A two-tier database API architecture (Admin and Project Data APIs) is employed. Docker builds are optimized for small image sizes. Stripe integration supports a hybrid pricing model. The platform supports 29 programming languages via CodeMirror 6 and a robust runtime system with PID tracking and language-specific timeouts, supporting `single-vm` and `kubernetes` deployment modes. `DockerExecutor` offers enterprise-grade sandboxed code execution. A Memory Bank System stores AI-generated contextual markdown files. Core systems include a WebSocket Resilience System, an Intersection Observer Animation System, a Native Motion Library, and a ReplDB-Compatible Key-Value Database. Tenant isolation is implemented using `PersistenceEngine`, `TenantContextMiddleware`, `TenantScopedQueries`, and PostgreSQL RLS policies.
@@ -67,25 +67,25 @@ PostgreSQL is the primary data store. Security features include CSRF protection,
 
 ### Infrastructure Services
 - PostgreSQL (Neon serverless)
-- Redis (optional caching)
-- Stripe (payment processing)
-- SendGrid (email delivery)
-- Sentry (error monitoring)
-- Slack (production monitoring alerts)
-- Object Storage (Replit built-in GCS-backed for production, local filesystem for development)
-- E-Code Runner (optional separate microservice)
+- Redis
+- Stripe
+- SendGrid
+- Sentry
+- Slack
+- Object Storage (GCS-backed for production)
+- E-Code Runner
 
 ### Development Tools & Integrations
-- GitHub (OAuth integration)
-- Playwright (browser automation for testing)
-- Monaco Editor (Microsoft's VS Code editor component)
-- xterm.js (terminal emulation library)
-- Tavily (web search integration)
+- GitHub
+- Playwright
+- Monaco Editor
+- xterm.js
+- Tavily
 
 ### Authentication Providers
-- Replit Auth (Google, GitHub, Twitter/X, Apple, email/password)
+- Replit Auth
 - Custom Email/Password
 
 ### Applications
-- Desktop Application (Electron)
-- Mobile Application (React Native + Expo SDK 54)
+- Electron (Desktop)
+- React Native + Expo SDK 54 (Mobile)
