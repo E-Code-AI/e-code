@@ -391,9 +391,43 @@ export class ProjectsRouter {
         const project = await this.storage.createProject({
           ...validatedData,
           slug,
-          visibility: validatedData.visibility || 'private'
+          visibility: validatedData.visibility || 'private',
+          tenantId: validatedData.tenantId ?? userId,
         });
-        
+
+        // Auto-create starter file so the IDE has something to show immediately
+        try {
+          const lang = validatedData.language || 'javascript';
+          const starterFiles: Record<string, { name: string; content: string }> = {
+            javascript:  { name: 'main.js',  content: 'console.log("Hello, World!");\n' },
+            typescript:  { name: 'main.ts',  content: 'console.log("Hello, World!");\n' },
+            python:      { name: 'main.py',  content: 'print("Hello, World!")\n' },
+            bash:        { name: 'main.sh',  content: '#!/usr/bin/env bash\necho "Hello, World!"\n' },
+            c:           { name: 'main.c',   content: '#include <stdio.h>\nint main() {\n  printf("Hello, World!\\n");\n  return 0;\n}\n' },
+            cpp:         { name: 'main.cpp', content: '#include <iostream>\nint main() {\n  std::cout << "Hello, World!" << std::endl;\n  return 0;\n}\n' },
+            rust:        { name: 'main.rs',  content: 'fn main() {\n  println!("Hello, World!");\n}\n' },
+            go:          { name: 'main.go',  content: 'package main\nimport "fmt"\nfunc main() {\n  fmt.Println("Hello, World!")\n}\n' },
+            java:        { name: 'Main.java', content: 'public class Main {\n  public static void main(String[] args) {\n    System.out.println("Hello, World!");\n  }\n}\n' },
+            ruby:        { name: 'main.rb',  content: 'puts "Hello, World!"\n' },
+            php:         { name: 'main.php', content: '<?php\necho "Hello, World!";\n' },
+            swift:       { name: 'main.swift', content: 'print("Hello, World!")\n' },
+            kotlin:      { name: 'main.kt', content: 'fun main() {\n  println("Hello, World!")\n}\n' },
+            perl:        { name: 'main.pl',  content: '#!/usr/bin/perl\nprint "Hello, World!\\n";\n' },
+            deno:        { name: 'main.ts',  content: 'console.log("Hello, World!");\n' },
+            nix:         { name: 'default.nix', content: '# Nix expression\n{ pkgs ? import <nixpkgs> {} }:\npkgs.mkShell {\n  buildInputs = [ pkgs.hello ];\n}\n' },
+            html:        { name: 'index.html', content: '<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8">\n  <title>App</title>\n</head>\n<body>\n  <h1>Hello, World!</h1>\n</body>\n</html>\n' },
+          };
+          const starter = starterFiles[lang] ?? { name: 'main.txt', content: '# Start coding here\n' };
+          await this.storage.createFile({
+            projectId: String(project.id),
+            path: starter.name,
+            content: starter.content,
+          });
+          projectLogger.info(`[Projects] Created starter file ${starter.name} for project ${project.id}`);
+        } catch (starterErr: any) {
+          projectLogger.warn(`[Projects] Failed to create starter file for project ${project.id}:`, starterErr);
+        }
+
         // Auto-initialize memory bank for new project
         try {
           await memoryBankService.initialize(

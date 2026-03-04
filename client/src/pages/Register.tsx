@@ -185,8 +185,8 @@ export default function Register() {
       {/* Left Side - Form - Mobile Optimized */}
       <LazyMotionDiv 
         className="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-6 md:p-8 lg:p-16 overflow-y-auto"
-        initial={{ opacity: 0, x: -50 }}
-        animate={{ opacity: 1, x: 0 }}
+        initial={{ opacity: 0, y: 50 }}
+        animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
       >
         <div className="w-full max-w-md space-y-4 sm:space-y-6">
@@ -504,8 +504,8 @@ export default function Register() {
       {/* Right Side - Image & Features */}
       <LazyMotionDiv 
         className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-orange-500 to-amber-500 relative overflow-hidden"
-        initial={{ opacity: 0, x: 50 }}
-        animate={{ opacity: 1, x: 0 }}
+        initial={{ opacity: 0, y: 50 }}
+        animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
         style={{
           background: 'linear-gradient(135deg, #F26207 0%, #F99D25 100%)'

@@ -30,10 +30,12 @@ export default function Deployments() {
   const projectId = params.projectId;
 
   // Fetch deployments for the current project
-  const { data: deployments, isLoading } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: projectId ? [`/api/projects/${projectId}/deployments`] : ['/api/deployments'],
     enabled: true
   });
+
+  const deployments = data?.deployments || (Array.isArray(data) ? data : []);
 
   const createDeploymentMutation = useMutation({
     mutationFn: async (_?: void) => {

@@ -287,12 +287,12 @@ export default function Home() {
                 </Button>
               </div>
               <div className="flex flex-wrap gap-2 px-2 pt-3 text-[13px] text-white/80">
-                <span>Exemples:</span>
+                <span>Examples:</span>
                 <Button 
                   variant="link" 
                   className="p-0 h-auto text-orange-50 hover:text-white font-medium"
                   onClick={() => {
-                    setSearchQuery("Build a full-stack e-commerce marketplace with Stripe payments, product catalog, shopping cart, user authentication, order management, and mobile-responsive design");
+                    handleCreateProject("Build a full-stack e-commerce marketplace with Stripe payments, product catalog, shopping cart, user authentication, order management, and mobile-responsive design");
                   }}
                   data-testid="button-example-ecommerce"
                 >
@@ -302,7 +302,7 @@ export default function Home() {
                   variant="link" 
                   className="p-0 h-auto text-orange-50 hover:text-white font-medium"
                   onClick={() => {
-                    setSearchQuery("Create a Slack-like real-time messaging app with WebSocket connections, channels, direct messages, file sharing, reactions, and presence indicators");
+                    handleCreateProject("Create a Slack-like real-time messaging app with WebSocket connections, channels, direct messages, file sharing, reactions, and presence indicators");
                   }}
                   data-testid="button-example-chat"
                 >
@@ -312,7 +312,7 @@ export default function Home() {
                   variant="link" 
                   className="p-0 h-auto text-orange-50 hover:text-white font-medium"
                   onClick={() => {
-                    setSearchQuery("Design a Fortune 500-grade analytics dashboard with real-time charts, KPI widgets, data tables with sorting/filtering, date range picker, and CSV/PDF export");
+                    handleCreateProject("Design a Fortune 500-grade analytics dashboard with real-time charts, KPI widgets, data tables with sorting/filtering, date range picker, and CSV/PDF export");
                   }}
                   data-testid="button-example-dashboard"
                 >
@@ -322,7 +322,7 @@ export default function Home() {
                   variant="link" 
                   className="p-0 h-auto text-orange-50 hover:text-white font-medium"
                   onClick={() => {
-                    setSearchQuery("Build an AI chatbot with OpenAI GPT-4 integration, conversation memory, document upload for RAG, streaming responses, and conversation history");
+                    handleCreateProject("Build an AI chatbot with OpenAI GPT-4 integration, conversation memory, document upload for RAG, streaming responses, and conversation history");
                   }}
                   data-testid="button-example-ai"
                 >

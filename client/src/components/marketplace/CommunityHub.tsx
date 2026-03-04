@@ -67,7 +67,10 @@ export function CommunityHub() {
     queryKey: ['/api/community/top-developers'],
     queryFn: async () => {
       const response = await fetch('/api/community/top-developers', { credentials: 'include' });
-      if (!response.ok) throw new Error('Failed to fetch top developers');
+      if (!response.ok) {
+        // Graceful fallback for top-developers
+        return [];
+      }
       return response.json();
     }
   });
@@ -76,7 +79,10 @@ export function CommunityHub() {
     queryKey: ['/api/community/collections'],
     queryFn: async () => {
       const response = await fetch('/api/community/collections', { credentials: 'include' });
-      if (!response.ok) throw new Error('Failed to fetch collections');
+      if (!response.ok) {
+        // Graceful fallback for collections
+        return [];
+      }
       return response.json();
     }
   });
@@ -85,7 +91,10 @@ export function CommunityHub() {
     queryKey: ['/api/community/activity'],
     queryFn: async () => {
       const response = await fetch('/api/community/activity', { credentials: 'include' });
-      if (!response.ok) throw new Error('Failed to fetch recent activity');
+      if (!response.ok) {
+        // Graceful fallback for activity
+        return [];
+      }
       return response.json();
     }
   });

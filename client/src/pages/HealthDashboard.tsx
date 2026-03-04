@@ -20,7 +20,7 @@ export default function HealthDashboard() {
 
   // Fetch system metrics for overview cards
   const { data: metrics, isLoading: metricsLoading, refetch } = useQuery({
-    queryKey: ['/api/monitoring/health'],
+    queryKey: ['/api/health/detailed'],
     refetchInterval: 30000
   });
 

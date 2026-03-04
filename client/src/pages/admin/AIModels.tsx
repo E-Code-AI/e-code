@@ -12,7 +12,7 @@ export default function AIModels() {
 
   // Get usage statistics
   const { data: stats } = useQuery({
-    queryKey: ['/api/ai/stats'],
+    queryKey: ['/api/admin/ai-usage/stats'],
     retry: false
   });
 

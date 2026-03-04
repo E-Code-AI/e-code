@@ -1,7 +1,7 @@
 # Project Brief
 
 ## Overview
-E2E Test Project
+TestModalProject
 
 ## Core Requirements
 [To be extracted from requirements]

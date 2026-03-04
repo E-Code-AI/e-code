@@ -44,7 +44,9 @@ export default function Marketplace() {
     queryKey: ['/api/marketplace/extensions'],
     queryFn: async () => {
       const response = await fetch('/api/marketplace/extensions');
-      if (!response.ok) throw new Error('Failed to fetch extensions');
+      if (!response.ok) {
+        return [];
+      }
       return response.json();
     }
   });
@@ -53,7 +55,9 @@ export default function Marketplace() {
     queryKey: ['/api/marketplace/templates'],
     queryFn: async () => {
       const response = await fetch('/api/marketplace/templates');
-      if (!response.ok) throw new Error('Failed to fetch templates');
+      if (!response.ok) {
+        return { templates: [] };
+      }
       return response.json();
     }
   });
@@ -63,7 +67,9 @@ export default function Marketplace() {
     queryKey: ['/api/marketplace/categories'],
     queryFn: async () => {
       const response = await fetch('/api/marketplace/categories');
-      if (!response.ok) throw new Error('Failed to fetch categories');
+      if (!response.ok) {
+        return [];
+      }
       return response.json();
     }
   });
@@ -96,7 +102,9 @@ export default function Marketplace() {
     queryKey: ['/api/marketplace/publishers'],
     queryFn: async () => {
       const response = await fetch('/api/marketplace/publishers');
-      if (!response.ok) throw new Error('Failed to fetch publishers');
+      if (!response.ok) {
+        return [];
+      }
       return response.json();
     }
   });

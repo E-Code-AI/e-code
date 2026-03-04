@@ -70,28 +70,29 @@ export default function AdminDashboard() {
 
   // Fetch system status
   const { data: systemStatus } = useQuery({
-    queryKey: ['/api/admin/system-status'],
+    queryKey: ['/api/health/detailed'],
     refetchInterval: 30000
   });
 
   // Fetch user statistics
   const { data: userStats } = useQuery({
-    queryKey: ['/api/admin/user-stats']
+    queryKey: ['/api/admin/dashboard/stats']
   });
 
   // Fetch project statistics  
   const { data: projectStats } = useQuery({
-    queryKey: ['/api/admin/project-stats']
+    queryKey: ['/api/admin/dashboard/stats']
   });
 
   // Fetch import statistics
   const { data: importStats } = useQuery({
-    queryKey: ['/api/admin/import-stats']
+    queryKey: ['/api/admin/import-stats'],
+    enabled: false // Endpoint not implemented yet
   });
 
   // Fetch recent activities
   const { data: activities } = useQuery({
-    queryKey: ['/api/admin/activities'],
+    queryKey: ['/api/admin/activity'],
     refetchInterval: 60000
   });
 
@@ -152,33 +153,33 @@ export default function AdminDashboard() {
               <CardContent>
                 <div className="text-2xl font-bold">{userStats?.totalUsers || 0}</div>
                 <p className="text-[11px] text-muted-foreground">
-                  +{userStats?.newThisWeek || 0} this week
+                  {userStats?.activeUsers || 0} active (30d)
                 </p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-[13px] font-medium">Active Projects</CardTitle>
+                <CardTitle className="text-[13px] font-medium">Total Projects</CardTitle>
                 <FileText className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{projectStats?.activeProjects || 0}</div>
+                <div className="text-2xl font-bold">{projectStats?.totalProjects || 0}</div>
                 <p className="text-[11px] text-muted-foreground">
-                  of {projectStats?.totalProjects || 0} total
+                  Across all users
                 </p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-[13px] font-medium">Storage Used</CardTitle>
-                <Database className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-[13px] font-medium">Total Revenue</CardTitle>
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{projectStats?.totalStorage || '0 GB'}</div>
+                <div className="text-2xl font-bold">${projectStats?.totalRevenue?.toFixed(2) || '0.00'}</div>
                 <p className="text-[11px] text-muted-foreground">
-                  {projectStats?.totalFiles || 0} files
+                  {projectStats?.activeSubscriptions || 0} subscriptions
                 </p>
               </CardContent>
             </Card>
@@ -189,9 +190,9 @@ export default function AdminDashboard() {
                 <Activity className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">Operational</div>
+                <div className="text-2xl font-bold">{systemStatus?.status === 'ok' ? 'Healthy' : 'Warning'}</div>
                 <p className="text-[11px] text-muted-foreground">
-                  All systems running
+                  Up: {systemStatus?.uptime || '0'}
                 </p>
               </CardContent>
             </Card>
