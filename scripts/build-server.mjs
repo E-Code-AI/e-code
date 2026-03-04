@@ -59,22 +59,15 @@ async function pruneNodeModules() {
 
   if (!existsSync('node_modules')) return;
 
-  const allEntries = readdirSync('node_modules').filter(f => !f.startsWith('.'));
-  let removed = 0;
-
-  for (const entry of allEntries) {
-    if (!KEEP_IN_NODE_MODULES.has(entry)) {
-      try {
-        rmSync(join('node_modules', entry), { recursive: true, force: true });
-        removed++;
-      } catch (_) {}
-    }
+  try {
+    execSync(
+      `cd node_modules && ls | grep -vE "^(${Array.from(KEEP_IN_NODE_MODULES).join('|')})$" | xargs -r rm -rf`,
+      { stdio: 'inherit', shell: true }
+    );
+    console.log(`  [deploy] Pruned node_modules — kept: ${Array.from(KEEP_IN_NODE_MODULES).join(', ')}`);
+  } catch (err) {
+    console.warn('  [deploy] Prune warning:', err.message);
   }
-
-  console.log(`  [deploy] Removed ${removed} packages — kept ${KEEP_IN_NODE_MODULES.size} native addon packages`);
-
-  const remainingFiles = countFiles('node_modules');
-  console.log(`  [deploy] node_modules now has ~${remainingFiles} files`);
 }
 
 function countFiles(dir) {

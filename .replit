@@ -9,7 +9,7 @@ packages = ["glibcLocales", "jq", "libxcrypt", "deno", "python3", "gnumake", "gc
 [deployment]
 deploymentTarget = "vm"
 run = ["npm", "run", "start"]
-build = ["bash", "-c", "BUILD_DEPLOY=1 npm run build"]
+build = ["npm", "run", "build"]
 publicDir = "dist/public"
 
 [workflows]
