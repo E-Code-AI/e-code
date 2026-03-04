@@ -1,7 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 
-// Web Speech API - use 'any' since TypeScript doesn't have built-in types for this browser API
-type SpeechRecognitionInstance = any;
 import { useQuery } from '@tanstack/react-query';
 import { devLog } from '@/lib/dev-logger';
 import { Button } from '@/components/ui/button';
@@ -504,10 +502,12 @@ export function ReplitAgentPanelV3({
   }, [effectiveConversationId, messages, setStoreMessages]);
   const [input, setInput] = useState('');
   const [isRecording, setIsRecording] = useState(false);
+  const [vibeModeEnabled, setVibeModeEnabled] = useState(false);
   const [pendingAttachments, setPendingAttachments] = useState<FileAttachment[]>([]);
   const [isUploadingFiles, setIsUploadingFiles] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
   const [isWorking, setIsWorking] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [isPendingResponse, setIsPendingResponse] = useState(false); // True when waiting for first AI response chunk
@@ -1099,88 +1099,119 @@ export function ReplitAgentPanelV3({
     setPendingAttachments(prev => prev.filter(a => a.id !== attachmentId));
   }, []);
 
-  // Handler for voice input button click
-  const handleVoiceClick = useCallback(() => {
-    // Check for Web Speech API support
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    
-    if (!SpeechRecognition) {
+  // Handler for voice vibe coding — MediaRecorder → OpenAI Whisper transcription
+  const handleVoiceClick = useCallback(async () => {
+    if (isRecording) {
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        mediaRecorderRef.current.stop();
+      }
+      return;
+    }
+
+    if (!navigator.mediaDevices?.getUserMedia) {
       toast({
-        title: "Voice Input Not Supported",
-        description: "Voice input is not supported in this browser. Please try Chrome or Edge.",
+        title: "Microphone Not Available",
+        description: "Your browser does not support microphone access. Please use Chrome or Firefox.",
         variant: "destructive"
       });
       return;
     }
 
-    if (isRecording) {
-      // Stop recording
-      if (recognitionRef.current) {
-        recognitionRef.current.stop();
-        recognitionRef.current = null;
-      }
-      setIsRecording(false);
+    let stream: MediaStream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch (err: any) {
+      const msg = err.name === 'NotAllowedError'
+        ? 'Microphone access denied. Please allow microphone access and try again.'
+        : 'No microphone found. Please connect a microphone and try again.';
+      toast({ title: "Microphone Error", description: msg, variant: "destructive" });
       return;
     }
 
-    // Start recording
-    const recognition = new SpeechRecognition();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = 'en-US';
+    const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+      ? 'audio/webm;codecs=opus'
+      : MediaRecorder.isTypeSupported('audio/webm')
+      ? 'audio/webm'
+      : 'audio/ogg';
 
-    recognition.onstart = () => {
-      setIsRecording(true);
-      toast({
-        title: "Listening...",
-        description: "Speak now. Click the mic button again to stop.",
-      });
+    const recorder = new MediaRecorder(stream, { mimeType });
+    audioChunksRef.current = [];
+
+    recorder.ondataavailable = (e) => {
+      if (e.data.size > 0) audioChunksRef.current.push(e.data);
     };
 
-    recognition.onresult = (event: any) => {
-      let transcript = '';
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        transcript += event.results[i][0].transcript;
-      }
-      // Append transcript to input
-      setInput(prev => prev + (prev ? ' ' : '') + transcript);
-    };
-
-    recognition.onerror = (event: any) => {
-      console.error('Speech recognition error:', event.error);
+    recorder.onstop = async () => {
+      stream.getTracks().forEach(t => t.stop());
       setIsRecording(false);
-      recognitionRef.current = null;
-      if (event.error !== 'aborted') {
-        const errorMessages: Record<string, string> = {
-          'not-allowed': 'Microphone access denied. Please allow microphone access in your browser settings and try again.',
-          'no-speech': 'No speech detected. Please speak clearly and try again.',
-          'audio-capture': 'No microphone found. Please connect a microphone and try again.',
-          'network': 'Network error. Please check your connection and try again.',
-          'service-not-allowed': 'Speech service not available. Please try again later.',
-        };
+      mediaRecorderRef.current = null;
+
+      const chunks = audioChunksRef.current;
+      if (chunks.length === 0) return;
+
+      const audioBlob = new Blob(chunks, { type: mimeType });
+      if (audioBlob.size < 1000) {
+        toast({ title: "No speech detected", description: "Please speak louder and try again.", variant: "destructive" });
+        return;
+      }
+
+      toast({ title: "Transcribing...", description: "Converting your voice to text with AI." });
+
+      try {
+        const formData = new FormData();
+        formData.append('audio', audioBlob, `recording.${mimeType.includes('ogg') ? 'ogg' : 'webm'}`);
+        formData.append('prompt', 'Code, programming, software, build, create, function, component, API');
+
+        const { transcript } = await apiRequest<{ transcript: string; language?: string }>(
+          'POST',
+          '/api/voice/transcribe',
+          formData
+        );
+
+        if (!transcript || transcript.trim().length === 0) {
+          toast({ title: "No speech detected", description: "Please try again and speak clearly.", variant: "destructive" });
+          return;
+        }
+
+        if (vibeModeEnabled && !isWorking) {
+          setInput(transcript);
+          setTimeout(() => {
+            const submitBtn = document.querySelector('[data-testid="button-send"]') as HTMLButtonElement;
+            if (submitBtn) submitBtn.click();
+          }, 120);
+          toast({ title: "Vibe Mode: Sending!", description: `"${transcript.slice(0, 60)}${transcript.length > 60 ? '…' : ''}"` });
+        } else {
+          setInput(prev => prev ? `${prev} ${transcript}` : transcript);
+          toast({ title: "Voice captured!", description: `"${transcript.slice(0, 60)}${transcript.length > 60 ? '…' : ''}"` });
+        }
+      } catch (err: any) {
         toast({
-          title: "Voice Input Error",
-          description: errorMessages[event.error] || `Error: ${event.error}. Please try again.`,
+          title: "Transcription Failed",
+          description: err.message || "Could not transcribe audio. Please try again.",
           variant: "destructive"
         });
       }
     };
 
-    recognition.onend = () => {
+    recorder.onerror = () => {
+      stream.getTracks().forEach(t => t.stop());
       setIsRecording(false);
-      recognitionRef.current = null;
+      mediaRecorderRef.current = null;
+      toast({ title: "Recording Error", description: "Recording failed. Please try again.", variant: "destructive" });
     };
 
-    recognitionRef.current = recognition;
-    recognition.start();
-  }, [isRecording, toast]);
+    mediaRecorderRef.current = recorder;
+    recorder.start(250);
+    setIsRecording(true);
+    toast({ title: "Listening...", description: "Speak your coding request. Click mic again to stop." });
+  }, [isRecording, vibeModeEnabled, isWorking, toast]);
 
-  // Cleanup speech recognition on unmount
+  // Cleanup media recorder on unmount
   useEffect(() => {
     return () => {
-      if (recognitionRef.current) {
-        recognitionRef.current.stop();
-        recognitionRef.current = null;
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        mediaRecorderRef.current.stop();
+        mediaRecorderRef.current = null;
       }
     };
   }, []);
@@ -2673,7 +2704,13 @@ export function ReplitAgentPanelV3({
       </div>
 
       {/* Input area */}
-      <div className="p-4 border-t border-border">
+      <div className={cn("p-4 border-t transition-colors duration-300", vibeModeEnabled ? "border-yellow-500/40 bg-yellow-500/3" : "border-border")}>
+        {vibeModeEnabled && (
+          <div className="flex items-center gap-1.5 mb-2 text-[11px] text-yellow-500 font-medium">
+            <Zap className="h-3 w-3 animate-pulse" />
+            <span>Vibe Mode ON — voice auto-sends to AI</span>
+          </div>
+        )}
         <div className="space-y-2">
           {/* Mode selector and Element Editor row - hidden on mobile when external input bar is used */}
           {!hideInput && (
@@ -2937,6 +2974,31 @@ export function ReplitAgentPanelV3({
                   </TooltipTrigger>
                   <TooltipContent side="top">
                     <p>{isRecording ? "Stop recording" : "Voice input"}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setVibeModeEnabled(v => !v)}
+                      className={cn(
+                        "h-7 w-7 rounded-lg transition-all duration-200",
+                        vibeModeEnabled
+                          ? "text-yellow-500 bg-yellow-500/10 hover:bg-yellow-500/20"
+                          : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                      )}
+                      data-testid="button-vibe-mode"
+                      title={vibeModeEnabled ? "Vibe Mode ON (auto-send)" : "Vibe Mode OFF"}
+                    >
+                      <Zap className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">
+                    <p>{vibeModeEnabled ? "Vibe Mode ON — voice auto-sends" : "Enable Vibe Mode"}</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>

@@ -57,7 +57,7 @@ router.get('/api/feature-flags', tierRateLimiters.api, async (req: Request, res:
       screenshotToolEnabled: true,
       
       // Experimental Features
-      voiceInputEnabled: false,
+      voiceInputEnabled: envBool('FEATURE_VOICE_INPUT', true),
       collaborationEnabled: false,
       aiModelSwitchingEnabled: true,
       

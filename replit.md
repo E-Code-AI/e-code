@@ -1,7 +1,7 @@
 # E-Code Platform
 
 ## Overview
-E-Code is an AI-assisted web-based IDE designed to enhance software development efficiency. It offers features such as automated workspace generation, live previews, real-time progress streaming, multi-provider AI model selection, collaborative tools, enterprise-grade testing, and robust security. The platform supports rapid prototyping, educational use, and enterprise application development, aiming to become a leader in the software development tools market.
+E-Code is an AI-assisted web-based IDE designed to enhance software development efficiency. It offers features like automated workspace generation, live previews, real-time progress streaming, multi-provider AI model selection, collaborative tools, enterprise-grade testing, and robust security. The platform aims to be a leader in the software development tools market, supporting rapid prototyping, educational use, and enterprise application development.
 
 ## User Preferences
 - **Communication:** Simple, everyday language
@@ -26,6 +26,7 @@ E-Code is an AI-assisted web-based IDE designed to enhance software development 
 - **SPA Routing:** `notFoundHandler` only catches `/api/*` routes — non-API paths pass through to Vite so the React SPA can handle them. This is critical: do NOT register notFoundHandler before Vite init, and do NOT remove the `/api` prefix check in notFoundHandler.
 - **Database Backup:** Use `tsx scripts/backup-database.ts` for backup (creates timestamped SQL file in `backups/`), `tsx scripts/backup-database.ts --restore <file>` for restore. REQUIRES pg_dump for backup and psql for restore (production-safe, no fallback). Cloud storage upload with `--cloud` flag (requires GCS_BACKUP_BUCKET).
 - **Deployment Build Optimization:** `scripts/build-server.mjs` bundles ALL pure-JS production packages into `dist/index.js` (~18MB). Only native addons (bcrypt, node-pty, sharp) remain external. Deployment build command uses `BUILD_DEPLOY=1 npm run build` which additionally prunes `node_modules` to only those 3 native packages (~200 files vs 40,000+) so the security scanner finishes in seconds. Dev builds (without BUILD_DEPLOY=1) skip the pruning to preserve dev tools.
+- **Voice Vibe Coding:** `MediaRecorder` API → `/api/voice/transcribe` (OpenAI Whisper `whisper-1`) → transcript injected into agent input. Uses `apiRequest` (not raw `fetch`) for automatic CSRF token handling. Vibe Mode (Zap button, `data-testid="button-vibe-mode"`) auto-submits on transcription. `voiceInputEnabled: true` by default (env `FEATURE_VOICE_INPUT`). FORBIDDEN: Web Speech API.
 - **Animation Safety:** Never use horizontal x-shift animations (`initial={{ x: -50 }}`) on public marketing pages — if `whileInView` fires late or not at all, content appears shifted 50px to the left creating perceived layout misalignment. Always use vertical y-shift (`initial={{ y: 30 }}`) for `whileInView` animations on public pages.
 - **Environment Configuration:** Zod-validated environment variables via `server/utils/env-config.ts`. Required vars validated at startup, optional vars have defaults. Categories: required, security, monitoring, cache, ai, payments, email, notifications, storage, performance, rateLimit, replit. Import `envConfig` for typed access.
 - **API Versioning:** Current API version is `v1` (implicit). Supports URL-based (`/api/v1/users`) and header-based (`Accept-Version: v1`). Deprecation middleware available via `deprecationWarning(version, sunsetDate)`.
@@ -42,11 +43,11 @@ E-Code is an AI-assisted web-based IDE designed to enhance software development 
 ## System Architecture
 
 ### UI/UX Decisions
-The frontend uses Shadcn/UI with Tailwind CSS and Monaco Editor, adhering to the Replit RUI Design System. It features responsiveness, mobile-first design, light/dark modes, a unified IDE layout, spring animations, loading skeletons, and touch enhancements.
+The frontend utilizes Shadcn/UI with Tailwind CSS and Monaco Editor, adhering to the Replit RUI Design System. It features responsiveness, mobile-first design, light/dark modes, a unified IDE layout, spring animations, loading skeletons, and touch enhancements.
 
 ### Technical Implementations
-The platform employs a two-service architecture:
-- **Main Platform:** Frontend (React 18, TypeScript, Vite, TanStack Query, Wouter) and Backend (Node.js/Express.js, TypeScript, Drizzle ORM for PostgreSQL, Passport.js for authentication). It provides RESTful APIs and WebSockets.
+The platform operates on a two-service architecture:
+- **Main Platform:** Consists of a frontend (React 18, TypeScript, Vite, TanStack Query, Wouter) and a backend (Node.js/Express.js, TypeScript, Drizzle ORM for PostgreSQL, Passport.js for authentication), providing RESTful APIs and WebSockets.
 - **Runner:** An optional, independent service for isolated workspace execution, communicating via signed JWT HTTP calls.
 
 Key AI optimizations include a Task Classifier, Circuit Breaker, Priority Queue, Intelligent Caching, and Observability. Environment variables are secured with AES-256-GCM encryption. Server-Sent Events (SSE) enable real-time code generation. Anonymous bootstrap authentication supports ephemeral guest users. AI Agent enhancements include structured XML-based system prompts, a repository overview service, a context window manager, a unified AI provider system, and AI-powered inline code actions. A Checkpoints & Rollback System ensures atomic transactions, complemented by a Background Auto-Testing System using Playwright. Max Autonomy Mode provides extended autonomous sessions with AI task decomposition, auto-execution, ETA estimation, and cost tracking. Process-based code execution leverages native Nix-managed language runtimes. Logging is managed by a centralized Winston-based system with correlation IDs. An Agent Step Cache system provides database-backed intermediate step caching. Persistent chat history uses a dual-layer architecture: Zustand store with localStorage for local loading, augmented by PostgreSQL for server backup. Fast Bootstrap Optimization provides fast model recommendations and parallel execution.

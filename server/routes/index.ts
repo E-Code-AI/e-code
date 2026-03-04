@@ -29,6 +29,7 @@ import adminRouter from "./admin";
 import aiRouter from "./ai.router";
 import aiStreamingRouter from "../api/ai-streaming";
 import voiceVideoRouter from "./voice-video.router";
+import voiceTranscribeRouter from "./voice-transcribe.router";
 import dataProvisioningRouter from "./data-provisioning.router";
 import terminalRouter from "./terminal.router";
 import terminalMetricsRouter from "./terminal-metrics.router";
@@ -323,6 +324,9 @@ export class MainRouter {
 
     // Voice/Video WebRTC routes
     app.use('/api', tierRateLimiters.api, voiceVideoRouter);
+
+    // Voice transcription (OpenAI Whisper → vibe coding)
+    app.use(tierRateLimiters.api, voiceTranscribeRouter);
 
     // Data Provisioning routes
     app.use('/api', tierRateLimiters.api, dataProvisioningRouter);
