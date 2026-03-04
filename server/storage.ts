@@ -1225,7 +1225,9 @@ export class DatabaseStorage implements IStorage {
 
   // Project operations
   async getProject(id: string): Promise<Project | undefined> {
-    const [project] = await this.db.select().from(projects).where(eq(projects.id, parseInt(id)));
+    const numId = parseInt(id, 10);
+    if (isNaN(numId)) return undefined;
+    const [project] = await this.db.select().from(projects).where(eq(projects.id, numId));
     return project;
   }
 

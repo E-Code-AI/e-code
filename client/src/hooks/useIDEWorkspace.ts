@@ -8,7 +8,7 @@
  * @returns All IDE state, queries, and action handlers
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
@@ -375,6 +375,31 @@ export function useIDEWorkspace(projectId: string) {
       }
     }
   }, [gitStatus]);
+
+  // Auto-open first file when project loads and no file is currently open
+  const autoOpenedRef = useRef(false);
+  useEffect(() => {
+    if (autoOpenedRef.current) return;
+    if (isLoadingFiles || files.length === 0) return;
+    const hasOpenFileTab = tabs.some(t => t.id.startsWith('file:'));
+    if (hasOpenFileTab || selectedFileId) return;
+
+    const PREFERRED_NAMES = ['main.py', 'index.js', 'main.js', 'index.ts', 'main.ts', 'index.html', 'main.rb', 'main.go', 'Main.java', 'main.c', 'main.cpp', 'main.rs', 'main.lua', 'main.php'];
+    const preferred = files.find(f => PREFERRED_NAMES.includes(f.name) && !f.isDirectory);
+    const firstFile = preferred || files.find(f => !f.isDirectory);
+    if (!firstFile) return;
+
+    autoOpenedRef.current = true;
+    setSelectedFileId(firstFile.id);
+    const tabId = `file:${firstFile.id}`;
+    setTabs(prev => {
+      if (!prev.find(t => t.id === tabId)) {
+        return [...prev, { id: tabId, label: firstFile.name, closable: true }];
+      }
+      return prev;
+    });
+    setActiveTab(tabId);
+  }, [files, isLoadingFiles, tabs, selectedFileId]);
 
   // Auto-start runtime
   useEffect(() => {

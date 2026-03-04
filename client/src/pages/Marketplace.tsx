@@ -110,10 +110,11 @@ export default function Marketplace() {
   });
 
   const filteredExtensions = extensions.filter((ext: any) => {
-    const matchesSearch = ext.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         ext.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         ext.tags.some((tag: string) => tag.toLowerCase().includes(searchQuery.toLowerCase()));
-    const matchesCategory = selectedCategory === 'all' || ext.category.toLowerCase().includes(selectedCategory);
+    const q = searchQuery.toLowerCase();
+    const matchesSearch = (ext.name || '').toLowerCase().includes(q) ||
+                         (ext.description || '').toLowerCase().includes(q) ||
+                         (Array.isArray(ext.tags) ? ext.tags : []).some((tag: string) => (tag || '').toLowerCase().includes(q));
+    const matchesCategory = selectedCategory === 'all' || (ext.category || '').toLowerCase().includes(selectedCategory);
     return matchesSearch && matchesCategory;
   });
 

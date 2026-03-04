@@ -152,8 +152,9 @@ func main() {
     displayName: 'PHP',
     fileExtensions: ['.php', '.phtml', '.php7'],
     defaultFile: 'index.php',
-    defaultContent: `<?php echo "Hello, world!"; ?>`,
-    runCommand: 'php -S 0.0.0.0:8080',
+    defaultContent: `<?php
+echo "Hello, world!\\n";`,
+    runCommand: 'php index.php',
     installCommand: 'composer install',
     packageManager: 'composer',
     packageFile: 'composer.json',
@@ -196,19 +197,11 @@ int main() {
     displayName: 'C#',
     fileExtensions: ['.cs'],
     defaultFile: 'Program.cs',
-    defaultContent: 
-`using System;
-
-class Program {
-  static void Main(string[] args) {
-    Console.WriteLine("Hello, world!");
-  }
-}`,
-    compilerCommand: 'dotnet build',
-    runCommand: 'dotnet run',
+    defaultContent: `Console.WriteLine("Hello, world!");`,
+    runCommand: 'dotnet run --project app.csproj',
     installCommand: 'dotnet restore',
     packageManager: 'dotnet',
-    packageFile: '*.csproj',
+    packageFile: 'app.csproj',
     icon: 'csharp'
   },
   swift: {
@@ -395,7 +388,7 @@ main = putStrLn "Hello, world!"`,
     fileExtensions: ['.clj', '.cljs', '.cljc', '.edn'],
     defaultFile: 'main.clj',
     defaultContent: `(println "Hello, world!")`,
-    runCommand: 'clojure main.clj',
+    runCommand: 'clojure -M main.clj',
     packageManager: 'leiningen',
     packageFile: 'project.clj',
     icon: 'clojure'
@@ -428,8 +421,7 @@ main = putStrLn "Hello, world!"`,
     fileExtensions: ['.ml', '.mli'],
     defaultFile: 'main.ml',
     defaultContent: `let () = print_endline "Hello, world!"`,
-    compilerCommand: 'ocamlopt -o main main.ml',
-    runCommand: './main',
+    runCommand: 'ocaml main.ml',
     packageManager: 'opam',
     icon: 'ocaml'
   },
@@ -510,6 +502,31 @@ export function getDefaultFiles(language: Language): { name: string, content: st
       files.push({
         name: 'requirements.txt',
         content: '# Add your dependencies here\n',
+        isFolder: false
+      });
+    } else if (language === 'csharp') {
+      files.push({
+        name: 'app.csproj',
+        content: `<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net6.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+</Project>`,
+        isFolder: false
+      });
+    } else if (language === 'rust') {
+      files.push({
+        name: 'Cargo.toml',
+        content: `[package]
+name = "my-project"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+`,
         isFolder: false
       });
     }

@@ -85,8 +85,8 @@ export default function AdminUsage() {
   const filteredUsers = usersUsage?.filter(user => 
     (selectedPlan === "all" || user.plan === selectedPlan) &&
     (searchTerm === "" || 
-     user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-     user.email.toLowerCase().includes(searchTerm.toLowerCase())
+     (user.username || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+     (user.email || "").toLowerCase().includes(searchTerm.toLowerCase())
     )
   ) || [];
 

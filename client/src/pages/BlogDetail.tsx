@@ -80,7 +80,7 @@ export default function BlogDetail() {
           {/* Title and Meta */}
           <div className="mb-8">
             <Badge variant="secondary" className="mb-4">
-              {post.category.charAt(0).toUpperCase() + post.category.slice(1)}
+              {(post.category || "Post").charAt(0).toUpperCase() + (post.category || "Post").slice(1)}
             </Badge>
             
             <h1 className="text-4xl font-bold mb-4">{post.title}</h1>
@@ -140,7 +140,7 @@ export default function BlogDetail() {
           <Card className="p-6 mb-8">
             <div className="flex items-start gap-4">
               <div className="h-16 w-16 rounded-full bg-gradient-to-br from-ecode-orange to-orange-600 flex items-center justify-center text-white font-bold text-xl">
-                {post.author.charAt(0)}
+                {(post.author || "A").charAt(0)}
               </div>
               <div className="flex-1">
                 <h3 className="font-semibold text-[15px]">{post.author}</h3>

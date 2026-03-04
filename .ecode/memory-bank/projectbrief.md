@@ -1,7 +1,7 @@
 # Project Brief
 
 ## Overview
-audit-test-js
+Final E2E Test
 
 ## Core Requirements
 [To be extracted from requirements]

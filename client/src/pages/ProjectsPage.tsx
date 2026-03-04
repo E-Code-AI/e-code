@@ -240,11 +240,16 @@ const ProjectsPage = () => {
     mutationFn: async (values: ProjectFormValues) => {
       return await apiRequest('POST', '/api/projects', values);
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
       setNewProjectOpen(false);
       form.reset();
-      toast({ title: "Success", description: "Project created successfully", variant: "success" });
+      const projectId = data?.id || data?.project?.id;
+      if (projectId) {
+        setLocation(`/ide/${projectId}`);
+      } else {
+        toast({ title: "Success", description: "Project created successfully", variant: "success" });
+      }
     },
     onError: (error: any) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });

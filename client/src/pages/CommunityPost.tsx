@@ -196,7 +196,7 @@ export default function CommunityPost() {
                 <Avatar className="h-12 w-12">
                   <AvatarImage src={post.author.avatarUrl} />
                   <AvatarFallback>
-                    {post.author.displayName.slice(0, 2).toUpperCase()}
+                    {(post.author?.displayName || "??").slice(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <div>

@@ -490,7 +490,7 @@ export default function Community() {
                               <Avatar className="h-8 w-8 sm:h-10 sm:w-10">
                                 <AvatarImage src={post.author.avatarUrl} />
                                 <AvatarFallback className="text-[11px] sm:text-[13px]">
-                                  {post.author.displayName.slice(0, 2).toUpperCase()}
+                                  {(post.author?.displayName || "??").slice(0, 2).toUpperCase()}
                                 </AvatarFallback>
                               </Avatar>
                               <div className="min-w-0 flex-1">
@@ -688,7 +688,7 @@ export default function Community() {
                     <Avatar className="h-6 w-6 sm:h-8 sm:w-8 shrink-0">
                       <AvatarImage src={user.avatarUrl} />
                       <AvatarFallback className="text-[11px] sm:text-[13px]">
-                        {user.displayName.slice(0, 2).toUpperCase()}
+                        {(user.displayName || "??").slice(0, 2).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">

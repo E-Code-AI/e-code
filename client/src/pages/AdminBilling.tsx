@@ -470,10 +470,10 @@ export default function AdminBilling() {
                       {invoices.map((inv) => (
                         <TableRow key={inv.id} className="border-zinc-700">
                           <TableCell className="text-white font-mono text-[13px]">
-                            {inv.number || inv.id.slice(0, 12)}
+                            {inv.number || (inv.id || '').slice(0, 12)}
                           </TableCell>
                           <TableCell className="text-white font-medium">
-                            {inv.currency} ${inv.amount.toFixed(2)}
+                            {inv.currency || 'USD'} ${(typeof inv.amount === 'number' ? inv.amount : 0).toFixed(2)}
                           </TableCell>
                           <TableCell>{getInvoiceStatusBadge(inv.status)}</TableCell>
                           <TableCell className="text-zinc-400">
@@ -589,11 +589,11 @@ export default function AdminBilling() {
                           <div className="space-y-1">
                             <p className="text-[13px] font-medium text-white">Features:</p>
                             <ul className="text-[13px] text-zinc-400 space-y-1">
-                              {plan.features.slice(0, 3).map((feature, i) => (
+                              {(plan.features || []).slice(0, 3).map((feature, i) => (
                                 <li key={i} className="truncate">• {feature}</li>
                               ))}
-                              {plan.features.length > 3 && (
-                                <li className="text-[11px]">+{plan.features.length - 3} more</li>
+                              {(plan.features || []).length > 3 && (
+                                <li className="text-[11px]">+{(plan.features || []).length - 3} more</li>
                               )}
                             </ul>
                           </div>

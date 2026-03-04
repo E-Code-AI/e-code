@@ -116,6 +116,7 @@ interface LanguageAdapter {
   entryFile: string;
   compileCmd?: string;
   compileArgs?: string[];
+  staticFiles?: Record<string, string>; // Extra files to write before execution (e.g., .csproj)
 }
 
 // Allowed languages for validation (includes all aliases)
@@ -256,6 +257,13 @@ export class CodeExecutor {
 
       // Get language adapter (cmd, args, entryFile)
       const adapter = this.getLanguageAdapter(language);
+
+      // Write static files required by the language (e.g., .csproj for C#)
+      if (adapter.staticFiles) {
+        for (const [fileName, content] of Object.entries(adapter.staticFiles)) {
+          writeFileSync(path.join(execDir, fileName), content);
+        }
+      }
       
       // Write main file
       writeFileSync(path.join(execDir, adapter.entryFile), code);
@@ -369,7 +377,21 @@ export class CodeExecutor {
         };
       
       case 'csharp':
-        return { cmd: 'dotnet', args: ['script', 'main.csx'], entryFile: 'main.csx' };
+        return {
+          cmd: 'dotnet',
+          args: ['run', '--project', 'app.csproj'],
+          entryFile: 'Program.cs',
+          staticFiles: {
+            'app.csproj': `<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net6.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+</Project>`
+          }
+        };
       
       case 'fsharp':
         return { cmd: 'dotnet', args: ['fsi', 'main.fsx'], entryFile: 'main.fsx' };

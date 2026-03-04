@@ -286,7 +286,10 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction) 
   }
 
   // Skip for excluded paths
-  if (EXCLUDED_PATHS.some(path => req.path.startsWith(path))) {
+  // Use req.originalUrl (full path) because this middleware is mounted at /api
+  // so req.path would be stripped of the /api prefix
+  const fullPath = req.originalUrl.split('?')[0];
+  if (EXCLUDED_PATHS.some(excluded => fullPath === excluded || fullPath.startsWith(excluded + '/'))) {
     return next();
   }
 
