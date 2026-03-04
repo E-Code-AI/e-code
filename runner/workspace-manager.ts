@@ -45,6 +45,17 @@ function allocatePort(): number {
   return 30000 + Math.floor(Math.random() * 5000);
 }
 
+/**
+ * Registered hooks called on workspace stop.
+ * Avoids circular imports: terminal-service registers its own cleanup here.
+ */
+type StopHook = (workspaceId: string) => void;
+const stopHooks: StopHook[] = [];
+
+export function onWorkspaceStop(hook: StopHook): void {
+  stopHooks.push(hook);
+}
+
 export function createWorkspace(projectId: string, userId = 'unknown'): Workspace {
   const id = randomUUID();
   const dir = path.join(WORKSPACES_DIR, id);
@@ -79,11 +90,19 @@ export function stopWorkspace(id: string, reason = 'manual'): boolean {
   const ws = workspaces.get(id);
   if (!ws) return false;
 
+  // Kill preview process
   if (ws.previewProcess && !ws.previewProcess.killed) {
     try {
       process.kill(-ws.previewProcess.pid!, 'SIGTERM');
     } catch {
       try { ws.previewProcess.kill('SIGTERM'); } catch {}
+    }
+  }
+
+  // Run all registered stop hooks (e.g. terminal PTY cleanup)
+  for (const hook of stopHooks) {
+    try { hook(id); } catch (e) {
+      logger.warn(`Stop hook error for workspace ${id}: ${e}`);
     }
   }
 

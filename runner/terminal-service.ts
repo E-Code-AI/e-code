@@ -26,6 +26,36 @@ async function getPty() {
   return ptyModule;
 }
 
+/**
+ * Registry of active PTY sessions keyed by workspaceId.
+ * Used by killWorkspaceTerminals() to clean up on workspace stop.
+ */
+const activePtys = new Map<string, Set<import('node-pty').IPty>>();
+
+function trackPty(workspaceId: string, pty: import('node-pty').IPty): void {
+  if (!activePtys.has(workspaceId)) activePtys.set(workspaceId, new Set());
+  activePtys.get(workspaceId)!.add(pty);
+}
+
+function untrackPty(workspaceId: string, pty: import('node-pty').IPty): void {
+  activePtys.get(workspaceId)?.delete(pty);
+  if (activePtys.get(workspaceId)?.size === 0) activePtys.delete(workspaceId);
+}
+
+/**
+ * Kill all active terminal (PTY) sessions for a given workspace.
+ * Called by stopWorkspace() so tabs are always cleaned up on stop.
+ */
+export function killWorkspaceTerminals(workspaceId: string): void {
+  const ptys = activePtys.get(workspaceId);
+  if (!ptys || ptys.size === 0) return;
+  logger.info(`Killing ${ptys.size} terminal session(s) for workspace ${workspaceId}`);
+  for (const pty of ptys) {
+    try { pty.kill(); } catch {}
+  }
+  activePtys.delete(workspaceId);
+}
+
 export function registerTerminalHandler(
   server: import('http').Server,
   wss: WebSocketServer
@@ -91,12 +121,15 @@ async function handleTerminalSession(
     return;
   }
 
+  trackPty(workspaceId, pty);
+
   pty.onData((data) => {
     if (ws.readyState === WebSocket.OPEN) ws.send(data);
     touchWorkspace(workspaceId);
   });
 
   pty.onExit(({ exitCode }) => {
+    untrackPty(workspaceId, pty);
     if (ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({ type: 'exit', code: exitCode }));
       ws.close();
@@ -124,11 +157,13 @@ async function handleTerminalSession(
 
   ws.on('close', () => {
     logger.info(`Terminal session closed for workspace ${workspaceId}`);
+    untrackPty(workspaceId, pty);
     try { pty.kill(); } catch {}
   });
 
   ws.on('error', (err) => {
     logger.warn(`Terminal WS error for workspace ${workspaceId}: ${err.message}`);
+    untrackPty(workspaceId, pty);
     try { pty.kill(); } catch {}
   });
 }

@@ -23,8 +23,9 @@ import {
   getWorkspace,
   listWorkspaces,
   stopWorkspace,
+  onWorkspaceStop,
 } from './workspace-manager';
-import { registerTerminalHandler } from './terminal-service';
+import { registerTerminalHandler, killWorkspaceTerminals } from './terminal-service';
 import { createFileRouter } from './file-service';
 import { createPreviewRouter } from './preview-proxy';
 import { createLogger } from './logger';
@@ -48,6 +49,9 @@ if (!process.env.RUNNER_JWT_SECRET) {
   console.error('[Runner] FATAL: RUNNER_JWT_SECRET is not set. Exiting.');
   process.exit(1);
 }
+
+// Register terminal PTY cleanup so all tabs are killed when a workspace stops
+onWorkspaceStop(killWorkspaceTerminals);
 
 const app = express();
 const httpServer = createServer(app);
