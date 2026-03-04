@@ -1,0 +1,78 @@
+version: "3.8"
+
+# ─────────────────────────────────────────────────────────────────
+# E-Code Runner — Production Docker Compose
+# ─────────────────────────────────────────────────────────────────
+# Usage:
+#   1. Copier ce fichier + le dossier runner/ sur le VPS
+#   2. Générer un secret : openssl rand -hex 32
+#   3. Remplacer CHANGE_ME_LONG_RANDOM par le secret généré
+#   4. Créer le réseau sandbox avant de lancer :
+#        docker network create --internal sandbox_net
+#   5. Builder l'image workspace :
+#        docker build -f workspace.Dockerfile -t vibe-workspace:latest .
+#   6. Lancer :
+#        docker compose -f docker-compose.prod.yml up -d
+#
+# Pour la plateforme principale (Replit Secrets) :
+#   RUNNER_BASE_URL = https://runner.e-code.ai
+#   RUNNER_JWT_SECRET = (même valeur que RUNNER_JWT_SECRET ci-dessous)
+# ─────────────────────────────────────────────────────────────────
+
+services:
+  runner:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      PORT: "8081"
+      RUNNER_JWT_SECRET: "CHANGE_ME_LONG_RANDOM"
+      WORKSPACE_IMAGE: "vibe-workspace:latest"
+      SANDBOX_NETWORK: "sandbox_net"
+      DEFAULT_PREVIEW_PORT: "3000"
+      CPU_NANO: "1000000000"
+      MEMORY_MB: "1024"
+      PIDS_LIMIT: "256"
+      WORKSPACE_IDLE_TTL_SEC: "3600"
+      RUNNER_DEBUG: "false"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - runner-workspaces:/tmp/runner-workspaces
+    ports:
+      - "8081:8081"
+    networks:
+      - sandbox_net
+      - public_net
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8081/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    networks:
+      - public_net
+    depends_on:
+      - runner
+
+volumes:
+  runner-workspaces:
+  caddy-data:
+  caddy-config:
+
+networks:
+  sandbox_net:
+    external: true
+  public_net:
+    driver: bridge
