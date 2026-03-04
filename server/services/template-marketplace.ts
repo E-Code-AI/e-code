@@ -304,28 +304,22 @@ export class TemplateMarketplaceService {
    */
   async getTrendingTemplates(limit: number = 10): Promise<TemplateWithDetails[]> {
     try {
-      // Calculate trending score based on recent activity
-      const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-      
       const trending = await db.select({
         template: templates,
         author: users,
         score: sql<number>`
-          (${templates.stars} * 0.3 + 
-           ${templates.forks} * 0.2 + 
-           ${templates.downloads} * 0.1 + 
-           ${templates.uses} * 0.05) * 
+          (templates.stars * 0.3 + templates.forks * 0.2 + COALESCE(templates.downloads, 0) * 0.1 + templates.uses * 0.05) * 
           CASE 
-            WHEN ${templates.createdAt} > ${oneWeekAgo} THEN 2.0
-            WHEN ${templates.updatedAt} > ${oneWeekAgo} THEN 1.5
+            WHEN templates.created_at > NOW() - INTERVAL '7 days' THEN 2.0
+            WHEN templates.updated_at > NOW() - INTERVAL '7 days' THEN 1.5
             ELSE 1.0
           END
-        `.as('score')
+        `.as('trending_score')
       })
       .from(templates)
       .leftJoin(users, eq(templates.authorId, users.id))
       .where(eq(templates.published, true))
-      .orderBy(desc(sql`score`))
+      .orderBy(desc(sql`trending_score`))
       .limit(limit);
 
       return trending.map(({ template, author }) => 

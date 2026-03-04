@@ -38,6 +38,27 @@ export class UsersRouter {
       }
     });
 
+    // Search users (MUST be before /:id to avoid "search" being captured as user ID)
+    this.router.get("/api/users/search", async (req: Request, res: Response) => {
+      try {
+        const query = (req.query.q || '').toString();
+        if (!query || query.length < 2) {
+          return res.status(400).json({ message: "Search query must be at least 2 characters", code: "INVALID_QUERY" });
+        }
+        const foundUsers = await this.storage.searchUsers(query);
+        const publicUsers = foundUsers.map(user => ({
+          id: user.id,
+          username: user.username,
+          displayName: user.displayName,
+          avatarUrl: user.avatarUrl
+        }));
+        res.json(publicUsers);
+      } catch (error) {
+        console.error('Error searching users:', error);
+        res.status(500).json({ message: "Failed to search users", code: "SEARCH_ERROR" });
+      }
+    });
+
     // Get user profile by ID
     this.router.get("/api/users/:id", async (req: Request, res: Response) => {
       try {

@@ -313,6 +313,7 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
+  searchUsers(query: string): Promise<User[]>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: string, user: Partial<InsertUser>): Promise<User | undefined>;
   deleteUser(id: string): Promise<boolean>;
@@ -829,6 +830,19 @@ export class DatabaseStorage implements IStorage {
   async getUserByUsername(username: string): Promise<User | undefined> {
     const [user] = await this.db.select().from(users).where(eq(users.username, username));
     return user;
+  }
+
+  async searchUsers(query: string): Promise<User[]> {
+    const searchTerm = `%${query.toLowerCase()}%`;
+    return await this.db.select().from(users)
+      .where(
+        or(
+          ilike(users.username, searchTerm),
+          ilike(users.email, searchTerm),
+          ilike(users.displayName, searchTerm),
+        )
+      )
+      .limit(20);
   }
 
   async createUser(userData: InsertUser): Promise<User> {
@@ -4743,13 +4757,14 @@ Constraints: {{constraints}}`,
   }
 
   async getLspDiagnostics(projectId: string, filePath?: string): Promise<LspDiagnostic[]> {
-    let query = this.db.select().from(lspDiagnostics).where(eq(lspDiagnostics.projectId, projectId));
-    
+    const pid = parseInt(projectId, 10);
+    const conditions = [eq(lspDiagnostics.projectId, pid)];
     if (filePath) {
-      query = query.where(eq(lspDiagnostics.filePath, filePath));
+      conditions.push(eq(lspDiagnostics.filePath, filePath));
     }
-
-    return await query.orderBy(desc(lspDiagnostics.createdAt));
+    return await this.db.select().from(lspDiagnostics)
+      .where(conditions.length === 1 ? conditions[0] : and(...conditions))
+      .orderBy(desc(lspDiagnostics.createdAt));
   }
 
   async updateLspDiagnostic(id: string, updates: Partial<LspDiagnostic>): Promise<LspDiagnostic> {
@@ -4766,13 +4781,13 @@ Constraints: {{constraints}}`,
   }
 
   async clearLspDiagnostics(projectId: string, filePath?: string): Promise<void> {
-    let query = this.db.delete(lspDiagnostics).where(eq(lspDiagnostics.projectId, projectId));
-    
+    const pid = parseInt(projectId, 10);
+    const conditions = [eq(lspDiagnostics.projectId, pid)];
     if (filePath) {
-      query = query.where(eq(lspDiagnostics.filePath, filePath));
+      conditions.push(eq(lspDiagnostics.filePath, filePath));
     }
-
-    await query;
+    await this.db.delete(lspDiagnostics)
+      .where(conditions.length === 1 ? conditions[0] : and(...conditions));
   }
 
   // Build Logs Methods - For Output Panel (fully implemented with database)
@@ -4782,23 +4797,23 @@ Constraints: {{constraints}}`,
   }
 
   async getBuildLogs(projectId: string, buildId?: string, limit: number = 1000): Promise<BuildLog[]> {
-    let query = this.db.select().from(buildLogs).where(eq(buildLogs.projectId, projectId));
-    
+    const conditions = [eq(buildLogs.projectId, projectId)];
     if (buildId) {
-      query = query.where(eq(buildLogs.buildId, buildId));
+      conditions.push(eq(buildLogs.buildId, buildId));
     }
-
-    return await query.orderBy(desc(buildLogs.timestamp)).limit(limit);
+    return await this.db.select().from(buildLogs)
+      .where(conditions.length === 1 ? conditions[0] : and(...conditions))
+      .orderBy(desc(buildLogs.timestamp))
+      .limit(limit);
   }
 
   async clearBuildLogs(projectId: string, buildId?: string): Promise<void> {
-    let query = this.db.delete(buildLogs).where(eq(buildLogs.projectId, projectId));
-    
+    const conditions = [eq(buildLogs.projectId, projectId)];
     if (buildId) {
-      query = query.where(eq(buildLogs.buildId, buildId));
+      conditions.push(eq(buildLogs.buildId, buildId));
     }
-
-    await query;
+    await this.db.delete(buildLogs)
+      .where(conditions.length === 1 ? conditions[0] : and(...conditions));
   }
 
   // Terminal Logs Methods - Persistent Console Logs

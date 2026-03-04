@@ -114,7 +114,7 @@ export default function Marketplace() {
       <CardContent className="p-6">
         <div className="flex items-start gap-4">
           <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-semibold">
-            {extension.name.charAt(0)}
+            {(extension.name || '?').charAt(0)}
           </div>
           
           <div className="flex-1 min-w-0">
@@ -159,11 +159,11 @@ export default function Marketplace() {
                 <div className="flex items-center gap-1" data-testid={`text-extension-rating-${extension.id}`}>
                   <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                   <span>{extension.rating}</span>
-                  <span>({extension.reviews.toLocaleString()})</span>
+                  <span>({(extension.reviews ?? 0).toLocaleString()})</span>
                 </div>
                 <div className="flex items-center gap-1" data-testid={`text-extension-downloads-${extension.id}`}>
                   <Download className="h-4 w-4" />
-                  <span>{extension.downloads.toLocaleString()}</span>
+                  <span>{(extension.downloads ?? 0).toLocaleString()}</span>
                 </div>
               </div>
               
@@ -185,7 +185,7 @@ export default function Marketplace() {
       <CardContent className="p-6">
         <div className="flex items-start gap-4">
           <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-blue-600 rounded-lg flex items-center justify-center text-white font-semibold text-[15px]">
-            {template.framework.charAt(0)}
+            {(template.framework || template.language || template.name || '?').charAt(0)}
           </div>
           
           <div className="flex-1">
@@ -225,7 +225,7 @@ export default function Marketplace() {
                 </div>
                 <div className="flex items-center gap-1" data-testid={`text-template-downloads-${template.id}`}>
                   <Download className="h-4 w-4" />
-                  <span>{template.downloads.toLocaleString()}</span>
+                  <span>{(template.downloads ?? 0).toLocaleString()}</span>
                 </div>
                 <Badge variant="outline" data-testid={`badge-template-category-${template.id}`}>{template.category}</Badge>
               </div>
@@ -354,7 +354,7 @@ export default function Marketplace() {
                     </div>
                     <h3 className="font-semibold mb-1" data-testid={`text-theme-name-${index}`}>{theme.name}</h3>
                     <div className="flex items-center justify-between text-[13px] text-muted-foreground">
-                      <span data-testid={`text-theme-downloads-${index}`}>{theme.downloads.toLocaleString()} downloads</span>
+                      <span data-testid={`text-theme-downloads-${index}`}>{(theme.downloads ?? 0).toLocaleString()} downloads</span>
                       <Button size="sm" data-testid={`button-apply-theme-${index}`}>Apply</Button>
                     </div>
                   </CardContent>
@@ -394,7 +394,7 @@ export default function Marketplace() {
                         
                         <div className="flex items-center gap-6 text-[13px] text-muted-foreground">
                           <span data-testid={`text-publisher-extensions-${publisher.id}`}>{publisher.extensions} extensions</span>
-                          <span data-testid={`text-publisher-downloads-${publisher.id}`}>{publisher.downloads.toLocaleString()} total downloads</span>
+                          <span data-testid={`text-publisher-downloads-${publisher.id}`}>{(publisher.downloads ?? 0).toLocaleString()} total downloads</span>
                         </div>
                       </div>
                       

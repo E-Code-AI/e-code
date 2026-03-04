@@ -135,7 +135,7 @@ export function CommunityHub() {
             <div className="grid grid-cols-2 gap-3">
               <div className="text-center p-3 bg-muted rounded-lg">
                 <p className="text-2xl font-bold text-orange-500">
-                  {communityStats.totalTemplates.toLocaleString()}
+                  {(communityStats.totalTemplates ?? 0).toLocaleString()}
                 </p>
                 <p className="text-[11px] text-muted-foreground">Templates</p>
               </div>

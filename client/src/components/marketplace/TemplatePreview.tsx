@@ -428,7 +428,7 @@ export function TemplatePreview({
                                 </div>
                               </div>
                               <span className="text-[11px] text-muted-foreground">
-                                {new Date(review.createdAt).toLocaleDateString()}
+                                {review.createdAt ? new Date(review.createdAt).toLocaleDateString() : ''}
                               </span>
                             </div>
                             {review.review && (

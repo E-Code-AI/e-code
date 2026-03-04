@@ -63,6 +63,7 @@ import logsViewerRouter from "./logs-viewer.router";
 import envVarsRouter from "./env-vars.router";
 import projectDataRouter from "./project-data.router";
 import codeGenerationRouter from "./code-generation.router";
+import codeReviewRouter from "./code-review.router";
 import syncRouter from "./sync";
 import backgroundTestsRouter from "./background-tests.router";
 import maxAutonomyRouter from "./max-autonomy.router";
@@ -343,6 +344,9 @@ export class MainRouter {
 
     // Packages routes (AI-driven package automation)
     app.use('/api/packages', tierRateLimiters.api, packagesRouter);
+
+    // Code Review routes (AI-powered code analysis)
+    app.use('/api/code-review', tierRateLimiters.api, codeReviewRouter);
 
     // Workspace routes (LSP, builds, tests, security, resources)
     app.use('/api/workspace', tierRateLimiters.api, createWorkspaceRoutes(this.storage));
