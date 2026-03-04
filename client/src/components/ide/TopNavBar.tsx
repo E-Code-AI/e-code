@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { RunnerWorkspaceButton } from '@/components/ide/RunnerWorkspaceButton';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -301,6 +302,9 @@ export function TopNavBar({
           )}
         </Button>
         
+        {/* Runner Workspace — only visible when RUNNER_BASE_URL is configured */}
+        <RunnerWorkspaceButton projectId={projectId} />
+
         {/* Publish Button */}
         <ReplitPublishButton
           projectId={projectId}

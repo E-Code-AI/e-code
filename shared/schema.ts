@@ -4651,3 +4651,26 @@ export const codeReviewsRelations = relations(codeReviews, ({ one, many }) => ({
   }),
   issues: many(reviewIssues),
 }));
+
+// ─── Runner Workspaces ──────────────────────────────────────────────────────
+// Tracks live workspace sessions created on an external Runner service.
+// When RUNNER_BASE_URL is set, each project can have an active workspace
+// (container/VM) on the Runner, identified by workspaceId.
+export const runnerWorkspaces = pgTable('runner_workspaces', {
+  id: serial('id').primaryKey(),
+  projectId: integer('project_id').notNull().unique().references(() => projects.id, { onDelete: 'cascade' }),
+  workspaceId: varchar('workspace_id', { length: 255 }).notNull(),
+  status: varchar('status', { length: 50 }).notNull().default('starting'),
+  runnerUrl: varchar('runner_url', { length: 500 }),
+  previewUrl: varchar('preview_url', { length: 500 }),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const insertRunnerWorkspaceSchema = createInsertSchema(runnerWorkspaces).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertRunnerWorkspace = z.infer<typeof insertRunnerWorkspaceSchema>;
+export type RunnerWorkspace = typeof runnerWorkspaces.$inferSelect;

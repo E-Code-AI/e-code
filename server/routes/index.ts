@@ -102,6 +102,7 @@ import polyglotRouter from '../polyglot-routes';
 import twoFactorRouter from './2fa.router';
 import resourcesRouter from './resources.router';
 import seoRouter from './seo.router';
+import runnerWorkspacesRouter from './runner-workspaces.router';
 
 export class MainRouter {
   private authRouter: AuthRouter;
@@ -435,6 +436,9 @@ export class MainRouter {
 
     // SendGrid webhooks
     app.use('/api/webhooks', sendgridWebhooksRouter);
+
+    // Runner Workspaces (external Runner microservice integration)
+    app.use('/api/runner', tierRateLimiters.api, runnerWorkspacesRouter);
   }
 
   /**
