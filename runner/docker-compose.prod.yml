@@ -37,6 +37,8 @@ services:
       WORKSPACE_IDLE_TTL_SEC: "3600"
       RUNNER_DEBUG: "false"
       RUNNER_ALLOWED_ORIGINS: "https://e-code.ai,https://www.e-code.ai"
+      RUNNER_ADMIN_KEY: "CHANGE_ME_ADMIN_KEY"
+      EXEC_TIMEOUT_MS: "10000"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - runner-workspaces:/tmp/runner-workspaces

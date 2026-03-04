@@ -2,12 +2,7 @@
  * Workspace Manager
  *
  * Each workspace is an isolated directory under RUNNER_WORKSPACES_DIR.
- * It tracks running processes (preview server) and metadata.
- *
- * Isolation strategy (no Docker required):
- * - Filesystem: each workspace gets /tmp/runner-workspaces/<id>/
- * - Processes: tracked by PID, killed on workspace stop
- * - Environment: only whitelisted safe vars passed to child processes
+ * Idle TTL is controlled by WORKSPACE_IDLE_TTL_SEC (default: 3600 = 1 hour).
  */
 
 import * as fs from 'fs';
@@ -16,17 +11,22 @@ import * as os from 'os';
 import { randomUUID } from 'crypto';
 import { spawn, ChildProcess } from 'child_process';
 import { createLogger } from './logger';
+import { auditLog } from './security';
 
 const logger = createLogger('workspace-manager');
 
 const WORKSPACES_DIR = process.env.RUNNER_WORKSPACES_DIR
   ?? path.join(os.tmpdir(), 'runner-workspaces');
 
+const IDLE_TTL_SEC = parseInt(process.env.WORKSPACE_IDLE_TTL_SEC ?? '3600', 10);
+const IDLE_TIMEOUT_MS = IDLE_TTL_SEC * 1000;
+
 export type WorkspaceStatus = 'starting' | 'running' | 'stopped' | 'error';
 
 export interface Workspace {
   id: string;
   projectId: string;
+  userId: string;
   dir: string;
   status: WorkspaceStatus;
   previewPort: number | null;
@@ -37,7 +37,6 @@ export interface Workspace {
 
 const workspaces = new Map<string, Workspace>();
 
-// Ensure the root workspaces dir exists
 if (!fs.existsSync(WORKSPACES_DIR)) {
   fs.mkdirSync(WORKSPACES_DIR, { recursive: true });
 }
@@ -46,7 +45,7 @@ function allocatePort(): number {
   return 30000 + Math.floor(Math.random() * 5000);
 }
 
-export function createWorkspace(projectId: string): Workspace {
+export function createWorkspace(projectId: string, userId = 'unknown'): Workspace {
   const id = randomUUID();
   const dir = path.join(WORKSPACES_DIR, id);
   fs.mkdirSync(dir, { recursive: true });
@@ -54,6 +53,7 @@ export function createWorkspace(projectId: string): Workspace {
   const workspace: Workspace = {
     id,
     projectId,
+    userId,
     dir,
     status: 'running',
     previewPort: null,
@@ -63,7 +63,7 @@ export function createWorkspace(projectId: string): Workspace {
   };
 
   workspaces.set(id, workspace);
-  logger.info(`Workspace created: ${id} for project ${projectId} at ${dir}`);
+  auditLog('workspace_created', { workspaceId: id, projectId, userId });
   return workspace;
 }
 
@@ -75,7 +75,7 @@ export function listWorkspaces(): Workspace[] {
   return Array.from(workspaces.values());
 }
 
-export function stopWorkspace(id: string): boolean {
+export function stopWorkspace(id: string, reason = 'manual'): boolean {
   const ws = workspaces.get(id);
   if (!ws) return false;
 
@@ -83,7 +83,7 @@ export function stopWorkspace(id: string): boolean {
     try {
       process.kill(-ws.previewProcess.pid!, 'SIGTERM');
     } catch {
-      ws.previewProcess.kill('SIGTERM');
+      try { ws.previewProcess.kill('SIGTERM'); } catch {}
     }
   }
 
@@ -96,7 +96,7 @@ export function stopWorkspace(id: string): boolean {
   }
 
   workspaces.delete(id);
-  logger.info(`Workspace stopped: ${id}`);
+  auditLog('workspace_stopped', { workspaceId: id, projectId: ws.projectId, reason });
   return true;
 }
 
@@ -105,14 +105,14 @@ export function touchWorkspace(id: string): void {
   if (ws) ws.lastActiveAt = new Date();
 }
 
-// Periodically stop idle workspaces (> 2 hours idle)
-const IDLE_TIMEOUT_MS = 2 * 60 * 60 * 1000;
+// Idle TTL enforcement
 setInterval(() => {
   const now = Date.now();
   for (const [id, ws] of workspaces) {
-    if (now - ws.lastActiveAt.getTime() > IDLE_TIMEOUT_MS) {
-      logger.info(`Stopping idle workspace ${id}`);
-      stopWorkspace(id);
+    const idleMs = now - ws.lastActiveAt.getTime();
+    if (idleMs > IDLE_TIMEOUT_MS) {
+      logger.info(`Stopping idle workspace ${id} (idle ${Math.round(idleMs / 1000)}s > TTL ${IDLE_TTL_SEC}s)`);
+      stopWorkspace(id, 'idle_ttl');
     }
   }
-}, 10 * 60 * 1000);
+}, Math.min(IDLE_TIMEOUT_MS / 4, 15 * 60 * 1000)); // check at 1/4 of TTL, max 15min
