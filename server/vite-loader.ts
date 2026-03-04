@@ -187,17 +187,30 @@ export async function safeSetupVite(app: Application, server: Server): Promise<b
         
         console.log(`[Vite Loader] Serving static files from: ${distPath}`);
         
-        // Serve static assets with caching
+        // Serve static assets with caching.
+        // CRITICAL: index:false prevents express.static from serving index.html directly,
+        // which would bypass CSP nonce injection and cause inline styles/scripts to be blocked.
         app.use(express.static(distPath, {
           maxAge: '1d',
           etag: true,
           lastModified: true,
+          index: false,
         }));
         
         // Read index.html for SPA fallback
         const indexHtml = fsModule.readFileSync(indexHtmlPath, 'utf-8');
         
-        // SPA fallback - serve index.html for all non-API routes
+        // Inject CSP nonce into inline <style> and <script> tags in a given HTML string.
+        // External scripts (with src="...") are left unchanged — they don't need nonces.
+        function injectNonce(html: string, nonce: string): string {
+          // Add nonce to all inline <style> tags
+          html = html.replace(/<style(\b[^>]*)>/g, (_m: string, attrs: string) => `<style${attrs} nonce="${nonce}">`);
+          // Add nonce to inline <script> tags only (those WITHOUT a src= attribute)
+          html = html.replace(/<script(?![^>]*\bsrc\s*=)([^>]*)>/g, (_m: string, attrs: string) => `<script${attrs} nonce="${nonce}">`);
+          return html;
+        }
+
+        // SPA fallback - serve index.html for all non-API routes WITH nonce injection
         app.use('*', (req: any, res: any, next: any) => {
           // Skip API and WebSocket routes
           if (req.originalUrl.startsWith('/api/') || 
@@ -207,7 +220,9 @@ export async function safeSetupVite(app: Application, server: Server): Promise<b
               req.originalUrl.startsWith('/collaboration')) {
             return next();
           }
-          res.status(200).set({ 'Content-Type': 'text/html' }).end(indexHtml);
+          const nonce: string | undefined = res.locals.cspNonce;
+          const html = nonce ? injectNonce(indexHtml, nonce) : indexHtml;
+          res.status(200).set({ 'Content-Type': 'text/html' }).end(html);
         });
         
         console.log('[Vite Loader] ✅ Production static serving configured successfully');
@@ -253,19 +268,24 @@ export async function setupFallbackServer(app: Application): Promise<void> {
   
   if (fs.existsSync(publicPath) && fs.existsSync(builtIndexPath)) {
     // We have a complete pre-built frontend!
-    app.use(express.static(publicPath));
+    // index:false so index.html is served via SPA fallback with CSP nonce injection
+    app.use(express.static(publicPath, { index: false }));
     
     // Read the built index.html
     const builtHTML = fs.readFileSync(builtIndexPath, 'utf-8');
     
-    // Serve index.html for all non-API routes
-    app.get('*', (req, res) => {
+    // Serve index.html for all non-API routes WITH nonce injection
+    app.get('*', (req: any, res: any) => {
       if (req.path.startsWith('/api') || req.path.startsWith('/collaboration') || req.path.startsWith('/webrtc')) {
         return res.status(404).json({ error: 'API endpoint not found' });
       }
-      
-      // Serve the pre-built React app
-      return res.status(200).set({ 'Content-Type': 'text/html' }).end(builtHTML);
+      const nonce: string | undefined = res.locals?.cspNonce;
+      let html = builtHTML;
+      if (nonce) {
+        html = html.replace(/<style(\b[^>]*)>/g, (_m: string, attrs: string) => `<style${attrs} nonce="${nonce}">`);
+        html = html.replace(/<script(?![^>]*\bsrc\s*=)([^>]*)>/g, (_m: string, attrs: string) => `<script${attrs} nonce="${nonce}">`);
+      }
+      return res.status(200).set({ 'Content-Type': 'text/html' }).end(html);
     });
     
     return;

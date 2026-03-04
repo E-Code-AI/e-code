@@ -1,7 +1,7 @@
 // Service Worker for E-Code Platform
 // Enhanced with better offline sync capabilities
 
-const CACHE_VERSION = 2;
+const CACHE_VERSION = 3;
 const STATIC_CACHE_NAME = `ecode-static-v${CACHE_VERSION}`;
 const DYNAMIC_CACHE_NAME = `ecode-dynamic-v${CACHE_VERSION}`;
 const API_CACHE_NAME = `ecode-api-v${CACHE_VERSION}`;
