@@ -27,12 +27,14 @@ mobile/ios/*.mobileprovision
 
 # SECURITY: Desktop Certificates
 desktop/*.p12
-desktop/*.pfxdesktop/dist/
+desktop/*.pfx
 
-# Large files - exclude from git
+# Large files - exclude from git and deployment scan
+.git/
 .checkpoints/
 backups/
 desktop/dist/
+dokploy/
 
 # Build output - rebuilt during deployment
 dist/
