@@ -19,6 +19,25 @@ export class UsersRouter {
   private ensureAuth = ensureAuthenticated;
 
   private initializeRoutes() {
+    // GET /api/users/me — current authenticated user (MUST be before /:id to avoid "me" being treated as an ID)
+    this.router.get("/api/users/me", this.ensureAuth, async (req: Request, res: Response) => {
+      try {
+        const userId = (req.user as any)?.id?.toString();
+        if (!userId) {
+          return res.status(401).json({ message: "Not authenticated", code: "UNAUTHORIZED" });
+        }
+        const user = await this.storage.getUser(userId);
+        if (!user) {
+          return res.status(404).json({ message: "User not found", code: "USER_NOT_FOUND" });
+        }
+        const { passwordHash, ...safeUser } = user as any;
+        res.json(safeUser);
+      } catch (error) {
+        console.error('Error fetching current user:', error);
+        res.status(500).json({ message: "Failed to fetch user", code: "FETCH_ERROR" });
+      }
+    });
+
     // Get user profile by ID
     this.router.get("/api/users/:id", async (req: Request, res: Response) => {
       try {

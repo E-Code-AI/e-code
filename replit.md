@@ -1,7 +1,7 @@
 # E-Code Platform
 
 ## Overview
-E-Code is an AI-assisted web-based IDE designed to enhance software development efficiency. It offers features like automated workspace generation, live previews, real-time progress streaming, multi-provider AI model selection, collaborative tools, enterprise-grade testing, and robust security. The platform aims to be a leader in the software development tools market, supporting rapid prototyping, educational use, and enterprise application development.
+E-Code is an AI-assisted web-based IDE designed to enhance software development efficiency. It offers features like automated workspace generation, live previews, real-time progress streaming, multi-provider AI model selection, collaborative tools, enterprise-grade testing, and robust security. The platform aims to be a market leader by supporting rapid prototyping, education, and enterprise-level application development, focusing on achieving significant market share.
 
 ## User Preferences
 - **Communication:** Simple, everyday language
@@ -43,14 +43,14 @@ E-Code is an AI-assisted web-based IDE designed to enhance software development 
 ## System Architecture
 
 ### UI/UX Decisions
-The frontend utilizes Shadcn/UI with Tailwind CSS and Monaco Editor, adhering to the Replit RUI Design System. It features responsiveness, mobile-first design, light/dark modes, a unified IDE layout, spring animations, loading skeletons, and touch enhancements.
+The frontend uses Shadcn/UI with Tailwind CSS and Monaco Editor, adhering to the Replit RUI Design System. It emphasizes responsiveness, mobile-first design, light/dark modes, a unified IDE layout, spring animations, loading skeletons, and touch enhancements.
 
 ### Technical Implementations
-The platform operates on a two-service architecture:
-- **Main Platform:** Consists of a frontend (React 18, TypeScript, Vite, TanStack Query, Wouter) and a backend (Node.js/Express.js, TypeScript, Drizzle ORM for PostgreSQL, Passport.js for authentication), providing RESTful APIs and WebSockets.
-- **Runner:** An optional, independent service for isolated workspace execution, communicating via signed JWT HTTP calls.
+The platform employs a two-service architecture:
+- **Main Platform:** A React 18, TypeScript, Vite, TanStack Query, Wouter frontend, and a Node.js/Express.js, TypeScript, Drizzle ORM (PostgreSQL), Passport.js backend, providing RESTful APIs and WebSockets.
+- **Runner:** An independent service for isolated workspace execution, communicating via signed JWT HTTP calls.
 
-Key AI optimizations include a Task Classifier, Circuit Breaker, Priority Queue, Intelligent Caching, and Observability. Environment variables are secured with AES-256-GCM encryption. Server-Sent Events (SSE) enable real-time code generation. Anonymous bootstrap authentication supports ephemeral guest users. AI Agent enhancements include structured XML-based system prompts, a repository overview service, a context window manager, a unified AI provider system, and AI-powered inline code actions. A Checkpoints & Rollback System ensures atomic transactions, complemented by a Background Auto-Testing System using Playwright. Max Autonomy Mode provides extended autonomous sessions with AI task decomposition, auto-execution, ETA estimation, and cost tracking. Process-based code execution leverages native Nix-managed language runtimes. Logging is managed by a centralized Winston-based system with correlation IDs. An Agent Step Cache system provides database-backed intermediate step caching. Persistent chat history uses a dual-layer architecture: Zustand store with localStorage for local loading, augmented by PostgreSQL for server backup. Fast Bootstrap Optimization provides fast model recommendations and parallel execution.
+AI optimizations include a Task Classifier, Circuit Breaker, Priority Queue, Intelligent Caching, and Observability. Environment variables are secured with AES-256-GCM encryption. Server-Sent Events (SSE) enable real-time code generation. Anonymous bootstrap authentication supports ephemeral guest users. AI Agent enhancements include structured XML-based system prompts, a repository overview service, a context window manager, a unified AI provider system, and AI-powered inline code actions. A Checkpoints & Rollback System ensures atomic transactions, complemented by a Background Auto-Testing System using Playwright. Max Autonomy Mode provides extended autonomous sessions with AI task decomposition, auto-execution, ETA estimation, and cost tracking. Process-based code execution uses native Nix-managed language runtimes. Logging is managed by a centralized Winston-based system with correlation IDs. An Agent Step Cache system provides database-backed intermediate step caching. Persistent chat history uses a dual-layer architecture: Zustand store with localStorage for local loading, augmented by PostgreSQL for server backup. Fast Bootstrap Optimization provides fast model recommendations and parallel execution.
 
 ### System Design Choices
 A PostgreSQL database serves as the primary data store. Security features include CSRF protection, input sanitization, tier-based rate limiting, API versioning, session-based authentication, and encrypted environment variables. The AI agent system offers server-sent event streaming, multi-provider AI model selection, database-backed conversation history, circuit breakers, and retry logic. Health monitoring integrates Kubernetes probes and a Provider Health API with Prometheus metrics. A two-tier database API architecture (Admin and Project Data APIs) is used with integrated security. Docker builds are optimized for small image sizes. Stripe payment integration supports a Replit-style hybrid pricing model. The platform supports 29 programming languages via CodeMirror 6 for syntax highlighting and a robust runtime system with PID tracking and language-specific timeouts. It supports `single-vm` (default) and `kubernetes` deployment modes. `DockerExecutor` provides enterprise-grade sandboxed code execution using ephemeral containers. A Memory Bank System stores AI-generated contextual markdown files. Core systems include a WebSocket Resilience System, an Intersection Observer Animation System, and a Native Motion Library. A ReplDB-Compatible Key-Value Database provides a Replit-compatible key-value store. Tenant isolation is implemented with `PersistenceEngine`, `TenantContextMiddleware`, and `TenantScopedQueries` for secure, transactional, and tenant-scoped database access. PostgreSQL RLS policies are available for defense-in-depth.
@@ -76,7 +76,6 @@ A PostgreSQL database serves as the primary data store. Security features includ
 
 ### Development Tools & Integrations
 - **GitHub:** OAuth integration
-- **Figma:** Design imports
 - **Playwright:** Browser automation for testing
 - **Monaco Editor:** Microsoft's VS Code editor component
 - **xterm.js:** Terminal emulation library

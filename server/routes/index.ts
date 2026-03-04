@@ -295,8 +295,9 @@ export class MainRouter {
     app.use('/api/ai/usage', tierRateLimiters.api, aiUsageRouter);
     app.use('/api/admin/ai-usage', tierRateLimiters.api, aiUsageRouter);
 
-    // AI Models Selection routes
+    // AI Models Selection routes (both paths for frontend compatibility)
     app.use('/api/models', tierRateLimiters.api, aiModelsRouter);
+    app.use('/api/ai/models', tierRateLimiters.api, aiModelsRouter);
 
     // RAG (Retrieval-Augmented Generation) routes
     app.use('/api/rag', tierRateLimiters.api, ragRouter);
