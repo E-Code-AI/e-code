@@ -47,13 +47,12 @@ waitForPort = 5000
 name = "Start Runner"
 author = "agent"
 
+[workflows.workflow.metadata]
+outputType = "console"
+
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "RUNNER_JWT_SECRET=${RUNNER_JWT_SECRET:-dev-runner-secret-change-me} npx tsx runner/index.ts"
-waitForPort = 8080
-
-[workflows.workflow.metadata]
-outputType = "console"
 
 [agent]
 integrations = [
@@ -88,7 +87,6 @@ FROM_EMAIL = "contact@e-code.ai"
 WORKSPACE_TOKEN_TTL_MIN = "15"
 
 [userenv.development]
-ENABLE_DIRECT_EXECUTION = "true"
 ALLOW_INSECURE_LOCAL_PTY = "true"
 
 [userenv.production]
