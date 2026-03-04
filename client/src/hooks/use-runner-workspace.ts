@@ -1,97 +1,140 @@
 /**
  * useRunnerWorkspace
  *
- * Manages the lifecycle of an optional external Runner workspace for a project.
- * - When Runner is not configured on the server, isRunnerEnabled = false and all
- *   operations are no-ops — the existing built-in terminal/preview are used.
- * - When Runner is configured, exposes start/stop/token helpers and tracks status.
+ * Hook pour le mode "Workspace live" de l'IDE.
+ *
+ * - Vérifie le statut du Runner via GET /api/runner/status
+ * - Start: POST /api/workspaces/:projectId → { online, workspaceId, token, terminalWsUrl, previewUrl }
+ * - Stop:  DELETE /api/workspaces/:projectId
+ *
+ * Si runner offline → isRunnerEnabled=false ou isOnline=false, UI affiche badge "Runner hors ligne"
+ * sans crash.
  */
 
 import { useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 
-interface RunnerStatus {
-  enabled: boolean;
+// ─── Types ──────────────────────────────────────────────────────────────────
+export interface RunnerStatusResponse {
+  online: boolean;
+  baseUrl: string | null;
+  latencyMs?: number;
+  workspaces?: number;
 }
 
-interface RunnerWorkspace {
-  exists: boolean;
-  id?: number;
-  projectId?: number;
+export interface WorkspaceSession {
+  online: boolean;
   workspaceId?: string;
-  status?: 'starting' | 'running' | 'stopped' | 'error';
-  previewUrl?: string | null;
   runnerUrl?: string | null;
-  createdAt?: string;
-  updatedAt?: string;
+  token?: string;
+  terminalWsUrl?: string | null;
+  previewUrl?: string | null;
+  reason?: string;
 }
 
-interface RunnerToken {
-  token: string;
-  workspaceId: string;
-  runnerUrl: string | null;
-  previewUrl: string | null;
-}
-
+// ─── Hook ───────────────────────────────────────────────────────────────────
 export function useRunnerWorkspace(projectId: string | number | undefined) {
   const qc = useQueryClient();
+  const { toast } = useToast();
   const pid = projectId ? String(projectId) : null;
 
-  const { data: statusData } = useQuery<RunnerStatus>({
+  // 1. Runner status (pings /health — updated every 30s)
+  const { data: runnerStatus, isLoading: isCheckingStatus } = useQuery<RunnerStatusResponse>({
     queryKey: ['/api/runner/status'],
     enabled: !!pid,
-    staleTime: 60_000,
+    staleTime: 30_000,
+    refetchInterval: 30_000,
+    retry: false,
   });
 
-  const isRunnerEnabled = statusData?.enabled ?? false;
+  const isRunnerEnabled = runnerStatus?.online === true;
 
-  const { data: workspace, isLoading } = useQuery<RunnerWorkspace>({
-    queryKey: ['/api/runner/workspaces', pid],
+  // 2. Current workspace session for this project
+  const {
+    data: session,
+    isLoading: isLoadingSession,
+  } = useQuery<WorkspaceSession>({
+    queryKey: ['/api/workspaces', pid],
     enabled: !!pid && isRunnerEnabled,
     refetchInterval: (query) => {
-      const data = query.state.data as RunnerWorkspace | undefined;
-      if (data?.status === 'starting') return 3000;
+      const d = query.state.data as WorkspaceSession | undefined;
+      if (d?.online && !d.workspaceId) return 3_000;
       return false;
     },
+    retry: false,
   });
 
-  const startMutation = useMutation({
-    mutationFn: () =>
-      apiRequest('POST', `/api/runner/workspaces/${pid}`).then((r) => r.json()),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['/api/runner/workspaces', pid] });
+  // 3. Start workspace
+  const startMutation = useMutation<WorkspaceSession, Error>({
+    mutationFn: async () => {
+      const res = await apiRequest('POST', `/api/workspaces/${pid}`);
+      return res.json();
+    },
+    onSuccess: (data) => {
+      qc.setQueryData(['/api/workspaces', pid], data);
+      if (!data.online) {
+        toast({
+          title: 'Runner hors ligne',
+          description: data.reason ?? 'Le service Runner est temporairement indisponible.',
+          variant: 'destructive',
+        });
+      }
+    },
+    onError: (err) => {
+      toast({
+        title: 'Erreur workspace',
+        description: err.message,
+        variant: 'destructive',
+      });
     },
   });
 
+  // 4. Stop workspace
   const stopMutation = useMutation({
-    mutationFn: () =>
-      apiRequest('DELETE', `/api/runner/workspaces/${pid}`).then((r) => r.json()),
+    mutationFn: async () => {
+      const res = await apiRequest('DELETE', `/api/workspaces/${pid}`);
+      return res.json();
+    },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['/api/runner/workspaces', pid] });
+      qc.removeQueries({ queryKey: ['/api/workspaces', pid] });
     },
   });
 
-  const getToken = useCallback(async (): Promise<RunnerToken | null> => {
+  // 5. Get fresh token for Runner access (terminal WS, files)
+  const getAccessToken = useCallback(async (): Promise<string | null> => {
     if (!pid || !isRunnerEnabled) return null;
-    const res = await apiRequest('GET', `/api/runner/workspaces/${pid}/token`);
-    if (!res.ok) return null;
-    return res.json();
+    try {
+      const res = await apiRequest('GET', `/api/runner/workspaces/${pid}/token`);
+      if (!res.ok) return null;
+      const data = await res.json();
+      return data.token ?? null;
+    } catch {
+      return null;
+    }
   }, [pid, isRunnerEnabled]);
 
-  const isActive = workspace?.exists && workspace.status === 'running';
-  const isStarting = workspace?.exists && workspace.status === 'starting';
+  const isActive = session?.online === true && !!session.workspaceId;
+  const isStarting = startMutation.isPending;
+  const isStopping = stopMutation.isPending;
 
   return {
+    // Status
     isRunnerEnabled,
-    workspace,
-    isLoading,
+    isCheckingStatus,
+    runnerStatus,
+
+    // Session
+    session,
+    isLoadingSession,
     isActive,
     isStarting,
-    startWorkspace: startMutation.mutate,
-    stopWorkspace: stopMutation.mutate,
-    isStarting: startMutation.isPending || isStarting,
-    isStopping: stopMutation.isPending,
-    getToken,
+    isStopping,
+
+    // Actions
+    startWorkspace: () => startMutation.mutate(),
+    stopWorkspace: () => stopMutation.mutate(),
+    getAccessToken,
   };
 }

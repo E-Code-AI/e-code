@@ -103,6 +103,7 @@ import twoFactorRouter from './2fa.router';
 import resourcesRouter from './resources.router';
 import seoRouter from './seo.router';
 import runnerWorkspacesRouter from './runner-workspaces.router';
+import workspacesRouter from './workspaces.router';
 
 export class MainRouter {
   private authRouter: AuthRouter;
@@ -437,8 +438,11 @@ export class MainRouter {
     // SendGrid webhooks
     app.use('/api/webhooks', sendgridWebhooksRouter);
 
-    // Runner Workspaces (external Runner microservice integration)
+    // Runner Workspaces — internal CRUD (/api/runner/*)
     app.use('/api/runner', tierRateLimiters.api, runnerWorkspacesRouter);
+
+    // Workspaces — simplified one-call IDE endpoint (/api/workspaces/*)
+    app.use('/api/workspaces', tierRateLimiters.api, workspacesRouter);
   }
 
   /**

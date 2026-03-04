@@ -1,37 +1,39 @@
 /**
- * Runner Workspaces Router
- * 
- * Manages live workspace sessions on an optional external Runner service.
- * When RUNNER_BASE_URL is not configured, returns 503 with a clear message.
- * When configured, creates/gets/stops workspaces and issues short-lived access tokens.
+ * Runner Workspaces Router  (/api/runner/*)
+ * ─────────────────────────────────────────────────────────────────
+ * Internal API for managing Runner workspace sessions.
+ * Uses the server/runnerClient module for all Runner communication.
+ *
+ * Routes:
+ *   GET    /api/runner/status                    → { online, baseUrl }
+ *   GET    /api/runner/workspaces/:projectId      → workspace record or { exists: false }
+ *   POST   /api/runner/workspaces/:projectId      → create workspace
+ *   DELETE /api/runner/workspaces/:projectId      → stop workspace
+ *   GET    /api/runner/workspaces/:projectId/token → access token for browser
  */
 
 import { Router } from 'express';
-import { z } from 'zod';
 import { ensureAuthenticated } from '../middleware/auth';
 import { db } from '../db';
 import { runnerWorkspaces, projects } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 import { createLogger } from '../utils/logger';
-import {
-  isRunnerEnabled,
-  createRunnerWorkspace,
-  getRunnerWorkspace,
-  stopRunnerWorkspace,
-  generateRunnerToken,
-} from '../services/runner.service';
+import * as runner from '../runnerClient';
 
 const logger = createLogger('runner-workspaces');
 const router = Router();
 
 router.use(ensureAuthenticated);
 
-// GET /api/runner/status — check if Runner is enabled
-router.get('/status', (_req, res) => {
-  res.json({ enabled: isRunnerEnabled() });
+// ─── GET /api/runner/status ───────────────────────────────────────────────
+// Pings the Runner's /health endpoint.
+// Returns { online: boolean, baseUrl: string|null } — never throws.
+router.get('/status', async (_req, res) => {
+  const health = await runner.pingRunner();
+  res.json(health);
 });
 
-// GET /api/runner/workspaces/:projectId — get current workspace state
+// ─── GET /api/runner/workspaces/:projectId ────────────────────────────────
 router.get('/workspaces/:projectId', async (req, res) => {
   const projectId = parseInt(req.params.projectId, 10);
   if (isNaN(projectId)) return res.status(400).json({ error: 'Invalid projectId' });
@@ -44,31 +46,29 @@ router.get('/workspaces/:projectId', async (req, res) => {
 
   if (!row) return res.json({ exists: false });
 
-  if (isRunnerEnabled()) {
-    try {
-      const live = await getRunnerWorkspace(row.workspaceId);
+  if (runner.isRunnerConfigured()) {
+    const live = await runner.getWorkspaceStatus(row.workspaceId);
+    if (live) {
       await db
         .update(runnerWorkspaces)
         .set({ status: live.status, updatedAt: new Date() })
         .where(eq(runnerWorkspaces.projectId, projectId));
-      return res.json({ exists: true, ...row, status: live.status, previewUrl: live.previewUrl ?? row.previewUrl });
-    } catch (err) {
-      logger.warn(`[Runner] Could not refresh workspace ${row.workspaceId}: ${err}`);
+      return res.json({ exists: true, ...row, status: live.status });
     }
   }
 
   res.json({ exists: true, ...row });
 });
 
-// POST /api/runner/workspaces/:projectId — create or return existing workspace
+// ─── POST /api/runner/workspaces/:projectId ───────────────────────────────
 router.post('/workspaces/:projectId', async (req, res) => {
   const projectId = parseInt(req.params.projectId, 10);
   if (isNaN(projectId)) return res.status(400).json({ error: 'Invalid projectId' });
 
-  if (!isRunnerEnabled()) {
+  if (!runner.isRunnerConfigured()) {
     return res.status(503).json({
       error: 'Runner service not configured',
-      hint: 'Set RUNNER_BASE_URL and RUNNER_JWT_SECRET environment variables to enable external Runner.',
+      hint: 'Set RUNNER_BASE_URL and RUNNER_JWT_SECRET environment variables.',
     });
   }
 
@@ -77,7 +77,6 @@ router.post('/workspaces/:projectId', async (req, res) => {
     .from(projects)
     .where(eq(projects.id, projectId))
     .limit(1);
-
   if (!project) return res.status(404).json({ error: 'Project not found' });
 
   const [existing] = await db
@@ -85,34 +84,28 @@ router.post('/workspaces/:projectId', async (req, res) => {
     .from(runnerWorkspaces)
     .where(eq(runnerWorkspaces.projectId, projectId))
     .limit(1);
+  if (existing) return res.json(existing);
 
-  if (existing) {
-    logger.info(`[Runner] Returning existing workspace ${existing.workspaceId} for project ${projectId}`);
-    return res.json(existing);
+  const info = await runner.createWorkspace(projectId, project.name);
+  if (!info) {
+    return res.status(502).json({ error: 'Runner is offline or returned an error' });
   }
 
-  try {
-    const info = await createRunnerWorkspace(projectId, project.name);
+  const [created] = await db
+    .insert(runnerWorkspaces)
+    .values({
+      projectId,
+      workspaceId: info.workspaceId,
+      status: info.status ?? 'starting',
+      previewUrl: info.previewUrl ?? null,
+      runnerUrl: process.env.RUNNER_BASE_URL ?? null,
+    })
+    .returning();
 
-    const [created] = await db
-      .insert(runnerWorkspaces)
-      .values({
-        projectId,
-        workspaceId: info.workspaceId,
-        status: info.status ?? 'starting',
-        previewUrl: info.previewUrl ?? null,
-        runnerUrl: process.env.RUNNER_BASE_URL ?? null,
-      })
-      .returning();
-
-    res.status(201).json(created);
-  } catch (err: any) {
-    logger.error(`[Runner] Failed to create workspace for project ${projectId}: ${err.message}`);
-    res.status(502).json({ error: 'Runner error', detail: err.message });
-  }
+  res.status(201).json(created);
 });
 
-// DELETE /api/runner/workspaces/:projectId — stop and remove workspace
+// ─── DELETE /api/runner/workspaces/:projectId ─────────────────────────────
 router.delete('/workspaces/:projectId', async (req, res) => {
   const projectId = parseInt(req.params.projectId, 10);
   if (isNaN(projectId)) return res.status(400).json({ error: 'Invalid projectId' });
@@ -122,28 +115,20 @@ router.delete('/workspaces/:projectId', async (req, res) => {
     .from(runnerWorkspaces)
     .where(eq(runnerWorkspaces.projectId, projectId))
     .limit(1);
+  if (!row) return res.status(404).json({ error: 'No workspace found' });
 
-  if (!row) return res.status(404).json({ error: 'No workspace found for this project' });
-
-  if (isRunnerEnabled()) {
-    try {
-      await stopRunnerWorkspace(row.workspaceId);
-    } catch (err) {
-      logger.warn(`[Runner] Stop workspace returned error (ignoring): ${err}`);
-    }
-  }
-
+  await runner.stopWorkspace(row.workspaceId);
   await db.delete(runnerWorkspaces).where(eq(runnerWorkspaces.projectId, projectId));
 
   res.json({ stopped: true });
 });
 
-// GET /api/runner/workspaces/:projectId/token — short-lived JWT for direct Runner access
+// ─── GET /api/runner/workspaces/:projectId/token ──────────────────────────
 router.get('/workspaces/:projectId/token', async (req, res) => {
   const projectId = parseInt(req.params.projectId, 10);
   if (isNaN(projectId)) return res.status(400).json({ error: 'Invalid projectId' });
 
-  if (!isRunnerEnabled()) {
+  if (!runner.isRunnerConfigured()) {
     return res.status(503).json({ error: 'Runner service not configured' });
   }
 
@@ -152,17 +137,17 @@ router.get('/workspaces/:projectId/token', async (req, res) => {
     .from(runnerWorkspaces)
     .where(eq(runnerWorkspaces.projectId, projectId))
     .limit(1);
-
-  if (!row) return res.status(404).json({ error: 'No workspace found — start one first' });
+  if (!row) return res.status(404).json({ error: 'No workspace — start one first' });
 
   const userId = (req.user as any)?.id ?? 0;
-  const token = generateRunnerToken(row.workspaceId, userId);
+  const token = runner.generateAccessToken(row.workspaceId, userId);
 
   res.json({
     token,
     workspaceId: row.workspaceId,
     runnerUrl: row.runnerUrl,
     previewUrl: row.previewUrl,
+    terminalWsUrl: runner.buildTerminalWsUrl(row.workspaceId),
   });
 });
 
