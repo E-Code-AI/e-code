@@ -40,7 +40,7 @@ import { createLogger } from './logger';
 
 const logger = createLogger('index');
 
-const PORT = parseInt(process.env.RUNNER_PORT ?? '8080', 10);
+const PORT = parseInt(process.env.PORT ?? process.env.RUNNER_PORT ?? '8080', 10);
 
 if (!process.env.RUNNER_JWT_SECRET) {
   console.error('[Runner] FATAL: RUNNER_JWT_SECRET is not set. Exiting.');
@@ -51,9 +51,18 @@ const app = express();
 const httpServer = createServer(app);
 const wss = new WebSocketServer({ noServer: true });
 
+const allowedOrigins = process.env.RUNNER_ALLOWED_ORIGINS
+  ? process.env.RUNNER_ALLOWED_ORIGINS.split(',').map(o => o.trim())
+  : null;
+
 app.use(
   cors({
-    origin: process.env.RUNNER_ALLOWED_ORIGINS?.split(',') ?? '*',
+    origin: allowedOrigins
+      ? (origin, cb) => {
+          if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
+          cb(new Error(`CORS: origin ${origin} not allowed`));
+        }
+      : '*',
     credentials: true,
   })
 );

@@ -36,6 +36,7 @@ services:
       PIDS_LIMIT: "256"
       WORKSPACE_IDLE_TTL_SEC: "3600"
       RUNNER_DEBUG: "false"
+      RUNNER_ALLOWED_ORIGINS: "https://e-code.ai,https://www.e-code.ai"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - runner-workspaces:/tmp/runner-workspaces
