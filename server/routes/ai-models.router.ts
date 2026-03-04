@@ -102,6 +102,40 @@ router.get('/preferred', async (req, res) => {
 });
 
 /**
+ * GET /api/models/pricing (also /api/ai/models/pricing via alias mount)
+ * Returns pricing for all AI models — public endpoint, no auth required
+ */
+router.get('/pricing', (_req, res) => {
+  res.json({
+    success: true,
+    pricing: {
+      'gpt-5.2':          { input: 0.000015, output: 0.00006,  creditsPerThousand: 15 },
+      'gpt-5.2-codex':    { input: 0.000012, output: 0.000048, creditsPerThousand: 12 },
+      'gpt-5.1':          { input: 0.000010, output: 0.00004,  creditsPerThousand: 10 },
+      'gpt-5':            { input: 0.000010, output: 0.00004,  creditsPerThousand: 10 },
+      'gpt-5-mini':       { input: 0.0000003, output: 0.0000012, creditsPerThousand: 0.3 },
+      'gpt-4.1':          { input: 0.000002, output: 0.000008, creditsPerThousand: 2 },
+      'gpt-4.1-mini':     { input: 0.0000004, output: 0.0000016, creditsPerThousand: 0.4 },
+      'gpt-4o':           { input: 0.0000025, output: 0.00001,  creditsPerThousand: 2.5 },
+      'gpt-4o-mini':      { input: 0.00000015, output: 0.0000006, creditsPerThousand: 0.15 },
+      'o3':               { input: 0.000015, output: 0.00006,  creditsPerThousand: 15 },
+      'o4-mini':          { input: 0.0000011, output: 0.0000044, creditsPerThousand: 1.1 },
+      'claude-opus-4-5':  { input: 0.000015, output: 0.000075, creditsPerThousand: 15 },
+      'claude-sonnet-4-5':{ input: 0.000003, output: 0.000015, creditsPerThousand: 3 },
+      'claude-haiku-4-5': { input: 0.00000025, output: 0.00000125, creditsPerThousand: 0.25 },
+      'gemini-3-flash':   { input: 0.0000001, output: 0.0000004, creditsPerThousand: 0.1 },
+      'gemini-2.5-pro':   { input: 0.00000125, output: 0.000010, creditsPerThousand: 1.25 },
+      'gemini-2.5-flash': { input: 0.0000003, output: 0.0000015, creditsPerThousand: 0.3 },
+      'grok-4.1-fast':    { input: 0.000002, output: 0.000010, creditsPerThousand: 2 },
+      'grok-4':           { input: 0.000003, output: 0.000015, creditsPerThousand: 3 },
+      'kimi-k2-thinking': { input: 0.000004, output: 0.000016, creditsPerThousand: 4 },
+      'kimi-k2-turbo':    { input: 0.0000014, output: 0.0000056, creditsPerThousand: 1.4 }
+    },
+    updatedAt: new Date().toISOString()
+  });
+});
+
+/**
  * POST /api/models/preferred
  * Set user's preferred AI model
  */

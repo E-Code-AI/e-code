@@ -42,7 +42,7 @@ router.get('/templates', async (req: Request, res: Response) => {
 // GET /api/marketplace/template/:id - Get template details
 router.get('/template/:id', async (req: Request, res: Response) => {
   try {
-    const template = await templateMarketplace.getTemplateById(req.params.id);
+    const template = await templateMarketplace.getTemplate(req.params.id);
     if (!template) {
       return res.status(404).json({ error: 'Template not found' });
     }
@@ -50,6 +50,31 @@ router.get('/template/:id', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('[marketplace] Error fetching template:', error);
     res.status(500).json({ error: 'Failed to fetch template' });
+  }
+});
+
+// GET /api/marketplace/template/:id/reviews - Get reviews for a template
+router.get('/template/:id/reviews', async (req: Request, res: Response) => {
+  try {
+    const page = req.query.page ? parseInt(req.query.page as string) : 1;
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
+    const result = await templateMarketplace.getTemplateReviews(req.params.id, page, limit);
+    res.json(result);
+  } catch (error) {
+    console.error('[marketplace] Error fetching reviews:', error);
+    res.json({ reviews: [], total: 0, page: 1, totalPages: 0 });
+  }
+});
+
+// GET /api/marketplace/template/:id/similar - Get similar templates
+router.get('/template/:id/similar', async (req: Request, res: Response) => {
+  try {
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : 6;
+    const similar = await templateMarketplace.getSimilarTemplates(req.params.id, limit);
+    res.json({ templates: similar, total: similar.length });
+  } catch (error) {
+    console.error('[marketplace] Error fetching similar templates:', error);
+    res.status(500).json({ error: 'Failed to fetch similar templates' });
   }
 });
 

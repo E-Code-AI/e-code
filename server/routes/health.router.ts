@@ -386,8 +386,12 @@ export class HealthRouter {
       });
     });
 
-    // Liveness probe (for Kubernetes/Docker)
-    this.router.get("/api/liveness", (req: Request, res: Response) => {
+    // Liveness probe — both paths for backward compatibility
+    this.router.get("/api/liveness", (_req: Request, res: Response) => {
+      res.json({ status: "alive" });
+    });
+    // Frontend hooks use /api/health/liveness (alias)
+    this.router.get("/api/health/liveness", (_req: Request, res: Response) => {
       res.json({ status: "alive" });
     });
 

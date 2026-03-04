@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import multer from 'multer';
 import OpenAI from 'openai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { ensureAuthenticated } from '../middleware/auth';
 import { tierRateLimiters } from '../middleware/tier-rate-limiter';
 import { createLogger } from '../utils/logger';
@@ -22,6 +23,63 @@ const upload = multer({
   }
 });
 
+/**
+ * Transcribe audio using OpenAI Whisper (primary — best accuracy for code)
+ */
+async function transcribeWithOpenAI(
+  buffer: Buffer,
+  mimetype: string,
+  language?: string,
+  prompt?: string
+): Promise<{ text: string; language: string | null }> {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) throw new Error('OPENAI_API_KEY not configured');
+
+  const openai = new OpenAI({ apiKey });
+  const ext = mimetype.includes('ogg') ? 'ogg'
+    : mimetype.includes('mp4') || mimetype.includes('m4a') ? 'mp4'
+    : mimetype.includes('wav') ? 'wav'
+    : 'webm';
+
+  const audioFile = await toFile(buffer, `recording.${ext}`, { type: mimetype });
+  const transcription = await openai.audio.transcriptions.create({
+    file: audioFile,
+    model: 'whisper-1',
+    language: language || undefined,
+    prompt: prompt || 'Code, programming, software development',
+  });
+
+  return { text: transcription.text, language: transcription.language ?? null };
+}
+
+/**
+ * Transcribe audio using Gemini 2.0 Flash (fallback — supports inline audio via multimodal API)
+ * Note: Anthropic and xAI do NOT support audio transcription APIs.
+ */
+async function transcribeWithGemini(
+  buffer: Buffer,
+  mimetype: string
+): Promise<{ text: string; language: null }> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) throw new Error('GEMINI_API_KEY not configured');
+
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+
+  const result = await model.generateContent([
+    {
+      inlineData: {
+        data: buffer.toString('base64'),
+        mimeType: mimetype as any
+      }
+    },
+    'Transcribe this audio accurately. Output ONLY the transcription text with no preamble, labels, or explanation. Preserve programming terminology, variable names, and technical terms exactly as spoken.'
+  ]);
+
+  const text = result.response.text().trim();
+  return { text, language: null };
+}
+
 router.post(
   '/api/voice/transcribe',
   ensureAuthenticated,
@@ -33,40 +91,56 @@ router.post(
         return res.status(400).json({ error: 'No audio file provided' });
       }
 
-      const apiKey = process.env.OPENAI_API_KEY;
-      if (!apiKey) {
-        return res.status(503).json({ error: 'OpenAI API key not configured' });
+      const hasOpenAI = !!process.env.OPENAI_API_KEY;
+      const hasGemini = !!process.env.GEMINI_API_KEY;
+
+      if (!hasOpenAI && !hasGemini) {
+        return res.status(503).json({
+          error: 'Voice transcription unavailable. No AI provider configured (requires OPENAI_API_KEY or GEMINI_API_KEY).'
+        });
       }
 
-      const openai = new OpenAI({ apiKey });
+      let result: { text: string; language: string | null };
+      let provider = 'openai';
 
-      const ext = req.file.mimetype.includes('ogg') ? 'ogg'
-        : req.file.mimetype.includes('mp4') || req.file.mimetype.includes('m4a') ? 'mp4'
-        : req.file.mimetype.includes('wav') ? 'wav'
-        : 'webm';
+      if (hasOpenAI) {
+        try {
+          result = await transcribeWithOpenAI(
+            req.file.buffer,
+            req.file.mimetype,
+            req.body.language,
+            req.body.prompt
+          );
+          provider = 'openai-whisper';
+        } catch (openaiErr: any) {
+          logger.warn('OpenAI Whisper failed, falling back to Gemini', { error: openaiErr.message });
 
-      const audioFile = await toFile(
-        req.file.buffer,
-        `recording.${ext}`,
-        { type: req.file.mimetype }
-      );
+          if (!hasGemini) {
+            if (openaiErr.status === 429) {
+              return res.status(429).json({ error: 'Rate limit exceeded. Please wait a moment.' });
+            }
+            throw openaiErr;
+          }
 
-      const transcription = await openai.audio.transcriptions.create({
-        file: audioFile,
-        model: 'whisper-1',
-        language: req.body.language || undefined,
-        prompt: req.body.prompt || 'Code, programming, software development',
-      });
+          result = await transcribeWithGemini(req.file.buffer, req.file.mimetype);
+          provider = 'gemini-2.0-flash';
+        }
+      } else {
+        result = await transcribeWithGemini(req.file.buffer, req.file.mimetype);
+        provider = 'gemini-2.0-flash';
+      }
 
       logger.info('Voice transcription completed', {
         userId: (req.user as any)?.id,
-        duration: req.file.size,
-        chars: transcription.text.length
+        sizeBytes: req.file.size,
+        chars: result.text.length,
+        provider
       });
 
       res.json({
-        transcript: transcription.text,
-        language: transcription.language ?? null,
+        transcript: result.text,
+        language: result.language,
+        provider
       });
     } catch (error: any) {
       logger.error('Voice transcription failed', { error: error.message });

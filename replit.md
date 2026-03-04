@@ -1,7 +1,7 @@
 # E-Code Platform
 
 ## Overview
-E-Code is an AI-assisted web-based IDE designed to enhance software development efficiency. It offers features like automated workspace generation, live previews, real-time progress streaming, multi-provider AI model selection, collaborative tools, enterprise-grade testing, and robust security. The platform aims to be a market leader by supporting rapid prototyping, education, and enterprise-level application development, focusing on achieving significant market share.
+E-Code is an AI-assisted web-based IDE designed to significantly enhance software development efficiency. It offers automated workspace generation, real-time code execution and previews, multi-provider AI model integration, collaborative development tools, enterprise-grade testing capabilities, and robust security features. The platform aims to be a market leader in AI-powered developer tools, supporting rapid prototyping, educational initiatives, and complex enterprise application development, with a vision for substantial market potential.
 
 ## User Preferences
 - **Communication:** Simple, everyday language
@@ -19,14 +19,15 @@ E-Code is an AI-assisted web-based IDE designed to enhance software development 
 - **Documentation:** Ruthlessly remove obsolete/misleading docs - maintain technical honesty
 - **WebSocket Upgrade:** Mark sockets as handled BEFORE async auth checks in central dispatcher to prevent race conditions with upgrade guard's setImmediate cleanup
 - **IDE Tab Defaults:** Desktop: Chat/Agent tab active by default (left dock index 3). Mobile/Tablet: Deploy tab active by default. Preview panel always visible with wireframe placeholder.
-- **Schema Warming:** Background data structure pre-drafting while user chats. Schema often "warmed up" by deploy time. Shows "App not ready" placeholder until schema is ready.
+- **Schema Warming:** Background data structure pre-drafting while user chats. Schema often "warmed up" by deploy time. Shows "App not ready" placeholder until schema ready.
 - **Mobile Font Sizes:** Compact but WCAG-compliant font sizes (11px minimum) in mobile inline tab navigation. Tab labels use 11px, status badges use 11px.
 - **Database Auto-Provisioning:** Databases provision asynchronously (fire-and-forget) on project creation to avoid API gateway timeouts. Frontend polls status via `/api/database/project/:id`. Multi-provider fallback: if Neon fails, auto-falls back to local PostgreSQL provider. Frontend auto-retries: if user opens DatabasePanel and database has status='error', triggers auto-retry; if no database exists, triggers auto-provision.
 - **Agent Bootstrap Always-Ready:** Replit-style pattern where agent panel is NEVER blocked by bootstrap delays. Uses temp conversationId (-projectId) when real ID not yet available. Messages stored locally in Zustand, migrated when real conversationId created. Send button disabled only when input empty or AI working - never due to missing conversationId. "Initializing Agent" removed entirely.
 - **SPA Routing:** `notFoundHandler` only catches `/api/*` routes — non-API paths pass through to Vite so the React SPA can handle them. This is critical: do NOT register notFoundHandler before Vite init, and do NOT remove the `/api` prefix check in notFoundHandler.
 - **Database Backup:** Use `tsx scripts/backup-database.ts` for backup (creates timestamped SQL file in `backups/`), `tsx scripts/backup-database.ts --restore <file>` for restore. REQUIRES pg_dump for backup and psql for restore (production-safe, no fallback). Cloud storage upload with `--cloud` flag (requires GCS_BACKUP_BUCKET).
 - **Deployment Build Optimization:** `scripts/build-server.mjs` bundles ALL pure-JS production packages into `dist/index.js` (~18MB). Only native addons (bcrypt, node-pty, sharp) remain external. Deployment build command uses `BUILD_DEPLOY=1 npm run build` which additionally prunes `node_modules` to only those 3 native packages (~200 files vs 40,000+) so the security scanner finishes in seconds. Dev builds (without BUILD_DEPLOY=1) skip the pruning to preserve dev tools.
-- **Voice Vibe Coding:** `MediaRecorder` API → `/api/voice/transcribe` (OpenAI Whisper `whisper-1`) → transcript injected into agent input. Uses `apiRequest` (not raw `fetch`) for automatic CSRF token handling. Vibe Mode (Zap button, `data-testid="button-vibe-mode"`) auto-submits on transcription. `voiceInputEnabled: true` by default (env `FEATURE_VOICE_INPUT`). FORBIDDEN: Web Speech API.
+- **Voice Vibe Coding:** `MediaRecorder` API → `/api/voice/transcribe` → transcript injected into agent input. **Multi-provider**: OpenAI Whisper (`whisper-1`) primary (best accuracy for code), Gemini 2.0 Flash as automatic fallback if OpenAI fails or key missing. Anthropic, xAI, Moonshot have NO audio transcription APIs. Uses `apiRequest` (not raw `fetch`) for automatic CSRF token handling. Vibe Mode (Zap button, `data-testid="button-vibe-mode"`) auto-submits on transcription. `voiceInputEnabled: true` by default (env `FEATURE_VOICE_INPUT`). FORBIDDEN: Web Speech API. Response includes `provider` field indicating which service was used.
+- **API Route Dual-Mount Pattern:** `aiModelsRouter` is mounted at BOTH `/api/models` AND `/api/ai/models` for frontend compatibility. Always mount at both paths when adding new AI-related routers that the frontend may call via either prefix.
 - **Animation Safety:** Never use horizontal x-shift animations (`initial={{ x: -50 }}`) on public marketing pages — if `whileInView` fires late or not at all, content appears shifted 50px to the left creating perceived layout misalignment. Always use vertical y-shift (`initial={{ y: 30 }}`) for `whileInView` animations on public pages.
 - **Environment Configuration:** Zod-validated environment variables via `server/utils/env-config.ts`. Required vars validated at startup, optional vars have defaults. Categories: required, security, monitoring, cache, ai, payments, email, notifications, storage, performance, rateLimit, replit. Import `envConfig` for typed access.
 - **API Versioning:** Current API version is `v1` (implicit). Supports URL-based (`/api/v1/users`) and header-based (`Accept-Version: v1`). Deprecation middleware available via `deprecationWarning(version, sunsetDate)`.
@@ -43,48 +44,44 @@ E-Code is an AI-assisted web-based IDE designed to enhance software development 
 ## System Architecture
 
 ### UI/UX Decisions
-The frontend uses Shadcn/UI with Tailwind CSS and Monaco Editor, adhering to the Replit RUI Design System. It emphasizes responsiveness, mobile-first design, light/dark modes, a unified IDE layout, spring animations, loading skeletons, and touch enhancements.
+The frontend uses Shadcn/UI with Tailwind CSS and the Monaco Editor, adhering to the Replit RUI Design System. Design principles emphasize responsiveness, mobile-first design, light/dark modes, a unified IDE layout, spring animations, loading skeletons, and touch-optimized interactions.
 
 ### Technical Implementations
-The platform employs a two-service architecture:
-- **Main Platform:** A React 18, TypeScript, Vite, TanStack Query, Wouter frontend, and a Node.js/Express.js, TypeScript, Drizzle ORM (PostgreSQL), Passport.js backend, providing RESTful APIs and WebSockets.
-- **Runner:** An independent service for isolated workspace execution, communicating via signed JWT HTTP calls.
-
-AI optimizations include a Task Classifier, Circuit Breaker, Priority Queue, Intelligent Caching, and Observability. Environment variables are secured with AES-256-GCM encryption. Server-Sent Events (SSE) enable real-time code generation. Anonymous bootstrap authentication supports ephemeral guest users. AI Agent enhancements include structured XML-based system prompts, a repository overview service, a context window manager, a unified AI provider system, and AI-powered inline code actions. A Checkpoints & Rollback System ensures atomic transactions, complemented by a Background Auto-Testing System using Playwright. Max Autonomy Mode provides extended autonomous sessions with AI task decomposition, auto-execution, ETA estimation, and cost tracking. Process-based code execution uses native Nix-managed language runtimes. Logging is managed by a centralized Winston-based system with correlation IDs. An Agent Step Cache system provides database-backed intermediate step caching. Persistent chat history uses a dual-layer architecture: Zustand store with localStorage for local loading, augmented by PostgreSQL for server backup. Fast Bootstrap Optimization provides fast model recommendations and parallel execution.
+The platform uses a two-service architecture: a full-stack **Main Platform** (React 18, TypeScript, Vite, TanStack Query, Wouter frontend; Node.js/Express.js, TypeScript, Drizzle ORM, Passport.js backend) and an independent **Runner** microservice for isolated workspace execution, communicating via signed JWT HTTP calls. Key features include AI optimizations (Task Classifier, Circuit Breaker, Priority Queue, Intelligent Caching, Observability), AES-256-GCM encrypted environment variables, Server-Sent Events for real-time code generation, anonymous bootstrap authentication, and AI Agent enhancements (structured XML prompts, context window manager, unified AI provider, inline code actions). A Checkpoints & Rollback System and Background Auto-Testing System (Playwright) ensure reliability. Max Autonomy Mode provides advanced AI task decomposition and execution. Process-based code execution uses native Nix-managed runtimes. Logging is managed by a centralized Winston system with correlation IDs. An Agent Step Cache uses a database for intermediate step caching. Persistent chat history uses a dual-layer approach (Zustand + localStorage and PostgreSQL). Fast Bootstrap Optimization provides fast model recommendations and parallel execution.
 
 ### System Design Choices
-A PostgreSQL database serves as the primary data store. Security features include CSRF protection, input sanitization, tier-based rate limiting, API versioning, session-based authentication, and encrypted environment variables. The AI agent system offers server-sent event streaming, multi-provider AI model selection, database-backed conversation history, circuit breakers, and retry logic. Health monitoring integrates Kubernetes probes and a Provider Health API with Prometheus metrics. A two-tier database API architecture (Admin and Project Data APIs) is used with integrated security. Docker builds are optimized for small image sizes. Stripe payment integration supports a Replit-style hybrid pricing model. The platform supports 29 programming languages via CodeMirror 6 for syntax highlighting and a robust runtime system with PID tracking and language-specific timeouts. It supports `single-vm` (default) and `kubernetes` deployment modes. `DockerExecutor` provides enterprise-grade sandboxed code execution using ephemeral containers. A Memory Bank System stores AI-generated contextual markdown files. Core systems include a WebSocket Resilience System, an Intersection Observer Animation System, and a Native Motion Library. A ReplDB-Compatible Key-Value Database provides a Replit-compatible key-value store. Tenant isolation is implemented with `PersistenceEngine`, `TenantContextMiddleware`, and `TenantScopedQueries` for secure, transactional, and tenant-scoped database access. PostgreSQL RLS policies are available for defense-in-depth.
+A PostgreSQL database is the primary data store. Security features include CSRF protection, input sanitization, tier-based rate limiting, API versioning, session-based authentication, and encrypted environment variables. The AI agent system offers SSE streaming, multi-provider AI model selection, database-backed conversation history, circuit breakers, and retry logic. Health monitoring integrates Kubernetes probes and a Provider Health API with Prometheus metrics. A two-tier database API architecture (Admin and Project Data APIs) is used with integrated security. Docker builds are optimized for small image sizes. Stripe payment integration supports a Replit-style hybrid pricing model. The platform supports 29 programming languages via CodeMirror 6 for syntax highlighting and a robust runtime system with PID tracking and language-specific timeouts. It supports `single-vm` (default) and `kubernetes` deployment modes. `DockerExecutor` provides enterprise-grade sandboxed code execution using ephemeral containers. A Memory Bank System stores AI-generated contextual markdown files. Core systems include a WebSocket Resilience System, an Intersection Observer Animation System, and a Native Motion Library. A ReplDB-Compatible Key-Value Database provides a Replit-compatible key-value store. Tenant isolation is implemented with `PersistenceEngine`, `TenantContextMiddleware`, and `TenantScopedQueries` for secure, transactional, and tenant-scoped database access, with PostgreSQL RLS policies for defense-in-depth.
 
 ## External Dependencies
 
 ### AI/ML Services
-- **OpenAI:** GPT-5.2, GPT-5.2-Codex, GPT-5.1, GPT-5, GPT-5-mini, GPT-5-nano, GPT-4.1, GPT-4.1-mini, GPT-4.1-nano, GPT-4o, GPT-4o-mini, o3, o4-mini
-- **Anthropic:** Claude Opus 4.5-20251101, Claude Opus 4.1-20250805, Claude Sonnet 4.5-20250929, Claude Sonnet 4-20250514, Claude Haiku 4.5
-- **Google Gemini:** Gemini 3 Flash, Gemini 3 Pro, Gemini 2.5 Pro, Gemini 2.5 Flash, Gemini 2.0 Flash
-- **Moonshot AI (Kimi):** kimi-k2-thinking, kimi-k2-thinking-turbo, kimi-k2-turbo-preview, kimi-k2-0905-preview
-- **xAI:** Grok 4.1 Fast (Reasoning), Grok 4.1 Fast (Non-Reasoning), Grok 4, Grok 3
+- OpenAI
+- Anthropic
+- Google Gemini
+- Moonshot AI (Kimi)
+- xAI
 
 ### Infrastructure Services
-- **PostgreSQL:** Neon serverless
-- **Redis:** Optional caching layer
-- **Stripe:** Payment processing
-- **SendGrid:** Email delivery
-- **Sentry:** Error monitoring
-- **Slack:** Production monitoring alerts
-- **Object Storage:** Replit built-in GCS-backed storage (production) / Local filesystem (development)
-- **E-Code Runner:** Optional separate microservice providing isolated workspace execution.
+- PostgreSQL (Neon serverless)
+- Redis (optional caching)
+- Stripe (payment processing)
+- SendGrid (email delivery)
+- Sentry (error monitoring)
+- Slack (production monitoring alerts)
+- Object Storage (Replit built-in GCS-backed for production, local filesystem for development)
+- E-Code Runner (optional separate microservice)
 
 ### Development Tools & Integrations
-- **GitHub:** OAuth integration
-- **Playwright:** Browser automation for testing
-- **Monaco Editor:** Microsoft's VS Code editor component
-- **xterm.js:** Terminal emulation library
-- **Tavily:** Web search integration
+- GitHub (OAuth integration)
+- Playwright (browser automation for testing)
+- Monaco Editor (Microsoft's VS Code editor component)
+- xterm.js (terminal emulation library)
+- Tavily (web search integration)
 
 ### Authentication Providers
-- **Replit Auth:** Google, GitHub, Twitter/X, Apple, email/password
-- **Custom Email/Password**
+- Replit Auth (Google, GitHub, Twitter/X, Apple, email/password)
+- Custom Email/Password
 
 ### Applications
-- **Desktop Application (Electron):** Cross-platform with multi-window, deep linking, auto-update, and secure IPC.
-- **Mobile Application (React Native + Expo SDK 54):** Cross-platform with platform-specific features.
+- Desktop Application (Electron)
+- Mobile Application (React Native + Expo SDK 54)
