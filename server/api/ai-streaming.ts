@@ -42,23 +42,16 @@ interface OpenAIModelCapabilities {
 }
 
 const OPENAI_MODEL_CAPABILITIES: Record<string, OpenAIModelCapabilities> = {
-  // GPT-5.x family - requires max_completion_tokens, no temperature
-  // ✅ CONSOLIDATED Jan 2026: Only gpt-5.2 is current, older versions use model-normalizer
-  'gpt-5.2': { requiresMaxCompletionTokens: true, supportsTemperature: false },
-  'gpt-5.2-codex': { requiresMaxCompletionTokens: true, supportsTemperature: false },
-  'gpt-5-mini': { requiresMaxCompletionTokens: true, supportsTemperature: false },
-  'gpt-5-nano': { requiresMaxCompletionTokens: true, supportsTemperature: false },
+  // GPT-4o family - standard parameters
+  'gpt-4o': { requiresMaxCompletionTokens: false, supportsTemperature: true },
+  'gpt-4o-mini': { requiresMaxCompletionTokens: false, supportsTemperature: true },
   // O-series - requires max_completion_tokens, no temperature
   'o1': { requiresMaxCompletionTokens: true, supportsTemperature: false },
   'o1-mini': { requiresMaxCompletionTokens: true, supportsTemperature: false },
   'o1-preview': { requiresMaxCompletionTokens: true, supportsTemperature: false },
   'o3': { requiresMaxCompletionTokens: true, supportsTemperature: false },
   'o3-mini': { requiresMaxCompletionTokens: true, supportsTemperature: false },
-  'o4-mini': { requiresMaxCompletionTokens: true, supportsTemperature: false },
-  // GPT-4.1 family - legacy parameters supported
-  'gpt-4.1': { requiresMaxCompletionTokens: false, supportsTemperature: true },
-  'gpt-4.1-mini': { requiresMaxCompletionTokens: false, supportsTemperature: true },
-  'gpt-4.1-nano': { requiresMaxCompletionTokens: false, supportsTemperature: true },
+  // GPT-4 family - legacy parameters supported
   'gpt-4-turbo': { requiresMaxCompletionTokens: false, supportsTemperature: true },
   'gpt-4': { requiresMaxCompletionTokens: false, supportsTemperature: true },
   // GPT-3.5 family - legacy parameters supported
@@ -76,9 +69,6 @@ function getOpenAIModelCapabilities(model: string): OpenAIModelCapabilities {
   }
   
   // Check family patterns for unknown variants
-  if (model.startsWith('gpt-5')) {
-    return { requiresMaxCompletionTokens: true, supportsTemperature: false };
-  }
   if (/^o[1-9]/.test(model)) {
     return { requiresMaxCompletionTokens: true, supportsTemperature: false };
   }
@@ -232,23 +222,22 @@ router.post('/agent/chat/stream', ensureAuthenticated, async (req, res) => {
   // ✅ ALIGNED Dec 5, 2025: Defaults MUST match AI_MODELS catalog IDs
   const getDefaultModel = (prov: string): string => {
     switch (prov) {
-      case 'openai': return 'gpt-5-mini';  // ✅ UPDATED Jan 2026: gpt-4o-mini deprecated
-      case 'anthropic': return 'claude-sonnet-4-5-20250929';
-      case 'gemini': return 'gemini-2.5-flash';  // ✅ STABLE: Gemini 2.5 Flash (production-ready)
-      case 'xai': return 'grok-4-fast';
+      case 'openai': return 'gpt-4o-mini';
+      case 'anthropic': return 'claude-3-5-sonnet-20241022';
+      case 'gemini': return 'gemini-2.5-flash';
+      case 'xai': return 'grok-2-1212';
       case 'moonshot': return 'moonshot-v1-32k';
-      default: return 'gpt-5-mini';
+      default: return 'gpt-4o-mini';
     }
   };
   
-  // Fast Mode model selection - use smaller/faster models for quick edits
   const getFastModel = (prov: string): string => {
     switch (prov) {
-      case 'anthropic': return 'claude-haiku-4-5-20251015';  // Fastest Claude
-      case 'openai': return 'gpt-5-mini';  // Fast GPT
-      case 'gemini': return 'gemini-2.5-flash';  // Fast Gemini (stable)
-      case 'xai': return 'grok-4-fast';  // Fast xAI
-      default: return 'gpt-5-mini';
+      case 'anthropic': return 'claude-3-5-haiku-20241022';
+      case 'openai': return 'gpt-4o-mini';
+      case 'gemini': return 'gemini-2.5-flash';
+      case 'xai': return 'grok-2-1212';
+      default: return 'gpt-4o-mini';
     }
   };
   
@@ -882,8 +871,8 @@ async function streamOpenAI(res: any, messages: any[], options: any) {
   const requestedTools = options.tools !== undefined ? options.tools : allTools;
   const tools = toOpenAITools(requestedTools);
   
-  // Use provided model or fallback to gpt-5-mini (reliable, cost-effective default - gpt-4o-mini deprecated)
-  const modelToUse = options.model || 'gpt-5-mini';
+  // Use provided model or fallback to gpt-4o-mini
+  const modelToUse = options.model || 'gpt-4o-mini';
   logger.info(`[OpenAI Stream] Using model: ${modelToUse}`);
   
   // Get model capabilities for correct parameter usage
@@ -1001,7 +990,7 @@ async function streamOpenAI(res: any, messages: any[], options: any) {
     content: fullContent,
     tool_calls: toolCalls,
     tool_results: toolResults,
-    model: options.model || 'gpt-5.2'  // ✅ CONSOLIDATED Jan 2026
+    model: options.model || 'gpt-4o'  // ✅ CONSOLIDATED Jan 2026
   });
   
   // ✅ Return token usage for billing
@@ -1033,8 +1022,8 @@ async function streamAnthropic(res: any, messages: any[], options: any) {
   const requestedTools = options.tools !== undefined ? options.tools : allTools;
   const tools = toAnthropicTools(requestedTools);
   
-  // Use provided model or default to claude-sonnet-4-5-20250929 (latest, falls back to 3.5 if needed)
-  const modelToUse = options.model || 'claude-sonnet-4-5-20250929';
+  // Use provided model or default to claude-3-5-sonnet-20241022
+  const modelToUse = options.model || 'claude-3-5-sonnet-20241022';
   logger.info(`[Anthropic Stream] Using model: ${modelToUse}`);
   
   // ✅ Use .stream() helper to get finalMessage() with usage
@@ -1184,7 +1173,7 @@ async function streamAnthropic(res: any, messages: any[], options: any) {
     content: fullContent,
     tool_calls: toolCalls,
     tool_results: toolResults,
-    model: options.model || 'claude-sonnet-4-5-20250929',
+    model: options.model || 'claude-3-5-sonnet-20241022',
     thinking: thinkingContent
   });
   
@@ -1294,7 +1283,7 @@ async function streamXAI(res: any, messages: any[], options: any) {
   });
   
   // ✅ FIXED Dec 5, 2025: Use catalog model ID (was grok-3-fast-latest which doesn't exist)
-  const modelToUse = options.model || 'grok-4-fast';
+  const modelToUse = options.model || 'grok-2-1212';
   logger.info(`[xAI Stream] Using model: ${modelToUse}`);
   
   try {
@@ -1486,32 +1475,28 @@ router.post('/agent/chat/stop', ensureAuthenticated, (req, res) => {
  */
 router.get('/agent/models', ensureAuthenticated, (req, res) => {
   const models = [
-    // OpenAI Models (January 2026) - ✅ CONSOLIDATED: Only gpt-5.2 is current
-    { provider: 'openai', model: 'gpt-5.2', name: 'GPT-5.2', context: 400000, available: !!process.env.OPENAI_API_KEY },
-    { provider: 'openai', model: 'gpt-5.2-codex', name: 'GPT-5.2 Codex', context: 400000, available: !!process.env.OPENAI_API_KEY },
-    { provider: 'openai', model: 'gpt-5-mini', name: 'GPT-5 Mini', context: 400000, available: !!process.env.OPENAI_API_KEY },
-    { provider: 'openai', model: 'gpt-5-nano', name: 'GPT-5 Nano', context: 400000, available: !!process.env.OPENAI_API_KEY },
-    { provider: 'openai', model: 'gpt-4.1', name: 'GPT-4.1', context: 1000000, available: !!process.env.OPENAI_API_KEY },
-    { provider: 'openai', model: 'o3', name: 'o3 (Reasoning)', context: 128000, available: !!process.env.OPENAI_API_KEY },
-    { provider: 'openai', model: 'o4-mini', name: 'o4 Mini', context: 128000, available: !!process.env.OPENAI_API_KEY },
+    // OpenAI Models
+    { provider: 'openai', model: 'gpt-4o', name: 'GPT-4o', context: 128000, available: !!process.env.OPENAI_API_KEY },
+    { provider: 'openai', model: 'gpt-4o-mini', name: 'GPT-4o Mini', context: 128000, available: !!process.env.OPENAI_API_KEY },
+    { provider: 'openai', model: 'o1', name: 'o1 (Reasoning)', context: 128000, available: !!process.env.OPENAI_API_KEY },
+    { provider: 'openai', model: 'o1-mini', name: 'o1 Mini', context: 128000, available: !!process.env.OPENAI_API_KEY },
+    { provider: 'openai', model: 'o3', name: 'o3 (Advanced Reasoning)', context: 128000, available: !!process.env.OPENAI_API_KEY },
     
-    // Anthropic Models (Claude 4.5 Family) - ✅ CONSOLIDATED: Only Claude 4.5 is current
-    { provider: 'anthropic', model: 'claude-opus-4-5-20251101', name: 'Claude Opus 4.5', context: 200000, available: !!process.env.ANTHROPIC_API_KEY },
-    { provider: 'anthropic', model: 'claude-sonnet-4-5-20250929', name: 'Claude Sonnet 4.5', context: 200000, available: !!process.env.ANTHROPIC_API_KEY },
-    { provider: 'anthropic', model: 'claude-haiku-4-5-20251015', name: 'Claude Haiku 4.5', context: 200000, available: !!process.env.ANTHROPIC_API_KEY },
+    // Anthropic Models
+    { provider: 'anthropic', model: 'claude-3-opus-20240229', name: 'Claude 3 Opus', context: 200000, available: !!process.env.ANTHROPIC_API_KEY },
+    { provider: 'anthropic', model: 'claude-3-5-sonnet-20241022', name: 'Claude 3.5 Sonnet', context: 200000, available: !!process.env.ANTHROPIC_API_KEY },
+    { provider: 'anthropic', model: 'claude-3-5-haiku-20241022', name: 'Claude 3.5 Haiku', context: 200000, available: !!process.env.ANTHROPIC_API_KEY },
     
-    // Google Gemini Models (January 2026) - ✅ STABLE: Gemini 2.5 is production-ready
-    { provider: 'gemini', model: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', context: 1000000, available: !!process.env.GEMINI_API_KEY },
+    // Google Gemini Models
     { provider: 'gemini', model: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', context: 1000000, available: !!process.env.GEMINI_API_KEY },
+    { provider: 'gemini', model: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash', context: 1000000, available: !!process.env.GEMINI_API_KEY },
+    { provider: 'gemini', model: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', context: 2000000, available: !!process.env.GEMINI_API_KEY },
+    { provider: 'gemini', model: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash', context: 1000000, available: !!process.env.GEMINI_API_KEY },
     
     // xAI Grok Models
-    { provider: 'xai', model: 'grok-4', name: 'Grok 4', context: 256000, available: !!process.env.XAI_API_KEY },
-    { provider: 'xai', model: 'grok-4-fast', name: 'Grok 4 Fast', context: 256000, available: !!process.env.XAI_API_KEY },
-    { provider: 'xai', model: 'grok-3-fast-latest', name: 'Grok 3 Fast', context: 128000, available: !!process.env.XAI_API_KEY },
+    { provider: 'xai', model: 'grok-2-1212', name: 'Grok 2', context: 131072, available: !!process.env.XAI_API_KEY },
     
-    // Moonshot AI (Kimi) Models - Verified Dec 2025: Only these 4 models exist
-    { provider: 'moonshot', model: 'kimi-k2-0711-preview', name: 'Kimi K2', context: 128000, available: !!process.env.MOONSHOT_API_KEY },
-    { provider: 'moonshot', model: 'kimi-k2-thinking', name: 'Kimi K2 Thinking', context: 256000, available: !!process.env.MOONSHOT_API_KEY },
+    // Moonshot AI (Kimi) Models
     { provider: 'moonshot', model: 'moonshot-v1-32k', name: 'Moonshot v1 32K', context: 32768, available: !!process.env.MOONSHOT_API_KEY },
     { provider: 'moonshot', model: 'moonshot-v1-128k', name: 'Moonshot v1 128K', context: 131072, available: !!process.env.MOONSHOT_API_KEY },
   ];

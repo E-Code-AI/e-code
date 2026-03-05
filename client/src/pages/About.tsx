@@ -400,11 +400,11 @@ export default function About() {
                 <CardContent className="pt-6">
                   <div className="flex items-center gap-4">
                     <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-xl font-semibold">
-                      {member.avatar}
+                      {member.avatar || member.name?.charAt(0) || 'U'}
                     </div>
                     <div>
-                      <h3 className="font-semibold text-[15px]">{member.name}</h3>
-                      <p className="text-[13px] text-muted-foreground leading-relaxed">{member.role}</p>
+                      <h3 className="font-semibold text-[15px]">{member.name || 'Team Member'}</h3>
+                      <p className="text-[13px] text-muted-foreground leading-relaxed">{member.role || 'Contributor'}</p>
                     </div>
                   </div>
                 </CardContent>

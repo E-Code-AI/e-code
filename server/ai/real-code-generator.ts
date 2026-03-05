@@ -295,7 +295,7 @@ ${context}`;
       // Try Claude first for better code understanding
       if (process.env.ANTHROPIC_API_KEY) {
         const response = await this.anthropic.messages.create({
-          model: 'claude-sonnet-4-5-20250929',
+          model: 'claude-3-5-sonnet-20241022',
           system: systemPrompt,
           messages: [{ role: 'user', content: userPrompt }],
           max_tokens: 4096,
@@ -315,7 +315,7 @@ ${context}`;
       // Fallback to OpenAI
       if (process.env.OPENAI_API_KEY) {
         const response = await this.openai.chat.completions.create({
-          model: 'gpt-5.2',  // ✅ CONSOLIDATED Jan 2026
+          model: 'gpt-4o',
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userPrompt }

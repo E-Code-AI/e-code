@@ -1,7 +1,7 @@
 # Project Brief
 
 ## Overview
-Project from Template #135
+E2E created by automated test
 
 ## Core Requirements
 [To be extracted from requirements]

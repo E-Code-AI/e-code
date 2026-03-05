@@ -5,14 +5,14 @@ import { useLocation } from "wouter";
 // Page transition variants
 const pageVariants: Record<string, Variants> = {
   slideRight: {
-    initial: { x: "100%", opacity: 0 },
-    animate: { x: 0, opacity: 1 },
-    exit: { x: "-20%", opacity: 0 },
+    initial: { y: 30, opacity: 0 },
+    animate: { y: 0, opacity: 1 },
+    exit: { y: -20, opacity: 0 },
   },
   slideLeft: {
-    initial: { x: "-100%", opacity: 0 },
-    animate: { x: 0, opacity: 1 },
-    exit: { x: "20%", opacity: 0 },
+    initial: { y: 30, opacity: 0 },
+    animate: { y: 0, opacity: 1 },
+    exit: { y: 20, opacity: 0 },
   },
   slideUp: {
     initial: { y: "100%", opacity: 0 },

@@ -320,6 +320,10 @@ export function useIDEWorkspace(projectId: string) {
     return null;
   }, [promptParam, autoStartAgent, storedPrompt, persistedBootstrapPrompt, bootstrapToken, project?.description]);
 
+  // Null safety for project object usage
+  const isOwner = project && user ? project.ownerId === user.id : false;
+  const projectTitle = project?.name || 'Loading...';
+
   // ========== EFFECTS ==========
 
   // Persist prompt from URL param

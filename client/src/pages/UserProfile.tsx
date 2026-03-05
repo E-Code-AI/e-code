@@ -81,8 +81,7 @@ export default function UserProfile() {
   const { data: profile, isLoading, error} = useQuery<UserProfile>({
     queryKey: ['/api/users', username],
     queryFn: async () => {
-      // apiRequest already returns parsed JSON and throws on !ok
-      return await apiRequest('GET', `/api/users/${username}`);
+      return await apiRequest('GET', `/api/users/username/${username}`);
     },
     enabled: !!username
   });

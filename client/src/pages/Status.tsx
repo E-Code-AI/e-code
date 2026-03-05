@@ -169,12 +169,12 @@ export default function Status() {
 
   // Handle services data structure from API
   const servicesArray = Array.isArray(services) ? services : 
-    (services && services.services) ? services.services : [];
+    (services && (services as any).services) ? (services as any).services : [];
 
   const overallStatus = servicesArray.length === 0 ? 'operational' : 
     servicesArray.every((s: any) => s.status === 'operational') 
     ? 'operational' 
-    : servicesArray.some((s: any) => s.status === 'major_outage' || s.status === 'partial_outage') 
+    : servicesArray.some((s: any) => s.status === 'major_outage' || s.status === 'partial_outage' || s.status === 'outage') 
     ? 'outage' 
     : 'degraded';
 

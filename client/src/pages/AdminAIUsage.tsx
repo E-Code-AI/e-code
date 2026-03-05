@@ -348,10 +348,10 @@ export default function AdminAIUsage() {
                     {usageData?.usage && usageData.usage.length > 0 ? (
                       usageData.usage.map((record) => (
                         <TableRow key={record.id} data-testid={`row-record-${record.id}`}>
-                          <TableCell className="font-mono text-[11px]">
+                  <TableCell className="font-mono text-[11px]">
                             <div>
                               <div className="font-medium">{record.username || 'Unknown'}</div>
-                              <div className="text-muted-foreground">{(record.userId || '').slice(0, 8)}...</div>
+                              <div className="text-muted-foreground">{(record.userId || 'unknown').toString().slice(0, 8)}...</div>
                             </div>
                           </TableCell>
                           <TableCell>
@@ -395,7 +395,7 @@ export default function AdminAIUsage() {
                         <div className="flex items-start justify-between">
                           <div>
                             <div className="font-medium">{record.username || 'Unknown'}</div>
-                            <div className="text-[11px] text-muted-foreground font-mono">{(record.userId || '').slice(0, 12)}...</div>
+                            <div className="text-[11px] text-muted-foreground font-mono">{(record.userId || 'unknown').toString().slice(0, 12)}...</div>
                           </div>
                           <Badge variant="outline">{record.userTier}</Badge>
                         </div>

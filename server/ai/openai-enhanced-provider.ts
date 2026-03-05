@@ -148,7 +148,7 @@ export interface OpenAIOptions {
 export class EnhancedOpenAIProvider implements AIProvider {
   name = 'OpenAI Enhanced';
   private client: OpenAI;
-  private defaultModel = 'gpt-5.2';  // ✅ CONSOLIDATED Jan 2026
+  private defaultModel = 'gpt-4o';
   
   constructor(apiKey?: string) {
     this.client = new OpenAI({
@@ -474,7 +474,7 @@ export class EnhancedOpenAIProvider implements AIProvider {
     userId?: number,
     options?: OpenAIOptions
   ): Promise<string> {
-    const model = options?.model || 'gpt-5.2';  // ✅ CONSOLIDATED Jan 2026
+    const model = options?.model || 'gpt-4o';
     const modelConfig = OPENAI_MODELS[model];
     
     if (!modelConfig.capabilities.includes('vision')) {

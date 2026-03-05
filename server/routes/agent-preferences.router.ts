@@ -47,7 +47,7 @@ export default function createAgentPreferencesRouter(storage: IStorage): Router 
           extendedThinking: false,
           highPowerMode: false,
           autoWebSearch: true,
-          preferredModel: 'claude-sonnet-4-5-20250929',
+          preferredModel: 'claude-3-5-sonnet-20241022',
           customInstructions: null,
           improvePromptEnabled: false,
           progressTabEnabled: false,
@@ -177,7 +177,7 @@ export default function createAgentPreferencesRouter(storage: IStorage): Router 
           userId,
           projectId: projectId || 0,
           messages: [],
-          model: 'claude-sonnet-4-5-20250929',
+          model: 'claude-3-5-sonnet-20241022',
           agentMode: 'build',
         })
         .returning();

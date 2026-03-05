@@ -414,8 +414,8 @@ export default function AdminBilling() {
                         <TableRow key={sub.id} className="border-zinc-700">
                           <TableCell className="text-white">
                             <div>
-                              <p className="font-medium">{sub.username}</p>
-                              <p className="text-[11px] text-zinc-500">{sub.email}</p>
+                              <p className="font-medium">{sub.username || 'Unknown'}</p>
+                              <p className="text-[11px] text-zinc-500">{sub.email || 'No email'}</p>
                             </div>
                           </TableCell>
                           <TableCell className="text-zinc-300 capitalize">{sub.subscriptionTier || 'free'}</TableCell>
@@ -472,7 +472,7 @@ export default function AdminBilling() {
                       {invoices.map((inv) => (
                         <TableRow key={inv.id} className="border-zinc-700">
                           <TableCell className="text-white font-mono text-[13px]">
-                            {inv.number || (inv.id || '').slice(0, 12)}
+                            {inv.number || (inv.id ? inv.id.toString().slice(0, 12) : 'N/A')}
                           </TableCell>
                           <TableCell className="text-white font-medium">
                             {inv.currency || 'USD'} ${(typeof inv.amount === 'number' ? inv.amount : parseFloat(String(inv.amount || 0))).toFixed(2)}

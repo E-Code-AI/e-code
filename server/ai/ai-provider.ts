@@ -65,10 +65,9 @@ export class OpenAIProvider implements AIProvider {
   // Get default model from AI_MODELS catalog
   private static getDefaultModel(): string {
     const openaiModels = AI_MODELS.filter(m => m.provider === 'openai');
-    // Prefer gpt-5.2 (flagship), fallback to gpt-5-mini (Jan 2026 consolidation)
-    return openaiModels.find(m => m.id === 'gpt-5.2')?.id 
-        || openaiModels.find(m => m.id === 'gpt-5-mini')?.id
-        || 'gpt-5-mini';
+    return openaiModels.find(m => m.id === 'gpt-4o')?.id 
+        || openaiModels.find(m => m.id === 'gpt-4o-mini')?.id
+        || 'gpt-4o';
   }
 
   constructor(apiKey?: string) {
@@ -187,10 +186,9 @@ export class AnthropicProvider implements AIProvider {
   // Get default model from AI_MODELS catalog
   private static getDefaultModel(): string {
     const anthropicModels = AI_MODELS.filter(m => m.provider === 'anthropic');
-    // Prefer claude-sonnet-4-5 (best balanced), fallback to haiku (fastest)
-    return anthropicModels.find(m => m.id === 'claude-sonnet-4-5-20250929')?.id
-        || anthropicModels.find(m => m.id === 'claude-haiku-4-5-20251015')?.id
-        || 'claude-sonnet-4-5-20250929';
+    return anthropicModels.find(m => m.id === 'claude-3-5-sonnet-20241022')?.id
+        || anthropicModels.find(m => m.id === 'claude-3-5-haiku-20241022')?.id
+        || 'claude-3-5-sonnet-20241022';
   }
 
   constructor(apiKey?: string) {

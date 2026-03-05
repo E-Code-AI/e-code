@@ -192,15 +192,15 @@ export default function Blog() {
                       <div className="flex items-center gap-4 text-[13px] text-muted-foreground">
                         <div className="flex items-center gap-1">
                           <User className="h-4 w-4" />
-                          <span>{featuredPost.author}</span>
+                          <span>{featuredPost.author || 'E-Code Team'}</span>
                         </div>
                         <div className="flex items-center gap-1">
                           <Calendar className="h-4 w-4" />
-                          <span>{new Date(featuredPost.publishedAt).toLocaleDateString()}</span>
+                          <span>{featuredPost.publishedAt ? new Date(featuredPost.publishedAt).toLocaleDateString() : 'Recent'}</span>
                         </div>
                         <div className="flex items-center gap-1">
                           <Clock className="h-4 w-4" />
-                          <span>{featuredPost.readTime} min read</span>
+                          <span>{featuredPost.readTime || '5'} min read</span>
                         </div>
                       </div>
                       <Button className="mt-6 w-fit min-h-[44px]" data-testid="button-blog-featured-read-more">
@@ -247,23 +247,23 @@ export default function Blog() {
               >
                 <CardHeader className="p-4 sm:p-6">
                   <div className="flex items-center justify-between mb-2">
-                    <Badge variant="secondary" className={`text-[11px] ${getCategoryColor(post.category)}`}>
-                      {post.category}
+                    <Badge variant="secondary" className={`text-[11px] ${getCategoryColor(post.category || 'Product')}`}>
+                      {post.category || 'Product'}
                     </Badge>
-                    <span className="text-[11px] sm:text-[13px] text-muted-foreground">{post.readTime} min read</span>
+                    <span className="text-[11px] sm:text-[13px] text-muted-foreground">{post.readTime || '5'} min read</span>
                   </div>
-                  <CardTitle className="line-clamp-2 text-base sm:text-[15px]">{post.title}</CardTitle>
+                  <CardTitle className="line-clamp-2 text-base sm:text-[15px]">{post.title || 'Untitled Post'}</CardTitle>
                 </CardHeader>
                 <CardContent className="p-4 sm:p-6 pt-0">
-                  <p className="text-muted-foreground line-clamp-3 mb-4 text-[13px]">{post.excerpt}</p>
+                  <p className="text-muted-foreground line-clamp-3 mb-4 text-[13px]">{post.excerpt || 'No excerpt available.'}</p>
                   <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-[11px] sm:text-[13px] text-muted-foreground">
                     <div className="flex items-center gap-1">
                       <User className="h-3 w-3" />
-                      <span>{post.author}</span>
+                      <span>{post.author || 'E-Code Team'}</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <Calendar className="h-3 w-3" />
-                      <span>{new Date(post.publishedAt).toLocaleDateString()}</span>
+                      <span>{post.publishedAt ? new Date(post.publishedAt).toLocaleDateString() : 'Recent'}</span>
                     </div>
                   </div>
                 </CardContent>

@@ -451,17 +451,17 @@ export default function Billing() {
                 </div>
               </div>
 
-              <div className="mt-8">
+                  <div className="mt-8">
                 <h3 className="font-semibold mb-4">Usage Limits</h3>
-                {plans.find(p => p.tier === currentTier) && (
+                {plans?.find(p => p.tier === currentTier) && (
                   <div className="space-y-4">
                     {(() => {
-                      const plan = plans.find(p => p.tier === currentTier);
+                      const plan = plans?.find(p => p.tier === currentTier);
                       if (!plan) return null;
                       const limitItems = [
-                        { label: 'Storage', current: usageData?.storage || 0, limit: plan.allowances.storageGb, unit: 'GB' },
-                        { label: 'Bandwidth', current: usageData?.bandwidth || 0, limit: plan.allowances.bandwidthGb, unit: 'GB' },
-                        { label: 'Collaborators', current: 1, limit: plan.allowances.collaborators, unit: 'users' },
+                        { label: 'Storage', current: usageData?.storage || 0, limit: plan.allowances?.storageGb || 0, unit: 'GB' },
+                        { label: 'Bandwidth', current: usageData?.bandwidth || 0, limit: plan.allowances?.bandwidthGb || 0, unit: 'GB' },
+                        { label: 'Collaborators', current: 1, limit: plan.allowances?.collaborators || 0, unit: 'users' },
                       ];
                       return limitItems.map(item => (
                         <div key={item.label} className="space-y-1">
@@ -472,7 +472,7 @@ export default function Billing() {
                             </span>
                           </div>
                           <Progress 
-                            value={item.limit === -1 ? 0 : (item.current / item.limit) * 100} 
+                            value={item.limit === -1 ? 0 : (item.current / Math.max(1, item.limit)) * 100} 
                             className="h-2" 
                           />
                         </div>

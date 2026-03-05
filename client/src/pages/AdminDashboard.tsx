@@ -23,15 +23,20 @@ import UserManagement from '@/components/admin/UserManagement';
 import { ProjectManagement } from '@/components/admin/ProjectManagement';
 
 interface SystemStatus {
-  database: { status: string; connections: number };
-  redis: { status: string; memory: string };
-  storage: { used: string; available: string };
-  services: {
-    git: boolean;
-    ai: boolean;
-    search: boolean;
-    billing: boolean;
-    deployments: boolean;
+  status?: string;
+  uptime?: string;
+  detailed?: {
+    uptime?: string;
+  };
+  database?: { status: string; connections: number };
+  redis?: { status: string; memory: string };
+  storage?: { used: string; available: string };
+  services?: {
+    git?: boolean;
+    ai?: boolean;
+    search?: boolean;
+    billing?: boolean;
+    deployments?: boolean;
   };
 }
 
@@ -47,6 +52,8 @@ interface ProjectStats {
   activeProjects: number;
   totalFiles: number;
   totalStorage: string;
+  totalRevenue?: string | number;
+  premiumUsers?: number;
 }
 
 interface ImportStats {
@@ -69,18 +76,18 @@ export default function AdminDashboard() {
   const [selectedTab, setSelectedTab] = useState('overview');
 
   // Fetch system status
-  const { data: systemStatus } = useQuery({
+  const { data: systemStatus } = useQuery<SystemStatus>({
     queryKey: ['/api/health/detailed'],
     refetchInterval: 30000
   });
 
   // Fetch user statistics
-  const { data: userStats } = useQuery({
+  const { data: userStats } = useQuery<UserStats>({
     queryKey: ['/api/admin/dashboard/stats']
   });
 
   // Fetch project statistics  
-  const { data: projectStats } = useQuery({
+  const { data: projectStats } = useQuery<ProjectStats>({
     queryKey: ['/api/admin/dashboard/stats']
   });
 
@@ -90,27 +97,27 @@ export default function AdminDashboard() {
   });
 
   // Fetch import statistics
-  const { data: importStats } = useQuery({
+  const { data: importStats } = useQuery<ImportStats>({
     queryKey: ['/api/admin/import-stats'],
     enabled: false // Endpoint not implemented yet
   });
 
   // Fetch recent activities
-  const { data: activities } = useQuery({
+  const { data: activities } = useQuery<any[]>({
     queryKey: ['/api/admin/activity'],
     refetchInterval: 60000
   });
 
   // Cache management mutations
   const clearCacheMutation = useMutation({
-    mutationFn: () => apiRequest('/api/admin/cache/clear', { method: 'POST' }),
+    mutationFn: () => apiRequest('POST', '/api/admin/cache/clear'),
     onSuccess: () => {
       queryClient.invalidateQueries();
     }
   });
 
   const runMaintenanceMutation = useMutation({
-    mutationFn: () => apiRequest('/api/admin/maintenance/run', { method: 'POST' })
+    mutationFn: () => apiRequest('POST', '/api/admin/maintenance/run')
   });
 
   return (

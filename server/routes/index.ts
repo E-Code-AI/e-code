@@ -229,6 +229,7 @@ export class MainRouter {
     app.use('/api', tierRateLimiters.api, deploymentRouter);
 
     // Deployment Rollback routes (uses /api/deployments/... internally)
+    // No mount prefix because router uses absolute paths like /deployments
     app.use('/api', tierRateLimiters.api, rollbackRouter);
 
     // File upload routes
@@ -250,6 +251,7 @@ export class MainRouter {
     app.use('/api/scalability', tierRateLimiters.api, scalabilityRouter);
 
     // Resources routes (uses /api/resources internally)
+    // No mount prefix because router uses absolute paths like /resources
     app.use('/api', tierRateLimiters.api, resourcesRouter);
 
     // Marketplace routes
@@ -278,6 +280,16 @@ export class MainRouter {
 
     // SEO Analytics routes (admin only - SEO management dashboard)
     app.use('/api/admin/seo', tierRateLimiters.api, seoRouter);
+
+    // Verify system status (including Runner status)
+    app.get('/api/system/status', async (req, res) => {
+      const runnerHealth = await import('../runnerClient').then(m => m.pingRunner()).catch(() => ({ online: false }));
+      res.json({
+        platform: 'online',
+        runner: runnerHealth,
+        timestamp: new Date().toISOString()
+      });
+    });
 
     // Generation Metrics routes (App generation performance monitoring)
     app.use('/api/metrics/generation', tierRateLimiters.api, generationMetricsRouter);
@@ -325,13 +337,13 @@ export class MainRouter {
     app.use('/api', tierRateLimiters.streaming, aiStreamingRouter);
 
     // Voice/Video WebRTC routes (uses /api/voice-video/... internally)
-    app.use('/api', tierRateLimiters.api, voiceVideoRouter);
+    app.use('/api/voice-video', tierRateLimiters.api, voiceVideoRouter);
 
     // Voice transcription (uses /api/voice/transcribe internally)
-    app.use('/api', tierRateLimiters.api, voiceTranscribeRouter);
+    app.use('/api/voice', tierRateLimiters.api, voiceTranscribeRouter);
 
     // Data Provisioning routes (uses /api/data-provisioning/... internally)
-    app.use('/api', tierRateLimiters.api, dataProvisioningRouter);
+    app.use('/api/data-provisioning', tierRateLimiters.api, dataProvisioningRouter);
 
     // Terminal routes (uses /api/terminal/... internally)
     app.use('/api', tierRateLimiters.api, terminalRouter);

@@ -50,9 +50,7 @@ export default function TemplateMarketplace() {
   const { data: categories, isLoading: categoriesLoading } = useQuery({
     queryKey: ['/api/marketplace/categories'],
     queryFn: async () => {
-      const response = await fetch('/api/marketplace/categories');
-      if (!response.ok) throw new Error('Failed to fetch categories');
-      return response.json();
+      return apiRequest('GET', '/api/marketplace/categories');
     },
   });
 
@@ -60,9 +58,7 @@ export default function TemplateMarketplace() {
   const { data: popularTags } = useQuery({
     queryKey: ['/api/marketplace/tags'],
     queryFn: async () => {
-      const response = await fetch('/api/marketplace/tags');
-      if (!response.ok) throw new Error('Failed to fetch tags');
-      return response.json();
+      return apiRequest('GET', '/api/marketplace/tags');
     },
   });
 
@@ -82,22 +78,23 @@ export default function TemplateMarketplace() {
       community: activeTab === 'community' ? true : undefined,
     }],
     queryFn: async ({ queryKey }) => {
-      const [url, params] = queryKey;
+      const [url, params] = queryKey as [string, any];
       const queryParams = new URLSearchParams();
       
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          if (Array.isArray(value)) {
-            value.forEach(v => queryParams.append(key, v));
-          } else {
-            queryParams.set(key, String(value));
+      if (params) {
+        Object.entries(params).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) {
+            if (Array.isArray(value)) {
+              value.forEach(v => queryParams.append(key, String(v)));
+            } else {
+              queryParams.set(key, String(value));
+            }
           }
-        }
-      });
+        });
+      }
 
-      const response = await fetch(`${url}?${queryParams}`);
-      if (!response.ok) throw new Error('Failed to fetch templates');
-      return response.json();
+      const response = await apiRequest('GET', `${url}?${queryParams}`);
+      return response;
     },
   });
 
@@ -105,9 +102,7 @@ export default function TemplateMarketplace() {
   const { data: trendingTemplates } = useQuery({
     queryKey: ['/api/marketplace/trending'],
     queryFn: async () => {
-      const response = await fetch('/api/marketplace/trending?limit=5');
-      if (!response.ok) throw new Error('Failed to fetch trending templates');
-      return response.json();
+      return apiRequest('GET', '/api/marketplace/trending?limit=5');
     },
   });
 
@@ -147,7 +142,7 @@ export default function TemplateMarketplace() {
       // Optionally navigate to the project
       if (response.project) {
         setTimeout(() => {
-          window.location.href = `/project/${response.project.id}`;
+          navigate(`/project/${response.project.id}`);
         }, 1500);
       }
     } catch (error) {
@@ -180,7 +175,7 @@ export default function TemplateMarketplace() {
       // Navigate to the forked project
       if (response.project) {
         setTimeout(() => {
-          window.location.href = `/project/${response.project.id}`;
+          navigate(`/project/${response.project.id}`);
         }, 1500);
       }
     } catch (error) {
@@ -224,7 +219,7 @@ export default function TemplateMarketplace() {
                 <Button
                   variant="outline"
                   className="gap-2"
-                  onClick={() => window.location.href = '/templates/submit'}
+                  onClick={() => navigate('/templates/submit')}
                   data-testid="submit-template-button"
                 >
                   <Upload className="h-4 w-4" />

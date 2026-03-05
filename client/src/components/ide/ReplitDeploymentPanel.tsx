@@ -651,6 +651,80 @@ export function ReplitDeploymentPanel({
           )}
         </CardTitle>
       </CardHeader>
+      
+      {/* NEW: Prominent Status & Publish Section at the TOP */}
+      <div className="px-4 pb-4 shrink-0">
+        <Card className={cn("border-2", 
+          displayStatus === 'live' ? "border-green-500/20 bg-green-500/5" : 
+          displayStatus === 'failed' ? "border-red-500/20 bg-red-500/5" : 
+          displayStatus === 'publishing' ? "border-blue-500/20 bg-blue-500/5" : 
+          "border-border bg-muted/30"
+        )}>
+          <CardContent className="p-4">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className={cn("p-2 rounded-full", 
+                  displayStatus === 'live' ? "bg-green-500/20 text-green-500" :
+                  displayStatus === 'failed' ? "bg-red-500/20 text-red-500" :
+                  displayStatus === 'publishing' ? "bg-blue-500/20 text-blue-500 animate-pulse" :
+                  "bg-muted text-muted-foreground"
+                )}>
+                  <Rocket className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-bold text-lg capitalize">{displayStatus.replace('-', ' ')}</h3>
+                    {getStatusIcon(displayStatus)}
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {displayStatus === 'live' ? `Last deployed: ${deployment?.deployedAt ? new Date(deployment.deployedAt).toLocaleString() : 'Just now'}` : 
+                     displayStatus === 'publishing' ? "Deployment in progress..." : 
+                     "Ready to publish your application"}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex gap-2 w-full sm:w-auto">
+                {!isActive || displayStatus === 'needs-republish' ? (
+                  <Button 
+                    className="flex-1 sm:flex-initial gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
+                    size="lg"
+                    onClick={() => publishMutation.mutate()}
+                    disabled={publishMutation.isPending || isInProgress}
+                  >
+                    {publishMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Rocket className="h-4 w-4" />}
+                    {displayStatus === 'needs-republish' ? 'Update App' : 'Publish App'}
+                  </Button>
+                ) : (
+                  <Button 
+                    variant="outline"
+                    className="flex-1 sm:flex-initial gap-2"
+                    size="lg"
+                    onClick={() => republishMutation.mutate()}
+                    disabled={republishMutation.isPending || isInProgress}
+                  >
+                    {republishMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                    Republish
+                  </Button>
+                )}
+                
+                {isActive && deployment?.url && (
+                  <Button 
+                    variant="secondary"
+                    className="flex-1 sm:flex-initial gap-2"
+                    size="lg"
+                    onClick={() => window.open(deployment.url, '_blank')}
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    Visit Site
+                  </Button>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       <CardContent className="flex-1 overflow-hidden p-0">
         <Tabs 
           value={activeTab} 
@@ -1100,54 +1174,18 @@ export function ReplitDeploymentPanel({
 
                   <Separator />
 
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    <Button
-                      className="flex-1"
-                      onClick={() => {
-                        if (isActive) {
-                          republishMutation.mutate(undefined);
-                        } else {
-                          publishMutation.mutate(undefined);
-                        }
-                      }}
-                      disabled={publishMutation.isPending || republishMutation.isPending || isDeploying}
-                      data-testid="button-publish"
-                    >
-                      {publishMutation.isPending || republishMutation.isPending || isDeploying ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          {isActive ? 'Republishing...' : 'Publishing...'}
-                        </>
-                      ) : (
-                        <>
-                          <Rocket className="h-4 w-4 mr-2" />
-                          {isActive ? 'Republish' : 'Publish'}
-                        </>
-                      )}
-                    </Button>
-                    
-                    {!isActive && (
-                      <Button
-                        variant="outline"
-                        className="flex-1"
-                        onClick={() => deployMutation.mutate(undefined)}
-                        disabled={deployMutation.isPending || isDeploying}
-                        data-testid="button-deploy"
-                      >
-                        {deployMutation.isPending ? (
-                          <>
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                            Deploying...
-                          </>
-                        ) : (
-                          <>
-                            <Play className="h-4 w-4 mr-2" />
-                            Deploy
-                          </>
-                        )}
-                      </Button>
-                    )}
-                  </div>
+                  <Button 
+                    className="w-full gap-2"
+                    variant="outline"
+                    onClick={() => {
+                      const url = deployment?.url;
+                      if (url) window.open(url, '_blank');
+                    }}
+                    disabled={!deployment?.url}
+                  >
+                    <Globe className="h-4 w-4" />
+                    Open Production URL
+                  </Button>
                 </div>
               </>
             )}

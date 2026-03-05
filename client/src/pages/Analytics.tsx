@@ -82,6 +82,9 @@ export default function Analytics() {
   // Fetch real analytics data from API
   const { data: analyticsData, isLoading } = useQuery<AnalyticsData>({
     queryKey: ['/api/analytics', timeRange],
+    queryFn: async () => {
+      return await apiRequest('GET', `/api/analytics?timeRange=${timeRange}`);
+    },
     initialData: {
       overview: [],
       trafficSources: [],
@@ -96,6 +99,9 @@ export default function Analytics() {
   // Fetch real-time activity data
   const { data: realtimeActivityData, isLoading: realtimeLoading } = useQuery<{ activities: RealtimeActivity[] }>({
     queryKey: ['/api/analytics/realtime-activity'],
+    queryFn: async () => {
+      return await apiRequest('GET', '/api/analytics/realtime-activity');
+    },
     staleTime: 10000,
     refetchInterval: 15000
   });

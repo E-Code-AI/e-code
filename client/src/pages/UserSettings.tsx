@@ -70,9 +70,7 @@ export default function UserSettings() {
   const { data: settings, isLoading } = useQuery({
     queryKey: ['/api/user/settings'],
     queryFn: async () => {
-      const res = await apiRequest('GET', '/api/user/settings');
-      if (!res.ok) throw new Error('Failed to fetch settings');
-      return res.json();
+      return await apiRequest('GET', '/api/user/settings');
     },
     enabled: !!user
   });

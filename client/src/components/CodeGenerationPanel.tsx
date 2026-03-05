@@ -37,7 +37,7 @@ export function CodeGenerationPanel() {
   // State
   const [prompt, setPrompt] = useState('');
   const [language, setLanguage] = useState('typescript');
-  const [selectedModel, setSelectedModel] = useState('gpt-5-mini');
+  const [selectedModel, setSelectedModel] = useState('gpt-4o-mini');
   const [generatedCode, setGeneratedCode] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState({ chunks: 0, length: 0 });

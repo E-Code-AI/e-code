@@ -172,7 +172,7 @@ export class MCPClient {
   async getAICompletion(prompt: string, model?: string): Promise<string> {
     const result = await this.executeTool('ai_complete', { 
       prompt, 
-      model: model || 'claude-sonnet-4-5-20250929' 
+      model: model || 'claude-3-5-sonnet-20241022' 
     });
     return result.content[0]?.text || '';
   }

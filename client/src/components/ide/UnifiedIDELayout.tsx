@@ -198,6 +198,10 @@ function UnifiedIDELayout({
     handleAddTool,
   } = workspace;
 
+  // Null safety check for project
+  const projectLanguage = project?.language || 'javascript';
+  const projectName = project?.name || 'Untitled Project';
+
   const handleActivityItemClick = useCallback((item: ActivityItem) => {
     setActiveActivityItem(item);
     

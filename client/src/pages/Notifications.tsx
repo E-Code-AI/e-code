@@ -474,7 +474,7 @@ export default function Notifications() {
                       <div className="flex-shrink-0 mt-1">
                         {notification.user ? (
                           <Avatar className="h-8 w-8">
-                            <AvatarImage src={notification.user.avatar} />
+                            <AvatarImage src={notification.user?.avatar} />
                             <AvatarFallback>
                               {(notification.user?.username || '?')?.[0]?.toUpperCase() || '?'}
                             </AvatarFallback>

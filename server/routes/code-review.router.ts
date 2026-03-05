@@ -41,7 +41,7 @@ router.post('/analyze', ensureAuthenticated, async (req: Request, res: Response)
     const client = new Anthropic();
 
     const message = await client.messages.create({
-      model: 'claude-haiku-4-5-20251015',
+      model: 'claude-3-5-haiku-20241022',
       max_tokens: 2048,
       system: SYSTEM_PROMPT,
       messages: [

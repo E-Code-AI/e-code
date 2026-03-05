@@ -95,8 +95,8 @@ export default function Settings() {
         preferences: {
           theme: globalTheme,
           editorTheme,
-          fontSize: parseInt(fontSize),
-          tabSize: parseInt(tabSize),
+          fontSize: parseInt(fontSize) || 14,
+          tabSize: parseInt(tabSize) || 2,
           wordWrap,
           minimap,
           autoSave,

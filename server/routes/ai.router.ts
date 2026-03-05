@@ -101,10 +101,10 @@ router.get('/features', (_req, res) => {
       { name: 'Checkpoint & Rollback', icon: 'History', description: 'Atomic snapshots at every AI step' }
     ],
     providers: [
-      { name: 'OpenAI', models: ['GPT-5.2', 'GPT-4o', 'o3', 'o4-mini'], available: !!process.env.OPENAI_API_KEY },
-      { name: 'Anthropic', models: ['Claude Opus 4.5', 'Claude Sonnet 4.5', 'Claude Haiku 4.5'], available: !!process.env.ANTHROPIC_API_KEY },
-      { name: 'Google Gemini', models: ['Gemini 3 Flash', 'Gemini 2.5 Pro', 'Gemini 2.5 Flash'], available: !!process.env.GEMINI_API_KEY },
-      { name: 'xAI', models: ['Grok 4.1 Fast', 'Grok 4'], available: !!process.env.XAI_API_KEY },
+      { name: 'OpenAI', models: ['GPT-4o', 'GPT-4o Mini', 'o1', 'o3'], available: !!process.env.OPENAI_API_KEY },
+      { name: 'Anthropic', models: ['Claude 3 Opus', 'Claude 3.5 Sonnet', 'Claude 3.5 Haiku'], available: !!process.env.ANTHROPIC_API_KEY },
+      { name: 'Google Gemini', models: ['Gemini 2.5 Flash', 'Gemini 2.0 Flash', 'Gemini 1.5 Pro'], available: !!process.env.GEMINI_API_KEY },
+      { name: 'xAI', models: ['Grok 2'], available: !!process.env.XAI_API_KEY },
       { name: 'Moonshot (Kimi)', models: ['Kimi K2 Thinking', 'Kimi K2 Turbo'], available: !!process.env.MOONSHOT_API_KEY }
     ]
   });
@@ -113,15 +113,11 @@ router.get('/features', (_req, res) => {
 // GET /api/openai/models — OpenAI-specific model list (public endpoint, used by OpenAIModelSelector)
 router.get('/openai/models', (_req, res) => {
   res.json([
-    { id: 'gpt-5.2', name: 'GPT-5.2', capabilities: ['chat', 'function_calling', 'code_interpreter', 'reasoning', 'complex_analysis'], contextWindow: 200000, maxOutput: 32000 },
-    { id: 'gpt-5.2-codex', name: 'GPT-5.2 Codex', capabilities: ['chat', 'code_interpreter', 'function_calling'], contextWindow: 200000, maxOutput: 32000 },
-    { id: 'gpt-5.1', name: 'GPT-5.1', capabilities: ['chat', 'function_calling', 'reasoning'], contextWindow: 128000, maxOutput: 16000 },
-    { id: 'gpt-5', name: 'GPT-5', capabilities: ['chat', 'function_calling', 'reasoning'], contextWindow: 128000, maxOutput: 16000 },
-    { id: 'gpt-5-mini', name: 'GPT-5 Mini', capabilities: ['chat', 'function_calling'], contextWindow: 128000, maxOutput: 16000 },
     { id: 'gpt-4o', name: 'GPT-4o', capabilities: ['chat', 'vision', 'function_calling', 'code_interpreter'], contextWindow: 128000, maxOutput: 4096 },
     { id: 'gpt-4o-mini', name: 'GPT-4o Mini', capabilities: ['chat', 'function_calling'], contextWindow: 128000, maxOutput: 16000 },
-    { id: 'o3', name: 'o3', capabilities: ['chat', 'reasoning', 'complex_analysis'], contextWindow: 200000, maxOutput: 100000 },
-    { id: 'o4-mini', name: 'o4-mini', capabilities: ['chat', 'reasoning'], contextWindow: 200000, maxOutput: 100000 }
+    { id: 'o1', name: 'o1', capabilities: ['chat', 'reasoning', 'complex_analysis'], contextWindow: 128000, maxOutput: 32768 },
+    { id: 'o1-mini', name: 'o1 Mini', capabilities: ['chat', 'reasoning'], contextWindow: 128000, maxOutput: 65536 },
+    { id: 'o3', name: 'o3', capabilities: ['chat', 'reasoning', 'complex_analysis'], contextWindow: 128000, maxOutput: 100000 }
   ]);
 });
 

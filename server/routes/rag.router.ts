@@ -363,38 +363,28 @@ router.post('/search', ensureAuthenticated, async (req, res) => {
  */
 router.get('/models', ensureAuthenticated, async (req, res) => {
   try {
-    // ✅ CONSOLIDATED Jan 2026: Only gpt-5.2 is current
     const ragCapableModels = [
       {
-        id: 'gpt-5.2',
-        name: 'GPT-5.2',
+        id: 'gpt-4o',
+        name: 'GPT-4o',
         provider: 'openai',
         ragSupport: true,
         embeddingModel: 'text-embedding-3-small',
-        contextWindow: 400000,
+        contextWindow: 128000,
         features: ['embeddings', 'function_calling', 'structured_outputs']
       },
       {
-        id: 'gpt-5.2-codex',
-        name: 'GPT-5.2 Codex',
+        id: 'gpt-4o-mini',
+        name: 'GPT-4o Mini',
         provider: 'openai',
         ragSupport: true,
         embeddingModel: 'text-embedding-3-small',
-        contextWindow: 400000,
-        features: ['embeddings', 'function_calling', 'code_generation']
-      },
-      {
-        id: 'gpt-5-mini',
-        name: 'GPT-5 Mini',
-        provider: 'openai',
-        ragSupport: true,
-        embeddingModel: 'text-embedding-3-small',
-        contextWindow: 400000,
+        contextWindow: 128000,
         features: ['embeddings', 'function_calling']
       },
       {
-        id: 'claude-sonnet-4-5-20250929',
-        name: 'Claude Sonnet 4.5',
+        id: 'claude-3-5-sonnet-20241022',
+        name: 'Claude 3.5 Sonnet',
         provider: 'anthropic',
         ragSupport: true,
         embeddingModel: null,
@@ -402,8 +392,8 @@ router.get('/models', ensureAuthenticated, async (req, res) => {
         features: ['long_context', 'function_calling']
       },
       {
-        id: 'claude-opus-4-5-20251101',
-        name: 'Claude Opus 4.5',
+        id: 'claude-3-opus-20240229',
+        name: 'Claude 3 Opus',
         provider: 'anthropic',
         ragSupport: true,
         embeddingModel: null,
@@ -420,7 +410,7 @@ router.get('/models', ensureAuthenticated, async (req, res) => {
         features: ['embeddings', 'multimodal', 'function_calling']
       },
       {
-        id: 'gemini-2.5-pro',
+        id: 'gemini-1.5-pro',
         name: 'Gemini 2.5 Pro',
         provider: 'gemini',
         ragSupport: true,
@@ -429,7 +419,7 @@ router.get('/models', ensureAuthenticated, async (req, res) => {
         features: ['embeddings', 'multimodal', 'function_calling', 'code_execution']
       },
       {
-        id: 'grok-4',
+        id: 'grok-2-1212',
         name: 'Grok 4',
         provider: 'xai',
         ragSupport: true,

@@ -284,21 +284,21 @@ export default function AdminMonitoring() {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
                       <h4 className="text-[13px] font-medium text-zinc-400 mb-2">Memory</h4>
-                      <p className="text-white">Usage: {detailedHealth.system.memory?.usage ?? 'N/A'}</p>
-                      <p className="text-zinc-400 text-[13px]">Available: {detailedHealth.system.memory?.available ?? 'N/A'}</p>
-                      <p className="text-zinc-400 text-[13px]">Total: {detailedHealth.system.memory?.total ?? 'N/A'}</p>
+                      <p className="text-white">Usage: {detailedHealth?.system?.memory?.usage ?? 'N/A'}</p>
+                      <p className="text-zinc-400 text-[13px]">Available: {detailedHealth?.system?.memory?.available ?? 'N/A'}</p>
+                      <p className="text-zinc-400 text-[13px]">Total: {detailedHealth?.system?.memory?.total ?? 'N/A'}</p>
                     </div>
                     <div>
                       <h4 className="text-[13px] font-medium text-zinc-400 mb-2">CPU</h4>
-                      <p className="text-white">{detailedHealth.system.cpu?.cores ?? 0} cores</p>
-                      <p className="text-zinc-400 text-[13px]">{detailedHealth.system.cpu?.model ?? 'Unknown'}</p>
-                      <p className="text-zinc-400 text-[13px]">Load: {detailedHealth.system.cpu?.loadAverage?.join(', ') ?? 'N/A'}</p>
+                      <p className="text-white">{detailedHealth?.system?.cpu?.cores ?? 0} cores</p>
+                      <p className="text-zinc-400 text-[13px]">{detailedHealth?.system?.cpu?.model ?? 'Unknown'}</p>
+                      <p className="text-zinc-400 text-[13px]">Load: {detailedHealth?.system?.cpu?.loadAverage?.join(', ') ?? 'N/A'}</p>
                     </div>
                     <div>
                       <h4 className="text-[13px] font-medium text-zinc-400 mb-2">Platform</h4>
-                      <p className="text-white">{detailedHealth.system.platform?.os ?? 'Unknown'} ({detailedHealth.system.platform?.arch ?? 'Unknown'})</p>
-                      <p className="text-zinc-400 text-[13px]">Node.js {detailedHealth.system.platform?.nodeVersion ?? 'Unknown'}</p>
-                      <p className="text-zinc-400 text-[13px]">Uptime: {detailedHealth.system.platform?.uptime ?? '0'}</p>
+                      <p className="text-white">{detailedHealth?.system?.platform?.os ?? 'Unknown'} ({detailedHealth?.system?.platform?.arch ?? 'Unknown'})</p>
+                      <p className="text-zinc-400 text-[13px]">Node.js {detailedHealth?.system?.platform?.nodeVersion ?? 'Unknown'}</p>
+                      <p className="text-zinc-400 text-[13px]">Uptime: {detailedHealth?.system?.platform?.uptime ?? '0'}</p>
                     </div>
                   </div>
                 </CardContent>

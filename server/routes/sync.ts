@@ -112,7 +112,7 @@ const DEFAULT_PREFERENCES: UserPreferences = {
   wordWrap: false,
   keyboardShortcuts: {},
   aiPreferences: {
-    defaultModel: 'claude-sonnet-4-5-20250929',
+    defaultModel: 'claude-3-5-sonnet-20241022',
     autoComplete: true,
     inlineSuggestions: true,
   },
@@ -209,7 +209,7 @@ router.get('/preferences', async (req: Request, res: Response) => {
       ...DEFAULT_PREFERENCES,
       aiPreferences: {
         ...DEFAULT_PREFERENCES.aiPreferences,
-        defaultModel: settings?.preferredModel || 'claude-sonnet-4-5-20250929',
+        defaultModel: settings?.preferredModel || 'claude-3-5-sonnet-20241022',
       },
     };
 

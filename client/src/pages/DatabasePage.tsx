@@ -95,6 +95,9 @@ export default function DatabasePage() {
 
   const { data: schemasData, isLoading: schemasLoading, error: schemasError } = useQuery<{ tables: TableSchema[] }>({
     queryKey: ['/api/admin/database/tables'],
+    queryFn: async () => {
+      return await apiRequest('GET', '/api/admin/database/tables');
+    },
   });
 
   const schemas = schemasData?.tables || [];

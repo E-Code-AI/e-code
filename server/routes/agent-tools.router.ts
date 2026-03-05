@@ -507,7 +507,7 @@ export default function createAgentToolsRouter(): Router {
         status: 'started',
         message: 'Extended thinking analysis started',
         settings: {
-          model: model || 'claude-sonnet-4-5-20250929',
+          model: model || 'claude-3-5-sonnet-20241022',
           extendedThinking: true,
         }
       });
@@ -907,12 +907,12 @@ export default function createAgentToolsRouter(): Router {
         extendedThinking: {
           enabled: true,
           status: 'operational',
-          models: ['claude-opus-4-5-20251101', 'claude-sonnet-4-5-20250929', 'o3', 'gpt-5.2']  // ✅ CONSOLIDATED Jan 2026
+          models: ['claude-3-opus-20240229', 'claude-3-5-sonnet-20241022', 'o3', 'gpt-4o']
         },
         highPowerModels: {
           enabled: true,
           status: 'operational',
-          models: ['gpt-5.2', 'claude-opus-4-5-20251101', 'gemini-3-pro', 'grok-4']  // ✅ CONSOLIDATED Jan 2026
+          models: ['gpt-4o', 'claude-3-opus-20240229', 'gemini-1.5-pro', 'grok-2-1212']
         },
         maxAutonomy: {
           enabled: true,

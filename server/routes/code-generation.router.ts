@@ -64,14 +64,10 @@ Generate the code now:`;
     ];
     
     // Get model or use default
-    const model = modelId || 'gpt-5-mini';
+    const model = modelId || 'gpt-4o-mini';
     logger.info('[Code Generation] Using model:', model);
     
-    // Stream code generation using aiProviderManager
-    // ✅ CRITICAL FIX: GPT-5 family and o-series use max_completion_tokens instead of max_tokens
-    const usesMaxCompletionTokens = model.startsWith('gpt-5') || 
-                                     model.startsWith('o3') || 
-                                     model.startsWith('o4');
+    const usesMaxCompletionTokens = /^o[1-9]/.test(model);
     
     const streamOptions: any = {};
     
@@ -155,7 +151,7 @@ router.get('/models', tierRateLimiters.api, async (req, res) => {
     
     res.json({
       models: codeGenModels,
-      defaultModel: 'gpt-5-mini'
+      defaultModel: 'gpt-4o-mini'
     });
   } catch (error: any) {
     logger.error('[Code Generation] Error getting models:', error);

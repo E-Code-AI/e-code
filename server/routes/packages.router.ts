@@ -460,13 +460,13 @@ router.get('/installed', ensureAuthenticated, ensureProjectAccess, async (req, r
 /**
  * Search packages from registry (npm/pip)
  * GET /api/packages/:projectId/search?q=query
+ * Also supports: GET /api/packages/:projectId/search/:query
  */
-router.get('/:projectId/search', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+router.get('/:projectId/search/:query?', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
   try {
     const { projectId } = req.params;
-    const query = req.query.q as string;
+    const query = (req.params.query || req.query.q) as string;
     const language = req.query.language as string || 'nodejs';
-    const projectIdStr = req.params.projectId || req.query.projectId as string;
     
     if (!query || query.length < 2) {
       return res.status(400).json({ 

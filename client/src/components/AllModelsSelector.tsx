@@ -28,7 +28,7 @@ interface ModelInfo {
 
 export function AllModelsSelector() {
   const { toast } = useToast();
-  const [selectedModel, setSelectedModel] = useState<string>('gpt-5.2');
+  const [selectedModel, setSelectedModel] = useState<string>('gpt-4o');
   const [testPrompt, setTestPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -49,143 +49,83 @@ export function AllModelsSelector() {
     ...(openaiModels?.models || []),
     ...(opensourceData?.models || []),
     
-    // OpenAI - January 2026 CONSOLIDATED (gpt-5/gpt-5.1 → gpt-5.2)
+    // OpenAI
     {
-      id: 'gpt-5.2',
-      name: 'GPT-5.2',
-      description: 'Current flagship - advanced reasoning with 400K context (Jan 2026)',
-      provider: 'OpenAI',
-      contextWindow: 400000,
-      capabilities: ['Chat', 'Code', 'Reasoning', 'Tools'],
-      pricing: { input: 1.75, output: 14, currency: 'USD', unit: '1M tokens' },
-      available: true
-    },
-    {
-      id: 'gpt-5.2-codex',
-      name: 'GPT-5.2 Codex',
-      description: 'Coding optimized - enhanced code generation & debugging (Jan 2026)',
-      provider: 'OpenAI',
-      contextWindow: 400000,
-      capabilities: ['Chat', 'Code', 'Debugging', 'Tools'],
-      pricing: { input: 1.75, output: 14, currency: 'USD', unit: '1M tokens' },
-      available: true
-    },
-    {
-      id: 'gpt-5-mini',
-      name: 'GPT-5 Mini',
-      description: 'Cost-optimized reasoning - balances speed, cost, capability',
-      provider: 'OpenAI',
-      contextWindow: 400000,
-      capabilities: ['Chat', 'Code', 'Reasoning'],
-      pricing: { input: 0.5, output: 2, currency: 'USD', unit: '1M tokens' },
-      available: true
-    },
-    {
-      id: 'gpt-5-nano',
-      name: 'GPT-5 Nano',
-      description: 'High-throughput for simple tasks - most affordable',
-      provider: 'OpenAI',
-      contextWindow: 400000,
-      capabilities: ['Chat', 'Code'],
-      pricing: { input: 0.25, output: 1, currency: 'USD', unit: '1M tokens' },
-      available: true
-    },
-    {
-      id: 'gpt-4.1',
-      name: 'GPT-4.1',
-      description: 'Excellent for coding, instruction-following, web development (April 2025)',
-      provider: 'OpenAI',
-      contextWindow: 1000000,
-      capabilities: ['Chat', 'Code', 'Vision', 'Tools'],
-      pricing: { input: 2, output: 8, currency: 'USD', unit: '1M tokens' },
-      available: true
-    },
-    {
-      id: 'gpt-4.1-mini',
-      name: 'GPT-4.1 Mini',
-      description: '83% cost reduction vs GPT-4o - significant upgrade',
-      provider: 'OpenAI',
-      contextWindow: 1000000,
-      capabilities: ['Chat', 'Code', 'Vision'],
-      pricing: { input: 0.4, output: 1.6, currency: 'USD', unit: '1M tokens' },
-      available: true
-    },
-    {
-      id: 'gpt-4.1-nano',
-      name: 'GPT-4.1 Nano',
-      description: 'Ultra-fast, 1M context, 80.1% MMLU - cheapest option',
-      provider: 'OpenAI',
-      contextWindow: 1000000,
-      capabilities: ['Chat', 'Code'],
-      pricing: { input: 0.1, output: 0.4, currency: 'USD', unit: '1M tokens' },
-      available: true
-    },
-    {
-      id: 'o3',
-      name: 'O3',
-      description: 'Advanced reasoning for complex problem solving',
+      id: 'gpt-4o',
+      name: 'GPT-4o',
+      description: 'Flagship multimodal model — vision, audio, and text with 128K context',
       provider: 'OpenAI',
       contextWindow: 128000,
-      capabilities: ['Reasoning', 'Code', 'Math'],
+      capabilities: ['Chat', 'Code', 'Vision', 'Tools'],
+      pricing: { input: 2.5, output: 10, currency: 'USD', unit: '1M tokens' },
+      available: true
+    },
+    {
+      id: 'gpt-4o-mini',
+      name: 'GPT-4o Mini',
+      description: 'Affordable and fast — best price-to-performance for most tasks',
+      provider: 'OpenAI',
+      contextWindow: 128000,
+      capabilities: ['Chat', 'Code', 'Vision'],
+      pricing: { input: 0.15, output: 0.6, currency: 'USD', unit: '1M tokens' },
+      available: true
+    },
+    {
+      id: 'o1',
+      name: 'o1',
+      description: 'Advanced reasoning model — excels at complex STEM and coding problems',
+      provider: 'OpenAI',
+      contextWindow: 128000,
+      capabilities: ['Reasoning', 'Code', 'Math', 'Science'],
       pricing: { input: 15, output: 60, currency: 'USD', unit: '1M tokens' },
       available: true
     },
     {
-      id: 'o4-mini',
-      name: 'O4 Mini',
-      description: 'Budget-friendly reasoning for math, coding, visual tasks',
+      id: 'o1-mini',
+      name: 'o1 Mini',
+      description: 'Faster, cheaper reasoning — coding, math, and science tasks',
       provider: 'OpenAI',
       contextWindow: 128000,
-      capabilities: ['Reasoning', 'Code', 'Math', 'Vision'],
-      pricing: { input: 2, output: 6, currency: 'USD', unit: '1M tokens' },
+      capabilities: ['Reasoning', 'Code', 'Math'],
+      pricing: { input: 3, output: 12, currency: 'USD', unit: '1M tokens' },
+      available: true
+    },
+    {
+      id: 'o3',
+      name: 'o3',
+      description: 'Most powerful reasoning — frontier performance on hard benchmarks',
+      provider: 'OpenAI',
+      contextWindow: 128000,
+      capabilities: ['Reasoning', 'Code', 'Math', 'Science'],
+      pricing: { input: 15, output: 60, currency: 'USD', unit: '1M tokens' },
       available: true
     },
     
-    // Anthropic - UPDATED JANUARY 2026
+    // Anthropic
     {
-      id: 'claude-opus-4-5-20251101',
-      name: 'Claude Opus 4.5',
-      description: 'Most intelligent - 80.9% SWE-bench, 66% cheaper than Opus 4 (Nov 1, 2025)',
+      id: 'claude-3-opus-20240229',
+      name: 'Claude 3 Opus',
+      description: 'Most capable Claude — excels at complex analysis, long-form writing',
       provider: 'Anthropic',
       contextWindow: 200000,
-      capabilities: ['Chat', 'Code', 'Vision', 'Agents'],
-      pricing: { input: 5, output: 25, currency: 'USD', unit: '1M tokens' },
-      available: true
-    },
-    {
-      id: 'claude-opus-4-1-20250805',
-      name: 'Claude Opus 4.1',
-      description: 'Advanced reasoning - software engineering workflows (Aug 5, 2025)',
-      provider: 'Anthropic',
-      contextWindow: 200000,
-      capabilities: ['Chat', 'Code', 'Vision', 'Reasoning'],
+      capabilities: ['Chat', 'Code', 'Vision', 'Analysis'],
       pricing: { input: 15, output: 75, currency: 'USD', unit: '1M tokens' },
       available: true
     },
     {
-      id: 'claude-sonnet-4-5-20250929',
-      name: 'Claude Sonnet 4.5',
-      description: 'Production agents - coding, balanced performance, 1M context beta (Sept 29, 2025)',
+      id: 'claude-3-5-sonnet-20241022',
+      name: 'Claude 3.5 Sonnet',
+      description: 'Best balance of speed and intelligence — top coding and reasoning',
       provider: 'Anthropic',
       contextWindow: 200000,
-      capabilities: ['Chat', 'Code', 'Agents', 'Computer Use'],
+      capabilities: ['Chat', 'Code', 'Vision', 'Agents'],
       pricing: { input: 3, output: 15, currency: 'USD', unit: '1M tokens' },
       available: true
     },
     {
-      id: 'claude-sonnet-4-20250514',
-      name: 'Claude Sonnet 4',
-      description: 'Agentic workflows - high-quality reasoning (May 14, 2025)',
-      provider: 'Anthropic',
-      contextWindow: 200000,
-      capabilities: ['Chat', 'Code', 'Agents'],
-      pricing: { input: 3, output: 15, currency: 'USD', unit: '1M tokens' },
-      available: true
-    },
-    {
-      id: 'claude-haiku-4-5',
-      name: 'Claude Haiku 4.5',
-      description: 'Fast, lightweight tasks - $0.80/$4 per MTok',
+      id: 'claude-3-5-haiku-20241022',
+      name: 'Claude 3.5 Haiku',
+      description: 'Fast and affordable — quick tasks, customer service, lightweight agents',
       provider: 'Anthropic',
       contextWindow: 200000,
       capabilities: ['Chat', 'Code', 'Fast Response'],
@@ -193,54 +133,44 @@ export function AllModelsSelector() {
       available: true
     },
     
-    // Google Gemini - UPDATED JANUARY 2026 with Gemini 3
-    {
-      id: 'gemini-3-flash',
-      name: 'Gemini 3 Flash',
-      description: 'Latest flagship - frontier-class, agentic coding, 90.4% GPQA Diamond (Jan 2026)',
-      provider: 'Google',
-      contextWindow: 1000000,
-      capabilities: ['Chat', 'Code', 'Agentic', 'Multimodal'],
-      pricing: { input: 0.075, output: 0.3, currency: 'USD', unit: '1M tokens' },
-      available: true
-    },
-    {
-      id: 'gemini-3-pro',
-      name: 'Gemini 3 Pro',
-      description: 'State-of-the-art reasoning - best multimodal, vibe coding (Dec 2025)',
-      provider: 'Google',
-      contextWindow: 1000000,
-      capabilities: ['Chat', 'Code', 'Reasoning', 'Multimodal'],
-      pricing: { input: 1.25, output: 5, currency: 'USD', unit: '1M tokens' },
-      available: true
-    },
-    {
-      id: 'gemini-2.5-pro',
-      name: 'Gemini 2.5 Pro',
-      description: 'Stable with adaptive thinking - LMArena leader 6+ months',
-      provider: 'Google',
-      contextWindow: 1000000,
-      capabilities: ['Chat', 'Code', 'Adaptive Thinking', 'Multimodal'],
-      pricing: { input: 1.25, output: 5, currency: 'USD', unit: '1M tokens' },
-      available: true
-    },
+    // Google Gemini
     {
       id: 'gemini-2.5-flash',
       name: 'Gemini 2.5 Flash',
-      description: 'Hybrid reasoning - thinks before it speaks with low latency',
+      description: 'Adaptive thinking — fast reasoning with 1M context window',
       provider: 'Google',
       contextWindow: 1000000,
-      capabilities: ['Chat', 'Code', 'Fast Reasoning', 'Audio'],
+      capabilities: ['Chat', 'Code', 'Reasoning', 'Multimodal'],
       pricing: { input: 0.075, output: 0.3, currency: 'USD', unit: '1M tokens' },
       available: true
     },
     {
       id: 'gemini-2.0-flash',
       name: 'Gemini 2.0 Flash',
-      description: 'Stable - 1M context, native tool use, superior speed',
+      description: 'Next-gen performance — native tool use, 1M context, superior speed',
       provider: 'Google',
       contextWindow: 1000000,
-      capabilities: ['Chat', 'Code', 'Tools', 'Fast Response'],
+      capabilities: ['Chat', 'Code', 'Tools', 'Multimodal'],
+      pricing: { input: 0.075, output: 0.3, currency: 'USD', unit: '1M tokens' },
+      available: true
+    },
+    {
+      id: 'gemini-1.5-pro',
+      name: 'Gemini 1.5 Pro',
+      description: 'Long context champion — 2M context window for large codebases',
+      provider: 'Google',
+      contextWindow: 2000000,
+      capabilities: ['Chat', 'Code', 'Vision', 'Long Context'],
+      pricing: { input: 1.25, output: 5, currency: 'USD', unit: '1M tokens' },
+      available: true
+    },
+    {
+      id: 'gemini-1.5-flash',
+      name: 'Gemini 1.5 Flash',
+      description: 'Fast and versatile — high volume tasks with 1M context',
+      provider: 'Google',
+      contextWindow: 1000000,
+      capabilities: ['Chat', 'Code', 'Fast Response'],
       pricing: { input: 0.075, output: 0.3, currency: 'USD', unit: '1M tokens' },
       available: true
     },

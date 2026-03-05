@@ -65,6 +65,9 @@ export default function Account() {
     } | null;
   }>({
     queryKey: ['/api/user/billing-summary'],
+    queryFn: async () => {
+      return await apiRequest('GET', '/api/user/billing-summary');
+    },
     enabled: !!user
   });
 

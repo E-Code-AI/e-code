@@ -69,13 +69,8 @@ export default function Home() {
   const { data: projectsData, isLoading, error: projectsError } = useQuery<{ projects: Project[], pagination?: any }>({
     queryKey: ['/api/projects'],
     queryFn: async () => {
-      try {
-        const res = await apiRequest('GET', '/api/projects');
-        return res;
-      } catch (err) {
-        console.error('Projects fetch error:', err);
-        return { projects: [] };
-      }
+      const res = await apiRequest('GET', '/api/projects');
+      return res;
     },
     retry: 2,
   });

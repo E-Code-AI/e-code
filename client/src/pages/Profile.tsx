@@ -53,23 +53,15 @@ export default function Profile() {
   });
   
   // Fetch user's projects
-  const { data: projects = [], isLoading: projectsLoading } = useQuery({
+  const { data: projectsData, isLoading: projectsLoading } = useQuery({
     queryKey: ['/api/users', username || currentUser?.username, 'projects'],
     queryFn: async () => {
-      // In the absence of a specific user projects endpoint, we filter the global projects if it's the current user
-      // or return empty for now as most of these profiles in demo are the current user
-      try {
-        const response = await fetch('/api/projects', { credentials: 'include' });
-        if (!response.ok) return [];
-        const data = await response.json();
-        const projectList = (data.projects && Array.isArray(data.projects)) ? data.projects : (Array.isArray(data) ? data : []);
-        return projectList;
-      } catch (e) {
-        return [];
-      }
+      return await apiRequest('GET', '/api/projects');
     },
     enabled: !!(username || currentUser?.username),
   });
+
+  const projects = projectsData?.projects || [];
 
   const getLanguageColor = (language: string) => {
     const colors: Record<string, string> = {

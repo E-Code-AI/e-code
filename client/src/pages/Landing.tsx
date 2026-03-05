@@ -361,10 +361,10 @@ export default function Landing() {
                         placeholder="Describe your app idea in any language..."
                         className="w-full bg-transparent border-none outline-none text-base sm:text-[15px] placeholder:text-[var(--ecode-text-muted)] text-[var(--ecode-text)] px-4 sm:px-6 py-3 sm:py-4 font-normal transition-colors duration-200"
                         style={{ fontFamily: 'var(--ecode-font-sans)' }}
-                        value={appDescription}
+                        value={appDescription || ''}
                         onChange={(e) => setAppDescription(e.target.value)}
                         onKeyDown={(e) => {
-                          if (e.key === 'Enter' && appDescription.trim()) {
+                          if (e.key === 'Enter' && appDescription?.trim()) {
                             handleStartBuilding(appDescription);
                           }
                         }}
@@ -375,11 +375,11 @@ export default function Landing() {
                 size="lg"
                 className="bg-ecode-accent hover:bg-ecode-accent-hover text-white shadow-lg px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-[15px] font-semibold h-auto min-h-[44px] rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-[0_8px_32px_-8px_rgba(242,98,7,0.4)]"
                 onClick={() => {
-                  if (appDescription.trim()) {
+                  if (appDescription?.trim()) {
                     handleStartBuilding(appDescription);
                   }
                 }}
-                disabled={!appDescription.trim()}
+                disabled={!appDescription?.trim()}
                 data-testid="button-hero-build-now"
               >
                 <Sparkles className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />

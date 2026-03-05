@@ -194,7 +194,7 @@ export function OpenAIModelSelector({
             </div>
           )}
           
-          {localSelectedModel.includes('vision') || localSelectedModel === 'gpt-5.2' && (
+          {localSelectedModel.includes('vision') || localSelectedModel === 'gpt-4o' && (
             <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
               <div className="flex items-center gap-2 text-purple-800">
                 <Eye className="h-4 w-4" />
@@ -213,11 +213,11 @@ export function OpenAIModelSelector({
         <Button
           variant="outline"
           size="sm"
-          onClick={() => handleModelChange('gpt-5.2')}
-          className={localSelectedModel === 'gpt-5.2' ? 'border-blue-500' : ''}
+          onClick={() => handleModelChange('gpt-4o')}
+          className={localSelectedModel === 'gpt-4o' ? 'border-blue-500' : ''}
         >
           <Sparkles className="h-3 w-3 mr-1" />
-          GPT-5.2
+          GPT-4o
         </Button>
         <Button
           variant="outline"
@@ -226,16 +226,16 @@ export function OpenAIModelSelector({
           className={localSelectedModel === 'o3' ? 'border-blue-500' : ''}
         >
           <Brain className="h-3 w-3 mr-1" />
-          O3
+          o3
         </Button>
         <Button
           variant="outline"
           size="sm"
-          onClick={() => handleModelChange('gpt-5-mini')}
-          className={localSelectedModel === 'gpt-5-mini' ? 'border-blue-500' : ''}
+          onClick={() => handleModelChange('gpt-4o-mini')}
+          className={localSelectedModel === 'gpt-4o-mini' ? 'border-blue-500' : ''}
         >
           <Zap className="h-3 w-3 mr-1" />
-          GPT-5 Mini
+          GPT-4o Mini
         </Button>
       </div>
     </div>

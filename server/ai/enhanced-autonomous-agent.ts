@@ -65,7 +65,7 @@ export class EnhancedAutonomousAgent {
   
   constructor(apiKey?: string) {
     // Initialize with Claude Sonnet 4.5 - latest model with agentic coding capabilities
-    // Using the newest model: claude-sonnet-4-5-20250929
+    // Using the newest model: claude-3-5-sonnet-20241022
     // This enables advanced code understanding, generation, and autonomous building
     if (apiKey) {
       this.aiProvider = new AnthropicProvider(apiKey);

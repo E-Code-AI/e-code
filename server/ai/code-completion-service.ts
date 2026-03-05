@@ -158,7 +158,7 @@ Only provide completions that are highly relevant and would actually help the de
       // Try Claude first (best for code completion)
       if (this.anthropic.apiKey) {
         const message = await this.anthropic.messages.create({
-          model: 'claude-sonnet-4-5-20250929', // Latest fast model for low latency
+          model: 'claude-3-5-sonnet-20241022',
           max_tokens: 300,
           messages: [{ role: 'user', content: prompt }],
           temperature: 0.2, // Lower temperature for more deterministic completions
@@ -170,7 +170,7 @@ Only provide completions that are highly relevant and would actually help the de
       // Fallback to GPT-4 if available
       if (this.openai) {
         const completion = await this.openai.chat.completions.create({
-          model: 'gpt-5.2',  // ✅ CONSOLIDATED Jan 2026
+          model: 'gpt-4o',
           messages: [{ role: 'user', content: prompt }],
           temperature: 0.2,
           max_tokens: 300,

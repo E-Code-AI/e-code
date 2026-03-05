@@ -85,7 +85,7 @@ async function pingProvider(
       case 'anthropic': {
         const client = new Anthropic({ apiKey, timeout: timeout - 500 });
         testPromise = client.messages.create({
-          model: 'claude-haiku-4-5-20251015',
+          model: 'claude-3-5-haiku-20241022',
           max_tokens: 1,
           messages: [{ role: 'user', content: 'ping' }]
         });
