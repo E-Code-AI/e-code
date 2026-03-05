@@ -78,3 +78,10 @@ docker-compose*
 
 # Memory bank
 .ecode/
+
+# Replit agent session state (1GB+ of subagent cache - NOT needed for deployment)
+.local/state/
+.local/
+
+# Checkpoints (not needed for deployment)
+.checkpoints/
