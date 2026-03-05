@@ -473,7 +473,7 @@ export default function AdminBilling() {
                             {inv.number || (inv.id || '').slice(0, 12)}
                           </TableCell>
                           <TableCell className="text-white font-medium">
-                            {inv.currency || 'USD'} ${(typeof inv.amount === 'number' ? inv.amount : 0).toFixed(2)}
+                            {inv.currency || 'USD'} ${(typeof inv.amount === 'number' ? inv.amount : parseFloat(String(inv.amount || 0))).toFixed(2)}
                           </TableCell>
                           <TableCell>{getInvoiceStatusBadge(inv.status)}</TableCell>
                           <TableCell className="text-zinc-400">

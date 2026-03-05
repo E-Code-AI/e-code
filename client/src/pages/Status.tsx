@@ -244,7 +244,7 @@ export default function Status() {
       </section>
 
       {/* Active Incidents */}
-      {!incidentsLoading && incidents.filter((i: any) => i.status !== 'resolved').length > 0 && (
+      {!incidentsLoading && Array.isArray(incidents) && incidents.filter((i: any) => i.status !== 'resolved').length > 0 && (
         <section className="border-b bg-muted/30">
           <div className="container-responsive py-8">
             <h2 className="text-2xl font-semibold mb-4">Active Incidents</h2>
@@ -432,7 +432,7 @@ export default function Status() {
                 <div className="h-4 bg-muted rounded w-1/2 mx-auto"></div>
               </CardContent>
             </Card>
-          ) : incidents.length === 0 ? (
+          ) : !Array.isArray(incidents) || incidents.length === 0 ? (
             <Card>
               <CardContent className="py-12 text-center">
                 <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-4" />
@@ -476,7 +476,7 @@ export default function Status() {
                       <p className="text-[13px] text-muted-foreground">
                         Affected services: {incident.affectedServices?.join(', ') || 'Multiple services'}
                       </p>
-                      {incident.updates && incident.updates.length > 0 && (
+                      {Array.isArray(incident.updates) && incident.updates.length > 0 && (
                         <div className="border-l-2 border-muted pl-4 space-y-2">
                           {incident.updates.map((update: any, index: number) => (
                             <div key={index} className="text-[13px]">

@@ -14,7 +14,7 @@ const router = Router();
  * Get comprehensive repository overview for a project
  * REQUIRES AUTHENTICATION
  */
-router.get('/api/agent/repo-overview/:projectId', async (req, res) => {
+router.get('/repo-overview/:projectId', async (req, res) => {
   try {
     // ✅ SECURITY: Require authentication
     if (!req.user) {
@@ -61,7 +61,7 @@ router.get('/api/agent/repo-overview/:projectId', async (req, res) => {
  * Get lightweight context summary for a project
  * REQUIRES AUTHENTICATION
  */
-router.get('/api/agent/context/:projectId', async (req, res) => {
+router.get('/context/:projectId', async (req, res) => {
   try {
     // ✅ SECURITY: Require authentication
     if (!req.user) {
@@ -105,7 +105,7 @@ router.get('/api/agent/context/:projectId', async (req, res) => {
  * Force refresh repository overview cache
  * REQUIRES AUTHENTICATION
  */
-router.post('/api/agent/repo-overview/refresh/:projectId', async (req, res) => {
+router.post('/repo-overview/refresh/:projectId', async (req, res) => {
   try {
     // ✅ SECURITY: Require authentication
     if (!req.user) {
@@ -151,7 +151,7 @@ router.post('/api/agent/repo-overview/refresh/:projectId', async (req, res) => {
  * GET /api/agent/repo-overview/health
  * Health check for repo overview service
  */
-router.get('/api/agent/repo-overview/health', (req, res) => {
+router.get('/repo-overview/health', (req, res) => {
   res.json({
     status: 'healthy',
     service: 'repository-overview',

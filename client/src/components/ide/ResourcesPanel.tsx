@@ -12,7 +12,7 @@ import {
   Server, Database, Globe, Terminal, Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useQuery } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 
 interface ResourceMetrics {
   cpu: {

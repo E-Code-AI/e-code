@@ -166,7 +166,7 @@ export function CustomRoles() {
     }, {} as Record<string, Permission[]>);
   };
 
-  const filteredRoles = roles?.filter(role => 
+  const filteredRoles = roles?.filter((role: Role) => 
     (role.name ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     (role.description ?? '').toLowerCase().includes(searchTerm.toLowerCase())
   );

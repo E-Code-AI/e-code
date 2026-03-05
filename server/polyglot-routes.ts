@@ -20,7 +20,7 @@ function getCoordinator(): PolyglotCoordinator {
 }
 
 // Health check for all services
-router.get('/api/polyglot/health', async (req, res) => {
+router.get('/polyglot/health', async (req, res) => {
   const healthStatus = getCoordinator().getHealthStatus();
   const overallHealth = healthStatus.every(service => service.status === 'healthy');
   
@@ -34,7 +34,7 @@ router.get('/api/polyglot/health', async (req, res) => {
 });
 
 // CRITICAL FEATURE 4: Container Operations - 100% Functional (Go Service)
-router.post('/api/containers/create', async (req, res) => {
+router.post('/containers/create', async (req, res) => {
   try {
     const { projectId, image = 'node:18', name } = req.body;
     
@@ -87,7 +87,7 @@ router.post('/api/containers/create', async (req, res) => {
   }
 });
 
-router.get('/api/containers/list', async (req, res) => {
+router.get('/containers/list', async (req, res) => {
   try {
     const result = await getCoordinator().forwardRequest(
       'container-orchestration',
@@ -105,7 +105,7 @@ router.get('/api/containers/list', async (req, res) => {
 });
 
 // High-Performance File Operations (Go Service)
-router.post('/api/files/batch-operations', async (req, res) => {
+router.post('/files/batch-operations', async (req, res) => {
   try {
     const result = await getCoordinator().forwardRequest(
       'file-operations',
@@ -124,7 +124,7 @@ router.post('/api/files/batch-operations', async (req, res) => {
 });
 
 // Fast Build Pipeline (Go Service)
-router.post('/api/builds/fast-build', async (req, res) => {
+router.post('/builds/fast-build', async (req, res) => {
   try {
     const result = await getCoordinator().forwardRequest(
       'builds',
@@ -143,7 +143,7 @@ router.post('/api/builds/fast-build', async (req, res) => {
 });
 
 // AI/ML Code Analysis (Python Service)
-router.post('/api/ai/code-analysis', async (req, res) => {
+router.post('/ai/code-analysis', async (req, res) => {
   try {
     const result = await getCoordinator().forwardRequest(
       'ai-ml',
@@ -162,7 +162,7 @@ router.post('/api/ai/code-analysis', async (req, res) => {
 });
 
 // Machine Learning Training (Python Service)
-router.post('/api/ml/train-model', async (req, res) => {
+router.post('/ml/train-model', async (req, res) => {
   try {
     const result = await getCoordinator().forwardRequest(
       'ai-ml',
@@ -181,7 +181,7 @@ router.post('/api/ml/train-model', async (req, res) => {
 });
 
 // ML Training Status (Python Service)
-router.get('/api/ml/training-status/:jobId', async (req, res) => {
+router.get('/ml/training-status/:jobId', async (req, res) => {
   try {
     const result = await getCoordinator().forwardRequest(
       'ai-ml',
@@ -199,7 +199,7 @@ router.get('/api/ml/training-status/:jobId', async (req, res) => {
 });
 
 // Text Analysis (Python Service)
-router.post('/api/ai/text-analysis', async (req, res) => {
+router.post('/ai/text-analysis', async (req, res) => {
   try {
     const result = await getCoordinator().forwardRequest(
       'ai-ml',
@@ -218,7 +218,7 @@ router.post('/api/ai/text-analysis', async (req, res) => {
 });
 
 // Advanced Data Processing (Python Service)
-router.post('/api/data/advanced-processing', async (req, res) => {
+router.post('/data/advanced-processing', async (req, res) => {
   try {
     const result = await getCoordinator().forwardRequest(
       'data-analysis',
@@ -237,7 +237,7 @@ router.post('/api/data/advanced-processing', async (req, res) => {
 });
 
 // AI Inference (Python Service)
-router.post('/api/ai/inference', async (req, res) => {
+router.post('/ai/inference', async (req, res) => {
   try {
     const result = await getCoordinator().forwardRequest(
       'ai-ml',
@@ -256,7 +256,7 @@ router.post('/api/ai/inference', async (req, res) => {
 });
 
 // Smart Service Router - automatically routes based on request characteristics
-router.post('/api/smart-route', async (req, res) => {
+router.post('/smart-route', async (req, res) => {
   try {
     const { operation, data, requestType } = req.body;
     const dataSize = JSON.stringify(data || {}).length;
@@ -304,7 +304,7 @@ router.post('/api/smart-route', async (req, res) => {
 });
 
 // Service Capabilities Discovery
-router.get('/api/polyglot/capabilities', (req, res) => {
+router.get('/polyglot/capabilities', (req, res) => {
   res.json({
     services: {
       typescript: {
@@ -358,7 +358,7 @@ router.get('/api/polyglot/capabilities', (req, res) => {
 });
 
 // Performance benchmarking endpoint
-router.get('/api/polyglot/benchmark', async (req, res) => {
+router.get('/polyglot/benchmark', async (req, res) => {
   const benchmarks = [];
   const testData = { test: 'performance', size: 1000 };
   

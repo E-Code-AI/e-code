@@ -42,7 +42,7 @@ function getProjectIcon(project: Project) {
     'bg-gradient-to-br from-[hsl(var(--ecode-green))] to-[hsl(var(--ecode-green)/0.8)]',
   ];
   const bgColor = colors[project.id % colors.length];
-  const firstLetter = (project.name || '?').charAt(0).toUpperCase();
+  const firstLetter = (project.name?.[0] || '?').toUpperCase();
 
   return (
     <div 

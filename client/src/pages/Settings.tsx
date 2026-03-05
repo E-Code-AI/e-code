@@ -223,7 +223,7 @@ export default function Settings() {
                     <Avatar className="h-20 w-20 ring-2 ring-border">
                       <AvatarImage src={user?.avatarUrl || undefined} />
                       <AvatarFallback className="text-2xl bg-primary/10 text-primary">
-                        {(user?.displayName || user?.username || 'U')[0]?.toUpperCase()}
+                        {(user?.displayName || user?.username || 'U')?.[0]?.toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <div>

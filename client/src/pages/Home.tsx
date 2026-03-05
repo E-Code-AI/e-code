@@ -544,7 +544,7 @@ export default function Home() {
                         <div className="flex items-center gap-2 mb-1">
                           <Avatar className="h-5 w-5">
                             <AvatarImage src={user?.avatarUrl || `https://avatar.vercel.sh/${user?.username || 'user'}.png`} />
-                            <AvatarFallback className="text-[10px]">{user?.username?.charAt(0).toUpperCase() || 'U'}</AvatarFallback>
+                            <AvatarFallback className="text-[10px]">{user?.username?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
                           </Avatar>
                           <span className="text-[11px] text-muted-foreground truncate">{user?.username || 'user'}</span>
                         </div>

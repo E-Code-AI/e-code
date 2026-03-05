@@ -63,10 +63,15 @@ export default function TemplatesPage() {
   const { data: templates, isLoading } = useQuery<Template[]>({
     queryKey: ['/api/marketplace/templates', selectedCategory, debouncedSearch],
     queryFn: async () => {
-      const response = await fetch(buildQueryUrl(), { credentials: 'include' });
-      if (!response.ok) throw new Error('Failed to fetch templates');
-      const data = await response.json();
-      return Array.isArray(data) ? data : data.templates || [];
+      try {
+        const response = await fetch(buildQueryUrl(), { credentials: 'include' });
+        if (!response.ok) throw new Error('Failed to fetch templates');
+        const data = await response.json();
+        return Array.isArray(data) ? data : data.templates || [];
+      } catch (err) {
+        console.error('Failed to fetch templates:', err);
+        return [];
+      }
     }
   });
 

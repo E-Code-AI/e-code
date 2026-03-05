@@ -363,7 +363,7 @@ export default function AdminAIUsage() {
                             {record.tokensTotal.toLocaleString()}
                           </TableCell>
                           <TableCell className="text-right font-medium text-green-600">
-                            ${parseFloat(record.costUsd || '0').toFixed(4)}
+                            ${parseFloat(String(record.costUsd || '0')).toFixed(4)}
                           </TableCell>
                           <TableCell>
                             <Badge variant={record.status === 'success' ? 'default' : 'destructive'}>
@@ -414,7 +414,7 @@ export default function AdminAIUsage() {
                           </div>
                           <div>
                             <span className="text-muted-foreground">Cost:</span>
-                            <div className="font-medium text-green-600 mt-1">${parseFloat(record.costUsd || '0').toFixed(4)}</div>
+                            <div className="font-medium text-green-600 mt-1">${parseFloat(String(record.costUsd || '0')).toFixed(4)}</div>
                           </div>
                           <div>
                             <span className="text-muted-foreground">Status:</span>

@@ -14,7 +14,7 @@ const router = Router();
 /**
  * Create isolated environment for a project
  */
-router.post('/api/projects/:id/environment', ensureAuthenticated, async (req, res) => {
+router.post('/projects/:id/environment', ensureAuthenticated, async (req, res) => {
   try {
     const projectId = parseInt(req.params.id);
     const userId = req.user?.id;
@@ -64,7 +64,7 @@ router.post('/api/projects/:id/environment', ensureAuthenticated, async (req, re
 /**
  * Get environment status
  */
-router.get('/api/projects/:id/environment', ensureAuthenticated, async (req, res) => {
+router.get('/projects/:id/environment', ensureAuthenticated, async (req, res) => {
   try {
     const projectId = parseInt(req.params.id);
     const environments = isolationManager.getProjectEnvironments(projectId);
@@ -97,7 +97,7 @@ router.get('/api/projects/:id/environment', ensureAuthenticated, async (req, res
 /**
  * Stop environment
  */
-router.delete('/api/projects/:id/environment', ensureAuthenticated, async (req, res) => {
+router.delete('/projects/:id/environment', ensureAuthenticated, async (req, res) => {
   try {
     const projectId = parseInt(req.params.id);
     const userId = req.user?.id;
@@ -128,7 +128,7 @@ router.delete('/api/projects/:id/environment', ensureAuthenticated, async (req, 
 /**
  * List all environments (admin only)
  */
-router.get('/api/admin/environments', ensureAuthenticated, async (req, res) => {
+router.get('/admin/environments', ensureAuthenticated, async (req, res) => {
   try {
     // Check if user is admin
     if (req.user?.role !== 'admin') {
@@ -166,7 +166,7 @@ router.get('/api/admin/environments', ensureAuthenticated, async (req, res) => {
 /**
  * Get resource usage for environment
  */
-router.get('/api/environments/:id/usage', ensureAuthenticated, async (req, res) => {
+router.get('/environments/:id/usage', ensureAuthenticated, async (req, res) => {
   try {
     const envId = req.params.id;
     const env = isolationManager.getEnvironment(envId);
@@ -207,7 +207,7 @@ router.get('/api/environments/:id/usage', ensureAuthenticated, async (req, res) 
 /**
  * Update network policy for environment
  */
-router.put('/api/environments/:id/network-policy', ensureAuthenticated, async (req, res) => {
+router.put('/environments/:id/network-policy', ensureAuthenticated, async (req, res) => {
   try {
     const envId = req.params.id;
     const { allowedPorts, allowedHosts } = req.body;

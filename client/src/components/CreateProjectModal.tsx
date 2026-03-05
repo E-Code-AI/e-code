@@ -517,7 +517,7 @@ export const CreateProjectModal = ({
         }
       });
 
-      if (response.success && response.project) {
+      if (response.success && response.projectId) {
         toast({
           title: "AI project created",
           description: "Redirecting to your new project...",
@@ -525,11 +525,12 @@ export const CreateProjectModal = ({
         
         queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
         
-        onSubmit?.(response.project.name, response.project.id);
+        const projectName = response.projectSlug || `Project ${response.projectId}`;
+        onSubmit?.(projectName, response.projectId);
         
         const redirectUrl = response.bootstrapToken 
-          ? `/editor/${response.project.id}?bootstrap=${response.bootstrapToken}`
-          : `/editor/${response.project.id}`;
+          ? `/ide/${response.projectId}?bootstrap=${response.bootstrapToken}`
+          : `/ide/${response.projectId}`;
         navigate(redirectUrl);
         onClose();
         resetState();

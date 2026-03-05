@@ -144,7 +144,7 @@ export default function AdminMonitoring() {
   }, []);
 
   const getStatusBadge = (status: string) => {
-    switch (status?.toLowerCase()) {
+    switch (String(status || '').toLowerCase()) {
       case 'healthy':
       case 'ok':
       case 'up':

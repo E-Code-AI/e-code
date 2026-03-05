@@ -193,7 +193,7 @@ export class MainRouter {
     app.use('/api/agent', tierRateLimiters.api, createAgentToolsRouter());
 
     // Agent routes (admin only)
-    app.use('/api/admin/agent', tierRateLimiters.api, agentRouter);
+    // app.use('/api/admin/agent', tierRateLimiters.api, agentRouter);
 
     // Agent plan routes (REAL AI-powered plan generation with streaming) - authenticated users
     // ✅ FORTUNE 500 FIX: Use streaming rate limiter for SSE endpoints
@@ -209,8 +209,8 @@ export class MainRouter {
     // Agent workflow routes (feature generation, build selection) - authenticated users
     app.use('/api/agent', tierRateLimiters.api, agentWorkflowRouter);
 
-    // Agent schema warming routes (background data structure pre-drafting) - authenticated users
-    // Mounted at /api/agent for schema/warm, schema/status, schema/stream endpoints
+    // Agent routes (authenticated users) - schema warming, status, stream, conversation, messages
+    // Mounted at /api/agent for schema/warm, schema/status, schema/stream, conversation, and messages endpoints
     app.use('/api/agent', tierRateLimiters.streaming, agentRouter);
 
     // Agent step cache routes (caching intermediate agent phases for cost optimization)

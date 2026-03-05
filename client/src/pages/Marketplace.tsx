@@ -57,26 +57,36 @@ export default function Marketplace() {
   };
 
   // Fetch real marketplace data from APIs
-  const { data: extensions = [], isLoading } = useQuery({
+  const { data: extensions = [], isLoading: isExtensionsLoading } = useQuery({
     queryKey: ['/api/marketplace/extensions'],
     queryFn: async () => {
-      const response = await fetch('/api/marketplace/extensions');
-      if (!response.ok) {
+      try {
+        const response = await fetch('/api/marketplace/extensions');
+        if (!response.ok) {
+          return [];
+        }
+        return response.json();
+      } catch (err) {
+        console.error('Failed to fetch extensions:', err);
         return [];
       }
-      return response.json();
     }
   });
 
-  const { data: templatesData } = useQuery({
+  const { data: templatesData, isLoading: isTemplatesLoading } = useQuery({
     queryKey: ['/api/marketplace/templates'],
     queryFn: async () => {
-      const response = await fetch('/api/marketplace/templates');
-      if (!response.ok) {
+      try {
+        const response = await fetch('/api/marketplace/templates');
+        if (!response.ok) {
+          return { templates: [] };
+        }
+        const data = await response.json();
+        return Array.isArray(data) ? { templates: data } : data;
+      } catch (err) {
+        console.error('Failed to fetch templates:', err);
         return { templates: [] };
       }
-      const data = await response.json();
-      return Array.isArray(data) ? data : data.templates || [];
     }
   });
   const templates = Array.isArray(templatesData) ? templatesData : (templatesData as any)?.templates || [];
@@ -84,11 +94,16 @@ export default function Marketplace() {
   const { data: categoriesData = [] } = useQuery({
     queryKey: ['/api/marketplace/categories'],
     queryFn: async () => {
-      const response = await fetch('/api/marketplace/categories');
-      if (!response.ok) {
+      try {
+        const response = await fetch('/api/marketplace/categories');
+        if (!response.ok) {
+          return [];
+        }
+        return response.json();
+      } catch (err) {
+        console.error('Failed to fetch categories:', err);
         return [];
       }
-      return response.json();
     }
   });
   
@@ -119,11 +134,16 @@ export default function Marketplace() {
   const { data: publishers = [] } = useQuery({
     queryKey: ['/api/marketplace/publishers'],
     queryFn: async () => {
-      const response = await fetch('/api/marketplace/publishers');
-      if (!response.ok) {
+      try {
+        const response = await fetch('/api/marketplace/publishers');
+        if (!response.ok) {
+          return [];
+        }
+        return response.json();
+      } catch (err) {
+        console.error('Failed to fetch publishers:', err);
         return [];
       }
-      return response.json();
     }
   });
 
@@ -212,7 +232,7 @@ export default function Marketplace() {
       <CardContent className="p-6">
         <div className="flex items-start gap-4">
           <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-blue-600 rounded-lg flex items-center justify-center text-white font-semibold text-[15px]">
-            {(template.framework || template.language || template.name || '?').charAt(0)}
+            {(template.framework || template.language || template.name || '?').toString().charAt(0)}
           </div>
           
           <div className="flex-1">

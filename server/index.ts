@@ -856,7 +856,7 @@ httpServer.listen(port, "0.0.0.0", () => {
     // ✅ AGENT CONTEXT: Repository overview routes
     try {
       const agentContextRouter = (await import('./agent/routes/agent-context')).default;
-      app.use(agentContextRouter);
+      app.use('/api/agent', agentContextRouter);
       console.log('[Agent Context] Routes registered at /api/agent/repo-overview');
     } catch (error) {
       console.error('[WORKING SERVER] Failed to register agent context routes:', error);
