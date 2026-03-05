@@ -147,22 +147,22 @@ export class PTYTerminalService {
     const allowInsecure = getAllowInsecureLocalPty();
     const requireDocker = getRequireDockerTerminal();
     
-    console.log(`[Terminal] Security configuration:`);
-    console.log(`  - IS_PRODUCTION: ${IS_PRODUCTION}`);
-    console.log(`  - REQUIRE_DOCKER_TERMINAL: ${requireDocker}`);
-    console.log(`  - ALLOW_INSECURE_LOCAL_PTY: ${allowInsecure}`);
-    console.log(`  - Docker available: ${dockerAvailable}`);
+    logger.info(`Security configuration:`);
+    logger.info(`  - IS_PRODUCTION: ${IS_PRODUCTION}`);
+    logger.info(`  - REQUIRE_DOCKER_TERMINAL: ${requireDocker}`);
+    logger.info(`  - ALLOW_INSECURE_LOCAL_PTY: ${allowInsecure}`);
+    logger.info(`  - Docker available: ${dockerAvailable}`);
     
     // CRITICAL SECURITY: If Docker is required but unavailable, log fatal error
     if (requireDocker && !dockerAvailable) {
-      console.error('[Terminal] CRITICAL: Docker is REQUIRED but NOT available!');
-      console.error('[Terminal] All terminal connections will be REJECTED.');
-      console.error('[Terminal] To fix: Install Docker OR set ALLOW_INSECURE_LOCAL_PTY=true (dev only)');
+      logger.error('CRITICAL: Docker is REQUIRED but NOT available!');
+      logger.error('All terminal connections will be REJECTED.');
+      logger.error('To fix: Install Docker OR set ALLOW_INSECURE_LOCAL_PTY=true (dev only)');
       // Don't throw - let the service start but reject all connections
     } else if (dockerAvailable) {
-      console.log('[Terminal] Docker validated - terminal sessions will be isolated');
+      logger.info('Docker validated - terminal sessions will be isolated');
     } else if (allowInsecure) {
-      console.warn('[Terminal] DEV MODE: Local PTY allowed - this should NEVER happen in production');
+      logger.warn('DEV MODE: Local PTY allowed - this should NEVER happen in production');
     }
 
     this.wss = new WebSocketServer({
@@ -186,8 +186,8 @@ export class PTYTerminalService {
     // Note: Socket is already marked as handled by central dispatcher
     // Don't call markSocketAsHandled again to avoid conflicts
     
-    console.log('[PTY Terminal] handleTerminalUpgrade called');
-    console.log('[PTY Terminal] Socket state:', {
+    logger.info('handleTerminalUpgrade called');
+    logger.info('Socket state:', {
       readable: socket.readable,
       writable: socket.writable,
       destroyed: socket.destroyed,
@@ -195,12 +195,12 @@ export class PTYTerminalService {
     
     try {
       this.wss!.handleUpgrade(request, socket as Socket, head, (ws) => {
-        console.log('[PTY Terminal] WebSocket upgrade completed successfully');
-        console.log('[PTY Terminal] ws.readyState:', ws.readyState);
+        logger.info('WebSocket upgrade completed successfully');
+        logger.info('ws.readyState:', ws.readyState);
         this.wss!.emit('connection', ws, request);
       });
     } catch (error) {
-      console.error('[PTY Terminal] handleUpgrade error:', error);
+      logger.error('handleUpgrade error:', error);
     }
   }
 
@@ -210,7 +210,7 @@ export class PTYTerminalService {
       // Allow connections without projectId by using 'default' workspace
       const projectId = url.searchParams.get('projectId') || 'default';
 
-      console.log(`[Terminal] handleConnection called for project ${projectId}`);
+      logger.info(`handleConnection called for project ${projectId}`);
 
       // Send immediate acknowledgment to keep connection alive
       // This is critical - delays can cause WebSocket to fail through proxies
@@ -218,7 +218,7 @@ export class PTYTerminalService {
         type: 'connected',
         data: 'Connected to terminal'
       }));
-      console.log(`[Terminal] Sent immediate connected message to client`);
+      logger.info(`Sent immediate connected message to client`);
 
       // Extract token from query params or Authorization header
       const queryToken = url.searchParams.get('token');
@@ -254,7 +254,7 @@ export class PTYTerminalService {
           return;
         }
 
-        console.log(`[Terminal] Creating new session for project ${projectId}`);
+        logger.info(`Creating new session for project ${projectId}`);
         const newSession = await this.createSession(projectId);
         if (!newSession) {
           ws.send(JSON.stringify({
@@ -266,7 +266,7 @@ export class PTYTerminalService {
         }
         session = newSession;
         this.sessions.set(projectId, session);
-        console.log(`[Terminal] Session created successfully for project ${projectId}`);
+        logger.info(`Session created successfully for project ${projectId}`);
       }
 
       session.clients.add(ws);
@@ -322,14 +322,14 @@ export class PTYTerminalService {
       const requireDocker = getRequireDockerTerminal();
       const allowInsecure = getAllowInsecureLocalPty();
       
-      console.log(`[Terminal] Creating session for project ${projectId}`);
-      console.log(`[Terminal] requireDocker=${requireDocker}, allowInsecure=${allowInsecure}, dockerAvailable=${dockerAvailable}`);
+      logger.info(`Creating session for project ${projectId}`);
+      logger.info(`requireDocker=${requireDocker}, allowInsecure=${allowInsecure}, dockerAvailable=${dockerAvailable}`);
       
       // CRITICAL SECURITY: If Docker is required (default), only allow Docker sessions
       if (requireDocker) {
         if (!dockerAvailable) {
-          console.error(`[Terminal] BLOCKED: Terminal session rejected - Docker required but unavailable`);
-          console.error(`[Terminal] Set ALLOW_INSECURE_LOCAL_PTY=true ONLY in development to allow local PTY`);
+          logger.error(`BLOCKED: Terminal session rejected - Docker required but unavailable`);
+          logger.error(`Set ALLOW_INSECURE_LOCAL_PTY=true ONLY in development to allow local PTY`);
           return null;
         }
         return await this.createDockerSession(projectId);

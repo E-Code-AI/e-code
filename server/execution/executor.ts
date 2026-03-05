@@ -4,6 +4,9 @@ import path from 'path';
 import os from 'os';
 import { dockerExecutor } from './docker-executor';
 import { remoteExecutor, LOCAL_ONLY_LANGUAGES } from './remote-executor';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('executor');
 
 export interface ExecutionOptions {
   timeout?: number;
@@ -200,7 +203,7 @@ export class CodeExecutor {
         if (errorMsg.includes('dockerode is not available') || 
             errorMsg.includes('Docker') || 
             errorMsg.includes('connect ENOENT')) {
-          console.log('[Executor] Docker not available, trying remote execution');
+          logger.info('Docker not available, trying remote execution');
         } else {
           return {
             output: '',
@@ -225,13 +228,13 @@ export class CodeExecutor {
             !remoteResult.error?.includes('Runtime not available')) {
           return remoteResult;
         }
-        console.log('[Executor] Remote execution failed, falling back to local:', remoteResult.error);
+        logger.info('Remote execution failed, falling back to local:', remoteResult.error);
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error);
-        console.log('[Executor] Remote execution error, falling back to local:', errorMsg);
+        logger.info('Remote execution error, falling back to local:', errorMsg);
       }
     } else if (requiresLocalExecution) {
-      console.log(`[Executor] ${normalizedLang} requires local execution (not available in Piston)`);
+      logger.info(`${normalizedLang} requires local execution (not available in Piston)`);
     }
 
     // Process execution (development or production fallback when Docker unavailable)

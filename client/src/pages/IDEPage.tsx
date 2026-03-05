@@ -44,10 +44,6 @@ export default function IDEPage() {
     
     // Only set if we have a token and haven't already captured one for this project
     if (urlToken && initialTokenRef.current !== urlToken) {
-      console.log('[IDEPage] Capturing bootstrap token in stable state:', {
-        tokenLength: urlToken.length,
-        tokenPreview: urlToken.substring(0, 30) + '...'
-      });
       initialTokenRef.current = urlToken;
       setStableBootstrapToken(urlToken);
     }
@@ -60,19 +56,6 @@ export default function IDEPage() {
   // Use stable token for AutonomousWorkspaceViewer, URL token for queries
   const bootstrapToken = stableBootstrapToken;
   
-  // Debug logging for bootstrap troubleshooting (dev only)
-  if (process.env.NODE_ENV === 'development') {
-    console.log('[IDEPage] Component render:', {
-      projectId,
-      hasStableToken: !!stableBootstrapToken,
-      hasUrlToken: !!urlBootstrapToken,
-      tokenLength: stableBootstrapToken?.length,
-      isAuthLoading,
-      hasUser: !!user,
-      canFetchProject: !!projectId && !isAuthLoading && (!!user || !!stableBootstrapToken),
-    });
-  }
-
   const handleWorkspaceComplete = useCallback(() => {
     // Clear the stable bootstrap token - workspace creation is complete
     setStableBootstrapToken(null);
@@ -102,8 +85,6 @@ export default function IDEPage() {
   // ✅ FIX (Dec 25, 2025): Handle agent bootstrap failure by clearing the token
   // This allows the agent panel to exit "Initializing Agent" state and enable chat
   const handleBootstrapFailure = useCallback(() => {
-    console.log('[IDEPage] Bootstrap failed - clearing token to exit loading state');
-    
     // Clear the stable bootstrap token so isBootstrapping becomes false
     setStableBootstrapToken(null);
     initialTokenRef.current = null;

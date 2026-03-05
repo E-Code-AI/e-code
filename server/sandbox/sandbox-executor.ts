@@ -1,11 +1,14 @@
 import { SandboxManager, SandboxConfig, SandboxResult } from './sandbox-manager';
 import { SecurityPolicy, getPolicyByName } from './security-policy';
 import { sandboxMonitor } from './sandbox-monitor';
+import { createLogger } from '../utils/logger';
 // Note: renderHtmlPreview in ./runtimes/htmlPreview.ts is available for standalone use
 // but sandbox execution uses inline Node.js script for security isolation
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
+
+const logger = createLogger('sandbox-executor');
 
 export interface ExecutionRequest {
   language: string;
@@ -334,14 +337,14 @@ export class SandboxExecutor {
             const doc = dom.window.document;
             const title = doc.title || 'Untitled';
             const elements = doc.querySelectorAll('*').length;
-            console.log('=== DOM Summary ===');
-            console.log('Title: ' + title);
-            console.log('Elements: ' + elements);
-            if (logs.length) console.log('\\n=== Console Output ===\\n' + logs.join('\\n'));
-            if (errors.length) console.error('\\n=== Errors ===\\n' + errors.join('\\n'));
+            process.stdout.write('=== DOM Summary ===\\n');
+            process.stdout.write('Title: ' + title + '\\n');
+            process.stdout.write('Elements: ' + elements + '\\n');
+            if (logs.length) process.stdout.write('\\n=== Console Output ===\\n' + logs.join('\\n') + '\\n');
+            if (errors.length) process.stderr.write('\\n=== Errors ===\\n' + errors.join('\\n') + '\\n');
             dom.window.close();
           } catch(e) {
-            console.error('HTML Preview Error:', e.message);
+            process.stderr.write('HTML Preview Error: ' + e.message + '\\n');
             process.exit(1);
           }
         `;

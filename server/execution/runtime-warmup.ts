@@ -1,5 +1,8 @@
 import { spawn } from 'child_process';
 import { existsSync } from 'fs';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('runtime-warmup');
 
 export interface LanguageRuntime {
   name: string;
@@ -144,7 +147,7 @@ class RuntimeWarmupManager {
 
   async warmupBundle(bundle: LanguageBundle): Promise<void> {
     this.bundleStatus.set(bundle.name, 'installing');
-    console.log(`[RuntimeWarmup] Starting bundle: ${bundle.name}`);
+    logger.info(`[RuntimeWarmup] Starting bundle: ${bundle.name}`);
 
     const results = await Promise.all(
       bundle.languages.map(async (lang) => {
@@ -159,11 +162,11 @@ class RuntimeWarmupManager {
     this.bundleStatus.set(bundle.name, allReady ? 'ready' : 'failed');
 
     if (allReady) {
-      console.log(`[RuntimeWarmup] Bundle ${bundle.name}: ✅ complete (${ready.join(', ')})`);
+      logger.info(`[RuntimeWarmup] Bundle ${bundle.name}: ✅ complete (${ready.join(', ')})`);
     } else if (ready.length > 0) {
-      console.log(`[RuntimeWarmup] Bundle ${bundle.name}: ⚠️ partial (ready: ${ready.join(', ')})`);
+      logger.info(`[RuntimeWarmup] Bundle ${bundle.name}: ⚠️ partial (ready: ${ready.join(', ')})`);
     } else {
-      console.log(`[RuntimeWarmup] Bundle ${bundle.name}: skipped (no runtimes installed)`);
+      logger.info(`[RuntimeWarmup] Bundle ${bundle.name}: skipped (no runtimes installed)`);
     }
   }
 
@@ -173,7 +176,7 @@ class RuntimeWarmupManager {
     }
 
     this.warmupInProgress = true;
-    console.log('[RuntimeWarmup] Starting language runtime warmup...');
+    logger.info('[RuntimeWarmup] Starting language runtime warmup...');
     const startTime = Date.now();
 
     const sortedBundles = [...LANGUAGE_BUNDLES].sort((a, b) => a.priority - b.priority);
@@ -186,8 +189,8 @@ class RuntimeWarmupManager {
     this.warmupInProgress = false;
 
     const duration = Date.now() - startTime;
-    console.log(`[RuntimeWarmup] Complete in ${duration}ms. Ready languages: ${this.readyLanguages.size}/29`);
-    console.log(`[RuntimeWarmup] Available: ${[...this.readyLanguages].sort().join(', ')}`);
+    logger.info(`[RuntimeWarmup] Complete in ${duration}ms. Ready languages: ${this.readyLanguages.size}/29`);
+    logger.info(`[RuntimeWarmup] Available: ${[...this.readyLanguages].sort().join(', ')}`);
   }
 
   isLanguageReady(language: string): boolean {
@@ -258,10 +261,10 @@ export const runtimeWarmup = new RuntimeWarmupManager();
 
 export async function initializeRuntimes(): Promise<void> {
   if (process.env.NODE_ENV === 'production' || process.env.WARMUP_RUNTIMES === 'true') {
-    console.log('[RuntimeWarmup] Production mode - starting warmup...');
+    logger.info('[RuntimeWarmup] Production mode - starting warmup...');
     await runtimeWarmup.warmup();
   } else {
-    console.log('[RuntimeWarmup] Development mode - checking available runtimes...');
+    logger.info('[RuntimeWarmup] Development mode - checking available runtimes...');
     await runtimeWarmup.warmup();
   }
 }

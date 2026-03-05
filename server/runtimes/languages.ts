@@ -4,6 +4,9 @@
  */
 
 import { pgEnum } from 'drizzle-orm/pg-core';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('languages');
 
 // Language type for the database schema
 // Comprehensive list of languages for Fortune 500 production use (Replit parity)

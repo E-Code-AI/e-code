@@ -240,7 +240,6 @@ export function useAutonomousChatIntegration({
     // Use a negative projectId to avoid collision with real IDs but ensure stability
     // Same projectId will always get the same tempConversationId
     tempConversationIdRef.current = -projectId;
-    console.log('[AutonomousChatIntegration] 🆔 Generated STABLE temp conversationId:', tempConversationIdRef.current, 'for projectId:', projectId);
   }
   
   // Use external conversationId if available, otherwise use temp ID for bootstrap flow
@@ -275,11 +274,9 @@ export function useAutonomousChatIntegration({
     try {
       sessionStorage.setItem('autonomousChatEffect_layoutEffectRan', String(Date.now()));
     } catch (e) { /* ignore */ }
-    console.warn('[AutonomousChatIntegration] 🧪 DIAGNOSTIC: useLayoutEffect EXECUTED (synchronous, before paint)');
     
     return () => {
       isMountedRef.current = false;
-      console.warn('[AutonomousChatIntegration] 🧪 DIAGNOSTIC: useLayoutEffect cleanup on unmount');
       
       // Note: intentionalTeardownRef is set by the LAST useLayoutEffect (at end of hook)
       // which runs FIRST during unmount due to React's reverse cleanup order
@@ -292,12 +289,10 @@ export function useAutonomousChatIntegration({
     };
   }, []);
 
-  // 🔍 DIAGNOSTIC (useEffect): Runs after paint - compare timing with useLayoutEffect
   useEffect(() => {
     try {
       sessionStorage.setItem('autonomousChatEffect_diagnosticRan', String(Date.now()));
     } catch (e) { /* ignore */ }
-    console.warn('[AutonomousChatIntegration] 🧪 DIAGNOSTIC: useEffect with [] deps EXECUTED (async, after paint)');
   }, []);
 
   // Decode bootstrap token to extract session info (memoized for use in both effects)
@@ -339,7 +334,6 @@ export function useAutonomousChatIntegration({
     // This runs AFTER the previous effect's cleanup (which skipped during active bootstrap)
     // If enabled=false but socket is still open, this is a genuine disable - close now
     if (!enabled && wsRef.current) {
-      console.log('[AutonomousChatIntegration] ⚠️ Genuine disable detected - closing WebSocket immediately');
       // Close WebSocket synchronously
       wsRef.current.close(1000, 'genuine-disable');
       wsRef.current = null;
@@ -383,7 +377,6 @@ export function useAutonomousChatIntegration({
     }
     
     if (!wsProjectId) {
-      console.warn('[AutonomousChatIntegration] 🚀 useLayoutEffect: No projectId, skipping');
       return;
     }
     
@@ -406,13 +399,12 @@ export function useAutonomousChatIntegration({
     
     const wsUrl = `${protocol}//${window.location.host}/ws/agent?${params.toString()}`;
     
-    console.warn('[AutonomousChatIntegration] 🚀 useLayoutEffect: Connecting to:', wsUrl.substring(0, 80) + '...');
+    console.warn('[AutonomousChatIntegration] 🚀 useLayoutEffect: Connecting to WebSocket');
     
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
     
     ws.onopen = () => {
-      console.warn('[AutonomousChatIntegration] 🚀 useLayoutEffect: WebSocket CONNECTED successfully!');
       hasConnectedRef.current = true;
       reconnectAttemptRef.current = 0;
       // ✅ FIX (Jan 2026): Mark bootstrap as active
@@ -422,7 +414,6 @@ export function useAutonomousChatIntegration({
         buildCompletedRef.current = false;
         // ✅ NEW (Jan 26, 2026): Reset task list message ID for new builds
         taskListMessageIdRef.current = null;
-        console.log('[AutonomousChatIntegration] 🔒 Bootstrap ACTIVE - protecting from transient enabled toggles');
       }
       setConnectionState({ isConnected: true, error: null, reconnectAttempt: 0, maxReconnectAttempts: 10 });
       try {
@@ -445,7 +436,6 @@ export function useAutonomousChatIntegration({
     };
     
     ws.onclose = (event) => {
-      console.warn('[AutonomousChatIntegration] 🚀 useLayoutEffect: WebSocket closed:', event.code, event.reason);
       hasConnectedRef.current = false;
       wsRef.current = null;
       
@@ -456,7 +446,6 @@ export function useAutonomousChatIntegration({
       if (event.code !== 1000 && isMountedRef.current && reconnectAttemptRef.current < maxReconnectAttempts) {
         reconnectAttemptRef.current++;
         const delay = Math.min(baseReconnectDelayMs * Math.pow(2, reconnectAttemptRef.current - 1), 30000);
-        console.log(`[AutonomousChatIntegration] 🚀 Scheduling reconnect in ${delay}ms`);
         // Clear error state when attempting reconnect so banner shows progress
         setConnectionState(prev => ({ 
           ...prev, 
@@ -515,7 +504,6 @@ export function useAutonomousChatIntegration({
       }
       
       const doCleanup = (reason: string) => {
-        console.log(`[AutonomousChatIntegration] 🔓 Executing cleanup (reason: ${reason})`);
         layoutEffectConnectedRef.current = false;
         if (wsRef.current) {
           wsRef.current.close(1000, `cleanup: ${reason}`);
@@ -533,7 +521,6 @@ export function useAutonomousChatIntegration({
         // DO NOTHING - socket stays open
         // The new effect will close it if enabled=false (genuine disable)
         // Or build completion handlers will reset bootstrapActiveRef
-        console.log('[AutonomousChatIntegration] 🔒 Cleanup skipped - active bootstrap protected (stall-resilient)');
         return;
       }
       
@@ -565,7 +552,6 @@ export function useAutonomousChatIntegration({
     // Use setMessages to REPLACE messages, ensuring user prompt is FIRST
     // This clears any welcome message that may have been rehydrated from localStorage
     setMessages(conversationId, [userPromptMsg]);
-    console.log('[AutonomousChatIntegration] ✅ IMMEDIATE: Set user prompt as FIRST message:', resolvedPrompt.substring(0, 50));
   }, [conversationId, resolvedPrompt, setMessages]);
 
   const createAutonomousMessage = useCallback((

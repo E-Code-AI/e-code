@@ -319,12 +319,11 @@ export const CreateProjectModal = ({
             reject(new Error(data.message || 'Project creation failed'));
           }
         } catch (err) {
-          console.error('Error parsing SSE message:', err);
+          // Silent catch for SSE parsing issues
         }
       };
 
       eventSource.onerror = (error) => {
-        console.error('SSE connection error:', error);
         eventSource.close();
         eventSourceRef.current = null;
         reject(new Error('Connection to progress stream lost'));
@@ -365,7 +364,6 @@ export const CreateProjectModal = ({
         });
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error);
-        console.warn(`Failed to create file ${path}:`, errorMsg);
         errors.push(`${path}: ${errorMsg}`);
       }
     }
@@ -459,13 +457,9 @@ export const CreateProjectModal = ({
       
       // Scaffold files in background (non-blocking)
       if (creationTab === 'github' && values.githubUrl) {
-        importFromGitHub(project.id, values.githubUrl).catch(err => {
-          console.warn('Background GitHub import failed:', err);
-        });
+        importFromGitHub(project.id, values.githubUrl).catch(() => {});
       } else {
-        scaffoldTemplateFiles(project.id, values.template).catch(err => {
-          console.warn('Background scaffolding failed:', err);
-        });
+        scaffoldTemplateFiles(project.id, values.template).catch(() => {});
       }
     },
     onError: (error: Error) => {
@@ -562,8 +556,6 @@ export const CreateProjectModal = ({
         description: "Project structure suggested based on your description. Click Create to proceed.",
       });
     } catch (error) {
-      console.error('AI generation error:', error);
-      
       const words = prompt.split(' ').slice(0, 4);
       let suggestedName = words.join(' ');
       suggestedName = suggestedName.charAt(0).toUpperCase() + suggestedName.slice(1);

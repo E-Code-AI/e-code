@@ -54,7 +54,9 @@ import { centralUpgradeDispatcher } from './websocket/central-upgrade-dispatcher
 import { installFinalUpgradeGuard } from './websocket/upgrade-guard';
 import { performanceHeaders, earlyHints } from './middleware/performance-headers';
 import { isViteDevPath } from './utils/security';
+import { createLogger } from './utils/logger';
 
+const logger = createLogger('server');
 const serverLogger = createCentralizedLogger('server');
 const app = express();
 
@@ -199,7 +201,7 @@ httpServer.setMaxListeners(20);
 // This MUST be done before any other WebSocket services are initialized
 // The dispatcher intercepts ALL upgrade events and routes them to the correct handler
 centralUpgradeDispatcher.initialize(httpServer);
-console.log('[Central Dispatcher] ✅ Initialized as authoritative WebSocket upgrade handler');
+logger.info('[Central Dispatcher] ✅ Initialized as authoritative WebSocket upgrade handler');
 
 // ✅ FIX (Dec 6, 2025): Block additional upgrade listeners after dispatcher init
 // This prevents Vite, Express, Socket.IO, and other libraries from adding competing listeners
@@ -212,7 +214,7 @@ const originalHttpServerPrependListener = httpServer.prependListener.bind(httpSe
 const blockUpgradeListener = (method: typeof httpServer.on) => {
   return function(event: string, listener: (...args: any[]) => void) {
     if (event === 'upgrade') {
-      console.log('[HTTP Server] ⚠️ Blocked additional upgrade listener (use centralUpgradeDispatcher.register instead)');
+      logger.info('[HTTP Server] ⚠️ Blocked additional upgrade listener (use centralUpgradeDispatcher.register instead)');
       return httpServer; // No-op for upgrade events
     }
     return method(event, listener);
@@ -223,7 +225,7 @@ httpServer.on = blockUpgradeListener(originalHttpServerOn);
 httpServer.addListener = blockUpgradeListener(originalHttpServerAddListener);
 httpServer.prependListener = blockUpgradeListener(originalHttpServerPrependListener);
 
-console.log('[HTTP Server] ✅ Upgrade listener blocking enabled - only dispatcher handles upgrades');
+logger.info('[HTTP Server] ✅ Upgrade listener blocking enabled - only dispatcher handles upgrades');
 
 // Export restore function for use when adding the final guard
 (global as any).__restoreUpgradeListenerMethods = () => {
@@ -380,7 +382,7 @@ app.get('/health/readiness', (_req, res) => {
 const trackServiceLoad = (serviceName: string) => {
   markServiceReady(serviceName);
   const { total, ready } = getServiceCounts();
-  console.log(`[Startup] ✅ ${serviceName} (${ready}/${total})`);
+  logger.info(`[Startup] ✅ ${serviceName} (${ready}/${total})`);
 };
 
 // Mark server as listening immediately
@@ -418,21 +420,21 @@ app.get('/api/cors-health', async (_req, res) => {
 
 // ✅ EARLY BIND: Start listening IMMEDIATELY so health checks respond within Replit's 5s timeout
 // Services will load in the background after the server is already accepting connections
-console.log(`[Server] Attempting to bind to port ${port} on 0.0.0.0...`);
+logger.info(`[Server] Attempting to bind to port ${port} on 0.0.0.0...`);
 httpServer.on('error', (err: any) => {
-  console.error(`[Server] FATAL: Failed to bind to port ${port}:`, err.message);
+  logger.error(`[Server] FATAL: Failed to bind to port ${port}: ${err.message}`);
   if (err.code === 'EADDRINUSE') {
-    console.error(`[Server] Port ${port} is already in use. Trying port 0 (auto-assign)...`);
+    logger.error(`[Server] Port ${port} is already in use. Trying port 0 (auto-assign)...`);
     httpServer.listen(0, "0.0.0.0", () => {
       const addr = httpServer.address();
       const actualPort = typeof addr === 'object' && addr ? addr.port : 'unknown';
-      console.log(`🚀 E-Code Platform listening on auto-assigned port ${actualPort}`);
+      logger.info(`🚀 E-Code Platform listening on auto-assigned port ${actualPort}`);
     });
   }
 });
 httpServer.listen(port, "0.0.0.0", () => {
-  console.log(`🚀 E-Code Platform listening on port ${port}`);
-  console.log(`[Server] Environment: ${process.env.NODE_ENV || 'development'}`);
+  logger.info(`🚀 E-Code Platform listening on port ${port}`);
+  logger.info(`[Server] Environment: ${process.env.NODE_ENV || 'development'}`);
 });
 
 // Now load the rest of the application asynchronously after server is listening
@@ -443,7 +445,7 @@ httpServer.listen(port, "0.0.0.0", () => {
     const { setupPassportAuth } = await import("./middleware/passport-setup");
     setupPassportAuth(app);
   } catch (error) {
-    console.error('[WORKING SERVER] Failed to setup passport:', error);
+    logger.error(`[WORKING SERVER] Failed to setup passport: ${error}`);
   }
 
   // ✅ P0-06 FIX: Apply CSRF protection GLOBALLY to all /api routes
@@ -452,9 +454,9 @@ httpServer.listen(port, "0.0.0.0", () => {
   try {
     const { csrfProtection } = await import('./middleware/csrf');
     app.use('/api', csrfProtection);
-    console.log('[CSRF] ✅ Global CSRF protection enabled for all /api routes');
+    logger.info('[CSRF] ✅ Global CSRF protection enabled for all /api routes');
   } catch (error) {
-    console.error('[CSRF] Failed to apply global CSRF protection:', error);
+    logger.error(`[CSRF] Failed to apply global CSRF protection: ${error}`);
   }
 
   // SECURITY: Validate origin configuration BEFORE initializing ANY WebSocket servers
@@ -463,7 +465,7 @@ httpServer.listen(port, "0.0.0.0", () => {
     const { validateOriginConfig } = await import("./utils/origin-validation");
     validateOriginConfig();
   } catch (error) {
-    console.error('[SECURITY] Origin validation configuration error:', error.message);
+    logger.error(`[SECURITY] Origin validation configuration error: ${error.message}`);
     // Continue anyway in development, but log the error
     if (process.env.NODE_ENV === 'production') {
       throw error; // Fail hard in production
@@ -478,18 +480,18 @@ httpServer.listen(port, "0.0.0.0", () => {
     const ptyTerminalService = initPTYTerminalService();
     ptyTerminalService.setup(httpServer);
     markServiceReady('terminal');
-    console.log('[Terminal] PTY Terminal service initialized at /api/terminal/ws');
+    logger.info('[Terminal] PTY Terminal service initialized at /api/terminal/ws');
   } catch (error) {
-    console.error('[WORKING SERVER] Failed to setup PTY Terminal WebSocket:', error);
+    logger.error(`[WORKING SERVER] Failed to setup PTY Terminal WebSocket: ${error}`);
     
     // Fallback to simulated terminal if PTY fails
     try {
       const { setupTerminalWebsocket } = await import("./terminal");
       setupTerminalWebsocket(httpServer);
       markServiceReady('terminal');
-      console.log('[Terminal] Fallback to simulated terminal');
+      logger.info('[Terminal] Fallback to simulated terminal');
     } catch (fallbackError) {
-      console.error('[WORKING SERVER] Fallback terminal also failed:', fallbackError);
+      logger.error(`[WORKING SERVER] Fallback terminal also failed: ${fallbackError}`);
       markServiceFailed('terminal', 'Both PTY and fallback terminal failed');
     }
   }
@@ -501,9 +503,9 @@ httpServer.listen(port, "0.0.0.0", () => {
     const { setupBackgroundTestingWebSocket } = await import("./websocket/background-testing-ws");
     setupBackgroundTestingWebSocket(httpServer);
     markServiceReady('background-testing');
-    console.log('[BackgroundTesting] WebSocket service initialized via central dispatcher at /ws/background-tests');
+    logger.info('[BackgroundTesting] WebSocket service initialized via central dispatcher at /ws/background-tests');
   } catch (error) {
-    console.error('[WORKING SERVER] Failed to setup Background Testing WebSocket:', error);
+    logger.error(`[WORKING SERVER] Failed to setup Background Testing WebSocket: ${error}`);
     markServiceFailed('background-testing', String(error));
   }
 
@@ -516,9 +518,9 @@ httpServer.listen(port, "0.0.0.0", () => {
     // Make collaboration server available globally
     (global as any).collaborationServer = collaborationServer;
     markServiceReady('collaboration');
-    console.log('[Collaboration] Yjs document sync server initialized at /collaboration');
+    logger.info('[Collaboration] Yjs document sync server initialized at /collaboration');
   } catch (error) {
-    console.error('[WORKING SERVER] Failed to setup Collaboration WebSocket:', error);
+    logger.error(`[WORKING SERVER] Failed to setup Collaboration WebSocket: ${error}`);
     markServiceFailed('collaboration', String(error));
   }
 
@@ -531,9 +533,9 @@ httpServer.listen(port, "0.0.0.0", () => {
     // Make unified collaboration service available globally
     (global as any).unifiedCollaborationService = unifiedCollabService;
     markServiceReady('unified-collaboration');
-    console.log('[Collaboration] Unified collaboration service initialized (presence/chat/cursors)');
+    logger.info('[Collaboration] Unified collaboration service initialized (presence/chat/cursors)');
   } catch (error) {
-    console.error('[WORKING SERVER] Failed to setup Unified Collaboration Service:', error);
+    logger.error(`[WORKING SERVER] Failed to setup Unified Collaboration Service: ${error}`);
     markServiceFailed('unified-collaboration', String(error));
   }
 
@@ -547,7 +549,7 @@ httpServer.listen(port, "0.0.0.0", () => {
     (global as any).webrtcService = webrtcService;
     markServiceReady('webrtc');
   } catch (error) {
-    console.error('[WORKING SERVER] Failed to setup WebRTC server:', error);
+    logger.error(`[WORKING SERVER] Failed to setup WebRTC server: ${error}`);
     markServiceFailed('webrtc', String(error));
   }
 
@@ -564,12 +566,12 @@ httpServer.listen(port, "0.0.0.0", () => {
       if (db) {
         const { initializeTokenRevocation } = await import("./auth/token-revocation");
         await initializeTokenRevocation(db);
-        console.log('[Token Revocation] ✅ Loaded from database - persists across restarts');
+        logger.info('[Token Revocation] ✅ Loaded from database - persists across restarts');
       } else {
-        console.log('[Token Revocation] Database not available - using memory-only mode');
+        logger.info('[Token Revocation] Database not available - using memory-only mode');
       }
     } catch (error) {
-      console.log('[Token Revocation] Using memory-only mode (will persist to DB on revocation)');
+      logger.info('[Token Revocation] Using memory-only mode (will persist to DB on revocation)');
     }
     
     // Setup LSP WebSocket server for real-time diagnostics
@@ -582,7 +584,7 @@ httpServer.listen(port, "0.0.0.0", () => {
       (global as any).lspService = lspService;
       markServiceReady('lsp');
     } catch (error) {
-      console.error('[WORKING SERVER] Failed to setup LSP WebSocket:', error);
+      logger.error(`[WORKING SERVER] Failed to setup LSP WebSocket: ${error}`);
       markServiceFailed('lsp', String(error));
     }
     
@@ -596,7 +598,7 @@ httpServer.listen(port, "0.0.0.0", () => {
       (global as any).buildLogsService = buildLogsService;
       markServiceReady('build-logs');
     } catch (error) {
-      console.error('[WORKING SERVER] Failed to setup Build Logs WebSocket:', error);
+      logger.error(`[WORKING SERVER] Failed to setup Build Logs WebSocket: ${error}`);
       markServiceFailed('build-logs', String(error));
     }
     
@@ -610,9 +612,9 @@ httpServer.listen(port, "0.0.0.0", () => {
       // Make runtime logs service available globally for routes
       (global as any).runtimeLogsService = runtimeLogsService;
       markServiceReady('runtime-logs');
-      console.log('[RuntimeLogs] WebSocket server initialized at /api/runtime/logs/ws');
+      logger.info('[RuntimeLogs] WebSocket server initialized at /api/runtime/logs/ws');
     } catch (error) {
-      console.error('[WORKING SERVER] Failed to setup Runtime Logs WebSocket:', error);
+      logger.error(`[WORKING SERVER] Failed to setup Runtime Logs WebSocket: ${error}`);
       markServiceFailed('runtime-logs', String(error));
     }
     
@@ -625,9 +627,9 @@ httpServer.listen(port, "0.0.0.0", () => {
       // Make server logs service available globally
       (global as any).serverLogsService = serverLogsService;
       markServiceReady('server-logs');
-      console.log('[ServerLogs] WebSocket server initialized at /api/server/logs/ws');
+      logger.info('[ServerLogs] WebSocket server initialized at /api/server/logs/ws');
     } catch (error) {
-      console.error('[WORKING SERVER] Failed to setup Server Logs WebSocket:', error);
+      logger.error(`[WORKING SERVER] Failed to setup Server Logs WebSocket: ${error}`);
       markServiceFailed('server-logs', String(error));
     }
     
@@ -641,7 +643,7 @@ httpServer.listen(port, "0.0.0.0", () => {
       (global as any).testRunsService = testRunsService;
       markServiceReady('test-runs');
     } catch (error) {
-      console.error('[WORKING SERVER] Failed to setup Test Runs WebSocket:', error);
+      logger.error(`[WORKING SERVER] Failed to setup Test Runs WebSocket: ${error}`);
       markServiceFailed('test-runs', String(error));
     }
     
@@ -655,7 +657,7 @@ httpServer.listen(port, "0.0.0.0", () => {
       (global as any).securityScannerService = securityScannerService;
       markServiceReady('security-scanner');
     } catch (error) {
-      console.error('[WORKING SERVER] Failed to setup Security Scanner WebSocket:', error);
+      logger.error(`[WORKING SERVER] Failed to setup Security Scanner WebSocket: ${error}`);
       markServiceFailed('security-scanner', String(error));
     }
     
@@ -664,7 +666,7 @@ httpServer.listen(port, "0.0.0.0", () => {
       const { setupScanExecutor } = await import("./services/scan-executor.service");
       setupScanExecutor(storage);
     } catch (error) {
-      console.error('[WORKING SERVER] Failed to setup Scan Executor:', error);
+      logger.error(`[WORKING SERVER] Failed to setup Scan Executor: ${error}`);
     }
     
     // Setup Resources WebSocket server for real-time resource metrics streaming
@@ -677,7 +679,7 @@ httpServer.listen(port, "0.0.0.0", () => {
       (global as any).resourcesService = resourcesService;
       markServiceReady('resources');
     } catch (error) {
-      console.error('[WORKING SERVER] Failed to setup Resources WebSocket:', error);
+      logger.error(`[WORKING SERVER] Failed to setup Resources WebSocket: ${error}`);
       markServiceFailed('resources', String(error));
     }
     
@@ -691,9 +693,9 @@ httpServer.listen(port, "0.0.0.0", () => {
       // Make agent websocket service available globally for routes
       (global as any).agentWebSocketService = agentWebSocketService;
       markServiceReady('agent');
-      console.log('[Agent WebSocket] Service initialized at /ws/agent');
+      logger.info('[Agent WebSocket] Service initialized at /ws/agent');
     } catch (error) {
-      console.error('[WORKING SERVER] Failed to setup Agent WebSocket:', error);
+      logger.error(`[WORKING SERVER] Failed to setup Agent WebSocket: ${error}`);
       markServiceFailed('agent', String(error));
     }
     
@@ -707,9 +709,9 @@ httpServer.listen(port, "0.0.0.0", () => {
       // Make deployment websocket service available globally for routes
       (global as any).deploymentWebSocketService = deploymentWebSocketService;
       markServiceReady('deployment');
-      console.log('[Deployment WebSocket] Service initialized at /ws/deployments');
+      logger.info('[Deployment WebSocket] Service initialized at /ws/deployments');
     } catch (error) {
-      console.error('[WORKING SERVER] Failed to setup Deployment WebSocket:', error);
+      logger.error(`[WORKING SERVER] Failed to setup Deployment WebSocket: ${error}`);
       markServiceFailed('deployment', String(error));
     }
     
@@ -722,9 +724,9 @@ httpServer.listen(port, "0.0.0.0", () => {
       // Make checkpoint websocket service available globally
       (global as any).checkpointWebSocketService = checkpointWss;
       markServiceReady('checkpoint');
-      console.log('[Checkpoint WebSocket] Service initialized at /ws/checkpoints');
+      logger.info('[Checkpoint WebSocket] Service initialized at /ws/checkpoints');
     } catch (error) {
-      console.error('[WORKING SERVER] Failed to setup Checkpoint WebSocket:', error);
+      logger.error(`[WORKING SERVER] Failed to setup Checkpoint WebSocket: ${error}`);
       markServiceFailed('checkpoint', String(error));
     }
     
@@ -738,9 +740,9 @@ httpServer.listen(port, "0.0.0.0", () => {
       app.get('/health/readiness', healthCheckRoutes.readiness);
       app.get('/health/deep', healthCheckRoutes.deep);
       app.get('/health/startup', healthCheckRoutes.startup);
-      console.log('[Fortune 500 Health] K8s endpoints registered: /health/{liveness,readiness,deep,startup}');
+      logger.info('[Fortune 500 Health] K8s endpoints registered: /health/{liveness,readiness,deep,startup}');
     } catch (error) {
-      console.error('[WORKING SERVER] Failed to register K8s health endpoints:', error);
+      logger.error(`[WORKING SERVER] Failed to register K8s health endpoints: ${error}`);
     }
 
     // Register Swagger API documentation (optional, controlled by SWAGGER_ENABLED flag)
@@ -749,12 +751,12 @@ httpServer.listen(port, "0.0.0.0", () => {
       if (enableSwagger) {
         const { setupSwaggerDocs } = await import('./docs/swagger');
         setupSwaggerDocs(app);
-        console.log('[Fortune 500 Swagger] 📚 API Documentation available at /api/docs');
+        logger.info('[Fortune 500 Swagger] 📚 API Documentation available at /api/docs');
       } else {
-        console.log('[Fortune 500 Swagger] API Documentation disabled (SWAGGER_ENABLED=false)');
+        logger.info('[Fortune 500 Swagger] API Documentation disabled (SWAGGER_ENABLED=false)');
       }
     } catch (error) {
-      console.error('[WORKING SERVER] Failed to register Swagger docs:', error);
+      logger.error(`[WORKING SERVER] Failed to register Swagger docs: ${error}`);
     }
 
     const mainRouter = new MainRouter(storage);
@@ -765,113 +767,113 @@ httpServer.listen(port, "0.0.0.0", () => {
       const monitoringRouter = (await import('./routes/monitoring.router')).default;
       app.use(monitoringRouter);
     } catch (error) {
-      console.error('[WORKING SERVER] Failed to register monitoring routes:', error);
+      logger.error(`[WORKING SERVER] Failed to register monitoring routes: ${error}`);
     }
 
     // ✅ PROMETHEUS METRICS: Standard /metrics endpoint for Prometheus scraping
     try {
       const prometheusRouter = (await import('./routes/prometheus.router')).default;
       app.use(prometheusRouter);
-      console.log('[Prometheus] Metrics endpoint registered at /metrics');
+      logger.info('[Prometheus] Metrics endpoint registered at /metrics');
     } catch (error) {
-      console.error('[WORKING SERVER] Failed to register Prometheus metrics routes:', error);
+      logger.error(`[WORKING SERVER] Failed to register Prometheus metrics routes: ${error}`);
     }
 
     // Register AI Optimization routes
     try {
       const aiOptimizationRouter = (await import('./routes/ai-optimization.router')).default;
       app.use('/api/ai-optimization', aiOptimizationRouter);
-      console.log('[AI Optimization] Routes registered at /api/ai-optimization');
+      logger.info('[AI Optimization] Routes registered at /api/ai-optimization');
       
       const slackConfigRouter = (await import('./routes/slack-config.router')).default;
       app.use('/api/slack-config', slackConfigRouter);
-      console.log('[Slack Config] Routes registered at /api/slack-config');
+      logger.info('[Slack Config] Routes registered at /api/slack-config');
     } catch (error) {
-      console.error('[WORKING SERVER] Failed to register AI optimization routes:', error);
+      logger.error(`[WORKING SERVER] Failed to register AI optimization routes: ${error}`);
     }
 
     // ✅ 40-YEAR ENGINEERING FIX: Register Agent Autonomous routes
     try {
       const agentAutonomousRouter = (await import('./routes/agent-autonomous.router')).default;
       app.use('/api/agent/autonomous', agentAutonomousRouter);
-      console.log('[Agent Autonomous] Routes registered at /api/agent/autonomous');
+      logger.info('[Agent Autonomous] Routes registered at /api/agent/autonomous');
     } catch (error) {
-      console.error('[WORKING SERVER] Failed to register agent autonomous routes:', error);
+      logger.error(`[WORKING SERVER] Failed to register agent autonomous routes: ${error}`);
     }
 
     // ✅ PHASE 1 CRITICAL FIX: Register Workspace Bootstrap routes (Replit-like flow)
     try {
       const workspaceBootstrapRouter = (await import('./routes/workspace-bootstrap.router')).default;
       app.use('/api/workspace', workspaceBootstrapRouter);
-      console.log('[Workspace Bootstrap] Routes registered at /api/workspace/bootstrap - Replit-like agent flow enabled ✅');
+      logger.info('[Workspace Bootstrap] Routes registered at /api/workspace/bootstrap - Replit-like agent flow enabled ✅');
     } catch (error) {
-      console.error('[WORKING SERVER] Failed to register workspace bootstrap routes:', error);
+      logger.error(`[WORKING SERVER] Failed to register workspace bootstrap routes: ${error}`);
     }
 
     // ✅ FORTUNE 500 OBSERVABILITY: WebSocket Metrics routes
     try {
       const websocketMetricsRouter = (await import('./routes/websocket-metrics.router')).default;
       app.use('/api/websocket', websocketMetricsRouter);
-      console.log('[WebSocket Metrics] Routes registered at /api/websocket - Cache stats available');
+      logger.info('[WebSocket Metrics] Routes registered at /api/websocket - Cache stats available');
     } catch (error) {
-      console.error('[WORKING SERVER] Failed to register websocket metrics routes:', error);
+      logger.error(`[WORKING SERVER] Failed to register websocket metrics routes: ${error}`);
     }
 
     // ✅ TEMPLATES MARKETPLACE: Templates routes
     try {
       const templatesRouter = (await import('./routes/templates')).default;
       app.use('/api/templates', templatesRouter);
-      console.log('[Templates Marketplace] Routes registered at /api/templates');
+      logger.info('[Templates Marketplace] Routes registered at /api/templates');
     } catch (error) {
-      console.error('[WORKING SERVER] Failed to register templates routes:', error);
+      logger.error(`[WORKING SERVER] Failed to register templates routes: ${error}`);
     }
 
     // ✅ SEO SITEMAP: Dynamic sitemap.xml generation
     try {
       const sitemapRouter = (await import('./routes/sitemap.router')).default;
       app.use(sitemapRouter);
-      console.log('[SEO] Sitemap routes registered at /sitemap.xml, /sitemap-index.xml, /sitemap-blog.xml');
+      logger.info('[SEO] Sitemap routes registered at /sitemap.xml, /sitemap-index.xml, /sitemap-blog.xml');
     } catch (error) {
-      console.error('[WORKING SERVER] Failed to register sitemap routes:', error);
+      logger.error(`[WORKING SERVER] Failed to register sitemap routes: ${error}`);
     }
 
     // ✅ CHECKPOINTS & ROLLBACK SYSTEM: Checkpoint routes with atomic transactions
     try {
       const checkpointsRouter = (await import('./routes/checkpoints.router')).default;
       app.use('/api', checkpointsRouter); // Mount at /api to get /api/projects/:projectId/checkpoints
-      console.log('[Checkpoints] Routes registered at /api - Atomic transactions + row-level locks enabled');
+      logger.info('[Checkpoints] Routes registered at /api - Atomic transactions + row-level locks enabled');
     } catch (error) {
-      console.error('[WORKING SERVER] Failed to register checkpoints routes:', error);
+      logger.error(`[WORKING SERVER] Failed to register checkpoints routes: ${error}`);
     }
 
     // ✅ STRIPE PAYMENTS: Payment and subscription routes
     try {
       const paymentsRouter = (await import('./routes/payments.router')).default;
       app.use('/api/payments', paymentsRouter);
-      console.log('[Stripe Payments] Routes registered at /api/payments');
+      logger.info('[Stripe Payments] Routes registered at /api/payments');
     } catch (error) {
-      console.error('[WORKING SERVER] Failed to register payments routes:', error);
+      logger.error(`[WORKING SERVER] Failed to register payments routes: ${error}`);
     }
 
     // ✅ AGENT CONTEXT: Repository overview routes
     try {
       const agentContextRouter = (await import('./agent/routes/agent-context')).default;
       app.use('/api/agent', agentContextRouter);
-      console.log('[Agent Context] Routes registered at /api/agent/repo-overview');
+      logger.info('[Agent Context] Routes registered at /api/agent/repo-overview');
     } catch (error) {
-      console.error('[WORKING SERVER] Failed to register agent context routes:', error);
+      logger.error(`[WORKING SERVER] Failed to register agent context routes: ${error}`);
     }
 
     // ✅ CENTRALIZED LOGS: Fortune 500 logging API with frontend ingestion
     try {
       const logsRouter = (await import('./routes/logs.router')).default;
       app.use(logsRouter);
-      console.log('[Centralized Logs] Routes registered at /api/logs - Request tracing enabled');
+      logger.info('[Centralized Logs] Routes registered at /api/logs - Request tracing enabled');
     } catch (error) {
-      console.error('[WORKING SERVER] Failed to register logs routes:', error);
+      logger.error(`[WORKING SERVER] Failed to register logs routes: ${error}`);
     }
   } catch (error) {
-    console.error('[WORKING SERVER] Failed to register routes:', error);
+    logger.error(`[WORKING SERVER] Failed to register routes: ${error}`);
     // Server continues running even if routes fail to load
   }
 
@@ -894,9 +896,9 @@ httpServer.listen(port, "0.0.0.0", () => {
     initializeErrorHandlers();
     app.use(notFoundHandler);
     app.use(errorHandler);
-    console.log('[Error Handler] ✅ Global error handler registered');
+    logger.info('[Error Handler] ✅ Global error handler registered');
   } catch (err) {
-    console.error('[Error Handler] Failed to register global error handler:', err);
+    logger.error(`[Error Handler] Failed to register global error handler: ${err}`);
     // Fallback error handler if import fails
     app.use((err: any, req: any, res: any, _next: any) => {
       const isProd = process.env.NODE_ENV === 'production';
@@ -915,7 +917,7 @@ httpServer.listen(port, "0.0.0.0", () => {
     etag: true,
     lastModified: true
   }));
-  console.log('[Static Assets] Serving attached_assets from', attachedAssetsPath);
+  logger.info(`[Static Assets] Serving attached_assets from ${attachedAssetsPath}`);
 
   // Setup Vite with graceful fallback handling
   // Uses safe loader that isolates Vite failures and provides fallback HTML server
@@ -926,14 +928,14 @@ httpServer.listen(port, "0.0.0.0", () => {
     const restoreUpgrade = (global as any).__restoreUpgradeListenerMethods;
     if (restoreUpgrade) {
       restoreUpgrade();
-      console.log('[HTTP Server] 🔓 Temporarily restored upgrade listeners for Vite HMR initialization');
+      logger.info('[HTTP Server] 🔓 Temporarily restored upgrade listeners for Vite HMR initialization');
     }
     
     // ✅ Initialize Socket.IO terminal service (uses both WebSocket and HTTP polling)
     // This provides better proxy compatibility than raw WebSocket
     const { socketIOTerminalService } = await import('./terminal/socket-io-terminal');
     socketIOTerminalService.initialize(httpServer);
-    console.log('[SocketIO Terminal] ✅ Terminal service initialized with WebSocket + polling fallback');
+    logger.info('[SocketIO Terminal] ✅ Terminal service initialized with WebSocket + polling fallback');
     
     const { safeSetupVite, setupFallbackServer } = await import("./vite-loader");
     const viteSuccess = await safeSetupVite(app, httpServer);
@@ -943,7 +945,7 @@ httpServer.listen(port, "0.0.0.0", () => {
     httpServer.on = blockUpgradeListener(originalHttpServerOn);
     httpServer.addListener = blockUpgradeListener(originalHttpServerAddListener);
     httpServer.prependListener = blockUpgradeListener(originalHttpServerPrependListener);
-    console.log('[HTTP Server] 🔒 Re-blocked upgrade listeners after Vite initialization');
+    logger.info('[HTTP Server] 🔒 Re-blocked upgrade listeners after Vite initialization');
     
     if (!viteSuccess) {
       // Vite failed - setup fallback HTML server
@@ -951,7 +953,7 @@ httpServer.listen(port, "0.0.0.0", () => {
     }
   } catch (error: any) {
     // If even the loader fails, setup basic fallback
-    console.error('[WORKING SERVER] Critical: Vite loader failed:', error.message);
+    logger.error(`[WORKING SERVER] Critical: Vite loader failed: ${error.message}`);
     
     // Fallback: serve a simple response for client routes
     app.get('*', (req, res) => {
@@ -991,7 +993,7 @@ httpServer.listen(port, "0.0.0.0", () => {
     const { initializeDatabase } = await import("./db-init");
     await initializeDatabase();
   } catch (error) {
-    console.warn('[WORKING SERVER] Database initialization failed (non-critical):', error.message);
+    logger.warn(`[WORKING SERVER] Database initialization failed (non-critical): ${error.message}`);
   }
 
   // Seed database with test user for E2E testing (development only)
@@ -999,9 +1001,9 @@ httpServer.listen(port, "0.0.0.0", () => {
     try {
       const { seedDatabase } = await import("./db-seed");
       await seedDatabase();
-      console.log('✅ Test user seeded (testuser@test.com / testpass123)');
+      logger.info('✅ Test user seeded (testuser@test.com / testpass123)');
     } catch (error) {
-      console.warn('[WORKING SERVER] Database seeding failed (non-critical):', error.message);
+      logger.warn(`[WORKING SERVER] Database seeding failed (non-critical): ${error.message}`);
     }
   }
 
@@ -1010,20 +1012,20 @@ httpServer.listen(port, "0.0.0.0", () => {
     try {
       const { startStripeUsageWorker } = await import('./workflows/stripe-usage-worker');
       startStripeUsageWorker();
-      console.log('✅ Stripe Usage Worker started - processing billing queue every 30s');
+      logger.info('✅ Stripe Usage Worker started - processing billing queue every 30s');
     } catch (error) {
-      console.warn('[WORKING SERVER] Stripe worker initialization failed (non-critical):', error.message);
+      logger.warn(`[WORKING SERVER] Stripe worker initialization failed (non-critical): ${error.message}`);
     }
 
     try {
       const { startPayAsYouGoWorker } = await import('./workflows/payg-queue-processor');
       startPayAsYouGoWorker();
-      console.log('✅ Pay-as-you-go Worker started - processing overage charges every 30s');
+      logger.info('✅ Pay-as-you-go Worker started - processing overage charges every 30s');
     } catch (error) {
-      console.warn('[WORKING SERVER] Pay-as-you-go worker initialization failed (non-critical):', error.message);
+      logger.warn(`[WORKING SERVER] Pay-as-you-go worker initialization failed (non-critical): ${error.message}`);
     }
   } else {
-    console.log('⏭️  Billing workers skipped in development (use NODE_ENV=production to enable)');
+    logger.info('⏭️  Billing workers skipped in development (use NODE_ENV=production to enable)');
   }
 
   // ✅ Mobile Sessions Cleanup Scheduler - runs every hour
@@ -1037,12 +1039,12 @@ httpServer.listen(port, "0.0.0.0", () => {
         const storage = getStorage();
         const deletedCount = await storage.cleanupExpiredMobileSessions();
         if (deletedCount > 0) {
-          console.log(`[Cleanup] Removed ${deletedCount} expired mobile sessions`);
+          logger.info(`[Cleanup] Removed ${deletedCount} expired mobile sessions`);
         }
       } catch (error: any) {
         // Silent fail if table doesn't exist or is being created
         if (!error.message?.includes('does not exist')) {
-          console.warn('[Cleanup] Mobile session cleanup failed:', error.message);
+          logger.warn(`[Cleanup] Mobile session cleanup failed: ${error.message}`);
         }
       }
     };
@@ -1050,18 +1052,18 @@ httpServer.listen(port, "0.0.0.0", () => {
     // Delay initial cleanup to allow db connection to stabilize, then run every hour
     setTimeout(() => runMobileSessionCleanup(), INITIAL_CLEANUP_DELAY);
     setInterval(runMobileSessionCleanup, MOBILE_SESSION_CLEANUP_INTERVAL);
-    console.log('✅ Mobile Session Cleanup Scheduler started - running every hour');
+    logger.info('✅ Mobile Session Cleanup Scheduler started - running every hour');
   } catch (error: any) {
-    console.warn('[WORKING SERVER] Mobile session cleanup initialization failed (non-critical):', error.message);
+    logger.warn(`[WORKING SERVER] Mobile session cleanup initialization failed (non-critical): ${error.message}`);
   }
 
   // ✅ Start Storage Metrics Collector (Fortune 500 Monitoring)
   try {
     const { startStorageMetricsCollector } = await import('./jobs/storage-metrics-collector');
     startStorageMetricsCollector();
-    console.log('✅ Storage Metrics Collector started - running every hour');
+    logger.info('✅ Storage Metrics Collector started - running every hour');
   } catch (error: any) {
-    console.warn('[WORKING SERVER] Storage metrics collector initialization failed (non-critical):', error.message);
+    logger.warn(`[WORKING SERVER] Storage metrics collector initialization failed (non-critical): ${error.message}`);
   }
 
   // ✅ CRITICAL FIX (Dec 1, 2025): Removed manual handleAgentUpgrade flow
@@ -1076,16 +1078,16 @@ httpServer.listen(port, "0.0.0.0", () => {
   
   // ✅ Initialize language runtime warmup asynchronously
   setImmediate(() => {
-    console.log('[RuntimeWarmup] Starting background runtime initialization...');
+    logger.info('[RuntimeWarmup] Starting background runtime initialization...');
     initializeRuntimes().catch(err => {
-      console.error('[RuntimeWarmup] Failed to initialize runtimes:', err);
+      logger.error(`[RuntimeWarmup] Failed to initialize runtimes: ${err}`);
     });
   });
   
   // ✅ Restore original methods to allow adding the final guard
   if ((global as any).__restoreUpgradeListenerMethods) {
     (global as any).__restoreUpgradeListenerMethods();
-    console.log('[HTTP Server] Restored original methods to add final guard');
+    logger.info('[HTTP Server] Restored original methods to add final guard');
   }
   
   // ✅ Re-enable final guard (Nov 20, 2025)  
@@ -1097,7 +1099,7 @@ httpServer.listen(port, "0.0.0.0", () => {
   const blockUpgradeListenerFinal = (method: typeof httpServer.on) => {
     return function(event: string, listener: (...args: any[]) => void) {
       if (event === 'upgrade') {
-        console.log('[HTTP Server] ⚠️ Blocked late upgrade listener');
+        logger.info('[HTTP Server] ⚠️ Blocked late upgrade listener');
         return httpServer;
       }
       return method(event, listener);
@@ -1107,38 +1109,38 @@ httpServer.listen(port, "0.0.0.0", () => {
   httpServer.addListener = blockUpgradeListenerFinal(httpServer.addListener.bind(httpServer)) as typeof httpServer.addListener;
   httpServer.prependListener = blockUpgradeListenerFinal(httpServer.prependListener.bind(httpServer)) as typeof httpServer.prependListener;
   
-  console.log('[Upgrade Guard] Final catch-all guard registered for orphan socket cleanup');
-  console.log('[HTTP Server] ✅ Upgrade listeners locked: only dispatcher + guard active');
+  logger.info('[Upgrade Guard] Final catch-all guard registered for orphan socket cleanup');
+  logger.info('[HTTP Server] ✅ Upgrade listeners locked: only dispatcher + guard active');
   
   // ✅ Mark server as fully ready for health probes
   serverState.phase = 'ready';
-  console.log(`[Startup] ✅ Server ready (${Date.now() - serverState.startTime}ms startup time)`);
+  logger.info(`[Startup] ✅ Server ready (${Date.now() - serverState.startTime}ms startup time)`);
 
   // ✅ PRODUCTION OPTIMIZATION: Graceful shutdown handler
   const gracefulShutdown = async (signal: string) => {
-    console.log(`\n[Shutdown] Received ${signal}, starting graceful shutdown...`);
+    logger.info(`\n[Shutdown] Received ${signal}, starting graceful shutdown...`);
     
     // Stop accepting new connections
     httpServer.close(() => {
-      console.log('[Shutdown] HTTP server closed');
+      logger.info('[Shutdown] HTTP server closed');
     });
 
     // Clear all registered intervals (prevents memory leaks)
     try {
       const { intervalRegistry } = await import('./utils/interval-registry');
       intervalRegistry.clearAll();
-      console.log('[Shutdown] All intervals cleared');
+      logger.info('[Shutdown] All intervals cleared');
     } catch (e) {
-      console.warn('[Shutdown] Interval cleanup failed:', e);
+      logger.warn(`[Shutdown] Interval cleanup failed: ${e}`);
     }
 
     // Close database pools
     try {
       const { dbPool } = await import('./services/database-pool');
       await dbPool.shutdown();
-      console.log('[Shutdown] Database pool closed');
+      logger.info('[Shutdown] Database pool closed');
     } catch (e) {
-      console.warn('[Shutdown] Database pool close failed:', e);
+      logger.warn(`[Shutdown] Database pool close failed: ${e}`);
     }
 
     // Close Redis connections
@@ -1147,14 +1149,14 @@ httpServer.listen(port, "0.0.0.0", () => {
       if (redisCache && typeof (redisCache as any).close === 'function') {
         (redisCache as any).close();
       }
-      console.log('[Shutdown] Redis connection closed');
+      logger.info('[Shutdown] Redis connection closed');
     } catch (e) {
-      console.warn('[Shutdown] Redis close failed:', e);
+      logger.warn(`[Shutdown] Redis close failed: ${e}`);
     }
 
     // Exit after cleanup
     setTimeout(() => {
-      console.log('[Shutdown] Forced exit after timeout');
+      logger.info('[Shutdown] Forced exit after timeout');
       process.exit(0);
     }, 5000);
   };

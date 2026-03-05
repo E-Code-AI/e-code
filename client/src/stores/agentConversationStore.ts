@@ -344,15 +344,12 @@ export const useAgentConversationStore = create<AgentConversationStore>()(
         set((state) => {
           const sourceMessages = state.messages[fromId];
           if (!sourceMessages || sourceMessages.length === 0) {
-            console.log('[AgentConversationStore] No messages to migrate from', fromId, 'to', toId);
             return state;
           }
           
           // Filter out the default message and merge with existing target messages
           const existingTargetMessages = state.messages[toId] || [];
           const filteredSourceMessages = sourceMessages.filter(msg => msg.id !== '1');
-          
-          console.log('[AgentConversationStore] Migrating', filteredSourceMessages.length, 'messages from', fromId, 'to', toId);
           
           // Create new messages object without the source key
           const { [fromId]: _, ...restMessages } = state.messages;
@@ -393,7 +390,6 @@ export const useAgentConversationStore = create<AgentConversationStore>()(
               }));
             }
           });
-          console.log('[AgentConversationStore] Rehydrated from localStorage');
         }
       }
     }

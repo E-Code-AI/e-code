@@ -5,6 +5,9 @@
 
 import type { Application } from 'express';
 import type { Server } from 'http';
+import { createLogger } from './utils/logger';
+
+const logger = createLogger('vite-loader');
 
 /**
  * Attempts to load and setup Vite with proper error handling
@@ -91,7 +94,7 @@ export async function safeSetupVite(app: Application, server: Server): Promise<b
       
       // Listen on separate port for HMR WebSocket connections
       viteHmrServer.listen(VITE_HMR_PORT, '0.0.0.0', () => {
-        console.log(`[Vite HMR] Dedicated WebSocket server listening on port ${VITE_HMR_PORT}`);
+        logger.info(`[Vite HMR] Dedicated WebSocket server listening on port ${VITE_HMR_PORT}`);
       });
       
       // ✅ CRITICAL FIX (Dec 1, 2025): Add early guard middleware for WebSocket paths
@@ -160,11 +163,11 @@ export async function safeSetupVite(app: Application, server: Server): Promise<b
       server.addListener = originalAddListener;
       server.prependListener = originalPrependListener;
       
-      console.log(`[Vite Loader] ✅ Vite HMR upgrade listeners wrapped (${viteUpgradeListeners.length} listeners patched)`);
-      console.log('[Vite Loader] /ws/agent connections will now bypass Vite HMR and survive');
-      console.log('[Vite Loader] ⚠️  Wrapped listeners remain active, subsequent listeners run normally');
+      logger.info(`[Vite Loader] ✅ Vite HMR upgrade listeners wrapped (${viteUpgradeListeners.length} listeners patched)`);
+      logger.info('[Vite Loader] /ws/agent connections will now bypass Vite HMR and survive');
+      logger.info('[Vite Loader] ⚠️  Wrapped listeners remain active, subsequent listeners run normally');
     } else {
-      console.log('[Vite Loader] 🏭 Production mode - serving static files from dist/public...');
+      logger.info('[Vite Loader] 🏭 Production mode - serving static files from dist/public...');
       try {
         // Use our own production static file serving (dist/public is the correct path)
         // Note: ES module default exports require .default access
@@ -185,7 +188,7 @@ export async function safeSetupVite(app: Application, server: Server): Promise<b
           throw new Error(`Build directory not found: ${distPath}. Run 'npm run build' first.`);
         }
         
-        console.log(`[Vite Loader] Serving static files from: ${distPath}`);
+        logger.info(`[Vite Loader] Serving static files from: ${distPath}`);
         
         // Serve static assets with caching.
         // CRITICAL: index:false prevents express.static from serving index.html directly,
@@ -225,9 +228,9 @@ export async function safeSetupVite(app: Application, server: Server): Promise<b
           res.status(200).set({ 'Content-Type': 'text/html' }).end(html);
         });
         
-        console.log('[Vite Loader] ✅ Production static serving configured successfully');
+        logger.info('[Vite Loader] ✅ Production static serving configured successfully');
       } catch (staticError: any) {
-        console.error('[Vite Loader] ❌ Production serving failed:', staticError.message);
+        logger.error('[Vite Loader] ❌ Production serving failed:', staticError.message);
         throw staticError;
       }
     }
@@ -236,12 +239,12 @@ export async function safeSetupVite(app: Application, server: Server): Promise<b
   } catch (error: any) {
     // Check if this is a genuine Rollup native module missing error
     if (error.code === 'ERR_MODULE_NOT_FOUND' && error.message.includes('@rollup/')) {
-      console.warn('[VITE] ⚠️  Rollup native module not available');
-      console.warn('[VITE] Cannot start Vite development server due to missing optional dependency');
-      console.warn('[VITE] Error:', error.message);
+      logger.warn('[VITE] ⚠️  Rollup native module not available');
+      logger.warn('[VITE] Cannot start Vite development server due to missing optional dependency');
+      logger.warn('[VITE] Error:', error.message);
     } else {
-      console.error('[VITE] Failed to setup Vite:', error.message);
-      console.error('[VITE] Stack:', error.stack);
+      logger.error('[VITE] Failed to setup Vite:', error.message);
+      logger.error('[VITE] Stack:', error.stack);
     }
     return false;
   }
@@ -292,8 +295,8 @@ export async function setupFallbackServer(app: Application): Promise<void> {
   }
   
   // Fallback if dist/public doesn't exist
-  console.warn('[FALLBACK] ⚠️  Pre-built frontend not found in dist/public/');
-  console.warn('[FALLBACK] Using emergency fallback HTML...');
+  logger.warn('[FALLBACK] ⚠️  Pre-built frontend not found in dist/public/');
+  logger.warn('[FALLBACK] Using emergency fallback HTML...');
   
   // Emergency fallback
   app.get('*', (req, res) => {

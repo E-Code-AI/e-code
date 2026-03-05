@@ -96,7 +96,6 @@ export class ResilientWebSocket {
   private handleOnline = (): void => {
     this.networkOnline = true;
     if (this.state === 'disconnected' || this.state === 'failed') {
-      console.log('[ResilientWS] Network online - attempting reconnection');
       this.reconnectAttempt = 0;
       this.consecutiveFailures = 0;
       this.connect();
@@ -110,7 +109,6 @@ export class ResilientWebSocket {
 
   private handleVisibilityChange = (): void => {
     if (document.visibilityState === 'visible' && this.state !== 'connected') {
-      console.log('[ResilientWS] App became visible - checking connection');
       if (this.ws?.readyState !== WebSocket.OPEN) {
         this.reconnectAttempt = 0;
         this.connect();
@@ -148,7 +146,6 @@ export class ResilientWebSocket {
       }
       
       // Circuit is ready to half-open (allow one attempt)
-      console.log('[ResilientWS] Circuit breaker half-open - allowing one attempt');
       this.consecutiveFailures = this.config.circuitBreakerThreshold - 1;
     }
     
@@ -289,7 +286,6 @@ export class ResilientWebSocket {
       
       this.ws.onopen = () => {
         const latency = Date.now() - this.connectionStartTime;
-        console.log(`[ResilientWS] Connected (latency: ${latency}ms)`);
         
         this.reconnectAttempt = 0;
         this.consecutiveFailures = 0;
@@ -305,8 +301,6 @@ export class ResilientWebSocket {
           this.emitEvent({ state: 'disconnected' });
           return;
         }
-        
-        console.log(`[ResilientWS] Connection closed (code: ${event.code}, reason: ${event.reason || 'none'})`);
         
         this.consecutiveFailures++;
         
@@ -348,8 +342,6 @@ export class ResilientWebSocket {
     
     const delay = this.calculateBackoff();
     this.reconnectAttempt++;
-    
-    console.log(`[ResilientWS] Scheduling reconnect attempt ${this.reconnectAttempt}/${this.config.maxReconnectAttempts} in ${delay}ms`);
     
     this.emitEvent({
       state: 'reconnecting',

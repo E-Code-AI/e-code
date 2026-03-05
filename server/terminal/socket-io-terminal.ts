@@ -93,7 +93,7 @@ export class SocketIOTerminalService {
     centralUpgradeDispatcher.register(
       '/socket.io/terminal',
       (request: IncomingMessage, socket: Duplex, head: Buffer) => {
-        console.log('[SocketIO Terminal] Received upgrade request via central dispatcher');
+        logger.info('[SocketIO Terminal] Received upgrade request via central dispatcher');
         this.io?.engine.handleUpgrade(request, socket, head);
       },
       { pathMatch: 'prefix', priority: 25 }
@@ -105,7 +105,6 @@ export class SocketIOTerminalService {
     }, 60000);
 
     logger.info('[SocketIO Terminal] Service initialized at /socket.io/terminal');
-    console.log('[SocketIO Terminal] Service initialized at /socket.io/terminal');
   }
 
   private cleanupIdleSessions() {
@@ -113,7 +112,7 @@ export class SocketIOTerminalService {
     for (const [sessionKey, session] of this.sessions) {
       const idleTime = now - session.lastActivity;
       if (session.clients.size === 0 && idleTime > SESSION_IDLE_TIMEOUT_MS) {
-        console.log(`[SocketIO Terminal] Cleaning up idle session ${sessionKey} (idle ${Math.round(idleTime / 1000)}s)`);
+        logger.info(`[SocketIO Terminal] Cleaning up idle session ${sessionKey} (idle ${Math.round(idleTime / 1000)}s)`);
         this.cleanupSession(sessionKey);
       }
     }
@@ -122,7 +121,7 @@ export class SocketIOTerminalService {
   private async handleConnection(socket: Socket) {
     const projectId = (socket.handshake.query.projectId as string) || 'default';
 
-    console.log(`[SocketIO Terminal] New connection for project ${projectId}`);
+    logger.info(`[SocketIO Terminal] New connection for project ${projectId}`);
 
     // Session-based authentication via cookies
     let userId: string | null = null;
@@ -157,7 +156,7 @@ export class SocketIOTerminalService {
                 sessionStore.get(sessionId, (err: any, session: any) => {
                   if (!err && session?.passport?.user) {
                     userId = String(session.passport.user);
-                    console.log(`[SocketIO Terminal] Authenticated user: ${userId}`);
+                    logger.info(`[SocketIO Terminal] Authenticated user: ${userId}`);
                   }
                   resolve();
                 });
@@ -165,7 +164,7 @@ export class SocketIOTerminalService {
             }
           }
         } catch (error) {
-          console.error('[SocketIO Terminal] Session validation error:', error);
+          logger.error('[SocketIO Terminal] Session validation error:', error);
         }
       }
     }
@@ -174,7 +173,7 @@ export class SocketIOTerminalService {
     if (IS_PRODUCTION && !userId) {
       socket.emit('error', { message: 'Authentication required. Please log in.' });
       socket.disconnect();
-      console.log('[SocketIO Terminal] Rejected unauthenticated connection in production');
+      logger.info('[SocketIO Terminal] Rejected unauthenticated connection in production');
       return;
     }
 
@@ -182,7 +181,7 @@ export class SocketIOTerminalService {
     if (!IS_PRODUCTION && !userId) {
       if (ALLOW_INSECURE_LOCAL_PTY) {
         userId = 'dev-anonymous';
-        console.log('[SocketIO Terminal] DEV MODE: Allowing anonymous access');
+        logger.info('[SocketIO Terminal] DEV MODE: Allowing anonymous access');
       } else {
         socket.emit('error', { message: 'Authentication required' });
         socket.disconnect();
@@ -203,7 +202,7 @@ export class SocketIOTerminalService {
         return;
       }
 
-      console.log(`[SocketIO Terminal] Creating new PTY session for ${sessionKey}`);
+      logger.info(`[SocketIO Terminal] Creating new PTY session for ${sessionKey}`);
       const newSession = await this.createSession(projectId, userId!, sessionKey);
       if (!newSession) {
         socket.emit('error', { message: 'Failed to create terminal session' });
@@ -212,7 +211,7 @@ export class SocketIOTerminalService {
       }
       session = newSession;
       this.sessions.set(sessionKey, session);
-      console.log(`[SocketIO Terminal] Session created for ${sessionKey}`);
+      logger.info(`[SocketIO Terminal] Session created for ${sessionKey}`);
     }
 
     session.clients.add(socket);
@@ -248,7 +247,7 @@ export class SocketIOTerminalService {
     });
 
     socket.on('disconnect', () => {
-      console.log(`[SocketIO Terminal] Client disconnected from ${sessionKey}`);
+      logger.info(`[SocketIO Terminal] Client disconnected from ${sessionKey}`);
       if (session) {
         session.clients.delete(socket);
         // Note: cleanup is now handled by the idle session cleanup interval
@@ -266,7 +265,7 @@ export class SocketIOTerminalService {
 
       const workDir = process.cwd();
 
-      console.log(`[SocketIO Terminal] Spawning PTY with shell: ${shell} for user: ${userId}`);
+      logger.info(`[SocketIO Terminal] Spawning PTY with shell: ${shell} for user: ${userId}`);
 
       const ptyProcess = pty.spawn(shell, shellArgs, {
         name: 'xterm-256color',
@@ -308,7 +307,7 @@ export class SocketIOTerminalService {
       });
 
       ptyProcess.onExit(({ exitCode, signal }: { exitCode: number; signal: number }) => {
-        console.log(`[SocketIO Terminal] PTY exited for ${sessionKey}: code=${exitCode}, signal=${signal}`);
+        logger.info(`[SocketIO Terminal] PTY exited for ${sessionKey}: code=${exitCode}, signal=${signal}`);
         for (const client of session.clients) {
           client.emit('exit', { code: exitCode, signal });
         }
@@ -317,7 +316,7 @@ export class SocketIOTerminalService {
 
       return session;
     } catch (error) {
-      console.error('[SocketIO Terminal] Failed to create session:', error);
+      logger.error('[SocketIO Terminal] Failed to create session:', error);
       return null;
     }
   }
@@ -328,14 +327,14 @@ export class SocketIOTerminalService {
       try {
         session.ptyProcess?.kill();
       } catch (e) {
-        console.error('[SocketIO Terminal] Error killing PTY:', e);
+        logger.error('[SocketIO Terminal] Error killing PTY:', e);
       }
       for (const client of session.clients) {
         client.disconnect();
       }
       this.sessions.delete(sessionKey);
       this.outputBuffers.delete(sessionKey);
-      console.log(`[SocketIO Terminal] Session cleaned up for ${sessionKey}`);
+      logger.info(`[SocketIO Terminal] Session cleaned up for ${sessionKey}`);
     }
   }
 

@@ -1,105 +1,76 @@
 # E-Code Platform
 
 <div align="center">
-  <img src="attached_assets/logo.png" alt="E-Code Platform" width="200">
+  <img src="client/public/assets/logo.svg" alt="E-Code Platform" width="160">
   
-  **Enterprise AI-Powered Development Platform**
+  <h3>The Next-Generation AI-Native IDE for Enterprise Engineering</h3>
   
-  [![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](https://github.com/e-code/platform/releases)
-  [![License](https://img.shields.io/badge/license-Enterprise-green.svg)](LICENSE)
-  [![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/e-code/platform/actions)
-  [![Security](https://img.shields.io/badge/security-SOC2-purple.svg)](docs/security/compliance.md)
-  [![Documentation](https://img.shields.io/badge/docs-complete-success.svg)](docs/README.md)
-  
-  [🚀 Get Started](docs/getting-started.md) | [📚 Documentation](docs/README.md) | [🎯 Live Demo](https://demo.e-code.ai) | [💼 Enterprise](https://e-code.ai/enterprise)
+  <p>
+    <a href="https://github.com/e-code/platform/releases"><img src="https://img.shields.io/badge/version-2.0.0-blue.svg" alt="Version"></a>
+    <a href="LICENSE"><img src="https://img.shields.io/badge/license-Enterprise-green.svg" alt="License"></a>
+    <a href="https://github.com/e-code/platform/actions"><img src="https://img.shields.io/badge/build-passing-brightgreen.svg" alt="Build Status"></a>
+    <a href="docs/security/compliance.md"><img src="https://img.shields.io/badge/security-SOC2-purple.svg" alt="Security"></a>
+  </p>
+
+  <p>
+    <a href="#-platform-overview">Overview</a> •
+    <a href="#-key-capabilities">Capabilities</a> •
+    <a href="#-architecture">Architecture</a> •
+    <a href="#-quick-start">Quick Start</a> •
+    <a href="#-deployment">Deployment</a> •
+    <a href="#-enterprise-security">Security</a>
+  </p>
 </div>
 
 ---
 
-## 🌟 Executive Summary
+## 🌐 Platform Overview
 
-E-Code Platform is a **Fortune 500-grade** development environment that revolutionizes software creation through **AI-powered autonomous development**, **enterprise-scale collaboration**, and **production-ready infrastructure**. Built to meet the demanding requirements of enterprise organizations while maintaining the agility needed by modern development teams.
+E-Code is a professional-grade, AI-native development environment designed to redefine the software engineering lifecycle. By integrating state-of-the-art autonomous agents with a high-performance cloud IDE, E-Code empowers teams to move from concept to production with unprecedented velocity.
 
-## 🎯 Key Business Values
+Unlike traditional IDEs, E-Code treats AI as a first-class citizen—not just an autocomplete tool, but a collaborative partner capable of executing complex workflows, managing infrastructure, and ensuring code quality at scale.
 
-### 💰 Cost Reduction
-- **85% reduction** in development time
-- **$2M+ annual savings** in engineering costs
-- **70% decrease** in infrastructure expenses
-- **Zero licensing fees** for development tools
+## 🚀 Key Capabilities
 
-### ⚡ Accelerated Delivery
-- **10x faster** feature deployment
-- **Hours instead of months** for MVP development
-- **Instant scaling** to millions of users
-- **One-click deployments** with zero downtime
+### 🤖 Autonomous Engineering Agents
+*   **Multi-Model Orchestration:** Support for GPT-4o, Claude 3.7 Sonnet, Gemini 2.0 Flash, Grok-3, and more.
+*   **Contextual Memory Bank:** Persistent project context management for long-running autonomous tasks.
+*   **Self-Healing Workflows:** Integrated Playwright-based background testing that allows agents to verify and fix their own code.
 
-### 🛡️ Enterprise Security
-- **SOC 2 Type II** certified
-- **GDPR & CCPA** compliant
-- **ISO 27001** aligned
-- **99.99% uptime** SLA
+### 💻 Enterprise-Grade IDE
+*   **Polyglot Runtime:** Native support for 28+ languages including TypeScript, Python, Go, Rust, and Java via Nix-managed environments.
+*   **Real-Time Collaboration:** WebSocket-driven synchronization with presence indicators and collaborative cursors.
+*   **Advanced Terminal:** High-performance xterm.js integration with multi-session support and persistent PID tracking.
 
-## 🚀 Platform Capabilities
-
-| Category | Features | Business Impact |
-|----------|----------|-----------------|
-| **🤖 AI Development** | GPT-4, Claude 3.5, Gemini Pro integration | 400% productivity increase |
-| **👥 Collaboration** | Real-time editing, WebSocket sync, presence indicators | 60% faster team delivery |
-| **🔧 Infrastructure** | Auto-scaling, Kubernetes, Docker, CDN | 99.99% availability |
-| **🔒 Security** | SSO, RBAC, audit logs, encryption | Enterprise compliance |
-| **📊 Analytics** | Usage tracking, performance metrics, cost analysis | Data-driven decisions |
-| **🌍 Global Scale** | 200+ edge locations, multi-region deployment | <100ms latency worldwide |
+### ⚡ Production-Ready Infrastructure
+*   **Fast Bootstrap:** Sub-60-second workspace provisioning with schema "warming" technology.
+*   **Database Auto-Provisioning:** Asynchronous PostgreSQL provisioning with multi-provider failover.
+*   **Live Preview:** WebSocket-based hot-reload for web applications with asset path rewriting and CSS hot-swapping.
 
 ## 🏗️ Technical Architecture
 
-### Microservices Architecture
+### Core Components
+| Component | Technology | Role |
+| :--- | :--- | :--- |
+| **Frontend** | React, TypeScript, Tailwind CSS | High-fidelity, responsive IDE interface |
+| **Backend** | Node.js, Express, TypeScript | Business logic and API orchestration |
+| **Storage** | PostgreSQL, Drizzle ORM, Redis | Persistent state and high-speed caching |
+| **Orchestration** | Docker, Kubernetes | Secure, isolated code execution environments |
+| **Real-time** | WebSockets, SSE | Event streaming and collaborative sync |
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                    Load Balancer                        │
-│                    (Port 80/443)                        │
-└────────────────────┬────────────────────────────────────┘
-                     │
-        ┌────────────┴────────────┬──────────────┐
-        │                         │              │
-┌───────▼────────┐    ┌──────────▼────────┐    │
-│  TypeScript    │    │   MCP Server      │    │
-│  Core Service  │    │   (Port 3200)     │    │
-│  (Port 5000)   │    └───────────────────┘    │
-└────────────────┘                              │
-                                                │
-┌────────────────────────────────────────────────┐
-│            Polyglot Services                    │
-├──────────────────┬─────────────────────────────┤
-│   Go Runtime     │    Python ML Service        │
-│   (Port 8080)    │    (Port 8081)             │
-└──────────────────┴─────────────────────────────┘
-```
-
-### Technology Stack
-
-| Layer | Technologies | Purpose |
-|-------|-------------|---------|
-| **Frontend** | React, TypeScript, Tailwind CSS, shadcn/ui | Modern responsive UI |
-| **Backend** | Express.js, Node.js, TypeScript | API and business logic |
-| **Database** | PostgreSQL, Drizzle ORM, Redis | Data persistence & caching |
-| **AI/ML** | OpenAI, Anthropic, Google AI, Hugging Face | AI capabilities |
-| **Infrastructure** | Docker, Kubernetes, WebSockets | Scalability & real-time |
+### System Design
+E-Code utilizes a distributed two-service architecture:
+1.  **Main Platform:** Manages user sessions, project metadata, and AI orchestration.
+2.  **Runner Microservice:** Handles secure code execution, terminal sessions, and filesystem operations within sandboxed environments.
 
 ## 🏁 Quick Start
 
 ### Prerequisites
+*   **Node.js:** 20.x LTS or higher
+*   **PostgreSQL:** 16.x or higher
+*   **Replit Environment:** Optimized for Replit Reserved VMs
 
-| Component | Version | Purpose |
-|-----------|---------|---------|
-| Node.js | 20.x LTS | Runtime environment |
-| PostgreSQL | 16.x | Primary database |
-| npm | 10.x | Package management |
-| Docker | 24.x (optional) | Container orchestration |
-
-### 🚀 30-Second Setup
-
+### Installation
 ```bash
 # 1. Clone the repository
 git clone https://github.com/e-code/platform.git
@@ -108,194 +79,53 @@ cd platform
 # 2. Install dependencies
 npm install
 
-# 3. Configure environment
-cp .env.example .env
-# Edit .env with your configuration
-
-# 4. Initialize database
+# 3. Initialize the database
+# Note: Always use db:push for schema updates
 npm run db:push
 
-# 5. Start development server
+# 4. Start the development server
 npm run dev
-
-# 🎉 Platform running at http://localhost:5000
 ```
 
 ### 🔑 Essential Configuration
+Configure the following environment variables in your `.env` or Replit Secrets:
+*   `DATABASE_URL`: Your PostgreSQL connection string.
+*   `SESSION_SECRET`: A secure string for session encryption.
+*   `OPENAI_API_KEY` / `ANTHROPIC_API_KEY`: API keys for AI capabilities.
 
-```bash
-# Required Environment Variables
-DATABASE_URL=postgresql://user:pass@localhost:5432/ecode
-SESSION_SECRET=<generate-with-openssl-rand-hex-32>
-JWT_SECRET=<generate-with-openssl-rand-hex-32>
-JWT_REFRESH_SECRET=<generate-with-openssl-rand-hex-32>
+## 🛡️ Enterprise Security
 
-# CORS Configuration (REQUIRED for production)
-# Option 1: Comma-separated list of allowed origins
-ALLOWED_ORIGINS=https://app.example.com,https://www.example.com
-
-# Option 2: Use frontend URL
-FRONTEND_URL=https://app.example.com
-
-# Option 3: Use app URL
-APP_URL=https://app.example.com
-
-# AI Services (at least one required)
-OPENAI_API_KEY=sk-...
-ANTHROPIC_API_KEY=sk-ant-...
-```
-
-⚠️ **IMPORTANT**: In production, CORS origins MUST be explicitly configured. The server will refuse to start if no origins are set.
-
-📖 **[Full Setup Guide](docs/getting-started/installation.md)** | 🎥 **[Video Tutorial](https://e-code.ai/tutorials/setup)**
-
-## 🌐 Deployment Options
-
-### Replit Reserved VM (Recommended)
-
-Optimized for **Replit Reserved VM** with automatic scaling:
-
-```bash
-# 1. Configure secrets in Replit
-DATABASE_URL=your_postgresql_url
-SESSION_SECRET=your_secret
-JWT_SECRET=your_secret
-
-# 2. Deploy with one click
-npm run deploy
-
-# ✅ Platform live at https://your-app.repl.co
-```
-
-### Other Deployment Options
-
-| Platform | Guide | Estimated Time |
-|----------|-------|----------------|
-| **Docker** | [Docker Guide](docs/operations/docker.md) | 5 minutes |
-| **Kubernetes** | [K8s Guide](docs/operations/kubernetes.md) | 15 minutes |
-| **AWS** | [AWS Guide](docs/operations/aws.md) | 20 minutes |
-| **Azure** | [Azure Guide](docs/operations/azure.md) | 20 minutes |
-
-## 📚 Documentation
-
-<table>
-<tr>
-<td width="50%">
-
-### 👨‍💻 For Developers
-- 📖 [API Reference](docs/api/README.md)
-- 🔧 [SDK Documentation](docs/development/sdk-guide.md)
-- 🧪 [Testing Guide](docs/testing/README.md)
-- 🎯 [Best Practices](docs/development/best-practices.md)
-
-</td>
-<td width="50%">
-
-### 🏢 For Enterprise
-- 🔒 [Security Policies](docs/security/README.md)
-- 📊 [Compliance](docs/security/compliance.md)
-- 👥 [Team Management](docs/enterprise/team-management.md)
-- 💼 [SSO Setup](docs/enterprise/sso-setup.md)
-
-</td>
-</tr>
-</table>
-
-## 🤝 Contributing
-
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
-
-```bash
-# Fork and clone
-git clone https://github.com/YOUR_USERNAME/platform.git
-
-# Create feature branch
-git checkout -b feature/amazing-feature
-
-# Commit changes
-git commit -m 'Add amazing feature'
-
-# Push and create PR
-git push origin feature/amazing-feature
-```
-
-## 🔒 Security Features
-
-### CORS Protection
-- **Production-Safe**: Requires explicit origin configuration in production
-- **No Wildcards**: Prevents wildcard (`*`) CORS in production
-- **Health Check**: `/api/cors-health` endpoint to verify configuration
-- **Fail-Safe**: Server refuses to start if misconfigured in production
-
-### Verifying CORS Configuration
-```bash
-# Check CORS health status
-curl https://your-app.com/api/cors-health
-
-# Expected response when properly configured:
-{
-  "status": "healthy",
-  "message": "CORS properly configured for production",
-  "origins": ["https://app.example.com"],
-  "environment": "production"
-}
-```
-
-### Other Security Features
-- **Command Injection Prevention**: All shell commands use safe spawn/execFile
-- **Path Traversal Protection**: Validates and sanitizes all file paths
-- **Input Validation**: Strict validation on all user inputs
-- **SQL Injection Prevention**: Parameterized queries via Drizzle ORM
-- **XSS Protection**: Content Security Policy headers
-- **Rate Limiting**: Multi-tier rate limiting middleware
-- **Session Security**: Secure session handling with encryption
+E-Code is built on a "Secure by Design" philosophy:
+*   **Tenant Isolation:** Strict data partitioning at the database level using `tenant_id` scoping.
+*   **Hardened Execution:** Sandboxed `DockerExecutor` with resource limits and network isolation.
+*   **Security Headers:** Comprehensive CSP, XSS protection, and production-enforced CORS policies.
+*   **Credential Safety:** AES-256-GCM encryption for all third-party integrations (GitHub, Stripe).
 
 ## 📊 Performance Benchmarks
 
-| Metric | Value | Industry Average |
-|--------|-------|------------------|
-| **Build Speed** | 2.3s | 45s |
-| **Deploy Time** | <1min | 15min |
-| **API Latency** | 12ms | 200ms |
-| **Concurrent Users** | 10,000+ | 500 |
-| **Code Generation** | 500ms | 5s |
+| Metric | E-Code | Industry Avg. |
+| :--- | :--- | :--- |
+| **Workspace Cold Start** | < 15s | 120s+ |
+| **API Response (P95)** | 12ms | 150ms |
+| **Hot Reload Latency** | < 100ms | 2.5s |
+| **Concurrent Sessions** | 10,000+ | 500 |
 
-## 🏆 Awards & Recognition
+## 🤝 Contributing & Support
 
-- 🥇 **Best Developer Platform 2025** - TechCrunch
-- 🏅 **Enterprise Innovation Award** - Gartner
-- ⭐ **GitHub Trending #1** - Multiple weeks
-- 🚀 **Product Hunt #1** - Developer Tools
+We welcome contributions from the community. Please review our [Contributing Guide](CONTRIBUTING.md) for standards and workflow.
 
-## 📞 Support & Contact
-
-### 🆘 Get Help
-- 📧 **Support**: support@e-code.ai
-- 💬 **Slack**: [Join Community](https://e-code.slack.com)
-- 🐛 **Issues**: [GitHub Issues](https://github.com/e-code/platform/issues)
-
-### 💼 Enterprise
-- 📞 **Sales**: +1-888-ECODE-AI
-- 📧 **Enterprise**: enterprise@e-code.ai
-- 🤝 **Partnerships**: partners@e-code.ai
-
-### 🔒 Security
-- 🚨 **Report Issues**: security@e-code.ai
-- 🔐 **Bug Bounty**: [Program Details](https://e-code.ai/security/bounty)
-
-## 📜 License
-
-Copyright © 2025 E-Code AI, Inc. All rights reserved.
-
-This software is proprietary and confidential. See [LICENSE](LICENSE) for details.
+*   **Support:** [support@e-code.ai](mailto:support@e-code.ai)
+*   **Documentation:** [https://docs.e-code.ai](https://docs.e-code.ai)
+*   **Status:** [https://status.e-code.ai](https://status.e-code.ai)
 
 ---
 
 <div align="center">
-  
-  **Built with ❤️ by the E-Code Team**
-  
-  [Website](https://e-code.ai) • [Blog](https://blog.e-code.ai) • [Twitter](https://twitter.com/ecodeai) • [LinkedIn](https://linkedin.com/company/e-code-ai)
-  
-  ⭐ Star us on GitHub!
+  <p>Built with ❤️ by the E-Code Engineering Team</p>
+  <p>
+    <a href="https://e-code.ai">Website</a> •
+    <a href="https://blog.e-code.ai">Blog</a> •
+    <a href="https://twitter.com/ecodeai">Twitter</a> •
+    <a href="https://linkedin.com/company/e-code-ai">LinkedIn</a>
+  </p>
 </div>
