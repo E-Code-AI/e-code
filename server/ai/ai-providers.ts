@@ -32,7 +32,7 @@ export class OpenAIProvider implements AIProvider {
   
   async generateChat(messages: any[], options?: any): Promise<string> {
     const response = await this.client.chat.completions.create({
-      model: options?.model || 'gpt-5.2',  // ✅ CONSOLIDATED Jan 2026
+      model: options?.model || 'gpt-4o',  // ✅ CONSOLIDATED Jan 2026
       messages,
       ...options
     });
@@ -78,7 +78,7 @@ export class AnthropicProvider implements AIProvider {
     try {
       const response = await this.client.messages.create({
         // Use latest AVAILABLE Claude model (validated working)
-        model: options?.model || 'claude-haiku-4-5-20251015',
+        model: options?.model || 'claude-3-5-haiku-20241022',
         messages: anthropicMessages,
         system: systemMessage,
         max_tokens: options?.max_tokens || 1024,
@@ -174,7 +174,7 @@ export class XAIProvider implements AIProvider {
   
   async generateChat(messages: any[], options?: any): Promise<string> {
     const response = await this.client.chat.completions.create({
-      model: options?.model || 'grok-4',
+      model: options?.model || 'grok-2-1212',
       messages,
       ...options
     });
@@ -595,10 +595,10 @@ export class MoonshotProvider implements AIProvider {
   }
   
   async generateChat(messages: any[], options?: any): Promise<string> {
-    const model = options?.model || 'kimi-k2-0711-preview';
+    const model = options?.model || 'moonshot-v1-32k';
     
     // ✅ KIMI K2 OPTIMIZATION: Detect thinking models for special configuration
-    const isThinkingModel = model.includes('thinking') || model.includes('kimi-k2');
+    const isThinkingModel = model.includes('thinking') || model.includes('moonshot-v1');
     
     // ✅ KIMI REQUIREMENT 1: Temperature = 1.0 for thinking models
     const temperature = isThinkingModel ? 1.0 : (options?.temperature ?? 0.7);

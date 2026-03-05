@@ -355,23 +355,23 @@ export default function AdminAIUsage() {
                             </div>
                           </TableCell>
                           <TableCell>
-                            <Badge variant="outline">{record.userTier}</Badge>
+                            <Badge variant="outline">{record.userTier || 'free'}</Badge>
                           </TableCell>
-                          <TableCell className="font-mono text-[11px]">{record.model}</TableCell>
-                          <TableCell><Badge variant="secondary">{record.provider}</Badge></TableCell>
+                          <TableCell className="font-mono text-[11px]">{record.model || 'unknown'}</TableCell>
+                          <TableCell><Badge variant="secondary">{record.provider || 'unknown'}</Badge></TableCell>
                           <TableCell className="text-right font-medium">
-                            {record.tokensTotal.toLocaleString()}
+                            {(record.tokensTotal || 0).toLocaleString()}
                           </TableCell>
                           <TableCell className="text-right font-medium text-green-600">
                             ${parseFloat(String(record.costUsd || '0')).toFixed(4)}
                           </TableCell>
                           <TableCell>
                             <Badge variant={record.status === 'success' ? 'default' : 'destructive'}>
-                              {record.status}
+                              {record.status || 'unknown'}
                             </Badge>
                           </TableCell>
                           <TableCell className="text-[11px] text-muted-foreground">
-                            {format(new Date(record.createdAt), 'MMM d, HH:mm:ss')}
+                            {record.createdAt ? format(new Date(record.createdAt), 'MMM d, HH:mm:ss') : 'N/A'}
                           </TableCell>
                         </TableRow>
                       ))
@@ -397,20 +397,20 @@ export default function AdminAIUsage() {
                             <div className="font-medium">{record.username || 'Unknown'}</div>
                             <div className="text-[11px] text-muted-foreground font-mono">{(record.userId || 'unknown').toString().slice(0, 12)}...</div>
                           </div>
-                          <Badge variant="outline">{record.userTier}</Badge>
+                          <Badge variant="outline">{record.userTier || 'free'}</Badge>
                         </div>
                         <div className="grid grid-cols-2 gap-2 text-[13px]">
                           <div>
                             <span className="text-muted-foreground">Model:</span>
-                            <div className="font-mono text-[11px] mt-1">{record.model}</div>
+                            <div className="font-mono text-[11px] mt-1">{record.model || 'unknown'}</div>
                           </div>
                           <div>
                             <span className="text-muted-foreground">Provider:</span>
-                            <div className="mt-1"><Badge variant="secondary">{record.provider}</Badge></div>
+                            <div className="mt-1"><Badge variant="secondary">{record.provider || 'unknown'}</Badge></div>
                           </div>
                           <div>
                             <span className="text-muted-foreground">Tokens:</span>
-                            <div className="font-medium mt-1">{record.tokensTotal.toLocaleString()}</div>
+                            <div className="font-medium mt-1">{(record.tokensTotal || 0).toLocaleString()}</div>
                           </div>
                           <div>
                             <span className="text-muted-foreground">Cost:</span>
@@ -420,13 +420,13 @@ export default function AdminAIUsage() {
                             <span className="text-muted-foreground">Status:</span>
                             <div className="mt-1">
                               <Badge variant={record.status === 'success' ? 'default' : 'destructive'}>
-                                {record.status}
+                                {record.status || 'unknown'}
                               </Badge>
                             </div>
                           </div>
                           <div>
                             <span className="text-muted-foreground">Time:</span>
-                            <div className="text-[11px] mt-1">{format(new Date(record.createdAt), 'MMM d, HH:mm')}</div>
+                            <div className="text-[11px] mt-1">{record.createdAt ? format(new Date(record.createdAt), 'MMM d, HH:mm') : 'N/A'}</div>
                           </div>
                         </div>
                       </CardContent>

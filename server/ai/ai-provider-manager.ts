@@ -33,253 +33,185 @@ export interface AIModel {
  * Fortune 500-grade model catalog
  */
 export const AI_MODELS: AIModel[] = [
-  // OpenAI Models - UPDATED January 2025 per official documentation
+  // OpenAI Models - UPDATED to real models only
   {
-    id: 'gpt-5.2',
-    name: 'GPT-5.2',
+    id: 'gpt-4o',
+    name: 'GPT-4o',
     provider: 'openai',
-    description: 'Newest flagship - advanced reasoning with 400K context (Dec 2025)',
-    maxTokens: 400000,
+    description: 'Flagship model - superior reasoning and multimodal capabilities',
+    maxTokens: 128000,
     supportsStreaming: true,
-    costPer1kTokens: 0.00175  // $1.75 input per 1M tokens
+    costPer1kTokens: 0.005
   },
   {
-    id: 'gpt-5.2-codex',
-    name: 'GPT-5.2 Codex',
+    id: 'gpt-4o-mini',
+    name: 'GPT-4o Mini',
     provider: 'openai',
-    description: 'Coding optimized variant - enhanced code generation & debugging (Dec 2025)',
-    maxTokens: 400000,
+    description: 'Fast, affordable model for high-volume tasks',
+    maxTokens: 128000,
     supportsStreaming: true,
-    costPer1kTokens: 0.014  // $14 output per 1M tokens
-  },
-  // ❌ gpt-5.1 and gpt-5 REMOVED (Jan 2026) - consolidated to gpt-5.2
-  // Use model-normalizer.ts for backward compatibility mappings
-  {
-    id: 'gpt-5-mini',
-    name: 'GPT-5 Mini',
-    provider: 'openai',
-    description: 'Cost-optimized reasoning - balances speed, cost, capability',
-    maxTokens: 400000,
-    supportsStreaming: true,
-    costPer1kTokens: 0.001
+    costPer1kTokens: 0.00015
   },
   {
-    id: 'gpt-5-nano',
-    name: 'GPT-5 Nano',
+    id: 'gpt-4-turbo',
+    name: 'GPT-4 Turbo',
     provider: 'openai',
-    description: 'High-throughput for simple tasks - most affordable',
-    maxTokens: 400000,
+    description: 'Powerful model with broad knowledge and follow-up capabilities',
+    maxTokens: 128000,
     supportsStreaming: true,
-    costPer1kTokens: 0.0005
+    costPer1kTokens: 0.01
   },
   {
-    id: 'gpt-4.1',
-    name: 'GPT-4.1',
+    id: 'o1',
+    name: 'o1',
     provider: 'openai',
-    description: 'Excellent for coding, instruction-following, web development (April 2025)',
-    maxTokens: 1000000,
-    supportsStreaming: true,
-    costPer1kTokens: 0.002
-  },
-  {
-    id: 'gpt-4.1-mini',
-    name: 'GPT-4.1 Mini',
-    provider: 'openai',
-    description: '83% cost reduction vs GPT-4o - significant upgrade',
-    maxTokens: 1000000,
-    supportsStreaming: true,
-    costPer1kTokens: 0.0004
-  },
-  {
-    id: 'gpt-4.1-nano',
-    name: 'GPT-4.1 Nano',
-    provider: 'openai',
-    description: 'Ultra-fast, 1M context, 80.1% MMLU - cheapest option',
-    maxTokens: 1000000,
-    supportsStreaming: true,
-    costPer1kTokens: 0.0001
-  },
-  {
-    id: 'o3',
-    name: 'o3',
-    provider: 'openai',
-    description: 'Advanced reasoning for complex problem solving',
+    description: 'Advanced reasoning model for complex problem solving',
     maxTokens: 128000,
     supportsStreaming: true,
     costPer1kTokens: 0.015
   },
   {
-    id: 'o4-mini',
-    name: 'o4 Mini',
+    id: 'o1-mini',
+    name: 'o1-mini',
     provider: 'openai',
-    description: 'Budget-friendly reasoning for STEM tasks',
+    description: 'Fast reasoning model for technical tasks',
     maxTokens: 128000,
     supportsStreaming: true,
     costPer1kTokens: 0.003
   },
-  
-  // Anthropic Models - UPDATED JANUARY 2026
-  // Source: https://platform.claude.com/docs/en/about-claude/models/overview
   {
-    id: 'claude-opus-4-5-20251101',
-    name: 'Claude Opus 4.5',
-    provider: 'anthropic',
-    description: 'Most intelligent - 80.9% SWE-bench, 66% cheaper than Opus 4, coding & agents (Nov 1, 2025)',
+    id: 'o3',
+    name: 'o3',
+    provider: 'openai',
+    description: 'Next-generation reasoning model',
     maxTokens: 200000,
     supportsStreaming: true,
-    costPer1kTokens: 0.005
+    costPer1kTokens: 0.015
   },
+  
+  // Anthropic Models
   {
-    id: 'claude-sonnet-4-5-20250929',
-    name: 'Claude Sonnet 4.5',
+    id: 'claude-3-5-sonnet-20241022',
+    name: 'Claude 3.5 Sonnet',
     provider: 'anthropic',
-    description: 'Production agents - coding, balanced performance, 1M context beta (Sept 29, 2025)',
+    description: 'Advanced coding and analysis - best balance of speed and intelligence',
     maxTokens: 200000,
     supportsStreaming: true,
     costPer1kTokens: 0.003
   },
   {
-    id: 'claude-haiku-4-5',
-    name: 'Claude Haiku 4.5',
+    id: 'claude-3-5-haiku-20241022',
+    name: 'Claude 3.5 Haiku',
     provider: 'anthropic',
-    description: 'Fast, lightweight tasks - $0.80/$4 per MTok',
+    description: 'Fast, efficient tasks with strong capabilities',
     maxTokens: 200000,
     supportsStreaming: true,
     costPer1kTokens: 0.0008
   },
-  
-  // Google Gemini Models - UPDATED JANUARY 2026 (production-stable)
-  // Source: https://ai.google.dev/gemini-api/docs/models
+  {
+    id: 'claude-3-opus-20240229',
+    name: 'Claude 3 Opus',
+    provider: 'anthropic',
+    description: 'Most powerful Claude model for complex reasoning',
+    maxTokens: 200000,
+    supportsStreaming: true,
+    costPer1kTokens: 0.015
+  },
+  {
+    id: 'claude-3-haiku-20240307',
+    name: 'Claude 3 Haiku',
+    provider: 'anthropic',
+    description: 'Fastest and most compact Claude model',
+    maxTokens: 200000,
+    supportsStreaming: true,
+    costPer1kTokens: 0.00025
+  },
+
+  // Google Gemini Models
   {
     id: 'gemini-2.5-flash',
     name: 'Gemini 2.5 Flash',
     provider: 'gemini',
-    description: 'Production-stable flagship - high performance, reliable API (Jan 2026)',
+    description: 'Fast multimodal AI with thinking capabilities',
     maxTokens: 1000000,
     supportsStreaming: true,
     costPer1kTokens: 0.000075
   },
   {
-    id: 'gemini-3-pro',
-    name: 'Gemini 3 Pro',
+    id: 'gemini-2.0-flash',
+    name: 'Gemini 2.0 Flash',
     provider: 'gemini',
-    description: 'State-of-the-art reasoning - fallback for high-complexity tasks (preview status)',
+    description: 'Next-gen features with speed',
     maxTokens: 1000000,
+    supportsStreaming: true,
+    costPer1kTokens: 0.000075
+  },
+  {
+    id: 'gemini-1.5-pro',
+    name: 'Gemini 1.5 Pro',
+    provider: 'gemini',
+    description: 'Complex reasoning tasks with 2M context window',
+    maxTokens: 2000000,
     supportsStreaming: true,
     costPer1kTokens: 0.00125
   },
-  
-  // Moonshot AI - UPDATED JANUARY 2026
-  // Source: https://platform.moonshot.ai/docs/introduction
   {
-    id: 'kimi-k2-thinking',
-    name: 'Kimi K2 Thinking',
-    provider: 'moonshot',
-    description: 'Multi-step reasoning + tool use - 256K context, 200-300 sequential tool calls',
-    maxTokens: 256000,
+    id: 'gemini-1.5-flash',
+    name: 'Gemini 1.5 Flash',
+    provider: 'gemini',
+    description: 'Fast and versatile multimodal AI',
+    maxTokens: 1000000,
     supportsStreaming: true,
-    costPer1kTokens: 0.0025
+    costPer1kTokens: 0.000075
+  },
+
+  // Moonshot AI
+  {
+    id: 'moonshot-v1-8k',
+    name: 'Moonshot v1 8K',
+    provider: 'moonshot',
+    description: 'Fast inference for shorter contexts',
+    maxTokens: 8192,
+    supportsStreaming: true,
+    costPer1kTokens: 0.0012
   },
   {
-    id: 'kimi-k2-thinking-turbo',
-    name: 'Kimi K2 Thinking Turbo',
+    id: 'moonshot-v1-32k',
+    name: 'Moonshot v1 32K',
     provider: 'moonshot',
-    description: 'Fast reasoning + tool use - 256K context, faster inference',
-    maxTokens: 256000,
+    description: 'Balanced performance with 32K context',
+    maxTokens: 32768,
     supportsStreaming: true,
-    costPer1kTokens: 0.0025
+    costPer1kTokens: 0.0024
   },
   {
-    id: 'kimi-k2-turbo-preview',
-    name: 'Kimi K2 Turbo Preview',
+    id: 'moonshot-v1-128k',
+    name: 'Moonshot v1 128K',
     provider: 'moonshot',
-    description: 'General purpose, high-speed - 60-100 tokens/sec, 256K context',
-    maxTokens: 256000,
-    supportsStreaming: true,
-    costPer1kTokens: 0.0015
-  },
-  {
-    id: 'kimi-k2-0905-preview',
-    name: 'Kimi K2 (Sept 2025)',
-    provider: 'moonshot',
-    description: 'Stable version - 1T param MoE, 256K context, 10-100× cheaper than GPT-4',
-    maxTokens: 256000,
-    supportsStreaming: true,
-    costPer1kTokens: 0.0025
-  },
-  // moonshot-v1-32k/128k removed Jan 2026 - not in official Moonshot API docs, only Kimi K2 supported
-  
-  // xAI Models - UPDATED JANUARY 2026
-  // Source: https://docs.x.ai/docs/models
-  {
-    id: 'grok-4-1-fast-reasoning',
-    name: 'Grok 4.1 Fast (Reasoning)',
-    provider: 'xai',
-    description: '#1 LMArena - 1483 Elo, 2M context, thinking capabilities (Jan 2026)',
-    maxTokens: 2000000,
+    description: 'Long context tasks with 128K window',
+    maxTokens: 131072,
     supportsStreaming: true,
     costPer1kTokens: 0.006
   },
+
+  // xAI Models
   {
-    id: 'grok-4-1-fast-non-reasoning',
-    name: 'Grok 4.1 Fast (Non-Reasoning)',
+    id: 'grok-2-1212',
+    name: 'Grok 2',
     provider: 'xai',
-    description: '#2 LMArena - 1465 Elo, faster without thinking tokens (Jan 2026)',
-    maxTokens: 2000000,
-    supportsStreaming: true,
-    costPer1kTokens: 0.003
-  },
-  {
-    id: 'grok-4',
-    name: 'Grok 4',
-    provider: 'xai',
-    description: 'Flagship reasoning model - post-graduate level reasoning',
-    maxTokens: 256000,
+    description: 'xAI flagship model with strong reasoning',
+    maxTokens: 131072,
     supportsStreaming: true,
     costPer1kTokens: 0.002
   },
   {
-    id: 'grok-3',
-    name: 'Grok 3',
+    id: 'grok-2-vision-1212',
+    name: 'Grok 2 Vision',
     provider: 'xai',
-    description: 'Previous flagship - cost-effective for most workloads',
-    maxTokens: 131072,
+    description: 'Grok 2 with image understanding capabilities',
+    maxTokens: 32768,
     supportsStreaming: true,
-    costPer1kTokens: 0.001
-  },
-  
-  // Groq Models - REAL models only
-  // Note: provider='groq' indicates the serving infrastructure (Groq API)
-  // Model IDs follow Groq's API naming convention
-  // Groq Models - UPDATED JANUARY 2026
-  // Source: https://console.groq.com/docs/models
-  // Note: mixtral-8x7b-32768 deprecated March 2025, llama3-70b-8192 deprecated May 2025
-  {
-    id: 'llama-3.3-70b-versatile',
-    name: 'Llama 3.3 70B Versatile',
-    provider: 'groq',
-    description: 'Latest Llama with 128K context, tool use, JSON mode - replaces deprecated models',
-    maxTokens: 128000,
-    supportsStreaming: true,
-    costPer1kTokens: 0.0006
-  },
-  {
-    id: 'llama-3.1-8b-instant',
-    name: 'Llama 3.1 8B Instant',
-    provider: 'groq',
-    description: 'Fast inference for simple tasks - 8K context',
-    maxTokens: 8192,
-    supportsStreaming: true,
-    costPer1kTokens: 0.0002
-  },
-  {
-    id: 'gemma2-9b-it',
-    name: 'Gemma 2 9B',
-    provider: 'groq',
-    description: 'Google open-source model - 8K context, efficient',
-    maxTokens: 8192,
-    supportsStreaming: true,
-    costPer1kTokens: 0.0002
+    costPer1kTokens: 0.002
   }
 ];
 
@@ -293,11 +225,11 @@ export const AI_MODELS: AIModel[] = [
  * UPDATED January 2025: kimi-k2-0711-preview → kimi-k2-0905-preview (September 2025 upgrade)
  */
 const PROVIDER_FALLBACK_CHAIN = [
-  'gpt-5.2',                        // OpenAI newest flagship (Jan 2026)
-  'kimi-k2-turbo-preview',          // Moonshot high-speed (Jan 2026)
-  'gemini-2.5-flash',               // Google production-stable flagship (Jan 2026)
-  'grok-4-1-fast-non-reasoning',    // xAI fastest (Jan 2026)
-  'claude-haiku-4-5'                // Anthropic fastest
+  'gpt-4o',
+  'claude-3-5-sonnet-20241022',
+  'gemini-2.5-flash',
+  'grok-2-1212',
+  'moonshot-v1-32k'
 ];
 
 export class AIProviderManager {
@@ -977,7 +909,7 @@ export class AIProviderManager {
     let success = false;
     
     // ✅ KIMI K2 OPTIMIZATION: Detect thinking models for special configuration
-    const isThinkingModel = modelId.includes('thinking') || modelId.includes('kimi-k2');
+    const isThinkingModel = modelId.includes('thinking') || modelId.includes('moonshot-v1-128k');
     
     // ✅ KIMI REQUIREMENT 1: Temperature = 1.0 for thinking models
     const temperature = isThinkingModel ? 1.0 : (options?.temperature ?? 0.7);
@@ -1205,13 +1137,12 @@ export class AIProviderManager {
    */
   getAvailableProviders(): Array<{ name: string; isAvailable: boolean }> {
     const providerMap: Record<string, string[]> = {
-      'OpenAI': ['gpt-5.2', 'gpt-5.2-codex', 'gpt-5-mini', 'gpt-5-nano', 'gpt-4.1', 'gpt-4.1-mini', 'gpt-4.1-nano', 'o3', 'o4-mini'],  // ✅ CONSOLIDATED Jan 2026
-      'Claude': ['claude-opus-4-5-20251101', 'claude-sonnet-4-5-20250929', 'claude-haiku-4-5'],  // ✅ CONSOLIDATED Jan 2026: Only 4.5 family
-      'Anthropic': ['claude-sonnet-4-5-20250929'],
-      'Gemini': ['gemini-2.5-flash', 'gemini-3-pro'],  // ✅ CONSOLIDATED Jan 2026: Gemini 2.5 Flash (stable) + 3 Pro (fallback)
-      'Moonshot': ['kimi-k2-thinking', 'kimi-k2-thinking-turbo', 'kimi-k2-turbo-preview', 'kimi-k2-0905-preview'],
-      'xAI': ['grok-4-1-fast-reasoning', 'grok-4-1-fast-non-reasoning', 'grok-4', 'grok-3'],
-      'Groq': ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'gemma2-9b-it']
+      'OpenAI': ['gpt-4o', 'gpt-4o-mini', 'o1', 'o1-mini', 'o3', 'gpt-4-turbo', 'gpt-4'],
+      'Claude': ['claude-3-5-sonnet-20241022', 'claude-3-5-haiku-20241022', 'claude-3-opus-20240229'],
+      'Anthropic': ['claude-3-5-sonnet-20241022', 'claude-3-5-haiku-20241022'],
+      'Gemini': ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro', 'gemini-1.5-flash'],
+      'Moonshot': ['moonshot-v1-8k', 'moonshot-v1-32k', 'moonshot-v1-128k'],
+      'xAI': ['grok-2-1212', 'grok-2-vision-1212']
     };
     
     return Object.entries(providerMap).map(([name, modelIds]) => ({
@@ -1228,14 +1159,13 @@ export class AIProviderManager {
    */
   getProvider(providerName: string): LegacyProviderAdapter | null {
     const providerToModelMap: Record<string, string> = {
-      'OpenAI': 'gpt-5.2',
-      'Claude': 'claude-sonnet-4-5-20250929',
-      'Claude 3.5 Sonnet': 'claude-sonnet-4-5-20250929',
-      'Anthropic': 'claude-sonnet-4-5-20250929',
-      'Gemini': 'gemini-2.5-flash',  // ✅ CONSOLIDATED Jan 2026: production-stable
-      'Moonshot': 'kimi-k2-turbo-preview',
-      'xAI': 'grok-4-1-fast-reasoning',
-      'Groq': 'llama-3.3-70b-versatile'
+      'OpenAI': 'gpt-4o',
+      'Claude': 'claude-3-5-sonnet-20241022',
+      'Claude 3.5 Sonnet': 'claude-3-5-sonnet-20241022',
+      'Anthropic': 'claude-3-5-sonnet-20241022',
+      'Gemini': 'gemini-2.5-flash',
+      'Moonshot': 'moonshot-v1-32k',
+      'xAI': 'grok-2-1212'
     };
     
     const modelId = providerToModelMap[providerName];
@@ -1253,11 +1183,11 @@ export class AIProviderManager {
   getDefaultProvider(): LegacyProviderAdapter {
     // Try providers in order of preference - UPDATED January 2026
     const preferredModels = [
-      'claude-sonnet-4-5-20250929', // Best coding model
-      'gpt-5.2',                        // Newest GPT flagship (Jan 2026)
-      'gemini-2.5-flash',               // Google production-stable flagship (Jan 2026)
-      'kimi-k2-turbo-preview',          // Moonshot high-speed (Jan 2026)
-      'grok-4-1-fast-reasoning'         // xAI top-ranked (Jan 2026)
+      'gpt-4o',
+      'claude-3-5-sonnet-20241022',
+      'gemini-2.5-flash',
+      'grok-2-1212',
+      'moonshot-v1-32k'
     ];
     
     for (const modelId of preferredModels) {

@@ -427,7 +427,7 @@ export function AdvancedSearch({ initialQuery = '' }: { initialQuery?: string })
                             {result.metadata.visibility === 'public' && <Globe className="h-3 w-3 mr-1" />}
                             {result.metadata.visibility === 'private' && <Lock className="h-3 w-3 mr-1" />}
                             {result.metadata.visibility === 'unlisted' && <Eye className="h-3 w-3 mr-1" />}
-                            {result.metadata.visibility}
+                            {result.metadata.visibility ?? ''}
                           </Badge>
                         )}
                       </h3>

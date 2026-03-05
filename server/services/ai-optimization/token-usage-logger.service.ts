@@ -23,20 +23,20 @@ export class TokenUsageLoggerService {
   // Token cost estimates (per 1K tokens) - December 2025 pricing
   private static readonly COST_PER_1K_TOKENS = {
     // OpenAI GPT-5 Family
-    'gpt-5.1': { prompt: 0.005, completion: 0.015 },
+    'gpt-4o': { prompt: 0.005, completion: 0.015 },
     'gpt-5': { prompt: 0.0025, completion: 0.01 },
-    'gpt-5-mini': { prompt: 0.00015, completion: 0.0006 },
-    'gpt-5-nano': { prompt: 0.0001, completion: 0.0003 },
+    'gpt-4o-mini': { prompt: 0.00015, completion: 0.0006 },
+    'gpt-4o-mini': { prompt: 0.0001, completion: 0.0003 },
     // Anthropic Claude 4.5 Family
-    'claude-opus-4-5-20251124': { prompt: 0.015, completion: 0.075 },
-    'claude-sonnet-4-5-20250929': { prompt: 0.003, completion: 0.015 },
-    'claude-haiku-4-5-20251015': { prompt: 0.00025, completion: 0.00125 },
+    'claude-3-opus-20240229': { prompt: 0.015, completion: 0.075 },
+    'claude-3-5-sonnet-20241022': { prompt: 0.003, completion: 0.015 },
+    'claude-3-5-haiku-20241022': { prompt: 0.00025, completion: 0.00125 },
     // Google Gemini 2.5 Family
     'gemini-2.5-pro': { prompt: 0.00125, completion: 0.005 },
     'gemini-2.5-flash': { prompt: 0.000075, completion: 0.0003 },
     // xAI Grok Family
-    'grok-4-fast': { prompt: 0.002, completion: 0.01 },
-    'grok-4': { prompt: 0.005, completion: 0.015 },
+    'grok-2-1212': { prompt: 0.002, completion: 0.01 },
+    'grok-2-1212': { prompt: 0.005, completion: 0.015 },
     // Groq
     'groq-llama': { prompt: 0.0001, completion: 0.0002 },
   };

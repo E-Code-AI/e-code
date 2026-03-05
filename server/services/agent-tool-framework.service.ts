@@ -631,7 +631,7 @@ export class AgentToolFrameworkService extends EventEmitter {
         };
         
         const completion = await this.openai.chat.completions.create({
-          model: 'gpt-5.2',
+          model: 'gpt-4o',
           messages: [
             {
               role: 'system',

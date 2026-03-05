@@ -64,7 +64,7 @@ Current model: GPT-5.2 (Dec 2025 flagship with advanced reasoning)`
       ],
       createdAt: new Date(),
       updatedAt: new Date(),
-      model: 'gpt-5.2'
+      model: 'gpt-4o'
     };
 
     chatSessions.set(sessionId, session);
@@ -129,7 +129,7 @@ Current model: GPT-5.2 (Dec 2025 flagship with advanced reasoning)`
       ];
 
       // Call OpenAI API - handle model-specific parameter requirements
-      const isNewGenModel = session.model.startsWith('gpt-5') || /^o[1-9]/.test(session.model);
+      const isNewGenModel = session.model.startsWith('gpt-4o') || /^o[1-9]/.test(session.model);
       const completionParams: any = {
         model: session.model,
         messages: apiMessages as any,
@@ -289,7 +289,7 @@ Return the code and a brief explanation of the implementation.`;
 
     try {
       const response = await openai.chat.completions.create({
-        model: 'gpt-5.2',  // ✅ CONSOLIDATED Jan 2026: Latest flagship for code generation
+        model: 'gpt-4o',  // ✅ CONSOLIDATED Jan 2026: Latest flagship for code generation
         messages: [
           {
             role: 'system',

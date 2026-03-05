@@ -175,120 +175,57 @@ export function AllModelsSelector() {
       available: true
     },
     
-    // xAI - UPDATED JANUARY 2026
+    // xAI — grok-2-1212 is the released production model
     {
-      id: 'grok-4-1-fast-reasoning',
-      name: 'Grok 4.1 Fast (Reasoning)',
-      description: '#1 LMArena - 1483 Elo, 2M context, thinking capabilities (Jan 2026)',
-      provider: 'xAI',
-      contextWindow: 2000000,
-      capabilities: ['Chat', 'Code', 'Reasoning', 'Tools'],
-      pricing: { input: 6, output: 30, currency: 'USD', unit: '1M tokens' },
-      available: true
-    },
-    {
-      id: 'grok-4-1-fast-non-reasoning',
-      name: 'Grok 4.1 Fast (Non-Reasoning)',
-      description: '#2 LMArena - 1465 Elo, faster without thinking tokens (Jan 2026)',
-      provider: 'xAI',
-      contextWindow: 2000000,
-      capabilities: ['Chat', 'Code', 'Fast Response'],
-      pricing: { input: 3, output: 15, currency: 'USD', unit: '1M tokens' },
-      available: true
-    },
-    {
-      id: 'grok-4',
-      name: 'Grok 4',
-      description: 'Flagship reasoning model - post-graduate level reasoning',
-      provider: 'xAI',
-      contextWindow: 256000,
-      capabilities: ['Chat', 'Code', 'Reasoning', 'Live Search'],
-      pricing: { input: 2, output: 6, currency: 'USD', unit: '1M tokens' },
-      available: true
-    },
-    {
-      id: 'grok-3',
-      name: 'Grok 3',
-      description: 'Previous flagship - cost-effective for most workloads',
+      id: 'grok-2-1212',
+      name: 'Grok 2',
+      description: 'xAI flagship — 131K context, function calling, JSON mode',
       provider: 'xAI',
       contextWindow: 131072,
-      capabilities: ['Chat', 'Code', 'Reasoning'],
-      pricing: { input: 1, output: 3, currency: 'USD', unit: '1M tokens' },
-      available: true
-    },
-    
-    // Groq Models - UPDATED JANUARY 2026
-    // Source: https://console.groq.com/docs/models
-    {
-      id: 'llama-3.3-70b-versatile',
-      name: 'Llama 3.3 70B Versatile',
-      description: 'Latest Llama with 128K context, tool use, JSON mode',
-      provider: 'Groq',
-      contextWindow: 128000,
-      capabilities: ['Chat', 'Code', 'Tools'],
-      pricing: { input: 0.6, output: 0.6, currency: 'USD', unit: '1M tokens' },
+      capabilities: ['Chat', 'Code', 'Vision', 'Tools'],
+      pricing: { input: 2, output: 10, currency: 'USD', unit: '1M tokens' },
       available: true
     },
     {
-      id: 'llama-3.1-8b-instant',
-      name: 'Llama 3.1 8B Instant',
-      description: 'Fast inference for simple tasks - 8K context',
-      provider: 'Groq',
+      id: 'grok-2-vision-1212',
+      name: 'Grok 2 Vision',
+      description: 'xAI vision model — image understanding and multimodal tasks',
+      provider: 'xAI',
       contextWindow: 8192,
-      capabilities: ['Chat', 'Fast Response'],
-      pricing: { input: 0.2, output: 0.2, currency: 'USD', unit: '1M tokens' },
+      capabilities: ['Chat', 'Vision', 'Multimodal'],
+      pricing: { input: 2, output: 10, currency: 'USD', unit: '1M tokens' },
       available: true
     },
+
+    // Moonshot AI — official moonshot-v1 series
     {
-      id: 'gemma2-9b-it',
-      name: 'Gemma 2 9B',
-      description: 'Google open-source model - 8K context, efficient',
-      provider: 'Groq',
+      id: 'moonshot-v1-8k',
+      name: 'Moonshot v1 8K',
+      description: 'Fast and cost-effective — 8K context for short tasks',
+      provider: 'Moonshot AI',
       contextWindow: 8192,
-      capabilities: ['Chat', 'Code'],
-      pricing: { input: 0.2, output: 0.2, currency: 'USD', unit: '1M tokens' },
-      available: true
-    },
-    
-    // Moonshot AI - UPDATED JANUARY 2026
-    {
-      id: 'kimi-k2-thinking',
-      name: 'Kimi K2 Thinking',
-      description: 'Multi-step reasoning + tool use - 256K context, 200-300 sequential tool calls',
-      provider: 'Moonshot AI',
-      contextWindow: 256000,
-      capabilities: ['Chat', 'Code', 'Reasoning', 'Tools'],
-      pricing: { input: 0.15, output: 2.50, currency: 'USD', unit: '1M tokens' },
-      available: true
-    },
-    {
-      id: 'kimi-k2-thinking-turbo',
-      name: 'Kimi K2 Thinking Turbo',
-      description: 'Fast reasoning + tool use - 256K context, faster inference',
-      provider: 'Moonshot AI',
-      contextWindow: 256000,
-      capabilities: ['Chat', 'Code', 'Reasoning', 'Fast Response'],
-      pricing: { input: 0.15, output: 2.50, currency: 'USD', unit: '1M tokens' },
-      available: true
-    },
-    {
-      id: 'kimi-k2-turbo-preview',
-      name: 'Kimi K2 Turbo Preview',
-      description: 'General purpose, high-speed - 60-100 tokens/sec, 256K context',
-      provider: 'Moonshot AI',
-      contextWindow: 256000,
       capabilities: ['Chat', 'Code', 'Fast Response'],
-      pricing: { input: 0.15, output: 2.50, currency: 'USD', unit: '1M tokens' },
+      pricing: { input: 0.12, output: 0.12, currency: 'USD', unit: '1M tokens' },
       available: true
     },
     {
-      id: 'kimi-k2-0905-preview',
-      name: 'Kimi K2 (Sept 2025)',
-      description: 'Stable version - 1T param MoE, 256K context, 10-100× cheaper than GPT-4',
+      id: 'moonshot-v1-32k',
+      name: 'Moonshot v1 32K',
+      description: 'Balanced — 32K context for most coding and analysis tasks',
       provider: 'Moonshot AI',
-      contextWindow: 256000,
-      capabilities: ['Chat', 'Code', 'Agents'],
-      pricing: { input: 0.15, output: 2.50, currency: 'USD', unit: '1M tokens' },
+      contextWindow: 32768,
+      capabilities: ['Chat', 'Code', 'Analysis'],
+      pricing: { input: 0.24, output: 0.24, currency: 'USD', unit: '1M tokens' },
+      available: true
+    },
+    {
+      id: 'moonshot-v1-128k',
+      name: 'Moonshot v1 128K',
+      description: 'Long context — 128K for large codebases and documents',
+      provider: 'Moonshot AI',
+      contextWindow: 131072,
+      capabilities: ['Chat', 'Code', 'Long Context'],
+      pricing: { input: 0.96, output: 0.96, currency: 'USD', unit: '1M tokens' },
       available: true
     }
   ];
@@ -310,7 +247,7 @@ export function AllModelsSelector() {
       let endpoint = '';
       let payload = {};
       
-      if (selectedModel.includes('gpt') || selectedModel.includes('o3') || selectedModel.includes('o4')) {
+      if (selectedModel.includes('gpt') || selectedModel === 'o1' || selectedModel === 'o1-mini' || selectedModel === 'o3') {
         endpoint = '/api/openai/generate';
         payload = {
           model: selectedModel,
@@ -420,7 +357,7 @@ export function AllModelsSelector() {
             AI Model Hub - Complete Integration
           </CardTitle>
           <CardDescription>
-            All available AI models: OpenAI, Anthropic, and 9 Open-Source Models
+            All available AI models: OpenAI, Anthropic, Google, xAI, and Moonshot AI
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -606,15 +543,15 @@ export function AllModelsSelector() {
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <CheckCircle className="h-4 w-4 text-green-500" />
-              <span className="text-[13px]">OpenAI Models: GPT-5.1, GPT-5, GPT-5 Mini/Nano, GPT-4o, o3, o4-mini</span>
+              <span className="text-[13px]">OpenAI: GPT-4o, GPT-4o Mini, o1, o1 Mini, o3</span>
             </div>
             <div className="flex items-center gap-2">
               <CheckCircle className="h-4 w-4 text-green-500" />
-              <span className="text-[13px]">Anthropic Models: Claude Opus 4.5, Claude Sonnet 4.5, Claude Haiku 4.5</span>
+              <span className="text-[13px]">Anthropic: Claude 3.5 Sonnet, Claude 3.5 Haiku, Claude 3 Opus</span>
             </div>
             <div className="flex items-center gap-2">
               <CheckCircle className="h-4 w-4 text-green-500" />
-              <span className="text-[13px]">Other Providers: Gemini 2.5 Pro/Flash, Grok 4, Moonshot Kimi K2, Groq</span>
+              <span className="text-[13px]">Google: Gemini 2.5 Flash, Gemini 2.0 Flash, Gemini 1.5 Pro &amp; Flash · xAI: Grok 2 · Moonshot AI: moonshot-v1-8k/32k/128k</span>
             </div>
             <div className="flex items-center gap-2">
               <CheckCircle className="h-4 w-4 text-green-500" />

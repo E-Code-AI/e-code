@@ -121,7 +121,7 @@ export default function Marketplace() {
                 <h3 className="font-semibold text-[15px] group-hover:text-primary transition-colors" data-testid={`text-extension-name-${extension.id}`}>
                   {extension.name}
                 </h3>
-                <p className="text-[13px] text-muted-foreground" data-testid={`text-extension-author-${extension.id}`}>by {typeof extension.author === 'object' ? (extension.author?.name ?? extension.author?.id ?? 'Unknown') : (extension.author ?? 'Unknown')}</p>
+                <p className="text-[13px] text-muted-foreground" data-testid={`text-extension-author-${extension.id}`}>by {typeof extension.author === 'object' ? (extension.author?.name ?? extension.author?.username ?? extension.author?.id ?? 'Unknown') : (extension.author ?? 'Unknown')}</p>
               </div>
               
               <div className="flex items-center gap-2">
@@ -192,7 +192,7 @@ export default function Marketplace() {
                 <h3 className="font-semibold text-[15px] group-hover:text-primary transition-colors" data-testid={`text-template-name-${template.id}`}>
                   {template.name}
                 </h3>
-                <p className="text-[13px] text-muted-foreground" data-testid={`text-template-author-${template.id}`}>by {typeof template.author === 'object' ? (template.author?.name ?? template.author?.id ?? 'Unknown') : (template.author ?? 'Unknown')}</p>
+                <p className="text-[13px] text-muted-foreground" data-testid={`text-template-author-${template.id}`}>by {typeof template.author === 'object' ? (template.author?.name ?? template.author?.username ?? template.author?.id ?? 'Unknown') : (template.author ?? 'Unknown')}</p>
               </div>
               
               {template.featured && (

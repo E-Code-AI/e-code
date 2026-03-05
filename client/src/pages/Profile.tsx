@@ -45,9 +45,8 @@ export default function Profile() {
   const { data: profile, isLoading: profileLoading, error: profileError } = useQuery({
     queryKey: ['/api/users', username || currentUser?.username],
     queryFn: async () => {
-      const response = await fetch(`/api/users/username/${username || currentUser?.username}`, { credentials: 'include' });
-      if (!response.ok) throw new Error('Failed to fetch profile');
-      return response.json();
+      const response = await apiRequest('GET', `/api/users/username/${username || currentUser?.username}`);
+      return response;
     },
     enabled: !!(username || currentUser?.username),
   });
@@ -132,8 +131,8 @@ export default function Profile() {
               </Avatar>
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
-                  <h1 className="text-2xl font-bold" data-testid="text-display-name">{profile.displayName}</h1>
-                  {(profile.badges || []).slice(0, 2).map((badge: { id: string; icon: any; name: string; color: string }) => {
+                  <h1 className="text-2xl font-bold" data-testid="text-display-name">{profile?.displayName || profile?.username}</h1>
+                  {(profile?.badges || []).slice(0, 2).map((badge: { id: string; icon: any; name: string; color: string }) => {
                     const Icon = badge.icon;
                     if (!Icon) return null;
                     return (
@@ -145,18 +144,18 @@ export default function Profile() {
                     );
                   })}
                 </div>
-                <p className="text-muted-foreground mb-3" data-testid="text-username">@{profile.username}</p>
-                <p className="mb-4" data-testid="text-bio">{profile.bio || ''}</p>
+                <p className="text-muted-foreground mb-3" data-testid="text-username">@{profile?.username}</p>
+                <p className="mb-4" data-testid="text-bio">{profile?.bio || ''}</p>
                 
                 {/* Contact and social */}
                 <div className="flex flex-wrap gap-4 text-[13px] text-muted-foreground mb-4">
-                  {profile.location && (
+                  {profile?.location && (
                     <span className="flex items-center gap-1">
                       <MapPin className="h-4 w-4" />
                       {profile.location}
                     </span>
                   )}
-                  {profile.website && (
+                  {profile?.website && (
                     <a
                       href={profile.website}
                       target="_blank"
@@ -167,7 +166,7 @@ export default function Profile() {
                       {profile.website.replace('https://', '')}
                     </a>
                   )}
-                  {profile.twitter && (
+                  {profile?.twitter && (
                     <a
                       href={`https://twitter.com/${profile.twitter.replace('@', '')}`}
                       target="_blank"
@@ -178,7 +177,7 @@ export default function Profile() {
                       {profile.twitter}
                     </a>
                   )}
-                  {profile.github && (
+                  {profile?.github && (
                     <a
                       href={`https://github.com/${profile.github}`}
                       target="_blank"
@@ -210,19 +209,19 @@ export default function Profile() {
               {/* Stats */}
             <div className="flex gap-6 md:ml-auto" data-testid="profile-stats">
               <div className="text-center">
-                <div className="text-2xl font-bold" data-testid="stat-repls">{profile.stats?.repls || 0}</div>
+                <div className="text-2xl font-bold" data-testid="stat-repls">{profile?.stats?.repls || 0}</div>
                 <div className="text-[13px] text-muted-foreground">Repls</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold" data-testid="stat-followers">{profile.stats?.followers || 0}</div>
+                <div className="text-2xl font-bold" data-testid="stat-followers">{profile?.stats?.followers || 0}</div>
                 <div className="text-[13px] text-muted-foreground">Followers</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold" data-testid="stat-following">{profile.stats?.following || 0}</div>
+                <div className="text-2xl font-bold" data-testid="stat-following">{profile?.stats?.following || 0}</div>
                 <div className="text-[13px] text-muted-foreground">Following</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold" data-testid="stat-stars">{profile.stats?.stars || 0}</div>
+                <div className="text-2xl font-bold" data-testid="stat-stars">{profile?.stats?.stars || 0}</div>
                 <div className="text-[13px] text-muted-foreground">Stars</div>
               </div>
             </div>
@@ -289,27 +288,27 @@ export default function Profile() {
                         <div
                           key={repl.id}
                           className="flex items-start justify-between p-3 hover:bg-accent cursor-pointer"
-                          onClick={() => navigate(`/repl/${repl.id}`)}
+                          onClick={() => navigate(`/ide/${repl.id}`)}
                         >
                           <div>
-                            <h4 className="font-semibold">{repl.name}</h4>
+                            <h4 className="font-semibold">{repl.name || 'Untitled Project'}</h4>
                             <p className="text-[13px] text-muted-foreground">
-                              {repl.description}
+                              {repl.description || ''}
                             </p>
                             <div className="flex items-center gap-4 mt-2 text-[11px] text-muted-foreground">
                               <span className="flex items-center gap-1">
                                 <Star className="h-3 w-3" />
-                                {repl.stars}
+                                {repl.stars || 0}
                               </span>
                               <span className="flex items-center gap-1">
                                 <GitFork className="h-3 w-3" />
-                                {repl.forks}
+                                {repl.forks || 0}
                               </span>
-                              <span>{repl.lastUpdated}</span>
+                              <span>{repl.updatedAt ? new Date(repl.updatedAt).toLocaleDateString() : ''}</span>
                             </div>
                           </div>
                           <Badge variant="secondary" className={getLanguageColor(repl.language)}>
-                            {repl.language}
+                            {repl.language || 'JavaScript'}
                           </Badge>
                         </div>
                       ))}
@@ -343,16 +342,16 @@ export default function Profile() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      {(profile.recentActivity || []).map((activity: { type: string; repl: string; time: string }, index: number) => (
+                      {(profile?.recentActivity || []).map((activity: { type: string; repl: string; time: string }, index: number) => (
                         <div key={index} className="flex items-start gap-2 text-[13px]">
                           <Activity className="h-4 w-4 mt-0.5 text-muted-foreground" />
                           <div>
                             <span className="text-muted-foreground">
-                              {activity.type} 
+                              {activity?.type} 
                             </span>{' '}
-                            <span className="font-medium">{activity.repl}</span>
+                            <span className="font-medium">{activity?.repl}</span>
                             <p className="text-[11px] text-muted-foreground">
-                              {activity.time}
+                              {activity?.time}
                             </p>
                           </div>
                         </div>
@@ -394,32 +393,32 @@ export default function Profile() {
                 <Card
                   key={repl.id}
                   className="cursor-pointer hover:shadow-md transition-shadow"
-                  onClick={() => navigate(`/repl/${repl.id}`)}
+                  onClick={() => navigate(`/ide/${repl.id}`)}
                 >
                   <CardHeader>
                     <div className="flex items-start justify-between">
-                      <div>
-                        <CardTitle className="text-base">{repl.name}</CardTitle>
-                        <CardDescription>{repl.description}</CardDescription>
+                      <div className="min-w-0 flex-1">
+                        <CardTitle className="text-base truncate">{repl.name || 'Untitled Project'}</CardTitle>
+                        <CardDescription className="truncate">{repl.description || ''}</CardDescription>
                       </div>
                       {repl.visibility === 'private' && (
-                        <Shield className="h-4 w-4 text-muted-foreground" />
+                        <Shield className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                       )}
                     </div>
                   </CardHeader>
                   <CardContent>
                     <div className="flex items-center justify-between">
                       <Badge variant="secondary" className={getLanguageColor(repl.language)}>
-                        {repl.language}
+                        {repl.language || 'JavaScript'}
                       </Badge>
                       <div className="flex items-center gap-3 text-[13px] text-muted-foreground">
                         <span className="flex items-center gap-1">
                           <Star className="h-3 w-3" />
-                          {repl.stars}
+                          {repl.stars || 0}
                         </span>
                         <span className="flex items-center gap-1">
                           <GitFork className="h-3 w-3" />
-                          {repl.forks}
+                          {repl.forks || 0}
                         </span>
                       </div>
                     </div>

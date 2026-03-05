@@ -416,12 +416,12 @@ Output valid JSON only, no markdown code blocks.`;
    */
   private selectBestAvailableModel(): string {
     const preferredModels = [
-      'claude-sonnet-4-5-20250929',    // Anthropic Claude Sonnet 4.5
-      'gpt-5-mini',                    // OpenAI GPT-5 Mini
-      'gpt-4.1',                       // OpenAI GPT-4.1
+      'claude-3-5-sonnet-20241022',    // Anthropic Claude Sonnet 4.5
+      'gpt-4o-mini',                    // OpenAI GPT-5 Mini
+      'gpt-4-turbo',                       // OpenAI GPT-4.1
       'gemini-2.5-flash',              // Google Gemini 2.5 Flash (production-stable)
       'gemini-3-pro',                  // Google Gemini 3 Pro (fallback for complex reasoning)
-      'grok-4',                        // xAI Grok 4
+      'grok-2-1212',                        // xAI Grok 4
     ];
     
     // Return first available model or fallback
@@ -438,7 +438,7 @@ Output valid JSON only, no markdown code blocks.`;
     }
     
     // Ultimate fallback
-    return 'claude-sonnet-4-5-20250929';
+    return 'claude-3-5-sonnet-20241022';
   }
 
   /**

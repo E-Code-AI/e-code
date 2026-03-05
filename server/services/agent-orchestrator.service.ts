@@ -1309,8 +1309,8 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
         default: 0.000002
       },
       moonshot: {
-        'kimi-k2': 0.00002,
-        'kimi-k2-thinking': 0.00003,
+        'moonshot-v1-32k': 0.00002,
+        'moonshot-v1-128k': 0.00003,
         default: 0.00002
       },
       groq: {
@@ -2100,7 +2100,7 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
         userId: userIdNum,
         role: 'assistant',
         content,
-        model: 'gpt-5.2',  // ✅ CONSOLIDATED Jan 2026
+        model: 'gpt-4o',  // ✅ CONSOLIDATED Jan 2026
         metadata: {
           tokensUsed: metadata?.tokensUsed ?? 0,
           processingTimeMs: metadata?.processingTimeMs,

@@ -553,7 +553,7 @@ export function TemplatePreview({
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="font-medium text-[13px]">{typeof template.author === 'object' ? template.author?.name : template.author}</p>
+                    <p className="font-medium text-[13px]">{typeof template.author === 'object' ? (template.author?.name ?? template.author?.username ?? 'Anonymous') : (template.author ?? 'Anonymous')}</p>
                     <p className="text-[11px] text-muted-foreground">
                       {template.author?.bio || 'Template developer'}
                     </p>

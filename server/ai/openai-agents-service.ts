@@ -154,7 +154,7 @@ export class OpenAIAgentsService {
         - Create unit tests and documentation
         - Analyze code for security vulnerabilities
         Always provide clean, production-ready code with best practices.`,
-      model: 'gpt-5.2',  // ✅ CONSOLIDATED Jan 2026
+      model: 'gpt-4o',  // ✅ CONSOLIDATED Jan 2026
       tools: [
         { type: 'code_interpreter' },
         { type: 'file_search' }
@@ -176,7 +176,7 @@ export class OpenAIAgentsService {
         - Compare and analyze multiple sources
         - Generate reports and insights
         Provide accurate, well-sourced information with citations when possible.`,
-      model: 'gpt-5.2',  // ✅ CONSOLIDATED Jan 2026
+      model: 'gpt-4o',  // ✅ CONSOLIDATED Jan 2026
       tools: [
         { type: 'file_search' }
       ],
@@ -197,7 +197,7 @@ export class OpenAIAgentsService {
         - Handle errors and retry operations
         - Optimize workflows for efficiency
         Execute tasks step by step, verify results, and provide clear status updates.`,
-      model: 'gpt-5.2',  // ✅ CONSOLIDATED Jan 2026
+      model: 'gpt-4o',  // ✅ CONSOLIDATED Jan 2026
       tools: [
         ...functions.map(fn => ({ type: 'function' as const, function: fn })),
         { type: 'code_interpreter' }
@@ -307,7 +307,7 @@ export class OpenAIAgentsService {
       // Track usage for billing
       if (runStatus.usage) {
         await aiBillingService.trackAIUsage(userId, {
-          model: runStatus.model || 'gpt-5.2',
+          model: runStatus.model || 'gpt-4o',
           provider: 'OpenAI',
           inputTokens: runStatus.usage.prompt_tokens || 0,
           outputTokens: runStatus.usage.completion_tokens || 0,
@@ -419,7 +419,7 @@ export class OpenAIAgentsService {
   }>> {
     return [
       {
-        id: 'gpt-5.2',
+        id: 'gpt-4o',
         name: 'GPT-5.2 (Latest)',
         capabilities: ['chat', 'vision', 'function_calling', 'code_interpreter', 'file_search', 'reasoning', 'complex_analysis'],
         contextWindow: 256000,

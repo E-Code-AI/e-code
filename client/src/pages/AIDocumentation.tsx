@@ -96,8 +96,8 @@ export default function AIDocumentation() {
                   <div className="border rounded-lg p-4">
                     <div className="flex items-start justify-between mb-2">
                       <div>
-                        <h3 className="font-semibold">GPT-5</h3>
-                        <p className="text-[13px] text-muted-foreground">OpenAI's latest model (gpt-5-2025-08-07)</p>
+                        <h3 className="font-semibold">GPT-4o</h3>
+                        <p className="text-[13px] text-muted-foreground">OpenAI flagship model (gpt-4o)</p>
                       </div>
                       <span className="px-2 py-1 bg-primary/10 text-primary text-[11px] rounded">Primary</span>
                     </div>
@@ -107,8 +107,8 @@ export default function AIDocumentation() {
                   <div className="border rounded-lg p-4">
                     <div className="flex items-start justify-between mb-2">
                       <div>
-                        <h3 className="font-semibold">Claude Sonnet 4.5</h3>
-                        <p className="text-[13px] text-muted-foreground">Anthropic's advanced model (claude-sonnet-4-5-20250929)</p>
+                        <h3 className="font-semibold">Claude 3.5 Sonnet</h3>
+                        <p className="text-[13px] text-muted-foreground">Anthropic's advanced model (claude-3-5-sonnet-20241022)</p>
                       </div>
                       <span className="px-2 py-1 bg-blue-500/10 text-blue-500 text-[11px] rounded">Fallback</span>
                     </div>
@@ -116,8 +116,8 @@ export default function AIDocumentation() {
                   </div>
 
                   <div className="border rounded-lg p-4">
-                    <h3 className="font-semibold">Gemini 2.5 Pro</h3>
-                    <p className="text-[13px] text-muted-foreground">Google's multimodal AI</p>
+                    <h3 className="font-semibold">Gemini 2.5 Flash</h3>
+                    <p className="text-[13px] text-muted-foreground">Google's fast multimodal AI (gemini-2.5-flash)</p>
                     <p className="text-[13px] mt-2">Supports vision and code understanding for complex use cases.</p>
                   </div>
                 </div>
@@ -209,7 +209,7 @@ export default function AIDocumentation() {
                       <pre className="text-[11px] overflow-x-auto">
 {`{
   "prompt": "Create a login form",
-  "model": "gpt-5.2",
+  "model": "gpt-4o",
   "context": "React TypeScript"
 }`}
                       </pre>

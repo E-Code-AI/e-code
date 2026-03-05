@@ -11,83 +11,40 @@ import { storage } from '../storage';
 
 const logger = createLogger('ai-billing-service');
 
-// Pricing per 1K tokens (similar to Replit's pricing model)
+// Pricing per 1K tokens
 export const AI_MODEL_PRICING = {
-  // ✅ CONSOLIDATED Jan 2026: Only gpt-5.2 is current
-  // OpenAI Models - Latest pricing as of January 2026
-  'gpt-5.2': {
-    input: 0.00175,   // $1.75 per 1M input tokens
-    output: 0.014,    // $14 per 1M output tokens  
-    creditsPerThousand: 0.0157 // Latest flagship with advanced reasoning
-  },
-  'gpt-5.2-codex': {
-    input: 0.00175,   // $1.75 per 1M input tokens
-    output: 0.014,    // $14 per 1M output tokens  
-    creditsPerThousand: 0.0157 // Coding optimized variant
-  },
-  'gpt-5-mini': {
-    input: 0.00015, // $0.15 per 1M input tokens
-    output: 0.0006, // $0.60 per 1M output tokens
-    creditsPerThousand: 0.00075 // Cost-optimized reasoning
-  },
-  'gpt-5-nano': {
-    input: 0.0001,  // $0.10 per 1M input tokens
-    output: 0.0003, // $0.30 per 1M output tokens
-    creditsPerThousand: 0.0004 // High-throughput for simple tasks
-  },
-  
-  // Anthropic Models - Claude 4.5 Family (December 2025)
-  'claude-opus-4-5-20251124': {
-    input: 0.015,   // $15 per 1M input tokens
-    output: 0.075,  // $75 per 1M output tokens
-    creditsPerThousand: 0.09 // Most capable frontier model
-  },
-  'claude-sonnet-4-5-20250929': {
-    input: 0.003,   // $3 per 1M input tokens
-    output: 0.015,  // $15 per 1M output tokens
-    creditsPerThousand: 0.018 // Best balanced model
-  },
-  'claude-haiku-4-5-20251015': {
-    input: 0.00025, // $0.25 per 1M input tokens
-    output: 0.00125,// $1.25 per 1M output tokens
-    creditsPerThousand: 0.0015 // Fastest & cheapest Claude
-  },
-  
-  // Google Gemini Models (December 2025)
-  'gemini-2.5-pro': {
-    input: 0.00125, // $1.25 per 1M input tokens
-    output: 0.005,  // $5 per 1M output tokens
-    creditsPerThousand: 0.00625 // Stable release with adaptive thinking
-  },
-  'gemini-2.5-flash': {
-    input: 0.000075, // $0.075 per 1M input tokens
-    output: 0.0003,  // $0.30 per 1M output tokens
-    creditsPerThousand: 0.0004 // Hybrid reasoning, low latency
-  },
-  
-  // E-Code Custom Models (similar to Replit's custom models)
-  'ecode-agent-v1': {
-    input: 0.002,
-    output: 0.008,
-    creditsPerThousand: 0.01 // Optimized pricing for E-Code users
-  },
-  'ecode-code-v1': {
-    input: 0.001,
-    output: 0.004,
-    creditsPerThousand: 0.005
-  },
-  'ecode-flash-v1': {
-    input: 0.0005,
-    output: 0.002,
-    creditsPerThousand: 0.0025
-  },
-  
+  // OpenAI Models
+  'gpt-4o': { input: 0.0025, output: 0.01, creditsPerThousand: 0.0125 },
+  'gpt-4o-mini': { input: 0.00015, output: 0.0006, creditsPerThousand: 0.00075 },
+  'o1': { input: 0.015, output: 0.06, creditsPerThousand: 0.075 },
+  'o1-mini': { input: 0.003, output: 0.012, creditsPerThousand: 0.015 },
+  'o3': { input: 0.01, output: 0.04, creditsPerThousand: 0.05 },
+  'gpt-4-turbo': { input: 0.01, output: 0.03, creditsPerThousand: 0.04 },
+  'gpt-4': { input: 0.03, output: 0.06, creditsPerThousand: 0.09 },
+
+  // Anthropic Models
+  'claude-3-5-sonnet-20241022': { input: 0.003, output: 0.015, creditsPerThousand: 0.018 },
+  'claude-3-5-haiku-20241022': { input: 0.0008, output: 0.004, creditsPerThousand: 0.005 },
+  'claude-3-opus-20240229': { input: 0.015, output: 0.075, creditsPerThousand: 0.09 },
+  'claude-3-haiku-20240307': { input: 0.00025, output: 0.00125, creditsPerThousand: 0.0015 },
+
+  // Google Gemini Models
+  'gemini-2.5-flash': { input: 0.000075, output: 0.0003, creditsPerThousand: 0.0004 },
+  'gemini-2.0-flash': { input: 0.000075, output: 0.0003, creditsPerThousand: 0.0004 },
+  'gemini-1.5-pro': { input: 0.00125, output: 0.005, creditsPerThousand: 0.00625 },
+  'gemini-1.5-flash': { input: 0.000075, output: 0.0003, creditsPerThousand: 0.0004 },
+
+  // xAI Models
+  'grok-2-1212': { input: 0.002, output: 0.01, creditsPerThousand: 0.012 },
+  'grok-2-vision-1212': { input: 0.002, output: 0.01, creditsPerThousand: 0.012 },
+
+  // Moonshot AI Models
+  'moonshot-v1-8k': { input: 0.0012, output: 0.0012, creditsPerThousand: 0.0024 },
+  'moonshot-v1-32k': { input: 0.0024, output: 0.0024, creditsPerThousand: 0.0048 },
+  'moonshot-v1-128k': { input: 0.006, output: 0.006, creditsPerThousand: 0.012 },
+
   // Default fallback
-  'default': {
-    input: 0.001,
-    output: 0.003,
-    creditsPerThousand: 0.004
-  }
+  'default': { input: 0.001, output: 0.003, creditsPerThousand: 0.004 }
 };
 
 export interface AIUsageMetadata {

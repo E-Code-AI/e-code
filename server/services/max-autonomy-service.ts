@@ -125,7 +125,7 @@ class MaxAutonomyService extends EventEmitter {
         userId: options.userId,
         projectId: options.projectId,
         sessionToken: `max-autonomy-${crypto.randomUUID()}`,
-        model: options.model || 'gpt-5.2',
+        model: options.model || 'gpt-4o',
         isActive: true,
         autonomousMode: true,
         riskThreshold: options.riskThreshold || 'medium',
@@ -152,7 +152,7 @@ class MaxAutonomyService extends EventEmitter {
         autoRollback: options.autoRollback !== false,
         riskThreshold: options.riskThreshold || 'medium',
         metadata: {
-          model: options.model || 'gpt-5.2',
+          model: options.model || 'gpt-4o',
           conversationHistory: [],
           executionLog: [{
             timestamp: new Date().toISOString(),
@@ -166,7 +166,7 @@ class MaxAutonomyService extends EventEmitter {
         sessionId: session.id,
         projectId: options.projectId,
         userId: options.userId,
-        model: options.model || 'gpt-5.2',
+        model: options.model || 'gpt-4o',
         checkpointService: this.checkpointService,
         testingService: this.testingService
       });
@@ -453,7 +453,7 @@ class MaxAutonomyService extends EventEmitter {
           actualTokens: result.tokensUsed ?? 0,
           success: true,
           provider: (session?.metadata as any)?.model?.includes('claude') ? 'anthropic' : 'openai',
-          model: (session?.metadata as any)?.model || 'gpt-5.2',  // ✅ CONSOLIDATED Jan 2026
+          model: (session?.metadata as any)?.model || 'gpt-4o',  // ✅ CONSOLIDATED Jan 2026
           timestamp: new Date()
         });
         
@@ -471,7 +471,7 @@ class MaxAutonomyService extends EventEmitter {
           actualTokens: result.tokensUsed ?? 0,
           success: false,
           provider: (session?.metadata as any)?.model?.includes('claude') ? 'anthropic' : 'openai',
-          model: (session?.metadata as any)?.model || 'gpt-5.2',  // ✅ CONSOLIDATED Jan 2026
+          model: (session?.metadata as any)?.model || 'gpt-4o',  // ✅ CONSOLIDATED Jan 2026
           timestamp: new Date()
         });
         

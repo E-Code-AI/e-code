@@ -29,7 +29,7 @@ interface ModelPricing {
 
 export function OpenAIModelSelector({ 
   onModelSelect,
-  selectedModel = 'gpt-5.2'
+  selectedModel = 'gpt-4o'
 }: { 
   onModelSelect: (model: string) => void;
   selectedModel?: string;

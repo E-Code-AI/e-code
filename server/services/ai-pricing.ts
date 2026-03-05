@@ -20,10 +20,10 @@ export const AI_MODEL_PRICING: Record<string, { input: number; output: number }>
   // ============================================
   // OpenAI (Jan 2026) - ✅ CONSOLIDATED: Only gpt-5.2 is current
   // ============================================
-  'gpt-5.2': { input: 1.75, output: 14.00 },
-  'gpt-5.2-codex': { input: 1.75, output: 14.00 },
-  'gpt-5-mini': { input: 0.30, output: 1.20 },
-  'gpt-5-nano': { input: 0.10, output: 0.40 },
+  'gpt-4o': { input: 1.75, output: 14.00 },
+  'gpt-4o': { input: 1.75, output: 14.00 },
+  'gpt-4o-mini': { input: 0.30, output: 1.20 },
+  'gpt-4o-mini': { input: 0.10, output: 0.40 },
   'gpt-4.1': { input: 2.00, output: 8.00 },
   'gpt-4.1-mini': { input: 0.40, output: 1.60 },
   'gpt-4.1-nano': { input: 0.10, output: 0.40 },
@@ -33,10 +33,10 @@ export const AI_MODEL_PRICING: Record<string, { input: number; output: number }>
   // ============================================
   // Anthropic (Dec 2025) - 4 models
   // ============================================
-  'claude-opus-4-5-20251124': { input: 15.00, output: 75.00 },
-  'claude-sonnet-4-5-20250929': { input: 3.00, output: 15.00 },
+  'claude-3-opus-20240229': { input: 15.00, output: 75.00 },
+  'claude-3-5-sonnet-20241022': { input: 3.00, output: 15.00 },
   'claude-opus-4-1-20250805': { input: 15.00, output: 75.00 },
-  'claude-haiku-4-5-20251015': { input: 0.80, output: 4.00 },
+  'claude-3-5-haiku-20241022': { input: 0.80, output: 4.00 },
 
   // ============================================
   // Google Gemini (Dec 2025) - 3 models
@@ -47,15 +47,15 @@ export const AI_MODEL_PRICING: Record<string, { input: number; output: number }>
   // ============================================
   // xAI (Dec 2025) - 2 models
   // ============================================
-  'grok-4': { input: 3.00, output: 15.00 },
-  'grok-4-fast': { input: 5.00, output: 25.00 },
+  'grok-2-1212': { input: 3.00, output: 15.00 },
+  'grok-2-1212': { input: 5.00, output: 25.00 },
 
   // ============================================
   // Moonshot AI (Dec 2025) - 5 models
   // ============================================
-  'kimi-k2-0711-preview': { input: 0.60, output: 2.40 },
-  'kimi-k2-0904-preview': { input: 0.60, output: 2.40 },
-  'kimi-k2-thinking': { input: 1.20, output: 4.80 },
+  'moonshot-v1-128k': { input: 0.60, output: 2.40 },
+  'moonshot-v1-128k': { input: 0.60, output: 2.40 },
+  'moonshot-v1-128k': { input: 1.20, output: 4.80 },
   'moonshot-v1-32k': { input: 0.30, output: 1.20 },
   'moonshot-v1-128k': { input: 0.50, output: 2.00 },
 

@@ -206,7 +206,7 @@ export class AutonomyTaskExecutor {
     this.sessionId = options.sessionId;
     this.projectId = options.projectId;
     this.userId = options.userId;
-    this.model = options.model || 'gpt-5.2';  // ✅ CONSOLIDATED Jan 2026
+    this.model = options.model || 'gpt-4o';
     this.aiProvider = new AIProviderManager();
     this.checkpointService = options.checkpointService;
     this.testingService = options.testingService;
@@ -604,11 +604,11 @@ Generate the task breakdown (aim for ${complexityAnalysis.suggestedTaskCount} ta
       Math.round(overallComplexity * 1.5) + categories.length
     ));
     
-    let recommendedModel = 'gpt-5-mini';  // ✅ UPDATED Jan 2026: gpt-4o deprecated
+    let recommendedModel = 'gpt-4o-mini';
     if (overallComplexity >= 8) {
-      recommendedModel = 'gpt-5.2';  // ✅ CONSOLIDATED Jan 2026
+      recommendedModel = 'gpt-4o';
     } else if (overallComplexity <= 3) {
-      recommendedModel = 'gpt-5-nano';
+      recommendedModel = 'gpt-4o-mini';
     }
     
     let riskLevel: 'low' | 'medium' | 'high' = 'low';

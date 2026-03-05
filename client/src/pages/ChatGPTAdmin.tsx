@@ -129,7 +129,7 @@ export default function ChatGPTAdmin() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
-  const [selectedModel, setSelectedModel] = useState('gpt-5.2');
+  const [selectedModel, setSelectedModel] = useState('gpt-4o');
   const [extendedThinking, setExtendedThinking] = useState(true);
   const [highPower, setHighPower] = useState(true);
   const [activeTab, setActiveTab] = useState('chat');
@@ -523,9 +523,17 @@ export default function ChatGPTAdmin() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="gpt-5.2">GPT-5.2 (Latest)</SelectItem>
-                      <SelectItem value="gpt-5.2-codex">GPT-5.2 Codex</SelectItem>
-                      <SelectItem value="gpt-5-mini">GPT-5 Mini</SelectItem>
+                      <SelectItem value="gpt-4o">GPT-4o</SelectItem>
+                      <SelectItem value="gpt-4o-mini">GPT-4o Mini</SelectItem>
+                      <SelectItem value="o1">o1</SelectItem>
+                      <SelectItem value="o1-mini">o1 Mini</SelectItem>
+                      <SelectItem value="o3">o3</SelectItem>
+                      <SelectItem value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet</SelectItem>
+                      <SelectItem value="claude-3-5-haiku-20241022">Claude 3.5 Haiku</SelectItem>
+                      <SelectItem value="claude-3-opus-20240229">Claude 3 Opus</SelectItem>
+                      <SelectItem value="gemini-2.5-flash">Gemini 2.5 Flash</SelectItem>
+                      <SelectItem value="gemini-2.0-flash">Gemini 2.0 Flash</SelectItem>
+                      <SelectItem value="grok-2-1212">Grok 2</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -571,21 +579,21 @@ export default function ChatGPTAdmin() {
                     <div className="flex items-center justify-between text-[13px]">
                       <span className="text-muted-foreground">Session</span>
                       <Badge variant="outline" className="font-mono text-[11px]">
-                        {activeSession.id.slice(0, 8)}
+                        {activeSession.id ? activeSession.id.slice(0, 8) : 'unknown'}
                       </Badge>
                     </div>
                     <div className="flex items-center justify-between text-[13px]">
                       <span className="text-muted-foreground">Model</span>
-                      <span className="font-medium">{activeSession.model}</span>
+                      <span className="font-medium">{activeSession.model || 'unknown'}</span>
                     </div>
                     <div className="flex items-center justify-between text-[13px]">
                       <span className="text-muted-foreground">Status</span>
-                      <Badge variant="default">Active</Badge>
+                      <Badge variant="default">{activeSession.isActive ? 'Active' : 'Inactive'}</Badge>
                     </div>
                     {selectedProject && (
                       <div className="flex items-center justify-between text-[13px]">
                         <span className="text-muted-foreground">Project</span>
-                        <span className="font-medium truncate max-w-[120px]">{selectedProject.name}</span>
+                        <span className="font-medium truncate max-w-[120px]">{selectedProject.name || 'Untitled'}</span>
                       </div>
                     )}
                     <Separator className="my-2" />

@@ -33,7 +33,7 @@ export class AgentPreferencesService {
     return [
       // OpenAI Models
       {
-        id: 'gpt-5.2',
+        id: 'gpt-4o',
         name: 'GPT-5.2',
         description: 'Latest and most advanced OpenAI model',
         category: 'openai',
@@ -47,7 +47,7 @@ export class AgentPreferencesService {
         },
       },
       {
-        id: 'gpt-5.2-codex',
+        id: 'gpt-4o',
         name: 'GPT-5.2 Codex',
         description: 'Coding optimized variant with enhanced code generation',
         category: 'openai',
@@ -61,7 +61,7 @@ export class AgentPreferencesService {
         },
       },
       {
-        id: 'gpt-5-mini',
+        id: 'gpt-4o-mini',
         name: 'GPT-5 Mini',
         description: 'Fast and efficient for most tasks',
         category: 'openai',
@@ -75,7 +75,7 @@ export class AgentPreferencesService {
         },
       },
       {
-        id: 'gpt-4.1',
+        id: 'gpt-4-turbo',
         name: 'GPT-4.1',
         description: 'Excellent for coding with 1M context (April 2025)',
         category: 'openai',
@@ -118,7 +118,7 @@ export class AgentPreferencesService {
       },
       // Anthropic Models
       {
-        id: 'claude-sonnet-4-5-20250929',
+        id: 'claude-3-5-sonnet-20241022',
         name: 'Claude Sonnet 4.5',
         description: 'Best balance of speed and quality',
         category: 'anthropic',
@@ -132,7 +132,7 @@ export class AgentPreferencesService {
         },
       },
       {
-        id: 'claude-opus-4-5-20251101',
+        id: 'claude-3-opus-20240229',
         name: 'Claude Opus 4.5',
         description: 'Most powerful Claude model',
         category: 'anthropic',
@@ -146,7 +146,7 @@ export class AgentPreferencesService {
         },
       },
       {
-        id: 'claude-haiku-4-5-20251015',
+        id: 'claude-3-5-haiku-20241022',
         name: 'Claude Haiku 4.5',
         description: 'Fast and cost-effective',
         category: 'anthropic',
@@ -175,7 +175,7 @@ export class AgentPreferencesService {
         },
       },
       {
-        id: 'gemini-3-pro',
+        id: 'gemini-2.5-flash',
         name: 'Gemini 3 Pro',
         description: 'State-of-the-art reasoning and multimodal (fallback for high-complexity tasks)',
         category: 'google',
@@ -190,7 +190,7 @@ export class AgentPreferencesService {
       },
       // xAI Models
       {
-        id: 'grok-4',
+        id: 'grok-2-1212',
         name: 'Grok 4',
         description: 'xAI\'s flagship reasoning model',
         category: 'xai',
@@ -204,7 +204,7 @@ export class AgentPreferencesService {
         },
       },
       {
-        id: 'grok-4-fast',
+        id: 'grok-2-1212',
         name: 'Grok 4 Fast',
         description: 'Fast xAI model',
         category: 'xai',
@@ -219,7 +219,7 @@ export class AgentPreferencesService {
       },
       // Moonshot AI / Kimi K2 Models - UPDATED JAN 2026
       {
-        id: 'kimi-k2-thinking',
+        id: 'moonshot-v1-128k',
         name: 'Kimi K2 Thinking',
         description: '1T params, 256K context, temp=1.0 required',
         category: 'moonshot',
@@ -233,7 +233,7 @@ export class AgentPreferencesService {
         },
       },
       {
-        id: 'kimi-k2-thinking',
+        id: 'moonshot-v1-128k',
         name: 'Kimi K2 Thinking',
         description: 'Kimi K2 with extended reasoning',
         category: 'moonshot',
@@ -313,34 +313,34 @@ export class AgentPreferencesService {
     // High power mode always uses premium models
     if (highPowerMode) {
       if (requiresExtendedThinking || complexity === 'complex') {
-        return 'claude-opus-4-5-20251101';  // ✅ CONSOLIDATED Jan 2026
+        return 'claude-3-opus-20240229';  // ✅ CONSOLIDATED Jan 2026
       }
-      return 'gpt-5.2';  // ✅ CONSOLIDATED Jan 2026
+      return 'gpt-4o';  // ✅ CONSOLIDATED Jan 2026
     }
 
     // Extended thinking required
     if (requiresExtendedThinking) {
       if (speedPriority === 'fast') return 'o4-mini';
-      if (speedPriority === 'quality') return 'claude-opus-4-5-20251101';  // ✅ CONSOLIDATED Jan 2026
-      return 'claude-sonnet-4-5-20250929';
+      if (speedPriority === 'quality') return 'claude-3-opus-20240229';  // ✅ CONSOLIDATED Jan 2026
+      return 'claude-3-5-sonnet-20241022';
     }
 
     // Complex tasks
     if (complexity === 'complex') {
-      if (speedPriority === 'quality') return 'gpt-5.2';  // ✅ CONSOLIDATED Jan 2026
-      return 'claude-sonnet-4-5-20250929';
+      if (speedPriority === 'quality') return 'gpt-4o';  // ✅ CONSOLIDATED Jan 2026
+      return 'claude-3-5-sonnet-20241022';
     }
 
     // Simple tasks prioritizing speed
     if (complexity === 'simple') {
-      if (speedPriority === 'fast') return 'claude-haiku-4-5-20251015';
-      return 'gpt-5-mini';
+      if (speedPriority === 'fast') return 'claude-3-5-haiku-20241022';
+      return 'gpt-4o-mini';
     }
 
     // Medium complexity
-    if (speedPriority === 'fast') return 'gpt-5-mini';  // ✅ UPDATED Jan 2026: gpt-4o deprecated
-    if (speedPriority === 'quality') return 'claude-sonnet-4-5-20250929';
-    return 'gpt-5-mini';
+    if (speedPriority === 'fast') return 'gpt-4o-mini';  // ✅ UPDATED Jan 2026: gpt-4o deprecated
+    if (speedPriority === 'quality') return 'claude-3-5-sonnet-20241022';
+    return 'gpt-4o-mini';
   }
 
   /**
@@ -350,10 +350,10 @@ export class AgentPreferencesService {
   getFastModel(): AiModel {
     // Priority order for fast models (by speed and availability)
     const fastModels: AiModel[] = [
-      'claude-haiku-4-5-20251015',  // Fastest Claude model
-      'gpt-5-mini',                  // Fast GPT model
+      'claude-3-5-haiku-20241022',  // Fastest Claude model
+      'gpt-4o-mini',                  // Fast GPT model
       'gemini-2.5-flash',            // Fast Gemini model (production-stable)
-      'grok-4-fast',                 // Fast xAI model
+      'grok-2-1212',                 // Fast xAI model
     ];
     
     // Return first available fast model
@@ -368,7 +368,7 @@ export class AgentPreferencesService {
     
     // Fallback to first model with 'fast' speed rating
     const fastBySpeed = availableModels.find(m => m.capabilities.speed === 'fast');
-    return fastBySpeed?.id || 'gpt-5-mini';
+    return fastBySpeed?.id || 'gpt-4o-mini';
   }
 
   /**
@@ -404,7 +404,7 @@ export class AgentPreferencesService {
         return preferredModel;
       }
       // Default high power model
-      return 'gpt-5.2';  // ✅ CONSOLIDATED Jan 2026
+      return 'gpt-4o';  // ✅ CONSOLIDATED Jan 2026
     }
 
     // If extended thinking is on, ensure model supports it
@@ -414,10 +414,10 @@ export class AgentPreferencesService {
         return preferredModel;
       }
       // Default extended thinking model
-      return 'claude-sonnet-4-5-20250929';
+      return 'claude-3-5-sonnet-20241022';
     }
 
     // Use preferred model or default
-    return preferredModel || 'gpt-5-mini';
+    return preferredModel || 'gpt-4o-mini';
   }
 }

@@ -53,16 +53,25 @@ interface AIModel {
 }
 
 const AI_MODELS: AIModel[] = [
-  // OpenAI - Jan 2026 (CONSOLIDATED)
-  { id: 'gpt-5.2', name: 'GPT-5.2', provider: 'OpenAI', description: 'Flagship - 90% SWE-bench, PhD-level reasoning', speed: 'medium', capability: 'expert' },
-  { id: 'gpt-5.2-codex', name: 'GPT-5.2 Codex', provider: 'OpenAI', description: 'Coding optimized with 2M context', speed: 'medium', capability: 'expert' },
-  { id: 'gpt-4.1', name: 'GPT-4.1', provider: 'OpenAI', description: '1M context, 21% better coding', speed: 'fast', capability: 'advanced' },
-  // Anthropic - Jan 2026 (CONSOLIDATED: Only 4.5 family)
-  { id: 'claude-opus-4-5-20251101', name: 'Claude Opus 4.5', provider: 'Anthropic', description: '80.9% SWE-bench, best reasoning', speed: 'medium', capability: 'expert' },
-  { id: 'claude-sonnet-4-5-20250929', name: 'Claude Sonnet 4.5', provider: 'Anthropic', description: 'Production agents, balanced', speed: 'fast', capability: 'advanced' },
-  // Google Gemini - Jan 2026 (CONSOLIDATED: Only Gemini 3)
-  { id: 'gemini-3-flash', name: 'Gemini 3 Flash', provider: 'Google', description: '90.4% GPQA Diamond, agentic coding', speed: 'fast', capability: 'expert' },
-  { id: 'gemini-3-pro', name: 'Gemini 3 Pro', provider: 'Google', description: 'State-of-art reasoning', speed: 'medium', capability: 'expert' },
+  // OpenAI
+  { id: 'gpt-4o', name: 'GPT-4o', provider: 'OpenAI', description: 'Flagship multimodal — vision, audio, and text with 128K context', speed: 'fast', capability: 'advanced' },
+  { id: 'gpt-4o-mini', name: 'GPT-4o Mini', provider: 'OpenAI', description: 'Fast and affordable — best price-to-performance', speed: 'fast', capability: 'standard' },
+  { id: 'o1', name: 'o1', provider: 'OpenAI', description: 'Advanced reasoning — excels at complex STEM and coding', speed: 'medium', capability: 'expert' },
+  { id: 'o1-mini', name: 'o1 Mini', provider: 'OpenAI', description: 'Faster reasoning — coding, math, and science tasks', speed: 'fast', capability: 'advanced' },
+  { id: 'o3', name: 'o3', provider: 'OpenAI', description: 'Most powerful reasoning — frontier performance on hard benchmarks', speed: 'medium', capability: 'expert' },
+  // Anthropic
+  { id: 'claude-3-5-sonnet-20241022', name: 'Claude 3.5 Sonnet', provider: 'Anthropic', description: 'Best balance of speed and intelligence — top coding and reasoning', speed: 'fast', capability: 'advanced' },
+  { id: 'claude-3-5-haiku-20241022', name: 'Claude 3.5 Haiku', provider: 'Anthropic', description: 'Fast and affordable — quick tasks and lightweight agents', speed: 'fast', capability: 'standard' },
+  { id: 'claude-3-opus-20240229', name: 'Claude 3 Opus', provider: 'Anthropic', description: 'Most capable Claude — complex analysis and long-form writing', speed: 'medium', capability: 'expert' },
+  // Google Gemini
+  { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', provider: 'Google', description: 'Adaptive thinking — fast reasoning with 1M context window', speed: 'fast', capability: 'advanced' },
+  { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash', provider: 'Google', description: 'Next-gen performance — native tool use and superior speed', speed: 'fast', capability: 'advanced' },
+  { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', provider: 'Google', description: 'Long context champion — 2M context for large codebases', speed: 'medium', capability: 'advanced' },
+  // xAI
+  { id: 'grok-2-1212', name: 'Grok 2', provider: 'xAI', description: 'xAI flagship — 131K context, function calling, JSON mode', speed: 'fast', capability: 'advanced' },
+  // Moonshot AI
+  { id: 'moonshot-v1-32k', name: 'Moonshot v1 32K', provider: 'Moonshot AI', description: 'Balanced — 32K context for most coding and analysis tasks', speed: 'fast', capability: 'standard' },
+  { id: 'moonshot-v1-128k', name: 'Moonshot v1 128K', provider: 'Moonshot AI', description: 'Long context — 128K for large codebases and documents', speed: 'medium', capability: 'advanced' },
 ];
 
 export default function AssistantPage() {
@@ -73,7 +82,7 @@ export default function AssistantPage() {
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showStarredOnly, setShowStarredOnly] = useState(false);
-  const [selectedModel, setSelectedModel] = useState('gpt-5.2');
+  const [selectedModel, setSelectedModel] = useState('gpt-4o');
   const [temperature, setTemperature] = useState([0.7]);
   const [maxTokens, setMaxTokens] = useState([2048]);
   const [streamResponse, setStreamResponse] = useState(true);

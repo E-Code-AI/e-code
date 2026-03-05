@@ -589,8 +589,8 @@ export default function Landing() {
 
           <LazyMotionDiv 
             className="relative max-w-5xl mx-auto"
-            initial={{ scale: 0.9, opacity: 0 }}
-            whileInView={{ scale: 1, opacity: 1 }}
+            initial={{ scale: 0.9, opacity: 0, y: 30 }}
+            whileInView={{ scale: 1, opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
           >
@@ -1150,8 +1150,8 @@ export default function Landing() {
       >
         <div className="container-responsive max-w-4xl text-center">
           <LazyMotionDiv
-            initial={{ scale: 0.9, opacity: 0 }}
-            whileInView={{ scale: 1, opacity: 1 }}
+            initial={{ scale: 0.9, opacity: 0, y: 30 }}
+            whileInView={{ scale: 1, opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
             className="space-y-6"

@@ -54,13 +54,13 @@ export class AIService {
         available: !!openai,
         configured: !!openaiKey,
         keyPresent: !!process.env.OPENAI_API_KEY,
-        models: openai ? ['gpt-5.2', 'gpt-5.2-codex', 'gpt-5-mini', 'gpt-5-nano'] : []  // ✅ CONSOLIDATED Jan 2026
+        models: openai ? ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo'] : []
       },
       anthropic: {
         available: !!anthropic,
         configured: !!anthropicKey,
         keyPresent: !!process.env.ANTHROPIC_API_KEY,
-        models: anthropic ? ['claude-opus-4-5-20251101', 'claude-sonnet-4-5-20250929', 'claude-haiku-4-5-20251015'] : []  // ✅ CONSOLIDATED Jan 2026
+        models: anthropic ? ['claude-3-5-sonnet-latest', 'claude-3-5-haiku-latest', 'claude-3-opus-latest'] : []
       },
       anyAvailable: !!openai || !!anthropic,
       missingKeys: [
@@ -89,7 +89,7 @@ export class AIService {
     }
     
     if (!isOpenAIModel && !isAnthropicModel) {
-      throw new Error(`Unsupported model: ${model}. Available models: gpt-5.2, gpt-5.2-codex, gpt-5-mini, claude-opus-4-5-20251101, claude-sonnet-4-5-20250929, claude-haiku-4-5-20251015`);
+      throw new Error(`Unsupported model: ${model}. Available models: gpt-4o, gpt-4o-mini, gpt-4-turbo, claude-3-5-sonnet-latest, claude-3-5-haiku-latest`);
     }
   }
 
@@ -148,11 +148,10 @@ export class AIService {
 
     const toolDefinitions = tools ? this.getToolDefinitions() : undefined;
 
-    // Check if this is a new-gen model (GPT-5.x or o-series) that requires different parameters
-    const isNewGenModel = model.startsWith('gpt-5') || /^o[1-9]/.test(model);
+    const isNewGenModel = /^o[1-9]/.test(model);
 
     const completionParams: any = {
-      model: model.startsWith('gpt-5') ? model : 'gpt-5.2',  // ✅ CONSOLIDATED Jan 2026
+      model: model,
       messages: messagesWithSystem,
       tools: toolDefinitions,
       tool_choice: tools ? 'auto' : undefined,
@@ -224,22 +223,22 @@ export class AIService {
     }));
 
     const ANTHROPIC_MODEL_MAP: Record<string, string> = {
-      'claude-4': 'claude-sonnet-4-5-20250929',
-      'claude-sonnet': 'claude-sonnet-4-5-20250929',
-      'claude-sonnet-4': 'claude-sonnet-4-5-20250929',
-      'claude-sonnet-4-5': 'claude-sonnet-4-5-20250929',
-      'claude-sonnet-4-5-20250929': 'claude-sonnet-4-5-20250929',
-      'claude-haiku': 'claude-haiku-4-5-20251015',
-      'claude-haiku-4': 'claude-haiku-4-5-20251015',
-      'claude-haiku-4-5': 'claude-haiku-4-5-20251015',
-      'claude-haiku-4-5-20251015': 'claude-haiku-4-5-20251015',
-      'claude-opus': 'claude-opus-4-5-20251101',  // ✅ CONSOLIDATED Jan 2026
-      'claude-opus-4': 'claude-opus-4-5-20251101',
-      'claude-opus-4-5': 'claude-opus-4-5-20251101',
-      'claude-opus-4-5-20251101': 'claude-opus-4-5-20251101',
+      'claude-4': 'claude-3-5-sonnet-20241022',
+      'claude-sonnet': 'claude-3-5-sonnet-20241022',
+      'claude-sonnet-4': 'claude-3-5-sonnet-20241022',
+      'claude-sonnet-4-5': 'claude-3-5-sonnet-20241022',
+      'claude-3-5-sonnet-20241022': 'claude-3-5-sonnet-20241022',
+      'claude-haiku': 'claude-3-5-haiku-20241022',
+      'claude-haiku-4': 'claude-3-5-haiku-20241022',
+      'claude-haiku-4-5': 'claude-3-5-haiku-20241022',
+      'claude-3-5-haiku-20241022': 'claude-3-5-haiku-20241022',
+      'claude-opus': 'claude-3-opus-20240229',  // ✅ CONSOLIDATED Jan 2026
+      'claude-opus-4': 'claude-3-opus-20240229',
+      'claude-opus-4-5': 'claude-3-opus-20240229',
+      'claude-3-opus-20240229': 'claude-3-opus-20240229',
     };
     
-    const resolvedModel = ANTHROPIC_MODEL_MAP[model] || 'claude-sonnet-4-5-20250929';
+    const resolvedModel = ANTHROPIC_MODEL_MAP[model] || 'claude-3-5-sonnet-20241022';
     
     const response = await anthropic.messages.create({
       model: resolvedModel,

@@ -2017,7 +2017,7 @@ Provide specific code changes to fix these issues.`;
     sessionId: string
   ): Promise<WorkflowStep[]> {
     const completion = await this.openai.chat.completions.create({
-      model: 'gpt-5.2',
+      model: 'gpt-4o',
       messages: [
         {
           role: 'system',

@@ -525,6 +525,7 @@ router.get('/:projectId/search/:query?', ensureAuthenticated, ensureProjectAcces
     res.status(500).json({
       error: 'Package search failed',
       message: error.message,
+      details: error.stderr || error.stdout,
     });
   }
 });

@@ -44,25 +44,25 @@ export interface TaskDelegationInput {
  */
 const MODEL_TIERS: Record<ModelTier, Record<Provider, { model: string; costPer1kTokens: number; avgLatencyMs: number } | null>> = {
   fast: {
-    openai: { model: 'gpt-5-nano', costPer1kTokens: 0.0005, avgLatencyMs: 500 },
-    anthropic: { model: 'claude-haiku-4-5-20251015', costPer1kTokens: 0.001, avgLatencyMs: 600 },
+    openai: { model: 'gpt-4o-mini', costPer1kTokens: 0.0005, avgLatencyMs: 500 },
+    anthropic: { model: 'claude-3-5-haiku-20241022', costPer1kTokens: 0.001, avgLatencyMs: 600 },
     google: { model: 'gemini-2.5-flash', costPer1kTokens: 0.000075, avgLatencyMs: 400 },  // ✅ STABLE: Gemini 2.5 Flash (production-reliable)
     xai: null,
-    moonshot: { model: 'kimi-k2-turbo-preview', costPer1kTokens: 0.0015, avgLatencyMs: 700 }
+    moonshot: { model: 'moonshot-v1-32k', costPer1kTokens: 0.0015, avgLatencyMs: 700 }
   },
   balanced: {
-    openai: { model: 'gpt-5-mini', costPer1kTokens: 0.001, avgLatencyMs: 1000 },
-    anthropic: { model: 'claude-sonnet-4-5-20250929', costPer1kTokens: 0.003, avgLatencyMs: 1200 },
+    openai: { model: 'gpt-4o-mini', costPer1kTokens: 0.001, avgLatencyMs: 1000 },
+    anthropic: { model: 'claude-3-5-sonnet-20241022', costPer1kTokens: 0.003, avgLatencyMs: 1200 },
     google: { model: 'gemini-2.5-flash', costPer1kTokens: 0.000075, avgLatencyMs: 800 },  // ✅ STABLE: Gemini 2.5 Flash
     xai: null,
-    moonshot: { model: 'kimi-k2-thinking-turbo', costPer1kTokens: 0.0025, avgLatencyMs: 1500 }
+    moonshot: { model: 'moonshot-v1-128k', costPer1kTokens: 0.0025, avgLatencyMs: 1500 }
   },
   quality: {
-    openai: { model: 'gpt-5.2', costPer1kTokens: 0.005, avgLatencyMs: 2000 },  // ✅ CONSOLIDATED Jan 2026
-    anthropic: { model: 'claude-opus-4-5-20251101', costPer1kTokens: 0.015, avgLatencyMs: 3000 },
+    openai: { model: 'gpt-4o', costPer1kTokens: 0.005, avgLatencyMs: 2000 },  // ✅ CONSOLIDATED Jan 2026
+    anthropic: { model: 'claude-3-opus-20240229', costPer1kTokens: 0.015, avgLatencyMs: 3000 },
     google: { model: 'gemini-3-pro', costPer1kTokens: 0.00125, avgLatencyMs: 2500 },  // ✅ HIGH-COMPLEXITY: Fallback for complex reasoning
-    xai: { model: 'grok-4', costPer1kTokens: 0.01, avgLatencyMs: 2000 },
-    moonshot: { model: 'kimi-k2-thinking', costPer1kTokens: 0.0025, avgLatencyMs: 2000 }
+    xai: { model: 'grok-2-1212', costPer1kTokens: 0.01, avgLatencyMs: 2000 },
+    moonshot: { model: 'moonshot-v1-128k', costPer1kTokens: 0.0025, avgLatencyMs: 2000 }
   }
 };
 
@@ -238,7 +238,7 @@ class DelegationManagerService extends EventEmitter {
       } else {
         // Last resort: use any available model
         selectedProvider = 'openai';
-        selectedModel = 'gpt-5-mini';
+        selectedModel = 'gpt-4o-mini';
         fallbackUsed = true;
         logger.error('No providers available, using last resort: gpt-5-mini');
       }

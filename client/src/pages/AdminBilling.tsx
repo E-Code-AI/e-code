@@ -356,8 +356,8 @@ export default function AdminBilling() {
                       {usageSummary?.usageByMetric?.map((metric) => (
                         <div key={metric.metric} className="space-y-2">
                           <div className="flex justify-between text-[13px]">
-                            <span className="text-zinc-300 capitalize">{metric.metric.replace('_', ' ')}</span>
-                            <span className="text-zinc-400">{metric.eventCount} events</span>
+                            <span className="text-zinc-300 capitalize">{(metric.metric || 'unknown').replace('_', ' ')}</span>
+                            <span className="text-zinc-400">{metric.eventCount || 0} events</span>
                           </div>
                           <div className="grid grid-cols-3 gap-2 text-[11px]">
                             <div className="bg-zinc-900 rounded p-2">
@@ -477,9 +477,9 @@ export default function AdminBilling() {
                           <TableCell className="text-white font-medium">
                             {inv.currency || 'USD'} ${(typeof inv.amount === 'number' ? inv.amount : parseFloat(String(inv.amount || 0))).toFixed(2)}
                           </TableCell>
-                          <TableCell>{getInvoiceStatusBadge(inv.status)}</TableCell>
+                          <TableCell>{getInvoiceStatusBadge(inv.status || 'unknown')}</TableCell>
                           <TableCell className="text-zinc-400">
-                            {new Date(inv.created).toLocaleDateString()}
+                            {inv.created ? new Date(inv.created).toLocaleDateString() : 'N/A'}
                           </TableCell>
                           <TableCell>
                             <div className="flex gap-2">

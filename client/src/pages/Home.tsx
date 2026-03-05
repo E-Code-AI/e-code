@@ -511,7 +511,7 @@ export default function Home() {
                         <CardTitle className="flex items-center justify-between text-[15px]">
                           <div className="flex items-center gap-2 truncate">
                             <Code className="h-4 w-4 flex-shrink-0 text-primary" />
-                            <span className="truncate">{project.name}</span>
+                            <span className="truncate">{project.name || 'Untitled Project'}</span>
                           </div>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>

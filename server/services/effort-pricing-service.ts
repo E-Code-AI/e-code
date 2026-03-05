@@ -127,7 +127,7 @@ export class EffortPricingService {
         userId: params.userId,
         projectId: params.projectId,
         action: params.action,
-        model: 'claude-sonnet-4-5-20250929',
+        model: 'claude-3-5-sonnet-20241022',
         tokensUsed: params.metrics.tokensUsed || 0,
         responseTime: params.metrics.computeTime || 0,
         success: true,

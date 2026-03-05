@@ -236,7 +236,7 @@ function TemplateCard({ template, onUse, index }: { template: Template; onUse: (
           <div className="relative h-48 overflow-hidden rounded-t-lg">
             <img 
               src={template.image} 
-              alt={template.name}
+              alt={template.name ?? 'Template'}
               className="w-full h-full object-cover"
             />
             {template.trending && (
