@@ -90,6 +90,15 @@ export function resetCSRFToken(): void {
   csrfToken = null;
 }
 
+// Get (or fetch) the current CSRF token — for use with raw fetch() calls
+// that need CSRF protection but can't use apiRequest (e.g. SSE streaming)
+export async function getCSRFToken(): Promise<string> {
+  if (!csrfToken) {
+    csrfToken = await fetchCSRFToken();
+  }
+  return csrfToken;
+}
+
 // Function to fetch CSRF token from server
 async function fetchCSRFToken(): Promise<string> {
   const response = await fetch('/api/csrf-token', {

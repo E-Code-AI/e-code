@@ -59,7 +59,7 @@ import {
   type FileDiff
 } from '@/components/agent/messages';
 import { useToast } from '@/hooks/use-toast';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, getCSRFToken } from '@/lib/queryClient';
 import { useWorkflowManager } from '@/hooks/use-workflow-manager';
 import { useAgentModelPreference } from '@/hooks/use-agent-model-preference';
 import { AgentWorkflowSelector } from './AgentWorkflowSelector';
@@ -1060,9 +1060,11 @@ export function ReplitAgentPanelV3({
         formData.append('files', file);
       });
       
+      const attachCsrf = await getCSRFToken();
       const response = await fetch('/api/agent/attachments', {
         method: 'POST',
         credentials: 'include',
+        headers: { 'X-CSRF-Token': attachCsrf },
         body: formData
       });
       
@@ -1430,9 +1432,11 @@ export function ReplitAgentPanelV3({
               : undefined; // Let backend create conversation if needed
             
             // Use raw fetch for SSE streaming - apiRequest consumes the body
+            // CSRF token must be included manually since we can't use apiRequest for streaming
+            const streamCsrf = await getCSRFToken();
             const response = await fetch('/api/agent/chat/stream', {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': streamCsrf },
               credentials: 'include',
               body: JSON.stringify({
                 message: userMessage.content,
@@ -1770,26 +1774,22 @@ export function ReplitAgentPanelV3({
     }
 
     // Fire-and-forget: don't await, don't block
-    fetch(`/api/agent/conversation/${conversationId}/messages`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({
-        role: message.role,
-        content: message.content,
-        timestamp: message.timestamp.toISOString(),
-        metadata: message.metadata || null,
-        extendedThinking: message.extendedThinking || null,
-      }),
-    })
-      .then(res => {
-        if (!res.ok) {
-          // Silently handle persistence errors - non-critical
-        }
-      })
-      .catch(err => {
-        console.error('[Persistence] Error persisting message:', err);
+    getCSRFToken().then(csrf => {
+      return fetch(`/api/agent/conversation/${conversationId}/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf },
+        credentials: 'include',
+        body: JSON.stringify({
+          role: message.role,
+          content: message.content,
+          timestamp: message.timestamp.toISOString(),
+          metadata: message.metadata || null,
+          extendedThinking: message.extendedThinking || null,
+        }),
       });
+    }).catch(err => {
+      console.error('[Persistence] Error persisting message:', err);
+    });
   }, [conversationId]);
 
   const handleSend = async () => {
@@ -1873,9 +1873,11 @@ export function ReplitAgentPanelV3({
         }));
       
       // Use raw fetch for SSE streaming - apiRequest consumes the body
+      // CSRF token must be included manually since we can't use apiRequest for streaming
+      const csrfHeader = await getCSRFToken();
       const response = await fetch('/api/agent/chat/stream', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfHeader },
         credentials: 'include',
         body: JSON.stringify({
           message: messageWithAttachments,
