@@ -472,7 +472,7 @@ export default function AdminBilling() {
                       {invoices.map((inv) => (
                         <TableRow key={inv.id} className="border-zinc-700">
                           <TableCell className="text-white font-mono text-[13px]">
-                            {inv.number || (inv.id ? inv.id.toString().slice(0, 12) : 'N/A')}
+                            {inv.number || (inv.id ? String(inv.id).slice(0, 12) : 'N/A')}
                           </TableCell>
                           <TableCell className="text-white font-medium">
                             {inv.currency || 'USD'} ${(typeof inv.amount === 'number' ? inv.amount : parseFloat(String(inv.amount || 0))).toFixed(2)}

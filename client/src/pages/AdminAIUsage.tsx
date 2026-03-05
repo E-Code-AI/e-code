@@ -233,16 +233,16 @@ export default function AdminAIUsage() {
                         tier === 'pro' ? 'secondary' : 
                         'outline'
                       }>
-                        {tier.toUpperCase()}
+                        {(tier ?? 'free').toUpperCase()}
                       </Badge>
                       <span className="text-[13px] text-muted-foreground">
-                        {data.requests} requests
+                        {data?.requests ?? 0} requests
                       </span>
                     </div>
                     <div className="text-right">
-                      <p className="font-medium">${data.cost.toFixed(2)}</p>
+                      <p className="font-medium">${(data?.cost ?? 0).toFixed(2)}</p>
                       <p className="text-[11px] text-muted-foreground">
-                        {data.tokens.toLocaleString()} tokens
+                        {(data?.tokens ?? 0).toLocaleString()} tokens
                       </p>
                     </div>
                   </div>

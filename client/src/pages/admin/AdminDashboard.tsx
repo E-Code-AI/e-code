@@ -62,42 +62,42 @@ export function AdminDashboard() {
   const statCards = [
     {
       title: 'Total Users',
-      value: stats?.totalUsers || 0,
+      value: stats?.totalUsers ?? 0,
       icon: Users,
-      description: `${stats?.activeUsers || 0} active in last 30 days`,
+      description: `${stats?.activeUsers ?? 0} active in last 30 days`,
       color: 'text-blue-500'
     },
     {
       title: 'Revenue',
-      value: `$${(stats?.totalRevenue || 0).toFixed(2)}`,
+      value: `$${(stats?.totalRevenue ?? 0).toFixed(2)}`,
       icon: DollarSign,
-      description: `${stats?.activeSubscriptions || 0} active subscriptions`,
+      description: `${stats?.activeSubscriptions ?? 0} active subscriptions`,
       color: 'text-green-500'
     },
     {
       title: 'Projects',
-      value: stats?.totalProjects || 0,
+      value: stats?.totalProjects ?? 0,
       icon: Package,
       description: 'Total projects created',
       color: 'text-purple-500'
     },
     {
       title: 'Open Tickets',
-      value: stats?.openTickets || 0,
+      value: stats?.openTickets ?? 0,
       icon: Ticket,
       description: 'Awaiting response',
       color: 'text-orange-500'
     },
     {
       title: 'Documentation',
-      value: stats?.publishedDocs || 0,
+      value: stats?.publishedDocs ?? 0,
       icon: BookOpen,
       description: 'Published articles',
       color: 'text-cyan-500'
     },
     {
       title: 'CMS Pages',
-      value: stats?.publishedPages || 0,
+      value: stats?.publishedPages ?? 0,
       icon: FileText,
       description: 'Published pages',
       color: 'text-pink-500'
@@ -168,7 +168,7 @@ export function AdminDashboard() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {providerHealth?.providers.map((provider) => {
+                  {providerHealth?.providers?.map((provider) => {
                     const isHealthy = provider.status === 'healthy';
                     const isTimeout = provider.status === 'timeout';
                     const StatusIcon = isHealthy ? CheckCircle : isTimeout ? AlertCircle : XCircle;
@@ -224,8 +224,8 @@ export function AdminDashboard() {
                         }`}></div>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[13px] text-white">{event.title}</p>
-                        <p className="text-[11px] text-zinc-500">{event.description}</p>
+                        <p className="text-[13px] text-white">{event.title ?? 'Untitled Event'}</p>
+                        <p className="text-[11px] text-zinc-500">{event.description ?? 'No description'}</p>
                       </div>
                     </div>
                   ))

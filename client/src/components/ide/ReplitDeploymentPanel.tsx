@@ -652,20 +652,23 @@ export function ReplitDeploymentPanel({
         </CardTitle>
       </CardHeader>
       
-      {/* NEW: Prominent Status & Publish Section at the TOP */}
+      {/* 1) Status & Publish Section at the TOP (Prominent) */}
       <div className="px-4 pb-4 shrink-0">
         <Card className={cn("border-2", 
           displayStatus === 'live' ? "border-green-500/20 bg-green-500/5" : 
           displayStatus === 'failed' ? "border-red-500/20 bg-red-500/5" : 
-          displayStatus === 'publishing' ? "border-blue-500/20 bg-blue-500/5" : 
-          "border-border bg-muted/30"
+          displayStatus === 'needs-republish' ? "border-yellow-500/20 bg-yellow-500/5" :
+          displayStatus === 'publishing' ? "border-blue-500/20 bg-blue-500/5" :
+          "bg-muted/30"
         )}>
           <CardContent className="p-4">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <div className={cn("p-2 rounded-full", 
+                <div className={cn(
+                  "h-10 w-10 rounded-full flex items-center justify-center shrink-0",
                   displayStatus === 'live' ? "bg-green-500/20 text-green-500" :
                   displayStatus === 'failed' ? "bg-red-500/20 text-red-500" :
+                  displayStatus === 'needs-republish' ? "bg-yellow-500/20 text-yellow-500" :
                   displayStatus === 'publishing' ? "bg-blue-500/20 text-blue-500 animate-pulse" :
                   "bg-muted text-muted-foreground"
                 )}>
@@ -673,50 +676,76 @@ export function ReplitDeploymentPanel({
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="font-bold text-lg capitalize">{displayStatus.replace('-', ' ')}</h3>
-                    {getStatusIcon(displayStatus)}
+                    <h3 className="font-semibold text-sm">
+                      {displayStatus === 'live' ? 'Application Live' : 
+                       displayStatus === 'publishing' ? 'Deploying...' :
+                       displayStatus === 'failed' ? 'Deployment Failed' :
+                       displayStatus === 'needs-republish' ? 'Changes Detected' :
+                       'Not Deployed'}
+                    </h3>
+                    <Badge variant="outline" className={cn('text-[10px] uppercase font-bold tracking-wider', getStatusBadgeClass(displayStatus))}>
+                      {displayStatus}
+                    </Badge>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    {displayStatus === 'live' ? `Last deployed: ${deployment?.deployedAt ? new Date(deployment.deployedAt).toLocaleString() : 'Just now'}` : 
-                     displayStatus === 'publishing' ? "Deployment in progress..." : 
-                     "Ready to publish your application"}
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    {displayStatus === 'live' ? (
+                      `Last deployed ${deployment?.deployedAt ? new Date(deployment.deployedAt).toLocaleString() : 'recently'}`
+                    ) : displayStatus === 'needs-republish' ? (
+                      'Your latest code changes are not yet live.'
+                    ) : displayStatus === 'failed' ? (
+                      'An error occurred during the last deployment.'
+                    ) : displayStatus === 'publishing' ? (
+                      'Preparing and uploading build artifacts...'
+                    ) : (
+                      'Launch your app to a public URL in seconds.'
+                    )}
                   </p>
                 </div>
               </div>
               
-              <div className="flex gap-2 w-full sm:w-auto">
-                {!isActive || displayStatus === 'needs-republish' ? (
+              <div className="flex flex-col gap-2 shrink-0 min-w-[120px]">
+                {displayStatus === 'idle' || displayStatus === 'failed' ? (
                   <Button 
-                    className="flex-1 sm:flex-initial gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
-                    size="lg"
+                    className="w-full gap-2 shadow-sm" 
                     onClick={() => publishMutation.mutate()}
-                    disabled={publishMutation.isPending || isInProgress}
+                    disabled={publishMutation.isPending}
+                    size="sm"
+                    data-testid="button-publish-primary"
                   >
-                    {publishMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Rocket className="h-4 w-4" />}
-                    {displayStatus === 'needs-republish' ? 'Update App' : 'Publish App'}
+                    {publishMutation.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Zap className="h-4 w-4 fill-current" />
+                    )}
+                    Publish
                   </Button>
                 ) : (
                   <Button 
-                    variant="outline"
-                    className="flex-1 sm:flex-initial gap-2"
-                    size="lg"
+                    className="w-full gap-2 shadow-sm"
                     onClick={() => republishMutation.mutate()}
                     disabled={republishMutation.isPending || isInProgress}
+                    size="sm"
+                    variant={displayStatus === 'needs-republish' ? "default" : "secondary"}
+                    data-testid="button-republish-primary"
                   >
-                    {republishMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-                    Republish
+                    {republishMutation.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <RefreshCw className={cn("h-4 w-4", isInProgress && "animate-spin")} />
+                    )}
+                    {displayStatus === 'needs-republish' ? 'Republish' : 'Update'}
                   </Button>
                 )}
                 
-                {isActive && deployment?.url && (
-                  <Button 
-                    variant="secondary"
-                    className="flex-1 sm:flex-initial gap-2"
-                    size="lg"
+                {deployment?.url && (
+                  <Button
+                    variant="ghost"
+                    size="xs"
+                    className="h-7 text-[10px] text-muted-foreground hover:text-foreground"
                     onClick={() => window.open(deployment.url, '_blank')}
                   >
-                    <ExternalLink className="h-4 w-4" />
-                    Visit Site
+                    <ExternalLink className="h-3 w-3 mr-1" />
+                    View Live Site
                   </Button>
                 )}
               </div>
@@ -725,771 +754,573 @@ export function ReplitDeploymentPanel({
         </Card>
       </div>
 
-      <CardContent className="flex-1 overflow-hidden p-0">
-        <Tabs 
-          value={activeTab} 
-          onValueChange={setActiveTab} 
-          className="h-full flex flex-col"
-        >
-          <TabsList className="h-9 mx-2.5 flex overflow-x-auto bg-[var(--ecode-surface)] border-b border-[var(--ecode-border)] rounded-none shrink-0" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }} data-testid="deployment-tabs">
-            <TabsTrigger value="deploy" className="flex-1 text-xs gap-1 whitespace-nowrap data-[state=active]:border-b-2 data-[state=active]:border-[hsl(142,72%,42%)]" data-testid="tab-deploy">
-              <Rocket className="h-3.5 w-3.5 hidden sm:inline" />
-              Deploy
-            </TabsTrigger>
-            <TabsTrigger value="logs" className="flex-1 text-xs gap-1 whitespace-nowrap data-[state=active]:border-b-2 data-[state=active]:border-[hsl(142,72%,42%)]" data-testid="tab-logs">
-              <Terminal className="h-3.5 w-3.5 hidden sm:inline" />
-              Logs
-            </TabsTrigger>
-            <TabsTrigger value="analytics" className="flex-1 text-xs gap-1 whitespace-nowrap data-[state=active]:border-b-2 data-[state=active]:border-[hsl(142,72%,42%)]" data-testid="tab-analytics">
-              <BarChart3 className="h-3.5 w-3.5 hidden sm:inline" />
-              Analytics
-            </TabsTrigger>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
+        <div className="px-4 shrink-0">
+          <TabsList className="w-full h-9 p-1 bg-muted/50">
+            <TabsTrigger value="deploy" className="flex-1 text-xs py-1.5" data-testid="tab-deploy">Configure</TabsTrigger>
+            <TabsTrigger value="logs" className="flex-1 text-xs py-1.5" data-testid="tab-logs">Logs</TabsTrigger>
+            <TabsTrigger value="analytics" className="flex-1 text-xs py-1.5" data-testid="tab-analytics">Analytics</TabsTrigger>
           </TabsList>
+        </div>
 
-          <TabsContent value="deploy" className="flex-1 overflow-auto p-4 space-y-4 m-0" data-testid="deploy-tab-content">
-            {isLoadingDeployment ? (
+        <TabsContent value="deploy" className="flex-1 overflow-auto p-4 space-y-4 m-0" data-testid="deploy-tab-content">
+          {isLoadingDeployment ? (
+            <div className="space-y-4">
+              <Skeleton className="h-32 w-full" />
+              <Skeleton className="h-32 w-full" />
+              <Skeleton className="h-32 w-full" />
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {/* 2) Config Sections (Collapsed or at least below status) */}
               <div className="space-y-4">
-                <Skeleton className="h-32 w-full" />
-                <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-10 w-full" />
-              </div>
-            ) : (
-              <>
-                {deployment && (
-                  <Card className="border-primary/20" data-testid="current-deployment-card">
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
-                        <div className="flex items-center gap-2">
-                          {getStatusIcon(displayStatus)}
-                          <span className="font-medium text-[13px] sm:text-base">Current Deployment</span>
-                        </div>
-                        <Badge 
-                          className={getStatusBadgeClass(displayStatus)}
-                          data-testid="status-badge"
-                        >
-                          {displayStatus}
-                        </Badge>
-                      </div>
-
-                      {deployment.url && (
-                        <div className="flex items-center gap-2 mb-3 flex-wrap">
-                          <Globe className="h-4 w-4 text-muted-foreground shrink-0" />
-                          <a
-                            href={deployment.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-[13px] text-primary hover:underline flex items-center gap-1 break-all"
-                            data-testid="link-deployment-url"
-                          >
-                            {deployment.url}
-                            <ExternalLink className="h-3 w-3 shrink-0" />
-                          </a>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 shrink-0"
-                            onClick={() => copyToClipboard(deployment.url!)}
-                            data-testid="button-copy-url"
-                          >
-                            <Copy className="h-3 w-3" />
-                          </Button>
-                        </div>
+                <div className="space-y-3">
+                  <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Deployment Type</Label>
+                  <div className="grid grid-cols-1 gap-2">
+                    <div 
+                      className={cn(
+                        "p-3 rounded-lg border cursor-pointer transition-all hover:border-primary/50",
+                        deployType === 'autoscale' ? "border-primary bg-primary/5 ring-1 ring-primary" : "bg-muted/30"
                       )}
-
-                      {deployment.customDomain && (
-                        <div className="flex items-center gap-2 mb-3 text-[13px] text-muted-foreground">
-                          <span>Custom Domain:</span>
-                          <span className="text-foreground">{deployment.customDomain}</span>
-                        </div>
-                      )}
-
-                      {isInProgress && (
-                        <div className="mb-3">
-                          <div className="flex items-center justify-between text-[11px] text-muted-foreground mb-1">
-                            <span>{deployment.status === 'building' ? 'Building...' : 'Deploying...'}</span>
-                            <span>{deployment.status === 'building' ? '40%' : '80%'}</span>
-                          </div>
-                          <Progress 
-                            value={deployment.status === 'building' ? 40 : 80} 
-                            className="h-2" 
-                            data-testid="progress-deployment"
-                          />
-                        </div>
-                      )}
-
-                      <div className="flex flex-wrap gap-2 mt-3">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => refetchDeployment()}
-                          data-testid="button-refresh-deployment"
-                        >
-                          <RefreshCw className="h-4 w-4 mr-1" />
-                          <span className="hidden sm:inline">Refresh</span>
-                        </Button>
-                        
-                        {isActive && deploymentId && (
-                          <>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => stopMutation.mutate(deploymentId)}
-                              disabled={stopMutation.isPending}
-                              data-testid="button-stop-deployment"
-                            >
-                              {stopMutation.isPending ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <>
-                                  <Square className="h-4 w-4 mr-1" />
-                                  <span className="hidden sm:inline">Stop</span>
-                                </>
-                              )}
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => restartMutation.mutate(deploymentId)}
-                              disabled={restartMutation.isPending}
-                              data-testid="button-restart-deployment"
-                            >
-                              {restartMutation.isPending ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <>
-                                  <RotateCcw className="h-4 w-4 mr-1" />
-                                  <span className="hidden sm:inline">Restart</span>
-                                </>
-                              )}
-                            </Button>
-                          </>
-                        )}
-                        
-                        {deployment.status === 'stopped' && deploymentId && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => restartMutation.mutate(deploymentId)}
-                            disabled={restartMutation.isPending}
-                            data-testid="button-start-deployment"
-                          >
-                            {restartMutation.isPending ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <>
-                                <Play className="h-4 w-4 mr-1" />
-                                <span className="hidden sm:inline">Start</span>
-                              </>
-                            )}
-                          </Button>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                <Separator />
-
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="deploy-type">Deployment Type</Label>
-                    <Select 
-                      value={deployType} 
-                      onValueChange={(v) => setDeployType(v as typeof deployType)}
+                      onClick={() => setDeployType('autoscale')}
+                      data-testid="deploy-type-autoscale"
                     >
-                      <SelectTrigger id="deploy-type" data-testid="select-deploy-type">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-medium text-sm">Autoscale</span>
+                        <Badge variant="secondary" className="text-[10px]">Recommended</Badge>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground">Serverless execution that scales based on traffic. Perfect for most apps.</p>
+                    </div>
+                    
+                    <div 
+                      className={cn(
+                        "p-3 rounded-lg border cursor-pointer transition-all hover:border-primary/50",
+                        deployType === 'static' ? "border-primary bg-primary/5 ring-1 ring-primary" : "bg-muted/30"
+                      )}
+                      onClick={() => setDeployType('static')}
+                      data-testid="deploy-type-static"
+                    >
+                      <span className="font-medium text-sm block mb-1">Static Site</span>
+                      <p className="text-[11px] text-muted-foreground">For frontend-only applications. Free global CDN hosting.</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="environment" className="text-[11px] font-medium">Environment</Label>
+                    <Select value={environment} onValueChange={(v: any) => setEnvironment(v)}>
+                      <SelectTrigger id="environment" className="h-8 text-xs bg-muted/30" data-testid="select-environment">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="static">
-                          <div className="flex items-center gap-2">
-                            <Globe className="h-4 w-4" />
-                            <span>Static</span>
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="autoscale">
-                          <div className="flex items-center gap-2">
-                            <Zap className="h-4 w-4" />
-                            <span>Autoscale</span>
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="reserved-vm">
-                          <div className="flex items-center gap-2">
-                            <Server className="h-4 w-4" />
-                            <span>Reserved VM</span>
-                          </div>
-                        </SelectItem>
+                        <SelectItem value="production">Production</SelectItem>
+                        <SelectItem value="staging">Staging</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="environment">Environment</Label>
-                      <Select 
-                        value={environment} 
-                        onValueChange={(v) => setEnvironment(v as typeof environment)}
-                      >
-                        <SelectTrigger id="environment" data-testid="select-environment">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="production">Production</SelectItem>
-                          <SelectItem value="staging">Staging</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="region">Region</Label>
-                      <Select value={region} onValueChange={setRegion}>
-                        <SelectTrigger id="region" data-testid="select-region">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="us-east-1">🇺🇸 US East (Virginia)</SelectItem>
-                          <SelectItem value="us-west-2">🇺🇸 US West (Oregon)</SelectItem>
-                          <SelectItem value="eu-west-1">🇪🇺 EU (Ireland)</SelectItem>
-                          <SelectItem value="eu-central-1">🇩🇪 EU (Frankfurt)</SelectItem>
-                          <SelectItem value="ap-southeast-1">🇸🇬 Asia Pacific (Singapore)</SelectItem>
-                          <SelectItem value="ap-northeast-1">🇯🇵 Asia Pacific (Tokyo)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="region" className="text-[11px] font-medium">Region</Label>
+                    <Select value={region} onValueChange={setRegion}>
+                      <SelectTrigger id="region" className="h-8 text-xs bg-muted/30" data-testid="select-region">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="us-east-1">US East (N. Virginia)</SelectItem>
+                        <SelectItem value="us-west-2">US West (Oregon)</SelectItem>
+                        <SelectItem value="eu-west-1">EU (Ireland)</SelectItem>
+                        <SelectItem value="ap-southeast-1">Asia Pacific (Singapore)</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-
-                  <div className="space-y-3">
-                    <Label className="flex items-center gap-2">
-                      <Link2 className="h-4 w-4" />
-                      Domain Settings
-                    </Label>
-                    
-                    {deployment?.url && (
-                      <div className="p-3 bg-muted/50 rounded-md border">
-                        <div className="text-[11px] text-muted-foreground mb-1">Generated URL</div>
-                        <div className="flex items-center gap-2">
-                          <code className="text-[13px] font-mono text-primary break-all flex-1">
-                            {deployment.url}
-                          </code>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 shrink-0"
-                            onClick={() => copyToClipboard(deployment.url!)}
-                          >
-                            <Copy className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                    
-                    <div className="flex gap-2">
-                      <Input
-                        id="custom-domain"
-                        placeholder="myapp.example.com"
-                        value={customDomain}
-                        onChange={(e) => setCustomDomain(e.target.value)}
-                        className="flex-1"
-                        data-testid="input-custom-domain"
-                      />
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          if (customDomain) {
-                            verifyDomainMutation.mutate(customDomain);
-                          }
-                        }}
-                        disabled={!customDomain || verifyDomainMutation.isPending}
-                        data-testid="button-verify-domain"
-                      >
-                        {verifyDomainMutation.isPending ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <>
-                            <Shield className="h-4 w-4 mr-1" />
-                            Verify
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                    
-                    {dnsVerificationStatus !== 'idle' && (
-                      <div className={cn(
-                        'p-3 rounded-md border text-[13px]',
-                        dnsVerificationStatus === 'verified' && 'bg-green-500/10 border-green-500/20 text-green-600',
-                        dnsVerificationStatus === 'verifying' && 'bg-blue-500/10 border-blue-500/20 text-blue-600',
-                        dnsVerificationStatus === 'failed' && 'bg-red-500/10 border-red-500/20 text-red-600'
-                      )}>
-                        <div className="flex items-center gap-2 mb-2">
-                          {dnsVerificationStatus === 'verified' && <CheckCircle2 className="h-4 w-4" />}
-                          {dnsVerificationStatus === 'verifying' && <Loader2 className="h-4 w-4 animate-spin" />}
-                          {dnsVerificationStatus === 'failed' && <XCircle className="h-4 w-4" />}
-                          <span className="font-medium">
-                            {dnsVerificationStatus === 'verified' && 'Domain Verified'}
-                            {dnsVerificationStatus === 'verifying' && 'Verifying DNS...'}
-                            {dnsVerificationStatus === 'failed' && 'Verification Failed'}
-                          </span>
-                        </div>
-                        
-                        {dnsRecords.length > 0 && (
-                          <div className="space-y-2 mt-2">
-                            <div className="text-[11px] font-medium text-muted-foreground">Required DNS Records:</div>
-                            {dnsRecords.map((record, idx) => (
-                              <div key={idx} className="p-2 bg-background rounded text-[11px] font-mono">
-                                <div className="flex items-center gap-2">
-                                  {record.verified ? (
-                                    <CheckCircle className="h-3 w-3 text-green-500" />
-                                  ) : (
-                                    <XCircle className="h-3 w-3 text-red-500" />
-                                  )}
-                                  <span>{record.type}</span>
-                                  <span className="text-muted-foreground">{record.name}</span>
-                                  <span className="text-primary break-all">{record.value}</span>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                        
-                        {dnsVerificationStatus === 'verified' && customDomain && (
-                          <Button
-                            size="sm"
-                            className="mt-2 w-full"
-                            onClick={() => updateDomainMutation.mutate(customDomain)}
-                            disabled={updateDomainMutation.isPending}
-                          >
-                            {updateDomainMutation.isPending ? (
-                              <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                            ) : null}
-                            Save Domain Configuration
-                          </Button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  <Separator />
-
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <Label className="flex items-center gap-2">
-                        <History className="h-4 w-4" />
-                        Deployment History
-                      </Label>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setShowHistory(!showHistory)}
-                        data-testid="button-toggle-history"
-                      >
-                        {showHistory ? 'Hide' : 'Show'}
-                      </Button>
-                    </div>
-                    
-                    {showHistory && (
-                      <div className="space-y-2" data-testid="deployment-history">
-                        {isLoadingHistory ? (
-                          <div className="space-y-2">
-                            {[...Array(3)].map((_, i) => (
-                              <Skeleton key={i} className="h-16 w-full" />
-                            ))}
-                          </div>
-                        ) : deploymentHistory?.deployments && deploymentHistory.deployments.length > 0 ? (
-                          <ScrollArea className="max-h-[200px]">
-                            <div className="space-y-2 pr-3">
-                              {deploymentHistory.deployments.map((dep, idx) => {
-                                const depStatus = getDisplayStatus(dep);
-                                const depId = dep.deploymentId || dep.id;
-                                const isCurrentDeployment = depId === deploymentId;
-                                
-                                return (
-                                  <div
-                                    key={dep.id}
-                                    className={cn(
-                                      'p-3 rounded-md border flex items-center justify-between gap-2',
-                                      isCurrentDeployment && 'border-primary/40 bg-primary/5'
-                                    )}
-                                    data-testid={`deployment-history-item-${idx}`}
-                                  >
-                                    <div className="flex-1 min-w-0">
-                                      <div className="flex items-center gap-2 mb-1">
-                                        {getStatusIcon(depStatus)}
-                                        <span className="text-[11px] font-mono truncate">
-                                          {depId?.substring(0, 12)}...
-                                        </span>
-                                        <Badge variant="outline" className={cn('text-[10px] shrink-0', getStatusBadgeClass(depStatus))}>
-                                          {depStatus}
-                                        </Badge>
-                                        {isCurrentDeployment && (
-                                          <Badge variant="secondary" className="text-[10px] shrink-0">
-                                            Current
-                                          </Badge>
-                                        )}
-                                      </div>
-                                      <div className="text-[11px] text-muted-foreground">
-                                        {dep.createdAt ? new Date(dep.createdAt).toLocaleString() : 'Unknown date'}
-                                      </div>
-                                    </div>
-                                    
-                                    {!isCurrentDeployment && depStatus !== 'failed' && depId && (
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="shrink-0"
-                                        onClick={() => {
-                                          if (confirm(`Are you sure you want to rollback to deployment ${depId.substring(0, 8)}?`)) {
-                                            rollbackMutation.mutate({ 
-                                              deploymentId: deploymentId || depId, 
-                                              version: depId 
-                                            });
-                                          }
-                                        }}
-                                        disabled={rollbackMutation.isPending}
-                                        data-testid={`button-rollback-${idx}`}
-                                      >
-                                        {rollbackMutation.isPending ? (
-                                          <Loader2 className="h-3 w-3 animate-spin" />
-                                        ) : (
-                                          <>
-                                            <ArrowLeft className="h-3 w-3 mr-1" />
-                                            Rollback
-                                          </>
-                                        )}
-                                      </Button>
-                                    )}
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </ScrollArea>
-                        ) : (
-                          <div className="text-center py-4 text-muted-foreground text-[13px]">
-                            No deployment history yet
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  <Separator />
-
-                  <Button 
-                    className="w-full gap-2"
-                    variant="outline"
-                    onClick={() => {
-                      const url = deployment?.url;
-                      if (url) window.open(url, '_blank');
-                    }}
-                    disabled={!deployment?.url}
-                  >
-                    <Globe className="h-4 w-4" />
-                    Open Production URL
-                  </Button>
                 </div>
-              </>
-            )}
-          </TabsContent>
 
-          <TabsContent value="logs" className="flex-1 flex flex-col overflow-hidden p-4 m-0 gap-3" data-testid="logs-tab-content">
-            <div className="flex items-center justify-between flex-wrap gap-2 shrink-0">
-              <div className="flex items-center gap-2">
-                <Select value={logFilter} onValueChange={(v) => setLogFilter(v as typeof logFilter)}>
-                  <SelectTrigger className="w-[120px] h-8" data-testid="select-log-filter">
-                    <Filter className="h-3 w-3 mr-1" />
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Logs</SelectItem>
-                    <SelectItem value="info">Info</SelectItem>
-                    <SelectItem value="warn">Warning</SelectItem>
-                    <SelectItem value="error">Error</SelectItem>
-                  </SelectContent>
-                </Select>
-                
-                {!wsConnected && (
-                  <Badge variant="outline" className="text-[11px] bg-yellow-500/10 text-yellow-500">
-                    <WifiOff className="h-3 w-3 mr-1" />
-                    Offline
-                  </Badge>
-                )}
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsAutoScroll(!isAutoScroll)}
-                  className={cn(isAutoScroll && 'bg-accent')}
-                  data-testid="button-toggle-autoscroll"
-                >
-                  {isAutoScroll ? (
-                    <Pause className="h-4 w-4" />
-                  ) : (
-                    <ArrowDown className="h-4 w-4" />
+                <div className="space-y-2">
+                  <Label htmlFor="custom-domain" className="text-[11px] font-medium">Custom Domain (Optional)</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="custom-domain"
+                      placeholder="myapp.com"
+                      value={customDomain}
+                      onChange={(e) => setCustomDomain(e.target.value)}
+                      className="h-8 text-xs bg-muted/30"
+                      data-testid="input-custom-domain"
+                    />
+                    <Button
+                      size="sm"
+                      className="h-8 text-[11px]"
+                      variant="outline"
+                      onClick={() => {
+                        if (customDomain) {
+                          verifyDomainMutation.mutate(customDomain);
+                        }
+                      }}
+                      disabled={!customDomain || verifyDomainMutation.isPending}
+                      data-testid="button-verify-domain"
+                    >
+                      {verifyDomainMutation.isPending ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <>
+                          <Shield className="h-3 w-3 mr-1" />
+                          Verify
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                  
+                  {dnsVerificationStatus !== 'idle' && (
+                    <div className={cn(
+                      'p-3 rounded-md border text-[12px]',
+                      dnsVerificationStatus === 'verified' && 'bg-green-500/10 border-green-500/20 text-green-600',
+                      dnsVerificationStatus === 'verifying' && 'bg-blue-500/10 border-blue-500/20 text-blue-600',
+                      dnsVerificationStatus === 'failed' && 'bg-red-500/10 border-red-500/20 text-red-600'
+                    )}>
+                      <div className="flex items-center gap-2 mb-2 font-medium">
+                        {dnsVerificationStatus === 'verified' && <CheckCircle2 className="h-4 w-4" />}
+                        {dnsVerificationStatus === 'verifying' && <Loader2 className="h-4 w-4 animate-spin" />}
+                        {dnsVerificationStatus === 'failed' && <XCircle className="h-4 w-4" />}
+                        {dnsVerificationStatus === 'verified' && 'Domain Verified'}
+                        {dnsVerificationStatus === 'verifying' && 'Verifying DNS...'}
+                        {dnsVerificationStatus === 'failed' && 'Verification Failed'}
+                      </div>
+                      
+                      {dnsRecords.length > 0 && (
+                        <div className="space-y-2 mt-2">
+                          <div className="text-[10px] uppercase font-bold text-muted-foreground/70">DNS Configuration</div>
+                          {dnsRecords.map((record, idx) => (
+                            <div key={idx} className="p-2 bg-background/50 rounded text-[10px] font-mono border">
+                              <div className="flex items-center gap-2">
+                                {record.verified ? <CheckCircle className="h-3 w-3 text-green-500" /> : <XCircle className="h-3 w-3 text-red-500" />}
+                                <span className="font-bold">{record.type}</span>
+                                <span className="text-muted-foreground">{record.name}</span>
+                                <span className="text-primary truncate">{record.value}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      
+                      {dnsVerificationStatus === 'verified' && customDomain && (
+                        <Button
+                          size="sm"
+                          className="mt-2 w-full h-8 text-xs"
+                          onClick={() => updateDomainMutation.mutate(customDomain)}
+                          disabled={updateDomainMutation.isPending}
+                        >
+                          {updateDomainMutation.isPending && <Loader2 className="h-3 w-3 animate-spin mr-1" />}
+                          Save Configuration
+                        </Button>
+                      )}
+                    </div>
                   )}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={clearLogs}
-                  data-testid="button-clear-logs"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-                {deploymentId && (
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* 3) Deployment History at the bottom */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    <History className="h-3 w-3" />
+                    History
+                  </Label>
                   <Button
                     variant="ghost"
-                    size="sm"
-                    onClick={() => fetchLogsViaHTTP(deploymentId)}
-                    data-testid="button-refresh-logs"
+                    size="xs"
+                    className="h-6 text-[10px]"
+                    onClick={() => setShowHistory(!showHistory)}
+                    data-testid="button-toggle-history"
                   >
-                    <RefreshCw className="h-4 w-4" />
+                    {showHistory ? 'Hide' : 'Show All'}
                   </Button>
-                )}
-              </div>
-            </div>
-
-            <div className="flex gap-2 shrink-0">
-              <Badge variant="outline" className="text-[11px]">
-                <FileText className="h-3 w-3 mr-1" />
-                Build: {logs.filter(l => l.type === 'build').length}
-              </Badge>
-              <Badge variant="outline" className="text-[11px]">
-                <Terminal className="h-3 w-3 mr-1" />
-                Deploy: {logs.filter(l => l.type === 'deploy').length}
-              </Badge>
-            </div>
-
-            <ScrollArea className="flex-1 rounded-md border bg-muted/30" ref={logsContainerRef}>
-              <div className="p-2 font-mono text-[11px] space-y-1" data-testid="logs-container">
-                {filteredLogs.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-                    <Terminal className="h-8 w-8 mb-2 opacity-50" />
-                    <p>No logs available</p>
-                    <p className="text-[11px] mt-1">Logs will appear here during deployment</p>
+                </div>
+                
+                {showHistory && (
+                  <div className="space-y-2" data-testid="deployment-history">
+                    {isLoadingHistory ? (
+                      <div className="space-y-2">
+                        {[...Array(2)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
+                      </div>
+                    ) : deploymentHistory?.deployments && deploymentHistory.deployments.length > 0 ? (
+                      <ScrollArea className="max-h-[150px]">
+                        <div className="space-y-2 pr-3">
+                          {deploymentHistory.deployments.map((dep, idx) => {
+                            const depStatus = getDisplayStatus(dep);
+                            const depId = dep.deploymentId || dep.id;
+                            const isCurrent = depId === deploymentId;
+                            
+                            return (
+                              <div
+                                key={dep.id}
+                                className={cn(
+                                  'p-2 rounded-md border flex items-center justify-between gap-2',
+                                  isCurrent && 'border-primary/40 bg-primary/5 shadow-sm'
+                                )}
+                              >
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 mb-0.5">
+                                    {getStatusIcon(depStatus)}
+                                    <span className="text-[10px] font-mono truncate">{depId?.substring(0, 8)}</span>
+                                    {isCurrent && <Badge variant="secondary" className="text-[8px] h-3.5 px-1 py-0 uppercase">Current</Badge>}
+                                  </div>
+                                  <div className="text-[9px] text-muted-foreground">
+                                    {dep.createdAt ? new Date(dep.createdAt).toLocaleString() : 'Unknown'}
+                                  </div>
+                                </div>
+                                
+                                {!isCurrent && depStatus !== 'failed' && depId && (
+                                  <Button
+                                    variant="outline"
+                                    size="xs"
+                                    className="h-6 px-2 text-[9px]"
+                                    onClick={() => {
+                                      if (confirm(`Rollback to ${depId.substring(0, 8)}?`)) {
+                                        rollbackMutation.mutate({ deploymentId: deploymentId || depId, version: depId });
+                                      }
+                                    }}
+                                    disabled={rollbackMutation.isPending}
+                                  >
+                                    Rollback
+                                  </Button>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </ScrollArea>
+                    ) : (
+                      <div className="text-center py-2 text-muted-foreground text-[11px]">No previous deployments</div>
+                    )}
                   </div>
-                ) : (
-                  filteredLogs.map((log) => (
-                    <div
-                      key={log.id}
-                      className={cn(
-                        'flex items-start gap-2 p-1.5 rounded text-[11px]',
-                        getLogLevelClass(log.level)
-                      )}
-                      data-testid={`log-entry-${log.id}`}
-                    >
-                      <span className="text-muted-foreground shrink-0 w-16">
-                        {new Date(log.timestamp).toLocaleTimeString([], { 
-                          hour: '2-digit', 
-                          minute: '2-digit', 
-                          second: '2-digit' 
-                        })}
-                      </span>
-                      <Badge 
-                        variant="outline" 
-                        className={cn(
-                          'text-[10px] px-1 py-0 shrink-0',
-                          log.type === 'build' ? 'bg-purple-500/10 text-purple-400' : 'bg-cyan-500/10 text-cyan-400'
-                        )}
-                      >
-                        {log.type}
-                      </Badge>
-                      <span className="break-all">{log.message}</span>
-                    </div>
-                  ))
                 )}
-                <div ref={logsEndRef} />
               </div>
-            </ScrollArea>
-          </TabsContent>
+            </div>
+          )}
+        </TabsContent>
 
-          <TabsContent value="analytics" className="flex-1 overflow-auto p-4 space-y-4 m-0" data-testid="analytics-tab-content">
-            <div className="flex items-center justify-between flex-wrap gap-2">
-              <h3 className="font-medium text-[13px]">Deployment Analytics</h3>
-              <div className="flex items-center gap-2">
-                <Select value={timePeriod} onValueChange={(v) => setTimePeriod(v as TimePeriod)}>
-                  <SelectTrigger className="w-[100px] h-8" data-testid="select-time-period">
-                    <Clock className="h-3 w-3 mr-1" />
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1h">1 hour</SelectItem>
-                    <SelectItem value="6h">6 hours</SelectItem>
-                    <SelectItem value="24h">24 hours</SelectItem>
-                    <SelectItem value="7d">7 days</SelectItem>
-                    <SelectItem value="30d">30 days</SelectItem>
-                  </SelectContent>
-                </Select>
+        <TabsContent value="logs" className="flex-1 flex flex-col overflow-hidden p-4 m-0 gap-3" data-testid="logs-tab-content">
+          <div className="flex items-center justify-between flex-wrap gap-2 shrink-0">
+            <div className="flex items-center gap-2">
+              <Select value={logFilter} onValueChange={(v) => setLogFilter(v as typeof logFilter)}>
+                <SelectTrigger className="w-[120px] h-8" data-testid="select-log-filter">
+                  <Filter className="h-3 w-3 mr-1" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Logs</SelectItem>
+                  <SelectItem value="info">Info</SelectItem>
+                  <SelectItem value="warn">Warning</SelectItem>
+                  <SelectItem value="error">Error</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              {!wsConnected && (
+                <Badge variant="outline" className="text-[11px] bg-yellow-500/10 text-yellow-500">
+                  <WifiOff className="h-3 w-3 mr-1" />
+                  Offline
+                </Badge>
+              )}
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsAutoScroll(!isAutoScroll)}
+                className={cn(isAutoScroll && 'bg-accent')}
+                data-testid="button-toggle-autoscroll"
+              >
+                {isAutoScroll ? (
+                  <Pause className="h-4 w-4" />
+                ) : (
+                  <ArrowDown className="h-4 w-4" />
+                )}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearLogs}
+                data-testid="button-clear-logs"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+              {deploymentId && (
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => refetchAnalytics()}
-                  data-testid="button-refresh-analytics"
+                  onClick={() => fetchLogsViaHTTP(deploymentId)}
+                  data-testid="button-refresh-logs"
                 >
                   <RefreshCw className="h-4 w-4" />
                 </Button>
-              </div>
+              )}
             </div>
+          </div>
 
-            {isLoadingAnalytics ? (
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {[...Array(4)].map((_, i) => (
-                    <Skeleton key={i} className="h-20" />
-                  ))}
+          <div className="flex gap-2 shrink-0">
+            <Badge variant="outline" className="text-[11px]">
+              <FileText className="h-3 w-3 mr-1" />
+              Build: {logs.filter(l => l.type === 'build').length}
+            </Badge>
+            <Badge variant="outline" className="text-[11px]">
+              <Terminal className="h-3 w-3 mr-1" />
+              Deploy: {logs.filter(l => l.type === 'deploy').length}
+            </Badge>
+          </div>
+
+          <ScrollArea className="flex-1 rounded-md border bg-muted/30" ref={logsContainerRef}>
+            <div className="p-2 font-mono text-[11px] space-y-1" data-testid="logs-container">
+              {filteredLogs.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                  <Terminal className="h-8 w-8 mb-2 opacity-50" />
+                  <p>No logs available</p>
+                  <p className="text-[11px] mt-1">Logs will appear here during deployment</p>
                 </div>
-                <Skeleton className="h-48" />
-                <Skeleton className="h-48" />
+              ) : (
+                filteredLogs.map((log) => (
+                  <div
+                    key={log.id}
+                    className={cn(
+                      'flex items-start gap-2 p-1.5 rounded text-[11px]',
+                      getLogLevelClass(log.level)
+                    )}
+                    data-testid={`log-entry-${log.id}`}
+                  >
+                    <span className="text-muted-foreground shrink-0 w-16">
+                      {new Date(log.timestamp).toLocaleTimeString([], { 
+                        hour: '2-digit', 
+                        minute: '2-digit', 
+                        second: '2-digit' 
+                      })}
+                    </span>
+                    <Badge 
+                      variant="outline" 
+                      className={cn(
+                        'text-[10px] px-1 py-0 shrink-0',
+                        log.type === 'build' ? 'bg-purple-500/10 text-purple-400' : 'bg-cyan-500/10 text-cyan-400'
+                      )}
+                    >
+                      {log.type}
+                    </Badge>
+                    <span className="break-all">{log.message}</span>
+                  </div>
+                ))
+              )}
+              <div ref={logsEndRef} />
+            </div>
+          </ScrollArea>
+        </TabsContent>
+
+        <TabsContent value="analytics" className="flex-1 overflow-auto p-4 space-y-4 m-0" data-testid="analytics-tab-content">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <h3 className="font-medium text-[13px]">Deployment Analytics</h3>
+            <div className="flex items-center gap-2">
+              <Select value={timePeriod} onValueChange={(v) => setTimePeriod(v as TimePeriod)}>
+                <SelectTrigger className="w-[100px] h-8" data-testid="select-time-period">
+                  <Clock className="h-3 w-3 mr-1" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1h">1 hour</SelectItem>
+                  <SelectItem value="6h">6 hours</SelectItem>
+                  <SelectItem value="24h">24 hours</SelectItem>
+                  <SelectItem value="7d">7 days</SelectItem>
+                  <SelectItem value="30d">30 days</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => refetchAnalytics()}
+                data-testid="button-refresh-analytics"
+              >
+                <RefreshCw className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+
+          {isLoadingAnalytics ? (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {[...Array(4)].map((_, i) => (
+                  <Skeleton key={i} className="h-20" />
+                ))}
               </div>
-            ) : analyticsData?.analytics ? (
-              <>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  <Card data-testid="metric-requests">
-                    <CardContent className="p-3">
-                      <div className="flex items-center justify-between">
-                        <TrendingUp className="h-4 w-4 text-blue-500" />
-                        <span className="text-[11px] text-muted-foreground">Requests</span>
-                      </div>
-                      <p className="text-[15px] font-bold mt-1">
-                        {formatNumber(analyticsData.analytics.summary.totalRequests)}
-                      </p>
-                    </CardContent>
-                  </Card>
-                  
-                  <Card data-testid="metric-error-rate">
-                    <CardContent className="p-3">
-                      <div className="flex items-center justify-between">
-                        <AlertTriangle className="h-4 w-4 text-red-500" />
-                        <span className="text-[11px] text-muted-foreground">Error Rate</span>
-                      </div>
-                      <p className="text-[15px] font-bold mt-1">
-                        {analyticsData.analytics.summary.errorRate.toFixed(2)}%
-                      </p>
-                    </CardContent>
-                  </Card>
-                  
-                  <Card data-testid="metric-response-time">
-                    <CardContent className="p-3">
-                      <div className="flex items-center justify-between">
-                        <Timer className="h-4 w-4 text-green-500" />
-                        <span className="text-[11px] text-muted-foreground">Avg Response</span>
-                      </div>
-                      <p className="text-[15px] font-bold mt-1">
-                        {Math.round(analyticsData.analytics.summary.avgResponseTime)}ms
-                      </p>
-                    </CardContent>
-                  </Card>
-                  
-                  <Card data-testid="metric-uptime">
-                    <CardContent className="p-3">
-                      <div className="flex items-center justify-between">
-                        <Activity className="h-4 w-4 text-purple-500" />
-                        <span className="text-[11px] text-muted-foreground">Uptime</span>
-                      </div>
-                      <p className="text-[15px] font-bold mt-1">
-                        {analyticsData.analytics.summary.uptime.toFixed(2)}%
-                      </p>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                <Card data-testid="chart-latency">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-[13px] font-medium">Latency Percentiles (ms)</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ChartContainer config={chartConfig} className="h-[180px] w-full">
-                      <BarChart data={latencyChartData} layout="vertical">
-                        <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                        <XAxis type="number" />
-                        <YAxis dataKey="percentile" type="category" width={40} />
-                        <ChartTooltip content={<ChartTooltipContent />} />
-                        <Bar 
-                          dataKey="value" 
-                          radius={[0, 4, 4, 0]}
-                        />
-                      </BarChart>
-                    </ChartContainer>
-                  </CardContent>
-                </Card>
-
-                <Card data-testid="chart-requests">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-[13px] font-medium">Requests & Errors Over Time</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ChartContainer config={chartConfig} className="h-[180px] w-full">
-                      <AreaChart data={timeSeriesData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="time" tick={{ fontSize: 10 }} />
-                        <YAxis tick={{ fontSize: 10 }} />
-                        <ChartTooltip content={<ChartTooltipContent />} />
-                        <Area
-                          type="monotone"
-                          dataKey="requests"
-                          stroke="hsl(var(--chart-1))"
-                          fill="hsl(var(--chart-1))"
-                          fillOpacity={0.3}
-                          name="Requests"
-                        />
-                        <Area
-                          type="monotone"
-                          dataKey="errors"
-                          stroke="hsl(var(--chart-2))"
-                          fill="hsl(var(--chart-2))"
-                          fillOpacity={0.3}
-                          name="Errors"
-                        />
-                      </AreaChart>
-                    </ChartContainer>
-                  </CardContent>
-                </Card>
-
-                <Card data-testid="cost-breakdown">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-[13px] font-medium flex items-center gap-2">
-                      <DollarSign className="h-4 w-4" />
-                      Cost Breakdown ({analyticsData.analytics.costs.period})
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center text-[13px]">
-                        <span className="text-muted-foreground">Compute</span>
-                        <span className="font-medium">${analyticsData.analytics.costs.compute.toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between items-center text-[13px]">
-                        <span className="text-muted-foreground">Bandwidth</span>
-                        <span className="font-medium">${analyticsData.analytics.costs.bandwidth.toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between items-center text-[13px]">
-                        <span className="text-muted-foreground">Storage</span>
-                        <span className="font-medium">${analyticsData.analytics.costs.storage.toFixed(2)}</span>
-                      </div>
-                      <Separator />
-                      <div className="flex justify-between items-center">
-                        <span className="font-medium">Total</span>
-                        <span className="font-bold text-[15px]">${analyticsData.analytics.costs.total.toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between items-center text-[11px] text-muted-foreground">
-                        <span>Projected Monthly</span>
-                        <span>${analyticsData.analytics.costs.projectedMonthly.toFixed(2)}/mo</span>
-                      </div>
+              <Skeleton className="h-48" />
+              <Skeleton className="h-48" />
+            </div>
+          ) : analyticsData?.analytics ? (
+            <>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <Card data-testid="metric-requests">
+                  <CardContent className="p-3">
+                    <div className="flex items-center justify-between">
+                      <TrendingUp className="h-4 w-4 text-blue-500" />
+                      <span className="text-[11px] text-muted-foreground">Requests</span>
                     </div>
+                    <p className="text-[15px] font-bold mt-1">
+                      {formatNumber(analyticsData.analytics.summary.totalRequests)}
+                    </p>
                   </CardContent>
                 </Card>
-              </>
-            ) : (
-              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-                <BarChart3 className="h-12 w-12 mb-3 opacity-50" />
-                <p>No analytics data available</p>
-                <p className="text-[11px] mt-1">Deploy your app to see analytics</p>
+                
+                <Card data-testid="metric-error-rate">
+                  <CardContent className="p-3">
+                    <div className="flex items-center justify-between">
+                      <AlertTriangle className="h-4 w-4 text-red-500" />
+                      <span className="text-[11px] text-muted-foreground">Error Rate</span>
+                    </div>
+                    <p className="text-[15px] font-bold mt-1">
+                      {analyticsData.analytics.summary.errorRate.toFixed(2)}%
+                    </p>
+                  </CardContent>
+                </Card>
+                
+                <Card data-testid="metric-response-time">
+                  <CardContent className="p-3">
+                    <div className="flex items-center justify-between">
+                      <Timer className="h-4 w-4 text-green-500" />
+                      <span className="text-[11px] text-muted-foreground">Avg Response</span>
+                    </div>
+                    <p className="text-[15px] font-bold mt-1">
+                      {Math.round(analyticsData.analytics.summary.avgResponseTime)}ms
+                    </p>
+                  </CardContent>
+                </Card>
+                
+                <Card data-testid="metric-uptime">
+                  <CardContent className="p-3">
+                    <div className="flex items-center justify-between">
+                      <Activity className="h-4 w-4 text-purple-500" />
+                      <span className="text-[11px] text-muted-foreground">Uptime</span>
+                    </div>
+                    <p className="text-[15px] font-bold mt-1">
+                      {analyticsData.analytics.summary.uptime.toFixed(2)}%
+                    </p>
+                  </CardContent>
+                </Card>
               </div>
-            )}
-          </TabsContent>
-        </Tabs>
-      </CardContent>
+
+              <Card data-testid="chart-latency">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-[13px] font-medium">Latency Percentiles (ms)</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ChartContainer config={chartConfig} className="h-[180px] w-full">
+                    <BarChart data={latencyChartData} layout="vertical">
+                      <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                      <XAxis type="number" />
+                      <YAxis dataKey="percentile" type="category" width={40} />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Bar 
+                        dataKey="value" 
+                        radius={[0, 4, 4, 0]}
+                      />
+                    </BarChart>
+                  </ChartContainer>
+                </CardContent>
+              </Card>
+
+              <Card data-testid="chart-requests">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-[13px] font-medium">Requests & Errors Over Time</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ChartContainer config={chartConfig} className="h-[180px] w-full">
+                    <AreaChart data={timeSeriesData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="time" tick={{ fontSize: 10 }} />
+                      <YAxis tick={{ fontSize: 10 }} />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Area
+                        type="monotone"
+                        dataKey="requests"
+                        stroke="hsl(var(--chart-1))"
+                        fill="hsl(var(--chart-1))"
+                        fillOpacity={0.3}
+                        name="Requests"
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="errors"
+                        stroke="hsl(var(--chart-2))"
+                        fill="hsl(var(--chart-2))"
+                        fillOpacity={0.3}
+                        name="Errors"
+                      />
+                    </AreaChart>
+                  </ChartContainer>
+                </CardContent>
+              </Card>
+
+              <Card data-testid="cost-breakdown">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-[13px] font-medium flex items-center gap-2">
+                    <DollarSign className="h-4 w-4" />
+                    Cost Breakdown ({analyticsData.analytics.costs.period})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center text-[13px]">
+                      <span className="text-muted-foreground">Compute</span>
+                      <span className="font-medium">${analyticsData.analytics.costs.compute.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-[13px]">
+                      <span className="text-muted-foreground">Bandwidth</span>
+                      <span className="font-medium">${analyticsData.analytics.costs.bandwidth.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-[13px]">
+                      <span className="text-muted-foreground">Storage</span>
+                      <span className="font-medium">${analyticsData.analytics.costs.storage.toFixed(2)}</span>
+                    </div>
+                    <Separator />
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium">Total</span>
+                      <span className="font-bold text-[15px]">${analyticsData.analytics.costs.total.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-[11px] text-muted-foreground">
+                      <span>Projected Monthly</span>
+                      <span className="font-medium">${analyticsData.analytics.costs.projectedMonthly.toFixed(2)}</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+              <Activity className="h-8 w-8 mb-2 opacity-50" />
+              <p>No analytics data available</p>
+              <p className="text-[11px] mt-1">Analytics will appear after your app receives traffic</p>
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
+
+      <div className="mt-auto p-4 border-t bg-muted/20 shrink-0">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Server className="h-3 w-3 text-muted-foreground" />
+            <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-tight">
+              {isActive ? 'System Healthy' : 'System Ready'}
+            </span>
+          </div>
+          {deployment?.url && (
+            <Button
+              variant="link"
+              size="xs"
+              className="h-auto p-0 text-[10px] font-mono"
+              onClick={() => copyToClipboard(deployment.url!)}
+            >
+              {deployment.url.replace(/^https?:\/\//, '').substring(0, 20)}...
+              <Copy className="h-2.5 w-2.5 ml-1" />
+            </Button>
+          )}
+        </div>
+      </div>
     </Card>
   );
 }

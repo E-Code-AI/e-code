@@ -25,7 +25,8 @@ import {
   RefreshCw, 
   Share2, 
   MoreVertical,
-  Loader2
+  Loader2,
+  MessageSquarePlus
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { instrumentedLazy } from '@/utils/instrumented-lazy';
@@ -49,8 +50,7 @@ type MobileTab = 'agent' | 'files' | 'code' | 'terminal' | 'preview' | 'more';
 export default function MobileWorkspace() {
   const params = useParams();
   const projectId = (params.projectId || params.id) as string;
-  
-  // Guard: projectId required
+
   if (!projectId) {
     return (
       <div className="h-screen flex items-center justify-center p-6">
@@ -58,12 +58,15 @@ export default function MobileWorkspace() {
       </div>
     );
   }
-  
-  const [activeTab, setActiveTab] = useState<MobileTab>('preview');
+
+  const [activeTab, setActiveTab] = useState<MobileTab>('agent');
   const [toolsSheetOpen, setToolsSheetOpen] = useState(false);
   const [isFilesOpen, setIsFilesOpen] = useState(false);
   const [selectedFileId, setSelectedFileId] = useState<number | undefined>();
   const [activeTool, setActiveTool] = useState<string | null>(null);
+
+  // Split-view: agent chat visible with floating preview overlay
+  const [previewOverlay, setPreviewOverlay] = useState(false);
 
   const handleTabChange = (tabId: MobileTab) => {
     if (tabId === 'files') {
@@ -71,8 +74,10 @@ export default function MobileWorkspace() {
     } else if (tabId === 'more') {
       setActiveTab(tabId);
       setActiveTool(null);
-      setToolsSheetOpen(true); // Auto-open tools when 'more' tab is clicked
+      setToolsSheetOpen(true);
     } else {
+      // If switching away from preview tab, also close overlay
+      if (tabId !== 'preview') setPreviewOverlay(false);
       setActiveTab(tabId);
       setActiveTool(null);
     }
@@ -82,11 +87,35 @@ export default function MobileWorkspace() {
     setActiveTool(toolId);
     setToolsSheetOpen(false);
   };
-  
+
   const handleFileSelect = (file: any) => {
     setSelectedFileId(file.id);
     setIsFilesOpen(false);
     setActiveTab('code');
+  };
+
+  // Layers icon in preview panel → switch to agent with floating preview overlay
+  const handleEnterOverlayMode = () => {
+    setPreviewOverlay(true);
+    setActiveTab('agent');
+  };
+
+  // Close the preview tab → go back to agent
+  const handleClosePreview = () => {
+    setPreviewOverlay(false);
+    setActiveTab('agent');
+  };
+
+  const isPreviewTab = activeTab === 'preview';
+
+  // Tab title shown in header center
+  const tabTitle: Record<MobileTab, string> = {
+    agent: 'Agent',
+    files: 'Files',
+    code: 'Code',
+    terminal: 'Shell',
+    preview: 'Preview',
+    more: 'Tools',
   };
 
   const renderTabContent = () => {
@@ -103,10 +132,10 @@ export default function MobileWorkspace() {
             </AgentPanelErrorBoundary>
           </div>
         );
-      
+
       case 'files':
-        return null; // Files modal handles this
-      
+        return null;
+
       case 'code':
         return (
           <LazyMobileCodeEditor 
@@ -119,7 +148,7 @@ export default function MobileWorkspace() {
             className="h-full"
           />
         );
-      
+
       case 'terminal':
         return (
           <Suspense fallback={<TerminalFallback />}>
@@ -130,12 +159,14 @@ export default function MobileWorkspace() {
             />
           </Suspense>
         );
-      
+
       case 'preview':
         return (
           <MobilePreviewPanel 
             projectId={projectId}
             className="h-full"
+            onClose={handleClosePreview}
+            onOverlayMode={handleEnterOverlayMode}
           />
         );
 
@@ -150,52 +181,77 @@ export default function MobileWorkspace() {
 
   return (
     <div className="h-screen flex flex-col bg-background md:hidden">
-      {/* Top Navigation Bar */}
-      <header className="flex items-center justify-between h-14 px-4 border-b bg-background">
-        <div className="flex items-center gap-3">
-          <button 
-            className="p-1.5 hover:bg-muted rounded-lg transition-colors"
-            data-testid="button-back"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </button>
-          <button 
-            className="p-1.5 hover:bg-muted rounded-lg transition-colors"
-            data-testid="button-refresh"
-          >
-            <RefreshCw className="h-5 w-5" />
-          </button>
-        </div>
 
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5 px-2 py-1 bg-muted rounded-md">
-            <div className="h-5 w-5 rounded bg-background flex items-center justify-center">
-              <div className="h-2 w-2 rounded-full bg-primary" />
-            </div>
-            <span className="text-[13px] font-medium">Agent 3</span>
+      {/* ── Top Navigation Bar ── hidden when in full preview tab (preview has its own header) */}
+      {!isPreviewTab && (
+        <header className="flex items-center justify-between h-14 px-4 border-b bg-background flex-shrink-0">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="w-9 h-9 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted"
+              data-testid="button-back"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="w-9 h-9 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted"
+              data-testid="button-refresh"
+            >
+              <RefreshCw className="h-5 w-5" />
+            </Button>
           </div>
-        </div>
 
-        <div className="flex items-center gap-2">
-          <button 
-            className="p-1.5 hover:bg-muted rounded-lg transition-colors"
-            data-testid="button-share"
+          {/* Center: active tab name */}
+          <div className="flex items-center gap-2">
+            <span className="text-[15px] font-semibold text-foreground">
+              {tabTitle[activeTab]}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="w-9 h-9 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted"
+              data-testid="button-new-chat"
+            >
+              <MessageSquarePlus className="h-5 w-5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="w-9 h-9 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted"
+              data-testid="button-more"
+            >
+              <MoreVertical className="h-5 w-5" />
+            </Button>
+          </div>
+        </header>
+      )}
+
+      {/* ── Tab Content ── */}
+      <div className={cn('flex-1 flex flex-col overflow-hidden relative', isPreviewTab && 'pb-16')}>
+        {renderTabContent()}
+
+        {/* ── Floating Preview Overlay (split-view mode) ── */}
+        {previewOverlay && (
+          <div
+            className="absolute bottom-20 right-3 w-[48%] h-[45%] rounded-2xl shadow-2xl border border-border overflow-hidden z-50 bg-background"
+            data-testid="mobile-preview-overlay-card"
           >
-            <Share2 className="h-5 w-5" />
-          </button>
-          <button 
-            className="p-1.5 hover:bg-muted rounded-lg transition-colors"
-            data-testid="button-more"
-          >
-            <MoreVertical className="h-5 w-5" />
-          </button>
-        </div>
-      </header>
+            <MobilePreviewPanel
+              projectId={projectId}
+              isOverlay={true}
+              onClose={() => setPreviewOverlay(false)}
+            />
+          </div>
+        )}
+      </div>
 
-      {/* Tab Content Area */}
-      {renderTabContent()}
-
-      {/* Bottom Tab Navigation (Replit Style) */}
+      {/* ── Bottom Tab Navigation ── always visible */}
       <ReplitBottomTabs
         activeTab={activeTab}
         onTabChange={(tab) => handleTabChange(tab as MobileTab)}
@@ -231,7 +287,7 @@ export default function MobileWorkspace() {
           {!['database', 'auth', 'integrations', 'git', 'developer'].includes(activeTool || '') && (
             <div className="flex items-center justify-center h-full">
               <p className="text-muted-foreground text-[13px]">
-                {activeTool} panel - Coming soon
+                {activeTool} panel — Coming soon
               </p>
             </div>
           )}

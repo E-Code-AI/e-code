@@ -133,12 +133,12 @@ export default function Profile() {
                 <div className="flex items-center gap-2 mb-2">
                   <h1 className="text-2xl font-bold" data-testid="text-display-name">{profile?.displayName || profile?.username}</h1>
                   {(profile?.badges || []).slice(0, 2).map((badge: { id: string; icon: any; name: string; color: string }) => {
-                    const Icon = badge.icon;
+                    const Icon = badge?.icon;
                     if (!Icon) return null;
                     return (
-                      <span key={badge.id} title={badge.name}>
+                      <span key={badge?.id} title={badge?.name}>
                         <Icon
-                          className={`h-5 w-5 ${badge.color || ''}`}
+                          className={`h-5 w-5 ${badge?.color || ''}`}
                         />
                       </span>
                     );
@@ -326,7 +326,7 @@ export default function Profile() {
                   </CardHeader>
                   <CardContent>
                     <div className="flex flex-wrap gap-2">
-                      {(profile.skills || []).map((skill: string) => (
+                      {(profile?.skills || []).map((skill: string) => (
                         <Badge key={skill} variant="secondary">
                           {skill}
                         </Badge>
@@ -367,16 +367,16 @@ export default function Profile() {
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-3 gap-4">
-                      {(profile.badges || []).map((badge: { id: string; icon: any; name: string; color: string }) => {
-                        const Icon = badge.icon;
+                      {(profile?.badges || []).map((badge: { id: string; icon: any; name: string; color: string }) => {
+                        const Icon = badge?.icon;
                         if (!Icon) return null;
                         return (
                           <div
-                            key={badge.id}
+                            key={badge?.id}
                             className="flex flex-col items-center text-center"
                           >
-                            <Icon className={`h-8 w-8 mb-1 ${badge.color || ''}`} />
-                            <span className="text-[11px]">{badge.name}</span>
+                            <Icon className={`h-8 w-8 mb-1 ${badge?.color || ''}`} />
+                            <span className="text-[11px]">{badge?.name}</span>
                           </div>
                         );
                       })}
@@ -443,14 +443,14 @@ export default function Profile() {
 
           <TabsContent value="achievements" className="mt-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {(profile.badges || []).map((badge: { id: string; icon: any; name: string; color: string }) => {
-                const Icon = badge.icon;
+              {(profile?.badges || []).map((badge: { id: string; icon: any; name: string; color: string }) => {
+                const Icon = badge?.icon;
                 if (!Icon) return null;
                 return (
-                  <Card key={badge.id}>
+                  <Card key={badge?.id}>
                     <CardContent className="p-6 text-center">
-                      <Icon className={`h-12 w-12 mx-auto mb-3 ${badge.color || ''}`} />
-                      <h3 className="font-semibold mb-1">{badge.name}</h3>
+                      <Icon className={`h-12 w-12 mx-auto mb-3 ${badge?.color || ''}`} />
+                      <h3 className="font-semibold mb-1">{badge?.name}</h3>
                       <p className="text-[13px] text-muted-foreground">
                         Earned for exceptional contributions
                       </p>
