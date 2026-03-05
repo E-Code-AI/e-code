@@ -1,7 +1,7 @@
 # E-Code Platform
 
 ## Overview
-E-Code is an AI-assisted web-based IDE designed to enhance developer productivity and accelerate project delivery. It provides automated workspace setup, real-time code execution, integrated AI, collaborative tools, enterprise-grade testing, and robust security. The platform aims to streamline development from prototyping to enterprise applications, with the ambition of becoming the leading AI-powered software development platform.
+E-Code is an AI-assisted web-based IDE designed to enhance developer productivity and accelerate project delivery. It streamlines the development lifecycle from prototyping to enterprise deployment through automated workspace setup, real-time code execution, integrated AI, collaborative tools, enterprise-grade testing, and robust security. The platform aims to be a leading AI-powered software development environment, fostering innovation and efficiency.
 
 ## User Preferences
 - Communication: Simple, everyday language
@@ -27,6 +27,7 @@ E-Code is an AI-assisted web-based IDE designed to enhance developer productivit
 - Database Backup: Use `tsx scripts/backup-database.ts` for backup (creates timestamped SQL file in `backups/`), `tsx scripts/backup-database.ts --restore <file>` for restore. REQUIRES pg_dump for backup and psql for restore (production-safe, no fallback). Cloud storage upload with `--cloud` flag (requires GCS_BACKUP_BUCKET).
 - Deployment Build Optimization: `BUILD_DEPLOY=1 npm run build` prunes `node_modules` to only native packages. **SAFETY**: The prune only runs when BOTH `BUILD_DEPLOY=1` AND `REPLIT_DEPLOYMENT` env var is set — never run `BUILD_DEPLOY=1 npm run build` in dev or it destroys node_modules.
 - apiRequest() Returns Parsed JSON: `apiRequest(method, url, body)` from `@/lib/queryClient` returns `Promise<T>` (parsed JSON body directly), NOT a `Promise<Response>`. Never check `.ok` or call `.json()` on the result. It throws automatically for non-OK responses. Pattern: `const data = await apiRequest<MyType>('POST', '/api/endpoint', body);`
+- postgres-js db.execute() returns array directly: The server uses `drizzle-orm/postgres-js`. When calling `db.execute(sql\`SELECT ...\`)`, it returns an array of rows directly (NOT `{ rows: [...] }`). Always use: `const rows = Array.isArray(result) ? result : (result as any).rows ?? [];` for compatibility. INSERT/UPDATE return an empty array. Never use `.rows` directly on `db.execute()` results.
 - Raw Fetch CSRF Rule: ALL raw `fetch()` calls to `/api/*` using POST/PUT/PATCH/DELETE MUST include `X-CSRF-Token` header. Use `getCSRFToken()` exported from `@/lib/queryClient`: `const csrf = await getCSRFToken(); fetch('/api/...', { headers: { 'X-CSRF-Token': csrf } })`. SSE streaming endpoints MUST use this pattern since `apiRequest` cannot be used for streaming. File uploads also need it.
 - Voice Vibe Coding: `MediaRecorder` API → `/api/voice/transcribe` → transcript injected into agent input. **Multi-provider**: OpenAI Whisper (`whisper-1`) primary, Gemini 2.0 Flash as automatic fallback. Uses `apiRequest` for automatic CSRF token handling. Vibe Mode auto-submits on transcription. `voiceInputEnabled: true` by default. FORBIDDEN: Web Speech API.
 - API Route Dual-Mount Pattern: `aiModelsRouter` is mounted at BOTH `/api/models` AND `/api/ai/models` for frontend compatibility. Always mount at both paths when adding new AI-related routers that the frontend may call via either prefix.
@@ -57,14 +58,22 @@ E-Code is an AI-assisted web-based IDE designed to enhance developer productivit
 - Stuck Session Cleanup (Autonomous Build): On server startup, `AgentOrchestratorService` constructor resets sessions stuck in `planning`/`executing` → `failed`. Idempotency check in `startAutonomousWorkspace` allows restart from `idle` OR `failed` status.
 
 ## System Architecture
-### UI/UX Decisions
-The frontend, built with Shadcn/UI, Tailwind CSS, and Monaco Editor, adheres to the Replit RUI Design System. It emphasizes responsiveness, a mobile-first approach, consistent IDE layouts, robust light/dark modes, fluid animations, loading skeletons, and touch-optimized interactions. The console panel is fully responsive across devices.
+The E-Code platform employs a two-service architecture (Main Platform and Runner microservice) with a React, TypeScript, Vite frontend adhering to the Replit RUI Design System for responsive, mobile-first UI. The backend uses Node.js/Express.js, TypeScript, Drizzle ORM, and Passport.js.
 
-### Technical Implementations
-E-Code employs a two-service architecture: a Main Platform (React, TypeScript, Vite, TanStack Query, Wouter frontend; Node.js/Express.js, TypeScript, Drizzle ORM, Passport.js backend) and an independent Runner microservice. AI capabilities include XML prompts, Task Classification, Circuit Breakers, Priority Quenes, Intelligent Caching, and Observability. Real-time code generation uses Server-Sent Events, and environment variables are secured with AES-256-GCM encryption. System reliability is ensured by Checkpoints & Rollback and Playwright-based Background Auto-Testing. Code execution uses native Nix-managed runtimes with Winston logging. Performance is optimized with Fast Bootstrap and an Agent Step Cache. Real-time logging and HTML live preview are WebSocket-driven. Voice Vibe Coding is integrated via the MediaRecorder API.
-
-### System Design Choices
-PostgreSQL is the primary data store, featuring a two-tier database API and strong tenant isolation. Security includes CSRF protection, input sanitization, tier-based rate limiting, API versioning, session-based authentication, and encrypted environment variables. The AI agent system offers SSE streaming, multi-provider AI model selection, database-backed conversation history, circuit breakers, and retry logic. Health monitoring is handled by Kubernetes probes and a Provider Health API with Prometheus metrics. Docker builds are optimized for minimal image sizes. Stripe manages a hybrid pricing model. The platform supports 29 programming languages and a robust runtime system with PID tracking, language-specific timeouts, and `single-vm`/`kubernetes` deployment options. `DockerExecutor` provides enterprise-grade sandboxed code execution. A Memory Bank System stores AI-generated contextual markdown files. Other core systems include a WebSocket Resilience System, an Intersection Observer Animation System, a Native Motion Library, and a ReplDB-Compatible Key-Value Database. All protected routes enforce valid Passport sessions, with critical tenant isolation for project data integrity.
+Key architectural decisions include:
+- **AI Integration**: XML prompts, task classification, circuit breakers, priority queues, intelligent caching, SSE streaming, multi-provider AI model selection, database-backed conversation history, retry logic, and an Agent Step Cache.
+- **Real-time Communication**: Server-Sent Events, WebSocket-driven logging, real-time HTML live preview with CSS hot-swapping, and a robust WebSocket Resilience System.
+- **Security Framework**: AES-256-GCM encryption, XSS prevention, CSRF protection, input sanitization, tier-based rate limiting, API versioning, session-based authentication, and encrypted GitHub tokens.
+- **System Reliability**: Checkpoints & Rollback and Playwright-based Background Auto-Testing.
+- **Code Execution Environment**: Native Nix-managed runtimes and `DockerExecutor` for sandboxed execution with PID tracking and language-specific timeouts, supporting `single-vm`/`kubernetes` deployment.
+- **Data Persistence**: PostgreSQL as the primary data store with a two-tier database API, strong tenant isolation, and Drizzle ORM.
+- **Performance Optimization**: Fast Bootstrap techniques.
+- **Voice Input System**: Voice Vibe Coding via MediaRecorder API.
+- **Monitoring and Observability**: Kubernetes probes and a Provider Health API with Prometheus metrics.
+- **Docker Optimization**: Docker builds optimized for minimal image sizes.
+- **Monetization Strategy**: Hybrid pricing model managed through Stripe.
+- **Contextual Memory**: Memory Bank System for storing AI-generated contextual markdown files.
+- **UI/UX Enhancements**: Intersection Observer Animation System, Native Motion Library, and ReplDB-Compatible Key-Value Database.
 
 ## External Dependencies
 - OpenAI

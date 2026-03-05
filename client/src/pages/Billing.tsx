@@ -587,7 +587,7 @@ export default function Billing() {
                       </p>
                     </div>
                     <ul className="space-y-2 text-[13px]">
-                      {plan.features.slice(0, 5).map((feature, i) => (
+                      {(plan.features || []).slice(0, 5).map((feature, i) => (
                         <li key={i} className="flex items-start gap-2">
                           <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
                           <span>{feature}</span>

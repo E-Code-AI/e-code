@@ -106,6 +106,7 @@ import resourcesRouter from './resources.router';
 import seoRouter from './seo.router';
 import runnerWorkspacesRouter from './runner-workspaces.router';
 import workspacesRouter from './workspaces.router';
+import publicFormsRouter from './public-forms.router';
 
 export class MainRouter {
   private authRouter: AuthRouter;
@@ -469,6 +470,9 @@ export class MainRouter {
 
     // SendGrid webhooks
     app.use('/api/webhooks', sendgridWebhooksRouter);
+
+    // Public forms — contact, newsletter (no auth required)
+    app.use('/api', publicFormsRouter);
 
     // Runner Workspaces — internal CRUD (/api/runner/*)
     app.use('/api/runner', tierRateLimiters.api, runnerWorkspacesRouter);

@@ -134,6 +134,7 @@ function AppContent() {
               <Suspense fallback={<PageLoader />}>
                 <Switch>
                   <Route path="/auth" component={() => <Redirect to="/login" />} />
+                  <Route path="/showcase" component={() => <Redirect to="/templates" />} />
                   <Route path="/agent" component={AgentRedirect} />
                   <Route path="/ai-agent" component={AIAgentRedirect} />
                   <ProtectedRoute path="/replit-ai-agent" component={ReplitAIAgentRedirect} />
