@@ -1,7 +1,7 @@
 # E-Code Platform
 
 ## Overview
-E-Code is an AI-assisted web-based IDE designed to boost software development efficiency. It provides automated workspace setup, real-time code execution, integration with various AI models, collaborative features, enterprise-level testing, and robust security. The platform aims to be a leading AI-powered development environment, accelerating prototyping, education, and enterprise application development, thereby increasing developer productivity and streamlining project delivery.
+E-Code is an AI-assisted web-based IDE designed to enhance software development efficiency. It provides automated workspace setup, real-time code execution, integration with multiple AI models, collaborative features, enterprise-level testing, and robust security. The platform aims to accelerate prototyping, educational initiatives, and enterprise application development, thereby boosting developer productivity and streamlining project delivery.
 
 ## User Preferences
 - Communication: Simple, everyday language
@@ -58,13 +58,13 @@ E-Code is an AI-assisted web-based IDE designed to boost software development ef
 
 ## System Architecture
 ### UI/UX Decisions
-The frontend uses Shadcn/UI, Tailwind CSS, and the Monaco Editor, adhering to the Replit RUI Design System. It features responsiveness, mobile-first design, light/dark modes, a consistent IDE layout, spring animations, loading skeletons, and touch-optimized interactions.
+The frontend uses Shadcn/UI, Tailwind CSS, and Monaco Editor, adhering to the Replit RUI Design System. Key design principles include responsiveness, mobile-first approach, light/dark modes, consistent IDE layout, fluid animations, loading skeletons, and touch-optimized interactions.
 
 ### Technical Implementations
-The platform utilizes a two-service architecture: a Main Platform (React 18, TypeScript, Vite, TanStack Query, Wouter; Node.js/Express.js, TypeScript, Drizzle ORM, Passport.js) and an independent Runner microservice. AI capabilities include Task Classification, Circuit Breakers, Priority Queues, Intelligent Caching, and Observability, primarily using XML prompts. Real-time code generation uses Server-Sent Events, and environment variables are secured with AES-256-GCM encryption. Reliability is ensured through Checkpoints & Rollback and Background Auto-Testing (Playwright). Code execution uses native Nix-managed runtimes with Winston logging. Performance is enhanced by Fast Bootstrap and an Agent Step Cache. Real-time server and runtime log streaming, along with HTML Live Preview, are WebSocket-based. Voice Vibe Coding integrates via the MediaRecorder API for transcription.
+The platform employs a two-service architecture: a Main Platform (React 18, TypeScript, Vite, TanStack Query, Wouter for frontend; Node.js/Express.js, TypeScript, Drizzle ORM, Passport.js for backend) and an independent Runner microservice. AI capabilities encompass Task Classification, Circuit Breakers, Priority Queues, Intelligent Caching, and Observability, driven by XML prompts. Real-time code generation uses Server-Sent Events, and environment variables are secured with AES-256-GCM encryption. Reliability features include Checkpoints & Rollback and Background Auto-Testing (Playwright). Code execution utilizes native Nix-managed runtimes with Winston logging. Performance is enhanced by Fast Bootstrap and an Agent Step Cache. WebSocket-based streaming is used for real-time server logs, runtime logs, and HTML Live Preview. Voice Vibe Coding integrates via the MediaRecorder API for transcription.
 
 ### System Design Choices
-PostgreSQL serves as the primary data store, supporting a two-tier database API and tenant isolation. Security features include CSRF protection, input sanitization, tier-based rate limiting, API versioning, session-based authentication, and encrypted environment variables. The AI agent system provides SSE streaming, multi-provider AI model selection, database-backed conversation history, circuit breakers, and retry logic. Health monitoring integrates Kubernetes probes and a Provider Health API with Prometheus metrics. Docker builds are optimized for minimal image sizes. Stripe enables a hybrid pricing model. The platform supports 29 programming languages and a robust runtime system with PID tracking, language-specific timeouts, and `single-vm`/`kubernetes` deployment modes. `DockerExecutor` offers enterprise-grade sandboxed code execution. A Memory Bank System stores AI-generated contextual markdown files. Core systems include a WebSocket Resilience System, an Intersection Observer Animation System, a Native Motion Library, and a ReplDB-Compatible Key-Value Database. API routes adhere to specific mounting and prefix rules, and project creation includes auto-provisioning of starter files and databases.
+PostgreSQL serves as the primary data store, supporting a two-tier database API and robust tenant isolation. Security features include CSRF protection, input sanitization, tier-based rate limiting, API versioning, session-based authentication, and encrypted environment variables. The AI agent system provides SSE streaming, multi-provider AI model selection, database-backed conversation history, circuit breakers, and retry logic. Health monitoring integrates Kubernetes probes and a Provider Health API with Prometheus metrics. Docker builds are optimized for minimal image sizes. Stripe facilitates a hybrid pricing model. The platform supports 29 programming languages and a robust runtime system with PID tracking, language-specific timeouts, and `single-vm`/`kubernetes` deployment modes. `DockerExecutor` provides enterprise-grade sandboxed code execution. A Memory Bank System stores AI-generated contextual markdown files. Core systems include a WebSocket Resilience System, an Intersection Observer Animation System, a Native Motion Library, and a ReplDB-Compatible Key-Value Database. API routes follow specific mounting and prefix rules, and project creation includes auto-provisioning of starter files and databases.
 
 ## External Dependencies
 - OpenAI
@@ -78,7 +78,7 @@ PostgreSQL serves as the primary data store, supporting a two-tier database API 
 - SendGrid
 - Sentry
 - Slack
-- Object Storage (GCS-backed for production)
+- Object Storage (GCS-backed)
 - E-Code Runner
 - GitHub
 - Playwright

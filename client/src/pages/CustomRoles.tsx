@@ -159,6 +159,7 @@ export function CustomRoles() {
   };
 
   const groupPermissionsByCategory = (perms: Permission[]) => {
+    if (!perms || !Array.isArray(perms)) return {};
     return perms.reduce((acc, perm) => {
       if (!acc[perm.category]) acc[perm.category] = [];
       acc[perm.category].push(perm);

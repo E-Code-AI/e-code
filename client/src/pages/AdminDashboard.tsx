@@ -204,7 +204,7 @@ export default function AdminDashboard() {
               <CardContent>
                 <div className="text-2xl font-bold">{systemStatus?.status === 'ok' || systemStatus?.status === 'healthy' ? 'Healthy' : (systemStatus?.status ? 'Warning' : 'Unknown')}</div>
                 <p className="text-[11px] text-muted-foreground">
-                  Up: {systemStatus?.uptime || (systemStatus?.detailed && typeof systemStatus.detailed === 'object' && 'uptime' in systemStatus.detailed ? systemStatus.detailed.uptime : '0')}
+                  Up: {systemStatus?.uptime || (systemStatus?.detailed && typeof systemStatus.detailed === 'object' && 'uptime' in systemStatus.detailed ? String(systemStatus.detailed.uptime ?? '0') : '0')}
                 </p>
               </CardContent>
             </Card>

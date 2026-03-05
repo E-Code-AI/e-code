@@ -265,8 +265,8 @@ export default function Dashboard() {
 
   const sortedProjects = useMemo(() => {
     return [...filteredProjects].sort((a, b) => {
-      const dateA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
-      const dateB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+      const dateA = a?.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+      const dateB = b?.updatedAt ? new Date(b.updatedAt).getTime() : 0;
       return dateB - dateA;
     });
   }, [filteredProjects]);

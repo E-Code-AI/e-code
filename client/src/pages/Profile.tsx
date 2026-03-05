@@ -124,7 +124,7 @@ export default function Profile() {
             {/* Avatar and basic info */}
             <div className="flex items-start gap-4">
               <Avatar className="h-24 w-24" data-testid="avatar-profile">
-                <AvatarImage src={profile.avatarUrl || undefined} />
+                <AvatarImage src={profile?.avatarUrl || undefined} />
                 <AvatarFallback className="text-3xl">
                   {(profile?.displayName || profile?.username || 'U')?.[0]?.toUpperCase()}
                 </AvatarFallback>
@@ -248,12 +248,12 @@ export default function Profile() {
                   <CardHeader>
                     <CardTitle>Contribution Activity</CardTitle>
                     <CardDescription>
-                      {profile.stats?.streak || 0} day streak 🔥
+                      {profile?.stats?.streak || 0} day streak 🔥
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-52 gap-1">
-                      {activityData.map((week) => (
+                      {(activityData || []).map((week: { week: number; contributions: number }) => (
                         <div
                           key={week.week}
                           className={`h-3 w-3 rounded-sm ${

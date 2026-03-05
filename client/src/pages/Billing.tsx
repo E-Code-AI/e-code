@@ -511,27 +511,27 @@ export default function Billing() {
                   </TableHeader>
                   <TableBody>
                     {invoices.map((inv) => (
-                      <TableRow key={inv.id}>
+                      <TableRow key={inv?.id || Math.random()}>
                         <TableCell className="font-mono text-[13px]">
-                          {inv.number || (inv.id || '').slice(0, 12)}
+                          {inv?.number || (inv?.id || '').slice(0, 12) || 'N/A'}
                         </TableCell>
                         <TableCell className="font-medium">
-                          {(inv.currency || 'usd').toUpperCase()} ${((inv.amount || 0) / 100).toFixed(2)}
+                          {(inv?.currency || 'usd').toUpperCase()} ${((inv?.amount || 0) / 100).toFixed(2)}
                         </TableCell>
-                        <TableCell>{getInvoiceStatusBadge(inv.status)}</TableCell>
+                        <TableCell>{getInvoiceStatusBadge(inv?.status || 'unknown')}</TableCell>
                         <TableCell>
-                          {new Date(inv.created * 1000).toLocaleDateString()}
+                          {inv?.created ? new Date(inv.created * 1000).toLocaleDateString() : 'N/A'}
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-2">
-                            {inv.invoice_pdf && (
+                            {inv?.invoice_pdf && (
                               <Button size="sm" variant="ghost" asChild>
                                 <a href={inv.invoice_pdf} target="_blank" rel="noopener noreferrer">
                                   <Download className="h-4 w-4" />
                                 </a>
                               </Button>
                             )}
-                            {inv.hosted_invoice_url && (
+                            {inv?.hosted_invoice_url && (
                               <Button size="sm" variant="ghost" asChild>
                                 <a href={inv.hosted_invoice_url} target="_blank" rel="noopener noreferrer">
                                   <ExternalLink className="h-4 w-4" />

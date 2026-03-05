@@ -173,7 +173,7 @@ const addFilesSchema = z.object({
 // ========================================
 
 /**
- * GET /api/projects/:projectId/checkpoints
+ * GET /projects/:projectId/checkpoints
  * List all checkpoints for a project with pagination and filtering
  */
 router.get(
@@ -245,7 +245,7 @@ router.get(
 );
 
 /**
- * POST /api/projects/:projectId/checkpoints
+ * POST /projects/:projectId/checkpoints
  * Create a new checkpoint (manual or auto)
  */
 router.post(
@@ -317,7 +317,7 @@ router.post(
 );
 
 /**
- * GET /api/projects/:projectId/checkpoints/:checkpointId
+ * GET /projects/:projectId/checkpoints/:checkpointId
  * Get checkpoint details by ID
  */
 router.get(
@@ -377,7 +377,7 @@ router.get(
 );
 
 /**
- * POST /api/projects/:projectId/checkpoints/:checkpointId/restore
+ * POST /projects/:projectId/checkpoints/:checkpointId/restore
  * Restore to a checkpoint
  */
 router.post(
@@ -486,7 +486,7 @@ router.post(
 );
 
 /**
- * GET /api/projects/:projectId/checkpoints/:checkpointId/files
+ * GET /projects/:projectId/checkpoints/:checkpointId/files
  * Get files for a checkpoint with pagination
  */
 router.get(

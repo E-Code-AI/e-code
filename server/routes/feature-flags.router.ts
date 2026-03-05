@@ -28,7 +28,7 @@ const envBool = (key: string, defaultValue: boolean = false): boolean => {
  * Reads from FEATURE_AI_UX_* environment variables.
  * Rate limited to prevent abuse on this public endpoint.
  */
-router.get('/feature-flags', tierRateLimiters.api, async (req: Request, res: Response) => {
+router.get('/', tierRateLimiters.api, async (req: Request, res: Response) => {
   try {
     // Read AI UX features from environment variables
     const flags = {

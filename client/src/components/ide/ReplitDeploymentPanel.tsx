@@ -235,6 +235,39 @@ export function ReplitDeploymentPanel({
     enabled: !!projectId && activeTab === 'analytics',
   });
 
+  const detectLogLevel = (message: string): 'info' | 'warn' | 'error' | 'success' => {
+    const lowerMessage = message.toLowerCase();
+    if (lowerMessage.includes('error') || lowerMessage.includes('failed') || lowerMessage.includes('❌')) {
+      return 'error';
+    }
+    if (lowerMessage.includes('warning') || lowerMessage.includes('warn') || lowerMessage.includes('⚠️')) {
+      return 'warn';
+    }
+    if (lowerMessage.includes('success') || lowerMessage.includes('complete') || lowerMessage.includes('✓') || lowerMessage.includes('✅')) {
+      return 'success';
+    }
+    return 'info';
+  };
+
+  const fetchLogsViaHTTP = useCallback(async (deploymentId: string) => {
+    try {
+      const response = await fetch(`/api/deployments/${deploymentId}/logs`, {
+        credentials: 'include',
+      });
+      if (response.ok) {
+        const data = await response.json();
+        if (data.logs && Array.isArray(data.logs)) {
+          setLogs(data.logs.map((log: any) => ({
+            ...log,
+            level: log.level || detectLogLevel(log.message),
+          })));
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch logs via HTTP:', error);
+    }
+  }, []);
+
   const connectWebSocket = useCallback((deploymentId: string) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify({ action: 'subscribe', deploymentId }));
@@ -305,40 +338,7 @@ export function ReplitDeploymentPanel({
       console.error('WebSocket connection failed:', error);
       fetchLogsViaHTTP(deploymentId);
     }
-  }, [refetchDeployment]);
-
-  const fetchLogsViaHTTP = useCallback(async (deploymentId: string) => {
-    try {
-      const response = await fetch(`/api/deployments/${deploymentId}/logs`, {
-        credentials: 'include',
-      });
-      if (response.ok) {
-        const data = await response.json();
-        if (data.logs && Array.isArray(data.logs)) {
-          setLogs(data.logs.map((log: any) => ({
-            ...log,
-            level: log.level || detectLogLevel(log.message),
-          })));
-        }
-      }
-    } catch (error) {
-      console.error('Failed to fetch logs via HTTP:', error);
-    }
-  }, []);
-
-  const detectLogLevel = (message: string): 'info' | 'warn' | 'error' | 'success' => {
-    const lowerMessage = message.toLowerCase();
-    if (lowerMessage.includes('error') || lowerMessage.includes('failed') || lowerMessage.includes('❌')) {
-      return 'error';
-    }
-    if (lowerMessage.includes('warning') || lowerMessage.includes('warn') || lowerMessage.includes('⚠️')) {
-      return 'warn';
-    }
-    if (lowerMessage.includes('success') || lowerMessage.includes('complete') || lowerMessage.includes('✓') || lowerMessage.includes('✅')) {
-      return 'success';
-    }
-    return 'info';
-  };
+  }, [refetchDeployment, fetchLogsViaHTTP]);
 
   useEffect(() => {
     const deploymentId = latestDeployment?.deployment?.deploymentId || latestDeployment?.deployment?.id;
@@ -395,27 +395,6 @@ export function ReplitDeploymentPanel({
     },
     onError: (error: Error) => {
       toast({ title: 'Republish failed', description: error.message, variant: 'destructive' });
-    },
-  });
-
-  const deployMutation = useMutation({
-    mutationFn: async () => {
-      return apiRequest('POST', `/api/projects/${projectId}/deploy`, {
-        type: deployType,
-        environment,
-        regions: [region],
-        customDomain: customDomain || undefined,
-        sslEnabled: true,
-      });
-    },
-    onSuccess: () => {
-      setIsDeploying(true);
-      setLogs([]);
-      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId] });
-      toast({ title: 'Deployment started', description: 'Your app is being deployed...' });
-    },
-    onError: (error: Error) => {
-      toast({ title: 'Deployment failed', description: error.message, variant: 'destructive' });
     },
   });
 
@@ -786,7 +765,7 @@ export function ReplitDeploymentPanel({
             </div>
           ) : (
             <div className="space-y-6">
-              {/* 2) Config Sections (Collapsed or at least below status) */}
+              {/* 2) Config Sections */}
               <div className="space-y-4">
                 <div className="space-y-3">
                   <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Deployment Type</Label>
@@ -961,7 +940,7 @@ export function ReplitDeploymentPanel({
                     ) : deploymentHistory?.deployments && deploymentHistory.deployments.length > 0 ? (
                       <ScrollArea className="max-h-[150px]">
                         <div className="space-y-2 pr-3">
-                          {deploymentHistory.deployments.map((dep, idx) => {
+                          {deploymentHistory.deployments.map((dep) => {
                             const depStatus = getDisplayStatus(dep);
                             const depId = dep.deploymentId || dep.id;
                             const isCurrent = depId === deploymentId;
@@ -985,21 +964,29 @@ export function ReplitDeploymentPanel({
                                   </div>
                                 </div>
                                 
-                                {!isCurrent && depStatus !== 'failed' && depId && (
-                                  <Button
-                                    variant="outline"
-                                    size="xs"
-                                    className="h-6 px-2 text-[9px]"
-                                    onClick={() => {
-                                      if (confirm(`Rollback to ${depId.substring(0, 8)}?`)) {
-                                        rollbackMutation.mutate({ deploymentId: deploymentId || depId, version: depId });
-                                      }
-                                    }}
-                                    disabled={rollbackMutation.isPending}
-                                  >
-                                    Rollback
-                                  </Button>
-                                )}
+                                <div className="flex items-center gap-1">
+                                  {dep.url && (
+                                    <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
+                                      <a href={dep.url} target="_blank" rel="noopener noreferrer">
+                                        <ExternalLink className="h-3.5 w-3.5" />
+                                      </a>
+                                    </Button>
+                                  )}
+                                  {!isCurrent && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-6 px-2 text-[9px]"
+                                      onClick={() => {
+                                        if (confirm(`Rollback to ${depId.substring(0, 8)}?`)) {
+                                          rollbackMutation.mutate({ deploymentId: depId, version: depId });
+                                        }
+                                      }}
+                                    >
+                                      Rollback
+                                    </Button>
+                                  )}
+                                </div>
                               </div>
                             );
                           })}
@@ -1322,17 +1309,43 @@ export function ReplitDeploymentPanel({
               {isActive ? 'System Healthy' : 'System Ready'}
             </span>
           </div>
-          {deployment?.url && (
-            <Button
-              variant="link"
-              size="xs"
-              className="h-auto p-0 text-[10px] font-mono"
-              onClick={() => copyToClipboard(deployment.url!)}
-            >
-              {deployment.url.replace(/^https?:\/\//, '').substring(0, 20)}...
-              <Copy className="h-2.5 w-2.5 ml-1" />
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            {deployment && (
+              <>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-7 text-[10px] gap-1.5 text-red-500 hover:text-red-600 hover:bg-red-500/10 font-bold uppercase"
+                  onClick={() => stopMutation.mutate(deploymentId!)}
+                  disabled={deployment.status === 'stopped' || isInProgress}
+                >
+                  <Square className="h-3 w-3 fill-current" />
+                  Stop App
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="h-7 text-[10px] gap-1.5 font-bold uppercase"
+                  onClick={() => restartMutation.mutate(deploymentId!)}
+                  disabled={isInProgress}
+                >
+                  <RotateCcw className="h-3 w-3" />
+                  Restart
+                </Button>
+              </>
+            )}
+            {deployment?.url && (
+              <Button
+                variant="link"
+                size="xs"
+                className="h-auto p-0 text-[10px] font-mono ml-2"
+                onClick={() => copyToClipboard(deployment.url!)}
+              >
+                {deployment.url.replace(/^https?:\/\//, '').substring(0, 20)}...
+                <Copy className="h-2.5 w-2.5 ml-1" />
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     </Card>

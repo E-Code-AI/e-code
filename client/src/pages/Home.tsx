@@ -208,7 +208,7 @@ export default function Home() {
 
   // Filter projects based on search query
   const filteredProjects = projects?.filter(
-    (project) => (project?.name || "").toLowerCase().includes(searchQuery.toLowerCase())
+    (project) => (project?.name || "").toLowerCase().includes((searchQuery || "").toLowerCase())
   );
 
   // Sort projects based on active tab

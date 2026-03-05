@@ -476,7 +476,7 @@ export default function Notifications() {
                           <Avatar className="h-8 w-8">
                             <AvatarImage src={notification.user?.avatar} />
                             <AvatarFallback>
-                              {(notification.user?.username || "?")?.[0]?.toUpperCase() || "?"}
+                              {(notification?.user?.username || "?")?.[0]?.toUpperCase() || "?"}
                             </AvatarFallback>
                           </Avatar>
                         ) : (
