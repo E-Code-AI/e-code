@@ -109,21 +109,40 @@ router.get('/pricing', (_req, res) => {
   res.json({
     success: true,
     pricing: {
-      'gpt-4o':                     { input: 0.0000025, output: 0.00001,   creditsPerThousand: 2.5 },
-      'gpt-4o-mini':                { input: 0.00000015, output: 0.0000006, creditsPerThousand: 0.15 },
-      'o1':                         { input: 0.000015, output: 0.00006,   creditsPerThousand: 15 },
-      'o1-mini':                    { input: 0.000003, output: 0.000012,  creditsPerThousand: 3 },
-      'o3':                         { input: 0.000015, output: 0.00006,   creditsPerThousand: 15 },
-      'claude-3-opus-20240229':     { input: 0.000015, output: 0.000075, creditsPerThousand: 15 },
-      'claude-3-5-sonnet-20241022': { input: 0.000003, output: 0.000015, creditsPerThousand: 3 },
+      // OpenAI — confirmed real models (March 2026)
+      'gpt-4.1':                    { input: 0.000002,   output: 0.000008,   creditsPerThousand: 2 },
+      'gpt-4.1-mini':               { input: 0.0000004,  output: 0.0000016,  creditsPerThousand: 0.4 },
+      'gpt-4.1-nano':               { input: 0.0000001,  output: 0.0000004,  creditsPerThousand: 0.1 },
+      'gpt-4o':                     { input: 0.0000025,  output: 0.00001,    creditsPerThousand: 2.5 },
+      'gpt-4o-mini':                { input: 0.00000015, output: 0.0000006,  creditsPerThousand: 0.15 },
+      'o4-mini':                    { input: 0.0000011,  output: 0.0000044,  creditsPerThousand: 1.1 },
+      'o3':                         { input: 0.00001,    output: 0.00004,    creditsPerThousand: 10 },
+      'o3-mini':                    { input: 0.0000011,  output: 0.0000044,  creditsPerThousand: 1.1 },
+      'o1':                         { input: 0.000015,   output: 0.00006,    creditsPerThousand: 15 },
+      'gpt-4-turbo':                { input: 0.00001,    output: 0.00003,    creditsPerThousand: 10 },
+      // Anthropic — confirmed real models (March 2026)
+      'claude-opus-4-20250514':     { input: 0.000015,   output: 0.000075,   creditsPerThousand: 15 },
+      'claude-sonnet-4-20250514':   { input: 0.000003,   output: 0.000015,   creditsPerThousand: 3 },
+      'claude-3-7-sonnet-20250219': { input: 0.000003,   output: 0.000015,   creditsPerThousand: 3 },
+      'claude-3-5-sonnet-20241022': { input: 0.000003,   output: 0.000015,   creditsPerThousand: 3 },
       'claude-3-5-haiku-20241022':  { input: 0.00000025, output: 0.00000125, creditsPerThousand: 0.25 },
-      'gemini-2.5-flash':           { input: 0.0000003, output: 0.0000015, creditsPerThousand: 0.3 },
-      'gemini-2.0-flash':           { input: 0.0000001, output: 0.0000004, creditsPerThousand: 0.1 },
-      'gemini-1.5-pro':             { input: 0.00000125, output: 0.000010, creditsPerThousand: 1.25 },
+      'claude-3-opus-20240229':     { input: 0.000015,   output: 0.000075,   creditsPerThousand: 15 },
+      'claude-3-haiku-20240307':    { input: 0.00000025, output: 0.00000125, creditsPerThousand: 0.25 },
+      // Gemini
+      'gemini-2.5-pro':             { input: 0.00000125, output: 0.000010,   creditsPerThousand: 1.25 },
+      'gemini-2.5-flash':           { input: 0.0000000375, output: 0.00000015, creditsPerThousand: 0.0375 },
+      'gemini-2.0-flash':           { input: 0.0000000375, output: 0.00000015, creditsPerThousand: 0.0375 },
+      'gemini-2.0-flash-lite':      { input: 0.000000019, output: 0.000000075, creditsPerThousand: 0.019 },
+      'gemini-1.5-pro':             { input: 0.00000125, output: 0.000010,   creditsPerThousand: 1.25 },
       'gemini-1.5-flash':           { input: 0.000000075, output: 0.0000003, creditsPerThousand: 0.075 },
-      'grok-2-1212':                { input: 0.000002, output: 0.000010,  creditsPerThousand: 2 },
-      'moonshot-v1-32k':            { input: 0.0000012, output: 0.0000012, creditsPerThousand: 1.2 },
-      'moonshot-v1-128k':           { input: 0.000006, output: 0.000006,  creditsPerThousand: 6 }
+      // xAI Grok — grok-3 family (confirmed real March 2026)
+      'grok-3':                     { input: 0.000003,   output: 0.000015,   creditsPerThousand: 3 },
+      'grok-3-mini':                { input: 0.0000003,  output: 0.0000005,  creditsPerThousand: 0.3 },
+      'grok-3-fast':                { input: 0.000005,   output: 0.000025,   creditsPerThousand: 5 },
+      // Moonshot AI / Kimi
+      'moonshot-v1-8k':             { input: 0.0000012,  output: 0.0000012,  creditsPerThousand: 1.2 },
+      'moonshot-v1-32k':            { input: 0.0000024,  output: 0.0000024,  creditsPerThousand: 2.4 },
+      'moonshot-v1-128k':           { input: 0.000006,   output: 0.000006,   creditsPerThousand: 6 },
     },
     updatedAt: new Date().toISOString()
   });

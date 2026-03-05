@@ -64,9 +64,11 @@ export default function TemplatesPage() {
     queryKey: [buildQueryUrl()],
   });
 
+  const templatesArr = Array.isArray(templates) ? templates : [];
+
   const useTemplateMutation = useMutation({
     mutationFn: async (templateId: number) => {
-      const data = await apiRequest('POST', '/api/projects', {
+      const data = await apiRequest<{ id: number }>('POST', '/api/projects', {
         name: `Project from Template #${templateId}`,
         templateId
       });
@@ -89,7 +91,7 @@ export default function TemplatesPage() {
     }
   });
 
-  const filteredTemplates = templates || [];
+  const filteredTemplates = templatesArr.filter(Boolean);
 
   return (
     <PageShell>
@@ -140,7 +142,7 @@ export default function TemplatesPage() {
         </ScrollArea>
 
         {/* Featured Templates Section */}
-        {!isLoading && filteredTemplates.some(t => t.featured) && selectedCategory === 'all' && !searchQuery && (
+        {!isLoading && filteredTemplates.some(t => t?.featured) && selectedCategory === 'all' && !searchQuery && (
           <div>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-2xl font-bold">Featured Templates</h2>
@@ -151,7 +153,7 @@ export default function TemplatesPage() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredTemplates
-                .filter(t => t.featured)
+                .filter(t => t?.featured)
                 .slice(0, 3)
                 .map((template, index) => (
                   <TemplateCard

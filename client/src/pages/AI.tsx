@@ -436,8 +436,8 @@ export default function AI() {
 
           <div className="max-w-6xl mx-auto">
             <LazyMotionDiv
-              initial={{ opacity: 0, scale: 0.95 }}
-              whileInView={{ opacity: 1, scale: 1 }}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, scale: 1, y: 0 }}
               transition={{ duration: 0.5 }}
               className="relative aspect-video rounded-3xl overflow-hidden shadow-2xl border bg-muted"
             >

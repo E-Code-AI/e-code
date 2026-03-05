@@ -574,10 +574,15 @@ export function useIDEWorkspace(projectId: string) {
     queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId] });
   }, [queryClient, projectId]);
 
+  const projectLanguage = project?.language || 'javascript';
+  const projectName = project?.name || 'Untitled Project';
+
   return {
     // Project info
     projectId,
     project,
+    projectLanguage,
+    projectName,
     isLoadingProject,
     files,
     isLoadingFiles,

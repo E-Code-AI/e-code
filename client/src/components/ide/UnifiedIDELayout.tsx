@@ -152,6 +152,8 @@ function UnifiedIDELayout({
 
   const {
     project,
+    projectLanguage,
+    projectName,
     files,
     isLoadingProject,
     user,
@@ -197,10 +199,6 @@ function UnifiedIDELayout({
     handleRunStop,
     handleAddTool,
   } = workspace;
-
-  // Null safety check for project
-  const projectLanguage = project?.language || 'javascript';
-  const projectName = project?.name || 'Untitled Project';
 
   const handleActivityItemClick = useCallback((item: ActivityItem) => {
     setActiveActivityItem(item);

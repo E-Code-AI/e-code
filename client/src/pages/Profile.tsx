@@ -138,14 +138,14 @@ export default function Profile() {
                     return (
                       <span key={badge?.id} title={badge?.name}>
                         <Icon
-                          className={`h-5 w-5 ${badge?.color || ''}`}
+                          className={`h-5 w-5 ${badge?.color || ""}`}
                         />
                       </span>
                     );
                   })}
                 </div>
-                <p className="text-muted-foreground mb-3" data-testid="text-username">@{profile?.username}</p>
-                <p className="mb-4" data-testid="text-bio">{profile?.bio || ''}</p>
+                <p className="text-muted-foreground mb-3" data-testid="text-username">@{profile?.username || "unknown"}</p>
+                <p className="mb-4" data-testid="text-bio">{profile?.bio || ""}</p>
                 
                 {/* Contact and social */}
                 <div className="flex flex-wrap gap-4 text-[13px] text-muted-foreground mb-4">

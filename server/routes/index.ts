@@ -222,6 +222,13 @@ export class MainRouter {
     // Test agent routes (uses /api/test/agent internally)
     app.use('/api', tierRateLimiters.api, testAgentRouter);
 
+    // Runner status (no auth required for health check)
+    app.get('/api/runner/status', async (_req, res) => {
+      const runner = await import('../runnerClient');
+      const health = await runner.pingRunner();
+      res.json(health);
+    });
+
     // Collaboration routes
     app.use('/api/collaboration', tierRateLimiters.api, collaborationRouter);
 

@@ -56,7 +56,6 @@ export default function Marketplace() {
     }
   };
 
-  // Fetch real marketplace data from APIs
   const { data: extensions = [], isLoading: isExtensionsLoading } = useQuery<any[]>({
     queryKey: ['/api/marketplace/extensions'],
   });
@@ -64,7 +63,7 @@ export default function Marketplace() {
   const { data: templatesData, isLoading: isTemplatesLoading } = useQuery<any>({
     queryKey: ['/api/marketplace/templates'],
   });
-  const templates = Array.isArray(templatesData) ? templatesData : (templatesData as any)?.templates || [];
+  const templates = (Array.isArray(templatesData) ? templatesData : (templatesData as any)?.templates || []).filter(Boolean);
 
   const { data: categoriesData = [] } = useQuery<any[]>({
     queryKey: ['/api/marketplace/categories'],
@@ -84,13 +83,14 @@ export default function Marketplace() {
     fullstack: BarChart3,
   };
   
+  const categoriesArr = Array.isArray(categoriesData) ? categoriesData : [];
   const categories = [
-    { id: 'all', name: 'All Categories', icon: Store, count: (categoriesData as any[]).reduce((sum: number, c: any) => sum + (c.count || 0), 0) || 0 },
-    ...(categoriesData as any[]).map((cat: any) => ({
-      id: cat.slug || cat.id,
-      name: cat.name,
-      icon: iconMap[(cat.slug || '').toLowerCase()] || Package,
-      count: cat.count || 0
+    { id: 'all', name: 'All Categories', icon: Store, count: categoriesArr.reduce((sum: number, c: any) => sum + (c?.count || 0), 0) || 0 },
+    ...categoriesArr.map((cat: any) => ({
+      id: cat?.slug || cat?.id || 'unknown',
+      name: cat?.name || 'Unknown',
+      icon: iconMap[(cat?.slug || '').toLowerCase()] || Package,
+      count: cat?.count || 0
     }))
   ];
 
@@ -98,7 +98,9 @@ export default function Marketplace() {
     queryKey: ['/api/marketplace/publishers'],
   });
 
-  const filteredExtensions = (extensions as any[]).filter((ext: any) => {
+  const extensionsArr = Array.isArray(extensions) ? extensions : [];
+  const filteredExtensions = extensionsArr.filter((ext: any) => {
+    if (!ext) return false;
     const q = searchQuery.toLowerCase();
     const matchesSearch = (ext.name || '').toLowerCase().includes(q) ||
                          (ext.description || '').toLowerCase().includes(q) ||
@@ -107,136 +109,142 @@ export default function Marketplace() {
     return matchesSearch && matchesCategory;
   });
 
-  const ExtensionCard = ({ extension }: { extension: any }) => (
-    <Card className="group hover:shadow-md transition-shadow" data-testid={`card-extension-${extension.id}`}>
-      <CardContent className="p-6">
-        <div className="flex items-start gap-4">
-          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-semibold">
-            {(extension.name || '?').charAt(0)}
-          </div>
-          
-          <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between mb-2">
-              <div>
-                <h3 className="font-semibold text-[15px] group-hover:text-primary transition-colors" data-testid={`text-extension-name-${extension.id}`}>
-                  {extension.name}
-                </h3>
-                <p className="text-[13px] text-muted-foreground" data-testid={`text-extension-author-${extension.id}`}>by {typeof extension.author === 'object' ? (extension.author?.name ?? extension.author?.username ?? extension.author?.id ?? 'Unknown') : (extension.author ?? 'Unknown')}</p>
+  const ExtensionCard = ({ extension }: { extension: any }) => {
+    if (!extension) return null;
+    return (
+      <Card className="group hover:shadow-md transition-shadow" data-testid={`card-extension-${extension.id}`}>
+        <CardContent className="p-6">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-semibold">
+              {(extension.name || '?').charAt(0)}
+            </div>
+            
+            <div className="flex-1 min-w-0">
+              <div className="flex items-start justify-between mb-2">
+                <div>
+                  <h3 className="font-semibold text-[15px] group-hover:text-primary transition-colors" data-testid={`text-extension-name-${extension.id}`}>
+                    {extension.name}
+                  </h3>
+                  <p className="text-[13px] text-muted-foreground" data-testid={`text-extension-author-${extension.id}`}>by {typeof extension.author === 'object' ? (extension.author?.name ?? extension.author?.username ?? extension.author?.id ?? 'Unknown') : (extension.author ?? 'Unknown')}</p>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  {extension.featured && (
+                    <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500" data-testid={`badge-extension-featured-${extension.id}`}>
+                      <Crown className="h-3 w-3 mr-1" />
+                      Featured
+                    </Badge>
+                  )}
+                  {extension.installed && (
+                    <Badge variant="outline" className="text-green-600 border-green-600" data-testid={`badge-extension-installed-${extension.id}`}>
+                      <CheckCircle2 className="h-3 w-3 mr-1" />
+                      Installed
+                    </Badge>
+                  )}
+                </div>
               </div>
               
-              <div className="flex items-center gap-2">
-                {extension.featured && (
-                  <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500" data-testid={`badge-extension-featured-${extension.id}`}>
+              <p className="text-[13px] text-muted-foreground mb-3 line-clamp-2" data-testid={`text-extension-description-${extension.id}`}>
+                {extension.description}
+              </p>
+              
+              <div className="flex flex-wrap gap-1 mb-3">
+                {(Array.isArray(extension.tags) ? extension.tags : []).map((tag: string, index: number) => (
+                  <Badge key={index} variant="secondary" className="text-[11px]" data-testid={`badge-extension-tag-${extension.id}-${index}`}>
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4 text-[13px] text-muted-foreground">
+                  <div className="flex items-center gap-1" data-testid={`text-extension-rating-${extension.id}`}>
+                    <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                    <span>{extension.rating ?? 0}</span>
+                    <span>({(extension.reviews ?? 0).toLocaleString()})</span>
+                  </div>
+                  <div className="flex items-center gap-1" data-testid={`text-extension-downloads-${extension.id}`}>
+                    <Download className="h-4 w-4" />
+                    <span>{(extension.downloads ?? 0).toLocaleString()}</span>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-[15px]" data-testid={`text-extension-price-${extension.id}`}>{extension.price || 'Free'}</span>
+                  <Button size="sm" variant={extension.installed ? "outline" : "default"} data-testid={`button-extension-install-${extension.id}`}>
+                    {extension.installed ? 'Uninstall' : 'Install'}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
+  const TemplateCard = ({ template }: { template: any }) => {
+    if (!template) return null;
+    return (
+      <Card className="group hover:shadow-md transition-shadow" data-testid={`card-template-${template.id}`}>
+        <CardContent className="p-6">
+          <div className="flex items-start gap-4">
+            <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-blue-600 rounded-lg flex items-center justify-center text-white font-semibold text-[15px]">
+              {(template.framework || template.language || template.name || '?').toString().charAt(0)}
+            </div>
+            
+            <div className="flex-1">
+              <div className="flex items-start justify-between mb-2">
+                <div>
+                  <h3 className="font-semibold text-[15px] group-hover:text-primary transition-colors" data-testid={`text-template-name-${template.id}`}>
+                    {template.name}
+                  </h3>
+                  <p className="text-[13px] text-muted-foreground" data-testid={`text-template-author-${template.id}`}>by {typeof template.author === 'object' ? (template.author?.name ?? template.author?.username ?? template.author?.id ?? 'Unknown') : (template.author ?? 'Unknown')}</p>
+                </div>
+                
+                {template.featured && (
+                  <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500" data-testid={`badge-template-featured-${template.id}`}>
                     <Crown className="h-3 w-3 mr-1" />
                     Featured
                   </Badge>
                 )}
-                {extension.installed && (
-                  <Badge variant="outline" className="text-green-600 border-green-600" data-testid={`badge-extension-installed-${extension.id}`}>
-                    <CheckCircle2 className="h-3 w-3 mr-1" />
-                    Installed
-                  </Badge>
-                )}
-              </div>
-            </div>
-            
-            <p className="text-[13px] text-muted-foreground mb-3 line-clamp-2" data-testid={`text-extension-description-${extension.id}`}>
-              {extension.description}
-            </p>
-            
-            <div className="flex flex-wrap gap-1 mb-3">
-              {(Array.isArray(extension.tags) ? extension.tags : []).map((tag: string, index: number) => (
-                <Badge key={index} variant="secondary" className="text-[11px]" data-testid={`badge-extension-tag-${extension.id}-${index}`}>
-                  {tag}
-                </Badge>
-              ))}
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4 text-[13px] text-muted-foreground">
-                <div className="flex items-center gap-1" data-testid={`text-extension-rating-${extension.id}`}>
-                  <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                  <span>{extension.rating ?? 0}</span>
-                  <span>({(extension.reviews ?? 0).toLocaleString()})</span>
-                </div>
-                <div className="flex items-center gap-1" data-testid={`text-extension-downloads-${extension.id}`}>
-                  <Download className="h-4 w-4" />
-                  <span>{(extension.downloads ?? 0).toLocaleString()}</span>
-                </div>
               </div>
               
-              <div className="flex items-center gap-2">
-                <span className="font-semibold text-[15px]" data-testid={`text-extension-price-${extension.id}`}>{extension.price || 'Free'}</span>
-                <Button size="sm" variant={extension.installed ? "outline" : "default"} data-testid={`button-extension-install-${extension.id}`}>
-                  {extension.installed ? 'Uninstall' : 'Install'}
+              <p className="text-[13px] text-muted-foreground mb-3" data-testid={`text-template-description-${template.id}`}>
+                {template.description}
+              </p>
+              
+              <div className="flex flex-wrap gap-1 mb-3">
+                {(Array.isArray(template.tags) ? template.tags : []).map((tag: string, index: number) => (
+                  <Badge key={index} variant="secondary" className="text-[11px]" data-testid={`badge-template-tag-${template.id}-${index}`}>
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4 text-[13px] text-muted-foreground">
+                  <div className="flex items-center gap-1" data-testid={`text-template-rating-${template.id}`}>
+                    <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                    <span>{template.rating ?? 0}</span>
+                  </div>
+                  <div className="flex items-center gap-1" data-testid={`text-template-downloads-${template.id}`}>
+                    <Download className="h-4 w-4" />
+                    <span>{(template.downloads ?? 0).toLocaleString()}</span>
+                  </div>
+                  <Badge variant="outline" data-testid={`badge-template-category-${template.id}`}>{template.category}</Badge>
+                </div>
+                
+                <Button size="sm" data-testid={`button-use-template-${template.id}`} disabled={usingTemplateId === template.id} onClick={() => handleUseTemplate(template.id)}>
+                  {usingTemplateId === template.id ? 'Creating...' : 'Use Template'}
                 </Button>
               </div>
             </div>
           </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-
-  const TemplateCard = ({ template }: { template: any }) => (
-    <Card className="group hover:shadow-md transition-shadow" data-testid={`card-template-${template.id}`}>
-      <CardContent className="p-6">
-        <div className="flex items-start gap-4">
-          <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-blue-600 rounded-lg flex items-center justify-center text-white font-semibold text-[15px]">
-            {(template.framework || template.language || template.name || '?').toString().charAt(0)}
-          </div>
-          
-          <div className="flex-1">
-            <div className="flex items-start justify-between mb-2">
-              <div>
-                <h3 className="font-semibold text-[15px] group-hover:text-primary transition-colors" data-testid={`text-template-name-${template.id}`}>
-                  {template.name}
-                </h3>
-                <p className="text-[13px] text-muted-foreground" data-testid={`text-template-author-${template.id}`}>by {typeof template.author === 'object' ? (template.author?.name ?? template.author?.username ?? template.author?.id ?? 'Unknown') : (template.author ?? 'Unknown')}</p>
-              </div>
-              
-              {template.featured && (
-                <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500" data-testid={`badge-template-featured-${template.id}`}>
-                  <Crown className="h-3 w-3 mr-1" />
-                  Featured
-                </Badge>
-              )}
-            </div>
-            
-            <p className="text-[13px] text-muted-foreground mb-3" data-testid={`text-template-description-${template.id}`}>
-              {template.description}
-            </p>
-            
-            <div className="flex flex-wrap gap-1 mb-3">
-              {(Array.isArray(template.tags) ? template.tags : []).map((tag: string, index: number) => (
-                <Badge key={index} variant="secondary" className="text-[11px]" data-testid={`badge-template-tag-${template.id}-${index}`}>
-                  {tag}
-                </Badge>
-              ))}
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4 text-[13px] text-muted-foreground">
-                <div className="flex items-center gap-1" data-testid={`text-template-rating-${template.id}`}>
-                  <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                  <span>{template.rating ?? 0}</span>
-                </div>
-                <div className="flex items-center gap-1" data-testid={`text-template-downloads-${template.id}`}>
-                  <Download className="h-4 w-4" />
-                  <span>{(template.downloads ?? 0).toLocaleString()}</span>
-                </div>
-                <Badge variant="outline" data-testid={`badge-template-category-${template.id}`}>{template.category}</Badge>
-              </div>
-              
-              <Button size="sm" data-testid={`button-use-template-${template.id}`} disabled={usingTemplateId === template.id} onClick={() => handleUseTemplate(template.id)}>
-                {usingTemplateId === template.id ? 'Creating...' : 'Use Template'}
-              </Button>
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
+        </CardContent>
+      </Card>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-background" data-testid="page-marketplace">

@@ -141,7 +141,7 @@ router.get('/conversation', async (req, res) => {
     const result = await withScopedTransaction(userId, userId, async (scopedQueries, context) => {
       // Verify project ownership - returns null if user doesn't own this project
       const project = await scopedQueries.getProjectById(projectId);
-      if (!project) {
+      if (!project && projectId >= 0) {
         return { error: 'Project not found or access denied', status: 403 };
       }
 
@@ -170,7 +170,7 @@ router.get('/conversation', async (req, res) => {
     if (!result.success) {
       return res.status(500).json({ error: result.error?.message || 'Transaction failed' });
     }
-    if (result.data?.error) {
+    if (result.data && 'error' in result.data) {
       return res.status(result.data.status).json({ error: result.data.error });
     }
 

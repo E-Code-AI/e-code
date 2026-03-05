@@ -662,94 +662,108 @@ export function ReplitDeploymentPanel({
           "bg-muted/30"
         )}>
           <CardContent className="p-4">
-            <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
-                <div className={cn(
-                  "h-10 w-10 rounded-full flex items-center justify-center shrink-0",
-                  displayStatus === 'live' ? "bg-green-500/20 text-green-500" :
-                  displayStatus === 'failed' ? "bg-red-500/20 text-red-500" :
+                <div className={cn("p-2 rounded-full", 
+                  displayStatus === 'live' ? "bg-green-500/20 text-green-500" : 
+                  displayStatus === 'failed' ? "bg-red-500/20 text-red-500" : 
                   displayStatus === 'needs-republish' ? "bg-yellow-500/20 text-yellow-500" :
-                  displayStatus === 'publishing' ? "bg-blue-500/20 text-blue-500 animate-pulse" :
+                  displayStatus === 'publishing' ? "bg-blue-500/20 text-blue-500" :
                   "bg-muted text-muted-foreground"
                 )}>
-                  <Rocket className="h-5 w-5" />
+                  {getStatusIcon(displayStatus)}
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="font-semibold text-sm">
-                      {displayStatus === 'live' ? 'Application Live' : 
-                       displayStatus === 'publishing' ? 'Deploying...' :
-                       displayStatus === 'failed' ? 'Deployment Failed' :
-                       displayStatus === 'needs-republish' ? 'Changes Detected' :
-                       'Not Deployed'}
-                    </h3>
-                    <Badge variant="outline" className={cn('text-[10px] uppercase font-bold tracking-wider', getStatusBadgeClass(displayStatus))}>
+                    <span className="font-bold text-lg capitalize">{displayStatus.replace('-', ' ')}</span>
+                    <Badge className={cn("text-[10px] uppercase font-bold", getStatusBadgeClass(displayStatus))}>
                       {displayStatus}
                     </Badge>
                   </div>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">
-                    {displayStatus === 'live' ? (
-                      `Last deployed ${deployment?.deployedAt ? new Date(deployment.deployedAt).toLocaleString() : 'recently'}`
-                    ) : displayStatus === 'needs-republish' ? (
-                      'Your latest code changes are not yet live.'
-                    ) : displayStatus === 'failed' ? (
-                      'An error occurred during the last deployment.'
-                    ) : displayStatus === 'publishing' ? (
-                      'Preparing and uploading build artifacts...'
-                    ) : (
-                      'Launch your app to a public URL in seconds.'
-                    )}
+                  <p className="text-xs text-muted-foreground">
+                    {displayStatus === 'live' ? 'Your application is live and accessible' :
+                     displayStatus === 'needs-republish' ? 'Changes detected since last deployment' :
+                     displayStatus === 'publishing' ? 'Deployment in progress...' :
+                     displayStatus === 'failed' ? 'Last deployment failed' :
+                     'Application is not currently deployed'}
                   </p>
                 </div>
               </div>
-              
-              <div className="flex flex-col gap-2 shrink-0 min-w-[120px]">
-                {displayStatus === 'idle' || displayStatus === 'failed' ? (
+
+              <div className="flex items-center gap-2">
+                {!isActive && !isInProgress && (
                   <Button 
-                    className="w-full gap-2 shadow-sm" 
-                    onClick={() => publishMutation.mutate()}
-                    disabled={publishMutation.isPending}
-                    size="sm"
+                    onClick={() => publishMutation.mutate()} 
+                    disabled={publishMutation.isPending || isInProgress}
+                    className="bg-primary hover:bg-primary/90 text-white gap-2 h-10 px-6"
                     data-testid="button-publish-primary"
                   >
-                    {publishMutation.isPending ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Zap className="h-4 w-4 fill-current" />
-                    )}
-                    Publish
-                  </Button>
-                ) : (
-                  <Button 
-                    className="w-full gap-2 shadow-sm"
-                    onClick={() => republishMutation.mutate()}
-                    disabled={republishMutation.isPending || isInProgress}
-                    size="sm"
-                    variant={displayStatus === 'needs-republish' ? "default" : "secondary"}
-                    data-testid="button-republish-primary"
-                  >
-                    {republishMutation.isPending ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <RefreshCw className={cn("h-4 w-4", isInProgress && "animate-spin")} />
-                    )}
-                    {displayStatus === 'needs-republish' ? 'Republish' : 'Update'}
+                    {publishMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Rocket className="h-4 w-4" />}
+                    Publish App
                   </Button>
                 )}
                 
-                {deployment?.url && (
-                  <Button
-                    variant="ghost"
-                    size="xs"
-                    className="h-7 text-[10px] text-muted-foreground hover:text-foreground"
-                    onClick={() => window.open(deployment.url, '_blank')}
+                {displayStatus === 'needs-republish' && (
+                  <Button 
+                    onClick={() => republishMutation.mutate()} 
+                    disabled={republishMutation.isPending || isInProgress}
+                    className="bg-yellow-500 hover:bg-yellow-600 text-white gap-2 h-10 px-6"
+                    data-testid="button-republish-primary"
                   >
-                    <ExternalLink className="h-3 w-3 mr-1" />
-                    View Live Site
+                    {republishMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                    Update App
+                  </Button>
+                )}
+
+                {isActive && displayStatus !== 'needs-republish' && (
+                  <Button 
+                    onClick={() => republishMutation.mutate()} 
+                    disabled={republishMutation.isPending || isInProgress}
+                    variant="outline"
+                    className="gap-2 h-10 px-6"
+                    data-testid="button-redeploy-primary"
+                  >
+                    {republishMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                    Redeploy
                   </Button>
                 )}
               </div>
             </div>
+
+            {isActive && deployment?.url && (
+              <div className="flex flex-col gap-2 p-3 bg-muted/50 rounded-lg border">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Public URL</span>
+                  <div className="flex items-center gap-2">
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => copyToClipboard(deployment.url!)}>
+                      <Copy className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
+                      <a href={deployment.url} target="_blank" rel="noopener noreferrer">
+                        <ExternalLink className="h-3.5 w-3.5" />
+                      </a>
+                    </Button>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 text-sm font-mono truncate bg-background p-2 rounded border">
+                  <Globe className="h-3.5 w-3.5 text-primary shrink-0" />
+                  <span className="truncate">{deployment.url}</span>
+                </div>
+              </div>
+            )}
+            
+            {isInProgress && (
+              <div className="mt-4 space-y-2">
+                <div className="flex justify-between text-xs font-medium">
+                  <span>Deploying...</span>
+                  <span>45%</span>
+                </div>
+                <Progress value={45} className="h-2" />
+                <p className="text-[10px] text-muted-foreground animate-pulse text-center">
+                  Provisioning infrastructure and building container image...
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

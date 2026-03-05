@@ -1,10 +1,13 @@
 /**
  * Model Name Normalizer (Production-Critical)
- * 
- * Maps ALL possible model names (aliases, legacy, fake names) to valid aiModelEnum values
+ *
+ * Maps ALL possible model names (aliases, legacy, deprecated) to valid real model IDs
  * that actually work with the respective provider APIs.
- * 
- * CRITICAL RULE: Real model names stay as-is. Fake/deprecated names map to real equivalents.
+ *
+ * VERIFIED via live API tests (March 2026):
+ *   429 quota / 400 credit balance = model EXISTS and is accessible
+ *   400 "model not found" = wrong ID, do not use
+ *   403 billing required = model EXISTS but account needs credits
  */
 
 import { createLogger } from './logger';
@@ -12,105 +15,122 @@ import { AlertService } from '../services/alert-service';
 
 const logger = createLogger('model-normalizer');
 
-// Maps model alias/fake → real model name that works with the actual provider API
 const MODEL_NORMALIZATION_MAP: Record<string, string> = {
-  // ── OpenAI: fake/deprecated → real ──────────────────────────────────────────
-  'gpt-5': 'gpt-4o',
-  'gpt-5.1': 'gpt-4o',
-  'gpt-5.2': 'gpt-4o',
-  'gpt-5.2-codex': 'gpt-4o',
-  'gpt-5-mini': 'gpt-4o-mini',
-  'gpt-5-nano': 'gpt-4o-mini',
-  'gpt-4.1': 'gpt-4o',
-  'gpt-4.1-mini': 'gpt-4o-mini',
-  'gpt-4.1-nano': 'gpt-4o-mini',
-  'o4-mini': 'o1-mini',
-  // Real OpenAI models — identity mappings
-  'gpt-4o': 'gpt-4o',
-  'gpt-4o-mini': 'gpt-4o-mini',
-  'gpt-4-turbo': 'gpt-4-turbo',
-  'gpt-4-turbo-preview': 'gpt-4-turbo',
-  'gpt-4': 'gpt-4',
-  'o1': 'o1',
-  'o1-mini': 'o1-mini',
-  'o3': 'o3',
 
-  // ── Anthropic: fake/deprecated → real ───────────────────────────────────────
-  'claude-haiku-4-5-20251015': 'claude-3-5-haiku-20241022',
-  'claude-sonnet-4-5-20250929': 'claude-3-5-sonnet-20241022',
-  'claude-opus-4-5-20251101': 'claude-3-5-sonnet-20241022',
-  'claude-opus-4-5-20251124': 'claude-3-5-sonnet-20241022',
-  'claude-opus-4-1-20250805': 'claude-3-5-sonnet-20241022',
-  'claude-sonnet-4-20250514': 'claude-3-5-sonnet-20241022',
-  // Real Anthropic models — identity mappings
-  'claude-3-5-sonnet-20241022': 'claude-3-5-sonnet-20241022',
-  'claude-3-5-haiku-20241022': 'claude-3-5-haiku-20241022',
-  'claude-3-opus-20240229': 'claude-3-opus-20240229',
-  'claude-3-haiku-20240307': 'claude-3-haiku-20240307',
-  // Short alias → real
-  'claude-sonnet': 'claude-3-5-sonnet-20241022',
-  'claude-opus': 'claude-3-opus-20240229',
-  'claude-haiku': 'claude-3-5-haiku-20241022',
-  'claude-3-5-sonnet': 'claude-3-5-sonnet-20241022',
-  'claude-3-opus': 'claude-3-opus-20240229',
-  'claude-3-haiku': 'claude-3-haiku-20240307',
-  'claude-opus-4-5': 'claude-3-5-sonnet-20241022',
-  'claude-opus-4.5': 'claude-3-5-sonnet-20241022',
-  'claude-sonnet-4': 'claude-3-5-sonnet-20241022',
+  // ── OpenAI ──────────────────────────────────────────────────────────────────
+  // Confirmed real (all return 429 quota — model exists)
+  'gpt-4o':             'gpt-4o',
+  'gpt-4o-mini':        'gpt-4o-mini',
+  'gpt-4-turbo':        'gpt-4-turbo',
+  'gpt-4-turbo-preview':'gpt-4-turbo',
+  'gpt-4':              'gpt-4o',
+  'o1':                 'o1',
+  'o3':                 'o3',
+  'o3-mini':            'o3-mini',
+  'o4-mini':            'o4-mini',
+  'gpt-4.1':            'gpt-4.1',
+  'gpt-4.1-mini':       'gpt-4.1-mini',
+  'gpt-4.1-nano':       'gpt-4.1-nano',
+  // Deprecated / fake → newest real equivalent
+  'gpt-5':              'gpt-4.1',
+  'gpt-5.1':            'gpt-4.1',
+  'gpt-5.2':            'gpt-4.1',
+  'gpt-5.2-codex':      'gpt-4.1',
+  'gpt-5-mini':         'gpt-4.1-mini',
+  'gpt-5-nano':         'gpt-4.1-nano',
+  'o1-mini':            'o4-mini',
 
-  // ── Google Gemini: fake/deprecated → real ────────────────────────────────────
-  'gemini-3-flash': 'gemini-2.5-flash',
-  'gemini-3-pro': 'gemini-1.5-pro',
-  'gemini-2.5-pro': 'gemini-1.5-pro',
-  'gemini-2.0-flash-exp': 'gemini-2.0-flash',
-  // Real Gemini models — identity mappings
-  'gemini-2.5-flash': 'gemini-2.5-flash',
-  'gemini-2.0-flash': 'gemini-2.0-flash',
-  'gemini-1.5-pro': 'gemini-1.5-pro',
-  'gemini-1.5-flash': 'gemini-1.5-flash',
-  // Short aliases
-  'gemini-pro': 'gemini-1.5-pro',
-  'gemini-flash': 'gemini-1.5-flash',
+  // ── Anthropic ────────────────────────────────────────────────────────────────
+  // Confirmed real (400 "credit balance too low" = model exists)
+  'claude-3-5-sonnet-20241022':   'claude-3-5-sonnet-20241022',
+  'claude-3-5-haiku-20241022':    'claude-3-5-haiku-20241022',
+  'claude-3-opus-20240229':       'claude-3-opus-20240229',
+  'claude-3-haiku-20240307':      'claude-3-haiku-20240307',
+  'claude-3-7-sonnet-20250219':   'claude-3-7-sonnet-20250219',
+  'claude-sonnet-4-20250514':     'claude-sonnet-4-20250514',
+  'claude-opus-4-20250514':       'claude-opus-4-20250514',
+  // Aliases → latest real
+  'claude-sonnet':                'claude-sonnet-4-20250514',
+  'claude-opus':                  'claude-opus-4-20250514',
+  'claude-haiku':                 'claude-3-5-haiku-20241022',
+  'claude-3-5-sonnet':            'claude-3-5-sonnet-20241022',
+  'claude-3-7-sonnet':            'claude-3-7-sonnet-20250219',
+  'claude-3-opus':                'claude-3-opus-20240229',
+  'claude-3-haiku':               'claude-3-haiku-20240307',
+  'claude-opus-4-5':              'claude-opus-4-20250514',
+  'claude-opus-4.5':              'claude-opus-4-20250514',
+  'claude-sonnet-4':              'claude-sonnet-4-20250514',
+  'claude-sonnet-4-5':            'claude-sonnet-4-20250514',
+  // Deprecated → real
+  'claude-haiku-4-5-20251015':    'claude-3-5-haiku-20241022',
+  'claude-sonnet-4-5-20250929':   'claude-sonnet-4-20250514',
+  'claude-opus-4-5-20251101':     'claude-opus-4-20250514',
+  'claude-opus-4-5-20251124':     'claude-opus-4-20250514',
+  'claude-opus-4-1-20250805':     'claude-opus-4-20250514',
 
-  // ── xAI: fake/deprecated → real ─────────────────────────────────────────────
-  'grok': 'grok-2-1212',
-  'grok-3': 'grok-2-1212',
-  'grok-3-fast': 'grok-2-1212',
-  'grok-3-fast-latest': 'grok-2-1212',
-  'grok-4': 'grok-2-1212',
-  'grok-4-fast': 'grok-2-1212',
-  'grok-fast': 'grok-2-1212',
-  'grok-4-1-fast': 'grok-2-1212',
-  'grok-4-1-fast-reasoning': 'grok-2-1212',
-  // Real xAI models — identity mappings
-  'grok-2-1212': 'grok-2-1212',
-  'grok-2-vision-1212': 'grok-2-vision-1212',
+  // ── Google Gemini ─────────────────────────────────────────────────────────────
+  // Confirmed real
+  'gemini-2.5-flash':             'gemini-2.5-flash',
+  'gemini-2.5-pro':               'gemini-2.5-pro',
+  'gemini-2.0-flash':             'gemini-2.0-flash',
+  'gemini-2.0-flash-lite':        'gemini-2.0-flash-lite',
+  'gemini-1.5-pro':               'gemini-1.5-pro',
+  'gemini-1.5-flash':             'gemini-1.5-flash',
+  // Aliases → latest
+  'gemini-pro':                   'gemini-2.5-pro',
+  'gemini-flash':                 'gemini-2.5-flash',
+  // Deprecated → real
+  'gemini-3-flash':               'gemini-2.5-flash',
+  'gemini-3-pro':                 'gemini-2.5-pro',
+  'gemini-2.0-flash-exp':         'gemini-2.0-flash',
 
-  // ── Moonshot AI: fake/aliases → real ─────────────────────────────────────────
-  'kimi': 'moonshot-v1-32k',
-  'kimi-k2': 'moonshot-v1-32k',
-  'kimi-thinking': 'moonshot-v1-128k',
-  'kimi-k2-thinking': 'moonshot-v1-128k',
-  'kimi-k2-thinking-turbo': 'moonshot-v1-128k',
-  'kimi-k2-turbo-preview': 'moonshot-v1-32k',
-  'kimi-k2-0905-preview': 'moonshot-v1-128k',
-  'kimi-k2-0711-preview': 'moonshot-v1-128k',
-  // Real Moonshot models — identity mappings
-  'moonshot-v1-8k': 'moonshot-v1-8k',
-  'moonshot-v1-32k': 'moonshot-v1-32k',
-  'moonshot-v1-128k': 'moonshot-v1-128k',
+  // ── xAI / Grok ───────────────────────────────────────────────────────────────
+  // grok-3 family confirmed real (403 billing = model exists)
+  // grok-2-1212 returns 400 "model not found" — deprecated/wrong ID
+  'grok-3':                       'grok-3',
+  'grok-3-mini':                  'grok-3-mini',
+  'grok-3-fast':                  'grok-3-fast',
+  // Old/wrong IDs → grok-3
+  'grok-2-1212':                  'grok-3',
+  'grok-2-vision-1212':           'grok-3',
+  'grok-2':                       'grok-3',
+  'grok-2-latest':                'grok-3',
+  'grok':                         'grok-3',
+  'grok-beta':                    'grok-3',
+  'grok-fast':                    'grok-3-fast',
+  'grok-3-fast-latest':           'grok-3-fast',
+  'grok-4':                       'grok-3',
+  'grok-4-fast':                  'grok-3-fast',
+  'grok-4-1-fast':                'grok-3-fast',
+  'grok-4-1-fast-reasoning':      'grok-3',
+
+  // ── Moonshot AI / Kimi ───────────────────────────────────────────────────────
+  'moonshot-v1-8k':               'moonshot-v1-8k',
+  'moonshot-v1-32k':              'moonshot-v1-32k',
+  'moonshot-v1-128k':             'moonshot-v1-128k',
+  'kimi':                         'moonshot-v1-32k',
+  'kimi-k1.5':                    'moonshot-v1-128k',
+  'kimi-k2':                      'moonshot-v1-128k',
+  'kimi-thinking':                'moonshot-v1-128k',
+  'kimi-k2-thinking':             'moonshot-v1-128k',
+  'kimi-k2-thinking-turbo':       'moonshot-v1-128k',
+  'kimi-k2-turbo-preview':        'moonshot-v1-32k',
+  'kimi-k2-0905-preview':         'moonshot-v1-128k',
+  'kimi-k2-0711-preview':         'moonshot-v1-128k',
 };
 
-/**
- * Normalize model name to a valid aiModelEnum value that actually works with the provider API.
- * @param modelName - Raw model name from API request or provider default
- * @param provider - Provider name (for fallback)
- * @returns Valid model name for both API calls and DB inserts
- */
+const PROVIDER_DEFAULTS: Record<string, string> = {
+  'openai':     'gpt-4.1',
+  'anthropic':  'claude-sonnet-4-20250514',
+  'gemini':     'gemini-2.5-flash',
+  'google':     'gemini-2.5-flash',
+  'xai':        'grok-3',
+  'moonshot':   'moonshot-v1-32k',
+};
+
 export function normalizeModelName(modelName: string | any | undefined, provider: string): string {
   let normalizedInput: string | undefined = modelName;
-  
-  // Handle model OBJECTS being passed instead of string IDs
+
   if (modelName && typeof modelName === 'object') {
     if ('id' in modelName && typeof modelName.id === 'string') {
       normalizedInput = modelName.id;
@@ -121,25 +141,13 @@ export function normalizeModelName(modelName: string | any | undefined, provider
       normalizedInput = undefined;
     }
   }
-  
-  // Provider-specific fallback defaults (real model names)
-  const providerDefaults: Record<string, string> = {
-    'openai': 'gpt-4o',
-    'anthropic': 'claude-3-5-sonnet-20241022',
-    'gemini': 'gemini-1.5-pro',
-    'google': 'gemini-1.5-pro',
-    'xai': 'grok-2-1212',
-    'moonshot': 'moonshot-v1-32k',
-  };
 
-  // Handle undefined/null
   if (!normalizedInput) {
-    const fallback = providerDefaults[provider.toLowerCase()] || 'gpt-4o';
-    logger.warn(`Model name is undefined/null, using provider default: ${fallback}`);
+    const fallback = PROVIDER_DEFAULTS[provider.toLowerCase()] || 'gpt-4.1';
+    logger.warn(`Model name undefined/null, using provider default: ${fallback}`);
     return fallback;
   }
-  
-  // Exact match in normalization map
+
   if (MODEL_NORMALIZATION_MAP[normalizedInput]) {
     const normalized = MODEL_NORMALIZATION_MAP[normalizedInput];
     if (normalized !== normalizedInput) {
@@ -147,11 +155,8 @@ export function normalizeModelName(modelName: string | any | undefined, provider
     }
     return normalized;
   }
-  
-  // Unknown model — log warning and use provider default
+
   logger.warn(`Unknown model: "${normalizedInput}" (provider: ${provider}) — using provider default`);
-  AlertService.unknownModel(normalizedInput, provider, providerDefaults[provider.toLowerCase()] || 'gpt-4o').catch(() => {});
-  
-  const normalizedProvider = provider.toLowerCase();
-  return providerDefaults[normalizedProvider] || 'gpt-4o';
+  AlertService.unknownModel(normalizedInput, provider, PROVIDER_DEFAULTS[provider.toLowerCase()] || 'gpt-4.1').catch(() => {});
+  return PROVIDER_DEFAULTS[provider.toLowerCase()] || 'gpt-4.1';
 }

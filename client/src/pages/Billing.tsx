@@ -320,15 +320,15 @@ export default function Billing() {
               <CardContent className="space-y-4">
                 {subscriptionStatus?.hasSubscription ? (
                   <>
-                    <div className="flex justify-between items-center p-4 bg-muted rounded-lg">
-                      <div>
-                        <p className="font-medium capitalize">{currentTier} Plan</p>
-                        <p className="text-[13px] text-muted-foreground">
-                          ${creditsAllowance}/month in credits included
-                        </p>
+                      <div className="flex justify-between items-center p-4 bg-muted rounded-lg">
+                        <div>
+                          <p className="font-medium capitalize">{currentTier} Plan</p>
+                          <p className="text-[13px] text-muted-foreground">
+                            ${creditsAllowance}/month in credits included
+                          </p>
+                        </div>
+                        {getStatusBadge(subscriptionStatus?.subscriptionStatus || null)}
                       </div>
-                      {getStatusBadge(subscriptionStatus.subscriptionStatus)}
-                    </div>
                     {subscriptionStatus.subscriptionStatus === 'active' && (
                       <div className="flex gap-2">
                         <Button variant="outline" asChild>

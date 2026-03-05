@@ -216,8 +216,8 @@ export default function Desktop() {
       <section className="py-20 bg-muted/30">
         <div className="container-responsive">
           <LazyMotionDiv
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ duration: 0.5 }}
             className="relative rounded-xl overflow-hidden shadow-2xl"
           >

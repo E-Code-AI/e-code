@@ -414,8 +414,8 @@ export default function AdminBilling() {
                         <TableRow key={sub.id} className="border-zinc-700">
                           <TableCell className="text-white">
                             <div>
-                              <p className="font-medium">{sub.username || 'Unknown'}</p>
-                              <p className="text-[11px] text-zinc-500">{sub.email || 'No email'}</p>
+                              <p className="font-medium">{sub?.username || 'Unknown'}</p>
+                              <p className="text-[11px] text-zinc-500">{sub?.email || 'No email'}</p>
                             </div>
                           </TableCell>
                           <TableCell className="text-zinc-300 capitalize">{sub.subscriptionTier || 'free'}</TableCell>

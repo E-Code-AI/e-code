@@ -106,7 +106,6 @@ export function AdvancedSearch({ initialQuery = '' }: { initialQuery?: string })
 
   const debouncedQuery = useDebounce(query, 300);
 
-  // Search query
   const { data, isLoading, error } = useQuery({
     queryKey: [
       `/api/search?${new URLSearchParams({
@@ -115,7 +114,7 @@ export function AdvancedSearch({ initialQuery = '' }: { initialQuery?: string })
         ...Object.fromEntries(
           Object.entries(filters).map(([key, value]) => [
             key, 
-            Array.isArray(value) ? value.join(',') : value
+            Array.from(Array.isArray(value) ? value : [value]).join(',')
           ])
         ),
       }).toString()}`
@@ -127,7 +126,6 @@ export function AdvancedSearch({ initialQuery = '' }: { initialQuery?: string })
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    // Trigger search
   };
 
   const updateFilter = (key: keyof SearchFilters, value: any) => {
@@ -145,7 +143,7 @@ export function AdvancedSearch({ initialQuery = '' }: { initialQuery?: string })
   };
 
   const getResultIcon = (result: SearchResult) => {
-    switch (result.type) {
+    switch (result?.type) {
       case 'project':
         return <Folder className="h-4 w-4" />;
       case 'file':
@@ -172,6 +170,8 @@ export function AdvancedSearch({ initialQuery = '' }: { initialQuery?: string })
     };
     return colors[language || ''] || 'bg-gray-500';
   };
+
+  const filteredResults = displayResults.filter(Boolean);
 
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-6">
@@ -223,12 +223,12 @@ export function AdvancedSearch({ initialQuery = '' }: { initialQuery?: string })
               >
                 <type.icon className="h-4 w-4" />
                 {type.name}
-                {displayResults.filter((r: SearchResult) => 
-                  type.id === 'all' || r.type === type.id.slice(0, -1)
+                {filteredResults.filter((r: SearchResult) => 
+                  type.id === 'all' || r?.type === type.id.slice(0, -1)
                 ).length > 0 && (
                   <Badge variant="secondary" className="ml-1 h-5 px-1">
-                    {displayResults.filter((r: SearchResult) => 
-                      type.id === 'all' || r.type === type.id.slice(0, -1)
+                    {filteredResults.filter((r: SearchResult) => 
+                      type.id === 'all' || r?.type === type.id.slice(0, -1)
                     ).length}
                   </Badge>
                 )}
@@ -385,7 +385,7 @@ export function AdvancedSearch({ initialQuery = '' }: { initialQuery?: string })
           </div>
         )}
 
-        {!isLoading && displayResults.length === 0 && query && (
+        {!isLoading && filteredResults.length === 0 && query && (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12 text-center">
               <Search className="h-12 w-12 text-muted-foreground mb-4" />
@@ -397,22 +397,22 @@ export function AdvancedSearch({ initialQuery = '' }: { initialQuery?: string })
           </Card>
         )}
 
-        {!isLoading && displayResults.map((result: SearchResult) => (
+        {!isLoading && filteredResults.map((result: SearchResult) => (
           <Card 
-            key={result.id}
+            key={result?.id}
             className="hover:shadow-md transition-shadow cursor-pointer"
-            onClick={() => navigate(result.url)}
-            data-testid={`card-result-${result.id}`}
+            onClick={() => result?.url && navigate(result.url)}
+            data-testid={`card-result-${result?.id}`}
           >
             <CardContent className="p-4">
               <div className="flex items-start gap-4">
                 <div className={cn(
                   "p-2 rounded-lg",
-                  result.type === 'project' && "bg-blue-500/10 text-blue-500",
-                  result.type === 'file' && "bg-green-500/10 text-green-500",
-                  result.type === 'code' && "bg-purple-500/10 text-purple-500",
-                  result.type === 'user' && "bg-orange-500/10 text-orange-500",
-                  result.type === 'template' && "bg-pink-500/10 text-pink-500"
+                  result?.type === 'project' && "bg-blue-500/10 text-blue-500",
+                  result?.type === 'file' && "bg-green-500/10 text-green-500",
+                  result?.type === 'code' && "bg-purple-500/10 text-purple-500",
+                  result?.type === 'user' && "bg-orange-500/10 text-orange-500",
+                  result?.type === 'template' && "bg-pink-500/10 text-pink-500"
                 )}>
                   {getResultIcon(result)}
                 </div>
@@ -421,8 +421,8 @@ export function AdvancedSearch({ initialQuery = '' }: { initialQuery?: string })
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
                       <h3 className="font-semibold flex items-center gap-2">
-                        {result.title}
-                        {result.metadata?.visibility && (
+                        {result?.title}
+                        {result?.metadata?.visibility && (
                           <Badge variant="outline" className="text-[11px]">
                             {result.metadata.visibility === 'public' && <Globe className="h-3 w-3 mr-1" />}
                             {result.metadata.visibility === 'private' && <Lock className="h-3 w-3 mr-1" />}
@@ -431,20 +431,20 @@ export function AdvancedSearch({ initialQuery = '' }: { initialQuery?: string })
                           </Badge>
                         )}
                       </h3>
-                      {result.description && (
+                      {result?.description && (
                         <p className="text-[13px] text-muted-foreground mt-1">
                           {result.description}
                         </p>
                       )}
                       
-                      {result.type === 'code' && result.metadata?.preview && (
+                      {result?.type === 'code' && result?.metadata?.preview && (
                         <pre className="mt-2 p-2 bg-muted rounded text-[11px] overflow-x-auto">
                           <code>{result.metadata.preview}</code>
                         </pre>
                       )}
                       
                       <div className="flex items-center gap-4 mt-2 text-[11px] text-muted-foreground">
-                        {result.metadata?.language && (
+                        {result?.metadata?.language && (
                           <span className="flex items-center gap-1">
                             <span className={cn(
                               "w-2 h-2 rounded-full",
@@ -453,25 +453,25 @@ export function AdvancedSearch({ initialQuery = '' }: { initialQuery?: string })
                             {result.metadata.language}
                           </span>
                         )}
-                        {result.metadata?.owner && (
+                        {result?.metadata?.owner && (
                           <span className="flex items-center gap-1">
                             <Users className="h-3 w-3" />
                             {result.metadata.owner}
                           </span>
                         )}
-                        {result.metadata?.stars !== undefined && (
+                        {result?.metadata?.stars !== undefined && (
                           <span className="flex items-center gap-1">
                             <Star className="h-3 w-3" />
                             {result.metadata.stars}
                           </span>
                         )}
-                        {result.metadata?.lastModified && (
+                        {result?.metadata?.lastModified && (
                           <span className="flex items-center gap-1">
                             <Clock className="h-3 w-3" />
                             {result.metadata.lastModified}
                           </span>
                         )}
-                        {result.metadata?.matches !== undefined && (
+                        {result?.metadata?.matches !== undefined && (
                           <Badge variant="secondary" className="h-5">
                             {result.metadata.matches} matches
                           </Badge>
@@ -479,10 +479,10 @@ export function AdvancedSearch({ initialQuery = '' }: { initialQuery?: string })
                       </div>
                     </div>
                     
-                    {result.type === 'user' && (
+                    {result?.type === 'user' && (
                       <Avatar className="h-12 w-12">
                         <AvatarFallback>
-                          {result.title.slice(0, 2).toUpperCase()}
+                          {result.title?.slice(0, 2).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
                     )}
@@ -492,6 +492,45 @@ export function AdvancedSearch({ initialQuery = '' }: { initialQuery?: string })
             </CardContent>
           </Card>
         ))}
+
+        {!isLoading && !query && (
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+              <Search className="h-12 w-12 text-muted-foreground mb-4" />
+              <h3 className="text-[15px] font-semibold mb-2">Start searching</h3>
+              <p className="text-muted-foreground max-w-sm">
+                Search for projects, files, code snippets, users, and templates across the platform.
+              </p>
+              <div className="flex flex-wrap gap-2 mt-4">
+                <Badge 
+                  variant="secondary" 
+                  className="cursor-pointer hover:bg-secondary/80"
+                  onClick={() => setQuery('typescript react')}
+                >
+                  typescript react
+                </Badge>
+                <Badge 
+                  variant="secondary" 
+                  className="cursor-pointer hover:bg-secondary/80"
+                  onClick={() => setQuery('python machine learning')}
+                >
+                  python machine learning
+                </Badge>
+                <Badge 
+                  variant="secondary" 
+                  className="cursor-pointer hover:bg-secondary/80"
+                  onClick={() => setQuery('next.js template')}
+                >
+                  next.js template
+                </Badge>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    </div>
+  );
+}
 
         {!isLoading && !query && (
           <Card>

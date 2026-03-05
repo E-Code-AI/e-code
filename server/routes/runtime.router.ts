@@ -90,11 +90,22 @@ router.get('/projects/:id/runtime', ensureAuthenticated, ensureProjectAccess, ge
  * POST /api/projects/:id/runtime/execute
  * Execute command in project runtime
  */
-router.post('/projects/:id/runtime/execute', ensureAuthenticated, ensureProjectAccess, (req, res) => {
-  executeProjectCommand(req, res).catch(err => {
+router.post('/projects/:id/runtime/execute', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+  try {
+    const { command, args, input } = req.body;
+    const projectId = req.params.id;
+
+    if (!command) {
+      return res.status(400).json({ error: 'Command is required' });
+    }
+
+    await executeProjectCommand(req, res);
+  } catch (err: any) {
     logger.error('Execute command failed:', err);
-    res.status(500).json({ error: 'Failed to execute command', details: err.message });
-  });
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'Failed to execute command', details: err.message });
+    }
+  }
 });
 
 /**

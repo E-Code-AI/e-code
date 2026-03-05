@@ -353,20 +353,20 @@ export default function AdminDashboard() {
                   {activities?.map((activity: any, index: number) => (
                     <div key={index} className="flex items-start gap-4 pb-4 border-b last:border-0">
                       <div className={`p-2 rounded-full ${
-                        activity.type === 'user' ? 'bg-blue-100' :
-                        activity.type === 'project' ? 'bg-green-100' :
-                        activity.type === 'system' ? 'bg-purple-100' :
+                        activity?.type === 'user' ? 'bg-blue-100' :
+                        activity?.type === 'project' ? 'bg-green-100' :
+                        activity?.type === 'system' ? 'bg-purple-100' :
                         'bg-gray-100'
                       }`}>
-                        {activity.type === 'user' ? <Users className="h-4 w-4" /> :
-                         activity.type === 'project' ? <FileText className="h-4 w-4" /> :
-                         activity.type === 'system' ? <Settings className="h-4 w-4" /> :
+                        {activity?.type === 'user' ? <Users className="h-4 w-4" /> :
+                         activity?.type === 'project' ? <FileText className="h-4 w-4" /> :
+                         activity?.type === 'system' ? <Settings className="h-4 w-4" /> :
                          <Activity className="h-4 w-4" />}
                       </div>
                       <div className="flex-1">
-                        <p className="text-[13px] font-medium">{activity.message}</p>
+                        <p className="text-[13px] font-medium">{activity?.message || 'No message'}</p>
                         <p className="text-[11px] text-muted-foreground">
-                          {formatDistanceToNow(new Date(activity.timestamp), { addSuffix: true })}
+                          {activity?.timestamp ? formatDistanceToNow(new Date(activity.timestamp), { addSuffix: true }) : 'unknown time'}
                         </p>
                       </div>
                     </div>

@@ -350,8 +350,8 @@ export default function AdminAIUsage() {
                         <TableRow key={record.id} data-testid={`row-record-${record.id}`}>
                   <TableCell className="font-mono text-[11px]">
                             <div>
-                              <div className="font-medium">{record.username || 'Unknown'}</div>
-                              <div className="text-muted-foreground">{(record.userId || 'unknown').toString().slice(0, 8)}...</div>
+                              <div className="font-medium">{record?.username || 'Unknown'}</div>
+                              <div className="text-muted-foreground">{(record?.userId || 'unknown').toString().slice(0, 8)}...</div>
                             </div>
                           </TableCell>
                           <TableCell>

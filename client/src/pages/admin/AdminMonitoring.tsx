@@ -122,9 +122,9 @@ export default function AdminMonitoring() {
     setLoading(true);
     try {
       const [healthRes, metricsRes, detailedRes] = await Promise.all([
-        fetch('/api/health').then(r => r.json()).catch(() => null),
-        fetch('/api/metrics').then(r => r.json()).catch(() => null),
-        fetch('/api/health/detailed').then(r => r.json()).catch(() => null),
+        fetch('/api/health').then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch('/api/metrics').then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch('/api/health/detailed').then(r => r.ok ? r.json() : null).catch(() => null),
       ]);
       setHealthData(healthRes);
       setMetricsData(metricsRes);

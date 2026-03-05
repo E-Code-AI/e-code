@@ -208,17 +208,17 @@ export default function Home() {
 
   // Filter projects based on search query
   const filteredProjects = projects?.filter(
-    (project) => project.name.toLowerCase().includes(searchQuery.toLowerCase())
+    (project) => (project?.name || "").toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   // Sort projects based on active tab
-  const sortedProjects = filteredProjects?.sort((a, b) => {
+  const sortedProjects = (filteredProjects || [])?.sort((a, b) => {
     if (activeTab === "recent") {
-      const dateA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
-      const dateB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+      const dateA = a?.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+      const dateB = b?.updatedAt ? new Date(b.updatedAt).getTime() : 0;
       return dateB - dateA;
     }
-    return (a.name || "").localeCompare(b.name || "");
+    return (a?.name || "").localeCompare(b?.name || "");
   });
 
   const homeStructuredData = {
@@ -511,7 +511,7 @@ export default function Home() {
                         <CardTitle className="flex items-center justify-between text-[15px]">
                           <div className="flex items-center gap-2 truncate">
                             <Code className="h-4 w-4 flex-shrink-0 text-primary" />
-                            <span className="truncate">{project.name || 'Untitled Project'}</span>
+                            <span className="truncate">{project?.name || 'Untitled Project'}</span>
                           </div>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>

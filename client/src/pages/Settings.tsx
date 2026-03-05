@@ -101,7 +101,7 @@ export default function Settings() {
           minimap,
           autoSave,
         },
-        notifications,
+        notifications: notifications || {},
       });
       
       queryClient.invalidateQueries({ queryKey: ['/api/user'] });

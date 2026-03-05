@@ -49,21 +49,51 @@ export function AllModelsSelector() {
     ...(openaiModels?.models || []),
     ...(opensourceData?.models || []),
     
-    // OpenAI
+    // ── OpenAI (all confirmed real — live API test March 2026) ──────────────────
+    {
+      id: 'gpt-4.1',
+      name: 'GPT-4.1',
+      description: 'Latest OpenAI flagship — best coding, instruction following, 1M context',
+      provider: 'OpenAI',
+      contextWindow: 1047576,
+      capabilities: ['Chat', 'Code', 'Vision', 'Tools', 'Long Context'],
+      pricing: { input: 2, output: 8, currency: 'USD', unit: '1M tokens' },
+      available: true
+    },
+    {
+      id: 'gpt-4.1-mini',
+      name: 'GPT-4.1 Mini',
+      description: 'Fast and efficient — best price-to-performance, 1M context',
+      provider: 'OpenAI',
+      contextWindow: 1047576,
+      capabilities: ['Chat', 'Code', 'Vision', 'Tools'],
+      pricing: { input: 0.4, output: 1.6, currency: 'USD', unit: '1M tokens' },
+      available: true
+    },
+    {
+      id: 'gpt-4.1-nano',
+      name: 'GPT-4.1 Nano',
+      description: 'Smallest and fastest OpenAI model — high-volume, latency-sensitive tasks',
+      provider: 'OpenAI',
+      contextWindow: 1047576,
+      capabilities: ['Chat', 'Code', 'Fast Response'],
+      pricing: { input: 0.1, output: 0.4, currency: 'USD', unit: '1M tokens' },
+      available: true
+    },
     {
       id: 'gpt-4o',
       name: 'GPT-4o',
-      description: 'Flagship multimodal model — vision, audio, and text with 128K context',
+      description: 'Multimodal flagship — vision, audio, and text with 128K context',
       provider: 'OpenAI',
       contextWindow: 128000,
-      capabilities: ['Chat', 'Code', 'Vision', 'Tools'],
+      capabilities: ['Chat', 'Code', 'Vision', 'Audio', 'Tools'],
       pricing: { input: 2.5, output: 10, currency: 'USD', unit: '1M tokens' },
       available: true
     },
     {
       id: 'gpt-4o-mini',
       name: 'GPT-4o Mini',
-      description: 'Affordable and fast — best price-to-performance for most tasks',
+      description: 'Affordable multimodal — vision + text at low cost',
       provider: 'OpenAI',
       contextWindow: 128000,
       capabilities: ['Chat', 'Code', 'Vision'],
@@ -71,23 +101,13 @@ export function AllModelsSelector() {
       available: true
     },
     {
-      id: 'o1',
-      name: 'o1',
-      description: 'Advanced reasoning model — excels at complex STEM and coding problems',
+      id: 'o4-mini',
+      name: 'o4-mini',
+      description: 'Latest efficient reasoning — fast STEM and coding at low cost',
       provider: 'OpenAI',
-      contextWindow: 128000,
+      contextWindow: 200000,
       capabilities: ['Reasoning', 'Code', 'Math', 'Science'],
-      pricing: { input: 15, output: 60, currency: 'USD', unit: '1M tokens' },
-      available: true
-    },
-    {
-      id: 'o1-mini',
-      name: 'o1 Mini',
-      description: 'Faster, cheaper reasoning — coding, math, and science tasks',
-      provider: 'OpenAI',
-      contextWindow: 128000,
-      capabilities: ['Reasoning', 'Code', 'Math'],
-      pricing: { input: 3, output: 12, currency: 'USD', unit: '1M tokens' },
+      pricing: { input: 1.1, output: 4.4, currency: 'USD', unit: '1M tokens' },
       available: true
     },
     {
@@ -95,21 +115,71 @@ export function AllModelsSelector() {
       name: 'o3',
       description: 'Most powerful reasoning — frontier performance on hard benchmarks',
       provider: 'OpenAI',
+      contextWindow: 200000,
+      capabilities: ['Reasoning', 'Code', 'Math', 'Science'],
+      pricing: { input: 10, output: 40, currency: 'USD', unit: '1M tokens' },
+      available: true
+    },
+    {
+      id: 'o3-mini',
+      name: 'o3-mini',
+      description: 'Efficient reasoning — strong on math, science, and code at lower cost',
+      provider: 'OpenAI',
+      contextWindow: 200000,
+      capabilities: ['Reasoning', 'Code', 'Math'],
+      pricing: { input: 1.1, output: 4.4, currency: 'USD', unit: '1M tokens' },
+      available: true
+    },
+    {
+      id: 'o1',
+      name: 'o1',
+      description: 'Advanced reasoning model — complex STEM and coding problems',
+      provider: 'OpenAI',
       contextWindow: 128000,
       capabilities: ['Reasoning', 'Code', 'Math', 'Science'],
       pricing: { input: 15, output: 60, currency: 'USD', unit: '1M tokens' },
       available: true
     },
-    
-    // Anthropic
     {
-      id: 'claude-3-opus-20240229',
-      name: 'Claude 3 Opus',
-      description: 'Most capable Claude — excels at complex analysis, long-form writing',
+      id: 'gpt-4-turbo',
+      name: 'GPT-4 Turbo',
+      description: 'Previous-generation flagship with broad knowledge',
+      provider: 'OpenAI',
+      contextWindow: 128000,
+      capabilities: ['Chat', 'Code', 'Vision'],
+      pricing: { input: 10, output: 30, currency: 'USD', unit: '1M tokens' },
+      available: true
+    },
+
+    // ── Anthropic (all confirmed real — live API test March 2026) ───────────────
+    {
+      id: 'claude-opus-4-20250514',
+      name: 'Claude Opus 4',
+      description: 'Most powerful Claude — frontier intelligence, complex tasks, 200K context',
       provider: 'Anthropic',
       contextWindow: 200000,
-      capabilities: ['Chat', 'Code', 'Vision', 'Analysis'],
+      capabilities: ['Chat', 'Code', 'Vision', 'Agents', 'Analysis'],
       pricing: { input: 15, output: 75, currency: 'USD', unit: '1M tokens' },
+      available: true
+    },
+    {
+      id: 'claude-sonnet-4-20250514',
+      name: 'Claude Sonnet 4',
+      description: 'High performance — excellent coding, analysis, and agentic workflows',
+      provider: 'Anthropic',
+      contextWindow: 200000,
+      capabilities: ['Chat', 'Code', 'Vision', 'Agents'],
+      pricing: { input: 3, output: 15, currency: 'USD', unit: '1M tokens' },
+      available: true
+    },
+    {
+      id: 'claude-3-7-sonnet-20250219',
+      name: 'Claude 3.7 Sonnet',
+      description: 'Extended thinking — deep reasoning with visible thought process',
+      provider: 'Anthropic',
+      contextWindow: 200000,
+      capabilities: ['Chat', 'Code', 'Reasoning', 'Thinking'],
+      pricing: { input: 3, output: 15, currency: 'USD', unit: '1M tokens' },
       available: true
     },
     {
@@ -132,12 +202,42 @@ export function AllModelsSelector() {
       pricing: { input: 0.8, output: 4, currency: 'USD', unit: '1M tokens' },
       available: true
     },
-    
-    // Google Gemini
+    {
+      id: 'claude-3-opus-20240229',
+      name: 'Claude 3 Opus',
+      description: 'Previous-generation flagship for complex reasoning and analysis',
+      provider: 'Anthropic',
+      contextWindow: 200000,
+      capabilities: ['Chat', 'Code', 'Vision', 'Analysis'],
+      pricing: { input: 15, output: 75, currency: 'USD', unit: '1M tokens' },
+      available: true
+    },
+    {
+      id: 'claude-3-haiku-20240307',
+      name: 'Claude 3 Haiku',
+      description: 'Fastest compact model — high throughput, low latency',
+      provider: 'Anthropic',
+      contextWindow: 200000,
+      capabilities: ['Chat', 'Code', 'Fast Response'],
+      pricing: { input: 0.25, output: 1.25, currency: 'USD', unit: '1M tokens' },
+      available: true
+    },
+
+    // ── Google Gemini ───────────────────────────────────────────────────────────
+    {
+      id: 'gemini-2.5-pro',
+      name: 'Gemini 2.5 Pro',
+      description: 'Most powerful Gemini — state-of-the-art reasoning, 1M context',
+      provider: 'Google',
+      contextWindow: 1000000,
+      capabilities: ['Chat', 'Code', 'Reasoning', 'Multimodal', 'Long Context'],
+      pricing: { input: 1.25, output: 10, currency: 'USD', unit: '1M tokens' },
+      available: true
+    },
     {
       id: 'gemini-2.5-flash',
       name: 'Gemini 2.5 Flash',
-      description: 'Adaptive thinking — fast reasoning with 1M context window',
+      description: 'Best price-performance — adaptive thinking with 1M context (LIVE ✓)',
       provider: 'Google',
       contextWindow: 1000000,
       capabilities: ['Chat', 'Code', 'Reasoning', 'Multimodal'],
@@ -147,11 +247,21 @@ export function AllModelsSelector() {
     {
       id: 'gemini-2.0-flash',
       name: 'Gemini 2.0 Flash',
-      description: 'Next-gen performance — native tool use, 1M context, superior speed',
+      description: 'Next-gen speed — native tool use, 1M context, multimodal',
       provider: 'Google',
       contextWindow: 1000000,
       capabilities: ['Chat', 'Code', 'Tools', 'Multimodal'],
       pricing: { input: 0.075, output: 0.3, currency: 'USD', unit: '1M tokens' },
+      available: true
+    },
+    {
+      id: 'gemini-2.0-flash-lite',
+      name: 'Gemini 2.0 Flash Lite',
+      description: 'Most cost-efficient Gemini — fastest for high-volume tasks',
+      provider: 'Google',
+      contextWindow: 1000000,
+      capabilities: ['Chat', 'Code', 'Fast Response'],
+      pricing: { input: 0.019, output: 0.075, currency: 'USD', unit: '1M tokens' },
       available: true
     },
     {
@@ -175,25 +285,35 @@ export function AllModelsSelector() {
       available: true
     },
     
-    // xAI — grok-2-1212 is the released production model
+    // ── xAI / Grok (grok-3 family confirmed real — live API test March 2026) ────
     {
-      id: 'grok-2-1212',
-      name: 'Grok 2',
-      description: 'xAI flagship — 131K context, function calling, JSON mode',
+      id: 'grok-3',
+      name: 'Grok 3',
+      description: "xAI flagship — real-time knowledge, strong reasoning, 131K context",
       provider: 'xAI',
       contextWindow: 131072,
-      capabilities: ['Chat', 'Code', 'Vision', 'Tools'],
-      pricing: { input: 2, output: 10, currency: 'USD', unit: '1M tokens' },
+      capabilities: ['Chat', 'Code', 'Reasoning', 'Tools', 'Real-time'],
+      pricing: { input: 3, output: 15, currency: 'USD', unit: '1M tokens' },
       available: true
     },
     {
-      id: 'grok-2-vision-1212',
-      name: 'Grok 2 Vision',
-      description: 'xAI vision model — image understanding and multimodal tasks',
+      id: 'grok-3-mini',
+      name: 'Grok 3 Mini',
+      description: 'Efficient Grok — fast reasoning at lower cost, ideal for dev tasks',
       provider: 'xAI',
-      contextWindow: 8192,
-      capabilities: ['Chat', 'Vision', 'Multimodal'],
-      pricing: { input: 2, output: 10, currency: 'USD', unit: '1M tokens' },
+      contextWindow: 131072,
+      capabilities: ['Chat', 'Code', 'Reasoning'],
+      pricing: { input: 0.3, output: 0.5, currency: 'USD', unit: '1M tokens' },
+      available: true
+    },
+    {
+      id: 'grok-3-fast',
+      name: 'Grok 3 Fast',
+      description: 'Fastest Grok variant — speed-optimized for low-latency workloads',
+      provider: 'xAI',
+      contextWindow: 131072,
+      capabilities: ['Chat', 'Code', 'Fast Response'],
+      pricing: { input: 5, output: 25, currency: 'USD', unit: '1M tokens' },
       available: true
     },
 
@@ -543,15 +663,15 @@ export function AllModelsSelector() {
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <CheckCircle className="h-4 w-4 text-green-500" />
-              <span className="text-[13px]">OpenAI: GPT-4o, GPT-4o Mini, o1, o1 Mini, o3</span>
+              <span className="text-[13px]">OpenAI: GPT-4.1, GPT-4.1 Mini, GPT-4.1 Nano, GPT-4o, o4-mini, o3, o3-mini, o1</span>
             </div>
             <div className="flex items-center gap-2">
               <CheckCircle className="h-4 w-4 text-green-500" />
-              <span className="text-[13px]">Anthropic: Claude 3.5 Sonnet, Claude 3.5 Haiku, Claude 3 Opus</span>
+              <span className="text-[13px]">Anthropic: Claude Opus 4, Claude Sonnet 4, Claude 3.7 Sonnet, Claude 3.5 Sonnet/Haiku</span>
             </div>
             <div className="flex items-center gap-2">
               <CheckCircle className="h-4 w-4 text-green-500" />
-              <span className="text-[13px]">Google: Gemini 2.5 Flash, Gemini 2.0 Flash, Gemini 1.5 Pro &amp; Flash · xAI: Grok 2 · Moonshot AI: moonshot-v1-8k/32k/128k</span>
+              <span className="text-[13px]">Google: Gemini 2.5 Pro/Flash, Gemini 2.0 Flash · xAI: Grok 3, Grok 3 Mini, Grok 3 Fast · Moonshot AI: moonshot-v1-8k/32k/128k</span>
             </div>
             <div className="flex items-center gap-2">
               <CheckCircle className="h-4 w-4 text-green-500" />
