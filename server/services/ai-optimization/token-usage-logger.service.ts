@@ -35,8 +35,9 @@ export class TokenUsageLoggerService {
     'gemini-2.5-pro': { prompt: 0.00125, completion: 0.005 },
     'gemini-2.5-flash': { prompt: 0.000075, completion: 0.0003 },
     // xAI Grok Family
-    'grok-2-1212': { prompt: 0.002, completion: 0.01 },
-    'grok-2-1212': { prompt: 0.005, completion: 0.015 },
+    'grok-3': { prompt: 0.003, completion: 0.015 },
+    'grok-3-mini': { prompt: 0.0003, completion: 0.0005 },
+    'grok-3-fast': { prompt: 0.005, completion: 0.025 },
     // Groq
     'groq-llama': { prompt: 0.0001, completion: 0.0002 },
   };
