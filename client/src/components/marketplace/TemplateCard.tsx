@@ -156,9 +156,9 @@ export function TemplateCard({
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <Avatar className="h-6 w-6">
-                    <AvatarImage src={template.author?.avatar} />
+                    <AvatarImage src={typeof template.author === 'object' ? template.author?.avatar : undefined} />
                     <AvatarFallback>
-                      {(template.author?.name || 'U').charAt(0)}
+                      {(typeof template.author === 'object' ? template.author?.name : template.author || 'U').charAt(0)}
                     </AvatarFallback>
                   </Avatar>
                   <span className="text-[13px] text-muted-foreground">
@@ -292,9 +292,9 @@ export function TemplateCard({
           {/* Author */}
           <div className="flex items-center gap-2 mb-3">
             <Avatar className="h-5 w-5">
-              <AvatarImage src={template.author?.avatar} />
+              <AvatarImage src={typeof template.author === 'object' ? template.author?.avatar : undefined} />
               <AvatarFallback>
-                {(template.author?.name || 'U').charAt(0)}
+                {(typeof template.author === 'object' ? template.author?.name : template.author || 'U').charAt(0)}
               </AvatarFallback>
             </Avatar>
             <span className="text-[11px] text-muted-foreground">

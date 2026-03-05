@@ -513,10 +513,10 @@ export default function Billing() {
                     {invoices.map((inv) => (
                       <TableRow key={inv.id}>
                         <TableCell className="font-mono text-[13px]">
-                          {inv.number || inv.id.slice(0, 12)}
+                          {inv.number || (inv.id || '').slice(0, 12)}
                         </TableCell>
                         <TableCell className="font-medium">
-                          {inv.currency.toUpperCase()} ${(inv.amount / 100).toFixed(2)}
+                          {(inv.currency || 'usd').toUpperCase()} ${((inv.amount || 0) / 100).toFixed(2)}
                         </TableCell>
                         <TableCell>{getInvoiceStatusBadge(inv.status)}</TableCell>
                         <TableCell>

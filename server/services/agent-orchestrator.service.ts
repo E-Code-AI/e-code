@@ -9,7 +9,7 @@ import {
   type AgentSession,
   type InsertAgentSession
 } from '@shared/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, inArray } from 'drizzle-orm';
 import { agentFileOperations } from './agent-file-operations.service';
 import { agentCommandExecution } from './agent-command-execution.service';
 import { agentToolFramework } from './agent-tool-framework.service';
@@ -219,22 +219,22 @@ export interface DelegationDecision {
  */
 const MODEL_TIERS: Record<string, Record<string, string | null>> = {
   fast: {
-    openai: 'gpt-5-nano',
-    anthropic: 'claude-haiku-4-5-20251015',
-    google: 'gemini-2.5-flash',  // ✅ STABLE: Gemini 2.5 Flash (production-ready, gemini-3-flash is preview)
+    openai: 'gpt-4o-mini',
+    anthropic: 'claude-3-5-haiku-20241022',
+    google: 'gemini-1.5-flash',
     xai: null
   },
   balanced: {
-    openai: 'gpt-5-mini',
-    anthropic: 'claude-sonnet-4-5-20250929',
-    google: 'gemini-2.5-flash',  // ✅ STABLE: Gemini 2.5 Flash for balanced performance
+    openai: 'gpt-4o-mini',
+    anthropic: 'claude-3-5-sonnet-20241022',
+    google: 'gemini-1.5-pro',
     xai: null
   },
   quality: {
-    openai: 'gpt-5.2',  // ✅ CONSOLIDATED Jan 2026
-    anthropic: 'claude-opus-4-5-20251101',  // ✅ CONSOLIDATED Jan 2026: Only Opus 4.5
-    google: 'gemini-3-pro',  // ✅ HIGH-COMPLEXITY: Gemini 3 Pro for best reasoning (fallback if gemini-2.5-flash unavailable)
-    xai: 'grok-4'
+    openai: 'gpt-4o',
+    anthropic: 'claude-3-5-sonnet-20241022',
+    google: 'gemini-1.5-pro',
+    xai: 'grok-2-1212'
   }
 };
 
@@ -288,6 +288,22 @@ export class AgentOrchestratorService extends EventEmitter {
     
     // Start the recovery worker for eventual consistency
     this.startRecoveryWorker();
+    
+    // Cleanup sessions stuck in planning/executing from a previous server crash/restart
+    // These sessions can never complete — reset to 'failed' so they can be retried
+    setImmediate(async () => {
+      try {
+        const result = await db.update(agentSessions)
+          .set({ workflowStatus: 'failed' })
+          .where(inArray(agentSessions.workflowStatus, ['planning', 'executing']));
+        const count = result.rowCount ?? 0;
+        if (count > 0) {
+          logger.info(`[AgentOrchestrator] Startup cleanup: reset ${count} stuck session(s) from planning/executing → failed`);
+        }
+      } catch (err: any) {
+        logger.warn('[AgentOrchestrator] Startup cleanup failed (non-blocking):', err.message);
+      }
+    });
   }
   
   /**
@@ -388,7 +404,7 @@ export class AgentOrchestratorService extends EventEmitter {
   async createSession(
     userId: string,
     projectId?: string,
-    model: string = 'gpt-5.2',  // ✅ CONSOLIDATED Jan 2026
+    model: string = 'gpt-4o',
     autonomousMode: boolean = false
   ): Promise<AgentSession> {
     const startTime = Date.now();
@@ -489,7 +505,7 @@ export class AgentOrchestratorService extends EventEmitter {
 
       try {
         const completion = await this.openai.chat.completions.create({
-          model: 'gpt-5.2',  // ✅ CONSOLIDATED Jan 2026: Latest flagship with adaptive reasoning
+          model: 'gpt-4o',
           messages: allMessages.map(m => ({
             role: m.role as any,
             content: m.content || ''
@@ -830,7 +846,7 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
         logger.warn(`[makeIntelligentDelegationDecision] ⚠️ No ${mode} tier providers available, using session model ${sessionModel}`);
       } else {
         // Absolute fallback: default to openai (may fail)
-        selectedModel = tierModels['openai'] || 'gpt-5.2';  // ✅ CONSOLIDATED Jan 2026
+        selectedModel = tierModels['openai'] || 'gpt-4o';
         selectedProvider = 'openai';
         logger.warn(`[makeIntelligentDelegationDecision] ⚠️ No providers available, defaulting to openai with ${selectedModel} (may fail)`);
       }
@@ -941,7 +957,7 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
     // ✅ INTELLIGENT DELEGATION (Dec 15, 2025): Make complexity-based model routing decision
     const delegationDecision = this.makeIntelligentDelegationDecision(
       taskClassification,
-      session.model || 'gpt-5.2',  // ✅ CONSOLIDATED Jan 2026
+      session.model || 'gpt-4o',
       prompt.length
     );
     
@@ -1267,16 +1283,13 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
   private calculateCost(provider: string, model: string, tokens: number): string {
     const rates: Record<string, Record<string, number>> = {
       openai: {
-        'gpt-5.2': 0.000035,  // ✅ CONSOLIDATED Jan 2026: $1.75 input, $14 output
-        'gpt-5.2-codex': 0.000035,
-        'gpt-5-mini': 0.000015,
-        'gpt-5-nano': 0.00001,
-        'gpt-4.1': 0.00002,
-        'gpt-4.1-mini': 0.000016,
-        'gpt-4.1-nano': 0.0000004,
+        'gpt-4o': 0.000005,
+        'gpt-4o-mini': 0.00000015,
+        'gpt-4-turbo': 0.00001,
+        'o1': 0.000015,
+        'o1-mini': 0.000003,
         'o3': 0.00006,
-        'o4-mini': 0.00002,
-        default: 0.00002
+        default: 0.000005
       },
       anthropic: {
         'claude-opus-4.5': 0.00005,
@@ -1285,15 +1298,15 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
         default: 0.00002
       },
       google: {
-        'gemini-3-pro': 0.00003,  // ✅ CONSOLIDATED Jan 2026: fallback for high-complexity
-        'gemini-2.5-flash': 0.00001,  // ✅ CONSOLIDATED Jan 2026: production-stable primary model
-        'gemini-2.5-pro': 0.00003,  // Legacy pricing
-        default: 0.00001
+        'gemini-1.5-pro': 0.0000035,
+        'gemini-1.5-flash': 0.00000035,
+        'gemini-2.5-flash': 0.00000035,
+        default: 0.0000035
       },
       xai: {
-        'grok-4': 0.00004,
-        'grok-4-fast': 0.00002,
-        default: 0.00002
+        'grok-2-1212': 0.000002,
+        'grok-2-vision-1212': 0.000002,
+        default: 0.000002
       },
       moonshot: {
         'kimi-k2': 0.00002,
@@ -2071,7 +2084,7 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
             userId: userIdNum,
             messages: [],
             context: { workspaceCreation: true },
-            model: 'gpt-5.2',  // ✅ CONSOLIDATED Jan 2026
+            model: 'gpt-4o',
             agentMode: 'build'
           })
           .returning();
@@ -2145,9 +2158,9 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
         throw new Error(`Session ${sessionId} not found`);
       }
       
-      // Check if already started (workflowStatus exists and not idle)
-      if (session.workflowStatus && session.workflowStatus !== 'idle') {
-        logger.warn(`[Autonomous] Session ${sessionId} already started, status: ${session.workflowStatus}`);
+      // Check if already started — allow restart from idle or failed; block if actively running
+      if (session.workflowStatus && session.workflowStatus !== 'idle' && session.workflowStatus !== 'failed') {
+        logger.warn(`[Autonomous] Session ${sessionId} already running, status: ${session.workflowStatus}`);
         return;
       }
       

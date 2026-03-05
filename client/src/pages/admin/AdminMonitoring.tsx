@@ -250,10 +250,10 @@ export default function AdminMonitoring() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-2xl font-bold text-white">
-                    {metricsData ? formatBytes(metricsData.memory.heapUsed) : '--'}
+                    {metricsData?.memory ? formatBytes(metricsData.memory.heapUsed) : '--'}
                   </p>
                   <p className="text-[11px] text-zinc-500 mt-1">
-                    of {metricsData ? formatBytes(metricsData.memory.heapTotal) : '--'} heap
+                    of {metricsData?.memory ? formatBytes(metricsData.memory.heapTotal) : '--'} heap
                   </p>
                 </CardContent>
               </Card>

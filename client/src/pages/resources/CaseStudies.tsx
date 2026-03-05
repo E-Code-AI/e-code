@@ -190,8 +190,8 @@ export default function CaseStudies() {
               <h3 className="font-semibold mb-2 group-hover:text-emerald-600 transition-colors">{study.company}</h3>
               <p className="text-[13px] text-muted-foreground line-clamp-2">{study.headline}</p>
               <div className="mt-4 pt-4 border-t">
-                <div className="text-2xl font-bold text-emerald-600">{study.metrics[0].value}</div>
-                <div className="text-[11px] text-muted-foreground">{study.metrics[0].label}</div>
+                <div className="text-2xl font-bold text-emerald-600">{study.metrics?.[0]?.value}</div>
+                <div className="text-[11px] text-muted-foreground">{study.metrics?.[0]?.label}</div>
               </div>
             </Card>
           ))}

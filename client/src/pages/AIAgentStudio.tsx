@@ -133,7 +133,7 @@ export default function AIAgentStudio() {
     },
     onSuccess: (data) => {
       setResult(data);
-      setSelectedFileId(data.files[0]?.id ?? null);
+      setSelectedFileId(data?.files?.[0]?.id ?? null);
       toast({
         title: "Preview generated",
         description: "Your workspace is ready to review before applying it to a project.",

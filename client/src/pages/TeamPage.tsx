@@ -452,7 +452,7 @@ export default function TeamPage() {
                           <div className="flex items-center gap-4">
                             <Avatar>
                               <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${member.username}`} />
-                              <AvatarFallback>{member.username[0].toUpperCase()}</AvatarFallback>
+                              <AvatarFallback>{member.username?.[0]?.toUpperCase() ?? '?'}</AvatarFallback>
                             </Avatar>
                             <div>
                               <div className="flex items-center gap-2">

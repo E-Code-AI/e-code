@@ -81,10 +81,17 @@ export const aiModelEnum = pgEnum('ai_model', [
   'claude-3-haiku',
   'gemini-pro',
   'gemini-ultra',
-  'gpt-5.1',  // DEPRECATED - maps to gpt-5.2 in normalizer
-  'gpt-5',    // DEPRECATED - maps to gpt-5.2 in normalizer
+  'gpt-5.1',
+  'gpt-5',
   
-  // OpenAI (Jan 2026) - 10 models CONSOLIDATED
+  // OpenAI — real production models
+  'gpt-4o',
+  'gpt-4o-mini',
+  'gpt-4-turbo-preview',
+  'o1',
+  'o1-mini',
+  'o3',
+  // Legacy fake names kept for backward compat with existing DB rows
   'gpt-5.2',
   'gpt-5.2-codex',
   'gpt-5-mini',
@@ -92,37 +99,48 @@ export const aiModelEnum = pgEnum('ai_model', [
   'gpt-4.1',
   'gpt-4.1-mini',
   'gpt-4.1-nano',
-  'gpt-4o',
-  'gpt-4o-mini',
-  'o3',
   'o4-mini',
   
-  // Anthropic (Dec 2025) - 4 models
+  // Anthropic — real production models
+  'claude-3-5-sonnet-20241022',
+  'claude-3-5-haiku-20241022',
+  'claude-3-opus-20240229',
+  'claude-3-haiku-20240307',
+  // Legacy fake names kept for backward compat
   'claude-opus-4-5-20251124',
   'claude-sonnet-4-5-20250929',
   'claude-opus-4-1-20250805',
   'claude-haiku-4-5-20251015',
+  'claude-opus-4-5-20251101',
   
-  // Google Gemini (Jan 2026) - 5 models with Gemini 3
+  // Google Gemini — real production models
+  'gemini-1.5-pro',
+  'gemini-1.5-flash',
+  'gemini-2.0-flash',
+  'gemini-2.0-flash-exp',
+  'gemini-2.5-flash',
+  'gemini-2.5-pro',
+  // Legacy fake names kept for backward compat
   'gemini-3-flash',
   'gemini-3-pro',
-  'gemini-2.5-pro',
-  'gemini-2.5-flash',
-  'gemini-2.0-flash',
   
-  // xAI (Jan 2026) - 4 models
+  // xAI — real production models
+  'grok-2-1212',
+  'grok-2-vision-1212',
+  // Legacy fake names kept for backward compat
   'grok-4-1-fast-reasoning',
   'grok-4-1-fast',
   'grok-4',
+  'grok-4-fast',
   'grok-3',
   
-  // Moonshot AI (Jan 2026) - 4 Kimi K2 models
+  // Moonshot AI / Kimi
   'kimi-k2-thinking',
   'kimi-k2-thinking-turbo',
   'kimi-k2-turbo-preview',
   'kimi-k2-0905-preview',
   
-  // Groq (Dec 2025) - 2 models
+  // Groq
   'mixtral-8x7b-32768',
   'llama3-70b-8192'
 ]);

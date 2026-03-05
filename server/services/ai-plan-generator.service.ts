@@ -59,11 +59,11 @@ export class AIPlanGeneratorService {
   // Gemini 3 Flash is in preview and may return 404 errors - using Gemini 2.5 Flash for reliability
   // Moonshot API has timeout/error issues, using proven models as primary
   private readonly PROVIDER_FALLBACK_CHAIN = [
-    'gemini-2.5-flash',             // ✅ PRIMARY: Google Gemini 2.5 Flash (production-stable)
-    'gpt-5.2',                      // ✅ CONSOLIDATED Jan 2026: OpenAI GPT-5.2 (flagship)
-    'claude-haiku-4-5-20251015',    // Anthropic Claude Haiku 4.5 (fastest Claude model)
-    'grok-4-fast',                  // xAI Grok 4 Fast (2M context, 64× cheaper than o3)
-    'kimi-k2-turbo-preview'         // Moonshot AI Kimi K2 Turbo (Jan 2026)
+    'gemini-2.5-flash',             // PRIMARY: Google Gemini 2.5 Flash
+    'gpt-4o',                       // OpenAI GPT-4o (flagship)
+    'claude-3-5-haiku-20241022',    // Anthropic Claude 3.5 Haiku (fastest Claude)
+    'grok-2-1212',                  // xAI Grok 2
+    'kimi-k2-turbo-preview'         // Moonshot AI Kimi K2 Turbo
   ];
 
   constructor(storage: IStorage) {
@@ -990,7 +990,7 @@ Remember:
           technologies: plan.technologies
         },
         totalTokensUsed: 0,
-        model: 'claude-haiku-4-5-20251015',
+        model: 'claude-3-5-haiku-20241022',
         agentMode: 'build'
       });
 
@@ -1001,7 +1001,7 @@ Remember:
         userId,     // Keep as string
         role: 'assistant',
         content: JSON.stringify(plan, null, 2),
-        model: 'claude-haiku-4-5-20251015',
+        model: 'claude-3-5-haiku-20241022',
         metadata: {
           planId: plan.id,
           totalTasks: plan.totalTasks,

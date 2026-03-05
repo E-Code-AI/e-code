@@ -239,7 +239,7 @@ export default function Explore() {
                     <div className="flex items-center gap-3">
                       <Avatar className="h-10 w-10">
                         <AvatarImage src={repl.avatar || undefined} />
-                        <AvatarFallback>{repl.author[0].toUpperCase()}</AvatarFallback>
+                        <AvatarFallback>{repl.author?.[0]?.toUpperCase() ?? '?'}</AvatarFallback>
                       </Avatar>
                       <div>
                         <CardTitle className="text-[15px]">{repl.name}</CardTitle>

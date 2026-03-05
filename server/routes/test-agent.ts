@@ -27,7 +27,7 @@ router.post('/test/agent', ensureAuthenticated, async (req, res) => {
       });
     }
 
-    const session = await agentOrchestrator.createSession(userId, undefined, 'gpt-5.2');  // ✅ Jan 2026
+    const session = await agentOrchestrator.createSession(userId, undefined, 'gpt-4o');
     
     // Execute agent with test message
     const messages = req.body.messages || [{
