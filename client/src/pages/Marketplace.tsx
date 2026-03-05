@@ -125,7 +125,7 @@ export default function Marketplace() {
                   <h3 className="font-semibold text-[15px] group-hover:text-primary transition-colors" data-testid={`text-extension-name-${extension.id}`}>
                     {extension.name}
                   </h3>
-                  <p className="text-[13px] text-muted-foreground" data-testid={`text-extension-author-${extension.id}`}>by {typeof extension.author === 'object' ? (extension.author?.name ?? extension.author?.username ?? extension.author?.id ?? 'Unknown') : (extension.author ?? 'Unknown')}</p>
+                  <p className="text-[13px] text-muted-foreground" data-testid={`text-extension-author-${extension.id}`}>by {typeof extension.author === 'object' ? extension.author?.name : (extension.author ?? 'Unknown')}</p>
                 </div>
                 
                 <div className="flex items-center gap-2">
@@ -190,7 +190,7 @@ export default function Marketplace() {
         <CardContent className="p-6">
           <div className="flex items-start gap-4">
             <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-blue-600 rounded-lg flex items-center justify-center text-white font-semibold text-[15px]">
-              {(template.framework || template.language || template.name || '?').toString().charAt(0)}
+              {(template?.framework || template?.language || template?.name || '?').toString().charAt(0)}
             </div>
             
             <div className="flex-1">
@@ -199,7 +199,7 @@ export default function Marketplace() {
                   <h3 className="font-semibold text-[15px] group-hover:text-primary transition-colors" data-testid={`text-template-name-${template.id}`}>
                     {template.name}
                   </h3>
-                  <p className="text-[13px] text-muted-foreground" data-testid={`text-template-author-${template.id}`}>by {typeof template.author === 'object' ? (template.author?.name ?? template.author?.username ?? template.author?.id ?? 'Unknown') : (template.author ?? 'Unknown')}</p>
+                  <p className="text-[13px] text-muted-foreground" data-testid={`text-template-author-${template.id}`}>by {typeof template.author === 'object' ? template.author?.name : (template.author ?? 'Unknown')}</p>
                 </div>
                 
                 {template.featured && (

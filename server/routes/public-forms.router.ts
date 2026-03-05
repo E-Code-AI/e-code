@@ -46,12 +46,13 @@ router.post("/contact", async (req, res) => {
     const contactSubject = subject || (reason ? `${reason} inquiry` : "General Inquiry");
     const description = `From: ${name} <${email}>${company ? ` (${company})` : ""}\n\n${message}`;
 
-    await db.execute(sql`
+    const [result] = await db.execute(sql`
       INSERT INTO customer_requests (type, subject, description, status, priority)
       VALUES (${"contact"}, ${contactSubject}, ${description}, ${"pending"}, ${"medium"})
+      RETURNING id
     `);
 
-    logger.info("Contact form submitted", { email, reason });
+    logger.info("Contact form submitted", { email, reason, requestId: (result as any)?.id });
     res.json({ success: true, message: "Your message has been received. We'll be in touch within 24 hours." });
   } catch (error) {
     logger.error("Contact form error", { error: String(error) });
@@ -77,12 +78,13 @@ router.post("/contact/sales", async (req, res) => {
       message ? `\nMessage:\n${message}` : null,
     ].filter(Boolean).join("\n");
 
-    await db.execute(sql`
+    const [result] = await db.execute(sql`
       INSERT INTO customer_requests (type, subject, description, status, priority)
       VALUES (${"sales"}, ${salesSubject}, ${description}, ${"pending"}, ${"high"})
+      RETURNING id
     `);
 
-    logger.info("Sales contact form submitted", { email, company, companySize });
+    logger.info("Sales contact form submitted", { email, company, companySize, requestId: (result as any)?.id });
     res.json({ success: true, message: "Thank you! Our sales team will contact you within 24 hours." });
   } catch (error) {
     logger.error("Sales contact form error", { error: String(error) });

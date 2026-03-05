@@ -579,7 +579,7 @@ export default function ChatGPTAdmin() {
                     <div className="flex items-center justify-between text-[13px]">
                       <span className="text-muted-foreground">Session</span>
                       <Badge variant="outline" className="font-mono text-[11px]">
-                        {activeSession.id ? activeSession.id.slice(0, 8) : 'unknown'}
+                        {activeSession?.id ? activeSession.id.slice(0, 8) : 'unknown'}
                       </Badge>
                     </div>
                     <div className="flex items-center justify-between text-[13px]">

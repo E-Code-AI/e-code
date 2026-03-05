@@ -292,8 +292,9 @@ export default function AdminMonitoring() {
                       <h4 className="text-[13px] font-medium text-zinc-400 mb-2">CPU</h4>
                       <p className="text-white">{detailedHealth?.system?.cpu?.cores ?? 0} cores</p>
                       <p className="text-zinc-400 text-[13px]">{detailedHealth?.system?.cpu?.model ?? 'Unknown'}</p>
-                      <p className="text-zinc-400 text-[13px]">Load: {detailedHealth?.system?.cpu?.loadAverage?.join(', ') ?? 'N/A'}</p>
+                      <p className="text-zinc-400 text-[13px]">Load: {detailedHealth?.system?.cpu?.loadAverage ? detailedHealth.system.cpu.loadAverage.join(', ') : 'N/A'}</p>
                     </div>
+
                     <div>
                       <h4 className="text-[13px] font-medium text-zinc-400 mb-2">Platform</h4>
                       <p className="text-white">{detailedHealth?.system?.platform?.os ?? 'Unknown'} ({detailedHealth?.system?.platform?.arch ?? 'Unknown'})</p>

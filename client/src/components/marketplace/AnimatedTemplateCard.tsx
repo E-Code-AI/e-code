@@ -156,7 +156,7 @@ export function AnimatedTemplateCard({
                   </div>
                   <div className="text-right">
                     <p className="text-[11px] text-muted-foreground mb-1">
-                      by {typeof template.author === 'object' ? (template.author?.name ?? template.author?.username ?? 'Anonymous') : (template.author ?? 'Anonymous')}
+                      by {typeof template.author === 'object' ? template.author?.name : (template.author ?? 'Anonymous')}
                     </p>
                     {template.price > 0 ? (
                       <div className="font-bold text-[15px] text-primary">
@@ -325,7 +325,7 @@ export function AnimatedTemplateCard({
               <div className="grid grid-cols-2 gap-2 text-[13px]">
                 <div>
                   <span className="text-muted-foreground">Author:</span>
-                  <p className="font-medium">{typeof template.author === 'object' ? (template.author?.name ?? template.author?.username ?? 'Anonymous') : (template.author ?? 'Anonymous')}</p>
+                  <p className="font-medium">{typeof template.author === 'object' ? template.author?.name : (template.author ?? 'Anonymous')}</p>
                 </div>
                 <div>
                   <span className="text-muted-foreground">Updated:</span>

@@ -549,11 +549,11 @@ export function TemplatePreview({
                   <Avatar className="h-10 w-10">
                     <AvatarImage src={template.author?.avatar} />
                     <AvatarFallback>
-                      {(typeof template.author === 'object' ? template.author?.name : template.author)?.charAt?.(0) || 'U'}
+                      {(typeof template.author === 'object' ? template.author?.name : (template.author || 'U')).charAt(0)}
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="font-medium text-[13px]">{typeof template.author === 'object' ? (template.author?.name ?? template.author?.username ?? 'Anonymous') : (template.author ?? 'Anonymous')}</p>
+                    <p className="font-medium text-[13px]">{typeof template.author === 'object' ? template.author?.name : (template.author ?? 'Anonymous')}</p>
                     <p className="text-[11px] text-muted-foreground">
                       {template.author?.bio || 'Template developer'}
                     </p>

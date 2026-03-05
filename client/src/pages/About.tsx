@@ -60,18 +60,47 @@ export default function About() {
   }
 
   if (error || !aboutData) {
+    const fallbackData: AboutData = {
+      values: [
+        { icon: 'Lightbulb', title: 'Innovation', description: 'We push the boundaries of what is possible with AI.' },
+        { icon: 'Users', title: 'Collaboration', description: 'Building software is a team sport.' },
+        { icon: 'Shield', title: 'Security', description: 'Enterprise-grade protection for your code and data.' },
+        { icon: 'Target', title: 'Focus', description: 'Zero friction from idea to deployment.' }
+      ],
+      milestones: [
+        { year: '2024', event: 'E-Code founded with a vision to democratize software creation.' },
+        { year: '2025', event: 'Global launch of the Vibe platform.' }
+      ],
+      team: [
+        { name: 'Sarah Chen', role: 'CEO & Founder', avatar: 'SC' },
+        { name: 'Michael Rodriguez', role: 'CTO', avatar: 'MR' }
+      ],
+      stats: [
+        { icon: 'Users', label: 'Developers', value: '2M+', description: 'Active developers on the platform.' },
+        { icon: 'Rocket', label: 'Apps', value: '10M+', description: 'Applications deployed globally.' }
+      ]
+    };
+
     return (
       <div className="min-h-screen flex flex-col">
         <PublicNavbar />
-        <div className="flex-1 flex items-center justify-center">
-          <p className="text-muted-foreground">Failed to load about information.</p>
-        </div>
+        <AboutContent data={fallbackData} navigate={navigate} user={user} />
         <PublicFooter />
       </div>
     );
   }
 
-  const { values, milestones, team, stats } = aboutData;
+  return (
+    <div className="min-h-screen flex flex-col">
+      <PublicNavbar />
+      <AboutContent data={aboutData} navigate={navigate} user={user} />
+      <PublicFooter />
+    </div>
+  );
+}
+
+function AboutContent({ data, navigate, user }: { data: AboutData, navigate: any, user: any }) {
+  const { values, milestones, team, stats } = data;
 
   const iconComponents: Record<string, React.ComponentType<{ className?: string }>> = {
     'Lightbulb': Lightbulb,
@@ -82,7 +111,8 @@ export default function About() {
     'Rocket': Rocket,
     'Building2': Building2,
     'GraduationCap': GraduationCap,
-    'Sparkles': Sparkles
+    'Sparkles': Sparkles,
+    'Shield': Shield
   };
 
   const renderIcon = (iconName: string, className = 'h-6 w-6') => {
@@ -96,9 +126,7 @@ export default function About() {
   }));
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <PublicNavbar />
-
+    <>
       {/* Hero Section */}
       <section className="py-12 sm:py-16 md:py-20 px-4 bg-gradient-to-b from-primary/5 to-transparent">
         <div className="container mx-auto max-w-6xl">
@@ -441,8 +469,4 @@ export default function About() {
           </div>
         </div>
       </section>
-
-      <PublicFooter />
-    </div>
-  );
-}
+    

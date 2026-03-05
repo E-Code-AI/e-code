@@ -70,10 +70,7 @@ export default function Home() {
     queryKey: ['/api/projects'],
     queryFn: async () => {
       const res = await apiRequest('GET', '/api/projects');
-      // If res is an array, wrap it to match the expected format
-      if (Array.isArray(res)) {
-        return { projects: res };
-      }
+      // res is expected to be { projects: [...], pagination: {...} }
       return res;
     },
     retry: 2,

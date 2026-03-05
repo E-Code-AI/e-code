@@ -56,9 +56,7 @@ export default function Profile() {
     queryKey: ['/api/users', username || currentUser?.username, 'projects'],
     queryFn: async () => {
       const res = await apiRequest('GET', '/api/projects');
-      if (Array.isArray(res)) {
-        return { projects: res };
-      }
+      // res is expected to be { projects: [...], pagination: {...} }
       return res;
     },
     enabled: !!(username || currentUser?.username),
@@ -136,7 +134,7 @@ export default function Profile() {
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
                   <h1 className="text-2xl font-bold" data-testid="text-display-name">{profile?.displayName || profile?.username}</h1>
-                  {(profile?.badges || []).slice(0, 2).map((badge: { id: string; icon: any; name: string; color: string }) => {
+                  {(profile?.badges || []).map((badge: { id: string; icon: any; name: string; color: string }) => {
                     const Icon = badge?.icon;
                     if (!Icon) return null;
                     return (

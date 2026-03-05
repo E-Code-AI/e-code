@@ -1079,21 +1079,26 @@ export function ReplitDeploymentPanel({
           <div className="flex gap-2 shrink-0">
             <Badge variant="outline" className="text-[11px]">
               <FileText className="h-3 w-3 mr-1" />
-              Build: {logs.filter(l => l.type === 'build').length}
+              {filteredLogs.length} Entries
             </Badge>
-            <Badge variant="outline" className="text-[11px]">
-              <Terminal className="h-3 w-3 mr-1" />
-              Deploy: {logs.filter(l => l.type === 'deploy').length}
-            </Badge>
+            {isDeploying && (
+              <Badge variant="outline" className="text-[11px] bg-blue-500/10 text-blue-500 animate-pulse border-blue-500/20">
+                Streaming...
+              </Badge>
+            )}
           </div>
 
-          <ScrollArea className="flex-1 rounded-md border bg-muted/30" ref={logsContainerRef}>
-            <div className="p-2 font-mono text-[11px] space-y-1" data-testid="logs-container">
+          <ScrollArea 
+            ref={logsContainerRef}
+            className="flex-1 rounded-md border bg-black/95 font-mono text-[11px] text-zinc-300"
+            data-testid="logs-scroll-area"
+          >
+            <div className="p-3 space-y-1 min-h-full">
               {filteredLogs.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-                  <Terminal className="h-8 w-8 mb-2 opacity-50" />
-                  <p>No logs available</p>
-                  <p className="text-[11px] mt-1">Logs will appear here during deployment</p>
+                <div className="flex flex-col items-center justify-center py-12 text-zinc-500 gap-2">
+                  <Terminal className="h-8 w-8 opacity-20" />
+                  <p>No logs to display</p>
+                  {isDeploying && <p className="text-[9px] animate-pulse">Waiting for build output...</p>}
                 </div>
               ) : (
                 filteredLogs.map((log) => (

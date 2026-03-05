@@ -158,11 +158,11 @@ export function TemplateCard({
                   <Avatar className="h-6 w-6">
                     <AvatarImage src={typeof template.author === 'object' ? template.author?.avatar : undefined} />
                     <AvatarFallback>
-                      {(typeof template.author === 'object' ? template.author?.name : template.author || 'U').charAt(0)}
+                      {(typeof template.author === 'object' ? template.author?.name : (template.author || 'U')).charAt(0)}
                     </AvatarFallback>
                   </Avatar>
                   <span className="text-[13px] text-muted-foreground">
-                    by {typeof template.author === 'object' ? (template.author?.name ?? template.author?.username ?? template.author?.id ?? 'Anonymous') : (template.author ?? 'Anonymous')}
+                    by {typeof template.author === 'object' ? template.author?.name : (template.author ?? 'Anonymous')}
                   </span>
                 </div>
                 <div className="flex items-center gap-3 text-[13px] text-muted-foreground">
@@ -294,11 +294,11 @@ export function TemplateCard({
             <Avatar className="h-5 w-5">
               <AvatarImage src={typeof template.author === 'object' ? template.author?.avatar : undefined} />
               <AvatarFallback>
-                {(typeof template.author === 'object' ? template.author?.name : template.author || 'U').charAt(0)}
+                {(typeof template.author === 'object' ? template.author?.name : (template.author || 'U')).charAt(0)}
               </AvatarFallback>
             </Avatar>
             <span className="text-[11px] text-muted-foreground">
-              {typeof template.author === 'object' ? (template.author?.name ?? template.author?.username ?? template.author?.id ?? 'Anonymous') : (template.author ?? 'Anonymous')}
+              {typeof template.author === 'object' ? template.author?.name : (template.author ?? 'Anonymous')}
             </span>
             {template.author?.verified && (
               <Badge variant="secondary" className="h-4 text-[11px] px-1">

@@ -163,27 +163,27 @@ export default function AdminDashboard() {
                 <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{userStats?.totalUsers ?? 0}</div>
-                <p className="text-[11px] text-muted-foreground">
-                  {userStats?.activeToday ?? 0} active (today)
-                </p>
-              </CardContent>
-            </Card>
+              <div className="text-2xl font-bold">{userStats?.totalUsers ?? 0}</div>
+              <p className="text-[11px] text-muted-foreground">
+                {userStats?.activeToday ?? 0} active (today)
+              </p>
+            </CardContent>
+          </Card>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-[13px] font-medium">Total Projects</CardTitle>
-                <FileText className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{projectStats?.totalProjects ?? 0}</div>
-                <p className="text-[11px] text-muted-foreground">
-                  {projectStats?.activeProjects ?? 0} active projects
-                </p>
-              </CardContent>
-            </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-[13px] font-medium">Total Projects</CardTitle>
+              <FileText className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{projectStats?.totalProjects ?? 0}</div>
+              <p className="text-[11px] text-muted-foreground">
+                {projectStats?.activeProjects ?? 0} active projects
+              </p>
+            </CardContent>
+          </Card>
 
-            <Card>
+          <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-[13px] font-medium">Total Revenue</CardTitle>
               <DollarSign className="h-4 w-4 text-muted-foreground" />
@@ -276,13 +276,13 @@ export default function AdminDashboard() {
                         <span className="capitalize">{importItem?.type} Import</span>
                       </div>
                       <div className="flex items-center gap-4">
-                        <Link href={`/projects/${importItem?.projectId}`}>
-                          <Button variant="ghost" size="sm">
+                        <Link href={importItem?.projectId ? `/ide/${importItem.projectId}` : '#'}>
+                          <Button variant="ghost" size="sm" disabled={!importItem?.projectId}>
                             View Project
                           </Button>
                         </Link>
                         <Badge variant={importItem?.status === 'completed' ? 'default' : 'secondary'}>
-                          {importItem?.status}
+                          {importItem?.status || 'unknown'}
                         </Badge>
                         <span className="text-[11px] text-muted-foreground">
                           {importItem?.createdAt ? formatDistanceToNow(new Date(importItem.createdAt), { addSuffix: true }) : 'unknown'}
@@ -353,10 +353,10 @@ export default function AdminDashboard() {
                   {Array.isArray(activities) && activities.map((activity: any, index: number) => (
                     <div key={index} className="flex items-start gap-4 pb-4 border-b last:border-0">
                       <div className={`p-2 rounded-full ${
-                        activity?.type === 'user' ? 'bg-blue-100' :
-                        activity?.type === 'project' ? 'bg-green-100' :
-                        activity?.type === 'system' ? 'bg-purple-100' :
-                        'bg-gray-100'
+                        activity?.type === 'user' ? 'bg-blue-100 dark:bg-blue-900' :
+                        activity?.type === 'project' ? 'bg-green-100 dark:bg-green-900' :
+                        activity?.type === 'system' ? 'bg-purple-100 dark:bg-purple-900' :
+                        'bg-gray-100 dark:bg-gray-800'
                       }`}>
                         {activity?.type === 'user' ? <Users className="h-4 w-4" /> :
                          activity?.type === 'project' ? <FileText className="h-4 w-4" /> :
@@ -378,6 +378,7 @@ export default function AdminDashboard() {
               </ScrollArea>
             </CardContent>
           </Card>
+
         </TabsContent>
 
         <TabsContent value="users" className="space-y-6">

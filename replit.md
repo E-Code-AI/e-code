@@ -1,7 +1,7 @@
 # E-Code Platform
 
 ## Overview
-E-Code is an AI-assisted web-based IDE designed to enhance developer productivity and accelerate project delivery. It streamlines the development lifecycle from prototyping to enterprise deployment through automated workspace setup, real-time code execution, integrated AI, collaborative tools, enterprise-grade testing, and robust security. The platform aims to be a leading AI-powered software development environment, fostering innovation and efficiency.
+E-Code is an AI-assisted web-based IDE designed to boost developer productivity and accelerate project delivery. It provides automated workspace setup, real-time code execution, integrated AI capabilities, collaborative tools, enterprise-grade testing, and robust security. The platform aims to foster innovation and efficiency through a comprehensive, secure, and performant development experience, becoming a leading AI-powered software development environment.
 
 ## User Preferences
 - Communication: Simple, everyday language
@@ -27,7 +27,7 @@ E-Code is an AI-assisted web-based IDE designed to enhance developer productivit
 - Database Backup: Use `tsx scripts/backup-database.ts` for backup (creates timestamped SQL file in `backups/`), `tsx scripts/backup-database.ts --restore <file>` for restore. REQUIRES pg_dump for backup and psql for restore (production-safe, no fallback). Cloud storage upload with `--cloud` flag (requires GCS_BACKUP_BUCKET).
 - Deployment Build Optimization: `BUILD_DEPLOY=1 npm run build` prunes `node_modules` to only native packages. **SAFETY**: The prune only runs when BOTH `BUILD_DEPLOY=1` AND `REPLIT_DEPLOYMENT` env var is set — never run `BUILD_DEPLOY=1 npm run build` in dev or it destroys node_modules.
 - apiRequest() Returns Parsed JSON: `apiRequest(method, url, body)` from `@/lib/queryClient` returns `Promise<T>` (parsed JSON body directly), NOT a `Promise<Response>`. Never check `.ok` or call `.json()` on the result. It throws automatically for non-OK responses. Pattern: `const data = await apiRequest<MyType>('POST', '/api/endpoint', body);`
-- postgres-js db.execute() returns array directly: The server uses `drizzle-orm/postgres-js`. When calling `db.execute(sql\`SELECT ...\`)`, it returns an array of rows directly (NOT `{ rows: [...] }`). Always use: `const rows = Array.isArray(result) ? result : (result as any).rows ?? [];` for compatibility. INSERT/UPDATE return an empty array. Never use `.rows` directly on `db.execute()` results.
+- postgres-js db.execute() returns array directly: The server uses `drizzle-orm/postgres-js`. When calling `db.execute(sql\`SELECT ...\`)`, it returns an array of rows directly (NOT `{ rows: [...] }`). Always use: `const rows = Array.isArray(result) ? (result as any) : (result as any).rows ?? [];` for compatibility. INSERT/UPDATE return an empty array. Never use `.rows` directly on `db.execute()` results.
 - Raw Fetch CSRF Rule: ALL raw `fetch()` calls to `/api/*` using POST/PUT/PATCH/DELETE MUST include `X-CSRF-Token` header. Use `getCSRFToken()` exported from `@/lib/queryClient`: `const csrf = await getCSRFToken(); fetch('/api/...', { headers: { 'X-CSRF-Token': csrf } })`. SSE streaming endpoints MUST use this pattern since `apiRequest` cannot be used for streaming. File uploads also need it.
 - Voice Vibe Coding: `MediaRecorder` API → `/api/voice/transcribe` → transcript injected into agent input. **Multi-provider**: OpenAI Whisper (`whisper-1`) primary, Gemini 2.0 Flash as automatic fallback. Uses `apiRequest` for automatic CSRF token handling. Vibe Mode auto-submits on transcription. `voiceInputEnabled: true` by default. FORBIDDEN: Web Speech API.
 - API Route Dual-Mount Pattern: `aiModelsRouter` is mounted at BOTH `/api/models` AND `/api/ai/models` for frontend compatibility. Always mount at both paths when adding new AI-related routers that the frontend may call via either prefix.
@@ -39,6 +39,7 @@ E-Code is an AI-assisted web-based IDE designed to enhance developer productivit
 - Project Starter Files: When a new project is created via `POST /api/projects`, a language-appropriate starter file is auto-created in the `files` DB table.
 - Notification Preferences Schema: The `notification_preferences` table uses `email` (jsonb), `push` (jsonb), and `frequency` (varchar) columns — NOT individual boolean columns.
 - Animation Safety: Never use horizontal x-shift animations (`initial={{ x: -50 }}`) on public marketing pages — Always use vertical y-shift (`initial={{ y: 30 }})` for `whileInView` animations on public pages.
+- Public Routes: `/marketplace`, `/templates`, `/marketplace/templates`, `/community`, `/community/post/:id`, `/search`, `/explore` are PUBLIC routes in `client/src/routes/config.ts` — do NOT move them to protectedRoutes. They must be accessible without authentication.
 - Environment Configuration: Zod-validated environment variables via `server/utils/env-config.ts`.
 - API Versioning: Current API version is `v1`. Supports URL-based (`/api/v1/users`) and header-based (`Accept-Version: v1`).
 - Server Logs Streaming: Real-time Winston log streaming via WebSocket at `/api/server/logs/ws`. Uses session-based authentication.
@@ -53,27 +54,26 @@ E-Code is an AI-assisted web-based IDE designed to enhance developer productivit
 - Bootstrap Response Format: `POST /api/workspace/bootstrap` returns `{ success, projectId, projectSlug, sessionId, bootstrapToken, workspaceUrl, ... }` — NOTE: the project ID is at top-level `response.projectId` (NOT `response.project.id`). Frontend must check `response.projectId`, use `/ide/${response.projectId}?bootstrap=${response.bootstrapToken}` for redirect. NEVER use `response.project` or `/editor/`.
 - Bootstrap Timeout: `BOOTSTRAP_TIMEOUT_MS = 60000` (60s) in `autonomousBuildStore.ts`.
 - Global Search Route: `globalSearchRouter` is mounted at `/api/search` → internal route MUST be `router.post('/global', ...)`.
-- Bootstrap Router Mount: `workspaceBootstrapRouter` is mounted at `/api/workspace` → internal route MUST be `router.post('/bootstrap', ...)`.
+- Bootstrap Router Mount: `workspaceBootstrapRouter` is mounted at `/api/workspace` → internal route MUST be `router.post('/bootstrap', indicative of an enterprise-grade platform.`)
 - AI Model Names (CRITICAL): The platform uses REAL API model names — NEVER fake/invented names. ALL models below verified via live API test (March 2026). OpenAI (all return 429 quota = real): `gpt-4.1`, `gpt-4.1-mini`, `gpt-4.1-nano`, `gpt-4o`, `gpt-4o-mini`, `o4-mini`, `o3`, `o3-mini`, `o1`, `gpt-4-turbo`. Anthropic (all return 400 credit = real): `claude-opus-4-20250514`, `claude-sonnet-4-20250514`, `claude-3-7-sonnet-20250219`, `claude-3-5-sonnet-20241022`, `claude-3-5-haiku-20241022`, `claude-3-opus-20240229`, `claude-3-haiku-20240307`. Google: `gemini-2.5-pro`, `gemini-2.5-flash`, `gemini-2.0-flash`, `gemini-2.0-flash-lite`, `gemini-1.5-pro`, `gemini-1.5-flash`. xAI (return 403 billing = real): `grok-3`, `grok-3-mini`, `grok-3-fast`. Moonshot: `moonshot-v1-8k`, `moonshot-v1-32k`, `moonshot-v1-128k`. DEAD IDs (do NOT use): `grok-2-1212` (400 not found), `o1-mini` (404 on this key). The `model-normalizer.ts` maps all deprecated/fake names → real names. FORBIDDEN fake names: gpt-5.x, gpt-5-mini, gpt-5-nano, gemini-3-*, llama-3.x (no Groq API key).
 - Stuck Session Cleanup (Autonomous Build): On server startup, `AgentOrchestratorService` constructor resets sessions stuck in `planning`/`executing` → `failed`. Idempotency check in `startAutonomousWorkspace` allows restart from `idle` OR `failed` status.
 
 ## System Architecture
-The E-Code platform employs a two-service architecture (Main Platform and Runner microservice) with a React, TypeScript, Vite frontend adhering to the Replit RUI Design System for responsive, mobile-first UI. The backend uses Node.js/Express.js, TypeScript, Drizzle ORM, and Passport.js.
+E-Code utilizes a two-service architecture (Main Platform and Runner microservice). The frontend is built with React, TypeScript, and Vite, adhering to the Replit RUI Design System. The backend uses Node.js/Express.js, TypeScript, Drizzle ORM, and Passport.js.
 
-Key architectural decisions include:
-- **AI Integration**: XML prompts, task classification, circuit breakers, priority queues, intelligent caching, SSE streaming, multi-provider AI model selection, database-backed conversation history, retry logic, and an Agent Step Cache.
-- **Real-time Communication**: Server-Sent Events, WebSocket-driven logging, real-time HTML live preview with CSS hot-swapping, and a robust WebSocket Resilience System.
-- **Security Framework**: AES-256-GCM encryption, XSS prevention, CSRF protection, input sanitization, tier-based rate limiting, API versioning, session-based authentication, and encrypted GitHub tokens.
-- **System Reliability**: Checkpoints & Rollback and Playwright-based Background Auto-Testing.
-- **Code Execution Environment**: Native Nix-managed runtimes and `DockerExecutor` for sandboxed execution with PID tracking and language-specific timeouts, supporting `single-vm`/`kubernetes` deployment.
-- **Data Persistence**: PostgreSQL as the primary data store with a two-tier database API, strong tenant isolation, and Drizzle ORM.
-- **Performance Optimization**: Fast Bootstrap techniques.
-- **Voice Input System**: Voice Vibe Coding via MediaRecorder API.
-- **Monitoring and Observability**: Kubernetes probes and a Provider Health API with Prometheus metrics.
-- **Docker Optimization**: Docker builds optimized for minimal image sizes.
-- **Monetization Strategy**: Hybrid pricing model managed through Stripe.
-- **Contextual Memory**: Memory Bank System for storing AI-generated contextual markdown files.
-- **UI/UX Enhancements**: Intersection Observer Animation System, Native Motion Library, and ReplDB-Compatible Key-Value Database.
+- **AI Integration**: Incorporates XML prompts, task classification, circuit breakers, priority queues, intelligent caching, SSE streaming, multi-provider AI model selection, database-backed conversation history, retry logic, and an Agent Step Cache.
+- **Real-time Communication**: Achieved through Server-Sent Events, WebSocket-driven logging, real-time HTML live preview with CSS hot-swapping, and a robust WebSocket Resilience System.
+- **Security Framework**: Features AES-256-GCM encryption, XSS prevention, CSRF protection, input sanitization, tier-based rate limiting, API versioning, session-based authentication, and encrypted GitHub tokens.
+- **System Reliability**: Supported by Checkpoints & Rollback and Playwright-based Background Auto-Testing.
+- **Code Execution Environment**: Uses Native Nix-managed runtimes and `DockerExecutor` for sandboxed execution, supporting `single-vm`/`kubernetes` deployment with PID tracking and language-specific timeouts.
+- **Data Persistence**: Employs PostgreSQL as the primary data store with a two-tier database API, strong tenant isolation, and Drizzle ORM.
+- **Performance Optimization**: Implements Fast Bootstrap techniques.
+- **Voice Input System**: Integrates Voice Vibe Coding via the MediaRecorder API.
+- **Monitoring and Observability**: Utilizes Kubernetes probes and a Provider Health API with Prometheus metrics.
+- **Docker Optimization**: Docker builds are optimized for minimal image sizes.
+- **Monetization Strategy**: A hybrid pricing model managed through Stripe.
+- **Contextual Memory**: A Memory Bank System stores AI-generated contextual markdown files.
+- **UI/UX Enhancements**: Features an Intersection Observer Animation System, Native Motion Library, and a ReplDB-Compatible Key-Value Database.
 
 ## External Dependencies
 - OpenAI

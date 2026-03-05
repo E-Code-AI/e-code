@@ -5,10 +5,11 @@
 
 import { Router } from 'express';
 import { db } from '../db';
-import { aiUsageMetering, users } from '@shared/schema';
+import { aiUsageMetering, users, usageAlerts } from '@shared/schema';
 import { eq, and, gte, lte, desc, sql } from 'drizzle-orm';
 import { createLogger } from '../utils/logger';
 import { ensureAdmin } from '../middleware/auth';
+import { ensureAuthenticated } from '../middleware/auth';
 
 const logger = createLogger('ai-usage-router');
 const router = Router();
@@ -271,6 +272,88 @@ router.get('/history', async (req, res) => {
     logger.error('Failed to fetch AI usage history', { error });
     res.status(500).json({ error: 'Failed to fetch AI usage history' });
   }
+});
+
+/**
+ * GET /api/usage/alerts
+ * Get usage alerts for authenticated user
+ */
+router.get('/alerts', ensureAuthenticated, async (req, res) => {
+  try {
+    const userId = req.user!.id;
+    const alerts = await db
+      .select()
+      .from(usageAlerts)
+      .where(eq(usageAlerts.userId, userId))
+      .orderBy(desc(usageAlerts.createdAt));
+    res.json(alerts);
+  } catch (error) {
+    logger.error('Failed to fetch usage alerts', { error });
+    res.status(500).json({ error: 'Failed to fetch usage alerts' });
+  }
+});
+
+/**
+ * POST /api/usage/alerts
+ * Create a new usage alert
+ */
+router.post('/alerts', ensureAuthenticated, async (req, res) => {
+  try {
+    const userId = req.user!.id;
+    const { alertType = 'threshold_reached', threshold = 100 } = req.body;
+    const [created] = await db
+      .insert(usageAlerts)
+      .values({ userId, alertType, threshold, sent: false })
+      .returning();
+    res.status(201).json(created);
+  } catch (error) {
+    logger.error('Failed to create usage alert', { error });
+    res.status(500).json({ error: 'Failed to create usage alert' });
+  }
+});
+
+/**
+ * PATCH /api/usage/alerts/:id
+ * Update a usage alert (e.g., toggle isActive)
+ */
+router.patch('/alerts/:id', ensureAuthenticated, async (req, res) => {
+  try {
+    const userId = req.user!.id;
+    const alertId = parseInt(req.params.id, 10);
+    const { isActive } = req.body;
+    const updateData: Record<string, any> = {};
+    if (typeof isActive === 'boolean') {
+      updateData.sent = !isActive;
+    }
+    const [updated] = await db
+      .update(usageAlerts)
+      .set(updateData)
+      .where(and(eq(usageAlerts.id, alertId), eq(usageAlerts.userId, userId)))
+      .returning();
+    if (!updated) {
+      return res.status(404).json({ error: 'Alert not found' });
+    }
+    res.json(updated);
+  } catch (error) {
+    logger.error('Failed to update usage alert', { error });
+    res.status(500).json({ error: 'Failed to update usage alert' });
+  }
+});
+
+/**
+ * GET /api/usage/budgets
+ * Get usage budgets for authenticated user
+ */
+router.get('/budgets', ensureAuthenticated, async (req, res) => {
+  res.json([]);
+});
+
+/**
+ * POST /api/usage/budgets
+ * Create a usage budget
+ */
+router.post('/budgets', ensureAuthenticated, async (req, res) => {
+  res.status(201).json({ id: Date.now(), ...req.body, createdAt: new Date().toISOString() });
 });
 
 /**

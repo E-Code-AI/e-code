@@ -256,7 +256,7 @@ function TemplateCard({ template, onUse, index }: { template: Template; onUse: (
             <div>
               <CardTitle className="line-clamp-1">{template.name}</CardTitle>
               <p className="text-[13px] text-muted-foreground mt-1">
-                by {typeof template.author === 'object' ? (template.author?.name ?? template.author?.username ?? template.author?.id ?? 'Unknown') : (template.author ?? 'Unknown')}
+                by {typeof template.author === 'object' ? template.author?.name : (template.author ?? 'Unknown')}
               </p>
             </div>
             {template.difficulty && (

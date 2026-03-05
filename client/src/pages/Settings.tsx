@@ -101,7 +101,13 @@ export default function Settings() {
           minimap,
           autoSave,
         },
-        notifications: notifications || {},
+        notifications: notifications || {
+          email: true,
+          push: true,
+          mentions: true,
+          updates: false,
+          marketing: false,
+        },
       });
       
       queryClient.invalidateQueries({ queryKey: ['/api/user'] });

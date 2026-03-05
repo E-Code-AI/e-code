@@ -106,9 +106,6 @@ export default function Dashboard() {
       }
       const res = await apiRequest('GET', url);
       // Projects API returns { projects: [...], pagination: {...} }
-      if (Array.isArray(res)) {
-        return { projects: res };
-      }
       return res;
     },
     enabled: !!user,
