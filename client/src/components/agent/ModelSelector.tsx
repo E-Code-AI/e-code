@@ -1,4 +1,4 @@
-import { Check, ChevronsUpDown, Sparkles, Zap, Brain } from 'lucide-react';
+import { Check, ChevronsUpDown, Sparkles, Zap, Brain, Cpu } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -14,14 +14,17 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+
+type ModelCategory = 'openai' | 'anthropic' | 'google' | 'xai' | 'moonshot';
 
 interface Model {
   id: string;
   name: string;
   description: string;
-  category: 'gpt' | 'claude' | 'gemini';
+  category: ModelCategory;
+  tier: 'standard' | 'high-power';
   capabilities: {
     extendedThinking: boolean;
     codeGeneration: boolean;
@@ -37,17 +40,19 @@ interface ModelSelectorProps {
   className?: string;
 }
 
-const categoryIcons = {
-  gpt: Sparkles,
-  claude: Brain,
-  gemini: Zap,
+const PROVIDER_CONFIG: Record<ModelCategory, {
+  label: string;
+  icon: React.ElementType;
+  color: string;
+}> = {
+  openai:    { label: 'OpenAI',       icon: Sparkles, color: 'text-green-500'  },
+  anthropic: { label: 'Anthropic',    icon: Brain,    color: 'text-orange-500' },
+  google:    { label: 'Google Gemini',icon: Zap,      color: 'text-blue-500'   },
+  xai:       { label: 'xAI / Grok',  icon: Cpu,      color: 'text-purple-500' },
+  moonshot:  { label: 'Moonshot / Kimi', icon: Zap,  color: 'text-cyan-500'   },
 };
 
-const categoryColors = {
-  gpt: 'text-green-500',
-  claude: 'text-purple-500',
-  gemini: 'text-blue-500',
-};
+const PROVIDER_ORDER: ModelCategory[] = ['openai', 'anthropic', 'google', 'xai', 'moonshot'];
 
 export function ModelSelector({ selectedModel, onModelChange, className }: ModelSelectorProps) {
   const [open, setOpen] = useState(false);
@@ -58,6 +63,9 @@ export function ModelSelector({ selectedModel, onModelChange, className }: Model
 
   const models: Model[] = modelsData?.models || [];
   const selected = models.find(m => m.id === selectedModel);
+
+  const selectedConfig = selected ? PROVIDER_CONFIG[selected.category] : null;
+  const SelectedIcon = selectedConfig?.icon || Cpu;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -70,12 +78,9 @@ export function ModelSelector({ selectedModel, onModelChange, className }: Model
           data-testid="button-select-model"
         >
           <div className="flex items-center gap-2 overflow-hidden">
-            {selected && categoryIcons[selected.category] && (
-              <span className={categoryColors[selected.category]}>
-                {(() => {
-                  const Icon = categoryIcons[selected.category];
-                  return <Icon className="h-4 w-4" />;
-                })()}
+            {selected && selectedConfig && (
+              <span className={selectedConfig.color}>
+                <SelectedIcon className="h-4 w-4" />
               </span>
             )}
             <span className="truncate">
@@ -85,184 +90,81 @@ export function ModelSelector({ selectedModel, onModelChange, className }: Model
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[90vw] sm:w-[400px] p-0" align="start">
+      <PopoverContent className="w-[90vw] sm:w-[420px] p-0" align="start">
         <Command>
           <CommandInput placeholder="Search models..." data-testid="input-search-models" />
           <CommandEmpty>No models found.</CommandEmpty>
-          
-          {/* GPT Models */}
-          <CommandGroup heading="OpenAI GPT">
-            {models
-              .filter(m => m.category === 'gpt')
-              .map((model) => (
-                <CommandItem
-                  key={model.id}
-                  value={model.id}
-                  onSelect={() => {
-                    onModelChange(model.id);
-                    setOpen(false);
-                  }}
-                  className="flex flex-col items-start gap-1 p-3"
-                  data-testid={`model-option-${model.id}`}
-                >
-                  <div className="flex items-center justify-between w-full">
-                    <div className="flex items-center gap-2">
-                      <Check
-                        className={cn(
-                          'h-4 w-4',
-                          selectedModel === model.id ? 'opacity-100' : 'opacity-0'
-                        )}
-                      />
-                      <Sparkles className="h-4 w-4 text-green-500" />
-                      <span className="font-medium">{model.name}</span>
-                    </div>
-                    <div className="flex gap-1">
-                      {model.capabilities.extendedThinking && (
-                        <Badge variant="secondary" className="text-[11px]">
-                          <Brain className="h-3 w-3 mr-1" />
-                          Thinking
-                        </Badge>
-                      )}
-                      <Badge 
-                        variant="outline" 
-                        className={cn(
-                          "text-[11px]",
-                          model.capabilities.speed === 'fast' && "border-green-500 text-green-500",
-                          model.capabilities.speed === 'medium' && "border-yellow-500 text-yellow-500",
-                          model.capabilities.speed === 'slow' && "border-red-500 text-red-500"
-                        )}
-                      >
-                        {model.capabilities.speed}
-                      </Badge>
-                    </div>
-                  </div>
-                  <p className="text-[13px] text-muted-foreground ml-6">
-                    {model.description}
-                  </p>
-                  <div className="flex gap-2 ml-6 mt-1 text-[11px] text-muted-foreground">
-                    <span>{model.capabilities.maxTokens.toLocaleString()} tokens</span>
-                    <span>•</span>
-                    <span>Cost: {model.capabilities.cost}</span>
-                  </div>
-                </CommandItem>
-              ))}
-          </CommandGroup>
 
-          {/* Claude Models */}
-          <CommandGroup heading="Anthropic Claude">
-            {models
-              .filter(m => m.category === 'claude')
-              .map((model) => (
-                <CommandItem
-                  key={model.id}
-                  value={model.id}
-                  onSelect={() => {
-                    onModelChange(model.id);
-                    setOpen(false);
-                  }}
-                  className="flex flex-col items-start gap-1 p-3"
-                  data-testid={`model-option-${model.id}`}
-                >
-                  <div className="flex items-center justify-between w-full">
-                    <div className="flex items-center gap-2">
-                      <Check
-                        className={cn(
-                          'h-4 w-4',
-                          selectedModel === model.id ? 'opacity-100' : 'opacity-0'
-                        )}
-                      />
-                      <Brain className="h-4 w-4 text-purple-500" />
-                      <span className="font-medium">{model.name}</span>
-                    </div>
-                    <div className="flex gap-1">
-                      {model.capabilities.extendedThinking && (
-                        <Badge variant="secondary" className="text-[11px]">
-                          <Brain className="h-3 w-3 mr-1" />
-                          Thinking
-                        </Badge>
-                      )}
-                      <Badge 
-                        variant="outline" 
-                        className={cn(
-                          "text-[11px]",
-                          model.capabilities.speed === 'fast' && "border-green-500 text-green-500",
-                          model.capabilities.speed === 'medium' && "border-yellow-500 text-yellow-500",
-                          model.capabilities.speed === 'slow' && "border-red-500 text-red-500"
-                        )}
-                      >
-                        {model.capabilities.speed}
-                      </Badge>
-                    </div>
-                  </div>
-                  <p className="text-[13px] text-muted-foreground ml-6">
-                    {model.description}
-                  </p>
-                  <div className="flex gap-2 ml-6 mt-1 text-[11px] text-muted-foreground">
-                    <span>{model.capabilities.maxTokens.toLocaleString()} tokens</span>
-                    <span>•</span>
-                    <span>Cost: {model.capabilities.cost}</span>
-                  </div>
-                </CommandItem>
-              ))}
-          </CommandGroup>
+          {PROVIDER_ORDER.map(category => {
+            const categoryModels = models.filter(m => m.category === category);
+            if (categoryModels.length === 0) return null;
 
-          {/* Gemini Models */}
-          <CommandGroup heading="Google Gemini">
-            {models
-              .filter(m => m.category === 'gemini')
-              .map((model) => (
-                <CommandItem
-                  key={model.id}
-                  value={model.id}
-                  onSelect={() => {
-                    onModelChange(model.id);
-                    setOpen(false);
-                  }}
-                  className="flex flex-col items-start gap-1 p-3"
-                  data-testid={`model-option-${model.id}`}
-                >
-                  <div className="flex items-center justify-between w-full">
-                    <div className="flex items-center gap-2">
-                      <Check
-                        className={cn(
-                          'h-4 w-4',
-                          selectedModel === model.id ? 'opacity-100' : 'opacity-0'
+            const config = PROVIDER_CONFIG[category];
+            const CategoryIcon = config.icon;
+
+            return (
+              <CommandGroup key={category} heading={config.label}>
+                {categoryModels.map((model) => (
+                  <CommandItem
+                    key={model.id}
+                    value={model.id}
+                    onSelect={() => {
+                      onModelChange(model.id);
+                      setOpen(false);
+                    }}
+                    className="flex flex-col items-start gap-1 p-3"
+                    data-testid={`model-option-${model.id}`}
+                  >
+                    <div className="flex items-center justify-between w-full">
+                      <div className="flex items-center gap-2">
+                        <Check
+                          className={cn(
+                            'h-4 w-4',
+                            selectedModel === model.id ? 'opacity-100' : 'opacity-0'
+                          )}
+                        />
+                        <CategoryIcon className={cn("h-4 w-4", config.color)} />
+                        <span className="font-medium text-[13px]">{model.name}</span>
+                      </div>
+                      <div className="flex gap-1 ml-2 shrink-0">
+                        {model.capabilities.extendedThinking && (
+                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                            <Brain className="h-3 w-3 mr-0.5" />
+                            Thinking
+                          </Badge>
                         )}
-                      />
-                      <Zap className="h-4 w-4 text-blue-500" />
-                      <span className="font-medium">{model.name}</span>
-                    </div>
-                    <div className="flex gap-1">
-                      {model.capabilities.extendedThinking && (
-                        <Badge variant="secondary" className="text-[11px]">
-                          <Brain className="h-3 w-3 mr-1" />
-                          Thinking
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            "text-[10px] px-1.5 py-0",
+                            model.capabilities.speed === 'fast' && "border-green-500 text-green-500",
+                            model.capabilities.speed === 'medium' && "border-yellow-500 text-yellow-500",
+                            model.capabilities.speed === 'slow' && "border-red-500 text-red-500"
+                          )}
+                        >
+                          {model.capabilities.speed}
                         </Badge>
-                      )}
-                      <Badge 
-                        variant="outline" 
-                        className={cn(
-                          "text-[11px]",
-                          model.capabilities.speed === 'fast' && "border-green-500 text-green-500",
-                          model.capabilities.speed === 'medium' && "border-yellow-500 text-yellow-500",
-                          model.capabilities.speed === 'slow' && "border-red-500 text-red-500"
+                        {model.tier === 'high-power' && (
+                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                            <Sparkles className="h-3 w-3 mr-0.5" />
+                            Pro
+                          </Badge>
                         )}
-                      >
-                        {model.capabilities.speed}
-                      </Badge>
+                      </div>
                     </div>
-                  </div>
-                  <p className="text-[13px] text-muted-foreground ml-6">
-                    {model.description}
-                  </p>
-                  <div className="flex gap-2 ml-6 mt-1 text-[11px] text-muted-foreground">
-                    <span>{model.capabilities.maxTokens.toLocaleString()} tokens</span>
-                    <span>•</span>
-                    <span>Cost: {model.capabilities.cost}</span>
-                  </div>
-                </CommandItem>
-              ))}
-          </CommandGroup>
+                    <p className="text-[12px] text-muted-foreground ml-6 leading-tight">
+                      {model.description}
+                    </p>
+                    <div className="flex gap-2 ml-6 mt-0.5 text-[10px] text-muted-foreground">
+                      <span>{model.capabilities.maxTokens.toLocaleString()} tokens</span>
+                      <span>•</span>
+                      <span>Cost: {model.capabilities.cost}</span>
+                    </div>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            );
+          })}
         </Command>
       </PopoverContent>
     </Popover>

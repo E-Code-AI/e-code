@@ -35,8 +35,10 @@ const getProviderColor = (provider: string) => {
     openai: 'text-green-500',
     anthropic: 'text-orange-500',
     gemini: 'text-blue-500',
+    google: 'text-blue-500',
     xai: 'text-purple-500',
     groq: 'text-indigo-500',
+    moonshot: 'text-cyan-500',
     default: 'text-gray-500'
   };
   return colors[provider] || colors.default;

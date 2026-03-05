@@ -52,7 +52,7 @@ router.get('/preferences', async (req, res) => {
         extendedThinking: false,
         highPowerMode: false,
         autoWebSearch: true,
-        preferredModel: 'claude-3-5-sonnet-20241022',
+        preferredModel: 'claude-sonnet-4-20250514',
         customInstructions: null,
         improvePromptEnabled: false,
         progressTabEnabled: false,

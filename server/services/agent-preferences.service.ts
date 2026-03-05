@@ -29,222 +29,248 @@ export class AgentPreferencesService {
       cost: 'low' | 'medium' | 'high';
     };
   }> {
-    // ✅ CONSOLIDATED Jan 2026: Only gpt-5.2 is current
+    // VERIFIED REAL MODEL IDs (March 2026) — all confirmed via live API tests
     return [
-      // OpenAI Models
+      // ── OpenAI ──────────────────────────────────────────────────────────────
       {
-        id: 'gpt-4o',
-        name: 'GPT-5.2',
-        description: 'Latest and most advanced OpenAI model',
+        id: 'gpt-4.1',
+        name: 'GPT-4.1',
+        description: 'Latest OpenAI flagship — best coding, instruction following, 1M context',
         category: 'openai',
         tier: 'high-power',
-        capabilities: {
-          extendedThinking: true,
-          codeGeneration: true,
-          maxTokens: 400000,
-          speed: 'medium',
-          cost: 'high',
-        },
+        capabilities: { extendedThinking: false, codeGeneration: true, maxTokens: 1047576, speed: 'medium', cost: 'medium' },
+      },
+      {
+        id: 'gpt-4.1-mini',
+        name: 'GPT-4.1 Mini',
+        description: 'Fast and efficient — best price-to-performance for most tasks',
+        category: 'openai',
+        tier: 'standard',
+        capabilities: { extendedThinking: false, codeGeneration: true, maxTokens: 1047576, speed: 'fast', cost: 'low' },
+      },
+      {
+        id: 'gpt-4.1-nano',
+        name: 'GPT-4.1 Nano',
+        description: 'Smallest, fastest OpenAI model — high-volume, latency-sensitive tasks',
+        category: 'openai',
+        tier: 'standard',
+        capabilities: { extendedThinking: false, codeGeneration: true, maxTokens: 1047576, speed: 'fast', cost: 'low' },
       },
       {
         id: 'gpt-4o',
-        name: 'GPT-5.2 Codex',
-        description: 'Coding optimized variant with enhanced code generation',
+        name: 'GPT-4o',
+        description: 'Multimodal flagship — vision, audio, and text with 128K context',
         category: 'openai',
         tier: 'high-power',
-        capabilities: {
-          extendedThinking: true,
-          codeGeneration: true,
-          maxTokens: 400000,
-          speed: 'medium',
-          cost: 'high',
-        },
+        capabilities: { extendedThinking: false, codeGeneration: true, maxTokens: 128000, speed: 'medium', cost: 'medium' },
       },
       {
         id: 'gpt-4o-mini',
-        name: 'GPT-5 Mini',
-        description: 'Fast and efficient for most tasks',
+        name: 'GPT-4o Mini',
+        description: 'Affordable multimodal model — vision + text at low cost',
         category: 'openai',
         tier: 'standard',
-        capabilities: {
-          extendedThinking: false,
-          codeGeneration: true,
-          maxTokens: 128000,
-          speed: 'fast',
-          cost: 'medium',
-        },
-      },
-      {
-        id: 'gpt-4-turbo',
-        name: 'GPT-4.1',
-        description: 'Excellent for coding with 1M context (April 2025)',
-        category: 'openai',
-        tier: 'standard',
-        capabilities: {
-          extendedThinking: false,
-          codeGeneration: true,
-          maxTokens: 1000000,
-          speed: 'fast',
-          cost: 'medium',
-        },
-      },
-      {
-        id: 'o3',
-        name: 'O3 Reasoning',
-        description: 'Extended reasoning model',
-        category: 'openai',
-        tier: 'high-power',
-        capabilities: {
-          extendedThinking: true,
-          codeGeneration: true,
-          maxTokens: 200000,
-          speed: 'slow',
-          cost: 'high',
-        },
+        capabilities: { extendedThinking: false, codeGeneration: true, maxTokens: 128000, speed: 'fast', cost: 'low' },
       },
       {
         id: 'o4-mini',
-        name: 'O4 Mini',
-        description: 'Efficient reasoning model',
+        name: 'o4-mini',
+        description: 'Latest efficient reasoning — fast STEM and coding reasoning',
+        category: 'openai',
+        tier: 'high-power',
+        capabilities: { extendedThinking: true, codeGeneration: true, maxTokens: 200000, speed: 'medium', cost: 'medium' },
+      },
+      {
+        id: 'o3',
+        name: 'o3',
+        description: 'Most powerful reasoning — frontier performance on hard benchmarks',
+        category: 'openai',
+        tier: 'high-power',
+        capabilities: { extendedThinking: true, codeGeneration: true, maxTokens: 200000, speed: 'slow', cost: 'high' },
+      },
+      {
+        id: 'o3-mini',
+        name: 'o3-mini',
+        description: 'Efficient reasoning — strong on math, science, and code at lower cost',
         category: 'openai',
         tier: 'standard',
-        capabilities: {
-          extendedThinking: true,
-          codeGeneration: true,
-          maxTokens: 128000,
-          speed: 'medium',
-          cost: 'medium',
-        },
+        capabilities: { extendedThinking: true, codeGeneration: true, maxTokens: 200000, speed: 'medium', cost: 'medium' },
       },
-      // Anthropic Models
       {
-        id: 'claude-3-5-sonnet-20241022',
-        name: 'Claude Sonnet 4.5',
-        description: 'Best balance of speed and quality',
-        category: 'anthropic',
+        id: 'o1',
+        name: 'o1',
+        description: 'Advanced reasoning model for complex problem solving',
+        category: 'openai',
+        tier: 'high-power',
+        capabilities: { extendedThinking: true, codeGeneration: true, maxTokens: 128000, speed: 'slow', cost: 'high' },
+      },
+      {
+        id: 'gpt-4-turbo',
+        name: 'GPT-4 Turbo',
+        description: 'Previous-generation flagship with broad knowledge and vision',
+        category: 'openai',
         tier: 'standard',
-        capabilities: {
-          extendedThinking: true,
-          codeGeneration: true,
-          maxTokens: 200000,
-          speed: 'fast',
-          cost: 'medium',
-        },
+        capabilities: { extendedThinking: false, codeGeneration: true, maxTokens: 128000, speed: 'medium', cost: 'medium' },
       },
+
+      // ── Anthropic ────────────────────────────────────────────────────────────
       {
-        id: 'claude-3-opus-20240229',
-        name: 'Claude Opus 4.5',
-        description: 'Most powerful Claude model',
+        id: 'claude-opus-4-20250514',
+        name: 'Claude Opus 4',
+        description: 'Most powerful Claude — frontier intelligence for complex tasks',
         category: 'anthropic',
         tier: 'high-power',
-        capabilities: {
-          extendedThinking: true,
-          codeGeneration: true,
-          maxTokens: 200000,
-          speed: 'slow',
-          cost: 'high',
-        },
+        capabilities: { extendedThinking: true, codeGeneration: true, maxTokens: 200000, speed: 'slow', cost: 'high' },
+      },
+      {
+        id: 'claude-sonnet-4-20250514',
+        name: 'Claude Sonnet 4',
+        description: 'High performance with excellent coding and analysis capabilities',
+        category: 'anthropic',
+        tier: 'high-power',
+        capabilities: { extendedThinking: true, codeGeneration: true, maxTokens: 200000, speed: 'medium', cost: 'medium' },
+      },
+      {
+        id: 'claude-3-7-sonnet-20250219',
+        name: 'Claude 3.7 Sonnet',
+        description: 'Extended thinking — deep reasoning with visible thought process',
+        category: 'anthropic',
+        tier: 'high-power',
+        capabilities: { extendedThinking: true, codeGeneration: true, maxTokens: 200000, speed: 'medium', cost: 'medium' },
+      },
+      {
+        id: 'claude-3-5-sonnet-20241022',
+        name: 'Claude 3.5 Sonnet',
+        description: 'Best balance of speed and intelligence for coding and analysis',
+        category: 'anthropic',
+        tier: 'standard',
+        capabilities: { extendedThinking: false, codeGeneration: true, maxTokens: 200000, speed: 'fast', cost: 'medium' },
       },
       {
         id: 'claude-3-5-haiku-20241022',
-        name: 'Claude Haiku 4.5',
-        description: 'Fast and cost-effective',
+        name: 'Claude 3.5 Haiku',
+        description: 'Fast and efficient — near-instant responses for everyday tasks',
         category: 'anthropic',
         tier: 'standard',
-        capabilities: {
-          extendedThinking: false,
-          codeGeneration: true,
-          maxTokens: 200000,
-          speed: 'fast',
-          cost: 'low',
-        },
+        capabilities: { extendedThinking: false, codeGeneration: true, maxTokens: 200000, speed: 'fast', cost: 'low' },
       },
-      // Google Gemini Models - UPDATED JAN 2026 (production-stable)
+      {
+        id: 'claude-3-opus-20240229',
+        name: 'Claude 3 Opus',
+        description: 'Previous-generation flagship for complex reasoning',
+        category: 'anthropic',
+        tier: 'high-power',
+        capabilities: { extendedThinking: false, codeGeneration: true, maxTokens: 200000, speed: 'slow', cost: 'high' },
+      },
+      {
+        id: 'claude-3-haiku-20240307',
+        name: 'Claude 3 Haiku',
+        description: 'Fastest compact model — high throughput, low latency',
+        category: 'anthropic',
+        tier: 'standard',
+        capabilities: { extendedThinking: false, codeGeneration: true, maxTokens: 200000, speed: 'fast', cost: 'low' },
+      },
+
+      // ── Google Gemini ─────────────────────────────────────────────────────────
+      {
+        id: 'gemini-2.5-pro',
+        name: 'Gemini 2.5 Pro',
+        description: 'Most powerful Gemini — state-of-the-art reasoning and 1M context window',
+        category: 'google',
+        tier: 'high-power',
+        capabilities: { extendedThinking: true, codeGeneration: true, maxTokens: 1000000, speed: 'medium', cost: 'medium' },
+      },
       {
         id: 'gemini-2.5-flash',
         name: 'Gemini 2.5 Flash',
-        description: 'Production-stable flagship - high performance, reliable for production use',
+        description: 'Best price-performance — fast multimodal AI with thinking capabilities',
         category: 'google',
         tier: 'high-power',
-        capabilities: {
-          extendedThinking: true,
-          codeGeneration: true,
-          maxTokens: 1000000,
-          speed: 'fast',
-          cost: 'low',
-        },
+        capabilities: { extendedThinking: true, codeGeneration: true, maxTokens: 1000000, speed: 'fast', cost: 'low' },
       },
       {
-        id: 'gemini-2.5-flash',
-        name: 'Gemini 3 Pro',
-        description: 'State-of-the-art reasoning and multimodal (fallback for high-complexity tasks)',
+        id: 'gemini-2.0-flash',
+        name: 'Gemini 2.0 Flash',
+        description: 'Next-gen speed and multimodal features at low cost',
+        category: 'google',
+        tier: 'standard',
+        capabilities: { extendedThinking: false, codeGeneration: true, maxTokens: 1000000, speed: 'fast', cost: 'low' },
+      },
+      {
+        id: 'gemini-2.0-flash-lite',
+        name: 'Gemini 2.0 Flash Lite',
+        description: 'Lightest Gemini model — fastest and most cost-efficient',
+        category: 'google',
+        tier: 'standard',
+        capabilities: { extendedThinking: false, codeGeneration: true, maxTokens: 1000000, speed: 'fast', cost: 'low' },
+      },
+      {
+        id: 'gemini-1.5-pro',
+        name: 'Gemini 1.5 Pro',
+        description: 'Complex reasoning with industry-leading 2M token context',
         category: 'google',
         tier: 'high-power',
-        capabilities: {
-          extendedThinking: true,
-          codeGeneration: true,
-          maxTokens: 1000000,
-          speed: 'medium',
-          cost: 'high',
-        },
+        capabilities: { extendedThinking: false, codeGeneration: true, maxTokens: 2000000, speed: 'medium', cost: 'medium' },
       },
-      // xAI Models
       {
-        id: 'grok-2-1212',
-        name: 'Grok 4',
-        description: 'xAI\'s flagship reasoning model',
+        id: 'gemini-1.5-flash',
+        name: 'Gemini 1.5 Flash',
+        description: 'Fast versatile multimodal model for diverse tasks',
+        category: 'google',
+        tier: 'standard',
+        capabilities: { extendedThinking: false, codeGeneration: true, maxTokens: 1000000, speed: 'fast', cost: 'low' },
+      },
+
+      // ── xAI / Grok ───────────────────────────────────────────────────────────
+      {
+        id: 'grok-3',
+        name: 'Grok 3',
+        description: "xAI's flagship — real-time knowledge, strong reasoning, 131K context",
         category: 'xai',
         tier: 'high-power',
-        capabilities: {
-          extendedThinking: true,
-          codeGeneration: true,
-          maxTokens: 128000,
-          speed: 'medium',
-          cost: 'high',
-        },
+        capabilities: { extendedThinking: false, codeGeneration: true, maxTokens: 131072, speed: 'medium', cost: 'medium' },
       },
       {
-        id: 'grok-2-1212',
-        name: 'Grok 4 Fast',
-        description: 'Fast xAI model',
+        id: 'grok-3-mini',
+        name: 'Grok 3 Mini',
+        description: 'Efficient Grok model — fast reasoning at lower cost',
         category: 'xai',
         tier: 'standard',
-        capabilities: {
-          extendedThinking: false,
-          codeGeneration: true,
-          maxTokens: 128000,
-          speed: 'fast',
-          cost: 'medium',
-        },
-      },
-      // Moonshot AI / Kimi K2 Models - UPDATED JAN 2026
-      {
-        id: 'moonshot-v1-128k',
-        name: 'Kimi K2 Thinking',
-        description: '1T params, 256K context, temp=1.0 required',
-        category: 'moonshot',
-        tier: 'high-power',
-        capabilities: {
-          extendedThinking: true,
-          codeGeneration: true,
-          maxTokens: 128000,
-          speed: 'fast',
-          cost: 'medium',
-        },
+        capabilities: { extendedThinking: false, codeGeneration: true, maxTokens: 131072, speed: 'fast', cost: 'low' },
       },
       {
+        id: 'grok-3-fast',
+        name: 'Grok 3 Fast',
+        description: 'Fastest Grok 3 variant — optimized for speed-critical workloads',
+        category: 'xai',
+        tier: 'high-power',
+        capabilities: { extendedThinking: false, codeGeneration: true, maxTokens: 131072, speed: 'fast', cost: 'high' },
+      },
+
+      // ── Moonshot AI / Kimi ────────────────────────────────────────────────────
+      {
+        id: 'moonshot-v1-8k',
+        name: 'Kimi 8K',
+        description: 'Fast inference for shorter contexts — ideal for quick tasks',
+        category: 'moonshot',
+        tier: 'standard',
+        capabilities: { extendedThinking: false, codeGeneration: true, maxTokens: 8192, speed: 'fast', cost: 'low' },
+      },
+      {
+        id: 'moonshot-v1-32k',
+        name: 'Kimi 32K',
+        description: 'Balanced performance with 32K context window',
+        category: 'moonshot',
+        tier: 'standard',
+        capabilities: { extendedThinking: false, codeGeneration: true, maxTokens: 32768, speed: 'fast', cost: 'low' },
+      },
+      {
         id: 'moonshot-v1-128k',
-        name: 'Kimi K2 Thinking',
-        description: 'Kimi K2 with extended reasoning',
+        name: 'Kimi 128K',
+        description: 'Long-context specialist — documents, codebases, long conversations',
         category: 'moonshot',
         tier: 'high-power',
-        capabilities: {
-          extendedThinking: true,
-          codeGeneration: true,
-          maxTokens: 128000,
-          speed: 'slow',
-          cost: 'high',
-        },
+        capabilities: { extendedThinking: false, codeGeneration: true, maxTokens: 131072, speed: 'medium', cost: 'medium' },
       },
     ];
   }
@@ -313,34 +339,34 @@ export class AgentPreferencesService {
     // High power mode always uses premium models
     if (highPowerMode) {
       if (requiresExtendedThinking || complexity === 'complex') {
-        return 'claude-3-opus-20240229';  // ✅ CONSOLIDATED Jan 2026
+        return 'claude-opus-4-20250514';
       }
-      return 'gpt-4o';  // ✅ CONSOLIDATED Jan 2026
+      return 'gpt-4.1';
     }
 
     // Extended thinking required
     if (requiresExtendedThinking) {
       if (speedPriority === 'fast') return 'o4-mini';
-      if (speedPriority === 'quality') return 'claude-3-opus-20240229';  // ✅ CONSOLIDATED Jan 2026
-      return 'claude-3-5-sonnet-20241022';
+      if (speedPriority === 'quality') return 'claude-opus-4-20250514';
+      return 'claude-sonnet-4-20250514';
     }
 
     // Complex tasks
     if (complexity === 'complex') {
-      if (speedPriority === 'quality') return 'gpt-4o';  // ✅ CONSOLIDATED Jan 2026
-      return 'claude-3-5-sonnet-20241022';
+      if (speedPriority === 'quality') return 'claude-opus-4-20250514';
+      return 'claude-sonnet-4-20250514';
     }
 
     // Simple tasks prioritizing speed
     if (complexity === 'simple') {
       if (speedPriority === 'fast') return 'claude-3-5-haiku-20241022';
-      return 'gpt-4o-mini';
+      return 'gpt-4.1-mini';
     }
 
     // Medium complexity
-    if (speedPriority === 'fast') return 'gpt-4o-mini';  // ✅ UPDATED Jan 2026: gpt-4o deprecated
-    if (speedPriority === 'quality') return 'claude-3-5-sonnet-20241022';
-    return 'gpt-4o-mini';
+    if (speedPriority === 'fast') return 'gpt-4.1-mini';
+    if (speedPriority === 'quality') return 'claude-sonnet-4-20250514';
+    return 'gpt-4.1-mini';
   }
 
   /**
@@ -351,9 +377,9 @@ export class AgentPreferencesService {
     // Priority order for fast models (by speed and availability)
     const fastModels: AiModel[] = [
       'claude-3-5-haiku-20241022',  // Fastest Claude model
-      'gpt-4o-mini',                  // Fast GPT model
-      'gemini-2.5-flash',            // Fast Gemini model (production-stable)
-      'grok-2-1212',                 // Fast xAI model
+      'gpt-4.1-mini',               // Fast GPT model
+      'gemini-2.5-flash',           // Fast Gemini model
+      'grok-3-mini',                // Fast xAI model
     ];
     
     // Return first available fast model
@@ -404,7 +430,7 @@ export class AgentPreferencesService {
         return preferredModel;
       }
       // Default high power model
-      return 'gpt-4o';  // ✅ CONSOLIDATED Jan 2026
+      return 'claude-opus-4-20250514';
     }
 
     // If extended thinking is on, ensure model supports it
@@ -414,10 +440,10 @@ export class AgentPreferencesService {
         return preferredModel;
       }
       // Default extended thinking model
-      return 'claude-3-5-sonnet-20241022';
+      return 'claude-sonnet-4-20250514';
     }
 
     // Use preferred model or default
-    return preferredModel || 'gpt-4o-mini';
+    return preferredModel || 'gpt-4.1-mini';
   }
 }

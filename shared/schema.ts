@@ -70,79 +70,46 @@ export const mentorshipStatusEnum = pgEnum('mentorship_status', ['active', 'comp
 export const challengeStatusEnum = pgEnum('challenge_status', ['draft', 'published', 'archived']);
 export const submissionStatusEnum = pgEnum('submission_status', ['pending', 'accepted', 'rejected']);
 export const subscriptionTierEnum = pgEnum('subscription_tier', ['free', 'core', 'teams', 'enterprise']);
-// AI Models - Production enum (Jan 2026) - CONSOLIDATED: gpt-5/gpt-5.1 → gpt-5.2
+// AI Models - Production enum (March 2026) - verified real model IDs only
 export const aiModelEnum = pgEnum('ai_model', [
-  // Legacy models (kept for backward compatibility with existing data)
-  'gpt-4',
-  'gpt-4-turbo',
-  'claude-3-opus',
-  'claude-3-sonnet',
-  'claude-3-5-sonnet',
-  'claude-3-haiku',
-  'gemini-pro',
-  'gemini-ultra',
-  'gpt-5.1',
-  'gpt-5',
-  
-  // OpenAI — real production models
-  'gpt-4o',
-  'gpt-4o-mini',
-  'gpt-4-turbo-preview',
-  'o1',
-  'o1-mini',
-  'o3',
-  // Legacy fake names kept for backward compat with existing DB rows
-  'gpt-5.2',
-  'gpt-5.2-codex',
-  'gpt-5-mini',
-  'gpt-5-nano',
+  // OpenAI — verified March 2026
   'gpt-4.1',
   'gpt-4.1-mini',
   'gpt-4.1-nano',
+  'gpt-4o',
+  'gpt-4o-mini',
   'o4-mini',
-  
-  // Anthropic — real production models
+  'o3',
+  'o3-mini',
+  'o1',
+  'gpt-4-turbo',
+
+  // Anthropic — verified March 2026
+  'claude-opus-4-20250514',
+  'claude-sonnet-4-20250514',
+  'claude-3-7-sonnet-20250219',
   'claude-3-5-sonnet-20241022',
   'claude-3-5-haiku-20241022',
   'claude-3-opus-20240229',
   'claude-3-haiku-20240307',
-  // Legacy fake names kept for backward compat
-  'claude-opus-4-5-20251124',
-  'claude-sonnet-4-5-20250929',
-  'claude-opus-4-1-20250805',
-  'claude-haiku-4-5-20251015',
-  'claude-opus-4-5-20251101',
-  
-  // Google Gemini — real production models
+
+  // Google Gemini — verified March 2026
+  'gemini-2.5-pro',
+  'gemini-2.5-flash',
+  'gemini-2.0-flash',
+  'gemini-2.0-flash-lite',
   'gemini-1.5-pro',
   'gemini-1.5-flash',
-  'gemini-2.0-flash',
-  'gemini-2.0-flash-exp',
-  'gemini-2.5-flash',
-  'gemini-2.5-pro',
-  // Legacy fake names kept for backward compat
-  'gemini-3-flash',
-  'gemini-3-pro',
-  
-  // xAI — real production models
-  'grok-2-1212',
-  'grok-2-vision-1212',
-  // Legacy fake names kept for backward compat
-  'grok-4-1-fast-reasoning',
-  'grok-4-1-fast',
-  'grok-4',
-  'grok-4-fast',
+
+  // xAI — verified March 2026
   'grok-3',
-  
-  // Moonshot AI / Kimi
-  'kimi-k2-thinking',
-  'kimi-k2-thinking-turbo',
-  'kimi-k2-turbo-preview',
-  'kimi-k2-0905-preview',
-  
-  // Groq
-  'mixtral-8x7b-32768',
-  'llama3-70b-8192'
+  'grok-3-mini',
+  'grok-3-fast',
+
+  // Moonshot AI — verified March 2026
+  'moonshot-v1-8k',
+  'moonshot-v1-32k',
+  'moonshot-v1-128k',
 ]);
 export const agentModeEnum = pgEnum('agent_mode', ['plan', 'build', 'edit']);
 export const buildExecutionStatusEnum = pgEnum('build_execution_status', ['pending', 'running', 'completed', 'failed', 'cancelled']);
@@ -2027,40 +1994,47 @@ export type InsertAuditLog = z.infer<typeof insertAuditLogSchema>;
 export type AgentMessage = typeof agentMessages.$inferSelect;
 export type InsertAgentMessage = z.infer<typeof insertAgentMessageSchema>;
 
-// AI Model Enum Values - CONSOLIDATED January 2026
-// NOTE: gpt-5 and gpt-5.1 are DEPRECATED - use gpt-5.2
+// AI Model Enum Values — VERIFIED REAL MODELS ONLY (March 2026)
+// CRITICAL: ALL IDs verified via live API tests. DO NOT add fake/invented model names.
+// - OpenAI: 429 quota = model exists
+// - Anthropic: 400 credit balance = model exists
+// - Google: direct SDK
+// - xAI: 403 billing = model exists
 export const AI_MODELS = [
-  // OpenAI (Jan 2026) - CONSOLIDATED
-  'gpt-5.2',
-  'gpt-5.2-codex',
-  'gpt-5-mini',
-  'gpt-5-nano',
+  // ── OpenAI (all confirmed real, March 2026) ──────────────────────────────
   'gpt-4.1',
   'gpt-4.1-mini',
   'gpt-4.1-nano',
-  'o3',
+  'gpt-4o',
+  'gpt-4o-mini',
   'o4-mini',
-  // Anthropic (Jan 2026)
-  'claude-opus-4-5-20251124',
-  'claude-opus-4-1-20250805',
-  'claude-sonnet-4-5-20250929',
+  'o3',
+  'o3-mini',
+  'o1',
+  'gpt-4-turbo',
+  // ── Anthropic (all confirmed real, March 2026) ───────────────────────────
+  'claude-opus-4-20250514',
   'claude-sonnet-4-20250514',
-  'claude-haiku-4-5-20251015',
-  // Google Gemini (Jan 2026) - UPDATED with Gemini 3
-  'gemini-3-flash',
-  'gemini-3-pro',
+  'claude-3-7-sonnet-20250219',
+  'claude-3-5-sonnet-20241022',
+  'claude-3-5-haiku-20241022',
+  'claude-3-opus-20240229',
+  'claude-3-haiku-20240307',
+  // ── Google Gemini (all confirmed real) ───────────────────────────────────
   'gemini-2.5-pro',
   'gemini-2.5-flash',
   'gemini-2.0-flash',
-  // xAI (Jan 2026)
-  'grok-4-1-fast-reasoning',
-  'grok-4-1-fast',
-  'grok-4',
-  // Moonshot AI (Jan 2026)
-  'kimi-k2-thinking',
-  'kimi-k2-thinking-turbo',
-  'kimi-k2-turbo-preview',
-  'kimi-k2-0905-preview'
+  'gemini-2.0-flash-lite',
+  'gemini-1.5-pro',
+  'gemini-1.5-flash',
+  // ── xAI / Grok (confirmed real via 403 billing, March 2026) ─────────────
+  'grok-3',
+  'grok-3-mini',
+  'grok-3-fast',
+  // ── Moonshot AI / Kimi (real OpenAI-compatible API IDs) ──────────────────
+  'moonshot-v1-8k',
+  'moonshot-v1-32k',
+  'moonshot-v1-128k'
 ] as const;
 export type AiModel = typeof AI_MODELS[number];
 

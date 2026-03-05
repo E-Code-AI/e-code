@@ -319,10 +319,10 @@ export const AI_MODELS: AIModel[] = [
  * UPDATED January 2025: kimi-k2-0711-preview → kimi-k2-0905-preview (September 2025 upgrade)
  */
 const PROVIDER_FALLBACK_CHAIN = [
-  'gpt-4o',
-  'claude-3-5-sonnet-20241022',
+  'gpt-4.1',
+  'claude-sonnet-4-20250514',
   'gemini-2.5-flash',
-  'grok-2-1212',
+  'grok-3',
   'moonshot-v1-32k'
 ];
 
