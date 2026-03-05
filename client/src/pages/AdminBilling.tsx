@@ -124,9 +124,11 @@ export default function AdminBilling() {
     queryKey: ['/api/admin/billing/settings'],
   });
 
-  const { data: subscribers = [], isLoading: subscribersLoading } = useQuery<Subscriber[]>({
+  const { data: subscribersData, isLoading: subscribersLoading } = useQuery<any>({
     queryKey: ['/api/admin/billing/subscriptions'],
   });
+
+  const subscribers: Subscriber[] = subscribersData?.subscribers || subscribersData || [];
 
   const { data: invoicesData, isLoading: invoicesLoading } = useQuery<{ invoices: Invoice[] }>({
     queryKey: ['/api/admin/billing/invoices'],

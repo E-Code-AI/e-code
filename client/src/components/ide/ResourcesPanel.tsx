@@ -229,8 +229,8 @@ export function ResourcesPanel({ projectId, className }: ResourcesPanelProps) {
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Badge variant={metrics.network.latency < 50 ? "secondary" : "destructive"} className="text-[10px]">
-                        {metrics.network.latency.toFixed(0)}ms
+                      <Badge variant={(metrics?.network?.latency || 0) < 50 ? "secondary" : "destructive"} className="text-[10px]">
+                        {(metrics?.network?.latency || 0).toFixed(0)}ms
                       </Badge>
                     </TooltipTrigger>
                     <TooltipContent>
@@ -245,14 +245,14 @@ export function ResourcesPanel({ projectId, className }: ResourcesPanelProps) {
                     <TrendingDown className="h-3 w-3 text-green-500" />
                     <span className="text-[10px] text-muted-foreground">IN</span>
                   </div>
-                  <span className="text-[11px] font-medium">{formatBytes(metrics.network.bytesIn)}</span>
+                  <span className="text-[11px] font-medium">{formatBytes(metrics?.network?.bytesIn || 0)}</span>
                 </div>
                 <div className="p-2 bg-surface-tertiary-solid rounded text-center">
                   <div className="flex items-center justify-center gap-1 mb-1">
                     <TrendingUp className="h-3 w-3 text-blue-500" />
                     <span className="text-[10px] text-muted-foreground">OUT</span>
                   </div>
-                  <span className="text-[11px] font-medium">{formatBytes(metrics.network.bytesOut)}</span>
+                  <span className="text-[11px] font-medium">{formatBytes(metrics?.network?.bytesOut || 0)}</span>
                 </div>
               </div>
             </div>
@@ -264,29 +264,29 @@ export function ResourcesPanel({ projectId, className }: ResourcesPanelProps) {
                 <Terminal className="h-3.5 w-3.5 text-muted-foreground" />
                 <span className="text-[11px] font-medium">Processes</span>
                 <Badge variant="outline" className="text-[10px]">
-                  {metrics.processes.filter(p => p.status === 'running').length} active
+                  {(metrics?.processes || []).filter(p => p?.status === 'running').length} active
                 </Badge>
               </div>
               <div className="space-y-1">
-                {metrics.processes.map((process) => (
+                {(metrics?.processes || []).map((process) => (
                   <div
-                    key={process.pid}
+                    key={process?.pid}
                     className="flex items-center justify-between p-2 bg-muted/30 rounded text-[11px]"
                   >
                     <div className="flex items-center gap-2">
                       <div className={cn(
                         "w-1.5 h-1.5 rounded-full",
-                        process.status === 'running' ? "bg-green-500" :
-                        process.status === 'sleeping' ? "bg-yellow-500" : "bg-red-500"
+                        process?.status === 'running' ? "bg-green-500" :
+                        process?.status === 'sleeping' ? "bg-yellow-500" : "bg-red-500"
                       )} />
-                      <span className="font-medium">{process.name}</span>
-                      <span className="text-muted-foreground">PID {process.pid}</span>
+                      <span className="font-medium">{process?.name}</span>
+                      <span className="text-muted-foreground">PID {process?.pid}</span>
                     </div>
                     <div className="flex items-center gap-3 text-muted-foreground">
-                      <span className={getUsageColor(process.cpu)}>
-                        {process.cpu.toFixed(1)}% CPU
+                      <span className={getUsageColor(process?.cpu || 0)}>
+                        {(process?.cpu || 0).toFixed(1)}% CPU
                       </span>
-                      <span>{formatBytes(process.memory)}</span>
+                      <span>{formatBytes(process?.memory || 0)}</span>
                     </div>
                   </div>
                 ))}

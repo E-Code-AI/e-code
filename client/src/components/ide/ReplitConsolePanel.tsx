@@ -116,7 +116,8 @@ export function ReplitConsolePanel({
         credentials: 'include'
       });
       if (!response.ok) return [];
-      return response.json();
+      const data = await response.json();
+      return Array.isArray(data) ? data : (data && typeof data === 'object' && 'workflows' in data && Array.isArray(data.workflows) ? data.workflows : []);
     },
     enabled: !!projectId
   });

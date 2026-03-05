@@ -158,11 +158,11 @@ export function TemplateCard({
                   <Avatar className="h-6 w-6">
                     <AvatarImage src={template.author?.avatar} />
                     <AvatarFallback>
-                      {template.author?.name?.charAt(0) || 'U'}
+                      {(template.author?.name || 'U').charAt(0)}
                     </AvatarFallback>
                   </Avatar>
                   <span className="text-[13px] text-muted-foreground">
-                    by {template.author?.name || 'Anonymous'}
+                    by {typeof template.author === 'object' ? (template.author?.name ?? 'Anonymous') : (template.author ?? 'Anonymous')}
                   </span>
                 </div>
                 <div className="flex items-center gap-3 text-[13px] text-muted-foreground">
@@ -294,11 +294,11 @@ export function TemplateCard({
             <Avatar className="h-5 w-5">
               <AvatarImage src={template.author?.avatar} />
               <AvatarFallback>
-                {template.author?.name?.charAt(0) || 'U'}
+                {(template.author?.name || 'U').charAt(0)}
               </AvatarFallback>
             </Avatar>
             <span className="text-[11px] text-muted-foreground">
-              {template.author?.name || 'Anonymous'}
+              {typeof template.author === 'object' ? (template.author?.name ?? 'Anonymous') : (template.author ?? 'Anonymous')}
             </span>
             {template.author?.verified && (
               <Badge variant="secondary" className="h-4 text-[11px] px-1">

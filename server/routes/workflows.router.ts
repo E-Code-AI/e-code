@@ -44,7 +44,7 @@ async function getWorkflowWithTasks(workflowId: number): Promise<WorkflowWithTas
 }
 
 // Get all workflows for a project
-workflowsRouter.get('/api/workflows', async (req: Request, res: Response) => {
+workflowsRouter.get('/', async (req: Request, res: Response) => {
   try {
     const projectId = req.query.projectId ? parseInt(req.query.projectId as string) : null;
     
@@ -86,7 +86,7 @@ workflowsRouter.get('/api/workflows', async (req: Request, res: Response) => {
 });
 
 // Get single workflow
-workflowsRouter.get('/api/workflows/:id', async (req: Request, res: Response) => {
+workflowsRouter.get('/:id', async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id);
     const workflow = await getWorkflowWithTasks(id);
@@ -118,7 +118,7 @@ const createWorkflowSchema = z.object({
 });
 
 // Create workflow
-workflowsRouter.post('/api/workflows', async (req: Request, res: Response) => {
+workflowsRouter.post('/', async (req: Request, res: Response) => {
   try {
     const data = createWorkflowSchema.parse(req.body);
     
@@ -183,7 +183,7 @@ const updateWorkflowSchema = z.object({
 });
 
 // Update workflow
-workflowsRouter.patch('/api/workflows/:id', async (req: Request, res: Response) => {
+workflowsRouter.patch('/:id', async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id);
     const data = updateWorkflowSchema.parse(req.body);
@@ -247,7 +247,7 @@ workflowsRouter.patch('/api/workflows/:id', async (req: Request, res: Response) 
 });
 
 // Delete workflow
-workflowsRouter.delete('/api/workflows/:id', async (req: Request, res: Response) => {
+workflowsRouter.delete('/:id', async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id);
     
@@ -276,7 +276,7 @@ workflowsRouter.delete('/api/workflows/:id', async (req: Request, res: Response)
 });
 
 // Run workflow
-workflowsRouter.post('/api/workflows/:id/run', async (req: Request, res: Response) => {
+workflowsRouter.post('/:id/run', async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id);
     const workflow = await getWorkflowWithTasks(id);
@@ -312,7 +312,7 @@ workflowsRouter.post('/api/workflows/:id/run', async (req: Request, res: Respons
 });
 
 // Stop workflow
-workflowsRouter.post('/api/workflows/:id/stop', async (req: Request, res: Response) => {
+workflowsRouter.post('/:id/stop', async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id);
     
@@ -342,7 +342,7 @@ workflowsRouter.post('/api/workflows/:id/stop', async (req: Request, res: Respon
 });
 
 // Get workflow runs
-workflowsRouter.get('/api/workflows/:id/runs', async (req: Request, res: Response) => {
+workflowsRouter.get('/:id/runs', async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id);
     const limit = Math.min(parseInt(req.query.limit as string) || 10, 50);
@@ -360,7 +360,7 @@ workflowsRouter.get('/api/workflows/:id/runs', async (req: Request, res: Respons
 });
 
 // Set workflow as Run Button
-workflowsRouter.post('/api/workflows/:id/set-run-button', async (req: Request, res: Response) => {
+workflowsRouter.post('/:id/set-run-button', async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id);
     
@@ -389,7 +389,7 @@ workflowsRouter.post('/api/workflows/:id/set-run-button', async (req: Request, r
 });
 
 // Reorder tasks
-workflowsRouter.post('/api/workflows/:id/reorder-tasks', async (req: Request, res: Response) => {
+workflowsRouter.post('/:id/reorder-tasks', async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id);
     const { taskIds } = req.body as { taskIds: number[] };

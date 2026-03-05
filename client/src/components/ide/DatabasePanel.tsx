@@ -440,14 +440,14 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
     restoreMutation.mutate({ timestamp, timezone: restoreTimezone });
   };
 
-  const filteredTables = allTables.filter(table =>
-    table.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredTables = (allTables || []).filter(table =>
+    table?.name && typeof table.name === 'string' && table.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const storageUsedMb = databaseInfo?.storageUsedMb || 87.45;
-  const storageLimitMb = databaseInfo?.storageLimitMb || 10240;
-  const storagePercentage = (storageUsedMb / storageLimitMb) * 100;
-  const computeHours = databaseInfo?.computeHours || 470.36;
+  const storageUsedMb = databaseInfo?.storageUsedMb || 0;
+  const storageLimitMb = databaseInfo?.storageLimitMb || 1024;
+  const storagePercentage = storageLimitMb > 0 ? (storageUsedMb / storageLimitMb) * 100 : 0;
+  const computeHours = databaseInfo?.computeHours || 0;
 
   const formatStorage = (mb: number, limitMb: number) => {
     if (limitMb >= 1024) {

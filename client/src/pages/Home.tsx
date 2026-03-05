@@ -66,20 +66,21 @@ export default function Home() {
   const { toast } = useToast();
   const { user } = useAuth();
 
-  const { data: projects, isLoading, error: projectsError } = useQuery<Project[]>({
+  const { data: projectsData, isLoading, error: projectsError } = useQuery<{ projects: Project[], pagination?: any }>({
     queryKey: ['/api/projects'],
     queryFn: async () => {
       try {
         const res = await apiRequest('GET', '/api/projects');
-        // Handle both paginated and direct array formats
-        return (res.projects && Array.isArray(res.projects)) ? res.projects : (Array.isArray(res) ? res : []);
+        return res;
       } catch (err) {
         console.error('Projects fetch error:', err);
-        return [];
+        return { projects: [] };
       }
     },
     retry: 2,
   });
+
+  const projects = projectsData?.projects || [];
 
   // Show error toast if projects fail to load - use ref to avoid toast dependency causing loops
   const toastRef = useRef(toast);

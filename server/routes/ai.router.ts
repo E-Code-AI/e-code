@@ -18,7 +18,7 @@ import { ensureAuthenticated } from '../middleware/auth';
 const router = Router();
 
 // GET /api/ai/features — AI features metadata for the marketing page (public, no auth)
-router.get('/ai/features', (_req, res) => {
+router.get('/features', (_req, res) => {
   res.json({
     features: {
       autonomous: {
@@ -126,14 +126,14 @@ router.get('/openai/models', (_req, res) => {
 });
 
 // POST /api/ai/* — authenticated AI generation endpoints
-router.post('/ai/completion', ensureAuthenticated, generateCompletion);
-router.post('/ai/explanation', ensureAuthenticated, generateExplanation);
-router.post('/ai/convert', ensureAuthenticated, convertCode);
-router.post('/ai/documentation', ensureAuthenticated, generateDocumentation);
-router.post('/ai/tests', ensureAuthenticated, generateTests);
+router.post('/completion', ensureAuthenticated, generateCompletion);
+router.post('/explanation', ensureAuthenticated, generateExplanation);
+router.post('/convert', ensureAuthenticated, convertCode);
+router.post('/documentation', ensureAuthenticated, generateDocumentation);
+router.post('/tests', ensureAuthenticated, generateTests);
 
 // Inline Code Actions (Right-click + Lightbulb)
-router.post('/ai/code-actions', ensureAuthenticated, handleCodeActions);
-router.post('/ai/code-actions/stream', ensureAuthenticated, handleCodeActionsStream);
+router.post('/code-actions', ensureAuthenticated, handleCodeActions);
+router.post('/code-actions/stream', ensureAuthenticated, handleCodeActionsStream);
 
 export default router;

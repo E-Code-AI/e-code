@@ -619,8 +619,8 @@ function UnifiedIDELayout({
     
     switch (mobileActiveTab) {
       case 'preview':
-        // Gate preview with AppNotReadyPlaceholder until schema is ready
-        if (!isSchemaReady) {
+        // Gate preview with AppNotReadyPlaceholder until schema is ready (bootstrap only)
+        if (!isSchemaReady && !!bootstrapToken) {
           return <AppNotReadyPlaceholder tabName="Preview" />;
         }
         return (
@@ -645,8 +645,8 @@ function UnifiedIDELayout({
           </AgentPanelErrorBoundary>
         );
       case 'deploy':
-        // Gate deploy with AppNotReadyPlaceholder until schema is ready
-        if (!isSchemaReady) {
+        // Gate deploy with AppNotReadyPlaceholder until schema is ready (bootstrap only)
+        if (!isSchemaReady && !!bootstrapToken) {
           return <AppNotReadyPlaceholder tabName="Deploy" />;
         }
         return (
@@ -854,8 +854,8 @@ function UnifiedIDELayout({
           </Suspense>
         );
       case 'preview':
-        // Gate preview with AppNotReadyPlaceholder until schema is ready
-        if (!isSchemaReady) {
+        // Gate preview with AppNotReadyPlaceholder until schema is ready (bootstrap only)
+        if (!isSchemaReady && !!bootstrapToken) {
           return <AppNotReadyPlaceholder tabName="Preview" />;
         }
         return (
@@ -923,9 +923,9 @@ function UnifiedIDELayout({
       return <div className="flex items-center justify-center h-full text-muted-foreground">Select a tab</div>;
     }
 
-    // Preview panel - gate with AppNotReadyPlaceholder until schema is ready
+    // Preview panel - gate with AppNotReadyPlaceholder until schema is ready (bootstrap only)
     if (currentTab.id === 'preview' || currentTab.id === 'webpreview') {
-      if (!isSchemaReady) {
+      if (!isSchemaReady && !!bootstrapToken) {
         return <AppNotReadyPlaceholder tabName="Preview" />;
       }
       return (

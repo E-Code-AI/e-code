@@ -150,31 +150,27 @@ export default function ChatGPTAdmin() {
   }, [user]);
 
   // Fetch ALL projects from all users
-  const { data: allProjects, isLoading: projectsLoading } = useQuery<Project[]>({
+  const { data: allProjectsData, isLoading: projectsLoading } = useQuery<any>({
     queryKey: ['/api/admin/chatgpt/all-projects'],
-    queryFn: async () => {
-      return await apiRequest('GET', '/api/admin/chatgpt/all-projects');
-    }
   });
 
+  const allProjects = allProjectsData?.projects || allProjectsData || [];
+
   // Fetch files for selected project
-  const { data: projectFiles, isLoading: filesLoading, refetch: refetchFiles } = useQuery<ProjectFile[]>({
+  const { data: projectFilesData, isLoading: filesLoading, refetch: refetchFiles } = useQuery<any>({
     queryKey: ['/api/admin/chatgpt/projects', selectedProject?.id, 'files'],
-    queryFn: async () => {
-      if (!selectedProject) return [];
-      return await apiRequest('GET', `/api/admin/chatgpt/projects/${selectedProject.id}/files`);
-    },
     enabled: !!selectedProject
   });
 
+  const projectFiles = projectFilesData?.files || projectFilesData || [];
+
   // Fetch all active agent sessions across all users
-  const { data: agentSessions, isLoading: sessionsLoading, refetch: refetchSessions } = useQuery<AdminAgentSession[]>({
+  const { data: agentSessionsData, isLoading: sessionsLoading, refetch: refetchSessions } = useQuery<any>({
     queryKey: ['/api/admin/chatgpt/agent-sessions'],
-    queryFn: async () => {
-      return await apiRequest('GET', '/api/admin/chatgpt/agent-sessions');
-    },
     refetchInterval: 10000
   });
+
+  const agentSessions = agentSessionsData?.sessions || agentSessionsData || [];
 
   // Initialize WebSocket connection
   useEffect(() => {

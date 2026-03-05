@@ -183,12 +183,7 @@ export default function AdminFormRequests() {
 
   const updateStatus = useMutation({
     mutationFn: async ({ id, status }: { id: number; status: string }) => {
-      const res = await apiRequest('PATCH', `/api/admin/form-requests/${id}`, { status });
-      if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(errorText || 'Unable to update request status');
-      }
-      return await res.json();
+      return await apiRequest('PATCH', `/api/admin/form-requests/${id}`, { status });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin.formRequests'] });

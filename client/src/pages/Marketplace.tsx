@@ -57,54 +57,17 @@ export default function Marketplace() {
   };
 
   // Fetch real marketplace data from APIs
-  const { data: extensions = [], isLoading: isExtensionsLoading } = useQuery({
+  const { data: extensions = [], isLoading: isExtensionsLoading } = useQuery<any[]>({
     queryKey: ['/api/marketplace/extensions'],
-    queryFn: async () => {
-      try {
-        const response = await fetch('/api/marketplace/extensions');
-        if (!response.ok) {
-          return [];
-        }
-        return response.json();
-      } catch (err) {
-        console.error('Failed to fetch extensions:', err);
-        return [];
-      }
-    }
   });
 
-  const { data: templatesData, isLoading: isTemplatesLoading } = useQuery({
+  const { data: templatesData, isLoading: isTemplatesLoading } = useQuery<any>({
     queryKey: ['/api/marketplace/templates'],
-    queryFn: async () => {
-      try {
-        const response = await fetch('/api/marketplace/templates');
-        if (!response.ok) {
-          return { templates: [] };
-        }
-        const data = await response.json();
-        return Array.isArray(data) ? { templates: data } : data;
-      } catch (err) {
-        console.error('Failed to fetch templates:', err);
-        return { templates: [] };
-      }
-    }
   });
   const templates = Array.isArray(templatesData) ? templatesData : (templatesData as any)?.templates || [];
 
-  const { data: categoriesData = [] } = useQuery({
+  const { data: categoriesData = [] } = useQuery<any[]>({
     queryKey: ['/api/marketplace/categories'],
-    queryFn: async () => {
-      try {
-        const response = await fetch('/api/marketplace/categories');
-        if (!response.ok) {
-          return [];
-        }
-        return response.json();
-      } catch (err) {
-        console.error('Failed to fetch categories:', err);
-        return [];
-      }
-    }
   });
   
   const iconMap: Record<string, any> = {
@@ -131,20 +94,8 @@ export default function Marketplace() {
     }))
   ];
 
-  const { data: publishers = [] } = useQuery({
+  const { data: publishers = [] } = useQuery<any[]>({
     queryKey: ['/api/marketplace/publishers'],
-    queryFn: async () => {
-      try {
-        const response = await fetch('/api/marketplace/publishers');
-        if (!response.ok) {
-          return [];
-        }
-        return response.json();
-      } catch (err) {
-        console.error('Failed to fetch publishers:', err);
-        return [];
-      }
-    }
   });
 
   const filteredExtensions = (extensions as any[]).filter((ext: any) => {

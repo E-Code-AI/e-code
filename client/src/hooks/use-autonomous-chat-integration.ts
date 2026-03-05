@@ -10,6 +10,7 @@
 import { useEffect, useLayoutEffect, useRef, useCallback, useMemo, useState } from 'react';
 import { useAgentConversationStore } from '@/stores/agentConversationStore';
 import { useAutonomousBuildStore } from '@/stores/autonomousBuildStore';
+import { useSchemaWarmingStore } from '@/stores/schemaWarmingStore';
 import { AgentEventBus } from '@/lib/agentEvents';
 import type { Message, AutonomousWorkspacePayload, AutonomousBuildTask } from '@/stores/agentConversationStore';
 import type { AutonomousBuildPhase } from '@/stores/autonomousBuildStore';
@@ -901,6 +902,9 @@ export function useAutonomousChatIntegration({
         // ✅ FIX (Jan 2026): Mark build as completed - allows normal cleanup
         buildCompletedRef.current = true;
         bootstrapActiveRef.current = false;
+        
+        // Unlock preview/deploy tabs — schema warming gate not needed after build completes
+        useSchemaWarmingStore.getState().markReady();
         
         // Emit complete event for favicon/audio/notifications
         AgentEventBus.emit('agent:complete', { projectId, sessionId });

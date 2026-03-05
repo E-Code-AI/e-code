@@ -32,7 +32,8 @@ export default function Deployments() {
   // Fetch deployments for the current project
   const { data, isLoading } = useQuery({
     queryKey: projectId ? [`/api/projects/${projectId}/deployments`] : ['/api/deployments'],
-    enabled: true
+    enabled: true,
+    initialData: { deployments: [] } as any
   });
 
   const deployments = data?.deployments || (Array.isArray(data) ? data : []);
@@ -40,8 +41,8 @@ export default function Deployments() {
   const createDeploymentMutation = useMutation({
     mutationFn: async (_?: void) => {
       if (!projectId) throw new Error('Project ID required');
-      const res = await apiRequest('POST', `/api/projects/${projectId}/deploy`, {});
-      return await res.json();
+      const response = await apiRequest('POST', `/api/projects/${projectId}/deploy`, {});
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: projectId ? [`/api/projects/${projectId}/deployments`] : ['/api/deployments'] });

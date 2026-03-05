@@ -81,7 +81,16 @@ export default function Analytics() {
   
   // Fetch real analytics data from API
   const { data: analyticsData, isLoading } = useQuery<AnalyticsData>({
-    queryKey: ['/api/analytics', timeRange]
+    queryKey: ['/api/analytics', timeRange],
+    initialData: {
+      overview: [],
+      trafficSources: [],
+      topPages: [],
+      deviceData: [],
+      geographicData: [],
+      chartData: [],
+      realtimeUsers: 0
+    }
   });
 
   // Fetch real-time activity data

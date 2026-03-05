@@ -143,8 +143,9 @@ export default function AdminMonitoring() {
     return () => clearInterval(interval);
   }, []);
 
-  const getStatusBadge = (status: string) => {
-    switch (String(status || '').toLowerCase()) {
+  const getStatusBadge = (status: any) => {
+    const statusStr = String(status || '').toLowerCase();
+    switch (statusStr) {
       case 'healthy':
       case 'ok':
       case 'up':
@@ -157,16 +158,18 @@ export default function AdminMonitoring() {
       case 'down':
         return <Badge className="bg-red-600"><XCircle className="h-3 w-3 mr-1" /> Unhealthy</Badge>;
       default:
-        return <Badge variant="secondary">{status || 'Unknown'}</Badge>;
+        return <Badge variant="secondary">{String(status || 'Unknown')}</Badge>;
     }
   };
 
   const formatBytes = (bytes: number) => {
+    if (typeof bytes !== 'number' || isNaN(bytes)) return '0 MB';
     const mb = bytes / (1024 * 1024);
     return `${mb.toFixed(2)} MB`;
   };
 
   const formatUptime = (seconds: number) => {
+    if (typeof seconds !== 'number' || isNaN(seconds)) return '0s';
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     const secs = Math.floor(seconds % 60);

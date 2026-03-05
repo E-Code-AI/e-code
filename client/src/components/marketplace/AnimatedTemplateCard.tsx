@@ -157,7 +157,7 @@ export function AnimatedTemplateCard({
                   <div className="text-right">
                     {template.price > 0 ? (
                       <div className="font-bold text-[15px] text-primary">
-                        $<AnimatedValue value={template.price} decimals={2} />
+                        $<AnimatedValue value={template.price || 0} decimals={2} />
                       </div>
                     ) : (
                       <Badge variant="secondary">Free</Badge>
@@ -322,11 +322,11 @@ export function AnimatedTemplateCard({
               <div className="grid grid-cols-2 gap-2 text-[13px]">
                 <div>
                   <span className="text-muted-foreground">Author:</span>
-                  <p className="font-medium">{template.author}</p>
+                  <p className="font-medium">{typeof template.author === 'object' ? (template.author?.name ?? 'Anonymous') : (template.author ?? 'Anonymous')}</p>
                 </div>
                 <div>
                   <span className="text-muted-foreground">Updated:</span>
-                  <p className="font-medium">{template.lastUpdated}</p>
+                  <p className="font-medium">{template.lastUpdated || ''}</p>
                 </div>
               </div>
             </div>

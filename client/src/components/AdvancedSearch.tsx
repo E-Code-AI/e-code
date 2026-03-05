@@ -108,11 +108,8 @@ export function AdvancedSearch({ initialQuery = '' }: { initialQuery?: string })
 
   // Search query
   const { data, isLoading, error } = useQuery({
-    queryKey: ['/api/search', debouncedQuery, activeTab, filters],
-    queryFn: async () => {
-      if (!debouncedQuery.trim()) return { results: [] };
-      
-      const params = new URLSearchParams({
+    queryKey: [
+      `/api/search?${new URLSearchParams({
         q: debouncedQuery,
         type: activeTab === 'all' ? '' : activeTab,
         ...Object.fromEntries(
@@ -121,21 +118,12 @@ export function AdvancedSearch({ initialQuery = '' }: { initialQuery?: string })
             Array.isArray(value) ? value.join(',') : value
           ])
         ),
-      });
-
-      try {
-        const res = await apiRequest('GET', `/api/search?${params}`);
-        // apiRequest returns parsed JSON
-        return Array.isArray(res) ? { results: res } : res;
-      } catch (err) {
-        console.error('Search failed:', err);
-        return { results: [] };
-      }
-    },
+      }).toString()}`
+    ],
     enabled: debouncedQuery.length > 0,
   });
 
-  const displayResults = Array.isArray(data) ? data : (data?.results || []);
+  const displayResults = data ? (Array.isArray(data) ? data : (data as any).results || []) : [];
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();

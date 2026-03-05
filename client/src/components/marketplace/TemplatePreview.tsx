@@ -56,26 +56,13 @@ export function TemplatePreview({
 
   // Fetch template reviews
   const { data: reviews, isLoading: reviewsLoading } = useQuery({
-    queryKey: ['/api/marketplace/template', template?.id, 'reviews'],
-    queryFn: async () => {
-      const response = await fetch(`/api/marketplace/template/${template.id}/reviews`);
-      if (!response.ok) {
-        // Return empty reviews instead of throwing
-        return { reviews: [], total: 0, page: 1, totalPages: 0 };
-      }
-      return response.json();
-    },
+    queryKey: [`/api/marketplace/template/${template?.id}/reviews`],
     enabled: !!template?.id && isOpen,
   });
 
   // Fetch similar templates
   const { data: similarTemplates } = useQuery({
-    queryKey: ['/api/marketplace/template', template?.id, 'similar'],
-    queryFn: async () => {
-      const response = await fetch(`/api/marketplace/template/${template.id}/similar`);
-      if (!response.ok) throw new Error('Failed to fetch similar templates');
-      return response.json();
-    },
+    queryKey: [`/api/marketplace/template/${template?.id}/similar`],
     enabled: !!template?.id && isOpen,
   });
 

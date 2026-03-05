@@ -65,47 +65,18 @@ export function CommunityHub() {
   // Real API calls - no mock data
   const { data: topDevelopers = [], isLoading: developersLoading, error: developersError } = useQuery<Developer[]>({
     queryKey: ['/api/community/top-developers'],
-    queryFn: async () => {
-      const response = await fetch('/api/community/top-developers', { credentials: 'include' });
-      if (!response.ok) {
-        // Graceful fallback for top-developers
-        return [];
-      }
-      return response.json();
-    }
   });
 
   const { data: collections = [], isLoading: collectionsLoading, error: collectionsError } = useQuery<Collection[]>({
     queryKey: ['/api/community/collections'],
-    queryFn: async () => {
-      const response = await fetch('/api/community/collections', { credentials: 'include' });
-      if (!response.ok) {
-        // Graceful fallback for collections
-        return [];
-      }
-      return response.json();
-    }
   });
 
   const { data: recentActivity = [], isLoading: activityLoading, error: activityError } = useQuery<Activity[]>({
     queryKey: ['/api/community/activity'],
-    queryFn: async () => {
-      const response = await fetch('/api/community/activity', { credentials: 'include' });
-      if (!response.ok) {
-        // Graceful fallback for activity
-        return [];
-      }
-      return response.json();
-    }
   });
 
   const { data: communityStats, isLoading: statsLoading, error: statsError } = useQuery<CommunityStats>({
     queryKey: ['/api/community/stats'],
-    queryFn: async () => {
-      const response = await fetch('/api/community/stats', { credentials: 'include' });
-      if (!response.ok) throw new Error('Failed to fetch community stats');
-      return response.json();
-    }
   });
 
   const getBadgeColor = (badge?: string) => {

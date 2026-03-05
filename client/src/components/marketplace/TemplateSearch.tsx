@@ -57,7 +57,7 @@ export function TemplateSearch({ value, onChange, onSearch, className }: Templat
       const response = await fetch(`/api/templates/suggestions?q=${encodeURIComponent(query)}&limit=5`);
       if (response.ok) {
         const data = await response.json();
-        setSuggestions(data.suggestions || []);
+        setSuggestions(data?.suggestions || []);
       } else {
         setSuggestions([]);
       }
