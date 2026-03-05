@@ -315,7 +315,12 @@ function TemplateCard({ template, onUse, index }: { template: Template; onUse: (
             Use Template
             <ArrowRight className="h-4 w-4 ml-2" />
           </Button>
-          <Button variant="outline" size="icon" data-testid={`button-preview-${template.id}`}>
+          <Button 
+            variant="outline" 
+            size="icon" 
+            data-testid={`button-preview-${template.id}`}
+            onClick={() => navigate(`/ide/${template.id}`)}
+          >
             <Eye className="h-4 w-4" />
           </Button>
         </CardFooter>

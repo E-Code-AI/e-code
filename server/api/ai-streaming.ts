@@ -180,7 +180,7 @@ const sendSSE = (res: any, event: string, data: any) => {
  * Main streaming chat endpoint for AI Agent panel
  * Supports OpenAI, Anthropic, Google AI, and more
  */
-router.post('/api/agent/chat/stream', ensureAuthenticated, async (req, res) => {
+router.post('/agent/chat/stream', ensureAuthenticated, async (req, res) => {
   // ✅ FORTUNE 500: Validate origin and setup SSE with 403 rejection for invalid origins
   const registerCleanup = setupSSE(res, req);
   if (!registerCleanup) {
@@ -1471,7 +1471,7 @@ async function streamMoonshot(res: any, messages: any[], options: any) {
 /**
  * Stop streaming endpoint - allows client to cancel ongoing stream
  */
-router.post('/api/agent/chat/stop', ensureAuthenticated, (req, res) => {
+router.post('/agent/chat/stop', ensureAuthenticated, (req, res) => {
   const { conversationId } = req.body;
   
   // In a production system, you'd track active streams and close them
@@ -1484,7 +1484,7 @@ router.post('/api/agent/chat/stop', ensureAuthenticated, (req, res) => {
  * Get available AI models endpoint
  * Returns models with availability based on configured API keys
  */
-router.get('/api/agent/models', ensureAuthenticated, (req, res) => {
+router.get('/agent/models', ensureAuthenticated, (req, res) => {
   const models = [
     // OpenAI Models (January 2026) - ✅ CONSOLIDATED: Only gpt-5.2 is current
     { provider: 'openai', model: 'gpt-5.2', name: 'GPT-5.2', context: 400000, available: !!process.env.OPENAI_API_KEY },

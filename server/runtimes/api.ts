@@ -288,13 +288,7 @@ export async function stopProjectRuntime(req: Request, res: Response) {
     logger.info(`Stopping runtime for project ${projectId}`);
     
     // Stop the project
-    const result = await runtimeManager.stopProject(projectId);
-    
-    if (!result) {
-      return res.status(500).json({
-        message: 'Failed to stop project runtime'
-      });
-    }
+    await runtimeManager.stopProject(projectId);
     
     res.json({
       success: true

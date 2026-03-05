@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useLocation } from 'wouter';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -6,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { queryClient } from '@/lib/queryClient';
+import { queryClient, apiRequest } from '@/lib/queryClient';
 import { toast } from '@/hooks/use-toast';
 import { 
   Store, 
@@ -35,9 +36,25 @@ import {
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 export default function Marketplace() {
+  const [, navigate] = useLocation();
   const [activeTab, setActiveTab] = useState('extensions');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [usingTemplateId, setUsingTemplateId] = useState<number | null>(null);
+
+  const handleUseTemplate = async (templateId: number) => {
+    setUsingTemplateId(templateId);
+    try {
+      const result = await apiRequest<{ project: { id: number } }>('POST', `/api/templates/${templateId}/fork`, {});
+      if (result?.project?.id) {
+        navigate(`/ide/${result.project.id}`);
+      }
+    } catch (err: any) {
+      toast({ title: 'Failed to use template', description: err?.message ?? 'Unknown error', variant: 'destructive' });
+    } finally {
+      setUsingTemplateId(null);
+    }
+  };
 
   // Fetch real marketplace data from APIs
   const { data: extensions = [], isLoading } = useQuery({
@@ -58,10 +75,11 @@ export default function Marketplace() {
       if (!response.ok) {
         return { templates: [] };
       }
-      return response.json();
+      const data = await response.json();
+      return Array.isArray(data) ? data : data.templates || [];
     }
   });
-  const templates = Array.isArray(templatesData) ? templatesData : templatesData?.templates || [];
+  const templates = Array.isArray(templatesData) ? templatesData : (templatesData as any)?.templates || [];
 
   const { data: categoriesData = [] } = useQuery({
     queryKey: ['/api/marketplace/categories'],
@@ -89,11 +107,11 @@ export default function Marketplace() {
   };
   
   const categories = [
-    { id: 'all', name: 'All Categories', icon: Store, count: categoriesData.reduce((sum: number, c: any) => sum + (c.count || 0), 0) || 0 },
-    ...categoriesData.map((cat: any) => ({
+    { id: 'all', name: 'All Categories', icon: Store, count: (categoriesData as any[]).reduce((sum: number, c: any) => sum + (c.count || 0), 0) || 0 },
+    ...(categoriesData as any[]).map((cat: any) => ({
       id: cat.slug || cat.id,
       name: cat.name,
-      icon: iconMap[cat.slug?.toLowerCase()] || Package,
+      icon: iconMap[(cat.slug || '').toLowerCase()] || Package,
       count: cat.count || 0
     }))
   ];
@@ -109,7 +127,7 @@ export default function Marketplace() {
     }
   });
 
-  const filteredExtensions = extensions.filter((ext: any) => {
+  const filteredExtensions = (extensions as any[]).filter((ext: any) => {
     const q = searchQuery.toLowerCase();
     const matchesSearch = (ext.name || '').toLowerCase().includes(q) ||
                          (ext.description || '').toLowerCase().includes(q) ||
@@ -132,7 +150,7 @@ export default function Marketplace() {
                 <h3 className="font-semibold text-[15px] group-hover:text-primary transition-colors" data-testid={`text-extension-name-${extension.id}`}>
                   {extension.name}
                 </h3>
-                <p className="text-[13px] text-muted-foreground" data-testid={`text-extension-author-${extension.id}`}>by {extension.author}</p>
+                <p className="text-[13px] text-muted-foreground" data-testid={`text-extension-author-${extension.id}`}>by {typeof extension.author === 'object' ? (extension.author?.name ?? extension.author?.id ?? 'Unknown') : (extension.author ?? 'Unknown')}</p>
               </div>
               
               <div className="flex items-center gap-2">
@@ -156,7 +174,7 @@ export default function Marketplace() {
             </p>
             
             <div className="flex flex-wrap gap-1 mb-3">
-              {extension.tags.map((tag: string, index: number) => (
+              {(Array.isArray(extension.tags) ? extension.tags : []).map((tag: string, index: number) => (
                 <Badge key={index} variant="secondary" className="text-[11px]" data-testid={`badge-extension-tag-${extension.id}-${index}`}>
                   {tag}
                 </Badge>
@@ -167,7 +185,7 @@ export default function Marketplace() {
               <div className="flex items-center gap-4 text-[13px] text-muted-foreground">
                 <div className="flex items-center gap-1" data-testid={`text-extension-rating-${extension.id}`}>
                   <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                  <span>{extension.rating}</span>
+                  <span>{extension.rating ?? 0}</span>
                   <span>({(extension.reviews ?? 0).toLocaleString()})</span>
                 </div>
                 <div className="flex items-center gap-1" data-testid={`text-extension-downloads-${extension.id}`}>
@@ -177,7 +195,7 @@ export default function Marketplace() {
               </div>
               
               <div className="flex items-center gap-2">
-                <span className="font-semibold text-[15px]" data-testid={`text-extension-price-${extension.id}`}>{extension.price}</span>
+                <span className="font-semibold text-[15px]" data-testid={`text-extension-price-${extension.id}`}>{extension.price || 'Free'}</span>
                 <Button size="sm" variant={extension.installed ? "outline" : "default"} data-testid={`button-extension-install-${extension.id}`}>
                   {extension.installed ? 'Uninstall' : 'Install'}
                 </Button>
@@ -203,7 +221,7 @@ export default function Marketplace() {
                 <h3 className="font-semibold text-[15px] group-hover:text-primary transition-colors" data-testid={`text-template-name-${template.id}`}>
                   {template.name}
                 </h3>
-                <p className="text-[13px] text-muted-foreground" data-testid={`text-template-author-${template.id}`}>by {template.author}</p>
+                <p className="text-[13px] text-muted-foreground" data-testid={`text-template-author-${template.id}`}>by {typeof template.author === 'object' ? (template.author?.name ?? template.author?.id ?? 'Unknown') : (template.author ?? 'Unknown')}</p>
               </div>
               
               {template.featured && (
@@ -219,7 +237,7 @@ export default function Marketplace() {
             </p>
             
             <div className="flex flex-wrap gap-1 mb-3">
-              {template.tags.map((tag: string, index: number) => (
+              {(Array.isArray(template.tags) ? template.tags : []).map((tag: string, index: number) => (
                 <Badge key={index} variant="secondary" className="text-[11px]" data-testid={`badge-template-tag-${template.id}-${index}`}>
                   {tag}
                 </Badge>
@@ -230,7 +248,7 @@ export default function Marketplace() {
               <div className="flex items-center gap-4 text-[13px] text-muted-foreground">
                 <div className="flex items-center gap-1" data-testid={`text-template-rating-${template.id}`}>
                   <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                  <span>{template.rating}</span>
+                  <span>{template.rating ?? 0}</span>
                 </div>
                 <div className="flex items-center gap-1" data-testid={`text-template-downloads-${template.id}`}>
                   <Download className="h-4 w-4" />
@@ -239,8 +257,8 @@ export default function Marketplace() {
                 <Badge variant="outline" data-testid={`badge-template-category-${template.id}`}>{template.category}</Badge>
               </div>
               
-              <Button size="sm" data-testid={`button-use-template-${template.id}`}>
-                Use Template
+              <Button size="sm" data-testid={`button-use-template-${template.id}`} disabled={usingTemplateId === template.id} onClick={() => handleUseTemplate(template.id)}>
+                {usingTemplateId === template.id ? 'Creating...' : 'Use Template'}
               </Button>
             </div>
           </div>

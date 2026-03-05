@@ -25,7 +25,7 @@ const createSnapshotSchema = z.object({
   tags: z.array(z.string()).optional(),
 });
 
-router.get('/api/deployments/:deploymentId/snapshots', ensureAuthenticated, async (req: Request, res: Response) => {
+router.get('/deployments/:deploymentId/snapshots', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const { deploymentId } = req.params;
     const { environment, status, limit } = req.query;
@@ -54,7 +54,7 @@ router.get('/api/deployments/:deploymentId/snapshots', ensureAuthenticated, asyn
   }
 });
 
-router.get('/api/deployments/:deploymentId/snapshots/:snapshotId', ensureAuthenticated, async (req: Request, res: Response) => {
+router.get('/deployments/:deploymentId/snapshots/:snapshotId', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const { deploymentId, snapshotId } = req.params;
     
@@ -84,7 +84,7 @@ router.get('/api/deployments/:deploymentId/snapshots/:snapshotId', ensureAuthent
   }
 });
 
-router.post('/api/deployments/:deploymentId/rollback', ensureAuthenticated, ensureAdmin, async (req: Request, res: Response) => {
+router.post('/deployments/:deploymentId/rollback', ensureAuthenticated, ensureAdmin, async (req: Request, res: Response) => {
   try {
     const { deploymentId } = req.params;
     const userId = req.user!.id;
@@ -152,7 +152,7 @@ router.post('/api/deployments/:deploymentId/rollback', ensureAuthenticated, ensu
   }
 });
 
-router.get('/api/deployments/:deploymentId/rollback/status', ensureAuthenticated, async (req: Request, res: Response) => {
+router.get('/deployments/:deploymentId/rollback/status', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const { deploymentId } = req.params;
     const { rollbackId } = req.query;
@@ -188,7 +188,7 @@ router.get('/api/deployments/:deploymentId/rollback/status', ensureAuthenticated
   }
 });
 
-router.post('/api/deployments/:deploymentId/snapshot', ensureAuthenticated, ensureAdmin, async (req: Request, res: Response) => {
+router.post('/deployments/:deploymentId/snapshot', ensureAuthenticated, ensureAdmin, async (req: Request, res: Response) => {
   try {
     const { deploymentId } = req.params;
     const userId = req.user!.id;
@@ -247,7 +247,7 @@ router.post('/api/deployments/:deploymentId/snapshot', ensureAuthenticated, ensu
   }
 });
 
-router.post('/api/deployments/:deploymentId/rollback/cancel', ensureAuthenticated, ensureAdmin, async (req: Request, res: Response) => {
+router.post('/deployments/:deploymentId/rollback/cancel', ensureAuthenticated, ensureAdmin, async (req: Request, res: Response) => {
   try {
     const { deploymentId } = req.params;
     const { rollbackId } = req.body;
@@ -285,7 +285,7 @@ router.post('/api/deployments/:deploymentId/rollback/cancel', ensureAuthenticate
   }
 });
 
-router.get('/api/deployments/:deploymentId/diff', ensureAuthenticated, async (req: Request, res: Response) => {
+router.get('/deployments/:deploymentId/diff', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const { deploymentId } = req.params;
     const { v1, v2 } = req.query;
@@ -320,7 +320,7 @@ router.get('/api/deployments/:deploymentId/diff', ensureAuthenticated, async (re
   }
 });
 
-router.get('/api/deployments/:deploymentId/rollback/history', ensureAuthenticated, async (req: Request, res: Response) => {
+router.get('/deployments/:deploymentId/rollback/history', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const { deploymentId } = req.params;
     const { limit = '10', offset = '0' } = req.query;

@@ -6,7 +6,7 @@ const router = Router();
 
 // SECURITY FIX: Test endpoint now requires authentication and uses authenticated user's ID
 // Only available in development mode
-router.post('/api/test/agent', ensureAuthenticated, async (req, res) => {
+router.post('/test/agent', ensureAuthenticated, async (req, res) => {
   // Block in production for security
   if (process.env.NODE_ENV === 'production') {
     return res.status(403).json({
@@ -59,7 +59,7 @@ router.post('/api/test/agent', ensureAuthenticated, async (req, res) => {
 });
 
 // Health check for agent service
-router.get('/api/test/agent/health', (req, res) => {
+router.get('/test/agent/health', (req, res) => {
   res.json({
     status: 'ok',
     message: 'Agent test endpoint is available',

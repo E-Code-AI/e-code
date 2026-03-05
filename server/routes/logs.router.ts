@@ -31,7 +31,7 @@ const frontendLogBatchSchema = z.object({
   pageUrl: z.string().optional(),
 });
 
-router.post('/api/logs/ingest', async (req: Request, res: Response) => {
+router.post('/logs/ingest', async (req: Request, res: Response) => {
   try {
     const result = frontendLogBatchSchema.safeParse(req.body);
     if (!result.success) {
@@ -107,12 +107,12 @@ async function handleLogsQuery(req: Request, res: Response) {
 }
 
 // Primary query endpoint with full filter support
-router.get('/api/logs/query', ensureAuthenticated, handleLogsQuery);
+router.get('/logs/query', ensureAuthenticated, handleLogsQuery);
 
 // Alias for backward compatibility
-router.get('/api/logs/recent', ensureAuthenticated, handleLogsQuery);
+router.get('/logs/recent', ensureAuthenticated, handleLogsQuery);
 
-router.get('/api/logs/search', ensureAuthenticated, async (req: Request, res: Response) => {
+router.get('/logs/search', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const query = req.query.q as string;
     if (!query) {
@@ -136,7 +136,7 @@ router.get('/api/logs/search', ensureAuthenticated, async (req: Request, res: Re
   }
 });
 
-router.get('/api/logs/request/:requestId', ensureAuthenticated, async (req: Request, res: Response) => {
+router.get('/logs/request/:requestId', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const { requestId } = req.params;
     const logs = centralizedAggregator.getByRequestId(requestId);
@@ -153,7 +153,7 @@ router.get('/api/logs/request/:requestId', ensureAuthenticated, async (req: Requ
   }
 });
 
-router.get('/api/logs/correlation/:correlationId', ensureAuthenticated, async (req: Request, res: Response) => {
+router.get('/logs/correlation/:correlationId', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const { correlationId } = req.params;
     const logs = centralizedAggregator.getByCorrelationId(correlationId);
@@ -170,7 +170,7 @@ router.get('/api/logs/correlation/:correlationId', ensureAuthenticated, async (r
   }
 });
 
-router.get('/api/logs/stats', ensureAuthenticated, async (req: Request, res: Response) => {
+router.get('/logs/stats', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const stats = centralizedAggregator.getStats();
     res.json({
@@ -183,7 +183,7 @@ router.get('/api/logs/stats', ensureAuthenticated, async (req: Request, res: Res
   }
 });
 
-router.get('/api/logs/errors', ensureAuthenticated, async (req: Request, res: Response) => {
+router.get('/logs/errors', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const since = req.query.since ? parseInt(req.query.since as string) : Date.now() - 24 * 60 * 60 * 1000;
     const summary = centralizedAggregator.getErrorSummary(since);
@@ -200,7 +200,7 @@ router.get('/api/logs/errors', ensureAuthenticated, async (req: Request, res: Re
   }
 });
 
-router.get('/api/logs/export', ensureAuthenticated, async (req: Request, res: Response) => {
+router.get('/logs/export', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const format = (req.query.format as 'json' | 'csv') || 'json';
     const data = centralizedAggregator.export(format);
@@ -217,7 +217,7 @@ router.get('/api/logs/export', ensureAuthenticated, async (req: Request, res: Re
   }
 });
 
-router.post('/api/logs/clear', ensureAuthenticated, async (req: Request, res: Response) => {
+router.post('/logs/clear', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const user = (req as any).user;
     if (user?.role !== 'admin') {

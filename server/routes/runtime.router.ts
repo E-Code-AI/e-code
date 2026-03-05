@@ -72,31 +72,36 @@ async function ensureProjectAccess(req: any, res: any, next: any) {
  * POST /api/projects/:id/runtime/start
  * Start a project's runtime
  */
-router.post('/api/projects/:id/runtime/start', ensureAuthenticated, ensureProjectAccess, startProjectRuntime);
+router.post('/projects/:id/runtime/start', ensureAuthenticated, ensureProjectAccess, startProjectRuntime);
 
 /**
  * POST /api/projects/:id/runtime/stop
  * Stop a project's runtime
  */
-router.post('/api/projects/:id/runtime/stop', ensureAuthenticated, ensureProjectAccess, stopProjectRuntime);
+router.post('/projects/:id/runtime/stop', ensureAuthenticated, ensureProjectAccess, stopProjectRuntime);
 
 /**
  * GET /api/projects/:id/runtime
  * Get project runtime status
  */
-router.get('/api/projects/:id/runtime', ensureAuthenticated, ensureProjectAccess, getProjectRuntimeStatus);
+router.get('/projects/:id/runtime', ensureAuthenticated, ensureProjectAccess, getProjectRuntimeStatus);
 
 /**
  * POST /api/projects/:id/runtime/execute
  * Execute command in project runtime
  */
-router.post('/api/projects/:id/runtime/execute', ensureAuthenticated, ensureProjectAccess, executeProjectCommand);
+router.post('/projects/:id/runtime/execute', ensureAuthenticated, ensureProjectAccess, (req, res) => {
+  executeProjectCommand(req, res).catch(err => {
+    logger.error('Execute command failed:', err);
+    res.status(500).json({ error: 'Failed to execute command', details: err.message });
+  });
+});
 
 /**
  * GET /api/projects/:id/runtime/logs
  * Get project runtime logs
  */
-router.get('/api/projects/:id/runtime/logs', ensureAuthenticated, ensureProjectAccess, getProjectRuntimeLogs);
+router.get('/projects/:id/runtime/logs', ensureAuthenticated, ensureProjectAccess, getProjectRuntimeLogs);
 
 // ===============================
 // Alternative Runtime Routes (COMPATIBILITY)
@@ -107,7 +112,7 @@ router.get('/api/projects/:id/runtime/logs', ensureAuthenticated, ensureProjectA
  * POST /api/runtime/start
  * Start runtime (requires projectId in body)
  */
-router.post('/api/runtime/start', ensureAuthenticated, async (req, res) => {
+router.post('/runtime/start', ensureAuthenticated, async (req, res) => {
   const { projectId } = req.body;
   
   if (!projectId) {
@@ -124,7 +129,7 @@ router.post('/api/runtime/start', ensureAuthenticated, async (req, res) => {
  * POST /api/runtime/stop
  * Stop runtime (requires projectId in body)
  */
-router.post('/api/runtime/stop', ensureAuthenticated, async (req, res) => {
+router.post('/runtime/stop', ensureAuthenticated, async (req, res) => {
   const { projectId } = req.body;
   
   if (!projectId) {
@@ -140,7 +145,7 @@ router.post('/api/runtime/stop', ensureAuthenticated, async (req, res) => {
  * GET /api/runtime/:projectId
  * Get runtime status (projectId in path)
  */
-router.get('/api/runtime/:projectId', ensureAuthenticated, async (req, res) => {
+router.get('/runtime/:projectId', ensureAuthenticated, async (req, res) => {
   const { projectId } = req.params;
   
   req.params.id = projectId;
@@ -152,7 +157,7 @@ router.get('/api/runtime/:projectId', ensureAuthenticated, async (req, res) => {
  * POST /api/runtime/:projectId/start
  * Start runtime (projectId in path)
  */
-router.post('/api/runtime/:projectId/start', ensureAuthenticated, async (req, res) => {
+router.post('/runtime/:projectId/start', ensureAuthenticated, async (req, res) => {
   const { projectId } = req.params;
   
   req.params.id = projectId;
@@ -164,7 +169,7 @@ router.post('/api/runtime/:projectId/start', ensureAuthenticated, async (req, re
  * POST /api/runtime/:projectId/stop
  * Stop runtime (projectId in path)
  */
-router.post('/api/runtime/:projectId/stop', ensureAuthenticated, async (req, res) => {
+router.post('/runtime/:projectId/stop', ensureAuthenticated, async (req, res) => {
   const { projectId } = req.params;
   
   req.params.id = projectId;
@@ -176,7 +181,7 @@ router.post('/api/runtime/:projectId/stop', ensureAuthenticated, async (req, res
  * POST /api/runtime/:projectId/execute
  * Execute command (projectId in path)
  */
-router.post('/api/runtime/:projectId/execute', ensureAuthenticated, async (req, res) => {
+router.post('/runtime/:projectId/execute', ensureAuthenticated, async (req, res) => {
   const { projectId } = req.params;
   
   req.params.id = projectId;
@@ -188,7 +193,7 @@ router.post('/api/runtime/:projectId/execute', ensureAuthenticated, async (req, 
  * GET /api/runtime/:projectId/logs
  * Get logs (projectId in path)
  */
-router.get('/api/runtime/:projectId/logs', ensureAuthenticated, async (req, res) => {
+router.get('/runtime/:projectId/logs', ensureAuthenticated, async (req, res) => {
   const { projectId } = req.params;
   
   req.params.id = projectId;
@@ -205,7 +210,7 @@ router.get('/api/runtime/:projectId/logs', ensureAuthenticated, async (req, res)
  * Get runtime dependencies (Docker, Nix, languages)
  * SECURITY: Requires authentication to prevent enumeration attacks
  */
-router.get('/api/runtime/dependencies', ensureAuthenticated, getRuntimeDependencies);
+router.get('/runtime/dependencies', ensureAuthenticated, getRuntimeDependencies);
 
 // ===============================
 // Direct Code Execution Routes (No Docker Required)
@@ -244,7 +249,7 @@ function checkRateLimit(userId: number): boolean {
  * SECURITY: Requires authentication, rate limited, feature-flagged
  * Body: { language: string, code: string, projectId?: string }
  */
-router.post('/api/execute', ensureAuthenticated, async (req, res) => {
+router.post('/execute', ensureAuthenticated, async (req, res) => {
   try {
     const userId = (req as any).user?.id;
     
@@ -317,7 +322,7 @@ router.post('/api/execute', ensureAuthenticated, async (req, res) => {
  * SECURITY: Requires authentication, rate limited, feature-flagged
  * Body: { language: string, code: string }
  */
-router.post('/api/projects/:id/execute-direct', ensureAuthenticated, async (req, res, next) => {
+router.post('/projects/:id/execute-direct', ensureAuthenticated, async (req, res, next) => {
   const projectId = req.params.id;
   req.params.id = projectId;
   
@@ -408,7 +413,7 @@ router.post('/api/projects/:id/execute-direct', ensureAuthenticated, async (req,
  * SECURITY: Requires authentication to gate execution feature info
  * Returns all 27+ supported languages from the language configuration
  */
-router.get('/api/execute/languages', ensureAuthenticated, async (req, res) => {
+router.get('/execute/languages', ensureAuthenticated, async (req, res) => {
   // Import from languages config for full language support
   const { languageConfigs } = await import('../runtimes/languages');
   

@@ -12,9 +12,9 @@ const router = Router();
 
 /**
  * Generate test data based on schema
- * POST /api/data-provisioning/generate
+ * POST /generate
  */
-router.post('/api/data-provisioning/generate', ensureAuthenticated, async (req: Request, res: Response) => {
+router.post('/generate', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const { schema, count } = req.body;
 
@@ -46,9 +46,9 @@ router.post('/api/data-provisioning/generate', ensureAuthenticated, async (req: 
 
 /**
  * Seed database with predefined data sets
- * POST /api/data-provisioning/seed
+ * POST /seed
  */
-router.post('/api/data-provisioning/seed', ensureAuthenticated, async (req: Request, res: Response) => {
+router.post('/seed', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const userId = (req.user as any)?.id;
     const { projectId, seedType } = req.body;
@@ -85,9 +85,9 @@ router.post('/api/data-provisioning/seed', ensureAuthenticated, async (req: Requ
 
 /**
  * Import data from various sources
- * POST /api/data-provisioning/import
+ * POST /import
  */
-router.post('/api/data-provisioning/import', ensureAuthenticated, async (req: Request, res: Response) => {
+router.post('/import', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const config: DataProvisioningConfig = req.body;
 
@@ -115,9 +115,9 @@ router.post('/api/data-provisioning/import', ensureAuthenticated, async (req: Re
 
 /**
  * Create data fixtures for testing
- * POST /api/data-provisioning/fixtures
+ * POST /fixtures
  */
-router.post('/api/data-provisioning/fixtures', ensureAuthenticated, async (req: Request, res: Response) => {
+router.post('/fixtures', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const { projectId, fixtureName } = req.body;
 
@@ -147,9 +147,9 @@ router.post('/api/data-provisioning/fixtures', ensureAuthenticated, async (req: 
 
 /**
  * Migrate data between schemas/formats
- * POST /api/data-provisioning/migrate
+ * POST /migrate
  */
-router.post('/api/data-provisioning/migrate', ensureAuthenticated, async (req: Request, res: Response) => {
+router.post('/migrate', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const config: DataProvisioningConfig = req.body;
 
@@ -176,9 +176,9 @@ router.post('/api/data-provisioning/migrate', ensureAuthenticated, async (req: R
 
 /**
  * Get available seed types and templates
- * GET /api/data-provisioning/templates
+ * GET /templates
  */
-router.get('/api/data-provisioning/templates', ensureAuthenticated, async (req: Request, res: Response) => {
+router.get('/templates', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const templates = {
       seedTypes: [

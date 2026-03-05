@@ -288,7 +288,7 @@ export default function PerformanceDashboard() {
       {/* System Status Banner */}
       {summaryMetrics && (
         <LazyMotionDiv
-          initial={{ opacity: 0, y: -10 }}
+          initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           className={cn(
             "mb-6 p-4 rounded-lg border flex items-center justify-between",

@@ -98,9 +98,9 @@ export function MobileToolsPanel({
           {/* Tools Panel */}
           <LazyMotionDiv
             className="fixed top-0 right-0 bottom-0 w-[85%] max-w-sm bg-[var(--ecode-background)] z-50 shadow-2xl flex flex-col"
-            initial={{ x: '100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '100%' }}
+            initial={{ y: 30, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ y: 30, opacity: 0 }}
             transition={{ type: 'spring', damping: 25, stiffness: 500 }}
             drag="x"
             dragConstraints={{ left: 0, right: 0 }}

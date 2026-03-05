@@ -94,13 +94,7 @@ export function ResourcesPanel({ projectId, className }: ResourcesPanelProps) {
   const { data: metrics, isLoading, isError, refetch } = useQuery<ResourceMetrics>({
     queryKey: ['/api/resources', projectId],
     queryFn: async () => {
-      const response = await fetch(`/api/resources?projectId=${projectId}`, {
-        credentials: 'include'
-      });
-      if (!response.ok) {
-        throw new Error(`Failed to fetch resources: ${response.statusText}`);
-      }
-      return response.json();
+      return await apiRequest('GET', `/api/resources?projectId=${projectId}`);
     },
     enabled: !!projectId,
     refetchInterval: 30000,

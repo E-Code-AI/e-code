@@ -137,6 +137,19 @@ function UnifiedIDELayout({
   const { isReady: isSchemaReady } = useSchemaWarmingStore();
   
   const workspace = useIDEWorkspace(projectId);
+  
+  // Handle case where project or user is missing
+  if (!workspace || (!workspace.project && !workspace.isLoadingProject && !workspace.bootstrapToken)) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-background">
+        <div className="text-center space-y-4">
+          <p className="text-muted-foreground">Project not found or access denied.</p>
+          <Button onClick={() => window.location.href = '/'}>Go back to Dashboard</Button>
+        </div>
+      </div>
+    );
+  }
+
   const {
     project,
     files,
@@ -151,6 +164,8 @@ function UnifiedIDELayout({
     setShowFileExplorer,
     isRunning,
     setIsRunning,
+    executionId,
+    setExecutionId,
     activeActivityItem,
     setActiveActivityItem,
     isSidebarCollapsed,
@@ -179,12 +194,9 @@ function UnifiedIDELayout({
     handleTabPin,
     handleTabDuplicate,
     handleSplitRight,
+    handleRunStop,
     handleAddTool,
   } = workspace;
-
-  const handleRunStop = useCallback(() => {
-    setIsRunning(prev => !prev);
-  }, [setIsRunning]);
 
   const handleActivityItemClick = useCallback((item: ActivityItem) => {
     setActiveActivityItem(item);
@@ -927,7 +939,7 @@ function UnifiedIDELayout({
     if (currentTab.id === 'console') {
       return (
         <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Console..." /></div>}>
-          <ReplitConsolePanel projectId={projectId} />
+          <ReplitConsolePanel projectId={projectId} isRunning={isRunning} executionId={executionId} />
         </Suspense>
       );
     }

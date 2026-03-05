@@ -167,8 +167,8 @@ export function CustomRoles() {
   };
 
   const filteredRoles = roles?.filter(role => 
-    (role.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (role.description || '').toLowerCase().includes(searchTerm.toLowerCase())
+    (role.name ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (role.description ?? '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (

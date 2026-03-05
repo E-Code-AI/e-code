@@ -55,7 +55,7 @@ router.use((req, res, next) => {
  * GET /api/templates
  * List all templates with filters and pagination
  */
-router.get('/api/templates', async (req, res) => {
+router.get('/templates', async (req, res) => {
   try {
     const {
       category,
@@ -179,7 +179,7 @@ router.get('/api/templates', async (req, res) => {
  * GET /api/templates/featured
  * Get featured templates with customizable limit
  */
-router.get('/api/templates/featured', async (req, res) => {
+router.get('/templates/featured', async (req, res) => {
   try {
     const { limit = '10', category } = req.query;
     const limitNum = Math.min(parseInt(limit as string) || 10, 50);
@@ -211,7 +211,7 @@ router.get('/api/templates/featured', async (req, res) => {
  * GET /api/templates/:id
  * Get single template by ID
  */
-router.get('/api/templates/:id', async (req, res) => {
+router.get('/templates/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -258,7 +258,7 @@ router.get('/api/templates/:id', async (req, res) => {
  * POST /api/templates
  * Create new template (authenticated users only)
  */
-router.post('/api/templates', async (req, res) => {
+router.post('/templates', async (req, res) => {
   try {
     // ✅ SECURITY: Check if user is authenticated
     if (!req.user) {
@@ -305,7 +305,7 @@ router.post('/api/templates', async (req, res) => {
  * PATCH /api/templates/:id
  * Update existing template (owner or admin only)
  */
-router.patch('/api/templates/:id', async (req, res) => {
+router.patch('/templates/:id', async (req, res) => {
   try {
     if (!req.user) {
       return res.status(401).json({ error: 'Authentication required' });
@@ -356,7 +356,7 @@ router.patch('/api/templates/:id', async (req, res) => {
  * DELETE /api/templates/:id
  * Delete template (owner or admin only)
  */
-router.delete('/api/templates/:id', async (req, res) => {
+router.delete('/templates/:id', async (req, res) => {
   try {
     if (!req.user) {
       return res.status(401).json({ error: 'Authentication required' });
@@ -392,7 +392,7 @@ router.delete('/api/templates/:id', async (req, res) => {
  * GET /api/templates/categories
  * List all template categories
  */
-router.get('/api/templates/categories', async (req, res) => {
+router.get('/templates/categories', async (req, res) => {
   try {
     const categories = await db
       .select()
@@ -410,7 +410,7 @@ router.get('/api/templates/categories', async (req, res) => {
  * POST /api/templates/:id/rate
  * Rate a template
  */
-router.post('/api/templates/:id/rate', async (req, res) => {
+router.post('/templates/:id/rate', async (req, res) => {
   try {
     // ✅ SECURITY: Check if user is authenticated
     if (!req.user) {
@@ -507,7 +507,7 @@ router.post('/api/templates/:id/rate', async (req, res) => {
  * Increment usage count when template is used
  * Requires authentication to prevent abuse
  */
-router.post('/api/templates/:id/use', requireAuth, async (req, res) => {
+router.post('/templates/:id/use', requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -530,7 +530,7 @@ router.post('/api/templates/:id/use', requireAuth, async (req, res) => {
  * GET /api/templates/:id/preview
  * Get live preview URL for a template
  */
-router.get('/api/templates/:id/preview', async (req, res) => {
+router.get('/templates/:id/preview', async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -567,7 +567,7 @@ router.get('/api/templates/:id/preview', async (req, res) => {
  * POST /api/templates/:id/fork
  * Fork a template to create a new project
  */
-router.post('/api/templates/:id/fork', async (req, res) => {
+router.post('/templates/:id/fork', async (req, res) => {
   try {
     if (!req.user) {
       return res.status(401).json({ error: 'Authentication required' });
@@ -600,6 +600,7 @@ router.post('/api/templates/:id/fork', async (req, res) => {
         name: projectName || `${template.name} (Fork)`,
         description: template.description || `Forked from ${template.name}`,
         ownerId: userId,
+        tenantId: userId,
         visibility: 'private',
         language: template.language as any
       })
@@ -640,7 +641,7 @@ router.post('/api/templates/:id/fork', async (req, res) => {
  * GET /api/templates/:id/forks
  * Get all forks of a template
  */
-router.get('/api/templates/:id/forks', async (req, res) => {
+router.get('/templates/:id/forks', async (req, res) => {
   try {
     const { id } = req.params;
     const { limit = '20', offset = '0' } = req.query;
@@ -692,7 +693,7 @@ router.get('/api/templates/:id/forks', async (req, res) => {
  * GET /api/templates/:id/ratings
  * Get all ratings for a template
  */
-router.get('/api/templates/:id/ratings', async (req, res) => {
+router.get('/templates/:id/ratings', async (req, res) => {
   try {
     const { id } = req.params;
     const { limit = '20', offset = '0', sortBy = 'recent' } = req.query;
@@ -778,7 +779,7 @@ router.get('/api/templates/:id/ratings', async (req, res) => {
  * GET /api/templates/collections
  * List template collections
  */
-router.get('/api/templates/collections', async (req, res) => {
+router.get('/templates/collections', async (req, res) => {
   try {
     const collections = await db
       .select()
@@ -796,7 +797,7 @@ router.get('/api/templates/collections', async (req, res) => {
  * GET /api/templates/collections/:id
  * Get templates in a collection
  */
-router.get('/api/templates/collections/:id', async (req, res) => {
+router.get('/templates/collections/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -834,7 +835,7 @@ router.get('/api/templates/collections/:id', async (req, res) => {
  * GET /api/templates/suggestions
  * Get search suggestions based on partial query
  */
-router.get('/api/templates/suggestions', async (req, res) => {
+router.get('/templates/suggestions', async (req, res) => {
   try {
     const { q, limit = '5' } = req.query;
     const limitNum = Math.min(parseInt(limit as string) || 5, 10);

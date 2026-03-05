@@ -182,7 +182,7 @@ function getProcesses(): Array<{ name: string; pid: number; cpu: number; memory:
   return processes.slice(0, 10);
 }
 
-router.get('/api/resources', resourcesRateLimiter, ensureAuthenticated, async (req: Request, res: Response) => {
+router.get('/resources', resourcesRateLimiter, ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const parseResult = resourcesQuerySchema.safeParse(req.query);
     if (!parseResult.success) {

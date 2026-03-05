@@ -218,9 +218,11 @@ export default function Home() {
   // Sort projects based on active tab
   const sortedProjects = filteredProjects?.sort((a, b) => {
     if (activeTab === "recent") {
-      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+      const dateA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+      const dateB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+      return dateB - dateA;
     }
-    return a.name.localeCompare(b.name);
+    return (a.name || "").localeCompare(b.name || "");
   });
 
   const homeStructuredData = {
@@ -541,8 +543,8 @@ export default function Home() {
                       <CardContent className="pb-2">
                         <div className="flex items-center gap-2 mb-1">
                           <Avatar className="h-5 w-5">
-                            <AvatarImage src={`https://avatar.vercel.sh/${user?.username || 'user'}.png`} />
-                            <AvatarFallback className="text-[10px]">{user?.username?.substring(0, 2).toUpperCase() || 'U'}</AvatarFallback>
+                            <AvatarImage src={user?.avatarUrl || `https://avatar.vercel.sh/${user?.username || 'user'}.png`} />
+                            <AvatarFallback className="text-[10px]">{user?.username?.charAt(0).toUpperCase() || 'U'}</AvatarFallback>
                           </Avatar>
                           <span className="text-[11px] text-muted-foreground truncate">{user?.username || 'user'}</span>
                         </div>
@@ -596,8 +598,8 @@ export default function Home() {
                         </div>
                         <div className="flex items-center gap-2 mt-1 text-[11px] text-muted-foreground">
                           <Avatar className="h-4 w-4">
-                            <AvatarImage src={`https://avatar.vercel.sh/${user?.username || 'user'}.png`} />
-                            <AvatarFallback className="text-[8px]">{user?.username?.substring(0, 2).toUpperCase() || 'U'}</AvatarFallback>
+                            <AvatarImage src={user?.avatarUrl || `https://avatar.vercel.sh/${user?.username || 'user'}.png`} />
+                            <AvatarFallback className="text-[8px]">{user?.username?.charAt(0).toUpperCase() || 'U'}</AvatarFallback>
                           </Avatar>
                           <span className="truncate">{user?.username}</span>
                           <span>•</span>

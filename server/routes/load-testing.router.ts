@@ -38,7 +38,7 @@ export class LoadTestingRouter {
      * Tests all 4 requirements: AI streaming, DB performance, WebSocket limits, system metrics
      * ADMIN ONLY - Prevents accidental production self-DOS and unexpected AI provider costs
      */
-    this.router.post("/api/load-test/comprehensive", this.ensureAdmin.bind(this), async (req: Request, res: Response) => {
+    this.router.post('/load-test/comprehensive', this.ensureAdmin.bind(this), async (req: Request, res: Response) => {
       try {
         const config: LoadTestConfig = {
           concurrency: Math.min(req.body.concurrency || 10, 50),
@@ -157,7 +157,7 @@ export class LoadTestingRouter {
      * Individual test: AI Streaming
      * ADMIN ONLY
      */
-    this.router.post("/api/load-test/ai-streaming", this.ensureAdmin.bind(this), async (req: Request, res: Response) => {
+    this.router.post('/load-test/ai-streaming', this.ensureAdmin.bind(this), async (req: Request, res: Response) => {
       try {
         const config: LoadTestConfig = {
           concurrency: req.body.concurrency || 10,
@@ -178,7 +178,7 @@ export class LoadTestingRouter {
      * Individual test: Database Performance
      * ADMIN ONLY
      */
-    this.router.post("/api/load-test/database", this.ensureAdmin.bind(this), async (req: Request, res: Response) => {
+    this.router.post('/load-test/database', this.ensureAdmin.bind(this), async (req: Request, res: Response) => {
       try {
         const config: LoadTestConfig = {
           concurrency: req.body.concurrency || 20,
@@ -199,7 +199,7 @@ export class LoadTestingRouter {
      * Individual test: WebSocket Limits
      * ADMIN ONLY
      */
-    this.router.post("/api/load-test/websocket", this.ensureAdmin.bind(this), async (req: Request, res: Response) => {
+    this.router.post('/load-test/websocket', this.ensureAdmin.bind(this), async (req: Request, res: Response) => {
       try {
         const config: LoadTestConfig = {
           concurrency: req.body.concurrency || 100,
@@ -219,7 +219,7 @@ export class LoadTestingRouter {
     /**
      * Get current system metrics
      */
-    this.router.get("/api/load-test/metrics", (req: Request, res: Response) => {
+    this.router.get('/load-test/metrics', (req: Request, res: Response) => {
       const metrics = this.loadTestingService.getSystemMetrics();
       res.json({
         samples: metrics.length,

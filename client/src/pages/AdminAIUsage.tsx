@@ -163,7 +163,7 @@ export default function AdminAIUsage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold" data-testid="text-total-revenue">
-                  ${stats.totalCost.toFixed(2)}
+                  ${(stats?.totalCost || 0).toFixed(2)}
                 </div>
                 <p className="text-[11px] text-muted-foreground">
                   {period === 'month' ? 'This month' : period === 'week' ? 'This week' : 'Today'}
@@ -178,10 +178,10 @@ export default function AdminAIUsage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold" data-testid="text-platform-requests">
-                  {stats.totalRequests.toLocaleString()}
+                  {(stats?.totalRequests ?? 0).toLocaleString()}
                 </div>
                 <p className="text-[11px] text-muted-foreground">
-                  Success: {stats.byStatus.success} | Error: {stats.byStatus.error}
+                  Success: {stats?.byStatus?.success ?? 0} | Error: {stats?.byStatus?.error ?? 0}
                 </p>
               </CardContent>
             </Card>
@@ -193,7 +193,7 @@ export default function AdminAIUsage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold" data-testid="text-unique-users">
-                  {stats.uniqueUsers}
+                  {stats?.uniqueUsers ?? 0}
                 </div>
                 <p className="text-[11px] text-muted-foreground">
                   Unique users with AI usage
@@ -208,7 +208,7 @@ export default function AdminAIUsage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold" data-testid="text-platform-tokens">
-                  {stats.totalTokens.toLocaleString()}
+                  {(stats?.totalTokens ?? 0).toLocaleString()}
                 </div>
                 <p className="text-[11px] text-muted-foreground">
                   Across all models
@@ -225,7 +225,7 @@ export default function AdminAIUsage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {Object.entries(stats.byTier).map(([tier, data]) => (
+                {stats?.byTier && Object.entries(stats.byTier).map(([tier, data]) => (
                   <div key={tier} className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <Badge variant={
@@ -363,7 +363,7 @@ export default function AdminAIUsage() {
                             {record.tokensTotal.toLocaleString()}
                           </TableCell>
                           <TableCell className="text-right font-medium text-green-600">
-                            ${parseFloat(record.costUsd).toFixed(4)}
+                            ${parseFloat(record.costUsd || '0').toFixed(4)}
                           </TableCell>
                           <TableCell>
                             <Badge variant={record.status === 'success' ? 'default' : 'destructive'}>
@@ -414,7 +414,7 @@ export default function AdminAIUsage() {
                           </div>
                           <div>
                             <span className="text-muted-foreground">Cost:</span>
-                            <div className="font-medium text-green-600 mt-1">${parseFloat(record.costUsd).toFixed(4)}</div>
+                            <div className="font-medium text-green-600 mt-1">${parseFloat(record.costUsd || '0').toFixed(4)}</div>
                           </div>
                           <div>
                             <span className="text-muted-foreground">Status:</span>

@@ -400,9 +400,9 @@ export function TabletIDEView({ projectId, className, bootstrapToken, onWorkspac
         {drawerOpen && (
           <LazyMotionDiv
             ref={drawerRef}
-            initial={{ x: -layout.optimalSidebarWidth }}
-            animate={{ x: 0 }}
-            exit={{ x: -layout.optimalSidebarWidth }}
+            initial={{ y: 30, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ y: 30, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
             className={cn(
               'fixed left-0 top-0 z-40 h-full bg-background border-r border-border',

@@ -497,7 +497,7 @@ export default function ChatGPTAdmin() {
                       <div className="flex flex-col">
                         <span>{project.name}</span>
                         <span className="text-[11px] text-muted-foreground">
-                          {project.ownerEmail || project.ownerUsername || `User #${project.ownerId}`}
+                          {project.ownerEmail ?? project.ownerUsername ?? `User #${project.ownerId}`}
                         </span>
                       </div>
                     </SelectItem>
@@ -507,7 +507,7 @@ export default function ChatGPTAdmin() {
             </Select>
             {selectedProject && (
               <div className="mt-2 p-2 bg-muted/50 rounded text-[11px]">
-                <div><strong>Owner:</strong> {selectedProject.ownerEmail || selectedProject.ownerUsername}</div>
+                <div><strong>Owner:</strong> {selectedProject.ownerEmail ?? selectedProject.ownerUsername ?? 'Unknown'}</div>
                 <div><strong>ID:</strong> {selectedProject.id}</div>
               </div>
             )}

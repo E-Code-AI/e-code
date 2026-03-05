@@ -156,9 +156,9 @@ export default function AdminDashboard() {
                 <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{userStats?.totalUsers || 0}</div>
+                <div className="text-2xl font-bold">{userStats?.totalUsers ?? 0}</div>
                 <p className="text-[11px] text-muted-foreground">
-                  {userStats?.activeUsers || 0} active (30d)
+                  {userStats?.activeUsers ?? 0} active (30d)
                 </p>
               </CardContent>
             </Card>
@@ -169,7 +169,7 @@ export default function AdminDashboard() {
                 <FileText className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{projectStats?.totalProjects || 0}</div>
+                <div className="text-2xl font-bold">{projectStats?.totalProjects ?? 0}</div>
                 <p className="text-[11px] text-muted-foreground">
                   Across all users
                 </p>
@@ -182,9 +182,9 @@ export default function AdminDashboard() {
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">${projectStats?.totalRevenue?.toFixed(2) || '0.00'}</div>
+                <div className="text-2xl font-bold">${projectStats?.totalRevenue ? projectStats.totalRevenue.toFixed(2) : '0.00'}</div>
                 <p className="text-[11px] text-muted-foreground">
-                  {projectStats?.activeSubscriptions || 0} subscriptions
+                  {projectStats?.activeSubscriptions ?? 0} subscriptions
                 </p>
               </CardContent>
             </Card>
@@ -195,9 +195,9 @@ export default function AdminDashboard() {
                 <Activity className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{systemStatus?.status === 'ok' ? 'Healthy' : 'Warning'}</div>
+                <div className="text-2xl font-bold">{systemStatus?.status === 'ok' ? 'Healthy' : (systemStatus?.status ? 'Warning' : 'Unknown')}</div>
                 <p className="text-[11px] text-muted-foreground">
-                  Up: {systemStatus?.uptime || '0'}
+                  Up: {systemStatus?.uptime ?? '0'}
                 </p>
               </CardContent>
             </Card>

@@ -219,7 +219,7 @@ export class ProjectsRouter {
 
   private initializeRoutes() {
     // Get user's projects with pagination
-    this.router.get("/api/projects", this.ensureAuthenticated, async (req: Request, res: Response) => {
+    this.router.get("/", this.ensureAuthenticated, async (req: Request, res: Response) => {
       try {
         const userId = (req.user as User).id;
         
@@ -275,7 +275,7 @@ export class ProjectsRouter {
     });
 
     // Get public projects for explore page (no auth required)
-    this.router.get("/api/explore/projects", async (req: Request, res: Response) => {
+    this.router.get("/explore", async (req: Request, res: Response) => {
       try {
         const category = req.query.category as string | undefined;
         const sort = req.query.sort as string | undefined;
@@ -365,7 +365,7 @@ export class ProjectsRouter {
     });
 
     // Create a new project
-    this.router.post("/api/projects", this.ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
+    this.router.post("/", this.ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
       try {
         const userId = (req.user as User).id;
         
@@ -399,21 +399,33 @@ export class ProjectsRouter {
         try {
           const lang = validatedData.language || 'javascript';
           const starterFiles: Record<string, { name: string; content: string }> = {
-            javascript:  { name: 'main.js',  content: 'console.log("Hello, World!");\n' },
-            typescript:  { name: 'main.ts',  content: 'console.log("Hello, World!");\n' },
-            python:      { name: 'main.py',  content: 'print("Hello, World!")\n' },
-            bash:        { name: 'main.sh',  content: '#!/usr/bin/env bash\necho "Hello, World!"\n' },
-            c:           { name: 'main.c',   content: '#include <stdio.h>\nint main() {\n  printf("Hello, World!\\n");\n  return 0;\n}\n' },
-            cpp:         { name: 'main.cpp', content: '#include <iostream>\nint main() {\n  std::cout << "Hello, World!" << std::endl;\n  return 0;\n}\n' },
-            rust:        { name: 'main.rs',  content: 'fn main() {\n  println!("Hello, World!");\n}\n' },
-            go:          { name: 'main.go',  content: 'package main\nimport "fmt"\nfunc main() {\n  fmt.Println("Hello, World!")\n}\n' },
+            javascript:  { name: 'index.js',  content: 'console.log("Hello, World!");\n' },
+            typescript:  { name: 'index.ts',  content: 'console.log("Hello, World!");\n' },
+            python:      { name: 'main.py',   content: 'print("Hello, World!")\n' },
+            bash:        { name: 'script.sh', content: '#!/usr/bin/env bash\necho "Hello, World!"\n' },
+            c:           { name: 'main.c',    content: '#include <stdio.h>\nint main() {\n  printf("Hello, World!\\n");\n  return 0;\n}\n' },
+            cpp:         { name: 'main.cpp',  content: '#include <iostream>\nint main() {\n  std::cout << "Hello, World!" << std::endl;\n  return 0;\n}\n' },
+            rust:        { name: 'main.rs',   content: 'fn main() {\n  println!("Hello, World!");\n}\n' },
+            go:          { name: 'main.go',   content: 'package main\nimport "fmt"\nfunc main() {\n  fmt.Println("Hello, World!")\n}\n' },
             java:        { name: 'Main.java', content: 'public class Main {\n  public static void main(String[] args) {\n    System.out.println("Hello, World!");\n  }\n}\n' },
-            ruby:        { name: 'main.rb',  content: 'puts "Hello, World!"\n' },
-            php:         { name: 'main.php', content: '<?php\necho "Hello, World!";\n' },
+            ruby:        { name: 'main.rb',   content: 'puts "Hello, World!"\n' },
+            php:         { name: 'index.php', content: '<?php\necho "Hello, World!";\n' },
             swift:       { name: 'main.swift', content: 'print("Hello, World!")\n' },
-            kotlin:      { name: 'main.kt', content: 'fun main() {\n  println("Hello, World!")\n}\n' },
-            perl:        { name: 'main.pl',  content: '#!/usr/bin/perl\nprint "Hello, World!\\n";\n' },
-            deno:        { name: 'main.ts',  content: 'console.log("Hello, World!");\n' },
+            kotlin:      { name: 'main.kt',   content: 'fun main() {\n  println("Hello, World!")\n}\n' },
+            perl:        { name: 'main.pl',   content: '#!/usr/bin/perl\nprint "Hello, World!\\n";\n' },
+            deno:        { name: 'index.ts',  content: 'console.log("Hello, World!");\n' },
+            lua:         { name: 'main.lua',  content: 'print("Hello, World!")\n' },
+            r:           { name: 'main.R',    content: 'cat("Hello, World!\\n")\n' },
+            julia:       { name: 'main.jl',   content: 'println("Hello, World!")\n' },
+            haskell:     { name: 'Main.hs',   content: 'module Main where\nmain :: IO ()\nmain = putStrLn "Hello, World!"\n' },
+            scala:       { name: 'Main.scala', content: 'object Main extends App {\n  println("Hello, World!")\n}\n' },
+            clojure:     { name: 'main.clj',  content: '(println "Hello, World!")\n' },
+            elixir:      { name: 'main.exs',  content: 'IO.puts "Hello, World!"\n' },
+            ocaml:       { name: 'main.ml',   content: 'let () = print_endline "Hello, World!"\n' },
+            dart:        { name: 'main.dart', content: 'void main() {\n  print("Hello, World!");\n}\n' },
+            zig:         { name: 'main.zig',  content: 'const std = @import("std");\npub fn main() void {\n  std.debug.print("Hello, World!\\n", .{});\n}\n' },
+            csharp:      { name: 'Program.cs', content: 'using System;\nclass Program {\n  static void Main() {\n    Console.WriteLine("Hello, World!");\n  }\n}\n' },
+            fsharp:      { name: 'Program.fs', content: 'printfn "Hello, World!"\n' },
             nix:         { name: 'default.nix', content: '# Nix expression\n{ pkgs ? import <nixpkgs> {} }:\npkgs.mkShell {\n  buildInputs = [ pkgs.hello ];\n}\n' },
             html:        { name: 'index.html', content: '<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8">\n  <title>App</title>\n</head>\n<body>\n  <h1>Hello, World!</h1>\n</body>\n</html>\n' },
           };
@@ -489,7 +501,7 @@ export class ProjectsRouter {
     });
 
     // Get a specific project
-    this.router.get("/api/projects/:projectId", this.ensureProjectAccess, async (req: Request, res: Response) => {
+    this.router.get("/:projectId", this.ensureProjectAccess, async (req: Request, res: Response) => {
       try {
         const projectId = req.params.projectId;
         const project = await this.storage.getProject(projectId);
@@ -514,7 +526,7 @@ export class ProjectsRouter {
     });
 
     // Update a project
-    this.router.put("/api/projects/:projectId", this.ensureProjectAccess, csrfProtection, async (req: Request, res: Response) => {
+    this.router.put("/:projectId", this.ensureProjectAccess, csrfProtection, async (req: Request, res: Response) => {
       try {
         const projectId = req.params.projectId;
         const updates = req.body;
@@ -543,7 +555,7 @@ export class ProjectsRouter {
     });
 
     // Delete a project
-    this.router.delete("/api/projects/:projectId", this.ensureProjectAccess, csrfProtection, async (req: Request, res: Response) => {
+    this.router.delete("/:projectId", this.ensureProjectAccess, csrfProtection, async (req: Request, res: Response) => {
       try {
         const projectId = req.params.projectId;
         const project = await this.storage.getProject(projectId);
@@ -575,7 +587,7 @@ export class ProjectsRouter {
     });
 
     // Get project by slug (for username/slug routes)
-    this.router.get("/api/u/:username/:slug", async (req: Request, res: Response) => {
+    this.router.get("/u/:username/:slug", async (req: Request, res: Response) => {
       try {
         const { username, slug } = req.params;
         
@@ -646,7 +658,7 @@ export class ProjectsRouter {
     });
 
     // AI Chat endpoint - Stream AI-generated code responses
-    this.router.post('/api/projects/:id/ai/chat', this.ensureProjectAccess, async (req: Request, res: Response) => {
+    this.router.post('/:id/ai/chat', this.ensureProjectAccess, async (req: Request, res: Response) => {
       try {
         const projectId = req.params.id;
         const { message, context } = req.body;
@@ -910,8 +922,8 @@ export class ProjectsRouter {
       }
     });
 
-    // POST /api/projects/:projectId/visual-edit - Apply visual edits to source code
-    this.router.post('/api/projects/:projectId/visual-edit', this.ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
+    // POST /visual-edit - Apply visual edits to source code
+    this.router.post('/:projectId/visual-edit', this.ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
       try {
         const projectId = req.params.projectId;
         const userId = (req.user as User).id;
@@ -960,7 +972,7 @@ export class ProjectsRouter {
     });
 
     // SSE endpoint for project creation progress (for complex operations like GitHub import)
-    this.router.get('/api/projects/:projectId/creation-progress', this.ensureAuthenticated, async (req: Request, res: Response) => {
+    this.router.get('/:projectId/creation-progress', this.ensureAuthenticated, async (req: Request, res: Response) => {
       const projectId = req.params.projectId;
       const userId = (req.user as User).id;
 
@@ -1001,8 +1013,8 @@ export class ProjectsRouter {
       }, 300);
     });
 
-    // GET /api/projects/:id/stats - Get real project statistics
-    this.router.get('/api/projects/:id/stats', this.ensureAuthenticated, this.ensureProjectAccess, async (req: Request, res: Response) => {
+    // GET /stats - Get real project statistics
+    this.router.get('/:id/stats', this.ensureAuthenticated, this.ensureProjectAccess, async (req: Request, res: Response) => {
       try {
         const projectId = req.params.id;
         const project = await this.storage.getProject(projectId);

@@ -135,7 +135,7 @@ export default function Profile() {
               <Avatar className="h-24 w-24" data-testid="avatar-profile">
                 <AvatarImage src={profile.avatarUrl || undefined} />
                 <AvatarFallback className="text-3xl">
-                  {profile.username[0].toUpperCase()}
+                  {(profile?.displayName || profile?.username || 'U')[0]?.toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1">

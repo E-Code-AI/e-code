@@ -42,10 +42,10 @@ export class ChatGPTRouter {
 
   private initializeRoutes() {
     // All routes require authentication and admin access
-    this.router.use('/api/admin/chatgpt', ensureAuthenticated, ensureAdmin);
+    this.router.use('/admin/chatgpt', ensureAuthenticated, ensureAdmin);
 
     // Check if user is admin
-    this.router.get('/api/admin/check', ensureAuthenticated, async (req: Request, res: Response) => {
+    this.router.get('/admin/check', ensureAuthenticated, async (req: Request, res: Response) => {
       try {
         const user = await this.storage.getUser(String(req.user!.id));
         res.json({ isAdmin: user?.role === 'admin' });
@@ -55,7 +55,7 @@ export class ChatGPTRouter {
     });
 
     // Create a new chat session
-    this.router.post('/api/admin/chatgpt/sessions', async (req: Request, res: Response) => {
+    this.router.post('/admin/chatgpt/sessions', async (req: Request, res: Response) => {
       try {
         // Validate request body
         const validation = createSessionSchema.safeParse(req.body);
@@ -76,7 +76,7 @@ export class ChatGPTRouter {
     });
 
     // Get all sessions for the current user
-    this.router.get('/api/admin/chatgpt/sessions', async (req: Request, res: Response) => {
+    this.router.get('/admin/chatgpt/sessions', async (req: Request, res: Response) => {
       try {
         const sessions = await this.chatgptService.getUserSessions(String(req.user!.id));
         res.json(sessions);
@@ -87,7 +87,7 @@ export class ChatGPTRouter {
     });
 
     // Get a specific session
-    this.router.get('/api/admin/chatgpt/sessions/:sessionId', async (req: Request, res: Response) => {
+    this.router.get('/admin/chatgpt/sessions/:sessionId', async (req: Request, res: Response) => {
       try {
         const session = await this.chatgptService.getSession(
           req.params.sessionId,
@@ -106,7 +106,7 @@ export class ChatGPTRouter {
     });
 
     // Send a message to ChatGPT
-    this.router.post('/api/admin/chatgpt/sessions/:sessionId/messages', async (req: Request, res: Response) => {
+    this.router.post('/admin/chatgpt/sessions/:sessionId/messages', async (req: Request, res: Response) => {
       try {
         // Validate request body
         const validation = sendMessageSchema.safeParse(req.body);
@@ -134,7 +134,7 @@ export class ChatGPTRouter {
     });
 
     // Generate code
-    this.router.post('/api/admin/chatgpt/generate-code', async (req: Request, res: Response) => {
+    this.router.post('/admin/chatgpt/generate-code', async (req: Request, res: Response) => {
       try {
         // Validate request body
         const validation = generateCodeSchema.safeParse(req.body);
@@ -162,7 +162,7 @@ export class ChatGPTRouter {
     });
 
     // Clear session messages
-    this.router.delete('/api/admin/chatgpt/sessions/:sessionId/messages', async (req: Request, res: Response) => {
+    this.router.delete('/admin/chatgpt/sessions/:sessionId/messages', async (req: Request, res: Response) => {
       try {
         await this.chatgptService.clearSession(req.params.sessionId, String(req.user!.id));
         res.json({ message: 'Session cleared' });
@@ -173,7 +173,7 @@ export class ChatGPTRouter {
     });
 
     // Delete a session
-    this.router.delete('/api/admin/chatgpt/sessions/:sessionId', async (req: Request, res: Response) => {
+    this.router.delete('/admin/chatgpt/sessions/:sessionId', async (req: Request, res: Response) => {
       try {
         await this.chatgptService.deleteSession(req.params.sessionId, String(req.user!.id));
         res.json({ message: 'Session deleted' });
@@ -184,7 +184,7 @@ export class ChatGPTRouter {
     });
 
     // Get projects for context selection
-    this.router.get('/api/admin/chatgpt/projects', async (req: Request, res: Response) => {
+    this.router.get('/admin/chatgpt/projects', async (req: Request, res: Response) => {
       try {
         const projects = await this.storage.getProjectsByUserId(String(req.user!.id));
         res.json(projects);
@@ -195,7 +195,7 @@ export class ChatGPTRouter {
     });
 
     // Send a streaming message to ChatGPT
-    this.router.post('/api/admin/chatgpt/sessions/:sessionId/stream', async (req: Request, res: Response) => {
+    this.router.post('/admin/chatgpt/sessions/:sessionId/stream', async (req: Request, res: Response) => {
       let streamEnded = false;
       let clientDisconnected = false;
       
@@ -269,7 +269,7 @@ export class ChatGPTRouter {
     // ===== ADMIN PROJECT MANAGEMENT ENDPOINTS =====
     
     // Get ALL projects (admin can see all users' projects)
-    this.router.get('/api/admin/chatgpt/all-projects', async (req: Request, res: Response) => {
+    this.router.get('/admin/chatgpt/all-projects', async (req: Request, res: Response) => {
       try {
         const projects = await this.storage.getAllProjects();
         res.json(projects);
@@ -280,7 +280,7 @@ export class ChatGPTRouter {
     });
 
     // Get project details with owner info
-    this.router.get('/api/admin/chatgpt/projects/:projectId', async (req: Request, res: Response) => {
+    this.router.get('/admin/chatgpt/projects/:projectId', async (req: Request, res: Response) => {
       try {
         const project = await this.storage.getProject(req.params.projectId);
         if (!project) {
@@ -299,7 +299,7 @@ export class ChatGPTRouter {
     });
 
     // List files in a project
-    this.router.get('/api/admin/chatgpt/projects/:projectId/files', async (req: Request, res: Response) => {
+    this.router.get('/admin/chatgpt/projects/:projectId/files', async (req: Request, res: Response) => {
       try {
         const files = await this.storage.getFilesByProjectId(req.params.projectId);
         res.json(files);
@@ -310,7 +310,7 @@ export class ChatGPTRouter {
     });
 
     // Read a specific file
-    this.router.get('/api/admin/chatgpt/projects/:projectId/files/:fileId', async (req: Request, res: Response) => {
+    this.router.get('/admin/chatgpt/projects/:projectId/files/:fileId', async (req: Request, res: Response) => {
       try {
         const file = await this.storage.getFile(parseInt(req.params.fileId));
         if (!file || String(file.projectId) !== req.params.projectId) {
@@ -324,7 +324,7 @@ export class ChatGPTRouter {
     });
 
     // Update a file (admin can modify any project's files)
-    this.router.put('/api/admin/chatgpt/projects/:projectId/files/:fileId', async (req: Request, res: Response) => {
+    this.router.put('/admin/chatgpt/projects/:projectId/files/:fileId', async (req: Request, res: Response) => {
       try {
         const { content } = req.body;
         if (content === undefined) {
@@ -347,7 +347,7 @@ export class ChatGPTRouter {
     });
 
     // Get all active agent sessions across all users
-    this.router.get('/api/admin/chatgpt/agent-sessions', async (req: Request, res: Response) => {
+    this.router.get('/admin/chatgpt/agent-sessions', async (req: Request, res: Response) => {
       try {
         const sessions = await this.storage.getActiveAgentSessions?.() || [];
         res.json(sessions);
@@ -358,7 +358,7 @@ export class ChatGPTRouter {
     });
 
     // Terminate an agent session (admin intervention)
-    this.router.post('/api/admin/chatgpt/agent-sessions/:sessionId/terminate', async (req: Request, res: Response) => {
+    this.router.post('/admin/chatgpt/agent-sessions/:sessionId/terminate', async (req: Request, res: Response) => {
       try {
         const { reason } = req.body;
         logger.warn(`[Admin] Session ${req.params.sessionId} terminated by admin ${req.user!.id}. Reason: ${reason || 'No reason provided'}`);

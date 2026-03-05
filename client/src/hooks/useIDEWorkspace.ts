@@ -247,6 +247,7 @@ export function useIDEWorkspace(projectId: string) {
 
   // ========== RUNTIME STATE ==========
   const [runtimeAutoStarted, setRuntimeAutoStarted] = useState(false);
+  const [executionId, setExecutionId] = useState<string | undefined>();
 
   // ========== BOOTSTRAP PROMPT STATE ==========
   const bootstrapPromptKey = `agent-prompt-${projectId}`;
@@ -265,11 +266,8 @@ export function useIDEWorkspace(projectId: string) {
     queryKey: ['/api/projects', projectId],
     queryFn: async () => {
       const url = `/api/projects/${projectId}${bootstrapToken ? `?bootstrap=${bootstrapToken}` : ''}`;
-      const res = await fetch(url, { credentials: "include" });
-      if (!res.ok) {
-        throw new Error(`Failed to fetch project: ${res.status} ${res.statusText}`);
-      }
-      return res.json();
+      const res = await apiRequest<Project>('GET', url);
+      return res;
     },
     enabled: !!projectId && (!!user || !!bootstrapToken),
     staleTime: Infinity,
@@ -279,11 +277,8 @@ export function useIDEWorkspace(projectId: string) {
     queryKey: ['/api/projects', projectId, 'files'],
     queryFn: async () => {
       const url = `/api/projects/${projectId}/files${bootstrapToken ? `?bootstrap=${bootstrapToken}` : ''}`;
-      const res = await fetch(url, { credentials: "include" });
-      if (!res.ok) {
-        throw new Error(`Failed to fetch files: ${res.status} ${res.statusText}`);
-      }
-      return res.json();
+      const res = await apiRequest<File[]>('GET', url);
+      return res;
     },
     enabled: !!projectId && (!!user || !!bootstrapToken),
     staleTime: Infinity,
@@ -405,12 +400,13 @@ export function useIDEWorkspace(projectId: string) {
   useEffect(() => {
     if (!runtimeAutoStarted && projectId && project && !isLoadingProject) {
       setRuntimeAutoStarted(true);
-      apiRequest('POST', '/api/runtime/start', {
+      apiRequest<{ success?: boolean; executionId?: string }>('POST', '/api/runtime/start', {
         projectId,
         mainFile: undefined,
         timeout: 30000
-      }).then(() => {
+      }).then((data) => {
         setIsRunning(true);
+        if (data?.executionId) setExecutionId(data.executionId);
       }).catch(() => {
       });
     }
@@ -439,6 +435,26 @@ export function useIDEWorkspace(projectId: string) {
       variant: "destructive",
     });
   }, [toast]);
+
+  const handleRunStop = useCallback(async () => {
+    if (isRunning) {
+      try {
+        await apiRequest('POST', '/api/runtime/stop', { projectId, executionId });
+      } catch (_) {}
+      setIsRunning(false);
+      setExecutionId(undefined);
+    } else {
+      try {
+        const data = await apiRequest<{ success?: boolean; executionId?: string }>(
+          'POST', '/api/runtime/start', { projectId, mainFile: undefined, timeout: 30000 }
+        );
+        setIsRunning(true);
+        if (data?.executionId) setExecutionId(data.executionId);
+      } catch (_) {
+        setIsRunning(false);
+      }
+    }
+  }, [isRunning, projectId, executionId, setIsRunning, setExecutionId]);
 
   const handleFileSelect = useCallback((file: { id: number; name: string }) => {
     setSelectedFileId(file.id);
@@ -573,6 +589,8 @@ export function useIDEWorkspace(projectId: string) {
     setShowFileExplorer,
     isRunning,
     setIsRunning,
+    executionId,
+    setExecutionId,
 
     // Activity states
     activeActivityItem,
@@ -637,6 +655,7 @@ export function useIDEWorkspace(projectId: string) {
     availableTools,
 
     // Callbacks
+    handleRunStop,
     handleWorkspaceComplete,
     handleWorkspaceError,
     handleFileSelect,

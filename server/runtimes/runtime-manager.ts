@@ -253,8 +253,44 @@ export async function startProject(
       
       // Get language config for run command
       const config = languageConfigs[language];
-      const runCommand = config.runCommand;
       const executionIdForSetup = options.executionId;
+
+      // Resolve the actual run command based on files present in the project directory
+      // This handles mismatches (e.g., project has main.js but config expects index.js)
+      const resolveRunCommand = (baseRunCmd: string, dir: string): string => {
+        const parts = baseRunCmd.split(/\s+/);
+        const targetFile = parts.find(p => /\.[a-z0-9]+$/i.test(p) && !p.startsWith('-'));
+        if (!targetFile || !dir) return baseRunCmd;
+        const targetPath = path.join(dir, targetFile);
+        if (fs.existsSync(targetPath)) return baseRunCmd;
+        // Fallbacks: common alternative entry point names by extension
+        const ext = path.extname(targetFile);
+        const alternatives: Record<string, string[]> = {
+          '.js':  ['index.js', 'main.js', 'app.js', 'server.js'],
+          '.ts':  ['index.ts', 'main.ts', 'app.ts', 'server.ts'],
+          '.py':  ['main.py', 'app.py', 'index.py', 'run.py'],
+          '.sh':  ['script.sh', 'main.sh', 'run.sh', 'start.sh'],
+          '.php': ['index.php', 'main.php', 'app.php'],
+          '.rb':  ['main.rb', 'app.rb', 'index.rb'],
+          '.lua': ['main.lua', 'index.lua', 'app.lua'],
+          '.pl':  ['main.pl', 'script.pl', 'index.pl'],
+          '.R':   ['main.R', 'script.R', 'app.R'],
+          '.jl':  ['main.jl', 'index.jl'],
+          '.exs': ['main.exs', 'app.exs'],
+          '.ml':  ['main.ml', 'index.ml'],
+        };
+        const candidates = alternatives[ext] || [];
+        for (const alt of candidates) {
+          if (fs.existsSync(path.join(dir, alt))) {
+            const newCmd = baseRunCmd.replace(targetFile, alt);
+            logger.info(`[Runtime] Entry point adapted: ${targetFile} → ${alt} (cmd: ${newCmd})`);
+            return newCmd;
+          }
+        }
+        return baseRunCmd;
+      };
+
+      const runCommand = resolveRunCommand(config.runCommand, projectDir || '');
       
       // Stream initial setup messages
       streamLog(projectId, executionIdForSetup, 'system', `Starting ${languageConfigs[language].displayName} project...`);

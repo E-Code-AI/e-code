@@ -90,7 +90,7 @@ async function verifyDeploymentOwnership(userId: number, deploymentId: string): 
  * ✅ SECURITY FIX: Admin-only access for global analytics
  * Non-admins get their own scoped analytics
  */
-router.get('/api/analytics', ensureAuthenticated, async (req: Request, res: Response) => {
+router.get('/analytics', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const timeRange = (req.query.timeRange as string) || '7d';
     const userId = req.user?.id;
@@ -313,7 +313,7 @@ router.get('/api/analytics', ensureAuthenticated, async (req: Request, res: Resp
  * 
  * ✅ SECURITY FIX: Admin-only for platform-wide realtime data
  */
-router.get('/api/analytics/realtime', ensureAuthenticated, async (req: Request, res: Response) => {
+router.get('/analytics/realtime', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const userIsAdmin = isAdmin(req);
     const userId = req.user?.id;
@@ -375,7 +375,7 @@ router.get('/api/analytics/realtime', ensureAuthenticated, async (req: Request, 
  * ✅ SECURITY FIX: Verify deployment ownership before returning metrics
  * Prevents cross-tenant data access
  */
-router.get('/api/analytics/deployment/:deploymentId', ensureAuthenticated, async (req: Request, res: Response) => {
+router.get('/analytics/deployment/:deploymentId', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const { deploymentId } = req.params;
     const userId = req.user?.id;
@@ -481,7 +481,7 @@ router.get('/api/analytics/deployment/:deploymentId', ensureAuthenticated, async
  * Weekly Activity Data for Dashboard Charts
  * GET /api/analytics/weekly-activity
  */
-router.get('/api/analytics/weekly-activity', ensureAuthenticated, async (req: Request, res: Response) => {
+router.get('/analytics/weekly-activity', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const userId = req.user?.id;
     
@@ -550,7 +550,7 @@ router.get('/api/analytics/weekly-activity', ensureAuthenticated, async (req: Re
  * Storage Breakdown Data for Dashboard Charts
  * GET /api/analytics/storage
  */
-router.get('/api/analytics/storage', ensureAuthenticated, async (req: Request, res: Response) => {
+router.get('/analytics/storage', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const userId = req.user?.id;
 

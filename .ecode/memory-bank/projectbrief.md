@@ -1,7 +1,7 @@
 # Project Brief
 
 ## Overview
-Final E2E Test
+Project from Template #135
 
 ## Core Requirements
 [To be extracted from requirements]

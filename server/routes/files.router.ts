@@ -39,7 +39,7 @@ export class FilesRouter {
   private ensureAuthenticated = ensureAuthenticated;
 
   private initializeRoutes() {
-    this.router.get("/api/projects/:projectId/files", this.ensureAuthenticated, async (req: Request, res: Response) => {
+    this.router.get("/:projectId/files", this.ensureAuthenticated, async (req: Request, res: Response) => {
       try {
         const projectIdResult = projectIdSchema.safeParse(req.params.projectId);
         if (!projectIdResult.success) {
@@ -85,7 +85,7 @@ export class FilesRouter {
       }
     });
 
-    this.router.get("/api/projects/:projectId/files/*", this.ensureAuthenticated, async (req: Request, res: Response) => {
+    this.router.get("/:projectId/files/*", this.ensureAuthenticated, async (req: Request, res: Response) => {
       try {
         const projectIdResult = projectIdSchema.safeParse(req.params.projectId);
         if (!projectIdResult.success) {
@@ -170,7 +170,7 @@ export class FilesRouter {
       }
     });
 
-    this.router.post("/api/projects/:projectId/files", this.ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
+    this.router.post("/:projectId/files", this.ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
       try {
         const projectIdResult = projectIdSchema.safeParse(req.params.projectId);
         if (!projectIdResult.success) {
@@ -279,7 +279,7 @@ export class FilesRouter {
       }
     });
 
-    this.router.put("/api/projects/:projectId/files/*", this.ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
+    this.router.put("/:projectId/files/*", this.ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
       try {
         const projectIdResult = projectIdSchema.safeParse(req.params.projectId);
         if (!projectIdResult.success) {
@@ -351,7 +351,7 @@ export class FilesRouter {
       }
     });
 
-    this.router.delete("/api/projects/:projectId/files/*", this.ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
+    this.router.delete("/:projectId/files/*", this.ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
       try {
         const projectIdResult = projectIdSchema.safeParse(req.params.projectId);
         if (!projectIdResult.success) {
@@ -422,7 +422,7 @@ export class FilesRouter {
       }
     });
 
-    this.router.patch("/api/files/:fileId", this.ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
+    this.router.patch("/:fileId", this.ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
       try {
         const fileIdResult = fileIdSchema.safeParse(req.params.fileId);
         if (!fileIdResult.success) {
@@ -477,7 +477,7 @@ export class FilesRouter {
     });
 
     // PUT route for file update (same as PATCH, for frontend compatibility)
-    this.router.put("/api/files/:fileId", this.ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
+    this.router.put("/:fileId", this.ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
       try {
         const fileIdResult = fileIdSchema.safeParse(req.params.fileId);
         if (!fileIdResult.success) {
@@ -531,7 +531,7 @@ export class FilesRouter {
       }
     });
 
-    this.router.delete("/api/files/:fileId", this.ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
+    this.router.delete("/:fileId", this.ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
       try {
         const fileIdResult = fileIdSchema.safeParse(req.params.fileId);
         if (!fileIdResult.success) {
@@ -584,7 +584,7 @@ export class FilesRouter {
       }
     });
 
-    this.router.post("/api/files/:projectId", this.ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
+    this.router.post("/:projectId", this.ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
       try {
         const projectIdResult = projectIdSchema.safeParse(req.params.projectId);
         if (!projectIdResult.success) {
@@ -700,7 +700,7 @@ export class FilesRouter {
       }
     });
 
-    this.router.post("/api/projects/:projectId/folders", this.ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
+    this.router.post("/projects/:projectId/folders", this.ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
       try {
         const projectIdResult = projectIdSchema.safeParse(req.params.projectId);
         if (!projectIdResult.success) {
@@ -762,7 +762,7 @@ export class FilesRouter {
     });
 
     // File History Endpoints
-    this.router.get("/api/projects/:projectId/file-history", this.ensureAuthenticated, async (req: Request, res: Response) => {
+    this.router.get("/projects/:projectId/file-history", this.ensureAuthenticated, async (req: Request, res: Response) => {
       try {
         const projectIdResult = projectIdSchema.safeParse(req.params.projectId);
         if (!projectIdResult.success) {
@@ -836,7 +836,7 @@ export class FilesRouter {
       }
     });
 
-    this.router.get("/api/projects/:projectId/files/:fileId/history", this.ensureAuthenticated, async (req: Request, res: Response) => {
+    this.router.get("/projects/:projectId/files/:fileId/history", this.ensureAuthenticated, async (req: Request, res: Response) => {
       try {
         const projectIdResult = projectIdSchema.safeParse(req.params.projectId);
         const fileIdResult = fileIdSchema.safeParse(req.params.fileId);
@@ -891,7 +891,7 @@ export class FilesRouter {
       }
     });
 
-    this.router.post("/api/projects/:projectId/files/:fileId/versions", this.ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
+    this.router.post("/projects/:projectId/files/:fileId/versions", this.ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
       try {
         const projectIdResult = projectIdSchema.safeParse(req.params.projectId);
         const fileIdResult = fileIdSchema.safeParse(req.params.fileId);
@@ -961,7 +961,7 @@ export class FilesRouter {
       }
     });
 
-    this.router.post("/api/projects/:projectId/files/:fileId/versions/:versionId/restore", this.ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
+    this.router.post("/projects/:projectId/files/:fileId/versions/:versionId/restore", this.ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
       try {
         const projectIdResult = projectIdSchema.safeParse(req.params.projectId);
         const fileIdResult = fileIdSchema.safeParse(req.params.fileId);
@@ -1065,7 +1065,7 @@ export class FilesRouter {
       }
     });
 
-    this.router.get("/api/projects/:projectId/files-with-history", this.ensureAuthenticated, async (req: Request, res: Response) => {
+    this.router.get("/projects/:projectId/files-with-history", this.ensureAuthenticated, async (req: Request, res: Response) => {
       try {
         const projectIdResult = projectIdSchema.safeParse(req.params.projectId);
         if (!projectIdResult.success) {

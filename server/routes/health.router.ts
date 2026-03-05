@@ -289,7 +289,7 @@ export class HealthRouter {
 
   private initializeRoutes() {
     // Basic health check
-    this.router.get("/api/health", (req: Request, res: Response) => {
+    this.router.get("/health", (req: Request, res: Response) => {
       res.json({
         status: "healthy",
         service: "E-Code Platform API",
@@ -302,7 +302,7 @@ export class HealthRouter {
 
     // Detailed health check with circuit breaker and recovery queue status
     // ✅ MONITORING ENDPOINT (Dec 7, 2025): Comprehensive health for monitoring tools
-    this.router.get("/api/health/detailed", async (req: Request, res: Response) => {
+    this.router.get("/health/detailed", async (req: Request, res: Response) => {
       try {
         const startTime = Date.now();
         const [dbHealth] = await Promise.all([
@@ -374,7 +374,7 @@ export class HealthRouter {
     });
 
     // CORS health endpoint
-    this.router.get("/api/cors-health", (req: Request, res: Response) => {
+    this.router.get("/cors-health", (req: Request, res: Response) => {
       const corsHealth = this.getCorsHealth();
       const statusCode = corsHealth.status === 'configured' ? 200 : 500;
       
@@ -387,16 +387,16 @@ export class HealthRouter {
     });
 
     // Liveness probe — both paths for backward compatibility
-    this.router.get("/api/liveness", (_req: Request, res: Response) => {
+    this.router.get("/liveness", (_req: Request, res: Response) => {
       res.json({ status: "alive" });
     });
     // Frontend hooks use /api/health/liveness (alias)
-    this.router.get("/api/health/liveness", (_req: Request, res: Response) => {
+    this.router.get("/health/liveness", (_req: Request, res: Response) => {
       res.json({ status: "alive" });
     });
 
     // Readiness probe (for Kubernetes/Docker)
-    this.router.get("/api/readiness", async (req: Request, res: Response) => {
+    this.router.get("/readiness", async (req: Request, res: Response) => {
       try {
         const dbHealth = await this.getDatabaseHealth();
         if (dbHealth.status === 'healthy') {
@@ -410,7 +410,7 @@ export class HealthRouter {
     });
 
     // Application metrics endpoint (JSON format - use /api/metrics for Prometheus format)
-    this.router.get("/api/health/metrics", (req: Request, res: Response) => {
+    this.router.get("/health/metrics", (req: Request, res: Response) => {
       const memUsage = process.memoryUsage();
       
       res.json({
@@ -438,7 +438,7 @@ export class HealthRouter {
     // AI Provider Health Check - Fortune 500 requirement
     // Always returns HTTP 200 with status in body (degraded/healthy)
     // Only returns 503 on complete failure to check providers
-    this.router.get("/api/health/providers", async (req: Request, res: Response) => {
+    this.router.get("/health/providers", async (req: Request, res: Response) => {
       try {
         const providersHealth = await this.getAllProvidersHealth();
         const allHealthy = providersHealth.summary.healthy === providersHealth.summary.total;
@@ -472,7 +472,7 @@ export class HealthRouter {
     });
 
     // Language Runtime Health Check - All 29 languages
-    this.router.get("/api/health/runtimes", (req: Request, res: Response) => {
+    this.router.get("/health/runtimes", (req: Request, res: Response) => {
       const status = runtimeWarmup.getStatus();
       res.status(200).json({
         timestamp: new Date().toISOString(),

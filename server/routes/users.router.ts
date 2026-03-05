@@ -19,8 +19,8 @@ export class UsersRouter {
   private ensureAuth = ensureAuthenticated;
 
   private initializeRoutes() {
-    // GET /api/users/me — current authenticated user (MUST be before /:id to avoid "me" being treated as an ID)
-    this.router.get("/api/users/me", this.ensureAuth, async (req: Request, res: Response) => {
+    // GET /me — current authenticated user (MUST be before /:id to avoid "me" being treated as an ID)
+    this.router.get("/me", this.ensureAuth, async (req: Request, res: Response) => {
       try {
         const userId = (req.user as any)?.id?.toString();
         if (!userId) {
@@ -39,7 +39,7 @@ export class UsersRouter {
     });
 
     // Search users (MUST be before /:id to avoid "search" being captured as user ID)
-    this.router.get("/api/users/search", async (req: Request, res: Response) => {
+    this.router.get("/search", async (req: Request, res: Response) => {
       try {
         const query = (req.query.q || '').toString();
         if (!query || query.length < 2) {
@@ -60,7 +60,7 @@ export class UsersRouter {
     });
 
     // Get user profile by ID
-    this.router.get("/api/users/:id", async (req: Request, res: Response) => {
+    this.router.get("/:id", async (req: Request, res: Response) => {
       try {
         const userId = req.params.id;
         const user = await this.storage.getUser(userId);
@@ -94,7 +94,7 @@ export class UsersRouter {
     });
 
     // Get user profile by username
-    this.router.get("/api/users/username/:username", async (req: Request, res: Response) => {
+    this.router.get("/username/:username", async (req: Request, res: Response) => {
       try {
         const username = req.params.username;
         const user = await this.storage.getUserByUsername(username);
@@ -128,7 +128,7 @@ export class UsersRouter {
     });
 
     // Update user profile
-    this.router.put("/api/users/:id", this.ensureAuth, csrfProtection, async (req: Request, res: Response) => {
+    this.router.put("/:id", this.ensureAuth, csrfProtection, async (req: Request, res: Response) => {
       try {
         const userId = req.params.id;
         
@@ -182,7 +182,7 @@ export class UsersRouter {
     });
 
     // Delete user account
-    this.router.delete("/api/users/:id", this.ensureAuth, csrfProtection, async (req: Request, res: Response) => {
+    this.router.delete("/:id", this.ensureAuth, csrfProtection, async (req: Request, res: Response) => {
       try {
         const userId = req.params.id;
         
@@ -212,39 +212,8 @@ export class UsersRouter {
       }
     });
 
-    // Search users
-    this.router.get("/api/users/search", async (req: Request, res: Response) => {
-      try {
-        const query = (req.query.q || '').toString();
-        
-        if (!query || query.length < 2) {
-          return res.status(400).json({
-            message: "Search query must be at least 2 characters",
-            code: "INVALID_QUERY"
-          });
-        }
-        
-        const users = await this.storage.searchUsers(query);
-        
-        // Remove sensitive information
-        const publicUsers = users.map(user => ({
-          id: user.id,
-          username: user.username,
-          displayName: user.displayName,
-          avatarUrl: user.avatarUrl
-        }));
-        
-        res.json(publicUsers);
-      } catch (error) {
-        console.error('Error searching users:', error);
-        res.status(500).json({ 
-          message: "Failed to search users",
-          code: "SEARCH_ERROR"
-        });
-      }
-    });
     // Get user usage (resource consumption metrics)
-    this.router.get("/api/user/usage", this.ensureAuth, async (req: Request, res: Response) => {
+    this.router.get("/usage", this.ensureAuth, async (req: Request, res: Response) => {
       try {
         const userId = req.user!.id;
         const user = await this.storage.getUser(String(userId));
@@ -328,7 +297,7 @@ export class UsersRouter {
     });
 
     // Get user billing information
-    this.router.get("/api/user/billing", this.ensureAuth, async (req: Request, res: Response) => {
+    this.router.get("/billing", this.ensureAuth, async (req: Request, res: Response) => {
       try {
         const userId = req.user!.id;
         const user = await this.storage.getUser(String(userId));
@@ -377,7 +346,7 @@ export class UsersRouter {
     });
 
     // Get user billing summary (for Account page)
-    this.router.get("/api/user/billing-summary", this.ensureAuth, async (req: Request, res: Response) => {
+    this.router.get("/billing-summary", this.ensureAuth, async (req: Request, res: Response) => {
       try {
         const userId = req.user!.id;
         const user = await this.storage.getUser(String(userId));

@@ -280,7 +280,7 @@ export default function AdminBilling() {
               <CardTitle className="text-[13px] font-medium text-zinc-400">Total Users</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-white">{usageSummary?.totalUsers || 0}</div>
+              <div className="text-2xl font-bold text-white">{usageSummary?.totalUsers ?? 0}</div>
               <p className="text-[11px] text-zinc-500">Platform-wide</p>
             </CardContent>
           </Card>
@@ -289,7 +289,7 @@ export default function AdminBilling() {
               <CardTitle className="text-[13px] font-medium text-zinc-400">Billing Period</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-white">{usageSummary?.billingPeriod || 'N/A'}</div>
+              <div className="text-2xl font-bold text-white">{usageSummary?.billingPeriod ?? 'N/A'}</div>
               <p className="text-[11px] text-zinc-500">Current cycle</p>
             </CardContent>
           </Card>

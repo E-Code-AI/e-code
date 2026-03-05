@@ -30,7 +30,7 @@ const projectIdSchema = z.object({
 const router = Router();
 
 // Create a new voice/video session
-router.post('/api/voice-video/sessions', ensureAuthenticated, async (req: Request, res: Response) => {
+router.post('/sessions', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const parseResult = createSessionSchema.safeParse(req.body);
     if (!parseResult.success) {
@@ -64,7 +64,7 @@ router.post('/api/voice-video/sessions', ensureAuthenticated, async (req: Reques
 });
 
 // Get active sessions for a project
-router.get('/api/voice-video/projects/:projectId/sessions', ensureAuthenticated, async (req: Request, res: Response) => {
+router.get('/projects/:projectId/sessions', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const parseResult = projectIdSchema.safeParse(req.params);
     if (!parseResult.success) {
@@ -92,7 +92,7 @@ router.get('/api/voice-video/projects/:projectId/sessions', ensureAuthenticated,
 });
 
 // Get session details
-router.get('/api/voice-video/sessions/:roomId', ensureAuthenticated, async (req: Request, res: Response) => {
+router.get('/sessions/:roomId', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const parseResult = roomIdSchema.safeParse(req.params);
     if (!parseResult.success) {
@@ -131,7 +131,7 @@ router.get('/api/voice-video/sessions/:roomId', ensureAuthenticated, async (req:
 });
 
 // End a session
-router.post('/api/voice-video/sessions/:roomId/end', ensureAuthenticated, async (req: Request, res: Response) => {
+router.post('/sessions/:roomId/end', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const parseResult = roomIdSchema.safeParse(req.params);
     if (!parseResult.success) {
@@ -171,7 +171,7 @@ router.post('/api/voice-video/sessions/:roomId/end', ensureAuthenticated, async 
 });
 
 // Toggle recording
-router.post('/api/voice-video/sessions/:roomId/recording', ensureAuthenticated, async (req: Request, res: Response) => {
+router.post('/sessions/:roomId/recording', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const paramsResult = roomIdSchema.safeParse(req.params);
     if (!paramsResult.success) {
@@ -224,7 +224,7 @@ router.post('/api/voice-video/sessions/:roomId/recording', ensureAuthenticated, 
 });
 
 // Get session statistics
-router.get('/api/voice-video/sessions/:roomId/stats', ensureAuthenticated, async (req: Request, res: Response) => {
+router.get('/sessions/:roomId/stats', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const parseResult = roomIdSchema.safeParse(req.params);
     if (!parseResult.success) {

@@ -380,8 +380,8 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
       const endpoint = isAdmin
         ? `/api/admin/database/${selectedTable}/data?page=${currentPage}&limit=50`
         : `/api/projects/${projectId}/data/${selectedTable}/data?page=${currentPage}&limit=50`;
-      const response = await apiRequest('GET', endpoint);
-      return response;
+      const res = await apiRequest('GET', endpoint);
+      return res;
     },
     enabled: !!selectedTable && tableExists && activeDetailTab === 'mydata',
     staleTime: 30000

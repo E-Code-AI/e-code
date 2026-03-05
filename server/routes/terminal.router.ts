@@ -9,7 +9,7 @@ const router = Router();
  * GET /api/terminal/logs
  * Fetch console logs for a project from database (persistent)
  */
-router.get('/api/terminal/logs', ensureAuthenticated, async (req, res) => {
+router.get('/terminal/logs', ensureAuthenticated, async (req, res) => {
   try {
     const projectIdParam = req.query.projectId;
     
@@ -54,7 +54,7 @@ router.get('/api/terminal/logs', ensureAuthenticated, async (req, res) => {
  * POST /api/terminal/logs
  * Add a log entry to database (persistent storage)
  */
-router.post('/api/terminal/logs', ensureAuthenticated, async (req, res) => {
+router.post('/terminal/logs', ensureAuthenticated, async (req, res) => {
   try {
     const { projectId, type, message, stack, source } = req.body;
     
@@ -106,7 +106,7 @@ router.post('/api/terminal/logs', ensureAuthenticated, async (req, res) => {
  * DELETE /api/terminal/logs
  * Clear logs for a project from database (persistent)
  */
-router.delete('/api/terminal/logs', ensureAuthenticated, async (req, res) => {
+router.delete('/terminal/logs', ensureAuthenticated, async (req, res) => {
   try {
     const projectIdParam = req.query.projectId;
     

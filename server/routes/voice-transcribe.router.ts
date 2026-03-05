@@ -81,7 +81,7 @@ async function transcribeWithGemini(
 }
 
 router.post(
-  '/api/voice/transcribe',
+  '/transcribe',
   ensureAuthenticated,
   tierRateLimiters.api,
   upload.single('audio'),

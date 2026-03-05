@@ -8,8 +8,16 @@
  * Returns null if no valid origins are configured (fail-closed security)
  */
 export function getAllowedOrigins(): string[] | null {
-  const originsStr = process.env.ALLOWED_ORIGINS || process.env.REPLIT_DOMAINS || '';
-  const origins = originsStr.split(',').map(o => o.trim()).filter(o => o.length > 0);
+  const sources = [
+    process.env.ALLOWED_ORIGINS || '',
+    process.env.REPLIT_DOMAINS || '',
+    // Auto-detect Replit dev/prod URLs from well-known env vars
+    process.env.REPLIT_DEV_URL ? new URL(process.env.REPLIT_DEV_URL).hostname : '',
+    process.env.REPL_SLUG && process.env.REPL_OWNER 
+      ? `${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co` : '',
+  ].join(',');
+
+  const origins = sources.split(',').map(o => o.trim()).filter(o => o.length > 0);
   
   if (origins.length === 0) {
     console.warn('[SECURITY] No allowed origins configured - WebSocket connections will be rejected');
@@ -49,24 +57,32 @@ function extractHostname(origin: string): string | null {
  * @returns true if origin is allowed, false otherwise
  */
 export function isOriginAllowed(requestOrigin: string | undefined, requestHost: string | undefined): boolean {
-  const allowedOrigins = getAllowedOrigins();
-  
-  // SECURITY: Fail-closed - if no origins configured, reject all connections
-  if (!allowedOrigins || allowedOrigins.length === 0) {
-    console.warn('[SECURITY] Origin validation failed: No allowed origins configured');
-    return false;
-  }
-  
   // Use origin header if available, otherwise use host header
   const origin = requestOrigin || requestHost;
   if (!origin) {
     console.warn('[SECURITY] Origin validation failed: No origin or host header present');
     return false;
   }
-  
+
   const requestHostname = extractHostname(origin);
   if (!requestHostname) {
     console.warn('[SECURITY] Origin validation failed: Could not parse origin:', origin);
+    return false;
+  }
+
+  // Same-host check: if the Origin matches the Host header, it's a same-origin request — always allow
+  if (requestHost) {
+    const hostHostname = extractHostname(requestHost);
+    if (hostHostname && requestHostname === hostHostname) {
+      return true;
+    }
+  }
+
+  const allowedOrigins = getAllowedOrigins();
+
+  // SECURITY: Fail-closed - if no origins configured, reject all connections
+  if (!allowedOrigins || allowedOrigins.length === 0) {
+    console.warn('[SECURITY] Origin validation failed: No allowed origins configured');
     return false;
   }
   

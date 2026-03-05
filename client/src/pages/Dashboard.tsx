@@ -46,11 +46,13 @@ function getProjectIcon(project: Project) {
 
   return (
     <div 
-      className={`${bgColor} w-12 h-12 rounded-xl flex items-center justify-center text-white font-semibold text-[15px] shadow-lg`}
+      className={`${bgColor} w-12 h-12 rounded-xl flex items-center justify-center text-white font-semibold text-[15px] shadow-lg overflow-hidden`}
       role="img"
       aria-label={`Project icon for ${project.name}`}
     >
-      {firstLetter}
+      {project.owner?.avatarUrl ? (
+        <img src={project.owner.avatarUrl} alt="" className="w-full h-full object-cover" />
+      ) : firstLetter}
     </div>
   );
 }
@@ -75,6 +77,7 @@ interface ProjectWithDeployment extends Project {
     id: number;
     username: string;
     email: string;
+    avatarUrl?: string | null;
   };
 }
 
@@ -260,6 +263,14 @@ export default function Dashboard() {
 
   const filteredProjects = recentProjects;
 
+  const sortedProjects = useMemo(() => {
+    return [...filteredProjects].sort((a, b) => {
+      const dateA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+      const dateB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+      return dateB - dateA;
+    });
+  }, [filteredProjects]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background p-4 md:p-6 lg:p-8">
@@ -443,7 +454,7 @@ export default function Dashboard() {
                 </Card>
               ))}
             </div>
-          ) : filteredProjects.length === 0 ? (
+          ) : sortedProjects.length === 0 ? (
             <Card className="p-12 text-center border-dashed border-[var(--ecode-border)] bg-[var(--ecode-surface)]" data-testid="card-empty-state">
               <div className="p-4 rounded-2xl bg-[var(--ecode-accent)]/10 w-fit mx-auto mb-4">
                 <Code2 className="h-10 w-10 text-[var(--ecode-accent)]" />
@@ -454,7 +465,7 @@ export default function Dashboard() {
             </Card>
           ) : (
             <div className={`grid ${TABLET_GRID_CLASSES.projectsTabletOptimized} gap-4`}>
-              {filteredProjects.map((project, index) => (
+              {sortedProjects.map((project, index) => (
                 <div
                   key={project.id}
                   className="animate-slide-in-up opacity-0"

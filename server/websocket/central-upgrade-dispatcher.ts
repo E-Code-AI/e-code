@@ -227,11 +227,17 @@ class CentralUpgradeDispatcher {
       this.activeConnections--;
     });
     
-    // Public paths that don't require auth
-    // In development mode, allow terminal access without auth for easier testing
-    const publicPaths = process.env.NODE_ENV === 'production' 
-      ? ['/health', '/api/health']
-      : ['/health', '/api/health', '/api/terminal/ws'];
+    // Public paths that don't require auth from the dispatcher
+    // Includes paths that have their own self-contained auth handlers
+    const selfAuthPaths = [
+      '/api/runtime/logs/ws',  // RuntimeLogsService handles its own session auth
+      '/api/server/logs/ws',   // ServerLogsService handles its own session auth
+    ];
+    const publicPaths = [
+      '/health', '/api/health',
+      ...selfAuthPaths,
+      ...(process.env.NODE_ENV !== 'production' ? ['/api/terminal/ws'] : []),
+    ];
     
     // Only validate auth for non-public paths with registered handlers
     // NOTE: Socket is already marked as handled above, so auth failures must explicitly destroy

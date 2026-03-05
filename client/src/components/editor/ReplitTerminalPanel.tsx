@@ -83,6 +83,7 @@ export function ReplitTerminalPanel({ projectId, className }: ReplitTerminalPane
     if (!projectId) return;
     
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    // Use project ID explicitly in the URL
     const wsUrl = `${protocol}//${window.location.host}/api/terminal/ws?projectId=${projectId}`;
     
     setIsConnecting(true);

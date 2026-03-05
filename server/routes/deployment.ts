@@ -164,7 +164,7 @@ const deploymentConfigSchema = z.object({
 });
 
 // Create deployment - REAL IMPLEMENTATION using deploymentManager
-router.post('/api/projects/:projectId/deploy', async (req, res) => {
+router.post('/projects/:projectId/deploy', async (req, res) => {
   try {
     const projectId = req.params.projectId;
     const userId = req.user!.id;
@@ -235,7 +235,7 @@ router.post('/api/projects/:projectId/deploy', async (req, res) => {
 });
 
 // Get deployment status
-router.get('/api/deployments/:deploymentId', async (req, res) => {
+router.get('/deployments/:deploymentId', async (req, res) => {
   try {
     const { deploymentId } = req.params;
     
@@ -274,7 +274,7 @@ router.get('/api/deployments/:deploymentId', async (req, res) => {
 });
 
 // List project deployments
-router.get('/api/projects/:projectId/deployments', async (req, res) => {
+router.get('/projects/:projectId/deployments', async (req, res) => {
   try {
     const projectId = req.params.projectId; // Keep as string
     const deployments = await deploymentManager.listDeployments(projectId);
@@ -293,7 +293,7 @@ router.get('/api/projects/:projectId/deployments', async (req, res) => {
 });
 
 // Get deployment stats for a project
-router.get('/api/projects/:projectId/deployments/stats', async (req, res) => {
+router.get('/projects/:projectId/deployments/stats', async (req, res) => {
   try {
     const projectId = req.params.projectId;
     
@@ -367,7 +367,7 @@ router.get('/api/projects/:projectId/deployments/stats', async (req, res) => {
 });
 
 // Update deployment
-router.put('/api/deployments/:deploymentId', async (req, res) => {
+router.put('/deployments/:deploymentId', async (req, res) => {
   try {
     const { deploymentId } = req.params;
     const updateConfig = deploymentConfigSchema.partial().parse(req.body);
@@ -388,7 +388,7 @@ router.put('/api/deployments/:deploymentId', async (req, res) => {
 });
 
 // Delete deployment
-router.delete('/api/deployments/:deploymentId', async (req, res) => {
+router.delete('/deployments/:deploymentId', async (req, res) => {
   try {
     const { deploymentId } = req.params;
     await deploymentManager.deleteDeployment(deploymentId);
@@ -407,7 +407,7 @@ router.delete('/api/deployments/:deploymentId', async (req, res) => {
 });
 
 // Scale deployment with autoscaling guards
-router.post('/api/deployments/:deploymentId/scale', async (req, res) => {
+router.post('/deployments/:deploymentId/scale', async (req, res) => {
   try {
     const { deploymentId } = req.params;
     const { desiredCount } = req.body;
@@ -457,7 +457,7 @@ router.post('/api/deployments/:deploymentId/scale', async (req, res) => {
 });
 
 // Get deployment metrics
-router.get('/api/deployments/:deploymentId/metrics', async (req, res) => {
+router.get('/deployments/:deploymentId/metrics', async (req, res) => {
   try {
     const { deploymentId } = req.params;
     const metrics = await deploymentManager.getDeploymentMetrics(deploymentId);
@@ -476,7 +476,7 @@ router.get('/api/deployments/:deploymentId/metrics', async (req, res) => {
 });
 
 // Domain management endpoints
-router.post('/api/deployments/:deploymentId/domain', async (req, res) => {
+router.post('/deployments/:deploymentId/domain', async (req, res) => {
   try {
     const { deploymentId } = req.params;
     const { domain } = z.object({ domain: z.string() }).parse(req.body);
@@ -496,7 +496,7 @@ router.post('/api/deployments/:deploymentId/domain', async (req, res) => {
   }
 });
 
-router.delete('/api/deployments/:deploymentId/domain', async (req, res) => {
+router.delete('/deployments/:deploymentId/domain', async (req, res) => {
   try {
     const { deploymentId } = req.params;
     await deploymentManager.removeCustomDomain(deploymentId);
@@ -515,7 +515,7 @@ router.delete('/api/deployments/:deploymentId/domain', async (req, res) => {
 });
 
 // SSL certificate management
-router.post('/api/deployments/:deploymentId/ssl/renew', async (req, res) => {
+router.post('/deployments/:deploymentId/ssl/renew', async (req, res) => {
   try {
     const { deploymentId } = req.params;
     await deploymentManager.renewSSLCertificate(deploymentId);
@@ -534,7 +534,7 @@ router.post('/api/deployments/:deploymentId/ssl/renew', async (req, res) => {
 });
 
 // Get available regions
-router.get('/api/deployment/regions', async (req, res) => {
+router.get('/deployment/regions', async (req, res) => {
   const regions = [
     { id: 'us-east-1', name: 'US East (Virginia)', flag: '🇺🇸', latency: '12ms' },
     { id: 'us-west-2', name: 'US West (Oregon)', flag: '🇺🇸', latency: '45ms' },
@@ -553,7 +553,7 @@ router.get('/api/deployment/regions', async (req, res) => {
 });
 
 // Get deployment types and pricing
-router.get('/api/deployment/types', async (req, res) => {
+router.get('/deployment/types', async (req, res) => {
   const deploymentTypes = [
     {
       id: 'static',
@@ -653,7 +653,7 @@ router.get('/api/deployment/types', async (req, res) => {
 // ============================================================
 
 // POST /api/projects/:projectId/publish - Creates a production deployment (like Replit's Publish button)
-router.post('/api/projects/:projectId/publish', ensureAuthenticated, async (req: Request, res: Response) => {
+router.post('/projects/:projectId/publish', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const { projectId } = req.params;
     const userId = req.user!.id;
@@ -761,7 +761,7 @@ router.post('/api/projects/:projectId/publish', ensureAuthenticated, async (req:
 });
 
 // POST /api/projects/:projectId/republish - Redeploys with latest code
-router.post('/api/projects/:projectId/republish', ensureAuthenticated, async (req: Request, res: Response) => {
+router.post('/projects/:projectId/republish', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const { projectId } = req.params;
     const userId = req.user!.id;
@@ -869,7 +869,7 @@ router.post('/api/projects/:projectId/republish', ensureAuthenticated, async (re
 });
 
 // GET /api/projects/:projectId/publish/status - Returns publish status with UI-friendly status
-router.get('/api/projects/:projectId/publish/status', ensureAuthenticated, async (req: Request, res: Response) => {
+router.get('/projects/:projectId/publish/status', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const { projectId } = req.params;
 
@@ -965,7 +965,7 @@ router.get('/api/projects/:projectId/publish/status', ensureAuthenticated, async
 });
 
 // GET /api/projects/:projectId/deployment/latest - Returns the latest deployment with UI-friendly status
-router.get('/api/projects/:projectId/deployment/latest', ensureAuthenticated, async (req: Request, res: Response) => {
+router.get('/projects/:projectId/deployment/latest', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const { projectId } = req.params;
 
@@ -1042,7 +1042,7 @@ router.get('/api/projects/:projectId/deployment/latest', ensureAuthenticated, as
 });
 
 // GET /api/deployments/:deploymentId/logs - Returns deployment logs (HTTP fallback for WebSocket)
-router.get('/api/deployments/:deploymentId/logs', ensureAuthenticated, async (req: Request, res: Response) => {
+router.get('/deployments/:deploymentId/logs', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const { deploymentId } = req.params;
     const { type = 'all', limit = '100', offset = '0' } = req.query;
@@ -1141,7 +1141,7 @@ router.get('/api/deployments/:deploymentId/logs', ensureAuthenticated, async (re
 });
 
 // GET /api/projects/:projectId/deployments/analytics - Returns deployment analytics/metrics summary
-router.get('/api/projects/:projectId/deployments/analytics', ensureAuthenticated, async (req: Request, res: Response) => {
+router.get('/projects/:projectId/deployments/analytics', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const { projectId } = req.params;
     
@@ -1349,7 +1349,7 @@ router.get('/api/projects/:projectId/deployments/analytics', ensureAuthenticated
 });
 
 // POST /api/projects/:projectId/domains - Update custom domain configuration
-router.post('/api/projects/:projectId/domains', ensureAuthenticated, async (req: Request, res: Response) => {
+router.post('/projects/:projectId/domains', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const { projectId } = req.params;
     const userId = req.user!.id;
@@ -1413,7 +1413,7 @@ router.post('/api/projects/:projectId/domains', ensureAuthenticated, async (req:
 });
 
 // POST /api/projects/:projectId/domains/verify - Verify DNS configuration for custom domain
-router.post('/api/projects/:projectId/domains/verify', ensureAuthenticated, async (req: Request, res: Response) => {
+router.post('/projects/:projectId/domains/verify', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const { projectId } = req.params;
     const { domain } = req.body;

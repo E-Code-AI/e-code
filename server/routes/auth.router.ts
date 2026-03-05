@@ -77,17 +77,17 @@ export class AuthRouter {
   private initializeRoutes() {
     // Fortune 500 Auth Rate Limiter - Apply to all auth routes
     // Free: 5/15min, Pro: 20/15min, Enterprise: 100/15min (10x in dev)
-    this.router.use('/api/register', tierRateLimiters.auth);
-    this.router.use('/api/login', tierRateLimiters.auth);
-    this.router.use('/api/logout', tierRateLimiters.auth);
-    this.router.use('/api/auth', tierRateLimiters.auth);
-    this.router.use('/api/verify-email', tierRateLimiters.auth);
-    this.router.use('/api/resend-verification', tierRateLimiters.auth);
-    this.router.use('/api/forgot-password', tierRateLimiters.auth);
-    this.router.use('/api/reset-password', tierRateLimiters.auth);
+    this.router.use('/register', tierRateLimiters.auth);
+    this.router.use('/login', tierRateLimiters.auth);
+    this.router.use('/logout', tierRateLimiters.auth);
+    this.router.use('/auth', tierRateLimiters.auth);
+    this.router.use('/verify-email', tierRateLimiters.auth);
+    this.router.use('/resend-verification', tierRateLimiters.auth);
+    this.router.use('/forgot-password', tierRateLimiters.auth);
+    this.router.use('/reset-password', tierRateLimiters.auth);
     
     // Get current user (sanitized - no sensitive fields)
-    this.router.get("/api/me", this.ensureAuthenticated, (req: Request, res: Response) => {
+    this.router.get("/me", this.ensureAuthenticated, (req: Request, res: Response) => {
       const user = req.user;
       if (!user) {
         return res.status(401).json({ message: "Not authenticated" });
@@ -96,7 +96,7 @@ export class AuthRouter {
     });
 
     // Register endpoint
-    this.router.post("/api/register", csrfProtection, async (req: Request, res: Response) => {
+    this.router.post("/register", csrfProtection, async (req: Request, res: Response) => {
       try {
         // Use registration schema with password validation
         const validatedData = userRegistrationSchema.parse(req.body);
@@ -263,7 +263,7 @@ export class AuthRouter {
 
     // Login endpoint
     // SECURITY: Session regeneration prevents session fixation attacks (Fortune 500)
-    this.router.post("/api/login", csrfProtection, (req: Request, res: Response, next: NextFunction) => {
+    this.router.post("/login", csrfProtection, (req: Request, res: Response, next: NextFunction) => {
       passport.authenticate('local', (err: any, user: User, info: any) => {
         if (err) {
           logger.error('Login error:', err.message);
@@ -333,7 +333,7 @@ export class AuthRouter {
     });
 
     // Logout endpoint - properly destroy session and clear cookies
-    this.router.post("/api/logout", csrfProtection, (req: Request, res: Response) => {
+    this.router.post("/logout", csrfProtection, (req: Request, res: Response) => {
       // ✅ 40-YEAR SENIOR FIX: Call Passport logout BEFORE session destruction
       // req.logout() removes user from session; must be called before session is destroyed
       req.logout((logoutErr: any) => {
@@ -361,7 +361,7 @@ export class AuthRouter {
 
     // Complete login after 2FA verification
     // SECURITY: Uses signed proof token from challenge/verify to prevent session fixation
-    this.router.post("/api/login/2fa-complete", csrfProtection, async (req: Request, res: Response) => {
+    this.router.post("/login/2fa-complete", csrfProtection, async (req: Request, res: Response) => {
       try {
         const { pendingSessionToken } = req.body;
         
@@ -428,12 +428,12 @@ export class AuthRouter {
       }
     });
 
-    // ===== COMPATIBILITY LAYER: /api/auth/* aliases =====
+    // ===== COMPATIBILITY LAYER: /auth/* aliases =====
     // These routes provide backward compatibility and align with RESTful naming
-    // Eventually, we should deprecate the flat /api/* routes and use only /api/auth/*
+    // Eventually, we should deprecate the flat /* routes and use only /auth/*
     
-    // Alias: /api/auth/user -> /api/me
-    this.router.get("/api/auth/user", this.ensureAuthenticated, (req: Request, res: Response) => {
+    // Alias: /auth/user -> /me
+    this.router.get("/auth/user", this.ensureAuthenticated, (req: Request, res: Response) => {
       const user = req.user;
       if (!user) {
         return res.status(401).json({ message: "Not authenticated" });
@@ -441,8 +441,8 @@ export class AuthRouter {
       res.json(this.sanitizeUser(user));
     });
 
-    // Alias: /api/auth/register -> /api/register
-    this.router.post("/api/auth/register", csrfProtection, async (req: Request, res: Response) => {
+    // Alias: /auth/register -> /register
+    this.router.post("/auth/register", csrfProtection, async (req: Request, res: Response) => {
       try {
         // Use registration schema with password validation
         const validatedData = userRegistrationSchema.parse(req.body);
@@ -607,9 +607,9 @@ export class AuthRouter {
       }
     });
 
-    // Alias: /api/auth/login -> /api/login
+    // Alias: /auth/login -> /login
     // SECURITY: Session regeneration prevents session fixation attacks (Fortune 500)
-    this.router.post("/api/auth/login", csrfProtection, (req: Request, res: Response, next: NextFunction) => {
+    this.router.post("/auth/login", csrfProtection, (req: Request, res: Response, next: NextFunction) => {
       passport.authenticate('local', (err: any, user: User, info: any) => {
         if (err) {
           logger.error('Login error', { message: err.message });
@@ -666,7 +666,7 @@ export class AuthRouter {
                 logger.warn('Session save warning:', saveErr.message);
               }
               
-              logger.info(`User ${user.id} logged in successfully via /api/auth/login`);
+              logger.info(`User ${user.id} logged in successfully via /auth/login`);
               res.json({ 
                 message: "Login successful",
                 user: this.sanitizeUser(user)
@@ -677,8 +677,8 @@ export class AuthRouter {
       })(req, res, next);
     });
 
-    // Alias: /api/auth/logout -> /api/logout
-    this.router.post("/api/auth/logout", csrfProtection, (req: Request, res: Response) => {
+    // Alias: /auth/logout -> /logout
+    this.router.post("/auth/logout", csrfProtection, (req: Request, res: Response) => {
       // ✅ 40-YEAR SENIOR FIX: Call Passport logout BEFORE session destruction
       // req.logout() removes user from session; must be called before session is destroyed
       req.logout((logoutErr: any) => {
@@ -705,7 +705,7 @@ export class AuthRouter {
     });
 
     // Check authentication status
-    this.router.get("/api/auth/check", (req: Request, res: Response) => {
+    this.router.get("/auth/check", (req: Request, res: Response) => {
       res.json({ 
         authenticated: req.isAuthenticated(),
         user: req.user ? this.sanitizeUser(req.user) : null
@@ -713,7 +713,7 @@ export class AuthRouter {
     });
 
     // JWT Token Revocation endpoint - revokes the current JWT token
-    this.router.post("/api/auth/revoke-token", (req: Request, res: Response) => {
+    this.router.post("/auth/revoke-token", (req: Request, res: Response) => {
       try {
         const authHeader = req.headers.authorization;
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -755,7 +755,7 @@ export class AuthRouter {
     });
 
     // Revoke all tokens for a user (requires authentication)
-    this.router.post("/api/auth/revoke-all-tokens", this.ensureAuthenticated, async (req: Request, res: Response) => {
+    this.router.post("/auth/revoke-all-tokens", this.ensureAuthenticated, async (req: Request, res: Response) => {
       try {
         const user = req.user;
         if (!user) {
@@ -794,7 +794,7 @@ export class AuthRouter {
     });
 
     // Email verification endpoint (token-based, no CSRF needed - token provides protection)
-    this.router.post("/api/verify-email", async (req: Request, res: Response) => {
+    this.router.post("/verify-email", async (req: Request, res: Response) => {
       try {
         const { token } = z.object({ token: z.string() }).parse(req.body);
         
@@ -857,7 +857,7 @@ export class AuthRouter {
     });
 
     // Resend verification email endpoint
-    this.router.post("/api/resend-verification", csrfProtection, this.ensureAuthenticated, async (req: Request, res: Response) => {
+    this.router.post("/resend-verification", csrfProtection, this.ensureAuthenticated, async (req: Request, res: Response) => {
       try {
         const user = req.user;
         if (!user) {
@@ -957,7 +957,7 @@ export class AuthRouter {
     });
 
     // Forgot password endpoint (no CSRF protection needed - public endpoint)
-    this.router.post("/api/forgot-password", async (req: Request, res: Response) => {
+    this.router.post("/forgot-password", async (req: Request, res: Response) => {
       try {
         const { email } = z.object({ email: z.string().email() }).parse(req.body);
 
@@ -1055,7 +1055,7 @@ export class AuthRouter {
     });
 
     // Reset password endpoint (no CSRF protection needed - token-based authentication)
-    this.router.post("/api/reset-password", async (req: Request, res: Response) => {
+    this.router.post("/reset-password", async (req: Request, res: Response) => {
       try {
         const { token, newPassword } = z.object({
           token: z.string(),
@@ -1144,7 +1144,7 @@ export class AuthRouter {
 
     // WebSocket authentication token endpoint
     // Generates a short-lived JWT token for WebSocket connections (e.g., background testing)
-    this.router.get("/api/auth/ws-token", this.ensureAuthenticated, async (req: Request, res: Response) => {
+    this.router.get("/auth/ws-token", this.ensureAuthenticated, async (req: Request, res: Response) => {
       try {
         const user = req.user;
         if (!user) {

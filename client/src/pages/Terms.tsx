@@ -14,7 +14,7 @@ export default function Terms() {
             <div className="prose prose-gray dark:prose-invert max-w-none space-y-8">
               <section>
                 <p className="text-[15px] text-muted-foreground">
-                  Last updated: {new Date().toLocaleDateString()}
+                  Last updated: January 24, 2024
                 </p>
               </section>
 

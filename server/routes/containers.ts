@@ -24,7 +24,7 @@ async function verifyProjectOwnership(projectId: string, userId: number): Promis
 /**
  * Create isolated container environment for a project
  */
-router.post('/api/projects/:projectId/container', ensureAuthenticated, async (req, res) => {
+router.post('/projects/:projectId/container', ensureAuthenticated, async (req, res) => {
   const { projectId } = req.params;
   const userId = req.user?.id;
 
@@ -64,7 +64,7 @@ router.post('/api/projects/:projectId/container', ensureAuthenticated, async (re
 /**
  * Get container status for a project
  */
-router.get('/api/projects/:projectId/container/status', ensureAuthenticated, async (req, res) => {
+router.get('/projects/:projectId/container/status', ensureAuthenticated, async (req, res) => {
   const { projectId } = req.params;
   const userId = req.user?.id;
 
@@ -109,7 +109,7 @@ router.get('/api/projects/:projectId/container/status', ensureAuthenticated, asy
 /**
  * Delete container environment for a project
  */
-router.delete('/api/projects/:projectId/container', ensureAuthenticated, async (req, res) => {
+router.delete('/projects/:projectId/container', ensureAuthenticated, async (req, res) => {
   const { projectId } = req.params;
   const userId = req.user?.id;
 
@@ -144,7 +144,7 @@ router.delete('/api/projects/:projectId/container', ensureAuthenticated, async (
 /**
  * Execute command in project container
  */
-router.post('/api/projects/:projectId/container/exec', ensureAuthenticated, async (req, res) => {
+router.post('/projects/:projectId/container/exec', ensureAuthenticated, async (req, res) => {
   const { projectId } = req.params;
   const { command } = req.body;
   const userId = req.user?.id;
@@ -182,7 +182,7 @@ router.post('/api/projects/:projectId/container/exec', ensureAuthenticated, asyn
 /**
  * Stop container for a project
  */
-router.post('/api/projects/:projectId/container/stop', ensureAuthenticated, async (req, res) => {
+router.post('/projects/:projectId/container/stop', ensureAuthenticated, async (req, res) => {
   const { projectId } = req.params;
   const userId = req.user?.id;
 
@@ -218,7 +218,7 @@ router.post('/api/projects/:projectId/container/stop', ensureAuthenticated, asyn
 /**
  * Get container logs
  */
-router.get('/api/projects/:projectId/container/logs', ensureAuthenticated, async (req, res) => {
+router.get('/projects/:projectId/container/logs', ensureAuthenticated, async (req, res) => {
   const { projectId } = req.params;
   const userId = req.user?.id;
 
@@ -251,7 +251,7 @@ router.get('/api/projects/:projectId/container/logs', ensureAuthenticated, async
 /**
  * Restart container for a project
  */
-router.post('/api/projects/:projectId/container/restart', ensureAuthenticated, async (req, res) => {
+router.post('/projects/:projectId/container/restart', ensureAuthenticated, async (req, res) => {
   const { projectId } = req.params;
   const userId = req.user?.id;
 

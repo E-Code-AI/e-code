@@ -154,7 +154,7 @@ function generateProductSVG(width: number, height: number): string {
 
 // Avatar endpoint: /api/avatar/:name or /api/avatar/:name/:size
 // SECURITY FIX #22: Apply rate limiting
-router.get('/api/avatar/:name/:size?', placeholderRateLimiter, (req: Request, res: Response) => {
+router.get('/avatar/:name/:size?', placeholderRateLimiter, (req: Request, res: Response) => {
   const name = decodeURIComponent(req.params.name || 'User');
   const size = parseInt(req.params.size || '100', 10);
   
@@ -177,7 +177,7 @@ router.get('/api/avatar/:name/:size?', placeholderRateLimiter, (req: Request, re
 
 // Placeholder endpoint: /api/placeholder/:width/:height
 // SECURITY FIX #22: Apply rate limiting
-router.get('/api/placeholder/:width/:height', placeholderRateLimiter, (req: Request, res: Response) => {
+router.get('/placeholder/:width/:height', placeholderRateLimiter, (req: Request, res: Response) => {
   const width = parseInt(req.params.width, 10) || 200;
   const height = parseInt(req.params.height, 10) || 200;
   const text = req.query.text as string | undefined;
@@ -207,7 +207,7 @@ router.get('/api/placeholder/:width/:height', placeholderRateLimiter, (req: Requ
 
 // Alternative format: /api/placeholder/:dimensions (e.g., 300x200)
 // SECURITY FIX #22: Apply rate limiting
-router.get('/api/placeholder/:dimensions', placeholderRateLimiter, (req: Request, res: Response) => {
+router.get('/placeholder/:dimensions', placeholderRateLimiter, (req: Request, res: Response) => {
   const dimensions = req.params.dimensions;
   const match = dimensions.match(/^(\d+)x(\d+)$/i);
   

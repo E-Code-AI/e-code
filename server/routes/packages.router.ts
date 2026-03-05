@@ -466,6 +466,7 @@ router.get('/:projectId/search', ensureAuthenticated, ensureProjectAccess, async
     const { projectId } = req.params;
     const query = req.query.q as string;
     const language = req.query.language as string || 'nodejs';
+    const projectIdStr = req.params.projectId || req.query.projectId as string;
     
     if (!query || query.length < 2) {
       return res.status(400).json({ 
@@ -481,7 +482,7 @@ router.get('/:projectId/search', ensureAuthenticated, ensureProjectAccess, async
       try {
         const response = await fetch(`https://pypi.org/pypi/${encodeURIComponent(query)}/json`);
         if (response.ok) {
-          const data = await response.json();
+          const data = await response.json() as any;
           packages = [{
             name: data.info.name,
             version: data.info.version,
@@ -498,7 +499,7 @@ router.get('/:projectId/search', ensureAuthenticated, ensureProjectAccess, async
       try {
         const response = await fetch(`https://registry.npmjs.org/-/v1/search?text=${encodeURIComponent(query)}&size=20`);
         if (response.ok) {
-          const data = await response.json();
+          const data = await response.json() as any;
           packages = data.objects?.map((obj: any) => ({
             name: obj.package.name,
             version: obj.package.version,

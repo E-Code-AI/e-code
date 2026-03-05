@@ -23,7 +23,7 @@ const logger = createLogger('monitoring-routes');
  * Get all metrics for dashboard
  * SECURITY: Admin only - metrics expose infrastructure KPIs (load, latency, throughput)
  */
-router.get('/api/monitoring/metrics', ensureAuthenticated, ensureAdmin, async (req: Request, res: Response) => {
+router.get('/monitoring/metrics', ensureAuthenticated, ensureAdmin, async (req: Request, res: Response) => {
   try {
     logger.info('Metrics accessed by admin', { userId: req.user?.id, ip: req.ip });
     const metrics = monitoringService.getAllMetrics();
@@ -38,7 +38,7 @@ router.get('/api/monitoring/metrics', ensureAuthenticated, ensureAdmin, async (r
  * Get specific metric history
  * SECURITY: Admin only - prevents reconnaissance of system performance patterns
  */
-router.get('/api/monitoring/metrics/:name/history', ensureAuthenticated, ensureAdmin, async (req: Request, res: Response) => {
+router.get('/monitoring/metrics/:name/history', ensureAuthenticated, ensureAdmin, async (req: Request, res: Response) => {
   try {
     const { name } = req.params;
     const limit = parseInt(req.query.limit as string) || 100;
@@ -56,7 +56,7 @@ router.get('/api/monitoring/metrics/:name/history', ensureAuthenticated, ensureA
  * Get system health check
  * Returns 503 if unhealthy (for K8s readiness probes)
  */
-router.get('/api/monitoring/health', async (req: Request, res: Response) => {
+router.get('/monitoring/health', async (req: Request, res: Response) => {
   try {
     const health = monitoringService.getHealthCheck();
     
@@ -76,7 +76,7 @@ router.get('/api/monitoring/health', async (req: Request, res: Response) => {
  * ALWAYS returns 200 with status field for frontend consumption
  * Frontend can display degraded state without throwing errors
  */
-router.get('/api/monitoring/health/summary', async (req: Request, res: Response) => {
+router.get('/monitoring/health/summary', async (req: Request, res: Response) => {
   try {
     const health = monitoringService.getHealthCheck();
     
@@ -102,7 +102,7 @@ router.get('/api/monitoring/health/summary', async (req: Request, res: Response)
  * Get Redis cache statistics
  * SECURITY: Admin only - cache stats reveal infrastructure capacity and hit rates
  */
-router.get('/api/monitoring/cache/stats', ensureAuthenticated, ensureAdmin, async (req: Request, res: Response) => {
+router.get('/monitoring/cache/stats', ensureAuthenticated, ensureAdmin, async (req: Request, res: Response) => {
   try {
     logger.info('Cache stats accessed', { userId: req.user?.id, ip: req.ip });
     const stats = await redisCache.getStats();
@@ -118,7 +118,7 @@ router.get('/api/monitoring/cache/stats', ensureAuthenticated, ensureAdmin, asyn
  * SECURITY: Critical destructive operation - requires admin authentication + audit trail
  * Rate limit: 5 req/hour per user
  */
-router.post('/api/monitoring/cache/flush', ensureAuthenticated, cacheFlushRateLimiter, ensureAdmin, async (req: Request, res: Response) => {
+router.post('/monitoring/cache/flush', ensureAuthenticated, cacheFlushRateLimiter, ensureAdmin, async (req: Request, res: Response) => {
   try {
     const success = await redisCache.flushAll();
     

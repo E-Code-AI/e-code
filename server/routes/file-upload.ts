@@ -42,7 +42,7 @@ const ensureProjectAccess = async (req: any, res: any, next: any) => {
 };
 
 // Upload single file
-router.post('/api/projects/:id/upload', 
+router.post('/projects/:id/upload', 
   ensureAuthenticated, 
   ensureProjectAccess, 
   upload.single('file'),
@@ -78,7 +78,7 @@ router.post('/api/projects/:id/upload',
 );
 
 // Upload multiple files
-router.post('/api/projects/:id/upload-multiple', 
+router.post('/projects/:id/upload-multiple', 
   ensureAuthenticated, 
   ensureProjectAccess, 
   upload.array('files', 10),
@@ -121,7 +121,7 @@ router.post('/api/projects/:id/upload-multiple',
 );
 
 // Download file
-router.get('/api/files/:id/download', ensureAuthenticated, async (req, res) => {
+router.get('/files/:id/download', ensureAuthenticated, async (req, res) => {
   try {
     const fileId = parseInt(req.params.id);
     const file = await storage.getFile(fileId);

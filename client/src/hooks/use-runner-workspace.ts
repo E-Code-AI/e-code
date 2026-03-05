@@ -69,8 +69,7 @@ export function useRunnerWorkspace(projectId: string | number | undefined) {
   // 3. Start workspace
   const startMutation = useMutation<WorkspaceSession, Error>({
     mutationFn: async () => {
-      const res = await apiRequest('POST', `/api/workspaces/${pid}`);
-      return res.json();
+      return await apiRequest<WorkspaceSession>('POST', `/api/workspaces/${pid}`);
     },
     onSuccess: (data) => {
       qc.setQueryData(['/api/workspaces', pid], data);
@@ -94,8 +93,7 @@ export function useRunnerWorkspace(projectId: string | number | undefined) {
   // 4. Stop workspace
   const stopMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest('DELETE', `/api/workspaces/${pid}`);
-      return res.json();
+      return await apiRequest<WorkspaceSession>('DELETE', `/api/workspaces/${pid}`);
     },
     onSuccess: () => {
       qc.removeQueries({ queryKey: ['/api/workspaces', pid] });
@@ -106,9 +104,7 @@ export function useRunnerWorkspace(projectId: string | number | undefined) {
   const getAccessToken = useCallback(async (): Promise<string | null> => {
     if (!pid || !isRunnerEnabled) return null;
     try {
-      const res = await apiRequest('GET', `/api/runner/workspaces/${pid}/token`);
-      if (!res.ok) return null;
-      const data = await res.json();
+      const data = await apiRequest<{ token?: string }>('GET', `/api/runner/workspaces/${pid}/token`);
       return data.token ?? null;
     } catch {
       return null;
