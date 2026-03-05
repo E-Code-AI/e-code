@@ -193,7 +193,7 @@ export default function SharedSnippet() {
               {snippet.author && (
                 <div className="flex items-center gap-1">
                   <User className="h-4 w-4" />
-                  <span>{snippet.author.displayName || snippet.author.username}</span>
+                  <span>{snippet.author?.displayName || snippet.author?.username || 'Unknown'}</span>
                 </div>
               )}
               

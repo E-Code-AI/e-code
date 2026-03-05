@@ -1493,7 +1493,7 @@ export const secrets = pgTable('secrets', {
 
 // Environment Variables
 export const environmentVariables = pgTable('environment_variables', {
-  id: varchar('id').primaryKey().default(sql`gen_random_uuid()`),
+  id: serial('id').primaryKey(),
   projectId: integer('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
   key: varchar('key').notNull(),
   value: text('value').notNull(),
@@ -2246,40 +2246,43 @@ export const collaborationMessages = pgTable("collaboration_messages", {
 
 // Templates table for project templates with marketplace features
 export const templates = pgTable("templates", {
-  id: varchar("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  id: serial("id").primaryKey(),
   slug: varchar("slug").notNull().unique(),
   name: varchar("name").notNull(),
-  description: text("description"),
+  description: text("description").notNull(),
+  icon: varchar("icon"),
   category: varchar("category").notNull(), // 'web', 'backend', 'bot', 'game', etc.
   tags: text().array().notNull().default([]),
   authorId: integer("author_id").references(() => users.id, { onDelete: 'set null' }), // Link to user for community templates
   authorName: varchar("author_name").notNull(),
-  authorVerified: boolean("author_verified").notNull().default(false),
+  authorVerified: boolean("author_verified").default(false),
   uses: integer("uses").notNull().default(0),
   stars: integer("stars").notNull().default(0),
   forks: integer("forks").notNull().default(0),
   language: varchar("language").notNull(),
   framework: varchar("framework"),
   difficulty: varchar("difficulty").notNull(), // 'beginner', 'intermediate', 'advanced'
-  estimatedTime: integer("estimated_time").notNull(), // in minutes
+  estimatedTime: varchar("estimated_time"), // stored as varchar in DB
   features: text().array().notNull().default([]),
-  isFeatured: boolean("is_featured").notNull().default(false),
-  isOfficial: boolean("is_official").notNull().default(false),
-  published: boolean("published").notNull().default(true),
-  isCommunity: boolean("is_community").notNull().default(false), // Community submitted templates
-  status: varchar("status").notNull().default('published'), // 'draft', 'pending_review', 'published', 'rejected'
-  githubUrl: text("github_url"), // Source repository URL
-  demoUrl: text("demo_url"), // Live demo URL
-  livePreviewUrl: text("live_preview_url"), // Live preview iframe URL
-  thumbnailUrl: text("thumbnail_url"), // Screenshot/preview image
-  version: varchar("version").notNull().default('1.0.0'),
-  license: varchar("license").notNull().default('MIT'),
+  files: jsonb("files").notNull().default({}),
+  dependencies: jsonb("dependencies"),
+  isFeatured: boolean("is_featured").default(false),
+  isOfficial: boolean("is_official").default(false),
+  published: boolean("published").default(true),
+  isCommunity: boolean("is_community").default(false), // Community submitted templates
+  status: varchar("status").default('published'), // 'draft', 'pending_review', 'published', 'rejected'
+  githubUrl: varchar("github_url"), // Source repository URL
+  demoUrl: varchar("demo_url"), // Live demo URL
+  livePreviewUrl: varchar("live_preview_url"), // Live preview iframe URL
+  thumbnailUrl: varchar("thumbnail_url"), // Screenshot/preview image
+  version: varchar("version").default('1.0.0'),
+  license: varchar("license").default('MIT'),
   price: decimal("price", { precision: 10, scale: 2 }).default('0.00'), // For premium templates
-  downloads: integer("downloads").notNull().default(0),
-  rating: real("rating").notNull().default(0), // Average rating
-  reviewCount: integer("review_count").notNull().default(0),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  downloads: integer("downloads").default(0),
+  rating: real("rating").default(0), // Average rating
+  reviewCount: integer("review_count").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 // Template categories with icons
@@ -2299,7 +2302,7 @@ export const templateCategories = pgTable("template_categories", {
 // Template ratings and reviews
 export const templateRatings = pgTable("template_ratings", {
   id: varchar("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-  templateId: varchar("template_id").notNull().references(() => templates.id, { onDelete: 'cascade' }),
+  templateId: integer("template_id").notNull(),
   userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
   rating: integer("rating").notNull(), // 1-5 stars
   review: text("review"),
@@ -2327,7 +2330,7 @@ export const templateForks = pgTable("template_forks", {
 // Template tags for enhanced categorization
 export const templateTags = pgTable("template_tags", {
   id: varchar("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-  templateId: varchar("template_id").notNull().references(() => templates.id, { onDelete: 'cascade' }),
+  templateId: integer("template_id").notNull(),
   tag: varchar("tag").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 }, (table) => [
@@ -2356,7 +2359,7 @@ export const templateCollections = pgTable("template_collections", {
 export const collectionTemplates = pgTable("collection_templates", {
   id: varchar("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   collectionId: varchar("collection_id").notNull().references(() => templateCollections.id, { onDelete: 'cascade' }),
-  templateId: varchar("template_id").notNull().references(() => templates.id, { onDelete: 'cascade' }),
+  templateId: integer("template_id").notNull(),
   order: integer("order").notNull().default(0),
   addedAt: timestamp("added_at").notNull().defaultNow(),
 }, (table) => [

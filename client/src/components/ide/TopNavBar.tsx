@@ -64,6 +64,7 @@ interface AvailableTool {
 
 interface TopNavBarProps {
   projectName: string;
+  projectDescription?: string;
   projectSlug: string;
   ownerUsername: string;
   projectId: string;
@@ -93,6 +94,7 @@ interface TopNavBarProps {
 
 export function TopNavBar({
   projectName,
+  projectDescription,
   projectSlug,
   ownerUsername,
   projectId,
@@ -173,10 +175,17 @@ export function TopNavBar({
       </DropdownMenu>
       
       {/* Logo & Project Name - Replit style */}
-      <div className="flex items-center gap-1.5 pl-1">
+      <div className="flex items-center gap-1.5 pl-1 group cursor-default">
         <span className="text-[12px] text-[var(--ecode-accent)] font-bold tracking-tight">E-Code</span>
         <span className="text-[var(--ecode-text-muted)] text-[10px]">/</span>
-        <span className="text-[12px] font-medium truncate max-w-[140px] text-[var(--ecode-text)]">{projectName}</span>
+        <div className="relative flex items-center gap-1">
+          <span className="text-[12px] font-medium truncate max-w-[140px] text-[var(--ecode-text)]">{projectName}</span>
+          {projectDescription && (
+            <div className="absolute left-0 top-full mt-1 w-64 p-2 bg-[var(--ecode-surface)] border border-[var(--ecode-border)] rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-[100] text-[11px] text-[var(--ecode-text-muted)] leading-relaxed">
+              {projectDescription}
+            </div>
+          )}
+        </div>
       </div>
       
       {/* Tabs with Drag-and-Drop Reorder - All tabs visible with scroll */}

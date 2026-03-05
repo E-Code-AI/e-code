@@ -97,7 +97,7 @@ export default function Dashboard() {
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
   // Fetch recent projects
-  const { data: recentProjects = [], isLoading, error: projectsError } = useQuery<ProjectWithDeployment[]>({
+  const { data: projectsResponse, isLoading, error: projectsError } = useQuery<{ projects: ProjectWithDeployment[], pagination?: any }>({
     queryKey: ['/api/projects', { limit: 12, search: debouncedSearchQuery }],
     queryFn: async () => {
       let url = '/api/projects?limit=12';
@@ -106,7 +106,10 @@ export default function Dashboard() {
       }
       const res = await apiRequest('GET', url);
       // Projects API returns { projects: [...], pagination: {...} }
-      return res.projects || [];
+      if (Array.isArray(res)) {
+        return { projects: res };
+      }
+      return res;
     },
     enabled: !!user,
     staleTime: 30000, // 30 seconds - prevent excessive refetches
@@ -117,6 +120,8 @@ export default function Dashboard() {
       return failureCount < 2;
     },
   });
+
+  const recentProjects = Array.isArray(projectsResponse?.projects) ? projectsResponse.projects : [];
 
   // Show error toast if projects fail to load - use refs to avoid loops and duplicates
   const toastRef = useRef(toast);

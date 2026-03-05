@@ -278,7 +278,7 @@ export function useIDEWorkspace(projectId: string) {
     queryFn: async () => {
       const url = `/api/projects/${projectId}/files${bootstrapToken ? `?bootstrap=${bootstrapToken}` : ''}`;
       const res = await apiRequest<File[]>('GET', url);
-      return res;
+      return res || [];
     },
     enabled: !!projectId && (!!user || !!bootstrapToken),
     staleTime: Infinity,
@@ -576,6 +576,7 @@ export function useIDEWorkspace(projectId: string) {
 
   const projectLanguage = project?.language || 'javascript';
   const projectName = project?.name || 'Untitled Project';
+  const projectDescription = project?.description || '';
 
   return {
     // Project info
@@ -583,6 +584,7 @@ export function useIDEWorkspace(projectId: string) {
     project,
     projectLanguage,
     projectName,
+    projectDescription,
     isLoadingProject,
     files,
     isLoadingFiles,

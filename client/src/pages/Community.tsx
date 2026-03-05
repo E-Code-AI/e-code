@@ -490,18 +490,18 @@ export default function Community() {
                               <Avatar className="h-8 w-8 sm:h-10 sm:w-10">
                                 <AvatarImage src={post.author.avatarUrl} />
                                 <AvatarFallback className="text-[11px] sm:text-[13px]">
-                                  {(post.author?.displayName || "??").slice(0, 2).toUpperCase()}
+                                  {(post.author?.displayName || post.author?.username || "??").slice(0, 2).toUpperCase()}
                                 </AvatarFallback>
                               </Avatar>
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2">
-                                  <Link href={`/user/${post.author.username}`}>
+                                  <Link href={`/user/${post.author?.username || ''}`}>
                                     <span className="font-semibold hover:underline text-[13px] sm:text-base truncate block">
-                                      {post.author.displayName}
+                                      {post.author?.displayName || post.author?.username || 'Unknown'}
                                     </span>
                                   </Link>
                                   <Badge variant="secondary" className="text-[11px] shrink-0">
-                                    {post.author.reputation} rep
+                                    {post.author?.reputation ?? 0} rep
                                   </Badge>
                                 </div>
                                 <p className="text-[11px] text-muted-foreground">

@@ -92,6 +92,8 @@ const VisualEditorPanel = instrumentedLazy(() => import('@/components/ide/Visual
 const ShellPanel = instrumentedLazy(() => import('@/components/editor/ShellPanel').then(mod => ({ default: mod.ShellPanel })), 'ShellPanel');
 const AppStoragePanel = instrumentedLazy(() => import('@/components/editor/AppStoragePanel').then(mod => ({ default: mod.AppStoragePanel })), 'AppStoragePanel');
 const ReplitConsolePanel = instrumentedLazy(() => import('@/components/ide/ReplitConsolePanel').then(mod => ({ default: mod.ReplitConsolePanel })), 'ReplitConsolePanel');
+const ResourcesPanel = instrumentedLazy(() => import('@/components/ide/ResourcesPanel').then(mod => ({ default: mod.ResourcesPanel })), 'ResourcesPanel');
+const LogsViewerPanel = instrumentedLazy(() => import('@/components/ide/LogsViewerPanel').then(mod => ({ default: mod.LogsViewerPanel })), 'LogsViewerPanel');
 
 import { ShortcutHint, ShortcutTester } from '@/components/utilities';
 import { useAutonomousBuildStore } from '@/stores/autonomousBuildStore';
@@ -137,23 +139,12 @@ function UnifiedIDELayout({
   const { isReady: isSchemaReady } = useSchemaWarmingStore();
   
   const workspace = useIDEWorkspace(projectId);
-  
-  // Handle case where project or user is missing
-  if (!workspace || (!workspace.project && !workspace.isLoadingProject && !workspace.bootstrapToken)) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center bg-background">
-        <div className="text-center space-y-4">
-          <p className="text-muted-foreground">Project not found or access denied.</p>
-          <Button onClick={() => window.location.href = '/'}>Go back to Dashboard</Button>
-        </div>
-      </div>
-    );
-  }
 
   const {
     project,
     projectLanguage,
     projectName,
+    projectDescription,
     files,
     isLoadingProject,
     user,
@@ -597,11 +588,12 @@ function UnifiedIDELayout({
     return <ECodeLoading fullScreen size="lg" text="Loading workspace..." />;
   }
 
-  if (!project && !isLoadingProject) {
+  if (!project && !isLoadingProject && !workspace.bootstrapToken) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold">Project not found</h2>
+      <div className="flex h-screen w-full items-center justify-center bg-background">
+        <div className="text-center space-y-4">
+          <p className="text-muted-foreground">Project not found or access denied.</p>
+          <Button onClick={() => window.location.href = '/'}>Go back to Dashboard</Button>
         </div>
       </div>
     );
@@ -742,7 +734,7 @@ function UnifiedIDELayout({
       case 'extensions':
         return (
           <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Extensions..." /></div>}>
-            <ExtensionsMarketplace className="h-full" />
+            <ExtensionsMarketplace projectId={parseInt(projectId, 10)} className="h-full" />
           </Suspense>
         );
       case 'workflows':
@@ -1053,7 +1045,7 @@ function UnifiedIDELayout({
     if (currentTab.id === 'extensions') {
       return (
         <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Extensions..." /></div>}>
-          <ExtensionsMarketplace />
+          <ExtensionsMarketplace projectId={parseInt(projectId, 10)} />
         </Suspense>
       );
     }
@@ -1140,20 +1132,18 @@ function UnifiedIDELayout({
     // Resources panel - inline
     if (currentTab.id === 'resources') {
       return (
-        <div className="h-full overflow-auto p-4">
-          <h2 className="text-[15px] font-semibold mb-4">Resources</h2>
-          <p className="text-muted-foreground">View CPU, memory, and storage usage.</p>
-        </div>
+        <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Resources..." /></div>}>
+          <ResourcesPanel projectId={projectId} />
+        </Suspense>
       );
     }
 
     // Logs viewer - inline
     if (currentTab.id === 'logs') {
       return (
-        <div className="h-full overflow-auto p-4">
-          <h2 className="text-[15px] font-semibold mb-4">Logs Viewer</h2>
-          <p className="text-muted-foreground">View application logs here.</p>
-        </div>
+        <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Logs..." /></div>}>
+          <LogsViewerPanel projectId={projectId} />
+        </Suspense>
       );
     }
 
@@ -1602,7 +1592,8 @@ function UnifiedIDELayout({
       
       <div className="flex flex-col flex-1 min-w-0">
         <TopNavBar
-          projectName={project?.name || 'Loading...'}
+          projectName={projectName}
+          projectDescription={projectDescription}
           projectSlug={project?.slug || String(project?.id || projectId)}
           ownerUsername={user?.username || ''}
           projectId={projectId}

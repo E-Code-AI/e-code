@@ -196,13 +196,13 @@ export default function CommunityPost() {
                 <Avatar className="h-12 w-12">
                   <AvatarImage src={post.author.avatarUrl} />
                   <AvatarFallback>
-                    {(post.author?.displayName || "??").slice(0, 2).toUpperCase()}
+                    {(post.author?.displayName || post.author?.username || "??").slice(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <h3 className="font-semibold">{post.author.displayName}</h3>
+                  <h3 className="font-semibold">{post.author?.displayName || post.author?.username || 'Unknown'}</h3>
                   <p className="text-[13px] text-muted-foreground">
-                    @{post.author.username} • {post.createdAt}
+                    @{post.author?.username || 'unknown'} • {post.createdAt}
                   </p>
                 </div>
               </div>
@@ -333,14 +333,14 @@ export default function CommunityPost() {
                 {post.commentsData.map((comment) => (
                   <div key={comment.id} className="flex gap-3">
                     <Avatar className="h-10 w-10">
-                      <AvatarImage src={comment.author.avatarUrl} />
+                      <AvatarImage src={comment.author?.avatarUrl} />
                       <AvatarFallback>
-                        {comment.author.displayName.slice(0, 2).toUpperCase()}
+                        {(comment.author?.displayName || comment.author?.username || "??").slice(0, 2).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <h4 className="font-semibold">{comment.author.displayName}</h4>
+                        <h4 className="font-semibold">{comment.author?.displayName || comment.author?.username || 'Unknown'}</h4>
                         <span className="text-[13px] text-muted-foreground">
                           • {comment.createdAt}
                         </span>

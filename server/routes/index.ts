@@ -223,11 +223,15 @@ export class MainRouter {
     app.use('/api', tierRateLimiters.api, testAgentRouter);
 
     // Runner status (no auth required for health check)
+    // Handled by runnerWorkspacesRouter at /api/runner/status
+    // DEPRECATED inline implementation:
+    /*
     app.get('/api/runner/status', async (_req, res) => {
       const runner = await import('../runnerClient');
       const health = await runner.pingRunner();
       res.json(health);
     });
+    */
 
     // Collaboration routes
     app.use('/api/collaboration', tierRateLimiters.api, collaborationRouter);
@@ -436,8 +440,8 @@ export class MainRouter {
     // Extensions routes (Per-project extensions management)
     app.use('/api/extensions', tierRateLimiters.api, extensionsRouter);
 
-    // Workflows routes (uses /api/workflows/... internally)
-    app.use('/api', tierRateLimiters.api, workflowsRouter);
+    // Workflows routes (mounted at /api/workflows)
+    app.use('/api/workflows', tierRateLimiters.api, workflowsRouter);
 
     // Per-project Shell routes (Create/manage shell sessions per project)
     app.use('/api/projects', tierRateLimiters.api, projectShellRouter);

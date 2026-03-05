@@ -820,7 +820,7 @@ httpServer.listen(port, "0.0.0.0", () => {
     // ✅ TEMPLATES MARKETPLACE: Templates routes
     try {
       const templatesRouter = (await import('./routes/templates')).default;
-      app.use(templatesRouter);
+      app.use('/api/templates', templatesRouter);
       console.log('[Templates Marketplace] Routes registered at /api/templates');
     } catch (error) {
       console.error('[WORKING SERVER] Failed to register templates routes:', error);

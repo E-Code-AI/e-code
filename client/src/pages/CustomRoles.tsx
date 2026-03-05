@@ -245,14 +245,14 @@ export function CustomRoles() {
                               </Badge>
                             )}
                           </div>
-                          <p className="text-[13px] text-muted-foreground mb-3">{role.description || 'No description provided'}</p>
+                          <p className="text-[13px] text-muted-foreground mb-3">{role?.description || 'No description provided'}</p>
                           <div className="flex flex-wrap gap-1">
-                            {role.permissions && role.permissions.slice(0, 5).map((perm) => (
+                            {role?.permissions && Array.isArray(role.permissions) && role.permissions.slice(0, 5).map((perm) => (
                               <Badge key={perm} variant="secondary" className="text-[11px]">
                                 {perm}
                               </Badge>
                             ))}
-                            {role.permissions && role.permissions.length > 5 && (
+                            {role?.permissions && Array.isArray(role.permissions) && role.permissions.length > 5 && (
                               <Badge variant="secondary" className="text-[11px]">
                                 +{role.permissions.length - 5} more
                               </Badge>

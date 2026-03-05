@@ -55,7 +55,7 @@ router.use((req, res, next) => {
  * GET /api/templates
  * List all templates with filters and pagination
  */
-router.get('/templates', async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const {
       category,
@@ -179,7 +179,7 @@ router.get('/templates', async (req, res) => {
  * GET /api/templates/featured
  * Get featured templates with customizable limit
  */
-router.get('/templates/featured', async (req, res) => {
+router.get('/featured', async (req, res) => {
   try {
     const { limit = '10', category } = req.query;
     const limitNum = Math.min(parseInt(limit as string) || 10, 50);
@@ -211,14 +211,14 @@ router.get('/templates/featured', async (req, res) => {
  * GET /api/templates/:id
  * Get single template by ID
  */
-router.get('/templates/:id', async (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
     const [template] = await db
       .select()
       .from(templates)
-      .where(eq(templates.id, id))
+      .where(eq(templates.id, parseInt(id, 10)))
       .limit(1);
 
     if (!template) {
@@ -229,7 +229,7 @@ router.get('/templates/:id', async (req, res) => {
     const tags = await db
       .select()
       .from(templateTags)
-      .where(eq(templateTags.templateId, id));
+      .where(eq(templateTags.templateId, parseInt(id, 10)));
 
     // Get ratings
     const [ratingStats] = await db
@@ -238,7 +238,7 @@ router.get('/templates/:id', async (req, res) => {
         totalRatings: sql<number>`count(*)`,
       })
       .from(templateRatings)
-      .where(eq(templateRatings.templateId, id));
+      .where(eq(templateRatings.templateId, parseInt(id, 10)));
 
     res.json({
       ...template,
@@ -258,7 +258,7 @@ router.get('/templates/:id', async (req, res) => {
  * POST /api/templates
  * Create new template (authenticated users only)
  */
-router.post('/templates', async (req, res) => {
+router.post('/', async (req, res) => {
   try {
     // ✅ SECURITY: Check if user is authenticated
     if (!req.user) {
@@ -305,7 +305,7 @@ router.post('/templates', async (req, res) => {
  * PATCH /api/templates/:id
  * Update existing template (owner or admin only)
  */
-router.patch('/templates/:id', async (req, res) => {
+router.patch('/:id', async (req, res) => {
   try {
     if (!req.user) {
       return res.status(401).json({ error: 'Authentication required' });
@@ -317,7 +317,7 @@ router.patch('/templates/:id', async (req, res) => {
     const [existing] = await db
       .select()
       .from(templates)
-      .where(eq(templates.id, id))
+      .where(eq(templates.id, parseInt(id, 10)))
       .limit(1);
 
     if (!existing) {
@@ -342,7 +342,7 @@ router.patch('/templates/:id', async (req, res) => {
     const [updated] = await db
       .update(templates)
       .set(updates)
-      .where(eq(templates.id, id))
+      .where(eq(templates.id, parseInt(id, 10)))
       .returning();
 
     res.json(updated);
@@ -356,7 +356,7 @@ router.patch('/templates/:id', async (req, res) => {
  * DELETE /api/templates/:id
  * Delete template (owner or admin only)
  */
-router.delete('/templates/:id', async (req, res) => {
+router.delete('/:id', async (req, res) => {
   try {
     if (!req.user) {
       return res.status(401).json({ error: 'Authentication required' });
@@ -368,7 +368,7 @@ router.delete('/templates/:id', async (req, res) => {
     const [existing] = await db
       .select()
       .from(templates)
-      .where(eq(templates.id, id))
+      .where(eq(templates.id, parseInt(id, 10)))
       .limit(1);
 
     if (!existing) {
@@ -379,7 +379,7 @@ router.delete('/templates/:id', async (req, res) => {
       return res.status(403).json({ error: 'Not authorized to delete this template' });
     }
 
-    await db.delete(templates).where(eq(templates.id, id));
+    await db.delete(templates).where(eq(templates.id, parseInt(id, 10)));
 
     res.json({ success: true, message: 'Template deleted successfully' });
   } catch (error) {
@@ -392,7 +392,7 @@ router.delete('/templates/:id', async (req, res) => {
  * GET /api/templates/categories
  * List all template categories
  */
-router.get('/templates/categories', async (req, res) => {
+router.get('/categories', async (req, res) => {
   try {
     const categories = await db
       .select()
@@ -410,7 +410,7 @@ router.get('/templates/categories', async (req, res) => {
  * POST /api/templates/:id/rate
  * Rate a template
  */
-router.post('/templates/:id/rate', async (req, res) => {
+router.post('/:id/rate', async (req, res) => {
   try {
     // ✅ SECURITY: Check if user is authenticated
     if (!req.user) {
@@ -435,7 +435,7 @@ router.post('/templates/:id/rate', async (req, res) => {
     const [template] = await db
       .select()
       .from(templates)
-      .where(eq(templates.id, id))
+      .where(eq(templates.id, parseInt(id, 10)))
       .limit(1);
 
     if (!template) {
@@ -448,7 +448,7 @@ router.post('/templates/:id/rate', async (req, res) => {
       .from(templateRatings)
       .where(
         and(
-          eq(templateRatings.templateId, id),
+          eq(templateRatings.templateId, parseInt(id, 10)),
           eq(templateRatings.userId, userId)
         )
       )
@@ -466,7 +466,7 @@ router.post('/templates/:id/rate', async (req, res) => {
       [result] = await db
         .insert(templateRatings)
         .values({
-          templateId: id,
+          templateId: parseInt(id, 10),
           userId,
           rating,
           review
@@ -481,7 +481,7 @@ router.post('/templates/:id/rate', async (req, res) => {
         count: sql<number>`count(*)`
       })
       .from(templateRatings)
-      .where(eq(templateRatings.templateId, id));
+      .where(eq(templateRatings.templateId, parseInt(id, 10)));
 
     await db
       .update(templates)
@@ -489,7 +489,7 @@ router.post('/templates/:id/rate', async (req, res) => {
         rating: Number(ratingStats.avg).toFixed(1),
         reviewCount: Number(ratingStats.count)
       })
-      .where(eq(templates.id, id));
+      .where(eq(templates.id, parseInt(id, 10)));
 
     res.json({
       ...result,
@@ -507,7 +507,7 @@ router.post('/templates/:id/rate', async (req, res) => {
  * Increment usage count when template is used
  * Requires authentication to prevent abuse
  */
-router.post('/templates/:id/use', requireAuth, async (req, res) => {
+router.post('/:id/use', requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -517,7 +517,7 @@ router.post('/templates/:id/use', requireAuth, async (req, res) => {
         uses: sql`${templates.uses} + 1`,
         downloads: sql`${templates.downloads} + 1`
       })
-      .where(eq(templates.id, id));
+      .where(eq(templates.id, parseInt(id, 10)));
 
     res.json({ success: true });
   } catch (error) {
@@ -530,7 +530,7 @@ router.post('/templates/:id/use', requireAuth, async (req, res) => {
  * GET /api/templates/:id/preview
  * Get live preview URL for a template
  */
-router.get('/templates/:id/preview', async (req, res) => {
+router.get('/:id/preview', async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -543,7 +543,7 @@ router.get('/templates/:id/preview', async (req, res) => {
         thumbnailUrl: templates.thumbnailUrl
       })
       .from(templates)
-      .where(eq(templates.id, id))
+      .where(eq(templates.id, parseInt(id, 10)))
       .limit(1);
 
     if (!template) {
@@ -567,7 +567,7 @@ router.get('/templates/:id/preview', async (req, res) => {
  * POST /api/templates/:id/fork
  * Fork a template to create a new project
  */
-router.post('/templates/:id/fork', async (req, res) => {
+router.post('/:id/fork', async (req, res) => {
   try {
     if (!req.user) {
       return res.status(401).json({ error: 'Authentication required' });
@@ -586,12 +586,17 @@ router.post('/templates/:id/fork', async (req, res) => {
     const [template] = await db
       .select()
       .from(templates)
-      .where(eq(templates.id, id))
+      .where(eq(templates.id, parseInt(id, 10)))
       .limit(1);
 
     if (!template) {
       return res.status(404).json({ error: 'Template not found' });
     }
+
+    // Normalize language to match DB enum (lowercase, fallback to javascript)
+    const validLanguages = ['javascript', 'typescript', 'python', 'java', 'go', 'rust', 'c', 'cpp', 'ruby', 'php', 'html', 'css', 'nodejs'];
+    const rawLang = (template.language || 'javascript').toLowerCase();
+    const normalizedLang = validLanguages.includes(rawLang) ? rawLang : 'javascript';
 
     // Create a new project from the template
     const [newProject] = await db
@@ -602,7 +607,7 @@ router.post('/templates/:id/fork', async (req, res) => {
         ownerId: userId,
         tenantId: userId,
         visibility: 'private',
-        language: template.language as any
+        language: normalizedLang as any
       })
       .returning();
 
@@ -623,7 +628,7 @@ router.post('/templates/:id/fork', async (req, res) => {
       .set({ 
         forks: sql`${templates.forks} + 1`
       })
-      .where(eq(templates.id, id));
+      .where(eq(templates.id, parseInt(id, 10)));
 
     res.status(201).json({
       success: true,
@@ -641,7 +646,7 @@ router.post('/templates/:id/fork', async (req, res) => {
  * GET /api/templates/:id/forks
  * Get all forks of a template
  */
-router.get('/templates/:id/forks', async (req, res) => {
+router.get('/:id/forks', async (req, res) => {
   try {
     const { id } = req.params;
     const { limit = '20', offset = '0' } = req.query;
@@ -653,7 +658,7 @@ router.get('/templates/:id/forks', async (req, res) => {
     const [template] = await db
       .select()
       .from(templates)
-      .where(eq(templates.id, id))
+      .where(eq(templates.id, parseInt(id, 10)))
       .limit(1);
 
     if (!template) {
@@ -693,7 +698,7 @@ router.get('/templates/:id/forks', async (req, res) => {
  * GET /api/templates/:id/ratings
  * Get all ratings for a template
  */
-router.get('/templates/:id/ratings', async (req, res) => {
+router.get('/:id/ratings', async (req, res) => {
   try {
     const { id } = req.params;
     const { limit = '20', offset = '0', sortBy = 'recent' } = req.query;
@@ -705,7 +710,7 @@ router.get('/templates/:id/ratings', async (req, res) => {
     const [template] = await db
       .select()
       .from(templates)
-      .where(eq(templates.id, id))
+      .where(eq(templates.id, parseInt(id, 10)))
       .limit(1);
 
     if (!template) {
@@ -715,7 +720,7 @@ router.get('/templates/:id/ratings', async (req, res) => {
     let query = db
       .select()
       .from(templateRatings)
-      .where(eq(templateRatings.templateId, id));
+      .where(eq(templateRatings.templateId, parseInt(id, 10)));
 
     // Sort ratings
     switch (sortBy) {
@@ -747,7 +752,7 @@ router.get('/templates/:id/ratings', async (req, res) => {
         one: sql<number>`count(*) filter (where ${templateRatings.rating} = 1)`
       })
       .from(templateRatings)
-      .where(eq(templateRatings.templateId, id));
+      .where(eq(templateRatings.templateId, parseInt(id, 10)));
 
     res.json({
       ratings,
@@ -779,7 +784,7 @@ router.get('/templates/:id/ratings', async (req, res) => {
  * GET /api/templates/collections
  * List template collections
  */
-router.get('/templates/collections', async (req, res) => {
+router.get('/collections', async (req, res) => {
   try {
     const collections = await db
       .select()
@@ -797,7 +802,7 @@ router.get('/templates/collections', async (req, res) => {
  * GET /api/templates/collections/:id
  * Get templates in a collection
  */
-router.get('/templates/collections/:id', async (req, res) => {
+router.get('/collections/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -835,7 +840,7 @@ router.get('/templates/collections/:id', async (req, res) => {
  * GET /api/templates/suggestions
  * Get search suggestions based on partial query
  */
-router.get('/templates/suggestions', async (req, res) => {
+router.get('/suggestions', async (req, res) => {
   try {
     const { q, limit = '5' } = req.query;
     const limitNum = Math.min(parseInt(limit as string) || 5, 10);

@@ -184,117 +184,117 @@ export default function AdminDashboard() {
             </Card>
 
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-[13px] font-medium">Total Revenue</CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">${projectStats?.totalRevenue ? Number(projectStats.totalRevenue).toFixed(2) : '0.00'}</div>
-                <p className="text-[11px] text-muted-foreground">
-                  {projectStats?.premiumUsers ?? 0} premium users
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-[13px] font-medium">System Health</CardTitle>
-                <Activity className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{systemStatus?.status === 'ok' || systemStatus?.status === 'healthy' ? 'Healthy' : (systemStatus?.status ? 'Warning' : 'Unknown')}</div>
-                <p className="text-[11px] text-muted-foreground">
-                  Up: {systemStatus?.uptime || (systemStatus?.detailed && typeof systemStatus.detailed === 'object' && 'uptime' in systemStatus.detailed ? String(systemStatus.detailed.uptime ?? '0') : '0')}
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Service Status */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Service Status</CardTitle>
-              <CardDescription>Current status of all platform services</CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-[13px] font-medium">Total Revenue</CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                {systemStatus?.services && Object.entries(systemStatus.services).map(([service, status]) => (
-                  <div key={service} className="flex items-center gap-2 p-3 border rounded-lg">
-                    {status ? (
-                      <CheckCircle className="h-5 w-5 text-green-600" />
-                    ) : (
-                      <XCircle className="h-5 w-5 text-red-600" />
-                    )}
-                    <span className="capitalize">{service}</span>
-                  </div>
-                ))}
-              </div>
+              <div className="text-2xl font-bold">${projectStats?.totalRevenue ? Number(projectStats.totalRevenue).toFixed(2) : '0.00'}</div>
+              <p className="text-[11px] text-muted-foreground">
+                {projectStats?.premiumUsers ?? 0} premium users
+              </p>
             </CardContent>
           </Card>
 
-          {/* Import Statistics */}
           <Card>
-            <CardHeader>
-              <CardTitle>Platform Imports</CardTitle>
-              <CardDescription>Import activity from various platforms</CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-[13px] font-medium">System Health</CardTitle>
+              <Activity className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                <div className="text-center p-4 border rounded-lg">
-                  <Palette className="h-8 w-8 mx-auto mb-2 text-purple-600" />
-                  <div className="text-2xl font-bold">{importStats?.figma || 0}</div>
-                  <div className="text-[13px] text-muted-foreground">Figma Imports</div>
+              <div className="text-2xl font-bold">{systemStatus?.status === 'ok' || systemStatus?.status === 'healthy' ? 'Healthy' : (systemStatus?.status ? 'Warning' : 'Unknown')}</div>
+              <p className="text-[11px] text-muted-foreground">
+                Up: {systemStatus?.uptime || (systemStatus?.detailed && typeof systemStatus.detailed === 'object' && 'uptime' in systemStatus.detailed ? String(systemStatus.detailed.uptime ?? '0') : '0')}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Service Status */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Service Status</CardTitle>
+            <CardDescription>Current status of all platform services</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+              {systemStatus?.services && typeof systemStatus.services === 'object' && Object.entries(systemStatus.services).map(([service, status]) => (
+                <div key={service} className="flex items-center gap-2 p-3 border rounded-lg">
+                  {status ? (
+                    <CheckCircle className="h-5 w-5 text-green-600" />
+                  ) : (
+                    <XCircle className="h-5 w-5 text-red-600" />
+                  )}
+                  <span className="capitalize">{service}</span>
                 </div>
-                <div className="text-center p-4 border rounded-lg">
-                  <Zap className="h-8 w-8 mx-auto mb-2 text-yellow-600" />
-                  <div className="text-2xl font-bold">{importStats?.bolt || 0}</div>
-                  <div className="text-[13px] text-muted-foreground">Bolt Imports</div>
-                </div>
-                <div className="text-center p-4 border rounded-lg">
-                  <Heart className="h-8 w-8 mx-auto mb-2 text-red-600" />
-                  <div className="text-2xl font-bold">{importStats?.lovable || 0}</div>
-                  <div className="text-[13px] text-muted-foreground">Lovable Imports</div>
-                </div>
-                <div className="text-center p-4 border rounded-lg">
-                  <Globe className="h-8 w-8 mx-auto mb-2 text-blue-600" />
-                  <div className="text-2xl font-bold">{importStats?.webContent || 0}</div>
-                  <div className="text-[13px] text-muted-foreground">Web Imports</div>
-                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Import Statistics */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Platform Imports</CardTitle>
+            <CardDescription>Import activity from various platforms</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+              <div className="text-center p-4 border rounded-lg">
+                <Palette className="h-8 w-8 mx-auto mb-2 text-purple-600" />
+                <div className="text-2xl font-bold">{importStats?.figma || 0}</div>
+                <div className="text-[13px] text-muted-foreground">Figma Imports</div>
               </div>
-              
-              {importStats?.recent && importStats.recent.length > 0 && (
-                <div>
-                  <h4 className="text-[13px] font-medium mb-2">Recent Imports</h4>
-                  <div className="space-y-2">
-                    {importStats.recent.slice(0, 5).map((importItem) => (
-                      <div key={importItem.id} className="flex items-center justify-between text-[13px] p-2 border rounded">
-                        <div className="flex items-center gap-2">
-                          {importItem.type === 'figma' && <Palette className="h-4 w-4 text-purple-600" />}
-                          {importItem.type === 'bolt' && <Zap className="h-4 w-4 text-yellow-600" />}
-                          {importItem.type === 'lovable' && <Heart className="h-4 w-4 text-red-600" />}
-                          {importItem.type === 'web' && <Globe className="h-4 w-4 text-blue-600" />}
-                          <span className="capitalize">{importItem.type} Import</span>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <Link href={`/projects/${importItem.projectId}`}>
-                            <Button variant="ghost" size="sm">
-                              View Project
-                            </Button>
-                          </Link>
-                          <Badge variant={importItem.status === 'completed' ? 'default' : 'secondary'}>
-                            {importItem.status}
-                          </Badge>
-                          <span className="text-[11px] text-muted-foreground">
-                            {formatDistanceToNow(new Date(importItem.createdAt), { addSuffix: true })}
-                          </span>
-                        </div>
+              <div className="text-center p-4 border rounded-lg">
+                <Zap className="h-8 w-8 mx-auto mb-2 text-yellow-600" />
+                <div className="text-2xl font-bold">{importStats?.bolt || 0}</div>
+                <div className="text-[13px] text-muted-foreground">Bolt Imports</div>
+              </div>
+              <div className="text-center p-4 border rounded-lg">
+                <Heart className="h-8 w-8 mx-auto mb-2 text-red-600" />
+                <div className="text-2xl font-bold">{importStats?.lovable || 0}</div>
+                <div className="text-[13px] text-muted-foreground">Lovable Imports</div>
+              </div>
+              <div className="text-center p-4 border rounded-lg">
+                <Globe className="h-8 w-8 mx-auto mb-2 text-blue-600" />
+                <div className="text-2xl font-bold">{importStats?.webContent || 0}</div>
+                <div className="text-[13px] text-muted-foreground">Web Imports</div>
+              </div>
+            </div>
+            
+            {importStats?.recent && Array.isArray(importStats.recent) && importStats.recent.length > 0 && (
+              <div>
+                <h4 className="text-[13px] font-medium mb-2">Recent Imports</h4>
+                <div className="space-y-2">
+                  {importStats.recent.slice(0, 5).map((importItem) => (
+                    <div key={importItem?.id} className="flex items-center justify-between text-[13px] p-2 border rounded">
+                      <div className="flex items-center gap-2">
+                        {importItem?.type === 'figma' && <Palette className="h-4 w-4 text-purple-600" />}
+                        {importItem?.type === 'bolt' && <Zap className="h-4 w-4 text-yellow-600" />}
+                        {importItem?.type === 'lovable' && <Heart className="h-4 w-4 text-red-600" />}
+                        {importItem?.type === 'web' && <Globe className="h-4 w-4 text-blue-600" />}
+                        <span className="capitalize">{importItem?.type} Import</span>
                       </div>
-                    ))}
-                  </div>
+                      <div className="flex items-center gap-4">
+                        <Link href={`/projects/${importItem?.projectId}`}>
+                          <Button variant="ghost" size="sm">
+                            View Project
+                          </Button>
+                        </Link>
+                        <Badge variant={importItem?.status === 'completed' ? 'default' : 'secondary'}>
+                          {importItem?.status}
+                        </Badge>
+                        <span className="text-[11px] text-muted-foreground">
+                          {importItem?.createdAt ? formatDistanceToNow(new Date(importItem.createdAt), { addSuffix: true }) : 'unknown'}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              )}
-            </CardContent>
-          </Card>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
           {/* Quick Actions */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -350,7 +350,7 @@ export default function AdminDashboard() {
             <CardContent>
               <ScrollArea className="h-[300px]">
                 <div className="space-y-4">
-                  {activities?.map((activity: any, index: number) => (
+                  {Array.isArray(activities) && activities.map((activity: any, index: number) => (
                     <div key={index} className="flex items-start gap-4 pb-4 border-b last:border-0">
                       <div className={`p-2 rounded-full ${
                         activity?.type === 'user' ? 'bg-blue-100' :
@@ -371,6 +371,9 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                   ))}
+                  {(!activities || (Array.isArray(activities) && activities.length === 0)) && (
+                    <p className="text-center text-muted-foreground py-8">No recent activities</p>
+                  )}
                 </div>
               </ScrollArea>
             </CardContent>

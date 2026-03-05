@@ -527,7 +527,7 @@ export default function ChatGPTAdmin() {
                       <SelectItem value="gpt-4o-mini">GPT-4o Mini</SelectItem>
                       <SelectItem value="o1">o1</SelectItem>
                       <SelectItem value="o1-mini">o1 Mini</SelectItem>
-                      <SelectItem value="o3">o3</SelectItem>
+                      <SelectItem value="o3-mini">o3-mini</SelectItem>
                       <SelectItem value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet</SelectItem>
                       <SelectItem value="claude-3-5-haiku-20241022">Claude 3.5 Haiku</SelectItem>
                       <SelectItem value="claude-3-opus-20240229">Claude 3 Opus</SelectItem>

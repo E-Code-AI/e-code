@@ -410,27 +410,27 @@ export default function AdminBilling() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {subscribers.map((sub) => (
-                        <TableRow key={sub.id} className="border-zinc-700">
+                      {Array.isArray(subscribers) && subscribers.map((sub) => (
+                        <TableRow key={sub?.id} className="border-zinc-700">
                           <TableCell className="text-white">
                             <div>
                               <p className="font-medium">{sub?.username || 'Unknown'}</p>
                               <p className="text-[11px] text-zinc-500">{sub?.email || 'No email'}</p>
                             </div>
                           </TableCell>
-                          <TableCell className="text-zinc-300 capitalize">{sub.subscriptionTier || 'free'}</TableCell>
-                          <TableCell>{getStatusBadge(sub.subscriptionStatus)}</TableCell>
+                          <TableCell className="text-zinc-300 capitalize">{sub?.subscriptionTier || 'free'}</TableCell>
+                          <TableCell>{getStatusBadge(sub?.subscriptionStatus)}</TableCell>
                           <TableCell className="text-green-500 font-medium">
-                            ${parseFloat(sub.creditsBalance || '0').toFixed(2)}
+                            ${parseFloat(sub?.creditsBalance || '0').toFixed(2)}
                           </TableCell>
                           <TableCell className="text-zinc-400">
-                            {sub.subscriptionCurrentPeriodEnd 
+                            {sub?.subscriptionCurrentPeriodEnd 
                               ? new Date(sub.subscriptionCurrentPeriodEnd).toLocaleDateString()
                               : 'N/A'}
                           </TableCell>
                         </TableRow>
                       ))}
-                      {subscribers.length === 0 && (
+                      {(!subscribers || (Array.isArray(subscribers) && subscribers.length === 0)) && (
                         <TableRow>
                           <TableCell colSpan={5} className="text-center text-zinc-500 py-8">
                             No active subscribers
@@ -469,28 +469,28 @@ export default function AdminBilling() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {invoices.map((inv) => (
-                        <TableRow key={inv.id} className="border-zinc-700">
+                      {Array.isArray(invoices) && invoices.map((inv) => (
+                        <TableRow key={inv?.id} className="border-zinc-700">
                           <TableCell className="text-white font-mono text-[13px]">
-                            {inv.number || (inv.id ? String(inv.id).slice(0, 12) : 'N/A')}
+                            {inv?.number || (inv?.id ? String(inv.id).slice(0, 12) : 'N/A')}
                           </TableCell>
                           <TableCell className="text-white font-medium">
-                            {inv.currency || 'USD'} ${(typeof inv.amount === 'number' ? inv.amount : parseFloat(String(inv.amount ?? 0))).toFixed(2)}
+                            {inv?.currency || 'USD'} ${(typeof inv?.amount === 'number' ? inv.amount : parseFloat(String(inv?.amount ?? 0))).toFixed(2)}
                           </TableCell>
-                          <TableCell>{getInvoiceStatusBadge(inv.status || 'unknown')}</TableCell>
+                          <TableCell>{getInvoiceStatusBadge(inv?.status || 'unknown')}</TableCell>
                           <TableCell className="text-zinc-400">
-                            {inv.created ? new Date(inv.created).toLocaleDateString() : 'N/A'}
+                            {inv?.created ? new Date(inv.created).toLocaleDateString() : 'N/A'}
                           </TableCell>
                           <TableCell>
                             <div className="flex gap-2">
-                              {inv.invoicePdf && (
+                              {inv?.invoicePdf && (
                                 <Button size="sm" variant="ghost" asChild>
                                   <a href={inv.invoicePdf} target="_blank" rel="noopener noreferrer">
                                     <Download className="h-4 w-4" />
                                   </a>
                                 </Button>
                               )}
-                              {inv.hostedInvoiceUrl && (
+                              {inv?.hostedInvoiceUrl && (
                                 <Button size="sm" variant="ghost" asChild>
                                   <a href={inv.hostedInvoiceUrl} target="_blank" rel="noopener noreferrer">
                                     <ExternalLink className="h-4 w-4" />
@@ -501,7 +501,7 @@ export default function AdminBilling() {
                           </TableCell>
                         </TableRow>
                       ))}
-                      {invoices.length === 0 && (
+                      {(!invoices || (Array.isArray(invoices) && invoices.length === 0)) && (
                         <TableRow>
                           <TableCell colSpan={5} className="text-center text-zinc-500 py-8">
                             No invoices found. Configure Stripe to see invoices.

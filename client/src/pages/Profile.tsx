@@ -55,12 +55,16 @@ export default function Profile() {
   const { data: projectsData, isLoading: projectsLoading } = useQuery({
     queryKey: ['/api/users', username || currentUser?.username, 'projects'],
     queryFn: async () => {
-      return await apiRequest('GET', '/api/projects');
+      const res = await apiRequest('GET', '/api/projects');
+      if (Array.isArray(res)) {
+        return { projects: res };
+      }
+      return res;
     },
     enabled: !!(username || currentUser?.username),
   });
 
-  const projects = projectsData?.projects || [];
+  const projects = Array.isArray(projectsData?.projects) ? projectsData.projects : [];
 
   const getLanguageColor = (language: string) => {
     const colors: Record<string, string> = {

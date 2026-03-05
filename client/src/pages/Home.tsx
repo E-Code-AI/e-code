@@ -70,12 +70,16 @@ export default function Home() {
     queryKey: ['/api/projects'],
     queryFn: async () => {
       const res = await apiRequest('GET', '/api/projects');
+      // If res is an array, wrap it to match the expected format
+      if (Array.isArray(res)) {
+        return { projects: res };
+      }
       return res;
     },
     retry: 2,
   });
 
-  const projects = projectsData?.projects || [];
+  const projects = Array.isArray(projectsData?.projects) ? projectsData.projects : [];
 
   // Show error toast if projects fail to load - use ref to avoid toast dependency causing loops
   const toastRef = useRef(toast);
@@ -207,12 +211,12 @@ export default function Home() {
   };
 
   // Filter projects based on search query
-  const filteredProjects = projects?.filter(
+  const filteredProjects = (projects || []).filter(
     (project) => (project?.name || "").toLowerCase().includes((searchQuery || "").toLowerCase())
   );
 
   // Sort projects based on active tab
-  const sortedProjects = (filteredProjects || [])?.sort((a, b) => {
+  const sortedProjects = (filteredProjects || []).sort((a, b) => {
     if (activeTab === "recent") {
       const dateA = a?.updatedAt ? new Date(a.updatedAt).getTime() : 0;
       const dateB = b?.updatedAt ? new Date(b.updatedAt).getTime() : 0;

@@ -103,7 +103,12 @@ router.post('/projects/:id/runtime/execute', ensureAuthenticated, ensureProjectA
   } catch (err: any) {
     logger.error('Execute command failed:', err);
     if (!res.headersSent) {
-      res.status(500).json({ error: 'Failed to execute command', details: err.message });
+      res.status(500).json({ 
+        success: false,
+        error: 'Failed to execute command', 
+        details: err.message,
+        projectId: req.params.id
+      });
     }
   }
 });

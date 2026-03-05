@@ -618,10 +618,11 @@ export function ReplitDeploymentPanel({
 
   return (
     <Card className={cn('h-full flex flex-col overflow-hidden', className)} data-testid="replit-deployment-panel">
-      <CardHeader className="pb-3 shrink-0">
-        <CardTitle className="text-base font-medium flex items-center gap-2">
+      {/* 1) Status & Publish Section at the TOP (Prominent) */}
+      <div className="px-4 pt-4 pb-4 shrink-0 border-b">
+        <CardTitle className="text-base font-medium flex items-center gap-2 mb-4">
           <Rocket className="h-4 w-4" />
-          Deployments
+          Deployment Status
           {wsConnected && activeTab === 'logs' && (
             <Badge variant="outline" className="ml-auto text-[11px] bg-green-500/10 text-green-500">
               <Wifi className="h-3 w-3 mr-1" />
@@ -629,10 +630,6 @@ export function ReplitDeploymentPanel({
             </Badge>
           )}
         </CardTitle>
-      </CardHeader>
-      
-      {/* 1) Status & Publish Section at the TOP (Prominent) */}
-      <div className="px-4 pb-4 shrink-0">
         <Card className={cn("border-2", 
           displayStatus === 'live' ? "border-green-500/20 bg-green-500/5" : 
           displayStatus === 'failed' ? "border-red-500/20 bg-red-500/5" : 
@@ -748,11 +745,29 @@ export function ReplitDeploymentPanel({
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
-        <div className="px-4 shrink-0">
-          <TabsList className="w-full h-9 p-1 bg-muted/50">
-            <TabsTrigger value="deploy" className="flex-1 text-xs py-1.5" data-testid="tab-deploy">Configure</TabsTrigger>
-            <TabsTrigger value="logs" className="flex-1 text-xs py-1.5" data-testid="tab-logs">Logs</TabsTrigger>
-            <TabsTrigger value="analytics" className="flex-1 text-xs py-1.5" data-testid="tab-analytics">Analytics</TabsTrigger>
+        <div className="px-4 shrink-0 border-b">
+          <TabsList className="h-10 bg-transparent p-0 gap-4">
+            <TabsTrigger 
+              value="deploy" 
+              className="h-10 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-2"
+              data-testid="tab-deploy"
+            >
+              Configuration
+            </TabsTrigger>
+            <TabsTrigger 
+              value="logs" 
+              className="h-10 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-2"
+              data-testid="tab-logs"
+            >
+              Logs
+            </TabsTrigger>
+            <TabsTrigger 
+              value="analytics" 
+              className="h-10 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-2"
+              data-testid="tab-analytics"
+            >
+              Analytics
+            </TabsTrigger>
           </TabsList>
         </div>
 

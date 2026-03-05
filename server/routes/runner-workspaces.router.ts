@@ -23,15 +23,16 @@ import * as runner from '../runnerClient';
 const logger = createLogger('runner-workspaces');
 const router = Router();
 
-router.use(ensureAuthenticated);
-
 // ─── GET /api/runner/status ───────────────────────────────────────────────
 // Pings the Runner's /health endpoint.
 // Returns { online: boolean, baseUrl: string|null } — never throws.
+// NOTE: No auth required for health check (Fortune 500 requirement)
 router.get('/status', async (_req, res) => {
   const health = await runner.pingRunner();
   res.json(health);
 });
+
+router.use(ensureAuthenticated);
 
 // ─── GET /api/runner/workspaces/:projectId ────────────────────────────────
 router.get('/workspaces/:projectId', async (req, res) => {

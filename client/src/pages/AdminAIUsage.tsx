@@ -225,7 +225,7 @@ export default function AdminAIUsage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {stats?.byTier && Object.entries(stats.byTier).map(([tier, data]) => (
+                {stats?.byTier && typeof stats.byTier === 'object' && Object.entries(stats.byTier).map(([tier, data]) => (
                   <div key={tier} className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <Badge variant={
@@ -345,9 +345,9 @@ export default function AdminAIUsage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {usageData?.usage && usageData.usage.length > 0 ? (
+                    {usageData?.usage && Array.isArray(usageData.usage) && usageData.usage.length > 0 ? (
                       usageData.usage.map((record) => (
-                        <TableRow key={record.id} data-testid={`row-record-${record.id}`}>
+                        <TableRow key={record?.id} data-testid={`row-record-${record?.id}`}>
                   <TableCell className="font-mono text-[11px]">
                             <div>
                               <div className="font-medium">{record?.username || 'Unknown'}</div>
@@ -355,23 +355,23 @@ export default function AdminAIUsage() {
                             </div>
                           </TableCell>
                           <TableCell>
-                            <Badge variant="outline">{record.userTier || 'free'}</Badge>
+                            <Badge variant="outline">{record?.userTier || 'free'}</Badge>
                           </TableCell>
-                          <TableCell className="font-mono text-[11px]">{record.model || 'unknown'}</TableCell>
-                          <TableCell><Badge variant="secondary">{record.provider || 'unknown'}</Badge></TableCell>
+                          <TableCell className="font-mono text-[11px]">{record?.model || 'unknown'}</TableCell>
+                          <TableCell><Badge variant="secondary">{record?.provider || 'unknown'}</Badge></TableCell>
                           <TableCell className="text-right font-medium">
-                            {(record.tokensTotal || 0).toLocaleString()}
+                            {(record?.tokensTotal || 0).toLocaleString()}
                           </TableCell>
                           <TableCell className="text-right font-medium text-green-600">
-                            ${parseFloat(String(record.costUsd || '0')).toFixed(4)}
+                            ${parseFloat(String(record?.costUsd || '0')).toFixed(4)}
                           </TableCell>
                           <TableCell>
-                            <Badge variant={record.status === 'success' ? 'default' : 'destructive'}>
-                              {record.status || 'unknown'}
+                            <Badge variant={record?.status === 'success' ? 'default' : 'destructive'}>
+                              {record?.status || 'unknown'}
                             </Badge>
                           </TableCell>
                           <TableCell className="text-[11px] text-muted-foreground">
-                            {record.createdAt ? format(new Date(record.createdAt), 'MMM d, HH:mm:ss') : 'N/A'}
+                            {record?.createdAt ? format(new Date(record.createdAt), 'MMM d, HH:mm:ss') : 'N/A'}
                           </TableCell>
                         </TableRow>
                       ))
@@ -388,45 +388,45 @@ export default function AdminAIUsage() {
 
               {/* Mobile Card View */}
               <div className="md:hidden space-y-4">
-                {usageData?.usage && usageData.usage.length > 0 ? (
+                {usageData?.usage && Array.isArray(usageData.usage) && usageData.usage.length > 0 ? (
                   usageData.usage.map((record) => (
-                    <Card key={record.id} data-testid={`card-record-${record.id}`}>
+                    <Card key={record?.id} data-testid={`card-record-${record?.id}`}>
                       <CardContent className="pt-6 space-y-3">
                         <div className="flex items-start justify-between">
                           <div>
-                            <div className="font-medium">{record.username || 'Unknown'}</div>
-                            <div className="text-[11px] text-muted-foreground font-mono">{(record.userId ?? 'unknown').toString().slice(0, 12)}...</div>
+                            <div className="font-medium">{record?.username || 'Unknown'}</div>
+                            <div className="text-[11px] text-muted-foreground font-mono">{(record?.userId ?? 'unknown').toString().slice(0, 12)}...</div>
                           </div>
-                          <Badge variant="outline">{record.userTier || 'free'}</Badge>
+                          <Badge variant="outline">{record?.userTier || 'free'}</Badge>
                         </div>
                         <div className="grid grid-cols-2 gap-2 text-[13px]">
                           <div>
                             <span className="text-muted-foreground">Model:</span>
-                            <div className="font-mono text-[11px] mt-1">{record.model || 'unknown'}</div>
+                            <div className="font-mono text-[11px] mt-1">{record?.model || 'unknown'}</div>
                           </div>
                           <div>
                             <span className="text-muted-foreground">Provider:</span>
-                            <div className="mt-1"><Badge variant="secondary">{record.provider || 'unknown'}</Badge></div>
+                            <div className="mt-1"><Badge variant="secondary">{record?.provider || 'unknown'}</Badge></div>
                           </div>
                           <div>
                             <span className="text-muted-foreground">Tokens:</span>
-                            <div className="font-medium mt-1">{(record.tokensTotal || 0).toLocaleString()}</div>
+                            <div className="font-medium mt-1">{(record?.tokensTotal || 0).toLocaleString()}</div>
                           </div>
                           <div>
                             <span className="text-muted-foreground">Cost:</span>
-                            <div className="font-medium text-green-600 mt-1">${parseFloat(String(record.costUsd || '0')).toFixed(4)}</div>
+                            <div className="font-medium text-green-600 mt-1">${parseFloat(String(record?.costUsd || '0')).toFixed(4)}</div>
                           </div>
                           <div>
                             <span className="text-muted-foreground">Status:</span>
                             <div className="mt-1">
-                              <Badge variant={record.status === 'success' ? 'default' : 'destructive'}>
-                                {record.status || 'unknown'}
+                              <Badge variant={record?.status === 'success' ? 'default' : 'destructive'}>
+                                {record?.status || 'unknown'}
                               </Badge>
                             </div>
                           </div>
                           <div>
                             <span className="text-muted-foreground">Time:</span>
-                            <div className="text-[11px] mt-1">{record.createdAt ? format(new Date(record.createdAt), 'MMM d, HH:mm') : 'N/A'}</div>
+                            <div className="text-[11px] mt-1">{record?.createdAt ? format(new Date(record.createdAt), 'MMM d, HH:mm') : 'N/A'}</div>
                           </div>
                         </div>
                       </CardContent>

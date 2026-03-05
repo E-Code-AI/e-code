@@ -365,13 +365,13 @@ export function ProjectTemplates({ onSelectTemplate, showCreateButton = true }: 
                         <Avatar className="h-5 w-5 sm:h-6 sm:w-6">
                           <AvatarImage src={template.author.avatar} />
                           <AvatarFallback className="text-[8px] sm:text-[10px]">
-                            {template.author.name.slice(0, 2).toUpperCase()}
+                            {(template.author?.name || '??').slice(0, 2).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                         <span className="text-[10px] sm:text-[11px] text-muted-foreground hidden sm:inline">
-                          {template.author.name}
+                          {template.author?.name || 'Unknown'}
                         </span>
-                        {template.author.verified && (
+                        {template.author?.verified && (
                           <Shield className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-primary" />
                         )}
                       </div>
@@ -486,16 +486,16 @@ export function ProjectTemplates({ onSelectTemplate, showCreateButton = true }: 
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={selectedTemplate.author.avatar} />
+                    <AvatarImage src={selectedTemplate.author?.avatar} />
                     <AvatarFallback>
-                      {selectedTemplate.author.name.slice(0, 2).toUpperCase()}
+                      {(selectedTemplate.author?.name || '??').slice(0, 2).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="font-medium text-[13px]">{selectedTemplate.author.name}</p>
+                    <p className="font-medium text-[13px]">{selectedTemplate.author?.name || 'Unknown'}</p>
                     <p className="text-[11px] text-muted-foreground">Template author</p>
                   </div>
-                  {selectedTemplate.author.verified && (
+                  {selectedTemplate.author?.verified && (
                     <Shield className="h-4 w-4 text-primary" />
                   )}
                 </div>
