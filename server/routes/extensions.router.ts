@@ -65,6 +65,10 @@ const toggleExtensionSchema = z.object({
   enabled: z.boolean(),
 });
 
+router.get('/', (_req, res) => {
+  res.status(404).json({ error: 'Project ID required. Use /api/extensions/marketplace or /api/extensions/:projectId/installed' });
+});
+
 router.get('/marketplace', async (_req, res) => {
   try {
     res.json({

@@ -786,6 +786,7 @@ function UnifiedIDELayout({
           <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Search..." /></div>}>
             <GlobalSearch
               isOpen={true}
+              inline={true}
               onClose={() => setMobileActiveTab('agent')}
               projectId={projectId}
               onFileSelect={(file) => {
@@ -1086,6 +1087,7 @@ function UnifiedIDELayout({
         <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Search..." /></div>}>
           <GlobalSearch
             isOpen={true}
+            inline={true}
             onClose={() => {}}
             projectId={projectId}
             onFileSelect={(file) => handleFileSelect({ id: file.id, name: file.name })}

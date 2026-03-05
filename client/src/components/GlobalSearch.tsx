@@ -23,6 +23,7 @@ interface GlobalSearchProps {
   onClose: () => void;
   projectId: string | number; // Support both UUID strings and numeric IDs
   onFileSelect: (file: { id: number; name: string; content?: string | null; isFolder: boolean; parentId: number | null; projectId: number; createdAt: Date; updatedAt: Date }) => void;
+  inline?: boolean; // When true, render as panel content (no Dialog modal overlay)
 }
 
 interface SearchResult {
@@ -64,7 +65,7 @@ const FILE_TYPE_ICONS: Record<string, React.ReactNode> = {
   default: <File className="h-4 w-4 text-gray-400" />
 };
 
-export function GlobalSearch({ isOpen, onClose, projectId, onFileSelect }: GlobalSearchProps) {
+export function GlobalSearch({ isOpen, onClose, projectId, onFileSelect, inline = false }: GlobalSearchProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchType, setSearchType] = useState<'files' | 'content' | 'symbols'>('content');
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -256,22 +257,7 @@ export function GlobalSearch({ isOpen, onClose, projectId, onFileSelect }: Globa
     );
   };
 
-  return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[70vh] p-0 flex flex-col overflow-hidden gap-0">
-        {/* Close button area - ensure it's clickable */}
-        <div className="absolute right-2 top-2 z-10">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onClose}
-            className="h-6 w-6 rounded-sm opacity-70 hover:opacity-100"
-          >
-            <X className="h-4 w-4" />
-            <span className="sr-only">Close</span>
-          </Button>
-        </div>
-        
+  const searchContent = (
         <div className="flex flex-col h-full min-h-0">
           {/* Search Header */}
           <div className="px-3 pt-3 pb-2 border-b border-border shrink-0">
@@ -416,6 +402,27 @@ export function GlobalSearch({ isOpen, onClose, projectId, onFileSelect }: Globa
             </div>
           )}
         </div>
+  );
+
+  if (inline) {
+    return <div className="flex flex-col h-full overflow-hidden">{searchContent}</div>;
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-2xl max-h-[70vh] p-0 flex flex-col overflow-hidden gap-0">
+        <div className="absolute right-2 top-2 z-10">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            className="h-6 w-6 rounded-sm opacity-70 hover:opacity-100"
+          >
+            <X className="h-4 w-4" />
+            <span className="sr-only">Close</span>
+          </Button>
+        </div>
+        {searchContent}
       </DialogContent>
     </Dialog>
   );
