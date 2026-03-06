@@ -358,7 +358,6 @@ export function useAutonomousChatIntegration({
       return; // Keep existing connection
     }
     
-    console.warn('[AutonomousChatIntegration] 🚀 useLayoutEffect: Attempting AGGRESSIVE WebSocket connection (before paint)');
     
     try {
       sessionStorage.setItem('autonomousChatEffect_layoutEffectConnect', String(Date.now()));
@@ -399,7 +398,6 @@ export function useAutonomousChatIntegration({
     
     const wsUrl = `${protocol}//${window.location.host}/ws/agent?${params.toString()}`;
     
-    console.warn('[AutonomousChatIntegration] 🚀 useLayoutEffect: Connecting to WebSocket');
     
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
@@ -426,7 +424,6 @@ export function useAutonomousChatIntegration({
         const data = JSON.parse(event.data);
         handleProgressEventRef.current?.(data);
       } catch (err) {
-        console.warn('[AutonomousChatIntegration] 🚀 useLayoutEffect: Failed to parse message:', err);
       }
     };
     
@@ -490,12 +487,6 @@ export function useAutonomousChatIntegration({
         wsRef.current?.readyState === WebSocket.OPEN;
       
       // Telemetry for debugging
-      console.warn('[AutonomousChatIntegration] 🧪 TELEMETRY: Cleanup triggered', {
-        isBootstrapActive,
-        intentionalTeardown: intentionalTeardownRef.current,
-        buildCompleted: buildCompletedRef.current,
-        wsState: wsRef.current?.readyState
-      });
       
       // Always cleanup reconnect timeout
       if (reconnectTimeoutRef.current) {
@@ -602,7 +593,6 @@ export function useAutonomousChatIntegration({
         );
         addMessage(conversationId, connectedMsg);
         lastMessageIdRef.current = connectedMsg.id;
-        console.log('[AutonomousChatIntegration] ✅ Added connected message to chat:', connectedMsg.id);
         break;
       }
 
@@ -644,7 +634,6 @@ export function useAutonomousChatIntegration({
           addMessage(conversationId, statusMsg);
           lastMessageIdRef.current = statusMsg.id;
         }
-        console.log('[AutonomousChatIntegration] ✅ Status update:', { status, phaseName, progress: eventProgress });
         break;
       }
 
@@ -701,7 +690,6 @@ export function useAutonomousChatIntegration({
           );
           addMessage(conversationId, planMsg);
           lastMessageIdRef.current = planMsg.id;
-          console.log('[AutonomousChatIntegration] ✅ Added plan_generated message with features:', features.length);
         }
         break;
       }
@@ -781,7 +769,6 @@ export function useAutonomousChatIntegration({
             addMessage(conversationId, msg);
             lastMessageIdRef.current = msg.id;
           }
-          console.log('[AutonomousChatIntegration] ✅ Task started:', taskName);
         }
         break;
       }
@@ -828,7 +815,6 @@ export function useAutonomousChatIntegration({
               }
             });
           }
-          console.log('[AutonomousChatIntegration] ✅ Task completed:', taskId);
         }
         break;
       }
@@ -964,7 +950,6 @@ export function useAutonomousChatIntegration({
         );
         addMessage(conversationId, msg);
         lastMessageIdRef.current = msg.id;
-        console.log('[AutonomousChatIntegration] ✅ Post-validation started');
         break;
       }
 
@@ -978,7 +963,6 @@ export function useAutonomousChatIntegration({
         );
         addMessage(conversationId, msg);
         lastMessageIdRef.current = msg.id;
-        console.log('[AutonomousChatIntegration] ✅ Dependency installation started');
         break;
       }
 
@@ -998,7 +982,6 @@ export function useAutonomousChatIntegration({
             isStreaming: false
           });
         }
-        console.log('[AutonomousChatIntegration] ✅ Dependency installation complete:', { success, deps });
         break;
       }
 
@@ -1012,7 +995,6 @@ export function useAutonomousChatIntegration({
         );
         addMessage(conversationId, msg);
         lastMessageIdRef.current = msg.id;
-        console.log('[AutonomousChatIntegration] ✅ Build verification started');
         break;
       }
 
@@ -1040,7 +1022,6 @@ export function useAutonomousChatIntegration({
             status: success ? undefined : 'error'
           });
         }
-        console.log('[AutonomousChatIntegration] ✅ Build verification complete:', { success, result });
         break;
       }
 
@@ -1054,7 +1035,6 @@ export function useAutonomousChatIntegration({
         );
         addMessage(conversationId, msg);
         lastMessageIdRef.current = msg.id;
-        console.log('[AutonomousChatIntegration] ✅ Responsive QA started');
         break;
       }
 
@@ -1089,7 +1069,6 @@ export function useAutonomousChatIntegration({
             isStreaming: false
           });
         }
-        console.log('[AutonomousChatIntegration] ✅ Responsive QA complete:', { score: scorePercent, qa });
         break;
       }
 
@@ -1124,7 +1103,6 @@ export function useAutonomousChatIntegration({
             addMessage(conversationId, msg);
             lastMessageIdRef.current = msg.id;
           }
-          console.log('[AutonomousChatIntegration] ✅ Step update:', stepData.title);
         }
         break;
       }
@@ -1147,7 +1125,6 @@ export function useAutonomousChatIntegration({
           );
           addMessage(conversationId, msg);
           lastMessageIdRef.current = msg.id;
-          console.log('[AutonomousChatIntegration] ✅ Summary:', content);
         }
         break;
       }
@@ -1187,7 +1164,6 @@ export function useAutonomousChatIntegration({
             addMessage(conversationId, msg);
             lastMessageIdRef.current = msg.id;
           }
-          console.log('[AutonomousChatIntegration] ✅ File created:', fileName);
         }
         break;
       }
@@ -1225,7 +1201,6 @@ export function useAutonomousChatIntegration({
             }
           );
           addMessage(conversationId, msg);
-          console.log('[AutonomousChatIntegration] ✅ Agent message:', msgContent.substring(0, 50));
         }
         break;
       }
@@ -1260,7 +1235,6 @@ export function useAutonomousChatIntegration({
           addMessage(conversationId, msg);
           lastMessageIdRef.current = msg.id;
         }
-        console.log('[AutonomousChatIntegration] ✅ Step started:', stepTitle);
         break;
       }
 
@@ -1283,7 +1257,6 @@ export function useAutonomousChatIntegration({
             }
           });
         }
-        console.log('[AutonomousChatIntegration] ✅ Step completed:', completedStep, 'Progress:', newProgress);
         break;
       }
 
@@ -1315,9 +1288,7 @@ export function useAutonomousChatIntegration({
             }
           };
           addMessage(conversationId, checkpointMsg);
-          console.log('[AutonomousChatIntegration] ✅ Checkpoint created message added:', checkpointId);
         } else {
-          console.log('[AutonomousChatIntegration] ⚠️ Checkpoint event without ID:', event);
         }
         break;
       }
@@ -1345,7 +1316,6 @@ export function useAutonomousChatIntegration({
             }
           );
           addMessage(conversationId, msg);
-          console.log('[AutonomousChatIntegration] ✅ Timeline event:', timelineEvent.type, timelineEvent.title);
         }
         break;
       }
@@ -1364,7 +1334,6 @@ export function useAutonomousChatIntegration({
             }
           );
           addMessage(conversationId, msg);
-          console.log('[AutonomousChatIntegration] ✅ Checkpoint:', checkpointData.title);
         }
         break;
       }
@@ -1383,7 +1352,6 @@ export function useAutonomousChatIntegration({
                 taskList: taskListData
               }
             });
-            console.log('[AutonomousChatIntegration] ✅ Task list updated:', taskListData.items?.length, 'items');
           } else {
             // First task list message - create and track ID
             const msg = createAutonomousMessage(
@@ -1397,7 +1365,6 @@ export function useAutonomousChatIntegration({
             );
             taskListMessageIdRef.current = msg.id;
             addMessage(conversationId, msg);
-            console.log('[AutonomousChatIntegration] ✅ Task list created:', taskListData.items?.length, 'items');
           }
         }
         break;
@@ -1417,7 +1384,6 @@ export function useAutonomousChatIntegration({
             }
           );
           addMessage(conversationId, msg);
-          console.log('[AutonomousChatIntegration] ✅ Preview:', previewData.url);
         }
         break;
       }
@@ -1450,7 +1416,6 @@ export function useAutonomousChatIntegration({
             }
           );
           addMessage(conversationId, msg);
-          console.log('[AutonomousChatIntegration] ✅ File operation:', fileOp.type, fileOp.filePath);
         }
         break;
       }
@@ -1485,38 +1450,16 @@ export function useAutonomousChatIntegration({
     // Mark that the effect ran (for fallback detection)
     effectRanRef.current = true;
     
-    // DEBUG: Write to sessionStorage for mobile WebView debugging (console.log may be deferred)
-    const effectTimestamp = Date.now();
-    try {
-      sessionStorage.setItem('autonomousChatEffect_lastRun', String(effectTimestamp));
-      sessionStorage.setItem('autonomousChatEffect_enabled', String(enabled));
-      sessionStorage.setItem('autonomousChatEffect_conversationId', String(conversationId));
-    } catch (e) { /* ignore storage errors */ }
-    
-    // DEBUG: Log activation conditions IMMEDIATELY
-    // Use console.warn for higher priority in mobile WebView log capture
-    console.warn('[AutonomousChatIntegration] ⚡ useEffect TRIGGERED:', {
-      enabled,
-      conversationId,
-      projectId,
-      hasBootstrapToken: !!bootstrapToken,
-      layoutEffectAlreadyConnected: layoutEffectConnectedRef.current,
-      timestamp: effectTimestamp
-    });
-    
-    // 🚀 Skip if useLayoutEffect already established connection
+    // Skip if useLayoutEffect already established connection
     if (layoutEffectConnectedRef.current || hasConnectedRef.current) {
-      console.warn('[AutonomousChatIntegration] ⚡ Skipping useEffect - useLayoutEffect already connected');
       return;
     }
     
     if (!enabled) {
-      console.warn('[AutonomousChatIntegration] ❌ Skipping - not enabled');
       return;
     }
     
     if (!conversationId) {
-      console.warn('[AutonomousChatIntegration] ❌ Skipping - no conversationId');
       return;
     }
     
@@ -1526,7 +1469,6 @@ export function useAutonomousChatIntegration({
     // Try to extract from bootstrap token if not provided directly
     if (bootstrapToken && (!wsProjectId || !wsSessionId)) {
       const tokenData = decodeToken(bootstrapToken);
-      console.log('[AutonomousChatIntegration] 🔑 Decoded token:', tokenData);
       if (tokenData) {
         wsProjectId = wsProjectId || tokenData.projectId;
         wsSessionId = wsSessionId || tokenData.sessionId;
@@ -1534,11 +1476,9 @@ export function useAutonomousChatIntegration({
     }
     
     if (!wsProjectId) {
-      console.log('[AutonomousChatIntegration] ❌ Skipping - no projectId');
       return;
     }
     
-    console.log('[AutonomousChatIntegration] ✅ All conditions met, proceeding with WebSocket connection');
 
     // Initialize build store directly via getState to avoid dependency issues (only once)
     if (!hasConnectedRef.current) {
@@ -1566,35 +1506,27 @@ export function useAutonomousChatIntegration({
     const connectWebSocket = () => {
       // Prevent duplicate connections
       if (wsRef.current?.readyState === WebSocket.OPEN || wsRef.current?.readyState === WebSocket.CONNECTING) {
-        console.log('[AutonomousChatIntegration] WebSocket already open or connecting, skipping');
         return;
       }
 
-      console.log('[AutonomousChatIntegration] 🚀 Connecting to WebSocket:', wsUrl.substring(0, 100) + '...', 
         `(attempt ${reconnectAttemptRef.current + 1}/${maxReconnectAttempts})`);
 
       try {
-        console.log('[AutonomousChatIntegration] 📡 Creating WebSocket instance...');
         const ws = new WebSocket(wsUrl);
-        console.log('[AutonomousChatIntegration] 📡 WebSocket created, initial readyState:', ws.readyState);
         wsRef.current = ws;
 
         ws.onopen = () => {
-          console.log('[AutonomousChatIntegration] ✅ WebSocket connected successfully, readyState:', ws.readyState);
           hasConnectedRef.current = true;
           reconnectAttemptRef.current = 0; // Reset reconnect counter on success
           setConnectionState({ isConnected: true, error: null, reconnectAttempt: 0, maxReconnectAttempts: 10 });
         };
 
         ws.onmessage = (event) => {
-          console.log('[AutonomousChatIntegration] 📥 Message received:', event.data.substring(0, 100) + '...');
           try {
             const data = JSON.parse(event.data);
-            console.log('[AutonomousChatIntegration] 📥 Parsed message type:', data.type);
             // Use ref to call handler to avoid stale closure issues
             handleProgressEventRef.current?.(data as AutonomousProgressEvent);
           } catch (err) {
-            console.warn('[AutonomousChatIntegration] Failed to parse message:', err);
           }
         };
 
@@ -1605,7 +1537,6 @@ export function useAutonomousChatIntegration({
         };
 
         ws.onclose = (event) => {
-          console.log('[AutonomousChatIntegration] WebSocket closed:', {
             code: event.code,
             reason: event.reason,
             wasClean: event.wasClean
@@ -1620,7 +1551,6 @@ export function useAutonomousChatIntegration({
           if (event.code !== 1000 && reconnectAttemptRef.current < maxReconnectAttempts) {
             reconnectAttemptRef.current++;
             const delay = Math.min(baseReconnectDelayMs * Math.pow(2, reconnectAttemptRef.current - 1), 30000);
-            console.log(`[AutonomousChatIntegration] Scheduling reconnect in ${delay}ms (attempt ${reconnectAttemptRef.current}/${maxReconnectAttempts})`);
             // Clear error state when attempting reconnect so banner shows progress
             setConnectionState(prev => ({ 
               ...prev, 
@@ -1703,7 +1633,6 @@ export function useAutonomousChatIntegration({
 
   // Manual reconnect function for retry button
   const manualReconnect = useCallback(() => {
-    console.log('[AutonomousChatIntegration] 🔄 Manual reconnect triggered');
     
     // Reset reconnect counter to allow fresh attempts
     reconnectAttemptRef.current = 0;
@@ -1736,13 +1665,11 @@ export function useAutonomousChatIntegration({
   useLayoutEffect(() => {
     return () => {
       // This cleanup runs FIRST during unmount (reverse order)
-      console.log('[AutonomousChatIntegration] 🚨 UNMOUNT HANDLER: Setting intentionalTeardownRef and closing socket');
       intentionalTeardownRef.current = true;
       
       // ✅ GUARANTEE: Close socket directly here, don't rely on other cleanups
       // This ensures socket is closed even if other cleanup logic has edge cases
       if (wsRef.current) {
-        console.log('[AutonomousChatIntegration] 🚨 UNMOUNT HANDLER: Force-closing WebSocket');
         try {
           wsRef.current.close(1000, 'component-unmount-guarantee');
         } catch (e) {

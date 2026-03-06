@@ -2,130 +2,194 @@
 
 <div align="center">
   <img src="client/public/assets/logo.svg" alt="E-Code Platform" width="160">
-  
-  <h3>The Next-Generation AI-Native IDE for Enterprise Engineering</h3>
-  
-  <p>
-    <a href="https://github.com/e-code/platform/releases"><img src="https://img.shields.io/badge/version-2.0.0-blue.svg" alt="Version"></a>
-    <a href="LICENSE"><img src="https://img.shields.io/badge/license-Enterprise-green.svg" alt="License"></a>
-    <a href="https://github.com/e-code/platform/actions"><img src="https://img.shields.io/badge/build-passing-brightgreen.svg" alt="Build Status"></a>
-    <a href="docs/security/compliance.md"><img src="https://img.shields.io/badge/security-SOC2-purple.svg" alt="Security"></a>
-  </p>
+
+  <h3>AI-Native Cloud IDE for Enterprise Engineering Teams</h3>
 
   <p>
-    <a href="#-platform-overview">Overview</a> •
-    <a href="#-key-capabilities">Capabilities</a> •
-    <a href="#-architecture">Architecture</a> •
-    <a href="#-quick-start">Quick Start</a> •
-    <a href="#-deployment">Deployment</a> •
-    <a href="#-enterprise-security">Security</a>
+    <a href="#platform-overview">Overview</a> •
+    <a href="#key-capabilities">Capabilities</a> •
+    <a href="#architecture">Architecture</a> •
+    <a href="#quick-start">Quick Start</a> •
+    <a href="#deployment">Deployment</a> •
+    <a href="#security">Security</a>
   </p>
 </div>
 
 ---
 
-## 🌐 Platform Overview
+## Platform Overview
 
-E-Code is a professional-grade, AI-native development environment designed to redefine the software engineering lifecycle. By integrating state-of-the-art autonomous agents with a high-performance cloud IDE, E-Code empowers teams to move from concept to production with unprecedented velocity.
+E-Code is a full-stack, AI-native development environment that combines a high-performance web IDE with autonomous AI agents. Built for teams that need to move from idea to production fast, it provides integrated code execution, real-time collaboration, database provisioning, and multi-model AI orchestration in a single platform.
 
-Unlike traditional IDEs, E-Code treats AI as a first-class citizen—not just an autocomplete tool, but a collaborative partner capable of executing complex workflows, managing infrastructure, and ensuring code quality at scale.
+The platform is designed as a commercial SaaS product with enterprise-grade security, tenant isolation, tier-based rate limiting, and Stripe-powered billing.
 
-## 🚀 Key Capabilities
+## Key Capabilities
 
-### 🤖 Autonomous Engineering Agents
-*   **Multi-Model Orchestration:** Support for GPT-4o, Claude 3.7 Sonnet, Gemini 2.0 Flash, Grok-3, and more.
-*   **Contextual Memory Bank:** Persistent project context management for long-running autonomous tasks.
-*   **Self-Healing Workflows:** Integrated Playwright-based background testing that allows agents to verify and fix their own code.
+### Autonomous AI Agents
+- **Multi-model support**: OpenAI (GPT-4.1, o3, o4-mini), Anthropic (Claude 3.7 Sonnet, Claude 3.5 Haiku), Google (Gemini 2.5 Pro/Flash), xAI (Grok-3), Moonshot
+- **Autonomous workspace bootstrap**: Creates full applications from a single prompt — plan, scaffold, build, test, and deploy
+- **Contextual memory bank**: Persistent markdown-based project context for long-running tasks
+- **Voice input (Vibe Coding)**: MediaRecorder → Whisper/Gemini transcription → agent prompt injection
 
-### 💻 Enterprise-Grade IDE
-*   **Polyglot Runtime:** Native support for 28+ languages including TypeScript, Python, Go, Rust, and Java via Nix-managed environments.
-*   **Real-Time Collaboration:** WebSocket-driven synchronization with presence indicators and collaborative cursors.
-*   **Advanced Terminal:** High-performance xterm.js integration with multi-session support and persistent PID tracking.
+### Enterprise-Grade IDE
+- **28+ language runtimes**: TypeScript, Python, Go, Rust, Java, C/C++, Ruby, PHP, and more via Nix-managed environments
+- **Monaco editor**: Full IntelliSense with syntax highlighting, multi-cursor, and custom keybindings
+- **Integrated xterm.js terminal**: Multi-session PTY with persistent PID tracking
+- **Real-time file system**: Database-backed with tenant isolation and path traversal protection
+- **Git integration**: GitHub OAuth with encrypted token storage and expiry enforcement
 
-### ⚡ Production-Ready Infrastructure
-*   **Fast Bootstrap:** Sub-60-second workspace provisioning with schema "warming" technology.
-*   **Database Auto-Provisioning:** Asynchronous PostgreSQL provisioning with multi-provider failover.
-*   **Live Preview:** WebSocket-based hot-reload for web applications with asset path rewriting and CSS hot-swapping.
+### Live Preview & Execution
+- **WebSocket hot-reload**: Sub-100ms CSS hot-swapping for HTML projects
+- **Sandboxed execution**: DockerExecutor with resource limits and network isolation
+- **Runner microservice**: Separate Node.js service handling code execution, terminal sessions, and filesystem operations
+- **Database auto-provisioning**: Async PostgreSQL provisioning (Neon primary, local fallback) with per-project isolation
 
-## 🏗️ Technical Architecture
+### Real-Time Infrastructure
+- **WebSocket central dispatcher**: Single upgrade handler routing `/ws/agent`, `/ws/preview`, `/ws/terminal`, and `/ws/logs`
+- **SSE streaming**: AI response streaming with circuit breakers and retry logic
+- **Agent WebSocket**: Persistent bidirectional connection for autonomous build events with mobile-safe reconnect logic
 
-### Core Components
-| Component | Technology | Role |
-| :--- | :--- | :--- |
-| **Frontend** | React, TypeScript, Tailwind CSS | High-fidelity, responsive IDE interface |
-| **Backend** | Node.js, Express, TypeScript | Business logic and API orchestration |
-| **Storage** | PostgreSQL, Drizzle ORM, Redis | Persistent state and high-speed caching |
-| **Orchestration** | Docker, Kubernetes | Secure, isolated code execution environments |
-| **Real-time** | WebSockets, SSE | Event streaming and collaborative sync |
+### Enterprise Features
+- **Multi-tenancy**: Hard database-level tenant isolation via `tenant_id` scoping on all queries
+- **Tier-based rate limiting**: Free (500 req/min), Pro (1000), Teams (5000), Enterprise (10000)
+- **Stripe billing**: Subscription management, webhook idempotency, and usage metering
+- **SendGrid email**: Transactional email for auth flows and notifications
+- **Slack integration**: Webhook-based notifications for deployment and build events
+- **Marketplace**: Template and extension marketplace with fork-to-project support
 
-### System Design
-E-Code utilizes a distributed two-service architecture:
-1.  **Main Platform:** Manages user sessions, project metadata, and AI orchestration.
-2.  **Runner Microservice:** Handles secure code execution, terminal sessions, and filesystem operations within sandboxed environments.
+## Architecture
 
-## 🏁 Quick Start
+E-Code uses a two-service architecture:
 
-### Prerequisites
-*   **Node.js:** 20.x LTS or higher
-*   **PostgreSQL:** 16.x or higher
-*   **Replit Environment:** Optimized for Replit Reserved VMs
-
-### Installation
-```bash
-# 1. Clone the repository
-git clone https://github.com/e-code/platform.git
-cd platform
-
-# 2. Install dependencies
-npm install
-
-# 3. Initialize the database
-# Note: Always use db:push for schema updates
-npm run db:push
-
-# 4. Start the development server
-npm run dev
+```
+┌─────────────────────────────────────────────────────┐
+│                  Main Platform                      │
+│  React/Vite frontend + Node.js/Express backend      │
+│  • Session management & auth (Passport.js)          │
+│  • AI orchestration (multi-provider)                │
+│  • Project/file CRUD (PostgreSQL + Drizzle ORM)     │
+│  • WebSocket dispatcher (agent, preview, terminal)  │
+│  • Stripe billing, SendGrid email                   │
+└──────────────────────┬──────────────────────────────┘
+                       │ HTTP/WebSocket
+┌──────────────────────▼──────────────────────────────┐
+│                  Runner Microservice                │
+│  Standalone Node.js service (port 8080)             │
+│  • Code execution (Docker/Nix sandboxes)            │
+│  • PTY terminal sessions                            │
+│  • Filesystem operations (scoped per workspace)     │
+│  • JWT-authenticated (RUNNER_JWT_SECRET)            │
+└─────────────────────────────────────────────────────┘
 ```
 
-### 🔑 Essential Configuration
-Configure the following environment variables in your `.env` or Replit Secrets:
-*   `DATABASE_URL`: Your PostgreSQL connection string.
-*   `SESSION_SECRET`: A secure string for session encryption.
-*   `OPENAI_API_KEY` / `ANTHROPIC_API_KEY`: API keys for AI capabilities.
+### Technology Stack
 
-## 🛡️ Enterprise Security
+| Layer | Technology |
+| :--- | :--- |
+| Frontend | React 18, TypeScript, Vite, Tailwind CSS, shadcn/ui |
+| Backend | Node.js, Express, TypeScript, Passport.js |
+| Database | PostgreSQL 16, Drizzle ORM, Redis |
+| AI | OpenAI, Anthropic, Google Gemini, xAI, Moonshot |
+| Editor | Monaco Editor, xterm.js |
+| Real-time | WebSockets (ws), Server-Sent Events |
+| Payments | Stripe |
+| Email | SendGrid |
+| Execution | Docker, Nix, node-pty |
 
-E-Code is built on a "Secure by Design" philosophy:
-*   **Tenant Isolation:** Strict data partitioning at the database level using `tenant_id` scoping.
-*   **Hardened Execution:** Sandboxed `DockerExecutor` with resource limits and network isolation.
-*   **Security Headers:** Comprehensive CSP, XSS protection, and production-enforced CORS policies.
-*   **Credential Safety:** AES-256-GCM encryption for all third-party integrations (GitHub, Stripe).
+## Quick Start
 
-## 📊 Performance Benchmarks
+### Prerequisites
+- Node.js 20.x LTS or higher
+- PostgreSQL 16.x
+- Redis (optional, used for caching)
 
-| Metric | E-Code | Industry Avg. |
-| :--- | :--- | :--- |
-| **Workspace Cold Start** | < 15s | 120s+ |
-| **API Response (P95)** | 12ms | 150ms |
-| **Hot Reload Latency** | < 100ms | 2.5s |
-| **Concurrent Sessions** | 10,000+ | 500 |
+### Development Setup
 
-## 🤝 Contributing & Support
+```bash
+# 1. Install dependencies
+npm install
 
-We welcome contributions from the community. Please review our [Contributing Guide](CONTRIBUTING.md) for standards and workflow.
+# 2. Set required environment variables (see Configuration below)
+# Use Replit Secrets or a .env file
 
-*   **Support:** [support@e-code.ai](mailto:support@e-code.ai)
-*   **Documentation:** [https://docs.e-code.ai](https://docs.e-code.ai)
-*   **Status:** [https://status.e-code.ai](https://status.e-code.ai)
+# 3. Push database schema
+npm run db:push
 
----
+# 4. Start development server (frontend + backend on same port)
+npm run dev
 
-<div align="center">
-  <p>Built with ❤️ by the E-Code Engineering Team</p>
-  <p>
-    <a href="https://e-code.ai">Website</a> •
-    <a href="https://blog.e-code.ai">Blog</a> •
-    <a href="https://twitter.com/ecodeai">Twitter</a> •
-    <a href="https://linkedin.com/company/e-code-ai">LinkedIn</a>
-  </p>
-</div>
+# 5. Start the Runner microservice (separate terminal)
+npx tsx runner/index.ts
+```
+
+The development server runs on port 5000 with Vite serving the frontend and Express handling API routes.
+
+### Configuration
+
+Required environment variables:
+
+```
+DATABASE_URL          PostgreSQL connection string
+SESSION_SECRET        Secret for session cookie encryption
+ANTHROPIC_API_KEY     Claude models
+OPENAI_API_KEY        GPT and Whisper models
+GEMINI_API_KEY        Gemini models
+XAI_API_KEY           Grok models
+MOONSHOT_API_KEY      Moonshot/Kimi models
+SENDGRID_API_KEY      Email delivery
+STRIPE_SECRET_KEY     Payment processing
+RUNNER_JWT_SECRET     Runner microservice authentication
+```
+
+### Database Schema Updates
+
+Never write SQL migrations manually. Always use:
+
+```bash
+npm run db:push
+# If drizzle prompts about enum renames, create the enum directly first:
+# psql $DATABASE_URL -c "CREATE TYPE name AS ENUM ('val1', 'val2');"
+# Then re-run db:push
+```
+
+## Deployment
+
+The platform deploys as a VM with WebSocket support. Build and run commands:
+
+```bash
+# Production build (prunes node_modules to native packages only)
+BUILD_DEPLOY=1 REPLIT_DEPLOYMENT=1 npm run build
+
+# Production start
+node dist/index.js
+```
+
+The build prunes `node_modules` down to only native packages (`bcrypt`, `node-pty`, `sharp`) when both `BUILD_DEPLOY=1` and `REPLIT_DEPLOYMENT=1` are set — this never runs in development.
+
+## Security
+
+- **AES-256-GCM encryption** for stored credentials (GitHub tokens, API keys)
+- **CSRF protection** on all state-mutating API endpoints (`X-CSRF-Token` header required)
+- **XSS prevention** with sanitized inputs and strict CSP headers
+- **Tenant isolation** enforced at query level — `tenant_id` checked on every file/project operation
+- **Path traversal protection** with Zod route validation
+- **GitHub token expiry enforcement** — expired tokens rejected, not silently extended
+- **WebSocket origin validation** with same-host shortcut and `REPLIT_DEV_URL` auto-detection
+- **Rate limiting** per tier, applied at the Express middleware layer
+- **No auth bypass** — all protected routes require valid Passport sessions
+
+## Development Notes
+
+- **API routes**: Mounted at `/api`. Internal router routes must not include `/api/` prefix.
+- **`apiRequest()`**: Returns parsed JSON directly — never check `.ok` or call `.json()`.
+- **`db.execute()`**: Returns array directly with `postgres-js`. Pattern: `Array.isArray(result) ? result : (result as any).rows ?? []`
+- **React hooks**: All hooks must appear before early returns.
+- **Monaco disposal**: Use `d?.dispose?.()` optional chaining for all enhancement classes.
+- **Lazy loading**: Use `instrumentedLazy()` instead of `lazy()` — adds 3-attempt retry for transient Vite HMR failures.
+- **SPA routing**: `notFoundHandler` only catches `/api/*` routes — non-API paths pass to Vite.
+
+## Support
+
+- **Issues**: Use the in-app feedback panel
+- **Email**: support@e-code.ai
+- **Documentation**: https://docs.e-code.ai

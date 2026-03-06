@@ -168,7 +168,7 @@ export const useAutonomousBuildStore = create<AutonomousBuildState & AutonomousB
       
       // Set global timeout that survives component remounts
       globalBootstrapTimeoutId = setTimeout(() => {
-        console.warn('[AutonomousBuildStore] Bootstrap timeout reached (5s) - setting bootstrapTimedOut=true');
+        console.warn('[AutonomousBuildStore] Bootstrap timeout reached (60s) - setting bootstrapTimedOut=true');
         set({ bootstrapTimedOut: true, bootstrapStartTime: null });
         globalBootstrapTimeoutId = null;
       }, BOOTSTRAP_TIMEOUT_MS);

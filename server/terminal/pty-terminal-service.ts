@@ -342,7 +342,7 @@ export class PTYTerminalService {
         return await this.createDockerSession(projectId);
       }
       
-      console.warn(`[Terminal] DEV ONLY: Creating local PTY session - INSECURE MODE ACTIVE`);
+      logger.warn('DEV ONLY: Creating local PTY session - INSECURE MODE ACTIVE');
       return await this.createLocalSession(projectId);
 
     } catch (error) {

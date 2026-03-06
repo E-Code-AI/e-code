@@ -34,7 +34,7 @@ interface PreviewStatus {
   message?: string;
 }
 
-function NotRunningState({ onRun, isStarting }: { onRun: () => void; isStarting: boolean }) {
+function NotRunningState({ onRun, isStarting, noRunnableFiles }: { onRun: () => void; isStarting: boolean; noRunnableFiles?: boolean }) {
   return (
     <div 
       className="flex flex-col items-center justify-center h-full bg-background"
@@ -50,29 +50,33 @@ function NotRunningState({ onRun, isStarting }: { onRun: () => void; isStarting:
             className="text-[17px] font-semibold text-foreground leading-tight"
             data-testid="text-not-running-title"
           >
-            Your app is not running
+            {noRunnableFiles ? 'No app built yet' : 'Your app is not running'}
           </h3>
           <p 
             className="text-[14px] text-muted-foreground leading-snug"
             data-testid="text-not-running-description"
           >
-            Run to preview your app.
+            {noRunnableFiles 
+              ? 'Describe your app in the chat and the AI will build it.'
+              : 'Run to preview your app.'}
           </p>
         </div>
 
-        <Button
-          onClick={onRun}
-          disabled={isStarting}
-          className="h-12 px-8 text-[15px] font-semibold rounded-xl gap-2"
-          data-testid="button-run-app"
-        >
-          {isStarting ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <Play className="w-4 h-4 fill-current" />
-          )}
-          {isStarting ? 'Starting...' : 'Run'}
-        </Button>
+        {!noRunnableFiles && (
+          <Button
+            onClick={onRun}
+            disabled={isStarting}
+            className="h-12 px-8 text-[15px] font-semibold rounded-xl gap-2"
+            data-testid="button-run-app"
+          >
+            {isStarting ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Play className="w-4 h-4 fill-current" />
+            )}
+            {isStarting ? 'Starting...' : 'Run'}
+          </Button>
+        )}
       </div>
     </div>
   );
@@ -142,6 +146,7 @@ export function MobilePreviewPanel({
 
   const isPreviewRunning = previewStatus?.status === 'running' || previewStatus?.status === 'static';
   const isPreviewStarting = previewStatus?.status === 'starting' || startPreviewMutation.isPending;
+  const noRunnableFiles = previewStatus?.status === 'no_runnable_files';
   const baseUrl = externalPreviewUrl || previewStatus?.previewUrl || `/api/preview/projects/${projectId}/preview`;
   const computedPreviewUrl = baseUrl + (currentPath === '/' ? '' : currentPath);
 
@@ -240,11 +245,15 @@ export function MobilePreviewPanel({
           ) : (
             <div className="flex flex-col items-center justify-center h-full gap-2 p-4">
               <Monitor className="w-6 h-6 text-muted-foreground" />
-              <p className="text-[11px] text-muted-foreground text-center">App not running</p>
-              <Button size="sm" className="h-7 text-[11px]" onClick={handleRun}>
-                <Play className="w-3 h-3 mr-1 fill-current" />
-                Run
-              </Button>
+              <p className="text-[11px] text-muted-foreground text-center">
+                {noRunnableFiles ? 'Ask the AI to build your app' : 'App not running'}
+              </p>
+              {!noRunnableFiles && (
+                <Button size="sm" className="h-7 text-[11px]" onClick={handleRun}>
+                  <Play className="w-3 h-3 mr-1 fill-current" />
+                  Run
+                </Button>
+              )}
             </div>
           )}
         </div>
@@ -413,7 +422,7 @@ export function MobilePreviewPanel({
             <Loader2 className="w-8 h-8 text-muted-foreground animate-spin" />
           </div>
         ) : !isPreviewRunning && !isPreviewStarting ? (
-          <NotRunningState onRun={handleRun} isStarting={startPreviewMutation.isPending} />
+          <NotRunningState onRun={handleRun} isStarting={startPreviewMutation.isPending} noRunnableFiles={noRunnableFiles} />
         ) : isPreviewStarting ? (
           <div className="flex flex-col items-center justify-center h-full bg-background gap-4">
             <Loader2 className="w-8 h-8 text-primary animate-spin" />
