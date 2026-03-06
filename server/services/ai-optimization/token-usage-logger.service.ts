@@ -20,26 +20,42 @@ export interface TokenUsageMetrics {
 }
 
 export class TokenUsageLoggerService {
-  // Token cost estimates (per 1K tokens) - December 2025 pricing
+  // Token cost estimates (per 1K tokens) - March 2026 pricing
   private static readonly COST_PER_1K_TOKENS = {
-    // OpenAI GPT-5 Family
-    'gpt-4o': { prompt: 0.005, completion: 0.015 },
-    'gpt-5': { prompt: 0.0025, completion: 0.01 },
+    // OpenAI
+    'gpt-4o': { prompt: 0.0025, completion: 0.01 },
     'gpt-4o-mini': { prompt: 0.00015, completion: 0.0006 },
-    'gpt-4o-mini': { prompt: 0.0001, completion: 0.0003 },
-    // Anthropic Claude 4.5 Family
-    'claude-3-opus-20240229': { prompt: 0.015, completion: 0.075 },
+    'gpt-4.1': { prompt: 0.002, completion: 0.008 },
+    'gpt-4.1-mini': { prompt: 0.0004, completion: 0.0016 },
+    'gpt-4.1-nano': { prompt: 0.0001, completion: 0.0004 },
+    'gpt-4-turbo': { prompt: 0.01, completion: 0.03 },
+    'o3': { prompt: 0.01, completion: 0.04 },
+    'o3-mini': { prompt: 0.0011, completion: 0.0044 },
+    'o4-mini': { prompt: 0.0011, completion: 0.0044 },
+    'o1': { prompt: 0.015, completion: 0.06 },
+    // Anthropic
+    'claude-opus-4-20250514': { prompt: 0.015, completion: 0.075 },
+    'claude-sonnet-4-20250514': { prompt: 0.003, completion: 0.015 },
+    'claude-3-7-sonnet-20250219': { prompt: 0.003, completion: 0.015 },
     'claude-3-5-sonnet-20241022': { prompt: 0.003, completion: 0.015 },
-    'claude-3-5-haiku-20241022': { prompt: 0.00025, completion: 0.00125 },
-    // Google Gemini 2.5 Family
+    'claude-3-5-haiku-20241022': { prompt: 0.0008, completion: 0.004 },
+    'claude-3-opus-20240229': { prompt: 0.015, completion: 0.075 },
+    'claude-3-haiku-20240307': { prompt: 0.00025, completion: 0.00125 },
+    // Google Gemini
     'gemini-2.5-pro': { prompt: 0.00125, completion: 0.005 },
     'gemini-2.5-flash': { prompt: 0.000075, completion: 0.0003 },
-    // xAI Grok Family
+    'gemini-2.0-flash': { prompt: 0.0001, completion: 0.0004 },
+    'gemini-2.0-flash-lite': { prompt: 0.000075, completion: 0.0003 },
+    'gemini-1.5-pro': { prompt: 0.00125, completion: 0.005 },
+    'gemini-1.5-flash': { prompt: 0.000075, completion: 0.0003 },
+    // xAI Grok
     'grok-3': { prompt: 0.003, completion: 0.015 },
     'grok-3-mini': { prompt: 0.0003, completion: 0.0005 },
     'grok-3-fast': { prompt: 0.005, completion: 0.025 },
-    // Groq
-    'groq-llama': { prompt: 0.0001, completion: 0.0002 },
+    // Moonshot
+    'moonshot-v1-8k': { prompt: 0.0012, completion: 0.0012 },
+    'moonshot-v1-32k': { prompt: 0.0024, completion: 0.0024 },
+    'moonshot-v1-128k': { prompt: 0.006, completion: 0.006 },
   };
 
   /**

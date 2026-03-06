@@ -112,24 +112,29 @@ export class PromptCacheManager {
   ]);
 
   private costPerToken: Record<string, { input: number; output: number }> = {
-    // ✅ CONSOLIDATED Jan 2026: Only gpt-5.2 is current
-    'gpt-4o': { input: 0.00000175, output: 0.000014 },
-    'gpt-4o': { input: 0.00000175, output: 0.000014 },
-    'gpt-4o-mini': { input: 0.000003, output: 0.000012 },
-    'gpt-4o-mini': { input: 0.0000015, output: 0.000006 },
+    'gpt-4o': { input: 0.0000025, output: 0.00001 },
+    'gpt-4o-mini': { input: 0.00000015, output: 0.0000006 },
     'gpt-4.1': { input: 0.000002, output: 0.000008 },
     'gpt-4.1-mini': { input: 0.0000004, output: 0.0000016 },
     'gpt-4.1-nano': { input: 0.0000001, output: 0.0000004 },
     'o3': { input: 0.00001, output: 0.00004 },
-    'o1-mini': { input: 0.000003, output: 0.000012 },
+    'o4-mini': { input: 0.0000011, output: 0.0000044 },
     'claude-3-opus-20240229': { input: 0.000015, output: 0.000075 },
     'claude-3-5-sonnet-20241022': { input: 0.000003, output: 0.000015 },
     'claude-3-5-haiku-20241022': { input: 0.0000008, output: 0.000004 },
-    'gemini-1.5-pro': { input: 0.00000125, output: 0.00001 },
+    'claude-3-7-sonnet-20250219': { input: 0.000003, output: 0.000015 },
+    'claude-sonnet-4-20250514': { input: 0.000003, output: 0.000015 },
+    'claude-opus-4-20250514': { input: 0.000015, output: 0.000075 },
+    'gemini-1.5-pro': { input: 0.00000125, output: 0.000005 },
+    'gemini-2.0-flash': { input: 0.0000001, output: 0.0000004 },
     'gemini-2.5-flash': { input: 0.000000075, output: 0.0000003 },
-    'grok-2-1212': { input: 0.000003, output: 0.000015 },
-    'grok-2-1212': { input: 0.000005, output: 0.000015 },
-    'kimi-k2-0711-preview': { input: 0.0000006, output: 0.0000024 },
+    'gemini-2.5-pro': { input: 0.00000125, output: 0.00001 },
+    'grok-3': { input: 0.000003, output: 0.000015 },
+    'grok-3-mini': { input: 0.0000003, output: 0.0000005 },
+    'grok-3-fast': { input: 0.000005, output: 0.000025 },
+    'moonshot-v1-8k': { input: 0.0000012, output: 0.0000012 },
+    'moonshot-v1-32k': { input: 0.0000024, output: 0.0000024 },
+    'moonshot-v1-128k': { input: 0.000006, output: 0.000006 },
     'default': { input: 0.000001, output: 0.000004 }
   };
 
