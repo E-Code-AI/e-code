@@ -58,10 +58,11 @@ export function PreviewPanel({
     },
     enabled: !!projectId,
     refetchInterval: (query) => {
-      // Poll more frequently when starting, less when running
       const data = query.state.data;
       if (data?.status === 'starting') return 2000;
       if (data?.status === 'running') return 10000;
+      if (data?.status === 'no_runnable_files') return 5000;
+      if (data?.status === 'stopped') return 3000;
       return false;
     }
   });
