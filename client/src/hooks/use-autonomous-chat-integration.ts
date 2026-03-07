@@ -1509,8 +1509,6 @@ export function useAutonomousChatIntegration({
         return;
       }
 
-        `(attempt ${reconnectAttemptRef.current + 1}/${maxReconnectAttempts})`);
-
       try {
         const ws = new WebSocket(wsUrl);
         wsRef.current = ws;
