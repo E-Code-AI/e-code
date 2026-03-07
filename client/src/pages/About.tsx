@@ -5,7 +5,7 @@ import { useLocation } from 'wouter';
 import { useAuth } from '@/hooks/use-auth';
 import { 
   Code, Users, Globe, Target, Lightbulb, Heart, Rocket,
-  ChevronRight, ArrowRight, Building2, GraduationCap, Sparkles
+  ChevronRight, ArrowRight, Building2, GraduationCap, Sparkles, Shield
 } from 'lucide-react';
 import { PublicNavbar } from '@/components/layout/PublicNavbar';
 import { PublicFooter } from '@/components/layout/PublicFooter';
@@ -469,4 +469,6 @@ function AboutContent({ data, navigate, user }: { data: AboutData, navigate: any
           </div>
         </div>
       </section>
-    
+    </>
+  );
+}

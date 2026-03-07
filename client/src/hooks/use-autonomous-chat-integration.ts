@@ -1535,10 +1535,6 @@ export function useAutonomousChatIntegration({
         };
 
         ws.onclose = (event) => {
-            code: event.code,
-            reason: event.reason,
-            wasClean: event.wasClean
-          });
           hasConnectedRef.current = false;
           wsRef.current = null;
           
