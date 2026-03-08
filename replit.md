@@ -1,7 +1,7 @@
 # E-Code Platform
 
 ## Overview
-E-Code is an AI-assisted web-based IDE designed to enhance developer productivity and accelerate project delivery. It provides automated workspace setup, real-time code execution, integrated AI capabilities, collaborative tools, enterprise-grade testing, and robust security. The platform aims to be a leading AI-powered software development environment, fostering innovation and efficiency through a comprehensive, secure, and high-performance development experience.
+E-Code is an AI-assisted web-based IDE designed to boost developer productivity and accelerate project delivery. It provides automated workspace setup, real-time code execution, integrated AI capabilities, collaborative tools, enterprise-grade testing, and robust security. The platform aims to be a leading AI-powered software development environment, fostering innovation and efficiency through a comprehensive, secure, and high-performance development experience.
 
 ## User Preferences
 - Communication: Simple, everyday language
@@ -63,17 +63,17 @@ E-Code is an AI-assisted web-based IDE designed to enhance developer productivit
 ## System Architecture
 E-Code employs a two-service architecture (Main Platform and Runner microservice), with a React, TypeScript, and Vite frontend built on the Replit RUI Design System, and a Node.js/Express.js, TypeScript, Drizzle ORM, and Passport.js backend.
 
-- **UI/UX Decisions**: Utilizes Replit RUI Design System, Intersection Observer for animations, and a Native Motion Library for a responsive user experience. The console panel adapts to all screen sizes. Public marketing pages use vertical y-shift animations for `whileInView`.
+- **UI/UX Decisions**: Utilizes Replit RUI Design System, Intersection Observer for animations, and a Native Motion Library for a responsive user experience. The console panel adapts to all screen sizes. Public marketing pages use vertical y-shift animations.
 - **AI Integration**: Features XML prompts, task classification, circuit breakers, priority queues, intelligent caching, SSE streaming, multi-provider AI model selection, database-backed conversation history, retry logic, an Agent Step Cache, and a Memory Bank System. Real API model names are used and validated.
 - **Real-time Communication**: Implements Server-Sent Events, WebSocket-driven logging for server and runtime, HTML live preview with CSS hot-swapping, and a robust WebSocket Resilience System.
-- **Security Framework**: Incorporates AES-256-GCM encryption, XSS prevention, CSRF protection (requiring `X-CSRF-Token` header for raw `fetch` POST/PUT/PATCH/DELETE to `/api/*`), input sanitization, tier-based rate limiting, API versioning, session-based authentication, encrypted GitHub tokens, and comprehensive security hardening measures. All protected routes require valid Passport sessions.
+- **Security Framework**: Incorporates AES-256-GCM encryption, XSS prevention, CSRF protection, input sanitization, tier-based rate limiting, API versioning, session-based authentication, encrypted GitHub tokens, and comprehensive security hardening measures. All protected routes require valid Passport sessions.
 - **System Reliability**: Includes Checkpoints & Rollback functionality and Playwright-based Background Auto-Testing. Autonomous build sessions stuck in `planning`/`executing` are reset to `failed` on server startup.
 - **Code Execution Environment**: Uses Native Nix-managed runtimes and `DockerExecutor` for sandboxed execution, supporting `single-vm`/`kubernetes` deployment with PID tracking and language-specific timeouts.
-- **Data Persistence**: Employs PostgreSQL as the primary data store with a two-tier database API, strong tenant isolation (personal projects must have `tenantId = ownerId`), and Drizzle ORM. `db.execute()` returns an array of rows directly.
+- **Data Persistence**: Employs PostgreSQL as the primary data store with a two-tier database API, strong tenant isolation, and Drizzle ORM. `db.execute()` returns an array of rows directly.
 - **Performance Optimization**: Leverages Fast Bootstrap techniques and optimized Docker builds for minimal image sizes. Bootstrap timeout is 60 seconds.
 - **Voice Input System**: Integrates Voice Vibe Coding via the MediaRecorder API for transcription, with OpenAI Whisper and Gemini 2.0 Flash as providers.
 - **Monitoring and Observability**: Features Kubernetes probes and a Provider Health API with Prometheus metrics.
-- **Routing**: API routes can be dual-mounted (e.g., `/api/models` and `/api/ai/models`). Internal router paths must not include the `/api/` prefix when mounted at `/api`. `notFoundHandler` is critical for SPA routing, only catching `/api/*` routes.
+- **Routing**: API routes can be dual-mounted. Internal router paths must not include the `/api/` prefix when mounted at `/api`. `notFoundHandler` is critical for SPA routing, only catching `/api/*` routes.
 - **Environment Configuration**: Zod-validated environment variables via `server/utils/env-config.ts`.
 
 ## External Dependencies
