@@ -68,26 +68,26 @@ E-Code is an AI-assisted web-based Integrated Development Environment (IDE) desi
 E-Code utilizes a two-service architecture, comprising a React, TypeScript, and Vite frontend built with the Replit RUI Design System, and a Node.js/Express.js, TypeScript, Drizzle ORM, and Passport.js backend.
 
 ### UI/UX Decisions
-- Leverages the Replit RUI Design System.
-- Uses vertical y-shift animations for public marketing pages.
-- Employs a Native Motion Library for responsiveness.
-- Console panels dynamically adapt to various screen sizes with compact mobile views and full desktop views.
-- Public routes are accessible without authentication.
-- IDE tab defaults: Chat/Agent tab on desktop, Deploy tab on mobile/tablet. Preview panel is always visible.
+- Leverages the Replit RUI Design System for a consistent and modern look and feel.
+- Employs vertical y-shift animations for public marketing pages to ensure smooth user experience.
+- Utilizes a Native Motion Library for responsive and interactive UI elements.
+- Console panels are designed to dynamically adapt to various screen sizes, offering compact mobile views and comprehensive desktop views.
+- Public routes (e.g., `/marketplace`, `/templates`) are accessible without requiring user authentication.
+- IDE tab defaults are set for optimal workflow: Chat/Agent tab active on desktop, Deploy tab on mobile/tablet. The preview panel is always visible, providing immediate feedback.
 
 ### Technical Implementations
-- **AI Integration**: Features XML prompts, task classification, circuit breakers, priority queues, intelligent caching, SSE streaming, multi-provider AI model selection with verified API model names, database-backed conversation history, retry logic, an Agent Step Cache, and a Memory Bank System. Autonomous build sessions stuck in `planning`/`executing` states are automatically reset to `failed` on server startup. Schema warming pre-drafts data structures while the user chats.
-- **Real-time Communication**: Implemented through Server-Sent Events (SSE) and WebSockets for server logs, runtime logs, and HTML live preview with CSS hot-swapping. Mobile Bootstrap WebSocket connections are stabilized with debounced cleanup.
-- **Security Framework**: Incorporates AES-256-GCM encryption, XSS prevention, CSRF protection, input sanitization, tier-based rate limiting, API versioning, session-based authentication, encrypted GitHub tokens, and comprehensive hardening measures, ensuring all protected routes require valid Passport sessions.
-- **System Reliability**: Features Checkpoints & Rollback functionality and Playwright-based Background Auto-Testing.
-- **Code Execution Environment**: Uses Native Nix-managed runtimes and a `DockerExecutor` for sandboxed code execution, supporting `single-vm`/`kubernetes` deployments with PID tracking and language-specific timeouts. Docker builds are optimized for minimal image sizes.
-- **Data Persistence**: Employs PostgreSQL with Drizzle ORM, enforcing strong tenant isolation (`tenantId = ownerId`) and providing asynchronous database auto-provisioning with multi-provider fallback. Notification preferences are stored in jsonb columns, and specific tables (`conversationMemory`, `userSessions`, `auditLogs`) use `text` for userId.
-- **Performance Optimization**: Fast Bootstrap techniques are implemented with a 60-second timeout for `autonomousBuildStore.ts` and 180s for schema warming. Lazy loading uses `instrumentedLazy()` for retry logic.
-- **Voice Input System**: Integrates Voice Vibe Coding via the MediaRecorder API for transcription, utilizing OpenAI Whisper and Gemini 2.0 Flash as primary/fallback providers.
-- **Monitoring and Observability**: Includes Kubernetes probes and a Provider Health API with Prometheus metrics.
-- **Routing**: API routes support dual-mounting (e.g., `/api/models` and `/api/ai/models`). Internal router paths must not include the `/api/` prefix when mounted at `/api`. A `notFoundHandler` specifically manages `/api/*` routes, allowing the React SPA to handle other paths. Global search and workspace bootstrap have dedicated API endpoints with specific response formats. Legacy `/editor/:id` redirects to `/ide/:id`.
-- **Environment Configuration**: Environment variables are validated using Zod via `server/utils/env-config.ts`.
-- **Project Management**: New projects are created with auto-generated starter files and adhere to tenant isolation principles. Template forking includes language normalization and validation against DB `language` enum. The Projects API supports pagination. Project authentication is managed via a dedicated panel supporting multiple providers (email, Google, GitHub, Discord, Apple).
+- **AI Integration**: Implemented with XML prompts, task classification, circuit breakers, priority queues, intelligent caching, SSE streaming, and multi-provider AI model selection. It features database-backed conversation history, retry logic, an Agent Step Cache, and a Memory Bank System. Autonomous build sessions stuck in `planning`/`executing` states are automatically reset to `failed` on server startup. Schema warming pre-drafts data structures while the user chats.
+- **Real-time Communication**: Achieved through Server-Sent Events (SSE) and WebSockets for streaming server logs, runtime logs, and providing HTML live preview with CSS hot-swapping. Mobile Bootstrap WebSocket connections are stabilized with debounced cleanup to prevent interruptions.
+- **Security Framework**: Incorporates AES-256-GCM encryption, XSS prevention, CSRF protection, input sanitization, tier-based rate limiting, API versioning, session-based authentication, and encrypted GitHub tokens. It also includes comprehensive hardening measures to ensure all protected routes require valid Passport sessions.
+- **System Reliability**: Features Checkpoints & Rollback functionality for version control and Playwright-based Background Auto-Testing for continuous quality assurance.
+- **Code Execution Environment**: Utilizes Native Nix-managed runtimes and a `DockerExecutor` for sandboxed code execution, supporting `single-vm`/`kubernetes` deployments with PID tracking and language-specific timeouts. Docker builds are optimized for minimal image sizes (<2GiB).
+- **Data Persistence**: Employs PostgreSQL with Drizzle ORM, enforcing strong tenant isolation (`tenantId = ownerId`) for data security. It provides asynchronous database auto-provisioning with multi-provider fallback. Notification preferences are stored in jsonb columns, and specific tables (`conversationMemory`, `userSessions`, `auditLogs`) use `text` for userId.
+- **Performance Optimization**: Fast Bootstrap techniques are implemented with a 60-second timeout for `autonomousBuildStore.ts` and 180s for schema warming to ensure quick project loading. Lazy loading uses `instrumentedLazy()` for retry logic, enhancing resilience against transient network issues.
+- **Voice Input System**: Integrates Voice Vibe Coding via the MediaRecorder API for transcription, utilizing OpenAI Whisper as the primary provider and Gemini 2.0 Flash as an automatic fallback.
+- **Monitoring and Observability**: Includes Kubernetes probes for health checks and a Provider Health API with Prometheus metrics for system monitoring.
+- **Routing**: API routes support dual-mounting (e.g., `/api/models` and `/api/ai/models`) for frontend compatibility. Internal router paths must not include the `/api/` prefix when mounted at `/api`. A `notFoundHandler` specifically manages `/api/*` routes, allowing the React SPA to handle other paths. Global search and workspace bootstrap have dedicated API endpoints with specific response formats. Legacy `/editor/:id` redirects to `/ide/:id`.
+- **Environment Configuration**: Environment variables are validated using Zod via `server/utils/env-config.ts` for robust configuration management.
+- **Project Management**: New projects are created with auto-generated starter files and adhere to tenant isolation principles. Template forking includes language normalization and validation against DB `language` enum. The Projects API supports pagination for efficient data retrieval. Project authentication is managed via a dedicated panel supporting multiple providers (email, Google, GitHub, Discord, Apple).
 
 ## External Dependencies
 - OpenAI
