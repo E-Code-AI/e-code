@@ -1,7 +1,7 @@
 # E-Code Platform
 
 ## Overview
-E-Code is an AI-assisted web-based Integrated Development Environment (IDE) designed to enhance developer productivity and accelerate project delivery. It offers automated workspace setup, real-time code execution, integrated AI capabilities, collaborative tools, enterprise-grade testing, and robust security features. The platform aims to be a leading AI-powered software development environment, fostering innovation and efficiency through a comprehensive, secure, and high-performance development experience.
+E-Code is an AI-assisted web-based Integrated Development Environment (IDE) that aims to enhance developer productivity and accelerate project delivery. It provides automated workspace setup, real-time code execution, integrated AI capabilities, collaborative tools, enterprise-grade testing, and robust security features. The platform's vision is to become a leading AI-powered software development environment, promoting innovation and efficiency through a comprehensive, secure, and high-performance development experience.
 
 ## User Preferences
 - Communication: Simple, everyday language
@@ -65,27 +65,27 @@ E-Code is an AI-assisted web-based Integrated Development Environment (IDE) desi
 - Stuck Session Cleanup (Autonomous Build): On server startup, `AgentOrchestratorService` constructor resets sessions stuck in `planning`/`executing` → `failed`. Idempotency check in `startAutonomousWorkspace` allows restart from `idle` OR `failed` status.
 
 ## System Architecture
-E-Code employs a two-service architecture: a React, TypeScript, and Vite frontend utilizing the Replit RUI Design System, and a Node.js/Express.js, TypeScript, Drizzle ORM, and Passport.js backend.
+E-Code utilizes a two-service architecture: a React, TypeScript, and Vite frontend leveraging the Replit RUI Design System, and a Node.js/Express.js, TypeScript, Drizzle ORM, and Passport.js backend.
 
 ### UI/UX Decisions
-- Leverages the Replit RUI Design System for a consistent and modern look.
+- Employs the Replit RUI Design System for a consistent and modern interface.
 - Uses vertical y-shift animations for public marketing pages.
-- Incorporates a Native Motion Library for responsive and interactive UI.
-- Console panels adapt for mobile (compact) and desktop (comprehensive) views.
+- Integrates a Native Motion Library for responsive and interactive UI.
+- Console panels are adaptive for mobile (compact) and desktop (comprehensive) views.
 - Public routes like `/marketplace` and `/templates` are accessible without authentication.
-- Default IDE tabs: Chat/Agent on desktop, Deploy on mobile/tablet, with a visible preview panel.
+- Default IDE tabs include Chat/Agent on desktop, Deploy on mobile/tablet, with a visible preview panel.
 
 ### Technical Implementations
-- **AI Integration**: Features XML prompts, task classification, circuit breakers, priority queues, intelligent caching, SSE streaming, multi-provider AI model selection (including real API model names), database-backed conversation history, retry logic, Agent Step Cache, and Memory Bank System. Includes schema warming for data structure pre-drafting and autonomous build session management with specific timeout and cleanup logic.
-- **Real-time Communication**: Achieved via SSE and WebSockets for streaming server logs, runtime logs, and HTML live preview with CSS hot-swapping. Includes debounced cleanup for mobile bootstrap WebSocket stability.
-- **Security Framework**: Implements AES-256-GCM encryption, XSS prevention, CSRF protection, input sanitization, tier-based rate limiting, API versioning, session-based authentication (all protected routes require valid Passport sessions), and encrypted GitHub tokens. Includes preview subprocess environment isolation and robust validation.
-- **System Reliability**: Incorporates Checkpoints & Rollback for version control and Playwright-based Background Auto-Testing. Autonomous build sessions have stuck session cleanup.
-- **Code Execution Environment**: Uses Native Nix-managed runtimes and `DockerExecutor` for sandboxed code execution, supporting `single-vm`/`kubernetes` deployments with optimized Docker builds.
-- **Data Persistence**: Utilizes PostgreSQL with Drizzle ORM, enforcing strict tenant isolation (`tenantId = ownerId`). Features asynchronous database auto-provisioning with multi-provider fallback and retry mechanisms. Notification preferences use jsonb, and specific tables use `text` for user IDs. Database backups are managed via `tsx scripts/backup-database.ts`.
+- **AI Integration**: Features XML prompts, task classification, circuit breakers, priority queues, intelligent caching, SSE streaming, multi-provider AI model selection, database-backed conversation history, retry logic, an Agent Step Cache, and a Memory Bank System. Includes schema warming for data structure pre-drafting and autonomous build session management with timeout and cleanup.
+- **Real-time Communication**: Implemented using SSE and WebSockets for streaming server logs, runtime logs, and HTML live preview with CSS hot-swapping. Debounced cleanup protects WebSocket connections during mobile bootstrap.
+- **Security Framework**: Includes AES-256-GCM encryption, XSS prevention, CSRF protection, input sanitization, tier-based rate limiting, API versioning, session-based authentication for all protected routes, and encrypted GitHub tokens. Also features preview subprocess environment isolation and robust validation.
+- **System Reliability**: Incorporates Checkpoints & Rollback for version control and Playwright-based Background Auto-Testing. Autonomous build sessions include stuck session cleanup.
+- **Code Execution Environment**: Utilizes Native Nix-managed runtimes and `DockerExecutor` for sandboxed code execution, supporting `single-vm`/`kubernetes` deployments with optimized Docker builds.
+- **Data Persistence**: Uses PostgreSQL with Drizzle ORM, enforcing strict tenant isolation (`tenantId = ownerId`). Features asynchronous database auto-provisioning with multi-provider fallback and retry mechanisms. Notification preferences use jsonb, and specific tables use `text` for user IDs. Database backups are managed via a dedicated script.
 - **Performance Optimization**: Employs fast bootstrap techniques (60s timeout for `autonomousBuildStore.ts`, 180s for schema warming) and `instrumentedLazy()` for retry logic in lazy loading. Docker builds are optimized for size.
-- **Voice Input System**: Integrates Voice Vibe Coding using the MediaRecorder API for transcription, with OpenAI Whisper as primary and Google Gemini 2.0 Flash as fallback.
+- **Voice Input System**: Integrates Voice Vibe Coding via the MediaRecorder API for transcription, with OpenAI Whisper as primary and Google Gemini 2.0 Flash as fallback.
 - **Monitoring and Observability**: Includes Kubernetes probes for health checks and a Provider Health API with Prometheus metrics.
-- **Routing**: API routes support dual-mounting (e.g., `/api/models` and `/api/ai/models`) and internal router paths do not include the `/api/` prefix when mounted under `/api`. `notFoundHandler` specifically manages `/api/*` routes. Dedicated endpoints for global search and workspace bootstrap (with specific response format and redirect logic). Legacy `/editor/:id` redirects to `/ide/:id`. Public routes are defined for marketplace and community content.
+- **Routing**: API routes support dual-mounting (e.g., `/api/models` and `/api/ai/models`). Internal router paths do not include the `/api/` prefix when mounted under `/api`. `notFoundHandler` specifically manages `/api/*` routes. Dedicated endpoints for global search and workspace bootstrap. Legacy `/editor/:id` redirects to `/ide/:id`. Public routes are defined for marketplace and community content.
 - **Environment Configuration**: Environment variables are validated using Zod.
 - **Project Management**: New projects are created with auto-generated starter files and tenant isolation. Template forking involves language normalization and validation against a database enum. The Projects API supports pagination, and project authentication is managed via a dedicated panel supporting multiple providers.
 - **IDE Tooling**: IDE tools must be registered in both `availableTools` and `TOOL_REGISTRY`, and correctly rendered in `UnifiedIDELayout.tsx`. Semgrep scanning excludes large generated files.
