@@ -34,7 +34,7 @@ export function ToolsPanel({
 }: ToolsPanelProps) {
   const [search, setSearch] = useState('');
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
-    new Set(['Development', 'Tools']) // Default expanded
+    new Set(['Development', 'Tools', 'Security', 'Data', 'Deployment']) // Default expanded
   );
 
   // Get only tools that are actually available in the IDE

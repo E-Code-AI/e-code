@@ -168,6 +168,14 @@ export const availableTools: AvailableTool[] = [
   { id: 'rewind', label: 'Rewind', icon: '⏪' },
   { id: 'workflows', label: 'Workflows', icon: '⚡' },
   { id: 'collaboration', label: 'Collaboration', icon: '👥' },
+  { id: 'auth', label: 'Auth', icon: '🔐' },
+  { id: 'storage', label: 'App Storage', icon: '🗂️' },
+  { id: 'history', label: 'History', icon: '⏱️' },
+  { id: 'checkpoints', label: 'Checkpoints', icon: '📌' },
+  { id: 'themes', label: 'Themes', icon: '🎨' },
+  { id: 'multiplayers', label: 'Multiplayer', icon: '👥' },
+  { id: 'deploy', label: 'Deploy', icon: '🚀' },
+  { id: 'preview', label: 'Preview', icon: '👁️' },
 ];
 
 export function useIDEWorkspace(projectId: string) {
