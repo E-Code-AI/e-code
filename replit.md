@@ -1,7 +1,7 @@
 # E-Code Platform
 
 ## Overview
-E-Code is an AI-assisted web-based IDE designed to boost developer productivity and accelerate project delivery. It provides automated workspace setup, real-time code execution, integrated AI capabilities, collaborative tools, enterprise-grade testing, and robust security. The platform aims to be a leading AI-powered software development environment, fostering innovation and efficiency through a comprehensive, secure, and high-performance development experience.
+E-Code is an AI-assisted web-based IDE designed to boost developer productivity and accelerate project delivery. It provides automated workspace setup, real-time code execution, integrated AI, collaborative tools, enterprise-grade testing, and robust security. The platform aims to be a leading AI-powered software development environment, fostering innovation and efficiency through a comprehensive, secure, and high-performance development experience.
 
 ## User Preferences
 - Communication: Simple, everyday language
@@ -25,7 +25,9 @@ E-Code is an AI-assisted web-based IDE designed to boost developer productivity 
 - Agent Bootstrap Always-Ready: Replit-style pattern where agent panel is NEVER blocked by bootstrap delays. Uses temp conversationId (-projectId) when real ID not yet available. Messages stored locally in Zustand, migrated when real conversationId created. Send button disabled only when input empty or AI working - never due to missing conversationId. "Initializing Agent" entirely removed.
 - SPA Routing: `notFoundHandler` only catches `/api/*` routes — non-API paths pass through to Vite so the React SPA can handle them. This is critical: do NOT register notFoundHandler before Vite init, and do NOT remove the `/api` prefix check in notFoundHandler.
 - Database Backup: Use `tsx scripts/backup-database.ts` for backup (creates timestamped SQL file in `backups/`), `tsx scripts/backup-database.ts --restore <file>` for restore. REQUIRES pg_dump for backup and psql for restore (production-safe, no fallback). Cloud storage upload with `--cloud` flag (requires GCS_BACKUP_BUCKET).
-- Deployment Build Optimization: `BUILD_DEPLOY=1 npm run build` prunes `node_modules` to only native packages (bcrypt, node-pty, sharp). **SAFETY**: The prune only runs when BOTH `BUILD_DEPLOY=1` AND `REPLIT_DEPLOYMENT` env var is set — never run `BUILD_DEPLOY=1 npm run build` in dev or it destroys node_modules. Deployment config: `vm` target, build=`BUILD_DEPLOY=1 REPLIT_DEPLOYMENT=1 npm run build`, run=`node dist/index.js`.
+- Deployment Build Optimization: `BUILD_DEPLOY=1 npm run build` prunes `node_modules` to only native packages (bcrypt, node-pty, sharp). **SAFETY**: The prune only runs when BOTH `BUILD_DEPLOY=1` AND `REPLIT_DEPLOYMENT` env var is set — never run `BUILD_DEPLOY=1 npm run build` in dev or it destroys node_modules. Deployment config: `vm` target, build=`BUILD_DEPLOY=1 REPLIT_DEPLOYMENT=1 npm run build`, run=`node dist/index.js`. `publicDir` is `null` (not set) for vm target.
+- Semgrep Scan Optimization: `.semgrepignore` excludes `node_modules/`, `dist/`, `.git/`, `.local/`, `.checkpoints/`, `backups/`, `logs/`, `previews/`, `attached_assets/`, `*.map`, `*.d.ts`, `package-lock.json` — prevents scan timeouts on large generated files.
+- Replit ModelFarm (Free OpenAI): `AI_INTEGRATIONS_OPENAI_BASE_URL=http://localhost:1106/modelfarm/openai` proxies OpenAI calls through Replit's infrastructure at no cost. Supports `gpt-4o` and `gpt-4o-mini`. The `OpenAIProvider` and `AIProviderFactory.create()` accept optional `baseURL`. `AIProviderManager` auto-detects `AI_INTEGRATIONS_OPENAI_BASE_URL` and uses ModelFarm as primary OpenAI endpoint, falling back to `OPENAI_API_KEY` direct if URL unavailable.
 - Database Enum Creation: When adding NEW PostgreSQL enum types to `shared/schema.ts`, `npm run db:push` may ask interactive questions (is this renamed from X?). Workaround: create the enum directly with SQL `CREATE TYPE name AS ENUM (...)` BEFORE running db:push. This is safe — enum creation is additive and non-destructive.
 - ModelSelector Categories: `client/src/components/agent/ModelSelector.tsx` supports 5 provider categories: `openai`, `anthropic`, `google`, `xai`, `moonshot`. The API returns `category` field in these exact values. Colors: openai=green, anthropic=orange, google=blue, xai=purple, moonshot=cyan.
 - apiRequest() Returns Parsed JSON: `apiRequest(method, url, body)` from `@/lib/queryClient` returns `Promise<T>` (parsed JSON body directly), NOT a `Promise<Response>`. Never check `.ok` or call `.json()` on the result. It throws automatically for non-OK responses. Pattern: `const data = await apiRequest<MyType>('POST', '/api/endpoint', body);`
@@ -61,20 +63,20 @@ E-Code is an AI-assisted web-based IDE designed to boost developer productivity 
 - Stuck Session Cleanup (Autonomous Build): On server startup, `AgentOrchestratorService` constructor resets sessions stuck in `planning`/`executing` → `failed`. Idempotency check in `startAutonomousWorkspace` allows restart from `idle` OR `failed` status.
 
 ## System Architecture
-E-Code employs a two-service architecture (Main Platform and Runner microservice), with a React, TypeScript, and Vite frontend built on the Replit RUI Design System, and a Node.js/Express.js, TypeScript, Drizzle ORM, and Passport.js backend.
+E-Code employs a two-service architecture (Main Platform and Runner microservice), consisting of a React, TypeScript, and Vite frontend built on the Replit RUI Design System, and a Node.js/Express.js, TypeScript, Drizzle ORM, and Passport.js backend.
 
-- **UI/UX Decisions**: Utilizes Replit RUI Design System, Intersection Observer for animations, and a Native Motion Library for a responsive user experience. The console panel adapts to all screen sizes. Public marketing pages use vertical y-shift animations.
-- **AI Integration**: Features XML prompts, task classification, circuit breakers, priority queues, intelligent caching, SSE streaming, multi-provider AI model selection, database-backed conversation history, retry logic, an Agent Step Cache, and a Memory Bank System. Real API model names are used and validated.
-- **Real-time Communication**: Implements Server-Sent Events, WebSocket-driven logging for server and runtime, HTML live preview with CSS hot-swapping, and a robust WebSocket Resilience System.
-- **Security Framework**: Incorporates AES-256-GCM encryption, XSS prevention, CSRF protection, input sanitization, tier-based rate limiting, API versioning, session-based authentication, encrypted GitHub tokens, and comprehensive security hardening measures. All protected routes require valid Passport sessions.
-- **System Reliability**: Includes Checkpoints & Rollback functionality and Playwright-based Background Auto-Testing. Autonomous build sessions stuck in `planning`/`executing` are reset to `failed` on server startup.
+- **UI/UX Decisions**: Leverages the Replit RUI Design System, Intersection Observer for animations, and a Native Motion Library for a responsive user experience. Public marketing pages exclusively use vertical y-shift animations.
+- **AI Integration**: Incorporates XML prompts, task classification, circuit breakers, priority queues, intelligent caching, SSE streaming, multi-provider AI model selection, database-backed conversation history, retry logic, an Agent Step Cache, and a Memory Bank System using real API model names.
+- **Real-time Communication**: Implements Server-Sent Events, WebSocket-driven logging for server and runtime, and HTML live preview with CSS hot-swapping.
+- **Security Framework**: Includes AES-256-GCM encryption, XSS prevention, CSRF protection, input sanitization, tier-based rate limiting, API versioning, session-based authentication, encrypted GitHub tokens, and comprehensive security hardening. All protected routes require valid Passport sessions.
+- **System Reliability**: Features Checkpoints & Rollback functionality and Playwright-based Background Auto-Testing. Stuck autonomous build sessions are reset on server startup.
 - **Code Execution Environment**: Uses Native Nix-managed runtimes and `DockerExecutor` for sandboxed execution, supporting `single-vm`/`kubernetes` deployment with PID tracking and language-specific timeouts.
-- **Data Persistence**: Employs PostgreSQL as the primary data store with a two-tier database API, strong tenant isolation, and Drizzle ORM. `db.execute()` returns an array of rows directly.
-- **Performance Optimization**: Leverages Fast Bootstrap techniques and optimized Docker builds for minimal image sizes. Bootstrap timeout is 60 seconds.
+- **Data Persistence**: Employs PostgreSQL as the primary data store with a two-tier database API, strong tenant isolation, and Drizzle ORM.
+- **Performance Optimization**: Utilizes Fast Bootstrap techniques and optimized Docker builds for minimal image sizes, with a bootstrap timeout of 60 seconds.
 - **Voice Input System**: Integrates Voice Vibe Coding via the MediaRecorder API for transcription, with OpenAI Whisper and Gemini 2.0 Flash as providers.
 - **Monitoring and Observability**: Features Kubernetes probes and a Provider Health API with Prometheus metrics.
-- **Routing**: API routes can be dual-mounted. Internal router paths must not include the `/api/` prefix when mounted at `/api`. `notFoundHandler` is critical for SPA routing, only catching `/api/*` routes.
-- **Environment Configuration**: Zod-validated environment variables via `server/utils/env-config.ts`.
+- **Routing**: API routes can be dual-mounted. Internal router paths must not include the `/api/` prefix when mounted at `/api`. `notFoundHandler` is configured to only catch `/api/*` routes, allowing the React SPA to handle non-API paths.
+- **Environment Configuration**: Environment variables are validated using Zod via `server/utils/env-config.ts`.
 
 ## External Dependencies
 - OpenAI

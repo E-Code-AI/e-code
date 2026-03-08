@@ -392,12 +392,23 @@ export class AIProviderManager {
       MOONSHOT_API_KEY: !!process.env.MOONSHOT_API_KEY
     });
     
-    // OpenAI
-    if (process.env.OPENAI_API_KEY) {
+    // OpenAI — prefer Replit ModelFarm (free) when available, fall back to direct key
+    const openaiModelfarmURL = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL;
+    const openaiApiKey = process.env.OPENAI_API_KEY || 'replit-modelfarm';
+    if (openaiModelfarmURL || process.env.OPENAI_API_KEY) {
       try {
-        this.providers.set('openai', AIProviderFactory.create('openai', process.env.OPENAI_API_KEY));
-        this.openaiClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-        logger.info('OpenAI provider initialized');
+        this.providers.set('openai', AIProviderFactory.create('openai', openaiApiKey, openaiModelfarmURL));
+        this.openaiClient = new OpenAI({
+          apiKey: openaiApiKey,
+          ...(openaiModelfarmURL ? { baseURL: openaiModelfarmURL } : {}),
+          maxRetries: 3,
+          timeout: 60000,
+        });
+        if (openaiModelfarmURL) {
+          logger.info('[AIProviderManager] OpenAI provider initialized via Replit ModelFarm (free tier)');
+        } else {
+          logger.info('[AIProviderManager] OpenAI provider initialized via direct API key');
+        }
       } catch (error) {
         logger.warn('Failed to initialize OpenAI provider:', error);
       }

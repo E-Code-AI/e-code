@@ -20,13 +20,13 @@ export class OpenAIProvider implements AIProvider {
   name = 'openai';
   private client: OpenAI;
   
-  constructor(apiKey: string) {
+  constructor(apiKey: string, baseURL?: string) {
     this.client = new OpenAI({ 
       apiKey,
-      // Enhanced configuration for production stability
+      ...(baseURL ? { baseURL } : {}),
       maxRetries: 3,
-      timeout: 60000, // 60 second timeout for network stability
-      dangerouslyAllowBrowser: false, // Server-side only
+      timeout: 60000,
+      dangerouslyAllowBrowser: false,
     });
   }
   
@@ -646,10 +646,10 @@ export class MoonshotProvider implements AIProvider {
 }
 
 export class AIProviderFactory {
-  static create(provider: string, apiKey: string): AIProvider {
+  static create(provider: string, apiKey: string, baseURL?: string): AIProvider {
     switch (provider.toLowerCase()) {
       case 'openai':
-        return new OpenAIProvider(apiKey);
+        return new OpenAIProvider(apiKey, baseURL);
       case 'anthropic':
         return new AnthropicProvider(apiKey);
       case 'gemini':
