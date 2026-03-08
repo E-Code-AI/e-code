@@ -1,7 +1,7 @@
 # E-Code Platform
 
 ## Overview
-E-Code is an AI-assisted web-based Integrated Development Environment (IDE) that aims to enhance developer productivity and accelerate project delivery. It provides automated workspace setup, real-time code execution, integrated AI capabilities, collaborative tools, enterprise-grade testing, and robust security features. The platform's vision is to become a leading AI-powered software development environment, promoting innovation and efficiency through a comprehensive, secure, and high-performance development experience.
+E-Code is an AI-assisted web-based Integrated Development Environment (IDE) designed to significantly enhance developer productivity. It offers automated workspace setup, real-time code execution, integrated AI capabilities, collaborative tools, enterprise-grade testing, and robust security features. The platform aims to be a leading AI-powered software development solution, fostering innovation and efficiency through a comprehensive, secure, and high-performance development experience.
 
 ## User Preferences
 - Communication: Simple, everyday language
@@ -32,7 +32,7 @@ E-Code is an AI-assisted web-based Integrated Development Environment (IDE) that
 - Database Enum Creation: When adding NEW PostgreSQL enum types to `shared/schema.ts`, `npm run db:push` may ask interactive questions (is this renamed from X?). Workaround: create the enum directly with SQL `CREATE TYPE name AS ENUM (...)` BEFORE running db:push. This is safe — enum creation is additive and non-destructive.
 - ModelSelector Categories: `client/src/components/agent/ModelSelector.tsx` supports 5 provider categories: `openai`, `anthropic`, `google`, `xai`, `moonshot`. The API returns `category` field in these exact values. Colors: openai=green, anthropic=orange, google=blue, xai=purple, moonshot=cyan.
 - apiRequest() Returns Parsed JSON: `apiRequest(method, url, body)` from `@/lib/queryClient` returns `Promise<T>` (parsed JSON body directly), NOT a `Promise<Response>`. Never check `.ok` or call `.json()` on the result. It throws automatically for non-OK responses. Pattern: `const data = await apiRequest<MyType>('POST', '/api/endpoint', body);`
-- postgres-js db.execute() returns array directly: The server uses `drizzle-orm/postgres-js`. When calling `db.execute(sql\`SELECT ...\`)`, it returns an array of rows directly (NOT `{ rows: [...] }`). Always use: `const rows = Array.isArray(result) ? (result as any) : (result as any).rows ?? [];` for compatibility. INSERT/UPDATE return an empty array. Never use `.rows` directly on `db.execute()` results.
+- postgres-js db.execute() returns array directly: The server uses `drizzle-orm/postgres-js`. When calling `db.execute(sql\`SELECT ...\`)`, it returns an array of rows directly (NOT `{ rows: [...]} `). Always use: `const rows = Array.isArray(result) ? (result as any) : (result as any).rows ?? [];` for compatibility. INSERT/UPDATE return an empty array. Never use `.rows` directly on `db.execute()` results.
 - Raw Fetch CSRF Rule: ALL raw `fetch()` calls to `/api/*` using POST/PUT/PATCH/DELETE MUST include `X-CSRF-Token` header. Use `getCSRFToken()` exported from `@/lib/queryClient`: `const csrf = await getCSRFToken(); fetch('/api/...', { headers: { 'X-CSRF-Token': csrf } })`. SSE streaming endpoints MUST use this pattern since `apiRequest` cannot be used for streaming. File uploads also need it.
 - Voice Vibe Coding: `MediaRecorder` API → `/api/voice/transcribe` → transcript injected into agent input. **Multi-provider**: OpenAI Whisper (`whisper-1`) primary, Gemini 2.0 Flash as automatic fallback. Uses `apiRequest` for automatic CSRF token handling. Vibe Mode auto-submits on transcription. `voiceInputEnabled: true` by default. FORBIDDEN: Web Speech API.
 - API Route Dual-Mount Pattern: `aiModelsRouter` is mounted at BOTH `/api/models` AND `/api/ai/models` for frontend compatibility. Always mount at both paths when adding new AI-related routers that the frontend may call via either prefix.
@@ -65,30 +65,29 @@ E-Code is an AI-assisted web-based Integrated Development Environment (IDE) that
 - Stuck Session Cleanup (Autonomous Build): On server startup, `AgentOrchestratorService` constructor resets sessions stuck in `planning`/`executing` → `failed`. Idempotency check in `startAutonomousWorkspace` allows restart from `idle` OR `failed` status.
 
 ## System Architecture
-E-Code utilizes a two-service architecture: a React, TypeScript, and Vite frontend leveraging the Replit RUI Design System, and a Node.js/Express.js, TypeScript, Drizzle ORM, and Passport.js backend.
+E-Code utilizes a two-service architecture with a React, TypeScript, and Vite frontend leveraging the Replit RUI Design System, and a Node.js/Express.js, TypeScript, Drizzle ORM, and Passport.js backend.
 
 ### UI/UX Decisions
-- Employs the Replit RUI Design System for a consistent and modern interface.
-- Uses vertical y-shift animations for public marketing pages.
-- Integrates a Native Motion Library for responsive and interactive UI.
-- Console panels are adaptive for mobile (compact) and desktop (comprehensive) views.
-- Public routes like `/marketplace` and `/templates` are accessible without authentication.
-- Default IDE tabs include Chat/Agent on desktop, Deploy on mobile/tablet, with a visible preview panel.
+- Consistent and modern interface based on the Replit RUI Design System.
+- Responsive and interactive UI with a Native Motion Library, using vertical y-shift animations for public pages.
+- Adaptive console panels for mobile and desktop.
+- Public routes for marketplace and templates are accessible without authentication.
+- Default IDE tab configuration: Chat/Agent for desktop, Deploy for mobile/tablet, with a permanently visible preview panel.
 
 ### Technical Implementations
-- **AI Integration**: Features XML prompts, task classification, circuit breakers, priority queues, intelligent caching, SSE streaming, multi-provider AI model selection, database-backed conversation history, retry logic, an Agent Step Cache, and a Memory Bank System. Includes schema warming for data structure pre-drafting and autonomous build session management with timeout and cleanup.
-- **Real-time Communication**: Implemented using SSE and WebSockets for streaming server logs, runtime logs, and HTML live preview with CSS hot-swapping. Debounced cleanup protects WebSocket connections during mobile bootstrap.
-- **Security Framework**: Includes AES-256-GCM encryption, XSS prevention, CSRF protection, input sanitization, tier-based rate limiting, API versioning, session-based authentication for all protected routes, and encrypted GitHub tokens. Also features preview subprocess environment isolation and robust validation.
-- **System Reliability**: Incorporates Checkpoints & Rollback for version control and Playwright-based Background Auto-Testing. Autonomous build sessions include stuck session cleanup.
-- **Code Execution Environment**: Utilizes Native Nix-managed runtimes and `DockerExecutor` for sandboxed code execution, supporting `single-vm`/`kubernetes` deployments with optimized Docker builds.
-- **Data Persistence**: Uses PostgreSQL with Drizzle ORM, enforcing strict tenant isolation (`tenantId = ownerId`). Features asynchronous database auto-provisioning with multi-provider fallback and retry mechanisms. Notification preferences use jsonb, and specific tables use `text` for user IDs. Database backups are managed via a dedicated script.
-- **Performance Optimization**: Employs fast bootstrap techniques (60s timeout for `autonomousBuildStore.ts`, 180s for schema warming) and `instrumentedLazy()` for retry logic in lazy loading. Docker builds are optimized for size.
-- **Voice Input System**: Integrates Voice Vibe Coding via the MediaRecorder API for transcription, with OpenAI Whisper as primary and Google Gemini 2.0 Flash as fallback.
+- **AI Integration**: Features XML prompts, task classification, circuit breakers, priority queues, intelligent caching, SSE streaming, multi-provider AI model selection, database-backed conversation history, retry logic, Agent Step Cache, and a Memory Bank System. Includes schema warming and autonomous build session management with timeouts and cleanup.
+- **Real-time Communication**: Uses Server-Sent Events (SSE) and WebSockets for streaming server logs, runtime logs, and providing real-time HTML live preview with CSS hot-swapping.
+- **Security Framework**: Incorporates AES-256-GCM encryption, XSS prevention, CSRF protection, input sanitization, tier-based rate limiting, API versioning, session-based authentication, encrypted GitHub tokens, isolated preview subprocess environments, and robust validation.
+- **System Reliability**: Includes Checkpoints & Rollback for version control and Playwright-based Background Auto-Testing. Manages stuck session cleanup for autonomous build processes.
+- **Code Execution Environment**: Uses Nix-managed runtimes and `DockerExecutor` for sandboxed code execution, supporting `single-vm` and `kubernetes` deployments with optimized Docker builds.
+- **Data Persistence**: Employs PostgreSQL with Drizzle ORM, ensuring strict tenant isolation. Features asynchronous database auto-provisioning with multi-provider fallback and retry mechanisms. Notification preferences are stored in JSONB, and specific tables use `text` for user IDs. Database backups are managed via a dedicated script.
+- **Performance Optimization**: Implements fast bootstrap techniques and `instrumentedLazy()` for retry logic in lazy loading. Docker builds are optimized for size.
+- **Voice Input System**: Integrates Voice Vibe Coding via MediaRecorder API for transcription, with OpenAI Whisper as primary and Google Gemini 2.0 Flash as an automatic fallback.
 - **Monitoring and Observability**: Includes Kubernetes probes for health checks and a Provider Health API with Prometheus metrics.
-- **Routing**: API routes support dual-mounting (e.g., `/api/models` and `/api/ai/models`). Internal router paths do not include the `/api/` prefix when mounted under `/api`. `notFoundHandler` specifically manages `/api/*` routes. Dedicated endpoints for global search and workspace bootstrap. Legacy `/editor/:id` redirects to `/ide/:id`. Public routes are defined for marketplace and community content.
-- **Environment Configuration**: Environment variables are validated using Zod.
-- **Project Management**: New projects are created with auto-generated starter files and tenant isolation. Template forking involves language normalization and validation against a database enum. The Projects API supports pagination, and project authentication is managed via a dedicated panel supporting multiple providers.
-- **IDE Tooling**: IDE tools must be registered in both `availableTools` and `TOOL_REGISTRY`, and correctly rendered in `UnifiedIDELayout.tsx`. Semgrep scanning excludes large generated files.
+- **Routing**: API routes support dual-mounting, and internal router paths do not include the `/api/` prefix. A `notFoundHandler` specifically manages `/api/*` routes. Dedicated endpoints exist for global search and workspace bootstrap. Legacy `/editor/:id` routes redirect to `/ide/:id`.
+- **Environment Configuration**: Environment variables are validated using Zod schemas.
+- **Project Management**: New projects auto-create language-appropriate starter files and enforce tenant isolation. Template forking normalizes and validates language types. The Projects API supports pagination, and project authentication is managed via a dedicated panel with multiple provider options.
+- **IDE Tooling**: IDE tools require registration in `availableTools` and `TOOL_REGISTRY`, and proper rendering within `UnifiedIDELayout.tsx`. Semgrep scanning is optimized by excluding large generated files.
 
 ## External Dependencies
 - OpenAI
