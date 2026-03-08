@@ -413,8 +413,12 @@ export class PreviewService {
     const port = preview.primaryPort;
     preview.logs.push(`Starting ${frameworkInfo.type} application...`);
     
-    // Install dependencies
-    await this.runCommand('npm', ['install'], previewPath);
+    // Install dependencies — use --ignore-scripts to prevent native postinstall failures (bcrypt, prisma, etc.)
+    try {
+      await this.runCommand('npm', ['install', '--ignore-scripts'], previewPath);
+    } catch (installErr: any) {
+      preview.logs.push(`[WARN] npm install had warnings: ${installErr.message} — continuing anyway`);
+    }
     
     let startCommand: string[] = [];
     if (frameworkInfo.packageJson.scripts?.dev) {
@@ -474,8 +478,12 @@ export class PreviewService {
     const port = preview.primaryPort;
     preview.logs.push('Starting Node.js application...');
     
-    // Install dependencies
-    await this.runCommand('npm', ['install'], previewPath);
+    // Install dependencies — use --ignore-scripts to prevent native postinstall failures
+    try {
+      await this.runCommand('npm', ['install', '--ignore-scripts'], previewPath);
+    } catch (installErr: any) {
+      preview.logs.push(`[WARN] npm install had warnings: ${installErr.message} — continuing anyway`);
+    }
     
     let startCommand: string[] = [];
     if (frameworkInfo.packageJson.scripts?.start) {

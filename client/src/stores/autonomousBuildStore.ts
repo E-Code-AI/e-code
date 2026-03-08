@@ -78,9 +78,8 @@ const initialState: AutonomousBuildState = {
   bootstrapStartTime: null,
 };
 
-// ✅ FIX (Jan 2026): Global bootstrap timeout - survives component remounts
-// Increased to 60s to allow WebSocket connection to stabilize after Vite HMR
-const BOOTSTRAP_TIMEOUT_MS = 60000;
+// ✅ FIX (Mar 2026): Increased to 180s — complex SaaS builds (npm install + AI file gen) take 90-150s
+const BOOTSTRAP_TIMEOUT_MS = 180000;
 let globalBootstrapTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
 export const useAutonomousBuildStore = create<AutonomousBuildState & AutonomousBuildActions>((set) => ({

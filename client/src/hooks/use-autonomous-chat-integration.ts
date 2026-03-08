@@ -12,6 +12,7 @@ import { useAgentConversationStore } from '@/stores/agentConversationStore';
 import { useAutonomousBuildStore } from '@/stores/autonomousBuildStore';
 import { useSchemaWarmingStore } from '@/stores/schemaWarmingStore';
 import { AgentEventBus } from '@/lib/agentEvents';
+import { apiRequest } from '@/lib/queryClient';
 import type { Message, AutonomousWorkspacePayload, AutonomousBuildTask } from '@/stores/agentConversationStore';
 import type { AutonomousBuildPhase } from '@/stores/autonomousBuildStore';
 
@@ -877,6 +878,13 @@ export function useAutonomousChatIntegration({
         
         // Unlock preview/deploy tabs — schema warming gate not needed after build completes
         useSchemaWarmingStore.getState().markReady();
+        
+        // ✅ FIX (Mar 2026): Auto-start the preview so user sees running app immediately (Replit-style)
+        if (projectId) {
+          apiRequest('POST', `/api/preview/projects/${projectId}/preview/start`, {}).catch(() => {
+            // Preview start is best-effort — non-fatal if app needs manual run
+          });
+        }
         
         // Emit complete event for favicon/audio/notifications
         AgentEventBus.emit('agent:complete', { projectId, sessionId });

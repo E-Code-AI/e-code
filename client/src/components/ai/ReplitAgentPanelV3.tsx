@@ -739,13 +739,18 @@ export function ReplitAgentPanelV3({
   // ✅ FIX (Jan 2026): React to bootstrap timeout and seed fallback message
   // When the global timer fires, we need to:
   // 1. Notify parent to clear isBootstrapping state
-  // 2. Seed a system message so the chat is never empty (Replit-style UX)
+  // 2. Unlock preview/deploy gate so user isn't stuck behind schema gate forever
+  // 3. Seed a system message so the chat is never empty (Replit-style UX)
   useEffect(() => {
     if (bootstrapTimedOut && !conversationId) {
       devLog('[ReplitAgentPanelV3] Bootstrap timeout detected - seeding fallback message');
       
       // Notify parent to clear bootstrap token and isBootstrapping state
       onBootstrapFailure?.();
+      
+      // ✅ FIX (Mar 2026): Also call markReady so preview/deploy tabs unlock even on timeout
+      // The build may still be running in the background; don't block the user forever
+      useSchemaWarmingStore.getState().markReady();
       
       // Seed a system message so the chat isn't empty
       // Use the temp conversationId (negative projectId) for offline/degraded mode

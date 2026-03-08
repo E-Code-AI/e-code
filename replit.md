@@ -1,7 +1,7 @@
 # E-Code Platform
 
 ## Overview
-E-Code is an AI-assisted web-based IDE designed to enhance developer productivity and accelerate project delivery. It provides automated workspace setup, real-time code execution, integrated AI capabilities, collaborative tools, enterprise-grade testing, and robust security. The platform aims to be a leading AI-powered software development environment, fostering innovation and efficiency through a comprehensive, secure, and high-performance development experience.
+E-Code is an AI-assisted web-based IDE designed to enhance developer productivity and accelerate project delivery. It provides automated workspace setup, real-time code execution, integrated AI capabilities, collaborative tools, enterprise-grade testing, and robust security. The platform aims to be a leading AI-powered software development environment, fostering innovation and efficiency through a comprehensive, secure, and high-performance development experience, with a hybrid pricing model.
 
 ## User Preferences
 - Communication: Simple, everyday language
@@ -19,7 +19,7 @@ E-Code is an AI-assisted web-based IDE designed to enhance developer productivit
 - Documentation: Ruthlessly remove obsolete/misleading docs - maintain technical honesty
 - WebSocket Upgrade: Mark sockets as handled BEFORE async auth checks in central dispatcher to prevent race conditions with upgrade guard's setImmediate cleanup
 - IDE Tab Defaults: Desktop: Chat/Agent tab active by default (left dock index 3). Mobile/Tablet: Deploy tab active by default. Preview panel always visible with wireframe placeholder.
-- Schema Warming: Background data structure pre-drafting while user chats. Schema often "warmed up" by deploy time. Shows "App not ready" placeholder until schema ready. CRITICAL: The preview/deploy gate `!isSchemaReady` is ONLY active during bootstrap (`!isSchemaReady && !!bootstrapToken`). Existing projects (no bootstrapToken) must always show preview/deploy immediately. When autonomous build completes ('complete' event), `useSchemaWarmingStore.getState().markReady()` is called in `use-autonomous-chat-integration.ts` to unlock the tabs.
+- Schema Warming: Background data structure pre-drafting while user chats. Schema often "warmed up" by deploy time. Shows "App not ready" placeholder until schema ready. CRITICAL: The preview/deploy gate `!isSchemaReady` is ONLY active during bootstrap (`!isSchemaReady && !!bootstrapToken`). Existing projects (no bootstrapToken) must always show preview/deploy immediately. When autonomous build completes ('complete' event), `useSchemaWarmingStore.getState().markReady()` is called in `use-autonomous-chat-integration.ts` to unlock the tabs AND preview auto-starts via `POST /api/preview/projects/:id/preview/start`. Bootstrap timeout is 180s (complex SaaS builds take 90-150s). On timeout, `markReady()` is ALSO called in `ReplitAgentPanelV3.tsx` so the user is never permanently blocked.
 - Mobile Font Sizes: Compact but WCAG-compliant font sizes (11px minimum) in mobile inline tab navigation. Tab labels use 11px, status badges use 11px.
 - Database Auto-Provisioning: Databases provision asynchronously (fire-and-forget) on project creation to avoid API gateway timeouts. Frontend polls status via `/api/database/project/:id`. Multi-provider fallback: if Neon fails, auto-falls back to local PostgreSQL provider. Frontend auto-retries: if user opens DatabasePanel and database has status='error', triggers auto-retry; if no database exists, triggers auto-provision.
 - Agent Bootstrap Always-Ready: Replit-style pattern where agent panel is NEVER blocked by bootstrap delays. Uses temp conversationId (-projectId) when real ID not yet available. Messages stored locally in Zustand, migrated when real conversationId created. Send button disabled only when input empty or AI working - never due to missing conversationId. "Initializing Agent" entirely removed.
@@ -63,17 +63,18 @@ E-Code is an AI-assisted web-based IDE designed to enhance developer productivit
 ## System Architecture
 E-Code employs a two-service architecture (Main Platform and Runner microservice), with a React, TypeScript, and Vite frontend built on the Replit RUI Design System, and a Node.js/Express.js, TypeScript, Drizzle ORM, and Passport.js backend.
 
-- **UI/UX Decisions**: Utilizes Replit RUI Design System, Intersection Observer for animations, and a Native Motion Library for a responsive user experience. The console panel adapts to all screen sizes.
-- **AI Integration**: Features XML prompts, task classification, circuit breakers, priority queues, intelligent caching, SSE streaming, multi-provider AI model selection, database-backed conversation history, retry logic, an Agent Step Cache, and a Memory Bank System.
+- **UI/UX Decisions**: Utilizes Replit RUI Design System, Intersection Observer for animations, and a Native Motion Library for a responsive user experience. The console panel adapts to all screen sizes. Public marketing pages use vertical y-shift animations for `whileInView`.
+- **AI Integration**: Features XML prompts, task classification, circuit breakers, priority queues, intelligent caching, SSE streaming, multi-provider AI model selection, database-backed conversation history, retry logic, an Agent Step Cache, and a Memory Bank System. Real API model names are used and validated.
 - **Real-time Communication**: Implements Server-Sent Events, WebSocket-driven logging for server and runtime, HTML live preview with CSS hot-swapping, and a robust WebSocket Resilience System.
-- **Security Framework**: Incorporates AES-256-GCM encryption, XSS prevention, CSRF protection, input sanitization, tier-based rate limiting, API versioning, session-based authentication, encrypted GitHub tokens, and comprehensive security hardening measures.
-- **System Reliability**: Includes Checkpoints & Rollback functionality and Playwright-based Background Auto-Testing.
+- **Security Framework**: Incorporates AES-256-GCM encryption, XSS prevention, CSRF protection (requiring `X-CSRF-Token` header for raw `fetch` POST/PUT/PATCH/DELETE to `/api/*`), input sanitization, tier-based rate limiting, API versioning, session-based authentication, encrypted GitHub tokens, and comprehensive security hardening measures. All protected routes require valid Passport sessions.
+- **System Reliability**: Includes Checkpoints & Rollback functionality and Playwright-based Background Auto-Testing. Autonomous build sessions stuck in `planning`/`executing` are reset to `failed` on server startup.
 - **Code Execution Environment**: Uses Native Nix-managed runtimes and `DockerExecutor` for sandboxed execution, supporting `single-vm`/`kubernetes` deployment with PID tracking and language-specific timeouts.
-- **Data Persistence**: Employs PostgreSQL as the primary data store with a two-tier database API, strong tenant isolation, and Drizzle ORM.
-- **Performance Optimization**: Leverages Fast Bootstrap techniques and optimized Docker builds for minimal image sizes.
+- **Data Persistence**: Employs PostgreSQL as the primary data store with a two-tier database API, strong tenant isolation (personal projects must have `tenantId = ownerId`), and Drizzle ORM. `db.execute()` returns an array of rows directly.
+- **Performance Optimization**: Leverages Fast Bootstrap techniques and optimized Docker builds for minimal image sizes. Bootstrap timeout is 60 seconds.
 - **Voice Input System**: Integrates Voice Vibe Coding via the MediaRecorder API for transcription, with OpenAI Whisper and Gemini 2.0 Flash as providers.
 - **Monitoring and Observability**: Features Kubernetes probes and a Provider Health API with Prometheus metrics.
-- **Monetization Strategy**: Operates on a hybrid pricing model.
+- **Routing**: API routes can be dual-mounted (e.g., `/api/models` and `/api/ai/models`). Internal router paths must not include the `/api/` prefix when mounted at `/api`. `notFoundHandler` is critical for SPA routing, only catching `/api/*` routes.
+- **Environment Configuration**: Zod-validated environment variables via `server/utils/env-config.ts`.
 
 ## External Dependencies
 - OpenAI

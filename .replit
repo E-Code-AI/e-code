@@ -9,7 +9,7 @@ packages = ["glibcLocales", "jq", "libxcrypt", "deno", "python3", "gnumake", "gc
 [deployment]
 deploymentTarget = "vm"
 run = ["node", "dist/index.js"]
-build = ["bash", "-c", "test -f dist/index.js && echo 'OK: dist/index.js' && test -d dist/public && echo 'OK: dist/public'"]
+build = ["sh", "-c", "BUILD_DEPLOY=1 REPLIT_DEPLOYMENT=1 npm run build"]
 publicDir = "dist/public"
 
 [workflows]

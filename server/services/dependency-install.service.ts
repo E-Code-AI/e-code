@@ -15,6 +15,7 @@ export interface InstallOptions {
   silent?: boolean;
   production?: boolean;
   cwd?: string;
+  ignoreScripts?: boolean;
 }
 
 export interface InstallResult {
@@ -179,6 +180,7 @@ export class DependencyInstallService extends EventEmitter {
         }
         if (options.silent) args.push('--silent');
         if (options.production) args.push('--production');
+        if (options.ignoreScripts) args.push('--ignore-scripts');
         args.push('--no-fund', '--no-audit');
         return { command: 'npm', args };
 
