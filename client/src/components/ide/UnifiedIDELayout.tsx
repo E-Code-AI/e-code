@@ -74,6 +74,7 @@ const CommandPalette = instrumentedLazy(() => import('@/components/CommandPalett
 const GlobalSearch = instrumentedLazy(() => import('@/components/GlobalSearch').then(mod => ({ default: mod.GlobalSearch })), 'GlobalSearch');
 const CollaborationPanel = instrumentedLazy(() => import('@/components/CollaborationPanel').then(mod => ({ default: mod.CollaborationPanel })), 'CollaborationPanel');
 const DatabasePanel = instrumentedLazy(() => import('@/components/ide/DatabasePanel').then(mod => ({ default: mod.DatabasePanel })), 'DatabasePanel');
+const ReplitAuthPanel = instrumentedLazy(() => import('@/components/ide/ReplitAuthPanel').then(mod => ({ default: mod.ReplitAuthPanel })), 'ReplitAuthPanel');
 const AutonomousWorkspaceViewer = instrumentedLazy(() => import('@/components/ide/AutonomousWorkspaceViewer'), 'AutonomousWorkspaceViewer');
 
 const ReplitGitPanel = instrumentedLazy(() => import('@/components/editor/ReplitGitPanel').then(mod => ({ default: mod.ReplitGitPanel })), 'ReplitGitPanel');
@@ -672,6 +673,12 @@ function UnifiedIDELayout({
             <DatabasePanel projectId={projectId} />
           </Suspense>
         );
+      case 'auth':
+        return (
+          <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Auth..." /></div>}>
+            <ReplitAuthPanel projectId={projectId} />
+          </Suspense>
+        );
       case 'shell':
         return (
           <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Shell..." /></div>}>
@@ -992,6 +999,15 @@ function UnifiedIDELayout({
       return (
         <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Database..." /></div>}>
           <DatabasePanel projectId={projectId} />
+        </Suspense>
+      );
+    }
+
+    // Auth panel - inline
+    if (currentTab.id === 'auth') {
+      return (
+        <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Auth..." /></div>}>
+          <ReplitAuthPanel projectId={projectId} />
         </Suspense>
       );
     }

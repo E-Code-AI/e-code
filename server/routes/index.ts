@@ -107,6 +107,7 @@ import seoRouter from './seo.router';
 import runnerWorkspacesRouter from './runner-workspaces.router';
 import workspacesRouter from './workspaces.router';
 import publicFormsRouter from './public-forms.router';
+import projectAuthRouter from './project-auth.router';
 
 export class MainRouter {
   private authRouter: AuthRouter;
@@ -479,6 +480,9 @@ export class MainRouter {
 
     // Workspaces — simplified one-call IDE endpoint (/api/workspaces/*)
     app.use('/api/workspaces', tierRateLimiters.api, workspacesRouter);
+
+    // Project Auth — authentication configuration per project (/api/project-auth/*)
+    app.use('/api/project-auth', tierRateLimiters.api, projectAuthRouter);
   }
 
   /**

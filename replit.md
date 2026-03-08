@@ -1,7 +1,7 @@
 # E-Code Platform
 
 ## Overview
-E-Code is an AI-assisted web-based IDE designed to boost developer productivity and accelerate project delivery. It provides automated workspace setup, real-time code execution, integrated AI, collaborative tools, enterprise-grade testing, and robust security. The platform aims to be a leading AI-powered software development environment, fostering innovation and efficiency through a comprehensive, secure, and high-performance development experience.
+E-Code is an AI-assisted web-based Integrated Development Environment (IDE) designed to enhance developer productivity and accelerate project delivery. It offers automated workspace setup, real-time code execution, integrated AI capabilities, collaborative tools, enterprise-grade testing, and robust security features. The platform aims to be a leading AI-powered software development environment, fostering innovation and efficiency through a comprehensive, secure, and high-performance development experience.
 
 ## User Preferences
 - Communication: Simple, everyday language
@@ -38,6 +38,7 @@ E-Code is an AI-assisted web-based IDE designed to boost developer productivity 
 - Router Prefix Rule: When a router is mounted at `app.use('/api', router)`, its internal routes must NOT include `/api/` prefix.
 - Template Fork: `POST /api/templates/:id/fork` creates a new project from a template. MUST set `tenantId: userId` on the new project (same as ownerId) to prevent 403 on file/runtime operations. MUST normalize template language to lowercase and validate against DB `language` enum (`javascript, typescript, python, java, go, rust, c, cpp, ruby, php, html, css, nodejs`) — fallback to `javascript` for `unsupported` values like C#, Rust (uppercase), YAML, etc. All `eq(templates.id, id)` and related FK queries MUST use `parseInt(id, 10)` since `templates.id` is serial (integer).
 - Marketplace author field: template.author and extension.author can be objects `{id, name, verified}`. Always render as: `typeof author === 'object' ? author?.name : author`. Never render the raw object.
+- Project Auth Panel: `ReplitAuthPanel` at `client/src/components/ide/ReplitAuthPanel.tsx` — real Replit-style auth panel. Backend: `server/routes/project-auth.router.ts` mounted at `/api/project-auth`. Tables: `project_auth_config` (per-project auth settings), `project_auth_users` (signed-in users). Wired in `UnifiedIDELayout.tsx` as `case 'auth'` and `if (currentTab.id === 'auth')`. Supports providers: email, google, github, discord, apple.
 - WebSocket Origin Validation: `isOriginAllowed()` now has same-host shortcut — if Origin header hostname matches Host header hostname, allow immediately. Also auto-detects `REPLIT_DEV_URL` for allowed origins.
 - Tenant Isolation (Critical): Personal projects MUST have `tenantId = ownerId` (the user's ID) — NOT NULL. The persistence engine's `withScopedTransaction` checks `WHERE tenant_id = userId`, so NULL tenantId causes 403 on all file operations. If projects have NULL tenant_id in DB, run: `UPDATE projects SET tenant_id = owner_id WHERE tenant_id IS NULL`.
 - Project Starter Files: When a new project is created via `POST /api/projects`, a language-appropriate starter file is auto-created in the `files` DB table.
@@ -63,20 +64,21 @@ E-Code is an AI-assisted web-based IDE designed to boost developer productivity 
 - Stuck Session Cleanup (Autonomous Build): On server startup, `AgentOrchestratorService` constructor resets sessions stuck in `planning`/`executing` → `failed`. Idempotency check in `startAutonomousWorkspace` allows restart from `idle` OR `failed` status.
 
 ## System Architecture
-E-Code employs a two-service architecture (Main Platform and Runner microservice), consisting of a React, TypeScript, and Vite frontend built on the Replit RUI Design System, and a Node.js/Express.js, TypeScript, Drizzle ORM, and Passport.js backend.
+E-Code utilizes a two-service architecture, comprising a React, TypeScript, and Vite frontend built with the Replit RUI Design System, and a Node.js/Express.js, TypeScript, Drizzle ORM, and Passport.js backend.
 
-- **UI/UX Decisions**: Leverages the Replit RUI Design System, Intersection Observer for animations, and a Native Motion Library for a responsive user experience. Public marketing pages exclusively use vertical y-shift animations.
-- **AI Integration**: Incorporates XML prompts, task classification, circuit breakers, priority queues, intelligent caching, SSE streaming, multi-provider AI model selection, database-backed conversation history, retry logic, an Agent Step Cache, and a Memory Bank System using real API model names.
-- **Real-time Communication**: Implements Server-Sent Events, WebSocket-driven logging for server and runtime, and HTML live preview with CSS hot-swapping.
-- **Security Framework**: Includes AES-256-GCM encryption, XSS prevention, CSRF protection, input sanitization, tier-based rate limiting, API versioning, session-based authentication, encrypted GitHub tokens, and comprehensive security hardening. All protected routes require valid Passport sessions.
-- **System Reliability**: Features Checkpoints & Rollback functionality and Playwright-based Background Auto-Testing. Stuck autonomous build sessions are reset on server startup.
-- **Code Execution Environment**: Uses Native Nix-managed runtimes and `DockerExecutor` for sandboxed execution, supporting `single-vm`/`kubernetes` deployment with PID tracking and language-specific timeouts.
-- **Data Persistence**: Employs PostgreSQL as the primary data store with a two-tier database API, strong tenant isolation, and Drizzle ORM.
-- **Performance Optimization**: Utilizes Fast Bootstrap techniques and optimized Docker builds for minimal image sizes, with a bootstrap timeout of 60 seconds.
-- **Voice Input System**: Integrates Voice Vibe Coding via the MediaRecorder API for transcription, with OpenAI Whisper and Gemini 2.0 Flash as providers.
-- **Monitoring and Observability**: Features Kubernetes probes and a Provider Health API with Prometheus metrics.
-- **Routing**: API routes can be dual-mounted. Internal router paths must not include the `/api/` prefix when mounted at `/api`. `notFoundHandler` is configured to only catch `/api/*` routes, allowing the React SPA to handle non-API paths.
-- **Environment Configuration**: Environment variables are validated using Zod via `server/utils/env-config.ts`.
+- **UI/UX Decisions**: The platform leverages the Replit RUI Design System, employs vertical y-shift animations for public marketing pages, and uses a Native Motion Library for responsiveness. Console panels dynamically adapt to various screen sizes, and public routes are accessible without authentication.
+- **AI Integration**: AI features include XML prompts, task classification, circuit breakers, priority queues, intelligent caching, SSE streaming, multi-provider AI model selection (OpenAI, Anthropic, Google, xAI, Moonshot) with verified API model names, database-backed conversation history, retry logic, an Agent Step Cache, and a Memory Bank System. Autonomous build sessions stuck in `planning`/`executing` states are automatically reset to `failed` on server startup.
+- **Real-time Communication**: Implemented through Server-Sent Events (SSE) and WebSockets for server logs, runtime logs, and HTML live preview with CSS hot-swapping. Mobile Bootstrap WebSocket connections are stabilized with debounced cleanup.
+- **Security Framework**: The platform incorporates AES-256-GCM encryption, XSS prevention, CSRF protection, input sanitization, tier-based rate limiting, API versioning, session-based authentication, encrypted GitHub tokens, and comprehensive hardening measures, ensuring all protected routes require valid Passport sessions.
+- **System Reliability**: Features Checkpoints & Rollback functionality and Playwright-based Background Auto-Testing.
+- **Code Execution Environment**: Uses Native Nix-managed runtimes and a `DockerExecutor` for sandboxed code execution, supporting `single-vm`/`kubernetes` deployments with PID tracking and language-specific timeouts. Docker builds are optimized for minimal image sizes.
+- **Data Persistence**: Employs PostgreSQL with Drizzle ORM, enforcing strong tenant isolation and providing asynchronous database auto-provisioning. Notification preferences are stored in jsonb columns, and specific tables use `text` for userId.
+- **Performance Optimization**: Fast Bootstrap techniques are implemented with a 60-second timeout.
+- **Voice Input System**: Integrates Voice Vibe Coding via the MediaRecorder API for transcription, utilizing OpenAI Whisper and Gemini 2.0 Flash as providers.
+- **Monitoring and Observability**: Includes Kubernetes probes and a Provider Health API with Prometheus metrics.
+- **Routing**: API routes support dual-mounting, and internal router paths must not include the `/api/` prefix when mounted at `/api`. A `notFoundHandler` specifically manages `/api/*` routes, allowing the React SPA to handle other paths. Global search and workspace bootstrap have dedicated API endpoints with specific response formats.
+- **Environment Configuration**: Environment variables are validated using Zod.
+- **Project Management**: New projects are created with auto-generated starter files and adhere to tenant isolation principles. Template forking includes language normalization and validation. The Projects API supports pagination. Project authentication is managed via a dedicated panel supporting multiple providers.
 
 ## External Dependencies
 - OpenAI

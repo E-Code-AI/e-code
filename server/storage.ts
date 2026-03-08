@@ -82,6 +82,8 @@ import {
   insertNotificationSchema, insertNotificationPreferenceSchema,
   customerRequests, insertCustomerRequestSchema,
   projectImports, auditLogs, // Added imports for projectImports and auditLogs
+  projectAuthConfig, projectAuthUsers,
+  ProjectAuthConfig, InsertProjectAuthConfig, ProjectAuthUser, InsertProjectAuthUser,
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -774,6 +776,13 @@ export interface IStorage {
   getHunterReviews(hunterId: number): Promise<BountyReview[]>;
   getPosterReviews(posterId: number): Promise<BountyReview[]>;
   getUserAverageRating(userId: number, reviewType: 'hunter_review' | 'poster_review'): Promise<number | null>;
+
+  // Project Auth Config operations
+  getProjectAuthConfig(projectId: number): Promise<ProjectAuthConfig | null>;
+  upsertProjectAuthConfig(projectId: number, config: Partial<InsertProjectAuthConfig>): Promise<ProjectAuthConfig>;
+  getProjectAuthUsers(projectId: number, limit?: number): Promise<ProjectAuthUser[]>;
+  addProjectAuthUser(user: InsertProjectAuthUser): Promise<ProjectAuthUser>;
+  deleteProjectAuthUser(projectId: number, userId: number): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -5486,6 +5495,60 @@ Constraints: {{constraints}}`,
       ));
 
     return result?.avgRating || null;
+  }
+
+  async getProjectAuthConfig(projectId: number): Promise<ProjectAuthConfig | null> {
+    const [config] = await this.db
+      .select()
+      .from(projectAuthConfig)
+      .where(eq(projectAuthConfig.projectId, projectId));
+    return config || null;
+  }
+
+  async upsertProjectAuthConfig(projectId: number, config: Partial<InsertProjectAuthConfig>): Promise<ProjectAuthConfig> {
+    const existing = await this.getProjectAuthConfig(projectId);
+    if (existing) {
+      const [updated] = await this.db
+        .update(projectAuthConfig)
+        .set({ ...config, updatedAt: new Date() })
+        .where(eq(projectAuthConfig.projectId, projectId))
+        .returning();
+      return updated;
+    } else {
+      const [created] = await this.db
+        .insert(projectAuthConfig)
+        .values({ projectId, ...config })
+        .returning();
+      return created;
+    }
+  }
+
+  async getProjectAuthUsers(projectId: number, limit = 50): Promise<ProjectAuthUser[]> {
+    return this.db
+      .select()
+      .from(projectAuthUsers)
+      .where(eq(projectAuthUsers.projectId, projectId))
+      .orderBy(desc(projectAuthUsers.createdAt))
+      .limit(limit);
+  }
+
+  async addProjectAuthUser(user: InsertProjectAuthUser): Promise<ProjectAuthUser> {
+    const [created] = await this.db
+      .insert(projectAuthUsers)
+      .values(user)
+      .onConflictDoUpdate({
+        target: [projectAuthUsers.projectId, projectAuthUsers.email],
+        set: { lastSignIn: new Date(), name: user.name, avatar: user.avatar },
+      })
+      .returning();
+    return created;
+  }
+
+  async deleteProjectAuthUser(projectId: number, userId: number): Promise<boolean> {
+    const result = await this.db
+      .delete(projectAuthUsers)
+      .where(and(eq(projectAuthUsers.id, userId), eq(projectAuthUsers.projectId, projectId)));
+    return (result as any).rowCount > 0;
   }
 }
 

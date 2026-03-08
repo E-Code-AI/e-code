@@ -4669,3 +4669,36 @@ export const insertRunnerWorkspaceSchema = createInsertSchema(runnerWorkspaces).
 });
 export type InsertRunnerWorkspace = z.infer<typeof insertRunnerWorkspaceSchema>;
 export type RunnerWorkspace = typeof runnerWorkspaces.$inferSelect;
+
+export const projectAuthConfig = pgTable("project_auth_config", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").notNull().references(() => projects.id, { onDelete: "cascade" }).unique(),
+  enabled: boolean("enabled").notNull().default(false),
+  providers: jsonb("providers").$type<string[]>().notNull().default(['email']),
+  allowedDomains: jsonb("allowed_domains").$type<string[]>().notNull().default([]),
+  requireVerifiedEmail: boolean("require_verified_email").notNull().default(false),
+  loginRedirectUrl: text("login_redirect_url"),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertProjectAuthConfigSchema = createInsertSchema(projectAuthConfig).omit({ id: true });
+export type InsertProjectAuthConfig = z.infer<typeof insertProjectAuthConfigSchema>;
+export type ProjectAuthConfig = typeof projectAuthConfig.$inferSelect;
+
+export const projectAuthUsers = pgTable("project_auth_users", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").notNull().references(() => projects.id, { onDelete: "cascade" }),
+  email: varchar("email", { length: 255 }).notNull(),
+  name: varchar("name", { length: 255 }),
+  avatar: text("avatar"),
+  provider: varchar("provider", { length: 50 }).notNull().default('email'),
+  lastSignIn: timestamp("last_sign_in").defaultNow(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => [
+  index("project_auth_users_project_id_idx").on(table.projectId),
+  uniqueIndex("project_auth_users_project_email_unique").on(table.projectId, table.email),
+]);
+
+export const insertProjectAuthUserSchema = createInsertSchema(projectAuthUsers).omit({ id: true, createdAt: true });
+export type InsertProjectAuthUser = z.infer<typeof insertProjectAuthUserSchema>;
+export type ProjectAuthUser = typeof projectAuthUsers.$inferSelect;
