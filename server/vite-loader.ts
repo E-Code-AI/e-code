@@ -7,6 +7,13 @@ import type { Application } from 'express';
 import type { Server } from 'http';
 import { createLogger } from './utils/logger';
 
+// Top-level synchronous imports for production static serving.
+// Using top-level imports (not dynamic await import()) ensures the production
+// branch of safeSetupVite runs SYNCHRONOUSLY with no async awaiting that can hang.
+import expressStatic from 'express';
+import pathModule from 'path';
+import fsModule from 'fs';
+
 const logger = createLogger('vite-loader');
 
 /**
@@ -169,19 +176,10 @@ export async function safeSetupVite(app: Application, server: Server): Promise<b
     } else {
       logger.info('[Vite Loader] 🏭 Production mode - serving static files from dist/public...');
       try {
-        // Use our own production static file serving (dist/public is the correct path)
-        // Note: ES module default exports require .default access
-        const expressModule = await import('express');
-        const express = expressModule.default;
-        const pathModule = await import('path');
-        const fsModule = await import('fs');
-        
         // Production build outputs to dist/public
-        // Use __dirname for production (bundle is at dist/index.js, assets at dist/public/)
-        // In production bundle, __dirname points to dist/, so public/ is adjacent
-        const distPath = process.env.NODE_ENV === 'production' 
-          ? pathModule.resolve(__dirname, 'public')
-          : pathModule.resolve(process.cwd(), 'dist', 'public');
+        // __dirname in the production esbuild bundle (dist/index.js) = dist/
+        // so pathModule.resolve(__dirname, 'public') = dist/public
+        const distPath = pathModule.resolve(__dirname, 'public');
         const indexHtmlPath = pathModule.join(distPath, 'index.html');
         
         if (!fsModule.existsSync(distPath)) {
@@ -193,7 +191,7 @@ export async function safeSetupVite(app: Application, server: Server): Promise<b
         // Serve static assets with caching.
         // CRITICAL: index:false prevents express.static from serving index.html directly,
         // which would bypass CSP nonce injection and cause inline styles/scripts to be blocked.
-        app.use(express.static(distPath, {
+        app.use(expressStatic.static(distPath, {
           maxAge: '1d',
           etag: true,
           lastModified: true,
@@ -213,14 +211,17 @@ export async function safeSetupVite(app: Application, server: Server): Promise<b
           return html;
         }
 
-        // SPA fallback - serve index.html for all non-API routes WITH nonce injection
+        // SPA fallback - serve index.html for all non-API/non-asset routes WITH nonce injection
         app.use('*', (req: any, res: any, next: any) => {
-          // Skip API and WebSocket routes
+          // Skip API, WebSocket, and static asset paths
+          // express.static above handles /assets/* — if it calls next(), the file is missing (404)
           if (req.originalUrl.startsWith('/api/') || 
               req.originalUrl.startsWith('/health') ||
               req.originalUrl.startsWith('/metrics') ||
               req.originalUrl.startsWith('/ws/') ||
-              req.originalUrl.startsWith('/collaboration')) {
+              req.originalUrl.startsWith('/collaboration') ||
+              req.originalUrl.startsWith('/assets/') ||
+              req.originalUrl.startsWith('/attached_assets/')) {
             return next();
           }
           const nonce: string | undefined = res.locals.cspNonce;
@@ -255,32 +256,27 @@ export async function safeSetupVite(app: Application, server: Server): Promise<b
  * Serves pre-built static files from dist/ folder
  */
 export async function setupFallbackServer(app: Application): Promise<void> {
-  // Use dynamic imports for ES modules
-  // Note: ES module default exports require .default access
-  const expressModule = await import('express');
-  const express = expressModule.default;
-  const path = await import('path');
-  const fs = await import('fs');
+  // Uses top-level synchronous imports (expressStatic, pathModule, fsModule)
+  // to avoid async hangs in the production bundle
+  const publicPath = pathModule.resolve(__dirname, 'public');
+  const builtIndexPath = pathModule.join(publicPath, 'index.html');
   
-  // Serve static assets from dist/public (built CSS, JS, images, index.html)
-  // Use __dirname in production (bundle is at dist/index.js)
-  const publicPath = process.env.NODE_ENV === 'production'
-    ? path.resolve(__dirname, 'public')
-    : path.resolve(process.cwd(), 'dist/public');
-  const builtIndexPath = path.join(publicPath, 'index.html');
-  
-  if (fs.existsSync(publicPath) && fs.existsSync(builtIndexPath)) {
+  if (fsModule.existsSync(publicPath) && fsModule.existsSync(builtIndexPath)) {
     // We have a complete pre-built frontend!
     // index:false so index.html is served via SPA fallback with CSP nonce injection
-    app.use(express.static(publicPath, { index: false }));
+    app.use(expressStatic.static(publicPath, { index: false }));
     
     // Read the built index.html
-    const builtHTML = fs.readFileSync(builtIndexPath, 'utf-8');
+    const builtHTML = fsModule.readFileSync(builtIndexPath, 'utf-8');
     
-    // Serve index.html for all non-API routes WITH nonce injection
-    app.get('*', (req: any, res: any) => {
-      if (req.path.startsWith('/api') || req.path.startsWith('/collaboration') || req.path.startsWith('/webrtc')) {
-        return res.status(404).json({ error: 'API endpoint not found' });
+    // Serve index.html for all non-API, non-asset routes WITH nonce injection
+    app.get('*', (req: any, res: any, next: any) => {
+      if (req.path.startsWith('/api') || 
+          req.path.startsWith('/collaboration') || 
+          req.path.startsWith('/webrtc') ||
+          req.path.startsWith('/assets/') ||
+          req.path.startsWith('/attached_assets/')) {
+        return next();
       }
       const nonce: string | undefined = res.locals?.cspNonce;
       let html = builtHTML;

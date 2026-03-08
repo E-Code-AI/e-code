@@ -919,6 +919,68 @@ httpServer.listen(port, "0.0.0.0", () => {
   }));
   logger.info(`[Static Assets] Serving attached_assets from ${attachedAssetsPath}`);
 
+  // ✅ PRODUCTION STATIC SERVING — registered synchronously, before any potentially-blocking
+  // async service initialization (socket.io terminal, vite dev server, etc.).
+  // This ensures JS/CSS/image assets are always served with correct Content-Type,
+  // regardless of how long other services take to start.
+  //
+  // NOTE: In development, the Vite dev server (safeSetupVite below) serves assets from
+  //       memory and this block is skipped — process.env.NODE_ENV is 'development'.
+  //       In the production bundle, esbuild replaces process.env.NODE_ENV with "production"
+  //       so this block always runs in production.
+  if (process.env.NODE_ENV === 'production') {
+    const fs = await import('fs');
+    // In the production esbuild bundle, __dirname = the directory of dist/index.js = dist/
+    // so the Vite frontend build at dist/public/ is one level down.
+    const distPublic = path.resolve(__dirname, 'public');
+    const distIndex = path.join(distPublic, 'index.html');
+
+    if (fs.existsSync(distPublic)) {
+      logger.info(`[Production Static] Serving frontend from ${distPublic}`);
+
+      // Serve hashed JS/CSS/font/image assets with long-lived cache.
+      // index:false forces index.html through the SPA fallback below so CSP nonces are injected.
+      app.use(express.static(distPublic, {
+        maxAge: '1d',
+        immutable: false,
+        etag: true,
+        lastModified: true,
+        index: false,
+      }));
+
+      if (fs.existsSync(distIndex)) {
+        const indexHtmlRaw = fs.readFileSync(distIndex, 'utf-8');
+
+        // SPA fallback: inject CSP nonce into inline <style>/<script> tags, then serve index.html.
+        // Skip asset paths — express.static above handled them (or they don't exist → 404).
+        app.use('*', (req: any, res: any, next: any) => {
+          if (req.originalUrl.startsWith('/api/') ||
+              req.originalUrl.startsWith('/health') ||
+              req.originalUrl.startsWith('/metrics') ||
+              req.originalUrl.startsWith('/ws/') ||
+              req.originalUrl.startsWith('/collaboration') ||
+              req.originalUrl.startsWith('/assets/') ||
+              req.originalUrl.startsWith('/attached_assets/')) {
+            return next();
+          }
+          const nonce: string | undefined = res.locals.cspNonce;
+          let html = indexHtmlRaw;
+          if (nonce) {
+            html = html.replace(/<style(\b[^>]*)>/g, (_m: string, attrs: string) => `<style${attrs} nonce="${nonce}">`);
+            html = html.replace(/<script(?![^>]*\bsrc\s*=)([^>]*)>/g, (_m: string, attrs: string) => `<script${attrs} nonce="${nonce}">`);
+          }
+          res.status(200).set({ 'Content-Type': 'text/html' }).end(html);
+        });
+
+        logger.info('[Production Static] ✅ SPA fallback registered (CSP nonce injection enabled)');
+      } else {
+        logger.warn('[Production Static] ⚠️  dist/public/index.html not found — run npm run build');
+      }
+    } else {
+      logger.warn('[Production Static] ⚠️  dist/public not found — run npm run build');
+    }
+  }
+
   // Setup Vite with graceful fallback handling
   // Uses safe loader that isolates Vite failures and provides fallback HTML server
   try {
@@ -931,12 +993,9 @@ httpServer.listen(port, "0.0.0.0", () => {
       logger.info('[HTTP Server] 🔓 Temporarily restored upgrade listeners for Vite HMR initialization');
     }
     
-    // ✅ Initialize Socket.IO terminal service (uses both WebSocket and HTTP polling)
-    // This provides better proxy compatibility than raw WebSocket
-    const { socketIOTerminalService } = await import('./terminal/socket-io-terminal');
-    socketIOTerminalService.initialize(httpServer);
-    logger.info('[SocketIO Terminal] ✅ Terminal service initialized with WebSocket + polling fallback');
-    
+    // ✅ CRITICAL ORDER: Setup static file serving FIRST before any potentially-blocking services.
+    // socketIOTerminalService.initialize can hang for seconds waiting for Redis/adapters.
+    // If safeSetupVite runs after it, assets return HTML instead of JS/CSS during that window.
     const { safeSetupVite, setupFallbackServer } = await import("./vite-loader");
     const viteSuccess = await safeSetupVite(app, httpServer);
     
@@ -951,6 +1010,13 @@ httpServer.listen(port, "0.0.0.0", () => {
       // Vite failed - setup fallback HTML server
       await setupFallbackServer(app);
     }
+
+    // ✅ Initialize Socket.IO terminal service AFTER static serving is set up.
+    // This service can take several seconds to initialize (Redis/adapter connections),
+    // so it must not block static file serving from being registered.
+    const { socketIOTerminalService } = await import('./terminal/socket-io-terminal');
+    socketIOTerminalService.initialize(httpServer);
+    logger.info('[SocketIO Terminal] ✅ Terminal service initialized with WebSocket + polling fallback');
   } catch (error: any) {
     // If even the loader fails, setup basic fallback
     logger.error(`[WORKING SERVER] Critical: Vite loader failed: ${error.message}`);

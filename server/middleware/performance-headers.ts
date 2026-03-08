@@ -105,25 +105,25 @@ export function performanceHeaders() {
 /**
  * Early hints middleware (103 Early Hints support)
  * Sends preload hints before the main response
+ * 
+ * NOTE: Only active in development — in production the asset filenames are
+ * hashed by Vite (e.g. /assets/index-B9iQpJ9g.js) and cannot be known at
+ * server startup without parsing the built index.html. Sending wrong dev
+ * paths (/src/main.tsx) in production causes browser console errors and
+ * wastes a round-trip fetching HTML instead of JS.
  */
 export function earlyHints() {
-  const criticalResources = [
-    { path: '/src/main.tsx', as: 'script' },
-    { path: '/src/index.css', as: 'style' },
-  ];
-  
   return (req: Request, res: Response, next: NextFunction) => {
-    // Only for HTML requests
-    if (req.accepts('html') && !req.path.startsWith('/api/')) {
-      // Note: 103 Early Hints requires HTTP/2 support
-      // For HTTP/1.1, we use Link headers instead
-      const linkHeaders = criticalResources
-        .map(r => `<${r.path}>; rel=preload; as=${r.as}`)
-        .join(', ');
-      
+    // Only emit preload hints in development where paths are stable
+    if (process.env.NODE_ENV === 'development' &&
+        req.accepts('html') &&
+        !req.path.startsWith('/api/')) {
+      const linkHeaders = [
+        '</src/main.tsx>; rel=preload; as=script',
+        '</src/index.css>; rel=preload; as=style',
+      ].join(', ');
       res.setHeader('Link', linkHeaders);
     }
-    
     next();
   };
 }
