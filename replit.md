@@ -1,7 +1,7 @@
 # E-Code Platform
 
 ## Overview
-E-Code is an AI-assisted web-based IDE designed to enhance developer productivity and accelerate project delivery. It provides automated workspace setup, real-time code execution, integrated AI capabilities, collaborative tools, enterprise-grade testing, and robust security. The platform aims to be a leading AI-powered software development environment, fostering innovation and efficiency through a comprehensive, secure, and high-performance development experience.
+E-Code is an AI-assisted web-based IDE designed to enhance developer productivity and accelerate project delivery. It offers automated workspace setup, real-time code execution, integrated AI capabilities, collaborative tools, enterprise-grade testing, and robust security. The platform aims to be a leading AI-powered software development environment, fostering innovation and efficiency through a comprehensive, secure, and high-performance development experience.
 
 ## User Preferences
 - Communication: Simple, everyday language
@@ -61,16 +61,17 @@ E-Code is an AI-assisted web-based IDE designed to enhance developer productivit
 - Stuck Session Cleanup (Autonomous Build): On server startup, `AgentOrchestratorService` constructor resets sessions stuck in `planning`/`executing` → `failed`. Idempotency check in `startAutonomousWorkspace` allows restart from `idle` OR `failed` status.
 
 ## System Architecture
-E-Code utilizes a two-service architecture (Main Platform and Runner microservice), comprising a React, TypeScript, and Vite frontend adhering to the Replit RUI Design System, and a Node.js/Express.js, TypeScript, Drizzle ORM, and Passport.js backend.
-- **UI/UX Decisions**: Employs Replit RUI Design System, Intersection Observer for animations, and a Native Motion Library for a responsive and engaging user experience.
-- **AI Integration**: Implements XML prompts, task classification, circuit breakers, priority queues, intelligent caching, SSE streaming, multi-provider AI model selection, database-backed conversation history, retry logic, an Agent Step Cache, and a Memory Bank System for advanced AI capabilities.
-- **Real-time Communication**: Features Server-Sent Events, WebSocket-driven logging, HTML live preview with CSS hot-swapping, and a robust WebSocket Resilience System to ensure seamless, real-time interactions.
+E-Code employs a two-service architecture (Main Platform and Runner microservice), with a React, TypeScript, and Vite frontend built on the Replit RUI Design System, and a Node.js/Express.js, TypeScript, Drizzle ORM, and Passport.js backend.
+
+- **UI/UX Decisions**: Utilizes Replit RUI Design System, Intersection Observer for animations, and a Native Motion Library for a responsive user experience. The console panel adapts to all screen sizes.
+- **AI Integration**: Features XML prompts, task classification, circuit breakers, priority queues, intelligent caching, SSE streaming, multi-provider AI model selection, database-backed conversation history, retry logic, an Agent Step Cache, and a Memory Bank System.
+- **Real-time Communication**: Implements Server-Sent Events, WebSocket-driven logging for server and runtime, HTML live preview with CSS hot-swapping, and a robust WebSocket Resilience System.
 - **Security Framework**: Incorporates AES-256-GCM encryption, XSS prevention, CSRF protection, input sanitization, tier-based rate limiting, API versioning, session-based authentication, encrypted GitHub tokens, and comprehensive security hardening measures.
-- **System Reliability**: Includes Checkpoints & Rollback functionality and Playwright-based Background Auto-Testing to ensure system stability and data integrity.
-- **Code Execution Environment**: Uses Native Nix-managed runtimes and `DockerExecutor` for sandboxed execution, supporting `single-vm`/`kubernetes` deployment with PID tracking and language-specific timeouts for secure and efficient code execution.
+- **System Reliability**: Includes Checkpoints & Rollback functionality and Playwright-based Background Auto-Testing.
+- **Code Execution Environment**: Uses Native Nix-managed runtimes and `DockerExecutor` for sandboxed execution, supporting `single-vm`/`kubernetes` deployment with PID tracking and language-specific timeouts.
 - **Data Persistence**: Employs PostgreSQL as the primary data store with a two-tier database API, strong tenant isolation, and Drizzle ORM.
 - **Performance Optimization**: Leverages Fast Bootstrap techniques and optimized Docker builds for minimal image sizes.
-- **Voice Input System**: Integrates Voice Vibe Coding via the MediaRecorder API.
+- **Voice Input System**: Integrates Voice Vibe Coding via the MediaRecorder API for transcription, with OpenAI Whisper and Gemini 2.0 Flash as providers.
 - **Monitoring and Observability**: Features Kubernetes probes and a Provider Health API with Prometheus metrics.
 - **Monetization Strategy**: Operates on a hybrid pricing model.
 
