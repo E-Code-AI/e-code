@@ -1,0 +1,14 @@
+node_modules/
+.local/
+.checkpoints/
+dist/
+.git/
+.cache/
+.upm/
+backups/
+logs/
+previews/
+attached_assets/
+*.map
+*.d.ts
+package-lock.json
