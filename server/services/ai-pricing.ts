@@ -20,9 +20,9 @@ export const AI_MODEL_PRICING: Record<string, { input: number; output: number }>
   // ============================================
   // OpenAI (Jan 2026) - ✅ CONSOLIDATED: Only gpt-5.2 is current
   // ============================================
+  'gpt-5.4': { input: 2.50, output: 15.00 },
+  'gpt-5.4-pro': { input: 30.00, output: 150.00 },
   'gpt-4o': { input: 1.75, output: 14.00 },
-  'gpt-4o': { input: 1.75, output: 14.00 },
-  'gpt-4o-mini': { input: 0.30, output: 1.20 },
   'gpt-4o-mini': { input: 0.10, output: 0.40 },
   'gpt-4.1': { input: 2.00, output: 8.00 },
   'gpt-4.1-mini': { input: 0.40, output: 1.60 },

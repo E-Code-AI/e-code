@@ -23,6 +23,8 @@ export class TokenUsageLoggerService {
   // Token cost estimates (per 1K tokens) - March 2026 pricing
   private static readonly COST_PER_1K_TOKENS = {
     // OpenAI
+    'gpt-5.4': { prompt: 0.0025, completion: 0.015 },
+    'gpt-5.4-pro': { prompt: 0.03, completion: 0.15 },
     'gpt-4o': { prompt: 0.0025, completion: 0.01 },
     'gpt-4o-mini': { prompt: 0.00015, completion: 0.0006 },
     'gpt-4.1': { prompt: 0.002, completion: 0.008 },

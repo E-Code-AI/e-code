@@ -33,9 +33,25 @@ export class AgentPreferencesService {
     return [
       // ── OpenAI ──────────────────────────────────────────────────────────────
       {
+        id: 'gpt-5.4',
+        name: 'GPT-5.4',
+        description: 'OpenAI cutting-edge flagship (March 2026) — best reasoning, coding, agentic workflows, 1.05M context',
+        category: 'openai',
+        tier: 'high-power',
+        capabilities: { extendedThinking: false, codeGeneration: true, maxTokens: 1050000, speed: 'medium', cost: 'high' },
+      },
+      {
+        id: 'gpt-5.4-pro',
+        name: 'GPT-5.4 Pro',
+        description: 'Maximum performance GPT-5.4 — for complex professional tasks requiring peak accuracy',
+        category: 'openai',
+        tier: 'high-power',
+        capabilities: { extendedThinking: false, codeGeneration: true, maxTokens: 1050000, speed: 'medium', cost: 'very-high' },
+      },
+      {
         id: 'gpt-4.1',
         name: 'GPT-4.1',
-        description: 'Latest OpenAI flagship — best coding, instruction following, 1M context',
+        description: 'Previous OpenAI flagship — best coding, instruction following, 1M context',
         category: 'openai',
         tier: 'high-power',
         capabilities: { extendedThinking: false, codeGeneration: true, maxTokens: 1047576, speed: 'medium', cost: 'medium' },
@@ -341,7 +357,7 @@ export class AgentPreferencesService {
       if (requiresExtendedThinking || complexity === 'complex') {
         return 'claude-opus-4-20250514';
       }
-      return 'gpt-4.1';
+      return 'gpt-5.4';
     }
 
     // Extended thinking required

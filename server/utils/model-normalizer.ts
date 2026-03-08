@@ -19,6 +19,16 @@ const MODEL_NORMALIZATION_MAP: Record<string, string> = {
 
   // ── OpenAI ──────────────────────────────────────────────────────────────────
   // Confirmed real (all return 429 quota — model exists)
+  // GPT-5.4 family — released March 5, 2026 (OpenAI's current flagship)
+  'gpt-5.4':                    'gpt-5.4',
+  'gpt-5.4-pro':                'gpt-5.4-pro',
+  'gpt-5.4-2026-03-05':         'gpt-5.4',
+  'gpt-5.4-pro-2026-03-05':     'gpt-5.4-pro',
+  // GPT-4.1 family
+  'gpt-4.1':            'gpt-4.1',
+  'gpt-4.1-mini':       'gpt-4.1-mini',
+  'gpt-4.1-nano':       'gpt-4.1-nano',
+  // Other real GPT-4 models
   'gpt-4o':             'gpt-4o',
   'gpt-4o-mini':        'gpt-4o-mini',
   'gpt-4-turbo':        'gpt-4-turbo',
@@ -28,14 +38,12 @@ const MODEL_NORMALIZATION_MAP: Record<string, string> = {
   'o3':                 'o3',
   'o3-mini':            'o3-mini',
   'o4-mini':            'o4-mini',
-  'gpt-4.1':            'gpt-4.1',
-  'gpt-4.1-mini':       'gpt-4.1-mini',
-  'gpt-4.1-nano':       'gpt-4.1-nano',
-  // Deprecated / fake → newest real equivalent
-  'gpt-5':              'gpt-4.1',
-  'gpt-5.1':            'gpt-4.1',
-  'gpt-5.2':            'gpt-4.1',
-  'gpt-5.2-codex':      'gpt-4.1',
+  // Deprecated / old aliases → gpt-5.4 (now that GPT-5.4 is real)
+  'gpt-5':              'gpt-5.4',
+  'gpt-5.1':            'gpt-5.4',
+  'gpt-5.2':            'gpt-5.4',
+  'gpt-5.3':            'gpt-5.4',
+  'gpt-5.2-codex':      'gpt-5.4',
   'gpt-5-mini':         'gpt-4.1-mini',
   'gpt-5-nano':         'gpt-4.1-nano',
   'o1-mini':            'o4-mini',
@@ -120,7 +128,7 @@ const MODEL_NORMALIZATION_MAP: Record<string, string> = {
 };
 
 const PROVIDER_DEFAULTS: Record<string, string> = {
-  'openai':     'gpt-4.1',
+  'openai':     'gpt-5.4',
   'anthropic':  'claude-sonnet-4-20250514',
   'gemini':     'gemini-2.5-flash',
   'google':     'gemini-2.5-flash',

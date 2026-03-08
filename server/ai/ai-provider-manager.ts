@@ -36,10 +36,28 @@ export const AI_MODELS: AIModel[] = [
   // ── OpenAI ──────────────────────────────────────────────────────────────────
   // All confirmed real via live API test (March 2026 — 429 quota = model exists)
   {
+    id: 'gpt-5.4',
+    name: 'GPT-5.4',
+    provider: 'openai',
+    description: 'OpenAI cutting-edge flagship (March 2026) — best reasoning, coding, agentic workflows, 1.05M context',
+    maxTokens: 1050000,
+    supportsStreaming: true,
+    costPer1kTokens: 0.0025
+  },
+  {
+    id: 'gpt-5.4-pro',
+    name: 'GPT-5.4 Pro',
+    provider: 'openai',
+    description: 'Maximum performance GPT-5.4 — for complex professional tasks requiring peak accuracy',
+    maxTokens: 1050000,
+    supportsStreaming: true,
+    costPer1kTokens: 0.03
+  },
+  {
     id: 'gpt-4.1',
     name: 'GPT-4.1',
     provider: 'openai',
-    description: 'Latest OpenAI flagship — best coding, instruction following, and long context',
+    description: 'Previous OpenAI flagship — best coding, instruction following, and long context',
     maxTokens: 1047576,
     supportsStreaming: true,
     costPer1kTokens: 0.002
@@ -319,7 +337,7 @@ export const AI_MODELS: AIModel[] = [
  * UPDATED January 2025: kimi-k2-0711-preview → kimi-k2-0905-preview (September 2025 upgrade)
  */
 const PROVIDER_FALLBACK_CHAIN = [
-  'gpt-4.1',
+  'gpt-5.4',
   'claude-sonnet-4-20250514',
   'gemini-2.5-flash',
   'grok-3',
