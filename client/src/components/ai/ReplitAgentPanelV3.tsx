@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { flushSync } from 'react-dom';
 
 import { useQuery } from '@tanstack/react-query';
 import { devLog } from '@/lib/dev-logger';
@@ -560,12 +561,13 @@ export function ReplitAgentPanelV3({
   // External input handler for mobile - allows external input bar to trigger submit
   const handleExternalSubmit = useCallback((value: string) => {
     if (!value.trim() || isWorking) return;
-    setInput(value);
-    // Trigger submit in next tick after input is set
-    setTimeout(() => {
-      const submitBtn = document.querySelector('[data-testid="button-send"]') as HTMLButtonElement;
-      if (submitBtn) submitBtn.click();
-    }, 0);
+    // flushSync forces React to commit the state update synchronously before
+    // we click the button — prevents handleSend from reading stale empty input
+    flushSync(() => {
+      setInput(value);
+    });
+    const submitBtn = document.querySelector('[data-testid="button-send"]') as HTMLButtonElement;
+    if (submitBtn) submitBtn.click();
   }, [isWorking]);
   
   // Optimistic UI updates and debounced streaming for faster perceived response

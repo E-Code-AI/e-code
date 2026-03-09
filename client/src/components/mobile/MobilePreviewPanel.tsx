@@ -50,33 +50,31 @@ function NotRunningState({ onRun, isStarting, noRunnableFiles }: { onRun: () => 
             className="text-[17px] font-semibold text-foreground leading-tight"
             data-testid="text-not-running-title"
           >
-            {noRunnableFiles ? 'No app built yet' : 'Your app is not running'}
+            {noRunnableFiles ? 'App ready to run' : 'Your app is not running'}
           </h3>
           <p 
             className="text-[14px] text-muted-foreground leading-snug"
             data-testid="text-not-running-description"
           >
             {noRunnableFiles 
-              ? 'Describe your app in the chat and the AI will build it.'
+              ? 'Press Run to start your app and see it live.'
               : 'Run to preview your app.'}
           </p>
         </div>
 
-        {!noRunnableFiles && (
-          <Button
-            onClick={onRun}
-            disabled={isStarting}
-            className="h-12 px-8 text-[15px] font-semibold rounded-xl gap-2"
-            data-testid="button-run-app"
-          >
-            {isStarting ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Play className="w-4 h-4 fill-current" />
-            )}
-            {isStarting ? 'Starting...' : 'Run'}
-          </Button>
-        )}
+        <Button
+          onClick={onRun}
+          disabled={isStarting}
+          className="h-12 px-8 text-[15px] font-semibold rounded-xl gap-2"
+          data-testid="button-run-app"
+        >
+          {isStarting ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Play className="w-4 h-4 fill-current" />
+          )}
+          {isStarting ? 'Starting...' : 'Run'}
+        </Button>
       </div>
     </div>
   );
@@ -153,7 +151,7 @@ export function MobilePreviewPanel({
   const computedPreviewUrl = baseUrl + (currentPath === '/' ? '' : currentPath);
 
   if (
-    previewStatus?.status === 'stopped' && 
+    (previewStatus?.status === 'stopped' || previewStatus?.status === 'no_runnable_files' || previewStatus?.status === 'error') &&
     !hasAttemptedAutoStart.current &&
     projectId
   ) {
@@ -248,14 +246,12 @@ export function MobilePreviewPanel({
             <div className="flex flex-col items-center justify-center h-full gap-2 p-4">
               <Monitor className="w-6 h-6 text-muted-foreground" />
               <p className="text-[11px] text-muted-foreground text-center">
-                {noRunnableFiles ? 'Ask the AI to build your app' : 'App not running'}
+                {noRunnableFiles ? 'App ready to run' : 'App not running'}
               </p>
-              {!noRunnableFiles && (
-                <Button size="sm" className="h-7 text-[11px]" onClick={handleRun}>
-                  <Play className="w-3 h-3 mr-1 fill-current" />
-                  Run
-                </Button>
-              )}
+              <Button size="sm" className="h-7 text-[11px]" onClick={handleRun}>
+                <Play className="w-3 h-3 mr-1 fill-current" />
+                Run
+              </Button>
             </div>
           )}
         </div>
