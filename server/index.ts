@@ -762,10 +762,10 @@ httpServer.listen(port, "0.0.0.0", () => {
     const mainRouter = new MainRouter(storage);
     mainRouter.registerRoutes(app);
     
-    // Register production monitoring routes
+    // Register production monitoring routes (mount at /api so routes are at /api/monitoring/*)
     try {
       const monitoringRouter = (await import('./routes/monitoring.router')).default;
-      app.use(monitoringRouter);
+      app.use('/api', monitoringRouter);
     } catch (error) {
       logger.error(`[WORKING SERVER] Failed to register monitoring routes: ${error}`);
     }

@@ -771,7 +771,7 @@ export function ReplitDeploymentPanel({
           </TabsList>
         </div>
 
-        <TabsContent value="deploy" className="flex-1 overflow-auto px-4 pt-4 pb-16 space-y-4 m-0" data-testid="deploy-tab-content">
+        <TabsContent value="deploy" className="flex-1 overflow-auto px-4 pt-4 pb-16 space-y-4 m-0 data-[state=inactive]:hidden" data-testid="deploy-tab-content">
           {isLoadingDeployment ? (
             <div className="space-y-4">
               <Skeleton className="h-32 w-full" />
@@ -1017,7 +1017,7 @@ export function ReplitDeploymentPanel({
           )}
         </TabsContent>
 
-        <TabsContent value="logs" className="flex-1 flex flex-col overflow-hidden px-4 pt-4 pb-16 m-0 gap-3" data-testid="logs-tab-content">
+        <TabsContent value="logs" className="flex-1 flex flex-col overflow-hidden px-4 pt-4 pb-16 m-0 gap-3 data-[state=inactive]:hidden" data-testid="logs-tab-content">
           <div className="flex items-center justify-between flex-wrap gap-2 shrink-0">
             <div className="flex items-center gap-2">
               <Select value={logFilter} onValueChange={(v) => setLogFilter(v as typeof logFilter)}>
@@ -1135,7 +1135,7 @@ export function ReplitDeploymentPanel({
           </ScrollArea>
         </TabsContent>
 
-        <TabsContent value="analytics" className="flex-1 overflow-auto px-4 pt-4 pb-16 space-y-4 m-0" data-testid="analytics-tab-content">
+        <TabsContent value="analytics" className="flex-1 overflow-auto px-4 pt-4 pb-16 space-y-4 m-0 data-[state=inactive]:hidden" data-testid="analytics-tab-content">
           <div className="flex items-center justify-between flex-wrap gap-2">
             <h3 className="font-medium text-[13px]">Deployment Analytics</h3>
             <div className="flex items-center gap-2">

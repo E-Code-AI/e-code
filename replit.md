@@ -1,7 +1,7 @@
 # E-Code Platform
 
 ## Overview
-E-Code is an AI-assisted web-based Integrated Development Environment (IDE) designed to significantly enhance developer productivity. It offers automated workspace setup, real-time code execution, integrated AI capabilities, collaborative tools, enterprise-grade testing, and robust security features. The platform aims to be a leading AI-powered software development solution, fostering innovation and efficiency through a comprehensive, secure, and high-performance development experience.
+E-Code is an AI-assisted web-based Integrated Development Environment (IDE) designed to boost developer productivity. It offers automated workspace setup, real-time code execution, integrated AI capabilities, collaborative tools, enterprise-grade testing, and robust security. The platform aims to be a leading AI-powered software development solution, fostering innovation and efficiency through a comprehensive, secure, and high-performance development experience.
 
 ## User Preferences
 - Communication: Simple, everyday language
@@ -35,7 +35,10 @@ E-Code is an AI-assisted web-based Integrated Development Environment (IDE) desi
 - postgres-js db.execute() returns array directly: The server uses `drizzle-orm/postgres-js`. When calling `db.execute(sql\`SELECT ...\`)`, it returns an array of rows directly (NOT `{ rows: [...]} `). Always use: `const rows = Array.isArray(result) ? (result as any) : (result as any).rows ?? [];` for compatibility. INSERT/UPDATE return an empty array. Never use `.rows` directly on `db.execute()` results.
 - Raw Fetch CSRF Rule: ALL raw `fetch()` calls to `/api/*` using POST/PUT/PATCH/DELETE MUST include `X-CSRF-Token` header. Use `getCSRFToken()` exported from `@/lib/queryClient`: `const csrf = await getCSRFToken(); fetch('/api/...', { headers: { 'X-CSRF-Token': csrf } })`. SSE streaming endpoints MUST use this pattern since `apiRequest` cannot be used for streaming. File uploads also need it.
 - Voice Vibe Coding: `MediaRecorder` API → `/api/voice/transcribe` → transcript injected into agent input. **Multi-provider**: OpenAI Whisper (`whisper-1`) primary, Gemini 2.0 Flash as automatic fallback. Uses `apiRequest` for automatic CSRF token handling. Vibe Mode auto-submits on transcription. `voiceInputEnabled: true` by default. FORBIDDEN: Web Speech API.
-- API Route Dual-Mount Pattern: `aiModelsRouter` is mounted at BOTH `/api/models` AND `/api/ai/models` for frontend compatibility. Always mount at both paths when adding new AI-related routers that the frontend may call via either prefix.
+- API Route Dual-Mount Pattern: `aiModelsRouter` is mounted at BOTH `/api/models` AND `/api/ai/models` for frontend compatibility. `aiRouter` is mounted at BOTH `/api` AND `/api/ai` (so `/api/ai/features`, `/api/ai/completion`, etc. all work). Always mount at both paths when adding new AI-related routers that the frontend may call via either prefix.
+- Status Routes: `server/routes/status.router.ts` mounted at `/api` — exposes `/api/status`, `/api/status/incidents`, `/api/status/metrics`, `/api/status/services`, `/api/status/maintenance`, `/api/status/uptime`. Uses `StatusPageService` from `server/status/status-page-service.ts`. Public routes, no auth required.
+- Monitoring Router Mount: `monitoring.router.ts` must be mounted as `app.use('/api', monitoringRouter)` in `server/index.ts` — NOT bare `app.use(monitoringRouter)` — so its routes resolve to `/api/monitoring/*` not `/monitoring/*`.
+- Deployment Build Cleanup: `scripts/build-server.mjs` also cleans playwright browser cache (`~/.cache/ms-playwright/`) during deploy builds to reduce artifact size. Runs before node_modules pruning.
 - Router Prefix Rule: When a router is mounted at `app.use('/api', router)`, its internal routes must NOT include `/api/` prefix.
 - Template Fork: `POST /api/templates/:id/fork` creates a new project from a template. MUST set `tenantId: userId` on the new project (same as ownerId) to prevent 403 on file/runtime operations. MUST normalize template language to lowercase and validate against DB `language` enum (`javascript, typescript, python, java, go, rust, c, cpp, ruby, php, html, css, nodejs`) — fallback to `javascript` for `unsupported` values like C#, Rust (uppercase), YAML, etc. All `eq(templates.id, id)` and related FK queries MUST use `parseInt(id, 10)` since `templates.id` is serial (integer).
 - Marketplace author field: template.author and extension.author can be objects `{id, name, verified}`. Always render as: `typeof author === 'object' ? author?.name : author`. Never render the raw object.
@@ -65,11 +68,11 @@ E-Code is an AI-assisted web-based Integrated Development Environment (IDE) desi
 - Stuck Session Cleanup (Autonomous Build): On server startup, `AgentOrchestratorService` constructor resets sessions stuck in `planning`/`executing` → `failed`. Idempotency check in `startAutonomousWorkspace` allows restart from `idle` OR `failed` status.
 
 ## System Architecture
-E-Code utilizes a two-service architecture with a React, TypeScript, and Vite frontend leveraging the Replit RUI Design System, and a Node.js/Express.js, TypeScript, Drizzle ORM, and Passport.js backend.
+E-Code uses a two-service architecture with a React, TypeScript, and Vite frontend leveraging the Replit RUI Design System, and a Node.js/Express.js, TypeScript, Drizzle ORM, and Passport.js backend.
 
 ### UI/UX Decisions
 - Consistent and modern interface based on the Replit RUI Design System.
-- Responsive and interactive UI with a Native Motion Library, using vertical y-shift animations for public pages.
+- Responsive UI with a Native Motion Library, using vertical y-shift animations for public pages.
 - Adaptive console panels for mobile and desktop.
 - Public routes for marketplace and templates are accessible without authentication.
 - Default IDE tab configuration: Chat/Agent for desktop, Deploy for mobile/tablet, with a permanently visible preview panel.
@@ -82,7 +85,7 @@ E-Code utilizes a two-service architecture with a React, TypeScript, and Vite fr
 - **Code Execution Environment**: Uses Nix-managed runtimes and `DockerExecutor` for sandboxed code execution, supporting `single-vm` and `kubernetes` deployments with optimized Docker builds.
 - **Data Persistence**: Employs PostgreSQL with Drizzle ORM, ensuring strict tenant isolation (`tenantId = ownerId`). Features asynchronous database auto-provisioning with multi-provider fallback and retry mechanisms. Notification preferences are stored in JSONB, and specific tables (`conversationMemory`, `userSessions`, `auditLogs`) use `text` for user IDs. Database backups are managed via a dedicated script requiring `pg_dump` and `psql`.
 - **Performance Optimization**: Implements fast bootstrap techniques and `instrumentedLazy()` for retry logic in lazy loading. Docker builds are optimized for size. Semgrep scanning is optimized by excluding large generated files.
-- **Voice Input System**: Integrates Voice Vibe Coding via MediaRecorder API for transcription, with OpenAI Whisper as primary and Google Gemini 2.0 Flash as an automatic fallback. Uses `apiRequest` for automatic CSRF token handling.
+- **Voice Input System**: Integrates Voice Vibe Coding via MediaRecorder API for transcription, with OpenAI Whisper as primary and Google Gemini 2.0 Flash as an automatic fallback.
 - **Monitoring and Observability**: Includes Kubernetes probes for health checks and a Provider Health API with Prometheus metrics.
 - **Routing**: API routes support dual-mounting, and internal router paths do not include the `/api/` prefix. A `notFoundHandler` specifically manages `/api/*` routes, passing non-API paths to Vite. Dedicated endpoints exist for global search and workspace bootstrap. Legacy `/editor/:id` routes redirect to `/ide/:id`. Public routes are accessible without authentication.
 - **Environment Configuration**: Environment variables are validated using Zod schemas.

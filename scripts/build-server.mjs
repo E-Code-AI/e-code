@@ -55,8 +55,6 @@ async function cleanOldChunks() {
 async function pruneNodeModules() {
   if (!IS_DEPLOY) return;
 
-  // Safety: only prune when actually deploying (REPLIT_DEPLOYMENT set by Replit infra)
-  // This prevents accidental pruning during local dev builds with BUILD_DEPLOY=1
   const isReplitDeployment = !!process.env.REPLIT_DEPLOYMENT || !!process.env.REPL_DEPLOYMENT_KEY;
   if (!isReplitDeployment) {
     console.log('  [deploy] SKIPPING prune — BUILD_DEPLOY=1 set but not in Replit deployment context.');
@@ -76,6 +74,28 @@ async function pruneNodeModules() {
     console.log(`  [deploy] Pruned node_modules — kept: ${Array.from(KEEP_IN_NODE_MODULES).join(', ')}`);
   } catch (err) {
     console.warn('  [deploy] Prune warning:', err.message);
+  }
+}
+
+async function prunePlaywrightCache() {
+  if (!IS_DEPLOY) return;
+
+  const isReplitDeployment = !!process.env.REPLIT_DEPLOYMENT || !!process.env.REPL_DEPLOYMENT_KEY;
+  if (!isReplitDeployment) return;
+
+  const cacheDirs = [
+    '/home/runner/.cache/ms-playwright',
+    '/root/.cache/ms-playwright',
+    `${process.env.HOME || '/home/runner'}/.cache/ms-playwright`,
+  ];
+
+  for (const dir of cacheDirs) {
+    if (existsSync(dir)) {
+      try {
+        rmSync(dir, { recursive: true, force: true });
+        console.log(`  [deploy] Removed playwright cache: ${dir}`);
+      } catch (_) {}
+    }
   }
 }
 
@@ -132,7 +152,14 @@ const __dirname = __esbuild_dirname(__filename);
     console.log(`   Bundled: all pure-JS packages  |  External: ${NATIVE_EXTERNAL.join(', ')}`);
 
     await cleanOldChunks();
+    await prunePlaywrightCache();
     await pruneNodeModules();
+
+    if (IS_DEPLOY) {
+      const distFiles = countFiles('dist');
+      const nmFiles = countFiles('node_modules');
+      console.log(`  [deploy] Final artifact: dist/ has ${distFiles} files, node_modules/ has ${nmFiles} files`);
+    }
 
   } catch (error) {
     console.error('❌ Build failed:', error);

@@ -108,6 +108,7 @@ import runnerWorkspacesRouter from './runner-workspaces.router';
 import workspacesRouter from './workspaces.router';
 import publicFormsRouter from './public-forms.router';
 import projectAuthRouter from './project-auth.router';
+import statusRouter from './status.router';
 
 export class MainRouter {
   private authRouter: AuthRouter;
@@ -314,7 +315,9 @@ export class MainRouter {
     // Removed: /api/models - This is a metadata endpoint, doesn't consume AI credits
 
     // AI routes (REST endpoints for chat, completions, etc.)
+    // Dual-mount: /api and /api/ai for frontend compatibility (e.g. /api/ai/features)
     app.use('/api', tierRateLimiters.api, aiRouter);
+    app.use('/api/ai', tierRateLimiters.api, aiRouter);
 
     // AI Usage Metering routes (Pay-As-You-Go billing endpoints)
     app.use('/api/usage', tierRateLimiters.api, aiUsageRouter);
@@ -474,6 +477,9 @@ export class MainRouter {
 
     // Public forms — contact, newsletter (no auth required)
     app.use('/api', publicFormsRouter);
+
+    // Status page routes — public, no auth required (/api/status/*)
+    app.use('/api', statusRouter);
 
     // Runner Workspaces — internal CRUD (/api/runner/*)
     app.use('/api/runner', tierRateLimiters.api, runnerWorkspacesRouter);
