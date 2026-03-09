@@ -309,10 +309,12 @@ class MonitoringService {
    */
   getHealthCheck() {
     const metrics = this.getAllMetrics();
+    const isErrorRateOk = metrics.api.requestCount === 0 ||
+      metrics.api.errorCount < (metrics.api.requestCount * 0.1); // <10% error rate
     const isHealthy = 
       metrics.system.memory.percentage < 95 &&
       metrics.system.cpu.usage < 95 &&
-      metrics.api.errorCount < (metrics.api.requestCount * 0.1); // <10% error rate
+      isErrorRateOk;
     
     return {
       status: isHealthy ? 'healthy' : 'degraded',
@@ -320,7 +322,7 @@ class MonitoringService {
       checks: {
         memory: metrics.system.memory.percentage < 95,
         cpu: metrics.system.cpu.usage < 95,
-        errorRate: metrics.api.errorCount < (metrics.api.requestCount * 0.1)
+        errorRate: isErrorRateOk
       }
     };
   }
