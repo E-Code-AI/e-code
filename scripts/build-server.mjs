@@ -39,12 +39,14 @@ const KEEP_IN_NODE_MODULES = new Set([
   'sharp',
 ]);
 
+const DIST_KEEP = new Set(['index.js', 'runner.js', 'public']);
+
 async function cleanOldChunks() {
   if (!existsSync('dist')) return;
   const files = readdirSync('dist');
   let removed = 0;
   for (const f of files) {
-    if (f !== 'index.js' && f !== 'public' && f.endsWith('.js')) {
+    if (!DIST_KEEP.has(f) && f.endsWith('.js')) {
       rmSync(join('dist', f));
       removed++;
     }
@@ -109,6 +111,44 @@ function countFiles(dir) {
   }
 }
 
+const ESM_BANNER = `
+import { createRequire as __esbuild_createRequire } from 'module';
+import { fileURLToPath as __esbuild_fileURLToPath } from 'url';
+import { dirname as __esbuild_dirname } from 'path';
+const require = __esbuild_createRequire(import.meta.url);
+const __filename = __esbuild_fileURLToPath(import.meta.url);
+const __dirname = __esbuild_dirname(__filename);
+`;
+
+async function buildRunner() {
+  console.log('Building runner bundle...');
+  try {
+    const result = await esbuild.build({
+      entryPoints: ['runner/index.ts'],
+      bundle: true,
+      splitting: false,
+      platform: 'node',
+      target: 'node20',
+      format: 'esm',
+      outfile: 'dist/runner.js',
+      external: NATIVE_EXTERNAL,
+      minify: true,
+      treeShaking: true,
+      sourcemap: false,
+      metafile: true,
+      legalComments: 'none',
+      drop: ['debugger'],
+      banner: { js: ESM_BANNER },
+    });
+    const outputSize = Object.values(result.metafile.outputs).reduce((acc, o) => acc + o.bytes, 0);
+    console.log(`✅ Runner bundle built successfully`);
+    console.log(`   Output: dist/runner.js (${(outputSize / 1024 / 1024).toFixed(2)} MB)`);
+  } catch (error) {
+    console.error('❌ Runner build failed:', error);
+    process.exit(1);
+  }
+}
+
 async function build() {
   console.log(`Building server bundle (bundle-all-except-native mode)${IS_DEPLOY ? ' [DEPLOY]' : ''}...`);
 
@@ -132,16 +172,7 @@ async function build() {
       define: {
         'process.env.NODE_ENV': '"production"',
       },
-      banner: {
-        js: `
-import { createRequire as __esbuild_createRequire } from 'module';
-import { fileURLToPath as __esbuild_fileURLToPath } from 'url';
-import { dirname as __esbuild_dirname } from 'path';
-const require = __esbuild_createRequire(import.meta.url);
-const __filename = __esbuild_fileURLToPath(import.meta.url);
-const __dirname = __esbuild_dirname(__filename);
-`
-      }
+      banner: { js: ESM_BANNER }
     });
 
     const outputSize = Object.values(result.metafile.outputs)
@@ -151,6 +182,7 @@ const __dirname = __esbuild_dirname(__filename);
     console.log(`   Output: dist/index.js (${(outputSize / 1024 / 1024).toFixed(2)} MB)`);
     console.log(`   Bundled: all pure-JS packages  |  External: ${NATIVE_EXTERNAL.join(', ')}`);
 
+    await buildRunner();
     await cleanOldChunks();
     await prunePlaywrightCache();
     await pruneNodeModules();
