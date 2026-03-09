@@ -60,8 +60,8 @@ const MODEL_TIERS: Record<ModelTier, Record<Provider, { model: string; costPer1k
   quality: {
     openai: { model: 'gpt-4o', costPer1kTokens: 0.005, avgLatencyMs: 2000 },  // ✅ CONSOLIDATED Jan 2026
     anthropic: { model: 'claude-3-opus-20240229', costPer1kTokens: 0.015, avgLatencyMs: 3000 },
-    google: { model: 'gemini-3-pro', costPer1kTokens: 0.00125, avgLatencyMs: 2500 },  // ✅ HIGH-COMPLEXITY: Fallback for complex reasoning
-    xai: { model: 'grok-2-1212', costPer1kTokens: 0.01, avgLatencyMs: 2000 },
+    google: { model: 'gemini-2.5-pro', costPer1kTokens: 0.00125, avgLatencyMs: 2500 },
+    xai: { model: 'grok-3', costPer1kTokens: 0.003, avgLatencyMs: 2000 },
     moonshot: { model: 'moonshot-v1-128k', costPer1kTokens: 0.0025, avgLatencyMs: 2000 }
   }
 };

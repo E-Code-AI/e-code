@@ -340,11 +340,11 @@ export const AI_MODELS: AIModel[] = [
  * UPDATED January 2025: kimi-k2-0711-preview → kimi-k2-0905-preview (September 2025 upgrade)
  */
 const PROVIDER_FALLBACK_CHAIN = [
-  'gpt-5.4',
-  'claude-sonnet-4-20250514',
-  'gemini-2.5-flash',
-  'grok-3',
-  'moonshot-v1-32k'
+  'gpt-4o',                    // Free via Replit ModelFarm — always available
+  'claude-sonnet-4-20250514',  // Anthropic Claude 4 Sonnet
+  'gemini-2.5-flash',          // Google Gemini 2.5 Flash
+  'grok-3',                    // xAI Grok 3
+  'moonshot-v1-32k'            // Moonshot Kimi 32K
 ];
 
 export class AIProviderManager {
@@ -931,6 +931,13 @@ export class AIProviderManager {
   private async *streamOpenAI(modelId: string, messages: any[], options?: any): AsyncGenerator<string> {
     if (!this.openaiClient) throw new Error('OpenAI client not initialized');
     
+    // ✅ MODELFARM SAFETY: When Replit ModelFarm is active, only gpt-4o and gpt-4o-mini are
+    // supported. Downgrade any other OpenAI model to gpt-4o-mini to prevent quota errors.
+    if (process.env.AI_INTEGRATIONS_OPENAI_BASE_URL && !MODELFARM_MODELS.has(modelId)) {
+      logger.info(`[ProviderManager/OpenAI] ModelFarm: downgrading ${modelId} → gpt-4o-mini`);
+      modelId = 'gpt-4o-mini';
+    }
+
     const startTime = Date.now();
     let tokensGenerated = 0;
     let success = false;
@@ -1268,7 +1275,7 @@ export class AIProviderManager {
       'Anthropic': ['claude-3-5-sonnet-20241022', 'claude-3-5-haiku-20241022'],
       'Gemini': ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro', 'gemini-1.5-flash'],
       'Moonshot': ['moonshot-v1-8k', 'moonshot-v1-32k', 'moonshot-v1-128k'],
-      'xAI': ['grok-2-1212', 'grok-2-vision-1212']
+      'xAI': ['grok-3', 'grok-3-mini', 'grok-3-fast']
     };
     
     return Object.entries(providerMap).map(([name, modelIds]) => ({
@@ -1291,7 +1298,7 @@ export class AIProviderManager {
       'Anthropic': 'claude-3-5-sonnet-20241022',
       'Gemini': 'gemini-2.5-flash',
       'Moonshot': 'moonshot-v1-32k',
-      'xAI': 'grok-2-1212'
+      'xAI': 'grok-3'
     };
     
     const modelId = providerToModelMap[providerName];
@@ -1312,7 +1319,7 @@ export class AIProviderManager {
       'gpt-4o',
       'claude-3-5-sonnet-20241022',
       'gemini-2.5-flash',
-      'grok-2-1212',
+      'grok-3',
       'moonshot-v1-32k'
     ];
     

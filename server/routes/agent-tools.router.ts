@@ -912,7 +912,7 @@ export default function createAgentToolsRouter(): Router {
         highPowerModels: {
           enabled: true,
           status: 'operational',
-          models: ['gpt-4o', 'claude-3-opus-20240229', 'gemini-1.5-pro', 'grok-2-1212']
+          models: ['gpt-4o', 'claude-3-opus-20240229', 'gemini-1.5-pro', 'grok-3']
         },
         maxAutonomy: {
           enabled: true,

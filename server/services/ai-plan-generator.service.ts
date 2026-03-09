@@ -62,8 +62,8 @@ export class AIPlanGeneratorService {
     'gemini-2.5-flash',             // PRIMARY: Google Gemini 2.5 Flash
     'gpt-4o',                       // OpenAI GPT-4o (flagship)
     'claude-3-5-haiku-20241022',    // Anthropic Claude 3.5 Haiku (fastest Claude)
-    'grok-2-1212',                  // xAI Grok 2
-    'kimi-k2-turbo-preview'         // Moonshot AI Kimi K2 Turbo
+    'grok-3',                       // xAI Grok 3
+    'moonshot-v1-128k'              // Moonshot AI Kimi 128K
   ];
 
   constructor(storage: IStorage) {

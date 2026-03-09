@@ -357,7 +357,7 @@ export class AgentPreferencesService {
       if (requiresExtendedThinking || complexity === 'complex') {
         return 'claude-opus-4-20250514';
       }
-      return 'gpt-5.4';
+      return 'gpt-4o';
     }
 
     // Extended thinking required

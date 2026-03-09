@@ -419,8 +419,8 @@ router.get('/models', ensureAuthenticated, async (req, res) => {
         features: ['embeddings', 'multimodal', 'function_calling', 'code_execution']
       },
       {
-        id: 'grok-2-1212',
-        name: 'Grok 4',
+        id: 'grok-3',
+        name: 'Grok 3',
         provider: 'xai',
         ragSupport: true,
         embeddingModel: null,

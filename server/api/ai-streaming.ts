@@ -225,7 +225,7 @@ router.post('/agent/chat/stream', ensureAuthenticated, async (req, res) => {
       case 'openai': return 'gpt-4o-mini';
       case 'anthropic': return 'claude-3-5-sonnet-20241022';
       case 'gemini': return 'gemini-2.5-flash';
-      case 'xai': return 'grok-2-1212';
+      case 'xai': return 'grok-3';
       case 'moonshot': return 'moonshot-v1-32k';
       default: return 'gpt-4o-mini';
     }
@@ -236,7 +236,7 @@ router.post('/agent/chat/stream', ensureAuthenticated, async (req, res) => {
       case 'anthropic': return 'claude-3-5-haiku-20241022';
       case 'openai': return 'gpt-4o-mini';
       case 'gemini': return 'gemini-2.5-flash';
-      case 'xai': return 'grok-2-1212';
+      case 'xai': return 'grok-3-mini';
       default: return 'gpt-4o-mini';
     }
   };
@@ -1297,8 +1297,8 @@ async function streamXAI(res: any, messages: any[], options: any) {
     baseURL: 'https://api.x.ai/v1'
   });
   
-  // ✅ FIXED Dec 5, 2025: Use catalog model ID (was grok-3-fast-latest which doesn't exist)
-  const modelToUse = options.model || 'grok-2-1212';
+  // ✅ FIXED: grok-2-1212 returns 400 "model not found" — use grok-3 (confirmed working)
+  const modelToUse = options.model || 'grok-3';
   logger.info(`[xAI Stream] Using model: ${modelToUse}`);
   
   try {
@@ -1509,7 +1509,7 @@ router.get('/agent/models', ensureAuthenticated, (req, res) => {
     { provider: 'gemini', model: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash', context: 1000000, available: !!process.env.GEMINI_API_KEY },
     
     // xAI Grok Models
-    { provider: 'xai', model: 'grok-2-1212', name: 'Grok 2', context: 131072, available: !!process.env.XAI_API_KEY },
+    { provider: 'xai', model: 'grok-3', name: 'Grok 3', context: 131072, available: !!process.env.XAI_API_KEY },
     
     // Moonshot AI (Kimi) Models
     { provider: 'moonshot', model: 'moonshot-v1-32k', name: 'Moonshot v1 32K', context: 32768, available: !!process.env.MOONSHOT_API_KEY },

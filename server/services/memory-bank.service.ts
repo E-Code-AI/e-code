@@ -420,8 +420,8 @@ Output valid JSON only, no markdown code blocks.`;
       'gpt-4o-mini',                    // OpenAI GPT-5 Mini
       'gpt-4-turbo',                       // OpenAI GPT-4.1
       'gemini-2.5-flash',              // Google Gemini 2.5 Flash (production-stable)
-      'gemini-3-pro',                  // Google Gemini 3 Pro (fallback for complex reasoning)
-      'grok-2-1212',                        // xAI Grok 4
+      'gemini-2.5-pro',                // Google Gemini 2.5 Pro (complex reasoning)
+      'grok-3',                             // xAI Grok 3
     ];
     
     // Return first available model or fallback
