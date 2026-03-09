@@ -181,16 +181,12 @@ export function AIAssistant({ projectId, selectedFile, selectedCode, className }
     if (!selectedCode) return;
 
     try {
-      const response = await apiRequest('POST', `/api/ai/${projectId}/suggestions`, {
+      const data = await apiRequest<{ suggestions: CodeSuggestion[] }>('POST', `/api/ai/${projectId}/suggestions`, {
         code: selectedCode,
         file: selectedFile,
         projectId
       });
-
-      if (response.ok) {
-        const data = await response.json();
-        setSuggestions(data.suggestions || []);
-      }
+      setSuggestions(data.suggestions || []);
     } catch (error) {
       console.error('Failed to generate suggestions:', error);
     }
@@ -215,7 +211,7 @@ export function AIAssistant({ projectId, selectedFile, selectedCode, className }
     setIsLoading(true);
 
     try {
-      const response = await apiRequest('POST', `/api/ai/${projectId}/chat`, {
+      const data = await apiRequest<{ id?: string; content: string; timestamp?: string }>('POST', `/api/ai/${projectId}/chat`, {
         message: userMessage.content,
         context: {
           projectId,
@@ -225,10 +221,6 @@ export function AIAssistant({ projectId, selectedFile, selectedCode, className }
         }
       });
 
-      if (!response.ok) throw new Error('Failed to get AI response');
-
-      // Handle JSON response
-      const data = await response.json();
       const assistantMessage: Message = {
         id: data.id || (Date.now() + 1).toString(),
         role: 'assistant',

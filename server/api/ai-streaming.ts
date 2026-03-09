@@ -242,10 +242,20 @@ router.post('/agent/chat/stream', ensureAuthenticated, async (req, res) => {
   };
   
   // Select model: Fast Mode overrides user selection with fast model
-  const model = fastMode 
+  let model = fastMode 
     ? getFastModel(provider) 
     : (rawModel || modelId || getDefaultModel(provider));
   
+  // ✅ MODELFARM SAFETY: When Replit ModelFarm is active (free tier), only gpt-4o and gpt-4o-mini
+  // are supported. Downgrade any other OpenAI models to gpt-4o-mini to avoid quota errors.
+  if (provider === 'openai' && process.env.AI_INTEGRATIONS_OPENAI_BASE_URL) {
+    const MODELFARM_SUPPORTED = new Set(['gpt-4o', 'gpt-4o-mini']);
+    if (!MODELFARM_SUPPORTED.has(model)) {
+      logger.info(`[AI Stream] ModelFarm: downgrading unsupported model ${model} → gpt-4o-mini`);
+      model = 'gpt-4o-mini';
+    }
+  }
+
   // Log Fast Mode activation for debugging
   if (fastMode) {
     logger.info('[AI Stream] Fast Mode activated', { fastModel: model, provider });
@@ -864,7 +874,12 @@ async function streamOpenAI(res: any, messages: any[], options: any) {
     return;
   }
   
-  const openai = new OpenAI({ apiKey });
+  // ✅ MODELFARM FIX: Use Replit ModelFarm (free) when available, fall back to direct key
+  const modelfarmURL = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL;
+  const openai = new OpenAI({
+    apiKey,
+    ...(modelfarmURL ? { baseURL: modelfarmURL } : {})
+  });
   const executor = new ToolExecutor(options.projectId || 'default');
   
   // Add tools to the stream (respect Plan Mode enforcement from options)

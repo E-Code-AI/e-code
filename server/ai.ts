@@ -599,3 +599,193 @@ function getPromptForLanguage(language: string, code: string): string {
       return basePrompt;
   }
 }
+
+// In-memory project chat history (keyed by projectId)
+const projectChatHistory = new Map<string, any[]>();
+
+// POST /api/ai/:projectId/chat — project-specific AI chat (used by ReplitAssistant, AIAssistant)
+export async function generateProjectChat(req: Request, res: Response) {
+  try {
+    const { projectId } = req.params;
+    const { message, context, provider: providerName } = req.body;
+
+    if (!message && !context?.code) {
+      return res.status(400).json({ error: 'Message is required' });
+    }
+
+    const provider = providerName
+      ? aiProviderManager.getProvider(providerName)
+      : aiProviderManager.getDefaultProvider();
+
+    if (!provider) {
+      return res.status(503).json({ error: 'No AI provider available' });
+    }
+
+    const systemPrompt = `You are an expert AI coding assistant embedded in E-Code, an AI-powered IDE.
+You are helping with project ${projectId}. Provide clear, concise, actionable answers.
+${context?.file ? `The user is working on file: ${context.file}` : ''}`;
+
+    const history = (context?.history || []).slice(-10).map((m: any) => ({
+      role: m.role as 'user' | 'assistant',
+      content: m.content
+    }));
+
+    const messages: ChatMessage[] = [
+      { role: 'system', content: systemPrompt },
+      ...history,
+      { role: 'user', content: context?.code
+          ? `File: ${context.file || 'unknown'}\n\`\`\`\n${context.code}\n\`\`\`\n\n${message}`
+          : message }
+    ];
+
+    const content = await provider.generateCompletion(message, systemPrompt, 2048, 0.7);
+
+    const responseMessage = {
+      id: Date.now().toString(),
+      role: 'assistant',
+      content,
+      timestamp: new Date().toISOString()
+    };
+
+    // Store in history
+    const history2 = projectChatHistory.get(projectId) || [];
+    history2.push({ id: Date.now().toString(), role: 'user', content: message, timestamp: new Date().toISOString() });
+    history2.push(responseMessage);
+    projectChatHistory.set(projectId, history2.slice(-100));
+
+    res.json(responseMessage);
+  } catch (error: any) {
+    console.error('Error in project chat:', error);
+    res.status(500).json({ error: 'Failed to generate AI response', details: error.message });
+  }
+}
+
+// GET /api/ai/:projectId/history — project chat history (used by AIAssistant)
+export async function getProjectHistory(req: Request, res: Response) {
+  try {
+    const { projectId } = req.params;
+    const history = projectChatHistory.get(projectId) || [];
+    res.json(history);
+  } catch (error: any) {
+    console.error('Error getting project history:', error);
+    res.status(500).json({ error: 'Failed to get chat history' });
+  }
+}
+
+// POST /api/ai/:projectId/suggestions — AI code suggestions (used by AIAssistant)
+export async function generateProjectSuggestions(req: Request, res: Response) {
+  try {
+    const { projectId } = req.params;
+    const { code, file, context } = req.body;
+
+    const provider = aiProviderManager.getDefaultProvider();
+    if (!provider) {
+      return res.json({ suggestions: [] });
+    }
+
+    const prompt = code
+      ? `Analyze this ${file ? `${file.split('.').pop()} ` : ''}code and suggest 3 specific improvements:\n\`\`\`\n${code}\n\`\`\`\nReturn a JSON array of objects with {title, description, type} fields.`
+      : `Suggest 3 useful coding tasks for project ${projectId}. Return a JSON array of objects with {title, description, type} fields.`;
+
+    const raw = await provider.generateCompletion(prompt, 'You are a helpful code reviewer. Return ONLY valid JSON.', 512, 0.7);
+    
+    let suggestions: any[] = [];
+    try {
+      const match = raw.match(/\[[\s\S]*\]/);
+      if (match) suggestions = JSON.parse(match[0]);
+    } catch {
+      suggestions = [
+        { title: 'Add error handling', description: 'Wrap async operations in try/catch blocks', type: 'improvement' },
+        { title: 'Write unit tests', description: 'Add tests for critical functions', type: 'testing' },
+        { title: 'Add TypeScript types', description: 'Improve type safety with explicit types', type: 'refactor' }
+      ];
+    }
+
+    res.json({ suggestions });
+  } catch (error: any) {
+    console.error('Error generating suggestions:', error);
+    res.json({ suggestions: [] });
+  }
+}
+
+// POST /api/ai/generate — general AI generation (Claude, Gemini, xAI, Kimi via AllModelsSelector)
+export async function generateAI(req: Request, res: Response) {
+  try {
+    const { model, prompt, messages, temperature = 0.7, max_tokens = 1024 } = req.body;
+
+    if (!prompt && (!messages || !messages.length)) {
+      return res.status(400).json({ error: 'prompt or messages are required' });
+    }
+
+    let provider;
+    if (model) {
+      const modelLower = model.toLowerCase();
+      if (modelLower.includes('claude')) provider = aiProviderManager.getProvider('anthropic');
+      else if (modelLower.includes('gemini')) provider = aiProviderManager.getProvider('gemini');
+      else if (modelLower.includes('grok')) provider = aiProviderManager.getProvider('xai');
+      else if (modelLower.includes('kimi') || modelLower.includes('moonshot')) provider = aiProviderManager.getProvider('moonshot');
+      else provider = aiProviderManager.getProvider('openai');
+    }
+    provider = provider || aiProviderManager.getDefaultProvider();
+
+    if (!provider) {
+      return res.status(503).json({ error: 'No AI provider available' });
+    }
+
+    const text = prompt || (messages as any[]).map((m: any) => m.content).join('\n');
+    const result = await provider.generateCompletion(text, 'You are a helpful AI assistant.', max_tokens, temperature);
+
+    res.json({ content: result, model: model || 'default', success: true });
+  } catch (error: any) {
+    console.error('Error in /ai/generate:', error);
+    res.status(500).json({ error: 'Failed to generate AI response', details: error.message });
+  }
+}
+
+// POST /api/openai/generate — OpenAI-specific generation (used by AllModelsSelector for GPT/o1/o3 models)
+export async function generateOpenAI(req: Request, res: Response) {
+  try {
+    const { model = 'gpt-4o-mini', messages, temperature = 0.7, max_tokens = 1024 } = req.body;
+
+    if (!messages || !messages.length) {
+      return res.status(400).json({ error: 'messages are required' });
+    }
+
+    const provider = aiProviderManager.getProvider('openai') || aiProviderManager.getDefaultProvider();
+    if (!provider) {
+      return res.status(503).json({ error: 'OpenAI provider not available' });
+    }
+
+    const text = (messages as any[]).map((m: any) => m.content).join('\n');
+    const result = await provider.generateCompletion(text, 'You are a helpful AI assistant.', max_tokens, temperature);
+
+    res.json({ content: result, model, success: true });
+  } catch (error: any) {
+    console.error('Error in /openai/generate:', error);
+    res.status(500).json({ error: 'Failed to generate OpenAI response', details: error.message });
+  }
+}
+
+// POST /api/opensource/generate — open-source model generation (used by AllModelsSelector)
+export async function generateOpenSource(req: Request, res: Response) {
+  try {
+    const { model, messages, temperature = 0.7, max_tokens = 1024 } = req.body;
+
+    if (!messages || !messages.length) {
+      return res.status(400).json({ error: 'messages are required' });
+    }
+
+    const provider = aiProviderManager.getDefaultProvider();
+    if (!provider) {
+      return res.status(503).json({ error: 'No provider available' });
+    }
+
+    const text = (messages as any[]).map((m: any) => m.content).join('\n');
+    const result = await provider.generateCompletion(text, 'You are a helpful AI assistant.', max_tokens, temperature);
+
+    res.json({ content: result, model: model || 'default', success: true });
+  } catch (error: any) {
+    console.error('Error in /opensource/generate:', error);
+    res.status(500).json({ error: 'Failed to generate response', details: error.message });
+  }
+}

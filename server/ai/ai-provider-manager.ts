@@ -32,32 +32,35 @@ export interface AIModel {
  * ONLY REAL, CURRENTLY SUPPORTED MODELS (November 2025)
  * Fortune 500-grade model catalog
  */
+// Models confirmed working via Replit ModelFarm (free, no quota)
+export const MODELFARM_MODELS = new Set(['gpt-4o', 'gpt-4o-mini']);
+
 export const AI_MODELS: AIModel[] = [
-  // ── OpenAI ──────────────────────────────────────────────────────────────────
-  // All confirmed real via live API test (March 2026 — 429 quota = model exists)
+  // ── OpenAI — ModelFarm-compatible models FIRST (free via Replit ModelFarm) ──
   {
-    id: 'gpt-5.4',
-    name: 'GPT-5.4',
+    id: 'gpt-4o-mini',
+    name: 'GPT-4o Mini',
     provider: 'openai',
-    description: 'OpenAI cutting-edge flagship (March 2026) — best reasoning, coding, agentic workflows, 1.05M context',
-    maxTokens: 1050000,
+    description: 'Affordable multimodal model — vision + text at low cost (free via Replit ModelFarm)',
+    maxTokens: 128000,
     supportsStreaming: true,
-    costPer1kTokens: 0.0025
+    costPer1kTokens: 0.00015
   },
   {
-    id: 'gpt-5.4-pro',
-    name: 'GPT-5.4 Pro',
+    id: 'gpt-4o',
+    name: 'GPT-4o',
     provider: 'openai',
-    description: 'Maximum performance GPT-5.4 — for complex professional tasks requiring peak accuracy',
-    maxTokens: 1050000,
+    description: 'Multimodal flagship — vision, audio, and text with 128K context (free via Replit ModelFarm)',
+    maxTokens: 128000,
     supportsStreaming: true,
-    costPer1kTokens: 0.03
+    costPer1kTokens: 0.005
   },
+  // ── OpenAI — Additional models (require direct API key) ─────────────────────
   {
     id: 'gpt-4.1',
     name: 'GPT-4.1',
     provider: 'openai',
-    description: 'Previous OpenAI flagship — best coding, instruction following, and long context',
+    description: 'OpenAI flagship — best coding, instruction following, and long context',
     maxTokens: 1047576,
     supportsStreaming: true,
     costPer1kTokens: 0.002
@@ -81,22 +84,22 @@ export const AI_MODELS: AIModel[] = [
     costPer1kTokens: 0.0001
   },
   {
-    id: 'gpt-4o',
-    name: 'GPT-4o',
+    id: 'gpt-5.4',
+    name: 'GPT-5.4',
     provider: 'openai',
-    description: 'Multimodal flagship — vision, audio, and text with 128K context',
-    maxTokens: 128000,
+    description: 'OpenAI next-generation flagship — advanced reasoning and coding (requires direct API key)',
+    maxTokens: 1050000,
     supportsStreaming: true,
-    costPer1kTokens: 0.005
+    costPer1kTokens: 0.0025
   },
   {
-    id: 'gpt-4o-mini',
-    name: 'GPT-4o Mini',
+    id: 'gpt-5.4-pro',
+    name: 'GPT-5.4 Pro',
     provider: 'openai',
-    description: 'Affordable multimodal model — vision + text at low cost',
-    maxTokens: 128000,
+    description: 'Maximum performance GPT-5.4 — for complex professional tasks (requires direct API key)',
+    maxTokens: 1050000,
     supportsStreaming: true,
-    costPer1kTokens: 0.00015
+    costPer1kTokens: 0.03
   },
   {
     id: 'o4-mini',

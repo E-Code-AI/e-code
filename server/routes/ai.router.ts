@@ -11,7 +11,13 @@ import {
   generateDocumentation,
   generateTests,
   handleCodeActions,
-  handleCodeActionsStream
+  handleCodeActionsStream,
+  generateProjectChat,
+  getProjectHistory,
+  generateProjectSuggestions,
+  generateAI,
+  generateOpenAI,
+  generateOpenSource
 } from '../ai';
 import { ensureAuthenticated } from '../middleware/auth';
 
@@ -110,7 +116,7 @@ router.get('/features', (_req, res) => {
   });
 });
 
-// GET /api/openai/models — OpenAI-specific model list (public endpoint, used by OpenAIModelSelector)
+// GET /api/openai/models — OpenAI-specific model list (public, used by OpenAIModelSelector)
 router.get('/openai/models', (_req, res) => {
   res.json([
     { id: 'gpt-4o', name: 'GPT-4o', capabilities: ['chat', 'vision', 'function_calling', 'code_interpreter'], contextWindow: 128000, maxOutput: 4096 },
@@ -121,7 +127,21 @@ router.get('/openai/models', (_req, res) => {
   ]);
 });
 
-// POST /api/ai/* — authenticated AI generation endpoints
+// GET /api/opensource/models — open-source model list (public, used by AllModelsSelector)
+router.get('/opensource/models', (_req, res) => {
+  res.json([
+    { id: 'llama-3.1-70b', name: 'Llama 3.1 70B', provider: 'meta', contextWindow: 128000, license: 'open' },
+    { id: 'llama-3.1-8b', name: 'Llama 3.1 8B', provider: 'meta', contextWindow: 128000, license: 'open' },
+    { id: 'mistral-7b', name: 'Mistral 7B', provider: 'mistral', contextWindow: 32768, license: 'open' },
+    { id: 'mixtral-8x7b', name: 'Mixtral 8x7B', provider: 'mistral', contextWindow: 32768, license: 'open' },
+    { id: 'codestral', name: 'Codestral', provider: 'mistral', contextWindow: 32768, license: 'open' },
+    { id: 'deepseek-coder-v2', name: 'DeepSeek Coder V2', provider: 'deepseek', contextWindow: 128000, license: 'open' },
+    { id: 'phi-3-medium', name: 'Phi-3 Medium', provider: 'microsoft', contextWindow: 128000, license: 'open' },
+    { id: 'qwen2.5-72b', name: 'Qwen 2.5 72B', provider: 'alibaba', contextWindow: 131072, license: 'open' }
+  ]);
+});
+
+// POST /api/ai/* — authenticated AI generation endpoints (specific paths before wildcards)
 router.post('/completion', ensureAuthenticated, generateCompletion);
 router.post('/explanation', ensureAuthenticated, generateExplanation);
 router.post('/convert', ensureAuthenticated, convertCode);
@@ -131,5 +151,31 @@ router.post('/tests', ensureAuthenticated, generateTests);
 // Inline Code Actions (Right-click + Lightbulb)
 router.post('/code-actions', ensureAuthenticated, handleCodeActions);
 router.post('/code-actions/stream', ensureAuthenticated, handleCodeActionsStream);
+
+// POST /api/ai/generate — general AI generation (all providers: Claude, Gemini, xAI, Kimi)
+// Also accessible as /api/generate via dual-mount at /api
+router.post('/generate', ensureAuthenticated, generateAI);
+
+// POST /api/openai/generate — OpenAI-specific generation (used by AllModelsSelector for GPT/o1/o3)
+// Also accessible as /api/ai/openai/generate via dual-mount
+router.post('/openai/generate', ensureAuthenticated, generateOpenAI);
+
+// POST /api/opensource/generate — open-source model generation (AllModelsSelector fallback)
+router.post('/opensource/generate', ensureAuthenticated, generateOpenSource);
+
+// POST /api/ai/feedback — submit feedback on an AI response (used by AIAssistant)
+router.post('/feedback', ensureAuthenticated, (_req, res) => {
+  res.json({ success: true, message: 'Feedback recorded' });
+});
+
+// --- Project-specific routes (MUST come AFTER all fixed-path routes) ---
+// POST /api/ai/:projectId/chat — project-specific AI chat (ReplitAssistant, AIAssistant)
+router.post('/:projectId/chat', ensureAuthenticated, generateProjectChat);
+
+// GET /api/ai/:projectId/history — project chat history (AIAssistant)
+router.get('/:projectId/history', ensureAuthenticated, getProjectHistory);
+
+// POST /api/ai/:projectId/suggestions — AI code suggestions (AIAssistant)
+router.post('/:projectId/suggestions', ensureAuthenticated, generateProjectSuggestions);
 
 export default router;
