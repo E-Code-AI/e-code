@@ -240,7 +240,7 @@ class DelegationManagerService extends EventEmitter {
         selectedProvider = 'openai';
         selectedModel = 'gpt-4o-mini';
         fallbackUsed = true;
-        logger.error('No providers available, using last resort: gpt-5-mini');
+        logger.error('No providers available, using last resort: gpt-4o-mini');
       }
     }
     

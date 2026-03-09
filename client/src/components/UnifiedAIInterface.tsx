@@ -299,7 +299,7 @@ export function UnifiedAIInterface({
                   </SelectItem>
                   <SelectItem value="gpt-4o">GPT-4o</SelectItem>
                   <SelectItem value="gemini-2.5-flash">Gemini 2.5 Flash</SelectItem>
-                  <SelectItem value="grok-2-1212">Grok 2</SelectItem>
+                  <SelectItem value="grok-3">Grok 3</SelectItem>
                 </SelectContent>
               </Select>
             )}

@@ -68,7 +68,7 @@ const AI_MODELS: AIModel[] = [
   { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash', provider: 'Google', description: 'Next-gen performance — native tool use and superior speed', speed: 'fast', capability: 'advanced' },
   { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', provider: 'Google', description: 'Long context champion — 2M context for large codebases', speed: 'medium', capability: 'advanced' },
   // xAI
-  { id: 'grok-2-1212', name: 'Grok 2', provider: 'xAI', description: 'xAI flagship — 131K context, function calling, JSON mode', speed: 'fast', capability: 'advanced' },
+  { id: 'grok-3', name: 'Grok 3', provider: 'xAI', description: 'xAI flagship — real-time knowledge, strong reasoning, 131K context', speed: 'fast', capability: 'advanced' },
   // Moonshot AI
   { id: 'moonshot-v1-32k', name: 'Moonshot v1 32K', provider: 'Moonshot AI', description: 'Balanced — 32K context for most coding and analysis tasks', speed: 'fast', capability: 'standard' },
   { id: 'moonshot-v1-128k', name: 'Moonshot v1 128K', provider: 'Moonshot AI', description: 'Long context — 128K for large codebases and documents', speed: 'medium', capability: 'advanced' },

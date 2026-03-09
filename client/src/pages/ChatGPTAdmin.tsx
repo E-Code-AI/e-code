@@ -533,7 +533,7 @@ export default function ChatGPTAdmin() {
                       <SelectItem value="claude-3-opus-20240229">Claude 3 Opus</SelectItem>
                       <SelectItem value="gemini-2.5-flash">Gemini 2.5 Flash</SelectItem>
                       <SelectItem value="gemini-2.0-flash">Gemini 2.0 Flash</SelectItem>
-                      <SelectItem value="grok-2-1212">Grok 2</SelectItem>
+                      <SelectItem value="grok-3">Grok 3</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

@@ -428,8 +428,8 @@ router.get('/models', ensureAuthenticated, async (req, res) => {
         features: ['real_time_data', 'function_calling']
       },
       {
-        id: 'kimi-k2-0711-preview',
-        name: 'Kimi K2',
+        id: 'moonshot-v1-128k',
+        name: 'Kimi 128K',
         provider: 'moonshot',
         ragSupport: true,
         embeddingModel: null,

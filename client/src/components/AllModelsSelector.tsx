@@ -386,7 +386,7 @@ export function AllModelsSelector() {
       } else if (selectedModel.includes('kimi')) {
         // Moonshot AI Kimi models
         // ✅ KIMI K2 REQUIREMENTS: temperature=1.0, max_tokens>=16384 for thinking models
-        const isThinkingModel = selectedModel.includes('thinking') || selectedModel.includes('kimi-k2-0905') || selectedModel.includes('kimi-k2');
+        const isThinkingModel = selectedModel.includes('thinking') || selectedModel.includes('moonshot-v1-128k');
         endpoint = '/api/ai/generate';
         payload = {
           model: selectedModel,
