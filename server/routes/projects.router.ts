@@ -16,6 +16,19 @@ import { validateAndSetSSEHeaders } from '../utils/sse-headers';
 
 const projectLogger = createLogger('projects-router');
 
+function sanitizeOwner(user: any): object | null {
+  if (!user) return null;
+  return {
+    id: user.id,
+    username: user.username,
+    displayName: user.displayName,
+    profileImageUrl: user.profileImageUrl || user.avatarUrl,
+    bio: user.bio,
+    reputation: user.reputation,
+    role: user.role,
+  };
+}
+
 export class ProjectsRouter {
   private router: Router;
   private storage: IStorage;
@@ -253,7 +266,7 @@ export class ProjectsRouter {
         
         const enrichedProjects = await Promise.all(projects.map(async (project) => {
           const owner = await this.storage.getUser(String(project.ownerId));
-          return { ...project, owner };
+          return { ...project, owner: sanitizeOwner(owner) };
         }));
         
         res.json({
@@ -395,47 +408,69 @@ export class ProjectsRouter {
           tenantId: validatedData.tenantId ?? userId,
         });
 
-        // Auto-create starter file so the IDE has something to show immediately
+        // Auto-create starter files so the IDE has something to show immediately
         try {
           const lang = validatedData.language || 'javascript';
-          const starterFiles: Record<string, { name: string; content: string }> = {
-            javascript:  { name: 'index.js',  content: 'console.log("Hello, World!");\n' },
-            typescript:  { name: 'index.ts',  content: 'console.log("Hello, World!");\n' },
-            python:      { name: 'main.py',   content: 'print("Hello, World!")\n' },
-            bash:        { name: 'script.sh', content: '#!/usr/bin/env bash\necho "Hello, World!"\n' },
-            c:           { name: 'main.c',    content: '#include <stdio.h>\nint main() {\n  printf("Hello, World!\\n");\n  return 0;\n}\n' },
-            cpp:         { name: 'main.cpp',  content: '#include <iostream>\nint main() {\n  std::cout << "Hello, World!" << std::endl;\n  return 0;\n}\n' },
-            rust:        { name: 'main.rs',   content: 'fn main() {\n  println!("Hello, World!");\n}\n' },
-            go:          { name: 'main.go',   content: 'package main\nimport "fmt"\nfunc main() {\n  fmt.Println("Hello, World!")\n}\n' },
-            java:        { name: 'Main.java', content: 'public class Main {\n  public static void main(String[] args) {\n    System.out.println("Hello, World!");\n  }\n}\n' },
-            ruby:        { name: 'main.rb',   content: 'puts "Hello, World!"\n' },
-            php:         { name: 'index.php', content: '<?php\necho "Hello, World!";\n' },
-            swift:       { name: 'main.swift', content: 'print("Hello, World!")\n' },
-            kotlin:      { name: 'main.kt',   content: 'fun main() {\n  println("Hello, World!")\n}\n' },
-            perl:        { name: 'main.pl',   content: '#!/usr/bin/perl\nprint "Hello, World!\\n";\n' },
-            deno:        { name: 'index.ts',  content: 'console.log("Hello, World!");\n' },
-            lua:         { name: 'main.lua',  content: 'print("Hello, World!")\n' },
-            r:           { name: 'main.R',    content: 'cat("Hello, World!\\n")\n' },
-            julia:       { name: 'main.jl',   content: 'println("Hello, World!")\n' },
-            haskell:     { name: 'Main.hs',   content: 'module Main where\nmain :: IO ()\nmain = putStrLn "Hello, World!"\n' },
-            scala:       { name: 'Main.scala', content: 'object Main extends App {\n  println("Hello, World!")\n}\n' },
-            clojure:     { name: 'main.clj',  content: '(println "Hello, World!")\n' },
-            elixir:      { name: 'main.exs',  content: 'IO.puts "Hello, World!"\n' },
-            ocaml:       { name: 'main.ml',   content: 'let () = print_endline "Hello, World!"\n' },
-            dart:        { name: 'main.dart', content: 'void main() {\n  print("Hello, World!");\n}\n' },
-            zig:         { name: 'main.zig',  content: 'const std = @import("std");\npub fn main() void {\n  std.debug.print("Hello, World!\\n", .{});\n}\n' },
-            csharp:      { name: 'Program.cs', content: 'using System;\nclass Program {\n  static void Main() {\n    Console.WriteLine("Hello, World!");\n  }\n}\n' },
-            fsharp:      { name: 'Program.fs', content: 'printfn "Hello, World!"\n' },
-            nix:         { name: 'default.nix', content: '# Nix expression\n{ pkgs ? import <nixpkgs> {} }:\npkgs.mkShell {\n  buildInputs = [ pkgs.hello ];\n}\n' },
-            html:        { name: 'index.html', content: '<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8">\n  <title>App</title>\n</head>\n<body>\n  <h1>Hello, World!</h1>\n</body>\n</html>\n' },
+          const projectName = validatedData.name || 'My App';
+
+          // Multi-file starters for web-capable languages
+          type StarterFile = { name: string; content: string };
+          const multiFileStarters: Record<string, StarterFile[]> = {
+            javascript: [
+              { name: 'index.html', content: `<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n  <title>${projectName}</title>\n  <style>\n    body { font-family: sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: #0f172a; color: #f1f5f9; }\n    .container { text-align: center; }\n    h1 { font-size: 2.5rem; margin-bottom: 0.5rem; }\n    p { color: #94a3b8; }\n  </style>\n</head>\n<body>\n  <div class="container">\n    <h1>Hello from ${projectName}!</h1>\n    <p>Edit <code>script.js</code> to get started</p>\n  </div>\n  <script src="script.js"></script>\n</body>\n</html>\n` },
+              { name: 'script.js', content: `// ${projectName}\nconsole.log('Hello, World!');\n` },
+            ],
+            typescript: [
+              { name: 'index.html', content: `<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n  <title>${projectName}</title>\n  <style>\n    body { font-family: sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: #0f172a; color: #f1f5f9; }\n    .container { text-align: center; }\n    h1 { font-size: 2.5rem; }\n    p { color: #94a3b8; }\n  </style>\n</head>\n<body>\n  <div class="container">\n    <h1>Hello from ${projectName}!</h1>\n    <p>Edit <code>index.ts</code> to get started</p>\n  </div>\n</body>\n</html>\n` },
+              { name: 'index.ts', content: `// ${projectName}\nconsole.log('Hello, World!');\n` },
+            ],
+            html: [
+              { name: 'index.html', content: `<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n  <title>${projectName}</title>\n  <link rel="stylesheet" href="style.css">\n</head>\n<body>\n  <div class="container">\n    <h1>Hello, World!</h1>\n    <p>Edit this page to get started.</p>\n  </div>\n  <script src="script.js"></script>\n</body>\n</html>\n` },
+              { name: 'style.css', content: `* { box-sizing: border-box; margin: 0; padding: 0; }\nbody { font-family: sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; background: #0f172a; color: #f1f5f9; }\n.container { text-align: center; padding: 2rem; }\nh1 { font-size: 2.5rem; margin-bottom: 0.5rem; }\np { color: #94a3b8; }\n` },
+              { name: 'script.js', content: `console.log('Page loaded!');\n` },
+            ],
           };
-          const starter = starterFiles[lang] ?? { name: 'main.txt', content: '# Start coding here\n' };
-          await this.storage.createFile({
-            projectId: String(project.id),
-            path: starter.name,
-            content: starter.content,
-          });
-          projectLogger.info(`[Projects] Created starter file ${starter.name} for project ${project.id}`);
+
+          // Single-file starters for non-web languages
+          const singleFileStarters: Record<string, StarterFile> = {
+            python:  { name: 'main.py',    content: 'print("Hello, World!")\n' },
+            bash:    { name: 'script.sh',  content: '#!/usr/bin/env bash\necho "Hello, World!"\n' },
+            c:       { name: 'main.c',     content: '#include <stdio.h>\nint main() {\n  printf("Hello, World!\\n");\n  return 0;\n}\n' },
+            cpp:     { name: 'main.cpp',   content: '#include <iostream>\nint main() {\n  std::cout << "Hello, World!" << std::endl;\n  return 0;\n}\n' },
+            rust:    { name: 'main.rs',    content: 'fn main() {\n  println!("Hello, World!");\n}\n' },
+            go:      { name: 'main.go',    content: 'package main\nimport "fmt"\nfunc main() {\n  fmt.Println("Hello, World!")\n}\n' },
+            java:    { name: 'Main.java',  content: 'public class Main {\n  public static void main(String[] args) {\n    System.out.println("Hello, World!");\n  }\n}\n' },
+            ruby:    { name: 'main.rb',    content: 'puts "Hello, World!"\n' },
+            php:     { name: 'index.php',  content: '<?php\necho "Hello, World!";\n?>\n' },
+            swift:   { name: 'main.swift', content: 'print("Hello, World!")\n' },
+            kotlin:  { name: 'main.kt',   content: 'fun main() {\n  println("Hello, World!")\n}\n' },
+            perl:    { name: 'main.pl',    content: '#!/usr/bin/perl\nprint "Hello, World!\\n";\n' },
+            deno:    { name: 'index.ts',   content: 'console.log("Hello, World!");\n' },
+            lua:     { name: 'main.lua',   content: 'print("Hello, World!")\n' },
+            r:       { name: 'main.R',     content: 'cat("Hello, World!\\n")\n' },
+            julia:   { name: 'main.jl',    content: 'println("Hello, World!")\n' },
+            haskell: { name: 'Main.hs',    content: 'module Main where\nmain :: IO ()\nmain = putStrLn "Hello, World!"\n' },
+            scala:   { name: 'Main.scala', content: 'object Main extends App {\n  println("Hello, World!")\n}\n' },
+            clojure: { name: 'main.clj',   content: '(println "Hello, World!")\n' },
+            elixir:  { name: 'main.exs',   content: 'IO.puts "Hello, World!"\n' },
+            ocaml:   { name: 'main.ml',    content: 'let () = print_endline "Hello, World!"\n' },
+            dart:    { name: 'main.dart',  content: 'void main() {\n  print("Hello, World!");\n}\n' },
+            zig:     { name: 'main.zig',   content: 'const std = @import("std");\npub fn main() void {\n  std.debug.print("Hello, World!\\n", .{});\n}\n' },
+            csharp:  { name: 'Program.cs', content: 'using System;\nclass Program {\n  static void Main() {\n    Console.WriteLine("Hello, World!");\n  }\n}\n' },
+            fsharp:  { name: 'Program.fs', content: 'printfn "Hello, World!"\n' },
+            nix:     { name: 'default.nix', content: '# Nix expression\n{ pkgs ? import <nixpkgs> {} }:\npkgs.mkShell {\n  buildInputs = [ pkgs.hello ];\n}\n' },
+          };
+
+          const filesToCreate: StarterFile[] = multiFileStarters[lang] ?? (singleFileStarters[lang] ? [singleFileStarters[lang]] : [{ name: 'main.txt', content: '# Start coding here\n' }]);
+
+          for (const file of filesToCreate) {
+            await this.storage.createFile({
+              projectId: String(project.id),
+              path: file.name,
+              content: file.content,
+            });
+          }
+          projectLogger.info(`[Projects] Created ${filesToCreate.length} starter file(s) for project ${project.id} (${lang})`);
         } catch (starterErr: any) {
           projectLogger.warn(`[Projects] Failed to create starter file for project ${project.id}:`, starterErr);
         }
@@ -481,7 +516,7 @@ export class ProjectsRouter {
         
         res.json({ 
           ...project, 
-          owner,
+          owner: sanitizeOwner(owner),
           database: databaseInfo
         });
       } catch (error: any) {
@@ -515,7 +550,7 @@ export class ProjectsRouter {
         
         const owner = await this.storage.getUser(String(project.ownerId));
         
-        res.json({ ...project, owner });
+        res.json({ ...project, owner: sanitizeOwner(owner) });
       } catch (error) {
         projectLogger.error('Error fetching project:', error);
         res.status(500).json({ 
@@ -618,7 +653,7 @@ export class ProjectsRouter {
           return res.json({
             ...project,
             redirectTo: `/editor/${project.id}`,
-            owner: await this.storage.getUser(String(project.ownerId))
+            owner: sanitizeOwner(await this.storage.getUser(String(project.ownerId)))
           });
         }
         
@@ -646,7 +681,7 @@ export class ProjectsRouter {
         const owner = await this.storage.getUser(String(project.ownerId));
         res.json({
           ...project,
-          owner
+          owner: sanitizeOwner(owner)
         });
       } catch (error) {
         projectLogger.error('[Projects] Error accessing project:', error);

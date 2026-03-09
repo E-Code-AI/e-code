@@ -139,7 +139,7 @@ export default function Register() {
           sessionStorage.setItem('triggerBuildOnLanding', 'true');
           navigate('/');
         } else {
-          navigate('/');
+          navigate('/home');
         }
       }
     } catch (error: any) {

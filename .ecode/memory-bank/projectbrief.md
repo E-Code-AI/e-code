@@ -1,7 +1,7 @@
 # Project Brief
 
 ## Overview
-Created by mobile send test
+Web Demo
 
 ## Core Requirements
 [To be extracted from requirements]

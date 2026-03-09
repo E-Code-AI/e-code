@@ -79,9 +79,12 @@ class MonitoringService {
     this.incrementCounter('api_requests_total');
     this.incrementCounter(`api_requests_${method.toLowerCase()}`);
     
-    // Track errors
-    if (statusCode >= 400) {
+    // Track errors - only 5xx server errors affect health; 4xx are client errors
+    if (statusCode >= 500) {
       this.incrementCounter('api_errors_total');
+      this.incrementCounter(`api_errors_${Math.floor(statusCode / 100)}xx`);
+    } else if (statusCode >= 400) {
+      // Track 4xx separately for visibility but don't count toward health degradation
       this.incrementCounter(`api_errors_${Math.floor(statusCode / 100)}xx`);
     }
     

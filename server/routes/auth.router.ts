@@ -95,6 +95,15 @@ export class AuthRouter {
       res.json(this.sanitizeUser(user));
     });
 
+    // Alias: /user -> /me (for compatibility with health probes and legacy clients)
+    this.router.get("/user", this.ensureAuthenticated, (req: Request, res: Response) => {
+      const user = req.user;
+      if (!user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      res.json(this.sanitizeUser(user));
+    });
+
     // Register endpoint
     this.router.post("/register", csrfProtection, async (req: Request, res: Response) => {
       try {
