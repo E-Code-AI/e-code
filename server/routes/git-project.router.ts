@@ -1,0 +1,309 @@
+import { Router, Request, Response } from 'express';
+import { execa } from 'execa';
+import path from 'path';
+import fs from 'fs/promises';
+import { ensureAuthenticated } from '../middleware/auth';
+import { createLogger } from '../utils/logger';
+import { storage } from '../storage';
+
+const logger = createLogger('git-project-router');
+const router = Router();
+
+const PROJECTS_BASE = path.join(process.cwd(), 'projects');
+
+async function getProjectDir(projectId: string): Promise<string> {
+  const dir = path.join(PROJECTS_BASE, `project-${projectId}`);
+  await fs.mkdir(dir, { recursive: true });
+  return dir;
+}
+
+async function syncProjectFiles(projectId: string, projectDir: string): Promise<void> {
+  try {
+    const files = await storage.getFilesByProjectId(projectId);
+    if (!files || files.length === 0) return;
+    for (const file of files) {
+      if (file.isDirectory || !file.content) continue;
+      const filePath = path.join(projectDir, file.path || file.name);
+      const fileDir = path.dirname(filePath);
+      await fs.mkdir(fileDir, { recursive: true });
+      await fs.writeFile(filePath, file.content || '', 'utf8');
+    }
+  } catch (err) {
+    logger.error('Failed to sync project files:', err);
+  }
+}
+
+async function ensureGitInitialized(projectDir: string): Promise<void> {
+  try {
+    await execa('git', ['rev-parse', '--git-dir'], { cwd: projectDir });
+  } catch {
+    await execa('git', ['init'], { cwd: projectDir });
+    await execa('git', ['config', 'user.name', 'E-Code User'], { cwd: projectDir });
+    await execa('git', ['config', 'user.email', 'user@e-code.ai'], { cwd: projectDir });
+  }
+}
+
+function parseStatusOutput(stdout: string) {
+  const staged: string[] = [];
+  const unstaged: string[] = [];
+  const untracked: string[] = [];
+  stdout.split('\n').forEach((line) => {
+    if (!line) return;
+    const xy = line.substring(0, 2);
+    const file = line.substring(3);
+    if (xy === '??') {
+      untracked.push(file);
+      return;
+    }
+    if (xy[0] !== ' ' && xy[0] !== '?') staged.push(file);
+    if (xy[1] !== ' ' && xy[1] !== '?') unstaged.push(file);
+  });
+  return { staged, unstaged, untracked };
+}
+
+// GET /:projectId/status
+router.get('/:projectId/status', ensureAuthenticated, async (req: Request, res: Response) => {
+  const { projectId } = req.params;
+  try {
+    const projectDir = await getProjectDir(projectId);
+    await syncProjectFiles(projectId, projectDir);
+    await ensureGitInitialized(projectDir);
+
+    const [branchRes, statusRes, aheadBehindRes] = await Promise.all([
+      execa('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: projectDir }).catch(() => ({ stdout: 'main' })),
+      execa('git', ['status', '--porcelain'], { cwd: projectDir }).catch(() => ({ stdout: '' })),
+      execa('git', ['rev-list', '--left-right', '--count', 'HEAD...@{u}'], { cwd: projectDir }).catch(() => ({ stdout: '0\t0' })),
+    ]);
+
+    const branch = (branchRes.stdout || 'main').trim();
+    const [ahead = 0, behind = 0] = (aheadBehindRes.stdout || '0\t0').split('\t').map(Number);
+    const { staged, unstaged, untracked } = parseStatusOutput(statusRes.stdout || '');
+
+    const changes = [
+      ...staged.map((f: string) => ({ path: f, status: 'staged' as const })),
+      ...unstaged.map((f: string) => ({ path: f, status: 'modified' as const })),
+      ...untracked.map((f: string) => ({ path: f, status: 'untracked' as const })),
+    ];
+
+    res.json({ branch, ahead, behind, staged, unstaged, untracked, changes });
+  } catch (error: any) {
+    logger.error(`[git-project] status error for ${projectId}:`, error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /:projectId/branches
+router.get('/:projectId/branches', ensureAuthenticated, async (req: Request, res: Response) => {
+  const { projectId } = req.params;
+  try {
+    const projectDir = await getProjectDir(projectId);
+    await ensureGitInitialized(projectDir);
+    const { stdout } = await execa('git', ['branch', '--format=%(refname:short)'], { cwd: projectDir }).catch(() => ({ stdout: 'main' }));
+    const currentRes = await execa('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: projectDir }).catch(() => ({ stdout: 'main' }));
+    const current = currentRes.stdout.trim();
+    const branches = stdout.split('\n').filter(Boolean).map((name: string) => ({
+      name,
+      current: name === current,
+      remote: null,
+    }));
+    if (branches.length === 0) {
+      branches.push({ name: current || 'main', current: true, remote: null });
+    }
+    res.json(branches);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /:projectId/commits
+router.get('/:projectId/commits', ensureAuthenticated, async (req: Request, res: Response) => {
+  const { projectId } = req.params;
+  try {
+    const projectDir = await getProjectDir(projectId);
+    await ensureGitInitialized(projectDir);
+    const { stdout } = await execa(
+      'git', ['log', '--format=%H|%an|%ae|%aI|%s', '--max-count=50'],
+      { cwd: projectDir }
+    ).catch(() => ({ stdout: '' }));
+    const commits = stdout.split('\n').filter(Boolean).map((line: string) => {
+      const [hash, author, email, date, ...msgParts] = line.split('|');
+      return { hash, shortHash: hash.substring(0, 7), author, email, date, message: msgParts.join('|') };
+    });
+    res.json(commits);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /:projectId/init
+router.post('/:projectId/init', ensureAuthenticated, async (req: Request, res: Response) => {
+  const { projectId } = req.params;
+  try {
+    const projectDir = await getProjectDir(projectId);
+    await syncProjectFiles(projectId, projectDir);
+    await execa('git', ['init'], { cwd: projectDir });
+    await execa('git', ['config', 'user.name', 'E-Code User'], { cwd: projectDir });
+    await execa('git', ['config', 'user.email', 'user@e-code.ai'], { cwd: projectDir });
+    const gitignore = 'node_modules/\ndist/\nbuild/\n.env\n.DS_Store\n';
+    await fs.writeFile(path.join(projectDir, '.gitignore'), gitignore);
+    res.json({ success: true, message: 'Git repository initialized' });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /:projectId/stage
+router.post('/:projectId/stage', ensureAuthenticated, async (req: Request, res: Response) => {
+  const { projectId } = req.params;
+  const { paths, files } = req.body;
+  const filesToStage: string[] = paths || files || ['.'];
+  try {
+    const projectDir = await getProjectDir(projectId);
+    await ensureGitInitialized(projectDir);
+    await execa('git', ['add', '--', ...filesToStage], { cwd: projectDir });
+    res.json({ success: true });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /:projectId/unstage
+router.post('/:projectId/unstage', ensureAuthenticated, async (req: Request, res: Response) => {
+  const { projectId } = req.params;
+  const { paths, files } = req.body;
+  const filesToUnstage: string[] = paths || files || [];
+  try {
+    const projectDir = await getProjectDir(projectId);
+    await ensureGitInitialized(projectDir);
+    if (filesToUnstage.length > 0) {
+      await execa('git', ['reset', 'HEAD', '--', ...filesToUnstage], { cwd: projectDir });
+    }
+    res.json({ success: true });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /:projectId/commit
+router.post('/:projectId/commit', ensureAuthenticated, async (req: Request, res: Response) => {
+  const { projectId } = req.params;
+  const { message, files } = req.body;
+  if (!message) {
+    return res.status(400).json({ error: 'Commit message is required' });
+  }
+  try {
+    const projectDir = await getProjectDir(projectId);
+    await ensureGitInitialized(projectDir);
+    if (files && files.length > 0) {
+      await execa('git', ['add', '--', ...files], { cwd: projectDir });
+    } else {
+      await execa('git', ['add', '.'], { cwd: projectDir });
+    }
+    const { stdout } = await execa('git', ['commit', '-m', message], { cwd: projectDir });
+    const hashRes = await execa('git', ['rev-parse', 'HEAD'], { cwd: projectDir }).catch(() => ({ stdout: '' }));
+    res.json({ success: true, hash: hashRes.stdout.trim().substring(0, 7), message: stdout });
+  } catch (error: any) {
+    if (error.message?.includes('nothing to commit')) {
+      return res.json({ success: true, message: 'Nothing to commit' });
+    }
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /:projectId/push
+router.post('/:projectId/push', ensureAuthenticated, async (req: Request, res: Response) => {
+  const { projectId } = req.params;
+  try {
+    const projectDir = await getProjectDir(projectId);
+    await ensureGitInitialized(projectDir);
+    const { stdout, stderr } = await execa('git', ['push', 'origin', 'HEAD'], { cwd: projectDir });
+    res.json({ success: true, output: stdout || stderr });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message || 'Push failed. Make sure you have a remote configured.' });
+  }
+});
+
+// POST /:projectId/pull
+router.post('/:projectId/pull', ensureAuthenticated, async (req: Request, res: Response) => {
+  const { projectId } = req.params;
+  try {
+    const projectDir = await getProjectDir(projectId);
+    await ensureGitInitialized(projectDir);
+    const { stdout } = await execa('git', ['pull', 'origin', 'HEAD'], { cwd: projectDir });
+    res.json({ success: true, output: stdout });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message || 'Pull failed. Make sure you have a remote configured.' });
+  }
+});
+
+// POST /:projectId/clone
+router.post('/:projectId/clone', ensureAuthenticated, async (req: Request, res: Response) => {
+  const { projectId } = req.params;
+  const { url } = req.body;
+  if (!url) {
+    return res.status(400).json({ error: 'Repository URL is required' });
+  }
+  try {
+    const projectDir = await getProjectDir(projectId);
+    await fs.rm(projectDir, { recursive: true, force: true });
+    await fs.mkdir(projectDir, { recursive: true });
+    await execa('git', ['clone', url, '.'], { cwd: projectDir });
+    res.json({ success: true, message: 'Repository cloned successfully' });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /:projectId/branch (create branch)
+router.post('/:projectId/branch', ensureAuthenticated, async (req: Request, res: Response) => {
+  const { projectId } = req.params;
+  const { name, startPoint } = req.body;
+  if (!name) {
+    return res.status(400).json({ error: 'Branch name is required' });
+  }
+  try {
+    const projectDir = await getProjectDir(projectId);
+    await ensureGitInitialized(projectDir);
+    const args = startPoint ? ['branch', name, startPoint] : ['branch', name];
+    await execa('git', args, { cwd: projectDir });
+    res.json({ success: true, message: `Branch '${name}' created` });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /:projectId/checkout
+router.post('/:projectId/checkout', ensureAuthenticated, async (req: Request, res: Response) => {
+  const { projectId } = req.params;
+  const { branch } = req.body;
+  if (!branch) {
+    return res.status(400).json({ error: 'Branch name is required' });
+  }
+  try {
+    const projectDir = await getProjectDir(projectId);
+    await ensureGitInitialized(projectDir);
+    await execa('git', ['checkout', branch], { cwd: projectDir });
+    res.json({ success: true, message: `Switched to branch '${branch}'` });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /:projectId/diff/:filePath
+router.get('/:projectId/diff/:filePath(*)', ensureAuthenticated, async (req: Request, res: Response) => {
+  const { projectId, filePath } = req.params;
+  const { staged } = req.query;
+  try {
+    const projectDir = await getProjectDir(projectId);
+    await ensureGitInitialized(projectDir);
+    const args = staged === 'true'
+      ? ['diff', '--cached', '--', filePath]
+      : ['diff', '--', filePath];
+    const { stdout } = await execa('git', args, { cwd: projectDir }).catch(() => ({ stdout: '' }));
+    res.json({ diff: stdout, filePath });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+export default router;

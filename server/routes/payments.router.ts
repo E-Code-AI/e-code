@@ -344,4 +344,59 @@ router.post('/queue-retry', ensureAuthenticated, ensureAdmin, adminPaymentRateLi
   }
 });
 
+// Alias routes so /api/billing/* works in addition to /api/payments/*
+router.post('/subscribe', ensureAuthenticated, async (req: Request, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const { planId, tier, interval, paymentMethodId } = req.body;
+    const resolvedTier = tier || planId || 'core';
+    const subscription = await paymentService.createSubscription(userId, resolvedTier, paymentMethodId);
+    const clientSecret = (subscription.latest_invoice as any)?.payment_intent?.client_secret;
+    res.json({
+      subscriptionId: subscription.id,
+      clientSecret: clientSecret || null,
+      status: subscription.status,
+      checkoutUrl: null
+    });
+  } catch (error: any) {
+    logger.error('Failed to create subscription (alias):', error);
+    res.status(500).json({ error: error.message || 'Failed to create subscription' });
+  }
+});
+
+router.post('/cancel', ensureAuthenticated, async (req: Request, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    await paymentService.cancelSubscription(userId);
+    res.json({ success: true, message: 'Subscription cancelled successfully' });
+  } catch (error: any) {
+    logger.error('Failed to cancel subscription (alias):', error);
+    res.status(500).json({ error: error.message || 'Failed to cancel subscription' });
+  }
+});
+
+router.get('/subscription', ensureAuthenticated, async (req: Request, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const { storage } = await import('../storage');
+    const user = await storage.getUser(String(userId));
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    const tier = user.subscriptionTier || 'free';
+    res.json({
+      id: user.id,
+      plan: tier,
+      status: user.subscriptionStatus || (tier === 'free' ? 'active' : 'inactive'),
+      currentPeriodEnd: user.subscriptionCurrentPeriodEnd || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      cancelAtPeriodEnd: false,
+      stripeCustomerId: user.stripeCustomerId || null,
+      stripeSubscriptionId: user.stripeSubscriptionId || null
+    });
+  } catch (error: any) {
+    logger.error('Failed to get subscription (alias):', error);
+    res.status(500).json({ error: error.message || 'Failed to get subscription' });
+  }
+});
+
 export default router;

@@ -40,6 +40,7 @@ import { mobileRouter } from "../api/mobile";
 // SECURITY FIX: Auth bypass removed - all authentication goes through Passport sessions
 import { csrfTokenEndpoint } from "../middleware/csrf";
 import { GitRouter } from "./git.router";
+import gitProjectRouter from "./git-project.router";
 import debugRouter from "./debug.router";
 import databaseRouter from "./database.router";
 import agentAutonomousRouter from "./agent-autonomous.router";
@@ -174,6 +175,9 @@ export class MainRouter {
 
     // User management routes
     app.use('/api/users', tierRateLimiters.api, this.usersRouter.getRouter());
+
+    // Alias: /api/user/* → /api/users/* (singular form used by some frontend components)
+    app.use('/api/user', tierRateLimiters.api, this.usersRouter.getRouter());
 
     // Project management routes  
     app.use('/api/projects', tierRateLimiters.api, this.projectsRouter.getRouter());
@@ -394,7 +398,10 @@ export class MainRouter {
     // Expo Snack integration for real mobile simulation
     app.use('/api/expo-snack', tierRateLimiters.api, expoSnackRouter);
 
-    // Git integration routes
+    // Per-project git routes (/:projectId/status, /branches, /commits, etc.)
+    app.use('/api/git', tierRateLimiters.api, gitProjectRouter);
+
+    // Git integration routes (platform-level git)
     app.use('/api/git', tierRateLimiters.api, GitRouter);
 
     // Debug routes

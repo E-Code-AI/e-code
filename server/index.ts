@@ -850,7 +850,11 @@ httpServer.listen(port, "0.0.0.0", () => {
     try {
       const paymentsRouter = (await import('./routes/payments.router')).default;
       app.use('/api/payments', paymentsRouter);
-      logger.info('[Stripe Payments] Routes registered at /api/payments');
+
+      // /api/billing/* aliases so BillingSystem.tsx and legacy components work without changes
+      app.use('/api/billing', paymentsRouter);
+
+      logger.info('[Stripe Payments] Routes registered at /api/payments and /api/billing');
     } catch (error) {
       logger.error(`[WORKING SERVER] Failed to register payments routes: ${error}`);
     }
