@@ -34,9 +34,10 @@ export const AI_MODEL_PRICING = {
   'gemini-1.5-pro': { input: 0.00125, output: 0.005, creditsPerThousand: 0.00625 },
   'gemini-1.5-flash': { input: 0.000075, output: 0.0003, creditsPerThousand: 0.0004 },
 
-  // xAI Models
-  'grok-2-1212': { input: 0.002, output: 0.01, creditsPerThousand: 0.012 },
-  'grok-2-vision-1212': { input: 0.002, output: 0.01, creditsPerThousand: 0.012 },
+  // xAI Models — grok-3 family (confirmed real, Mar 2026)
+  'grok-3': { input: 0.003, output: 0.015, creditsPerThousand: 0.018 },
+  'grok-3-mini': { input: 0.0003, output: 0.0005, creditsPerThousand: 0.0008 },
+  'grok-3-fast': { input: 0.005, output: 0.025, creditsPerThousand: 0.030 },
 
   // Moonshot AI Models
   'moonshot-v1-8k': { input: 0.0012, output: 0.0012, creditsPerThousand: 0.0024 },

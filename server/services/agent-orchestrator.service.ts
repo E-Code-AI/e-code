@@ -1307,8 +1307,6 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
         'grok-3': 0.000003,
         'grok-3-mini': 0.0000003,
         'grok-3-fast': 0.000005,
-        'grok-2-1212': 0.000002,       // legacy entry for historical billing
-        'grok-2-vision-1212': 0.000002, // legacy entry for historical billing
         default: 0.000003
       },
       moonshot: {

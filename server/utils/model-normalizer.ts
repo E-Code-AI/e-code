@@ -128,7 +128,7 @@ const MODEL_NORMALIZATION_MAP: Record<string, string> = {
 };
 
 const PROVIDER_DEFAULTS: Record<string, string> = {
-  'openai':     'gpt-5.4',
+  'openai':     'gpt-4o',
   'anthropic':  'claude-sonnet-4-20250514',
   'gemini':     'gemini-2.5-flash',
   'google':     'gemini-2.5-flash',

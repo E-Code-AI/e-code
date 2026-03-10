@@ -45,19 +45,18 @@ export const AI_MODEL_PRICING: Record<string, { input: number; output: number }>
   'gemini-2.5-flash': { input: 0.075, output: 0.30 },
 
   // ============================================
-  // xAI (Dec 2025) - 2 models
+  // xAI (Mar 2026) — grok-3 family (confirmed real)
   // ============================================
-  'grok-2-1212': { input: 3.00, output: 15.00 },
-  'grok-2-1212': { input: 5.00, output: 25.00 },
+  'grok-3': { input: 3.00, output: 15.00 },
+  'grok-3-mini': { input: 0.30, output: 0.50 },
+  'grok-3-fast': { input: 5.00, output: 25.00 },
 
   // ============================================
-  // Moonshot AI (Dec 2025) - 5 models
+  // Moonshot AI — moonshot-v1 series (confirmed real)
   // ============================================
-  'moonshot-v1-128k': { input: 0.60, output: 2.40 },
-  'moonshot-v1-128k': { input: 0.60, output: 2.40 },
-  'moonshot-v1-128k': { input: 1.20, output: 4.80 },
+  'moonshot-v1-8k': { input: 0.30, output: 1.20 },
   'moonshot-v1-32k': { input: 0.30, output: 1.20 },
-  'moonshot-v1-128k': { input: 0.50, output: 2.00 },
+  'moonshot-v1-128k': { input: 0.60, output: 2.40 },
 
   // ============================================
   // Groq (Dec 2025) - 2 models

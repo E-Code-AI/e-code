@@ -42,9 +42,10 @@ export const MODEL_PRICING: Record<string, ModelPricingEntry> = {
   'gemini-1.5-pro':   { input: 1.25,  output: 5.0,  provider: 'gemini', name: 'Gemini 1.5 Pro' },
   'gemini-1.5-flash': { input: 0.075, output: 0.3,  provider: 'gemini', name: 'Gemini 1.5 Flash' },
 
-  // ── xAI ──────────────────────────────────────────────────────────────────────
-  'grok-2-1212':        { input: 2.0,  output: 10.0, provider: 'xai', name: 'Grok 2' },
-  'grok-2-vision-1212': { input: 2.0,  output: 10.0, provider: 'xai', name: 'Grok 2 Vision' },
+  // ── xAI — grok-3 family (confirmed real, Mar 2026) ───────────────────────────
+  'grok-3':      { input: 3.0,  output: 15.0, provider: 'xai', name: 'Grok 3' },
+  'grok-3-mini': { input: 0.3,  output: 0.5,  provider: 'xai', name: 'Grok 3 Mini' },
+  'grok-3-fast': { input: 5.0,  output: 25.0, provider: 'xai', name: 'Grok 3 Fast' },
 
   // ── Moonshot AI ───────────────────────────────────────────────────────────────
   'moonshot-v1-8k':   { input: 0.12, output: 0.12, provider: 'moonshot', name: 'Moonshot v1 8K' },

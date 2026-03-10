@@ -229,16 +229,16 @@ export const securityMiddleware = (): RequestHandler[] => {
   middlewares.push(helmet({
     contentSecurityPolicy: false, // We handle CSP ourselves for nonce support
     crossOriginEmbedderPolicy: isProduction,
-    crossOriginOpenerPolicy: { policy: "same-origin" },
-    crossOriginResourcePolicy: { policy: "same-origin" },
+    crossOriginOpenerPolicy: isProduction ? { policy: "same-origin" } : { policy: "unsafe-none" },
+    crossOriginResourcePolicy: isProduction ? { policy: "same-origin" } : { policy: "cross-origin" },
     originAgentCluster: true,
-    hsts: {
+    hsts: isProduction ? {
       maxAge: 31536000,
       includeSubDomains: true,
       preload: true
-    },
+    } : false,
     dnsPrefetchControl: { allow: false },
-    xFrameOptions: { action: 'deny' },
+    xFrameOptions: isProduction ? { action: 'sameorigin' } : false,
     xPoweredBy: false,
     xContentTypeOptions: true,
     referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
@@ -247,9 +247,10 @@ export const securityMiddleware = (): RequestHandler[] => {
 
   // Enhanced security headers
   middlewares.push((req: Request, res: Response, next: NextFunction) => {
-    // Prevent clickjacking with multiple headers
-    res.setHeader('X-Frame-Options', 'DENY');
-    res.setHeader('Frame-Options', 'DENY');
+    // Prevent clickjacking — only in production (dev needs Replit preview iframe)
+    if (isProduction) {
+      res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+    }
     
     // Prevent MIME type sniffing
     res.setHeader('X-Content-Type-Options', 'nosniff');
