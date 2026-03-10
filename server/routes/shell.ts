@@ -10,6 +10,7 @@ import type { IncomingMessage } from 'http';
 import type { Duplex } from 'stream';
 import { createLogger } from '../utils/logger';
 import { safePath } from '../utils/safe-path';
+import { storage } from '../storage';
 
 const logger = createLogger('shell-router');
 const router = Router();
@@ -128,16 +129,31 @@ echo ""
       logger.error('Failed to create user shell directory:', error);
     }
 
-    // Determine the working directory: prefer project dir if projectId is given
+    // Determine the working directory: sync project files from DB to /tmp
     let shellCwd = userHome;
     if (projectId) {
-      const projectDir = path.join(process.cwd(), 'projects', String(projectId));
-      const fsMod = await import('fs/promises');
+      const baseDir = path.join(os.tmpdir(), 'e-code-terminals');
+      const projectDir = path.join(baseDir, `project-${projectId}`);
       try {
-        await fsMod.access(projectDir);
+        await fs.mkdir(projectDir, { recursive: true });
+        const projectFiles = await storage.getFilesByProjectId(String(projectId));
+        if (projectFiles && projectFiles.length > 0) {
+          for (const file of projectFiles) {
+            const filePath = path.join(projectDir, (file as any).path || (file as any).name || '');
+            if (!filePath.startsWith(projectDir)) continue;
+            const fileDir = path.dirname(filePath);
+            if ((file as any).isDirectory) {
+              await fs.mkdir(filePath, { recursive: true });
+            } else {
+              await fs.mkdir(fileDir, { recursive: true });
+              await fs.writeFile(filePath, (file as any).content || '', 'utf8');
+            }
+          }
+          logger.info(`[Shell] Synced ${projectFiles.length} files for project ${projectId}`);
+        }
         shellCwd = projectDir;
-      } catch {
-        // project dir doesn't exist yet, fall back to userHome
+      } catch (syncErr) {
+        logger.warn(`[Shell] Could not sync project files, using userHome: ${syncErr}`);
       }
     }
 

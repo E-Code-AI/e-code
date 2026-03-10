@@ -8,6 +8,8 @@ import cookieParser from 'cookie';
 import * as signature from 'cookie-signature';
 import * as path from 'path';
 import * as fs from 'fs';
+import * as os from 'os';
+import { storage } from '../storage';
 
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 const ALLOW_INSECURE_LOCAL_PTY = process.env.ALLOW_INSECURE_LOCAL_PTY === 'true';
@@ -265,18 +267,7 @@ export class SocketIOTerminalService {
                     process.env.SHELL || '/bin/bash';
       const shellArgs = process.platform === 'win32' ? [] : ['-l'];
 
-      const projectsBase = path.join(process.cwd(), 'projects');
-      const projectDir = path.join(projectsBase, String(projectId));
-      let workDir: string;
-      if (projectId && projectId !== 'default' && fs.existsSync(projectDir)) {
-        workDir = projectDir;
-      } else {
-        const userShellDir = path.join(projectsBase, `user-${userId}`);
-        if (!fs.existsSync(userShellDir)) {
-          fs.mkdirSync(userShellDir, { recursive: true });
-        }
-        workDir = userShellDir;
-      }
+      const workDir = await this.setupProjectDirectory(projectId);
 
       logger.info(`[SocketIO Terminal] Spawning PTY for project ${projectId} in ${workDir}`);
 
@@ -348,6 +339,40 @@ export class SocketIOTerminalService {
       this.sessions.delete(sessionKey);
       this.outputBuffers.delete(sessionKey);
       logger.info(`[SocketIO Terminal] Session cleaned up for ${sessionKey}`);
+    }
+  }
+
+  private async setupProjectDirectory(projectId: string): Promise<string> {
+    const baseDir = path.join(os.tmpdir(), 'e-code-terminals');
+    const projectDir = path.join(baseDir, `project-${projectId}`);
+
+    try {
+      await fs.promises.mkdir(projectDir, { recursive: true });
+
+      try {
+        const files = await storage.getFilesByProjectId(projectId);
+        if (files && files.length > 0) {
+          for (const file of files) {
+            const filePath = path.join(projectDir, file.path || (file as any).name || '');
+            if (!filePath.startsWith(projectDir)) continue;
+            const fileDir = path.dirname(filePath);
+            if ((file as any).isDirectory) {
+              await fs.promises.mkdir(filePath, { recursive: true });
+            } else {
+              await fs.promises.mkdir(fileDir, { recursive: true });
+              await fs.promises.writeFile(filePath, (file as any).content || '', 'utf8');
+            }
+          }
+          logger.info(`[SocketIO Terminal] Synced ${files.length} files to ${projectDir}`);
+        }
+      } catch (storageError) {
+        logger.warn(`[SocketIO Terminal] Could not sync project files: ${storageError}`);
+      }
+
+      return projectDir;
+    } catch (error) {
+      logger.error(`[SocketIO Terminal] Failed to setup project directory:`, error);
+      return os.tmpdir();
     }
   }
 
