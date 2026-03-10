@@ -49,11 +49,62 @@ export function AllModelsSelector() {
     ...(openaiModels?.models || []),
     ...(opensourceData?.models || []),
     
+    // ── OpenAI GPT-5.x (via Replit ModelFarm — no API key needed) ───────────────
+    {
+      id: 'gpt-5.2',
+      name: 'GPT-5.2',
+      description: 'Most capable general-purpose model — best for most tasks. Free via Replit ModelFarm.',
+      provider: 'OpenAI',
+      contextWindow: 1000000,
+      capabilities: ['Chat', 'Code', 'Vision', 'Tools', 'Long Context', 'ModelFarm'],
+      pricing: { input: 3, output: 12, currency: 'USD', unit: '1M tokens' },
+      available: true
+    },
+    {
+      id: 'gpt-5.1',
+      name: 'GPT-5.1',
+      description: 'High-capability model — great for complex reasoning and coding. Free via Replit ModelFarm.',
+      provider: 'OpenAI',
+      contextWindow: 1000000,
+      capabilities: ['Chat', 'Code', 'Tools', 'Long Context', 'ModelFarm'],
+      pricing: { input: 2, output: 8, currency: 'USD', unit: '1M tokens' },
+      available: true
+    },
+    {
+      id: 'gpt-5',
+      name: 'GPT-5',
+      description: 'Flagship GPT-5 — powerful and versatile. Free via Replit ModelFarm.',
+      provider: 'OpenAI',
+      contextWindow: 1000000,
+      capabilities: ['Chat', 'Code', 'Tools', 'ModelFarm'],
+      pricing: { input: 2, output: 8, currency: 'USD', unit: '1M tokens' },
+      available: true
+    },
+    {
+      id: 'gpt-5-mini',
+      name: 'GPT-5 Mini',
+      description: 'Cost-effective GPT-5 — ideal for high-volume tasks. Free via Replit ModelFarm.',
+      provider: 'OpenAI',
+      contextWindow: 1000000,
+      capabilities: ['Chat', 'Code', 'ModelFarm'],
+      pricing: { input: 0.4, output: 1.6, currency: 'USD', unit: '1M tokens' },
+      available: true
+    },
+    {
+      id: 'gpt-5-nano',
+      name: 'GPT-5 Nano',
+      description: 'Fastest and most cost-effective — use when speed is critical. Free via Replit ModelFarm.',
+      provider: 'OpenAI',
+      contextWindow: 1000000,
+      capabilities: ['Chat', 'Fast Response', 'ModelFarm'],
+      pricing: { input: 0.1, output: 0.4, currency: 'USD', unit: '1M tokens' },
+      available: true
+    },
     // ── OpenAI (all confirmed real — live API test March 2026) ──────────────────
     {
       id: 'gpt-4.1',
       name: 'GPT-4.1',
-      description: 'Latest OpenAI flagship — best coding, instruction following, 1M context',
+      description: 'OpenAI legacy flagship — best coding, instruction following, 1M context',
       provider: 'OpenAI',
       contextWindow: 1047576,
       capabilities: ['Chat', 'Code', 'Vision', 'Tools', 'Long Context'],

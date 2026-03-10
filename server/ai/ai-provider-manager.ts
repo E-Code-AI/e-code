@@ -32,11 +32,100 @@ export interface AIModel {
  * ONLY REAL, CURRENTLY SUPPORTED MODELS (November 2025)
  * Fortune 500-grade model catalog
  */
-// Models confirmed working via Replit ModelFarm (free, no quota)
-export const MODELFARM_MODELS = new Set(['gpt-4o', 'gpt-4o-mini']);
+// All models supported by Replit ModelFarm (AI Integrations free tier)
+// Source: javascript_openai_ai_integrations blueprint (March 2026)
+export const MODELFARM_MODELS = new Set([
+  'gpt-5.2', 'gpt-5.1', 'gpt-5', 'gpt-5-mini', 'gpt-5-nano',
+  'gpt-4.1', 'gpt-4.1-mini', 'gpt-4.1-nano',
+  'gpt-4o', 'gpt-4o-mini',
+  'o4-mini', 'o3', 'o3-mini',
+]);
 
 export const AI_MODELS: AIModel[] = [
-  // ── OpenAI — ModelFarm-compatible models FIRST (free via Replit ModelFarm) ──
+  // ── OpenAI — GPT-5.x (ModelFarm-supported, best available) ──────────────────
+  {
+    id: 'gpt-5.2',
+    name: 'GPT-5.2',
+    provider: 'openai',
+    description: 'Most capable general-purpose model — best for most tasks (free via Replit ModelFarm)',
+    maxTokens: 1000000,
+    supportsStreaming: true,
+    costPer1kTokens: 0.003
+  },
+  {
+    id: 'gpt-5.1',
+    name: 'GPT-5.1',
+    provider: 'openai',
+    description: 'High-capability general model — great for complex reasoning and coding (free via Replit ModelFarm)',
+    maxTokens: 1000000,
+    supportsStreaming: true,
+    costPer1kTokens: 0.002
+  },
+  {
+    id: 'gpt-5',
+    name: 'GPT-5',
+    provider: 'openai',
+    description: 'Flagship GPT-5 — powerful and versatile (free via Replit ModelFarm)',
+    maxTokens: 1000000,
+    supportsStreaming: true,
+    costPer1kTokens: 0.002
+  },
+  {
+    id: 'gpt-5-mini',
+    name: 'GPT-5 Mini',
+    provider: 'openai',
+    description: 'Cost-effective GPT-5 — ideal for high-volume tasks (free via Replit ModelFarm)',
+    maxTokens: 1000000,
+    supportsStreaming: true,
+    costPer1kTokens: 0.0004
+  },
+  {
+    id: 'gpt-5-nano',
+    name: 'GPT-5 Nano',
+    provider: 'openai',
+    description: 'Fastest and most cost-effective — use when volume and speed are critical (free via Replit ModelFarm)',
+    maxTokens: 1000000,
+    supportsStreaming: true,
+    costPer1kTokens: 0.0001
+  },
+  // ── OpenAI — GPT-4.1 family (ModelFarm-supported) ───────────────────────────
+  {
+    id: 'gpt-4.1',
+    name: 'GPT-4.1',
+    provider: 'openai',
+    description: 'OpenAI legacy flagship — best coding, instruction following, and long context (free via Replit ModelFarm)',
+    maxTokens: 1047576,
+    supportsStreaming: true,
+    costPer1kTokens: 0.002
+  },
+  {
+    id: 'gpt-4.1-mini',
+    name: 'GPT-4.1 Mini',
+    provider: 'openai',
+    description: 'Fast and efficient legacy model — best price-to-performance (free via Replit ModelFarm)',
+    maxTokens: 1047576,
+    supportsStreaming: true,
+    costPer1kTokens: 0.0004
+  },
+  {
+    id: 'gpt-4.1-nano',
+    name: 'GPT-4.1 Nano',
+    provider: 'openai',
+    description: 'Smallest fastest legacy model — for latency-sensitive tasks (free via Replit ModelFarm)',
+    maxTokens: 1047576,
+    supportsStreaming: true,
+    costPer1kTokens: 0.0001
+  },
+  // ── OpenAI — GPT-4o family (ModelFarm-supported) ─────────────────────────────
+  {
+    id: 'gpt-4o',
+    name: 'GPT-4o',
+    provider: 'openai',
+    description: 'Multimodal model — vision, audio, and text with 128K context (free via Replit ModelFarm)',
+    maxTokens: 128000,
+    supportsStreaming: true,
+    costPer1kTokens: 0.005
+  },
   {
     id: 'gpt-4o-mini',
     name: 'GPT-4o Mini',
@@ -46,43 +135,35 @@ export const AI_MODELS: AIModel[] = [
     supportsStreaming: true,
     costPer1kTokens: 0.00015
   },
+  // ── OpenAI — Reasoning models (ModelFarm-supported) ──────────────────────────
   {
-    id: 'gpt-4o',
-    name: 'GPT-4o',
+    id: 'o4-mini',
+    name: 'o4-mini',
     provider: 'openai',
-    description: 'Multimodal flagship — vision, audio, and text with 128K context (free via Replit ModelFarm)',
-    maxTokens: 128000,
+    description: 'Best thinking model — fast reasoning for STEM and coding (free via Replit ModelFarm)',
+    maxTokens: 200000,
     supportsStreaming: true,
-    costPer1kTokens: 0.005
-  },
-  // ── OpenAI — Additional models (require direct API key) ─────────────────────
-  {
-    id: 'gpt-4.1',
-    name: 'GPT-4.1',
-    provider: 'openai',
-    description: 'OpenAI flagship — best coding, instruction following, and long context',
-    maxTokens: 1047576,
-    supportsStreaming: true,
-    costPer1kTokens: 0.002
+    costPer1kTokens: 0.0011
   },
   {
-    id: 'gpt-4.1-mini',
-    name: 'GPT-4.1 Mini',
+    id: 'o3',
+    name: 'o3',
     provider: 'openai',
-    description: 'Fast and efficient — best price-to-performance for most tasks',
-    maxTokens: 1047576,
+    description: 'Most powerful reasoning — frontier performance on hard benchmarks (free via Replit ModelFarm)',
+    maxTokens: 200000,
     supportsStreaming: true,
-    costPer1kTokens: 0.0004
+    costPer1kTokens: 0.01
   },
   {
-    id: 'gpt-4.1-nano',
-    name: 'GPT-4.1 Nano',
+    id: 'o3-mini',
+    name: 'o3-mini',
     provider: 'openai',
-    description: 'Smallest and fastest OpenAI model — ideal for high-volume, latency-sensitive tasks',
-    maxTokens: 1047576,
+    description: 'Efficient reasoning — strong on math, science, and code (free via Replit ModelFarm)',
+    maxTokens: 200000,
     supportsStreaming: true,
-    costPer1kTokens: 0.0001
+    costPer1kTokens: 0.0011
   },
+  // ── OpenAI — Direct API key only (beyond ModelFarm range) ────────────────────
   {
     id: 'gpt-5.4',
     name: 'GPT-5.4',
@@ -96,37 +177,10 @@ export const AI_MODELS: AIModel[] = [
     id: 'gpt-5.4-pro',
     name: 'GPT-5.4 Pro',
     provider: 'openai',
-    description: 'Maximum performance GPT-5.4 — for complex professional tasks (requires direct API key)',
+    description: 'Maximum performance — for complex professional tasks (requires direct API key)',
     maxTokens: 1050000,
     supportsStreaming: true,
     costPer1kTokens: 0.03
-  },
-  {
-    id: 'o4-mini',
-    name: 'o4-mini',
-    provider: 'openai',
-    description: 'Latest efficient reasoning model — fast STEM and coding reasoning',
-    maxTokens: 200000,
-    supportsStreaming: true,
-    costPer1kTokens: 0.0011
-  },
-  {
-    id: 'o3',
-    name: 'o3',
-    provider: 'openai',
-    description: 'Most powerful reasoning — frontier performance on hard benchmarks',
-    maxTokens: 200000,
-    supportsStreaming: true,
-    costPer1kTokens: 0.01
-  },
-  {
-    id: 'o3-mini',
-    name: 'o3-mini',
-    provider: 'openai',
-    description: 'Efficient reasoning — strong on math, science, and code at lower cost',
-    maxTokens: 200000,
-    supportsStreaming: true,
-    costPer1kTokens: 0.0011
   },
   {
     id: 'o1',
@@ -340,7 +394,7 @@ export const AI_MODELS: AIModel[] = [
  * UPDATED January 2025: kimi-k2-0711-preview → kimi-k2-0905-preview (September 2025 upgrade)
  */
 const PROVIDER_FALLBACK_CHAIN = [
-  'gpt-4o',                    // Free via Replit ModelFarm — always available
+  'gpt-5.1',                   // Free via Replit ModelFarm — best verified working model
   'claude-sonnet-4-20250514',  // Anthropic Claude 4 Sonnet
   'gemini-2.5-flash',          // Google Gemini 2.5 Flash
   'grok-3',                    // xAI Grok 3
@@ -931,11 +985,13 @@ export class AIProviderManager {
   private async *streamOpenAI(modelId: string, messages: any[], options?: any): AsyncGenerator<string> {
     if (!this.openaiClient) throw new Error('OpenAI client not initialized');
     
-    // ✅ MODELFARM SAFETY: When Replit ModelFarm is active, only gpt-4o and gpt-4o-mini are
-    // supported. Downgrade any other OpenAI model to gpt-4o-mini to prevent quota errors.
-    if (process.env.AI_INTEGRATIONS_OPENAI_BASE_URL && !MODELFARM_MODELS.has(modelId)) {
-      logger.info(`[ProviderManager/OpenAI] ModelFarm: downgrading ${modelId} → gpt-4o-mini`);
-      modelId = 'gpt-4o-mini';
+    // ✅ MODELFARM SAFETY: When Replit ModelFarm is active, only route supported models through it.
+    // gpt-5.2 is excluded (known ModelFarm internal error) — use gpt-5.1 as default.
+    // Unsupported models (e.g. gpt-5.4, gpt-5.4-pro) fall back to gpt-5.1.
+    const MODELFARM_EXCLUDED = new Set(['gpt-5.2']);
+    if (process.env.AI_INTEGRATIONS_OPENAI_BASE_URL && (!MODELFARM_MODELS.has(modelId) || MODELFARM_EXCLUDED.has(modelId))) {
+      logger.info(`[ProviderManager/OpenAI] ModelFarm: model ${modelId} not supported → gpt-5.1`);
+      modelId = 'gpt-5.1';
     }
 
     const startTime = Date.now();
@@ -1270,7 +1326,7 @@ export class AIProviderManager {
    */
   getAvailableProviders(): Array<{ name: string; isAvailable: boolean }> {
     const providerMap: Record<string, string[]> = {
-      'OpenAI': ['gpt-4o', 'gpt-4o-mini', 'o1', 'o1-mini', 'o3', 'gpt-4-turbo', 'gpt-4'],
+      'OpenAI': ['gpt-5.2', 'gpt-5.1', 'gpt-5', 'gpt-5-mini', 'gpt-5-nano', 'gpt-4.1', 'gpt-4.1-mini', 'gpt-4.1-nano', 'gpt-4o', 'gpt-4o-mini', 'o4-mini', 'o3', 'o3-mini'],
       'Claude': ['claude-3-5-sonnet-20241022', 'claude-3-5-haiku-20241022', 'claude-3-opus-20240229'],
       'Anthropic': ['claude-3-5-sonnet-20241022', 'claude-3-5-haiku-20241022'],
       'Gemini': ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro', 'gemini-1.5-flash'],

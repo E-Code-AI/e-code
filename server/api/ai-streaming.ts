@@ -42,19 +42,32 @@ interface OpenAIModelCapabilities {
 }
 
 const OPENAI_MODEL_CAPABILITIES: Record<string, OpenAIModelCapabilities> = {
-  // GPT-4o family - standard parameters
+  // GPT-5.x family (ModelFarm-supported) — no temperature, max_completion_tokens
+  'gpt-5.2':      { requiresMaxCompletionTokens: true, supportsTemperature: false },
+  'gpt-5.1':      { requiresMaxCompletionTokens: true, supportsTemperature: false },
+  'gpt-5':        { requiresMaxCompletionTokens: true, supportsTemperature: false },
+  'gpt-5-mini':   { requiresMaxCompletionTokens: true, supportsTemperature: false },
+  'gpt-5-nano':   { requiresMaxCompletionTokens: true, supportsTemperature: false },
+  // GPT-5.4 family (direct API key only) — no temperature, max_completion_tokens
+  'gpt-5.4':      { requiresMaxCompletionTokens: true, supportsTemperature: false },
+  'gpt-5.4-pro':  { requiresMaxCompletionTokens: true, supportsTemperature: false },
+  // GPT-4.1 family — standard parameters
+  'gpt-4.1':      { requiresMaxCompletionTokens: false, supportsTemperature: true },
+  'gpt-4.1-mini': { requiresMaxCompletionTokens: false, supportsTemperature: true },
+  'gpt-4.1-nano': { requiresMaxCompletionTokens: false, supportsTemperature: true },
+  // GPT-4o family — standard parameters
   'gpt-4o': { requiresMaxCompletionTokens: false, supportsTemperature: true },
   'gpt-4o-mini': { requiresMaxCompletionTokens: false, supportsTemperature: true },
-  // O-series - requires max_completion_tokens, no temperature
-  'o1': { requiresMaxCompletionTokens: true, supportsTemperature: false },
-  'o1-mini': { requiresMaxCompletionTokens: true, supportsTemperature: false },
+  // O-series — no temperature, max_completion_tokens
+  'o4-mini':    { requiresMaxCompletionTokens: true, supportsTemperature: false },
+  'o1':         { requiresMaxCompletionTokens: true, supportsTemperature: false },
+  'o1-mini':    { requiresMaxCompletionTokens: true, supportsTemperature: false },
   'o1-preview': { requiresMaxCompletionTokens: true, supportsTemperature: false },
-  'o3': { requiresMaxCompletionTokens: true, supportsTemperature: false },
-  'o3-mini': { requiresMaxCompletionTokens: true, supportsTemperature: false },
-  // GPT-4 family - legacy parameters supported
+  'o3':         { requiresMaxCompletionTokens: true, supportsTemperature: false },
+  'o3-mini':    { requiresMaxCompletionTokens: true, supportsTemperature: false },
+  // GPT-4 legacy family — standard parameters
   'gpt-4-turbo': { requiresMaxCompletionTokens: false, supportsTemperature: true },
-  'gpt-4': { requiresMaxCompletionTokens: false, supportsTemperature: true },
-  // GPT-3.5 family - legacy parameters supported
+  'gpt-4':       { requiresMaxCompletionTokens: false, supportsTemperature: true },
   'gpt-3.5-turbo': { requiresMaxCompletionTokens: false, supportsTemperature: true },
 };
 
@@ -63,20 +76,21 @@ const OPENAI_MODEL_CAPABILITIES: Record<string, OpenAIModelCapabilities> = {
  * Unknown models default to legacy parameter support for backwards compatibility
  */
 function getOpenAIModelCapabilities(model: string): OpenAIModelCapabilities {
-  // Check exact match first
   if (OPENAI_MODEL_CAPABILITIES[model]) {
     return OPENAI_MODEL_CAPABILITIES[model];
   }
-  
-  // Check family patterns for unknown variants
+  // gpt-5.x family — no temperature, max_completion_tokens
+  if (model.startsWith('gpt-5')) {
+    return { requiresMaxCompletionTokens: true, supportsTemperature: false };
+  }
+  // o-series — no temperature, max_completion_tokens
   if (/^o[1-9]/.test(model)) {
     return { requiresMaxCompletionTokens: true, supportsTemperature: false };
   }
+  // gpt-4.x family — standard parameters
   if (model.startsWith('gpt-4')) {
     return { requiresMaxCompletionTokens: false, supportsTemperature: true };
   }
-  
-  // Default: legacy parameters (safe fallback for older models)
   return { requiresMaxCompletionTokens: false, supportsTemperature: true };
 }
 
@@ -222,22 +236,22 @@ router.post('/agent/chat/stream', ensureAuthenticated, async (req, res) => {
   // ✅ ALIGNED Dec 5, 2025: Defaults MUST match AI_MODELS catalog IDs
   const getDefaultModel = (prov: string): string => {
     switch (prov) {
-      case 'openai': return 'gpt-4o-mini';
-      case 'anthropic': return 'claude-3-5-sonnet-20241022';
+      case 'openai': return 'gpt-5.1';
+      case 'anthropic': return 'claude-sonnet-4-20250514';
       case 'gemini': return 'gemini-2.5-flash';
       case 'xai': return 'grok-3';
       case 'moonshot': return 'moonshot-v1-32k';
-      default: return 'gpt-4o-mini';
+      default: return 'gpt-5.1';
     }
   };
   
   const getFastModel = (prov: string): string => {
     switch (prov) {
       case 'anthropic': return 'claude-3-5-haiku-20241022';
-      case 'openai': return 'gpt-4o-mini';
+      case 'openai': return 'gpt-5-nano';
       case 'gemini': return 'gemini-2.5-flash';
       case 'xai': return 'grok-3-mini';
-      default: return 'gpt-4o-mini';
+      default: return 'gpt-5-nano';
     }
   };
   
@@ -246,13 +260,21 @@ router.post('/agent/chat/stream', ensureAuthenticated, async (req, res) => {
     ? getFastModel(provider) 
     : (rawModel || modelId || getDefaultModel(provider));
   
-  // ✅ MODELFARM SAFETY: When Replit ModelFarm is active (free tier), only gpt-4o and gpt-4o-mini
-  // are supported. Downgrade any other OpenAI models to gpt-4o-mini to avoid quota errors.
+  // ✅ MODELFARM SAFETY: When Replit ModelFarm is active, route only supported models through it.
+  // Supported: gpt-5.x, gpt-4.1.x, gpt-4o.x, o-series (o3, o3-mini, o4-mini).
+  // NOT supported: gpt-5.4/gpt-5.4-pro (not in ModelFarm range), gpt-5.3-codex/gpt-5.2-codex (Responses API only).
+  // Unsupported models stay on ModelFarm URL but fall back to gpt-5.1.
   if (provider === 'openai' && process.env.AI_INTEGRATIONS_OPENAI_BASE_URL) {
-    const MODELFARM_SUPPORTED = new Set(['gpt-4o', 'gpt-4o-mini']);
+    // gpt-5.2 excluded: known ModelFarm internal error (400 invalid_prompt)
+    const MODELFARM_SUPPORTED = new Set([
+      'gpt-5.1', 'gpt-5', 'gpt-5-mini', 'gpt-5-nano',
+      'gpt-4.1', 'gpt-4.1-mini', 'gpt-4.1-nano',
+      'gpt-4o', 'gpt-4o-mini',
+      'o4-mini', 'o3', 'o3-mini',
+    ]);
     if (!MODELFARM_SUPPORTED.has(model)) {
-      logger.info(`[AI Stream] ModelFarm: downgrading unsupported model ${model} → gpt-4o-mini`);
-      model = 'gpt-4o-mini';
+      logger.info(`[AI Stream] ModelFarm: model ${model} not in supported set → gpt-5.1`);
+      model = 'gpt-5.1';
     }
   }
 

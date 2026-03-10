@@ -38,14 +38,15 @@ const MODEL_NORMALIZATION_MAP: Record<string, string> = {
   'o3':                 'o3',
   'o3-mini':            'o3-mini',
   'o4-mini':            'o4-mini',
-  // Deprecated / old aliases → gpt-5.4 (now that GPT-5.4 is real)
-  'gpt-5':              'gpt-5.4',
-  'gpt-5.1':            'gpt-5.4',
-  'gpt-5.2':            'gpt-5.4',
-  'gpt-5.3':            'gpt-5.4',
-  'gpt-5.2-codex':      'gpt-5.4',
-  'gpt-5-mini':         'gpt-4.1-mini',
-  'gpt-5-nano':         'gpt-4.1-nano',
+  // GPT-5.x — all real ModelFarm-supported models (map to themselves)
+  'gpt-5.2':            'gpt-5.2',
+  'gpt-5.1':            'gpt-5.1',
+  'gpt-5':              'gpt-5',
+  'gpt-5-mini':         'gpt-5-mini',
+  'gpt-5-nano':         'gpt-5-nano',
+  // Aliases that fall outside ModelFarm range → best available
+  'gpt-5.3':            'gpt-5.2',
+  'gpt-5.2-codex':      'gpt-5.2',
   'o1-mini':            'o4-mini',
 
   // ── Anthropic ────────────────────────────────────────────────────────────────
@@ -128,7 +129,7 @@ const MODEL_NORMALIZATION_MAP: Record<string, string> = {
 };
 
 const PROVIDER_DEFAULTS: Record<string, string> = {
-  'openai':     'gpt-4o',
+  'openai':     'gpt-5.1',
   'anthropic':  'claude-sonnet-4-20250514',
   'gemini':     'gemini-2.5-flash',
   'google':     'gemini-2.5-flash',

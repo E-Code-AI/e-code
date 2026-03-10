@@ -98,6 +98,10 @@ function getModelDisplayName(model: string): string {
   if (model.includes('gpt-4-turbo')) return 'GPT-4 Turbo';
   if (model.includes('gpt-5.4-pro')) return 'GPT-5.4 Pro';
   if (model.includes('gpt-5.4')) return 'GPT-5.4';
+  if (model.includes('gpt-5.2')) return 'GPT-5.2';
+  if (model.includes('gpt-5.1')) return 'GPT-5.1';
+  if (model.includes('gpt-5-nano')) return 'GPT-5 Nano';
+  if (model.includes('gpt-5-mini')) return 'GPT-5 Mini';
   if (model.includes('gpt-5')) return 'GPT-5';
   // Anthropic — real models
   if (model.includes('claude-opus-4')) return 'Claude Opus 4';

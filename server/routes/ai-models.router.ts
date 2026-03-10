@@ -89,6 +89,17 @@ router.get('/preferred', async (req, res) => {
       const availableModels = aiProviderManager.getAvailableModels();
       preferredModel = availableModels.length > 0 ? availableModels[0].id : null;
     }
+
+    // Upgrade legacy OpenAI defaults to modern GPT-5.x models
+    // These are auto-upgrades for users who never changed their preference
+    const LEGACY_UPGRADES: Record<string, string> = {
+      'gpt-4o-mini': 'gpt-5.1',
+      'gpt-4o':      'gpt-5.1',
+      'gpt-5.2':     'gpt-5.1', // gpt-5.2 has a known ModelFarm internal error
+    };
+    if (preferredModel && LEGACY_UPGRADES[preferredModel]) {
+      preferredModel = LEGACY_UPGRADES[preferredModel];
+    }
     
     res.json({
       success: true,

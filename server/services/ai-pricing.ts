@@ -18,17 +18,27 @@ export const AI_MODEL_PRICING: Record<string, { input: number; output: number }>
   'gemini-ultra': { input: 5.00, output: 15.00 },
 
   // ============================================
-  // OpenAI (Jan 2026) - ✅ CONSOLIDATED: Only gpt-5.2 is current
+  // OpenAI (Mar 2026) — GPT-5.x (ModelFarm-supported)
   // ============================================
-  'gpt-5.4': { input: 2.50, output: 15.00 },
-  'gpt-5.4-pro': { input: 30.00, output: 150.00 },
-  'gpt-4o': { input: 1.75, output: 14.00 },
-  'gpt-4o-mini': { input: 0.10, output: 0.40 },
-  'gpt-4.1': { input: 2.00, output: 8.00 },
-  'gpt-4.1-mini': { input: 0.40, output: 1.60 },
-  'gpt-4.1-nano': { input: 0.10, output: 0.40 },
-  'o3': { input: 10.00, output: 40.00 },
-  'o4-mini': { input: 1.10, output: 4.40 },
+  'gpt-5.2':      { input: 3.00,  output: 12.00 },
+  'gpt-5.1':      { input: 2.00,  output: 8.00  },
+  'gpt-5':        { input: 2.00,  output: 8.00  },
+  'gpt-5-mini':   { input: 0.40,  output: 1.60  },
+  'gpt-5-nano':   { input: 0.10,  output: 0.40  },
+  // OpenAI — GPT-5.4 (direct API key only, beyond ModelFarm range)
+  'gpt-5.4':      { input: 2.50,  output: 15.00 },
+  'gpt-5.4-pro':  { input: 30.00, output: 150.00 },
+  // OpenAI — GPT-4.1 family (ModelFarm-supported)
+  'gpt-4.1':      { input: 2.00,  output: 8.00  },
+  'gpt-4.1-mini': { input: 0.40,  output: 1.60  },
+  'gpt-4.1-nano': { input: 0.10,  output: 0.40  },
+  // OpenAI — GPT-4o family (ModelFarm-supported)
+  'gpt-4o':       { input: 1.75,  output: 14.00 },
+  'gpt-4o-mini':  { input: 0.10,  output: 0.40  },
+  // OpenAI — Reasoning models (ModelFarm-supported)
+  'o4-mini':      { input: 1.10,  output: 4.40  },
+  'o3':           { input: 10.00, output: 40.00 },
+  'o3-mini':      { input: 1.10,  output: 4.40  },
 
   // ============================================
   // Anthropic (Dec 2025) - 4 models
