@@ -1022,7 +1022,7 @@ async function streamOpenAI(res: any, messages: any[], options: any) {
     content: fullContent,
     tool_calls: toolCalls,
     tool_results: toolResults,
-    model: options.model || 'gpt-4o'  // ✅ CONSOLIDATED Jan 2026
+    model: options.model || 'gpt-5.1'
   });
   
   // ✅ Return token usage for billing

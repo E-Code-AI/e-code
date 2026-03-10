@@ -167,10 +167,10 @@ Only provide completions that are highly relevant and would actually help the de
         return message.content[0].type === 'text' ? message.content[0].text : '';
       }
       
-      // Fallback to GPT-4 if available
+      // Fallback to OpenAI if available
       if (this.openai) {
         const completion = await this.openai.chat.completions.create({
-          model: 'gpt-4o',
+          model: 'gpt-5.1',
           messages: [{ role: 'user', content: prompt }],
           temperature: 0.2,
           max_tokens: 300,

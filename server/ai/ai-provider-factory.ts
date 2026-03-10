@@ -16,7 +16,7 @@ class OpenAIProvider implements AIProvider {
 
   async generateCode(prompt: string, context?: any): Promise<string> {
     const response = await this.client.chat.completions.create({
-      model: 'gpt-4',
+      model: 'gpt-5.1',
       messages: [
         {
           role: 'system',
@@ -35,7 +35,7 @@ class OpenAIProvider implements AIProvider {
 
   async analyzeCode(code: string): Promise<any> {
     const response = await this.client.chat.completions.create({
-      model: 'gpt-4',
+      model: 'gpt-5.1',
       messages: [
         {
           role: 'system',
@@ -57,7 +57,7 @@ class OpenAIProvider implements AIProvider {
 
   async generateTests(code: string): Promise<string> {
     const response = await this.client.chat.completions.create({
-      model: 'gpt-4',
+      model: 'gpt-5.1',
       messages: [
         {
           role: 'system',
@@ -76,7 +76,7 @@ class OpenAIProvider implements AIProvider {
 
   async explainCode(code: string): Promise<string> {
     const response = await this.client.chat.completions.create({
-      model: 'gpt-4',
+      model: 'gpt-5.1',
       messages: [
         {
           role: 'system',

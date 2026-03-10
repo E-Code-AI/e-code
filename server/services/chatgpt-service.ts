@@ -59,12 +59,12 @@ You are helping an admin user build and manage projects. You have access to:
 - Full platform features
 
 Be helpful, precise, and provide code examples when appropriate.
-Current model: GPT-5.2 (Dec 2025 flagship with advanced reasoning)`
+Current model: GPT-5.1 (flagship with advanced reasoning)`
         }
       ],
       createdAt: new Date(),
       updatedAt: new Date(),
-      model: 'gpt-4o'
+      model: 'gpt-5.1'
     };
 
     chatSessions.set(sessionId, session);
@@ -289,11 +289,11 @@ Return the code and a brief explanation of the implementation.`;
 
     try {
       const response = await openai.chat.completions.create({
-        model: 'gpt-4o',  // ✅ CONSOLIDATED Jan 2026: Latest flagship for code generation
+        model: 'gpt-5.1',
         messages: [
           {
             role: 'system',
-            content: 'You are an expert programmer using GPT-5.2 with enhanced coding capabilities. Generate clean, efficient, and well-documented code.'
+            content: 'You are an expert programmer. Generate clean, efficient, and well-documented code.'
           },
           {
             role: 'user',

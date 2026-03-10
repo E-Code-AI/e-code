@@ -35,17 +35,15 @@ export interface OpenAIModelConfig {
   };
 }
 
-// MODEL_ALIAS_MAP maps fake/future model names to real OpenAI model IDs
+// MODEL_ALIAS_MAP: maps ModelFarm model names → real OpenAI API model IDs
+// Used only when NOT on ModelFarm (direct OpenAI API key). gpt-4.1 is real and available.
 const MODEL_ALIAS_MAP: Record<string, string> = {
-  'gpt-5.2': 'gpt-4o',
-  'gpt-5.2-codex': 'gpt-4o',
-  'gpt-5-mini': 'gpt-4o-mini',
-  'gpt-5-nano': 'gpt-4o-mini',
-  'gpt-5': 'gpt-4o',
-  'gpt-5.1': 'gpt-4o',
-  'gpt-4.1': 'gpt-4-turbo',
-  'gpt-4.1-mini': 'gpt-4o-mini',
-  'gpt-4.1-nano': 'gpt-4o-mini'
+  'gpt-5.1':       'gpt-4.1',
+  'gpt-5':         'gpt-4.1',
+  'gpt-5-mini':    'gpt-4.1-mini',
+  'gpt-5-nano':    'gpt-4.1-nano',
+  'gpt-5.2':       'gpt-4.1',
+  'gpt-5.2-codex': 'gpt-4.1',
 };
 
 // Complete list of OpenAI models with configurations
@@ -127,7 +125,7 @@ export interface OpenAIOptions {
 export class EnhancedOpenAIProvider implements AIProvider {
   name = 'OpenAI Enhanced';
   private client: OpenAI;
-  private defaultModel = 'gpt-4o';
+  private defaultModel = 'gpt-4.1';
   
   constructor(apiKey?: string) {
     this.client = new OpenAI({
@@ -298,7 +296,7 @@ export class EnhancedOpenAIProvider implements AIProvider {
     userId?: number,
     options?: OpenAIOptions
   ): Promise<string> {
-    const model = options?.model || 'gpt-4o';
+    const model = options?.model || 'gpt-4.1';
     const resolvedModel = MODEL_ALIAS_MAP[model] || model;
     const modelConfig = OPENAI_MODELS[resolvedModel];
     

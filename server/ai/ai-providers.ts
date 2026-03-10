@@ -32,7 +32,7 @@ export class OpenAIProvider implements AIProvider {
   
   async generateChat(messages: any[], options?: any): Promise<string> {
     const response = await this.client.chat.completions.create({
-      model: options?.model || 'gpt-4o',  // ✅ CONSOLIDATED Jan 2026
+      model: options?.model || 'gpt-5.1',
       messages,
       ...options
     });

@@ -209,7 +209,7 @@ export default function AIDocumentation() {
                       <pre className="text-[11px] overflow-x-auto">
 {`{
   "prompt": "Create a login form",
-  "model": "gpt-4o",
+  "model": "gpt-5.1",
   "context": "React TypeScript"
 }`}
                       </pre>

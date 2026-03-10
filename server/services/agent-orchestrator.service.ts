@@ -404,7 +404,7 @@ export class AgentOrchestratorService extends EventEmitter {
   async createSession(
     userId: string,
     projectId?: string,
-    model: string = 'gpt-4o',
+    model: string = 'gpt-5.1',
     autonomousMode: boolean = false
   ): Promise<AgentSession> {
     const startTime = Date.now();
@@ -505,7 +505,7 @@ export class AgentOrchestratorService extends EventEmitter {
 
       try {
         const completion = await this.openai.chat.completions.create({
-          model: 'gpt-4o',
+          model: 'gpt-5.1',
           messages: allMessages.map(m => ({
             role: m.role as any,
             content: m.content || ''
@@ -846,7 +846,7 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
         logger.warn(`[makeIntelligentDelegationDecision] ⚠️ No ${mode} tier providers available, using session model ${sessionModel}`);
       } else {
         // Absolute fallback: default to openai (may fail)
-        selectedModel = tierModels['openai'] || 'gpt-4o';
+        selectedModel = tierModels['openai'] || 'gpt-5.1';
         selectedProvider = 'openai';
         logger.warn(`[makeIntelligentDelegationDecision] ⚠️ No providers available, defaulting to openai with ${selectedModel} (may fail)`);
       }
@@ -957,7 +957,7 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
     // ✅ INTELLIGENT DELEGATION (Dec 15, 2025): Make complexity-based model routing decision
     const delegationDecision = this.makeIntelligentDelegationDecision(
       taskClassification,
-      session.model || 'gpt-4o',
+      session.model || 'gpt-5.1',
       prompt.length
     );
     
@@ -2085,7 +2085,7 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
             userId: userIdNum,
             messages: [],
             context: { workspaceCreation: true },
-            model: 'gpt-4o',
+            model: 'gpt-5.1',
             agentMode: 'build'
           })
           .returning();
@@ -2101,7 +2101,7 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
         userId: userIdNum,
         role: 'assistant',
         content,
-        model: 'gpt-4o',  // ✅ CONSOLIDATED Jan 2026
+        model: 'gpt-5.1',
         metadata: {
           tokensUsed: metadata?.tokensUsed ?? 0,
           processingTimeMs: metadata?.processingTimeMs,
