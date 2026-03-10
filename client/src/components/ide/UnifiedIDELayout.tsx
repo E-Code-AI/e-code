@@ -45,6 +45,7 @@ import { ECodeLoading } from '@/components/ECodeLoading';
 import { TopNavBar } from '@/components/ide/TopNavBar';
 import { StatusBar } from '@/components/ide/StatusBar';
 import { ReplitActivityBar, type ActivityItem } from '@/components/ide/ReplitActivityBar';
+import { ReplitTabBar } from '@/components/ide/ReplitTabBar';
 import { ReplitToolsSheet } from '@/components/ide/ReplitToolsSheet';
 import { QuickFileSearch } from '@/components/ide/QuickFileSearch';
 import { KeyboardShortcutsOverlay } from '@/components/ide/KeyboardShortcutsOverlay';
@@ -184,6 +185,9 @@ function UnifiedIDELayout({
     handleFileSelect,
     handleTabClose,
     handleTabReorder,
+    handleTabPin,
+    handleTabDuplicate,
+    handleSplitRight,
     handleRunStop,
     handleAddTool,
   } = workspace;
@@ -1630,6 +1634,25 @@ function UnifiedIDELayout({
           showTabs={false}
           onOpenCommandPalette={() => setShowCommandPalette(true)}
           onOpenGlobalSearch={() => { setIsSidebarCollapsed(false); setLeftPanelTab('agent'); }}
+        />
+        
+        <ReplitTabBar
+          tabs={tabs.map(tab => ({
+            id: tab.id,
+            label: tab.label,
+            closable: tab.closable,
+            pinned: tab.pinned,
+            modified: tab.modified,
+            path: tab.path,
+          }))}
+          activeTabId={activeTab}
+          onTabClick={setActiveTab}
+          onTabClose={handleTabClose}
+          onTabReorder={handleTabReorder}
+          onTabPin={handleTabPin}
+          onTabDuplicate={handleTabDuplicate}
+          onSplitRight={handleSplitRight}
+          onAddTab={() => setShowToolsSheet(true)}
         />
         
         <ResizablePanelGroup direction="horizontal" className="flex-1" data-testid="desktop-panel-group">
