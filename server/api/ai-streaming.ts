@@ -42,15 +42,12 @@ interface OpenAIModelCapabilities {
 }
 
 const OPENAI_MODEL_CAPABILITIES: Record<string, OpenAIModelCapabilities> = {
-  // GPT-5.x family (ModelFarm-supported) — no temperature, max_completion_tokens
-  'gpt-5.2':      { requiresMaxCompletionTokens: true, supportsTemperature: false },
+  // GPT-5.x family (ALL confirmed working on ModelFarm, March 2026)
+  // No temperature support, use max_completion_tokens
   'gpt-5.1':      { requiresMaxCompletionTokens: true, supportsTemperature: false },
   'gpt-5':        { requiresMaxCompletionTokens: true, supportsTemperature: false },
   'gpt-5-mini':   { requiresMaxCompletionTokens: true, supportsTemperature: false },
   'gpt-5-nano':   { requiresMaxCompletionTokens: true, supportsTemperature: false },
-  // GPT-5.4 family (direct API key only) — no temperature, max_completion_tokens
-  'gpt-5.4':      { requiresMaxCompletionTokens: true, supportsTemperature: false },
-  'gpt-5.4-pro':  { requiresMaxCompletionTokens: true, supportsTemperature: false },
   // GPT-4.1 family — standard parameters
   'gpt-4.1':      { requiresMaxCompletionTokens: false, supportsTemperature: true },
   'gpt-4.1-mini': { requiresMaxCompletionTokens: false, supportsTemperature: true },
@@ -260,12 +257,10 @@ router.post('/agent/chat/stream', ensureAuthenticated, async (req, res) => {
     ? getFastModel(provider) 
     : (rawModel || modelId || getDefaultModel(provider));
   
-  // ✅ MODELFARM SAFETY: When Replit ModelFarm is active, route only supported models through it.
-  // Supported: gpt-5.x, gpt-4.1.x, gpt-4o.x, o-series (o3, o3-mini, o4-mini).
-  // NOT supported: gpt-5.4/gpt-5.4-pro (not in ModelFarm range), gpt-5.3-codex/gpt-5.2-codex (Responses API only).
-  // Unsupported models stay on ModelFarm URL but fall back to gpt-5.1.
+  // ✅ MODELFARM SAFETY: Only confirmed-working models are routed to ModelFarm.
+  // Tested March 2026: gpt-5.1/5/5-mini/5-nano ✅, gpt-4.1 family ✅, gpt-4o family ✅, o4-mini/o3/o3-mini ✅
+  // EXCLUDED: gpt-5.2 (ModelFarm 400 error), gpt-5.4/gpt-5.4-pro (unknown model error)
   if (provider === 'openai' && process.env.AI_INTEGRATIONS_OPENAI_BASE_URL) {
-    // gpt-5.2 excluded: known ModelFarm internal error (400 invalid_prompt)
     const MODELFARM_SUPPORTED = new Set([
       'gpt-5.1', 'gpt-5', 'gpt-5-mini', 'gpt-5-nano',
       'gpt-4.1', 'gpt-4.1-mini', 'gpt-4.1-nano',

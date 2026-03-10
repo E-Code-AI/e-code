@@ -29,80 +29,65 @@ export class AgentPreferencesService {
       cost: 'low' | 'medium' | 'high';
     };
   }> {
-    // VERIFIED REAL MODEL IDs (March 2026) — all confirmed via live API tests
+    // CONFIRMED WORKING via live ModelFarm tests (March 2026)
     return [
-      // ── OpenAI ──────────────────────────────────────────────────────────────
-      {
-        id: 'gpt-5.4',
-        name: 'GPT-5.4',
-        description: 'OpenAI cutting-edge flagship (March 2026) — best reasoning, coding, agentic workflows, 1.05M context',
-        category: 'openai',
-        tier: 'high-power',
-        capabilities: { extendedThinking: false, codeGeneration: true, maxTokens: 1050000, speed: 'medium', cost: 'high' },
-      },
-      {
-        id: 'gpt-5.4-pro',
-        name: 'GPT-5.4 Pro',
-        description: 'Maximum performance GPT-5.4 — for complex professional tasks requiring peak accuracy',
-        category: 'openai',
-        tier: 'high-power',
-        capabilities: { extendedThinking: false, codeGeneration: true, maxTokens: 1050000, speed: 'medium', cost: 'very-high' },
-      },
-      {
-        id: 'gpt-4.1',
-        name: 'GPT-4.1',
-        description: 'Previous OpenAI flagship — best coding, instruction following, 1M context',
-        category: 'openai',
-        tier: 'high-power',
-        capabilities: { extendedThinking: false, codeGeneration: true, maxTokens: 1047576, speed: 'medium', cost: 'medium' },
-      },
-      {
-        id: 'gpt-4.1-mini',
-        name: 'GPT-4.1 Mini',
-        description: 'Fast and efficient — best price-to-performance for most tasks',
-        category: 'openai',
-        tier: 'standard',
-        capabilities: { extendedThinking: false, codeGeneration: true, maxTokens: 1047576, speed: 'fast', cost: 'low' },
-      },
-      {
-        id: 'gpt-4.1-nano',
-        name: 'GPT-4.1 Nano',
-        description: 'Smallest, fastest OpenAI model — high-volume, latency-sensitive tasks',
-        category: 'openai',
-        tier: 'standard',
-        capabilities: { extendedThinking: false, codeGeneration: true, maxTokens: 1047576, speed: 'fast', cost: 'low' },
-      },
+      // ── OpenAI — GPT-5.x (ALL free via Replit ModelFarm) ────────────────────
       {
         id: 'gpt-5.1',
         name: 'GPT-5.1',
-        description: 'Best ModelFarm model — high intelligence, free via ModelFarm',
+        description: 'Best overall — top intelligence for coding, reasoning & agentic tasks. Free via ModelFarm.',
         category: 'openai',
         tier: 'high-power',
-        capabilities: { extendedThinking: false, codeGeneration: true, maxTokens: 128000, speed: 'medium', cost: 'free' },
+        capabilities: { extendedThinking: false, codeGeneration: true, maxTokens: 1000000, speed: 'medium', cost: 'free' },
       },
       {
         id: 'gpt-5',
         name: 'GPT-5',
-        description: 'OpenAI flagship — best overall capability across all tasks',
+        description: 'OpenAI flagship — powerful and versatile for complex tasks. Free via ModelFarm.',
         category: 'openai',
         tier: 'high-power',
-        capabilities: { extendedThinking: false, codeGeneration: true, maxTokens: 128000, speed: 'medium', cost: 'free' },
+        capabilities: { extendedThinking: false, codeGeneration: true, maxTokens: 1000000, speed: 'medium', cost: 'free' },
       },
       {
         id: 'gpt-5-mini',
         name: 'GPT-5 Mini',
-        description: 'Fast GPT-5 variant — excellent balance of speed and capability',
+        description: 'Fast GPT-5 — excellent balance of speed and capability. Free via ModelFarm.',
         category: 'openai',
         tier: 'standard',
-        capabilities: { extendedThinking: false, codeGeneration: true, maxTokens: 128000, speed: 'fast', cost: 'free' },
+        capabilities: { extendedThinking: false, codeGeneration: true, maxTokens: 1000000, speed: 'fast', cost: 'free' },
       },
       {
         id: 'gpt-5-nano',
         name: 'GPT-5 Nano',
-        description: 'Fastest GPT-5 variant — ultra-low latency for background tasks',
+        description: 'Fastest GPT-5 — ultra-low latency for background tasks. Free via ModelFarm.',
         category: 'openai',
         tier: 'standard',
-        capabilities: { extendedThinking: false, codeGeneration: true, maxTokens: 128000, speed: 'fast', cost: 'free' },
+        capabilities: { extendedThinking: false, codeGeneration: true, maxTokens: 1000000, speed: 'fast', cost: 'free' },
+      },
+      // ── OpenAI — GPT-4.1 family (confirmed working on ModelFarm) ─────────────
+      {
+        id: 'gpt-4.1',
+        name: 'GPT-4.1',
+        description: 'Best coding & instruction following — 1M context window. Free via ModelFarm.',
+        category: 'openai',
+        tier: 'high-power',
+        capabilities: { extendedThinking: false, codeGeneration: true, maxTokens: 1047576, speed: 'medium', cost: 'free' },
+      },
+      {
+        id: 'gpt-4.1-mini',
+        name: 'GPT-4.1 Mini',
+        description: 'Fast and efficient — best price-to-performance for most tasks. Free via ModelFarm.',
+        category: 'openai',
+        tier: 'standard',
+        capabilities: { extendedThinking: false, codeGeneration: true, maxTokens: 1047576, speed: 'fast', cost: 'free' },
+      },
+      {
+        id: 'gpt-4.1-nano',
+        name: 'GPT-4.1 Nano',
+        description: 'Smallest, fastest GPT-4.1 — high-volume, latency-sensitive tasks. Free via ModelFarm.',
+        category: 'openai',
+        tier: 'standard',
+        capabilities: { extendedThinking: false, codeGeneration: true, maxTokens: 1047576, speed: 'fast', cost: 'free' },
       },
       {
         id: 'gpt-4o',

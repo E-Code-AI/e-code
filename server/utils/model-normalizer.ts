@@ -18,36 +18,37 @@ const logger = createLogger('model-normalizer');
 const MODEL_NORMALIZATION_MAP: Record<string, string> = {
 
   // ── OpenAI ──────────────────────────────────────────────────────────────────
-  // Confirmed real (all return 429 quota — model exists)
-  // GPT-5.4 family — released March 5, 2026 (OpenAI's current flagship)
-  'gpt-5.4':                    'gpt-5.4',
-  'gpt-5.4-pro':                'gpt-5.4-pro',
-  'gpt-5.4-2026-03-05':         'gpt-5.4',
-  'gpt-5.4-pro-2026-03-05':     'gpt-5.4-pro',
-  // GPT-4.1 family
+  // GPT-5.x — confirmed working on Replit ModelFarm (March 2026)
+  'gpt-5.1':            'gpt-5.1',
+  'gpt-5':              'gpt-5',
+  'gpt-5-mini':         'gpt-5-mini',
+  'gpt-5-nano':         'gpt-5-nano',
+  // GPT-4.1 family — confirmed working on ModelFarm
   'gpt-4.1':            'gpt-4.1',
   'gpt-4.1-mini':       'gpt-4.1-mini',
   'gpt-4.1-nano':       'gpt-4.1-nano',
-  // Other real GPT-4 models
+  // GPT-4o family — confirmed working on ModelFarm
   'gpt-4o':             'gpt-4o',
   'gpt-4o-mini':        'gpt-4o-mini',
   'gpt-4-turbo':        'gpt-4-turbo',
   'gpt-4-turbo-preview':'gpt-4-turbo',
   'gpt-4':              'gpt-4o',
-  'o1':                 'o1',
+  // O-series — confirmed working on ModelFarm
+  'o4-mini':            'o4-mini',
   'o3':                 'o3',
   'o3-mini':            'o3-mini',
-  'o4-mini':            'o4-mini',
-  // GPT-5.x — all real ModelFarm-supported models (map to themselves)
-  'gpt-5.2':            'gpt-5.2',
-  'gpt-5.1':            'gpt-5.1',
-  'gpt-5':              'gpt-5',
-  'gpt-5-mini':         'gpt-5-mini',
-  'gpt-5-nano':         'gpt-5-nano',
-  // Aliases that fall outside ModelFarm range → best available
-  'gpt-5.3':            'gpt-5.2',
-  'gpt-5.2-codex':      'gpt-5.2',
+  'o1':                 'o1',
   'o1-mini':            'o4-mini',
+  // Unknown/broken aliases → redirect to best working model
+  // gpt-5.2: ModelFarm internal error (400) → use gpt-5.1
+  'gpt-5.2':            'gpt-5.1',
+  'gpt-5.3':            'gpt-5.1',
+  'gpt-5.2-codex':      'gpt-5.1',
+  // gpt-5.4/gpt-5.4-pro: NOT in ModelFarm → redirect to gpt-5.1
+  'gpt-5.4':            'gpt-5.1',
+  'gpt-5.4-pro':        'gpt-5.1',
+  'gpt-5.4-2026-03-05': 'gpt-5.1',
+  'gpt-5.4-pro-2026-03-05': 'gpt-5.1',
 
   // ── Anthropic ────────────────────────────────────────────────────────────────
   // Confirmed real (400 "credit balance too low" = model exists)

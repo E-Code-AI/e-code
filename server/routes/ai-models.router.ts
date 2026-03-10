@@ -120,10 +120,12 @@ router.get('/pricing', (_req, res) => {
   res.json({
     success: true,
     pricing: {
-      // OpenAI — confirmed real models (March 2026)
-      // GPT-5.4 family — released March 5, 2026; OpenAI's highest cost tier
-      'gpt-5.4':                    { input: 0.0000025,  output: 0.000015,   creditsPerThousand: 2.5 },
-      'gpt-5.4-pro':                { input: 0.00003,    output: 0.00015,    creditsPerThousand: 30 },
+      // OpenAI — confirmed working models (March 2026)
+      // GPT-5.x via ModelFarm free tier
+      'gpt-5.1':                    { input: 0.000002,   output: 0.000008,   creditsPerThousand: 2 },
+      'gpt-5':                      { input: 0.000002,   output: 0.000008,   creditsPerThousand: 2 },
+      'gpt-5-mini':                 { input: 0.0000004,  output: 0.0000016,  creditsPerThousand: 0.4 },
+      'gpt-5-nano':                 { input: 0.0000001,  output: 0.0000004,  creditsPerThousand: 0.1 },
       'gpt-4.1':                    { input: 0.000002,   output: 0.000008,   creditsPerThousand: 2 },
       'gpt-4.1-mini':               { input: 0.0000004,  output: 0.0000016,  creditsPerThousand: 0.4 },
       'gpt-4.1-nano':               { input: 0.0000001,  output: 0.0000004,  creditsPerThousand: 0.1 },

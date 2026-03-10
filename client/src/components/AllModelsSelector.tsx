@@ -49,17 +49,7 @@ export function AllModelsSelector() {
     ...(openaiModels?.models || []),
     ...(opensourceData?.models || []),
     
-    // ── OpenAI GPT-5.x (via Replit ModelFarm — no API key needed) ───────────────
-    {
-      id: 'gpt-5.2',
-      name: 'GPT-5.2',
-      description: 'Most capable general-purpose model — best for most tasks. Free via Replit ModelFarm.',
-      provider: 'OpenAI',
-      contextWindow: 1000000,
-      capabilities: ['Chat', 'Code', 'Vision', 'Tools', 'Long Context', 'ModelFarm'],
-      pricing: { input: 3, output: 12, currency: 'USD', unit: '1M tokens' },
-      available: true
-    },
+    // ── OpenAI GPT-5.x (ALL confirmed working via Replit ModelFarm — no API key needed) ──
     {
       id: 'gpt-5.1',
       name: 'GPT-5.1',

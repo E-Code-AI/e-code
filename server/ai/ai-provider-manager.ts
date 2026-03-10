@@ -34,24 +34,18 @@ export interface AIModel {
  */
 // All models supported by Replit ModelFarm (AI Integrations free tier)
 // Source: javascript_openai_ai_integrations blueprint (March 2026)
+// Confirmed working via live ModelFarm tests (March 2026)
+// gpt-5.2 EXCLUDED: ModelFarm internal error (400 invalid_prompt)
+// gpt-5.4/gpt-5.4-pro EXCLUDED: Not in ModelFarm range (unknown model error)
 export const MODELFARM_MODELS = new Set([
-  'gpt-5.2', 'gpt-5.1', 'gpt-5', 'gpt-5-mini', 'gpt-5-nano',
+  'gpt-5.1', 'gpt-5', 'gpt-5-mini', 'gpt-5-nano',
   'gpt-4.1', 'gpt-4.1-mini', 'gpt-4.1-nano',
   'gpt-4o', 'gpt-4o-mini',
   'o4-mini', 'o3', 'o3-mini',
 ]);
 
 export const AI_MODELS: AIModel[] = [
-  // ── OpenAI — GPT-5.x (ModelFarm-supported, best available) ──────────────────
-  {
-    id: 'gpt-5.2',
-    name: 'GPT-5.2',
-    provider: 'openai',
-    description: 'Most capable general-purpose model — best for most tasks (free via Replit ModelFarm)',
-    maxTokens: 1000000,
-    supportsStreaming: true,
-    costPer1kTokens: 0.003
-  },
+  // ── OpenAI — GPT-5.x (ALL confirmed working on Replit ModelFarm, March 2026) ──
   {
     id: 'gpt-5.1',
     name: 'GPT-5.1',
@@ -162,25 +156,6 @@ export const AI_MODELS: AIModel[] = [
     maxTokens: 200000,
     supportsStreaming: true,
     costPer1kTokens: 0.0011
-  },
-  // ── OpenAI — Direct API key only (beyond ModelFarm range) ────────────────────
-  {
-    id: 'gpt-5.4',
-    name: 'GPT-5.4',
-    provider: 'openai',
-    description: 'OpenAI next-generation flagship — advanced reasoning and coding (requires direct API key)',
-    maxTokens: 1050000,
-    supportsStreaming: true,
-    costPer1kTokens: 0.0025
-  },
-  {
-    id: 'gpt-5.4-pro',
-    name: 'GPT-5.4 Pro',
-    provider: 'openai',
-    description: 'Maximum performance — for complex professional tasks (requires direct API key)',
-    maxTokens: 1050000,
-    supportsStreaming: true,
-    costPer1kTokens: 0.03
   },
   {
     id: 'o1',
@@ -986,10 +961,8 @@ export class AIProviderManager {
     if (!this.openaiClient) throw new Error('OpenAI client not initialized');
     
     // ✅ MODELFARM SAFETY: When Replit ModelFarm is active, only route supported models through it.
-    // gpt-5.2 is excluded (known ModelFarm internal error) — use gpt-5.1 as default.
-    // Unsupported models (e.g. gpt-5.4, gpt-5.4-pro) fall back to gpt-5.1.
-    const MODELFARM_EXCLUDED = new Set(['gpt-5.2']);
-    if (process.env.AI_INTEGRATIONS_OPENAI_BASE_URL && (!MODELFARM_MODELS.has(modelId) || MODELFARM_EXCLUDED.has(modelId))) {
+    // Only route confirmed-working models through ModelFarm. Anything else → gpt-5.1.
+    if (process.env.AI_INTEGRATIONS_OPENAI_BASE_URL && !MODELFARM_MODELS.has(modelId)) {
       logger.info(`[ProviderManager/OpenAI] ModelFarm: model ${modelId} not supported → gpt-5.1`);
       modelId = 'gpt-5.1';
     }
@@ -1326,7 +1299,7 @@ export class AIProviderManager {
    */
   getAvailableProviders(): Array<{ name: string; isAvailable: boolean }> {
     const providerMap: Record<string, string[]> = {
-      'OpenAI': ['gpt-5.2', 'gpt-5.1', 'gpt-5', 'gpt-5-mini', 'gpt-5-nano', 'gpt-4.1', 'gpt-4.1-mini', 'gpt-4.1-nano', 'gpt-4o', 'gpt-4o-mini', 'o4-mini', 'o3', 'o3-mini'],
+      'OpenAI': ['gpt-5.1', 'gpt-5', 'gpt-5-mini', 'gpt-5-nano', 'gpt-4.1', 'gpt-4.1-mini', 'gpt-4.1-nano', 'gpt-4o', 'gpt-4o-mini', 'o4-mini', 'o3', 'o3-mini'],
       'Claude': ['claude-3-5-sonnet-20241022', 'claude-3-5-haiku-20241022', 'claude-3-opus-20240229'],
       'Anthropic': ['claude-3-5-sonnet-20241022', 'claude-3-5-haiku-20241022'],
       'Gemini': ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro', 'gemini-1.5-flash'],

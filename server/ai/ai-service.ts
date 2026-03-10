@@ -54,7 +54,7 @@ export class AIService {
         available: !!openai,
         configured: !!openaiKey,
         keyPresent: !!process.env.OPENAI_API_KEY,
-        models: openai ? ['gpt-5.2', 'gpt-5.1', 'gpt-5', 'gpt-5-mini', 'gpt-5-nano', 'gpt-4.1', 'gpt-4.1-mini', 'gpt-4.1-nano', 'gpt-4o', 'gpt-4o-mini', 'o4-mini', 'o3', 'o3-mini'] : []
+        models: openai ? ['gpt-5.1', 'gpt-5', 'gpt-5-mini', 'gpt-5-nano', 'gpt-4.1', 'gpt-4.1-mini', 'gpt-4.1-nano', 'gpt-4o', 'gpt-4o-mini', 'o4-mini', 'o3', 'o3-mini'] : []
       },
       anthropic: {
         available: !!anthropic,
