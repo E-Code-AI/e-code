@@ -206,7 +206,7 @@ export class MonitoringWebSocketService {
 
       let decoded: { userId: number };
       try {
-        decoded = jwt.verify(data.token, process.env.JWT_SECRET || 'dev-secret') as { userId: number };
+        decoded = jwt.verify(data.token, process.env.JWT_SECRET || (process.env.NODE_ENV === 'production' ? (() => { throw new Error('JWT_SECRET not configured'); })() : 'dev-secret')) as { userId: number };
       } catch (jwtError) {
         logger.warn('JWT verification failed:', jwtError);
         this.sendError(client, 'Invalid or expired token');

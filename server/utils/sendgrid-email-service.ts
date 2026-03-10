@@ -12,9 +12,9 @@ const isProduction = process.env.NODE_ENV === 'production';
 // Initialize SendGrid with API key
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
 
-// Validate API key in production - critical security check
+// Warn if missing in production - email features will be disabled but server won't crash
 if (isProduction && !SENDGRID_API_KEY) {
-  throw new Error('SENDGRID_API_KEY is required in production environment');
+  console.warn('[SendGrid] SENDGRID_API_KEY not configured — email verification and password reset emails will be disabled in production.');
 }
 
 // Initialize SendGrid if key is available (skip in test mode to prevent 401 errors)

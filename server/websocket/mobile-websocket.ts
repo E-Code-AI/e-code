@@ -72,7 +72,7 @@ export class MobileWebSocketService {
           return next(new Error('Authentication token required'));
         }
         
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'dev-secret') as { userId: number };
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || (process.env.NODE_ENV === 'production' ? (() => { throw new Error('JWT_SECRET not configured'); })() : 'dev-secret')) as { userId: number };
         const user = await storage.getUser(String(decoded.userId));
         if (!user) {
           logger.warn(`User ${decoded.userId} not found`);

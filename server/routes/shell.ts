@@ -24,6 +24,8 @@ interface ShellSession {
 }
 
 const shellSessions = new Map<string, ShellSession>();
+const projectSyncCache = new Map<string, number>(); // projectId -> last sync timestamp
+const SHELL_SYNC_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 // WebSocket server for shell connections (noServer mode)
 let shellWss: WebSocketServer | null = null;
@@ -136,20 +138,27 @@ echo ""
       const projectDir = path.join(baseDir, `project-${projectId}`);
       try {
         await fs.mkdir(projectDir, { recursive: true });
-        const projectFiles = await storage.getFilesByProjectId(String(projectId));
-        if (projectFiles && projectFiles.length > 0) {
-          for (const file of projectFiles) {
-            const filePath = path.join(projectDir, (file as any).path || (file as any).name || '');
-            if (!filePath.startsWith(projectDir)) continue;
-            const fileDir = path.dirname(filePath);
-            if ((file as any).isDirectory) {
-              await fs.mkdir(filePath, { recursive: true });
-            } else {
-              await fs.mkdir(fileDir, { recursive: true });
-              await fs.writeFile(filePath, (file as any).content || '', 'utf8');
+        const lastSync = projectSyncCache.get(String(projectId)) || 0;
+        const now = Date.now();
+        if (now - lastSync >= SHELL_SYNC_CACHE_TTL_MS) {
+          const projectFiles = await storage.getFilesByProjectId(String(projectId));
+          if (projectFiles && projectFiles.length > 0) {
+            for (const file of projectFiles) {
+              const filePath = path.join(projectDir, (file as any).path || (file as any).name || '');
+              if (!filePath.startsWith(projectDir)) continue;
+              const fileDir = path.dirname(filePath);
+              if ((file as any).isDirectory) {
+                await fs.mkdir(filePath, { recursive: true });
+              } else {
+                await fs.mkdir(fileDir, { recursive: true });
+                await fs.writeFile(filePath, (file as any).content || '', 'utf8');
+              }
             }
+            projectSyncCache.set(String(projectId), Date.now());
+            logger.info(`[Shell] Synced ${projectFiles.length} files for project ${projectId}`);
           }
-          logger.info(`[Shell] Synced ${projectFiles.length} files for project ${projectId}`);
+        } else {
+          logger.info(`[Shell] Skipping sync for project ${projectId} (cached ${Math.round((now - lastSync) / 1000)}s ago)`);
         }
         shellCwd = projectDir;
       } catch (syncErr) {

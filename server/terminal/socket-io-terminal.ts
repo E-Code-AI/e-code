@@ -62,10 +62,13 @@ async function getPty() {
   return ptyModule;
 }
 
+const PROJECT_SYNC_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
 export class SocketIOTerminalService {
   private io: SocketIOServer | null = null;
   private sessions: Map<string, PTYSession> = new Map();
   private outputBuffers: Map<string, CircularBuffer> = new Map();
+  private lastSyncedAt: Map<string, number> = new Map();
   private maxSessions = 50;
   private cleanupInterval: NodeJS.Timeout | null = null;
 
@@ -349,6 +352,13 @@ export class SocketIOTerminalService {
     try {
       await fs.promises.mkdir(projectDir, { recursive: true });
 
+      const lastSync = this.lastSyncedAt.get(projectId) || 0;
+      const now = Date.now();
+      if (now - lastSync < PROJECT_SYNC_CACHE_TTL_MS) {
+        logger.info(`[SocketIO Terminal] Skipping sync for project ${projectId} (cached ${Math.round((now - lastSync) / 1000)}s ago)`);
+        return projectDir;
+      }
+
       try {
         const files = await storage.getFilesByProjectId(projectId);
         if (files && files.length > 0) {
@@ -363,6 +373,7 @@ export class SocketIOTerminalService {
               await fs.promises.writeFile(filePath, (file as any).content || '', 'utf8');
             }
           }
+          this.lastSyncedAt.set(projectId, Date.now());
           logger.info(`[SocketIO Terminal] Synced ${files.length} files to ${projectDir}`);
         }
       } catch (storageError) {

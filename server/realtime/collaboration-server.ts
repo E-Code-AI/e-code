@@ -310,7 +310,7 @@ export class CollaborationServer {
 
     let decoded: { userId: number };
     try {
-      decoded = jwt.verify(message.data.token, process.env.JWT_SECRET || 'dev-secret') as { userId: number };
+      decoded = jwt.verify(message.data.token, process.env.JWT_SECRET || (process.env.NODE_ENV === 'production' ? (() => { throw new Error('JWT_SECRET not configured'); })() : 'dev-secret')) as { userId: number };
     } catch (jwtError) {
       logger.error('[CollaborationServer] JWT verification failed:', jwtError);
       this.send(ws, {
