@@ -16,7 +16,8 @@ const logger = createLogger('chatgpt-router');
 
 // Validation schemas
 const createSessionSchema = z.object({
-  projectId: z.number().int().positive().optional()
+  projectId: z.number().int().positive().optional(),
+  model: z.string().optional(),
 });
 
 const sendMessageSchema = z.object({
@@ -54,10 +55,59 @@ export class ChatGPTRouter {
       }
     });
 
+    // List available AI models
+    this.router.get('/admin/chatgpt/models', async (req: Request, res: Response) => {
+      try {
+        res.json(this.chatgptService.getModels());
+      } catch (error) {
+        res.status(500).json({ message: 'Failed to retrieve models' });
+      }
+    });
+
+    // Direct streaming chat (stateless - no session required)
+    this.router.post('/admin/chatgpt/stream', async (req: Request, res: Response) => {
+      let streamEnded = false;
+      let clientDisconnected = false;
+
+      req.on('close', () => { clientDisconnected = true; });
+
+      try {
+        const { model = 'gpt-4.1', messages } = req.body;
+        if (!messages || !Array.isArray(messages) || messages.length === 0) {
+          return res.status(400).json({ message: 'messages array is required' });
+        }
+
+        if (!validateAndSetSSEHeaders(res, req)) return;
+        res.write('data: {"type":"connected"}\n\n');
+
+        try {
+          const stream = this.chatgptService.streamDirect(model, messages);
+          for await (const chunk of stream) {
+            if (clientDisconnected) break;
+            res.write(`data: ${JSON.stringify({ type: 'content', content: chunk })}\n\n`);
+          }
+          if (!clientDisconnected) {
+            res.write('data: {"type":"done"}\n\n');
+          }
+        } catch (streamError: any) {
+          logger.error('[ChatGPT] Direct stream error:', streamError);
+          if (!clientDisconnected && !streamEnded) {
+            try {
+              res.write(`data: ${JSON.stringify({ type: 'error', message: streamError.message || 'Stream error' })}\n\n`);
+            } catch (_) {}
+          }
+        } finally {
+          if (!streamEnded) { streamEnded = true; res.end(); }
+        }
+      } catch (error: any) {
+        logger.error('[ChatGPT] Failed to setup direct stream:', error);
+        if (!streamEnded) { streamEnded = true; res.status(500).json({ message: error.message || 'Failed to setup streaming' }); }
+      }
+    });
+
     // Create a new chat session
     this.router.post('/admin/chatgpt/sessions', async (req: Request, res: Response) => {
       try {
-        // Validate request body
         const validation = createSessionSchema.safeParse(req.body);
         if (!validation.success) {
           return res.status(400).json({
@@ -66,8 +116,12 @@ export class ChatGPTRouter {
           });
         }
         
-        const { projectId } = validation.data;
-        const session = await this.chatgptService.createSession(String(req.user!.id), projectId ? String(projectId) : undefined);
+        const { projectId, model } = validation.data;
+        const session = await this.chatgptService.createSession(
+          String(req.user!.id),
+          projectId ? String(projectId) : undefined,
+          model
+        );
         res.json(session);
       } catch (error: any) {
         logger.error('Failed to create session:', { error: error.message });
