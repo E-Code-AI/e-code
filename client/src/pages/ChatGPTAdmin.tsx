@@ -15,8 +15,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { 
   Bot, Send, StopCircle, Loader2, Trash2, Plus, Search,
   FolderOpen, FileText, Code2, Users, Activity, RefreshCw,
-  ChevronRight, Edit, Save, X, Copy, Check, Sparkles,
-  Terminal, Brain, Zap, MessageSquare, Settings, Eye
+  ChevronRight, ChevronDown, Edit, Save, X, Copy, Check, Sparkles,
+  Terminal, Brain, Zap, MessageSquare, Settings, Eye,
+  Server, HardDrive, Package, Folder, Globe, Cpu, Database, MemoryStick
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { CM6Editor } from '@/components/editor/CM6Editor';
@@ -69,6 +70,104 @@ interface AgentSession {
   status?: string;
   startedAt: string;
   lastActivityAt?: string;
+}
+
+interface PlatformFileNode {
+  name: string;
+  path: string;
+  isDirectory: boolean;
+  children?: PlatformFileNode[];
+}
+
+interface PlatformFileContent {
+  path: string;
+  name: string;
+  content: string;
+  size: number;
+  extension: string;
+  modifiedAt: string;
+}
+
+interface PlatformStats {
+  name: string;
+  version: string;
+  description: string;
+  dependencies: number;
+  devDependencies: number;
+  fileCounts: { server: number; client: number; shared: number; total: number };
+  nodeVersion: string;
+  platform: string;
+  uptime: number;
+  memoryUsage: { rss: number; heapUsed: number; heapTotal: number; external: number };
+}
+
+// ===== Platform file tree node =====
+function PlatformTreeNode({
+  node,
+  depth,
+  selectedPath,
+  expandedDirs,
+  onToggleDir,
+  onSelectFile,
+}: {
+  node: PlatformFileNode;
+  depth: number;
+  selectedPath: string | null;
+  expandedDirs: Set<string>;
+  onToggleDir: (path: string) => void;
+  onSelectFile: (path: string) => void;
+}) {
+  const isExpanded = expandedDirs.has(node.path);
+
+  if (node.isDirectory) {
+    return (
+      <div>
+        <button
+          className="flex items-center gap-1.5 w-full px-2 py-1 rounded hover:bg-muted/50 text-left text-sm transition-colors"
+          style={{ paddingLeft: `${8 + depth * 12}px` }}
+          onClick={() => onToggleDir(node.path)}
+        >
+          {isExpanded ? <ChevronDown className="w-3 h-3 shrink-0 text-muted-foreground" /> : <ChevronRight className="w-3 h-3 shrink-0 text-muted-foreground" />}
+          {isExpanded ? <FolderOpen className="w-3.5 h-3.5 shrink-0 text-blue-400" /> : <Folder className="w-3.5 h-3.5 shrink-0 text-blue-400" />}
+          <span className="truncate text-[13px]">{node.name}</span>
+        </button>
+        {isExpanded && node.children && (
+          <div>
+            {node.children.map(child => (
+              <PlatformTreeNode
+                key={child.path}
+                node={child}
+                depth={depth + 1}
+                selectedPath={selectedPath}
+                expandedDirs={expandedDirs}
+                onToggleDir={onToggleDir}
+                onSelectFile={onSelectFile}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  const ext = node.name.split('.').pop() || '';
+  const fileColor = {
+    ts: 'text-blue-400', tsx: 'text-cyan-400', js: 'text-yellow-400', jsx: 'text-yellow-400',
+    json: 'text-orange-400', css: 'text-purple-400', sql: 'text-green-400', md: 'text-gray-400',
+  }[ext] || 'text-muted-foreground';
+
+  return (
+    <button
+      className={`flex items-center gap-1.5 w-full px-2 py-0.5 rounded hover:bg-muted/50 text-left text-sm transition-colors ${
+        selectedPath === node.path ? 'bg-primary/10 text-primary' : ''
+      }`}
+      style={{ paddingLeft: `${8 + depth * 12}px` }}
+      onClick={() => onSelectFile(node.path)}
+    >
+      <FileText className={`w-3.5 h-3.5 shrink-0 ${fileColor}`} />
+      <span className={`truncate text-[13px] ${selectedPath === node.path ? 'text-primary font-medium' : ''}`}>{node.name}</span>
+    </button>
+  );
 }
 
 // ===== Constants =====
@@ -165,6 +264,16 @@ export default function ChatGPTAdmin() {
   // Sessions terminate
   const [terminatingId, setTerminatingId] = useState<string | null>(null);
 
+  // Platform filesystem state
+  const [platformSelectedPath, setPlatformSelectedPath] = useState<string | null>(null);
+  const [platformEditedContent, setPlatformEditedContent] = useState<string>('');
+  const [platformFileExt, setPlatformFileExt] = useState<string>('ts');
+  const [isSavingPlatformFile, setIsSavingPlatformFile] = useState(false);
+  const [expandedPlatformDirs, setExpandedPlatformDirs] = useState<Set<string>>(
+    new Set(['server', 'client', 'shared'])
+  );
+  const [isLoadingPlatformFile, setIsLoadingPlatformFile] = useState(false);
+
   // ===== Queries =====
   const { data: models = [] } = useQuery<AIModel[]>({
     queryKey: ['/api/admin/chatgpt/models'],
@@ -188,6 +297,14 @@ export default function ChatGPTAdmin() {
   const { data: agentSessions = [], refetch: refetchSessions } = useQuery<AgentSession[]>({
     queryKey: ['/api/admin/chatgpt/agent-sessions'],
     refetchInterval: 10000,
+  });
+
+  const { data: platformTree = [], isLoading: loadingPlatformTree, refetch: refetchPlatformTree } = useQuery<PlatformFileNode[]>({
+    queryKey: ['/api/admin/chatgpt/platform/tree'],
+  });
+
+  const { data: platformStats } = useQuery<PlatformStats>({
+    queryKey: ['/api/admin/chatgpt/platform/stats'],
   });
 
   // Filtered projects
@@ -349,6 +466,62 @@ export default function ChatGPTAdmin() {
     inputRef.current?.focus();
   };
 
+  // ===== Platform file operations =====
+  const loadPlatformFile = async (filePath: string) => {
+    if (isLoadingPlatformFile) return;
+    setPlatformSelectedPath(filePath);
+    setIsLoadingPlatformFile(true);
+    try {
+      const res = await fetch(`/api/admin/chatgpt/platform/file?path=${encodeURIComponent(filePath)}`, {
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('Failed to load file');
+      const data: PlatformFileContent = await res.json();
+      setPlatformEditedContent(data.content);
+      setPlatformFileExt(data.extension || 'ts');
+    } catch {
+      toast({ title: 'Failed to load platform file', variant: 'destructive' });
+    } finally {
+      setIsLoadingPlatformFile(false);
+    }
+  };
+
+  const savePlatformFile = async () => {
+    if (!platformSelectedPath) return;
+    setIsSavingPlatformFile(true);
+    try {
+      const res = await fetch('/api/admin/chatgpt/platform/file', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ path: platformSelectedPath, content: platformEditedContent }),
+      });
+      if (!res.ok) throw new Error('Failed to save');
+      toast({ title: 'Platform file saved successfully' });
+    } catch {
+      toast({ title: 'Failed to save platform file', variant: 'destructive' });
+    } finally {
+      setIsSavingPlatformFile(false);
+    }
+  };
+
+  const askAIAboutPlatformFile = () => {
+    if (!platformSelectedPath || !platformEditedContent) return;
+    const preview = platformEditedContent.slice(0, 4000);
+    const question = `Analyze this E-Code platform source file \`${platformSelectedPath}\`:\n\`\`\`${platformFileExt}\n${preview}${platformEditedContent.length > 4000 ? '\n... [truncated]' : ''}\n\`\`\`\n\nProvide: purpose, key functions/components, potential improvements.`;
+    setInputText(question);
+    toast({ title: 'File context added to chat', description: 'Switch to AI Chat tab to send' });
+  };
+
+  const togglePlatformDir = (dirPath: string) => {
+    setExpandedPlatformDirs(prev => {
+      const next = new Set(prev);
+      if (next.has(dirPath)) next.delete(dirPath);
+      else next.add(dirPath);
+      return next;
+    });
+  };
+
   // ===== Terminate session =====
   const terminateSession = async (sessionId: string) => {
     setTerminatingId(sessionId);
@@ -402,6 +575,7 @@ export default function ChatGPTAdmin() {
           <TabsTrigger value="chat" className="gap-2"><MessageSquare className="w-3.5 h-3.5" />AI Chat</TabsTrigger>
           <TabsTrigger value="projects" className="gap-2"><FolderOpen className="w-3.5 h-3.5" />Client Projects</TabsTrigger>
           <TabsTrigger value="sessions" className="gap-2"><Activity className="w-3.5 h-3.5" />Live Sessions</TabsTrigger>
+          <TabsTrigger value="platform" className="gap-2"><Server className="w-3.5 h-3.5" />E-Code Platform</TabsTrigger>
         </TabsList>
 
         {/* ===== TAB: AI CHAT ===== */}
@@ -793,6 +967,145 @@ export default function ChatGPTAdmin() {
                   </div>
                 </Card>
               ))}
+            </div>
+          )}
+        </TabsContent>
+
+        {/* ===== TAB: E-CODE PLATFORM ===== */}
+        <TabsContent value="platform" className="flex-1 flex overflow-hidden m-0 mt-3 px-6 pb-6 gap-4">
+          {/* Left: Platform tree + stats */}
+          <div className="w-72 shrink-0 flex flex-col gap-3 min-h-0">
+            {/* Platform Stats Card */}
+            {platformStats && (
+              <Card className="p-3 shrink-0">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-7 h-7 rounded-md bg-primary/10 flex items-center justify-center">
+                    <Globe className="w-3.5 h-3.5 text-primary" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[13px] font-semibold leading-none">{platformStats.name}</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">v{platformStats.version}</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-1.5">
+                  <div className="rounded-md bg-muted/40 px-2 py-1.5">
+                    <p className="text-[10px] text-muted-foreground">Total Files</p>
+                    <p className="text-sm font-bold text-foreground">{platformStats.fileCounts.total}</p>
+                  </div>
+                  <div className="rounded-md bg-muted/40 px-2 py-1.5">
+                    <p className="text-[10px] text-muted-foreground">Node</p>
+                    <p className="text-sm font-bold text-foreground">{platformStats.nodeVersion}</p>
+                  </div>
+                  <div className="rounded-md bg-muted/40 px-2 py-1.5">
+                    <p className="text-[10px] text-muted-foreground">Deps</p>
+                    <p className="text-sm font-bold text-foreground">{platformStats.dependencies}</p>
+                  </div>
+                  <div className="rounded-md bg-muted/40 px-2 py-1.5">
+                    <p className="text-[10px] text-muted-foreground">Heap</p>
+                    <p className="text-sm font-bold text-foreground">{Math.round(platformStats.memoryUsage.heapUsed / 1024 / 1024)}MB</p>
+                  </div>
+                </div>
+                <div className="mt-2 flex gap-1.5">
+                  <div className="flex-1 rounded-md bg-blue-500/10 px-2 py-1">
+                    <p className="text-[10px] text-blue-400">server/</p>
+                    <p className="text-xs font-semibold text-blue-400">{platformStats.fileCounts.server} files</p>
+                  </div>
+                  <div className="flex-1 rounded-md bg-cyan-500/10 px-2 py-1">
+                    <p className="text-[10px] text-cyan-400">client/</p>
+                    <p className="text-xs font-semibold text-cyan-400">{platformStats.fileCounts.client} files</p>
+                  </div>
+                  <div className="flex-1 rounded-md bg-purple-500/10 px-2 py-1">
+                    <p className="text-[10px] text-purple-400">shared/</p>
+                    <p className="text-xs font-semibold text-purple-400">{platformStats.fileCounts.shared} files</p>
+                  </div>
+                </div>
+              </Card>
+            )}
+            {/* File Tree */}
+            <Card className="flex-1 flex flex-col overflow-hidden p-0">
+              <div className="flex items-center justify-between px-3 py-2 border-b shrink-0">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Codebase</p>
+                <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => refetchPlatformTree()}>
+                  <RefreshCw className="w-3 h-3" />
+                </Button>
+              </div>
+              <ScrollArea className="flex-1">
+                <div className="py-1 px-1">
+                  {loadingPlatformTree ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : platformTree.length === 0 ? (
+                    <p className="text-xs text-muted-foreground text-center py-4">No files found</p>
+                  ) : (
+                    platformTree.map(node => (
+                      <PlatformTreeNode
+                        key={node.path}
+                        node={node}
+                        depth={0}
+                        selectedPath={platformSelectedPath}
+                        expandedDirs={expandedPlatformDirs}
+                        onToggleDir={togglePlatformDir}
+                        onSelectFile={loadPlatformFile}
+                      />
+                    ))
+                  )}
+                </div>
+              </ScrollArea>
+            </Card>
+          </div>
+
+          {/* Right: Editor */}
+          {platformSelectedPath ? (
+            <div className="flex-1 flex flex-col gap-2 min-w-0 min-h-0">
+              <div className="flex items-center gap-2 shrink-0 bg-muted/30 rounded-lg px-3 py-2">
+                <Code2 className="w-4 h-4 text-muted-foreground shrink-0" />
+                <span className="text-sm font-medium truncate flex-1 font-mono">{platformSelectedPath}</span>
+                {isLoadingPlatformFile && <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" />}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 px-2 text-xs shrink-0 gap-1"
+                  onClick={askAIAboutPlatformFile}
+                  disabled={!platformEditedContent}
+                >
+                  <Sparkles className="w-3 h-3" />Ask AI
+                </Button>
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="h-7 px-2 text-xs shrink-0 gap-1"
+                  onClick={savePlatformFile}
+                  disabled={isSavingPlatformFile || isLoadingPlatformFile}
+                >
+                  {isSavingPlatformFile ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+                  Save
+                </Button>
+              </div>
+              <div className="flex-1 border rounded-xl overflow-hidden">
+                {isLoadingPlatformFile ? (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="text-center">
+                      <Loader2 className="w-6 h-6 animate-spin text-muted-foreground mx-auto mb-2" />
+                      <p className="text-sm text-muted-foreground">Loading file...</p>
+                    </div>
+                  </div>
+                ) : (
+                  <CM6Editor
+                    value={platformEditedContent}
+                    onChange={setPlatformEditedContent}
+                    language={platformFileExt}
+                  />
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="flex-1 border rounded-xl flex items-center justify-center">
+              <div className="text-center">
+                <Server className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
+                <p className="font-medium text-sm mb-1">Select a source file</p>
+                <p className="text-xs text-muted-foreground max-w-[200px]">Browse the E-Code platform codebase and click any file to view and edit it</p>
+              </div>
             </div>
           )}
         </TabsContent>

@@ -1,7 +1,7 @@
 # E-Code Platform
 
 ## Overview
-E-Code is an AI-assisted web-based Integrated Development Environment (IDE) designed to boost developer productivity. It offers automated workspace setup, real-time code execution, integrated AI capabilities, collaboration tools, enterprise-grade testing, and robust security. The platform aims to be a leading solution in AI-powered software development, providing a comprehensive, secure, and high-performance development experience.
+E-Code is an AI-assisted web-based Integrated Development Environment (IDE) designed to boost developer productivity. It offers automated workspace setup, real-time code execution, integrated AI capabilities, collaboration tools, enterprise-grade testing, and robust security. The platform aims to be a a comprehensive, secure, and high-performance development experience, positioning itself as a leading solution in AI-powered software development.
 
 ## User Preferences
 - Communication: Simple, everyday language
@@ -74,12 +74,12 @@ E-Code is an AI-assisted web-based Integrated Development Environment (IDE) desi
 - Stuck Session Cleanup (Autonomous Build): On server startup, `AgentOrchestratorService` constructor resets sessions stuck in `planning`/`executing` → `failed`. Idempotency check in `startAutonomousWorkspace` allows restart from `idle` OR `failed` status.
 
 ## System Architecture
-E-Code utilizes a two-service architecture: a React, TypeScript, and Vite frontend leveraging the Replit RUI Design System, and a Node.js/Express.js, TypeScript, Drizzle ORM, and Passport.js backend.
+E-Code employs a two-service architecture: a React, TypeScript, and Vite frontend utilizing the Replit RUI Design System, and a Node.js/Express.js, TypeScript, Drizzle ORM, and Passport.js backend.
 
 ### UI/UX Decisions
-- Employs the Replit RUI Design System for a consistent and modern user interface.
+- Utilizes the Replit RUI Design System for a consistent and modern user interface.
 - Features a responsive design, adapting console panels across various devices.
-- Uses vertical y-shift animations for public-facing pages, ensuring a smooth user experience.
+- Uses vertical y-shift animations for public-facing pages to ensure a smooth user experience.
 - Key public routes, such as the marketplace and templates, are accessible without authentication.
 - The IDE defaults to the Chat/Agent tab for desktop users and the Deploy tab for mobile/tablet, always displaying a preview panel with a wireframe placeholder.
 

@@ -5,12 +5,53 @@
 
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
+import path from 'path';
+import fs from 'fs/promises';
 import { IStorage } from '../storage';
 import { ensureAdmin } from '../middleware/admin-auth';
 import { ChatGPTService } from '../services/chatgpt-service';
 import { ensureAuthenticated } from '../middleware/auth';
 import { createLogger } from '../utils/logger';
 import { validateAndSetSSEHeaders } from '../utils/sse-headers';
+
+// Platform root (E-Code codebase base directory)
+const PLATFORM_ROOT = process.cwd();
+
+// Allowed top-level directories for security
+const ALLOWED_TOP_DIRS = new Set(['server', 'client', 'shared', 'scripts', 'runner']);
+const ALLOWED_ROOT_FILES = new Set(['package.json', 'tsconfig.json', 'vite.config.ts', 'drizzle.config.ts', 'replit.md', '.replit', 'README.md']);
+
+function isPathAllowed(filePath: string): boolean {
+  const normalized = path.normalize(filePath).replace(/\\/g, '/');
+  if (normalized.includes('..')) return false;
+  const parts = normalized.split('/');
+  if (parts.length === 1) return ALLOWED_ROOT_FILES.has(parts[0]);
+  return ALLOWED_TOP_DIRS.has(parts[0]);
+}
+
+const EXCLUDED_PATTERNS = ['.local', 'node_modules', '.git', 'dist', '.checkpoints', 'backups', 'logs', 'previews', '__pycache__', '.env'];
+
+async function buildFileTree(dirPath: string, relativePath: string = '', maxDepth = 4, depth = 0): Promise<any[]> {
+  if (depth >= maxDepth) return [];
+  const entries = await fs.readdir(dirPath, { withFileTypes: true });
+  const result: any[] = [];
+
+  for (const entry of entries.sort((a, b) => {
+    if (a.isDirectory() && !b.isDirectory()) return -1;
+    if (!a.isDirectory() && b.isDirectory()) return 1;
+    return a.name.localeCompare(b.name);
+  })) {
+    if (EXCLUDED_PATTERNS.some(p => entry.name.startsWith(p) || entry.name === p)) continue;
+    const entryRelPath = relativePath ? `${relativePath}/${entry.name}` : entry.name;
+    if (entry.isDirectory()) {
+      const children = await buildFileTree(path.join(dirPath, entry.name), entryRelPath, maxDepth, depth + 1);
+      result.push({ name: entry.name, path: entryRelPath, isDirectory: true, children });
+    } else {
+      result.push({ name: entry.name, path: entryRelPath, isDirectory: false });
+    }
+  }
+  return result;
+}
 
 const logger = createLogger('chatgpt-router');
 
@@ -426,6 +467,147 @@ export class ChatGPTRouter {
       } catch (error) {
         logger.error('Failed to terminate session:', error);
         res.status(500).json({ message: 'Failed to terminate session' });
+      }
+    });
+
+    // ===== E-CODE PLATFORM MANAGEMENT =====
+    // Browse/edit the actual E-Code platform source code (real filesystem)
+
+    // Get file tree of the platform codebase
+    this.router.get('/admin/chatgpt/platform/tree', async (req: Request, res: Response) => {
+      try {
+        const dir = (req.query.dir as string) || '';
+        let basePath: string;
+        
+        if (!dir) {
+          // Return top-level structure
+          const topLevel = await buildFileTree(PLATFORM_ROOT, '', 2, 0);
+          const filtered = topLevel.filter(e =>
+            (e.isDirectory && ALLOWED_TOP_DIRS.has(e.name)) || (!e.isDirectory && ALLOWED_ROOT_FILES.has(e.name))
+          );
+          return res.json(filtered);
+        }
+
+        if (!isPathAllowed(dir)) {
+          return res.status(403).json({ message: 'Access denied to this path' });
+        }
+
+        basePath = path.join(PLATFORM_ROOT, dir);
+        const stat = await fs.stat(basePath);
+        if (!stat.isDirectory()) {
+          return res.status(400).json({ message: 'Not a directory' });
+        }
+
+        const tree = await buildFileTree(basePath, dir, 6, 0);
+        res.json(tree);
+      } catch (error: any) {
+        logger.error('Failed to get platform file tree:', error);
+        if (error.code === 'ENOENT') return res.status(404).json({ message: 'Directory not found' });
+        res.status(500).json({ message: 'Failed to read directory' });
+      }
+    });
+
+    // Read a platform file
+    this.router.get('/admin/chatgpt/platform/file', async (req: Request, res: Response) => {
+      try {
+        const filePath = req.query.path as string;
+        if (!filePath) return res.status(400).json({ message: 'path query param required' });
+        if (!isPathAllowed(filePath)) return res.status(403).json({ message: 'Access denied to this path' });
+
+        const absolutePath = path.join(PLATFORM_ROOT, filePath);
+        const stat = await fs.stat(absolutePath);
+        if (stat.isDirectory()) return res.status(400).json({ message: 'Path is a directory' });
+
+        // Size limit: 2MB
+        if (stat.size > 2 * 1024 * 1024) {
+          return res.status(400).json({ message: 'File too large (max 2MB)' });
+        }
+
+        const content = await fs.readFile(absolutePath, 'utf-8');
+        const ext = path.extname(filePath).slice(1);
+
+        res.json({
+          path: filePath,
+          name: path.basename(filePath),
+          content,
+          size: stat.size,
+          extension: ext,
+          modifiedAt: stat.mtime,
+        });
+      } catch (error: any) {
+        logger.error('Failed to read platform file:', error);
+        if (error.code === 'ENOENT') return res.status(404).json({ message: 'File not found' });
+        if (error.code === 'EISDIR') return res.status(400).json({ message: 'Path is a directory' });
+        res.status(500).json({ message: 'Failed to read file' });
+      }
+    });
+
+    // Write a platform file
+    this.router.put('/admin/chatgpt/platform/file', async (req: Request, res: Response) => {
+      try {
+        const { path: filePath, content } = req.body;
+        if (!filePath || content === undefined) {
+          return res.status(400).json({ message: 'path and content are required' });
+        }
+        if (!isPathAllowed(filePath)) return res.status(403).json({ message: 'Access denied to this path' });
+
+        const absolutePath = path.join(PLATFORM_ROOT, filePath);
+
+        // Ensure parent directory exists
+        await fs.mkdir(path.dirname(absolutePath), { recursive: true });
+        await fs.writeFile(absolutePath, content, 'utf-8');
+
+        logger.info(`[Admin] Platform file written: ${filePath} by admin ${req.user!.id}`);
+        res.json({ success: true, path: filePath, size: Buffer.byteLength(content, 'utf-8') });
+      } catch (error: any) {
+        logger.error('Failed to write platform file:', error);
+        res.status(500).json({ message: 'Failed to write file' });
+      }
+    });
+
+    // Get platform stats (package.json info, file counts, etc.)
+    this.router.get('/admin/chatgpt/platform/stats', async (req: Request, res: Response) => {
+      try {
+        const pkgJson = JSON.parse(await fs.readFile(path.join(PLATFORM_ROOT, 'package.json'), 'utf-8'));
+        
+        // Count files per directory
+        const countFiles = async (dir: string): Promise<number> => {
+          try {
+            const entries = await fs.readdir(dir, { withFileTypes: true });
+            let count = 0;
+            for (const entry of entries) {
+              if (EXCLUDED_PATTERNS.some(p => entry.name.startsWith(p))) continue;
+              if (entry.isDirectory()) {
+                count += await countFiles(path.join(dir, entry.name));
+              } else {
+                count++;
+              }
+            }
+            return count;
+          } catch { return 0; }
+        };
+
+        const [serverCount, clientCount, sharedCount] = await Promise.all([
+          countFiles(path.join(PLATFORM_ROOT, 'server')),
+          countFiles(path.join(PLATFORM_ROOT, 'client')),
+          countFiles(path.join(PLATFORM_ROOT, 'shared')),
+        ]);
+
+        res.json({
+          name: pkgJson.name || 'E-Code',
+          version: pkgJson.version || '1.0.0',
+          description: pkgJson.description || 'E-Code Platform',
+          dependencies: Object.keys(pkgJson.dependencies || {}).length,
+          devDependencies: Object.keys(pkgJson.devDependencies || {}).length,
+          fileCounts: { server: serverCount, client: clientCount, shared: sharedCount, total: serverCount + clientCount + sharedCount },
+          nodeVersion: process.version,
+          platform: process.platform,
+          uptime: process.uptime(),
+          memoryUsage: process.memoryUsage(),
+        });
+      } catch (error) {
+        logger.error('Failed to get platform stats:', error);
+        res.status(500).json({ message: 'Failed to get platform stats' });
       }
     });
   }
