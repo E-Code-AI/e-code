@@ -416,7 +416,7 @@ export default class MCPServer {
             type: "object",
             properties: {
               prompt: { type: "string", description: "Prompt for completion" },
-              model: { type: "string", default: "claude-sonnet-4-5-20250929" },
+              model: { type: "string", default: "claude-sonnet-4-20250514" },
               temperature: { type: "number", default: 0.7 },
               maxTokens: { type: "number", default: 2048 }
             },
@@ -1044,7 +1044,7 @@ export default class MCPServer {
   
   // AI/ML handlers
   private async handleAiComplete(args: any) {
-    const { prompt, model = "claude-sonnet-4-5-20250929", temperature = 0.7, maxTokens = 2048, userId } = args;
+    const { prompt, model = "claude-sonnet-4-20250514", temperature = 0.7, maxTokens = 2048, userId } = args;
     
     // Check if this is an open-source model
     const isOpenSourceModel = Object.keys(OPENSOURCE_MODELS).includes(model);

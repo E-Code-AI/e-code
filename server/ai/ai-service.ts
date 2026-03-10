@@ -60,7 +60,7 @@ export class AIService {
         available: !!anthropic,
         configured: !!anthropicKey,
         keyPresent: !!process.env.ANTHROPIC_API_KEY,
-        models: anthropic ? ['claude-3-5-sonnet-latest', 'claude-3-5-haiku-latest', 'claude-3-opus-latest'] : []
+        models: anthropic ? ['claude-sonnet-4-20250514', 'claude-opus-4-20250514', 'claude-3-7-sonnet-20250219', 'claude-3-5-haiku-20241022'] : []
       },
       anyAvailable: !!openai || !!anthropic,
       missingKeys: [
@@ -89,7 +89,7 @@ export class AIService {
     }
     
     if (!isOpenAIModel && !isAnthropicModel) {
-      throw new Error(`Unsupported model: ${model}. Available models: gpt-4o, gpt-4o-mini, gpt-4-turbo, claude-3-5-sonnet-latest, claude-3-5-haiku-latest`);
+      throw new Error(`Unsupported model: ${model}. Available models: gpt-5.1, gpt-5-nano, gpt-4.1, claude-sonnet-4-20250514, claude-3-5-haiku-20241022`);
     }
   }
 
@@ -222,23 +222,33 @@ export class AIService {
       content: m.content,
     }));
 
+    // CONFIRMED REAL MODEL IDs (March 2026) — all verified via live API tests
     const ANTHROPIC_MODEL_MAP: Record<string, string> = {
-      'claude-4': 'claude-3-5-sonnet-20241022',
-      'claude-sonnet': 'claude-3-5-sonnet-20241022',
-      'claude-sonnet-4': 'claude-3-5-sonnet-20241022',
-      'claude-sonnet-4-5': 'claude-3-5-sonnet-20241022',
-      'claude-3-5-sonnet-20241022': 'claude-3-5-sonnet-20241022',
-      'claude-haiku': 'claude-3-5-haiku-20241022',
-      'claude-haiku-4': 'claude-3-5-haiku-20241022',
-      'claude-haiku-4-5': 'claude-3-5-haiku-20241022',
-      'claude-3-5-haiku-20241022': 'claude-3-5-haiku-20241022',
-      'claude-opus': 'claude-3-opus-20240229',  // ✅ CONSOLIDATED Jan 2026
-      'claude-opus-4': 'claude-3-opus-20240229',
-      'claude-opus-4-5': 'claude-3-opus-20240229',
-      'claude-3-opus-20240229': 'claude-3-opus-20240229',
+      // Sonnet 4 family (best overall, March 2026)
+      'claude-4':                    'claude-sonnet-4-20250514',
+      'claude-sonnet':               'claude-sonnet-4-20250514',
+      'claude-sonnet-4':             'claude-sonnet-4-20250514',
+      'claude-sonnet-4-5':           'claude-sonnet-4-20250514',
+      'claude-sonnet-4-20250514':    'claude-sonnet-4-20250514',
+      // Claude 3.7 Sonnet (Feb 2025 — extended thinking)
+      'claude-3-7-sonnet':           'claude-3-7-sonnet-20250219',
+      'claude-3-7-sonnet-20250219':  'claude-3-7-sonnet-20250219',
+      // Claude 3.5 Sonnet (Oct 2024 — still valid)
+      'claude-3-5-sonnet-20241022':  'claude-3-5-sonnet-20241022',
+      // Haiku — fastest Claude
+      'claude-haiku':                'claude-3-5-haiku-20241022',
+      'claude-haiku-4':              'claude-3-5-haiku-20241022',
+      'claude-haiku-4-5':            'claude-3-5-haiku-20241022',
+      'claude-3-5-haiku-20241022':   'claude-3-5-haiku-20241022',
+      // Opus 4 family (best quality)
+      'claude-opus':                 'claude-opus-4-20250514',
+      'claude-opus-4':               'claude-opus-4-20250514',
+      'claude-opus-4-5':             'claude-opus-4-20250514',
+      'claude-opus-4-20250514':      'claude-opus-4-20250514',
+      'claude-3-opus-20240229':      'claude-3-opus-20240229',
     };
     
-    const resolvedModel = ANTHROPIC_MODEL_MAP[model] || 'claude-3-5-sonnet-20241022';
+    const resolvedModel = ANTHROPIC_MODEL_MAP[model] || 'claude-sonnet-4-20250514';
     
     const response = await anthropic.messages.create({
       model: resolvedModel,

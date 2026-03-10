@@ -305,7 +305,7 @@ export function AgentSessionsGrid({
               <SelectItem value="gpt-5.1">GPT-5.1</SelectItem>
               <SelectItem value="gpt-5-nano">GPT-5 Nano</SelectItem>
               <SelectItem value="gpt-4o">GPT-4o</SelectItem>
-              <SelectItem value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet</SelectItem>
+              <SelectItem value="claude-sonnet-4-20250514">Claude Sonnet 4</SelectItem>
               <SelectItem value="gemini-2.5-flash">Gemini 2.5 Flash</SelectItem>
             </SelectContent>
           </Select>

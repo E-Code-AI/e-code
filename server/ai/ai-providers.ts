@@ -496,7 +496,7 @@ export class GeminiProvider implements AIProvider {
       }
     }
     // Default to most stable model if all checks fail
-    return 'gemini-2.0-flash';
+    return 'gemini-2.5-flash';
   }
   
   async generateChat(messages: any[], options?: any): Promise<string> {

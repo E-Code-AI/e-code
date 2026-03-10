@@ -230,7 +230,7 @@ router.post('/conversation', async (req, res) => {
           userId: userId,
           messages: [],
           agentMode: 'build',
-          model: 'claude-3-5-sonnet-20241022',
+          model: 'claude-sonnet-4-20250514',
         })
         .returning();
 
@@ -276,7 +276,7 @@ router.post('/conversation', async (req, res) => {
           userId: userId,
           messages: [],
           agentMode: 'build',
-          model: 'claude-3-5-sonnet-20241022',
+          model: 'claude-sonnet-4-20250514',
         })
         .returning();
 

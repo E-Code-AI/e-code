@@ -1054,8 +1054,7 @@ async function streamAnthropic(res: any, messages: any[], options: any) {
   const requestedTools = options.tools !== undefined ? options.tools : allTools;
   const tools = toAnthropicTools(requestedTools);
   
-  // Use provided model or default to claude-3-5-sonnet-20241022
-  const modelToUse = options.model || 'claude-3-5-sonnet-20241022';
+  const modelToUse = options.model || 'claude-sonnet-4-20250514';
   logger.info(`[Anthropic Stream] Using model: ${modelToUse}`);
   
   // ✅ Use .stream() helper to get finalMessage() with usage
@@ -1205,7 +1204,7 @@ async function streamAnthropic(res: any, messages: any[], options: any) {
     content: fullContent,
     tool_calls: toolCalls,
     tool_results: toolResults,
-    model: options.model || 'claude-3-5-sonnet-20241022',
+    model: options.model || 'claude-sonnet-4-20250514',
     thinking: thinkingContent
   });
   
@@ -1522,16 +1521,17 @@ router.get('/agent/models', ensureAuthenticated, (req, res) => {
     { provider: 'openai', model: 'o3', name: 'o3 (Advanced Reasoning)', context: 200000, available: hasOpenAI },
     { provider: 'openai', model: 'o3-mini', name: 'o3-mini (Reasoning)', context: 200000, available: hasOpenAI },
     
-    // Anthropic Models
-    { provider: 'anthropic', model: 'claude-3-opus-20240229', name: 'Claude 3 Opus', context: 200000, available: !!process.env.ANTHROPIC_API_KEY },
+    // Anthropic Models (newest first)
+    { provider: 'anthropic', model: 'claude-sonnet-4-20250514', name: 'Claude Sonnet 4', context: 200000, available: !!process.env.ANTHROPIC_API_KEY },
+    { provider: 'anthropic', model: 'claude-opus-4-20250514', name: 'Claude Opus 4', context: 200000, available: !!process.env.ANTHROPIC_API_KEY },
+    { provider: 'anthropic', model: 'claude-3-7-sonnet-20250219', name: 'Claude 3.7 Sonnet', context: 200000, available: !!process.env.ANTHROPIC_API_KEY },
     { provider: 'anthropic', model: 'claude-3-5-sonnet-20241022', name: 'Claude 3.5 Sonnet', context: 200000, available: !!process.env.ANTHROPIC_API_KEY },
     { provider: 'anthropic', model: 'claude-3-5-haiku-20241022', name: 'Claude 3.5 Haiku', context: 200000, available: !!process.env.ANTHROPIC_API_KEY },
     
-    // Google Gemini Models
+    // Google Gemini Models (newest first)
+    { provider: 'gemini', model: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', context: 2000000, available: !!process.env.GEMINI_API_KEY },
     { provider: 'gemini', model: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', context: 1000000, available: !!process.env.GEMINI_API_KEY },
     { provider: 'gemini', model: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash', context: 1000000, available: !!process.env.GEMINI_API_KEY },
-    { provider: 'gemini', model: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', context: 2000000, available: !!process.env.GEMINI_API_KEY },
-    { provider: 'gemini', model: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash', context: 1000000, available: !!process.env.GEMINI_API_KEY },
     
     // xAI Grok Models
     { provider: 'xai', model: 'grok-3', name: 'Grok 3', context: 131072, available: !!process.env.XAI_API_KEY },

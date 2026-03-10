@@ -226,7 +226,7 @@ const MODEL_TIERS: Record<string, Record<string, string | null>> = {
   },
   balanced: {
     openai: 'gpt-5.1',
-    anthropic: 'claude-3-5-sonnet-20241022',
+    anthropic: 'claude-sonnet-4-20250514',
     google: 'gemini-2.5-flash',
     xai: 'grok-3'
   },

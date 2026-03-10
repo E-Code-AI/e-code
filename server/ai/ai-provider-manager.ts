@@ -205,11 +205,42 @@ export const AI_MODELS: AIModel[] = [
     supportsStreaming: true,
     costPer1kTokens: 0.003
   },
+  // Claude Sonnet 4 (May 2025 — best overall, March 2026)
+  {
+    id: 'claude-sonnet-4-20250514',
+    name: 'Claude Sonnet 4',
+    provider: 'anthropic',
+    description: 'Best overall Claude — top intelligence for coding, reasoning & agentic tasks',
+    maxTokens: 200000,
+    supportsStreaming: true,
+    costPer1kTokens: 0.003
+  },
+  // Claude Opus 4 (May 2025 — best quality/complex tasks)
+  {
+    id: 'claude-opus-4-20250514',
+    name: 'Claude Opus 4',
+    provider: 'anthropic',
+    description: 'Most powerful Claude — best for complex reasoning and analysis',
+    maxTokens: 200000,
+    supportsStreaming: true,
+    costPer1kTokens: 0.015
+  },
+  // Claude 3.7 Sonnet (Feb 2025 — extended thinking)
+  {
+    id: 'claude-3-7-sonnet-20250219',
+    name: 'Claude 3.7 Sonnet',
+    provider: 'anthropic',
+    description: 'Extended thinking — advanced multi-step reasoning',
+    maxTokens: 200000,
+    supportsStreaming: true,
+    costPer1kTokens: 0.003
+  },
+  // Claude 3.5 Sonnet (Oct 2024 — still valid)
   {
     id: 'claude-3-5-sonnet-20241022',
     name: 'Claude 3.5 Sonnet',
     provider: 'anthropic',
-    description: 'Best balance of speed and intelligence for coding and analysis',
+    description: 'Proven coding and analysis model (Oct 2024)',
     maxTokens: 200000,
     supportsStreaming: true,
     costPer1kTokens: 0.003
@@ -218,7 +249,7 @@ export const AI_MODELS: AIModel[] = [
     id: 'claude-3-5-haiku-20241022',
     name: 'Claude 3.5 Haiku',
     provider: 'anthropic',
-    description: 'Fast and efficient — near-instant responses for everyday tasks',
+    description: 'Fastest Claude — near-instant responses for everyday tasks',
     maxTokens: 200000,
     supportsStreaming: true,
     costPer1kTokens: 0.0008
@@ -227,7 +258,7 @@ export const AI_MODELS: AIModel[] = [
     id: 'claude-3-opus-20240229',
     name: 'Claude 3 Opus',
     provider: 'anthropic',
-    description: 'Previous-generation flagship for complex reasoning',
+    description: 'Legacy flagship for complex reasoning (2024)',
     maxTokens: 200000,
     supportsStreaming: true,
     costPer1kTokens: 0.015
@@ -236,7 +267,7 @@ export const AI_MODELS: AIModel[] = [
     id: 'claude-3-haiku-20240307',
     name: 'Claude 3 Haiku',
     provider: 'anthropic',
-    description: 'Fastest compact model — high throughput, low latency',
+    description: 'Fastest compact legacy model — high throughput, low latency',
     maxTokens: 200000,
     supportsStreaming: true,
     costPer1kTokens: 0.00025
@@ -612,7 +643,7 @@ export class AIProviderManager {
    * Stream chat completion with the selected model
    * Routes to appropriate provider based on model ID
    * 
-   * @param modelId The model ID to use (e.g., "gpt-5", "claude-sonnet-4-5-20250929")
+   * @param modelId The model ID to use (e.g., "gpt-5.1", "claude-sonnet-4-20250514")
    * @param messages Array of chat messages with role and content
    * @param options Additional options like system prompt, max_tokens, temperature
    */
@@ -1300,8 +1331,8 @@ export class AIProviderManager {
   getAvailableProviders(): Array<{ name: string; isAvailable: boolean }> {
     const providerMap: Record<string, string[]> = {
       'OpenAI': ['gpt-5.1', 'gpt-5', 'gpt-5-mini', 'gpt-5-nano', 'gpt-4.1', 'gpt-4.1-mini', 'gpt-4.1-nano', 'gpt-4o', 'gpt-4o-mini', 'o4-mini', 'o3', 'o3-mini'],
-      'Claude': ['claude-3-5-sonnet-20241022', 'claude-3-5-haiku-20241022', 'claude-3-opus-20240229'],
-      'Anthropic': ['claude-3-5-sonnet-20241022', 'claude-3-5-haiku-20241022'],
+      'Claude': ['claude-sonnet-4-20250514', 'claude-opus-4-20250514', 'claude-3-7-sonnet-20250219', 'claude-3-5-sonnet-20241022', 'claude-3-5-haiku-20241022'],
+      'Anthropic': ['claude-sonnet-4-20250514', 'claude-opus-4-20250514', 'claude-3-7-sonnet-20250219', 'claude-3-5-sonnet-20241022', 'claude-3-5-haiku-20241022'],
       'Gemini': ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro', 'gemini-1.5-flash'],
       'Moonshot': ['moonshot-v1-8k', 'moonshot-v1-32k', 'moonshot-v1-128k'],
       'xAI': ['grok-3', 'grok-3-mini', 'grok-3-fast']
@@ -1321,10 +1352,11 @@ export class AIProviderManager {
    */
   getProvider(providerName: string): LegacyProviderAdapter | null {
     const providerToModelMap: Record<string, string> = {
-      'OpenAI': 'gpt-4o',
-      'Claude': 'claude-3-5-sonnet-20241022',
+      'OpenAI': 'gpt-5.1',
+      'Claude': 'claude-sonnet-4-20250514',
+      'Claude Sonnet 4': 'claude-sonnet-4-20250514',
       'Claude 3.5 Sonnet': 'claude-3-5-sonnet-20241022',
-      'Anthropic': 'claude-3-5-sonnet-20241022',
+      'Anthropic': 'claude-sonnet-4-20250514',
       'Gemini': 'gemini-2.5-flash',
       'Moonshot': 'moonshot-v1-32k',
       'xAI': 'grok-3'
@@ -1345,8 +1377,8 @@ export class AIProviderManager {
   getDefaultProvider(): LegacyProviderAdapter {
     // Try providers in order of preference - UPDATED January 2026
     const preferredModels = [
-      'gpt-4o',
-      'claude-3-5-sonnet-20241022',
+      'gpt-5.1',
+      'claude-sonnet-4-20250514',
       'gemini-2.5-flash',
       'grok-3',
       'moonshot-v1-32k'

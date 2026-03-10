@@ -392,8 +392,8 @@ router.get('/models', ensureAuthenticated, async (req, res) => {
         features: ['embeddings', 'function_calling']
       },
       {
-        id: 'claude-3-5-sonnet-20241022',
-        name: 'Claude 3.5 Sonnet',
+        id: 'claude-sonnet-4-20250514',
+        name: 'Claude Sonnet 4',
         provider: 'anthropic',
         ragSupport: true,
         embeddingModel: null,
@@ -401,8 +401,8 @@ router.get('/models', ensureAuthenticated, async (req, res) => {
         features: ['long_context', 'function_calling']
       },
       {
-        id: 'claude-3-opus-20240229',
-        name: 'Claude 3 Opus',
+        id: 'claude-opus-4-20250514',
+        name: 'Claude Opus 4',
         provider: 'anthropic',
         ragSupport: true,
         embeddingModel: null,
@@ -419,7 +419,7 @@ router.get('/models', ensureAuthenticated, async (req, res) => {
         features: ['embeddings', 'multimodal', 'function_calling']
       },
       {
-        id: 'gemini-1.5-pro',
+        id: 'gemini-2.5-pro',
         name: 'Gemini 2.5 Pro',
         provider: 'gemini',
         ragSupport: true,

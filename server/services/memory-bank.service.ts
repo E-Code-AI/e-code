@@ -412,11 +412,11 @@ Output valid JSON only, no markdown code blocks.`;
   
   /**
    * Select the best available model for Memory Bank generation
-   * Priority: Claude Sonnet > GPT-4o > Gemini Pro > Any available
+   * Priority: Claude Sonnet 4 > GPT-5.1 > Gemini 2.5 Flash > Any available
    */
   private selectBestAvailableModel(): string {
     const preferredModels = [
-      'claude-3-5-sonnet-20241022',    // Anthropic Claude 3.5 Sonnet (reliable, good quality)
+      'claude-sonnet-4-20250514',      // Anthropic Claude Sonnet 4 (best Claude, March 2026)
       'gpt-5.1',                       // OpenAI GPT-5.1 (best verified ModelFarm model)
       'gpt-5-nano',                    // OpenAI GPT-5 Nano (fast, free via ModelFarm)
       'gemini-2.5-flash',              // Google Gemini 2.5 Flash (production-stable)
@@ -438,7 +438,7 @@ Output valid JSON only, no markdown code blocks.`;
     }
     
     // Ultimate fallback
-    return 'claude-3-5-sonnet-20241022';
+    return 'claude-sonnet-4-20250514';
   }
 
   /**

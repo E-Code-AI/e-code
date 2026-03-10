@@ -52,14 +52,14 @@ const MODEL_TIERS: Record<ModelTier, Record<Provider, { model: string; costPer1k
   },
   balanced: {
     openai: { model: 'gpt-5.1', costPer1kTokens: 0.0008, avgLatencyMs: 800 },
-    anthropic: { model: 'claude-3-5-sonnet-20241022', costPer1kTokens: 0.003, avgLatencyMs: 1200 },
+    anthropic: { model: 'claude-sonnet-4-20250514', costPer1kTokens: 0.003, avgLatencyMs: 1200 },
     google: { model: 'gemini-2.5-flash', costPer1kTokens: 0.000075, avgLatencyMs: 800 },
     xai: null,
     moonshot: { model: 'moonshot-v1-128k', costPer1kTokens: 0.0025, avgLatencyMs: 1500 }
   },
   quality: {
     openai: { model: 'gpt-5.1', costPer1kTokens: 0.0008, avgLatencyMs: 1200 },
-    anthropic: { model: 'claude-3-opus-20240229', costPer1kTokens: 0.015, avgLatencyMs: 3000 },
+    anthropic: { model: 'claude-opus-4-20250514', costPer1kTokens: 0.015, avgLatencyMs: 3000 },
     google: { model: 'gemini-2.5-pro', costPer1kTokens: 0.00125, avgLatencyMs: 2500 },
     xai: { model: 'grok-3', costPer1kTokens: 0.003, avgLatencyMs: 2000 },
     moonshot: { model: 'moonshot-v1-128k', costPer1kTokens: 0.0025, avgLatencyMs: 2000 }

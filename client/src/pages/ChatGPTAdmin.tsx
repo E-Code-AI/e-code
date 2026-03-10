@@ -528,11 +528,12 @@ export default function ChatGPTAdmin() {
                       <SelectItem value="o1">o1</SelectItem>
                       <SelectItem value="o1-mini">o1 Mini</SelectItem>
                       <SelectItem value="o3-mini">o3-mini</SelectItem>
-                      <SelectItem value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet</SelectItem>
+                      <SelectItem value="claude-sonnet-4-20250514">Claude Sonnet 4</SelectItem>
+                      <SelectItem value="claude-opus-4-20250514">Claude Opus 4</SelectItem>
+                      <SelectItem value="claude-3-7-sonnet-20250219">Claude 3.7 Sonnet</SelectItem>
                       <SelectItem value="claude-3-5-haiku-20241022">Claude 3.5 Haiku</SelectItem>
-                      <SelectItem value="claude-3-opus-20240229">Claude 3 Opus</SelectItem>
+                      <SelectItem value="gemini-2.5-pro">Gemini 2.5 Pro</SelectItem>
                       <SelectItem value="gemini-2.5-flash">Gemini 2.5 Flash</SelectItem>
-                      <SelectItem value="gemini-2.0-flash">Gemini 2.0 Flash</SelectItem>
                       <SelectItem value="grok-3">Grok 3</SelectItem>
                     </SelectContent>
                   </Select>
