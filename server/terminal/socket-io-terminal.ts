@@ -265,29 +265,42 @@ export class SocketIOTerminalService {
   private async createSession(projectId: string, userId: string, sessionKey: string): Promise<PTYSession | null> {
     try {
       const pty = await getPty();
-      
-      const shell = process.platform === 'win32' ? 'powershell.exe' : 
-                    process.env.SHELL || '/bin/bash';
-      const shellArgs = process.platform === 'win32' ? [] : ['-l'];
 
       const workDir = await this.setupProjectDirectory(projectId);
 
       logger.info(`[SocketIO Terminal] Spawning PTY for project ${projectId} in ${workDir}`);
 
-      const ptyProcess = pty.spawn(shell, shellArgs, {
+      const bashPath = process.platform !== 'win32' && fs.existsSync('/bin/bash') ? '/bin/bash' :
+                       process.env.SHELL || '/bin/bash';
+
+      const sandboxedEnv: Record<string, string> = {
+        TERM: 'xterm-256color',
+        COLORTERM: 'truecolor',
+        HOME: workDir,
+        PWD: workDir,
+        TMPDIR: '/tmp',
+        SHELL: bashPath,
+        USER: `user-${userId.slice(0, 8)}`,
+        LOGNAME: `user-${userId.slice(0, 8)}`,
+        PS1: '\\[\\033[1;34m\\]\\w\\[\\033[0m\\]$ ',
+        LANG: 'en_US.UTF-8',
+        LC_ALL: 'en_US.UTF-8',
+        PATH: process.env.PATH || '/usr/local/bin:/usr/bin:/bin',
+      };
+
+      const resourceLimitedShell = process.platform === 'win32'
+        ? 'powershell.exe'
+        : bashPath;
+      const shellArgs = process.platform === 'win32'
+        ? []
+        : ['-c', `ulimit -v 524288 -n 256 -u 64 -t 3600 2>/dev/null; exec ${bashPath} -i`];
+
+      const ptyProcess = pty.spawn(resourceLimitedShell, shellArgs, {
         name: 'xterm-256color',
         cols: 80,
         rows: 24,
         cwd: workDir,
-        env: {
-          ...process.env,
-          TERM: 'xterm-256color',
-          COLORTERM: 'truecolor',
-          HOME: workDir,
-          PS1: '\\[\\033[1;34m\\]\\w\\[\\033[0m\\]$ ',
-          LANG: 'en_US.UTF-8',
-          LC_ALL: 'en_US.UTF-8',
-        }
+        env: sandboxedEnv,
       });
 
       const buffer = new CircularBuffer(10000);

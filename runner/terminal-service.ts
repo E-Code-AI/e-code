@@ -100,19 +100,28 @@ async function handleTerminalSession(
 
   try {
     const nodePty = await getPty();
-    pty = nodePty.spawn(process.env.SHELL ?? '/bin/bash', [], {
+    const bashPath = process.env.SHELL ?? '/bin/bash';
+
+    const sandboxedEnv: Record<string, string> = {
+      TERM: 'xterm-256color',
+      HOME: cwd,
+      PWD: cwd,
+      TMPDIR: '/tmp',
+      SHELL: bashPath,
+      USER: `workspace-${workspaceId.slice(0, 8)}`,
+      LOGNAME: `workspace-${workspaceId.slice(0, 8)}`,
+      PATH: process.env.PATH ?? '/usr/local/bin:/usr/bin:/bin',
+      LANG: 'en_US.UTF-8',
+      LC_ALL: 'en_US.UTF-8',
+      PS1: '\\[\\033[1;32m\\]workspace\\[\\033[0m\\]:\\[\\033[1;34m\\]\\w\\[\\033[0m\\]$ ',
+    };
+
+    pty = nodePty.spawn(bashPath, ['-c', `ulimit -v 524288 -n 256 -u 64 -t 3600 2>/dev/null; exec ${bashPath} -i`], {
       name: 'xterm-256color',
       cols: 80,
       rows: 24,
       cwd,
-      env: {
-        TERM: 'xterm-256color',
-        HOME: cwd,
-        PATH: process.env.PATH ?? '/usr/bin:/bin',
-        SHELL: process.env.SHELL ?? '/bin/bash',
-        LANG: 'en_US.UTF-8',
-        PS1: '\\[\\033[1;32m\\]workspace\\[\\033[0m\\]:\\[\\033[1;34m\\]\\w\\[\\033[0m\\]$ ',
-      },
+      env: sandboxedEnv,
     });
   } catch (err) {
     logger.error(`Failed to spawn PTY: ${err}`);

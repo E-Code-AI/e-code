@@ -517,26 +517,32 @@ export class PTYTerminalService {
       const workDir = await this.setupProjectDirectory(projectId);
       
       const shell = this.getShell();
-      const shellArgs = this.getShellArgs();
 
       logger.info(`Creating local PTY session for project ${projectId} in ${workDir}`);
       logger.warn('[SECURITY] Local PTY is only for development. Use Docker in production.');
 
+      const sandboxedEnv: Record<string, string> = {
+        TERM: 'xterm-256color',
+        COLORTERM: 'truecolor',
+        HOME: workDir,
+        PWD: workDir,
+        TMPDIR: '/tmp',
+        SHELL: shell,
+        USER: `user-${projectId.slice(0, 8)}`,
+        LOGNAME: `user-${projectId.slice(0, 8)}`,
+        PS1: 'user@e-code:\\w$ ',
+        LANG: 'en_US.UTF-8',
+        LC_ALL: 'en_US.UTF-8',
+        PATH: process.env.PATH || '/usr/local/bin:/usr/bin:/bin',
+      };
+
       const pty = await getPty();
-      const ptyProcess = pty.spawn(shell, shellArgs, {
+      const ptyProcess = pty.spawn(shell, ['-c', `ulimit -v 524288 -n 256 -u 64 -t 3600 2>/dev/null; exec ${shell} -i`], {
         name: 'xterm-256color',
         cols: 80,
         rows: 24,
         cwd: workDir,
-        env: {
-          ...process.env,
-          TERM: 'xterm-256color',
-          COLORTERM: 'truecolor',
-          HOME: workDir,
-          PS1: 'user@e-code:\\w$ ',
-          LANG: 'en_US.UTF-8',
-          LC_ALL: 'en_US.UTF-8'
-        }
+        env: sandboxedEnv,
       });
 
       const session: PTYSession = {
