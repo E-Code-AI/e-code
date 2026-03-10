@@ -408,7 +408,7 @@ router.post('/mobile/ai/chat', mobileEnsureAuthenticated, async (req, res) => {
   try {
     const { projectId, message, model, messages, context } = req.body;
     
-    const modelId = model || 'gpt-4o-mini';
+    const modelId = model || 'gpt-5.1';
     const chatMessages = messages || [{ role: 'user', content: message }];
     
     // ✅ Route through aiProviderManager which enforces Kimi K2 requirements
@@ -417,8 +417,7 @@ router.post('/mobile/ai/chat', mobileEnsureAuthenticated, async (req, res) => {
       chatMessages,
       {
         system: context?.systemPrompt,
-        max_tokens: 4096,
-        temperature: 0.7
+        max_completion_tokens: 4096,
       }
     );
     
@@ -435,7 +434,7 @@ router.post('/mobile/ai/chat/stream', mobileEnsureAuthenticated, async (req, res
   try {
     const { model, messages, projectId } = req.body;
     
-    const modelId = model || 'gpt-4o-mini';
+    const modelId = model || 'gpt-5.1';
     
     // Set SSE headers
     res.setHeader('Content-Type', 'text/event-stream');

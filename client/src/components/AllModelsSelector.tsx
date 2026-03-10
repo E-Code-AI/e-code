@@ -28,7 +28,7 @@ interface ModelInfo {
 
 export function AllModelsSelector() {
   const { toast } = useToast();
-  const [selectedModel, setSelectedModel] = useState<string>('gpt-4o');
+  const [selectedModel, setSelectedModel] = useState<string>('gpt-5.1');
   const [testPrompt, setTestPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
 

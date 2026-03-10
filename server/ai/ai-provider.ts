@@ -65,9 +65,9 @@ export class OpenAIProvider implements AIProvider {
   // Get default model from AI_MODELS catalog
   private static getDefaultModel(): string {
     const openaiModels = AI_MODELS.filter(m => m.provider === 'openai');
-    return openaiModels.find(m => m.id === 'gpt-4o')?.id 
-        || openaiModels.find(m => m.id === 'gpt-4o-mini')?.id
-        || 'gpt-4o';
+    return openaiModels.find(m => m.id === 'gpt-5.1')?.id 
+        || openaiModels.find(m => m.id === 'gpt-5-nano')?.id
+        || 'gpt-5.1';
   }
 
   constructor(apiKey?: string) {

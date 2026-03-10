@@ -119,11 +119,18 @@ router.get('/features', (_req, res) => {
 // GET /api/openai/models — OpenAI-specific model list (public, used by OpenAIModelSelector)
 router.get('/openai/models', (_req, res) => {
   res.json([
+    { id: 'gpt-5.1', name: 'GPT-5.1', capabilities: ['chat', 'function_calling', 'code_interpreter'], contextWindow: 128000, maxOutput: 32768 },
+    { id: 'gpt-5', name: 'GPT-5', capabilities: ['chat', 'function_calling', 'code_interpreter'], contextWindow: 128000, maxOutput: 32768 },
+    { id: 'gpt-5-mini', name: 'GPT-5 Mini', capabilities: ['chat', 'function_calling'], contextWindow: 128000, maxOutput: 16384 },
+    { id: 'gpt-5-nano', name: 'GPT-5 Nano', capabilities: ['chat', 'function_calling'], contextWindow: 128000, maxOutput: 8192 },
+    { id: 'gpt-4.1', name: 'GPT-4.1', capabilities: ['chat', 'vision', 'function_calling', 'code_interpreter'], contextWindow: 1000000, maxOutput: 32768 },
+    { id: 'gpt-4.1-mini', name: 'GPT-4.1 Mini', capabilities: ['chat', 'function_calling'], contextWindow: 1000000, maxOutput: 16384 },
+    { id: 'gpt-4.1-nano', name: 'GPT-4.1 Nano', capabilities: ['chat', 'function_calling'], contextWindow: 1000000, maxOutput: 8192 },
     { id: 'gpt-4o', name: 'GPT-4o', capabilities: ['chat', 'vision', 'function_calling', 'code_interpreter'], contextWindow: 128000, maxOutput: 4096 },
     { id: 'gpt-4o-mini', name: 'GPT-4o Mini', capabilities: ['chat', 'function_calling'], contextWindow: 128000, maxOutput: 16000 },
-    { id: 'o1', name: 'o1', capabilities: ['chat', 'reasoning', 'complex_analysis'], contextWindow: 128000, maxOutput: 32768 },
-    { id: 'o1-mini', name: 'o1 Mini', capabilities: ['chat', 'reasoning'], contextWindow: 128000, maxOutput: 65536 },
-    { id: 'o3', name: 'o3', capabilities: ['chat', 'reasoning', 'complex_analysis'], contextWindow: 128000, maxOutput: 100000 }
+    { id: 'o4-mini', name: 'o4-mini', capabilities: ['chat', 'reasoning', 'complex_analysis'], contextWindow: 200000, maxOutput: 100000 },
+    { id: 'o3', name: 'o3', capabilities: ['chat', 'reasoning', 'complex_analysis'], contextWindow: 200000, maxOutput: 100000 },
+    { id: 'o3-mini', name: 'o3-mini', capabilities: ['chat', 'reasoning'], contextWindow: 200000, maxOutput: 65536 }
   ]);
 });
 

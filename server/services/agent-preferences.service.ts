@@ -73,6 +73,38 @@ export class AgentPreferencesService {
         capabilities: { extendedThinking: false, codeGeneration: true, maxTokens: 1047576, speed: 'fast', cost: 'low' },
       },
       {
+        id: 'gpt-5.1',
+        name: 'GPT-5.1',
+        description: 'Best ModelFarm model — high intelligence, free via ModelFarm',
+        category: 'openai',
+        tier: 'high-power',
+        capabilities: { extendedThinking: false, codeGeneration: true, maxTokens: 128000, speed: 'medium', cost: 'free' },
+      },
+      {
+        id: 'gpt-5',
+        name: 'GPT-5',
+        description: 'OpenAI flagship — best overall capability across all tasks',
+        category: 'openai',
+        tier: 'high-power',
+        capabilities: { extendedThinking: false, codeGeneration: true, maxTokens: 128000, speed: 'medium', cost: 'free' },
+      },
+      {
+        id: 'gpt-5-mini',
+        name: 'GPT-5 Mini',
+        description: 'Fast GPT-5 variant — excellent balance of speed and capability',
+        category: 'openai',
+        tier: 'standard',
+        capabilities: { extendedThinking: false, codeGeneration: true, maxTokens: 128000, speed: 'fast', cost: 'free' },
+      },
+      {
+        id: 'gpt-5-nano',
+        name: 'GPT-5 Nano',
+        description: 'Fastest GPT-5 variant — ultra-low latency for background tasks',
+        category: 'openai',
+        tier: 'standard',
+        capabilities: { extendedThinking: false, codeGeneration: true, maxTokens: 128000, speed: 'fast', cost: 'free' },
+      },
+      {
         id: 'gpt-4o',
         name: 'GPT-4o',
         description: 'Multimodal flagship — vision, audio, and text with 128K context',
@@ -410,7 +442,7 @@ export class AgentPreferencesService {
     
     // Fallback to first model with 'fast' speed rating
     const fastBySpeed = availableModels.find(m => m.capabilities.speed === 'fast');
-    return fastBySpeed?.id || 'gpt-4o-mini';
+    return fastBySpeed?.id || 'gpt-5-nano';
   }
 
   /**

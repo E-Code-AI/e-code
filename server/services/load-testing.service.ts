@@ -271,10 +271,10 @@ export class LoadTestingService extends EventEmitter {
     if (provider === 'openai') {
       const client = new OpenAI({ apiKey });
       const stream = await client.chat.completions.create({
-        model: 'gpt-4o-mini',  // ✅ UPDATED Jan 2026: gpt-4o-mini deprecated
+        model: 'gpt-5-nano',
         messages: [{ role: 'user', content: 'Test load testing message' }],
         stream: true,
-        max_tokens: 50
+        max_completion_tokens: 50
       });
 
       for await (const chunk of stream) {

@@ -908,8 +908,8 @@ async function streamOpenAI(res: any, messages: any[], options: any) {
   const requestedTools = options.tools !== undefined ? options.tools : allTools;
   const tools = toOpenAITools(requestedTools);
   
-  // Use provided model or fallback to gpt-4o-mini
-  const modelToUse = options.model || 'gpt-4o-mini';
+  // Use provided model or fallback to gpt-5.1
+  const modelToUse = options.model || 'gpt-5.1';
   logger.info(`[OpenAI Stream] Using model: ${modelToUse}`);
   
   // Get model capabilities for correct parameter usage
@@ -1511,13 +1511,21 @@ router.post('/agent/chat/stop', ensureAuthenticated, (req, res) => {
  * Returns models with availability based on configured API keys
  */
 router.get('/agent/models', ensureAuthenticated, (req, res) => {
+  const hasOpenAI = !!process.env.OPENAI_API_KEY || !!process.env.AI_INTEGRATIONS_OPENAI_BASE_URL;
   const models = [
-    // OpenAI Models
-    { provider: 'openai', model: 'gpt-4o', name: 'GPT-4o', context: 128000, available: !!process.env.OPENAI_API_KEY },
-    { provider: 'openai', model: 'gpt-4o-mini', name: 'GPT-4o Mini', context: 128000, available: !!process.env.OPENAI_API_KEY },
-    { provider: 'openai', model: 'o1', name: 'o1 (Reasoning)', context: 128000, available: !!process.env.OPENAI_API_KEY },
-    { provider: 'openai', model: 'o1-mini', name: 'o1 Mini', context: 128000, available: !!process.env.OPENAI_API_KEY },
-    { provider: 'openai', model: 'o3', name: 'o3 (Advanced Reasoning)', context: 128000, available: !!process.env.OPENAI_API_KEY },
+    // OpenAI Models (GPT-5.x — available via ModelFarm free tier)
+    { provider: 'openai', model: 'gpt-5.1', name: 'GPT-5.1', context: 128000, available: hasOpenAI },
+    { provider: 'openai', model: 'gpt-5', name: 'GPT-5', context: 128000, available: hasOpenAI },
+    { provider: 'openai', model: 'gpt-5-mini', name: 'GPT-5 Mini', context: 128000, available: hasOpenAI },
+    { provider: 'openai', model: 'gpt-5-nano', name: 'GPT-5 Nano', context: 128000, available: hasOpenAI },
+    { provider: 'openai', model: 'gpt-4.1', name: 'GPT-4.1', context: 1000000, available: hasOpenAI },
+    { provider: 'openai', model: 'gpt-4.1-mini', name: 'GPT-4.1 Mini', context: 1000000, available: hasOpenAI },
+    { provider: 'openai', model: 'gpt-4.1-nano', name: 'GPT-4.1 Nano', context: 1000000, available: hasOpenAI },
+    { provider: 'openai', model: 'gpt-4o', name: 'GPT-4o', context: 128000, available: hasOpenAI },
+    { provider: 'openai', model: 'gpt-4o-mini', name: 'GPT-4o Mini', context: 128000, available: hasOpenAI },
+    { provider: 'openai', model: 'o4-mini', name: 'o4-mini (Reasoning)', context: 200000, available: hasOpenAI },
+    { provider: 'openai', model: 'o3', name: 'o3 (Advanced Reasoning)', context: 200000, available: hasOpenAI },
+    { provider: 'openai', model: 'o3-mini', name: 'o3-mini (Reasoning)', context: 200000, available: hasOpenAI },
     
     // Anthropic Models
     { provider: 'anthropic', model: 'claude-3-opus-20240229', name: 'Claude 3 Opus', context: 200000, available: !!process.env.ANTHROPIC_API_KEY },

@@ -64,10 +64,10 @@ Generate the code now:`;
     ];
     
     // Get model or use default
-    const model = modelId || 'gpt-4o-mini';
+    const model = modelId || 'gpt-5.1';
     logger.info('[Code Generation] Using model:', model);
     
-    const usesMaxCompletionTokens = /^o[1-9]/.test(model);
+    const usesMaxCompletionTokens = /^o[1-9]/.test(model) || /^gpt-5/.test(model);
     
     const streamOptions: any = {};
     
@@ -151,7 +151,7 @@ router.get('/models', tierRateLimiters.api, async (req, res) => {
     
     res.json({
       models: codeGenModels,
-      defaultModel: 'gpt-4o-mini'
+      defaultModel: 'gpt-5.1'
     });
   } catch (error: any) {
     logger.error('[Code Generation] Error getting models:', error);

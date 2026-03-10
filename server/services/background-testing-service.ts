@@ -409,9 +409,8 @@ Provide 1-3 actionable fix suggestions:`;
       ];
 
       // Use fast model for quick suggestions
-      const response = await aiProviderManager.generateChat('gpt-4o-mini', messages, {
-        max_tokens: 500,
-        temperature: 0.3
+      const response = await aiProviderManager.generateChat('gpt-5-nano', messages, {
+        max_completion_tokens: 500,
       });
 
       if (response && response.trim()) {

@@ -374,8 +374,17 @@ router.get('/models', ensureAuthenticated, async (req, res) => {
         features: ['embeddings', 'function_calling', 'structured_outputs']
       },
       {
-        id: 'gpt-4o-mini',
-        name: 'GPT-4o Mini',
+        id: 'gpt-5.1',
+        name: 'GPT-5.1',
+        provider: 'openai',
+        ragSupport: true,
+        embeddingModel: 'text-embedding-3-small',
+        contextWindow: 128000,
+        features: ['embeddings', 'function_calling']
+      },
+      {
+        id: 'gpt-5-nano',
+        name: 'GPT-5 Nano',
         provider: 'openai',
         ragSupport: true,
         embeddingModel: 'text-embedding-3-small',

@@ -152,10 +152,10 @@ Generate the complete ${fileName} file:`;
       // Try multiple models with fallback for code generation
       // Use actual model IDs from provider configuration
       const fallbackModels = [
-        'gpt-4o-mini',                     // OpenAI fast, reliable
-        'claude-sonnet-4-5-20250929',     // Anthropic balanced
-        'gemini-2.5-flash',               // ✅ CONSOLIDATED Jan 2026: Google fast (stable production model)
-        'gpt-4o',                        // ✅ CONSOLIDATED Jan 2026: OpenAI flagship
+        'gpt-5.1',            // OpenAI GPT-5.1 (best verified ModelFarm model)
+        'gpt-5-nano',         // OpenAI GPT-5 Nano (fastest, free via ModelFarm)
+        'gemini-2.5-flash',   // Google Gemini 2.5 Flash (stable production)
+        'gpt-4.1-mini',       // OpenAI GPT-4.1 Mini (legacy, still supported)
       ];
       let result: string | null = null;
       let lastError: string | null = null;

@@ -302,6 +302,8 @@ export function AgentSessionsGrid({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Models</SelectItem>
+              <SelectItem value="gpt-5.1">GPT-5.1</SelectItem>
+              <SelectItem value="gpt-5-nano">GPT-5 Nano</SelectItem>
               <SelectItem value="gpt-4o">GPT-4o</SelectItem>
               <SelectItem value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet</SelectItem>
               <SelectItem value="gemini-2.5-flash">Gemini 2.5 Flash</SelectItem>

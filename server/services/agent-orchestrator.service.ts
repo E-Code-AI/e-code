@@ -219,21 +219,21 @@ export interface DelegationDecision {
  */
 const MODEL_TIERS: Record<string, Record<string, string | null>> = {
   fast: {
-    openai: 'gpt-4o-mini',
+    openai: 'gpt-5-nano',
     anthropic: 'claude-3-5-haiku-20241022',
-    google: 'gemini-1.5-flash',
-    xai: null
+    google: 'gemini-2.5-flash',
+    xai: 'grok-3-mini'
   },
   balanced: {
-    openai: 'gpt-4o-mini',
+    openai: 'gpt-5.1',
     anthropic: 'claude-3-5-sonnet-20241022',
-    google: 'gemini-1.5-pro',
-    xai: null
+    google: 'gemini-2.5-flash',
+    xai: 'grok-3'
   },
   quality: {
-    openai: 'gpt-4o',
-    anthropic: 'claude-3-5-sonnet-20241022',
-    google: 'gemini-1.5-pro',
+    openai: 'gpt-5.1',
+    anthropic: 'claude-sonnet-4-20250514',
+    google: 'gemini-2.5-flash',
     xai: 'grok-3'
   }
 };

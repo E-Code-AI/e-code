@@ -261,7 +261,7 @@ router.post('/generate-command', ensureAuthenticated, async (req, res) => {
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',  // ✅ UPDATED Jan 2026: gpt-4o-mini deprecated
+      model: 'gpt-5-nano',
       messages: [
         {
           role: 'system',

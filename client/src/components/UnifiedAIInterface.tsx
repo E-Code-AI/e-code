@@ -294,6 +294,8 @@ export function UnifiedAIInterface({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="gpt-5.1">GPT-5.1</SelectItem>
+                  <SelectItem value="gpt-5-nano">GPT-5 Nano</SelectItem>
                   <SelectItem value="claude-3-5-sonnet-20241022">
                     Claude 3.5 Sonnet
                   </SelectItem>
