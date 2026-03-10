@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useTheme } from '@/components/ThemeProvider';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -56,6 +57,34 @@ interface TerminalInstance {
   currentInput: string;
 }
 
+function getTerminalTheme() {
+  const style = getComputedStyle(document.documentElement);
+  const get = (v: string) => style.getPropertyValue(v).trim();
+  return {
+    background:         get('--ecode-terminal-bg')            || '#0e1525',
+    foreground:         get('--ecode-terminal-text')           || '#d4d8dd',
+    cursor:             get('--ecode-terminal-cursor')         || '#F26207',
+    cursorAccent:       get('--ecode-terminal-bg')             || '#0e1525',
+    selectionBackground:get('--ecode-terminal-selection')      || 'rgba(0,121,242,0.3)',
+    black:              get('--ecode-terminal-black')          || '#0e1525',
+    red:                get('--ecode-terminal-red')            || '#ff6b6b',
+    green:              get('--ecode-terminal-green')          || '#4ecdc4',
+    yellow:             get('--ecode-terminal-yellow')         || '#ffe66d',
+    blue:               get('--ecode-terminal-blue')           || '#0079f2',
+    magenta:            get('--ecode-terminal-magenta')        || '#c792ea',
+    cyan:               get('--ecode-terminal-cyan')           || '#89ddff',
+    white:              get('--ecode-terminal-white')          || '#d4d8dd',
+    brightBlack:        get('--ecode-terminal-bright-black')   || '#3d4452',
+    brightRed:          get('--ecode-terminal-bright-red')     || '#ff8a80',
+    brightGreen:        get('--ecode-terminal-bright-green')   || '#69f0ae',
+    brightYellow:       get('--ecode-terminal-bright-yellow')  || '#ffff8d',
+    brightBlue:         get('--ecode-terminal-bright-blue')    || '#40c4ff',
+    brightMagenta:      get('--ecode-terminal-bright-magenta') || '#ff80ab',
+    brightCyan:         get('--ecode-terminal-bright-cyan')    || '#a7fdeb',
+    brightWhite:        get('--ecode-terminal-bright-white')   || '#ffffff',
+  };
+}
+
 export function ShellPanel({ projectId, className }: ShellPanelProps) {
   const [tabs, setTabs] = useState<ShellTab[]>([]);
   const [activeTabId, setActiveTabId] = useState<string>('');
@@ -63,9 +92,16 @@ export function ShellPanel({ projectId, className }: ShellPanelProps) {
   const terminalsRef = useRef<Map<string, TerminalInstance>>(new Map());
   const terminalContainerRef = useRef<HTMLDivElement>(null);
   const reconnectTimeoutsRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
-  // Track which tabs have had WebSocket connection initiated (prevents duplicate connections)
   const wsInitiatedRef = useRef<Set<string>>(new Set());
   const { toast } = useToast();
+  const { theme } = useTheme();
+
+  useEffect(() => {
+    const newTheme = getTerminalTheme();
+    for (const instance of terminalsRef.current.values()) {
+      instance.term.options.theme = newTheme;
+    }
+  }, [theme]);
 
   const createSession = useCallback(async (): Promise<string | null> => {
     // For now, use local session IDs - they work with the terminal WebSocket directly
@@ -178,29 +214,7 @@ export function ShellPanel({ projectId, className }: ShellPanelProps) {
     if (terminalsRef.current.has(tabId)) return;
 
     const term = new XTerm({
-      theme: {
-        background: '#0e1525',
-        foreground: '#d4d8dd',
-        cursor: '#0079f2',
-        cursorAccent: '#0e1525',
-        selectionBackground: 'rgba(0, 121, 242, 0.3)',
-        black: '#0e1525',
-        red: '#ff6b6b',
-        green: '#4ecdc4',
-        yellow: '#ffe66d',
-        blue: '#0079f2',
-        magenta: '#c792ea',
-        cyan: '#89ddff',
-        white: '#d4d8dd',
-        brightBlack: '#3d4452',
-        brightRed: '#ff8a80',
-        brightGreen: '#69f0ae',
-        brightYellow: '#ffff8d',
-        brightBlue: '#40c4ff',
-        brightMagenta: '#ff80ab',
-        brightCyan: '#a7fdeb',
-        brightWhite: '#ffffff'
-      },
+      theme: getTerminalTheme(),
       fontSize: 13,
       fontFamily: 'Monaco, Menlo, "Ubuntu Mono", "Courier New", monospace',
       cursorBlink: true,
@@ -601,7 +615,7 @@ export function ShellPanel({ projectId, className }: ShellPanelProps) {
         <div
           ref={terminalContainerRef}
           className="absolute inset-0 p-2"
-          style={{ backgroundColor: '#0e1525' }}
+          style={{ backgroundColor: 'var(--ecode-terminal-bg)' }}
           data-testid="terminal-container"
         />
       </div>

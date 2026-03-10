@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useTheme } from '@/components/ThemeProvider';
 import { Button } from '@/components/ui/button';
 import { Terminal as XTerm } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
@@ -63,21 +64,53 @@ function ConnectionBadge({ isConnecting, isConnected }: { isConnecting: boolean;
   );
 }
 
+function getTerminalTheme() {
+  const style = getComputedStyle(document.documentElement);
+  const get = (v: string) => style.getPropertyValue(v).trim();
+  return {
+    background:          get('--ecode-terminal-bg')            || '#0e1525',
+    foreground:          get('--ecode-terminal-text')           || '#d4d8dd',
+    cursor:              get('--ecode-terminal-cursor')         || '#F26207',
+    cursorAccent:        get('--ecode-terminal-bg')             || '#0e1525',
+    selectionBackground: get('--ecode-terminal-selection')      || 'rgba(0,121,242,0.3)',
+    black:               get('--ecode-terminal-black')          || '#0e1525',
+    red:                 get('--ecode-terminal-red')            || '#ff6b6b',
+    green:               get('--ecode-terminal-green')          || '#4ecdc4',
+    yellow:              get('--ecode-terminal-yellow')         || '#ffe66d',
+    blue:                get('--ecode-terminal-blue')           || '#0079f2',
+    magenta:             get('--ecode-terminal-magenta')        || '#c792ea',
+    cyan:                get('--ecode-terminal-cyan')           || '#89ddff',
+    white:               get('--ecode-terminal-white')          || '#d4d8dd',
+    brightBlack:         get('--ecode-terminal-bright-black')   || '#3d4452',
+    brightRed:           get('--ecode-terminal-bright-red')     || '#ff8a80',
+    brightGreen:         get('--ecode-terminal-bright-green')   || '#69f0ae',
+    brightYellow:        get('--ecode-terminal-bright-yellow')  || '#ffff8d',
+    brightBlue:          get('--ecode-terminal-bright-blue')    || '#40c4ff',
+    brightMagenta:       get('--ecode-terminal-bright-magenta') || '#ff80ab',
+    brightCyan:          get('--ecode-terminal-bright-cyan')    || '#a7fdeb',
+    brightWhite:         get('--ecode-terminal-bright-white')   || '#ffffff',
+  };
+}
+
 export function ReplitTerminalPanel({ projectId, className }: ReplitTerminalPanelProps) {
   const terminalRef = useRef<HTMLDivElement>(null);
   const xtermRef = useRef<XTerm | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const commandHistoryRef = useRef<string[]>([]);
-  const historyIndexRef = useRef(-1);
-  const currentInputRef = useRef('');
-  
+
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const { theme } = useTheme();
+
+  useEffect(() => {
+    if (xtermRef.current) {
+      xtermRef.current.options.theme = getTerminalTheme();
+    }
+  }, [theme]);
 
   const connectWebSocket = useCallback(() => {
     if (!projectId) return;
@@ -162,29 +195,7 @@ export function ReplitTerminalPanel({ projectId, className }: ReplitTerminalPane
     if (!terminalRef.current || xtermRef.current) return;
 
     const term = new XTerm({
-      theme: {
-        background: 'var(--ecode-terminal-bg)',
-        foreground: 'var(--ecode-terminal-text)',
-        cursor: 'var(--ecode-accent)',
-        cursorAccent: 'var(--ecode-terminal-bg)',
-        selectionBackground: 'var(--ecode-border)',
-        black: '#0e1525',
-        red: '#9da2a6',
-        green: '#0079f2',
-        yellow: '#9da2a6',
-        blue: '#0079f2',
-        magenta: '#5c6670',
-        cyan: '#9da2a6',
-        white: '#ffffff',
-        brightBlack: '#3d4452',
-        brightRed: '#9da2a6',
-        brightGreen: '#0079f2',
-        brightYellow: '#d4d8dd',
-        brightBlue: '#0079f2',
-        brightMagenta: '#9da2a6',
-        brightCyan: '#d4d8dd',
-        brightWhite: '#ffffff'
-      },
+      theme: getTerminalTheme(),
       fontSize: 14,
       fontFamily: 'Monaco, Menlo, "Ubuntu Mono", monospace',
       cursorBlink: true,

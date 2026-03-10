@@ -138,9 +138,26 @@
   --ecode-editor-selection: #ffe4d3;  /* Light orange tint */
   --ecode-editor-line-highlight: #f7f8fa;
 
-  --ecode-terminal-bg: #1a1f36;
-  --ecode-terminal-text: #f7f8fa;
+  --ecode-terminal-bg: #f8f9fa;
+  --ecode-terminal-text: #24292e;
   --ecode-terminal-cursor: #F26207;  /* E-Code Orange */
+  --ecode-terminal-selection: rgba(242, 98, 7, 0.2);
+  --ecode-terminal-black: #24292e;
+  --ecode-terminal-red: #c0392b;
+  --ecode-terminal-green: #27ae60;
+  --ecode-terminal-yellow: #d68910;
+  --ecode-terminal-blue: #2980b9;
+  --ecode-terminal-magenta: #8e44ad;
+  --ecode-terminal-cyan: #16a085;
+  --ecode-terminal-white: #f8f9fa;
+  --ecode-terminal-bright-black: #586069;
+  --ecode-terminal-bright-red: #e74c3c;
+  --ecode-terminal-bright-green: #2ecc71;
+  --ecode-terminal-bright-yellow: #f39c12;
+  --ecode-terminal-bright-blue: #3498db;
+  --ecode-terminal-bright-magenta: #9b59b6;
+  --ecode-terminal-bright-cyan: #1abc9c;
+  --ecode-terminal-bright-white: #ffffff;
 
   /* Mobile IDE surfaces - Light mode */
   --mobile-ide-bg: var(--ecode-background);
@@ -335,8 +352,25 @@
   --ecode-editor-line-highlight: #1a2332;
 
   --ecode-terminal-bg: #0e1525;
-  --ecode-terminal-text: #f5f9fc;
+  --ecode-terminal-text: #d4d8dd;
   --ecode-terminal-cursor: #F26207;  /* E-Code Orange */
+  --ecode-terminal-selection: rgba(0, 121, 242, 0.3);
+  --ecode-terminal-black: #0e1525;
+  --ecode-terminal-red: #ff6b6b;
+  --ecode-terminal-green: #4ecdc4;
+  --ecode-terminal-yellow: #ffe66d;
+  --ecode-terminal-blue: #0079f2;
+  --ecode-terminal-magenta: #c792ea;
+  --ecode-terminal-cyan: #89ddff;
+  --ecode-terminal-white: #d4d8dd;
+  --ecode-terminal-bright-black: #3d4452;
+  --ecode-terminal-bright-red: #ff8a80;
+  --ecode-terminal-bright-green: #69f0ae;
+  --ecode-terminal-bright-yellow: #ffff8d;
+  --ecode-terminal-bright-blue: #40c4ff;
+  --ecode-terminal-bright-magenta: #ff80ab;
+  --ecode-terminal-bright-cyan: #a7fdeb;
+  --ecode-terminal-bright-white: #ffffff;
 
   /* Mobile IDE surfaces - Dark mode */
   --mobile-ide-bg: var(--ecode-background);
@@ -465,9 +499,26 @@
   --ecode-editor-selection: #ffe4d3;  /* Light orange tint */
   --ecode-editor-line-highlight: #f8f9fa;
 
-  --ecode-terminal-bg: #1a1f36;
-  --ecode-terminal-text: #f7f8fa;
+  --ecode-terminal-bg: #f8f9fa;
+  --ecode-terminal-text: #24292e;
   --ecode-terminal-cursor: #F26207;  /* E-Code Orange */
+  --ecode-terminal-selection: rgba(242, 98, 7, 0.2);
+  --ecode-terminal-black: #24292e;
+  --ecode-terminal-red: #c0392b;
+  --ecode-terminal-green: #27ae60;
+  --ecode-terminal-yellow: #d68910;
+  --ecode-terminal-blue: #2980b9;
+  --ecode-terminal-magenta: #8e44ad;
+  --ecode-terminal-cyan: #16a085;
+  --ecode-terminal-white: #f8f9fa;
+  --ecode-terminal-bright-black: #586069;
+  --ecode-terminal-bright-red: #e74c3c;
+  --ecode-terminal-bright-green: #2ecc71;
+  --ecode-terminal-bright-yellow: #f39c12;
+  --ecode-terminal-bright-blue: #3498db;
+  --ecode-terminal-bright-magenta: #9b59b6;
+  --ecode-terminal-bright-cyan: #1abc9c;
+  --ecode-terminal-bright-white: #ffffff;
 
   --ecode-button-primary: #F26207;  /* E-Code Orange */
   --ecode-button-primary-hover: #D04E00;
