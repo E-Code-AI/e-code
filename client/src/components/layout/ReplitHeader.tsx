@@ -141,17 +141,18 @@ export function ReplitHeader() {
   };
 
   const navLinkClass = "replit-nav-link";
-  const headerNavigation: NavigationItem[] = [...primaryNavigation, ...secondaryNavigation];
+  const primaryNav: NavigationItem[] = primaryNavigation;
+  const moreNav: NavigationItem[] = secondaryNavigation;
 
   return (
     <>
-    <header role="banner" aria-label="Site header" className="replit-header h-14 bg-background dark:bg-[var(--ecode-surface)] border-b border-[var(--ecode-border)] flex items-center justify-between px-4 replit-transition">
-      <div className="flex items-center gap-4">
+    <header role="banner" aria-label="Site header" className="replit-header h-14 bg-background dark:bg-[var(--ecode-surface)] border-b border-[var(--ecode-border)] flex items-center px-4 gap-2 replit-transition overflow-hidden">
+      <div className="flex items-center gap-2 min-w-0">
         <div className="lg:hidden mr-2">
           <MobileMenu onOpenSpotlight={() => setSpotlightOpen(true)} />
         </div>
 
-        <Link href="/" className="flex items-center">
+        <Link href="/" className="flex items-center shrink-0">
           <ECodeLogo size="sm" showText={!isMobile} className="hover:opacity-80 transition-opacity" />
         </Link>
 
@@ -365,7 +366,7 @@ export function ReplitHeader() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {headerNavigation.map((item) => {
+          {primaryNav.map((item) => {
             const Icon = item.icon;
             const active = isActiveNavigationItem(location, item);
 
@@ -391,29 +392,57 @@ export function ReplitHeader() {
               </Link>
             );
           })}
+
+          {moreNav.length > 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={cn(navLinkClass, "replit-nav-link--inactive replit-transition")}
+                >
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-48 bg-[var(--ecode-surface)] border-[var(--ecode-border)]">
+                {moreNav.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <DropdownMenuItem
+                      key={item.key}
+                      className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
+                      onClick={() => navigate(item.path)}
+                    >
+                      {Icon && <Icon className="mr-2 h-4 w-4" />}
+                      {item.label}
+                    </DropdownMenuItem>
+                  );
+                })}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </nav>
       </div>
 
       {/* Hide search bar in IDE view - the IDE has its own file search */}
       {!projectId && (
-        <div className="flex-1 max-w-md mx-4 sm:mx-6 hidden lg:block">
+        <div className="flex-1 min-w-0 max-w-xs hidden xl:block">
           <Button
             variant="ghost"
             className="replit-header-search"
             onClick={() => setSpotlightOpen(true)}
             aria-label="Search or run a command (⌘K)"
           >
-            <Search className="mr-2 h-4 w-4" aria-hidden="true" />
-            <span className="hidden xl:inline">Search or run a command...</span>
-            <span className="xl:hidden">Search...</span>
-            <kbd className="pointer-events-none ml-auto inline-flex h-5 select-none items-center gap-1 border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
+            <Search className="mr-2 h-4 w-4 shrink-0" aria-hidden="true" />
+            <span className="truncate text-sm">Search or run a command...</span>
+            <kbd className="pointer-events-none ml-auto inline-flex h-5 select-none items-center gap-1 border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100 shrink-0">
               <span className="text-[11px]">⌘</span>K
             </kbd>
           </Button>
         </div>
       )}
 
-      <div className="replit-header-controls flex items-center gap-2 md:gap-3">
+      <div className="replit-header-controls flex items-center gap-2 flex-shrink-0 ml-auto">
         <Button
           variant="outline"
           size="sm"
