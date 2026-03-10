@@ -81,7 +81,7 @@ export function ReplitMobileShell({ projectId, onClose, onBack }: ReplitMobileSh
     const newTab: ShellTab = {
       id: sessionId,
       name: 'bash',
-      cwd: '~/workspace',
+      cwd: '~',
       output: [],
       ws: null,
       isConnected: false

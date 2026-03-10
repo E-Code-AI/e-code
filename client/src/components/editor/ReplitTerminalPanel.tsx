@@ -99,7 +99,6 @@ export function ReplitTerminalPanel({ projectId, className }: ReplitTerminalPane
         
         if (xtermRef.current) {
           xtermRef.current.writeln('\x1b[1;32m✓ Connected to terminal server\x1b[0m');
-          xtermRef.current.write('\x1b[1;36muser@e-code\x1b[0m:\x1b[1;34m~/workspace\x1b[0m$ ');
         }
         
         if (reconnectTimeoutRef.current) {
@@ -123,7 +122,6 @@ export function ReplitTerminalPanel({ projectId, className }: ReplitTerminalPane
               break;
             case 'exit':
               xtermRef.current.writeln(`\r\n\x1b[90mProcess exited with code ${message.code}\x1b[0m`);
-              xtermRef.current.write('\x1b[1;36muser@e-code\x1b[0m:\x1b[1;34m~/workspace\x1b[0m$ ');
               break;
             default:
               xtermRef.current.write(message.data || event.data);
@@ -218,47 +216,7 @@ export function ReplitTerminalPanel({ projectId, className }: ReplitTerminalPane
       if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
         return;
       }
-
-      if (data === '\x1b[A') {
-        if (historyIndexRef.current < commandHistoryRef.current.length - 1) {
-          historyIndexRef.current++;
-          const command = commandHistoryRef.current[commandHistoryRef.current.length - 1 - historyIndexRef.current];
-          if (command) {
-            term.write('\x1b[2K\r\x1b[1;36muser@e-code\x1b[0m:\x1b[1;34m~/workspace\x1b[0m$ ' + command);
-            currentInputRef.current = command;
-          }
-        }
-        return;
-      }
-
-      if (data === '\x1b[B') {
-        if (historyIndexRef.current >= 0) {
-          historyIndexRef.current--;
-          const command = historyIndexRef.current >= 0 
-            ? commandHistoryRef.current[commandHistoryRef.current.length - 1 - historyIndexRef.current] 
-            : '';
-          term.write('\x1b[2K\r\x1b[1;36muser@e-code\x1b[0m:\x1b[1;34m~/workspace\x1b[0m$ ' + command);
-          currentInputRef.current = command;
-        }
-        return;
-      }
-
-      if (data === '\r') {
-        if (currentInputRef.current.trim()) {
-          commandHistoryRef.current = [...commandHistoryRef.current.slice(-99), currentInputRef.current.trim()];
-        }
-        currentInputRef.current = '';
-        historyIndexRef.current = -1;
-      } else if (data === '\x7f') {
-        currentInputRef.current = currentInputRef.current.slice(0, -1);
-      } else if (data.charCodeAt(0) >= 32) {
-        currentInputRef.current += data;
-      }
-
-      wsRef.current.send(JSON.stringify({
-        type: 'input',
-        data: data
-      }));
+      wsRef.current.send(JSON.stringify({ type: 'input', data }));
     });
 
     connectWebSocket();
@@ -305,7 +263,6 @@ export function ReplitTerminalPanel({ projectId, className }: ReplitTerminalPane
   const handleClear = () => {
     if (xtermRef.current) {
       xtermRef.current.clear();
-      xtermRef.current.write('\x1b[1;36muser@e-code\x1b[0m:\x1b[1;34m~/workspace\x1b[0m$ ');
     }
   };
 

@@ -85,9 +85,6 @@ export function ReplitTerminal({
   const [isConnected, setIsConnected] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
-  const [commandHistory, setCommandHistory] = useState<string[]>([]);
-  const [historyIndex, setHistoryIndex] = useState(-1);
-  const [currentInput, setCurrentInput] = useState("");
 
   // Configuration du thème du terminal
   const terminalTheme = theme === "dark" ? {
@@ -187,7 +184,6 @@ export function ReplitTerminal({
       ws.onopen = () => {
         setIsConnected(true);
         terminal.writeln("\x1b[1;32m✓ Connected to terminal server\x1b[0m");
-        terminal.write("\x1b[1;36muser@e-code\x1b[0m:\x1b[1;34m/workspace\x1b[0m$ ");
         
         if (defaultCommand) {
           terminal.writeln(defaultCommand);
@@ -245,45 +241,7 @@ export function ReplitTerminal({
         return;
       }
 
-      // Gestion de l'historique des commandes
-      if (data === "\x1b[A") { // Flèche haut
-        if (historyIndex < commandHistory.length - 1) {
-          setHistoryIndex(historyIndex + 1);
-          const command = commandHistory[commandHistory.length - 1 - historyIndex - 1];
-          if (command) {
-            // Effacer la ligne actuelle et afficher la commande de l'historique
-            terminal.write("\x1b[2K\r\x1b[1;36muser@e-code\x1b[0m:\x1b[1;34m/workspace\x1b[0m$ " + command);
-            setCurrentInput(command);
-          }
-        }
-        return;
-      }
-
-      if (data === "\x1b[B") { // Flèche bas
-        if (historyIndex >= 0) {
-          setHistoryIndex(historyIndex - 1);
-          const command = historyIndex > 0 ? commandHistory[commandHistory.length - historyIndex] : "";
-          terminal.write("\x1b[2K\r\x1b[1;36muser@e-code\x1b[0m:\x1b[1;34m/workspace\x1b[0m$ " + command);
-          setCurrentInput(command);
-        }
-        return;
-      }
-
-      // Sauvegarder la commande dans l'historique
-      if (data === "\r") {
-        if (currentInput.trim()) {
-          setCommandHistory(prev => [...prev.slice(-49), currentInput.trim()]);
-          onCommandExecute?.(currentInput.trim());
-        }
-        setCurrentInput("");
-        setHistoryIndex(-1);
-      } else if (data === "\x7f") { // Backspace
-        setCurrentInput(prev => prev.slice(0, -1));
-      } else if (data.charCodeAt(0) >= 32) { // Caractères imprimables
-        setCurrentInput(prev => prev + data);
-      }
-
-      // Envoyer au serveur
+      // Envoyer au serveur (le PTY gère nativement l'historique et les prompts)
       wsRef.current.send(JSON.stringify({
         type: "input",
         sessionId: activeSessionId,

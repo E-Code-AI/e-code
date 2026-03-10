@@ -93,7 +93,7 @@ export function ReplitDesktopShell({
     const newTab: ShellTab = {
       id: sessionId,
       name: `Shell ${tabs.length + 1}`,
-      cwd: '~/workspace',
+      cwd: '~',
       output: [],
       ws: null,
       isConnected: false

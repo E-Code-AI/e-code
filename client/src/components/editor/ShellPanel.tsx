@@ -236,42 +236,6 @@ export function ShellPanel({ projectId, className }: ShellPanelProps) {
         return;
       }
 
-      if (data === '\x1b[A') {
-        if (instance.historyIndex < instance.commandHistory.length - 1) {
-          instance.historyIndex++;
-          const command = instance.commandHistory[instance.commandHistory.length - 1 - instance.historyIndex];
-          if (command) {
-            term.write('\x1b[2K\r\x1b[1;36muser@project\x1b[0m:\x1b[1;34m~/workspace\x1b[0m$ ' + command);
-            instance.currentInput = command;
-          }
-        }
-        return;
-      }
-
-      if (data === '\x1b[B') {
-        if (instance.historyIndex >= 0) {
-          instance.historyIndex--;
-          const command = instance.historyIndex >= 0 
-            ? instance.commandHistory[instance.commandHistory.length - 1 - instance.historyIndex] 
-            : '';
-          term.write('\x1b[2K\r\x1b[1;36muser@project\x1b[0m:\x1b[1;34m~/workspace\x1b[0m$ ' + command);
-          instance.currentInput = command;
-        }
-        return;
-      }
-
-      if (data === '\r') {
-        if (instance.currentInput.trim()) {
-          instance.commandHistory = [...instance.commandHistory.slice(-99), instance.currentInput.trim()];
-        }
-        instance.currentInput = '';
-        instance.historyIndex = -1;
-      } else if (data === '\x7f') {
-        instance.currentInput = instance.currentInput.slice(0, -1);
-      } else if (data.charCodeAt(0) >= 32) {
-        instance.currentInput += data;
-      }
-
       instance.socket.emit('input', { data });
     });
 
@@ -294,7 +258,7 @@ export function ShellPanel({ projectId, className }: ShellPanelProps) {
       id: tabId,
       sessionId,
       name: `Shell ${tabs.length + 1}`,
-      cwd: '~/workspace',
+      cwd: '~',
       isConnected: false,
       isConnecting: false,
     };
@@ -337,7 +301,6 @@ export function ShellPanel({ projectId, className }: ShellPanelProps) {
     const instance = terminalsRef.current.get(activeTabId);
     if (instance) {
       instance.term.clear();
-      instance.term.write('\x1b[1;36muser@project\x1b[0m:\x1b[1;34m~/workspace\x1b[0m$ ');
     }
   }, [activeTabId]);
 
