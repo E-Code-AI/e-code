@@ -1,7 +1,7 @@
 # E-Code Platform
 
 ## Overview
-E-Code is an AI-assisted web-based Integrated Development Environment (IDE) designed to boost developer productivity. It offers automated workspace setup, real-time code execution, integrated AI capabilities, collaboration tools, enterprise-grade testing, and robust security. The platform aims to be a a comprehensive, secure, and high-performance development experience, positioning itself as a leading solution in AI-powered software development.
+E-Code is an AI-assisted web-based Integrated Development Environment (IDE) that significantly enhances developer productivity. It provides automated workspace setup, real-time code execution, integrated AI capabilities, collaboration tools, enterprise-grade testing, and robust security. The platform's vision is to deliver a comprehensive, secure, and high-performance development experience, positioning it as a leader in AI-powered software development.
 
 ## User Preferences
 - Communication: Simple, everyday language
@@ -74,24 +74,24 @@ E-Code is an AI-assisted web-based Integrated Development Environment (IDE) desi
 - Stuck Session Cleanup (Autonomous Build): On server startup, `AgentOrchestratorService` constructor resets sessions stuck in `planning`/`executing` → `failed`. Idempotency check in `startAutonomousWorkspace` allows restart from `idle` OR `failed` status.
 
 ## System Architecture
-E-Code employs a two-service architecture: a React, TypeScript, and Vite frontend utilizing the Replit RUI Design System, and a Node.js/Express.js, TypeScript, Drizzle ORM, and Passport.js backend.
+E-Code operates on a two-service architecture: a React, TypeScript, and Vite frontend leveraging the Replit RUI Design System, and a Node.js/Express.js, TypeScript, Drizzle ORM, and Passport.js backend.
 
 ### UI/UX Decisions
-- Utilizes the Replit RUI Design System for a consistent and modern user interface.
-- Features a responsive design, adapting console panels across various devices.
-- Uses vertical y-shift animations for public-facing pages to ensure a smooth user experience.
-- Key public routes, such as the marketplace and templates, are accessible without authentication.
-- The IDE defaults to the Chat/Agent tab for desktop users and the Deploy tab for mobile/tablet, always displaying a preview panel with a wireframe placeholder.
+- Employs the Replit RUI Design System for a consistent and modern UI.
+- Features a responsive design, adapting console panels across devices.
+- Uses vertical y-shift animations for public-facing pages for a smooth user experience.
+- Key public routes are accessible without authentication.
+- The IDE defaults to the Chat/Agent tab for desktop and the Deploy tab for mobile/tablet, always displaying a preview panel.
 
 ### Technical Implementations
-- **AI Integration**: Features a comprehensive AI system with XML prompts, task classification, circuit breakers, caching, SSE streaming, multi-provider model selection, database-backed conversation history, retry logic, Agent Step Cache, Memory Bank, schema warming, autonomous build session management, and real API model names with normalization.
-- **Real-time Communication**: Leverages SSE and WebSockets for streaming server logs, runtime logs, and providing a live HTML preview with CSS hot-swapping capabilities.
+- **AI Integration**: Comprehensive AI system with XML prompts, task classification, circuit breakers, caching, SSE streaming, multi-provider model selection, database-backed conversation history, retry logic, Agent Step Cache, Memory Bank, schema warming, autonomous build session management, and real API model names with normalization.
+- **Real-time Communication**: Utilizes SSE and WebSockets for streaming server logs, runtime logs, and providing a live HTML preview with CSS hot-swapping.
 - **Security Framework**: Includes AES-256-GCM encryption, XSS prevention, CSRF protection, input sanitization, tier-based rate limiting, API versioning, session-based authentication, encrypted GitHub tokens, isolated preview subprocess environments, and Zod-based validation with path traversal protection. All protected routes enforce valid Passport sessions.
 - **System Reliability**: Incorporates Checkpoints & Rollback for version control, Playwright-based Background Auto-Testing, and mechanisms for cleaning up stuck autonomous build sessions.
-- **Code Execution Environment**: Utilizes Nix-managed runtimes and `DockerExecutor` for sandboxed code execution, supporting `single-vm` and `kubernetes` deployments with optimized Docker builds.
-- **Data Persistence**: Built on PostgreSQL with Drizzle ORM, ensuring strict tenant isolation. It includes asynchronous database auto-provisioning with multi-provider fallback and retry mechanisms. Notification preferences are stored as JSONB, and user IDs in specific tables are stored as text. A dedicated script is provided for database backups.
-- **Performance Optimization**: Implements fast bootstrap techniques, `instrumentedLazy()` for retry logic in lazy loading, optimized Docker builds, and Semgrep scan optimization by excluding large generated files.
-- **Voice Input System**: Integrates Voice Vibe Coding using the MediaRecorder API for transcription, with OpenAI Whisper as the primary provider and Google Gemini 2.0 Flash as an automatic fallback.
+- **Code Execution Environment**: Employs Nix-managed runtimes and `DockerExecutor` for sandboxed code execution, supporting `single-vm` and `kubernetes` deployments with optimized Docker builds.
+- **Data Persistence**: Built on PostgreSQL with Drizzle ORM, ensuring strict tenant isolation. Includes asynchronous database auto-provisioning with multi-provider fallback and retry mechanisms. Notification preferences are stored as JSONB, and user IDs in specific tables are stored as text.
+- **Performance Optimization**: Implements fast bootstrap techniques, `instrumentedLazy()` for retry logic in lazy loading, optimized Docker builds, and Semgrep scan optimization.
+- **Voice Input System**: Integrates Voice Vibe Coding using the MediaRecorder API for transcription, with OpenAI Whisper as primary and Google Gemini 2.0 Flash as automatic fallback.
 - **Monitoring and Observability**: Provides Kubernetes probes for health checks and a Provider Health API with Prometheus metrics.
 - **Routing**: API routes support dual-mounting, and internal router paths do not include the `/api/` prefix. A `notFoundHandler` manages `/api/*` routes, passing non-API paths to Vite. Dedicated endpoints exist for global search and workspace bootstrap.
 - **Environment Configuration**: Environment variables are validated using Zod schemas.
