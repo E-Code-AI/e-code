@@ -1,7 +1,7 @@
 # Project Brief
 
 ## Overview
-Web Demo
+Created by automated test
 
 ## Core Requirements
 [To be extracted from requirements]

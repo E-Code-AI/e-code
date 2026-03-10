@@ -1,7 +1,7 @@
 # E-Code Platform
 
 ## Overview
-E-Code is an AI-assisted web-based Integrated Development Environment (IDE) that significantly enhances developer productivity. It provides automated workspace setup, real-time code execution, integrated AI capabilities, collaboration tools, enterprise-grade testing, and robust security. The platform's vision is to deliver a comprehensive, secure, and high-performance development experience, positioning it as a leader in AI-powered software development.
+E-Code is an AI-assisted web-based Integrated Development Environment (IDE) designed to boost developer productivity. It offers automated workspace setup, real-time code execution, integrated AI capabilities, collaboration tools, enterprise-grade testing, and robust security. The platform aims to provide a comprehensive, secure, and high-performance development experience, positioning itself as a leader in AI-powered software development.
 
 ## User Preferences
 - Communication: Simple, everyday language
@@ -74,17 +74,17 @@ E-Code is an AI-assisted web-based Integrated Development Environment (IDE) that
 - Stuck Session Cleanup (Autonomous Build): On server startup, `AgentOrchestratorService` constructor resets sessions stuck in `planning`/`executing` → `failed`. Idempotency check in `startAutonomousWorkspace` allows restart from `idle` OR `failed` status.
 
 ## System Architecture
-E-Code operates on a two-service architecture: a React, TypeScript, and Vite frontend leveraging the Replit RUI Design System, and a Node.js/Express.js, TypeScript, Drizzle ORM, and Passport.js backend.
+E-Code employs a two-service architecture: a React, TypeScript, and Vite frontend leveraging the Replit RUI Design System, and a Node.js/Express.js, TypeScript, Drizzle ORM, and Passport.js backend.
 
 ### UI/UX Decisions
-- Employs the Replit RUI Design System for a consistent and modern UI.
+- Uses the Replit RUI Design System for a consistent and modern interface.
 - Features a responsive design, adapting console panels across devices.
-- Uses vertical y-shift animations for public-facing pages for a smooth user experience.
-- Key public routes are accessible without authentication.
+- Employs vertical y-shift animations for public-facing pages for a smooth user experience.
+- Public routes are accessible without authentication.
 - The IDE defaults to the Chat/Agent tab for desktop and the Deploy tab for mobile/tablet, always displaying a preview panel.
 
 ### Technical Implementations
-- **AI Integration**: Comprehensive AI system with XML prompts, task classification, circuit breakers, caching, SSE streaming, multi-provider model selection, database-backed conversation history, retry logic, Agent Step Cache, Memory Bank, schema warming, autonomous build session management, and real API model names with normalization.
+- **AI Integration**: Features a comprehensive AI system with XML prompts, task classification, circuit breakers, caching, SSE streaming, multi-provider model selection, database-backed conversation history, retry logic, Agent Step Cache, Memory Bank, schema warming, autonomous build session management, and real API model names with normalization.
 - **Real-time Communication**: Utilizes SSE and WebSockets for streaming server logs, runtime logs, and providing a live HTML preview with CSS hot-swapping.
 - **Security Framework**: Includes AES-256-GCM encryption, XSS prevention, CSRF protection, input sanitization, tier-based rate limiting, API versioning, session-based authentication, encrypted GitHub tokens, isolated preview subprocess environments, and Zod-based validation with path traversal protection. All protected routes enforce valid Passport sessions.
 - **System Reliability**: Incorporates Checkpoints & Rollback for version control, Playwright-based Background Auto-Testing, and mechanisms for cleaning up stuck autonomous build sessions.

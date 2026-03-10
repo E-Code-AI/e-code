@@ -49,6 +49,13 @@ export const AdminMonitoring = instrumentedLazy(() => import("@/pages/admin/Admi
 export const AdminSystemMonitoring = instrumentedLazy(() => import("@/pages/admin/SystemMonitoring"), "AdminSystemMonitoring");
 export const PitchDeck = instrumentedLazy(() => import("@/pages/admin/PitchDeck"), "PitchDeck");
 export const ChatGPTAdmin = instrumentedLazy(() => import("@/pages/ChatGPTAdmin"), "ChatGPTAdmin");
+export const AdminUsers = instrumentedLazy(() => import("@/pages/AdminUsers"), "AdminUsers");
+export const AdminProjects = instrumentedLazy(() => import("@/pages/AdminProjects"), "AdminProjects");
+export const AdminSubscriptions = instrumentedLazy(() => import("@/pages/AdminSubscriptions"), "AdminSubscriptions");
+export const AdminActivityLogs = instrumentedLazy(() => import("@/pages/AdminActivityLogs"), "AdminActivityLogs");
+export const AdminSettings = instrumentedLazy(() => import("@/pages/AdminSettings"), "AdminSettings");
+export const AdminApiKeys = instrumentedLazy(() => import("@/pages/AdminApiKeys"), "AdminApiKeys");
+export const AdminSupport = instrumentedLazy(() => import("@/pages/AdminSupport"), "AdminSupport");
 
 export const Landing = instrumentedLazy(() => import("@/pages/LandingOptimized"), "Landing");
 export const Pricing = instrumentedLazy(() => import("@/pages/Pricing"), "Pricing");

@@ -92,7 +92,7 @@ ALLOW_INSECURE_LOCAL_PTY = "true"
 [userenv.production]
 NODE_ENV = "production"
 PATH = "/nix/store/1lagpgadaybvs1n2312gysg2phjk89y8-nodejs-20.20.0-wrapped/bin:/home/runner/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-ALLOW_INSECURE_LOCAL_PTY = "true"
+ALLOW_INSECURE_LOCAL_PTY = "false"
 NODE_OPTIONS = "--max-old-space-size=4096"
 LOG_LEVEL = "warn"
 ENABLE_BILLING = "true"
@@ -101,6 +101,7 @@ ENABLE_AI = "true"
 ENABLE_DEPLOYMENTS = "true"
 ENABLE_ANALYTICS = "true"
 PORT = "80"
+DB_POOL_SIZE = "25"
 
 [[ports]]
 localPort = 5000

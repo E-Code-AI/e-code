@@ -142,29 +142,27 @@ router.get('/subscriptions', ensureAuthenticated, ensureAdmin, async (req: Reque
 router.get('/usage-summary', ensureAuthenticated, ensureAdmin, async (_req: Request, res: Response) => {
   try {
     const { db } = await import('../db');
-    const { users, usageEvents } = await import('../../shared/schema');
-    const { sql, count, sum } = await import('drizzle-orm');
-
+    const { sql } = await import('drizzle-orm');
     const now = new Date();
     const billingPeriod = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
-    const usageSummary = await db
-      .select({
-        metric: usageEvents.metric,
-        totalBilled: sum(usageEvents.billedAmount),
-        totalCreditsUsed: sum(usageEvents.creditsDeducted),
-        totalPayAsYouGo: sum(usageEvents.payAsYouGo),
-        eventCount: count(),
-      })
-      .from(usageEvents)
-      .groupBy(usageEvents.metric);
+    const usageResult = await db.execute(sql`
+      SELECT 
+        resource_type AS metric,
+        event_type,
+        COUNT(*) AS event_count,
+        COALESCE(SUM(quantity), 0) AS total_quantity
+      FROM usage_events
+      GROUP BY resource_type, event_type
+      ORDER BY event_count DESC
+    `);
 
-    const totalUsers = await db.select({ count: count() }).from(users);
+    const totalUsers = await db.execute(sql`SELECT COUNT(*) AS count FROM users`);
 
     res.json({
       billingPeriod,
-      usageByMetric: usageSummary,
-      totalUsers: totalUsers[0]?.count || 0,
+      usageByMetric: Array.isArray(usageResult) ? usageResult : [],
+      totalUsers: parseInt(String((Array.isArray(totalUsers) ? totalUsers[0] : (totalUsers as any).rows?.[0])?.count || '0')),
     });
   } catch (error: any) {
     logger.error('Failed to fetch usage summary:', error);
