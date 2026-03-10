@@ -107,7 +107,7 @@ function initializeShellWebSocket() {
       // Create .bashrc with custom prompt
       const bashrcContent = `
 # E-Code Shell Configuration
-export PS1='\\[\\033[34m\\]~/workspace\\[\\033[0m\\] $ '
+export PS1='\\[\\033[1;34m\\]\\w\\[\\033[0m\\]$ '
 export TERM=xterm-256color
 export LANG=en_US.UTF-8
 
@@ -128,12 +128,25 @@ echo ""
       logger.error('Failed to create user shell directory:', error);
     }
 
+    // Determine the working directory: prefer project dir if projectId is given
+    let shellCwd = userHome;
+    if (projectId) {
+      const projectDir = path.join(process.cwd(), 'projects', String(projectId));
+      const fsMod = await import('fs/promises');
+      try {
+        await fsMod.access(projectDir);
+        shellCwd = projectDir;
+      } catch {
+        // project dir doesn't exist yet, fall back to userHome
+      }
+    }
+
     // Spawn bash process
     const shell = spawn('bash', ['--login'], {
-      cwd: userHome,
+      cwd: shellCwd,
       env: {
         ...process.env,
-        HOME: userHome,
+        HOME: shellCwd,
         USER: `user${userId}`,
         SHELL: '/bin/bash',
         TERM: 'xterm-256color',

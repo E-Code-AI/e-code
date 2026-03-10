@@ -122,7 +122,6 @@ export function ShellPanel({ projectId, className }: ShellPanelProps) {
 
       socket.on('ready', (data: { message: string }) => {
         instance.term.writeln(`\x1b[1;32m✓ ${data.message}\x1b[0m`);
-        instance.term.write('\x1b[1;36muser@project\x1b[0m:\x1b[1;34m~/workspace\x1b[0m$ ');
       });
 
       socket.on('history', (data: { data: string }) => {

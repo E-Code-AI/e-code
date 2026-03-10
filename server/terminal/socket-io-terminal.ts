@@ -6,6 +6,8 @@ import { winstonLogger as logger } from '../utils/logger';
 import { centralUpgradeDispatcher } from '../websocket/central-upgrade-dispatcher';
 import cookieParser from 'cookie';
 import * as signature from 'cookie-signature';
+import * as path from 'path';
+import * as fs from 'fs';
 
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 const ALLOW_INSECURE_LOCAL_PTY = process.env.ALLOW_INSECURE_LOCAL_PTY === 'true';
@@ -263,9 +265,20 @@ export class SocketIOTerminalService {
                     process.env.SHELL || '/bin/bash';
       const shellArgs = process.platform === 'win32' ? [] : ['-l'];
 
-      const workDir = process.cwd();
+      const projectsBase = path.join(process.cwd(), 'projects');
+      const projectDir = path.join(projectsBase, String(projectId));
+      let workDir: string;
+      if (projectId && projectId !== 'default' && fs.existsSync(projectDir)) {
+        workDir = projectDir;
+      } else {
+        const userShellDir = path.join(projectsBase, `user-${userId}`);
+        if (!fs.existsSync(userShellDir)) {
+          fs.mkdirSync(userShellDir, { recursive: true });
+        }
+        workDir = userShellDir;
+      }
 
-      logger.info(`[SocketIO Terminal] Spawning PTY with shell: ${shell} for user: ${userId}`);
+      logger.info(`[SocketIO Terminal] Spawning PTY for project ${projectId} in ${workDir}`);
 
       const ptyProcess = pty.spawn(shell, shellArgs, {
         name: 'xterm-256color',
@@ -276,10 +289,10 @@ export class SocketIOTerminalService {
           ...process.env,
           TERM: 'xterm-256color',
           COLORTERM: 'truecolor',
-          PS1: 'user@e-code:\\w$ ',
+          HOME: workDir,
+          PS1: '\\[\\033[1;34m\\]\\w\\[\\033[0m\\]$ ',
           LANG: 'en_US.UTF-8',
           LC_ALL: 'en_US.UTF-8',
-          // Security: Don't leak user or project info to shell unless needed
         }
       });
 
