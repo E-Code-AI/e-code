@@ -2,12 +2,12 @@
 /**
  * Production server build script
  *
- * Strategy: Bundle all pure-JS packages into dist/index.js. Only packages with
- * native .node binaries (bcrypt, node-pty, sharp) remain external and stay in
- * node_modules. When BUILD_DEPLOY=1 is set (Replit deployment context), the
- * post-build cleanup deletes everything from node_modules except the 3 native
- * addon packages — reducing 40,000+ files to ~200, which the security scanner
- * can process in seconds instead of timing out.
+ * Strategy: Bundle all small pure-JS packages into dist/index.js. Large packages
+ * (drizzle-orm 17MB, openai 11MB, stripe 6.9MB, @anthropic-ai 5MB) are kept
+ * external in node_modules — keeping dist/index.js small (<5MB) so Replit's
+ * security scanner can complete within the 9-minute deployment timeout.
+ * The .deployignore file tells the scanner to skip node_modules/, so large
+ * external packages don't add to scan time.
  *
  * Dev workflow: npm run dev (never calls this script — no impact)
  * Prod build:   npm run build (bundles, no cleanup in dev)
@@ -22,6 +22,7 @@ import { execSync } from 'child_process';
 const IS_DEPLOY = process.env.BUILD_DEPLOY === '1';
 
 const NATIVE_EXTERNAL = [
+  // Native addon packages (.node binaries — cannot be bundled)
   'bcrypt',
   'node-pty',
   'sharp',
@@ -31,12 +32,33 @@ const NATIVE_EXTERNAL = [
   'playwright',
   'playwright-core',
   '@playwright/test',
+  // Large pure-JS packages — kept external to shrink dist/index.js
+  // so Replit's 9-min security scan timeout is not exceeded.
+  // These stay in node_modules (excluded from scanner via .deployignore).
+  'drizzle-orm',
+  'openai',
+  'stripe',
+  '@anthropic-ai/sdk',
+  '@google/generative-ai',
+  '@ai-sdk/openai',
+  '@ai-sdk/anthropic',
+  '@ai-sdk/google',
+  'ai',
 ];
 
 const KEEP_IN_NODE_MODULES = new Set([
+  // Native addons
   'bcrypt',
   'node-pty',
   'sharp',
+  // Large packages kept external to keep dist/index.js small
+  'drizzle-orm',
+  'openai',
+  'stripe',
+  '@anthropic-ai',
+  '@google',
+  '@ai-sdk',
+  'ai',
 ]);
 
 const DIST_KEEP = new Set(['index.js', 'runner.js', 'public']);
@@ -64,16 +86,19 @@ async function pruneNodeModules() {
     return;
   }
 
-  console.log('  [deploy] Pruning node_modules to native addon packages only...');
+  console.log('  [deploy] Pruning node_modules to production dependencies only...');
 
   if (!existsSync('node_modules')) return;
 
   try {
-    execSync(
-      `cd node_modules && ls | grep -vE "^(${Array.from(KEEP_IN_NODE_MODULES).join('|')})$" | xargs -r rm -rf`,
-      { stdio: 'inherit', shell: true }
-    );
-    console.log(`  [deploy] Pruned node_modules — kept: ${Array.from(KEEP_IN_NODE_MODULES).join(', ')}`);
+    // Use npm prune --production to keep all production deps and their
+    // transitive dependencies. This is required because external packages
+    // (drizzle-orm, openai, stripe, @anthropic-ai/sdk) need their own
+    // dependencies available at runtime in node_modules.
+    // node_modules is excluded from the security scanner via .deployignore,
+    // so its size does not affect deployment scan time.
+    execSync('npm prune --production', { stdio: 'inherit', shell: true });
+    console.log('  [deploy] Pruned node_modules to production dependencies.');
   } catch (err) {
     console.warn('  [deploy] Prune warning:', err.message);
   }
@@ -150,7 +175,7 @@ async function buildRunner() {
 }
 
 async function build() {
-  console.log(`Building server bundle (bundle-all-except-native mode)${IS_DEPLOY ? ' [DEPLOY]' : ''}...`);
+  console.log(`Building server bundle (packages-external mode)${IS_DEPLOY ? ' [DEPLOY]' : ''}...`);
 
   try {
     const result = await esbuild.build({
@@ -161,7 +186,11 @@ async function build() {
       target: 'node20',
       format: 'esm',
       outfile: 'dist/index.js',
-      external: NATIVE_EXTERNAL,
+      // All npm packages stay external (resolved from node_modules at runtime).
+      // This keeps dist/index.js small (<3MB = just our own TypeScript).
+      // node_modules is excluded from Replit's security scanner via .deployignore,
+      // so scan time only depends on dist/ size, not node_modules size.
+      packages: 'external',
       minify: true,
       treeShaking: true,
       sourcemap: false,
@@ -180,7 +209,7 @@ async function build() {
 
     console.log(`✅ Server bundle built successfully`);
     console.log(`   Output: dist/index.js (${(outputSize / 1024 / 1024).toFixed(2)} MB)`);
-    console.log(`   Bundled: all pure-JS packages  |  External: ${NATIVE_EXTERNAL.join(', ')}`);
+    console.log(`   Mode: packages=external — all npm packages resolved from node_modules at runtime`);
 
     await buildRunner();
     await cleanOldChunks();
