@@ -16,9 +16,10 @@ node_modules/
 *.map
 *.d.ts
 
-# Server bundles — rebuilt during deployment build step (too large to scan)
-dist/index.js
-dist/runner.js
+# All build output — rebuilt during deployment build step, NOT in snapshot
+# The security scanner only scans the initial snapshot, not build output.
+# So we can safely build everything (dist/ + node_modules) during the build step.
+dist/
 
 # Development dependencies
 test/
