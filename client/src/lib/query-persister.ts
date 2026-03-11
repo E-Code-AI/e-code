@@ -8,7 +8,7 @@ import { get, set, del, createStore } from 'idb-keyval';
 import type { PersistedClient, Persister } from '@tanstack/react-query-persist-client';
 
 const CACHE_KEY = 'ecode-tanstack-query-cache';
-const CACHE_VERSION = 1;
+const CACHE_VERSION = 2;
 const MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 let queryStore: ReturnType<typeof createStore> | null = null;

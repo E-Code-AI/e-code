@@ -131,7 +131,9 @@ export function AIModelSelector({
   };
 
   const currentModel = selectedModel || preferredData?.preferredModel || null;
-  const availableModels = modelsData?.models || [];
+  const availableModels = (modelsData?.models || []).filter(
+    (m: AIModel, i: number, arr: AIModel[]) => arr.findIndex((n: AIModel) => n.id === m.id) === i
+  );
 
   if (modelsLoading || preferredLoading) {
     return <Skeleton className="h-10 sm:h-12 w-full" />;

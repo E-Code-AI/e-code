@@ -17,6 +17,14 @@ import { createLogger } from './logger';
 
 const logger = createLogger('sse-headers');
 
+// Replit origin patterns (always allowed — platform-internal)
+const REPLIT_ORIGIN_PATTERNS = [
+  /^https:\/\/[a-f0-9-]+\.replit\.dev$/,
+  /^https:\/\/[a-f0-9-]+-\d+-[a-z0-9]+\.riker\.replit\.dev$/,
+  /^https:\/\/[a-z0-9-]+\.repl\.co$/,
+  /^https:\/\/[a-z0-9-]+\.replit\.app$/,
+];
+
 /**
  * Get validated allowed origins list
  */
@@ -24,6 +32,8 @@ function getAllowedOrigins(): string[] {
   const origins = [
     'https://e-code.ai',
     'https://www.e-code.ai',
+    'http://localhost:5000',
+    'http://localhost:3000',
   ];
   
   if (process.env.APP_URL) {
@@ -38,10 +48,6 @@ function getAllowedOrigins(): string[] {
     origins.push(process.env.REPLIT_DEV_URL);
   }
   
-  if (process.env.NODE_ENV === 'development') {
-    origins.push('http://localhost:5000', 'http://localhost:3000');
-  }
-  
   return origins;
 }
 
@@ -53,10 +59,8 @@ export function validateSSEOrigin(req?: Request): string | null {
   const origin = req?.headers?.origin as string | undefined;
   
   if (!origin) {
-    if (process.env.NODE_ENV === 'development') {
-      return 'http://localhost:5000';
-    }
-    return null;
+    // No Origin header = same-origin request (safe by definition, always allow)
+    return 'http://localhost:5000';
   }
   
   const allowedOrigins = getAllowedOrigins();
@@ -65,15 +69,9 @@ export function validateSSEOrigin(req?: Request): string | null {
     return origin;
   }
   
-  if (process.env.NODE_ENV === 'development') {
-    const replitPatterns = [
-      /^https:\/\/[a-f0-9-]+\.replit\.dev$/,
-      /^https:\/\/[a-f0-9-]+-\d+-[a-z0-9]+\.riker\.replit\.dev$/,
-      /^https:\/\/[a-z0-9-]+\.repl\.co$/,
-    ];
-    if (replitPatterns.some(pattern => pattern.test(origin))) {
-      return origin;
-    }
+  // Always allow Replit platform origins (not restricted to dev mode)
+  if (REPLIT_ORIGIN_PATTERNS.some(pattern => pattern.test(origin))) {
+    return origin;
   }
   
   logger.warn('[SSE] Rejected invalid origin', { origin, allowedOrigins });

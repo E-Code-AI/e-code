@@ -284,7 +284,9 @@ export function CodeGenerationPanel() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {modelsData?.models.map((model) => (
+                  {(modelsData?.models || [])
+                    .filter((model: AIModel, i: number, arr: AIModel[]) => arr.findIndex((m: AIModel) => m.id === model.id) === i)
+                    .map((model: AIModel) => (
                     <SelectItem key={model.id} value={model.id}>
                       {model.name} ({model.provider})
                     </SelectItem>

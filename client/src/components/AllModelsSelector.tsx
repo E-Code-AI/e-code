@@ -389,7 +389,7 @@ export function AllModelsSelector() {
       pricing: { input: 0.96, output: 0.96, currency: 'USD', unit: '1M tokens' },
       available: true
     }
-  ];
+  ].filter((model, index, self) => self.findIndex(m => m.id === model.id) === index);
 
   // Test model generation
   const testModel = async () => {

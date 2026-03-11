@@ -178,33 +178,6 @@ export const AI_MODELS: AIModel[] = [
 
   // ── Anthropic ────────────────────────────────────────────────────────────────
   // All confirmed real via live API test (400 credit balance = model exists)
-  {
-    id: 'claude-opus-4-20250514',
-    name: 'Claude Opus 4',
-    provider: 'anthropic',
-    description: 'Most powerful Claude — frontier intelligence for complex tasks',
-    maxTokens: 200000,
-    supportsStreaming: true,
-    costPer1kTokens: 0.015
-  },
-  {
-    id: 'claude-sonnet-4-20250514',
-    name: 'Claude Sonnet 4',
-    provider: 'anthropic',
-    description: 'High performance with excellent coding and analysis capabilities',
-    maxTokens: 200000,
-    supportsStreaming: true,
-    costPer1kTokens: 0.003
-  },
-  {
-    id: 'claude-3-7-sonnet-20250219',
-    name: 'Claude 3.7 Sonnet',
-    provider: 'anthropic',
-    description: 'Extended thinking — deep reasoning with visible thought process',
-    maxTokens: 200000,
-    supportsStreaming: true,
-    costPer1kTokens: 0.003
-  },
   // Claude Sonnet 4 (May 2025 — best overall, March 2026)
   {
     id: 'claude-sonnet-4-20250514',

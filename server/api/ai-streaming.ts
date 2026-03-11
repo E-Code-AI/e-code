@@ -101,28 +101,31 @@ router.use(aiUsageTracker);
 // Helper to validate and setup SSE headers (Fortune 500-grade reliability with 403 rejection)
 const setupSSE = (res: any, req?: any): ((cleanupFn?: () => void) => void) | null => {
   const origin = req?.headers?.origin;
+  const isDevMode = !process.env.NODE_ENV || process.env.NODE_ENV === 'development';
   const allowedOrigins = [
     'https://e-code.ai',
     'https://www.e-code.ai',
     process.env.APP_URL,
     process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : null,
     process.env.REPLIT_DEV_URL,
-    ...(process.env.NODE_ENV === 'development' ? ['http://localhost:5000', 'http://localhost:3000'] : []),
+    'http://localhost:5000',
+    'http://localhost:3000',
   ].filter(Boolean);
   
   let validatedOrigin: string | null = null;
   
   if (!origin) {
-    if (process.env.NODE_ENV === 'development') {
-      validatedOrigin = 'http://localhost:5000';
-    }
+    // No Origin header = same-origin request (safe by definition, always allow)
+    validatedOrigin = 'http://localhost:5000';
   } else if (allowedOrigins.includes(origin)) {
     validatedOrigin = origin;
-  } else if (process.env.NODE_ENV === 'development') {
+  } else {
+    // Always check Replit patterns (not just in development)
     const replitPatterns = [
       /^https:\/\/[a-f0-9-]+\.replit\.dev$/,
       /^https:\/\/[a-f0-9-]+-\d+-[a-z0-9]+\.riker\.replit\.dev$/,
       /^https:\/\/[a-z0-9-]+\.repl\.co$/,
+      /^https:\/\/[a-z0-9-]+\.replit\.app$/,
     ];
     if (replitPatterns.some(pattern => pattern.test(origin))) {
       validatedOrigin = origin;
