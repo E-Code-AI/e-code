@@ -5,7 +5,7 @@
  *
  * Environment variables:
  *   RUNNER_JWT_SECRET        Shared secret with main platform (REQUIRED)
- *   PORT / RUNNER_PORT       Port to listen on (default: 8080)
+ *   RUNNER_PORT / PORT       Port to listen on (default: 8080) — RUNNER_PORT takes precedence
  *   RUNNER_WORKSPACES_DIR    Where to store workspace dirs
  *   RUNNER_ALLOWED_ORIGINS   Comma-separated CORS origins
  *   RUNNER_ADMIN_KEY         Secret header for /admin/runs
@@ -43,7 +43,7 @@ import { execSync } from 'child_process';
 import { randomUUID } from 'crypto';
 
 const logger = createLogger('index');
-const PORT = parseInt(process.env.PORT ?? process.env.RUNNER_PORT ?? '8080', 10);
+const PORT = parseInt(process.env.RUNNER_PORT ?? process.env.PORT ?? '8080', 10);
 
 if (!process.env.RUNNER_JWT_SECRET) {
   console.error('[Runner] FATAL: RUNNER_JWT_SECRET is not set. Exiting.');
