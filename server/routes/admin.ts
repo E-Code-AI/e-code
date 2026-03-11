@@ -442,10 +442,9 @@ router.post('/users/:id/unlock', async (req, res) => {
 router.get('/api-keys', async (req, res) => {
   try {
     const apiKeys = await adminService.getApiKeys();
-    // Mask the keys for security
     const maskedKeys = apiKeys.map(key => ({
       ...key,
-      key: key.key.substring(0, 8) + '...' + key.key.substring(key.key.length - 4)
+      apiKey: key.apiKey ? `${key.apiKey.substring(0, 8)}...${key.apiKey.slice(-4)}` : '[not set]',
     }));
     res.json(maskedKeys);
   } catch (error) {

@@ -6,23 +6,19 @@ import { users } from "./schema";
 // AI Provider Keys for admin panel - DIFFERENT from user api_keys in shared/schema.ts
 // NOTE: shared/schema.ts has api_keys for user-generated API keys with userId
 // This schema is for admin-managed AI provider credentials (OpenAI, Anthropic, etc.)
-// These two have DIFFERENT purposes and should NOT be confused:
-// - shared/schema.ts api_keys: User-generated keys for platform API access (has userId, permissions JSONB)
-// - This file: Admin-managed AI provider credentials (has provider, isActive, usageLimit)
+// Columns match the actual DB: service, api_key, key_name, provider, usage_count, reset_date
 export const adminApiKeys = pgTable("admin_api_keys", {
-  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
-  provider: varchar("provider", { length: 50 }).notNull(), // openai, anthropic, gemini, xai, perplexity
-  keyHash: text("key_hash").notNull(), // SHA-256 hash of API key (never store plain text)
-  keyPrefix: varchar("key_prefix", { length: 12 }), // First 8 chars for identification (sk-xxxx...)
-  name: varchar("name", { length: 255 }),
-  description: text("description"),
+  id: integer("id").primaryKey(),
+  service: text("service"),
+  apiKey: text("api_key"),
   isActive: boolean("is_active").default(true),
   usageLimit: integer("usage_limit"),
-  currentUsage: integer("current_usage").default(0),
-  expiresAt: timestamp("expires_at"), // S-H2 FIXED: Expiry enforcement
-  lastUsedAt: timestamp("last_used_at"),
+  usageCount: integer("usage_count").default(0),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow()
+  updatedAt: timestamp("updated_at").defaultNow(),
+  provider: varchar("provider", { length: 255 }),
+  keyName: varchar("key_name", { length: 255 }),
+  resetDate: timestamp("reset_date"),
 });
 
 export const insertAdminApiKeySchema = createInsertSchema(adminApiKeys);

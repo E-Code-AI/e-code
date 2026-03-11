@@ -243,6 +243,12 @@ import { client } from "./db";
 import * as crypto from "crypto";
 import { Pool } from 'pg';
 import { withTransaction, type TransactionClient } from "./utils/db-transactions";
+import {
+  SupportTicket, InsertSupportTicket,
+  TicketReply, InsertTicketReply,
+  supportTickets, ticketReplies,
+  AdminApiKey, adminApiKeys,
+} from '@shared/admin-schema';
 
 type ApiKeyInsertModel = typeof apiKeys.$inferInsert;
 type CodeReviewInsertModel = typeof codeReviews.$inferInsert;
@@ -374,6 +380,8 @@ export interface IStorage {
   getApiKey(id: number): Promise<ApiKey | undefined>;
   updateApiKey(id: number, apiKey: Partial<InsertApiKey>): Promise<ApiKey | undefined>;
   deleteApiKey(id: number): Promise<boolean>;
+  getApiKeys(): Promise<AdminApiKey[]>;
+  getApiKeyByProvider(provider: string): Promise<AdminApiKey | undefined>;
 
   // Code Review operations
   createCodeReview(review: InsertCodeReview): Promise<CodeReview>;
@@ -783,6 +791,12 @@ export interface IStorage {
   getProjectAuthUsers(projectId: number, limit?: number): Promise<ProjectAuthUser[]>;
   addProjectAuthUser(user: InsertProjectAuthUser): Promise<ProjectAuthUser>;
   deleteProjectAuthUser(projectId: number, userId: number): Promise<boolean>;
+
+  // Support Ticket operations
+  getSupportTickets(filter?: { status?: string; userId?: number; assignedTo?: number }): Promise<SupportTicket[]>;
+  getSupportTicket(id: number): Promise<SupportTicket | undefined>;
+  getTicketReplies(ticketId: number): Promise<TicketReply[]>;
+  createTicketReply(reply: InsertTicketReply): Promise<TicketReply>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1448,6 +1462,18 @@ export class DatabaseStorage implements IStorage {
   async deleteApiKey(id: number): Promise<boolean> {
     const result = await this.db.delete(apiKeys).where(eq(apiKeys.id, id));
     return result.length > 0;
+  }
+
+  async getApiKeys(): Promise<AdminApiKey[]> {
+    return await this.db.select().from(adminApiKeys).orderBy(desc(adminApiKeys.createdAt));
+  }
+
+  async getApiKeyByProvider(provider: string): Promise<AdminApiKey | undefined> {
+    const [key] = await this.db.select().from(adminApiKeys)
+      .where(and(eq(adminApiKeys.provider, provider), eq(adminApiKeys.isActive, true)))
+      .orderBy(desc(adminApiKeys.createdAt))
+      .limit(1);
+    return key;
   }
 
   // Code Review operations
@@ -5549,6 +5575,35 @@ Constraints: {{constraints}}`,
       .delete(projectAuthUsers)
       .where(and(eq(projectAuthUsers.id, userId), eq(projectAuthUsers.projectId, projectId)));
     return (result as any).rowCount > 0;
+  }
+
+  // Support Ticket operations
+  async getSupportTickets(filter?: { status?: string; userId?: number; assignedTo?: number }): Promise<SupportTicket[]> {
+    const conditions = [];
+    if (filter?.status) conditions.push(eq(supportTickets.status, filter.status));
+    if (filter?.userId) conditions.push(eq(supportTickets.userId, filter.userId));
+    if (filter?.assignedTo) conditions.push(eq(supportTickets.assignedTo, filter.assignedTo));
+    const query = this.db.select().from(supportTickets);
+    if (conditions.length > 0) {
+      return await query.where(and(...conditions)).orderBy(desc(supportTickets.createdAt));
+    }
+    return await query.orderBy(desc(supportTickets.createdAt));
+  }
+
+  async getSupportTicket(id: number): Promise<SupportTicket | undefined> {
+    const [ticket] = await this.db.select().from(supportTickets).where(eq(supportTickets.id, id));
+    return ticket;
+  }
+
+  async getTicketReplies(ticketId: number): Promise<TicketReply[]> {
+    return await this.db.select().from(ticketReplies)
+      .where(eq(ticketReplies.ticketId, ticketId))
+      .orderBy(ticketReplies.createdAt);
+  }
+
+  async createTicketReply(reply: InsertTicketReply): Promise<TicketReply> {
+    const [created] = await this.db.insert(ticketReplies).values(reply).returning();
+    return created;
   }
 }
 
