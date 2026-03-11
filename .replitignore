@@ -16,8 +16,11 @@ node_modules/
 *.map
 *.d.ts
 
+# Server bundles — rebuilt during deployment build step (too large to scan)
+dist/index.js
+dist/runner.js
+
 # Development dependencies
-scripts/
 test/
 *.test.*
 *.spec.*
