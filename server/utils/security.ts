@@ -490,14 +490,14 @@ export const passwordSecurity = {
 
   // Hash password
   hash: async (password: string): Promise<string> => {
-    const bcrypt = require('bcrypt');
+    const bcrypt = require('bcryptjs');
     const saltRounds = 12;
     return bcrypt.hash(password, saltRounds);
   },
 
   // Verify password
   verify: async (password: string, hash: string): Promise<boolean> => {
-    const bcrypt = require('bcrypt');
+    const bcrypt = require('bcryptjs');
     return bcrypt.compare(password, hash);
   },
 

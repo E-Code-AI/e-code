@@ -23,7 +23,7 @@ const IS_DEPLOY = process.env.BUILD_DEPLOY === '1';
 
 const NATIVE_EXTERNAL = [
   // Native addon packages (.node binaries — cannot be bundled)
-  'bcrypt',
+  // bcrypt replaced with bcryptjs (pure JS) so server needs no native addons
   'node-pty',
   'sharp',
   'pg-native',
@@ -32,18 +32,6 @@ const NATIVE_EXTERNAL = [
   'playwright',
   'playwright-core',
   '@playwright/test',
-  // Large pure-JS packages — kept external to shrink dist/index.js
-  // so Replit's 9-min security scan timeout is not exceeded.
-  // These stay in node_modules (excluded from scanner via .deployignore).
-  'drizzle-orm',
-  'openai',
-  'stripe',
-  '@anthropic-ai/sdk',
-  '@google/generative-ai',
-  '@ai-sdk/openai',
-  '@ai-sdk/anthropic',
-  '@ai-sdk/google',
-  'ai',
 ];
 
 const KEEP_IN_NODE_MODULES = new Set([
@@ -175,7 +163,7 @@ async function buildRunner() {
 }
 
 async function build() {
-  console.log(`Building server bundle (packages-external mode)${IS_DEPLOY ? ' [DEPLOY]' : ''}...`);
+  console.log(`Building server bundle (bundled mode)${IS_DEPLOY ? ' [DEPLOY]' : ''}...`);
 
   try {
     const result = await esbuild.build({
@@ -186,11 +174,10 @@ async function build() {
       target: 'node20',
       format: 'esm',
       outfile: 'dist/index.js',
-      // All npm packages stay external (resolved from node_modules at runtime).
-      // This keeps dist/index.js small (<3MB = just our own TypeScript).
-      // node_modules is excluded from Replit's security scanner via .deployignore,
-      // so scan time only depends on dist/ size, not node_modules size.
-      packages: 'external',
+      // Bundle all JS deps into dist/index.js so no node_modules needed at runtime.
+      // Only true native addons (node-pty, sharp, etc.) remain external.
+      // bcrypt replaced with bcryptjs (pure JS) — server has zero native deps.
+      external: NATIVE_EXTERNAL,
       minify: true,
       treeShaking: true,
       sourcemap: false,
@@ -209,7 +196,7 @@ async function build() {
 
     console.log(`✅ Server bundle built successfully`);
     console.log(`   Output: dist/index.js (${(outputSize / 1024 / 1024).toFixed(2)} MB)`);
-    console.log(`   Mode: packages=external — all npm packages resolved from node_modules at runtime`);
+    console.log(`   Mode: bundled — all JS deps included, zero node_modules dependency`);
 
     await buildRunner();
     await cleanOldChunks();
