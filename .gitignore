@@ -38,6 +38,7 @@ dokploy/
 
 # Build output - rebuilt during deployment
 dist/
+client/dist/
 
 # SECURITY: Credential files - NEVER commit
 Prive*
