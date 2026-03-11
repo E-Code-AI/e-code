@@ -248,6 +248,11 @@ import {
   TicketReply, InsertTicketReply,
   supportTickets, ticketReplies,
   AdminApiKey, adminApiKeys,
+  CmsPage, InsertCmsPage, cmsPages,
+  Documentation, InsertDocumentation, documentation,
+  DocCategory, InsertDocCategory, docCategories,
+  UserSubscription, InsertUserSubscription, userSubscriptions,
+  AdminActivityLog, InsertAdminActivityLog, adminActivityLogs,
 } from '@shared/admin-schema';
 
 type ApiKeyInsertModel = typeof apiKeys.$inferInsert;
@@ -795,8 +800,35 @@ export interface IStorage {
   // Support Ticket operations
   getSupportTickets(filter?: { status?: string; userId?: number; assignedTo?: number }): Promise<SupportTicket[]>;
   getSupportTicket(id: number): Promise<SupportTicket | undefined>;
+  updateSupportTicket(id: number, update: Partial<SupportTicket>): Promise<SupportTicket | undefined>;
   getTicketReplies(ticketId: number): Promise<TicketReply[]>;
   createTicketReply(reply: InsertTicketReply): Promise<TicketReply>;
+
+  // CMS operations
+  getCmsPages(): Promise<CmsPage[]>;
+  getCmsPage(id: number): Promise<CmsPage | undefined>;
+  getCmsPageBySlug(slug: string): Promise<CmsPage | undefined>;
+  createCmsPage(page: InsertCmsPage): Promise<CmsPage>;
+  updateCmsPage(id: number, update: Partial<CmsPage>): Promise<CmsPage | undefined>;
+  deleteCmsPage(id: number): Promise<boolean>;
+
+  // Documentation operations
+  getDocumentation(): Promise<Documentation[]>;
+  getDocumentationByCategory(categoryId: number): Promise<Documentation[]>;
+  createDocumentation(doc: InsertDocumentation): Promise<Documentation>;
+  updateDocumentation(id: number, update: Partial<Documentation>): Promise<Documentation | undefined>;
+  getDocCategories(): Promise<DocCategory[]>;
+  createDocCategory(category: InsertDocCategory): Promise<DocCategory>;
+
+  // Subscription operations
+  getUserSubscriptions(filter?: { userId?: number; status?: string }): Promise<UserSubscription[]>;
+  getUserActiveSubscription(userId: number): Promise<UserSubscription | undefined>;
+  createUserSubscription(sub: InsertUserSubscription): Promise<UserSubscription>;
+  updateUserSubscription(id: number, update: Partial<UserSubscription>): Promise<UserSubscription | undefined>;
+
+  // Admin Activity Log operations
+  createAdminActivityLog(log: InsertAdminActivityLog): Promise<AdminActivityLog>;
+  getAdminActivityLogs(filter?: { adminId?: number; entityType?: string }): Promise<AdminActivityLog[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -5604,6 +5636,130 @@ Constraints: {{constraints}}`,
   async createTicketReply(reply: InsertTicketReply): Promise<TicketReply> {
     const [created] = await this.db.insert(ticketReplies).values(reply).returning();
     return created;
+  }
+
+  async updateSupportTicket(id: number, update: Partial<SupportTicket>): Promise<SupportTicket | undefined> {
+    const [updated] = await this.db.update(supportTickets)
+      .set({ ...update, updatedAt: new Date() } as any)
+      .where(eq(supportTickets.id, id))
+      .returning();
+    return updated;
+  }
+
+  // CMS operations
+  async getCmsPages(): Promise<CmsPage[]> {
+    return await this.db.select().from(cmsPages).orderBy(desc(cmsPages.updatedAt));
+  }
+
+  async getCmsPage(id: number): Promise<CmsPage | undefined> {
+    const [page] = await this.db.select().from(cmsPages).where(eq(cmsPages.id, id));
+    return page;
+  }
+
+  async getCmsPageBySlug(slug: string): Promise<CmsPage | undefined> {
+    const [page] = await this.db.select().from(cmsPages).where(eq(cmsPages.slug, slug));
+    return page;
+  }
+
+  async createCmsPage(page: InsertCmsPage): Promise<CmsPage> {
+    const [created] = await this.db.insert(cmsPages).values(page as any).returning();
+    return created;
+  }
+
+  async updateCmsPage(id: number, update: Partial<CmsPage>): Promise<CmsPage | undefined> {
+    const [updated] = await this.db.update(cmsPages)
+      .set({ ...update, updatedAt: new Date() } as any)
+      .where(eq(cmsPages.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteCmsPage(id: number): Promise<boolean> {
+    const result = await this.db.delete(cmsPages).where(eq(cmsPages.id, id)).returning();
+    return result.length > 0;
+  }
+
+  // Documentation operations
+  async getDocumentation(): Promise<Documentation[]> {
+    return await this.db.select().from(documentation).orderBy(documentation.order, desc(documentation.createdAt));
+  }
+
+  async getDocumentationByCategory(categoryId: number): Promise<Documentation[]> {
+    return await this.db.select().from(documentation)
+      .where(eq(documentation.categoryId, categoryId))
+      .orderBy(documentation.order);
+  }
+
+  async createDocumentation(doc: InsertDocumentation): Promise<Documentation> {
+    const [created] = await this.db.insert(documentation).values(doc as any).returning();
+    return created;
+  }
+
+  async updateDocumentation(id: number, update: Partial<Documentation>): Promise<Documentation | undefined> {
+    const [updated] = await this.db.update(documentation)
+      .set({ ...update, updatedAt: new Date() } as any)
+      .where(eq(documentation.id, id))
+      .returning();
+    return updated;
+  }
+
+  async getDocCategories(): Promise<DocCategory[]> {
+    return await this.db.select().from(docCategories).orderBy(docCategories.order, docCategories.name);
+  }
+
+  async createDocCategory(category: InsertDocCategory): Promise<DocCategory> {
+    const [created] = await this.db.insert(docCategories).values(category as any).returning();
+    return created;
+  }
+
+  // Subscription operations
+  async getUserSubscriptions(filter?: { userId?: number; status?: string }): Promise<UserSubscription[]> {
+    const conditions = [];
+    if (filter?.userId) conditions.push(eq(userSubscriptions.userId, filter.userId));
+    if (filter?.status) conditions.push(eq(userSubscriptions.status, filter.status));
+    const query = this.db.select().from(userSubscriptions);
+    if (conditions.length > 0) {
+      return await query.where(and(...conditions)).orderBy(desc(userSubscriptions.createdAt));
+    }
+    return await query.orderBy(desc(userSubscriptions.createdAt));
+  }
+
+  async getUserActiveSubscription(userId: number): Promise<UserSubscription | undefined> {
+    const [sub] = await this.db.select().from(userSubscriptions)
+      .where(and(eq(userSubscriptions.userId, userId), eq(userSubscriptions.status, 'active')))
+      .orderBy(desc(userSubscriptions.createdAt))
+      .limit(1);
+    return sub;
+  }
+
+  async createUserSubscription(sub: InsertUserSubscription): Promise<UserSubscription> {
+    const [created] = await this.db.insert(userSubscriptions).values(sub as any).returning();
+    return created;
+  }
+
+  async updateUserSubscription(id: number, update: Partial<UserSubscription>): Promise<UserSubscription | undefined> {
+    const [updated] = await this.db.update(userSubscriptions)
+      .set({ ...update, updatedAt: new Date() } as any)
+      .where(eq(userSubscriptions.id, id))
+      .returning();
+    return updated;
+  }
+
+  // Admin Activity Log operations
+  async createAdminActivityLog(log: InsertAdminActivityLog): Promise<AdminActivityLog> {
+    const [created] = await this.db.insert(adminActivityLogs).values(log as any).returning();
+    return created;
+  }
+
+  async getAdminActivityLogs(filter?: { adminId?: number; entityType?: string }): Promise<AdminActivityLog[]> {
+    const conditions = [];
+    if (filter?.adminId) conditions.push(eq(adminActivityLogs.adminId, filter.adminId));
+    if (filter?.entityType) conditions.push(eq(adminActivityLogs.entityType, filter.entityType));
+    const query = this.db.select().from(adminActivityLogs);
+    if (conditions.length > 0) {
+      return await query.where(and(...conditions)).orderBy(desc(adminActivityLogs.createdAt));
+    }
+    return await query.orderBy(desc(adminActivityLogs.createdAt));
   }
 }
 

@@ -1,4 +1,4 @@
-import { pgTable, varchar, text, timestamp, boolean, integer, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, varchar, text, timestamp, boolean, integer, jsonb, serial } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { users } from "./schema";
@@ -8,7 +8,7 @@ import { users } from "./schema";
 // This schema is for admin-managed AI provider credentials (OpenAI, Anthropic, etc.)
 // Columns match the actual DB: service, api_key, key_name, provider, usage_count, reset_date
 export const adminApiKeys = pgTable("admin_api_keys", {
-  id: integer("id").primaryKey(),
+  id: serial("id").primaryKey(),
   service: text("service"),
   apiKey: text("api_key"),
   isActive: boolean("is_active").default(true),
@@ -25,16 +25,16 @@ export const insertAdminApiKeySchema = createInsertSchema(adminApiKeys);
 export type InsertAdminApiKey = z.infer<typeof insertAdminApiKeySchema>;
 export type AdminApiKey = typeof adminApiKeys.$inferSelect;
 
-// CMS Pages
+// CMS Pages - uses SERIAL in DB
 export const cmsPages = pgTable("cms_pages", {
-  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  id: serial("id").primaryKey(),
   slug: varchar("slug", { length: 255 }).unique().notNull(),
   title: varchar("title", { length: 500 }).notNull(),
   content: text("content").notNull(),
   metaTitle: varchar("meta_title", { length: 255 }),
   metaDescription: text("meta_description"),
   metaKeywords: text("meta_keywords"),
-  status: varchar("status", { length: 20 }).default("draft"), // draft, published, archived
+  status: varchar("status", { length: 20 }).default("draft"),
   publishedAt: timestamp("published_at"),
   authorId: integer("author_id").references(() => users.id),
   template: varchar("template", { length: 50 }).default("default"),
@@ -48,9 +48,9 @@ export const insertCmsPageSchema = createInsertSchema(cmsPages);
 export type InsertCmsPage = z.infer<typeof insertCmsPageSchema>;
 export type CmsPage = typeof cmsPages.$inferSelect;
 
-// Documentation
+// Documentation - uses SERIAL in DB
 export const documentation = pgTable("documentation", {
-  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  id: serial("id").primaryKey(),
   categoryId: integer("category_id"),
   slug: varchar("slug", { length: 255 }).unique().notNull(),
   title: varchar("title", { length: 500 }).notNull(),
@@ -71,9 +71,9 @@ export const insertDocumentationSchema = createInsertSchema(documentation);
 export type InsertDocumentation = z.infer<typeof insertDocumentationSchema>;
 export type Documentation = typeof documentation.$inferSelect;
 
-// Documentation Categories
+// Documentation Categories - uses SERIAL in DB
 export const docCategories = pgTable("doc_categories", {
-  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  id: serial("id").primaryKey(),
   parentId: integer("parent_id"),
   name: varchar("name", { length: 255 }).notNull(),
   slug: varchar("slug", { length: 255 }).unique().notNull(),
@@ -88,16 +88,16 @@ export const insertDocCategorySchema = createInsertSchema(docCategories);
 export type InsertDocCategory = z.infer<typeof insertDocCategorySchema>;
 export type DocCategory = typeof docCategories.$inferSelect;
 
-// Support Tickets
+// Support Tickets - uses GENERATED ALWAYS AS IDENTITY in DB
 export const supportTickets = pgTable("support_tickets", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   userId: integer("user_id").notNull().references(() => users.id),
   ticketNumber: varchar("ticket_number", { length: 20 }).unique().notNull(),
   subject: varchar("subject", { length: 500 }).notNull(),
   description: text("description").notNull(),
-  category: varchar("category", { length: 50 }), // billing, technical, account, other
-  priority: varchar("priority", { length: 20 }).default("normal"), // low, normal, high, urgent
-  status: varchar("status", { length: 20 }).default("open"), // open, in_progress, resolved, closed
+  category: varchar("category", { length: 50 }),
+  priority: varchar("priority", { length: 20 }).default("normal"),
+  status: varchar("status", { length: 20 }).default("open"),
   assignedTo: integer("assigned_to").references(() => users.id),
   tags: jsonb("tags").$type<string[]>().default([]),
   attachments: jsonb("attachments").$type<{url: string, name: string}[]>().default([]),
@@ -111,13 +111,13 @@ export const insertSupportTicketSchema = createInsertSchema(supportTickets);
 export type InsertSupportTicket = z.infer<typeof insertSupportTicketSchema>;
 export type SupportTicket = typeof supportTickets.$inferSelect;
 
-// Support Ticket Replies
+// Support Ticket Replies - uses GENERATED ALWAYS AS IDENTITY in DB
 export const ticketReplies = pgTable("ticket_replies", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   ticketId: integer("ticket_id").notNull(),
   userId: integer("user_id").notNull().references(() => users.id),
   message: text("message").notNull(),
-  isInternal: boolean("is_internal").default(false), // Internal notes for staff
+  isInternal: boolean("is_internal").default(false),
   attachments: jsonb("attachments").$type<{url: string, name: string}[]>().default([]),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow()
@@ -127,12 +127,12 @@ export const insertTicketReplySchema = createInsertSchema(ticketReplies);
 export type InsertTicketReply = z.infer<typeof insertTicketReplySchema>;
 export type TicketReply = typeof ticketReplies.$inferSelect;
 
-// User Subscriptions
+// User Subscriptions - uses SERIAL in DB
 export const userSubscriptions = pgTable("user_subscriptions", {
-  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id),
-  planId: varchar("plan_id", { length: 50 }).notNull(), // free, pro, enterprise
-  status: varchar("status", { length: 20 }).default("active"), // active, cancelled, expired, paused
+  planId: varchar("plan_id", { length: 50 }).notNull(),
+  status: varchar("status", { length: 20 }).default("active"),
   stripeSubscriptionId: varchar("stripe_subscription_id", { length: 255 }),
   stripeCustomerId: varchar("stripe_customer_id", { length: 255 }),
   currentPeriodStart: timestamp("current_period_start"),
@@ -149,12 +149,12 @@ export const insertUserSubscriptionSchema = createInsertSchema(userSubscriptions
 export type InsertUserSubscription = z.infer<typeof insertUserSubscriptionSchema>;
 export type UserSubscription = typeof userSubscriptions.$inferSelect;
 
-// Admin Activity Logs
+// Admin Activity Logs - uses SERIAL in DB
 export const adminActivityLogs = pgTable("admin_activity_logs", {
-  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  id: serial("id").primaryKey(),
   adminId: integer("admin_id").notNull().references(() => users.id),
   action: varchar("action", { length: 100 }).notNull(),
-  entityType: varchar("entity_type", { length: 50 }), // user, subscription, ticket, etc.
+  entityType: varchar("entity_type", { length: 50 }),
   entityId: integer("entity_id"),
   details: jsonb("details").$type<Record<string, any>>().default({}),
   ipAddress: varchar("ip_address", { length: 45 }),
