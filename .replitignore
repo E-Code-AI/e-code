@@ -2,10 +2,6 @@
 # .replitignore - Exclude from Replit deployments
 # =============================================================================
 
-# Build artifacts (rebuilt by deployment build step, not needed in snapshot)
-dist/
-client/dist/
-
 # Large user data directories (1.6GB+)
 projects/
 uploads/
