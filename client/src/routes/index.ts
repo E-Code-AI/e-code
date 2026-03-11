@@ -56,6 +56,8 @@ export const AdminActivityLogs = instrumentedLazy(() => import("@/pages/AdminAct
 export const AdminSettings = instrumentedLazy(() => import("@/pages/AdminSettings"), "AdminSettings");
 export const AdminApiKeys = instrumentedLazy(() => import("@/pages/AdminApiKeys"), "AdminApiKeys");
 export const AdminSupport = instrumentedLazy(() => import("@/pages/AdminSupport"), "AdminSupport");
+export const AdminCMS = instrumentedLazy(() => import("@/pages/AdminCMS"), "AdminCMS");
+export const AdminDocs = instrumentedLazy(() => import("@/pages/AdminDocs"), "AdminDocs");
 
 export const Landing = instrumentedLazy(() => import("@/pages/LandingOptimized"), "Landing");
 export const Pricing = instrumentedLazy(() => import("@/pages/Pricing"), "Pricing");

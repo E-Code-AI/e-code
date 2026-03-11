@@ -168,6 +168,8 @@ export const protectedRoutes: RouteConfig[] = [
   { path: "/admin/settings", component: Pages.AdminSettings, layout: "replit" },
   { path: "/admin/api-keys", component: Pages.AdminApiKeys, layout: "replit" },
   { path: "/admin/support", component: Pages.AdminSupport, layout: "replit" },
+  { path: "/admin/cms", component: Pages.AdminCMS, layout: "replit" },
+  { path: "/admin/docs", component: Pages.AdminDocs, layout: "replit" },
   { path: "/account", component: Pages.Account, layout: "replit" },
   { path: "/deployments", component: Pages.Deployments, layout: "replit" },
   { path: "/usage", component: Pages.Usage, layout: "replit" },
