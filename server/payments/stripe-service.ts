@@ -581,6 +581,10 @@ export class StripePaymentService {
           await this.handlePaymentFailed(event.data.object as Stripe.Invoice);
           break;
 
+        case 'payment_intent.payment_failed':
+          await this.handlePaymentIntentFailed(event.data.object as Stripe.PaymentIntent);
+          break;
+
         case 'charge.refunded':
           await this.handleChargeRefunded(event.data.object as Stripe.Charge);
           break;
@@ -656,6 +660,10 @@ export class StripePaymentService {
 
     await storage.updateUser(String(userId), updateData);
 
+    if (tier !== 'free') {
+      await creditsService.updatePlanAllowances(String(userId), tier);
+    }
+
     logger.info(`[Stripe] Subscription updated for user ${userId}: tier=${tier}, status=${subscription.status}`);
   }
 
@@ -669,6 +677,8 @@ export class StripePaymentService {
       stripeSubscriptionId: null,
       stripePriceId: null,
     });
+
+    await creditsService.updatePlanAllowances(String(userId), 'free');
 
     logger.info(`[Stripe] Subscription canceled for user ${userId}, downgraded to free tier`);
   }
@@ -705,9 +715,49 @@ export class StripePaymentService {
       }
 
       await storage.updateUser(userId, updateData);
+
+      if (tier !== 'free') {
+        await creditsService.updatePlanAllowances(userId, tier);
+      }
     }
 
     logger.info(`[Stripe] Payment succeeded for user ${userId}, invoice ${invoice.id}`);
+  }
+
+  private async handlePaymentIntentFailed(paymentIntent: Stripe.PaymentIntent) {
+    const customerId = typeof paymentIntent.customer === 'string'
+      ? paymentIntent.customer
+      : paymentIntent.customer?.id;
+    if (!customerId) return;
+
+    const customer = await stripe.customers.retrieve(customerId);
+    if (customer.deleted) return;
+
+    const userId = (customer as Stripe.Customer).metadata?.userId;
+    if (!userId) return;
+
+    await storage.updateUser(userId, {
+      subscriptionStatus: 'past_due',
+    });
+
+    const user = await storage.getUser(userId);
+    if (user?.email) {
+      try {
+        const { sendPaymentFailedEmail } = await import('../utils/sendgrid-email-service');
+        const amountDue = (paymentIntent.amount ?? 0) / 100;
+        await sendPaymentFailedEmail(
+          userId,
+          user.email,
+          user.displayName || user.username,
+          amountDue,
+          paymentIntent.id
+        );
+      } catch (emailError) {
+        logger.error('[Stripe] Failed to send payment failure email (non-critical):', emailError);
+      }
+    }
+
+    logger.warn(`[Stripe] PaymentIntent failed for user ${userId}, pi ${paymentIntent.id}, status set to past_due`);
   }
 
   private async handlePaymentFailed(invoice: Stripe.Invoice) {
