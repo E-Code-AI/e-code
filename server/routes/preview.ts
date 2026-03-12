@@ -165,29 +165,71 @@ function rewriteAssetPaths(html: string, projectId: string): string {
   return result;
 }
 
-// Helper to inject hot-reload script into HTML content and rewrite asset paths
-// NOTE: We do NOT inject a <base> tag because:
-// 1. It breaks asset resolution when paths conflict with explicit route handlers (status/start/stop)
-// 2. Instead, we rewrite root-absolute paths to use project-relative URLs
+function getFetchInterceptorScript(projectId: string): string {
+  return `
+    <script data-fetch-interceptor="true">
+      (function() {
+        var basePrefix = '/api/preview/projects/${projectId}/preview';
+
+        function rewriteUrl(url) {
+          if (typeof url !== 'string') return url;
+          if (url.startsWith(basePrefix)) return url;
+          if (url.startsWith('//') || url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:') || url.startsWith('blob:')) return url;
+          if (url.startsWith('/')) return basePrefix + url;
+          return url;
+        }
+
+        var origFetch = window.fetch;
+        window.fetch = function(input, init) {
+          if (typeof input === 'string') {
+            input = rewriteUrl(input);
+          } else if (input instanceof Request) {
+            var newUrl = rewriteUrl(input.url.replace(window.location.origin, ''));
+            if (newUrl !== input.url.replace(window.location.origin, '')) {
+              input = new Request(newUrl, {
+                method: input.method,
+                headers: input.headers,
+                body: input.method !== 'GET' && input.method !== 'HEAD' ? input.body : undefined,
+                mode: input.mode,
+                credentials: input.credentials,
+                cache: input.cache,
+                redirect: input.redirect,
+                referrer: input.referrer,
+                referrerPolicy: input.referrerPolicy,
+                integrity: input.integrity,
+                keepalive: input.keepalive,
+                signal: input.signal
+              });
+            }
+          }
+          return origFetch.call(this, input, init);
+        };
+
+        var origOpen = XMLHttpRequest.prototype.open;
+        XMLHttpRequest.prototype.open = function(method, url) {
+          arguments[1] = rewriteUrl(url);
+          return origOpen.apply(this, arguments);
+        };
+      })();
+    </script>`;
+}
+
 function injectPreviewScripts(content: string, projectId: string): string {
   const hotReload = getHotReloadScript(projectId);
+  const fetchInterceptor = getFetchInterceptorScript(projectId);
+  const scripts = fetchInterceptor + '\n' + hotReload;
   
-  // First, rewrite asset paths BEFORE injecting hot-reload script
-  // This ensures the hot-reload script URLs are not affected
   let modifiedContent = rewriteAssetPaths(content, projectId);
   
-  // Insert hot-reload script after <head> tag
   if (/<head>/i.test(modifiedContent)) {
-    return modifiedContent.replace(/<head>/i, `<head>\n    ${hotReload}`);
+    return modifiedContent.replace(/<head>/i, `<head>\n    ${scripts}`);
   }
   
-  // If no <head> tag, try inserting after <html> tag
   if (/<html/i.test(modifiedContent)) {
-    return modifiedContent.replace(/<html([^>]*)>/i, `<html$1>\n  <head>\n    ${hotReload}\n  </head>`);
+    return modifiedContent.replace(/<html([^>]*)>/i, `<html$1>\n  <head>\n    ${scripts}\n  </head>`);
   }
   
-  // Last resort: prepend the scripts
-  return `<head>\n    ${hotReload}\n  </head>\n${modifiedContent}`;
+  return `<head>\n    ${scripts}\n  </head>\n${modifiedContent}`;
 }
 
 // Middleware to ensure user has access to project

@@ -28,7 +28,7 @@ interface Secret {
   };
 }
 
-interface EncryptedData {
+export interface EncryptedData {
   iv: string;
   encryptedData: string;
   authTag: string;
@@ -74,6 +74,10 @@ export class RealSecretManagementService {
       encryptedData: encrypted,
       authTag: authTag.toString('hex')
     };
+  }
+
+  decryptValue(encryptedData: EncryptedData): string {
+    return this.decrypt(encryptedData);
   }
 
   private decrypt(encryptedData: EncryptedData): string {

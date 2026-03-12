@@ -7,6 +7,9 @@ import { spawn } from 'child_process';
 import { createLogger } from '../utils/logger';
 import { previewEvents } from './preview-websocket';
 import fetch from 'node-fetch';
+import { db } from '../db';
+import { environmentVariables } from '@shared/schema';
+import { eq } from 'drizzle-orm';
 
 const logger = createLogger('preview-service');
 
@@ -62,11 +65,40 @@ function createSafeEnv(additionalVars: Record<string, string> = {}): Record<stri
     }
   }
   
-  // Preserve NODE_ENV from parent but default to development for previews
   safeEnv['NODE_ENV'] = globalThis.process.env['NODE_ENV'] || 'development';
   
-  // Merge additional safe variables (PORT, VITE_PORT, etc.)
   return { ...safeEnv, ...additionalVars };
+}
+
+async function fetchProjectEnvVars(projectId: string): Promise<Record<string, string>> {
+  const vars: Record<string, string> = {};
+  try {
+    const envVars = await db.query.environmentVariables.findMany({
+      where: eq(environmentVariables.projectId, parseInt(projectId, 10)),
+    });
+    for (const envVar of envVars) {
+      if (envVar.key && envVar.value) {
+        if (envVar.isSecret) {
+          try {
+            const { RealSecretManagementService } = await import('../services/real-secret-management');
+            const secretService = new RealSecretManagementService();
+            const encryptedData = JSON.parse(envVar.value) as { iv: string; encryptedData: string; authTag: string };
+            vars[envVar.key] = secretService.decryptValue(encryptedData);
+          } catch {
+            logger.warn(`Failed to decrypt secret ${envVar.key} for project ${projectId}`);
+          }
+        } else {
+          vars[envVar.key] = envVar.value;
+        }
+      }
+    }
+    if (Object.keys(vars).length > 0) {
+      logger.info(`Injecting ${Object.keys(vars).length} env vars into preview for project ${projectId}`);
+    }
+  } catch (err: any) {
+    logger.warn(`Failed to fetch env vars for project ${projectId}: ${err.message}`);
+  }
+  return vars;
 }
 
 interface PreviewInstance {
@@ -449,6 +481,8 @@ export class PreviewService {
   private async bootPreviewServer(preview: PreviewInstance, files: any[], previewPath: string, port: number) {
     const projectId = preview.projectId;
 
+    const projectEnvVars = await fetchProjectEnvVars(projectId);
+
     const frameworkInfo = await this.detectFramework(files, previewPath);
     preview.frameworkType = frameworkInfo.type as any;
     preview.logs.push(`Detected framework: ${frameworkInfo.type}`);
@@ -456,11 +490,11 @@ export class PreviewService {
     if (frameworkInfo.type === 'static') {
       await this.startStaticServer(preview, previewPath);
     } else if (frameworkInfo.type === 'react' || frameworkInfo.type === 'vue' || frameworkInfo.type === 'angular') {
-      await this.startModernFramework(preview, frameworkInfo, previewPath, files);
+      await this.startModernFramework(preview, frameworkInfo, previewPath, files, projectEnvVars);
     } else if (frameworkInfo.type === 'node') {
-      await this.startNodeApplication(preview, frameworkInfo, previewPath, files);
+      await this.startNodeApplication(preview, frameworkInfo, previewPath, files, projectEnvVars);
     } else if (frameworkInfo.type === 'python') {
-      await this.startPythonApplication(preview, frameworkInfo, previewPath, files);
+      await this.startPythonApplication(preview, frameworkInfo, previewPath, files, projectEnvVars);
     } else {
       await this.startStaticServer(preview, previewPath);
     }
@@ -562,11 +596,10 @@ export class PreviewService {
     return { type: 'static' as const };
   }
 
-  private async startModernFramework(preview: PreviewInstance, frameworkInfo: any, previewPath: string, files: any[]) {
+  private async startModernFramework(preview: PreviewInstance, frameworkInfo: any, previewPath: string, files: any[], projectEnvVars: Record<string, string> = {}) {
     const port = preview.primaryPort;
     preview.logs.push(`Starting ${frameworkInfo.type} application...`);
     
-    // Install dependencies — use --ignore-scripts to prevent native postinstall failures (bcrypt, prisma, etc.)
     try {
       await this.runCommand('npm', ['install', '--ignore-scripts'], previewPath);
     } catch (installErr: any) {
@@ -581,7 +614,6 @@ export class PreviewService {
     } else if (frameworkInfo.hasVite) {
       startCommand = ['npx', 'vite', '--port', port.toString(), '--host'];
     } else {
-      // Fallback to static serving
       await this.startStaticServer(preview, previewPath);
       return;
     }
@@ -589,6 +621,7 @@ export class PreviewService {
     const childProcess = spawn(startCommand[0], startCommand.slice(1), {
       cwd: previewPath,
       env: createSafeEnv({ 
+        ...projectEnvVars,
         PORT: port.toString(),
         VITE_PORT: port.toString(),
         DEV_SERVER_PORT: port.toString()
@@ -606,12 +639,11 @@ export class PreviewService {
       description: `Main ${frameworkInfo.type} application`
     });
 
-    // Check for additional services (like API server)
     if (frameworkInfo.packageJson.scripts?.api || frameworkInfo.packageJson.scripts?.server) {
-      const apiPort = port + 1000; // API on different port
+      const apiPort = port + 1000;
       const apiProcess = spawn('npm', ['run', frameworkInfo.packageJson.scripts?.api ? 'api' : 'server'], {
         cwd: previewPath,
-        env: createSafeEnv({ PORT: apiPort.toString() })
+        env: createSafeEnv({ ...projectEnvVars, PORT: apiPort.toString() })
       });
 
       this.setupProcessHandlers(preview, apiProcess, apiPort, 'API Server');
@@ -627,11 +659,10 @@ export class PreviewService {
     }
   }
 
-  private async startNodeApplication(preview: PreviewInstance, frameworkInfo: any, previewPath: string, files: any[]) {
+  private async startNodeApplication(preview: PreviewInstance, frameworkInfo: any, previewPath: string, files: any[], projectEnvVars: Record<string, string> = {}) {
     const port = preview.primaryPort;
     preview.logs.push('Starting Node.js application...');
     
-    // Install dependencies — use --ignore-scripts to prevent native postinstall failures
     try {
       await this.runCommand('npm', ['install', '--ignore-scripts'], previewPath);
     } catch (installErr: any) {
@@ -644,14 +675,13 @@ export class PreviewService {
     } else if (frameworkInfo.packageJson.scripts?.dev) {
       startCommand = ['npm', 'run', 'dev'];
     } else {
-      // Try to find main file
       const mainFile = frameworkInfo.packageJson.main || 'index.js';
       startCommand = ['node', mainFile];
     }
 
     const nodeProcess = spawn(startCommand[0], startCommand.slice(1), {
       cwd: previewPath,
-      env: createSafeEnv({ PORT: port.toString() })
+      env: createSafeEnv({ ...projectEnvVars, PORT: port.toString() })
     });
 
     this.setupProcessHandlers(preview, nodeProcess, port, 'Node.js Server');
@@ -666,16 +696,14 @@ export class PreviewService {
     });
   }
 
-  private async startPythonApplication(preview: PreviewInstance, frameworkInfo: any, previewPath: string, files: any[]) {
+  private async startPythonApplication(preview: PreviewInstance, frameworkInfo: any, previewPath: string, files: any[], projectEnvVars: Record<string, string> = {}) {
     const port = preview.primaryPort;
     preview.logs.push('Starting Python application...');
     
-    // Install requirements if available
     if (frameworkInfo.hasRequirements) {
       await this.runCommand('pip', ['install', '-r', 'requirements.txt'], previewPath);
     }
     
-    // Try to find main Python file
     const mainFile = files.find(f => f.name === 'main.py' || f.name === 'app.py' || f.name === 'server.py');
     if (!mainFile) {
       throw new Error('No main Python file found (main.py, app.py, or server.py)');
@@ -683,7 +711,7 @@ export class PreviewService {
 
     const pythonProcess = spawn('python', [mainFile.name], {
       cwd: previewPath,
-      env: createSafeEnv({ PORT: port.toString() })
+      env: createSafeEnv({ ...projectEnvVars, PORT: port.toString() })
     });
 
     this.setupProcessHandlers(preview, pythonProcess, port, 'Python Server');

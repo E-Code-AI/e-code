@@ -87,7 +87,7 @@ export function PreviewPanel({
   // Stop preview mutation
   const stopPreviewMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest('POST', `/api/projects/${projectId}/runtime/stop`, {});
+      return apiRequest('POST', `/api/preview/projects/${projectId}/preview/stop`, {});
     },
     onSuccess: () => {
       toast({ title: 'Preview stopped' });

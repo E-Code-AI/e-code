@@ -519,7 +519,7 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
                   <div className="text-left">
                     <div className="font-medium text-foreground">Production Database</div>
                     <div className="text-[13px] text-muted-foreground">
-                      {formatStorage(64.93, 102400)}
+                      {formatStorage(storageUsedMb, storageLimitMb)}
                     </div>
                   </div>
                 </div>
@@ -530,7 +530,7 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
 
           <div>
             <h4 className="text-[13px] font-semibold text-foreground mb-2">Billing Period</h4>
-            <p className="text-[13px] text-muted-foreground">Renews monthly, 1 janv.</p>
+            <p className="text-[13px] text-muted-foreground">Renews monthly</p>
           </div>
 
           <div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Play, Square, Loader2 } from 'lucide-react';
 import { useMutation, useQuery } from '@tanstack/react-query';
@@ -7,7 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
 interface RunButtonProps {
-  projectId: string | number; // Support both UUID strings and numeric IDs
+  projectId: string | number;
   language?: string;
   onRunning?: (running: boolean, executionId?: string) => void;
   className?: string;
@@ -15,10 +15,16 @@ interface RunButtonProps {
   size?: 'default' | 'sm' | 'lg' | 'icon';
 }
 
+interface PreviewStatus {
+  previewUrl: string | null;
+  status: 'running' | 'stopped' | 'starting' | 'error' | 'static' | 'no_runnable_files';
+  runId?: string;
+  frameworkType?: string;
+}
+
 interface RuntimeStatus {
-  isRunning: boolean;
-  status: 'starting' | 'running' | 'stopped' | 'error';
-  url?: string;
+  status: 'running' | 'stopped' | 'starting' | 'error';
+  executionId?: string;
 }
 
 export function RunButton({ 
@@ -29,121 +35,130 @@ export function RunButton({
   variant = 'default',
   size = 'default'
 }: RunButtonProps) {
-  const [isRunning, setIsRunning] = useState(false);
   const [localExecutionId, setLocalExecutionId] = useState<string | undefined>();
   const { toast } = useToast();
 
-  // Poll runtime status from backend - REAL STATUS TRACKING
-  const { data: runtimeStatus } = useQuery<RuntimeStatus>({
-    queryKey: [`/api/runtime/${projectId}`],
-    refetchInterval: (query) => {
-      const data = query.state.data;
-      // Poll more frequently when starting, less when running/stopped
-      if (data?.status === 'starting') return 1000;
-      if (data?.status === 'running') return 5000;
-      return false; // Don't poll when stopped/error
+  const { data: previewStatus, isError: previewQueryFailed } = useQuery<PreviewStatus>({
+    queryKey: ['/api/preview/url', projectId],
+    queryFn: async () => {
+      const response = await fetch(`/api/preview/url?projectId=${projectId}`, {
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Failed to get preview status');
+      return response.json();
     },
     enabled: !!projectId,
+    retry: 1,
+    refetchInterval: (query) => {
+      const data = query.state.data;
+      if (data?.status === 'starting') return 2000;
+      if (data?.status === 'running') return 15000;
+      return false;
+    }
   });
 
-  // Sync local state with backend status - BACKEND IS SOURCE OF TRUTH
-  useEffect(() => {
-    if (runtimeStatus) {
-      const backendIsRunning = runtimeStatus.status === 'running' || runtimeStatus.status === 'starting';
-      
-      // Only update if backend status differs from local state
-      if (backendIsRunning !== isRunning) {
-        setIsRunning(backendIsRunning);
-        
-        // Use executionId from backend or local fallback
-        const execId = localExecutionId;
-        onRunning?.(backendIsRunning, execId);
-      }
-    }
-  }, [runtimeStatus]);
+  const previewStatusResolved = previewStatus !== undefined || previewQueryFailed;
+  const usePreview = previewStatusResolved && !previewQueryFailed && previewStatus?.status !== 'no_runnable_files';
+  const useRuntime = previewStatusResolved && (previewQueryFailed || previewStatus?.status === 'no_runnable_files');
 
-  // Start project execution - REAL BACKEND
-  const runProjectMutation = useMutation({
-    mutationFn: async () => {
-      // apiRequest already returns parsed JSON and throws on error
-      const data = await apiRequest<{
-        success: boolean;
-        executionId?: string;
-        url?: string;
-        error?: string;
-      }>('POST', `/api/runtime/start`, {
-        projectId,
-        mainFile: undefined, // Will use auto-detection
-        timeout: 30000 // 30 seconds timeout
+  const { data: runtimeStatus } = useQuery<RuntimeStatus>({
+    queryKey: ['/api/runtime', projectId],
+    queryFn: async () => {
+      const response = await fetch(`/api/runtime/${projectId}`, {
+        credentials: 'include'
       });
-      return data;
+      if (!response.ok) return { status: 'stopped' } as RuntimeStatus;
+      return response.json();
     },
-    onSuccess: async (data) => {
-      // Store execution ID for stopping later
-      const execId = data.executionId || `exec-${Date.now()}`;
+    enabled: !!projectId && useRuntime,
+    refetchInterval: (query) => {
+      const data = query.state.data;
+      if (data?.status === 'starting') return 2000;
+      if (data?.status === 'running') return 10000;
+      return false;
+    }
+  });
+
+  const currentStatus = usePreview ? previewStatus : runtimeStatus;
+  const isRunning = currentStatus?.status === 'running' || (previewStatus?.status === 'static' && usePreview);
+  const isStarting = currentStatus?.status === 'starting';
+
+  useEffect(() => {
+    if (!usePreview && runtimeStatus?.executionId && !localExecutionId) {
+      setLocalExecutionId(runtimeStatus.executionId);
+    }
+  }, [usePreview, runtimeStatus?.executionId, localExecutionId]);
+
+  useEffect(() => {
+    if (usePreview && previewStatus?.runId && !localExecutionId) {
+      setLocalExecutionId(previewStatus.runId);
+    }
+  }, [usePreview, previewStatus?.runId, localExecutionId]);
+
+  useEffect(() => {
+    const running = isRunning || isStarting;
+    onRunning?.(running, localExecutionId);
+  }, [isRunning, isStarting, localExecutionId]);
+
+  const startMutation = useMutation({
+    mutationFn: async () => {
+      if (usePreview) {
+        return apiRequest('POST', `/api/preview/projects/${projectId}/preview/start`, {});
+      }
+      return apiRequest('POST', `/api/runtime/start`, { projectId: String(projectId) });
+    },
+    onSuccess: async (data: Record<string, unknown> | undefined) => {
+      const execId = (data?.executionId as string) || (data?.runId as string) || `exec-${Date.now()}`;
       setLocalExecutionId(execId);
       (window as any).__currentExecutionId = execId;
-      
-      // CRITICAL: Notify parent immediately with running state and executionId
-      // This enables ReplitConsole to subscribe to WebSocket for real-time logs
-      setIsRunning(true);
       onRunning?.(true, execId);
-      
-      // CRITICAL: Invalidate query to force refetch and start polling
-      await queryClient.invalidateQueries({ 
-        queryKey: [`/api/runtime/${projectId}`] 
-      });
-      
+
+      if (usePreview) {
+        await queryClient.invalidateQueries({ queryKey: ['/api/preview/url', projectId] });
+      } else {
+        await queryClient.invalidateQueries({ queryKey: ['/api/runtime', projectId] });
+      }
+
       toast({
-        title: 'Starting runtime',
-        description: 'Your project is starting...',
+        title: 'Starting project',
+        description: usePreview ? 'Building and starting your application...' : 'Running your script...',
       });
     },
     onError: (error: Error) => {
       toast({
-        title: 'Failed to start runtime',
+        title: 'Failed to start',
         description: error.message,
         variant: 'destructive',
       });
     },
   });
 
-  // Stop project execution - REAL BACKEND
-  const stopProjectMutation = useMutation({
+  const stopMutation = useMutation({
     mutationFn: async () => {
-      const executionId = (window as any).__currentExecutionId || localExecutionId;
-      // apiRequest already returns parsed JSON and throws on error
-      const data = await apiRequest<{
-        success: boolean;
-        error?: string;
-      }>('POST', `/api/runtime/stop`, {
-        projectId,
-        executionId
-      });
-      return data;
+      if (usePreview) {
+        return apiRequest('POST', `/api/preview/projects/${projectId}/preview/stop`, {});
+      }
+      return apiRequest('POST', `/api/runtime/stop`, { projectId: String(projectId), executionId: localExecutionId });
     },
     onSuccess: async () => {
-      // Clear execution ID
       setLocalExecutionId(undefined);
       delete (window as any).__currentExecutionId;
-      
-      // CRITICAL: Notify parent that runtime has stopped
-      setIsRunning(false);
       onRunning?.(false, undefined);
-      
-      // CRITICAL: Invalidate query to force refetch and clear stale "running" status
-      await queryClient.invalidateQueries({ 
-        queryKey: [`/api/runtime/${projectId}`] 
-      });
-      
+
+      if (usePreview) {
+        await queryClient.invalidateQueries({ queryKey: ['/api/preview/url', projectId] });
+      } else {
+        await queryClient.invalidateQueries({ queryKey: ['/api/runtime', projectId] });
+      }
+
       toast({
-        title: 'Runtime stopped',
-        description: 'Your project has been stopped',
+        title: 'Stopped',
+        description: 'Your project has been stopped.',
       });
     },
     onError: (error: Error) => {
       toast({
-        title: 'Failed to stop runtime',
+        title: 'Failed to stop',
         description: error.message,
         variant: 'destructive',
       });
@@ -151,32 +166,30 @@ export function RunButton({
   });
 
   const handleClick = () => {
-    if (isRunning) {
-      stopProjectMutation.mutate(undefined);
+    if (isRunning || isStarting) {
+      stopMutation.mutate(undefined);
     } else {
-      runProjectMutation.mutate(undefined);
+      startMutation.mutate(undefined);
     }
   };
 
-  const isStarting = runtimeStatus?.status === 'starting';
-  const isStartMutating = runProjectMutation.isPending;
-  const isStopMutating = stopProjectMutation.isPending;
-  const isLoading = isStartMutating || isStopMutating || isStarting;
+  const isPending = startMutation.isPending || stopMutation.isPending;
+  const isLoading = isPending || isStarting || !previewStatusResolved;
 
   return (
     <Button
       onClick={handleClick}
       disabled={isLoading}
       size={size}
-      variant={isRunning ? "destructive" : variant}
+      variant={(isRunning || isStarting) ? "destructive" : variant}
       className={cn("gap-2 font-medium", className)}
-      data-testid={isRunning ? "button-stop-runtime" : "button-run-runtime"}
+      data-testid={(isRunning || isStarting) ? "button-stop-runtime" : "button-run-runtime"}
     >
       {isLoading ? (
         <>
           <Loader2 className="h-4 w-4 animate-spin" />
           <span className="hidden sm:inline">
-            {isStopMutating ? 'Stopping...' : 'Starting...'}
+            {stopMutation.isPending ? 'Stopping...' : 'Starting...'}
           </span>
         </>
       ) : isRunning ? (

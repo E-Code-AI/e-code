@@ -246,16 +246,82 @@ export function ReplitConsolePanel({
     autoReconnect: true,
   });
 
+  const previewWsRef = useRef<WebSocket | null>(null);
+  const previewReconnectRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const previewDisposedRef = useRef(false);
+  const recentPreviewMessagesRef = useRef<Set<string>>(new Set());
+
+  const addPreviewLog = useCallback((entry: { type: 'stdout' | 'stderr' | 'system' | 'exit'; content: string; timestamp: number }) => {
+    if (previewDisposedRef.current) return;
+    const dedupeKey = `${entry.type}:${entry.content}`;
+    if (recentPreviewMessagesRef.current.has(dedupeKey)) return;
+    recentPreviewMessagesRef.current.add(dedupeKey);
+    setTimeout(() => recentPreviewMessagesRef.current.delete(dedupeKey), 500);
+    handleLog(entry);
+  }, [handleLog]);
+
+  const connectPreviewLogs = useCallback(() => {
+    if (!projectId || previewDisposedRef.current) return;
+    if (previewWsRef.current && previewWsRef.current.readyState === WebSocket.OPEN) return;
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws/preview`;
+    try {
+      const ws = new WebSocket(wsUrl);
+      previewWsRef.current = ws;
+      ws.onopen = () => {
+        if (previewDisposedRef.current) { ws.close(); return; }
+        ws.send(JSON.stringify({ type: 'subscribe', projectId: String(projectId) }));
+      };
+      ws.onmessage = (event) => {
+        if (previewDisposedRef.current) return;
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === 'ping') { ws.send(JSON.stringify({ type: 'pong' })); return; }
+          if (String(data.projectId) !== String(projectId)) return;
+          if (data.type === 'preview:log' && data.log) {
+            const isErr = data.log.includes('ERROR') || data.log.includes('Error');
+            addPreviewLog({ type: isErr ? 'stderr' : 'stdout', content: data.log.trim(), timestamp: Date.now() });
+          } else if (data.type === 'preview:start') {
+            addPreviewLog({ type: 'system', content: 'Starting preview server...', timestamp: Date.now() });
+          } else if (data.type === 'preview:ready') {
+            addPreviewLog({ type: 'system', content: 'Preview server is ready.', timestamp: Date.now() });
+          } else if (data.type === 'preview:error') {
+            addPreviewLog({ type: 'stderr', content: data.error || 'Preview error', timestamp: Date.now() });
+          } else if (data.type === 'preview:status' && Array.isArray(data.logs)) {
+            for (const log of data.logs) {
+              addPreviewLog({ type: 'stdout', content: log.trim(), timestamp: Date.now() });
+            }
+          }
+        } catch {}
+      };
+      ws.onclose = () => {
+        previewWsRef.current = null;
+        if (previewDisposedRef.current) return;
+        if (previewReconnectRef.current) clearTimeout(previewReconnectRef.current);
+        previewReconnectRef.current = setTimeout(connectPreviewLogs, 3000);
+      };
+      ws.onerror = () => {};
+    } catch {}
+  }, [projectId, addPreviewLog]);
+
+  useEffect(() => {
+    previewDisposedRef.current = false;
+    connectPreviewLogs();
+    return () => {
+      previewDisposedRef.current = true;
+      if (previewReconnectRef.current) clearTimeout(previewReconnectRef.current);
+      if (previewWsRef.current) { previewWsRef.current.close(); previewWsRef.current = null; }
+    };
+  }, [connectPreviewLogs]);
+
   useEffect(() => {
     if (isRunning && executionId) {
-      // Mark the start of a new run for "Show Only Latest" feature
       setLatestRunStartIndex(logs.length);
       connect(executionId);
     } else if (!isRunning) {
       disconnect();
       setRunningWorkflowIds(new Set());
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isRunning, executionId, connect, disconnect]);
 
   const displayedLogs = showOnlyLatest 

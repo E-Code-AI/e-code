@@ -48,43 +48,7 @@ export function RewindPanel({ projectId, onRestore, className }: RewindPanelProp
         credentials: 'include'
       });
       if (!response.ok) {
-        return [
-          {
-            id: 'ckpt-1',
-            timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
-            type: 'auto',
-            description: 'Auto-save checkpoint',
-            files: [{ path: 'src/App.tsx', action: 'modified' }]
-          },
-          {
-            id: 'ckpt-2', 
-            timestamp: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
-            type: 'manual',
-            description: 'Added login form',
-            files: [
-              { path: 'src/components/LoginForm.tsx', action: 'created' },
-              { path: 'src/App.tsx', action: 'modified' }
-            ]
-          },
-          {
-            id: 'ckpt-3',
-            timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-            type: 'git_commit',
-            description: 'Initial commit',
-            files: [
-              { path: 'package.json', action: 'created' },
-              { path: 'src/App.tsx', action: 'created' },
-              { path: 'src/index.tsx', action: 'created' }
-            ]
-          },
-          {
-            id: 'ckpt-4',
-            timestamp: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
-            type: 'deploy',
-            description: 'Deployed to production',
-            files: []
-          }
-        ] as Checkpoint[];
+        return [] as Checkpoint[];
       }
       return response.json();
     },
