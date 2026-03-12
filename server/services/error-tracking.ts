@@ -4,6 +4,7 @@
  */
 
 import * as Sentry from '@sentry/node';
+import { nodeProfilingIntegration } from '@sentry/profiling-node';
 import { createLogger } from '../utils/logger';
 import { Request, Response, NextFunction } from 'express';
 
@@ -59,6 +60,7 @@ export class ErrorTrackingService {
             Sentry.httpIntegration(),
             Sentry.consoleIntegration(),
             Sentry.expressIntegration(),
+            nodeProfilingIntegration(),
           ],
           
           beforeSend: (event, hint) => {

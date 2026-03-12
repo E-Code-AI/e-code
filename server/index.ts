@@ -6,22 +6,17 @@ if (process.env.NODE_ENV === 'development') {
   dotenv.config();
 }
 
-// ✅ Fortune 500 Security: Validate required secrets EARLY in startup
-// Must be after dotenv/config to have access to environment variables
+// ✅ Sentry error tracking: Initialize FIRST (after dotenv) to catch startup errors
+import { errorTracking } from './services/error-tracking';
+errorTracking.initialize();
+
 import { validateRequiredSecrets } from './utils/secrets-manager';
 import { validateProductionEnvironment } from './utils/production-validation';
-// ✅ Fortune 500: Zod-validated environment configuration (validates on import)
 import { envConfig } from './utils/env-config';
 import { initializeRuntimes } from './execution/runtime-warmup';
 
 validateRequiredSecrets();
 validateProductionEnvironment();
-// envConfig is already validated on module load
-
-// ✅ Fortune 500 Production Monitoring: Initialize Sentry error tracking EARLY
-// Must be done before any other imports to catch startup errors
-import { errorTracking } from './services/error-tracking';
-errorTracking.initialize();
 
 // ✅ Database connection with retry logic for resilient startup
 import { connectWithRetry } from './db';
