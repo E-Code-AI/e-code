@@ -187,9 +187,8 @@ export function AdvancedTerminal({
       currentDirectory: '~'
     };
 
-    // Connect WebSocket
     const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${wsProtocol}//${window.location.host}/terminal?projectId=${projectId}&sessionId=${id}`;
+    const wsUrl = `${wsProtocol}//${window.location.host}/api/terminal/ws?projectId=${projectId}`;
     const ws = new WebSocket(wsUrl);
     
     ws.onopen = () => {
@@ -198,7 +197,32 @@ export function AdvancedTerminal({
     };
 
     ws.onmessage = (event) => {
-      terminal.write(event.data);
+      try {
+        const msg = JSON.parse(event.data);
+        switch (msg.type) {
+          case 'output':
+            terminal.write(msg.data);
+            break;
+          case 'connected':
+          case 'ready':
+            break;
+          case 'history':
+            terminal.write(msg.data);
+            break;
+          case 'exit':
+            terminal.writeln(`\r\n\x1b[1;33m${msg.data}\x1b[0m`);
+            break;
+          case 'error':
+            terminal.writeln(`\r\n\x1b[1;31mError: ${msg.data}\x1b[0m`);
+            break;
+          case 'pong':
+            break;
+          default:
+            break;
+        }
+      } catch {
+        terminal.write(event.data);
+      }
     };
 
     ws.onerror = (error) => {
@@ -207,17 +231,30 @@ export function AdvancedTerminal({
     };
 
     ws.onclose = () => {
-      terminal.writeln('\x1b[1;31mDisconnected from terminal\x1b[0m');
+      terminal.writeln('\r\n\x1b[1;31mDisconnected from terminal\x1b[0m');
     };
 
-    // Handle terminal input
     terminal.onData((data) => {
       if (ws.readyState === WebSocket.OPEN) {
-        ws.send(data);
+        ws.send(JSON.stringify({ type: 'input', data }));
       }
     });
 
-    // Track command history
+    const sendResize = () => {
+      if (ws.readyState === WebSocket.OPEN) {
+        const dims = fitAddon.proposeDimensions();
+        if (dims) {
+          ws.send(JSON.stringify({ type: 'resize', cols: dims.cols, rows: dims.rows }));
+        }
+      }
+    };
+
+    terminal.onResize(({ cols, rows }) => {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'resize', cols, rows }));
+      }
+    });
+
     let currentCommand = '';
     terminal.onKey(({ key, domEvent }) => {
       if (domEvent.key === 'Enter') {
@@ -233,6 +270,10 @@ export function AdvancedTerminal({
     });
 
     session.websocket = ws;
+
+    ws.addEventListener('open', () => {
+      setTimeout(sendResize, 200);
+    });
     setSessions(prev => [...prev, session]);
     setActiveSessionId(id);
 

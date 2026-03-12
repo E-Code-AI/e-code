@@ -537,7 +537,7 @@ export class PTYTerminalService {
       };
 
       const pty = await getPty();
-      const ptyProcess = pty.spawn(shell, ['-c', `ulimit -v 524288 -n 256 -u 64 -t 3600 2>/dev/null; exec ${shell} -i`], {
+      const ptyProcess = pty.spawn(shell, ['-i'], {
         name: 'xterm-256color',
         cols: 80,
         rows: 24,

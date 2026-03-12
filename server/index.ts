@@ -474,8 +474,9 @@ httpServer.listen(port, "0.0.0.0", () => {
 
   registerService('terminal');
   try {
-    // Setup PTY Terminal WebSocket server for real-time terminal access
-    // Uses node-pty for real shell interaction (Replit Cloud Run compatible)
+    if (process.env.NODE_ENV !== 'production') {
+      process.env.ALLOW_INSECURE_LOCAL_PTY = 'true';
+    }
     const { initPTYTerminalService } = await import("./terminal/pty-terminal-service");
     const ptyTerminalService = initPTYTerminalService();
     ptyTerminalService.setup(httpServer);

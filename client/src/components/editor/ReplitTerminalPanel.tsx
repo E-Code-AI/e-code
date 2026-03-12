@@ -134,6 +134,14 @@ export function ReplitTerminalPanel({ projectId, className }: ReplitTerminalPane
           xtermRef.current.writeln('\x1b[1;32m✓ Connected to terminal server\x1b[0m');
         }
         
+        if (fitAddonRef.current && xtermRef.current) {
+          ws.send(JSON.stringify({
+            type: 'resize',
+            cols: xtermRef.current.cols,
+            rows: xtermRef.current.rows
+          }));
+        }
+        
         if (reconnectTimeoutRef.current) {
           clearTimeout(reconnectTimeoutRef.current);
           reconnectTimeoutRef.current = null;

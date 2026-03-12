@@ -185,6 +185,11 @@ export function ReplitTerminal({
         setIsConnected(true);
         terminal.writeln("\x1b[1;32m✓ Connected to terminal server\x1b[0m");
         
+        const dims = fitAddon.proposeDimensions();
+        if (dims) {
+          ws.send(JSON.stringify({ type: 'resize', cols: dims.cols, rows: dims.rows }));
+        }
+        
         if (defaultCommand) {
           terminal.writeln(defaultCommand);
           ws.send(JSON.stringify({
@@ -252,7 +257,12 @@ export function ReplitTerminal({
     // Démarrer la connexion
     connectWebSocket();
 
-    // Ajustement automatique de la taille
+    terminal.onResize(({ cols, rows }) => {
+      if (wsRef.current?.readyState === WebSocket.OPEN) {
+        wsRef.current.send(JSON.stringify({ type: 'resize', cols, rows }));
+      }
+    });
+
     const handleResize = () => {
       fitAddon.fit();
     };
