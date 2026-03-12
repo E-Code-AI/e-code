@@ -91,12 +91,20 @@ interface PreviewInstance {
 
 export class PreviewService {
   private previews: Map<string, PreviewInstance> = new Map();
-  private basePort = 8000;
+  // Port range 20000-29999 — safely away from the app (5000), runner (8080), and common dev ports
+  private basePort = 20000;
+  private portRange = 9999;
   public healthCheckInterval: NodeJS.Timeout | null = null;
+  public idleCleanupInterval: NodeJS.Timeout | null = null;
   private allocatedPorts: Set<number> = new Set();
+  // Protect the host: cap concurrent live preview servers
+  private readonly MAX_CONCURRENT_PREVIEWS = 80;
+  // Kill idle previews after 30 minutes of no activity
+  private readonly IDLE_TIMEOUT_MS = 30 * 60 * 1000;
 
   constructor() {
     this.startHealthChecks();
+    this.startIdleCleanup();
   }
 
   private hashProjectId(projectId: string): number {
@@ -106,32 +114,49 @@ export class PreviewService {
       hash = ((hash << 5) - hash) + char;
       hash = hash & hash;
     }
-    return Math.abs(hash) % 10000;
+    return Math.abs(hash) % this.portRange;
   }
 
   private allocatePort(projectId: string): number {
     // Start from hash to maintain some consistency
     const hash = this.hashProjectId(projectId);
-    const originalPort = this.basePort + (hash % 10000);
+    const originalPort = this.basePort + hash;
     let port = originalPort;
     
     // Probe for next available port if collision
+    let tries = 0;
     while (this.allocatedPorts.has(port)) {
       port++;
-      if (port >= this.basePort + 10000) {
+      if (port >= this.basePort + this.portRange) {
         port = this.basePort; // Wrap around
       }
+      if (++tries > this.portRange) break; // No ports available
     }
     
     this.allocatedPorts.add(port);
     
-    // Log port allocation
     if (port !== originalPort) {
       logger.warn(`Port ${originalPort} collision, using ${port} for project ${projectId}`);
     }
     logger.info(`Allocated port ${port} for project ${projectId}`);
     
     return port;
+  }
+
+  /** Auto-kill previews that have been idle for IDLE_TIMEOUT_MS */
+  private startIdleCleanup() {
+    this.idleCleanupInterval = setInterval(async () => {
+      const now = Date.now();
+      for (const [projectId, preview] of this.previews) {
+        if (preview.status === 'running' || preview.status === 'starting') {
+          const idleMs = now - preview.lastHealthCheck.getTime();
+          if (idleMs > this.IDLE_TIMEOUT_MS) {
+            logger.info(`Preview for project ${projectId} idle for ${Math.round(idleMs / 60000)}m — stopping`);
+            await this.stopPreview(projectId);
+          }
+        }
+      }
+    }, 5 * 60 * 1000); // Sweep every 5 minutes
   }
 
   private ensurePreviewAuth(req: any, res: any, next: any) {
@@ -181,6 +206,9 @@ export class PreviewService {
       if (!preview.healthChecks.get(port)) {
         return res.status(503).json({ error: `Service on port ${port} is not healthy` });
       }
+
+      // Update idle timestamp so this preview isn't swept by the idle cleanup
+      preview.lastHealthCheck = new Date();
       
       const proxy = createProxyMiddleware({
         target: `http://127.0.0.1:${port}`,
@@ -209,6 +237,9 @@ export class PreviewService {
       if (!preview || preview.status !== 'running') {
         return res.status(404).json({ error: 'Preview not available' });
       }
+
+      // Update idle timestamp so this preview isn't swept by the idle cleanup
+      preview.lastHealthCheck = new Date();
       
       const proxy = createProxyMiddleware({
         target: `http://127.0.0.1:${preview.primaryPort}`,
@@ -326,6 +357,17 @@ export class PreviewService {
     await this.stopPreview(projectId);
 
     const runId = `run-${projectId}-${Date.now()}`;
+
+    // Enforce concurrency cap — reject if we're already at the process limit
+    const activeCount = [...this.previews.values()].filter(
+      p => p.status === 'running' || p.status === 'starting'
+    ).length;
+    if (activeCount >= this.MAX_CONCURRENT_PREVIEWS) {
+      logger.warn(`Preview concurrency limit (${this.MAX_CONCURRENT_PREVIEWS}) reached — rejecting start for project ${projectId}`);
+      const errInstance = this.makeErrorInstance(projectId, runId, 'Server is at capacity. Please try again in a moment.');
+      this.previews.set(projectId, errInstance);
+      return errInstance;
+    }
 
     // Get project files from the database
     let files: any[];
@@ -822,6 +864,9 @@ export function setupPreviewRoutes(app: express.Application) {
 process.on('exit', () => {
   if (previewService.healthCheckInterval) {
     clearInterval(previewService.healthCheckInterval);
+  }
+  if (previewService.idleCleanupInterval) {
+    clearInterval(previewService.idleCleanupInterval);
   }
 });
 
