@@ -16,12 +16,12 @@ node_modules/
 *.map
 *.d.ts
 
-# All build output — rebuilt during deployment build step, NOT in snapshot
-# The security scanner only scans the initial snapshot, not build output.
-# So we can safely build everything (dist/ + node_modules) during the build step.
-dist/
+# Server bundles only — rebuilt during deployment build step
+# dist/public/ is KEPT (pre-built frontend, static assets, not JS code)
+dist/index.js
+dist/runner.js
 
-# Development dependencies
+# Development test/spec files
 test/
 *.test.*
 *.spec.*
@@ -33,59 +33,27 @@ test/
 docs/
 *.md
 
-# Tests
-__tests__/
-*.test.ts
-*.test.tsx
-*.spec.ts
-*.spec.tsx
-coverage/
-playwright-report/
-test-results/
+# Logs
+*.log
+logs/
 
-# IDE
+# IDE files
 .vscode/
 .idea/
 
-# Assets not needed
-attached_assets/
-previews/
-screenshots/
+# OS files
+.DS_Store
+Thumbs.db
 
-# Logs
-logs/
-*.log
+# Environment
+.env*
 
-# Temporary
+# TypeScript source cache
+tsconfig.tsbuildinfo
+
+# Coverage
+coverage/
+
+# Tmp
 tmp/
 temp/
-
-# Mobile/Desktop
-mobile/
-desktop/
-electron/
-android/
-ios/
-
-# Kubernetes
-kubernetes/
-k8s/
-
-# Docker
-Dockerfile*
-docker-compose*
-
-# Replit dev files
-.breakpoints
-.upm/
-.cache/
-
-# Memory bank
-.ecode/
-
-# Replit agent session state (1GB+ of subagent cache - NOT needed for deployment)
-.local/state/
-.local/
-
-# Checkpoints (not needed for deployment)
-.checkpoints/
