@@ -14,6 +14,7 @@ interface CacheConfig {
   maxAge: number;
   staleWhileRevalidate?: number;
   immutable?: boolean;
+  noStore?: boolean;
 }
 
 const CACHE_CONFIGS: Record<string, CacheConfig> = {
@@ -27,11 +28,10 @@ const CACHE_CONFIGS: Record<string, CacheConfig> = {
     maxAge: 86400, // 1 day
     staleWhileRevalidate: 604800, // 7 days
   },
-  // API responses - short cache
   api: {
     maxAge: 0,
+    noStore: true,
   },
-  // HTML - no cache (always fresh)
   html: {
     maxAge: 0,
   },
@@ -70,8 +70,10 @@ export function performanceHeaders() {
     // Build Cache-Control header
     const cacheDirectives: string[] = [];
     
-    if (config.maxAge === 0) {
+    if (config.noStore) {
       cacheDirectives.push('no-cache', 'no-store', 'must-revalidate');
+    } else if (config.maxAge === 0) {
+      cacheDirectives.push('no-cache');
     } else {
       cacheDirectives.push(`max-age=${config.maxAge}`);
       cacheDirectives.push('public');

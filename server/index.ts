@@ -1021,15 +1021,13 @@ httpServer.listen(port, "0.0.0.0", () => {
   }));
   logger.info(`[Static Assets] Serving attached_assets from ${attachedAssetsPath}`);
 
-  // ✅ PRODUCTION STATIC SERVING — registered synchronously, before any potentially-blocking
-  // async service initialization (socket.io terminal, vite dev server, etc.).
-  // This ensures JS/CSS/image assets are always served with correct Content-Type,
-  // regardless of how long other services take to start.
+  // ✅ PRODUCTION STATIC SERVING — belt-and-suspenders with vite-loader.ts.
+  // This block runs early (before async service init) so assets are available
+  // immediately even if vite-loader takes time. vite-loader.ts has identical
+  // cache settings; Express deduplicates since first mount wins for same paths.
   //
-  // NOTE: In development, the Vite dev server (safeSetupVite below) serves assets from
-  //       memory and this block is skipped — process.env.NODE_ENV is 'development'.
-  //       In the production bundle, esbuild replaces process.env.NODE_ENV with "production"
-  //       so this block always runs in production.
+  // In development, Vite dev server serves assets from memory (this is skipped).
+  // In production, esbuild replaces process.env.NODE_ENV with "production".
   if (process.env.NODE_ENV === 'production') {
     const fs = await import('fs');
     // In the production esbuild bundle, __dirname = the directory of dist/index.js = dist/
