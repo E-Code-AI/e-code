@@ -544,77 +544,119 @@ export class StripePaymentService {
       throw new Error(`Webhook signature verification failed: ${error.message}`);
     }
 
-    // API-1 SECURITY FIX: Idempotency check - prevent duplicate event processing
+    // Atomic idempotency: INSERT ON CONFLICT DO NOTHING to claim the event
     const { db } = await import('../db');
     const { stripeWebhookEvents } = await import('../../shared/schema');
-    const { eq } = await import('drizzle-orm');
+    const { sql } = await import('drizzle-orm');
 
-    // Check if event was already processed
-    const existingEvent = await db
-      .select({ id: stripeWebhookEvents.id })
-      .from(stripeWebhookEvents)
-      .where(eq(stripeWebhookEvents.stripeEventId, event.id))
-      .limit(1);
+    const insertResult = await db.execute(
+      sql`INSERT INTO stripe_webhook_events (stripe_event_id, event_type, processed_at)
+          VALUES (${event.id}, ${event.type}, NOW())
+          ON CONFLICT (stripe_event_id) DO NOTHING`
+    );
 
-    if (existingEvent.length > 0) {
+    const rowCount = (insertResult as any).rowCount ?? (insertResult as any).length ?? 0;
+    if (rowCount === 0) {
       logger.info(`[Stripe] Duplicate webhook event detected, skipping: ${event.id}`);
-      return; // Return early - event already processed
+      return;
     }
 
-    // Handle different event types
-    switch (event.type) {
-      case 'customer.subscription.created':
-      case 'customer.subscription.updated':
-        await this.handleSubscriptionUpdate(event.data.object as Stripe.Subscription);
-        break;
-        
-      case 'customer.subscription.deleted':
-        await this.handleSubscriptionCanceled(event.data.object as Stripe.Subscription);
-        break;
-        
-      case 'invoice.payment_succeeded':
-        await this.handlePaymentSucceeded(event.data.object as Stripe.Invoice);
-        break;
-        
-      case 'invoice.payment_failed':
-        await this.handlePaymentFailed(event.data.object as Stripe.Invoice);
-        break;
+    // Process event — on failure, remove idempotency record so Stripe can retry
+    try {
+      switch (event.type) {
+        case 'customer.subscription.created':
+        case 'customer.subscription.updated':
+          await this.handleSubscriptionUpdate(event.data.object as Stripe.Subscription);
+          break;
+          
+        case 'customer.subscription.deleted':
+          await this.handleSubscriptionCanceled(event.data.object as Stripe.Subscription);
+          break;
+          
+        case 'invoice.payment_succeeded':
+          await this.handlePaymentSucceeded(event.data.object as Stripe.Invoice);
+          break;
+          
+        case 'invoice.payment_failed':
+          await this.handlePaymentFailed(event.data.object as Stripe.Invoice);
+          break;
 
-      case 'charge.refunded':
-        await this.handleChargeRefunded(event.data.object as Stripe.Charge);
-        break;
+        case 'charge.refunded':
+          await this.handleChargeRefunded(event.data.object as Stripe.Charge);
+          break;
 
-      case 'charge.dispute.created':
-        await this.handleDisputeCreated(event.data.object as Stripe.Dispute);
-        break;
-        
-      default:
-        // Unhandled webhook event type
-        break;
+        case 'charge.dispute.created':
+          await this.handleDisputeCreated(event.data.object as Stripe.Dispute);
+          break;
+          
+        default:
+          break;
+      }
+
+      logger.info(`[Stripe] Webhook event processed: ${event.id} (${event.type})`);
+    } catch (handlerError) {
+      // Remove idempotency record so Stripe can retry this event
+      await db.execute(
+        sql`DELETE FROM stripe_webhook_events WHERE stripe_event_id = ${event.id}`
+      );
+      logger.error(`[Stripe] Handler failed for event ${event.id} (${event.type}), removed idempotency record for retry:`, handlerError);
+      throw handlerError;
+    }
+  }
+
+  private resolveTierFromPriceId(priceId: string | null | undefined): 'free' | 'core' | 'teams' | 'enterprise' {
+    if (!priceId) return 'free';
+    for (const plan of this.plans.values()) {
+      if (plan.id === priceId) return plan.tier;
+    }
+    return 'free';
+  }
+
+  private resolveTierFromSubscription(subscription: Stripe.Subscription): { tier: 'free' | 'core' | 'teams' | 'enterprise'; priceId: string | null } {
+    const knownPriceIds = new Map<string, 'free' | 'core' | 'teams' | 'enterprise'>();
+    for (const plan of this.plans.values()) {
+      if (plan.id && plan.id !== 'free') {
+        knownPriceIds.set(plan.id, plan.tier);
+      }
     }
 
-    // API-1 SECURITY FIX: Record event as processed after successful handling
-    await db.insert(stripeWebhookEvents).values({
-      stripeEventId: event.id,
-      eventType: event.type,
-      processedAt: new Date(),
-    });
+    for (const item of subscription.items?.data ?? []) {
+      const itemPriceId = item.price?.id;
+      if (itemPriceId && knownPriceIds.has(itemPriceId)) {
+        return { tier: knownPriceIds.get(itemPriceId)!, priceId: itemPriceId };
+      }
+    }
 
-    logger.info(`[Stripe] Webhook event processed and recorded: ${event.id} (${event.type})`);
+    const fallbackPriceId = subscription.items?.data?.[0]?.price?.id ?? null;
+    if (fallbackPriceId) {
+      logger.warn(`[Stripe] Unknown price ID ${fallbackPriceId} in subscription ${subscription.id}, preserving current tier`);
+    }
+    return { tier: 'free', priceId: fallbackPriceId };
   }
 
   private async handleSubscriptionUpdate(subscription: Stripe.Subscription) {
     const userId = parseInt(subscription.metadata.userId);
     if (!userId) return;
 
-    await storage.updateUser(String(userId), {
+    const { tier, priceId } = this.resolveTierFromSubscription(subscription);
+
+    const updateData: Record<string, any> = {
       stripeSubscriptionId: subscription.id,
+      stripePriceId: priceId,
       subscriptionStatus: subscription.status,
       subscriptionCurrentPeriodEnd: getSubscriptionPeriodBoundary(
         subscription,
         'current_period_end'
       ) ?? undefined,
-    });
+    };
+
+    if (tier !== 'free' || subscription.status === 'canceled') {
+      updateData.subscriptionTier = tier;
+    }
+
+    await storage.updateUser(String(userId), updateData);
+
+    logger.info(`[Stripe] Subscription updated for user ${userId}: tier=${tier}, status=${subscription.status}`);
   }
 
   private async handleSubscriptionCanceled(subscription: Stripe.Subscription) {
@@ -623,45 +665,83 @@ export class StripePaymentService {
 
     await storage.updateUser(String(userId), {
       subscriptionStatus: 'canceled',
+      subscriptionTier: 'free',
       stripeSubscriptionId: null,
       stripePriceId: null,
     });
+
+    logger.info(`[Stripe] Subscription canceled for user ${userId}, downgraded to free tier`);
   }
 
   private async handlePaymentSucceeded(invoice: Stripe.Invoice) {
     const customerId = typeof invoice.customer === 'string' ? invoice.customer : invoice.customer?.id;
     if (!customerId) return;
 
-    try {
-      const customer = await stripe.customers.retrieve(customerId);
-      if (customer.deleted) return;
-      
-      const userId = (customer as Stripe.Customer).metadata?.userId;
-      if (!userId) return;
+    const customer = await stripe.customers.retrieve(customerId);
+    if (customer.deleted) return;
+    
+    const userId = (customer as Stripe.Customer).metadata?.userId;
+    if (!userId) return;
 
-      // Note: Payment tracking fields not in schema - using logs for audit trail
-      logger.info(`[Stripe] Payment succeeded for user ${userId}, invoice ${invoice.id}`);
-    } catch (error) {
-      logger.error('[Stripe] Error handling payment success:', error);
+    const subscriptionId = typeof invoice.subscription === 'string'
+      ? invoice.subscription
+      : invoice.subscription?.id;
+
+    if (subscriptionId) {
+      const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+      const { tier, priceId } = this.resolveTierFromSubscription(subscription);
+
+      const updateData: Record<string, any> = {
+        subscriptionStatus: 'active',
+        stripePriceId: priceId,
+        subscriptionCurrentPeriodEnd: getSubscriptionPeriodBoundary(
+          subscription,
+          'current_period_end'
+        ) ?? undefined,
+      };
+
+      if (tier !== 'free') {
+        updateData.subscriptionTier = tier;
+      }
+
+      await storage.updateUser(userId, updateData);
     }
+
+    logger.info(`[Stripe] Payment succeeded for user ${userId}, invoice ${invoice.id}`);
   }
 
   private async handlePaymentFailed(invoice: Stripe.Invoice) {
     const customerId = typeof invoice.customer === 'string' ? invoice.customer : invoice.customer?.id;
     if (!customerId) return;
 
-    try {
-      const customer = await stripe.customers.retrieve(customerId);
-      if (customer.deleted) return;
-      
-      const userId = (customer as Stripe.Customer).metadata?.userId;
-      if (!userId) return;
+    const customer = await stripe.customers.retrieve(customerId);
+    if (customer.deleted) return;
+    
+    const userId = (customer as Stripe.Customer).metadata?.userId;
+    if (!userId) return;
 
-      // Note: Payment tracking fields not in schema - using logs for audit trail
-      logger.warn(`[Stripe] Payment failed for user ${userId}, invoice ${invoice.id}`);
-    } catch (error) {
-      logger.error('[Stripe] Error handling payment failure:', error);
+    await storage.updateUser(userId, {
+      subscriptionStatus: 'past_due',
+    });
+
+    const user = await storage.getUser(userId);
+    if (user?.email) {
+      try {
+        const { sendPaymentFailedEmail } = await import('../utils/sendgrid-email-service');
+        const amountDue = (invoice.amount_due ?? 0) / 100;
+        await sendPaymentFailedEmail(
+          userId,
+          user.email,
+          user.displayName || user.username,
+          amountDue,
+          invoice.id
+        );
+      } catch (emailError) {
+        logger.error('[Stripe] Failed to send payment failure email (non-critical):', emailError);
+      }
     }
+
+    logger.warn(`[Stripe] Payment failed for user ${userId}, invoice ${invoice.id}, status set to past_due`);
   }
 
   private async handleChargeRefunded(charge: Stripe.Charge) {

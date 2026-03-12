@@ -65,6 +65,8 @@ export class AuthRouter {
       isMentor: user.isMentor,
       role: user.role,
       isAdmin: user.role === 'admin' || user.role === 'super_admin',
+      subscriptionTier: user.subscriptionTier || 'free',
+      subscriptionStatus: user.subscriptionStatus || null,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt
       // EXCLUDED: password, twoFactorSecret, passwordResetToken, stripeCustomerId, etc.

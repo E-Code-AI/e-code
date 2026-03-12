@@ -23,6 +23,7 @@ const ConnectionStatusBanner = instrumentedLazy(() => import("./components/Conne
 const LazyShellWidgets = instrumentedLazy(() => import("@/components/LazyShellWidgets").then(m => ({ default: m.LazyShellWidgets })), 'LazyShellWidgets');
 const OfflineFallback = instrumentedLazy(() => import("@/components/OfflineFallback").then(m => ({ default: m.OfflineFallback })), 'OfflineFallback');
 const EmailVerificationBanner = instrumentedLazy(() => import("@/components/EmailVerificationBanner").then(m => ({ default: m.EmailVerificationBanner })), 'EmailVerificationBanner');
+const PaymentFailureBanner = instrumentedLazy(() => import("@/components/PaymentFailureBanner").then(m => ({ default: m.PaymentFailureBanner })), 'PaymentFailureBanner');
 
 function PageLoader() {
   return <ECodeLoading fullScreen size="lg" text="Loading..." />;
@@ -129,6 +130,7 @@ function AppContent() {
           <div className="min-h-screen replit-layout-main">
             <ConnectionStatusBanner />
             <EmailVerificationBanner />
+            <PaymentFailureBanner />
             <ScrollToTop />
             <Toaster />
             <LazyShellWidgets />

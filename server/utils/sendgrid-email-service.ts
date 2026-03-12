@@ -448,6 +448,58 @@ export async function sendAccountLockedEmail(userId: string, email: string, disp
   }
 }
 
+export async function sendPaymentFailedEmail(userId: string, email: string, displayName: string, amountDue: number, invoiceId: string): Promise<void> {
+  const template = {
+    subject: 'Action Required: Payment Failed for Your E-Code Subscription',
+    html: `
+      <!DOCTYPE html>
+      <html>
+        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #ffffff;">
+          <div style="text-align: center; padding: 20px 0;">
+            <h1 style="color: #1a1a2e; font-size: 24px; margin-bottom: 8px;">E-Code</h1>
+          </div>
+          <div style="background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 12px; padding: 24px; margin-bottom: 20px;">
+            <h2 style="color: #dc2626; font-size: 20px; margin: 0 0 12px 0;">Payment Failed</h2>
+            <p style="color: #374151; font-size: 16px; line-height: 1.5; margin: 0 0 12px 0;">
+              Hi ${displayName},
+            </p>
+            <p style="color: #374151; font-size: 16px; line-height: 1.5; margin: 0 0 12px 0;">
+              We were unable to process your payment of <strong>$${amountDue.toFixed(2)}</strong> for your E-Code subscription.
+            </p>
+            <p style="color: #374151; font-size: 16px; line-height: 1.5; margin: 0 0 16px 0;">
+              Please update your payment method to avoid any interruption to your service. Your subscription will remain active for a limited time while we retry the payment.
+            </p>
+            <div style="text-align: center; margin: 20px 0;">
+              <a href="${APP_URL}/billing" style="display: inline-block; padding: 12px 32px; background-color: #dc2626; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">Update Payment Method</a>
+            </div>
+            <p style="color: #6b7280; font-size: 13px; margin: 16px 0 0 0;">
+              Invoice: ${invoiceId}
+            </p>
+          </div>
+          <div style="text-align: center; padding: 20px 0; color: #9ca3af; font-size: 12px;">
+            <p>If you believe this is an error, please contact support.</p>
+          </div>
+        </body>
+      </html>
+    `,
+    text: `Payment Failed - Hi ${displayName}, we were unable to process your payment of $${amountDue.toFixed(2)} for your E-Code subscription. Please update your payment method at ${APP_URL}/billing to avoid service interruption.`
+  };
+
+  try {
+    await sgMail.send({
+      to: email,
+      from: { email: FROM_EMAIL, name: FROM_NAME },
+      subject: template.subject,
+      html: template.html,
+      text: template.text
+    });
+    await logEmailEvent(userId, 'payment_failed_notification', email, 'success', { amountDue, invoiceId });
+  } catch (error: any) {
+    await logEmailEvent(userId, 'payment_failed_notification', email, 'failure', { error: error.message, amountDue, invoiceId });
+    console.error('Failed to send payment failed email:', error);
+  }
+}
+
 // Validate email format and check for typos
 export function validateEmailTypos(email: string): string | null {
   const commonTypos: Record<string, string> = {
