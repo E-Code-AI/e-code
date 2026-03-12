@@ -3,6 +3,19 @@ import App from "./App";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import "./critical.css";
 
+if (import.meta.env.VITE_SENTRY_DSN) {
+  import('@sentry/react').then((Sentry) => {
+    Sentry.init({
+      dsn: import.meta.env.VITE_SENTRY_DSN,
+      environment: import.meta.env.MODE,
+      integrations: [
+        Sentry.browserTracingIntegration(),
+      ],
+      tracesSampleRate: import.meta.env.MODE === 'production' ? 0.1 : 1.0,
+    });
+  });
+}
+
 const deferredInit = () => {
   import('./index.css');
   import("./i18n");
@@ -27,25 +40,6 @@ const deferredInit = () => {
   import("./lib/cache-reconciliation").then(({ cacheReconciliation }) => {
     cacheReconciliation.init();
   });
-  
-  if (import.meta.env.VITE_SENTRY_DSN) {
-    import('@sentry/react').then((Sentry) => {
-      Sentry.init({
-        dsn: import.meta.env.VITE_SENTRY_DSN,
-        environment: import.meta.env.MODE,
-        integrations: [
-          Sentry.browserTracingIntegration(),
-          Sentry.replayIntegration({
-            maskAllText: true,
-            blockAllMedia: true,
-          }),
-        ],
-        tracesSampleRate: import.meta.env.MODE === 'production' ? 0.1 : 1.0,
-        replaysSessionSampleRate: 0.1,
-        replaysOnErrorSampleRate: 1.0,
-      });
-    });
-  }
 };
 
 if (typeof window !== 'undefined') {
