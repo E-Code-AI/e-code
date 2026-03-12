@@ -257,6 +257,10 @@ export const useAgentConversationStore = create<AgentConversationStore>()(
       addMessage: (conversationId: number, message: Message) => {
         set((state) => {
           const existingMessages = state.messages[conversationId] || [DEFAULT_ASSISTANT_MESSAGE];
+          // Dedup: skip if a message with the same ID already exists
+          if (message.id && existingMessages.some(m => m.id === message.id)) {
+            return {};
+          }
           const messageWithDate = {
             ...message,
             timestamp: message.timestamp instanceof Date 

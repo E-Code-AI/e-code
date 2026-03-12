@@ -431,6 +431,14 @@ export class PreviewService {
     const preview = this.previews.get(projectId);
     if (preview) {
       preview.status = 'stopped';
+      // Kill all spawned child processes and release their ports
+      for (const [port, proc] of preview.processes) {
+        try {
+          proc.kill('SIGKILL');
+        } catch {}
+        this.allocatedPorts.delete(port);
+      }
+      preview.processes.clear();
       logger.info(`Preview stopped for project ${projectId}`);
       previewEvents.emit('preview:stop', { projectId, runId: preview.runId });
     }
@@ -779,9 +787,11 @@ http.createServer((req, res) => {
 
   private async checkPortHealth(port: number): Promise<boolean> {
     try {
-      const response = await fetch(`http://localhost:${port}`, {
-        method: 'HEAD',
-        signal: AbortSignal.timeout(5000)
+      // Use 127.0.0.1 explicitly — "localhost" can resolve to ::1 (IPv6) on some hosts,
+      // while the preview servers bind to 127.0.0.1 only.
+      const response = await fetch(`http://127.0.0.1:${port}`, {
+        method: 'GET',
+        signal: AbortSignal.timeout(3000)
       });
       return response.status < 500;
     } catch {
