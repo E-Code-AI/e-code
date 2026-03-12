@@ -773,16 +773,170 @@ export class ToolExecutor {
   }
 
   private async getDiagnostics(params: { file_path?: string }): Promise<ToolExecutionResult> {
-    // In production, integrate with LSP or TypeScript compiler
-    // For now, return a stub
-    
-    return {
-      success: true,
-      output: {
-        message: 'Diagnostics integration requires LSP setup',
-        errors: [],
-        warnings: []
+    const ts = await import('typescript');
+
+    const supportedExtensions = ['.ts', '.tsx', '.js', '.jsx'];
+
+    if (params.file_path) {
+      this.validatePath(params.file_path);
+
+      const ext = path.extname(params.file_path).toLowerCase();
+      if (!supportedExtensions.includes(ext)) {
+        return {
+          success: true,
+          output: {
+            message: `Diagnostics not supported for "${ext}" files. Supported: ${supportedExtensions.join(', ')}`,
+            diagnostics: [],
+            errors: [],
+            warnings: []
+          }
+        };
       }
-    };
+    }
+
+    try {
+      const tsconfigPath = ts.findConfigFile(
+        this.projectRoot,
+        ts.sys.fileExists,
+        'tsconfig.json'
+      );
+
+      let compilerOptions: any = {
+        target: ts.ScriptTarget.ES2020,
+        module: ts.ModuleKind.ESNext,
+        moduleResolution: ts.ModuleResolutionKind.Node10,
+        strict: true,
+        noEmit: true,
+        skipLibCheck: true,
+        esModuleInterop: true,
+        jsx: ts.JsxEmit.Preserve,
+      };
+
+      let rootFileNames: string[] = [];
+
+      if (tsconfigPath) {
+        const configFile = ts.readConfigFile(tsconfigPath, ts.sys.readFile);
+        if (!configFile.error) {
+          const parsed = ts.parseJsonConfigFileContent(
+            configFile.config,
+            ts.sys,
+            path.dirname(tsconfigPath)
+          );
+          compilerOptions = parsed.options;
+          rootFileNames = parsed.fileNames;
+        }
+      }
+
+      let targetResolvedFile: string | undefined;
+      if (params.file_path) {
+        targetResolvedFile = path.resolve(this.projectRoot, params.file_path);
+        if (!rootFileNames.includes(targetResolvedFile)) {
+          rootFileNames.push(targetResolvedFile);
+        }
+      }
+
+      if (rootFileNames.length === 0) {
+        return {
+          success: true,
+          output: {
+            message: 'No TypeScript/JavaScript files found to check',
+            diagnostics: [],
+            errors: [],
+            warnings: []
+          }
+        };
+      }
+
+      const program = ts.createProgram(rootFileNames, {
+        ...compilerOptions,
+        noEmit: true,
+        skipLibCheck: true,
+      });
+
+      let allDiagnostics: readonly any[];
+      if (targetResolvedFile) {
+        const sourceFile = program.getSourceFile(targetResolvedFile);
+        if (!sourceFile) {
+          return {
+            success: true,
+            output: {
+              message: `File not found in program: ${params.file_path}`,
+              diagnostics: [],
+              errors: [],
+              warnings: []
+            }
+          };
+        }
+        allDiagnostics = [
+          ...program.getSyntacticDiagnostics(sourceFile),
+          ...program.getSemanticDiagnostics(sourceFile),
+        ];
+      } else {
+        allDiagnostics = [
+          ...program.getSyntacticDiagnostics(),
+          ...program.getSemanticDiagnostics(),
+        ];
+      }
+
+      const diagnostics: Array<{
+        file: string;
+        line: number;
+        column: number;
+        severity: 'error' | 'warning' | 'info';
+        message: string;
+        code: string;
+        source: string;
+      }> = [];
+
+      for (const diag of allDiagnostics) {
+        if (!diag.file || diag.start === undefined) continue;
+
+        const { line, character } = diag.file.getLineAndCharacterOfPosition(diag.start);
+        const filePath = path.relative(this.projectRoot, diag.file.fileName);
+
+        let severity: 'error' | 'warning' | 'info' = 'info';
+        if (diag.category === ts.DiagnosticCategory.Error) {
+          severity = 'error';
+        } else if (diag.category === ts.DiagnosticCategory.Warning) {
+          severity = 'warning';
+        }
+
+        diagnostics.push({
+          file: filePath,
+          line: line + 1,
+          column: character + 1,
+          severity,
+          message: ts.flattenDiagnosticMessageText(diag.messageText, '\n'),
+          code: `TS${diag.code}`,
+          source: 'typescript',
+        });
+      }
+
+      const errors = diagnostics.filter(d => d.severity === 'error');
+      const warnings = diagnostics.filter(d => d.severity === 'warning');
+
+      const fileLabel = params.file_path || 'project';
+      let message: string;
+      if (errors.length === 0 && warnings.length === 0) {
+        message = `No diagnostics found for ${fileLabel}`;
+      } else {
+        message = `Found ${errors.length} error(s) and ${warnings.length} warning(s) in ${fileLabel}`;
+      }
+
+      return {
+        success: true,
+        output: {
+          message,
+          diagnostics,
+          errors,
+          warnings
+        }
+      };
+    } catch (err: any) {
+      return {
+        success: false,
+        error: `Failed to run diagnostics: ${err.message}`
+      };
+    }
   }
 }
