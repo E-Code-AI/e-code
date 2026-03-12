@@ -1,9 +1,9 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Globe, RefreshCw, ExternalLink, Play, Square, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { PreviewSplashScreen } from './PreviewSplashScreen';
@@ -41,8 +41,6 @@ export function PreviewPanel({
   appName
 }: PreviewPanelProps) {
   const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const hasAttemptedAutoStart = useRef(false);
 
   // Query preview status
   const { data: previewStatus, isLoading: isStatusLoading, refetch: refetchStatus } = useQuery<PreviewStatus>({
@@ -67,14 +65,13 @@ export function PreviewPanel({
     }
   });
 
-  // Start preview mutation
+  // Start preview mutation — calls the runtime start which bridges to the preview proxy
   const startPreviewMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest('POST', `/api/preview/projects/${projectId}/preview/start`, {});
+      return apiRequest('POST', `/api/projects/${projectId}/runtime/start`, {});
     },
     onSuccess: () => {
       toast({ title: 'Preview starting...', description: 'Your app is being built and started.' });
-      // Refetch status after a delay to allow startup
       setTimeout(() => refetchStatus(), 2000);
     },
     onError: (error: any) => {
@@ -89,7 +86,7 @@ export function PreviewPanel({
   // Stop preview mutation
   const stopPreviewMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest('POST', `/api/preview/projects/${projectId}/preview/stop`, {});
+      return apiRequest('POST', `/api/projects/${projectId}/runtime/stop`, {});
     },
     onSuccess: () => {
       toast({ title: 'Preview stopped' });
@@ -103,17 +100,6 @@ export function PreviewPanel({
       });
     }
   });
-
-  // Auto-start preview when component mounts if there are runnable files
-  // ✅ FIX (Dec 1, 2025): Use ref flag to prevent infinite re-triggering if backend rejects
-  useEffect(() => {
-    if (autoStart && previewStatus && 
-        previewStatus.status === 'stopped' && 
-        !hasAttemptedAutoStart.current) {
-      hasAttemptedAutoStart.current = true;
-      startPreviewMutation.mutate(undefined);
-    }
-  }, [autoStart, previewStatus?.status]);
 
   // ✅ FIX (Dec 1, 2025): Add cache-busting timestamp to prevent stale content
   const handleRefresh = useCallback(() => {

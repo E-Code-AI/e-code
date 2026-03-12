@@ -94,8 +94,6 @@ export function MobilePreviewPanel({
   const [isLoading, setIsLoading] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const { toast } = useToast();
-  const hasAttemptedAutoStart = useRef(false);
-
   const { data: previewStatus, isLoading: isStatusLoading, refetch: refetchStatus } = useQuery<PreviewStatus>({
     queryKey: ['/api/preview/url', projectId],
     queryFn: async () => {
@@ -118,7 +116,7 @@ export function MobilePreviewPanel({
 
   const startPreviewMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest('POST', `/api/preview/projects/${projectId}/preview/start`, {});
+      return apiRequest('POST', `/api/projects/${projectId}/runtime/start`, {});
     },
     onSuccess: () => {
       setTimeout(() => refetchStatus(), 2000);
@@ -149,15 +147,6 @@ export function MobilePreviewPanel({
   const noRunnableFiles = previewStatus?.status === 'no_runnable_files';
   const baseUrl = externalPreviewUrl || previewStatus?.previewUrl || `/api/preview/projects/${projectId}/preview`;
   const computedPreviewUrl = baseUrl + (currentPath === '/' ? '' : currentPath);
-
-  if (
-    (previewStatus?.status === 'stopped' || previewStatus?.status === 'no_runnable_files' || previewStatus?.status === 'error') &&
-    !hasAttemptedAutoStart.current &&
-    projectId
-  ) {
-    hasAttemptedAutoStart.current = true;
-    startPreviewMutation.mutate(undefined);
-  }
 
   const handleRefresh = () => {
     setIsLoading(true);

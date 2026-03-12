@@ -290,6 +290,15 @@ router.get('/url', ensureAuthenticated, async (req, res) => {
     const { previewService } = await import('../preview/preview-service');
     const preview = previewService.getPreview(projectId);
     
+    // If preview is starting, propagate that status so the client shows a loading state
+    if (preview && preview.status === 'starting') {
+      return res.json({
+        previewUrl: null,
+        status: 'starting',
+        message: 'Preview server is starting...'
+      });
+    }
+    
     if (!preview || preview.status !== 'running') {
       // For HTML-only projects, return static preview URL
       if (hasHtmlFile && !hasPackageJson && !hasPythonFiles) {
