@@ -95,6 +95,8 @@ export function createCorsMiddleware(): cors.CorsOptions {
 
   const corsOptions: cors.CorsOptions = {
     origin: (origin, callback) => {
+      // Requests with no Origin header (curl, wget, server-side health checks)
+      // skip the origin check and are always allowed through.
       if (!origin || origin === 'null') {
         if (isProduction && origin === 'null') {
           console.warn(`[CORS] Rejected explicit null origin in production`);
@@ -134,7 +136,7 @@ export function createCorsMiddleware(): cors.CorsOptions {
       callback(err);
     },
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: [
       'Content-Type',
       'Authorization',

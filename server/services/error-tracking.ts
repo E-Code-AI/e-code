@@ -136,6 +136,7 @@ export class ErrorTrackingService {
       'Non-Error promise rejection captured',
       'Network request failed',
       'Failed to fetch',
+      'Not allowed by CORS',
     ];
     
     const errorMessage = (error as Error)?.message || event.message || '';
