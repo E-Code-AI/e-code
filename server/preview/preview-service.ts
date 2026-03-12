@@ -401,6 +401,7 @@ export class PreviewService {
         this.allocatedPorts.delete(port);
       }
       existing.processes.clear();
+      previewEvents.emit('preview:stop', { projectId, runId: existing.runId });
       this.previews.delete(projectId);
     }
 
@@ -464,13 +465,30 @@ export class PreviewService {
       }
 
       let removed = 0;
-      for (const cachedPath of [...projectCache.keys()]) {
-        if (!currentPaths.has(cachedPath)) {
-          const fullPath = path.join(previewPath, cachedPath);
-          try { await fs.unlink(fullPath); } catch {}
-          projectCache.delete(cachedPath);
-          removed++;
+      if (projectCache.size > 0) {
+        for (const cachedPath of [...projectCache.keys()]) {
+          if (!currentPaths.has(cachedPath)) {
+            const fullPath = path.join(previewPath, cachedPath);
+            try { await fs.unlink(fullPath); } catch {}
+            projectCache.delete(cachedPath);
+            removed++;
+          }
         }
+      } else {
+        const walkDir = async (dir: string, base: string) => {
+          let entries: import('fs').Dirent[];
+          try { entries = await fs.readdir(dir, { withFileTypes: true }); } catch { return; }
+          for (const entry of entries) {
+            const rel = path.join(base, entry.name);
+            if (entry.isDirectory()) {
+              await walkDir(path.join(dir, entry.name), rel);
+            } else if (!currentPaths.has(rel)) {
+              try { await fs.unlink(path.join(dir, entry.name)); } catch {}
+              removed++;
+            }
+          }
+        };
+        await walkDir(previewPath, '');
       }
 
       for (const { relPath, content, hash } of toWrite) {
