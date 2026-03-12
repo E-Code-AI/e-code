@@ -6,13 +6,15 @@ import {
   toolExecutions,
   agentSessions,
   agentAuditTrail,
+  files,
   type ToolRegistry,
   type ToolExecution,
   type InsertToolRegistry,
   type InsertToolExecution,
   type AgentSession
 } from '@shared/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
+import { syncFileToDisc } from '../utils/project-fs-sync';
 import { z } from 'zod';
 import { agentFileOperations } from './agent-file-operations.service';
 import { agentCommandExecution } from './agent-command-execution.service';
@@ -1273,20 +1275,24 @@ export class AgentToolFrameworkService extends EventEmitter {
       }
     });
 
-    // 10. Write Environment Variables (with auditing)
+    // 10. Write Environment Variables (with auditing + DB persistence)
     this.registerTool({
       name: 'write_env',
       displayName: 'Write Environment Variable',
-      description: 'Write environment variable with audit trail',
+      description: 'Write environment variable with audit trail and database persistence',
       capability: 'ide_integration',
       inputSchema: z.object({
         key: z.string().describe('Environment variable key'),
         value: z.string().describe('Environment variable value'),
-        namespace: z.string().optional().describe('Variable namespace')
+        namespace: z.string().optional().describe('Variable namespace'),
+        envFileName: z.string().optional().describe('Env file name (default: .env)')
       }),
       requiresAuth: true,
       rateLimit: 2,
       execute: async (input, context) => {
+        const envFileName = input.envFileName || '.env';
+        this.validateEnvFileName(envFileName);
+
         // Audit all env writes
         await db.insert(agentAuditTrail).values({
           userId: typeof context.userId === 'string' ? parseInt(context.userId) || 0 : context.userId,
@@ -1302,12 +1308,70 @@ export class AgentToolFrameworkService extends EventEmitter {
           },
           severity: 'medium'
         });
-        
+
+        // Persist env variable to the files table atomically
+        const mergedContent = await this.upsertEnvVariable(
+          context.projectId,
+          envFileName,
+          input.key,
+          input.value
+        );
+
+        // Sync env file to disk so running processes pick it up
+        syncFileToDisc(context.projectId, envFileName, mergedContent).catch(err => {
+          logger.warn(`[ToolFramework] Failed to sync env file to disk: ${err.message}`);
+        });
+
         return {
           success: true,
           key: input.key,
           written: true,
-          note: 'Env file persistence pending - currently in-memory only'
+          persisted: true,
+          envFile: envFileName
+        };
+      }
+    });
+
+    // 10b. Write entire .env file content (with auditing + DB persistence)
+    this.registerTool({
+      name: 'write_env_file',
+      displayName: 'Write Environment File',
+      description: 'Write an entire .env file with audit trail and database persistence',
+      capability: 'ide_integration',
+      inputSchema: z.object({
+        content: z.string().describe('Full .env file content'),
+        envFileName: z.string().optional().describe('Env file name (default: .env)')
+      }),
+      requiresAuth: true,
+      rateLimit: 2,
+      execute: async (input, context) => {
+        const envFileName = input.envFileName || '.env';
+        this.validateEnvFileName(envFileName);
+
+        await db.insert(agentAuditTrail).values({
+          userId: typeof context.userId === 'string' ? parseInt(context.userId) || 0 : context.userId,
+          sessionId: context.sessionId,
+          action: 'write_env_file',
+          resourceType: 'environment_file',
+          resourceId: envFileName,
+          details: {
+            envFileName,
+            timestamp: new Date().toISOString(),
+            outcome: 'success'
+          },
+          severity: 'medium'
+        });
+
+        await this.upsertEnvFileContent(context.projectId, envFileName, input.content);
+
+        syncFileToDisc(context.projectId, envFileName, input.content).catch(err => {
+          logger.warn(`[ToolFramework] Failed to sync env file to disk: ${err.message}`);
+        });
+
+        return {
+          success: true,
+          persisted: true,
+          envFile: envFileName
         };
       }
     });
@@ -1601,6 +1665,150 @@ export class AgentToolFrameworkService extends EventEmitter {
 
   private emitEvent(event: ToolExecutionEvent) {
     this.emit('tool:event', event);
+  }
+
+  private parseEnvContent(content: string): Map<string, string> {
+    const vars = new Map<string, string>();
+    for (const line of content.split('\n')) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith('#')) continue;
+      const eqIdx = trimmed.indexOf('=');
+      if (eqIdx === -1) continue;
+      const key = trimmed.substring(0, eqIdx).trim();
+      let value = trimmed.substring(eqIdx + 1).trim();
+      if ((value.startsWith('"') && value.endsWith('"')) ||
+          (value.startsWith("'") && value.endsWith("'"))) {
+        value = value.slice(1, -1);
+      }
+      vars.set(key, value);
+    }
+    return vars;
+  }
+
+  private serializeEnvVars(vars: Map<string, string>): string {
+    const lines: string[] = [];
+    vars.forEach((value, key) => {
+      const needsQuotes = value.includes(' ') || value.includes('#') || value.includes('\n');
+      lines.push(needsQuotes ? `${key}="${value}"` : `${key}=${value}`);
+    });
+    return lines.join('\n') + '\n';
+  }
+
+  private static ENV_FILE_PATTERN = /^\.env(\.[a-zA-Z0-9._-]+)?$/;
+
+  private validateEnvFileName(envFileName: string): void {
+    const basename = path.basename(envFileName);
+    if (!AgentToolFrameworkService.ENV_FILE_PATTERN.test(basename) || envFileName.includes('/')) {
+      throw new Error(`Invalid env file name: ${envFileName}. Must match .env or .env.* pattern (e.g. .env, .env.local, .env.production)`);
+    }
+  }
+
+  private envFileLockKey(projectId: number, normalizedPath: string): number {
+    let hash = projectId * 2654435761;
+    for (let i = 0; i < normalizedPath.length; i++) {
+      hash = ((hash << 5) - hash + normalizedPath.charCodeAt(i)) | 0;
+    }
+    return hash;
+  }
+
+  async upsertEnvVariable(
+    projectId: number,
+    envFileName: string,
+    key: string,
+    value: string
+  ): Promise<string> {
+    const normalizedPath = envFileName.replace(/^\.\//, '').replace(/^\//, '');
+    const lockKey = this.envFileLockKey(projectId, normalizedPath);
+
+    const mergedContent = await db.transaction(async (tx) => {
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(${lockKey})`);
+
+      const existing = await tx.select()
+        .from(files)
+        .where(and(
+          eq(files.projectId, projectId),
+          sql`(${files.path} = ${normalizedPath} OR ${files.path} = ${'/' + normalizedPath} OR ${files.path} = ${'./' + normalizedPath})`
+        ))
+        .limit(1);
+
+      const record = existing[0];
+      const currentContent = record?.content || '';
+      const vars = this.parseEnvContent(currentContent);
+      vars.set(key, value);
+      const newContent = this.serializeEnvVars(vars);
+
+      if (record) {
+        await tx.update(files)
+          .set({
+            content: newContent,
+            size: Buffer.byteLength(newContent),
+            updatedAt: new Date()
+          })
+          .where(eq(files.id, record.id));
+      } else {
+        await tx.insert(files).values({
+          name: path.basename(normalizedPath),
+          path: normalizedPath,
+          content: newContent,
+          projectId,
+          parentId: null,
+          isDirectory: false,
+          type: 'env',
+          size: Buffer.byteLength(newContent)
+        });
+      }
+
+      return newContent;
+    });
+
+    logger.info(`[ToolFramework] Persisted env variable ${key} to ${normalizedPath} for project ${projectId}`);
+    return mergedContent;
+  }
+
+  async upsertEnvFileContent(
+    projectId: number,
+    envFileName: string,
+    content: string
+  ): Promise<void> {
+    const normalizedPath = envFileName.replace(/^\.\//, '').replace(/^\//, '');
+    const lockKey = this.envFileLockKey(projectId, normalizedPath);
+
+    await db.transaction(async (tx) => {
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(${lockKey})`);
+
+      const existing = await tx.select()
+        .from(files)
+        .where(and(
+          eq(files.projectId, projectId),
+          sql`(${files.path} = ${normalizedPath} OR ${files.path} = ${'/' + normalizedPath} OR ${files.path} = ${'./' + normalizedPath})`
+        ))
+        .limit(1);
+
+      const record = existing[0];
+
+      if (record) {
+        await tx.update(files)
+          .set({
+            content,
+            size: Buffer.byteLength(content),
+            updatedAt: new Date()
+          })
+          .where(eq(files.id, record.id));
+      } else {
+        await tx.insert(files).values({
+          name: path.basename(normalizedPath),
+          path: normalizedPath,
+          content,
+          projectId,
+          parentId: null,
+          isDirectory: false,
+          type: 'env',
+          size: Buffer.byteLength(content)
+        });
+      }
+    });
+
+    logger.info(`[ToolFramework] Persisted env file ${normalizedPath} for project ${projectId}`);
   }
 }
 
