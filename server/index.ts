@@ -1010,9 +1010,14 @@ httpServer.listen(port, "0.0.0.0", () => {
   const path = await import('path');
   const attachedAssetsPath = path.resolve(process.cwd(), 'attached_assets');
   app.use('/attached_assets', express.static(attachedAssetsPath, {
-    maxAge: '1d',
+    maxAge: '7d',
     etag: true,
-    lastModified: true
+    lastModified: true,
+    setHeaders: (res, filePath) => {
+      if (filePath.match(/\.[a-f0-9]{8,}\.(png|jpg|jpeg|gif|svg|webp|woff2?|ttf|eot)$/)) {
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      }
+    },
   }));
   logger.info(`[Static Assets] Serving attached_assets from ${attachedAssetsPath}`);
 
@@ -1035,14 +1040,24 @@ httpServer.listen(port, "0.0.0.0", () => {
     if (fs.existsSync(distPublic)) {
       logger.info(`[Production Static] Serving frontend from ${distPublic}`);
 
-      // Serve hashed JS/CSS/font/image assets with long-lived cache.
-      // index:false forces index.html through the SPA fallback below so CSP nonces are injected.
+      app.use('/assets', express.static(path.join(distPublic, 'assets'), {
+        maxAge: '365d',
+        immutable: true,
+        etag: false,
+        lastModified: false,
+        index: false,
+      }));
+
       app.use(express.static(distPublic, {
         maxAge: '1d',
-        immutable: false,
         etag: true,
         lastModified: true,
         index: false,
+        setHeaders: (res, filePath) => {
+          if (filePath.endsWith('.html')) {
+            res.setHeader('Cache-Control', 'no-cache');
+          }
+        },
       }));
 
       if (fs.existsSync(distIndex)) {
@@ -1066,7 +1081,7 @@ httpServer.listen(port, "0.0.0.0", () => {
             html = html.replace(/<style(\b[^>]*)>/g, (_m: string, attrs: string) => `<style${attrs} nonce="${nonce}">`);
             html = html.replace(/<script(?![^>]*\bsrc\s*=)([^>]*)>/g, (_m: string, attrs: string) => `<script${attrs} nonce="${nonce}">`);
           }
-          res.status(200).set({ 'Content-Type': 'text/html' }).end(html);
+          res.status(200).set({ 'Content-Type': 'text/html', 'Cache-Control': 'no-cache' }).end(html);
         });
 
         logger.info('[Production Static] ✅ SPA fallback registered (CSP nonce injection enabled)');
