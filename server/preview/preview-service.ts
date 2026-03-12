@@ -446,7 +446,7 @@ export class PreviewService {
       }
 
       const currentPaths = new Set<string>();
-      let written = 0;
+      const toWrite: Array<{ relPath: string; content: string; hash: string }> = [];
       let skipped = 0;
 
       for (const file of files) {
@@ -455,18 +455,12 @@ export class PreviewService {
         currentPaths.add(relPath);
         const content = file.content || '';
         const hash = contentHash(content);
-        const cachedHash = projectCache.get(relPath);
 
-        if (cachedHash === hash) {
+        if (projectCache.get(relPath) === hash) {
           skipped++;
-          continue;
+        } else {
+          toWrite.push({ relPath, content, hash });
         }
-
-        const filePath = path.join(previewPath, relPath);
-        await fs.mkdir(path.dirname(filePath), { recursive: true });
-        await fs.writeFile(filePath, content, 'utf-8');
-        projectCache.set(relPath, hash);
-        written++;
       }
 
       let removed = 0;
@@ -479,10 +473,26 @@ export class PreviewService {
         }
       }
 
+      for (const { relPath, content, hash } of toWrite) {
+        const filePath = path.join(previewPath, relPath);
+        const dir = path.dirname(filePath);
+        try {
+          const stat = await fs.stat(filePath).catch(() => null);
+          if (stat && stat.isDirectory()) {
+            await fs.rm(filePath, { recursive: true, force: true });
+          }
+        } catch {}
+        await fs.mkdir(dir, { recursive: true });
+        await fs.writeFile(filePath, content, 'utf-8');
+        projectCache.set(relPath, hash);
+      }
+
+      const written = toWrite.length;
+
       const syncMs = Date.now() - syncStart;
       logger.info(`[preview-sync] project=${projectId} written=${written} skipped=${skipped} removed=${removed} total=${files.length} syncMs=${syncMs}`);
     } catch (err: any) {
-      logger.error(`Failed to write files for project ${projectId}: ${err.message}`);
+      logger.error(`Failed to write files for project ${projectId}: ${err.message}`, { stack: err.stack });
       const errInstance = this.makeErrorInstance(projectId, runId, `Failed to prepare preview directory: ${err.message}`);
       this.previews.set(projectId, errInstance);
       return errInstance;
