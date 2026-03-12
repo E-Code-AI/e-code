@@ -44,7 +44,7 @@ EXPOSE 5000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD curl -f http://localhost:5000/api/monitoring/health || exit 1
+  CMD curl -f http://localhost:5000/health || exit 1
 
 # Run migrations then start app
 ENTRYPOINT ["./docker-entrypoint.sh"]

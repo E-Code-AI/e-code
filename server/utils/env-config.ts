@@ -89,6 +89,13 @@ const optionalEnvSchema = z.object({
   
   GIT_COMMIT_SHA: z.string().optional(),
   
+  RUNNER_URL: z.string().optional(),
+  RUNNER_BASE_URL: z.string().optional(),
+  RUNNER_JWT_SECRET: z.string().optional(),
+  
+  ALLOWED_ORIGINS: z.string().optional(),
+  APP_URL: z.string().optional(),
+  
   DEBUG: booleanString.default('false'),
 });
 
@@ -286,6 +293,12 @@ export const ENV_CATEGORIES = {
     'RATE_LIMIT_ENABLED',
     'RATE_LIMIT_WINDOW_MS',
     'RATE_LIMIT_MAX_REQUESTS',
+  ] as const,
+  
+  runner: [
+    'RUNNER_URL',
+    'RUNNER_BASE_URL',
+    'RUNNER_JWT_SECRET',
   ] as const,
   
   replit: [

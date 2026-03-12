@@ -3,86 +3,102 @@
  * 
  * Runs at startup to ensure all critical dependencies and environment 
  * variables are correctly configured before the server starts accepting traffic.
+ * 
+ * In production: Fails fast with a descriptive list of missing/invalid variables.
+ * In development: Logs warnings but allows the server to start.
  */
 
 import { createCentralizedLogger } from '../logging/centralized-logger';
 
 const logger = createCentralizedLogger('env-validation');
 
-/**
- * Validates the environment configuration.
- * In production: Fails fast if critical variables are missing or invalid.
- * In development: Logs warnings but allows the server to start.
- */
+const REQUIRED_IN_PRODUCTION: Array<{ key: string; description: string; validate?: (v: string) => string | null }> = [
+  { key: 'DATABASE_URL', description: 'PostgreSQL connection string' },
+  { key: 'SESSION_SECRET', description: 'Express session encryption key', validate: (v) => v.length < 32 ? 'Must be at least 32 characters' : null },
+  { key: 'JWT_SECRET', description: 'JWT signing secret' },
+  { key: 'ENCRYPTION_KEY', description: 'Data encryption key' },
+  { key: 'REDIS_URL', description: 'Redis connection URL (required when REDIS_ENABLED=true)', validate: () => {
+    if (process.env.REDIS_ENABLED === 'true' && !process.env.REDIS_URL) return 'REDIS_ENABLED=true but REDIS_URL is missing';
+    return null;
+  }},
+];
+
+const RECOMMENDED_IN_PRODUCTION: Array<{ key: string; description: string }> = [
+  { key: 'JWT_REFRESH_SECRET', description: 'JWT refresh token secret' },
+  { key: 'SENTRY_DSN', description: 'Sentry error tracking DSN' },
+  { key: 'STRIPE_SECRET_KEY', description: 'Stripe payments API key' },
+  { key: 'SENDGRID_API_KEY', description: 'SendGrid email API key' },
+  { key: 'ALLOWED_ORIGINS', description: 'CORS allowed origins' },
+  { key: 'APP_URL', description: 'Public application URL' },
+  { key: 'RUNNER_JWT_SECRET', description: 'Shared secret for runner microservice auth' },
+];
+
 export function validateProductionEnvironment(): void {
   const isProduction = process.env.NODE_ENV === 'production';
+  const isReplit = !!(process.env.REPL_ID || process.env.REPL_SLUG);
   const errors: string[] = [];
   const warnings: string[] = [];
 
-  logger.info(`Starting environment validation (mode: ${process.env.NODE_ENV})`);
+  logger.info(`Starting environment validation (mode: ${process.env.NODE_ENV || 'development'})`);
 
-  // 1. Validate NODE_ENV
+  // Map RUNNER_URL alias early so subsequent checks see it
+  if (process.env.RUNNER_URL && !process.env.RUNNER_BASE_URL) {
+    process.env.RUNNER_BASE_URL = process.env.RUNNER_URL;
+    logger.info('RUNNER_URL mapped to RUNNER_BASE_URL');
+  }
+
   if (!process.env.NODE_ENV) {
     warnings.push('NODE_ENV is not set. Defaulting to development.');
   }
 
-  // 2. Validate DATABASE_URL
-  if (!process.env.DATABASE_URL) {
-    if (isProduction) {
-      errors.push('DATABASE_URL is missing. Production requires a valid database connection.');
-    } else {
-      warnings.push('DATABASE_URL is missing. Using in-memory storage or local database.');
+  // Validate all required production variables
+  for (const { key, description, validate } of REQUIRED_IN_PRODUCTION) {
+    const value = process.env[key];
+    if (!value || value.trim() === '') {
+      // Special case: REDIS_URL is only required when REDIS_ENABLED=true
+      if (key === 'REDIS_URL' && process.env.REDIS_ENABLED !== 'true') continue;
+
+      if (isProduction && !isReplit) {
+        errors.push(`${key} is missing — ${description}`);
+      } else if (isProduction && isReplit) {
+        warnings.push(`${key} is missing — ${description} (auto-generated fallback on Replit)`);
+      } else {
+        warnings.push(`${key} is missing — ${description}`);
+      }
+    } else if (validate) {
+      const validationError = validate(value);
+      if (validationError) {
+        if (isProduction) {
+          errors.push(`${key}: ${validationError}`);
+        } else {
+          warnings.push(`${key}: ${validationError}`);
+        }
+      }
     }
   }
 
-  // 3. Validate SESSION_SECRET
-  const sessionSecret = process.env.SESSION_SECRET;
-  if (!sessionSecret) {
-    if (isProduction) {
-      errors.push('SESSION_SECRET is missing. Production requires a secure session secret.');
-    } else {
-      warnings.push('SESSION_SECRET is missing. Using a development-only fallback.');
-    }
-  } else if (sessionSecret.length < 32) {
-    if (isProduction) {
-      errors.push('SESSION_SECRET is too weak. It must be at least 32 characters in production.');
-    } else {
-      warnings.push('SESSION_SECRET is weak (< 32 characters). This is only acceptable in development.');
+  // Warn about recommended-but-missing variables
+  for (const { key, description } of RECOMMENDED_IN_PRODUCTION) {
+    if (!process.env[key]) {
+      warnings.push(`${key} is not set — ${description}. Related features may be disabled.`);
     }
   }
 
-  // 4. Validate Stripe Keys (if used)
-  // We check if Stripe is used by checking if STRIPE_PUBLISHABLE_KEY or other stripe vars are present
-  // or if we just want to ensure the secret key is there if payment features are enabled.
-  if (!process.env.STRIPE_SECRET_KEY) {
-    warnings.push('STRIPE_SECRET_KEY is missing. Payment features will be disabled.');
-  }
-
-  // 5. Validate AI API Keys
-  const aiKeys = [
-    'ANTHROPIC_API_KEY',
-    'OPENAI_API_KEY',
-    'GOOGLE_GENERATIVE_AI_API_KEY'
-  ];
-  
+  // Validate AI API keys (at least one should be present)
+  const aiKeys = ['ANTHROPIC_API_KEY', 'OPENAI_API_KEY', 'GEMINI_API_KEY', 'XAI_API_KEY'];
   const configuredAiKeys = aiKeys.filter(key => process.env[key]);
   if (configuredAiKeys.length === 0) {
-    warnings.push('No AI API keys configured (Anthropic, OpenAI, or Google). AI features will be disabled.');
+    warnings.push('No AI API keys configured. AI features will be disabled.');
   }
 
-  // 6. Guard: ALLOW_INSECURE_LOCAL_PTY must NEVER be true in production
-  // This flag enables un-isolated local PTY terminals — a critical security breach
-  // in a multi-tenant environment where every user shares the same host filesystem.
+  // Security guards
   if (isProduction && process.env.ALLOW_INSECURE_LOCAL_PTY === 'true') {
     errors.push(
       'FATAL SECURITY: ALLOW_INSECURE_LOCAL_PTY=true is forbidden in production. ' +
-      'This flag allows un-sandboxed host terminal access. Remove it from environment immediately.'
+      'This flag allows un-sandboxed host terminal access.'
     );
   }
 
-  // 7. Note: TESTING_STRIPE_SECRET_KEY in production — warn but do not crash.
-  // This secret is used for Stripe integration testing and is intentionally
-  // kept available alongside the live key. It cannot process real payments.
   if (isProduction && process.env.TESTING_STRIPE_SECRET_KEY) {
     warnings.push(
       'TESTING_STRIPE_SECRET_KEY is set in production. ' +
@@ -90,19 +106,31 @@ export function validateProductionEnvironment(): void {
     );
   }
 
-  // Final reporting
+  // Runner connectivity: if RUNNER_BASE_URL is configured, RUNNER_JWT_SECRET is required
+  if (process.env.RUNNER_BASE_URL && !process.env.RUNNER_JWT_SECRET) {
+    if (isProduction) {
+      errors.push('RUNNER_JWT_SECRET is missing — RUNNER_BASE_URL is set but runner auth requires this secret');
+    } else {
+      warnings.push('RUNNER_BASE_URL is set but RUNNER_JWT_SECRET is missing — runner auth will fail.');
+    }
+  }
+
+  // Report
   if (warnings.length > 0) {
-    warnings.forEach(warn => logger.warn(`[Config Warning] ${warn}`));
+    logger.warn(`Environment validation warnings (${warnings.length}):`);
+    warnings.forEach(warn => logger.warn(`  ⚠ ${warn}`));
   }
 
   if (errors.length > 0) {
-    errors.forEach(err => logger.error(`[CRITICAL CONFIG ERROR] ${err}`));
+    logger.error(`Environment validation FAILED — ${errors.length} critical error(s):`);
+    errors.forEach(err => logger.error(`  ✖ ${err}`));
     
     if (isProduction) {
-      logger.error('FATAL: Environment validation failed in production. Server shutting down.');
+      logger.error('FATAL: Server cannot start in production with missing/invalid configuration.');
+      logger.error('Fix the variables listed above and restart.');
       process.exit(1);
     }
   } else {
-    logger.info('Environment validation successful.');
+    logger.info(`Environment validation successful (${warnings.length} warning(s)).`);
   }
 }

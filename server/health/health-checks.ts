@@ -73,11 +73,9 @@ async function checkRedis(): Promise<{ status: 'up' | 'down' | 'degraded'; respo
   const startTime = Date.now();
 
   try {
-    // Import Redis client dynamically to avoid circular dependencies
     const { redisCache } = await import('../services/redis-cache');
-
-    // Check if Redis is connected
     const isConnected = await redisCache.healthCheck();
+
     const responseTime = Date.now() - startTime;
 
     if (!isConnected) {
@@ -106,6 +104,62 @@ async function checkRedis(): Promise<{ status: 'up' | 'down' | 'degraded'; respo
       status: 'down',
       responseTime: Date.now() - startTime,
       message: error.message
+    };
+  }
+}
+
+/**
+ * Check Runner microservice connectivity
+ */
+async function checkRunner(): Promise<{ status: 'up' | 'down' | 'degraded'; responseTime: number; message?: string; configured: boolean }> {
+  const startTime = Date.now();
+
+  try {
+    const { isRunnerConfigured, pingRunner } = await import('../runnerClient');
+
+    if (!isRunnerConfigured()) {
+      return {
+        status: 'down',
+        responseTime: 0,
+        message: 'Runner not configured (RUNNER_BASE_URL / RUNNER_JWT_SECRET missing)',
+        configured: false
+      };
+    }
+
+    const health = await pingRunner();
+    const responseTime = Date.now() - startTime;
+
+    if (!health.online) {
+      return {
+        status: 'down',
+        responseTime,
+        message: `Runner unreachable at ${health.baseUrl}`,
+        configured: true
+      };
+    }
+
+    if (responseTime > 2000) {
+      return {
+        status: 'degraded',
+        responseTime,
+        message: 'Runner responding slowly',
+        configured: true
+      };
+    }
+
+    return {
+      status: 'up',
+      responseTime,
+      message: health.workspaces !== undefined ? `${health.workspaces} active workspace(s)` : undefined,
+      configured: true
+    };
+  } catch (error: any) {
+    logger.error('Runner health check failed', { error: error.message });
+    return {
+      status: 'down',
+      responseTime: Date.now() - startTime,
+      message: error.message,
+      configured: false
     };
   }
 }
@@ -351,7 +405,15 @@ async function performHealthChecks(deep: boolean = false): Promise<HealthStatus>
 
   // Always check critical dependencies
   checks.database = await checkDatabase();
-  checks.redis = await checkRedis();
+  
+  const redisEnabled = process.env.REDIS_ENABLED === 'true' || process.env.NODE_ENV === 'production';
+  if (redisEnabled) {
+    checks.redis = await checkRedis();
+  } else {
+    checks.redis = { status: 'up', responseTime: 0, message: 'Redis disabled (REDIS_ENABLED not set)' };
+  }
+  
+  checks.runner = await checkRunner();
   checks.memory = checkMemory();
 
   // Deep health checks (optional)

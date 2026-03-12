@@ -20,7 +20,8 @@ const logger = createLogger('runnerClient');
 
 // ─── Config ────────────────────────────────────────────────────────────────
 function getBaseUrl(): string | null {
-  return process.env.RUNNER_BASE_URL?.replace(/\/$/, '') ?? null;
+  const url = process.env.RUNNER_BASE_URL || process.env.RUNNER_URL;
+  return url?.replace(/\/$/, '') ?? null;
 }
 
 function getSecret(): string | null {

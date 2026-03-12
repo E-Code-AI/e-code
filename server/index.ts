@@ -342,16 +342,67 @@ app.use((req, res, next) => {
   next();
 });
 
-// Main health check - responds with detailed status (dynamic service counts)
-app.get('/health', (_req, res) => {
+// Main health check - responds with structured subsystem status
+app.get('/health', async (_req, res) => {
   const uptime = Date.now() - serverState.startTime;
   const { total, ready } = getServiceCounts();
-  
-  res.status(200).json({
-    status: 'ok',
+
+  const subsystems: Record<string, { status: string; message?: string; responseTime?: number }> = {};
+  let overallStatus: 'ok' | 'degraded' | 'down' = 'ok';
+
+  try {
+    const { db } = await import('./db');
+    const { sql } = await import('drizzle-orm');
+    const dbStart = Date.now();
+    await db.execute(sql`SELECT 1`);
+    subsystems.database = { status: 'up', responseTime: Date.now() - dbStart };
+  } catch (e: any) {
+    subsystems.database = { status: 'down', message: e.message };
+    overallStatus = 'down';
+  }
+
+  const redisEnabled = process.env.REDIS_ENABLED === 'true' || process.env.NODE_ENV === 'production';
+  if (redisEnabled) {
+    try {
+      const { redisCache } = await import('./services/redis-cache');
+      const redisStart = Date.now();
+      const isConnected = await redisCache.healthCheck();
+      subsystems.redis = { status: isConnected ? 'up' : 'down', responseTime: Date.now() - redisStart };
+      if (!isConnected) overallStatus = overallStatus === 'down' ? 'down' : 'degraded';
+    } catch (e: any) {
+      subsystems.redis = { status: 'down', message: e.message };
+      if (overallStatus !== 'down') overallStatus = 'degraded';
+    }
+  } else {
+    subsystems.redis = { status: 'disabled', message: 'REDIS_ENABLED is not set' };
+  }
+
+  try {
+    const { isRunnerConfigured, pingRunner } = await import('./runnerClient');
+    if (isRunnerConfigured()) {
+      const runnerStart = Date.now();
+      const rh = await pingRunner();
+      subsystems.runner = {
+        status: rh.online ? 'up' : 'down',
+        responseTime: Date.now() - runnerStart,
+        message: rh.online ? `${rh.workspaces ?? 0} workspace(s)` : `Unreachable at ${rh.baseUrl}`
+      };
+      if (!rh.online && overallStatus !== 'down') overallStatus = 'degraded';
+    } else {
+      subsystems.runner = { status: 'not_configured', message: 'RUNNER_BASE_URL not set' };
+    }
+  } catch (e: any) {
+    subsystems.runner = { status: 'down', message: e.message };
+    if (overallStatus !== 'down') overallStatus = 'degraded';
+  }
+
+  const statusCode = overallStatus === 'down' ? 503 : 200;
+  res.status(statusCode).json({
+    status: overallStatus,
     phase: serverState.phase,
     uptime: `${Math.round(uptime / 1000)}s`,
     services: `${ready}/${total}`,
+    subsystems,
     message: serverState.phase === 'ready'
       ? 'Server is fully operational'
       : `Server is starting (${ready}/${total} services loaded)`
