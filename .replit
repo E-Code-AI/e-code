@@ -49,7 +49,7 @@ outputType = "console"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "RUNNER_JWT_SECRET=${RUNNER_JWT_SECRET:-dev-runner-secret-change-me} npx tsx runner/index.ts"
+args = "RUNNER_PORT=8081 DOCKER_ENABLED=false RUNNER_JWT_SECRET=${RUNNER_JWT_SECRET:-dev-runner-secret-change-me} npx tsx runner/index.ts"
 
 [agent]
 integrations = [
@@ -82,7 +82,7 @@ REPLIT_DEV_URL = "https://f4d2485e-81a7-4595-9868-17903ab251f3-00-ngx9sxwfcs19.r
 DISABLE_CSRF = "false"
 FROM_EMAIL = "contact@e-code.ai"
 WORKSPACE_TOKEN_TTL_MIN = "15"
-RUNNER_BASE_URL = "http://localhost:8080"
+RUNNER_BASE_URL = "http://localhost:8081"
 STRIPE_WEBHOOK_SECRET = "whsec_drSl9KUZtP5tlyUKevilphko1lj8NNFe"
 
 [userenv.development]
@@ -117,6 +117,10 @@ externalPort = 5173
 [[ports]]
 localPort = 8080
 externalPort = 8080
+
+[[ports]]
+localPort = 8081
+externalPort = 8081
 
 [[ports]]
 localPort = 24678
