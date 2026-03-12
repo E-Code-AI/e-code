@@ -522,6 +522,8 @@ httpServer.listen(port, "0.0.0.0", () => {
     logger.error(`[CSRF] Failed to apply global CSRF protection: ${error}`);
   }
 
+  app.use(errorTracking.userContextMiddleware());
+
   // SECURITY: Validate origin configuration BEFORE initializing ANY WebSocket servers
   // This ensures all WebSocket servers have proper origin validation configured
   try {
@@ -957,7 +959,19 @@ httpServer.listen(port, "0.0.0.0", () => {
     // Server continues running even if routes fail to load
   }
 
-  // Error handler for PayloadTooLargeError (must come AFTER routes)
+  app.get('/api/debug/sentry-test', (req, res) => {
+    const isAdmin = (req as any).user?.role === 'admin';
+    if (process.env.NODE_ENV === 'production' && !isAdmin) {
+      return res.status(403).json({ error: 'Admin only' });
+    }
+    errorTracking.captureMessage('Sentry test event triggered', 'info', {
+      endpoint: '/api/debug/sentry-test',
+      method: 'GET',
+      userId: (req as any).user?.id,
+    });
+    throw new Error('Sentry test error — this is intentional');
+  });
+
   app.use((err: any, req: any, res: any, next: any) => {
     if (err.type === 'entity.too.large' || err.status === 413) {
       return res.status(413).json({
@@ -969,8 +983,8 @@ httpServer.listen(port, "0.0.0.0", () => {
     next(err);
   });
 
-  // ✅ P0 FIX: Global error handler — must be registered AFTER all routes
-  // Prevents unhandled errors from exposing stack traces in production
+  errorTracking.setupExpressErrorHandler(app);
+
   try {
     const { errorHandler, notFoundHandler, initializeErrorHandlers } = await import('./middleware/error-handler');
     initializeErrorHandlers();
@@ -979,7 +993,6 @@ httpServer.listen(port, "0.0.0.0", () => {
     logger.info('[Error Handler] ✅ Global error handler registered');
   } catch (err) {
     logger.error(`[Error Handler] Failed to register global error handler: ${err}`);
-    // Fallback error handler if import fails
     app.use((err: any, req: any, res: any, _next: any) => {
       const isProd = process.env.NODE_ENV === 'production';
       res.status(err.statusCode || err.status || 500).json({

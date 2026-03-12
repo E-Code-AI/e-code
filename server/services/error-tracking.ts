@@ -46,41 +46,29 @@ export class ErrorTrackingService {
     const dsn = process.env.SENTRY_DSN;
     const environment = process.env.NODE_ENV || 'development';
 
-    if (environment === 'production' && dsn) {
+    if (dsn) {
       try {
         Sentry.init({
           dsn,
           environment,
-          release: process.env.RELEASE_VERSION || 'unknown',
-          tracesSampleRate: parseFloat(process.env.SENTRY_TRACES_SAMPLE_RATE || '0.1'),
+          release: process.env.GIT_COMMIT_SHA || process.env.RELEASE_VERSION || 'unknown',
+          tracesSampleRate: parseFloat(process.env.SENTRY_TRACES_SAMPLE_RATE || (environment === 'production' ? '0.1' : '1.0')),
           profilesSampleRate: parseFloat(process.env.SENTRY_PROFILES_SAMPLE_RATE || '0.1'),
           
-          // Performance monitoring - Sentry v8 API
           integrations: [
-            // HTTP integration for Express (v8 uses function-based integrations)
-            Sentry.httpIntegration({ tracing: true }),
-            // Console integration
+            Sentry.httpIntegration(),
             Sentry.consoleIntegration(),
+            Sentry.expressIntegration(),
           ],
           
-          // Before send hook for filtering
           beforeSend: (event, hint) => {
-            // Filter out certain errors
             if (this.shouldIgnoreError(event, hint)) {
               return null;
             }
-            
-            // Add additional context
-            if (event.extra) {
-              event.extra.errorStats = this.getStats();
-            }
-            
             return event;
           },
           
-          // Before breadcrumb hook
           beforeBreadcrumb: (breadcrumb) => {
-            // Filter sensitive data from breadcrumbs
             if (breadcrumb.category === 'console' && breadcrumb.data) {
               breadcrumb.data = this.sanitizeData(breadcrumb.data);
             }
@@ -89,14 +77,14 @@ export class ErrorTrackingService {
         });
 
         this.initialized = true;
-        logger.info('Sentry error tracking initialized', { environment });
+        logger.info('Sentry error tracking initialized', { environment, dsn: dsn.replace(/\/\/.*@/, '//***@') });
       } catch (error) {
         logger.error('Failed to initialize Sentry:', error);
       }
-    } else if (environment === 'production' && !dsn) {
-      logger.warn('SENTRY_DSN not configured in production environment');
+    } else if (environment === 'production') {
+      logger.warn('SENTRY_DSN not configured — error tracking disabled in production');
     } else {
-      logger.info('Error tracking disabled in development environment');
+      logger.info('SENTRY_DSN not set — error tracking disabled (set SENTRY_DSN to enable)');
     }
 
     // Set up global error handlers
@@ -181,22 +169,16 @@ export class ErrorTrackingService {
     // Log the error
     logger.error('Captured exception:', error, context);
 
-    // Send to Sentry if initialized
-    if (this.initialized && process.env.NODE_ENV === 'production') {
+    if (this.initialized) {
       const sentryContext = this.sanitizeData(context || {});
       
       Sentry.withScope((scope) => {
-        // Set context
         if (sentryContext) {
           scope.setContext('custom', sentryContext);
         }
-        
-        // Set user if available
         if (sentryContext.userId) {
           scope.setUser({ id: sentryContext.userId });
         }
-        
-        // Set tags
         if (sentryContext.endpoint) {
           scope.setTag('endpoint', sentryContext.endpoint);
         }
@@ -204,7 +186,6 @@ export class ErrorTrackingService {
           scope.setTag('method', sentryContext.method);
         }
         
-        // Capture the exception
         if (error instanceof Error) {
           Sentry.captureException(error);
         } else {
@@ -219,15 +200,13 @@ export class ErrorTrackingService {
     const logMethod = level === 'error' ? 'error' : level === 'warning' ? 'warn' : 'info';
     logger[logMethod](`Captured message: ${message}`, context);
 
-    // Send to Sentry if initialized
-    if (this.initialized && process.env.NODE_ENV === 'production') {
+    if (this.initialized) {
       const sentryLevel = level === 'error' ? 'error' : level === 'warning' ? 'warning' : 'info';
       
       Sentry.withScope((scope) => {
         if (context) {
           scope.setContext('custom', this.sanitizeData(context));
         }
-        
         Sentry.captureMessage(message, sentryLevel);
       });
     }
@@ -302,17 +281,27 @@ export class ErrorTrackingService {
     };
   }
 
-  // Request handler for adding Sentry tracing (v8 uses setupExpressErrorHandler)
-  requestHandler() {
-    // In Sentry v8, automatic Express instrumentation is built-in
-    // No separate request handler needed
-    return (req: Request, res: Response, next: NextFunction) => next();
+  setupExpressErrorHandler(app: import('express').Application) {
+    if (this.initialized) {
+      Sentry.setupExpressErrorHandler(app);
+      logger.info('Sentry Express error handler registered');
+    }
   }
 
-  // Tracing handler (v8 uses automatic instrumentation)
-  tracingHandler() {
-    // In Sentry v8, tracing is automatic via httpIntegration
-    return (req: Request, res: Response, next: NextFunction) => next();
+  userContextMiddleware() {
+    return (req: Request, _res: Response, next: NextFunction) => {
+      if (this.initialized) {
+        const user = (req as any).user;
+        if (user) {
+          Sentry.setUser({
+            id: String(user.id),
+            email: user.email,
+            username: user.username,
+          });
+        }
+      }
+      next();
+    };
   }
 
   async flush(timeout: number = 2000): Promise<boolean> {

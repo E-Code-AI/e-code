@@ -1,5 +1,4 @@
 import React from 'react';
-import * as Sentry from '@sentry/react';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle } from 'lucide-react';
 
@@ -22,7 +21,11 @@ class ErrorBoundary extends React.Component<
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    Sentry.captureException(error, { extra: errorInfo });
+    import('@sentry/react').then((Sentry) => {
+      if (Sentry.isInitialized()) {
+        Sentry.captureException(error, { extra: errorInfo });
+      }
+    }).catch(() => {});
     console.error('Error caught by boundary:', {
       message: error?.message || 'Unknown error',
       name: error?.name || 'Unknown',

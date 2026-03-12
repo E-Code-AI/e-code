@@ -33,6 +33,7 @@ const optionalEnvSchema = z.object({
   ENCRYPTION_KEY: z.string().optional(),
   
   SENTRY_DSN: z.string().optional(),
+  SENTRY_AUTH_TOKEN: z.string().optional(),
   SENTRY_TRACES_SAMPLE_RATE: numberString.default('0.2'),
   
   REDIS_ENABLED: booleanString.default('false'),
@@ -232,6 +233,7 @@ export const ENV_CATEGORIES = {
   
   monitoring: [
     'SENTRY_DSN',
+    'SENTRY_AUTH_TOKEN',
     'SENTRY_TRACES_SAMPLE_RATE',
     'LOG_LEVEL',
     'LOG_AGGREGATION_ENABLED',
