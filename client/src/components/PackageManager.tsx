@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -14,9 +15,9 @@ import {
   Search,
   AlertCircle,
   CheckCircle,
-  Info,
-  ExternalLink,
-  Download
+  Download,
+  Terminal,
+  X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -24,7 +25,7 @@ import { apiRequest } from '@/lib/queryClient';
 
 interface PackageManagerProps {
   projectId: number;
-  language: 'javascript' | 'python' | 'go' | 'rust';
+  language?: string;
   className?: string;
 }
 
@@ -37,25 +38,53 @@ interface PackageInfo {
   outdated?: boolean;
 }
 
-export function PackageManager({ projectId, language = 'javascript', className }: PackageManagerProps) {
-  const [packages, setPackages] = useState<PackageInfo[]>([
-    { name: 'react', version: '18.2.0', description: 'A JavaScript library for building user interfaces', latest: '18.2.0' },
-    { name: 'typescript', version: '4.9.5', description: 'TypeScript is a language for application scale JavaScript development', isDevDependency: true, latest: '5.0.2', outdated: true },
-    { name: 'vite', version: '4.4.0', description: 'Next Generation Frontend Tooling', isDevDependency: true, latest: '4.4.0' },
-    { name: 'tailwindcss', version: '3.3.0', description: 'A utility-first CSS framework', isDevDependency: true, latest: '3.3.2', outdated: true }
-  ]);
+interface InstallLogEntry {
+  line: string;
+  stream: 'stdout' | 'stderr';
+  timestamp: number;
+}
+
+export function PackageManager({ projectId, language: propLanguage, className }: PackageManagerProps) {
+  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<PackageInfo[]>([]);
   const [installingPackages, setInstallingPackages] = useState<Set<string>>(new Set());
+  const [installLog, setInstallLog] = useState<InstallLogEntry[]>([]);
+  const [showLog, setShowLog] = useState(false);
+  const logEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
+  const { data: packageData, isLoading } = useQuery<{
+    packages: PackageInfo[];
+    language: string;
+    packageManager: string;
+  }>({
+    queryKey: ['/api/projects', projectId, 'packages'],
+    queryFn: async () => {
+      const res = await fetch(`/api/projects/${projectId}/packages`, { credentials: 'include' });
+      if (!res.ok) throw new Error('Failed to fetch packages');
+      return res.json();
+    },
+    enabled: !!projectId,
+  });
+
+  const packages = packageData?.packages || [];
+  const detectedLanguage = propLanguage || packageData?.language || 'javascript';
+  const detectedManager = packageData?.packageManager || 'npm';
+
+  useEffect(() => {
+    if (logEndRef.current && showLog) {
+      logEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [installLog, showLog]);
+
   const getPackageManager = () => {
-    switch (language) {
+    switch (detectedLanguage) {
       case 'python': return 'pip';
       case 'go': return 'go';
       case 'rust': return 'cargo';
-      default: return 'npm';
+      default: return detectedManager || 'npm';
     }
   };
 
@@ -64,17 +93,16 @@ export function PackageManager({ projectId, language = 'javascript', className }
 
     setIsSearching(true);
     try {
-      // Use real API endpoint
-      const response = await fetch(`/api/packages/search?q=${encodeURIComponent(searchQuery)}&language=${language}`, {
-        credentials: 'include'
-      });
+      const response = await fetch(
+        `/api/packages/search?q=${encodeURIComponent(searchQuery)}&language=${detectedLanguage}`,
+        { credentials: 'include' }
+      );
       
-      if (!response.ok) {
-        throw new Error('Search failed');
-      }
+      if (!response.ok) throw new Error('Search failed');
       
       const results = await response.json();
-      setSearchResults(results.map((pkg: any) => ({
+      const resultArray = Array.isArray(results) ? results : results.packages || [];
+      setSearchResults(resultArray.map((pkg: any) => ({
         name: pkg.name,
         version: pkg.version,
         description: pkg.description
@@ -82,7 +110,7 @@ export function PackageManager({ projectId, language = 'javascript', className }
     } catch (error) {
       toast({
         title: 'Search Failed',
-        description: 'Failed to search packages',
+        description: 'Failed to search packages. Please try again.',
         variant: 'destructive',
       });
     } finally {
@@ -90,35 +118,85 @@ export function PackageManager({ projectId, language = 'javascript', className }
     }
   };
 
-  const handleInstall = async (packageName: string, version?: string) => {
+  const handleInstallWithStreaming = useCallback(async (packageName: string, version?: string) => {
     setInstallingPackages(prev => new Set([...prev, packageName]));
-    
+    setInstallLog([]);
+    setShowLog(true);
+
     try {
-      // Use real API endpoint
-      const response = await apiRequest('POST', `/api/projects/${projectId}/packages`, { name: packageName, version, language });
-      
+      const response = await fetch(`/api/projects/${projectId}/packages/install-stream`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ name: packageName, version, language: detectedLanguage }),
+      });
+
       if (!response.ok) {
         throw new Error('Installation failed');
       }
-      
-      const result = await response.json();
-      const newPackage: PackageInfo = {
-        name: packageName,
-        version: version || result.version || 'latest',
-        description: result.description || ''
-      };
-      
-      setPackages(prev => [...prev, newPackage]);
-      toast({
-        title: 'Package Installed',
-        description: `Successfully installed ${packageName}`,
-      });
+
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const frames = buffer.split('\n\n');
+          buffer = frames.pop() || '';
+
+          for (const frame of frames) {
+            let eventType = '';
+            let dataStr = '';
+            for (const line of frame.split('\n')) {
+              if (line.startsWith('event: ')) {
+                eventType = line.slice(7).trim();
+              } else if (line.startsWith('data: ')) {
+                dataStr = line.slice(6);
+              }
+            }
+            if (!eventType || !dataStr) continue;
+
+            try {
+              const data = JSON.parse(dataStr);
+              if (eventType === 'output') {
+                setInstallLog(prev => [...prev, {
+                  line: data.line,
+                  stream: data.stream,
+                  timestamp: Date.now(),
+                }]);
+              } else if (eventType === 'complete') {
+                if (data.success) {
+                  toast({
+                    title: 'Package Installed',
+                    description: `Successfully installed ${packageName}`,
+                  });
+                  queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'packages'] });
+                } else {
+                  toast({
+                    title: 'Installation Failed',
+                    description: `Failed to install ${packageName}`,
+                    variant: 'destructive',
+                  });
+                }
+              } else if (eventType === 'error') {
+                setInstallLog(prev => [...prev, {
+                  line: `Error: ${data.message}`,
+                  stream: 'stderr',
+                  timestamp: Date.now(),
+                }]);
+              }
+            } catch {
+              // skip malformed JSON
+            }
+          }
+        }
+      }
     } catch (error) {
-      toast({
-        title: 'Installation Failed',
-        description: `Failed to install ${packageName}`,
-        variant: 'destructive',
-      });
+      await handleInstallFallback(packageName, version);
     } finally {
       setInstallingPackages(prev => {
         const newSet = new Set(prev);
@@ -126,18 +204,39 @@ export function PackageManager({ projectId, language = 'javascript', className }
         return newSet;
       });
     }
+  }, [projectId, detectedLanguage, queryClient, toast]);
+
+  const handleInstallFallback = async (packageName: string, version?: string) => {
+    try {
+      const response = await apiRequest('POST', `/api/projects/${projectId}/packages`, {
+        name: packageName,
+        version,
+        language: detectedLanguage,
+      });
+      
+      if (!response.ok) throw new Error('Installation failed');
+      
+      toast({
+        title: 'Package Installed',
+        description: `Successfully installed ${packageName}`,
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'packages'] });
+    } catch (error) {
+      toast({
+        title: 'Installation Failed',
+        description: `Failed to install ${packageName}`,
+        variant: 'destructive',
+      });
+    }
   };
 
   const handleUninstall = async (packageName: string) => {
     try {
-      // Use real API endpoint
       const response = await apiRequest('DELETE', `/api/projects/${projectId}/packages/${encodeURIComponent(packageName)}`);
       
-      if (!response.ok) {
-        throw new Error('Uninstall failed');
-      }
+      if (!response.ok) throw new Error('Uninstall failed');
       
-      setPackages(prev => prev.filter(p => p.name !== packageName));
+      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'packages'] });
       toast({
         title: 'Package Uninstalled',
         description: `Successfully uninstalled ${packageName}`,
@@ -155,19 +254,13 @@ export function PackageManager({ projectId, language = 'javascript', className }
     setInstallingPackages(prev => new Set([...prev, packageName]));
     
     try {
-      // Use real API endpoint
-      const response = await apiRequest('POST', `/api/projects/${projectId}/packages/update`, { packages: [packageName] });
+      const response = await apiRequest('POST', `/api/projects/${projectId}/packages/update`, {
+        packages: [packageName],
+      });
       
-      if (!response.ok) {
-        throw new Error('Update failed');
-      }
+      if (!response.ok) throw new Error('Update failed');
       
-      setPackages(prev => prev.map(p => 
-        p.name === packageName 
-          ? { ...p, version: p.latest || p.version, outdated: false }
-          : p
-      ));
-      
+      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'packages'] });
       toast({
         title: 'Package Updated',
         description: `Successfully updated ${packageName}`,
@@ -197,13 +290,46 @@ export function PackageManager({ projectId, language = 'javascript', className }
             <Package className="h-5 w-5" />
             Package Manager
           </CardTitle>
-          <Badge variant="outline">
-            {getPackageManager()}
-          </Badge>
+          <div className="flex items-center gap-2">
+            {showLog && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 px-2"
+                onClick={() => setShowLog(false)}
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            )}
+            <Badge variant="outline">
+              {getPackageManager()}
+            </Badge>
+          </div>
         </div>
       </CardHeader>
-      <CardContent className="flex-1 flex flex-col">
-        <Tabs defaultValue="installed" className="flex-1 flex flex-col">
+      <CardContent className="flex-1 flex flex-col min-h-0">
+        {showLog && installLog.length > 0 && (
+          <div className="mb-3 rounded-lg border bg-black/90 text-green-400 font-mono text-[11px] p-3 max-h-[200px] overflow-auto">
+            <div className="flex items-center gap-2 mb-2 text-muted-foreground">
+              <Terminal className="h-3 w-3" />
+              <span>Installation Output</span>
+            </div>
+            {installLog.map((entry, i) => (
+              <div
+                key={i}
+                className={cn(
+                  "whitespace-pre-wrap break-all",
+                  entry.stream === 'stderr' ? 'text-yellow-400' : 'text-green-400'
+                )}
+              >
+                {entry.line}
+              </div>
+            ))}
+            <div ref={logEndRef} />
+          </div>
+        )}
+
+        <Tabs defaultValue="installed" className="flex-1 flex flex-col min-h-0">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="installed" className="relative">
               Installed
@@ -216,95 +342,110 @@ export function PackageManager({ projectId, language = 'javascript', className }
             <TabsTrigger value="search">Search</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="installed" className="flex-1 flex flex-col mt-4">
-            {outdatedCount > 0 && (
-              <Alert className="mb-4">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  {outdatedCount} package{outdatedCount > 1 ? 's' : ''} can be updated
-                </AlertDescription>
-              </Alert>
-            )}
-
-            <ScrollArea className="flex-1">
-              <div className="space-y-2">
-                {packages.map(pkg => (
-                  <div
-                    key={pkg.name}
-                    className="p-3 rounded-lg border hover:bg-muted/50 transition-colors"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <h4 className="font-medium text-[13px]">{pkg.name}</h4>
-                          <Badge variant="secondary" className="text-[11px]">
-                            v{pkg.version}
-                          </Badge>
-                          {pkg.isDevDependency && (
-                            <Badge variant="outline" className="text-[11px]">
-                              Dev
-                            </Badge>
-                          )}
-                          {pkg.outdated && (
-                            <Badge variant="destructive" className="text-[11px]">
-                              Outdated
-                            </Badge>
-                          )}
-                        </div>
-                        {pkg.description && (
-                          <p className="text-[11px] text-muted-foreground mt-1">
-                            {pkg.description}
-                          </p>
-                        )}
-                        {pkg.outdated && pkg.latest && (
-                          <p className="text-[11px] text-muted-foreground mt-1">
-                            Latest: v{pkg.latest}
-                          </p>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        {pkg.outdated && (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-7 px-2"
-                            onClick={() => handleUpdate(pkg.name)}
-                            disabled={installingPackages.has(pkg.name)}
-                          >
-                            {installingPackages.has(pkg.name) ? (
-                              <RefreshCw className="h-3 w-3 animate-spin" />
-                            ) : (
-                              <>
-                                <Download className="h-3 w-3 mr-1" />
-                                Update
-                              </>
-                            )}
-                          </Button>
-                        )}
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-7 w-7 p-0 text-destructive"
-                          onClick={() => handleUninstall(pkg.name)}
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+          <TabsContent value="installed" className="flex-1 flex flex-col mt-4 min-h-0">
+            {isLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <RefreshCw className="h-5 w-5 animate-spin text-muted-foreground" />
+                <span className="ml-2 text-[13px] text-muted-foreground">Loading packages...</span>
               </div>
-            </ScrollArea>
+            ) : (
+              <>
+                {outdatedCount > 0 && (
+                  <Alert className="mb-4">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      {outdatedCount} package{outdatedCount > 1 ? 's' : ''} can be updated
+                    </AlertDescription>
+                  </Alert>
+                )}
 
-            <div className="pt-3 border-t mt-3 text-[11px] text-muted-foreground">
-              {packages.length} packages installed
-              {packages.filter(p => p.isDevDependency).length > 0 && 
-                ` (${packages.filter(p => p.isDevDependency).length} dev)`
-              }
-            </div>
+                <ScrollArea className="flex-1">
+                  <div className="space-y-2">
+                    {packages.length === 0 ? (
+                      <div className="text-center py-8 text-muted-foreground text-[13px]">
+                        No packages installed yet. Use the Search tab to find and install packages.
+                      </div>
+                    ) : (
+                      packages.map(pkg => (
+                        <div
+                          key={pkg.name}
+                          className="p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <h4 className="font-medium text-[13px] truncate">{pkg.name}</h4>
+                                <Badge variant="secondary" className="text-[11px]">
+                                  v{pkg.version}
+                                </Badge>
+                                {pkg.isDevDependency && (
+                                  <Badge variant="outline" className="text-[11px]">
+                                    Dev
+                                  </Badge>
+                                )}
+                                {pkg.outdated && (
+                                  <Badge variant="destructive" className="text-[11px]">
+                                    Outdated
+                                  </Badge>
+                                )}
+                              </div>
+                              {pkg.description && (
+                                <p className="text-[11px] text-muted-foreground mt-1 truncate">
+                                  {pkg.description}
+                                </p>
+                              )}
+                              {pkg.outdated && pkg.latest && (
+                                <p className="text-[11px] text-muted-foreground mt-1">
+                                  Latest: v{pkg.latest}
+                                </p>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-1 flex-shrink-0">
+                              {pkg.outdated && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-7 px-2"
+                                  onClick={() => handleUpdate(pkg.name)}
+                                  disabled={installingPackages.has(pkg.name)}
+                                >
+                                  {installingPackages.has(pkg.name) ? (
+                                    <RefreshCw className="h-3 w-3 animate-spin" />
+                                  ) : (
+                                    <>
+                                      <Download className="h-3 w-3 mr-1" />
+                                      Update
+                                    </>
+                                  )}
+                                </Button>
+                              )}
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-7 w-7 p-0 text-destructive"
+                                onClick={() => handleUninstall(pkg.name)}
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </ScrollArea>
+
+                <div className="pt-3 border-t mt-3 text-[11px] text-muted-foreground">
+                  {packages.length} packages installed
+                  {packages.filter(p => p.isDevDependency).length > 0 && 
+                    ` (${packages.filter(p => p.isDevDependency).length} dev)`
+                  }
+                </div>
+              </>
+            )}
           </TabsContent>
 
-          <TabsContent value="search" className="flex-1 flex flex-col mt-4">
+          <TabsContent value="search" className="flex-1 flex flex-col mt-4 min-h-0">
             <div className="flex gap-2 mb-4">
               <Input
                 placeholder={`Search ${getPackageManager()} packages...`}
@@ -339,15 +480,15 @@ export function PackageManager({ projectId, language = 'javascript', className }
                       className="p-3 rounded-lg border hover:bg-muted/50 transition-colors"
                     >
                       <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1">
+                        <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <h4 className="font-medium text-[13px]">{pkg.name}</h4>
+                            <h4 className="font-medium text-[13px] truncate">{pkg.name}</h4>
                             <Badge variant="secondary" className="text-[11px]">
                               v{pkg.version}
                             </Badge>
                           </div>
                           {pkg.description && (
-                            <p className="text-[11px] text-muted-foreground mt-1">
+                            <p className="text-[11px] text-muted-foreground mt-1 line-clamp-2">
                               {pkg.description}
                             </p>
                           )}
@@ -355,8 +496,8 @@ export function PackageManager({ projectId, language = 'javascript', className }
                         <Button
                           size="sm"
                           variant="default"
-                          className="h-7"
-                          onClick={() => handleInstall(pkg.name, pkg.version)}
+                          className="h-7 flex-shrink-0"
+                          onClick={() => handleInstallWithStreaming(pkg.name, pkg.version)}
                           disabled={installingPackages.has(pkg.name) || 
                                     packages.some(p => p.name === pkg.name)}
                         >

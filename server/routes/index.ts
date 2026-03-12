@@ -34,7 +34,7 @@ import dataProvisioningRouter from "./data-provisioning.router";
 import terminalRouter from "./terminal.router";
 import terminalMetricsRouter from "./terminal-metrics.router";
 import runtimeRouter from "./runtime.router";
-import packagesRouter from "./packages.router";
+import packagesRouter, { projectPackagesRouter } from "./packages.router";
 import { createWorkspaceRoutes } from "./workspace";
 import { mobileRouter } from "../api/mobile";
 // SECURITY FIX: Auth bypass removed - all authentication goes through Passport sessions
@@ -377,6 +377,9 @@ export class MainRouter {
 
     // Packages routes (AI-driven package automation)
     app.use('/api/packages', tierRateLimiters.api, packagesRouter);
+
+    // Project-scoped package routes (frontend-compatible)
+    app.use('/api/projects', tierRateLimiters.api, projectPackagesRouter);
 
     // Code Review routes (AI-powered code analysis)
     app.use('/api/code-review', tierRateLimiters.api, codeReviewRouter);

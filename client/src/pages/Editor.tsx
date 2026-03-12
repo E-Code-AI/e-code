@@ -13,7 +13,7 @@ import { AgentPanelErrorBoundary } from "@/components/ai/AgentPanelErrorBoundary
 import { WebPreview } from "@/components/WebPreview";
 import { ConsolePanel } from "@/components/ide/ConsolePanel";
 import { ReplitDB } from "@/components/ReplitDB";
-import { NixConfig } from "@/components/NixConfig";
+import { PackageManager } from "@/components/PackageManager";
 import { KeyboardShortcuts } from "@/components/KeyboardShortcuts";
 import { ShortcutHint, ShortcutTester } from "@/components/utilities";
 import { Bot, Database, Globe, Package, Loader2 } from "lucide-react";
@@ -367,7 +367,7 @@ export default function Editor(props: EditorProps = {}) {
     const handleToggleFiles = () => setLeftPanelOpen(prev => !prev);
     const handleToggleTerminal = () => setBottomPanelOpen(prev => !prev);
     const handleOpenPackages = () => {
-      setActiveRightPanel("nix");
+      setActiveRightPanel("packages");
       setRightPanelOpen(true);
     };
     const handleRunProject = () => {
@@ -453,7 +453,7 @@ export default function Editor(props: EditorProps = {}) {
   };
 
   const handleNixConfigOpen = () => {
-    setActiveRightPanel("nix");
+    setActiveRightPanel("packages");
     setRightPanelOpen(true);
   };
 
@@ -538,12 +538,15 @@ export default function Editor(props: EditorProps = {}) {
       });
 
       panels.push({
-        id: "nix",
+        id: "packages",
         title: "Packages",
         icon: <Package className="h-3.5 w-3.5" />,
         content: (
-          <div className="h-full overflow-auto p-4">
-            <NixConfig projectId={activeProjectId as any} />
+          <div className="h-full overflow-hidden">
+            <PackageManager
+              projectId={activeProjectId as any}
+              className="h-full border-0 shadow-none rounded-none"
+            />
           </div>
         )
       });

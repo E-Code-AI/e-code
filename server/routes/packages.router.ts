@@ -1115,4 +1115,471 @@ router.get('/:projectId/dependencies', ensureAuthenticated, ensureProjectAccess,
   }
 });
 
+/**
+ * ===== Project-scoped package routes =====
+ * These routes are mounted at /api/projects and use the /:projectId/packages pattern
+ * for frontend compatibility. They are also re-exported as a separate router.
+ */
+
+interface DetectedManager {
+  language: string;
+  manager: string;
+}
+
+async function detectProjectManager(workingDir: string): Promise<DetectedManager> {
+  try {
+    const packageJsonPath = path.join(workingDir, 'package.json');
+    const packageJsonContent = await fs.readFile(packageJsonPath, 'utf-8');
+    const packageJson = JSON.parse(packageJsonContent);
+
+    if (packageJson.packageManager) {
+      const pmField = packageJson.packageManager as string;
+      if (pmField.startsWith('yarn')) return { language: 'javascript', manager: 'yarn' };
+      if (pmField.startsWith('pnpm')) return { language: 'javascript', manager: 'pnpm' };
+      if (pmField.startsWith('bun')) return { language: 'javascript', manager: 'bun' };
+      return { language: 'javascript', manager: 'npm' };
+    }
+
+    try { await fs.access(path.join(workingDir, 'pnpm-lock.yaml')); return { language: 'javascript', manager: 'pnpm' }; } catch {}
+    try { await fs.access(path.join(workingDir, 'yarn.lock')); return { language: 'javascript', manager: 'yarn' }; } catch {}
+    try { await fs.access(path.join(workingDir, 'bun.lockb')); return { language: 'javascript', manager: 'bun' }; } catch {}
+    try { await fs.access(path.join(workingDir, 'bun.lock')); return { language: 'javascript', manager: 'bun' }; } catch {}
+
+    return { language: 'javascript', manager: 'npm' };
+  } catch {}
+
+  try { await fs.access(path.join(workingDir, 'requirements.txt')); return { language: 'python', manager: 'pip' }; } catch {}
+  try { await fs.access(path.join(workingDir, 'pyproject.toml')); return { language: 'python', manager: 'pip' }; } catch {}
+  try { await fs.access(path.join(workingDir, 'Cargo.toml')); return { language: 'rust', manager: 'cargo' }; } catch {}
+  try { await fs.access(path.join(workingDir, 'go.mod')); return { language: 'go', manager: 'go' }; } catch {}
+  try { await fs.access(path.join(workingDir, 'Gemfile')); return { language: 'ruby', manager: 'gem' }; } catch {}
+  try { await fs.access(path.join(workingDir, 'composer.json')); return { language: 'php', manager: 'composer' }; } catch {}
+
+  return { language: 'javascript', manager: 'npm' };
+}
+
+function getInstallCommand(manager: string, name: string, version?: string, dev?: boolean): { cmd: string; args: string[] } {
+  const pkgSpec = version ? `${name}@${version}` : name;
+  switch (manager) {
+    case 'yarn':
+      return { cmd: 'yarn', args: ['add', ...(dev ? ['--dev'] : []), pkgSpec] };
+    case 'pnpm':
+      return { cmd: 'pnpm', args: ['add', ...(dev ? ['--save-dev'] : []), pkgSpec] };
+    case 'bun':
+      return { cmd: 'bun', args: ['add', ...(dev ? ['--dev'] : []), pkgSpec] };
+    case 'pip':
+      return { cmd: 'pip', args: ['install', version ? `${name}==${version}` : name] };
+    case 'cargo':
+      return { cmd: 'cargo', args: ['add', name] };
+    case 'go':
+      return { cmd: 'go', args: ['get', version ? `${name}@${version}` : name] };
+    case 'gem':
+      return { cmd: 'gem', args: ['install', name, ...(version ? ['-v', version] : [])] };
+    case 'composer':
+      return { cmd: 'composer', args: ['require', ...(dev ? ['--dev'] : []), pkgSpec] };
+    default:
+      return { cmd: 'npm', args: ['install', ...(dev ? ['--save-dev'] : []), pkgSpec] };
+  }
+}
+
+function getUninstallCommand(manager: string, name: string): { cmd: string; args: string[] } {
+  switch (manager) {
+    case 'yarn': return { cmd: 'yarn', args: ['remove', name] };
+    case 'pnpm': return { cmd: 'pnpm', args: ['remove', name] };
+    case 'bun': return { cmd: 'bun', args: ['remove', name] };
+    case 'pip': return { cmd: 'pip', args: ['uninstall', '-y', name] };
+    case 'cargo': return { cmd: 'cargo', args: ['remove', name] };
+    case 'go': return { cmd: 'go', args: ['get', `${name}@none`] };
+    case 'gem': return { cmd: 'gem', args: ['uninstall', name] };
+    case 'composer': return { cmd: 'composer', args: ['remove', name] };
+    default: return { cmd: 'npm', args: ['uninstall', name] };
+  }
+}
+
+function getUpdateCommand(manager: string, names: string[]): { cmd: string; args: string[] } {
+  switch (manager) {
+    case 'yarn': return { cmd: 'yarn', args: ['upgrade', ...names] };
+    case 'pnpm': return { cmd: 'pnpm', args: ['update', ...names] };
+    case 'bun': return { cmd: 'bun', args: ['update', ...names] };
+    case 'pip': return { cmd: 'pip', args: ['install', '--upgrade', ...names] };
+    case 'cargo': return { cmd: 'cargo', args: ['update', '-p', ...names] };
+    case 'go': return { cmd: 'go', args: ['get', '-u', ...names] };
+    case 'gem': return { cmd: 'gem', args: ['update', ...names] };
+    case 'composer': return { cmd: 'composer', args: ['update', ...names] };
+    default: return { cmd: 'npm', args: ['install', ...names.map(n => `${n}@latest`)] };
+  }
+}
+
+async function parseCargoTomlDependencies(workingDir: string): Promise<any[]> {
+  try {
+    const content = await fs.readFile(path.join(workingDir, 'Cargo.toml'), 'utf-8');
+    const packages: any[] = [];
+    let inDeps = false;
+    let inDevDeps = false;
+    for (const line of content.split('\n')) {
+      const trimmed = line.trim();
+      if (trimmed === '[dependencies]') { inDeps = true; inDevDeps = false; continue; }
+      if (trimmed === '[dev-dependencies]') { inDeps = false; inDevDeps = true; continue; }
+      if (trimmed.startsWith('[') && trimmed.endsWith(']')) { inDeps = false; inDevDeps = false; continue; }
+      if (!inDeps && !inDevDeps) continue;
+      const simple = trimmed.match(/^([a-zA-Z0-9_-]+)\s*=\s*"([^"]+)"/);
+      if (simple) {
+        packages.push({ name: simple[1], version: simple[2], isDevDependency: inDevDeps });
+        continue;
+      }
+      const table = trimmed.match(/^([a-zA-Z0-9_-]+)\s*=\s*\{.*version\s*=\s*"([^"]+)"/);
+      if (table) {
+        packages.push({ name: table[1], version: table[2], isDevDependency: inDevDeps });
+      }
+    }
+    return packages;
+  } catch {
+    return [];
+  }
+}
+
+async function parseGoModDependencies(workingDir: string): Promise<any[]> {
+  try {
+    const content = await fs.readFile(path.join(workingDir, 'go.mod'), 'utf-8');
+    const packages: any[] = [];
+    let inRequire = false;
+    for (const line of content.split('\n')) {
+      const trimmed = line.trim();
+      if (trimmed === 'require (') { inRequire = true; continue; }
+      if (trimmed === ')') { inRequire = false; continue; }
+      if (inRequire) {
+        const match = trimmed.match(/^(\S+)\s+(\S+)/);
+        if (match) {
+          packages.push({
+            name: match[1],
+            version: match[2].replace(/^v/, ''),
+            isDevDependency: trimmed.includes('// indirect'),
+          });
+        }
+      }
+      const singleReq = trimmed.match(/^require\s+(\S+)\s+(\S+)/);
+      if (singleReq) {
+        packages.push({ name: singleReq[1], version: singleReq[2].replace(/^v/, ''), isDevDependency: false });
+      }
+    }
+    return packages;
+  } catch {
+    return [];
+  }
+}
+
+const projectPackagesRouter = Router();
+
+projectPackagesRouter.get('/:projectId/packages', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    
+    if (!isValidProjectId(projectId)) {
+      return res.status(400).json({ error: 'Invalid project ID' });
+    }
+    
+    const workingDir = await resolveProjectDirectory(projectId);
+    
+    if (!workingDir) {
+      return res.json({ packages: [], language: 'javascript', packageManager: 'npm' });
+    }
+    
+    const { language, manager: packageManager } = await detectProjectManager(workingDir);
+    let packages: any[] = [];
+    
+    if (language === 'javascript') {
+      try {
+        const packageJson = JSON.parse(await fs.readFile(path.join(workingDir, 'package.json'), 'utf-8'));
+        const deps = packageJson.dependencies || {};
+        const devDeps = packageJson.devDependencies || {};
+        packages = [
+          ...Object.entries(deps).map(([name, version]) => ({
+            name,
+            version: (version as string).replace(/^[\^~>=<]/, ''),
+            isDevDependency: false,
+          })),
+          ...Object.entries(devDeps).map(([name, version]) => ({
+            name,
+            version: (version as string).replace(/^[\^~>=<]/, ''),
+            isDevDependency: true,
+          })),
+        ];
+      } catch { /* no package.json */ }
+    } else if (language === 'python') {
+      try {
+        const content = await fs.readFile(path.join(workingDir, 'requirements.txt'), 'utf-8');
+        packages = content.split('\n')
+          .filter(line => line.trim() && !line.startsWith('#'))
+          .map(line => {
+            const match = line.match(/^([a-zA-Z0-9_.-]+)(?:[=<>!~]+(.+))?$/);
+            return {
+              name: match ? match[1].trim() : line.trim(),
+              version: match && match[2] ? match[2].trim() : 'latest',
+              isDevDependency: false,
+            };
+          });
+      } catch { /* no requirements.txt */ }
+    } else if (language === 'rust') {
+      packages = await parseCargoTomlDependencies(workingDir);
+    } else if (language === 'go') {
+      packages = await parseGoModDependencies(workingDir);
+    }
+    
+    res.json({ packages, language, packageManager });
+  } catch (error: any) {
+    console.error('[Packages] Failed to list packages:', error);
+    res.status(500).json({ error: 'Failed to list packages', message: error.message });
+  }
+});
+
+async function handleInstall(req: any, res: any) {
+  try {
+    const { projectId } = req.params;
+    const { name, version, dev, manager: managerOverride } = req.body;
+    
+    if (!isValidProjectId(projectId)) {
+      return res.status(400).json({ error: 'Invalid project ID' });
+    }
+    
+    if (!name || !isValidPackageName(name)) {
+      return res.status(400).json({ error: 'Invalid or missing package name' });
+    }
+    
+    if (version && !isValidVersion(version)) {
+      return res.status(400).json({ error: 'Invalid version string' });
+    }
+    
+    const workingDir = await resolveProjectDirectory(projectId);
+    if (!workingDir) {
+      return res.status(404).json({ error: 'Project directory not found' });
+    }
+    
+    const detected = await detectProjectManager(workingDir);
+    const effectiveManager = managerOverride || detected.manager;
+    const { cmd, args } = getInstallCommand(effectiveManager, name, version, dev);
+    
+    const { stdout, stderr } = await spawnPackageManager(cmd, args, workingDir);
+    
+    res.json({
+      success: true,
+      name,
+      version: version || 'latest',
+      manager: effectiveManager,
+      output: stdout,
+      warnings: stderr && !stderr.includes('WARN') ? stderr : undefined,
+    });
+  } catch (error: any) {
+    console.error('[Packages] Install failed:', error);
+    res.status(500).json({
+      error: 'Installation failed',
+      message: error.message,
+      details: error.stderr || error.stdout,
+    });
+  }
+}
+
+projectPackagesRouter.post('/:projectId/packages', ensureAuthenticated, ensureProjectAccess, handleInstall);
+projectPackagesRouter.post('/:projectId/packages/install', ensureAuthenticated, ensureProjectAccess, handleInstall);
+
+projectPackagesRouter.post('/:projectId/packages/install-stream', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+  const { projectId } = req.params;
+  const { name, version, dev, manager: managerOverride } = req.body;
+  
+  if (!isValidProjectId(projectId)) {
+    return res.status(400).json({ error: 'Invalid project ID' });
+  }
+  
+  if (!name || !isValidPackageName(name)) {
+    return res.status(400).json({ error: 'Invalid or missing package name' });
+  }
+  
+  if (version && !isValidVersion(version)) {
+    return res.status(400).json({ error: 'Invalid version string' });
+  }
+  
+  const workingDir = await resolveProjectDirectory(projectId);
+  if (!workingDir) {
+    return res.status(404).json({ error: 'Project directory not found' });
+  }
+  
+  const detected = await detectProjectManager(workingDir);
+  const effectiveManager = managerOverride || detected.manager;
+  const { cmd, args } = getInstallCommand(effectiveManager, name, version, dev);
+  
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive',
+  });
+  
+  const sendEvent = (event: string, data: any) => {
+    res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+  };
+  
+  sendEvent('start', { package: name, command: `${cmd} ${args.join(' ')}`, manager: effectiveManager });
+  
+  const child = spawn(cmd, args, {
+    cwd: workingDir,
+    timeout: 180000,
+    shell: false,
+  });
+  
+  child.stdout.on('data', (data) => {
+    const lines = data.toString().split('\n').filter((l: string) => l.trim());
+    for (const line of lines) {
+      sendEvent('output', { line, stream: 'stdout' });
+    }
+  });
+  
+  child.stderr.on('data', (data) => {
+    const lines = data.toString().split('\n').filter((l: string) => l.trim());
+    for (const line of lines) {
+      sendEvent('output', { line, stream: 'stderr' });
+    }
+  });
+  
+  child.on('error', (error) => {
+    sendEvent('error', { message: error.message });
+    res.end();
+  });
+  
+  child.on('close', (code) => {
+    sendEvent('complete', { exitCode: code, success: code === 0 });
+    res.end();
+  });
+  
+  req.on('close', () => {
+    child.kill();
+  });
+});
+
+projectPackagesRouter.delete('/:projectId/packages/:packageName', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+  try {
+    const { projectId, packageName } = req.params;
+    
+    if (!isValidProjectId(projectId)) {
+      return res.status(400).json({ error: 'Invalid project ID' });
+    }
+    
+    if (!isValidPackageName(packageName)) {
+      return res.status(400).json({ error: 'Invalid package name' });
+    }
+    
+    const workingDir = await resolveProjectDirectory(projectId);
+    if (!workingDir) {
+      return res.status(404).json({ error: 'Project directory not found' });
+    }
+    
+    const { manager } = await detectProjectManager(workingDir);
+    const { cmd, args } = getUninstallCommand(manager, packageName);
+    
+    const { stdout } = await spawnPackageManager(cmd, args, workingDir);
+    
+    res.json({
+      success: true,
+      message: `Successfully uninstalled ${packageName}`,
+      output: stdout,
+    });
+  } catch (error: any) {
+    console.error('[Packages] Uninstall failed:', error);
+    res.status(500).json({
+      error: 'Uninstall failed',
+      message: error.message,
+    });
+  }
+});
+
+projectPackagesRouter.post('/:projectId/packages/update', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const { packages: pkgNames } = req.body;
+    
+    if (!isValidProjectId(projectId)) {
+      return res.status(400).json({ error: 'Invalid project ID' });
+    }
+    
+    const names: string[] = Array.isArray(pkgNames) ? pkgNames : [pkgNames].filter(Boolean);
+    if (names.length === 0) {
+      return res.status(400).json({ error: 'Package name(s) required' });
+    }
+    
+    for (const n of names) {
+      if (!isValidPackageName(n)) {
+        return res.status(400).json({ error: `Invalid package name: ${n}` });
+      }
+    }
+    
+    const workingDir = await resolveProjectDirectory(projectId);
+    if (!workingDir) {
+      return res.status(404).json({ error: 'Project directory not found' });
+    }
+    
+    const { manager } = await detectProjectManager(workingDir);
+    const { cmd, args } = getUpdateCommand(manager, names);
+    
+    const { stdout } = await spawnPackageManager(cmd, args, workingDir);
+    
+    res.json({
+      success: true,
+      message: `Successfully updated ${names.join(', ')}`,
+      output: stdout,
+    });
+  } catch (error: any) {
+    console.error('[Packages] Update failed:', error);
+    res.status(500).json({
+      error: 'Update failed',
+      message: error.message,
+    });
+  }
+});
+
+router.get('/search', ensureAuthenticated, async (req, res) => {
+  try {
+    const query = req.query.q as string;
+    const language = req.query.language as string || 'javascript';
+    
+    if (!query || query.length < 2) {
+      return res.status(400).json({ error: 'Search query must be at least 2 characters' });
+    }
+    
+    let packages: any[] = [];
+    
+    if (language === 'python') {
+      try {
+        const response = await fetch(`https://pypi.org/pypi/${encodeURIComponent(query)}/json`);
+        if (response.ok) {
+          const data = await response.json() as any;
+          packages = [{
+            name: data.info.name,
+            version: data.info.version,
+            description: data.info.summary || '',
+          }];
+        }
+      } catch {
+        packages = [];
+      }
+    } else {
+      try {
+        const response = await fetch(`https://registry.npmjs.org/-/v1/search?text=${encodeURIComponent(query)}&size=20`);
+        if (response.ok) {
+          const data = await response.json() as any;
+          packages = data.objects?.map((obj: any) => ({
+            name: obj.package.name,
+            version: obj.package.version,
+            description: obj.package.description || '',
+          })) || [];
+        }
+      } catch {
+        packages = [];
+      }
+    }
+    
+    res.json(packages);
+  } catch (error: any) {
+    console.error('[Packages] Search failed:', error);
+    res.status(500).json({ error: 'Search failed', message: error.message });
+  }
+});
+
+export { projectPackagesRouter };
 export default router;
