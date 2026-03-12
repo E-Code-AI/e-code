@@ -149,6 +149,7 @@ export class EdgeFunctionsService extends EventEmitter {
     };
 
     const startTime = Date.now();
+    const memBefore = process.memoryUsage().heapUsed;
 
     try {
       let result: any;
@@ -167,7 +168,8 @@ export class EdgeFunctionsService extends EventEmitter {
 
       invocation.result = result;
       invocation.duration = Date.now() - startTime;
-      invocation.memory = Math.floor(Math.random() * func.memory * 0.8 + func.memory * 0.2);
+      const memAfter = process.memoryUsage().heapUsed;
+      invocation.memory = Math.max(0, Math.round((memAfter - memBefore) / 1024));
       invocation.logs.push(`Function executed successfully in ${invocation.duration}ms`);
 
       func.lastInvocation = new Date();

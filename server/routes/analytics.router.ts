@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { db } from '../db';
-import { performanceMetrics, deploymentMetrics, users, projects, agentSessions, deployments } from '@shared/schema';
+import { performanceMetrics, deploymentMetrics, users, projects, agentSessions, deployments, files } from '@shared/schema';
 import { eq, desc, gte, sql, and, count } from 'drizzle-orm';
 import { ensureAuthenticated } from '../middleware/auth';
 import { createLogger } from '../utils/logger';
@@ -569,19 +569,54 @@ router.get('/storage', ensureAuthenticated, async (req: Request, res: Response) 
     const projectCount = Number(projectsResult?.count || 0);
     const sessionCount = Number(sessionsResult?.count || 0);
 
-    // Calculate storage breakdown (simulated based on activity)
-    const codeStorage = projectCount * 15; // ~15MB per project
-    const databaseStorage = projectCount * 5; // ~5MB per project
-    const mediaStorage = projectCount * 10; // ~10MB per project
-    const cacheStorage = sessionCount * 2; // ~2MB per session
+    const codeExts = ['.js', '.ts', '.jsx', '.tsx', '.py', '.go', '.rs', '.java', '.cpp', '.c', '.h', '.css', '.html', '.vue', '.svelte'];
+    const mediaExts = ['.png', '.jpg', '.jpeg', '.gif', '.svg', '.mp4', '.webp', '.ico', '.mp3', '.wav'];
 
-    const total = codeStorage + databaseStorage + mediaStorage + cacheStorage || 1;
+    let codeStorage = 0;
+    let mediaStorage = 0;
+    let otherStorage = 0;
+
+    try {
+      const userProjects = await db.select({ id: projects.id })
+        .from(projects)
+        .where(eq(projects.ownerId, userId!));
+      const projectIds = userProjects.map(p => p.id);
+
+      if (projectIds.length > 0) {
+        const fileRows = await db.select({
+          projectId: files.projectId,
+          name: files.name,
+          size: files.size,
+        }).from(files)
+          .where(
+            and(
+              sql`${files.projectId} IN (${sql.join(projectIds.map(id => sql`${id}`), sql`, `)})`,
+              eq(files.isDirectory, false)
+            )
+          );
+
+        for (const f of fileRows) {
+          const sz = f.size || 0;
+          const ext = (f.name || '').toLowerCase().replace(/^.*(\.[^.]+)$/, '$1');
+          if (codeExts.includes(ext)) {
+            codeStorage += sz;
+          } else if (mediaExts.includes(ext)) {
+            mediaStorage += sz;
+          } else {
+            otherStorage += sz;
+          }
+        }
+      }
+    } catch (queryErr) {
+      logger.warn('Storage query failed, returning empty breakdown', { error: queryErr });
+    }
+
+    const total = codeStorage + mediaStorage + otherStorage || 1;
 
     const storageData = [
       { name: 'Code', value: Math.round((codeStorage / total) * 100), color: '#3b82f6' },
-      { name: 'Database', value: Math.round((databaseStorage / total) * 100), color: '#10b981' },
       { name: 'Media', value: Math.round((mediaStorage / total) * 100), color: '#f59e0b' },
-      { name: 'Cache', value: Math.round((cacheStorage / total) * 100), color: '#6b7280' },
+      { name: 'Other', value: Math.round((otherStorage / total) * 100), color: '#10b981' },
     ];
 
     res.json(storageData);

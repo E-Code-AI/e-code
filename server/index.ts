@@ -42,6 +42,7 @@ import { legacyRateLimiters, dynamicRateLimiter, logRateLimitViolations } from '
 import { tierRateLimiters } from './middleware/tier-rate-limiter';
 import { monitoringMiddleware } from './services/monitoring.service';
 import { prometheusMiddleware } from './monitoring/prometheus';
+import { requestCounterMiddleware } from './middleware/request-counter';
 import { sanitizeInput } from './middleware/input-validation';
 import { loggingMiddleware, securityLoggingMiddleware, performanceLoggingMiddleware } from './logging/logging-middleware';
 import { createCentralizedLogger } from './logging/centralized-logger';
@@ -115,6 +116,9 @@ app.use((req, res, next) => {
   
   next();
 });
+
+// Request counter middleware - tracks real API request counts
+app.use(requestCounterMiddleware);
 
 // Production monitoring middleware - tracks API latency, errors, WebSocket connections
 // Skip for static assets to improve performance

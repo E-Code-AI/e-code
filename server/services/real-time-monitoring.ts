@@ -173,28 +173,58 @@ export class RealTimeMonitoringService {
     return size;
   }
 
-  // Get network statistics
+  private readProcNetDev(): { bytesReceived: number; bytesSent: number; packetsReceived: number; packetsSent: number } | null {
+    try {
+      const data = require('fs').readFileSync('/proc/net/dev', 'utf8');
+      const lines = data.split('\n').slice(2);
+      let bytesReceived = 0, bytesSent = 0, packetsReceived = 0, packetsSent = 0;
+      for (const line of lines) {
+        const parts = line.trim().split(/\s+/);
+        if (parts.length < 11) continue;
+        const iface = parts[0].replace(':', '');
+        if (iface === 'lo') continue;
+        bytesReceived += parseInt(parts[1], 10) || 0;
+        packetsReceived += parseInt(parts[2], 10) || 0;
+        bytesSent += parseInt(parts[9], 10) || 0;
+        packetsSent += parseInt(parts[10], 10) || 0;
+      }
+      return { bytesReceived, bytesSent, packetsReceived, packetsSent };
+    } catch {
+      return null;
+    }
+  }
+
+  private getNetworkStatsViaOsModule(): { bytesReceived: number; bytesSent: number; packetsReceived: number; packetsSent: number } {
+    const interfaces = os.networkInterfaces();
+    let activeAddresses = 0;
+    for (const name in interfaces) {
+      if (name === 'lo' || name === 'lo0') continue;
+      const addrs = interfaces[name];
+      if (addrs) {
+        for (const addr of addrs) {
+          if (!addr.internal) activeAddresses++;
+        }
+      }
+    }
+    return { bytesReceived: 0, bytesSent: 0, packetsReceived: 0, packetsSent: 0 };
+  }
+
   private async getNetworkStats(): Promise<any> {
-    // Simplified network stats - in production this would read from /proc/net/dev
-    const currentStats = {
-      bytesReceived: Math.floor(Math.random() * 1000000),
-      bytesSent: Math.floor(Math.random() * 1000000),
-      packetsReceived: Math.floor(Math.random() * 10000),
-      packetsSent: Math.floor(Math.random() * 10000)
-    };
+    const currentStats = this.readProcNetDev() || this.getNetworkStatsViaOsModule();
 
     if (this.previousNetworkStats) {
-      // Calculate delta since last measurement
-      return {
+      const delta = {
         bytesReceived: Math.max(0, currentStats.bytesReceived - this.previousNetworkStats.bytesReceived),
         bytesSent: Math.max(0, currentStats.bytesSent - this.previousNetworkStats.bytesSent),
         packetsReceived: Math.max(0, currentStats.packetsReceived - this.previousNetworkStats.packetsReceived),
         packetsSent: Math.max(0, currentStats.packetsSent - this.previousNetworkStats.packetsSent)
       };
+      this.previousNetworkStats = currentStats;
+      return delta;
     }
 
     this.previousNetworkStats = currentStats;
-    return currentStats;
+    return { bytesReceived: 0, bytesSent: 0, packetsReceived: 0, packetsSent: 0 };
   }
 
   // Store system metrics

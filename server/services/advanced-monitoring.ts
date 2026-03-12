@@ -1,5 +1,9 @@
 import { EventEmitter } from 'events';
 import type { DatabaseStorage } from '../storage';
+import { db } from '../db';
+import { agentSessions } from '@shared/schema';
+import { and, eq, gte, sql } from 'drizzle-orm';
+import { getRequestCountLastMinute } from '../middleware/request-counter';
 
 export interface MetricPoint {
   timestamp: Date;
@@ -153,10 +157,22 @@ export class AdvancedMonitoringService extends EventEmitter {
   }
 
   private async collectBusinessMetrics() {
-    // These would normally query the database
-    // For now, using simulated values
-    const activeUsers = Math.floor(Math.random() * 1000) + 500;
-    const apiRequests = Math.floor(Math.random() * 10000) + 5000;
+    let activeUsers = 0;
+    try {
+      const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000);
+      const [result] = await db
+        .select({ count: sql<number>`COUNT(DISTINCT ${agentSessions.userId})` })
+        .from(agentSessions)
+        .where(and(
+          eq(agentSessions.isActive, true),
+          gte(agentSessions.startedAt, fiveMinAgo)
+        ));
+      activeUsers = Number(result?.count || 0);
+    } catch {
+      activeUsers = 0;
+    }
+
+    const apiRequests = getRequestCountLastMinute();
     
     this.recordMetric('business.users.active', activeUsers, { period: '5m' });
     this.recordMetric('api.requests', apiRequests, { period: '1m' });
