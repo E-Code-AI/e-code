@@ -199,6 +199,15 @@ export default function AuthPage() {
                         </FormItem>
                       )}
                     />
+                    <div className="flex justify-end -mt-1 mb-1">
+                      <a
+                        href="/forgot-password"
+                        className="text-[13px] text-primary hover:text-primary/80 hover:underline transition-colors"
+                        data-testid="link-forgot-password"
+                      >
+                        Forgot password?
+                      </a>
+                    </div>
                     <div className="space-y-3 pt-2">
                       <Button 
                         type="submit" 

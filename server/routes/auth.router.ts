@@ -51,6 +51,7 @@ export class AuthRouter {
       id: user.id,
       username: user.username,
       email: user.email,
+      emailVerified: user.emailVerified,
       displayName: user.displayName,
       firstName: user.firstName,
       lastName: user.lastName,
@@ -64,7 +65,6 @@ export class AuthRouter {
       isMentor: user.isMentor,
       role: user.role,
       isAdmin: user.role === 'admin' || user.role === 'super_admin',
-      emailVerified: user.emailVerified,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt
       // EXCLUDED: password, twoFactorSecret, passwordResetToken, stripeCustomerId, etc.
@@ -884,6 +884,24 @@ export class AuthRouter {
           });
         }
 
+        // Rate limiting: max 3 resend requests per hour
+        const recentResends = await db.select()
+          .from(securityLogs)
+          .where(
+            and(
+              eq(securityLogs.userId, user.id),
+              eq(securityLogs.action, 'verification_resend'),
+              gte(securityLogs.timestamp, new Date(Date.now() - 60 * 60 * 1000))
+            )
+          );
+
+        if (recentResends.length >= 3) {
+          return res.status(429).json({
+            message: "Too many resend requests. Please wait before trying again.",
+            code: "RATE_LIMITED"
+          });
+        }
+
         // Generate new verification token
         const verificationToken = generateEmailVerificationToken();
         const hashedToken = hashToken(verificationToken);
@@ -990,7 +1008,7 @@ export class AuthRouter {
             and(
               eq(securityLogs.userId, user.id),
               eq(securityLogs.action, 'password_reset_request'),
-              gte(securityLogs.timestamp, new Date(Date.now() - 15 * 60 * 1000)) // Last 15 minutes
+              gte(securityLogs.timestamp, new Date(Date.now() - 60 * 60 * 1000)) // Last hour
             )
           );
 

@@ -22,6 +22,7 @@ const ScrollToTop = instrumentedLazy(() => import("@/components/ScrollToTop").th
 const ConnectionStatusBanner = instrumentedLazy(() => import("./components/ConnectionStatusBanner").then(m => ({ default: m.ConnectionStatusBanner })), 'ConnectionStatusBanner');
 const LazyShellWidgets = instrumentedLazy(() => import("@/components/LazyShellWidgets").then(m => ({ default: m.LazyShellWidgets })), 'LazyShellWidgets');
 const OfflineFallback = instrumentedLazy(() => import("@/components/OfflineFallback").then(m => ({ default: m.OfflineFallback })), 'OfflineFallback');
+const EmailVerificationBanner = instrumentedLazy(() => import("@/components/EmailVerificationBanner").then(m => ({ default: m.EmailVerificationBanner })), 'EmailVerificationBanner');
 
 function PageLoader() {
   return <ECodeLoading fullScreen size="lg" text="Loading..." />;
@@ -127,6 +128,7 @@ function AppContent() {
         <AtSymbolRedirectHandler>
           <div className="min-h-screen replit-layout-main">
             <ConnectionStatusBanner />
+            <EmailVerificationBanner />
             <ScrollToTop />
             <Toaster />
             <LazyShellWidgets />
