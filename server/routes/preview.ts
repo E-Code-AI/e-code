@@ -464,10 +464,10 @@ router.get('/projects/:id/preview/status', ensureAuthenticated, ensureProjectAcc
 router.post('/projects/:id/preview/start', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
   try {
     const projectId = req.params.id;
-    const { runId } = req.body;
+    const { runId, port } = req.body;
     
     const { previewService } = await import('../preview/preview-service');
-    const preview = await previewService.startPreview(projectId, runId);
+    const preview = await previewService.startPreview(projectId, { port, runId });
     
     res.json({
       success: true,

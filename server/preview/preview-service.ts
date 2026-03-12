@@ -134,10 +134,38 @@ export class PreviewService {
     return port;
   }
 
-  // Register preview routes on the main Express app
+  private ensurePreviewAuth(req: any, res: any, next: any) {
+    if (!req.isAuthenticated || !req.isAuthenticated()) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    next();
+  }
+
+  private async ensureProjectAccess(req: any, res: any, next: any) {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      if (isNaN(projectId)) {
+        return res.status(400).json({ error: 'Invalid project ID' });
+      }
+      const project = await storage.getProject(projectId);
+      if (!project) {
+        return res.status(404).json({ error: 'Project not found' });
+      }
+      if (project.ownerId !== req.user?.id) {
+        const collaborators = await storage.getProjectCollaborators?.(String(projectId));
+        const isCollaborator = collaborators?.some((c: any) => c.userId === req.user?.id);
+        if (!isCollaborator) {
+          return res.status(403).json({ error: 'Access denied' });
+        }
+      }
+      next();
+    } catch (error) {
+      return res.status(500).json({ error: 'Failed to verify project access' });
+    }
+  }
+
   registerRoutes(app: express.Application) {
-    // Multi-port proxy requests to preview instances
-    app.use('/preview/:projectId/:port/*', async (req, res, next) => {
+    app.use('/preview/:projectId/:port/*', this.ensurePreviewAuth, this.ensureProjectAccess.bind(this), async (req, res, next) => {
       const projectId = req.params.projectId;
       const port = parseInt(req.params.port);
       const preview = this.previews.get(projectId);
@@ -146,26 +174,23 @@ export class PreviewService {
         return res.status(404).json({ error: 'Preview not available' });
       }
       
-      // Check if requested port is exposed
       if (!preview.ports.includes(port)) {
         return res.status(404).json({ error: `Port ${port} not exposed by this preview` });
       }
       
-      // Health check for the specific port
       if (!preview.healthChecks.get(port)) {
         return res.status(503).json({ error: `Service on port ${port} is not healthy` });
       }
       
-      // Proxy to the specific port
       const proxy = createProxyMiddleware({
         target: `http://127.0.0.1:${port}`,
         changeOrigin: true,
-        ws: true, // Enable WebSocket proxying
+        ws: true,
         pathRewrite: {
           [`^/preview/${projectId}/${port}`]: ''
         },
         on: {
-          error: (err: any, req: any, res: any) => {
+          error: (err: any, _req: any, res: any) => {
             logger.error(`Preview proxy error for project ${projectId} port ${port}:`, err);
             if (res && typeof res.status === 'function') {
               res.status(502).json({ error: 'Preview server error' });
@@ -177,8 +202,7 @@ export class PreviewService {
       proxy(req, res, next);
     });
 
-    // Default port proxy (backwards compatibility)
-    app.use('/preview/:projectId/*', async (req, res, next) => {
+    app.use('/preview/:projectId/*', this.ensurePreviewAuth, this.ensureProjectAccess.bind(this), async (req, res, next) => {
       const projectId = req.params.projectId;
       const preview = this.previews.get(projectId);
       
@@ -186,16 +210,15 @@ export class PreviewService {
         return res.status(404).json({ error: 'Preview not available' });
       }
       
-      // Proxy to primary port
       const proxy = createProxyMiddleware({
         target: `http://127.0.0.1:${preview.primaryPort}`,
         changeOrigin: true,
-        ws: true, // Enable WebSocket proxying
+        ws: true,
         pathRewrite: {
           [`^/preview/${projectId}`]: ''
         },
         on: {
-          error: (err: any, req: any, res: any) => {
+          error: (err: any, _req: any, res: any) => {
             logger.error(`Preview proxy error for project ${projectId}:`, err);
             if (res && typeof res.status === 'function') {
               res.status(502).json({ error: 'Preview server error' });
@@ -208,127 +231,97 @@ export class PreviewService {
     });
   }
 
-  async startPreview(projectId: string, runId?: string): Promise<PreviewInstance> {
-    // Stop existing preview if running
+  async startPreview(projectId: string, options?: { port?: number; runId?: string }): Promise<PreviewInstance> {
     await this.stopPreview(projectId);
     
-    const port = this.allocatePort(projectId);
+    const runtimePort = options?.port;
+    const runId = options?.runId || `run-${projectId}-${Date.now()}`;
+
+    if (!runtimePort) {
+      logger.warn(`No runtime port provided for project ${projectId}, preview cannot proxy`);
+      const errorPreview: PreviewInstance = {
+        projectId,
+        runId,
+        ports: [],
+        primaryPort: 0,
+        processes: new Map(),
+        url: '',
+        status: 'error',
+        logs: ['No runtime port available'],
+        healthChecks: new Map(),
+        lastHealthCheck: new Date(),
+        exposedServices: []
+      };
+      this.previews.set(projectId, errorPreview);
+      previewEvents.emit('preview:error', { projectId, runId, error: 'No runtime port available' });
+      return errorPreview;
+    }
+
     const preview: PreviewInstance = {
       projectId,
-      runId: runId || `run-${projectId}-${Date.now()}`,
-      ports: [],
-      primaryPort: port,
+      runId,
+      ports: [runtimePort],
+      primaryPort: runtimePort,
       processes: new Map(),
       url: `/preview/${projectId}/`,
       status: 'starting',
       logs: [],
       healthChecks: new Map(),
       lastHealthCheck: new Date(),
-      exposedServices: []
+      exposedServices: [{ port: runtimePort, name: 'runtime' }]
     };
     
     this.previews.set(projectId, preview);
+    previewEvents.emit('preview:start', { projectId, runId, port: runtimePort });
     
-    // Emit WebSocket event for preview start
-    previewEvents.emit('preview:start', { projectId, runId: preview.runId, port });
+    this.pollPortReady(projectId, runtimePort, preview);
     
-    try {
-      // Create temporary directory for preview
-      const previewPath = path.join(process.cwd(), 'previews', projectId);
-      await fs.mkdir(previewPath, { recursive: true });
-      
-      // Load project files from database
-      const files = await storage.getFilesByProjectId(projectId);
-      
-      // Write files to preview directory
-      for (const file of files) {
-        if (!file.path || file.path === '/' || file.path.endsWith('/')) continue;
-        
-        const filePath = path.join(previewPath, file.path.startsWith('/') ? file.path.slice(1) : file.path);
-        const fileDir = path.dirname(filePath);
-        await fs.mkdir(fileDir, { recursive: true });
-        await fs.writeFile(filePath, file.content || '');
+    return preview;
+  }
+
+  private async pollPortReady(projectId: string, port: number, preview: PreviewInstance) {
+    const maxAttempts = 30;
+    const intervalMs = 1000;
+
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      const current = this.previews.get(projectId);
+      if (!current || current.runId !== preview.runId || current.status === 'stopped') {
+        return;
       }
-      
-      // Enhanced framework detection and multi-port setup
-      const frameworkInfo = await this.detectFramework(files, previewPath);
-      preview.frameworkType = frameworkInfo.type;
-      
-      if (frameworkInfo.type === 'react' || frameworkInfo.type === 'vue' || frameworkInfo.type === 'angular') {
-        // Modern frontend frameworks - may expose multiple services
-        await this.startModernFramework(preview, frameworkInfo, previewPath, files);
-      } else if (frameworkInfo.type === 'node') {
-        // Node.js backend - may expose API + frontend
-        await this.startNodeApplication(preview, frameworkInfo, previewPath, files);
-      } else if (frameworkInfo.type === 'python') {
-        // Python application
-        await this.startPythonApplication(preview, frameworkInfo, previewPath, files);
-      } else {
-        // Static files
-        await this.startStaticServer(preview, previewPath);
-      }
-      
-      // Wait for services to start
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      
-      // Perform initial health checks
-      await this.performHealthChecks(preview);
-      
-      preview.status = preview.ports.length > 0 ? 'running' : 'error';
-      
-      if (preview.status === 'running') {
-        previewEvents.emit('preview:ready', { 
-          projectId, 
+
+      const healthy = await this.checkPortHealth(port);
+      if (healthy) {
+        preview.status = 'running';
+        preview.healthChecks.set(port, true);
+        logger.info(`Port ${port} ready for project ${projectId} after ${attempt + 1} attempts`);
+        previewEvents.emit('preview:ready', {
+          projectId,
           runId: preview.runId,
           ports: preview.ports,
           primaryPort: preview.primaryPort,
           services: preview.exposedServices
         });
-      } else {
-        previewEvents.emit('preview:error', { 
-          projectId, 
-          runId: preview.runId,
-          error: 'No services started successfully'
-        });
+        return;
       }
-      
-    } catch (error: any) {
-      preview.status = 'error';
-      preview.logs.push(`Error: ${error.message}`);
-      logger.error(`Failed to start preview for project ${projectId}:`, error);
-      previewEvents.emit('preview:error', { 
-        projectId, 
-        runId: preview.runId,
-        error: error.message 
-      });
+
+      await new Promise(resolve => setTimeout(resolve, intervalMs));
     }
-    
-    return preview;
+
+    preview.status = 'error';
+    preview.logs.push(`Port ${port} did not become ready within ${maxAttempts}s`);
+    logger.error(`Port ${port} readiness timeout for project ${projectId}`);
+    previewEvents.emit('preview:error', {
+      projectId,
+      runId: preview.runId,
+      error: `Port ${port} did not become ready`
+    });
   }
 
   async stopPreview(projectId: string): Promise<void> {
     const preview = this.previews.get(projectId);
     if (preview) {
-      // Stop all processes
-      for (const [port, process] of preview.processes) {
-        if (process) {
-          process.kill();
-          preview.logs.push(`Stopped service on port ${port}`);
-        }
-      }
       preview.status = 'stopped';
-      
-      // Release allocated ports
-      if (preview.primaryPort) {
-        this.allocatedPorts.delete(preview.primaryPort);
-        logger.info(`Released port ${preview.primaryPort} for project ${projectId}`);
-      }
-      preview.ports.forEach(p => {
-        this.allocatedPorts.delete(p);
-        logger.info(`Released port ${p} for project ${projectId}`);
-      });
-      
-      // Emit stop event for WebSocket
+      logger.info(`Preview stopped for project ${projectId}`);
       previewEvents.emit('preview:stop', { projectId, runId: preview.runId });
     }
     this.previews.delete(projectId);
@@ -622,9 +615,18 @@ export class PreviewService {
   private async performHealthChecks(preview: PreviewInstance) {
     for (const port of preview.ports) {
       const isHealthy = await this.checkPortHealth(port);
+      const wasHealthy = preview.healthChecks.get(port) ?? true;
       preview.healthChecks.set(port, isHealthy);
       
-      if (!isHealthy) {
+      if (!isHealthy && wasHealthy && port === preview.primaryPort) {
+        preview.status = 'error';
+        logger.warn(`Primary port ${port} became unhealthy for project ${preview.projectId}`);
+        previewEvents.emit('preview:error', {
+          projectId: preview.projectId,
+          runId: preview.runId,
+          error: `Runtime on port ${port} is no longer responding`
+        });
+      } else if (!isHealthy) {
         previewEvents.emit('preview:health-check-failed', {
           projectId: preview.projectId,
           runId: preview.runId,

@@ -110,6 +110,7 @@ import workspacesRouter from './workspaces.router';
 import publicFormsRouter from './public-forms.router';
 import projectAuthRouter from './project-auth.router';
 import statusRouter from './status.router';
+import { setupPreviewRoutes } from '../preview/preview-service';
 
 export class MainRouter {
   private authRouter: AuthRouter;
@@ -496,6 +497,9 @@ export class MainRouter {
 
     // Project Auth — authentication configuration per project (/api/project-auth/*)
     app.use('/api/project-auth', tierRateLimiters.api, projectAuthRouter);
+
+    // Preview proxy routes — proxies HTTP/WebSocket traffic to project preview ports
+    setupPreviewRoutes(app);
   }
 
   /**

@@ -10,6 +10,8 @@ import * as runtimeHealth from './runtime-health';
 import { createLogger } from '../utils/logger';
 import * as os from 'os';
 import { randomUUID } from 'crypto';
+import { previewService } from '../preview/preview-service';
+import { previewEvents } from '../preview/preview-websocket';
 
 const logger = createLogger('runtime-api');
 
@@ -254,11 +256,19 @@ export async function startProjectRuntime(req: Request, res: Response) {
       });
     }
     
+    // Bridge runtime → preview: set up the proxy to the runtime's port
+    try {
+      const preview = await previewService.startPreview(projectId, { port: result.port, runId: executionId });
+      logger.info(`Preview started for project ${projectId}, proxying to runtime port: ${result.port}`);
+    } catch (previewErr: any) {
+      logger.warn(`Preview service start failed for project ${projectId}: ${previewErr.message} — runtime continues without preview proxy`);
+    }
+
     res.json({
       success: true,
       containerId: result.containerId,
       port: result.port,
-      url: `http://localhost:${result.port}`,
+      url: `/preview/${projectId}/`,
       logs: result.logs,
       executionId // Include for WebSocket subscription
     });
@@ -289,6 +299,14 @@ export async function stopProjectRuntime(req: Request, res: Response) {
     
     // Stop the project
     await runtimeManager.stopProject(projectId);
+    
+    // Bridge runtime → preview: stop the preview proxy and free the port
+    try {
+      await previewService.stopPreview(projectId);
+      logger.info(`Preview stopped for project ${projectId}`);
+    } catch (previewErr: any) {
+      logger.warn(`Preview service stop failed for project ${projectId}: ${previewErr.message}`);
+    }
     
     res.json({
       success: true

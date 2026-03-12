@@ -731,6 +731,18 @@ httpServer.listen(port, "0.0.0.0", () => {
       markServiceFailed('checkpoint', String(error));
     }
     
+    // Setup Preview WebSocket server for live preview status updates
+    registerService('preview-ws');
+    try {
+      const { previewWebSocketService } = await import("./preview/preview-websocket");
+      previewWebSocketService.initialize(httpServer);
+      markServiceReady('preview-ws');
+      logger.info('[Preview WebSocket] Service initialized at /ws/preview');
+    } catch (error) {
+      logger.error(`[WORKING SERVER] Failed to setup Preview WebSocket: ${error}`);
+      markServiceFailed('preview-ws', String(error));
+    }
+
     // Make session store available globally for WebSocket authentication
     (global as any).sessionStore = sessionStore;
     

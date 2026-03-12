@@ -5,6 +5,8 @@ import { previewService } from './preview-service';
 import { EventEmitter } from 'events';
 import { parse as parseCookie } from 'cookie';
 import { storage } from '../storage';
+import { centralUpgradeDispatcher } from '../websocket/central-upgrade-dispatcher';
+import { markSocketAsHandled } from '../websocket/upgrade-guard';
 
 // Event emitter for preview updates
 // NOTE: File changes are emitted by files.router.ts when files are mutated via REST API
@@ -33,15 +35,9 @@ class PreviewWebSocketService {
       noServer: true
     });
 
-    // Handle WebSocket upgrade with authentication
-    server.on('upgrade', async (request: IncomingMessage, socket, head) => {
-      const pathname = new URL(request.url || '', `http://${request.headers.host}`).pathname;
-      
-      if (pathname !== '/ws/preview' && !pathname.startsWith('/ws/preview-devtools/')) {
-        return; // Not our WebSocket path
-      }
+    centralUpgradeDispatcher.register('/ws/preview', async (request: IncomingMessage, socket: any, head: Buffer) => {
+      markSocketAsHandled(request, socket);
 
-      // Extract and verify session BEFORE handleUpgrade
       const cookies = parseCookie(request.headers.cookie || '');
       const sessionId = cookies['ecode.sid'];
       
@@ -51,7 +47,6 @@ class PreviewWebSocketService {
         return;
       }
 
-      // Validate session BEFORE upgrading the connection
       let userId: number | null;
       try {
         userId = await this.getUserIdFromSession(sessionId);
@@ -68,7 +63,6 @@ class PreviewWebSocketService {
         return;
       }
 
-      // Session validated, now safe to upgrade
       try {
         this.wss!.handleUpgrade(request, socket, head, (ws) => {
           const clientId = Math.random().toString(36).substring(7);
@@ -88,7 +82,7 @@ class PreviewWebSocketService {
         socket.write('HTTP/1.1 500 Internal Server Error\r\n\r\n');
         socket.destroy();
       }
-    });
+    }, { pathMatch: 'prefix', priority: 55 });
     
     this.startCleanupInterval();
     this.startPingInterval();
@@ -213,8 +207,8 @@ class PreviewWebSocketService {
     createListener('preview:ready', (data) => this.broadcastToProject(data.projectId, {
       type: 'preview:ready',
       projectId: data.projectId,
-      port: data.port,
-      url: `/preview/${data.projectId}`,
+      port: data.primaryPort,
+      url: `/preview/${data.projectId}/`,
       status: 'running'
     }));
 
@@ -291,8 +285,8 @@ class PreviewWebSocketService {
             type: 'preview:status',
             projectId: projectId,
             status: preview.status,
-            port: preview.port,
-            url: preview.status === 'running' ? `/preview/${projectId}` : null,
+            port: preview.primaryPort,
+            url: preview.status === 'running' ? `/preview/${projectId}/` : null,
             logs: preview.logs || []
           }));
         }
@@ -314,9 +308,10 @@ class PreviewWebSocketService {
     }
   }
 
-  private broadcastToProject(projectId: number, message: any) {
+  private broadcastToProject(projectId: number | string, message: any) {
+    const targetId = String(projectId);
     this.clients.forEach((client) => {
-      if (client.projectId === projectId && client.ws.readyState === WebSocket.OPEN) {
+      if (String(client.projectId) === targetId && client.ws.readyState === WebSocket.OPEN) {
         client.ws.send(JSON.stringify(message));
       }
     });
@@ -330,7 +325,7 @@ class PreviewWebSocketService {
     });
   }
 
-  sendToProject(projectId: number, message: any) {
+  sendToProject(projectId: number | string, message: any) {
     this.broadcastToProject(projectId, message);
   }
 
