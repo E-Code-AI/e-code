@@ -756,7 +756,7 @@ export class StripePaymentService {
           paymentIntent.id
         );
       } catch (emailError) {
-        logger.error('[Stripe] Failed to send payment failure email (non-critical):', emailError);
+        logger.error(`[Stripe] Failed to send payment failure email for payment_intent.payment_failed (pi: ${paymentIntent.id}, user: ${userId}):`, emailError);
       }
     }
 
@@ -790,7 +790,7 @@ export class StripePaymentService {
           invoice.id
         );
       } catch (emailError) {
-        logger.error('[Stripe] Failed to send payment failure email (non-critical):', emailError);
+        logger.error(`[Stripe] Failed to send payment failure email for invoice.payment_failed (invoice: ${invoice.id}, user: ${userId}):`, emailError);
       }
     }
 
