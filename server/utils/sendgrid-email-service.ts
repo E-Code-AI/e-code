@@ -25,8 +25,8 @@ if (SENDGRID_API_KEY && !isTestEnv) {
 }
 
 // Configuration
-const APP_URL = process.env.APP_URL || process.env.REPLIT_DOMAINS?.split(',')[0] ? 
-  `https://${process.env.REPLIT_DOMAINS?.split(',')[0]}` : 'http://localhost:5000';
+const APP_URL = process.env.APP_URL
+  ?? (process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}` : 'http://localhost:5000');
 const FROM_EMAIL = process.env.FROM_EMAIL || 'noreply@e-code.ai';
 const FROM_NAME = process.env.FROM_NAME || 'E-Code Platform';
 

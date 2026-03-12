@@ -9,7 +9,7 @@ let redirectPending = false;
 let lastRedirectTime = 0;
 const REDIRECT_DEBOUNCE_MS = 1000;
 
-const AUTH_PAGES = ['/login', '/register', '/auth', '/forgot-password', '/reset-password'];
+const AUTH_PAGES = ['/login', '/register', '/auth', '/forgot-password', '/reset-password', '/verify-email'];
 
 /**
  * Check if current path is an authentication page
