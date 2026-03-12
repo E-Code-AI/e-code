@@ -70,9 +70,15 @@ securityMiddleware().forEach(middleware => app.use(middleware));
 app.use(performanceHeaders());
 app.use(earlyHints());
 
-// Response compression - reduces bandwidth for text-based responses
 import compression from 'compression';
-app.use(compression({ level: 6 }));
+app.use(compression({
+  level: 6,
+  threshold: 1024,
+  filter: (req, res) => {
+    if (req.headers['x-no-compression']) return false;
+    return compression.filter(req, res);
+  },
+}));
 
 // Basic middleware
 app.use(express.json({ limit: '10mb' }));

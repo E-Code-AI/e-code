@@ -41,22 +41,22 @@ const CACHE_CONFIGS: Record<string, CacheConfig> = {
  * Determines cache configuration based on request path
  */
 function getCacheConfig(path: string, contentType?: string): CacheConfig {
-  // Hashed assets (Vite generates these)
+  if (path.startsWith('/assets/')) {
+    return CACHE_CONFIGS.immutable;
+  }
+
   if (path.match(/\.[a-f0-9]{8,}\.(js|css|woff2?|ttf|eot)$/)) {
     return CACHE_CONFIGS.immutable;
   }
-  
-  // Static assets
-  if (path.match(/\.(js|css|png|jpg|jpeg|gif|svg|ico|woff2?|ttf|eot)$/)) {
-    return CACHE_CONFIGS.static;
-  }
-  
-  // API endpoints
+
   if (path.startsWith('/api/')) {
     return CACHE_CONFIGS.api;
   }
-  
-  // HTML and everything else
+
+  if (path.match(/\.(js|css|png|jpg|jpeg|gif|svg|ico|woff2?|ttf|eot)$/)) {
+    return CACHE_CONFIGS.static;
+  }
+
   return CACHE_CONFIGS.html;
 }
 

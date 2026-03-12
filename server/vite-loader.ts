@@ -188,14 +188,24 @@ export async function safeSetupVite(app: Application, server: Server): Promise<b
         
         logger.info(`[Vite Loader] Serving static files from: ${distPath}`);
         
-        // Serve static assets with caching.
-        // CRITICAL: index:false prevents express.static from serving index.html directly,
-        // which would bypass CSP nonce injection and cause inline styles/scripts to be blocked.
+        app.use('/assets', expressStatic.static(pathModule.join(distPath, 'assets'), {
+          maxAge: '365d',
+          immutable: true,
+          etag: false,
+          lastModified: false,
+          index: false,
+        }));
+
         app.use(expressStatic.static(distPath, {
           maxAge: '1d',
           etag: true,
           lastModified: true,
           index: false,
+          setHeaders: (res, filePath) => {
+            if (filePath.endsWith('.html')) {
+              res.setHeader('Cache-Control', 'no-cache');
+            }
+          },
         }));
         
         // Read index.html for SPA fallback
@@ -226,7 +236,7 @@ export async function safeSetupVite(app: Application, server: Server): Promise<b
           }
           const nonce: string | undefined = res.locals.cspNonce;
           const html = nonce ? injectNonce(indexHtml, nonce) : indexHtml;
-          res.status(200).set({ 'Content-Type': 'text/html' }).end(html);
+          res.status(200).set({ 'Content-Type': 'text/html', 'Cache-Control': 'no-cache' }).end(html);
         });
         
         logger.info('[Vite Loader] ✅ Production static serving configured successfully');
@@ -263,7 +273,13 @@ export async function setupFallbackServer(app: Application): Promise<void> {
   
   if (fsModule.existsSync(publicPath) && fsModule.existsSync(builtIndexPath)) {
     // We have a complete pre-built frontend!
-    // index:false so index.html is served via SPA fallback with CSP nonce injection
+    app.use('/assets', expressStatic.static(pathModule.join(publicPath, 'assets'), {
+      maxAge: '365d',
+      immutable: true,
+      etag: false,
+      lastModified: false,
+      index: false,
+    }));
     app.use(expressStatic.static(publicPath, { index: false }));
     
     // Read the built index.html
@@ -284,7 +300,7 @@ export async function setupFallbackServer(app: Application): Promise<void> {
         html = html.replace(/<style(\b[^>]*)>/g, (_m: string, attrs: string) => `<style${attrs} nonce="${nonce}">`);
         html = html.replace(/<script(?![^>]*\bsrc\s*=)([^>]*)>/g, (_m: string, attrs: string) => `<script${attrs} nonce="${nonce}">`);
       }
-      return res.status(200).set({ 'Content-Type': 'text/html' }).end(html);
+      return res.status(200).set({ 'Content-Type': 'text/html', 'Cache-Control': 'no-cache' }).end(html);
     });
     
     return;
