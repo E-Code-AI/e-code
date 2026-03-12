@@ -470,13 +470,23 @@ router.get('/projects/:id/preview/status', ensureAuthenticated, ensureProjectAcc
 
 // Start preview server
 // Note: This route handles /api/preview/projects/:id/preview/start
+// If a port is supplied, proxy to an already-running runtime.
+// If no port is supplied, auto-detect the framework from DB files and spawn the server.
 router.post('/projects/:id/preview/start', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
   try {
     const projectId = req.params.id;
     const { runId, port } = req.body;
     
     const { previewService } = await import('../preview/preview-service');
-    const preview = await previewService.startPreview(projectId, { port, runId });
+    
+    let preview;
+    if (port) {
+      // Proxy mode: runtime already running on a known port
+      preview = await previewService.startPreview(projectId, { port, runId });
+    } else {
+      // Auto mode: read files from DB, detect framework, spawn server
+      preview = await previewService.startPreviewFromProject(projectId);
+    }
     
     res.json({
       success: true,

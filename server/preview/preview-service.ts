@@ -317,6 +317,116 @@ export class PreviewService {
     });
   }
 
+  /**
+   * Start a preview by reading project files from the database, writing them to
+   * disk, detecting the framework, and spawning the appropriate server process.
+   * This is the primary path used when the user opens a project — no port needed.
+   */
+  async startPreviewFromProject(projectId: string): Promise<PreviewInstance> {
+    await this.stopPreview(projectId);
+
+    const runId = `run-${projectId}-${Date.now()}`;
+
+    // Get project files from the database
+    let files: any[];
+    try {
+      files = await storage.getFilesByProject(projectId);
+    } catch (err: any) {
+      logger.error(`Failed to read files for project ${projectId}: ${err.message}`);
+      const errInstance = this.makeErrorInstance(projectId, runId, `Failed to read project files: ${err.message}`);
+      this.previews.set(projectId, errInstance);
+      return errInstance;
+    }
+
+    if (!files || files.length === 0) {
+      const errInstance = this.makeErrorInstance(projectId, runId, 'No files found in project');
+      this.previews.set(projectId, errInstance);
+      return errInstance;
+    }
+
+    // Write files to a temp directory
+    const previewPath = path.join('/tmp', `preview-${projectId}`);
+    try {
+      await fs.rm(previewPath, { recursive: true, force: true });
+      await fs.mkdir(previewPath, { recursive: true });
+
+      for (const file of files) {
+        if (file.isDirectory || file.isFolder) continue;
+        const filePath = path.join(previewPath, file.path || file.name);
+        await fs.mkdir(path.dirname(filePath), { recursive: true });
+        await fs.writeFile(filePath, file.content || '', 'utf-8');
+      }
+    } catch (err: any) {
+      logger.error(`Failed to write files for project ${projectId}: ${err.message}`);
+      const errInstance = this.makeErrorInstance(projectId, runId, `Failed to prepare preview directory: ${err.message}`);
+      this.previews.set(projectId, errInstance);
+      return errInstance;
+    }
+
+    // Allocate a port and create the preview instance
+    const port = this.allocatePort(projectId);
+
+    const preview: PreviewInstance = {
+      projectId,
+      runId,
+      ports: [],
+      primaryPort: port,
+      processes: new Map(),
+      url: `/preview/${projectId}/`,
+      status: 'starting',
+      logs: [],
+      healthChecks: new Map(),
+      lastHealthCheck: new Date(),
+      exposedServices: []
+    };
+
+    this.previews.set(projectId, preview);
+    previewEvents.emit('preview:start', { projectId, runId, port });
+
+    // Detect framework and start the right server — runs async so we return immediately
+    this.bootPreviewServer(preview, files, previewPath, port).catch((err: any) => {
+      logger.error(`Preview boot failed for project ${projectId}: ${err.message}`);
+      preview.status = 'error';
+      preview.logs.push(`ERROR: ${err.message}`);
+      previewEvents.emit('preview:error', { projectId, runId, error: err.message });
+    });
+
+    return preview;
+  }
+
+  private makeErrorInstance(projectId: string, runId: string, error: string): PreviewInstance {
+    const inst: PreviewInstance = {
+      projectId, runId, ports: [], primaryPort: 0,
+      processes: new Map(), url: '', status: 'error',
+      logs: [error], healthChecks: new Map(), lastHealthCheck: new Date(), exposedServices: []
+    };
+    previewEvents.emit('preview:error', { projectId, runId, error });
+    return inst;
+  }
+
+  private async bootPreviewServer(preview: PreviewInstance, files: any[], previewPath: string, port: number) {
+    const projectId = preview.projectId;
+
+    const frameworkInfo = await this.detectFramework(files, previewPath);
+    preview.frameworkType = frameworkInfo.type as any;
+    preview.logs.push(`Detected framework: ${frameworkInfo.type}`);
+
+    if (frameworkInfo.type === 'static') {
+      await this.startStaticServer(preview, previewPath);
+    } else if (frameworkInfo.type === 'react' || frameworkInfo.type === 'vue' || frameworkInfo.type === 'angular') {
+      await this.startModernFramework(preview, frameworkInfo, previewPath, files);
+    } else if (frameworkInfo.type === 'node') {
+      await this.startNodeApplication(preview, frameworkInfo, previewPath, files);
+    } else if (frameworkInfo.type === 'python') {
+      await this.startPythonApplication(preview, frameworkInfo, previewPath, files);
+    } else {
+      await this.startStaticServer(preview, previewPath);
+    }
+
+    // Poll until the primary port is accepting connections
+    this.pollPortReady(projectId, port, preview);
+  }
+
   async stopPreview(projectId: string): Promise<void> {
     const preview = this.previews.get(projectId);
     if (preview) {
@@ -541,9 +651,38 @@ export class PreviewService {
   private async startStaticServer(preview: PreviewInstance, previewPath: string) {
     const port = preview.primaryPort;
     preview.logs.push('Starting static file server...');
-    
-    const staticProcess = spawn('npx', ['http-server', '-p', port.toString(), '-a', 'localhost', '--cors'], {
-      cwd: previewPath
+
+    // Use a self-contained Node.js inline script so we don't need npx or any packages
+    const serverScript = `
+const http = require('http');
+const fs = require('fs');
+const path = require('path');
+const root = ${JSON.stringify(previewPath)};
+const mimeMap = {
+  '.html':'text/html','.css':'text/css','.js':'application/javascript',
+  '.json':'application/json','.png':'image/png','.jpg':'image/jpeg',
+  '.jpeg':'image/jpeg','.gif':'image/gif','.svg':'image/svg+xml',
+  '.ico':'image/x-icon','.woff':'font/woff','.woff2':'font/woff2',
+  '.ttf':'font/ttf','.ts':'text/plain','.tsx':'text/plain','.jsx':'text/plain'
+};
+http.createServer((req, res) => {
+  const safePath = path.normalize(req.url.split('?')[0]);
+  let target = path.join(root, safePath);
+  let stat;
+  try { stat = fs.statSync(target); } catch {}
+  if (!stat || stat.isDirectory()) { target = path.join(root, 'index.html'); }
+  fs.readFile(target, (err, data) => {
+    if (err) { res.writeHead(404,'Not Found',{'Content-Type':'text/plain'}); return res.end('404'); }
+    const ext = path.extname(target).toLowerCase();
+    res.writeHead(200, { 'Content-Type': mimeMap[ext] || 'application/octet-stream', 'Access-Control-Allow-Origin': '*' });
+    res.end(data);
+  });
+}).listen(${port}, '127.0.0.1', () => { process.stdout.write('Static server ready on port ${port}\\n'); });
+`;
+
+    const staticProcess = spawn('node', ['-e', serverScript], {
+      cwd: previewPath,
+      env: createSafeEnv()
     });
 
     this.setupProcessHandlers(preview, staticProcess, port, 'Static Server');

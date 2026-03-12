@@ -66,10 +66,10 @@ export function PreviewPanel({
     }
   });
 
-  // Start preview mutation — calls the runtime start which bridges to the preview proxy
+  // Start preview mutation — calls the preview service which auto-detects framework and spawns the server
   const startPreviewMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest('POST', `/api/projects/${projectId}/runtime/start`, {});
+      return apiRequest('POST', `/api/preview/projects/${projectId}/preview/start`, {});
     },
     onSuccess: () => {
       toast({ title: 'Preview starting...', description: 'Your app is being built and started.' });

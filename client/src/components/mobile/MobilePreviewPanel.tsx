@@ -117,7 +117,7 @@ export function MobilePreviewPanel({
 
   const startPreviewMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest('POST', `/api/projects/${projectId}/runtime/start`, {});
+      return apiRequest('POST', `/api/preview/projects/${projectId}/preview/start`, {});
     },
     onSuccess: () => {
       setTimeout(() => refetchStatus(), 2000);
