@@ -109,12 +109,12 @@ export function createCorsMiddleware(): cors.CorsOptions {
         return callback(null, true);
       }
 
-      const originWithoutPort = origin.replace(/:\d+$/, '');
-      if (originWithoutPort !== origin && allowedOrigins.includes(originWithoutPort)) {
-        return callback(null, true);
-      }
-
       if (!isProduction) {
+        const originWithoutPort = origin.replace(/:\d+$/, '');
+        if (originWithoutPort !== origin && allowedOrigins.includes(originWithoutPort)) {
+          return callback(null, true);
+        }
+
         const replitDevPatterns = [
           /^https:\/\/[a-f0-9-]+-\d+-[a-z0-9]+\.riker\.replit\.dev(:\d+)?$/,
           /^https:\/\/[a-f0-9-]+-\d+-[a-z0-9]+\.kirk\.replit\.dev(:\d+)?$/,
