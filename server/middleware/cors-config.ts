@@ -13,7 +13,7 @@ function getAllowedOrigins(): string[] {
   }
 
   if (isProduction) {
-    if (process.env.REPLIT_DOMAINS) {
+    if (!process.env.ALLOWED_ORIGINS && process.env.REPLIT_DOMAINS) {
       const domains = process.env.REPLIT_DOMAINS.split(',')
         .map(domain => domain.trim())
         .filter(domain => domain.length > 0)
@@ -96,6 +96,12 @@ export function createCorsMiddleware(): cors.CorsOptions {
   const corsOptions: cors.CorsOptions = {
     origin: (origin, callback) => {
       if (!origin || origin === 'null') {
+        if (isProduction && origin === 'null') {
+          console.warn(`[CORS] Rejected explicit null origin in production`);
+          const err = new Error('Not allowed by CORS');
+          (err as any).statusCode = 403;
+          return callback(err);
+        }
         return callback(null, true);
       }
 

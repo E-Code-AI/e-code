@@ -191,22 +191,20 @@ function buildCSPHeader(directives: CSPDirectives, nonce: string): string {
  * DEVELOPMENT: CSP disabled for Vite HMR compatibility
  */
 function applyCSP(req: Request, res: Response, next: NextFunction) {
-  // Skip CSP entirely in development mode for Vite compatibility
-  if (process.env.NODE_ENV === 'development') {
-    return next();
-  }
-  
   const nonce = res.locals.cspNonce;
   const directives = getCSPDirectives();
   const cspHeader = buildCSPHeader(directives, nonce);
-  
-  res.setHeader('Content-Security-Policy', cspHeader);
-  
-  // Also set report-only header for monitoring (optional)
+
+  if (process.env.NODE_ENV === 'development') {
+    res.setHeader('Content-Security-Policy-Report-Only', cspHeader);
+  } else {
+    res.setHeader('Content-Security-Policy', cspHeader);
+  }
+
   if (process.env.CSP_REPORT_ONLY === 'true') {
     res.setHeader('Content-Security-Policy-Report-Only', cspHeader);
   }
-  
+
   next();
 }
 
