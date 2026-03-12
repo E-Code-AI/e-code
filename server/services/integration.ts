@@ -12,7 +12,7 @@ import { realPackageManager } from './real-package-manager';
 import { realCollaborationService } from '../collaboration/real-collaboration';
 import { realEmailService } from './real-email-service';
 import { real2FAService } from './real-2fa-service';
-import { realObjectStorageService } from './real-object-storage';
+import { storageService } from './storage.service';
 import { realMobileCompiler } from './real-mobile-compiler';
 
 const logger = createLogger('service-integration');
@@ -26,7 +26,7 @@ export interface IntegratedServices {
   collaboration: typeof realCollaborationService;
   email: typeof realEmailService;
   twoFactor: typeof real2FAService;
-  objectStorage: typeof realObjectStorageService;
+  objectStorage: typeof storageService;
   mobileCompiler: typeof realMobileCompiler;
 }
 
@@ -50,7 +50,7 @@ export async function initializeRealServices(): Promise<IntegratedServices> {
       collaboration: realCollaborationService,
       email: realEmailService,
       twoFactor: real2FAService,
-      objectStorage: realObjectStorageService,
+      objectStorage: storageService,
       mobileCompiler: realMobileCompiler
     };
 
@@ -73,6 +73,6 @@ export {
   realCollaborationService,
   realEmailService,
   real2FAService,
-  realObjectStorageService,
+  storageService,
   realMobileCompiler
 };

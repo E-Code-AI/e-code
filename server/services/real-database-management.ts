@@ -3,6 +3,11 @@ import { projects, users } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 import { Pool } from 'pg';
 import crypto from 'crypto';
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
+import { execSync } from 'child_process';
+import { storageService } from './storage.service';
 
 // SQL identifier escaping to prevent SQL injection in DDL statements
 function escapeIdentifier(str: string): string {
@@ -265,11 +270,29 @@ export class RealDatabaseManagementService {
       throw new Error('Database not found');
     }
 
-    // In production, this would trigger a real backup
     const backupId = `backup_${Date.now()}`;
     logger.info(`Creating backup ${backupId} for database ${databaseId}`);
-    
-    // Simulate backup creation
+
+    try {
+      const dumpBuffer = execSync(
+        `pg_dump "${config.connectionInfo.connectionString}" --format=custom --compress=6`,
+        { maxBuffer: 500 * 1024 * 1024 }
+      );
+
+      const { downloadUrl } = await storageService.uploadDatabaseBackup(
+        databaseId,
+        backupId,
+        dumpBuffer
+      );
+
+      logger.info(`Database backup ${backupId} stored in object storage: ${downloadUrl}`);
+    } catch (error) {
+      if (process.env.NODE_ENV === 'production') {
+        throw new Error(`Database backup failed for database ${databaseId}: ${error}`);
+      }
+      logger.warn(`pg_dump not available or failed for database ${databaseId}, backup ${backupId} recorded as metadata only: ${error}`);
+    }
+
     return backupId;
   }
 
@@ -280,7 +303,27 @@ export class RealDatabaseManagementService {
     }
 
     logger.info(`Restoring backup ${backupId} for database ${databaseId}`);
-    // In production, this would restore from a real backup
+
+    const backupBuffer = await storageService.downloadDatabaseBackup(databaseId, backupId);
+
+    const tmpDir = path.join(os.tmpdir(), `db-restore-${backupId}`);
+    const tmpFile = path.join(tmpDir, 'backup.sql.gz');
+    try {
+      fs.mkdirSync(tmpDir, { recursive: true });
+      fs.writeFileSync(tmpFile, backupBuffer);
+
+      execSync(
+        `pg_restore --clean --if-exists --no-owner -d "${config.connectionInfo.connectionString}" "${tmpFile}"`,
+        { maxBuffer: 500 * 1024 * 1024, stdio: 'pipe' }
+      );
+
+      logger.info(`Database backup ${backupId} restored successfully for database ${databaseId}`);
+    } catch (error) {
+      logger.error(`Failed to restore database backup ${backupId}: ${error}`);
+      throw new Error(`Database restore failed: ${error}`);
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
   }
 
   async deleteDatabase(databaseId: number): Promise<void> {

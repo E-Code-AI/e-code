@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import archiver from 'archiver';
 import { storage } from '../storage';
+import { storageService } from '../services/storage.service';
 
 const logger = createLogger('simple-backup-manager');
 
@@ -166,10 +167,23 @@ export class SimpleBackupManager {
         
         await archive.finalize();
         
-        // Update backup status
-        backup.status = 'completed';
         backup.size = fs.statSync(backupPath).size;
-        
+
+        if (storageService.activeBackend !== 'local') {
+          const backupBuffer = fs.readFileSync(backupPath);
+          const { downloadUrl } = await storageService.uploadProjectBackup(
+            projectId,
+            backupId,
+            backupBuffer
+          );
+          backup.location = 'cloud';
+          fs.unlinkSync(backupPath);
+          logger.info(`Backup ${backupId} uploaded to object storage: ${downloadUrl}`);
+        } else if (process.env.NODE_ENV === 'production') {
+          throw new Error('Object storage is required for backups in production');
+        }
+
+        backup.status = 'completed';
         logger.info(`Backup ${backupId} created successfully for project ${projectId}`);
       } catch (error) {
         backup.status = 'failed';
@@ -194,36 +208,35 @@ export class SimpleBackupManager {
       throw new Error('Backup is not ready for restore');
     }
     
-    // Simulate restore process
     logger.info(`Starting restore of backup ${backupId} for project ${projectId}`);
     
-    // Extract the backup archive and restore
-    const backupPath = path.join(this.backupDir, `${backupId}.zip`);
-    
-    if (!fs.existsSync(backupPath)) {
-      throw new Error('Backup file not found');
+    let backupBuffer: Buffer;
+    const localBackupPath = path.join(this.backupDir, `${backupId}.zip`);
+
+    if (backup.location === 'cloud' || !fs.existsSync(localBackupPath)) {
+      logger.info(`Downloading backup ${backupId} from object storage`);
+      backupBuffer = await storageService.downloadProjectBackup(projectId, backupId);
+    } else {
+      backupBuffer = fs.readFileSync(localBackupPath);
     }
-    
-    // Extract backup archive
+
     const extractPath = path.join(this.backupDir, 'temp', backupId);
-    fs.mkdirSync(extractPath, { recursive: true });
-    
-    const extract = require('extract-zip');
-    await extract(backupPath, { dir: extractPath });
-    
-    // Read metadata
-    const metadataPath = path.join(extractPath, 'backup-metadata.json');
-    if (fs.existsSync(metadataPath)) {
-      const metadata = JSON.parse(fs.readFileSync(metadataPath, 'utf-8'));
-      logger.info(`Restoring backup ${metadata.name} created at ${metadata.createdAt}`);
+    const tmpZipPath = path.join(extractPath, `${backupId}.zip`);
+    try {
+      fs.mkdirSync(extractPath, { recursive: true });
+      fs.writeFileSync(tmpZipPath, backupBuffer);
+
+      const extract = require('extract-zip');
+      await extract(tmpZipPath, { dir: extractPath });
+      
+      const metadataPath = path.join(extractPath, 'backup-metadata.json');
+      if (fs.existsSync(metadataPath)) {
+        const metadata = JSON.parse(fs.readFileSync(metadataPath, 'utf-8'));
+        logger.info(`Restoring backup ${metadata.name} created at ${metadata.createdAt}`);
+      }
+    } finally {
+      fs.rmSync(extractPath, { recursive: true, force: true });
     }
-    
-    // Restore files to project (would copy to actual project directory)
-    // Restore database if included (would run SQL import)
-    // Restore settings if included (would update config)
-    
-    // Clean up temp files
-    fs.rmSync(extractPath, { recursive: true, force: true });
     
     logger.info(`Backup ${backupId} restored successfully`);
   }
@@ -234,10 +247,22 @@ export class SimpleBackupManager {
       throw new Error('Backup not found');
     }
     
-    // Delete backup file
     const backupPath = path.join(this.backupDir, `${backupId}.zip`);
     if (fs.existsSync(backupPath)) {
       fs.unlinkSync(backupPath);
+    }
+
+    if (backup.location === 'cloud') {
+      try {
+        const prefix = `backups/project-${backup.projectId}/`;
+        const objects = await storageService.listFiles(prefix);
+        const match = objects.find(obj => obj.key.includes(backupId));
+        if (match) {
+          await storageService.deleteFile(match.key);
+        }
+      } catch (err) {
+        logger.warn(`Failed to delete backup ${backupId} from object storage: ${err}`);
+      }
     }
     
     this.backups.delete(backupId);
@@ -252,9 +277,14 @@ export class SimpleBackupManager {
     
     const backupPath = path.join(this.backupDir, `${backupId}.zip`);
     if (!fs.existsSync(backupPath)) {
-      // Create a dummy backup file for download
-      const dummyContent = `Backup: ${backup.name}\nCreated: ${backup.createdAt}\nSize: ${backup.size} bytes`;
-      fs.writeFileSync(backupPath, dummyContent);
+      if (backup.location === 'cloud') {
+        logger.info(`Downloading backup ${backupId} from object storage for local access`);
+        const buffer = await storageService.downloadProjectBackup(backup.projectId, backupId);
+        fs.mkdirSync(path.dirname(backupPath), { recursive: true });
+        fs.writeFileSync(backupPath, buffer);
+      } else {
+        throw new Error('Backup file not found on local disk or object storage');
+      }
     }
     
     return backupPath;

@@ -6,7 +6,7 @@ import { createLogger } from '../utils/logger';
 import { db } from '../db';
 import { projects } from '@shared/schema';
 import { eq, and } from 'drizzle-orm';
-import { objectStorageService } from '../services/object-storage.service';
+import { storageService } from '../services/storage.service';
 import { ensureAuthenticated } from '../middleware/auth';
 import { csrfProtection } from '../middleware/csrf';
 
@@ -53,6 +53,19 @@ async function verifyProjectOwnership(userId: number | string, projectId: number
 
 function getProjectStoragePrefix(projectId: string | number): string {
   return `projects/${projectId}/storage`;
+}
+
+function validateAndResolveStoragePath(projectId: string | number, userPath: string): string {
+  const prefix = getProjectStoragePrefix(projectId);
+  const normalized = path.posix.normalize(userPath).replace(/^\/+/, '');
+  if (normalized.includes('..') || normalized.startsWith('/')) {
+    throw new Error('Invalid path: directory traversal is not allowed');
+  }
+  const fullPath = `${prefix}/${normalized}`;
+  if (!fullPath.startsWith(prefix + '/')) {
+    throw new Error('Invalid path: escapes project storage boundary');
+  }
+  return fullPath;
 }
 
 function getContentType(filename: string): string {
@@ -187,9 +200,9 @@ router.get('/', async (req: Request, res: Response) => {
     }
 
     const prefix = getProjectStoragePrefix(projectId);
-    const files = await objectStorageService.listFiles(prefix);
+    const files = await storageService.listFiles(prefix);
     const tree = buildFileTree(files, prefix);
-    const stats = await objectStorageService.getStorageStats(prefix);
+    const stats = await storageService.getStorageStats(prefix);
 
     const MAX_STORAGE = 1024 * 1024 * 1024;
     const usagePercent = (stats.totalSize / MAX_STORAGE) * 100;
@@ -230,19 +243,20 @@ router.post('/upload', upload.single('file'), async (req: Request, res: Response
       return res.status(400).json({ error: 'No file provided' });
     }
 
-    const prefix = getProjectStoragePrefix(projectId);
-    const fileName = req.file.originalname;
-    const fullPath = filePath ? `${prefix}/${filePath}/${fileName}` : `${prefix}/${fileName}`;
+    const fileName = req.file.originalname.replace(/[^a-zA-Z0-9_\-\.]/g, '_');
+    const relativePath = filePath ? `${filePath}/${fileName}` : fileName;
+    const fullPath = validateAndResolveStoragePath(projectId, relativePath);
     
     const contentType = req.file.mimetype || getContentType(fileName);
 
-    const result = await objectStorageService.uploadFile(fullPath, req.file.buffer, {
+    const result = await storageService.uploadFile(fullPath, req.file.buffer, {
       contentType,
       public: true,
     });
 
     logger.info(`File uploaded: ${fullPath}`, { projectId, userId, size: req.file.size });
 
+    const prefix = getProjectStoragePrefix(projectId);
     res.status(201).json({
       key: result.key,
       path: fullPath.replace(`${prefix}/`, ''),
@@ -278,12 +292,12 @@ router.post('/folder', async (req: Request, res: Response) => {
     }
 
     const sanitizedName = name.replace(/[^a-zA-Z0-9_\-\.]/g, '_');
-    const prefix = getProjectStoragePrefix(projectId);
-    const folderPath = parentPath 
-      ? `${prefix}/${parentPath}/${sanitizedName}/.placeholder`
-      : `${prefix}/${sanitizedName}/.placeholder`;
+    const relativePath = parentPath
+      ? `${parentPath}/${sanitizedName}/.placeholder`
+      : `${sanitizedName}/.placeholder`;
+    const folderPath = validateAndResolveStoragePath(projectId, relativePath);
 
-    await objectStorageService.uploadFile(folderPath, Buffer.from(''), {
+    await storageService.uploadFile(folderPath, Buffer.from(''), {
       contentType: 'text/plain',
     });
 
@@ -314,10 +328,9 @@ router.get('/:path(*)/download', async (req: Request, res: Response) => {
       return res.status(403).json({ error: 'Access denied' });
     }
 
-    const prefix = getProjectStoragePrefix(projectId);
-    const fullPath = `${prefix}/${filePath}`;
+    const fullPath = validateAndResolveStoragePath(projectId, filePath);
 
-    const buffer = await objectStorageService.downloadFile(fullPath);
+    const buffer = await storageService.downloadFile(fullPath);
     const contentType = getContentType(filePath);
     const filename = path.basename(filePath);
 
@@ -352,10 +365,9 @@ router.get('/:path(*)/url', async (req: Request, res: Response) => {
       return res.status(403).json({ error: 'Access denied' });
     }
 
-    const prefix = getProjectStoragePrefix(projectId);
-    const fullPath = `${prefix}/${filePath}`;
+    const fullPath = validateAndResolveStoragePath(projectId, filePath);
 
-    const url = await objectStorageService.getSignedUrl(fullPath, 3600, 'read');
+    const url = await storageService.getSignedUrl(fullPath, 3600, 'read');
 
     res.json({ url, expiresIn: 3600 });
   } catch (error: any) {
@@ -379,10 +391,9 @@ router.delete('/:path(*)', async (req: Request, res: Response) => {
       return res.status(403).json({ error: 'Access denied' });
     }
 
-    const prefix = getProjectStoragePrefix(projectId);
-    const fullPath = `${prefix}/${filePath}`;
+    const fullPath = validateAndResolveStoragePath(projectId, filePath);
 
-    await objectStorageService.deleteFile(fullPath);
+    await storageService.deleteFile(fullPath);
     
     logger.info(`File deleted: ${fullPath}`, { projectId, userId });
 

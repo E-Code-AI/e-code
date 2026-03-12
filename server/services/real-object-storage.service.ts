@@ -1,10 +1,12 @@
 export {
-  RealObjectStorageService,
-  realObjectStorageService,
-  StorageObject,
-  UploadOptions,
-  DownloadOptions,
-} from './real-object-storage';
+  StorageService as RealObjectStorageService,
+  storageService as realObjectStorageService,
+  type StorageObject,
+  type UploadOptions,
+  type DownloadOptions,
+} from './storage.service';
 
-import { objectStorageService, ObjectStorageService } from '../objectStorage';
-export { objectStorageService, ObjectStorageService };
+export {
+  StorageService as ObjectStorageService,
+  storageService as objectStorageService,
+} from './storage.service';

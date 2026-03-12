@@ -1,15 +1,6 @@
 /**
  * Validated Environment Configuration
- * Fortune 500 Production-Grade - Zod-validated env vars
- * 
- * Features:
- * - Zod schema validation for all environment variables
- * - Clear error messages for missing required variables
- * - Categorized: required vs optional, development vs production
- * - Typed configuration object for IntelliSense support
- * 
- * Date: December 25, 2025
- * Status: Production-ready
+ * Zod-validated env vars with categorized required vs optional schemas.
  */
 
 import { z } from 'zod';
@@ -70,6 +61,16 @@ const optionalEnvSchema = z.object({
   
   GCS_BACKUP_BUCKET: z.string().optional(),
   GCS_PROJECT_ID: z.string().optional(),
+  
+  STORAGE_BACKEND: z.enum(['replit', 's3', 'local']).optional(),
+  STORAGE_PATH: z.string().optional(),
+  REPLIT_OBJECT_STORAGE_BUCKET: z.string().optional(),
+  S3_BUCKET: z.string().optional(),
+  S3_REGION: z.string().optional(),
+  S3_ACCESS_KEY_ID: z.string().optional(),
+  S3_SECRET_ACCESS_KEY: z.string().optional(),
+  S3_ENDPOINT: z.string().optional(),
+  S3_FORCE_PATH_STYLE: booleanString,
   
   CDN_ENABLED: booleanString.default('false'),
   CDN_BASE_URL: z.string().optional(),
@@ -133,6 +134,23 @@ function validateEnvironment(): EnvConfig {
     }
     if (!process.env.SENTRY_DSN) {
       securityWarnings.push('SENTRY_DSN not set - error tracking disabled');
+    }
+
+    const storageBackend = process.env.STORAGE_BACKEND?.toLowerCase();
+    const hasReplitStorage = !!(process.env.PRIVATE_OBJECT_DIR || process.env.REPLIT_OBJECT_STORAGE_BUCKET);
+    const hasS3Storage = !!(process.env.S3_BUCKET && process.env.S3_ACCESS_KEY_ID);
+    if (!isReplit && !storageBackend && !hasReplitStorage && !hasS3Storage) {
+      throw new Error(
+        'No object storage configured in production. Set STORAGE_BACKEND=replit (with REPLIT_OBJECT_STORAGE_BUCKET) ' +
+        'or STORAGE_BACKEND=s3 (with S3_BUCKET, S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY). ' +
+        'Local filesystem storage is not durable and not supported in production.'
+      );
+    }
+    if (storageBackend === 's3' && (!process.env.S3_BUCKET || !process.env.S3_ACCESS_KEY_ID || !process.env.S3_SECRET_ACCESS_KEY)) {
+      throw new Error(
+        'STORAGE_BACKEND=s3 but required credentials are missing. ' +
+        'Set S3_BUCKET, S3_ACCESS_KEY_ID, and S3_SECRET_ACCESS_KEY environment variables.'
+      );
     }
 
     if (securityWarnings.length > 0 && !isReplit) {
@@ -246,6 +264,15 @@ export const ENV_CATEGORIES = {
   storage: [
     'GCS_BACKUP_BUCKET',
     'GCS_PROJECT_ID',
+    'STORAGE_BACKEND',
+    'STORAGE_PATH',
+    'REPLIT_OBJECT_STORAGE_BUCKET',
+    'S3_BUCKET',
+    'S3_REGION',
+    'S3_ACCESS_KEY_ID',
+    'S3_SECRET_ACCESS_KEY',
+    'S3_ENDPOINT',
+    'S3_FORCE_PATH_STYLE',
   ] as const,
   
   performance: [

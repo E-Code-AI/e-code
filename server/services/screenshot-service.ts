@@ -1,6 +1,6 @@
 import { createLogger } from '../utils/logger';
 import { checkpointService } from './checkpoint-service';
-import { realObjectStorageService, type StorageObject } from './real-object-storage';
+import { storageService, type StorageObject } from './storage.service';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as crypto from 'crypto';
@@ -54,7 +54,7 @@ export class ScreenshotService {
         logger.info('Playwright not available, running in basic mode without browser automation');
       }
 
-      this.objectStorageEnabled = await realObjectStorageService.fileExists('screenshots/.initialized').catch(() => false) || true;
+      this.objectStorageEnabled = storageService.activeBackend !== 'local';
       if (this.objectStorageEnabled) {
         logger.info('Object storage integration enabled for screenshots');
       }
@@ -75,7 +75,7 @@ export class ScreenshotService {
       ? `screenshots/checkpoints/${projectId}/${options.checkpointId}-${timestamp}-${hash}.png`
       : `screenshots/projects/${projectId}/${timestamp}-${hash}.png`;
 
-    const storageObject = await realObjectStorageService.uploadFile(
+    const storageObject = await storageService.uploadFile(
       key,
       buffer,
       {
@@ -87,9 +87,7 @@ export class ScreenshotService {
           capturedAt: new Date().toISOString(),
           ...options.metadata
         }
-      },
-      projectId,
-      options.userId
+      }
     );
 
     logger.info(`Screenshot stored in object storage: ${key}`);
@@ -98,7 +96,7 @@ export class ScreenshotService {
 
   async getScreenshotFromObjectStorage(key: string): Promise<Buffer | null> {
     try {
-      const buffer = await realObjectStorageService.downloadFile(key);
+      const buffer = await storageService.downloadFile(key);
       return buffer;
     } catch (error) {
       logger.warn(`Failed to retrieve screenshot from object storage: ${key}`);
@@ -111,7 +109,7 @@ export class ScreenshotService {
       ? `screenshots/checkpoints/${projectId}/${checkpointId}`
       : `screenshots/checkpoints/${projectId}`;
     
-    return realObjectStorageService.listFiles(prefix);
+    return storageService.listFiles(prefix);
   }
 
   async captureProjectPreview(

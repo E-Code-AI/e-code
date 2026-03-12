@@ -9,7 +9,7 @@ import * as fs from 'fs/promises';
 import * as crypto from 'crypto';
 import { createLogger } from '../utils/logger';
 import { dockerExecutor } from '../execution/docker-executor';
-import { realObjectStorageService } from './real-object-storage';
+import { storageService } from './storage.service';
 import { storage } from '../storage';
 
 const logger = createLogger('real-mobile-compiler');
@@ -245,19 +245,22 @@ export class RealMobileCompiler {
 
     const artifactResult = await dockerExecutor.executeCommand(
       containerId,
-      ['cat', `/app/${artifactPath}`]
+      ['base64', `-w0`, `/app/${artifactPath}`]
     );
 
     if (artifactResult.exitCode === 0) {
-      // Upload artifact to storage
+      const artifactData = Buffer.from(artifactResult.output.trim(), 'base64');
+      if (artifactData.length === 0) {
+        logger.warn(`Build artifact is empty for ${artifactPath}`);
+      }
       const artifactKey = `builds/${config.projectId}/${result.buildId}/app.${config.buildType === 'appstore' ? 'aab' : 'apk'}`;
-      const uploaded = await realObjectStorageService.uploadFile(
+      const uploaded = await storageService.uploadFile(
         artifactKey,
-        Buffer.from(artifactResult.output, 'base64'),
+        artifactData,
         { contentType: 'application/vnd.android.package-archive' }
       );
 
-      const downloadUrl = await realObjectStorageService.getSignedUrl(artifactKey, 86400); // 24 hours
+      const downloadUrl = await storageService.getSignedUrl(artifactKey, 86400); // 24 hours
 
       result.artifacts.push({
         type: config.buildType === 'appstore' ? 'aab' : 'apk',
@@ -489,21 +492,21 @@ export class RealMobileCompiler {
   ) {
     const getArtifactResult = await dockerExecutor.executeCommand(
       containerId,
-      ['base64', `/app/${artifactPath}`]
+      ['base64', '-w0', `/app/${artifactPath}`]
     );
 
     if (getArtifactResult.exitCode === 0) {
-      const artifactData = Buffer.from(getArtifactResult.output, 'base64');
+      const artifactData = Buffer.from(getArtifactResult.output.trim(), 'base64');
       const extension = path.extname(artifactPath);
       const artifactKey = `builds/${config.projectId}/${result.buildId}/app${extension}`;
 
-      const uploaded = await realObjectStorageService.uploadFile(
+      const uploaded = await storageService.uploadFile(
         artifactKey,
         artifactData,
         { contentType: this.getContentType(extension) }
       );
 
-      const downloadUrl = await realObjectStorageService.getSignedUrl(artifactKey, 86400);
+      const downloadUrl = await storageService.getSignedUrl(artifactKey, 86400);
 
       result.artifacts.push({
         type: extension === '.ipa' ? 'ipa' : extension === '.aab' ? 'aab' : 'apk',
@@ -613,13 +616,13 @@ export class RealMobileCompiler {
               const extension = isIOS ? 'ipa' : (config.buildType === 'appstore' ? 'aab' : 'apk');
               const artifactKey = `builds/${config.projectId}/${result.buildId}/app.${extension}`;
               
-              const uploaded = await realObjectStorageService.uploadFile(
+              const uploaded = await storageService.uploadFile(
                 artifactKey,
                 artifactBuffer,
                 { contentType: 'application/octet-stream' }
               );
 
-              const downloadUrl = await realObjectStorageService.getSignedUrl(artifactKey, 86400);
+              const downloadUrl = await storageService.getSignedUrl(artifactKey, 86400);
 
               result.artifacts.push({
                 type: isIOS ? 'ipa' : (config.buildType === 'appstore' ? 'aab' : 'apk'),
@@ -713,13 +716,13 @@ export class RealMobileCompiler {
               const ipaBuffer = Buffer.from(await ipaResponse.arrayBuffer());
               
               const artifactKey = `builds/${config.projectId}/${result.buildId}/app.ipa`;
-              const uploaded = await realObjectStorageService.uploadFile(
+              const uploaded = await storageService.uploadFile(
                 artifactKey,
                 ipaBuffer,
                 { contentType: 'application/octet-stream' }
               );
 
-              const downloadUrl = await realObjectStorageService.getSignedUrl(artifactKey, 86400);
+              const downloadUrl = await storageService.getSignedUrl(artifactKey, 86400);
 
               result.artifacts.push({
                 type: 'ipa',
