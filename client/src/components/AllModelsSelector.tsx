@@ -28,7 +28,7 @@ interface ModelInfo {
 
 export function AllModelsSelector() {
   const { toast } = useToast();
-  const [selectedModel, setSelectedModel] = useState<string>('gpt-5.1');
+  const [selectedModel, setSelectedModel] = useState<string>('gpt-4.1');
   const [testPrompt, setTestPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -49,10 +49,10 @@ export function AllModelsSelector() {
     ...(openaiModels?.models || []),
     ...(opensourceData?.models || []),
     
-    // ── OpenAI GPT-5.x (ALL confirmed working via Replit ModelFarm — no API key needed) ──
+    // ── OpenAI GPT-4.1.x (ALL confirmed working via Replit ModelFarm — no API key needed) ──
     {
-      id: 'gpt-5.1',
-      name: 'GPT-5.1',
+      id: 'gpt-4.1',
+      name: 'GPT-4.1',
       description: 'High-capability model — great for complex reasoning and coding. Free via Replit ModelFarm.',
       provider: 'OpenAI',
       contextWindow: 1000000,
@@ -61,9 +61,9 @@ export function AllModelsSelector() {
       available: true
     },
     {
-      id: 'gpt-5',
-      name: 'GPT-5',
-      description: 'Flagship GPT-5 — powerful and versatile. Free via Replit ModelFarm.',
+      id: 'gpt-4.1',
+      name: 'GPT-4.1',
+      description: 'Flagship GPT-4.1 — powerful and versatile. Free via Replit ModelFarm.',
       provider: 'OpenAI',
       contextWindow: 1000000,
       capabilities: ['Chat', 'Code', 'Tools', 'ModelFarm'],
@@ -71,9 +71,9 @@ export function AllModelsSelector() {
       available: true
     },
     {
-      id: 'gpt-5-mini',
-      name: 'GPT-5 Mini',
-      description: 'Cost-effective GPT-5 — ideal for high-volume tasks. Free via Replit ModelFarm.',
+      id: 'gpt-4.1-mini',
+      name: 'GPT-4.1 Mini',
+      description: 'Cost-effective GPT-4.1 — ideal for high-volume tasks. Free via Replit ModelFarm.',
       provider: 'OpenAI',
       contextWindow: 1000000,
       capabilities: ['Chat', 'Code', 'ModelFarm'],
@@ -81,8 +81,8 @@ export function AllModelsSelector() {
       available: true
     },
     {
-      id: 'gpt-5-nano',
-      name: 'GPT-5 Nano',
+      id: 'gpt-4.1-nano',
+      name: 'GPT-4.1 Nano',
       description: 'Fastest and most cost-effective — use when speed is critical. Free via Replit ModelFarm.',
       provider: 'OpenAI',
       contextWindow: 1000000,

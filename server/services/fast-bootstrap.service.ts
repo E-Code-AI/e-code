@@ -29,10 +29,10 @@ const logger = createLogger('fast-bootstrap');
 // Fast model recommendations based on typical latency (measured averages)
 // These are the fastest models across all providers
 const FAST_MODELS = [
-  { id: 'gpt-5-nano', avgLatencyMs: 300, provider: 'openai' },
+  { id: 'gpt-4.1-nano', avgLatencyMs: 300, provider: 'openai' },
   { id: 'claude-3-5-haiku-20241022', avgLatencyMs: 350, provider: 'anthropic' },
   { id: 'gemini-2.5-flash', avgLatencyMs: 400, provider: 'gemini' },
-  { id: 'gpt-5-mini', avgLatencyMs: 420, provider: 'openai' },
+  { id: 'gpt-4.1-mini', avgLatencyMs: 420, provider: 'openai' },
 ] as const;
 
 // Track recommendations vs actual usage for accurate monitoring

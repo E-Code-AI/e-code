@@ -907,12 +907,12 @@ export default function createAgentToolsRouter(): Router {
         extendedThinking: {
           enabled: true,
           status: 'operational',
-          models: ['claude-opus-4-20250514', 'claude-sonnet-4-20250514', 'o3', 'gpt-5.1']
+          models: ['claude-opus-4-20250514', 'claude-sonnet-4-20250514', 'o3', 'gpt-4.1']
         },
         highPowerModels: {
           enabled: true,
           status: 'operational',
-          models: ['gpt-5.1', 'claude-opus-4-20250514', 'gemini-2.5-pro', 'grok-3']
+          models: ['gpt-4.1', 'claude-opus-4-20250514', 'gemini-2.5-pro', 'grok-3']
         },
         maxAutonomy: {
           enabled: true,

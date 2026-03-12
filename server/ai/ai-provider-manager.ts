@@ -32,56 +32,13 @@ export interface AIModel {
  * ONLY REAL, CURRENTLY SUPPORTED MODELS (November 2025)
  * Fortune 500-grade model catalog
  */
-// All models supported by Replit ModelFarm (AI Integrations free tier)
-// Source: javascript_openai_ai_integrations blueprint (March 2026)
-// Confirmed working via live ModelFarm tests (March 2026)
-// gpt-5.2 EXCLUDED: ModelFarm internal error (400 invalid_prompt)
-// gpt-5.4/gpt-5.4-pro EXCLUDED: Not in ModelFarm range (unknown model error)
 export const MODELFARM_MODELS = new Set([
-  'gpt-5.1', 'gpt-5', 'gpt-5-mini', 'gpt-5-nano',
   'gpt-4.1', 'gpt-4.1-mini', 'gpt-4.1-nano',
   'gpt-4o', 'gpt-4o-mini',
   'o4-mini', 'o3', 'o3-mini',
 ]);
 
 export const AI_MODELS: AIModel[] = [
-  // ── OpenAI — GPT-5.x (ALL confirmed working on Replit ModelFarm, March 2026) ──
-  {
-    id: 'gpt-5.1',
-    name: 'GPT-5.1',
-    provider: 'openai',
-    description: 'High-capability general model — great for complex reasoning and coding (free via Replit ModelFarm)',
-    maxTokens: 1000000,
-    supportsStreaming: true,
-    costPer1kTokens: 0.002
-  },
-  {
-    id: 'gpt-5',
-    name: 'GPT-5',
-    provider: 'openai',
-    description: 'Flagship GPT-5 — powerful and versatile (free via Replit ModelFarm)',
-    maxTokens: 1000000,
-    supportsStreaming: true,
-    costPer1kTokens: 0.002
-  },
-  {
-    id: 'gpt-5-mini',
-    name: 'GPT-5 Mini',
-    provider: 'openai',
-    description: 'Cost-effective GPT-5 — ideal for high-volume tasks (free via Replit ModelFarm)',
-    maxTokens: 1000000,
-    supportsStreaming: true,
-    costPer1kTokens: 0.0004
-  },
-  {
-    id: 'gpt-5-nano',
-    name: 'GPT-5 Nano',
-    provider: 'openai',
-    description: 'Fastest and most cost-effective — use when volume and speed are critical (free via Replit ModelFarm)',
-    maxTokens: 1000000,
-    supportsStreaming: true,
-    costPer1kTokens: 0.0001
-  },
   // ── OpenAI — GPT-4.1 family (ModelFarm-supported) ───────────────────────────
   {
     id: 'gpt-4.1',
@@ -373,7 +330,7 @@ export const AI_MODELS: AIModel[] = [
  * UPDATED January 2025: kimi-k2-0711-preview → kimi-k2-0905-preview (September 2025 upgrade)
  */
 const PROVIDER_FALLBACK_CHAIN = [
-  'gpt-5.1',                   // Free via Replit ModelFarm — best verified working model
+  'gpt-4.1',                   // Free via Replit ModelFarm
   'claude-sonnet-4-20250514',  // Anthropic Claude 4 Sonnet
   'gemini-2.5-flash',          // Google Gemini 2.5 Flash
   'grok-3',                    // xAI Grok 3
@@ -616,7 +573,7 @@ export class AIProviderManager {
    * Stream chat completion with the selected model
    * Routes to appropriate provider based on model ID
    * 
-   * @param modelId The model ID to use (e.g., "gpt-5.1", "claude-sonnet-4-20250514")
+   * @param modelId The model ID to use (e.g., "gpt-4.1", "claude-sonnet-4-20250514")
    * @param messages Array of chat messages with role and content
    * @param options Additional options like system prompt, max_tokens, temperature
    */
@@ -964,11 +921,9 @@ export class AIProviderManager {
   private async *streamOpenAI(modelId: string, messages: any[], options?: any): AsyncGenerator<string> {
     if (!this.openaiClient) throw new Error('OpenAI client not initialized');
     
-    // ✅ MODELFARM SAFETY: When Replit ModelFarm is active, only route supported models through it.
-    // Only route confirmed-working models through ModelFarm. Anything else → gpt-5.1.
     if (process.env.AI_INTEGRATIONS_OPENAI_BASE_URL && !MODELFARM_MODELS.has(modelId)) {
-      logger.info(`[ProviderManager/OpenAI] ModelFarm: model ${modelId} not supported → gpt-5.1`);
-      modelId = 'gpt-5.1';
+      logger.info(`[ProviderManager/OpenAI] ModelFarm: model ${modelId} not supported → gpt-4.1`);
+      modelId = 'gpt-4.1';
     }
 
     const startTime = Date.now();
@@ -985,8 +940,7 @@ export class AIProviderManager {
       promptCacheManager.cacheSystemPrompt(systemPrompt, 'openai');
     }
     
-    // ✅ CRITICAL FIX: GPT-5 family and o-series use max_completion_tokens and don't support temperature
-    const isNewGenModel = modelId.startsWith('gpt-5') || /^o[1-9]/.test(modelId);
+    const isNewGenModel = /^o[1-9]/.test(modelId);
     
     const completionParams: any = {
       model: modelId,
@@ -1006,17 +960,8 @@ export class AIProviderManager {
       completionParams.max_tokens = options?.max_tokens || 4000;
     }
 
-    // ✅ FIX (Dec 11, 2025): reasoning_effort='none' only supported by GPT-5.1, not GPT-5
-    // GPT-5 supports: 'minimal', 'low', 'medium', 'high'
-    // GPT-5.1 supports: 'none', 'minimal', 'low', 'medium', 'high'
-    if (options?.reasoning_effort && modelId.startsWith('gpt-5')) {
-      const isGpt51 = modelId.includes('5.1');
-      if (options.reasoning_effort === 'none' && !isGpt51) {
-        // For GPT-5 (non-5.1), use 'minimal' instead of unsupported 'none'
-        completionParams.reasoning_effort = 'minimal';
-      } else {
-        completionParams.reasoning_effort = options.reasoning_effort;
-      }
+    if (options?.reasoning_effort && /^o[1-9]/.test(modelId)) {
+      completionParams.reasoning_effort = options.reasoning_effort;
     }
 
     try {
@@ -1303,7 +1248,7 @@ export class AIProviderManager {
    */
   getAvailableProviders(): Array<{ name: string; isAvailable: boolean }> {
     const providerMap: Record<string, string[]> = {
-      'OpenAI': ['gpt-5.1', 'gpt-5', 'gpt-5-mini', 'gpt-5-nano', 'gpt-4.1', 'gpt-4.1-mini', 'gpt-4.1-nano', 'gpt-4o', 'gpt-4o-mini', 'o4-mini', 'o3', 'o3-mini'],
+      'OpenAI': ['gpt-4.1', 'gpt-4.1-mini', 'gpt-4.1-nano', 'gpt-4o', 'gpt-4o-mini', 'o4-mini', 'o3', 'o3-mini'],
       'Claude': ['claude-sonnet-4-20250514', 'claude-opus-4-20250514', 'claude-3-7-sonnet-20250219', 'claude-3-5-sonnet-20241022', 'claude-3-5-haiku-20241022'],
       'Anthropic': ['claude-sonnet-4-20250514', 'claude-opus-4-20250514', 'claude-3-7-sonnet-20250219', 'claude-3-5-sonnet-20241022', 'claude-3-5-haiku-20241022'],
       'Gemini': ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro', 'gemini-1.5-flash'],
@@ -1325,7 +1270,7 @@ export class AIProviderManager {
    */
   getProvider(providerName: string): LegacyProviderAdapter | null {
     const providerToModelMap: Record<string, string> = {
-      'OpenAI': 'gpt-5.1',
+      'OpenAI': 'gpt-4.1',
       'Claude': 'claude-sonnet-4-20250514',
       'Claude Sonnet 4': 'claude-sonnet-4-20250514',
       'Claude 3.5 Sonnet': 'claude-3-5-sonnet-20241022',
@@ -1350,7 +1295,7 @@ export class AIProviderManager {
   getDefaultProvider(): LegacyProviderAdapter {
     // Try providers in order of preference - UPDATED January 2026
     const preferredModels = [
-      'gpt-5.1',
+      'gpt-4.1',
       'claude-sonnet-4-20250514',
       'gemini-2.5-flash',
       'grok-3',

@@ -3,10 +3,9 @@
  * Single source of truth for all AI models across backend and frontend
  * 
  * CONSOLIDATION NOTICE (Jan 2026):
- * - gpt-5 → DEPRECATED (use gpt-5.2)
- * - gpt-5.1 → DEPRECATED (use gpt-5.2)
- * - gpt-5.2 → CURRENT flagship
- * - gpt-5.2-codex → CURRENT coding optimized
+ * - gpt-4.1 → CURRENT flagship
+ * - gpt-4.1-mini → Cost-optimized
+ * - gpt-4.1-nano → High-throughput
  * 
  * Key Capabilities tracked:
  * 1. Extended Thinking - Raisonnement approfondi
@@ -43,86 +42,54 @@ export interface AIModel {
  */
 export const AI_MODELS_REGISTRY: Record<string, AIModel> = {
   // ========================================
-  // OpenAI Models - January 2026 CONSOLIDATED
+  // OpenAI Models - GPT-4.1 family
   // Source: https://platform.openai.com/docs/models
   // ========================================
-  'gpt-5.2': {
-    id: 'gpt-5.2',
-    name: 'GPT-5.2',
-    provider: 'openai',
-    description: 'Current flagship - advanced reasoning with 400K context (Jan 2026)',
-    capabilities: {
-      extendedThinking: true,  // reasoning.effort: none/minimal/medium/high
-      toolUse: true,           // apply_patch, shell tools
-      contextWindow: 400000,
-      codeGeneration: true,
-      multimodal: true
-    },
-    pricing: { input: 1.75, output: 14 },  // $1.75 input / $14 output per 1M tokens
-    releaseDate: '2025-12-15',
-    available: true
-  },
-  'gpt-5.2-codex': {
-    id: 'gpt-5.2-codex',
-    name: 'GPT-5.2 Codex',
-    provider: 'openai',
-    description: 'Coding optimized - enhanced code generation & debugging (Jan 2026)',
-    capabilities: {
-      extendedThinking: true,
-      toolUse: true,
-      contextWindow: 400000,
-      codeGeneration: true,
-      multimodal: false
-    },
-    pricing: { input: 1.75, output: 14 },
-    releaseDate: '2025-12-15',
-    available: true
-  },
-  'gpt-5-mini': {
-    id: 'gpt-5-mini',
-    name: 'GPT-5 Mini',
-    provider: 'openai',
-    description: 'Cost-optimized reasoning - balances speed, cost, and capability',
-    capabilities: {
-      extendedThinking: true,
-      toolUse: true,
-      contextWindow: 400000,
-      codeGeneration: true,
-      multimodal: true
-    },
-    pricing: { input: 1, output: 3 },  // Estimation
-    releaseDate: '2025-08-07',
-    available: true
-  },
-  'gpt-5-nano': {
-    id: 'gpt-5-nano',
-    name: 'GPT-5 Nano',
-    provider: 'openai',
-    description: 'High-throughput - simple instruction-following and classification',
-    capabilities: {
-      extendedThinking: false,
-      toolUse: true,
-      contextWindow: 400000,
-      codeGeneration: true,
-      multimodal: false
-    },
-    pricing: { input: 0.5, output: 1.5 },  // Très économique
-    releaseDate: '2025-08-07',
-    available: true
-  },
   'gpt-4.1': {
     id: 'gpt-4.1',
     name: 'GPT-4.1',
     provider: 'openai',
-    description: 'Smartest non-reasoning multimodal LLM - Swiss Army knife',
+    description: 'Flagship model — best coding, instruction following, and long context (free via Replit ModelFarm)',
     capabilities: {
       extendedThinking: false,
       toolUse: true,
-      contextWindow: 1000000,  // 1M context
+      contextWindow: 1000000,
       codeGeneration: true,
       multimodal: true
     },
-    pricing: { input: 2.5, output: 10 },
+    pricing: { input: 2.00, output: 8.00 },
+    releaseDate: '2025-04-14',
+    available: true
+  },
+  'gpt-4.1-mini': {
+    id: 'gpt-4.1-mini',
+    name: 'GPT-4.1 Mini',
+    provider: 'openai',
+    description: 'Cost-optimized — balances speed, cost, and capability',
+    capabilities: {
+      extendedThinking: false,
+      toolUse: true,
+      contextWindow: 1000000,
+      codeGeneration: true,
+      multimodal: true
+    },
+    pricing: { input: 0.40, output: 1.60 },
+    releaseDate: '2025-04-14',
+    available: true
+  },
+  'gpt-4.1-nano': {
+    id: 'gpt-4.1-nano',
+    name: 'GPT-4.1 Nano',
+    provider: 'openai',
+    description: 'High-throughput — simple instruction-following and classification',
+    capabilities: {
+      extendedThinking: false,
+      toolUse: true,
+      contextWindow: 1000000,
+      codeGeneration: true,
+      multimodal: false
+    },
+    pricing: { input: 0.10, output: 0.40 },
     releaseDate: '2025-04-14',
     available: true
   },

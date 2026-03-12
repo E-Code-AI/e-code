@@ -3,6 +3,7 @@ import { createLogger } from '../utils/logger';
 import { spawn, execSync, ChildProcess } from 'child_process';
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import * as os from 'os';
 
 const logger = createLogger('real-database-hosting');
 
@@ -92,42 +93,108 @@ export class RealDatabaseHostingService extends EventEmitter {
     const instance = this.instances.get(instanceId);
     if (!instance) return;
 
-    // Production-ready metrics collection
-    const metrics = {
-      timestamp: new Date(),
-      cpu: Math.random() * 100,
-      memory: Math.random() * 100,
-      storage: Math.random() * 100,
-      connections: Math.floor(Math.random() * 500),
-      queryLatency: Math.random() * 50,
-      diskIOPS: Math.floor(Math.random() * 1000),
-    };
+    const cpus = os.cpus();
+    const cpuUsage = cpus.length > 0
+      ? cpus.reduce((acc, cpu) => {
+          const total = Object.values(cpu.times).reduce((a, b) => a + b, 0);
+          const idle = cpu.times.idle;
+          return acc + ((total - idle) / total) * 100;
+        }, 0) / cpus.length
+      : 0;
 
-    // Update instance metrics
+    const totalMem = os.totalmem();
+    const freeMem = os.freemem();
+    const memoryPercent = totalMem > 0 ? ((totalMem - freeMem) / totalMem) * 100 : 0;
+
+    let storagePercent = 0;
+    try {
+      const instanceDir = path.join(this.dataDir, instanceId);
+      const stats = await fs.stat(instanceDir);
+      if (stats.isDirectory()) {
+        const output = execSync(`du -sb ${instanceDir} 2>/dev/null || echo 0`, { encoding: 'utf8' }).trim();
+        const usedBytes = parseInt(output.split('\t')[0]) || 0;
+        storagePercent = usedBytes / (1024 * 1024 * 1024) * 100;
+      }
+    } catch {
+      storagePercent = 0;
+    }
+
+    let connectionCount = 0;
+    const proc = this.processes.get(instanceId);
+    if (proc && proc.pid) {
+      try {
+        const output = execSync(`ls /proc/${proc.pid}/fd 2>/dev/null | wc -l`, { encoding: 'utf8' }).trim();
+        connectionCount = parseInt(output) || 0;
+      } catch {
+        connectionCount = 0;
+      }
+    }
+
     instance.metrics = {
-      cpu: metrics.cpu,
-      memory: metrics.memory,
-      storage: metrics.storage,
-      connections: metrics.connections,
+      cpu: Math.round(cpuUsage * 100) / 100,
+      memory: Math.round(memoryPercent * 100) / 100,
+      storage: Math.round(storagePercent * 100) / 100,
+      connections: connectionCount,
     };
 
-    logger.debug(`Database ${instanceId} enhanced metrics: CPU ${metrics.cpu.toFixed(1)}%, Memory ${metrics.memory.toFixed(1)}%, Latency ${metrics.queryLatency.toFixed(1)}ms`);
+    logger.debug(`Database ${instanceId} metrics: CPU ${instance.metrics.cpu.toFixed(1)}%, Memory ${instance.metrics.memory.toFixed(1)}%`);
   }
 
   private async performHealthCheck(instanceId: string): Promise<void> {
     const instance = this.instances.get(instanceId);
     if (!instance) return;
 
+    const startTime = Date.now();
     try {
-      // Simulate health check - real implementation would ping database
-      const healthOk = Math.random() > 0.1; // 90% success rate
-      
-      if (!healthOk) {
-        logger.warn(`Health check failed for database instance ${instanceId}`);
-        // Real implementation would trigger alerts and recovery procedures
+      const proc = this.processes.get(instanceId);
+      if (!proc || !proc.pid) {
+        logger.warn(`Health check failed for database instance ${instanceId}: no active process`);
+        instance.status = 'error';
+        await this.saveInstance(instance);
+        this.emit('health-check-failed', { instanceId, reason: 'no_process' });
+        return;
       }
+
+      let processAlive = false;
+      try {
+        process.kill(proc.pid, 0);
+        processAlive = true;
+      } catch {
+        processAlive = false;
+      }
+
+      if (!processAlive) {
+        logger.warn(`Health check failed for database instance ${instanceId}: process not responding`);
+        instance.status = 'error';
+        await this.saveInstance(instance);
+        this.emit('health-check-failed', { instanceId, reason: 'process_dead' });
+        return;
+      }
+
+      if (instance.type === 'postgresql' && instance.endpoints) {
+        try {
+          const net = await import('net');
+          await new Promise<void>((resolve, reject) => {
+            const socket = net.createConnection(instance.endpoints.port, instance.endpoints.host);
+            socket.setTimeout(5000);
+            socket.on('connect', () => { socket.end(); resolve(); });
+            socket.on('error', reject);
+            socket.on('timeout', () => { socket.destroy(); reject(new Error('timeout')); });
+          });
+        } catch (connErr) {
+          logger.warn(`Health check failed for database instance ${instanceId}: port not reachable`);
+          instance.status = 'error';
+          await this.saveInstance(instance);
+          this.emit('health-check-failed', { instanceId, reason: 'port_unreachable' });
+          return;
+        }
+      }
+
+      const latencyMs = Date.now() - startTime;
+      logger.debug(`Health check passed for ${instanceId} (${latencyMs}ms)`);
     } catch (error) {
       logger.error(`Health check error for instance ${instanceId}:`, error);
+      this.emit('health-check-failed', { instanceId, reason: 'unexpected_error', error });
     }
   }
 
@@ -606,15 +673,44 @@ export class RealDatabaseHostingService extends EventEmitter {
     const instance = this.instances.get(instanceId);
     if (!instance) throw new Error('Instance not found');
     
-    // Generate deterministic metrics based on instance ID and time
-    const now = Date.now();
-    const idHash = instanceId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    
+    const cpus = os.cpus();
+    const cpuUsage = cpus.length > 0
+      ? cpus.reduce((acc, cpu) => {
+          const total = Object.values(cpu.times).reduce((a, b) => a + b, 0);
+          const idle = cpu.times.idle;
+          return acc + ((total - idle) / total) * 100;
+        }, 0) / cpus.length
+      : 0;
+
+    const totalMem = os.totalmem();
+    const freeMem = os.freemem();
+    const memoryPercent = totalMem > 0 ? ((totalMem - freeMem) / totalMem) * 100 : 0;
+
+    let storageBytes = 0;
+    try {
+      const instanceDir = path.join(this.dataDir, instanceId);
+      const output = execSync(`du -sb ${instanceDir} 2>/dev/null || echo 0`, { encoding: 'utf8' }).trim();
+      storageBytes = parseInt(output.split('\t')[0]) || 0;
+    } catch {
+      storageBytes = 0;
+    }
+
+    let connectionCount = 0;
+    const proc = this.processes.get(instanceId);
+    if (proc && proc.pid) {
+      try {
+        const output = execSync(`ls /proc/${proc.pid}/fd 2>/dev/null | wc -l`, { encoding: 'utf8' }).trim();
+        connectionCount = parseInt(output) || 0;
+      } catch {
+        connectionCount = 0;
+      }
+    }
+
     return {
-      cpu: 20 + ((now + idHash) % 60), // 20-80%
-      memory: 30 + ((now + idHash * 2) % 50), // 30-80%
-      storage: 10 + ((now + idHash * 3) % 70), // 10-80%
-      connections: 5 + ((now + idHash * 4) % 45) // 5-50
+      cpu: Math.round(cpuUsage * 100) / 100,
+      memory: Math.round(memoryPercent * 100) / 100,
+      storage: Math.round((storageBytes / (1024 * 1024 * 1024)) * 100) / 100,
+      connections: connectionCount,
     };
   }
 

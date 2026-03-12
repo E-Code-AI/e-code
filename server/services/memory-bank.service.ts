@@ -412,13 +412,13 @@ Output valid JSON only, no markdown code blocks.`;
   
   /**
    * Select the best available model for Memory Bank generation
-   * Priority: Claude Sonnet 4 > GPT-5.1 > Gemini 2.5 Flash > Any available
+   * Priority: Claude Sonnet 4 > GPT-4.1 > Gemini 2.5 Flash > Any available
    */
   private selectBestAvailableModel(): string {
     const preferredModels = [
       'claude-sonnet-4-20250514',      // Anthropic Claude Sonnet 4 (best Claude, March 2026)
-      'gpt-5.1',                       // OpenAI GPT-5.1 (best verified ModelFarm model)
-      'gpt-5-nano',                    // OpenAI GPT-5 Nano (fast, free via ModelFarm)
+      'gpt-4.1',                       // OpenAI GPT-4.1 (best verified ModelFarm model)
+      'gpt-4.1-nano',                    // OpenAI GPT-4.1 Nano (fast, free via ModelFarm)
       'gemini-2.5-flash',              // Google Gemini 2.5 Flash (production-stable)
       'gemini-2.5-pro',                // Google Gemini 2.5 Pro (complex reasoning)
       'grok-3',                        // xAI Grok 3

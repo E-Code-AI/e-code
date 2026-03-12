@@ -470,7 +470,7 @@ export class AgentUsageTrackingService extends EventEmitter {
       'claude-3-5-sonnet-20241022': { input: 0.3, output: 1.5 },
       'claude-3-5-haiku-20241022': { input: 0.025, output: 0.125 },
       'gpt-4o': { input: 0.5, output: 1.5 },
-      'gpt-5': { input: 0.25, output: 1.0 },
+      'gpt-4.1': { input: 0.25, output: 1.0 },
       'gpt-4o-mini': { input: 0.015, output: 0.06 },
       'gemini-2.5-pro': { input: 0.125, output: 0.5 }
     };

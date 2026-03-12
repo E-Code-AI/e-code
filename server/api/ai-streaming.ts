@@ -42,12 +42,6 @@ interface OpenAIModelCapabilities {
 }
 
 const OPENAI_MODEL_CAPABILITIES: Record<string, OpenAIModelCapabilities> = {
-  // GPT-5.x family (ALL confirmed working on ModelFarm, March 2026)
-  // No temperature support, use max_completion_tokens
-  'gpt-5.1':      { requiresMaxCompletionTokens: true, supportsTemperature: false },
-  'gpt-5':        { requiresMaxCompletionTokens: true, supportsTemperature: false },
-  'gpt-5-mini':   { requiresMaxCompletionTokens: true, supportsTemperature: false },
-  'gpt-5-nano':   { requiresMaxCompletionTokens: true, supportsTemperature: false },
   // GPT-4.1 family — standard parameters
   'gpt-4.1':      { requiresMaxCompletionTokens: false, supportsTemperature: true },
   'gpt-4.1-mini': { requiresMaxCompletionTokens: false, supportsTemperature: true },
@@ -75,10 +69,6 @@ const OPENAI_MODEL_CAPABILITIES: Record<string, OpenAIModelCapabilities> = {
 function getOpenAIModelCapabilities(model: string): OpenAIModelCapabilities {
   if (OPENAI_MODEL_CAPABILITIES[model]) {
     return OPENAI_MODEL_CAPABILITIES[model];
-  }
-  // gpt-5.x family — no temperature, max_completion_tokens
-  if (model.startsWith('gpt-5')) {
-    return { requiresMaxCompletionTokens: true, supportsTemperature: false };
   }
   // o-series — no temperature, max_completion_tokens
   if (/^o[1-9]/.test(model)) {
@@ -236,22 +226,22 @@ router.post('/agent/chat/stream', ensureAuthenticated, async (req, res) => {
   // ✅ ALIGNED Dec 5, 2025: Defaults MUST match AI_MODELS catalog IDs
   const getDefaultModel = (prov: string): string => {
     switch (prov) {
-      case 'openai': return 'gpt-5.1';
+      case 'openai': return 'gpt-4.1';
       case 'anthropic': return 'claude-sonnet-4-20250514';
       case 'gemini': return 'gemini-2.5-flash';
       case 'xai': return 'grok-3';
       case 'moonshot': return 'moonshot-v1-32k';
-      default: return 'gpt-5.1';
+      default: return 'gpt-4.1';
     }
   };
   
   const getFastModel = (prov: string): string => {
     switch (prov) {
       case 'anthropic': return 'claude-3-5-haiku-20241022';
-      case 'openai': return 'gpt-5-nano';
+      case 'openai': return 'gpt-4.1-nano';
       case 'gemini': return 'gemini-2.5-flash';
       case 'xai': return 'grok-3-mini';
-      default: return 'gpt-5-nano';
+      default: return 'gpt-4.1-nano';
     }
   };
   
@@ -260,19 +250,15 @@ router.post('/agent/chat/stream', ensureAuthenticated, async (req, res) => {
     ? getFastModel(provider) 
     : (rawModel || modelId || getDefaultModel(provider));
   
-  // ✅ MODELFARM SAFETY: Only confirmed-working models are routed to ModelFarm.
-  // Tested March 2026: gpt-5.1/5/5-mini/5-nano ✅, gpt-4.1 family ✅, gpt-4o family ✅, o4-mini/o3/o3-mini ✅
-  // EXCLUDED: gpt-5.2 (ModelFarm 400 error), gpt-5.4/gpt-5.4-pro (unknown model error)
   if (provider === 'openai' && process.env.AI_INTEGRATIONS_OPENAI_BASE_URL) {
     const MODELFARM_SUPPORTED = new Set([
-      'gpt-5.1', 'gpt-5', 'gpt-5-mini', 'gpt-5-nano',
       'gpt-4.1', 'gpt-4.1-mini', 'gpt-4.1-nano',
       'gpt-4o', 'gpt-4o-mini',
       'o4-mini', 'o3', 'o3-mini',
     ]);
     if (!MODELFARM_SUPPORTED.has(model)) {
-      logger.info(`[AI Stream] ModelFarm: model ${model} not in supported set → gpt-5.1`);
-      model = 'gpt-5.1';
+      logger.info(`[AI Stream] ModelFarm: model ${model} not in supported set → gpt-4.1`);
+      model = 'gpt-4.1';
     }
   }
 
@@ -906,8 +892,7 @@ async function streamOpenAI(res: any, messages: any[], options: any) {
   const requestedTools = options.tools !== undefined ? options.tools : allTools;
   const tools = toOpenAITools(requestedTools);
   
-  // Use provided model or fallback to gpt-5.1
-  const modelToUse = options.model || 'gpt-5.1';
+  const modelToUse = options.model || 'gpt-4.1';
   logger.info(`[OpenAI Stream] Using model: ${modelToUse}`);
   
   // Get model capabilities for correct parameter usage
@@ -1025,7 +1010,7 @@ async function streamOpenAI(res: any, messages: any[], options: any) {
     content: fullContent,
     tool_calls: toolCalls,
     tool_results: toolResults,
-    model: options.model || 'gpt-5.1'
+    model: options.model || 'gpt-4.1'
   });
   
   // ✅ Return token usage for billing
@@ -1510,11 +1495,6 @@ router.post('/agent/chat/stop', ensureAuthenticated, (req, res) => {
 router.get('/agent/models', ensureAuthenticated, (req, res) => {
   const hasOpenAI = !!process.env.OPENAI_API_KEY || !!process.env.AI_INTEGRATIONS_OPENAI_BASE_URL;
   const models = [
-    // OpenAI Models (GPT-5.x — available via ModelFarm free tier)
-    { provider: 'openai', model: 'gpt-5.1', name: 'GPT-5.1', context: 128000, available: hasOpenAI },
-    { provider: 'openai', model: 'gpt-5', name: 'GPT-5', context: 128000, available: hasOpenAI },
-    { provider: 'openai', model: 'gpt-5-mini', name: 'GPT-5 Mini', context: 128000, available: hasOpenAI },
-    { provider: 'openai', model: 'gpt-5-nano', name: 'GPT-5 Nano', context: 128000, available: hasOpenAI },
     { provider: 'openai', model: 'gpt-4.1', name: 'GPT-4.1', context: 1000000, available: hasOpenAI },
     { provider: 'openai', model: 'gpt-4.1-mini', name: 'GPT-4.1 Mini', context: 1000000, available: hasOpenAI },
     { provider: 'openai', model: 'gpt-4.1-nano', name: 'GPT-4.1 Nano', context: 1000000, available: hasOpenAI },

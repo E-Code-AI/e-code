@@ -64,10 +64,10 @@ Generate the code now:`;
     ];
     
     // Get model or use default
-    const model = modelId || 'gpt-5.1';
+    const model = modelId || 'gpt-4.1';
     logger.info('[Code Generation] Using model:', model);
     
-    const usesMaxCompletionTokens = /^o[1-9]/.test(model) || /^gpt-5/.test(model);
+    const usesMaxCompletionTokens = /^o[1-9]/.test(model) || /^gpt-4.1/.test(model);
     
     const streamOptions: any = {};
     
@@ -79,7 +79,7 @@ Generate the code now:`;
     }
     
     // Only add temperature for models that support it (GPT-4, Claude, Gemini, etc.)
-    // GPT-5 family and o-series models don't support custom temperature
+    // GPT-4.1 family and o-series models don't support custom temperature
     if (!usesMaxCompletionTokens) {
       streamOptions.temperature = 0.3; // Lower temperature for more consistent code
     }
@@ -151,7 +151,7 @@ router.get('/models', tierRateLimiters.api, async (req, res) => {
     
     res.json({
       models: codeGenModels,
-      defaultModel: 'gpt-5.1'
+      defaultModel: 'gpt-4.1'
     });
   } catch (error: any) {
     logger.error('[Code Generation] Error getting models:', error);

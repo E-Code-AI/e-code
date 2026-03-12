@@ -35,8 +35,6 @@ export interface OpenAIModelConfig {
   };
 }
 
-// MODEL_ALIAS_MAP: maps ModelFarm model names → real OpenAI API model IDs
-// Used only when NOT on ModelFarm (direct OpenAI API key). gpt-4.1 is real and available.
 const MODEL_ALIAS_MAP: Record<string, string> = {
   'gpt-5.1':       'gpt-4.1',
   'gpt-5':         'gpt-4.1',
@@ -46,8 +44,31 @@ const MODEL_ALIAS_MAP: Record<string, string> = {
   'gpt-5.2-codex': 'gpt-4.1',
 };
 
-// Complete list of OpenAI models with configurations
 export const OPENAI_MODELS: Record<string, OpenAIModelConfig> = {
+  'gpt-4.1': {
+    id: 'gpt-4.1',
+    name: 'GPT-4.1',
+    contextWindow: 1000000,
+    maxOutput: 32768,
+    capabilities: ['chat', 'vision', 'function_calling', 'json_mode', 'structured_outputs'],
+    pricing: { input: 0.002, output: 0.008 }
+  },
+  'gpt-4.1-mini': {
+    id: 'gpt-4.1-mini',
+    name: 'GPT-4.1 Mini',
+    contextWindow: 1000000,
+    maxOutput: 16384,
+    capabilities: ['chat', 'function_calling', 'json_mode', 'structured_outputs'],
+    pricing: { input: 0.0004, output: 0.0016 }
+  },
+  'gpt-4.1-nano': {
+    id: 'gpt-4.1-nano',
+    name: 'GPT-4.1 Nano',
+    contextWindow: 1000000,
+    maxOutput: 8192,
+    capabilities: ['chat', 'function_calling'],
+    pricing: { input: 0.0001, output: 0.0004 }
+  },
   'gpt-4o': {
     id: 'gpt-4o',
     name: 'GPT-4o',

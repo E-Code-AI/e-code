@@ -188,12 +188,8 @@ const swaggerDefinition = {
       },
       AIModel: {
         type: 'string',
-        description: 'Supported AI models - March 2026 catalog (GPT-5.x via ModelFarm free tier)',
+        description: 'Supported AI models - March 2026 catalog (GPT-4.1.x via ModelFarm free tier)',
         enum: [
-          'gpt-5.1',
-          'gpt-5',
-          'gpt-5-mini',
-          'gpt-5-nano',
           'gpt-4.1',
           'gpt-4.1-mini',
           'gpt-4.1-nano',

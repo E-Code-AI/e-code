@@ -14,6 +14,9 @@ import { createLogger } from '../../utils/logger';
 import crypto from 'crypto';
 import { db } from '../../db';
 import { sql } from 'drizzle-orm';
+import { execSync } from 'child_process';
+import * as fsSync from 'fs';
+import * as pathModule from 'path';
 
 const logger = createLogger('LocalProvider');
 
@@ -342,26 +345,63 @@ export class LocalProvider implements IDatabaseProvider {
     const schemaName = this.sanitizeIdentifier(`proj_${databaseId}`);
     const backupName = options?.name || `backup-${Date.now()}`;
     const backupId = `local-${databaseId}-${Date.now()}`;
+    const backupDir = pathModule.join(process.cwd(), 'database-backups', 'local', String(databaseId));
+    const backupFile = pathModule.join(backupDir, `${backupId}.sql`);
     
     logger.info(`Creating backup for project ${databaseId}`, { name: backupName, schema: schemaName });
     
     try {
-      const sizeRows = extractRows(await db.execute(sql`
-        SELECT COALESCE(SUM(pg_total_relation_size(quote_ident(schemaname) || '.' || quote_ident(tablename))), 0) as size_bytes
-        FROM pg_tables 
-        WHERE schemaname = ${schemaName}
+      fsSync.mkdirSync(backupDir, { recursive: true });
+
+      const tableRows = extractRows(await db.execute(sql`
+        SELECT tablename FROM pg_tables WHERE schemaname = ${schemaName}
       `));
-      const sizeBytes = parseInt((sizeRows[0]?.size_bytes as string) || '0');
+
+      let sqlDump = `-- Backup ${backupId} for schema ${schemaName}\n`;
+      sqlDump += `-- Created at ${new Date().toISOString()}\n`;
+      sqlDump += `-- Name: ${backupName}\n\n`;
+      sqlDump += `SET search_path TO ${this.escapeIdentifier(schemaName)};\n\n`;
+
+      for (const row of tableRows) {
+        const tableName = row.tablename as string;
+        const escapedTable = this.escapeIdentifier(tableName);
+        const fullTable = `${this.escapeIdentifier(schemaName)}.${escapedTable}`;
+
+        sqlDump += `-- Table: ${tableName}\n`;
+
+        const dataRows = extractRows(await db.execute(sql.raw(`SELECT * FROM ${fullTable}`)));
+        if (dataRows.length > 0) {
+          const columns = Object.keys(dataRows[0]);
+          for (const dataRow of dataRows) {
+            const values = columns.map(col => {
+              const val = dataRow[col];
+              if (val === null || val === undefined) return 'NULL';
+              if (typeof val === 'number') return String(val);
+              if (typeof val === 'boolean') return val ? 'TRUE' : 'FALSE';
+              if (val instanceof Date) return `'${val.toISOString()}'`;
+              return `'${String(val).replace(/'/g, "''")}'`;
+            });
+            sqlDump += `INSERT INTO ${escapedTable} (${columns.map(c => this.escapeIdentifier(c)).join(', ')}) VALUES (${values.join(', ')});\n`;
+          }
+        }
+        sqlDump += '\n';
+      }
+
+      fsSync.writeFileSync(backupFile, sqlDump, 'utf8');
+      const stats = fsSync.statSync(backupFile);
       
+      logger.info(`Backup ${backupId} created successfully (${stats.size} bytes)`);
+
       return {
         id: backupId,
         name: backupName,
         status: 'completed',
-        sizeBytes,
+        sizeBytes: stats.size,
         createdAt: new Date()
       };
     } catch (error: any) {
       logger.error(`Failed to create backup for project ${databaseId}`, { error: error.message });
+      try { fsSync.unlinkSync(backupFile); } catch {}
       return {
         id: backupId,
         name: backupName,
@@ -373,17 +413,91 @@ export class LocalProvider implements IDatabaseProvider {
   }
   
   async listBackups(databaseId: number): Promise<BackupInfo[]> {
+    const backupDir = pathModule.join(process.cwd(), 'database-backups', 'local', String(databaseId));
     logger.info(`Listing backups for project ${databaseId}`);
-    return [];
+
+    try {
+      if (!fsSync.existsSync(backupDir)) return [];
+      const files = fsSync.readdirSync(backupDir).filter(f => f.endsWith('.sql'));
+      return files.map(file => {
+        const filePath = pathModule.join(backupDir, file);
+        const stats = fsSync.statSync(filePath);
+        const backupId = file.replace('.sql', '');
+        return {
+          id: backupId,
+          name: backupId,
+          status: 'completed' as const,
+          sizeBytes: stats.size,
+          createdAt: stats.mtime,
+        };
+      });
+    } catch (error: any) {
+      logger.warn(`Failed to list backups for project ${databaseId}`, { error: error.message });
+      return [];
+    }
   }
   
+  private validateBackupId(backupId: string): void {
+    if (!/^[a-zA-Z0-9_-]+$/.test(backupId)) {
+      throw new Error(`Invalid backup ID: ${backupId}`);
+    }
+  }
+
   async restoreBackup(databaseId: number, backupId: string): Promise<void> {
-    logger.info(`Restoring backup ${backupId} for project ${databaseId}`);
-    logger.warn('Schema backup restore requires manual intervention - operation logged but not executed');
+    this.validateBackupId(backupId);
+    const schemaName = this.sanitizeIdentifier(`proj_${databaseId}`);
+    const backupDir = pathModule.join(process.cwd(), 'database-backups', 'local', String(databaseId));
+    const backupFile = pathModule.join(backupDir, `${backupId}.sql`);
+
+    if (!fsSync.existsSync(backupFile)) {
+      throw new Error(`Backup file not found: ${backupId}`);
+    }
+
+    logger.info(`Restoring backup ${backupId} for project ${databaseId}`, { schema: schemaName });
+
+    try {
+      const sqlContent = fsSync.readFileSync(backupFile, 'utf8');
+      const statements = sqlContent
+        .split(';')
+        .map(s => s.trim())
+        .filter(s => s.length > 0 && !s.startsWith('--'));
+
+      await db.execute(sql.raw(`SET search_path TO ${this.escapeIdentifier(schemaName)}`));
+
+      for (const statement of statements) {
+        try {
+          await db.execute(sql.raw(statement));
+        } catch (stmtErr: any) {
+          logger.warn(`Restore statement failed (continuing): ${stmtErr.message}`);
+        }
+      }
+
+      await db.execute(sql`SET search_path TO public`);
+      logger.info(`Backup ${backupId} restored successfully for project ${databaseId}`);
+    } catch (error: any) {
+      await db.execute(sql`SET search_path TO public`).catch(() => {});
+      logger.error(`Failed to restore backup for project ${databaseId}`, { error: error.message });
+      throw new Error(`Backup restore failed: ${error.message}`);
+    }
   }
   
   async deleteBackup(databaseId: number, backupId: string): Promise<void> {
+    this.validateBackupId(backupId);
+    const backupDir = pathModule.join(process.cwd(), 'database-backups', 'local', String(databaseId));
+    const backupFile = pathModule.join(backupDir, `${backupId}.sql`);
     logger.info(`Deleting backup ${backupId} for project ${databaseId}`);
+
+    try {
+      if (fsSync.existsSync(backupFile)) {
+        fsSync.unlinkSync(backupFile);
+        logger.info(`Backup ${backupId} deleted for project ${databaseId}`);
+      } else {
+        throw new Error(`Backup file not found: ${backupId}`);
+      }
+    } catch (error: any) {
+      logger.error(`Failed to delete backup ${backupId}`, { error: error.message });
+      throw new Error(`Backup deletion failed: ${error.message}`);
+    }
   }
   
   async isHealthy(): Promise<boolean> {

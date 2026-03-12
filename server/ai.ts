@@ -745,7 +745,7 @@ export async function generateAI(req: Request, res: Response) {
 // POST /api/openai/generate — OpenAI-specific generation (used by AllModelsSelector for GPT/o1/o3 models)
 export async function generateOpenAI(req: Request, res: Response) {
   try {
-    const { model = 'gpt-5.1', messages, temperature = 0.7, max_tokens = 1024 } = req.body;
+    const { model = 'gpt-4.1', messages, temperature = 0.7, max_tokens = 1024 } = req.body;
 
     if (!messages || !messages.length) {
       return res.status(400).json({ error: 'messages are required' });

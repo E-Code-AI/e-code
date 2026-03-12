@@ -18,11 +18,6 @@ const logger = createLogger('model-normalizer');
 const MODEL_NORMALIZATION_MAP: Record<string, string> = {
 
   // ── OpenAI ──────────────────────────────────────────────────────────────────
-  // GPT-5.x — confirmed working on Replit ModelFarm (March 2026)
-  'gpt-5.1':            'gpt-5.1',
-  'gpt-5':              'gpt-5',
-  'gpt-5-mini':         'gpt-5-mini',
-  'gpt-5-nano':         'gpt-5-nano',
   // GPT-4.1 family — confirmed working on ModelFarm
   'gpt-4.1':            'gpt-4.1',
   'gpt-4.1-mini':       'gpt-4.1-mini',
@@ -40,15 +35,17 @@ const MODEL_NORMALIZATION_MAP: Record<string, string> = {
   'o1':                 'o1',
   'o1-mini':            'o4-mini',
   // Unknown/broken aliases → redirect to best working model
-  // gpt-5.2: ModelFarm internal error (400) → use gpt-5.1
-  'gpt-5.2':            'gpt-5.1',
-  'gpt-5.3':            'gpt-5.1',
-  'gpt-5.2-codex':      'gpt-5.1',
-  // gpt-5.4/gpt-5.4-pro: NOT in ModelFarm → redirect to gpt-5.1
-  'gpt-5.4':            'gpt-5.1',
-  'gpt-5.4-pro':        'gpt-5.1',
-  'gpt-5.4-2026-03-05': 'gpt-5.1',
-  'gpt-5.4-pro-2026-03-05': 'gpt-5.1',
+  'gpt-5.1':            'gpt-4.1',
+  'gpt-5':              'gpt-4.1',
+  'gpt-5-mini':         'gpt-4.1-mini',
+  'gpt-5-nano':         'gpt-4.1-nano',
+  'gpt-5.2':            'gpt-4.1',
+  'gpt-5.3':            'gpt-4.1',
+  'gpt-5.2-codex':      'gpt-4.1',
+  'gpt-5.4':            'gpt-4.1',
+  'gpt-5.4-pro':        'gpt-4.1',
+  'gpt-5.4-2026-03-05': 'gpt-4.1',
+  'gpt-5.4-pro-2026-03-05': 'gpt-4.1',
 
   // ── Anthropic ────────────────────────────────────────────────────────────────
   // Confirmed real (400 "credit balance too low" = model exists)
@@ -130,7 +127,7 @@ const MODEL_NORMALIZATION_MAP: Record<string, string> = {
 };
 
 const PROVIDER_DEFAULTS: Record<string, string> = {
-  'openai':     'gpt-5.1',
+  'openai':     'gpt-4.1',
   'anthropic':  'claude-sonnet-4-20250514',
   'gemini':     'gemini-2.5-flash',
   'google':     'gemini-2.5-flash',

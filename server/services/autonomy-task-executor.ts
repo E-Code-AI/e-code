@@ -206,7 +206,7 @@ export class AutonomyTaskExecutor {
     this.sessionId = options.sessionId;
     this.projectId = options.projectId;
     this.userId = options.userId;
-    this.model = options.model || 'gpt-5.1';
+    this.model = options.model || 'gpt-4.1';
     this.aiProvider = new AIProviderManager();
     this.checkpointService = options.checkpointService;
     this.testingService = options.testingService;
@@ -604,11 +604,11 @@ Generate the task breakdown (aim for ${complexityAnalysis.suggestedTaskCount} ta
       Math.round(overallComplexity * 1.5) + categories.length
     ));
     
-    let recommendedModel = 'gpt-5.1';
+    let recommendedModel = 'gpt-4.1';
     if (overallComplexity >= 8) {
-      recommendedModel = 'gpt-5.1';
+      recommendedModel = 'gpt-4.1';
     } else if (overallComplexity <= 3) {
-      recommendedModel = 'gpt-5-nano';
+      recommendedModel = 'gpt-4.1-nano';
     }
     
     let riskLevel: 'low' | 'medium' | 'high' = 'low';

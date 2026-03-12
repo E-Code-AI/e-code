@@ -90,12 +90,9 @@ router.get('/preferred', async (req, res) => {
       preferredModel = availableModels.length > 0 ? availableModels[0].id : null;
     }
 
-    // Upgrade legacy OpenAI defaults to modern GPT-5.x models
-    // These are auto-upgrades for users who never changed their preference
     const LEGACY_UPGRADES: Record<string, string> = {
-      'gpt-4o-mini': 'gpt-5.1',
-      'gpt-4o':      'gpt-5.1',
-      'gpt-5.2':     'gpt-5.1', // gpt-5.2 has a known ModelFarm internal error
+      'gpt-4o-mini': 'gpt-4.1',
+      'gpt-4o':      'gpt-4.1',
     };
     if (preferredModel && LEGACY_UPGRADES[preferredModel]) {
       preferredModel = LEGACY_UPGRADES[preferredModel];
@@ -120,12 +117,6 @@ router.get('/pricing', (_req, res) => {
   res.json({
     success: true,
     pricing: {
-      // OpenAI — confirmed working models (March 2026)
-      // GPT-5.x via ModelFarm free tier
-      'gpt-5.1':                    { input: 0.000002,   output: 0.000008,   creditsPerThousand: 2 },
-      'gpt-5':                      { input: 0.000002,   output: 0.000008,   creditsPerThousand: 2 },
-      'gpt-5-mini':                 { input: 0.0000004,  output: 0.0000016,  creditsPerThousand: 0.4 },
-      'gpt-5-nano':                 { input: 0.0000001,  output: 0.0000004,  creditsPerThousand: 0.1 },
       'gpt-4.1':                    { input: 0.000002,   output: 0.000008,   creditsPerThousand: 2 },
       'gpt-4.1-mini':               { input: 0.0000004,  output: 0.0000016,  creditsPerThousand: 0.4 },
       'gpt-4.1-nano':               { input: 0.0000001,  output: 0.0000004,  creditsPerThousand: 0.1 },

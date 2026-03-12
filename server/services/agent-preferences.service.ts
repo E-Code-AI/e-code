@@ -31,35 +31,35 @@ export class AgentPreferencesService {
   }> {
     // CONFIRMED WORKING via live ModelFarm tests (March 2026)
     return [
-      // ── OpenAI — GPT-5.x (ALL free via Replit ModelFarm) ────────────────────
+      // ── OpenAI — GPT-4.1.x (ALL free via Replit ModelFarm) ────────────────────
       {
-        id: 'gpt-5.1',
-        name: 'GPT-5.1',
+        id: 'gpt-4.1',
+        name: 'GPT-4.1',
         description: 'Best overall — top intelligence for coding, reasoning & agentic tasks. Free via ModelFarm.',
         category: 'openai',
         tier: 'high-power',
         capabilities: { extendedThinking: false, codeGeneration: true, maxTokens: 1000000, speed: 'medium', cost: 'free' },
       },
       {
-        id: 'gpt-5',
-        name: 'GPT-5',
+        id: 'gpt-4.1',
+        name: 'GPT-4.1',
         description: 'OpenAI flagship — powerful and versatile for complex tasks. Free via ModelFarm.',
         category: 'openai',
         tier: 'high-power',
         capabilities: { extendedThinking: false, codeGeneration: true, maxTokens: 1000000, speed: 'medium', cost: 'free' },
       },
       {
-        id: 'gpt-5-mini',
-        name: 'GPT-5 Mini',
-        description: 'Fast GPT-5 — excellent balance of speed and capability. Free via ModelFarm.',
+        id: 'gpt-4.1-mini',
+        name: 'GPT-4.1 Mini',
+        description: 'Fast GPT-4.1 — excellent balance of speed and capability. Free via ModelFarm.',
         category: 'openai',
         tier: 'standard',
         capabilities: { extendedThinking: false, codeGeneration: true, maxTokens: 1000000, speed: 'fast', cost: 'free' },
       },
       {
-        id: 'gpt-5-nano',
-        name: 'GPT-5 Nano',
-        description: 'Fastest GPT-5 — ultra-low latency for background tasks. Free via ModelFarm.',
+        id: 'gpt-4.1-nano',
+        name: 'GPT-4.1 Nano',
+        description: 'Fastest GPT-4.1 — ultra-low latency for background tasks. Free via ModelFarm.',
         category: 'openai',
         tier: 'standard',
         capabilities: { extendedThinking: false, codeGeneration: true, maxTokens: 1000000, speed: 'fast', cost: 'free' },
@@ -427,7 +427,7 @@ export class AgentPreferencesService {
     
     // Fallback to first model with 'fast' speed rating
     const fastBySpeed = availableModels.find(m => m.capabilities.speed === 'fast');
-    return fastBySpeed?.id || 'gpt-5-nano';
+    return fastBySpeed?.id || 'gpt-4.1-nano';
   }
 
   /**

@@ -315,7 +315,7 @@ ${context}`;
       // Fallback to OpenAI
       if (process.env.OPENAI_API_KEY) {
         const response = await this.openai.chat.completions.create({
-          model: 'gpt-5.1',
+          model: 'gpt-4.1',
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userPrompt }

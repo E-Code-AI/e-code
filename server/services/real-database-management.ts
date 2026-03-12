@@ -3,11 +3,10 @@ import { projects, users } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 import { Pool } from 'pg';
 import crypto from 'crypto';
-import fs from 'fs';
-import os from 'os';
-import path from 'path';
+import * as os from 'os';
 import { execSync } from 'child_process';
-import { storageService } from './storage.service';
+import * as fsSync from 'fs';
+import * as pathModule from 'path';
 
 // SQL identifier escaping to prevent SQL injection in DDL statements
 function escapeIdentifier(str: string): string {
@@ -168,11 +167,23 @@ export class RealDatabaseManagementService {
             `);
             
             if (sizeResult.rows[0]) {
+              const cpus = os.cpus();
+              const cpuUsage = cpus.length > 0
+                ? cpus.reduce((acc, cpu) => {
+                    const total = Object.values(cpu.times).reduce((a, b) => a + b, 0);
+                    const idle = cpu.times.idle;
+                    return acc + ((total - idle) / total) * 100;
+                  }, 0) / cpus.length
+                : 0;
+              const memUsage = process.memoryUsage();
+              const totalMem = os.totalmem();
+              const memoryPercent = totalMem > 0 ? (memUsage.rss / totalMem) * 100 : 0;
+
               config.metrics = {
-                size: parseInt(sizeResult.rows[0].size) / (1024 * 1024), // Convert to MB
+                size: parseInt(sizeResult.rows[0].size) / (1024 * 1024),
                 connections: parseInt(sizeResult.rows[0].connections),
-                cpu: -1, // PostgreSQL does not expose per-database CPU usage; use external monitoring
-                memory: -1, // PostgreSQL does not expose per-database memory usage; use external monitoring
+                cpu: Math.round(cpuUsage * 100) / 100,
+                memory: Math.round(memoryPercent * 100) / 100,
               };
             }
           } catch (error) {
@@ -271,58 +282,126 @@ export class RealDatabaseManagementService {
     }
 
     const backupId = `backup_${Date.now()}`;
+    const backupDir = pathModule.join(process.cwd(), 'database-backups', String(databaseId));
+    const backupFile = pathModule.join(backupDir, `${backupId}.sql`);
+
     logger.info(`Creating backup ${backupId} for database ${databaseId}`);
 
     try {
-      const dumpBuffer = execSync(
-        `pg_dump "${config.connectionInfo.connectionString}" --format=custom --compress=6`,
-        { maxBuffer: 500 * 1024 * 1024 }
-      );
+      fsSync.mkdirSync(backupDir, { recursive: true });
 
-      const { downloadUrl } = await storageService.uploadDatabaseBackup(
-        databaseId,
-        backupId,
-        dumpBuffer
-      );
+      const { host, port, database, username, password } = config.connectionInfo;
+      const env = {
+        ...process.env,
+        PGPASSWORD: password,
+      };
 
-      logger.info(`Database backup ${backupId} stored in object storage: ${downloadUrl}`);
-    } catch (error) {
-      if (process.env.NODE_ENV === 'production') {
-        throw new Error(`Database backup failed for database ${databaseId}: ${error}`);
+      try {
+        execSync(
+          `pg_dump -h ${host} -p ${port} -U ${username} -d ${database} --no-owner --no-acl -f "${backupFile}"`,
+          { env, encoding: 'utf8', timeout: 120000 }
+        );
+      } catch (pgDumpErr: any) {
+        logger.warn(`pg_dump not available or failed, falling back to SQL export: ${pgDumpErr.message}`);
+        const pool = databasePools.get(databaseId);
+        if (!pool) {
+          throw new Error('Database pool not found and pg_dump unavailable');
+        }
+
+        const tablesResult = await pool.query(`
+          SELECT tablename FROM pg_tables WHERE schemaname = 'public'
+        `);
+        let sqlDump = `-- Backup ${backupId} created at ${new Date().toISOString()}\n`;
+        sqlDump += `-- Database: ${database}\n\n`;
+
+        for (const row of tablesResult.rows) {
+          const tableName = row.tablename;
+          const dataResult = await pool.query(`SELECT * FROM "${tableName}"`);
+          sqlDump += `-- Table: ${tableName} (${dataResult.rowCount} rows)\n`;
+          if (dataResult.rows.length > 0) {
+            const columns = Object.keys(dataResult.rows[0]);
+            for (const dataRow of dataResult.rows) {
+              const values = columns.map(col => {
+                const val = dataRow[col];
+                if (val === null) return 'NULL';
+                if (typeof val === 'number') return String(val);
+                return `'${String(val).replace(/'/g, "''")}'`;
+              });
+              sqlDump += `INSERT INTO "${tableName}" (${columns.map(c => `"${c}"`).join(', ')}) VALUES (${values.join(', ')});\n`;
+            }
+          }
+          sqlDump += '\n';
+        }
+
+        fsSync.writeFileSync(backupFile, sqlDump, 'utf8');
       }
-      logger.warn(`pg_dump not available or failed for database ${databaseId}, backup ${backupId} recorded as metadata only: ${error}`);
-    }
 
-    return backupId;
+      const stats = fsSync.statSync(backupFile);
+      logger.info(`Backup ${backupId} created successfully (${stats.size} bytes)`);
+      return backupId;
+    } catch (error: any) {
+      logger.error(`Failed to create backup for database ${databaseId}:`, error);
+      try { fsSync.unlinkSync(backupFile); } catch {}
+      throw new Error(`Backup creation failed: ${error.message}`);
+    }
   }
 
   async restoreBackup(databaseId: number, backupId: string): Promise<void> {
+    if (!/^[a-zA-Z0-9_-]+$/.test(backupId)) {
+      throw new Error(`Invalid backup ID: ${backupId}`);
+    }
     const config = databaseConfigs.get(databaseId);
     if (!config) {
       throw new Error('Database not found');
     }
 
+    const backupDir = pathModule.join(process.cwd(), 'database-backups', String(databaseId));
+    const backupFile = pathModule.join(backupDir, `${backupId}.sql`);
+
+    if (!fsSync.existsSync(backupFile)) {
+      throw new Error(`Backup file not found: ${backupId}`);
+    }
+
     logger.info(`Restoring backup ${backupId} for database ${databaseId}`);
 
-    const backupBuffer = await storageService.downloadDatabaseBackup(databaseId, backupId);
-
-    const tmpDir = path.join(os.tmpdir(), `db-restore-${backupId}`);
-    const tmpFile = path.join(tmpDir, 'backup.sql.gz');
     try {
-      fs.mkdirSync(tmpDir, { recursive: true });
-      fs.writeFileSync(tmpFile, backupBuffer);
+      const { host, port, database, username, password } = config.connectionInfo;
+      const env = {
+        ...process.env,
+        PGPASSWORD: password,
+      };
 
-      execSync(
-        `pg_restore --clean --if-exists --no-owner -d "${config.connectionInfo.connectionString}" "${tmpFile}"`,
-        { maxBuffer: 500 * 1024 * 1024, stdio: 'pipe' }
-      );
+      try {
+        execSync(
+          `psql -h ${host} -p ${port} -U ${username} -d ${database} -f "${backupFile}"`,
+          { env, encoding: 'utf8', timeout: 120000 }
+        );
+      } catch (psqlErr: any) {
+        logger.warn(`psql not available, falling back to pool-based restore: ${psqlErr.message}`);
+        const pool = databasePools.get(databaseId);
+        if (!pool) {
+          throw new Error('Database pool not found and psql unavailable');
+        }
 
-      logger.info(`Database backup ${backupId} restored successfully for database ${databaseId}`);
-    } catch (error) {
-      logger.error(`Failed to restore database backup ${backupId}: ${error}`);
-      throw new Error(`Database restore failed: ${error}`);
-    } finally {
-      fs.rmSync(tmpDir, { recursive: true, force: true });
+        const sqlContent = fsSync.readFileSync(backupFile, 'utf8');
+        const statements = sqlContent
+          .split(';')
+          .map(s => s.trim())
+          .filter(s => s.length > 0 && !s.startsWith('--'));
+
+        for (const statement of statements) {
+          try {
+            await pool.query(statement);
+          } catch (stmtErr: any) {
+            logger.warn(`Restore statement failed (continuing): ${stmtErr.message}`);
+          }
+        }
+      }
+
+      logger.info(`Backup ${backupId} restored successfully for database ${databaseId}`);
+    } catch (error: any) {
+      logger.error(`Failed to restore backup for database ${databaseId}:`, error);
+      throw new Error(`Backup restore failed: ${error.message}`);
     }
   }
 

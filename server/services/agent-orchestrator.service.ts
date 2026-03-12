@@ -220,19 +220,19 @@ export interface DelegationDecision {
  */
 const MODEL_TIERS: Record<string, Record<string, string | null>> = {
   fast: {
-    openai: 'gpt-5-nano',
+    openai: 'gpt-4.1-nano',
     anthropic: 'claude-3-5-haiku-20241022',
     google: 'gemini-2.5-flash',
     xai: 'grok-3-mini'
   },
   balanced: {
-    openai: 'gpt-5.1',
+    openai: 'gpt-4.1',
     anthropic: 'claude-sonnet-4-20250514',
     google: 'gemini-2.5-flash',
     xai: 'grok-3'
   },
   quality: {
-    openai: 'gpt-5.1',
+    openai: 'gpt-4.1',
     anthropic: 'claude-sonnet-4-20250514',
     google: 'gemini-2.5-flash',
     xai: 'grok-3'
@@ -396,7 +396,7 @@ export class AgentOrchestratorService extends EventEmitter {
   async createSession(
     userId: string,
     projectId?: string,
-    model: string = 'gpt-5.1',
+    model: string = 'gpt-4.1',
     autonomousMode: boolean = false
   ): Promise<AgentSession> {
     const startTime = Date.now();
@@ -490,24 +490,24 @@ export class AgentOrchestratorService extends EventEmitter {
       // Add system prompt with capabilities
       const systemMessage: AgentMessage = {
         role: 'system',
-        content: `You are GPT-5.2, an advanced AI assistant running on the E-Code Platform with adaptive reasoning. You are capable of helping users with programming, architecture design, and building applications. Respond helpfully and concisely.`
+        content: `You are GPT-4.1.2, an advanced AI assistant running on the E-Code Platform with adaptive reasoning. You are capable of helping users with programming, architecture design, and building applications. Respond helpfully and concisely.`
       };
 
       const allMessages = [systemMessage, ...messages];
 
       try {
         const completion = await this.openai.chat.completions.create({
-          model: 'gpt-5.1',
+          model: 'gpt-4.1',
           messages: allMessages.map(m => ({
             role: m.role as any,
             content: m.content || ''
           })),
-          max_completion_tokens: 500,  // GPT-5.1 requires max_completion_tokens, not max_tokens
+          max_completion_tokens: 500,  // GPT-4.1 requires max_completion_tokens, not max_tokens
           reasoning_effort: 'medium' as any  // ✅ Use medium reasoning for complex agent tasks
         });
 
         const response = completion.choices[0].message;
-        const responseContent = response.content || 'I am GPT-5 on E-Code Platform, ready to help you build amazing applications!';
+        const responseContent = response.content || 'I am GPT-4.1 on E-Code Platform, ready to help you build amazing applications!';
 
         // Update session token usage
         try {
@@ -554,7 +554,7 @@ export class AgentOrchestratorService extends EventEmitter {
         let fallbackResponse = '';
         
         if (userMessage.toLowerCase().includes('hello') || userMessage.toLowerCase().includes('test')) {
-          fallbackResponse = `Hello! I'm GPT-5, the most advanced AI assistant running on the E-Code Platform. I'm fully operational and ready to help you build amazing applications!
+          fallbackResponse = `Hello! I'm GPT-4.1, the most advanced AI assistant running on the E-Code Platform. I'm fully operational and ready to help you build amazing applications!
 
 I have autonomous capabilities including:
 • File system operations - Create, read, update, and delete files
@@ -569,7 +569,7 @@ I'm currently running in demonstration mode, but all my core functions are worki
 
 How can I assist you with your development today?`;
         } else if (userMessage.toLowerCase().includes('build') || userMessage.toLowerCase().includes('create')) {
-          fallbackResponse = `I understand you want to build something! As GPT-5 on the E-Code Platform, I can help you create:
+          fallbackResponse = `I understand you want to build something! As GPT-4.1 on the E-Code Platform, I can help you create:
 
 • Full-stack web applications with React, Vue, or Angular
 • Backend APIs with Node.js, Python, or Go  
@@ -582,7 +582,7 @@ Just describe what you want to build, and I'll break it down into steps, generat
 
 What kind of application would you like to create?`;
         } else {
-          fallbackResponse = `I'm GPT-5, your autonomous AI assistant on the E-Code Platform. I've received your message and I'm ready to help!
+          fallbackResponse = `I'm GPT-4.1, your autonomous AI assistant on the E-Code Platform. I've received your message and I'm ready to help!
 
 Your request: "${userMessage.substring(0, 100)}${userMessage.length > 100 ? '...' : ''}"
 
@@ -592,7 +592,7 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
         }
         
         // Return error message instead of simulation
-        const errorMessage = `Error connecting to GPT-5 API: ${apiError.message || 'Unknown error'}. Please ensure the OpenAI AI Integrations are properly configured.`;
+        const errorMessage = `Error connecting to GPT-4.1 API: ${apiError.message || 'Unknown error'}. Please ensure the OpenAI AI Integrations are properly configured.`;
         
         return {
           message: errorMessage,
@@ -611,7 +611,7 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
 
       // Return error response instead of throwing
       return {
-        message: `System error occurred: ${error.message}. The GPT-5 agent is experiencing technical difficulties. Please check the server logs for more details.`,
+        message: `System error occurred: ${error.message}. The GPT-4.1 agent is experiencing technical difficulties. Please check the server logs for more details.`,
         functionCalls: [],
         sessionId
       };
@@ -838,7 +838,7 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
         logger.warn(`[makeIntelligentDelegationDecision] ⚠️ No ${mode} tier providers available, using session model ${sessionModel}`);
       } else {
         // Absolute fallback: default to openai (may fail)
-        selectedModel = tierModels['openai'] || 'gpt-5.1';
+        selectedModel = tierModels['openai'] || 'gpt-4.1';
         selectedProvider = 'openai';
         logger.warn(`[makeIntelligentDelegationDecision] ⚠️ No providers available, defaulting to openai with ${selectedModel} (may fail)`);
       }
@@ -949,7 +949,7 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
     // ✅ INTELLIGENT DELEGATION (Dec 15, 2025): Make complexity-based model routing decision
     const delegationDecision = this.makeIntelligentDelegationDecision(
       taskClassification,
-      session.model || 'gpt-5.1',
+      session.model || 'gpt-4.1',
       prompt.length
     );
     
@@ -1957,7 +1957,7 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
   /**
    * Build workflow step config from plan task
    * ✅ FIX (Nov 21, 2025 - Part 2): Store only METADATA in workflow steps (no large content)
-   * PROBLEM: GPT-5.1 plans have massive file contents (HTML/CSS/TS) causing JSONB insert failures
+   * PROBLEM: GPT-4.1 plans have massive file contents (HTML/CSS/TS) causing JSONB insert failures
    * SOLUTION: Store taskId reference instead of duplicating large content
    */
   private buildStepConfig(task: any): any {
@@ -2077,7 +2077,7 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
             userId: userIdNum,
             messages: [],
             context: { workspaceCreation: true },
-            model: 'gpt-5.1',
+            model: 'gpt-4.1',
             agentMode: 'build'
           })
           .returning();
@@ -2093,7 +2093,7 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
         userId: userIdNum,
         role: 'assistant',
         content,
-        model: 'gpt-5.1',
+        model: 'gpt-4.1',
         metadata: {
           tokensUsed: metadata?.tokensUsed ?? 0,
           processingTimeMs: metadata?.processingTimeMs,

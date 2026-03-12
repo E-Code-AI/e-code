@@ -154,7 +154,7 @@ Break this down into a step-by-step execution plan. Be specific and actionable.`
 
     try {
       const response = await this.openai.chat.completions.create({
-        model: 'gpt-5.1',
+        model: 'gpt-4.1',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
@@ -348,7 +348,7 @@ Break this down into a step-by-step execution plan. Be specific and actionable.`
   ): Promise<string[]> {
     try {
       const response = await this.openai.chat.completions.create({
-        model: 'gpt-5.1',
+        model: 'gpt-4.1',
         messages: [
           {
             role: 'system',

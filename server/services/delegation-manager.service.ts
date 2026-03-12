@@ -44,21 +44,21 @@ export interface TaskDelegationInput {
  */
 const MODEL_TIERS: Record<ModelTier, Record<Provider, { model: string; costPer1kTokens: number; avgLatencyMs: number } | null>> = {
   fast: {
-    openai: { model: 'gpt-5-nano', costPer1kTokens: 0.0001, avgLatencyMs: 300 },
+    openai: { model: 'gpt-4.1-nano', costPer1kTokens: 0.0001, avgLatencyMs: 300 },
     anthropic: { model: 'claude-3-5-haiku-20241022', costPer1kTokens: 0.001, avgLatencyMs: 600 },
     google: { model: 'gemini-2.5-flash', costPer1kTokens: 0.000075, avgLatencyMs: 400 },
     xai: null,
     moonshot: { model: 'moonshot-v1-32k', costPer1kTokens: 0.0015, avgLatencyMs: 700 }
   },
   balanced: {
-    openai: { model: 'gpt-5.1', costPer1kTokens: 0.0008, avgLatencyMs: 800 },
+    openai: { model: 'gpt-4.1', costPer1kTokens: 0.0008, avgLatencyMs: 800 },
     anthropic: { model: 'claude-sonnet-4-20250514', costPer1kTokens: 0.003, avgLatencyMs: 1200 },
     google: { model: 'gemini-2.5-flash', costPer1kTokens: 0.000075, avgLatencyMs: 800 },
     xai: null,
     moonshot: { model: 'moonshot-v1-128k', costPer1kTokens: 0.0025, avgLatencyMs: 1500 }
   },
   quality: {
-    openai: { model: 'gpt-5.1', costPer1kTokens: 0.0008, avgLatencyMs: 1200 },
+    openai: { model: 'gpt-4.1', costPer1kTokens: 0.0008, avgLatencyMs: 1200 },
     anthropic: { model: 'claude-opus-4-20250514', costPer1kTokens: 0.015, avgLatencyMs: 3000 },
     google: { model: 'gemini-2.5-pro', costPer1kTokens: 0.00125, avgLatencyMs: 2500 },
     xai: { model: 'grok-3', costPer1kTokens: 0.003, avgLatencyMs: 2000 },
@@ -238,9 +238,9 @@ class DelegationManagerService extends EventEmitter {
       } else {
         // Last resort: use any available model
         selectedProvider = 'openai';
-        selectedModel = 'gpt-5.1';
+        selectedModel = 'gpt-4.1';
         fallbackUsed = true;
-        logger.error('No providers available, using last resort: gpt-5.1');
+        logger.error('No providers available, using last resort: gpt-4.1');
       }
     }
     

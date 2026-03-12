@@ -299,7 +299,7 @@ router.post('/generate-command', ensureAuthenticated, async (req, res) => {
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     
     const completion = await openai.chat.completions.create({
-      model: 'gpt-5-nano',
+      model: 'gpt-4.1-nano',
       messages: [
         {
           role: 'system',

@@ -119,10 +119,6 @@ router.get('/features', (_req, res) => {
 // GET /api/openai/models — OpenAI-specific model list (public, used by OpenAIModelSelector)
 router.get('/openai/models', (_req, res) => {
   res.json([
-    { id: 'gpt-5.1', name: 'GPT-5.1', capabilities: ['chat', 'function_calling', 'code_interpreter'], contextWindow: 128000, maxOutput: 32768 },
-    { id: 'gpt-5', name: 'GPT-5', capabilities: ['chat', 'function_calling', 'code_interpreter'], contextWindow: 128000, maxOutput: 32768 },
-    { id: 'gpt-5-mini', name: 'GPT-5 Mini', capabilities: ['chat', 'function_calling'], contextWindow: 128000, maxOutput: 16384 },
-    { id: 'gpt-5-nano', name: 'GPT-5 Nano', capabilities: ['chat', 'function_calling'], contextWindow: 128000, maxOutput: 8192 },
     { id: 'gpt-4.1', name: 'GPT-4.1', capabilities: ['chat', 'vision', 'function_calling', 'code_interpreter'], contextWindow: 1000000, maxOutput: 32768 },
     { id: 'gpt-4.1-mini', name: 'GPT-4.1 Mini', capabilities: ['chat', 'function_calling'], contextWindow: 1000000, maxOutput: 16384 },
     { id: 'gpt-4.1-nano', name: 'GPT-4.1 Nano', capabilities: ['chat', 'function_calling'], contextWindow: 1000000, maxOutput: 8192 },

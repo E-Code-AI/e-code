@@ -18,14 +18,8 @@ export const AI_MODEL_PRICING: Record<string, { input: number; output: number }>
   'gemini-ultra': { input: 5.00, output: 15.00 },
 
   // ============================================
-  // OpenAI (Mar 2026) — Confirmed working on ModelFarm
-  // ============================================
-  // GPT-5.x (all confirmed ✅ via live tests)
-  'gpt-5.1':      { input: 2.00,  output: 8.00  },
-  'gpt-5':        { input: 2.00,  output: 8.00  },
-  'gpt-5-mini':   { input: 0.40,  output: 1.60  },
-  'gpt-5-nano':   { input: 0.10,  output: 0.40  },
   // OpenAI — GPT-4.1 family (ModelFarm-supported)
+  // ============================================
   'gpt-4.1':      { input: 2.00,  output: 8.00  },
   'gpt-4.1-mini': { input: 0.40,  output: 1.60  },
   'gpt-4.1-nano': { input: 0.10,  output: 0.40  },

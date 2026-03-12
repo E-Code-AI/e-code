@@ -2581,7 +2581,7 @@ export const agentSessions = pgTable('agent_sessions', {
   userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   projectId: integer('project_id').references(() => projects.id, { onDelete: 'cascade' }), // ✅ Fixed to match serial projects.id
   sessionToken: text('session_token').notNull().unique(),
-  model: text('model').notNull(), // gpt-5, gpt-4, claude-3, etc
+  model: text('model').notNull(), // gpt-4.1, gpt-4, claude-3, etc
   context: jsonb('context').$type<{
     files: string[];
     currentFile?: string;
@@ -2648,7 +2648,7 @@ export const agentPlans = pgTable('agent_plans', {
   completedAt: timestamp('completed_at'),
   updatedAt: timestamp('updated_at').defaultNow(),
   metadata: jsonb('metadata').$type<{
-    provider?: string; // gemini-2.5-flash, gpt-5.1, etc
+    provider?: string; // gemini-2.5-flash, gpt-4.1, etc
     fallbackChain?: string[];
     generationTimeMs?: number;
     taskCount?: number;

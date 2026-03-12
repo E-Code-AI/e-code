@@ -343,7 +343,7 @@ const TOOL_DEFINITIONS: Record<string, {
       properties: {
         prompt: { type: 'string', description: 'Prompt for the model' },
         messages: { type: 'array', description: 'Chat messages' },
-        model: { type: 'string', description: 'Model to use', default: 'gpt-5.1' },
+        model: { type: 'string', description: 'Model to use', default: 'gpt-4.1' },
         temperature: { type: 'number', description: 'Sampling temperature', default: 0.7 }
       }
     },
@@ -362,7 +362,7 @@ const TOOL_DEFINITIONS: Record<string, {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: args.model || 'gpt-5.1',
+          model: args.model || 'gpt-4.1',
           messages: args.messages || [{ role: 'user', content: args.prompt }],
           temperature: args.temperature ?? 0.7,
         }),

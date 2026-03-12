@@ -170,7 +170,7 @@ Only provide completions that are highly relevant and would actually help the de
       // Fallback to OpenAI if available
       if (this.openai) {
         const completion = await this.openai.chat.completions.create({
-          model: 'gpt-5.1',
+          model: 'gpt-4.1',
           messages: [{ role: 'user', content: prompt }],
           temperature: 0.2,
           max_tokens: 300,

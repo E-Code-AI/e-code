@@ -1,6 +1,6 @@
 /**
  * Admin AI Chat Service
- * Supports OpenAI (GPT-5.1, GPT-4.1, o3, o4-mini) and Anthropic (Claude Opus 4, Sonnet 4)
+ * Supports OpenAI (GPT-4.1, GPT-4.1, o3, o4-mini) and Anthropic (Claude Opus 4, Sonnet 4)
  * with real streaming via SSE
  */
 
@@ -33,8 +33,8 @@ export interface AIModel {
 
 export const AI_MODELS: AIModel[] = [
   {
-    id: 'gpt-5.1',
-    name: 'GPT-5.1',
+    id: 'gpt-4.1',
+    name: 'GPT-4.1',
     provider: 'openai',
     description: 'Flagship OpenAI model — advanced reasoning & code generation',
     maxTokens: 32768,

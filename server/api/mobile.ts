@@ -408,10 +408,9 @@ router.post('/mobile/ai/chat', mobileEnsureAuthenticated, async (req, res) => {
   try {
     const { projectId, message, model, messages, context } = req.body;
     
-    const modelId = model || 'gpt-5.1';
+    const modelId = model || 'gpt-4.1';
     const chatMessages = messages || [{ role: 'user', content: message }];
     
-    // ✅ Route through aiProviderManager which enforces Kimi K2 requirements
     const response = await aiProviderManager.generateChat(
       modelId,
       chatMessages,
@@ -428,13 +427,11 @@ router.post('/mobile/ai/chat', mobileEnsureAuthenticated, async (req, res) => {
   }
 });
 
-// AI chat streaming for mobile
-// ✅ Uses aiProviderManager.streamChat which enforces Kimi K2 requirements (temp=1.0, max>=16384)
 router.post('/mobile/ai/chat/stream', mobileEnsureAuthenticated, async (req, res) => {
   try {
     const { model, messages, projectId } = req.body;
     
-    const modelId = model || 'gpt-5.1';
+    const modelId = model || 'gpt-4.1';
     
     // Set SSE headers
     res.setHeader('Content-Type', 'text/event-stream');

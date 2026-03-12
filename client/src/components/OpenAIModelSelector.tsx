@@ -29,7 +29,7 @@ interface ModelPricing {
 
 export function OpenAIModelSelector({ 
   onModelSelect,
-  selectedModel = 'gpt-5.1'
+  selectedModel = 'gpt-4.1'
 }: { 
   onModelSelect: (model: string) => void;
   selectedModel?: string;
@@ -213,11 +213,11 @@ export function OpenAIModelSelector({
         <Button
           variant="outline"
           size="sm"
-          onClick={() => handleModelChange('gpt-5.1')}
-          className={localSelectedModel === 'gpt-5.1' ? 'border-blue-500' : ''}
+          onClick={() => handleModelChange('gpt-4.1')}
+          className={localSelectedModel === 'gpt-4.1' ? 'border-blue-500' : ''}
         >
           <Sparkles className="h-3 w-3 mr-1" />
-          GPT-5.1
+          GPT-4.1
         </Button>
         <Button
           variant="outline"
@@ -231,11 +231,11 @@ export function OpenAIModelSelector({
         <Button
           variant="outline"
           size="sm"
-          onClick={() => handleModelChange('gpt-5-nano')}
-          className={localSelectedModel === 'gpt-5-nano' ? 'border-blue-500' : ''}
+          onClick={() => handleModelChange('gpt-4.1-nano')}
+          className={localSelectedModel === 'gpt-4.1-nano' ? 'border-blue-500' : ''}
         >
           <Zap className="h-3 w-3 mr-1" />
-          GPT-5 Nano
+          GPT-4.1 Nano
         </Button>
       </div>
     </div>
