@@ -71,14 +71,57 @@ app.use(performanceHeaders());
 app.use(earlyHints());
 
 import compression from 'compression';
-app.use(compression({
-  level: 6,
-  threshold: 1024,
-  filter: (req, res) => {
-    if (req.headers['x-no-compression']) return false;
-    return compression.filter(req, res);
-  },
-}));
+import zlib from 'zlib';
+
+app.use((req, res, next) => {
+  if (req.headers['x-no-compression']) return next();
+
+  const accept = req.headers['accept-encoding'];
+  if (typeof accept === 'string' && /\bbr\b/.test(accept)) {
+    const origWrite = res.write;
+    const origEnd = res.end;
+    const brotli = zlib.createBrotliCompress({
+      params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 4 },
+    });
+    let headersSent = false;
+
+    const setHeaders = () => {
+      if (headersSent) return;
+      headersSent = true;
+      const ct = res.getHeader('content-type');
+      if (ct && !/text|json|javascript|xml|css|svg|font/.test(String(ct))) {
+        return false;
+      }
+      res.removeHeader('Content-Length');
+      res.setHeader('Content-Encoding', 'br');
+      res.setHeader('Vary', 'Accept-Encoding');
+      return true;
+    };
+
+    brotli.on('data', (chunk) => origWrite.call(res, chunk));
+    brotli.on('end', () => origEnd.call(res));
+
+    res.write = function (chunk: any, ...args: any[]) {
+      if (setHeaders() === false) return origWrite.apply(res, [chunk, ...args] as any);
+      return brotli.write(chunk);
+    } as any;
+
+    res.end = function (chunk?: any, ...args: any[]) {
+      if (setHeaders() === false) return origEnd.apply(res, [chunk, ...args] as any);
+      if (chunk) brotli.write(chunk);
+      brotli.end();
+      return res;
+    } as any;
+
+    return next();
+  }
+
+  compression({
+    level: 6,
+    threshold: 1024,
+    filter: (_req, _res) => compression.filter(_req, _res),
+  })(req, res, next);
+});
 
 // Basic middleware
 app.use(express.json({ limit: '10mb' }));
