@@ -449,6 +449,11 @@ export async function sendAccountLockedEmail(userId: string, email: string, disp
 }
 
 export async function sendPaymentFailedEmail(userId: string, email: string, displayName: string, amountDue: number, invoiceId: string): Promise<void> {
+  if (!SENDGRID_API_KEY || isTestEnv) {
+    console.log(`[SendGrid] Payment failed email skipped (${isTestEnv ? 'test env' : 'no API key'}): user=${userId}, amount=$${amountDue.toFixed(2)}`);
+    return;
+  }
+
   const template = {
     subject: 'Action Required: Payment Failed for Your E-Code Subscription',
     html: `
