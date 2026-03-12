@@ -1278,37 +1278,8 @@ export async function checkRuntimeDependencies(): Promise<{
  * Create a project directory with all files
  */
 async function createProjectDir(project: Project, files: File[]): Promise<string> {
-  const projectDir = path.join(process.cwd(), 'projects', `project-${project.id}`);
-  
-  logger.info(`Creating project directory for project ${project.id}`);
-  
-  // Create project directory if it doesn't exist
-  if (!fs.existsSync(projectDir)) {
-    fs.mkdirSync(projectDir, { recursive: true });
-    logger.info(`Created new project directory: ${projectDir}`);
-  }
-  
-  // Write all files to the project directory
-  let fileCount = 0;
-  for (const file of files) {
-    // Skip folders - we'll create them when writing files
-    if (file.isDirectory) continue;
-    
-    // Make sure parent directories exist
-    const filePath = path.join(projectDir, file.name);
-    const fileDir = path.dirname(filePath);
-    
-    if (!fs.existsSync(fileDir)) {
-      fs.mkdirSync(fileDir, { recursive: true });
-    }
-    
-    // Write file content
-    fs.writeFileSync(filePath, file.content || '');
-    fileCount++;
-  }
-  
-  logger.info(`Wrote ${fileCount} files to project directory`);
-  return projectDir;
+  const { bulkSyncProjectFiles } = await import('../utils/project-fs-sync');
+  return bulkSyncProjectFiles(String(project.id), files as any);
 }
 
 /**

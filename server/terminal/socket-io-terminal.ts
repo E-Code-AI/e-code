@@ -359,44 +359,26 @@ export class SocketIOTerminalService {
   }
 
   private async setupProjectDirectory(projectId: string): Promise<string> {
-    const baseDir = path.join(os.tmpdir(), 'e-code-terminals');
-    const projectDir = path.join(baseDir, `project-${projectId}`);
-
     try {
-      await fs.promises.mkdir(projectDir, { recursive: true });
-
       const lastSync = this.lastSyncedAt.get(projectId) || 0;
       const now = Date.now();
+      
+      const { getProjectWorkspacePath, bulkSyncProjectFiles, ensureProjectDirectory } = await import('../utils/project-fs-sync');
+
       if (now - lastSync < PROJECT_SYNC_CACHE_TTL_MS) {
+        const projectDir = getProjectWorkspacePath(projectId);
         logger.info(`[SocketIO Terminal] Skipping sync for project ${projectId} (cached ${Math.round((now - lastSync) / 1000)}s ago)`);
         return projectDir;
       }
 
-      try {
-        const files = await storage.getFilesByProjectId(projectId);
-        if (files && files.length > 0) {
-          for (const file of files) {
-            const filePath = path.join(projectDir, file.path || (file as any).name || '');
-            if (!filePath.startsWith(projectDir)) continue;
-            const fileDir = path.dirname(filePath);
-            if ((file as any).isDirectory) {
-              await fs.promises.mkdir(filePath, { recursive: true });
-            } else {
-              await fs.promises.mkdir(fileDir, { recursive: true });
-              await fs.promises.writeFile(filePath, (file as any).content || '', 'utf8');
-            }
-          }
-          this.lastSyncedAt.set(projectId, Date.now());
-          logger.info(`[SocketIO Terminal] Synced ${files.length} files to ${projectDir}`);
-        }
-      } catch (storageError) {
-        logger.warn(`[SocketIO Terminal] Could not sync project files: ${storageError}`);
-      }
-
+      const files = await storage.getFilesByProjectId(projectId);
+      const projectDir = await bulkSyncProjectFiles(projectId, files as any);
+      this.lastSyncedAt.set(projectId, Date.now());
       return projectDir;
     } catch (error) {
       logger.error(`[SocketIO Terminal] Failed to setup project directory:`, error);
-      return os.tmpdir();
+      const { ensureProjectDirectory } = await import('../utils/project-fs-sync');
+      return ensureProjectDirectory(projectId);
     }
   }
 

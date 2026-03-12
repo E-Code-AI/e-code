@@ -8,6 +8,7 @@ import path from 'path';
 import { previewEvents } from '../preview/preview-websocket';
 import { withScopedTransaction, TenantScopedQueries } from '../services/persistence-engine';
 import { z } from 'zod';
+import { syncFileToDisc, removeFileFromDisk } from '../utils/project-fs-sync';
 
 const projectIdSchema = z.coerce.number().int().positive();
 const fileIdSchema = z.coerce.number().int().positive();
@@ -261,6 +262,7 @@ export class FilesRouter {
         res.json({ file: result.data!.file });
         
         this.emitFileChange(String(projectId), validatedData.path, result.data!.isUpdate ? 'update' : 'create');
+        syncFileToDisc(projectId, validatedData.path, validatedData.content || '', !!validatedData.isDirectory).catch(() => {});
       } catch (error: any) {
         console.error('Error saving file:', error);
         if (error.name === 'ZodError') {
@@ -342,6 +344,9 @@ export class FilesRouter {
         res.json(result.data);
         
         this.emitFileChange(String(projectId), filePath, 'update');
+        if (content !== undefined) {
+          syncFileToDisc(projectId, filePath, content || '').catch(() => {});
+        }
       } catch (error) {
         console.error('Error updating file:', error);
         res.status(500).json({ 
@@ -413,6 +418,7 @@ export class FilesRouter {
         res.json({ message: "File deleted successfully" });
         
         this.emitFileChange(String(projectId), filePath, 'delete');
+        removeFileFromDisk(projectId, filePath).catch(() => {});
       } catch (error) {
         console.error('Error deleting file:', error);
         res.status(500).json({ 
@@ -467,6 +473,9 @@ export class FilesRouter {
         res.json(result.data!.file);
         
         this.emitFileChange(String(result.data!.projectId), result.data!.originalPath, 'update');
+        if (content !== undefined) {
+          syncFileToDisc(result.data!.projectId, result.data!.originalPath, content || '').catch(() => {});
+        }
       } catch (error) {
         console.error('Error updating file:', error);
         res.status(500).json({ 
@@ -522,6 +531,9 @@ export class FilesRouter {
         res.json(result.data!.file);
         
         this.emitFileChange(String(result.data!.projectId), result.data!.originalPath, 'update');
+        if (content !== undefined) {
+          syncFileToDisc(result.data!.projectId, result.data!.originalPath, content || '').catch(() => {});
+        }
       } catch (error) {
         console.error('Error updating file:', error);
         res.status(500).json({ 
@@ -575,6 +587,7 @@ export class FilesRouter {
         res.json({ message: "File deleted successfully" });
         
         this.emitFileChange(String(result.data!.projectId), result.data!.path, 'delete');
+        removeFileFromDisk(result.data!.projectId, result.data!.path).catch(() => {});
       } catch (error) {
         console.error('Error deleting file:', error);
         res.status(500).json({ 
@@ -682,6 +695,7 @@ export class FilesRouter {
         );
 
         res.json(result.data!.file);
+        syncFileToDisc(projectId, validatedData.path, validatedData.content || '', !!validatedData.isDirectory).catch(() => {});
       } catch (error: any) {
         console.error('Error saving file:', error);
         if (error.name === 'ZodError') {
@@ -752,6 +766,7 @@ export class FilesRouter {
         });
         
         this.emitFileChange(String(projectId), folderPath, 'create');
+        syncFileToDisc(projectId, folderPath, '', true).catch(() => {});
       } catch (error) {
         console.error('Error creating folder:', error);
         res.status(500).json({ 
@@ -1055,6 +1070,7 @@ export class FilesRouter {
         const file = allFiles.find(f => f.id === fileId);
         if (file) {
           this.emitFileChange(String(projectId), file.path, 'update');
+          syncFileToDisc(projectId, file.path, file.content || '').catch(() => {});
         }
       } catch (error) {
         console.error('Error restoring file version:', error);

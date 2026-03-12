@@ -587,39 +587,15 @@ export class PTYTerminalService {
   }
 
   private async setupProjectDirectory(projectId: string): Promise<string> {
-    const baseDir = path.join(os.tmpdir(), 'e-code-terminals');
-    const projectDir = path.join(baseDir, `project-${projectId}`);
-
     try {
-      await fs.promises.mkdir(projectDir, { recursive: true });
-
-      try {
-        const project = await storage.getProject(projectId);
-        const files = await storage.getFilesByProjectId(projectId);
-
-        if (files && files.length > 0) {
-          for (const file of files) {
-            const filePath = path.join(projectDir, file.path || file.name);
-            const fileDir = path.dirname(filePath);
-
-            if (file.isDirectory) {
-              await fs.promises.mkdir(filePath, { recursive: true });
-            } else {
-              await fs.promises.mkdir(fileDir, { recursive: true });
-              await fs.promises.writeFile(filePath, file.content || '', 'utf8');
-            }
-          }
-          logger.info(`Synced ${files.length} files to ${projectDir}`);
-        }
-      } catch (storageError) {
-        logger.warn(`Could not sync project files: ${storageError}`);
-      }
-
+      const { bulkSyncProjectFiles, getProjectWorkspacePath } = await import('../utils/project-fs-sync');
+      const files = await storage.getFilesByProjectId(projectId);
+      const projectDir = await bulkSyncProjectFiles(projectId, files as any);
       return projectDir;
-
     } catch (error) {
       logger.error(`Failed to setup project directory:`, error);
-      return os.tmpdir();
+      const { getProjectWorkspacePath, ensureProjectDirectory } = await import('../utils/project-fs-sync');
+      return ensureProjectDirectory(projectId);
     }
   }
 
@@ -788,7 +764,8 @@ export class PTYTerminalService {
 
     // Sync files back to database before cleanup (for persistent changes)
     try {
-      const workDir = path.join(os.tmpdir(), 'e-code-terminals', `project-${projectId}`);
+      const { getProjectWorkspacePath } = await import('../utils/project-fs-sync');
+      const workDir = getProjectWorkspacePath(projectId);
       await this.syncFilesBack(projectId, workDir);
     } catch (syncError) {
       logger.error(`Error syncing files back for project ${projectId}:`, syncError);

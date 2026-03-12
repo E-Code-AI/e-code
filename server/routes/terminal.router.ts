@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { ensureAuthenticated } from '../middleware/auth';
 import { storage } from '../storage';
 import type { InsertTerminalLog } from '@shared/schema';
+import { bulkSyncProjectFiles, getProjectWorkspacePath } from '../utils/project-fs-sync';
 
 const router = Router();
 
@@ -144,6 +145,73 @@ router.delete('/logs', ensureAuthenticated, async (req, res) => {
   } catch (error) {
     console.error('Error clearing terminal logs:', error);
     res.status(500).json({ error: 'Failed to clear terminal logs' });
+  }
+});
+
+router.post('/sync', ensureAuthenticated, async (req, res) => {
+  try {
+    const { projectId } = req.body;
+    
+    if (!projectId) {
+      return res.status(400).json({ error: 'Project ID is required' });
+    }
+    
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    
+    const project = await storage.getProject(projectId);
+    if (!project) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+    
+    if (project.ownerId !== userId) {
+      return res.status(403).json({ error: "You don't have access to this project" });
+    }
+    
+    const files = await storage.getFilesByProjectId(projectId);
+    const workspacePath = await bulkSyncProjectFiles(projectId, files as any);
+    
+    res.json({
+      success: true,
+      workspacePath,
+      fileCount: files.length
+    });
+  } catch (error) {
+    console.error('Error syncing project files:', error);
+    res.status(500).json({ error: 'Failed to sync project files' });
+  }
+});
+
+router.get('/workspace-path', ensureAuthenticated, async (req, res) => {
+  try {
+    const projectId = req.query.projectId as string;
+    
+    if (!projectId) {
+      return res.status(400).json({ error: 'Project ID is required' });
+    }
+    
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    
+    const project = await storage.getProject(projectId);
+    if (!project) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+    
+    if (project.ownerId !== userId) {
+      return res.status(403).json({ error: "You don't have access to this project" });
+    }
+    
+    res.json({
+      workspacePath: getProjectWorkspacePath(projectId)
+    });
+  } catch (error) {
+    console.error('Error getting workspace path:', error);
+    res.status(500).json({ error: 'Failed to get workspace path' });
   }
 });
 

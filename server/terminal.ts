@@ -145,7 +145,7 @@ export function setupTerminalWebsocket(server: Server) {
             'npm', 'node', 'python', 'python3', 'git', 'curl', 'wget',
             'yarn', 'clear', 'exit', 'kill', 'ps', 'cp', 'mv', 'rm'
           ],
-          currentDirectory: existingSession?.currentDirectory || `/project/${projectId}`,
+          currentDirectory: existingSession?.currentDirectory || `/tmp/projects/${projectId}`,
           outputBuffer: ''
         };
 
@@ -519,32 +519,9 @@ function broadcastToClients(clients: Set<WebSocket>, message: TerminalMessage): 
   });
 }
 
-// Create a temporary project directory with all project files
 async function createProjectDir(project: { id: number | string }, files: File[]): Promise<string> {
-  const projectDir = path.join(os.tmpdir(), `plot-terminal-${project.id}`);
-  
-  try {
-    // Create directory if it doesn't exist
-    await fs.promises.mkdir(projectDir, { recursive: true });
-    
-    // Write all files to the directory
-    for (const file of files) {
-      if (file.isDirectory) {
-        await fs.promises.mkdir(path.join(projectDir, file.name), { recursive: true });
-      } else {
-        await fs.promises.writeFile(
-          path.join(projectDir, file.name),
-          file.content || '',
-          'utf8'
-        );
-      }
-    }
-    
-    return projectDir;
-  } catch (error) {
-    logger.error(`Error creating project directory: ${error}`);
-    throw error;
-  }
+  const { bulkSyncProjectFiles } = await import('./utils/project-fs-sync');
+  return bulkSyncProjectFiles(String(project.id), files as any);
 }
 
 // Execute a command using the container executor
@@ -573,7 +550,7 @@ async function executeCommand(projectId: string, command: string) {
       // SECURITY: Robust path traversal protection using path.resolve() + path.relative()
       // This handles: .., ../, ..;, URL encoding, symlinks, case variations, etc.
       // Anchor to per-project directory to prevent cross-project traversal
-      const projectRoot = path.resolve(`/project/${projectId}`);
+      const projectRoot = path.resolve(`/tmp/projects/${projectId}`);
       const baseDir = session.currentDirectory;
       const resolvedPath = path.resolve(baseDir, newDir);
       
