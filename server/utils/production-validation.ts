@@ -91,6 +91,13 @@ export function validateProductionEnvironment(): void {
     warnings.push('No AI API keys configured. AI features will be disabled.');
   }
 
+  if (isProduction && !process.env.ALLOWED_ORIGINS) {
+    warnings.push(
+      'ALLOWED_ORIGINS is not set. CORS will rely on auto-detected Replit domains or APP_URL/FRONTEND_URL. ' +
+      'Set ALLOWED_ORIGINS explicitly for strict cross-origin control (comma-separated HTTPS origins).'
+    );
+  }
+
   // Security guards
   if (isProduction && process.env.ALLOW_INSECURE_LOCAL_PTY === 'true') {
     errors.push(

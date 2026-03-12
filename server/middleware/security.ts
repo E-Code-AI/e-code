@@ -55,11 +55,11 @@ const productionCSPDirectives: CSPDirectives = {
   ...baseCSPDirectives,
   scriptSrc: [
     "'self'",
-    "'nonce-{{nonce}}'", // Nonce for inline scripts
+    "'nonce-{{nonce}}'",
     "https://cdn.jsdelivr.net",
     "https://cdnjs.cloudflare.com",
-    "https://unpkg.com"
-    // NO 'unsafe-inline' or 'unsafe-eval' in production
+    "https://unpkg.com",
+    "https://js.stripe.com"
   ],
   styleSrc: [
     "'self'",
@@ -78,7 +78,8 @@ const productionCSPDirectives: CSPDirectives = {
     "'self'",
     "wss:",
     "https://api.anthropic.com",
-    "https://*.googleapis.com"
+    "https://*.googleapis.com",
+    "https://api.stripe.com"
   ],
   upgradeInsecureRequests: [],
   reportUri: ['/api/security/csp-report']
@@ -238,7 +239,7 @@ export const securityMiddleware = (): RequestHandler[] => {
       preload: true
     } : false,
     dnsPrefetchControl: { allow: false },
-    xFrameOptions: isProduction ? { action: 'sameorigin' } : false,
+    xFrameOptions: isProduction ? { action: 'deny' } : false,
     xPoweredBy: false,
     xContentTypeOptions: true,
     referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
@@ -247,9 +248,8 @@ export const securityMiddleware = (): RequestHandler[] => {
 
   // Enhanced security headers
   middlewares.push((req: Request, res: Response, next: NextFunction) => {
-    // Prevent clickjacking — only in production (dev needs Replit preview iframe)
     if (isProduction) {
-      res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+      res.setHeader('X-Frame-Options', 'DENY');
     }
     
     // Prevent MIME type sniffing
