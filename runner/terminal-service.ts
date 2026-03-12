@@ -1,22 +1,10 @@
-/**
- * Terminal Service
- *
- * Provides real interactive shell access per workspace via node-pty + WebSocket.
- * Each workspace gets its own PTY session, isolated to its workspace directory.
- *
- * WebSocket protocol (same as main platform's ReplitTerminalPanel):
- *   Client → Server:  JSON { type: 'input', data: string }
- *                     JSON { type: 'resize', cols: number, rows: number }
- *   Server → Client:  string (raw terminal output)
- *                     JSON { type: 'exit', code: number }
- */
-
 import { WebSocket, WebSocketServer } from 'ws';
 import { IncomingMessage } from 'http';
 import { Socket } from 'net';
-import { getWorkspace, touchWorkspace } from './workspace-manager';
+import { getWorkspace, touchWorkspace, isDockerEnabled } from './workspace-manager';
 import { verifyWsToken } from './auth';
 import { createLogger } from './logger';
+import { getDockerManager } from './docker-manager';
 
 const logger = createLogger('terminal');
 
@@ -26,11 +14,8 @@ async function getPty() {
   return ptyModule;
 }
 
-/**
- * Registry of active PTY sessions keyed by workspaceId.
- * Used by killWorkspaceTerminals() to clean up on workspace stop.
- */
 const activePtys = new Map<string, Set<import('node-pty').IPty>>();
+const activeDockerStreams = new Map<string, Set<NodeJS.ReadWriteStream>>();
 
 function trackPty(workspaceId: string, pty: import('node-pty').IPty): void {
   if (!activePtys.has(workspaceId)) activePtys.set(workspaceId, new Set());
@@ -42,18 +27,34 @@ function untrackPty(workspaceId: string, pty: import('node-pty').IPty): void {
   if (activePtys.get(workspaceId)?.size === 0) activePtys.delete(workspaceId);
 }
 
-/**
- * Kill all active terminal (PTY) sessions for a given workspace.
- * Called by stopWorkspace() so tabs are always cleaned up on stop.
- */
+function trackDockerStream(workspaceId: string, stream: NodeJS.ReadWriteStream): void {
+  if (!activeDockerStreams.has(workspaceId)) activeDockerStreams.set(workspaceId, new Set());
+  activeDockerStreams.get(workspaceId)!.add(stream);
+}
+
+function untrackDockerStream(workspaceId: string, stream: NodeJS.ReadWriteStream): void {
+  activeDockerStreams.get(workspaceId)?.delete(stream);
+  if (activeDockerStreams.get(workspaceId)?.size === 0) activeDockerStreams.delete(workspaceId);
+}
+
 export function killWorkspaceTerminals(workspaceId: string): void {
   const ptys = activePtys.get(workspaceId);
-  if (!ptys || ptys.size === 0) return;
-  logger.info(`Killing ${ptys.size} terminal session(s) for workspace ${workspaceId}`);
-  for (const pty of ptys) {
-    try { pty.kill(); } catch {}
+  if (ptys && ptys.size > 0) {
+    logger.info(`Killing ${ptys.size} PTY session(s) for workspace ${workspaceId}`);
+    for (const pty of ptys) {
+      try { pty.kill(); } catch {}
+    }
+    activePtys.delete(workspaceId);
   }
-  activePtys.delete(workspaceId);
+
+  const streams = activeDockerStreams.get(workspaceId);
+  if (streams && streams.size > 0) {
+    logger.info(`Closing ${streams.size} Docker exec stream(s) for workspace ${workspaceId}`);
+    for (const stream of streams) {
+      try { (stream as any).destroy(); } catch {}
+    }
+    activeDockerStreams.delete(workspaceId);
+  }
 }
 
 export function registerTerminalHandler(
@@ -84,9 +85,86 @@ export function registerTerminalHandler(
     }
 
     wss.handleUpgrade(req, socket, head, (ws) => {
-      handleTerminalSession(ws, workspaceId, workspace.dir);
+      if (isDockerEnabled() && workspace.containerId) {
+        handleDockerTerminalSession(ws, workspaceId);
+      } else {
+        handleTerminalSession(ws, workspaceId, workspace.dir);
+      }
     });
   });
+}
+
+async function handleDockerTerminalSession(
+  ws: WebSocket,
+  workspaceId: string
+) {
+  logger.info(`Docker terminal session started for workspace ${workspaceId}`);
+
+  try {
+    const dockerMgr = getDockerManager();
+
+    const { stream, resize } = await dockerMgr.execInteractive(
+      workspaceId,
+      ['bash', '-l'],
+      { cols: 80, rows: 24 }
+    );
+
+    trackDockerStream(workspaceId, stream);
+
+    stream.on('data', (data: Buffer) => {
+      if (ws.readyState === WebSocket.OPEN) ws.send(data);
+      touchWorkspace(workspaceId);
+    });
+
+    stream.on('end', () => {
+      untrackDockerStream(workspaceId, stream);
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'exit', code: 0 }));
+        ws.close();
+      }
+    });
+
+    stream.on('error', (err: Error) => {
+      logger.warn(`Docker exec stream error for workspace ${workspaceId}: ${err.message}`);
+      untrackDockerStream(workspaceId, stream);
+    });
+
+    ws.on('message', (msg: Buffer | string) => {
+      try {
+        const text = typeof msg === 'string' ? msg : msg.toString();
+        const parsed = JSON.parse(text);
+        if (parsed.type === 'input' && typeof parsed.data === 'string') {
+          stream.write(parsed.data);
+        } else if (
+          parsed.type === 'resize' &&
+          typeof parsed.cols === 'number' &&
+          typeof parsed.rows === 'number'
+        ) {
+          resize(parsed.cols, parsed.rows);
+        }
+      } catch {
+        if (typeof msg === 'string') stream.write(msg);
+        else stream.write(msg);
+      }
+      touchWorkspace(workspaceId);
+    });
+
+    ws.on('close', () => {
+      logger.info(`Docker terminal session closed for workspace ${workspaceId}`);
+      untrackDockerStream(workspaceId, stream);
+      try { (stream as any).destroy(); } catch {}
+    });
+
+    ws.on('error', (err) => {
+      logger.warn(`Terminal WS error for workspace ${workspaceId}: ${err.message}`);
+      untrackDockerStream(workspaceId, stream);
+      try { (stream as any).destroy(); } catch {}
+    });
+  } catch (err) {
+    logger.error(`Failed to start Docker terminal: ${err}`);
+    ws.send(JSON.stringify({ type: 'error', message: 'Failed to start terminal in container' }));
+    ws.close();
+  }
 }
 
 async function handleTerminalSession(

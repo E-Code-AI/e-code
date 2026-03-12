@@ -1,20 +1,9 @@
-/**
- * Preview Proxy
- *
- * Allows a workspace to run a web server on a local port, then proxies
- * requests from /workspaces/:id/preview/* to that port.
- *
- * Usage:
- *   1. Client POSTs { command, port } to /workspaces/:id/preview/start
- *   2. Runner spawns the command in the workspace dir
- *   3. All requests to /workspaces/:id/preview/* are proxied to localhost:<port>
- */
-
 import { Router, Request, Response } from 'express';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import { spawn, ChildProcess } from 'child_process';
-import { getWorkspace, touchWorkspace } from './workspace-manager';
+import { getWorkspace, touchWorkspace, isDockerEnabled } from './workspace-manager';
 import { createLogger } from './logger';
+import { getDockerManager } from './docker-manager';
 
 const logger = createLogger('preview-proxy');
 
@@ -32,9 +21,10 @@ function buildSafeEnv(extra: Record<string, string> = {}) {
 }
 
 interface PreviewSession {
-  process: ChildProcess;
+  process?: ChildProcess;
   port: number;
   proxy: ReturnType<typeof createProxyMiddleware>;
+  dockerExecStream?: NodeJS.ReadWriteStream;
 }
 
 const previewSessions = new Map<string, PreviewSession>();
@@ -42,7 +32,7 @@ const previewSessions = new Map<string, PreviewSession>();
 export function createPreviewRouter(): Router {
   const router = Router({ mergeParams: true });
 
-  router.post('/preview/start', (req: Request, res: Response) => {
+  router.post('/preview/start', async (req: Request, res: Response) => {
     const workspaceId = req.params.workspaceId;
     const ws = getWorkspace(workspaceId);
     if (!ws || ws.status !== 'running') {
@@ -56,8 +46,61 @@ export function createPreviewRouter(): Router {
 
     const existing = previewSessions.get(workspaceId);
     if (existing) {
-      try { existing.process.kill('SIGTERM'); } catch {}
+      if (existing.process) {
+        try { existing.process.kill('SIGTERM'); } catch {}
+      }
+      if (existing.dockerExecStream) {
+        try { (existing.dockerExecStream as any).destroy(); } catch {}
+      }
       previewSessions.delete(workspaceId);
+    }
+
+    if (isDockerEnabled() && ws.containerId) {
+      try {
+        const dockerMgr = getDockerManager();
+
+        const containerIp = await dockerMgr.getContainerIp(workspaceId);
+        if (!containerIp) {
+          return res.status(500).json({ error: 'Could not determine container IP address' });
+        }
+
+        const { stream } = await dockerMgr.execInteractive(
+          workspaceId,
+          ['sh', '-c', command],
+          { env: { PORT: String(port), HOST: '0.0.0.0' } }
+        );
+
+        stream.on('data', (d: Buffer) =>
+          logger.info(`[preview:${workspaceId}] ${d.toString().trim()}`)
+        );
+
+        const proxyTarget = `http://${containerIp}:${port}`;
+        logger.info(`Preview proxy target for workspace ${workspaceId}: ${proxyTarget}`);
+
+        const proxy = createProxyMiddleware({
+          target: proxyTarget,
+          changeOrigin: true,
+          pathRewrite: { [`^/workspaces/${workspaceId}/preview`]: '' },
+          on: {
+            error: (err: Error, _req: Request, res: Response) => {
+              logger.warn(`Preview proxy error for ${workspaceId}: ${err.message}`);
+              if (!res.headersSent) {
+                (res as any).status(502).json({ error: 'Preview server not ready yet' });
+              }
+            },
+          },
+        });
+
+        previewSessions.set(workspaceId, { port, proxy, dockerExecStream: stream });
+        ws.previewPort = port;
+        touchWorkspace(workspaceId);
+
+        logger.info(`Docker preview started for workspace ${workspaceId} on port ${port}`);
+        return res.json({ started: true, port, previewPath: `/workspaces/${workspaceId}/preview/` });
+      } catch (err) {
+        logger.error(`Failed to start Docker preview for ${workspaceId}: ${err}`);
+        return res.status(500).json({ error: 'Failed to start preview in container' });
+      }
     }
 
     const child = spawn('sh', ['-c', command], {
@@ -97,12 +140,27 @@ export function createPreviewRouter(): Router {
     res.json({ started: true, port, previewPath: `/workspaces/${workspaceId}/preview/` });
   });
 
-  router.post('/preview/stop', (req: Request, res: Response) => {
+  router.post('/preview/stop', async (req: Request, res: Response) => {
     const workspaceId = req.params.workspaceId;
     const session = previewSessions.get(workspaceId);
     if (!session) return res.json({ stopped: false, reason: 'no session' });
 
-    try { session.process.kill('SIGTERM'); } catch {}
+    if (session.process) {
+      try { session.process.kill('SIGTERM'); } catch {}
+    }
+    if (session.dockerExecStream) {
+      const dockerWs = getWorkspace(workspaceId);
+      if (isDockerEnabled() && dockerWs?.containerId) {
+        try {
+          const dockerMgr = getDockerManager();
+          await dockerMgr.execInContainer(workspaceId,
+            ['sh', '-c', `kill $(lsof -t -i:${session.port}) 2>/dev/null || true`],
+            { timeout: 3000 }
+          );
+        } catch {}
+      }
+      try { (session.dockerExecStream as any).destroy(); } catch {}
+    }
     previewSessions.delete(workspaceId);
 
     const ws = getWorkspace(workspaceId);

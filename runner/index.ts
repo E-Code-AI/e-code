@@ -1,18 +1,3 @@
-/**
- * E-Code Runner Service
- * ─────────────────────────────────────────────────────────────────
- * Standalone microservice that provides isolated workspace execution.
- *
- * Environment variables:
- *   RUNNER_JWT_SECRET        Shared secret with main platform (REQUIRED)
- *   RUNNER_PORT / PORT       Port to listen on (default: 8080) — RUNNER_PORT takes precedence
- *   RUNNER_WORKSPACES_DIR    Where to store workspace dirs
- *   RUNNER_ALLOWED_ORIGINS   Comma-separated CORS origins
- *   RUNNER_ADMIN_KEY         Secret header for /admin/runs
- *   WORKSPACE_IDLE_TTL_SEC   Idle TTL in seconds (default: 3600)
- *   EXEC_TIMEOUT_MS          Max exec duration in ms (default: 10000)
- */
-
 import express, { Request, Response, NextFunction } from 'express';
 import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
@@ -24,6 +9,7 @@ import {
   listWorkspaces,
   stopWorkspace,
   onWorkspaceStop,
+  isDockerEnabled,
 } from './workspace-manager';
 import { registerTerminalHandler, killWorkspaceTerminals } from './terminal-service';
 import { createFileRouter } from './file-service';
@@ -41,6 +27,7 @@ import {
 } from './security';
 import { execSync } from 'child_process';
 import { randomUUID } from 'crypto';
+import { getDockerManager } from './docker-manager';
 
 const logger = createLogger('index');
 const PORT = parseInt(process.env.RUNNER_PORT ?? process.env.PORT ?? '8080', 10);
@@ -50,14 +37,12 @@ if (!process.env.RUNNER_JWT_SECRET) {
   process.exit(1);
 }
 
-// Register terminal PTY cleanup so all tabs are killed when a workspace stops
 onWorkspaceStop(killWorkspaceTerminals);
 
 const app = express();
 const httpServer = createServer(app);
 const wss = new WebSocketServer({ noServer: true });
 
-// ─── CORS ────────────────────────────────────────────────────────
 const allowedOrigins = process.env.RUNNER_ALLOWED_ORIGINS
   ? process.env.RUNNER_ALLOWED_ORIGINS.split(',').map(o => o.trim())
   : null;
@@ -76,27 +61,26 @@ app.use(
 
 app.use(express.json({ limit: '2mb' }));
 
-// ─── Health check (no auth) ───────────────────────────────────────
 app.get('/health', (_req, res) => {
+  const dockerMgr = isDockerEnabled() ? getDockerManager() : null;
   res.json({
     status: 'ok',
     service: 'e-code-runner',
     workspaces: listWorkspaces().length,
+    dockerEnabled: isDockerEnabled(),
+    dockerReady: dockerMgr?.isReady ?? false,
     timestamp: new Date().toISOString(),
   });
 });
 
-// ─── Admin: list recent exec runs (no JWT — uses RUNNER_ADMIN_KEY) ─
 app.get('/admin/runs', requireAdminKey, (_req, res) => {
   const runs = getExecRuns();
   res.json({ total: runs.length, runs });
 });
 
-// ─── All routes below require JWT auth ───────────────────────────
 app.use(requireRunnerAuth);
 
-// POST /workspaces — create workspace (rate limited: 10/min per user)
-app.post('/workspaces', rateLimit(10), (req: Request, res: Response) => {
+app.post('/workspaces', rateLimit(10), async (req: Request, res: Response) => {
   const { projectId, projectName } = req.body;
   if (!projectId) {
     return res.status(400).json({ error: 'projectId is required', code: 'MISSING_FIELD' });
@@ -105,21 +89,26 @@ app.post('/workspaces', rateLimit(10), (req: Request, res: Response) => {
   const token = (req as any).runnerToken as Record<string, unknown>;
   const userId = String(token?.userId ?? token?.sub ?? 'unknown');
 
-  const ws = createWorkspace(String(projectId), userId);
-  const runnerUrl = process.env.RUNNER_PUBLIC_URL ?? `http://localhost:${PORT}`;
+  try {
+    const ws = await createWorkspace(String(projectId), userId);
+    const runnerUrl = process.env.RUNNER_PUBLIC_URL ?? `http://localhost:${PORT}`;
 
-  auditLog('workspace_create', { workspaceId: ws.id, projectId, userId });
+    auditLog('workspace_create', { workspaceId: ws.id, projectId, userId });
 
-  res.status(201).json({
-    workspaceId: ws.id,
-    status: ws.status,
-    previewUrl: `${runnerUrl}/workspaces/${ws.id}/preview/`,
-    wsTerminalUrl: `${runnerUrl.replace(/^http/, 'ws')}/workspaces/${ws.id}/terminal`,
-    createdAt: ws.createdAt.toISOString(),
-  });
+    res.status(201).json({
+      workspaceId: ws.id,
+      status: ws.status,
+      dockerIsolated: !!ws.containerId,
+      previewUrl: `${runnerUrl}/workspaces/${ws.id}/preview/`,
+      wsTerminalUrl: `${runnerUrl.replace(/^http/, 'ws')}/workspaces/${ws.id}/terminal`,
+      createdAt: ws.createdAt.toISOString(),
+    });
+  } catch (err: any) {
+    logger.error(`Failed to create workspace: ${err.message}`);
+    res.status(500).json({ error: 'Failed to create workspace', code: 'WORKSPACE_CREATE_FAILED' });
+  }
 });
 
-// GET /workspaces/:id — workspace status
 app.get('/workspaces/:id', (req: Request, res: Response) => {
   const ws = getWorkspace(req.params.id);
   if (!ws) return res.status(404).json({ error: 'Workspace not found', code: 'NOT_FOUND' });
@@ -129,38 +118,38 @@ app.get('/workspaces/:id', (req: Request, res: Response) => {
     projectId: ws.projectId,
     status: ws.status,
     previewPort: ws.previewPort,
+    dockerIsolated: !!ws.containerId,
+    containerId: ws.containerId?.slice(0, 12),
     createdAt: ws.createdAt.toISOString(),
     lastActiveAt: ws.lastActiveAt.toISOString(),
   });
 });
 
-// DELETE /workspaces/:id — stop workspace
-app.delete('/workspaces/:id', (req: Request, res: Response) => {
+app.delete('/workspaces/:id', async (req: Request, res: Response) => {
   const token = (req as any).runnerToken as Record<string, unknown>;
   const userId = String(token?.userId ?? token?.sub ?? 'unknown');
-  const stopped = stopWorkspace(req.params.id, `manual:${userId}`);
+  const stopped = await stopWorkspace(req.params.id, `manual:${userId}`);
   if (!stopped) return res.status(404).json({ error: 'Workspace not found', code: 'NOT_FOUND' });
   res.json({ stopped: true });
 });
 
-// GET /workspaces — list all (admin view, still JWT-gated)
 app.get('/workspaces', (_req, res) => {
   const list = listWorkspaces().map((ws) => ({
     workspaceId: ws.id,
     projectId: ws.projectId,
     status: ws.status,
+    dockerIsolated: !!ws.containerId,
     createdAt: ws.createdAt.toISOString(),
     lastActiveAt: ws.lastActiveAt.toISOString(),
   }));
   res.json({ workspaces: list, total: list.length });
 });
 
-// POST /workspaces/:workspaceId/exec — run a command (rate limited: 30/min)
 app.post(
   '/workspaces/:workspaceId/exec',
   rateLimit(30),
   validateExecPayload,
-  (req: Request, res: Response) => {
+  async (req: Request, res: Response) => {
     const ws = getWorkspace(req.params.workspaceId);
     if (!ws || ws.status !== 'running') {
       return res.status(404).json({ error: 'Workspace not found or stopped', code: 'NOT_FOUND' });
@@ -174,6 +163,53 @@ app.post(
     const t0 = Date.now();
 
     auditLog('exec_start', { runId, workspaceId: ws.id, userId, command });
+
+    if (isDockerEnabled() && ws.containerId) {
+      try {
+        const dockerMgr = getDockerManager();
+        const result = await dockerMgr.execInContainer(ws.id, command, {
+          timeout: EXEC_TIMEOUT_MS,
+          env: { PATH: '/usr/local/bin:/usr/bin:/bin', HOME: '/workspace' },
+        });
+
+        const durationMs = Date.now() - t0;
+        const isTimeout = result.exitCode === 124;
+
+        recordExecRun({ runId, workspaceId: ws.id, userId, command, startedAt, durationMs, exitCode: result.exitCode, error: isTimeout ? 'timeout' : (result.stderr || null) });
+        auditLog('exec_done', { runId, exitCode: result.exitCode, durationMs, docker: true });
+
+        if (isTimeout) {
+          return res.status(408).json({
+            runId,
+            output: result.stdout,
+            error: `Command timed out after ${EXEC_TIMEOUT_MS}ms`,
+            exitCode: 124,
+            durationMs,
+            code: 'EXEC_TIMEOUT',
+          });
+        }
+
+        return res.json({
+          runId,
+          output: result.stdout,
+          error: result.stderr || undefined,
+          exitCode: result.exitCode,
+          durationMs,
+        });
+      } catch (err: any) {
+        const durationMs = Date.now() - t0;
+        recordExecRun({ runId, workspaceId: ws.id, userId, command, startedAt, durationMs, exitCode: 1, error: err.message });
+        auditLog('exec_error', { runId, error: err.message, durationMs });
+        return res.status(500).json({
+          runId,
+          output: '',
+          error: err.message,
+          exitCode: 1,
+          durationMs,
+          code: 'EXEC_ERROR',
+        });
+      }
+    }
 
     try {
       const output = execSync(command, {
@@ -211,33 +247,55 @@ app.post(
   }
 );
 
-// ─── File & Preview sub-routers ───────────────────────────────────
 app.use('/workspaces/:workspaceId', createFileRouter());
 app.use('/workspaces/:workspaceId', createPreviewRouter());
 
-// ─── 404 handler ─────────────────────────────────────────────────
 app.use((_req, res) => {
   res.status(404).json({ error: 'Route not found', code: 'NOT_FOUND' });
 });
 
-// ─── Global error handler ─────────────────────────────────────────
 app.use(globalErrorHandler);
 
-// ─── WebSocket terminal handler ───────────────────────────────────
 registerTerminalHandler(httpServer, wss);
 
-// ─── Start ────────────────────────────────────────────────────────
-httpServer.listen(PORT, '0.0.0.0', () => {
-  logger.info(`E-Code Runner listening on port ${PORT}`);
-  logger.info(`Health: http://localhost:${PORT}/health`);
-  logger.info(`Idle TTL: ${process.env.WORKSPACE_IDLE_TTL_SEC ?? 3600}s | Exec timeout: ${EXEC_TIMEOUT_MS}ms`);
-  logger.info(`Admin endpoint: ${process.env.RUNNER_ADMIN_KEY ? 'enabled' : 'disabled (set RUNNER_ADMIN_KEY)'}`);
+async function startServer() {
+  if (isDockerEnabled()) {
+    try {
+      const dockerMgr = getDockerManager();
+      await dockerMgr.initialize();
+      logger.info('Docker sandbox isolation: ENABLED');
+    } catch (err) {
+      logger.warn(`Docker initialization failed — running in directory-only mode: ${err}`);
+    }
+  } else {
+    logger.info('Docker sandbox isolation: DISABLED (set DOCKER_ENABLED=true to enable)');
+  }
+
+  httpServer.listen(PORT, '0.0.0.0', () => {
+    logger.info(`E-Code Runner listening on port ${PORT}`);
+    logger.info(`Health: http://localhost:${PORT}/health`);
+    logger.info(`Idle TTL: ${process.env.WORKSPACE_IDLE_TTL_SEC ?? 3600}s | Exec timeout: ${EXEC_TIMEOUT_MS}ms`);
+    logger.info(`Admin endpoint: ${process.env.RUNNER_ADMIN_KEY ? 'enabled' : 'disabled (set RUNNER_ADMIN_KEY)'}`);
+  });
+}
+
+startServer().catch((err) => {
+  logger.error(`Failed to start server: ${err}`);
+  process.exit(1);
 });
 
-process.on('SIGTERM', () => {
+process.on('SIGTERM', async () => {
   logger.info('Received SIGTERM, shutting down gracefully...');
   const all = listWorkspaces();
-  for (const ws of all) stopWorkspace(ws.id, 'shutdown');
+  for (const ws of all) await stopWorkspace(ws.id, 'shutdown');
+
+  if (isDockerEnabled()) {
+    try {
+      const dockerMgr = getDockerManager();
+      await dockerMgr.stopAll();
+    } catch {}
+  }
+
   httpServer.close(() => process.exit(0));
 });
 
