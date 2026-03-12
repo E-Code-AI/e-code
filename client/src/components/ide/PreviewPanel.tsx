@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Globe, RefreshCw, ExternalLink, Play, Square, Loader2 } from 'lucide-react';
@@ -41,6 +41,7 @@ export function PreviewPanel({
   appName
 }: PreviewPanelProps) {
   const { toast } = useToast();
+  const hasAttemptedAutoStart = useRef(false);
 
   // Query preview status
   const { data: previewStatus, isLoading: isStatusLoading, refetch: refetchStatus } = useQuery<PreviewStatus>({
@@ -100,6 +101,21 @@ export function PreviewPanel({
       });
     }
   });
+
+  // Auto-start: when a project has server-side files (status='stopped') automatically
+  // boot the runtime so the preview appears without the user needing to click Run —
+  // the same always-on experience as Replit.
+  useEffect(() => {
+    if (
+      autoStart &&
+      previewStatus?.status === 'stopped' &&
+      !hasAttemptedAutoStart.current &&
+      projectId
+    ) {
+      hasAttemptedAutoStart.current = true;
+      startPreviewMutation.mutate(undefined);
+    }
+  }, [previewStatus?.status, projectId, autoStart]);
 
   // ✅ FIX (Dec 1, 2025): Add cache-busting timestamp to prevent stale content
   const handleRefresh = useCallback(() => {

@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { 
   Monitor, ExternalLink, 
   ChevronLeft, ChevronRight, ArrowRight,
@@ -93,6 +93,7 @@ export function MobilePreviewPanel({
   const [currentPath, setCurrentPath] = useState('/');
   const [isLoading, setIsLoading] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const hasAttemptedAutoStart = useRef(false);
   const { toast } = useToast();
   const { data: previewStatus, isLoading: isStatusLoading, refetch: refetchStatus } = useQuery<PreviewStatus>({
     queryKey: ['/api/preview/url', projectId],
@@ -141,6 +142,20 @@ export function MobilePreviewPanel({
       toast({ title: 'Republish failed', variant: 'destructive' });
     }
   });
+
+  // Auto-start runtime when project opens — mirrors Replit's always-on behavior.
+  // Only fires for 'stopped' projects (ones that have server-side files but no running server).
+  // HTML-only projects already show as 'static' so they never reach this.
+  useEffect(() => {
+    if (
+      previewStatus?.status === 'stopped' &&
+      !hasAttemptedAutoStart.current &&
+      projectId
+    ) {
+      hasAttemptedAutoStart.current = true;
+      startPreviewMutation.mutate(undefined);
+    }
+  }, [previewStatus?.status, projectId]);
 
   const isPreviewRunning = previewStatus?.status === 'running' || previewStatus?.status === 'static';
   const isPreviewStarting = previewStatus?.status === 'starting' || startPreviewMutation.isPending;
