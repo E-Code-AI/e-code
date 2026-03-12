@@ -14,10 +14,12 @@ import * as awarenessProtocol from 'y-protocols/awareness';
 import * as encoding from 'lib0/encoding';
 import * as decoding from 'lib0/decoding';
 import SimplePeer from 'simple-peer';
+import * as crypto from 'crypto';
 import { createLogger } from '../utils/logger';
 import { storage } from '../storage';
 import { centralUpgradeDispatcher } from '../websocket/central-upgrade-dispatcher';
 import { markSocketAsHandled } from '../websocket/upgrade-guard';
+import { redisCache, CacheKeys, CacheTTL } from '../services/redis-cache.service';
 
 const logger = createLogger('real-collaboration');
 
@@ -25,74 +27,147 @@ const logger = createLogger('real-collaboration');
 const messageSync = 0;
 const messageAwareness = 1;
 
-// Document storage for y-websocket protocol compatibility
+const CHECKPOINT_INTERVAL_MS = 5000;
+const instanceId = crypto.randomUUID();
+
 interface DocData {
   doc: Y.Doc;
   awareness: awarenessProtocol.Awareness;
-  conns: Map<WebSocket, Set<number>>; // WebSocket -> tracked client IDs
+  conns: Map<WebSocket, Set<number>>;
+  checkpointTimer?: ReturnType<typeof setTimeout>;
+  dirty: boolean;
+  ready: boolean;
+  readyPromise?: Promise<void>;
+  applyingRemote: boolean;
 }
 const docs = new Map<string, DocData>();
 
-function getYDoc(docName: string): DocData {
-  let docData = docs.get(docName);
-  if (!docData) {
-    const doc = new Y.Doc();
-    const awareness = new awarenessProtocol.Awareness(doc);
-    docData = { doc, awareness, conns: new Map() };
-    docs.set(docName, docData);
-    
-    // Broadcast updates to all connected clients
-    doc.on('update', (update: Uint8Array, origin: any) => {
-      const encoder = encoding.createEncoder();
-      encoding.writeVarUint(encoder, messageSync);
-      syncProtocol.writeUpdate(encoder, update);
-      const message = encoding.toUint8Array(encoder);
-      
-      // Get origin wsId if available (for filtering sender)
-      const originWsId = origin && (origin as any).__wsId;
-      
-      docData!.conns.forEach((clientIds, conn) => {
-        // Skip sender if we can identify them via wsId
-        const connWsId = (conn as any).__wsId;
-        const isSender = originWsId && connWsId === originWsId;
-        
-        if (conn.readyState === WebSocket.OPEN && !isSender) {
-          conn.send(message);
-        }
-      });
-    });
-    
-    // Broadcast awareness updates (always send to all - awareness protocol handles dedup)
-    awareness.on('update', ({ added, updated, removed }: any, origin: any) => {
-      const changedClients = added.concat(updated).concat(removed);
-      if (changedClients.length === 0) return;
-      
-      const encoder = encoding.createEncoder();
-      encoding.writeVarUint(encoder, messageAwareness);
-      encoding.writeVarUint8Array(encoder, awarenessProtocol.encodeAwarenessUpdate(awareness, changedClients));
-      const message = encoding.toUint8Array(encoder);
-      
-      // Get origin wsId if available
-      const originWsId = origin && (origin as any).__wsId;
-      
-      docData!.conns.forEach((clientIds, conn) => {
-        // Skip sender if we can identify them via wsId
-        const connWsId = (conn as any).__wsId;
-        const isSender = originWsId && connWsId === originWsId;
-        
-        if (conn.readyState === WebSocket.OPEN && !isSender) {
-          conn.send(message);
-        }
-      });
-    });
+async function loadDocStateFromRedis(doc: Y.Doc, docName: string): Promise<void> {
+  try {
+    const savedState = await redisCache.getRaw(CacheKeys.collabDocState(`yjs-${docName}`));
+    if (savedState) {
+      const stateBuffer = Buffer.from(savedState, 'base64');
+      Y.applyUpdate(doc, new Uint8Array(stateBuffer));
+      logger.info(`Restored Yjs doc state from Redis for doc ${docName}`);
+    }
+  } catch (error) {
+    logger.error(`Failed to restore Yjs doc from Redis for ${docName}:`, error);
   }
+}
+
+async function persistDocStateToRedis(doc: Y.Doc, docName: string): Promise<void> {
+  try {
+    const state = Y.encodeStateAsUpdate(doc);
+    const stateBase64 = Buffer.from(state).toString('base64');
+    await redisCache.setRaw(CacheKeys.collabDocState(`yjs-${docName}`), stateBase64, CacheTTL.DAY);
+  } catch (error) {
+    logger.error(`Failed to persist Yjs doc to Redis for ${docName}:`, error);
+  }
+}
+
+function scheduleCheckpoint(docData: DocData, docName: string): void {
+  if (docData.checkpointTimer) return;
+  docData.checkpointTimer = setTimeout(async () => {
+    docData.checkpointTimer = undefined;
+    if (docData.dirty) {
+      docData.dirty = false;
+      await persistDocStateToRedis(docData.doc, docName);
+    }
+  }, CHECKPOINT_INTERVAL_MS);
+}
+
+async function getYDoc(docName: string): Promise<DocData> {
+  let docData = docs.get(docName);
+  if (docData) {
+    if (!docData.ready && docData.readyPromise) {
+      await docData.readyPromise;
+    }
+    return docData;
+  }
+
+  const doc = new Y.Doc();
+  const awareness = new awarenessProtocol.Awareness(doc);
+  docData = { doc, awareness, conns: new Map(), dirty: false, ready: false, applyingRemote: false };
+  docs.set(docName, docData);
+
+  const readyPromise = loadDocStateFromRedis(doc, docName).then(() => {
+    docData!.ready = true;
+  }).catch(() => {
+    docData!.ready = true;
+  });
+  docData.readyPromise = readyPromise;
+  await readyPromise;
+
+  const channel = CacheKeys.collabDocUpdates(`yjs-${docName}`);
+  const localDocData = docData;
+  await redisCache.subscribe(channel, (message: string) => {
+    try {
+      const parsed = JSON.parse(message);
+      if (parsed.instance === instanceId) return;
+      const updateBuf = Buffer.from(parsed.update, 'base64');
+      localDocData.applyingRemote = true;
+      Y.applyUpdate(doc, new Uint8Array(updateBuf));
+      localDocData.applyingRemote = false;
+    } catch (err) {
+      localDocData.applyingRemote = false;
+      logger.error(`Failed to apply remote Yjs update for ${docName}:`, err);
+    }
+  });
+
+  doc.on('update', (update: Uint8Array, origin: any) => {
+    const encoder = encoding.createEncoder();
+    encoding.writeVarUint(encoder, messageSync);
+    syncProtocol.writeUpdate(encoder, update);
+    const message = encoding.toUint8Array(encoder);
+
+    const originWsId = origin && (origin as any).__wsId;
+
+    localDocData.conns.forEach((clientIds, conn) => {
+      const connWsId = (conn as any).__wsId;
+      const isSender = originWsId && connWsId === originWsId;
+
+      if (conn.readyState === WebSocket.OPEN && !isSender) {
+        conn.send(message);
+      }
+    });
+
+    if (!localDocData.applyingRemote) {
+      const updateBase64 = Buffer.from(update).toString('base64');
+      redisCache.publish(channel, JSON.stringify({ instance: instanceId, update: updateBase64 })).catch(() => {});
+    }
+
+    localDocData.dirty = true;
+    scheduleCheckpoint(localDocData, docName);
+  });
+
+  awareness.on('update', ({ added, updated, removed }: any, origin: any) => {
+    const changedClients = added.concat(updated).concat(removed);
+    if (changedClients.length === 0) return;
+
+    const encoder = encoding.createEncoder();
+    encoding.writeVarUint(encoder, messageAwareness);
+    encoding.writeVarUint8Array(encoder, awarenessProtocol.encodeAwarenessUpdate(awareness, changedClients));
+    const message = encoding.toUint8Array(encoder);
+
+    const originWsId = origin && (origin as any).__wsId;
+
+    localDocData.conns.forEach((clientIds, conn) => {
+      const connWsId = (conn as any).__wsId;
+      const isSender = originWsId && connWsId === originWsId;
+
+      if (conn.readyState === WebSocket.OPEN && !isSender) {
+        conn.send(message);
+      }
+    });
+  });
+
   return docData;
 }
 
-function setupWSConnection(ws: WebSocket, req: any) {
+async function setupWSConnection(ws: WebSocket, req: any) {
   const url = new URL(req.url, 'http://localhost');
   const docName = url.searchParams.get('room') || 'default';
-  const docData = getYDoc(docName);
+  const docData = await getYDoc(docName);
   const { doc, awareness, conns } = docData;
   
   // Track client IDs for this connection
@@ -161,14 +236,20 @@ function setupWSConnection(ws: WebSocket, req: any) {
   });
   
   ws.on('close', () => {
-    // Remove awareness update listener
     awareness.off('update', awarenessUpdateHandler);
     
-    // Remove awareness states for all tracked client IDs from this connection
     if (trackedClientIds.size > 0) {
       awarenessProtocol.removeAwarenessStates(awareness, Array.from(trackedClientIds), null);
     }
     conns.delete(ws);
+    
+    if (conns.size === 0) {
+      if (docData.checkpointTimer) {
+        clearTimeout(docData.checkpointTimer);
+        docData.checkpointTimer = undefined;
+      }
+      persistDocStateToRedis(doc, docName);
+    }
   });
 }
 
@@ -319,17 +400,30 @@ export class RealCollaborationService {
   }
 
   private async createSession(projectId: number, fileId: number): Promise<CollaborationSession> {
-    // Create Yjs document for CRDT
     const doc = new Y.Doc();
+    const sessionKey = `${projectId}-${fileId}`;
     
-    // Load file content
-    const file = await storage.getFile(fileId);
-    if (file && file.content) {
-      const yText = doc.getText('content');
-      yText.insert(0, file.content);
+    let restoredFromRedis = false;
+    try {
+      const savedState = await redisCache.getRaw(CacheKeys.collabDocState(`session-${sessionKey}`));
+      if (savedState) {
+        const stateBuffer = Buffer.from(savedState, 'base64');
+        Y.applyUpdate(doc, new Uint8Array(stateBuffer));
+        restoredFromRedis = true;
+        logger.info(`Restored session doc state from Redis for ${sessionKey}`);
+      }
+    } catch (error) {
+      logger.error(`Failed to restore session doc from Redis for ${sessionKey}:`, error);
+    }
+    
+    if (!restoredFromRedis) {
+      const file = await storage.getFile(fileId);
+      if (file && file.content) {
+        const yText = doc.getText('content');
+        yText.insert(0, file.content);
+      }
     }
 
-    // Setup awareness for cursor positions
     const awareness = new Map();
 
     return {
@@ -623,17 +717,21 @@ export class RealCollaborationService {
       userId
     });
 
-    // Clean up empty sessions
     if (session.peers.size === 0) {
-      // Clear any pending debounced save timer
       const existingTimer = this.saveTimers.get(sessionKey);
       if (existingTimer) {
         clearTimeout(existingTimer);
         this.saveTimers.delete(sessionKey);
       }
       
-      // Final save before cleanup
-      this.saveDocument(session).then(() => {
+      this.saveDocument(session).then(async () => {
+        try {
+          const state = Y.encodeStateAsUpdate(session.doc);
+          const stateBase64 = Buffer.from(state).toString('base64');
+          await redisCache.setRaw(CacheKeys.collabDocState(`session-${sessionKey}`), stateBase64, CacheTTL.DAY);
+        } catch (error) {
+          logger.error(`Failed to persist session doc state to Redis: ${error}`);
+        }
         session.doc.destroy();
         this.sessions.delete(sessionKey);
         logger.info(`Session ${sessionKey} closed`);

@@ -13,12 +13,17 @@ import { Awareness } from 'y-protocols/awareness';
 import { Request } from 'express';
 import http, { IncomingMessage } from 'http';
 import type { Duplex } from 'stream';
+import * as crypto from 'crypto';
 import { storage } from '../storage';
 import { centralUpgradeDispatcher } from '../websocket/central-upgrade-dispatcher';
 import { markSocketAsHandled } from '../websocket/upgrade-guard';
 import { createLogger } from '../utils/logger';
+import { redisCache, CacheKeys, CacheTTL } from '../services/redis-cache.service';
 
 const logger = createLogger('collaboration-server');
+
+const CHECKPOINT_INTERVAL_MS = 5000;
+const instanceId = crypto.randomUUID();
 
 interface CollaborationRoom {
   doc: Y.Doc;
@@ -26,6 +31,9 @@ interface CollaborationRoom {
   connections: Set<WebSocket>;
   projectId: number;
   lastActivity: Date;
+  checkpointTimer?: ReturnType<typeof setTimeout>;
+  dirty: boolean;
+  applyingRemote: boolean;
 }
 
 interface AuthenticatedWebSocket extends WebSocket {
@@ -85,7 +93,7 @@ export class CollaborationServer {
       ws.isAlive = true;
 
       const roomName = `project-${projectId}`;
-      const room = this.getOrCreateRoom(roomName, projectId);
+      const room = await this.getOrCreateRoom(roomName, projectId);
       room.connections.add(ws);
 
       // Send initial document state
@@ -111,14 +119,17 @@ export class CollaborationServer {
 
       ws.on('close', () => {
         room.connections.delete(ws);
-        // Notify others that user left
         if (ws.clientId) {
           this.broadcastUserLeft(room, ws.clientId);
         }
-        // Clean up empty rooms
         if (room.connections.size === 0) {
-          this.rooms.delete(roomName);
-          
+          if (room.checkpointTimer) {
+            clearTimeout(room.checkpointTimer);
+            room.checkpointTimer = undefined;
+          }
+          this.persistRoomState(roomName, room.doc).then(() => {
+            this.rooms.delete(roomName);
+          });
         }
       });
 
@@ -154,7 +165,18 @@ export class CollaborationServer {
     }
   }
 
-  private getOrCreateRoom(roomName: string, projectId: number): CollaborationRoom {
+  private scheduleCheckpoint(roomName: string, room: CollaborationRoom): void {
+    if (room.checkpointTimer) return;
+    room.checkpointTimer = setTimeout(async () => {
+      room.checkpointTimer = undefined;
+      if (room.dirty) {
+        room.dirty = false;
+        await this.persistRoomState(roomName, room.doc);
+      }
+    }, CHECKPOINT_INTERVAL_MS);
+  }
+
+  private async getOrCreateRoom(roomName: string, projectId: number): Promise<CollaborationRoom> {
     let room = this.rooms.get(roomName);
     if (!room) {
       const doc = new Y.Doc();
@@ -164,12 +186,64 @@ export class CollaborationServer {
         awareness,
         connections: new Set(),
         projectId,
-        lastActivity: new Date()
+        lastActivity: new Date(),
+        dirty: false,
+        applyingRemote: false
       };
+
+      try {
+        const savedState = await redisCache.getRaw(CacheKeys.collabDocState(roomName));
+        if (savedState) {
+          const stateBuffer = Buffer.from(savedState, 'base64');
+          Y.applyUpdate(doc, new Uint8Array(stateBuffer));
+          logger.info(`Restored Yjs doc state from Redis for room ${roomName}`);
+        }
+      } catch (error) {
+        logger.error(`Failed to restore doc state from Redis for room ${roomName}:`, error);
+      }
+
+      const channel = CacheKeys.collabDocUpdates(roomName);
+      const roomRef = room;
+
+      await redisCache.subscribe(channel, (message: string) => {
+        try {
+          const parsed = JSON.parse(message);
+          if (parsed.instance === instanceId) return;
+          const updateBuf = Buffer.from(parsed.update, 'base64');
+          roomRef.applyingRemote = true;
+          Y.applyUpdate(doc, new Uint8Array(updateBuf));
+          roomRef.applyingRemote = false;
+        } catch (err) {
+          roomRef.applyingRemote = false;
+          logger.error(`Failed to apply remote update for room ${roomName}:`, err);
+        }
+      });
+
+      doc.on('update', (update: Uint8Array) => {
+        roomRef.dirty = true;
+        this.scheduleCheckpoint(roomName, roomRef);
+
+        if (!roomRef.applyingRemote) {
+          const updateBase64 = Buffer.from(update).toString('base64');
+          redisCache.publish(channel, JSON.stringify({ instance: instanceId, update: updateBase64 })).catch(() => {});
+        }
+      });
+
       this.rooms.set(roomName, room);
     }
     room.lastActivity = new Date();
     return room;
+  }
+
+  private async persistRoomState(roomName: string, doc: Y.Doc): Promise<void> {
+    try {
+      const state = Y.encodeStateAsUpdate(doc);
+      const stateBase64 = Buffer.from(state).toString('base64');
+      await redisCache.setRaw(CacheKeys.collabDocState(roomName), stateBase64, CacheTTL.DAY);
+      logger.info(`Persisted Yjs doc state to Redis for room ${roomName}`);
+    } catch (error) {
+      logger.error(`Failed to persist doc state to Redis for room ${roomName}:`, error);
+    }
   }
 
   private handleMessage(ws: AuthenticatedWebSocket, message: ArrayBuffer, room: CollaborationRoom) {
@@ -271,13 +345,14 @@ export class CollaborationServer {
       });
     }, 30000);
 
-    // Clean up inactive rooms every 5 minutes
     setInterval(() => {
       const now = new Date();
       this.rooms.forEach((room, roomName) => {
         if (room.connections.size === 0 && 
             now.getTime() - room.lastActivity.getTime() > 5 * 60 * 1000) {
-          this.rooms.delete(roomName);
+          this.persistRoomState(roomName, room.doc).then(() => {
+            this.rooms.delete(roomName);
+          });
         }
       });
     }, 5 * 60 * 1000);

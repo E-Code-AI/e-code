@@ -2,6 +2,10 @@ import { EventEmitter } from 'events';
 import { db } from '../db';
 import { projects, deployments } from '@shared/schema';
 import { eq, and, gte } from 'drizzle-orm';
+import { redisCache, CacheKeys, CacheTTL } from '../services/redis-cache.service';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('ab-testing');
 
 interface ABTestConfig {
     id: string;
@@ -9,7 +13,7 @@ interface ABTestConfig {
     name: string;
     description?: string;
     variants: ABVariant[];
-    trafficSplit: Record<string, number>; // variant -> percentage
+    trafficSplit: Record<string, number>;
     metrics: string[];
     startDate: Date;
     endDate?: Date;
@@ -42,25 +46,44 @@ interface ABTestResult {
 }
 
 export class ABTestingService extends EventEmitter {
-    private tests: Map<string, ABTestConfig> = new Map();
-    private results: Map<string, ABTestResult[]> = new Map();
-    private userAssignments: Map<string, Map<string, string>> = new Map(); // userId -> testId -> variantId
-
     constructor() {
         super();
         this.startMetricsCollection();
     }
 
+    private async getTest(testId: string): Promise<ABTestConfig | null> {
+        return await redisCache.get<ABTestConfig>(CacheKeys.abTest(testId));
+    }
+
+    private async setTest(test: ABTestConfig): Promise<void> {
+        await redisCache.set(CacheKeys.abTest(test.id), test, CacheTTL.WEEK);
+        await redisCache.sadd(CacheKeys.abTestsList(), test.id);
+    }
+
+    private async getResults(testId: string): Promise<ABTestResult[] | null> {
+        return await redisCache.get<ABTestResult[]>(CacheKeys.abResult(testId));
+    }
+
+    private async setResults(testId: string, results: ABTestResult[]): Promise<void> {
+        await redisCache.set(CacheKeys.abResult(testId), results, CacheTTL.WEEK);
+    }
+
+    private async getUserAssignment(userId: string, testId: string): Promise<string | null> {
+        return await redisCache.getRaw(CacheKeys.abUserAssignment(userId, testId));
+    }
+
+    private async setUserAssignment(userId: string, testId: string, variantId: string): Promise<void> {
+        await redisCache.setRaw(CacheKeys.abUserAssignment(userId, testId), variantId, CacheTTL.WEEK);
+    }
+
     async createABTest(config: Omit<ABTestConfig, 'id'>): Promise<ABTestConfig> {
         const testId = `ab_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         
-        // Validate traffic split adds up to 100%
         const totalTraffic = Object.values(config.trafficSplit).reduce((sum, pct) => sum + pct, 0);
         if (Math.abs(totalTraffic - 100) > 0.01) {
             throw new Error('Traffic split must add up to 100%');
         }
 
-        // Validate all variants have deployments
         for (const variant of config.variants) {
             const deployment = await db.select()
                 .from(deployments)
@@ -78,10 +101,9 @@ export class ABTestingService extends EventEmitter {
             enabled: config.enabled ?? true
         };
 
-        this.tests.set(testId, test);
+        await this.setTest(test);
         
-        // Initialize results tracking
-        this.results.set(testId, config.variants.map(v => ({
+        const initialResults = config.variants.map(v => ({
             testId,
             variant: v.id,
             metrics: Object.fromEntries(config.metrics.map(m => [m, 0])),
@@ -89,21 +111,21 @@ export class ABTestingService extends EventEmitter {
             impressions: 0,
             conversionRate: 0,
             confidence: 0
-        })));
+        }));
+        await this.setResults(testId, initialResults);
 
         this.emit('test:created', test);
         return test;
     }
 
     async updateABTest(testId: string, updates: Partial<ABTestConfig>): Promise<ABTestConfig> {
-        const test = this.tests.get(testId);
+        const test = await this.getTest(testId);
         if (!test) {
             throw new Error('A/B test not found');
         }
 
         const updatedTest = { ...test, ...updates };
         
-        // Re-validate traffic split if updated
         if (updates.trafficSplit) {
             const totalTraffic = Object.values(updatedTest.trafficSplit).reduce((sum, pct) => sum + pct, 0);
             if (Math.abs(totalTraffic - 100) > 0.01) {
@@ -111,109 +133,103 @@ export class ABTestingService extends EventEmitter {
             }
         }
 
-        this.tests.set(testId, updatedTest);
+        await this.setTest(updatedTest);
         this.emit('test:updated', updatedTest);
         return updatedTest;
     }
 
     async deleteABTest(testId: string): Promise<void> {
-        const test = this.tests.get(testId);
+        const test = await this.getTest(testId);
         if (!test) {
             throw new Error('A/B test not found');
         }
 
-        this.tests.delete(testId);
-        this.results.delete(testId);
+        await redisCache.del(CacheKeys.abTest(testId));
+        await redisCache.del(CacheKeys.abResult(testId));
+        await redisCache.srem(CacheKeys.abTestsList(), testId);
         this.emit('test:deleted', testId);
     }
 
     async getABTest(testId: string): Promise<ABTestConfig | undefined> {
-        return this.tests.get(testId);
+        return (await this.getTest(testId)) || undefined;
     }
 
     async listABTests(projectId?: number): Promise<ABTestConfig[]> {
-        const tests = Array.from(this.tests.values());
+        const testIds = await redisCache.smembers(CacheKeys.abTestsList());
+        const tests: ABTestConfig[] = [];
         
-        if (projectId) {
-            return tests.filter(t => t.projectId === projectId);
+        for (const id of testIds) {
+            const test = await this.getTest(id);
+            if (test) {
+                if (projectId) {
+                    if (test.projectId === projectId) tests.push(test);
+                } else {
+                    tests.push(test);
+                }
+            }
         }
         
         return tests;
     }
 
     async assignUserToVariant(testId: string, userId: string, context?: any): Promise<string> {
-        const test = this.tests.get(testId);
+        const test = await this.getTest(testId);
         if (!test || !test.enabled) {
             throw new Error('A/B test not found or disabled');
         }
 
-        // Check if user already assigned
-        let userTests = this.userAssignments.get(userId);
-        if (!userTests) {
-            userTests = new Map();
-            this.userAssignments.set(userId, userTests);
-        }
-
-        const existingAssignment = userTests.get(testId);
+        const existingAssignment = await this.getUserAssignment(userId, testId);
         if (existingAssignment) {
             return existingAssignment;
         }
 
-        // Apply targeting rules if any
         if (test.targetingRules && context) {
             for (const rule of test.targetingRules) {
                 if (this.evaluateTargetingRule(rule, context)) {
-                    userTests.set(testId, rule.variantId);
+                    await this.setUserAssignment(userId, testId, rule.variantId);
                     return rule.variantId;
                 }
             }
         }
 
-        // Random assignment based on traffic split
         const variantId = this.selectVariantByTrafficSplit(test);
-        userTests.set(testId, variantId);
+        await this.setUserAssignment(userId, testId, variantId);
         
-        // Track impression
-        this.trackImpression(testId, variantId);
+        await this.trackImpression(testId, variantId);
         
         return variantId;
     }
 
     async trackEvent(testId: string, userId: string, eventName: string, value?: number): Promise<void> {
-        const test = this.tests.get(testId);
+        const test = await this.getTest(testId);
         if (!test) return;
 
-        const userTests = this.userAssignments.get(userId);
-        if (!userTests) return;
-
-        const variantId = userTests.get(testId);
+        const variantId = await this.getUserAssignment(userId, testId);
         if (!variantId) return;
 
-        const results = this.results.get(testId);
+        const results = await this.getResults(testId);
         if (!results) return;
 
         const variantResult = results.find(r => r.variant === variantId);
         if (!variantResult) return;
 
-        // Update metrics
         if (test.metrics.includes(eventName)) {
             variantResult.metrics[eventName] = (variantResult.metrics[eventName] || 0) + (value || 1);
         }
 
-        // Track conversion if it's a conversion event
         if (eventName === 'conversion' || eventName.includes('purchase') || eventName.includes('signup')) {
             variantResult.conversions++;
             variantResult.conversionRate = (variantResult.conversions / variantResult.impressions) * 100;
         }
 
-        // Calculate statistical significance
-        this.calculateConfidence(testId);
+        this.calculateConfidence(test, results);
+        await this.setResults(testId, results);
         
         this.emit('event:tracked', { testId, userId, variantId, eventName, value });
     }
 
     async getTestResults(testId: string): Promise<ABTestResult[]> {
-        const results = this.results.get(testId);
+        const results = await this.getResults(testId);
         if (!results) {
             throw new Error('A/B test results not found');
         }
@@ -222,20 +238,19 @@ export class ABTestingService extends EventEmitter {
     }
 
     async getWinningVariant(testId: string): Promise<{ variantId: string; confidence: number } | null> {
-        const results = this.results.get(testId);
+        const results = await this.getResults(testId);
         if (!results || results.length < 2) return null;
 
-        // Sort by conversion rate
         const sorted = [...results].sort((a, b) => b.conversionRate - a.conversionRate);
         const winner = sorted[0];
+        const test = await this.getTest(testId);
         const control = sorted.find(r => {
-            const test = this.tests.get(testId);
             const variant = test?.variants.find(v => v.id === r.variant);
             return variant?.isControl;
         });
 
         if (!control || winner.confidence < 95) {
-            return null; // Not statistically significant
+            return null;
         }
 
         return {
@@ -250,7 +265,7 @@ export class ABTestingService extends EventEmitter {
             throw new Error('No statistically significant winner');
         }
 
-        const test = this.tests.get(testId);
+        const test = await this.getTest(testId);
         if (!test) {
             throw new Error('A/B test not found');
         }
@@ -260,14 +275,13 @@ export class ABTestingService extends EventEmitter {
             throw new Error('Winning variant not found');
         }
 
-        // Update project to use winning deployment
         await db.update(projects)
             .set({ defaultDeploymentId: winningVariant.deploymentId })
             .where(eq(projects.id, test.projectId));
 
-        // Disable the test
         test.enabled = false;
         test.endDate = new Date();
+        await this.setTest(test);
         
         this.emit('winner:promoted', { testId, variantId: winner.variantId });
     }
@@ -283,7 +297,6 @@ export class ABTestingService extends EventEmitter {
             }
         }
 
-        // Fallback to first variant
         return test.variants[0].id;
     }
 
@@ -302,8 +315,6 @@ export class ABTestingService extends EventEmitter {
                        context.tier === rule.condition.tier;
             
             case 'custom':
-                // SECURITY FIX: Use safe condition evaluation instead of new Function()
-                // Only allow simple property comparisons
                 try {
                     return this.safeEvaluateCondition(rule.condition, context);
                 } catch {
@@ -315,10 +326,7 @@ export class ABTestingService extends EventEmitter {
         }
     }
 
-    // SECURITY: Sandboxed condition evaluator using structured object pattern matching
-    // Does NOT use vm2 — evaluates only predefined operators (eq, gt, lt, contains, etc.)
     private safeEvaluateCondition(condition: any, context: any): boolean {
-        // Handle structured object format (preferred for new rules)
         if (typeof condition === 'object' && condition.property && condition.operator) {
             const actualValue = context[condition.property];
             const expectedValue = condition.value;
@@ -337,11 +345,9 @@ export class ABTestingService extends EventEmitter {
             }
         }
         
-        // Handle legacy string/function conditions with pattern blocking
         if (typeof condition === 'string' || typeof condition === 'function') {
             const conditionStr = typeof condition === 'function' ? condition.toString() : condition;
             
-            // SECURITY: Block critical injection patterns
             const criticalPatterns = /\b(require|import|eval|child_process|exec|spawn|Function)\s*\(|process\b|globalThis\b|global\b|__proto__|constructor\s*\[|\.constructor\b|prototype\b|\bfs\b|Buffer\b|Reflect\b|Proxy\b/i;
             if (criticalPatterns.test(conditionStr)) {
                 console.warn('[ABTesting] Blocked dangerous pattern in condition');
@@ -360,29 +366,26 @@ export class ABTestingService extends EventEmitter {
         return false;
     }
 
-    private trackImpression(testId: string, variantId: string): void {
-        const results = this.results.get(testId);
+    private async trackImpression(testId: string, variantId: string): Promise<void> {
+        const results = await this.getResults(testId);
         if (!results) return;
 
         const variantResult = results.find(r => r.variant === variantId);
         if (variantResult) {
             variantResult.impressions++;
+            await this.setResults(testId, results);
         }
     }
 
-    private calculateConfidence(testId: string): void {
-        const results = this.results.get(testId);
+    private calculateConfidence(test: ABTestConfig, results: ABTestResult[]): void {
         if (!results || results.length < 2) return;
 
-        // Find control variant
-        const test = this.tests.get(testId);
-        const controlVariant = test?.variants.find(v => v.isControl);
+        const controlVariant = test.variants.find(v => v.isControl);
         if (!controlVariant) return;
 
         const controlResult = results.find(r => r.variant === controlVariant.id);
         if (!controlResult) return;
 
-        // Calculate z-score for each variant against control
         for (const result of results) {
             if (result.variant === controlVariant.id) continue;
 
@@ -399,36 +402,34 @@ export class ABTestingService extends EventEmitter {
             if (se === 0) continue;
 
             const z = Math.abs(p2 - p1) / se;
-            
-            // Convert z-score to confidence percentage
             result.confidence = this.zScoreToConfidence(z);
         }
     }
 
     private zScoreToConfidence(z: number): number {
-        // Simplified conversion for common confidence levels
         if (z >= 2.58) return 99;
         if (z >= 1.96) return 95;
         if (z >= 1.645) return 90;
         if (z >= 1.28) return 80;
-        return Math.min(z * 30, 79); // Linear approximation for lower values
+        return Math.min(z * 30, 79);
     }
 
     private startMetricsCollection(): void {
-        setInterval(() => {
-            // Simulate real-time metrics collection
-            for (const [testId, test] of this.tests) {
-                if (!test.enabled) continue;
+        setInterval(async () => {
+            const testIds = await redisCache.smembers(CacheKeys.abTestsList());
+            for (const testId of testIds) {
+                const test = await this.getTest(testId);
+                if (!test || !test.enabled) continue;
                 
                 const now = new Date();
-                if (test.endDate && now > test.endDate) {
+                if (test.endDate && now > new Date(test.endDate)) {
                     test.enabled = false;
+                    await this.setTest(test);
                     continue;
                 }
 
-                // In production, this would collect real metrics from analytics
                 this.emit('metrics:collected', { testId, timestamp: now });
             }
-        }, 60000); // Every minute
+        }, 60000);
     }
 }

@@ -12,12 +12,14 @@ const logger = createLogger('redis-cache');
 
 export class RedisCacheService {
   private client: Redis | null = null;
+  private subClient: Redis | null = null;
   private isEnabled: boolean = false;
   private readonly defaultTTL = 3600; // 1 hour in seconds
   private retryCount = 0;
   private readonly MAX_RETRIES = 5;
   private reconnectTimer: NodeJS.Timeout | null = null;
   private readonly RECONNECT_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+  private subscriptions: Map<string, Set<(message: string, channel: string) => void>> = new Map();
 
   constructor() {
     this.initialize();
@@ -127,6 +129,89 @@ export class RedisCacheService {
     if (this.reconnectTimer) {
       clearInterval(this.reconnectTimer);
       this.reconnectTimer = null;
+    }
+  }
+
+  private getOrCreateSubClient(): Redis | null {
+    if (this.subClient) return this.subClient;
+    if (!this.client) return null;
+
+    const redisUrl = process.env.REDIS_URL || process.env.REDIS_TLS_URL;
+    if (!redisUrl) return null;
+
+    try {
+      const connectionUrl = redisUrl.replace('rediss://', 'redis://');
+      this.subClient = new Redis(connectionUrl, {
+        maxRetriesPerRequest: 3,
+        enableReadyCheck: true,
+        lazyConnect: false,
+      });
+
+      this.subClient.on('message', (channel: string, message: string) => {
+        const handlers = this.subscriptions.get(channel);
+        if (handlers) {
+          handlers.forEach(handler => {
+            try {
+              handler(message, channel);
+            } catch (err) {
+              logger.error(`Pub/sub handler error on channel ${channel}:`, err);
+            }
+          });
+        }
+      });
+
+      this.subClient.on('error', (err) => {
+        logger.error('Redis sub client error:', { error: err.message });
+      });
+
+      return this.subClient;
+    } catch (error: any) {
+      logger.error('Failed to create Redis sub client:', { error: error.message });
+      return null;
+    }
+  }
+
+  async publish(channel: string, message: string): Promise<boolean> {
+    if (!this.isEnabled || !this.client) return false;
+    try {
+      await this.client.publish(channel, message);
+      return true;
+    } catch (error) {
+      logger.error(`Publish error on channel ${channel}:`, error);
+      return false;
+    }
+  }
+
+  async subscribe(channel: string, handler: (message: string, channel: string) => void): Promise<boolean> {
+    const sub = this.getOrCreateSubClient();
+    if (!sub) return false;
+    try {
+      if (!this.subscriptions.has(channel)) {
+        this.subscriptions.set(channel, new Set());
+        await sub.subscribe(channel);
+      }
+      this.subscriptions.get(channel)!.add(handler);
+      return true;
+    } catch (error) {
+      logger.error(`Subscribe error on channel ${channel}:`, error);
+      return false;
+    }
+  }
+
+  async unsubscribe(channel: string, handler?: (message: string, channel: string) => void): Promise<void> {
+    if (!this.subClient) return;
+    const handlers = this.subscriptions.get(channel);
+    if (!handlers) return;
+    if (handler) {
+      handlers.delete(handler);
+    }
+    if (!handler || handlers.size === 0) {
+      this.subscriptions.delete(channel);
+      try {
+        await this.subClient.unsubscribe(channel);
+      } catch (error) {
+        logger.error(`Unsubscribe error on channel ${channel}:`, error);
+      }
     }
   }
 
@@ -345,6 +430,146 @@ export class RedisCacheService {
   }
 
   /**
+   * Set a key with TTL using SETEX (no JSON serialization - raw string)
+   */
+  async setRaw(key: string, value: string, ttl: number): Promise<boolean> {
+    if (!this.isEnabled || !this.client) {
+      return false;
+    }
+
+    try {
+      await this.client.setex(key, ttl, value);
+      return true;
+    } catch (error) {
+      logger.error(`Cache SETEX raw error for key ${key}:`, error);
+      return false;
+    }
+  }
+
+  /**
+   * Get raw string value (no JSON deserialization)
+   */
+  async getRaw(key: string): Promise<string | null> {
+    if (!this.isEnabled || !this.client) {
+      return null;
+    }
+
+    try {
+      return await this.client.get(key);
+    } catch (error) {
+      logger.error(`Cache GET raw error for key ${key}:`, error);
+      return null;
+    }
+  }
+
+  /**
+   * Set a hash field
+   */
+  async hset(key: string, field: string, value: string): Promise<boolean> {
+    if (!this.isEnabled || !this.client) {
+      return false;
+    }
+
+    try {
+      await this.client.hset(key, field, value);
+      return true;
+    } catch (error) {
+      logger.error(`Cache HSET error for key ${key}:`, error);
+      return false;
+    }
+  }
+
+  /**
+   * Get a hash field
+   */
+  async hget(key: string, field: string): Promise<string | null> {
+    if (!this.isEnabled || !this.client) {
+      return null;
+    }
+
+    try {
+      return await this.client.hget(key, field);
+    } catch (error) {
+      logger.error(`Cache HGET error for key ${key}:`, error);
+      return null;
+    }
+  }
+
+  /**
+   * Get all fields from a hash
+   */
+  async hgetall(key: string): Promise<Record<string, string> | null> {
+    if (!this.isEnabled || !this.client) {
+      return null;
+    }
+
+    try {
+      const result = await this.client.hgetall(key);
+      if (!result || Object.keys(result).length === 0) return null;
+      return result;
+    } catch (error) {
+      logger.error(`Cache HGETALL error for key ${key}:`, error);
+      return null;
+    }
+  }
+
+  /**
+   * Delete a hash field
+   */
+  async hdel(key: string, ...fields: string[]): Promise<number> {
+    if (!this.isEnabled || !this.client) {
+      return 0;
+    }
+
+    try {
+      return await this.client.hdel(key, ...fields);
+    } catch (error) {
+      logger.error(`Cache HDEL error for key ${key}:`, error);
+      return 0;
+    }
+  }
+
+  /**
+   * Set a key only if it doesn't exist (SETNX), with TTL
+   */
+  async setnx(key: string, value: string, ttl: number): Promise<boolean> {
+    if (!this.isEnabled || !this.client) {
+      return false;
+    }
+
+    try {
+      const result = await this.client.set(key, value, 'EX', ttl, 'NX');
+      return result === 'OK';
+    } catch (error) {
+      logger.error(`Cache SETNX error for key ${key}:`, error);
+      return false;
+    }
+  }
+
+  /**
+   * Ping Redis to check connectivity
+   */
+  async ping(): Promise<boolean> {
+    if (!this.client) {
+      return false;
+    }
+
+    try {
+      const result = await this.client.ping();
+      return result === 'PONG';
+    } catch (error) {
+      return false;
+    }
+  }
+
+  /**
+   * Check if Redis is currently enabled and connected
+   */
+  isReady(): boolean {
+    return this.isEnabled && this.client !== null;
+  }
+
+  /**
    * Close Redis connection
    */
   async close(): Promise<void> {
@@ -409,6 +634,23 @@ export const CacheKeys = {
   marketplaceTemplate: (id: string) => `marketplace:template:${id}`,
   aiModelConfig: (model: string) => `ai:config:${model}`,
   userSession: (sessionId: string) => `session:${sessionId}`,
+  revokedToken: (jti: string) => `revoked:token:${jti}`,
+  revokedUserTokens: (userId: string) => `revoked:user:${userId}`,
+  collabDocState: (roomName: string) => `collab:doc:${roomName}`,
+  collabDocUpdates: (roomName: string) => `collab:updates:${roomName}`,
+  collabRoomMeta: (roomName: string) => `collab:room:${roomName}`,
+  agentActiveSession: (sessionId: string) => `agent:active:${sessionId}`,
+  agentRecovery: (sessionId: string) => `agent:recovery:${sessionId}`,
+  agentRateLimit: (userId: string) => `agent:ratelimit:${userId}`,
+  edgeFunction: (id: string) => `edge:func:${id}`,
+  edgeFunctionsList: () => `edge:funcs:all`,
+  edgeInvocations: (functionId: string) => `edge:invoc:${functionId}`,
+  abTest: (testId: string) => `ab:test:${testId}`,
+  abTestsList: () => `ab:tests:all`,
+  abResult: (testId: string) => `ab:result:${testId}`,
+  abUserAssignment: (userId: string, testId: string) => `ab:assign:${userId}:${testId}`,
+  aiSessionMemory: (sessionId: string) => `ai:session:${sessionId}`,
+  aiLongTermMemory: (key: string) => `ai:ltm:${key}`,
 };
 
 // TTL constants (in seconds)

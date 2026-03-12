@@ -6,6 +6,7 @@
 
 import type { AIModel } from './ai-provider-manager';
 import { createLogger } from '../utils/logger';
+import { redisCache, CacheKeys, CacheTTL } from '../services/redis-cache.service';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as crypto from 'crypto';
@@ -335,6 +336,7 @@ export class ContextWindowManager {
     };
     
     this.sessionMemory.set(sessionId, session);
+    await redisCache.set(CacheKeys.aiSessionMemory(sessionId), session, CacheTTL.DAY);
     logger.info(`Created new session: ${sessionId}`);
     return session;
   }
@@ -343,6 +345,11 @@ export class ContextWindowManager {
     let session = this.sessionMemory.get(sessionId);
     
     if (!session) {
+      const redisSession = await redisCache.get<SessionMemory>(CacheKeys.aiSessionMemory(sessionId));
+      if (redisSession) {
+        this.sessionMemory.set(sessionId, redisSession);
+        return redisSession;
+      }
       session = await this.loadSession(sessionId);
     }
     
@@ -395,6 +402,7 @@ export class ContextWindowManager {
     this.extractKeyFacts(message, session.userId, session.projectId);
     
     this.sessionMemory.set(sessionId, session);
+    await redisCache.set(CacheKeys.aiSessionMemory(sessionId), session, CacheTTL.DAY);
   }
 
   async getSessionMessages(
@@ -411,6 +419,8 @@ export class ContextWindowManager {
   async saveSession(sessionId: string): Promise<void> {
     const session = this.sessionMemory.get(sessionId);
     if (!session) return;
+    
+    await redisCache.set(CacheKeys.aiSessionMemory(sessionId), session, CacheTTL.DAY);
     
     const sessionPath = path.join(this.memoryStoragePath, 'sessions', `${sessionId}.json`);
     await fs.mkdir(path.dirname(sessionPath), { recursive: true });
@@ -458,6 +468,11 @@ export class ContextWindowManager {
     let memory = this.longTermMemory.get(key);
     
     if (!memory) {
+      const redisMemory = await redisCache.get<LongTermMemory>(CacheKeys.aiLongTermMemory(key));
+      if (redisMemory) {
+        this.longTermMemory.set(key, redisMemory);
+        return redisMemory;
+      }
       memory = await this.loadLongTermMemory(key);
     }
     
@@ -621,6 +636,8 @@ export class ContextWindowManager {
     const memory = this.longTermMemory.get(key);
     if (!memory) return;
     
+    await redisCache.set(CacheKeys.aiLongTermMemory(key), memory, CacheTTL.WEEK);
+    
     const memoryPath = path.join(this.memoryStoragePath, 'long-term', `${key}.json`);
     await fs.mkdir(path.dirname(memoryPath), { recursive: true });
     await fs.writeFile(memoryPath, JSON.stringify(memory, null, 2));
@@ -741,6 +758,7 @@ export class ContextWindowManager {
 
   async clearSession(sessionId: string): Promise<void> {
     this.sessionMemory.delete(sessionId);
+    await redisCache.del(CacheKeys.aiSessionMemory(sessionId));
     try {
       const sessionPath = path.join(this.memoryStoragePath, 'sessions', `${sessionId}.json`);
       await fs.unlink(sessionPath);
@@ -752,6 +770,7 @@ export class ContextWindowManager {
   async clearLongTermMemory(userId?: number, projectId?: number): Promise<void> {
     const key = this.getMemoryKey(userId, projectId);
     this.longTermMemory.delete(key);
+    await redisCache.del(CacheKeys.aiLongTermMemory(key));
     try {
       const memoryPath = path.join(this.memoryStoragePath, 'long-term', `${key}.json`);
       await fs.unlink(memoryPath);

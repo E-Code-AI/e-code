@@ -1,4 +1,8 @@
 import { EventEmitter } from 'events';
+import { redisCache, CacheKeys, CacheTTL } from '../services/redis-cache.service';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('edge-functions');
 
 interface EdgeFunction {
   id: string;
@@ -38,8 +42,6 @@ interface EdgeFunctionInvocation {
 }
 
 export class EdgeFunctionsService extends EventEmitter {
-  private functions: Map<string, EdgeFunction> = new Map();
-  private invocations: Map<string, EdgeFunctionInvocation[]> = new Map();
   private deploymentQueue: Map<string, any> = new Map();
 
   constructor() {
@@ -48,11 +50,34 @@ export class EdgeFunctionsService extends EventEmitter {
   }
 
   private initializeService(): void {
-    // Start deployment worker
     setInterval(() => this.processDeploymentQueue(), 5000);
-    
-    // Start health checker
     setInterval(() => this.checkFunctionHealth(), 30000);
+  }
+
+  private async getFunction(functionId: string): Promise<EdgeFunction | null> {
+    return await redisCache.get<EdgeFunction>(CacheKeys.edgeFunction(functionId));
+  }
+
+  private async setFunction(func: EdgeFunction): Promise<void> {
+    await redisCache.set(CacheKeys.edgeFunction(func.id), func, CacheTTL.WEEK);
+    await redisCache.sadd(CacheKeys.edgeFunctionsList(), func.id);
+  }
+
+  private async removeFunction(functionId: string): Promise<void> {
+    await redisCache.del(CacheKeys.edgeFunction(functionId));
+    await redisCache.srem(CacheKeys.edgeFunctionsList(), functionId);
+    await redisCache.del(CacheKeys.edgeInvocations(functionId));
+  }
+
+  private async getInvocations(functionId: string): Promise<EdgeFunctionInvocation[]> {
+    return await redisCache.get<EdgeFunctionInvocation[]>(CacheKeys.edgeInvocations(functionId)) || [];
+  }
+
+  private async addInvocation(functionId: string, invocation: EdgeFunctionInvocation): Promise<void> {
+    const invocations = await this.getInvocations(functionId);
+    invocations.push(invocation);
+    const kept = invocations.slice(-100);
+    await redisCache.set(CacheKeys.edgeInvocations(functionId), kept, CacheTTL.DAY);
   }
 
   async deployFunction(
@@ -84,13 +109,13 @@ export class EdgeFunctionsService extends EventEmitter {
       invocationCount: 0,
     };
 
-    this.functions.set(functionId, edgeFunction);
+    await this.setFunction(edgeFunction);
     this.deploymentQueue.set(functionId, edgeFunction);
     
-    // Simulate deployment process
-    setTimeout(() => {
+    setTimeout(async () => {
       edgeFunction.status = 'active';
       edgeFunction.deployedAt = new Date();
+      await this.setFunction(edgeFunction);
       this.emit('functionDeployed', edgeFunction);
     }, 3000);
 
@@ -107,7 +132,7 @@ export class EdgeFunctionsService extends EventEmitter {
       query?: Record<string, string>;
     }
   ): Promise<EdgeFunctionInvocation> {
-    const func = this.functions.get(functionId);
+    const func = await this.getFunction(functionId);
     if (!func || func.status !== 'active') {
       throw new Error('Function not found or not active');
     }
@@ -126,7 +151,6 @@ export class EdgeFunctionsService extends EventEmitter {
     const startTime = Date.now();
 
     try {
-      // Execute function based on runtime
       let result: any;
       
       switch (func.runtime) {
@@ -146,7 +170,6 @@ export class EdgeFunctionsService extends EventEmitter {
       invocation.memory = Math.floor(Math.random() * func.memory * 0.8 + func.memory * 0.2);
       invocation.logs.push(`Function executed successfully in ${invocation.duration}ms`);
 
-      // Update function stats
       func.lastInvocation = new Date();
       func.invocationCount++;
       func.averageLatency = func.averageLatency 
@@ -159,11 +182,8 @@ export class EdgeFunctionsService extends EventEmitter {
       invocation.logs.push(`Error: ${error.message}`);
     }
 
-    // Store invocation
-    if (!this.invocations.has(functionId)) {
-      this.invocations.set(functionId, []);
-    }
-    this.invocations.get(functionId)!.push(invocation);
+    await this.addInvocation(functionId, invocation);
+    await this.setFunction(func);
 
     return invocation;
   }
@@ -172,7 +192,6 @@ export class EdgeFunctionsService extends EventEmitter {
     func: EdgeFunction,
     request: any
   ): Promise<any> {
-    // Create isolated context for function execution
     const context = {
       request,
       env: func.env,
@@ -186,8 +205,6 @@ export class EdgeFunctionsService extends EventEmitter {
       Headers: global.Headers,
     };
 
-    // SECURITY: Execute function code with pattern blocking
-    // Block critical injection patterns
     const criticalPatterns = /\b(require|import|child_process|exec|spawn)\s*\(|process\.env|globalThis\b|global\b|__proto__|constructor\s*\[|\.constructor\b|prototype\b|\bfs\b|Buffer\b|Reflect\b|Proxy\b/i;
     if (criticalPatterns.test(func.code)) {
       throw new Error('Blocked dangerous pattern in edge function');
@@ -206,7 +223,6 @@ export class EdgeFunctionsService extends EventEmitter {
     func: EdgeFunction,
     request: any
   ): Promise<any> {
-    // WebAssembly execution (placeholder for real WASM runtime)
     return {
       message: 'WASM function executed',
       functionId: func.id,
@@ -218,46 +234,55 @@ export class EdgeFunctionsService extends EventEmitter {
     functionId: string,
     updates: Partial<EdgeFunction>
   ): Promise<EdgeFunction> {
-    const func = this.functions.get(functionId);
+    const func = await this.getFunction(functionId);
     if (!func) {
       throw new Error('Function not found');
     }
 
-    // Update function
     Object.assign(func, updates);
     func.status = 'deploying';
     
-    // Redeploy
     this.deploymentQueue.set(functionId, func);
     
-    setTimeout(() => {
+    setTimeout(async () => {
       func.status = 'active';
       func.deployedAt = new Date();
+      await this.setFunction(func);
     }, 2000);
 
+    await this.setFunction(func);
     return func;
   }
 
   async deleteFunction(functionId: string): Promise<void> {
-    const func = this.functions.get(functionId);
+    const func = await this.getFunction(functionId);
     if (!func) {
       throw new Error('Function not found');
     }
 
     func.status = 'inactive';
+    await this.setFunction(func);
     
-    // Clean up after grace period
-    setTimeout(() => {
-      this.functions.delete(functionId);
-      this.invocations.delete(functionId);
-    }, 60000); // 1 minute grace period
+    setTimeout(async () => {
+      await this.removeFunction(functionId);
+    }, 60000);
   }
 
   async getFunctions(projectId?: number): Promise<EdgeFunction[]> {
-    const functions = Array.from(this.functions.values());
+    const functionIds = await redisCache.smembers(CacheKeys.edgeFunctionsList());
+    const functions: EdgeFunction[] = [];
     
-    if (projectId) {
-      return functions.filter(f => f.id.includes(`ef_${projectId}_`));
+    for (const id of functionIds) {
+      const func = await this.getFunction(id);
+      if (func) {
+        if (projectId) {
+          if (func.id.includes(`ef_${projectId}_`)) {
+            functions.push(func);
+          }
+        } else {
+          functions.push(func);
+        }
+      }
     }
     
     return functions;
@@ -276,7 +301,7 @@ export class EdgeFunctionsService extends EventEmitter {
       };
     };
   }> {
-    const invocations = this.invocations.get(functionId) || [];
+    const invocations = await this.getInvocations(functionId);
     const successful = invocations.filter(i => i.status === 'success');
     
     const stats = {
@@ -297,7 +322,7 @@ export class EdgeFunctionsService extends EventEmitter {
     functionId: string,
     trigger: EdgeFunction['triggers']
   ): Promise<void> {
-    const func = this.functions.get(functionId);
+    const func = await this.getFunction(functionId);
     if (!func) {
       throw new Error('Function not found');
     }
@@ -307,7 +332,6 @@ export class EdgeFunctionsService extends EventEmitter {
   }
 
   private selectOptimalRegion(regions: string[]): string {
-    // In production, select based on user location and load
     return regions[Math.floor(Math.random() * regions.length)];
   }
 
@@ -317,23 +341,22 @@ export class EdgeFunctionsService extends EventEmitter {
     }
   }
 
-  private checkFunctionHealth(): void {
-    for (const [functionId, func] of Array.from(this.functions)) {
-      if (func.status === 'active' && func.lastInvocation) {
-        const inactiveDuration = Date.now() - func.lastInvocation.getTime();
-        
-        // Scale down inactive functions
-        if (inactiveDuration > 300000) { // 5 minutes
+  private async checkFunctionHealth(): Promise<void> {
+    const functionIds = await redisCache.smembers(CacheKeys.edgeFunctionsList());
+    for (const functionId of functionIds) {
+      const func = await this.getFunction(functionId);
+      if (func && func.status === 'active' && func.lastInvocation) {
+        const inactiveDuration = Date.now() - new Date(func.lastInvocation).getTime();
+        if (inactiveDuration > 300000) {
           // Function can be scaled down
         }
       }
     }
   }
 
-  // WebSocket support for real-time logs
   streamFunctionLogs(functionId: string, callback: (log: string) => void): () => void {
-    const interval = setInterval(() => {
-      const invocations = this.invocations.get(functionId) || [];
+    const interval = setInterval(async () => {
+      const invocations = await this.getInvocations(functionId);
       const latest = invocations[invocations.length - 1];
       
       if (latest && latest.logs.length > 0) {
@@ -345,5 +368,4 @@ export class EdgeFunctionsService extends EventEmitter {
   }
 }
 
-// Export singleton instance
 export const edgeFunctionsService = new EdgeFunctionsService();

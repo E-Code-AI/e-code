@@ -774,7 +774,7 @@ export class AuthRouter {
           });
         }
 
-        const revokedCount = revokeAllUserTokens(user.id);
+        const revokedCount = await revokeAllUserTokens(user.id);
 
         await db.insert(securityLogs).values({
           userId: user.id,

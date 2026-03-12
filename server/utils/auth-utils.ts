@@ -77,7 +77,8 @@ export interface RefreshTokenPayload {
 
 export function generateAccessToken(userId: number, username: string): string {
   const jti = randomUUID();
-  trackUserToken(userId, jti);
+  const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+  trackUserToken(userId, jti, expiresAt);
   
   return jwt.sign(
     { userId, username, type: 'access', jti },
@@ -88,7 +89,8 @@ export function generateAccessToken(userId: number, username: string): string {
 
 export function generateRefreshToken(userId: number): string {
   const jti = randomUUID();
-  trackUserToken(userId, jti);
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  trackUserToken(userId, jti, expiresAt);
   
   return jwt.sign(
     { userId, type: 'refresh', jti },
@@ -97,14 +99,14 @@ export function generateRefreshToken(userId: number): string {
   );
 }
 
-export function verifyAccessToken(token: string): { userId: number; username: string; jti: string } {
+export async function verifyAccessToken(token: string): Promise<{ userId: number; username: string; jti: string }> {
   try {
     const payload = jwt.verify(token, getJwtSecret()) as AccessTokenPayload;
     if (payload.type !== 'access') {
       throw new Error('Invalid token type');
     }
     
-    if (payload.jti && isTokenRevoked(payload.jti)) {
+    if (payload.jti && await isTokenRevoked(payload.jti)) {
       throw new Error('Token has been revoked');
     }
     
@@ -117,14 +119,14 @@ export function verifyAccessToken(token: string): { userId: number; username: st
   }
 }
 
-export function verifyRefreshToken(token: string): { userId: number; jti: string } {
+export async function verifyRefreshToken(token: string): Promise<{ userId: number; jti: string }> {
   try {
     const payload = jwt.verify(token, getJwtRefreshSecret()) as RefreshTokenPayload;
     if (payload.type !== 'refresh') {
       throw new Error('Invalid token type');
     }
     
-    if (payload.jti && isTokenRevoked(payload.jti)) {
+    if (payload.jti && await isTokenRevoked(payload.jti)) {
       throw new Error('Token has been revoked');
     }
     

@@ -20,6 +20,7 @@ import { agentWebSocketService } from './agent-websocket-service';
 import { aiOptimization } from './ai-optimization';
 import { observability } from './ai-optimization/observability.service';
 import { createLogger } from '../utils/logger';
+import { redisCache, CacheKeys, CacheTTL } from './redis-cache.service';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
@@ -252,18 +253,7 @@ const RATE_LIMIT_WINDOW_MS = 60000; // 1 minute sliding window
 
 export class AgentOrchestratorService extends EventEmitter {
   private openai: OpenAI;
-  private activeSessions: Map<string, AgentSession> = new Map();
   
-  /**
-   * ✅ RATE LIMITING (Dec 16, 2025): Per-user rate limiting with sliding window
-   * Key: userId, Value: RateLimitEntry with request timestamps
-   */
-  private rateLimitMap: Map<string, RateLimitEntry> = new Map();
-  
-  /**
-   * ✅ DURABLE RECOVERY (Dec 7, 2025): In-memory queue for sessions with failed DB status updates
-   * Key: sessionId, Value: PendingRecoveryItem with target status and metadata
-   */
   private pendingRecovery: Map<string, PendingRecoveryItem> = new Map();
   private recoveryWorkerInterval: ReturnType<typeof setInterval> | null = null;
   private static readonly RECOVERY_INTERVAL_MS = 30000; // 30 seconds
@@ -306,66 +296,68 @@ export class AgentOrchestratorService extends EventEmitter {
     });
   }
   
-  /**
-   * ✅ RATE LIMITING (Dec 16, 2025): Check and enforce per-user rate limits
-   * Returns error message if rate limit exceeded, null if allowed
-   */
-  private checkRateLimit(userId: string, isPro: boolean = false): string | null {
+  private async checkRateLimit(userId: string, isPro: boolean = false): Promise<string | null> {
     const now = Date.now();
     const limit = isPro ? RATE_LIMIT_PRO : RATE_LIMIT_NORMAL;
+    const key = CacheKeys.agentRateLimit(userId);
     
-    let entry = this.rateLimitMap.get(userId);
-    
-    if (!entry) {
-      entry = { timestamps: [], isPro };
-      this.rateLimitMap.set(userId, entry);
+    try {
+      const cached = await redisCache.get<RateLimitEntry>(key);
+      let entry: RateLimitEntry = cached || { timestamps: [], isPro };
+      
+      entry.timestamps = entry.timestamps.filter(ts => now - ts < RATE_LIMIT_WINDOW_MS);
+      
+      if (entry.timestamps.length >= limit) {
+        const oldestTimestamp = entry.timestamps[0];
+        const resetIn = Math.ceil((oldestTimestamp + RATE_LIMIT_WINDOW_MS - now) / 1000);
+        logger.warn(`[RateLimit] User ${userId} exceeded rate limit (${entry.timestamps.length}/${limit})`, {
+          userId,
+          requestCount: entry.timestamps.length,
+          limit,
+          resetInSeconds: resetIn
+        });
+        return `Rate limit exceeded. You have made ${entry.timestamps.length} requests in the last minute. Limit: ${limit}/min. Please try again in ${resetIn} seconds.`;
+      }
+      
+      entry.timestamps.push(now);
+      await redisCache.set(key, entry, 120);
+      return null;
+    } catch (error) {
+      logger.error(`[RateLimit] Redis error for user ${userId}, allowing request:`, error);
+      return null;
     }
-    
-    // Remove timestamps outside the sliding window
-    entry.timestamps = entry.timestamps.filter(ts => now - ts < RATE_LIMIT_WINDOW_MS);
-    
-    if (entry.timestamps.length >= limit) {
-      const oldestTimestamp = entry.timestamps[0];
-      const resetIn = Math.ceil((oldestTimestamp + RATE_LIMIT_WINDOW_MS - now) / 1000);
-      logger.warn(`[RateLimit] User ${userId} exceeded rate limit (${entry.timestamps.length}/${limit})`, {
-        userId,
-        requestCount: entry.timestamps.length,
-        limit,
-        resetInSeconds: resetIn
-      });
-      return `Rate limit exceeded. You have made ${entry.timestamps.length} requests in the last minute. Limit: ${limit}/min. Please try again in ${resetIn} seconds.`;
-    }
-    
-    // Record this request
-    entry.timestamps.push(now);
-    return null;
   }
   
   /**
    * Get rate limit status for a user (for API exposure)
    */
-  getRateLimitStatus(userId: string, isPro: boolean = false): {
+  async getRateLimitStatus(userId: string, isPro: boolean = false): Promise<{
     remaining: number;
     limit: number;
     resetIn: number;
-  } {
+  }> {
     const now = Date.now();
     const limit = isPro ? RATE_LIMIT_PRO : RATE_LIMIT_NORMAL;
-    const entry = this.rateLimitMap.get(userId);
     
-    if (!entry) {
+    try {
+      const entry = await redisCache.get<RateLimitEntry>(CacheKeys.agentRateLimit(userId));
+      
+      if (!entry) {
+        return { remaining: limit, limit, resetIn: 0 };
+      }
+      
+      const validTimestamps = entry.timestamps.filter(ts => now - ts < RATE_LIMIT_WINDOW_MS);
+      const oldestTimestamp = validTimestamps[0];
+      const resetIn = oldestTimestamp ? Math.ceil((oldestTimestamp + RATE_LIMIT_WINDOW_MS - now) / 1000) : 0;
+      
+      return {
+        remaining: Math.max(0, limit - validTimestamps.length),
+        limit,
+        resetIn: resetIn > 0 ? resetIn : 0
+      };
+    } catch {
       return { remaining: limit, limit, resetIn: 0 };
     }
-    
-    const validTimestamps = entry.timestamps.filter(ts => now - ts < RATE_LIMIT_WINDOW_MS);
-    const oldestTimestamp = validTimestamps[0];
-    const resetIn = oldestTimestamp ? Math.ceil((oldestTimestamp + RATE_LIMIT_WINDOW_MS - now) / 1000) : 0;
-    
-    return {
-      remaining: Math.max(0, limit - validTimestamps.length),
-      limit,
-      resetIn: resetIn > 0 ? resetIn : 0
-    };
   }
 
   /**
@@ -437,7 +429,7 @@ export class AgentOrchestratorService extends EventEmitter {
         .values(insertData as any)
         .returning();
 
-      this.activeSessions.set(session.id, session);
+      await redisCache.set(CacheKeys.agentActiveSession(session.id), session, CacheTTL.LONG);
       
       // Initialize file watcher (non-blocking failure)
       try {
@@ -484,7 +476,7 @@ export class AgentOrchestratorService extends EventEmitter {
   ): Promise<AgentExecutionResult> {
     try {
       // ✅ RATE LIMITING (Dec 16, 2025): Check rate limit before processing
-      const rateLimitError = this.checkRateLimit(userId, isPro);
+      const rateLimitError = await this.checkRateLimit(userId, isPro);
       if (rateLimitError) {
         return {
           message: rateLimitError,
@@ -1380,7 +1372,7 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
       })
       .where(eq(agentSessions.id, sessionId));
     
-    this.activeSessions.delete(sessionId);
+    await redisCache.del(CacheKeys.agentActiveSession(sessionId));
     
     // Cleanup services
     await agentFileOperations.cleanup();
@@ -1399,7 +1391,7 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
 
   // Private helper methods
   private async validateSession(sessionId: string): Promise<AgentSession> {
-    let session = this.activeSessions.get(sessionId);
+    let session = await redisCache.get<AgentSession>(CacheKeys.agentActiveSession(sessionId));
     
     if (!session) {
       const [dbSession] = await db.select()
@@ -1414,7 +1406,7 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
       }
       
       session = dbSession;
-      this.activeSessions.set(sessionId, session);
+      await redisCache.set(CacheKeys.agentActiveSession(sessionId), session, CacheTTL.LONG);
     }
     
     return session;

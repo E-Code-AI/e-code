@@ -441,6 +441,18 @@ httpServer.listen(port, "0.0.0.0", () => {
 // This ensures the server starts even if there are issues with other modules
 (async () => {
   try {
+    const { redisCache } = await import('./services/redis-cache.service');
+    const redisHealthy = await redisCache.ping();
+    if (redisHealthy) {
+      logger.info('[Redis Health] ✅ Redis connection verified and healthy');
+    } else {
+      logger.error('[Redis Health] ❌ Redis connection FAILED - state persistence will not work. Ensure REDIS_URL is set and Redis is reachable.');
+    }
+  } catch (error: any) {
+    logger.error(`[Redis Health] ❌ Redis health check failed: ${error.message}`);
+  }
+
+  try {
     // Setup passport authentication BEFORE routes
     const { setupPassportAuth } = await import("./middleware/passport-setup");
     setupPassportAuth(app);
