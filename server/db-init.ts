@@ -1,5 +1,6 @@
 import { db, client } from "./db";
 import * as schema from "@shared/schema";
+import { getTableName } from "drizzle-orm";
 import { scrypt, randomBytes } from "crypto";
 import { promisify } from "util";
 import { existsSync } from "fs";
@@ -9,6 +10,30 @@ import { createLogger } from './utils/logger';
 
 const logger = createLogger('db-init');
 const scryptAsync = promisify(scrypt);
+
+const CORE_TABLES: string[] = [
+  schema.users,
+  schema.projects,
+  schema.files,
+  schema.deployments,
+].map((t) => getTableName(t));
+
+async function verifyCoreTablesExist(): Promise<{ ok: boolean; missing: string[] }> {
+  try {
+    const rows = await client`
+      SELECT table_name::text
+      FROM information_schema.tables
+      WHERE table_schema = 'public'
+        AND table_name = ANY(${CORE_TABLES})
+    `;
+    const found = new Set(rows.map((r: any) => r.table_name));
+    const missing = CORE_TABLES.filter((t) => !found.has(t));
+    return { ok: missing.length === 0, missing };
+  } catch (error: any) {
+    logger.error('[DB Init] Core table verification query failed:', error.message);
+    return { ok: false, missing: [...CORE_TABLES] };
+  }
+}
 
 // Password hashing function
 async function hashPassword(password: string) {
@@ -115,7 +140,6 @@ async function ensureDatabaseMigrated(force = false) {
 
 // Initialize the database with default data
 export async function initializeDatabase() {
-  // Add retry logic for database initialization
   let retries = 3;
   let lastError = null;
   
@@ -123,8 +147,19 @@ export async function initializeDatabase() {
     try {
       await ensureDatabaseMigrated();
       
-      // Ensure preferred_ai_model column exists (multi-provider AI model selection)
       await ensurePreferredAiModelColumn();
+
+      const verification = await verifyCoreTablesExist();
+      if (!verification.ok) {
+        logger.warn(`[DB Init] Missing core tables: ${verification.missing.join(', ')}. Attempting migration...`);
+        migrationsEnsured = false;
+        await ensureDatabaseMigrated(true);
+        const recheck = await verifyCoreTablesExist();
+        if (!recheck.ok) {
+          throw new Error(`Core tables still missing after migration: ${recheck.missing.join(', ')}`);
+        }
+      }
+      logger.info('[DB Init] Core table verification passed');
 
       // Check if tables are created by checking if we have any users
       const users = await db.select().from(schema.users);
