@@ -547,16 +547,19 @@ export class StripePaymentService {
     // Atomic idempotency: INSERT ON CONFLICT DO NOTHING to claim the event
     const { db } = await import('../db');
     const { stripeWebhookEvents } = await import('../../shared/schema');
-    const { sql } = await import('drizzle-orm');
+    const { eq } = await import('drizzle-orm');
 
-    const insertResult = await db.execute(
-      sql`INSERT INTO stripe_webhook_events (stripe_event_id, event_type, processed_at)
-          VALUES (${event.id}, ${event.type}, NOW())
-          ON CONFLICT (stripe_event_id) DO NOTHING`
-    );
+    const claimed = await db
+      .insert(stripeWebhookEvents)
+      .values({
+        stripeEventId: event.id,
+        eventType: event.type,
+        processedAt: new Date(),
+      })
+      .onConflictDoNothing({ target: stripeWebhookEvents.stripeEventId })
+      .returning({ id: stripeWebhookEvents.id });
 
-    const rowCount = (insertResult as any).rowCount ?? (insertResult as any).length ?? 0;
-    if (rowCount === 0) {
+    if (claimed.length === 0) {
       logger.info(`[Stripe] Duplicate webhook event detected, skipping: ${event.id}`);
       return;
     }
@@ -600,9 +603,9 @@ export class StripePaymentService {
       logger.info(`[Stripe] Webhook event processed: ${event.id} (${event.type})`);
     } catch (handlerError) {
       // Remove idempotency record so Stripe can retry this event
-      await db.execute(
-        sql`DELETE FROM stripe_webhook_events WHERE stripe_event_id = ${event.id}`
-      );
+      await db
+        .delete(stripeWebhookEvents)
+        .where(eq(stripeWebhookEvents.stripeEventId, event.id));
       logger.error(`[Stripe] Handler failed for event ${event.id} (${event.type}), removed idempotency record for retry:`, handlerError);
       throw handlerError;
     }
