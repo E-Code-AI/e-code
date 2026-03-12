@@ -4,6 +4,7 @@ import { storage } from '../storage';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import * as fs from 'fs/promises';
 import { spawn } from 'child_process';
+import { createHash } from 'crypto';
 import { createLogger } from '../utils/logger';
 import { previewEvents } from './preview-websocket';
 import fetch from 'node-fetch';
@@ -12,6 +13,12 @@ import { environmentVariables } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 
 const logger = createLogger('preview-service');
+
+const fileHashCache = new Map<string, Map<string, string>>();
+
+function contentHash(content: string): string {
+  return createHash('sha256').update(content).digest('hex');
+}
 
 /**
  * SECURITY FIX: Whitelist of safe environment variables for preview processes
@@ -386,7 +393,16 @@ export class PreviewService {
    * This is the primary path used when the user opens a project — no port needed.
    */
   async startPreviewFromProject(projectId: string): Promise<PreviewInstance> {
-    await this.stopPreview(projectId);
+    const existing = this.previews.get(projectId);
+    if (existing) {
+      existing.status = 'stopped';
+      for (const [port, proc] of existing.processes) {
+        try { proc.kill('SIGKILL'); } catch {}
+        this.allocatedPorts.delete(port);
+      }
+      existing.processes.clear();
+      this.previews.delete(projectId);
+    }
 
     const runId = `run-${projectId}-${Date.now()}`;
 
@@ -418,18 +434,53 @@ export class PreviewService {
       return errInstance;
     }
 
-    // Write files to a temp directory
     const previewPath = path.join('/tmp', `preview-${projectId}`);
     try {
-      await fs.rm(previewPath, { recursive: true, force: true });
+      const syncStart = Date.now();
       await fs.mkdir(previewPath, { recursive: true });
+
+      let projectCache = fileHashCache.get(projectId);
+      if (!projectCache) {
+        projectCache = new Map<string, string>();
+        fileHashCache.set(projectId, projectCache);
+      }
+
+      const currentPaths = new Set<string>();
+      let written = 0;
+      let skipped = 0;
 
       for (const file of files) {
         if (file.isDirectory || file.isFolder) continue;
-        const filePath = path.join(previewPath, file.path || file.name);
+        const relPath = file.path || file.name;
+        currentPaths.add(relPath);
+        const content = file.content || '';
+        const hash = contentHash(content);
+        const cachedHash = projectCache.get(relPath);
+
+        if (cachedHash === hash) {
+          skipped++;
+          continue;
+        }
+
+        const filePath = path.join(previewPath, relPath);
         await fs.mkdir(path.dirname(filePath), { recursive: true });
-        await fs.writeFile(filePath, file.content || '', 'utf-8');
+        await fs.writeFile(filePath, content, 'utf-8');
+        projectCache.set(relPath, hash);
+        written++;
       }
+
+      let removed = 0;
+      for (const cachedPath of [...projectCache.keys()]) {
+        if (!currentPaths.has(cachedPath)) {
+          const fullPath = path.join(previewPath, cachedPath);
+          try { await fs.unlink(fullPath); } catch {}
+          projectCache.delete(cachedPath);
+          removed++;
+        }
+      }
+
+      const syncMs = Date.now() - syncStart;
+      logger.info(`[preview-sync] project=${projectId} written=${written} skipped=${skipped} removed=${removed} total=${files.length} syncMs=${syncMs}`);
     } catch (err: any) {
       logger.error(`Failed to write files for project ${projectId}: ${err.message}`);
       const errInstance = this.makeErrorInstance(projectId, runId, `Failed to prepare preview directory: ${err.message}`);
@@ -507,7 +558,6 @@ export class PreviewService {
     const preview = this.previews.get(projectId);
     if (preview) {
       preview.status = 'stopped';
-      // Kill all spawned child processes and release their ports
       for (const [port, proc] of preview.processes) {
         try {
           proc.kill('SIGKILL');
@@ -519,6 +569,10 @@ export class PreviewService {
       previewEvents.emit('preview:stop', { projectId, runId: preview.runId });
     }
     this.previews.delete(projectId);
+
+    const previewPath = path.join('/tmp', `preview-${projectId}`);
+    fs.rm(previewPath, { recursive: true, force: true }).catch(() => {});
+    fileHashCache.delete(projectId);
   }
 
   getPreview(projectId: string): PreviewInstance | undefined {
