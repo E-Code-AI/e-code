@@ -8,6 +8,7 @@ import { realEmailService } from '../services/real-email-service';
 import { createLogger } from '../utils/logger';
 import { getCollaborationService } from '../collaboration/unified-collaboration-service';
 import { storage } from '../storage';
+import { notifyCollaborationInvite } from '../services/notification-events';
 
 const logger = createLogger('collaboration-router');
 
@@ -330,6 +331,15 @@ router.post('/invite', requireAuth, async (req: Request, res: Response) => {
       text: `${inviterName} invited you to collaborate on E-Code!\n\nYour role: ${roleDisplay}\n\nAccept the invitation: ${inviteLink}\n\nIf you didn't expect this invitation, you can safely ignore this email.`
     });
     
+    const invitedUser = await storage.getUserByEmail(email);
+    if (invitedUser) {
+      const project = await storage.getProject(parseInt(projectId, 10));
+      const projectName = project?.name || `Project #${projectId}`;
+      notifyCollaborationInvite(invitedUser.id, inviterName, projectName).catch(err =>
+        logger.warn('[Collaboration] Failed to send push notification for invite:', err)
+      );
+    }
+
     if (emailResult.success) {
       logger.info(`[Collaboration] Invitation email sent to ${email} for project ${projectId} by user ${inviterId}`);
       res.json({ 

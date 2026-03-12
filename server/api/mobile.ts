@@ -1,8 +1,8 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { storage } from '../storage';
 import { db } from '../db';
-import { projects, files } from '@shared/schema';
-import { eq, desc } from 'drizzle-orm';
+import { projects, files, deviceTokens } from '@shared/schema';
+import { eq, and, desc } from 'drizzle-orm';
 import { aiService } from '../ai/ai-service';
 import { aiProviderManager } from '../ai/ai-provider-manager';
 import { mobileContainerService } from '../services/mobile-container-service';
@@ -12,6 +12,7 @@ import crypto from 'crypto';
 import { getJwtSecret, getJwtRefreshSecret } from '../utils/secrets-manager';
 import { createLogger } from '../utils/logger';
 import { mobileOAuthRateLimiter } from '../middleware/custom-rate-limiter';
+import { mobileAppService } from './mobile-app-service';
 
 const logger = createLogger('mobile-api');
 const router = Router();
@@ -544,6 +545,105 @@ function formatTimeAgo(date: Date): string {
   if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
   return date.toLocaleDateString();
 }
+
+// ====== FCM DEVICE TOKEN MANAGEMENT ======
+
+router.post('/mobile/device-token', mobileEnsureAuthenticated, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { token, platform, deviceId } = req.body;
+
+    if (!token || typeof token !== 'string') {
+      return res.status(400).json({ error: 'token is required' });
+    }
+    if (!platform || !['android', 'ios', 'web'].includes(platform)) {
+      return res.status(400).json({ error: 'platform must be android, ios, or web' });
+    }
+
+    const [existing] = await db
+      .select()
+      .from(deviceTokens)
+      .where(eq(deviceTokens.token, token));
+
+    if (existing) {
+      if (existing.userId !== userId) {
+        await db.delete(deviceTokens).where(eq(deviceTokens.id, existing.id));
+        await db
+          .insert(deviceTokens)
+          .values({ userId, token, platform, deviceId: deviceId || null });
+      } else {
+        await db
+          .update(deviceTokens)
+          .set({ platform, deviceId: deviceId || null, lastSeen: new Date() })
+          .where(eq(deviceTokens.id, existing.id));
+      }
+    } else {
+      await db
+        .insert(deviceTokens)
+        .values({ userId, token, platform, deviceId: deviceId || null });
+    }
+
+    res.json({ success: true });
+  } catch (error) {
+    logger.error('[Mobile] Device token registration error:', error);
+    res.status(500).json({ error: 'Failed to register device token' });
+  }
+});
+
+router.delete('/mobile/device-token', mobileEnsureAuthenticated, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { token } = req.body;
+
+    if (!token || typeof token !== 'string') {
+      return res.status(400).json({ error: 'token is required' });
+    }
+
+    await db
+      .delete(deviceTokens)
+      .where(and(eq(deviceTokens.token, token), eq(deviceTokens.userId, userId)));
+
+    res.json({ success: true });
+  } catch (error) {
+    logger.error('[Mobile] Device token removal error:', error);
+    res.status(500).json({ error: 'Failed to remove device token' });
+  }
+});
+
+// ====== ADMIN: TEST NOTIFICATION ======
+
+router.post('/mobile/admin/test-notification', mobileEnsureAuthenticated, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const user = req.user;
+
+    if (user.role !== 'admin') {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const targetUserId = req.body.userId || userId;
+    const title = req.body.title || 'Test Notification';
+    const body = req.body.body || 'This is a test push notification from E-Code developer tools.';
+
+    const result = await mobileAppService.sendPushNotification({
+      userId: targetUserId,
+      title,
+      body,
+      type: 'system',
+      data: { test: 'true' }
+    });
+
+    res.json({
+      success: true,
+      deviceCount: result.deviceCount,
+      deliveryResults: result.deliveryResults,
+      notificationId: result.notification.id
+    });
+  } catch (error) {
+    logger.error('[Mobile] Test notification error:', error);
+    res.status(500).json({ error: 'Failed to send test notification' });
+  }
+});
 
 // ====== MOBILE OAUTH FLOW ======
 // Mobile OAuth works by:

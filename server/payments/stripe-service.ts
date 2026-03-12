@@ -6,6 +6,7 @@ import { getSubscriptionPeriodBoundary } from '../services/stripe-utils';
 import { PLANS, getPlanByTier } from './pricing-constants';
 import { creditsService } from '../services/credits-service';
 import { createLogger } from '../utils/logger';
+import { notifyPaymentFailed } from '../services/notification-events';
 
 function generateIdempotencyKey(prefix: string, ...parts: (string | number)[]): string {
   const timestamp = Date.now();
@@ -760,6 +761,11 @@ export class StripePaymentService {
       }
     }
 
+    notifyPaymentFailed(
+      typeof userId === 'string' ? parseInt(userId, 10) : userId,
+      `Payment of $${((paymentIntent.amount ?? 0) / 100).toFixed(2)} could not be processed.`
+    ).catch(err => logger.warn('[Stripe] Failed to send payment failure push notification:', err));
+
     logger.warn(`[Stripe] PaymentIntent failed for user ${userId}, pi ${paymentIntent.id}, status set to past_due`);
   }
 
@@ -793,6 +799,11 @@ export class StripePaymentService {
         logger.error(`[Stripe] Failed to send payment failure email for invoice.payment_failed (invoice: ${invoice.id}, user: ${userId}):`, emailError);
       }
     }
+
+    notifyPaymentFailed(
+      typeof userId === 'string' ? parseInt(userId, 10) : userId,
+      `Invoice payment of $${((invoice.amount_due ?? 0) / 100).toFixed(2)} failed.`
+    ).catch(err => logger.warn('[Stripe] Failed to send invoice failure push notification:', err));
 
     logger.warn(`[Stripe] Payment failed for user ${userId}, invoice ${invoice.id}, status set to past_due`);
   }

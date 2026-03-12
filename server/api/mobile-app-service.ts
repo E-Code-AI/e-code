@@ -1,6 +1,7 @@
 import { db } from '../db';
-import { mobileDevices, pushNotifications, users, projects } from '@shared/schema';
+import { mobileDevices, pushNotifications, users, projects, deviceTokens } from '@shared/schema';
 import { eq, and, desc, count } from 'drizzle-orm';
+import { fcmService } from '../integrations/fcm-service';
 
 export class MobileAppService {
   // Register mobile device
@@ -103,7 +104,7 @@ export class MobileAppService {
       .orderBy(desc(mobileDevices.lastSeen));
   }
 
-  // Send push notification
+  // Send push notification via FCM
   async sendPushNotification(data: {
     userId: number;
     title: string;
@@ -111,13 +112,11 @@ export class MobileAppService {
     type?: string;
     actionUrl?: string;
     data?: Record<string, any>;
-    deviceIds?: string[]; // Optional: send to specific devices only
   }) {
-    // Create notification record
     const [notification] = await db
       .insert(pushNotifications)
       .values({
-        userId: String(data.userId),
+        userId: data.userId,
         title: data.title,
         body: data.body,
         type: data.type ?? 'system',
@@ -129,74 +128,55 @@ export class MobileAppService {
       })
       .returning();
 
-    // Get user's active devices
-    let devicesQuery = db
+    const tokens = await db
       .select()
-      .from(mobileDevices)
-      .where(and(
-        eq(mobileDevices.userId, data.userId),
-        eq(mobileDevices.isActive, true)
-      ));
+      .from(deviceTokens)
+      .where(eq(deviceTokens.userId, data.userId));
 
-    if (data.deviceIds && data.deviceIds.length > 0) {
-      // Filter by specific device IDs if provided
-      devicesQuery = devicesQuery.where(
-        // Note: In a real implementation, you'd use `inArray` from drizzle-orm
-        eq(mobileDevices.deviceId, data.deviceIds[0]) // Simplified for this example
-      );
+    if (tokens.length === 0) {
+      return {
+        notification,
+        deliveryResults: [],
+        deviceCount: 0
+      };
     }
 
-    const devices = await devicesQuery;
+    const tokenStrings = tokens.map(t => t.token);
 
-    // Send to each device (in a real implementation, use push notification service)
-    const sendPromises = devices.map(async (device) => {
-      try {
-        // This would integrate with Firebase FCM, Apple Push Notifications, etc.
-        await this.sendToDevice(device, {
-          title: data.title,
-          body: data.body,
-          data: data.data || {}
-        });
-        return { deviceId: device.deviceId, success: true };
-      } catch (error) {
-        console.error(`[MobileAppService] Failed to send notification to device ${device.deviceId}:`, error);
-        return { deviceId: device.deviceId, success: false, error };
+    const fcmDataPayload: Record<string, string> = {};
+    if (data.data) {
+      for (const [k, v] of Object.entries(data.data)) {
+        fcmDataPayload[k] = String(v);
       }
-    });
+    }
+    if (data.type) {
+      fcmDataPayload.type = data.type;
+    }
+    if (data.actionUrl) {
+      fcmDataPayload.actionUrl = data.actionUrl;
+    }
 
-    const results = await Promise.all(sendPromises);
+    const { successCount, results } = await fcmService.sendToMultipleDevices(
+      tokenStrings,
+      {
+        title: data.title,
+        body: data.body,
+        data: Object.keys(fcmDataPayload).length > 0 ? fcmDataPayload : undefined
+      }
+    );
 
-    // Update notification as sent
-    await db
-      .update(pushNotifications)
-      .set({
-        sent: true,
-        sentAt: new Date()
-      })
-      .where(eq(pushNotifications.id, notification.id));
+    if (successCount > 0) {
+      await db
+        .update(pushNotifications)
+        .set({ sent: true, sentAt: new Date() })
+        .where(eq(pushNotifications.id, notification.id));
+    }
 
     return {
       notification,
       deliveryResults: results,
-      deviceCount: devices.length
+      deviceCount: tokens.length
     };
-  }
-
-  // Send to device (placeholder for actual push service integration)
-  private async sendToDevice(device: any, payload: any): Promise<void> {
-    // In a real implementation, this would integrate with:
-    // - Firebase Cloud Messaging (FCM) for Android
-    // - Apple Push Notification Service (APNs) for iOS
-    
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    // In production, you would:
-    // if (device.platform === 'ios') {
-    //   await apns.send(device.pushToken, payload);
-    // } else if (device.platform === 'android') {
-    //   await fcm.send(device.pushToken, payload);
-    // }
   }
 
   // Get user's notifications

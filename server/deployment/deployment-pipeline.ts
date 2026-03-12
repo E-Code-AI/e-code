@@ -5,6 +5,7 @@ import { buildPipeline, BuildConfig, BuildResult } from './build-pipeline';
 import { realDeploymentService, RealDeploymentConfig, RealDeploymentResult } from './real-deployment-service';
 import { storage } from '../storage';
 import { simplePackageInstaller } from '../package-management/simple-package-installer';
+import { notifyDeployComplete } from '../services/notification-events';
 
 const logger = createLogger('deployment-pipeline');
 
@@ -151,6 +152,15 @@ export class DeploymentPipeline {
         url: pipeline.url,
         logs: pipeline.logs
       });
+
+      try {
+        const project = await storage.getProject(config.projectId);
+        if (project) {
+          notifyDeployComplete(project.ownerId, config.projectName, pipeline.url || '');
+        }
+      } catch (notifyErr) {
+        logger.warn('Failed to send deploy-complete push notification:', notifyErr);
+      }
       
     } catch (error: any) {
       pipeline.status = 'failed';
@@ -304,6 +314,15 @@ export class DeploymentPipeline {
       pipelineResult.previewUrl = deploymentResult.customUrl || deploymentResult.url;
       pipelineResult.logs.push(`Quick deployment successful! Your app is live at: ${pipelineResult.url}`);
       pipelineResult.completedAt = new Date();
+
+      try {
+        const project = await storage.getProject(config.projectId);
+        if (project) {
+          notifyDeployComplete(project.ownerId, config.projectName, pipelineResult.url || '');
+        }
+      } catch (notifyErr) {
+        logger.warn('Failed to send deploy-complete push notification:', notifyErr);
+      }
       
     } catch (error: any) {
       pipelineResult.status = 'failed';

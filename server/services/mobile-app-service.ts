@@ -1,5 +1,8 @@
 import { DatabaseStorage } from '../storage';
 import { fcmService } from '../integrations/fcm-service';
+import { db } from '../db';
+import { deviceTokens } from '@shared/schema';
+import { eq } from 'drizzle-orm';
 
 export interface MobileSession {
   id: number;
@@ -169,48 +172,37 @@ export class MobileAppService {
       read: false,
       createdAt: new Date()
     };
-    
+
     const id = this.notificationIdCounter++;
     const notificationWithId = { ...notification, id };
     this.pushNotifications.set(id, notificationWithId);
-    
-    // Get user's devices
-    const sessions = Array.from(this.mobileSessions.values()).filter(s => s.userId === data.userId);
-    
-    for (const session of sessions) {
-      if (session.pushToken) {
-        // Send push notification
-        await this.sendToDevice(session.pushToken, {
-          title: data.title,
-          body: data.body,
-          data: data.data
-        });
+
+    const tokens = await db
+      .select()
+      .from(deviceTokens)
+      .where(eq(deviceTokens.userId, data.userId));
+
+    const tokenStrings = tokens.map(t => t.token).filter(Boolean);
+
+    if (tokenStrings.length > 0) {
+      const fcmData: Record<string, string> = {};
+      if (data.data) {
+        for (const [k, v] of Object.entries(data.data)) {
+          fcmData[k] = String(v);
+        }
       }
+
+      await fcmService.sendToMultipleDevices(tokenStrings, {
+        title: data.title,
+        body: data.body,
+        data: Object.keys(fcmData).length > 0 ? fcmData : undefined
+      });
     }
-    
+
     await this.storage.updatePushNotification(id, {
       sent: true,
       sentAt: new Date()
     });
-  }
-
-  private async sendToDevice(pushToken: string, data: any): Promise<void> {
-    if (!fcmService.isInitialized()) {
-      console.warn('[MobileAppService] FCM service not initialized. Set FIREBASE_SERVICE_ACCOUNT_JSON environment variable.');
-      return;
-    }
-
-    const success = await fcmService.sendToDevice(pushToken, {
-      title: data.title,
-      body: data.body,
-      data: data.data ? Object.fromEntries(
-        Object.entries(data.data).map(([k, v]) => [k, String(v)])
-      ) : undefined
-    });
-
-    if (!success) {
-      console.error(`[MobileAppService] Failed to send push notification to ${pushToken}`);
-    }
   }
 
   async startOfflineSync(data: {

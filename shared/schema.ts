@@ -808,6 +808,24 @@ export const notificationPreferences = pgTable("notification_preferences", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// FCM Device Tokens table - stores Firebase Cloud Messaging registration tokens
+export const deviceTokens = pgTable("device_tokens", {
+  id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  token: text("token").notNull(),
+  platform: varchar("platform", { length: 10 }).notNull(), // 'android', 'ios', 'web'
+  deviceId: varchar("device_id", { length: 255 }),
+  lastSeen: timestamp("last_seen").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("idx_device_tokens_user").on(table.userId),
+  unique("device_tokens_token_unique").on(table.token),
+]);
+
+export const insertDeviceTokenSchema = createInsertSchema(deviceTokens).omit({ id: true, createdAt: true, lastSeen: true });
+export type DeviceToken = typeof deviceTokens.$inferSelect;
+export type InsertDeviceToken = z.infer<typeof insertDeviceTokenSchema>;
+
 // Deployments table
 // Knowledge Graph for Memory MCP
 export const knowledgeGraphNodes = pgTable("knowledge_graph_nodes", {

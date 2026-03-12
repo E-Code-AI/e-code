@@ -1,4 +1,7 @@
 import * as admin from 'firebase-admin';
+import { db } from '../db';
+import { deviceTokens } from '@shared/schema';
+import { eq } from 'drizzle-orm';
 
 export interface FCMNotificationPayload {
   title: string;
@@ -7,6 +10,19 @@ export interface FCMNotificationPayload {
   imageUrl?: string;
   clickAction?: string;
 }
+
+export interface FCMSendResult {
+  token: string;
+  success: boolean;
+  error?: string;
+  staleToken?: boolean;
+}
+
+const STALE_TOKEN_ERROR_CODES = [
+  'messaging/registration-token-not-registered',
+  'messaging/invalid-registration-token',
+  'messaging/mismatched-credential',
+];
 
 export class FCMService {
   private initialized = false;
@@ -19,7 +35,7 @@ export class FCMService {
   private initialize(): void {
     try {
       const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
-      
+
       if (!serviceAccountJson) {
         console.warn('[FCMService] FIREBASE_SERVICE_ACCOUNT_JSON not configured. Push notifications disabled.');
         return;
@@ -36,6 +52,7 @@ export class FCMService {
       }
 
       this.initialized = true;
+      console.log('[FCMService] Firebase Admin SDK initialized successfully');
     } catch (error) {
       console.error('[FCMService] Failed to initialize Firebase Admin SDK:', error);
       console.warn('[FCMService] Push notifications will not work. Set FIREBASE_SERVICE_ACCOUNT_JSON environment variable.');
@@ -45,10 +62,10 @@ export class FCMService {
   async sendToDevice(
     deviceToken: string,
     notification: FCMNotificationPayload
-  ): Promise<boolean> {
+  ): Promise<FCMSendResult> {
     if (!this.initialized || !this.app) {
       console.warn('[FCMService] Cannot send notification - service not initialized');
-      return false;
+      return { token: deviceToken, success: false, error: 'FCM not initialized' };
     }
 
     try {
@@ -77,26 +94,48 @@ export class FCMService {
         }
       };
 
-      const response = await admin.messaging().send(message);
-      return true;
-    } catch (error) {
-      console.error('[FCMService] Error sending notification:', error);
-      return false;
+      await admin.messaging().send(message);
+      return { token: deviceToken, success: true };
+    } catch (error: any) {
+      const errorCode = error?.code || error?.errorInfo?.code || '';
+      const isStale = STALE_TOKEN_ERROR_CODES.includes(errorCode);
+
+      if (isStale) {
+        console.warn(`[FCMService] Stale token detected, removing: ${deviceToken.substring(0, 12)}...`);
+        await this.removeStaleToken(deviceToken);
+      } else {
+        console.error('[FCMService] Error sending notification:', error);
+      }
+
+      return {
+        token: deviceToken,
+        success: false,
+        error: errorCode || error.message,
+        staleToken: isStale
+      };
     }
   }
 
   async sendToMultipleDevices(
-    deviceTokens: string[],
+    deviceTokensList: string[],
     notification: FCMNotificationPayload
-  ): Promise<{ successCount: number; failureCount: number }> {
+  ): Promise<{ successCount: number; failureCount: number; results: FCMSendResult[] }> {
     if (!this.initialized || !this.app) {
       console.warn('[FCMService] Cannot send notifications - service not initialized');
-      return { successCount: 0, failureCount: deviceTokens.length };
+      return {
+        successCount: 0,
+        failureCount: deviceTokensList.length,
+        results: deviceTokensList.map(t => ({ token: t, success: false, error: 'FCM not initialized' }))
+      };
+    }
+
+    if (deviceTokensList.length === 0) {
+      return { successCount: 0, failureCount: 0, results: [] };
     }
 
     try {
       const message: admin.messaging.MulticastMessage = {
-        tokens: deviceTokens,
+        tokens: deviceTokensList,
         notification: {
           title: notification.title,
           body: notification.body,
@@ -120,14 +159,46 @@ export class FCMService {
       };
 
       const response = await admin.messaging().sendEachForMulticast(message);
-      
+
+      const results: FCMSendResult[] = [];
+      const staleTokensToRemove: string[] = [];
+
+      response.responses.forEach((resp, idx) => {
+        const token = deviceTokensList[idx];
+        if (resp.success) {
+          results.push({ token, success: true });
+        } else {
+          const errorCode = resp.error?.code || '';
+          const isStale = STALE_TOKEN_ERROR_CODES.includes(errorCode);
+          if (isStale) {
+            staleTokensToRemove.push(token);
+          }
+          results.push({
+            token,
+            success: false,
+            error: errorCode || resp.error?.message,
+            staleToken: isStale
+          });
+        }
+      });
+
+      if (staleTokensToRemove.length > 0) {
+        console.warn(`[FCMService] Removing ${staleTokensToRemove.length} stale token(s)`);
+        await Promise.all(staleTokensToRemove.map(t => this.removeStaleToken(t)));
+      }
+
       return {
         successCount: response.successCount,
-        failureCount: response.failureCount
+        failureCount: response.failureCount,
+        results
       };
     } catch (error) {
       console.error('[FCMService] Error sending batch notifications:', error);
-      return { successCount: 0, failureCount: deviceTokens.length };
+      return {
+        successCount: 0,
+        failureCount: deviceTokensList.length,
+        results: deviceTokensList.map(t => ({ token: t, success: false, error: 'batch send failed' }))
+      };
     }
   }
 
@@ -151,7 +222,7 @@ export class FCMService {
         data: notification.data
       };
 
-      const response = await admin.messaging().send(message);
+      await admin.messaging().send(message);
       return true;
     } catch (error) {
       console.error('[FCMService] Error sending topic notification:', error);
@@ -182,6 +253,14 @@ export class FCMService {
       await admin.messaging().unsubscribeFromTopic(tokens, topic);
     } catch (error) {
       console.error('[FCMService] Error unsubscribing from topic:', error);
+    }
+  }
+
+  private async removeStaleToken(token: string): Promise<void> {
+    try {
+      await db.delete(deviceTokens).where(eq(deviceTokens.token, token));
+    } catch (err) {
+      console.error('[FCMService] Failed to remove stale token from DB:', err);
     }
   }
 
