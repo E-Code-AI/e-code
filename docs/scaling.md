@@ -56,7 +56,7 @@ a fresh shell in the same working directory.
 
 WebSocket connections (terminal, collaboration, LSP) require sticky sessions so
 that all frames in a connection reach the same instance. Configure your load
-balancer to use cookie-based affinity on the `connect.sid` cookie.
+balancer to use cookie-based affinity on the `ecode.sid` cookie.
 
 | LB               | Setting                                 |
 |-------------------|-----------------------------------------|

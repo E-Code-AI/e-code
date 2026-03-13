@@ -332,14 +332,6 @@ const serverState = {
   errors: [] as string[]
 };
 
-process.on('SIGTERM', () => {
-  logger.info('[Server] SIGTERM received — entering draining mode');
-  serverState.phase = 'draining';
-  setTimeout(() => {
-    logger.info('[Server] Drain timeout reached — shutting down');
-    process.exit(0);
-  }, 30_000);
-});
 
 app.use((req, res, next) => {
   if (serverState.phase !== 'ready' && process.env.NODE_ENV === 'production') {
