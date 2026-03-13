@@ -28,6 +28,12 @@ const RECOMMENDED_IN_PRODUCTION: Array<{ key: string; description: string }> = [
   { key: 'SENTRY_DSN', description: 'Sentry error tracking DSN' },
   { key: 'STRIPE_SECRET_KEY', description: 'Stripe payments API key' },
   { key: 'SENDGRID_API_KEY', description: 'SendGrid email API key' },
+  {
+    key: 'FROM_EMAIL',
+    description: 'Verified sender address for transactional emails (SendGrid Sender Authentication). ' +
+      'Defaults to noreply@e-code.ai — verify this domain at https://app.sendgrid.com/settings/sender_auth ' +
+      'or set FROM_EMAIL to an already-verified address, otherwise all emails will be rejected.'
+  },
   { key: 'ALLOWED_ORIGINS', description: 'CORS allowed origins' },
   { key: 'APP_URL', description: 'Public application URL' },
   { key: 'RUNNER_JWT_SECRET', description: 'Shared secret for runner microservice auth' },

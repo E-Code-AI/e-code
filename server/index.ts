@@ -1303,25 +1303,33 @@ httpServer.listen(port, "0.0.0.0", () => {
   serverState.phase = 'ready';
   const startupMs = Date.now() - serverState.startTime;
 
-  // Production startup banner — one clear snapshot of what's active
+  // Production startup banner — one clear, accurate snapshot of what's active
   const isReplitVM = !!(process.env.REPL_ID || process.env.REPLIT_DEPLOYMENT);
+
+  // Compute object storage state using the same logic as ObjectStorageService
+  const _hasBucket = !!(process.env.PRIVATE_OBJECT_DIR || process.env.REPLIT_OBJECT_STORAGE_BUCKET);
+  const _hasExplicitBucket = !!process.env.REPLIT_OBJECT_STORAGE_BUCKET;
+  const _usingReplitGCS = _hasBucket && isReplitVM &&
+                          (process.env.NODE_ENV === 'production' || _hasExplicitBucket);
+
+  const _fromEmail = process.env.FROM_EMAIL || 'noreply@e-code.ai (unverified default)';
+
   const banner = [
     '',
-    '╔══════════════════════════════════════════════════════╗',
-    `║  E-Code Platform  •  ${process.env.NODE_ENV || 'development'} mode  •  ${startupMs}ms     `,
-    '╠══════════════════════════════════════════════════════╣',
-    `║  Redis           ${process.env.REDIS_URL           ? '✅ connected' : '⚠️  disabled (memory store)  '}`,
-    `║  Stripe          ${process.env.STRIPE_SECRET_KEY   ? '✅ enabled'   : '⚠️  disabled (no key)        '}`,
-    `║  SendGrid        ${process.env.SENDGRID_API_KEY    ? '✅ enabled'   : '⚠️  disabled (no key)        '}`,
-    `║  Sentry          ${process.env.SENTRY_DSN          ? '✅ enabled'   : '⚠️  disabled (no DSN)        '}`,
-    `║  Object Storage  ${process.env.PRIVATE_OBJECT_DIR || process.env.REPLIT_OBJECT_STORAGE_BUCKET
-                                                          ? '✅ Replit GCS' : '⚠️  local filesystem         '}`,
+    '╔════════════════════════════════════════════════════════════╗',
+    `║  E-Code Platform  •  ${process.env.NODE_ENV || 'development'} mode  •  ${startupMs}ms`,
+    '╠════════════════════════════════════════════════════════════╣',
+    `║  Redis           ${process.env.REDIS_URL           ? '✅ connected (session store)'    : '⚠️  no REDIS_URL — memory sessions'}`,
+    `║  Stripe          ${process.env.STRIPE_SECRET_KEY   ? '✅ enabled'                      : '⚠️  disabled — STRIPE_SECRET_KEY missing'}`,
+    `║  SendGrid        ${process.env.SENDGRID_API_KEY    ? `✅ enabled  FROM=${_fromEmail}` : '⚠️  disabled — SENDGRID_API_KEY missing'}`,
+    `║  Sentry          ${process.env.SENTRY_DSN          ? '✅ enabled'                      : '⚠️  disabled — SENTRY_DSN missing'}`,
+    `║  Object Storage  ${_usingReplitGCS                 ? '✅ Replit GCS (active)'          : _hasBucket ? '⚠️  bucket set but using local (dev)' : '⚠️  local filesystem'}`,
     `║  Terminal        ${process.env.ALLOW_INSECURE_LOCAL_PTY === 'true'
-                                                          ? (isReplitVM ? '✅ Replit VM isolation' : '⚠️  insecure local PTY')
-                                                          : '🔒 Docker required'}`,
-    `║  Replit VM       ${isReplitVM                      ? '✅ yes'        : '—  no                       '}`,
-    `║  APP_URL         ${process.env.APP_URL || (process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}` : 'http://localhost:5000')}`,
-    '╚══════════════════════════════════════════════════════╝',
+                                                          ? (isReplitVM ? '✅ Replit VM isolation (safe)' : '⚠️  insecure local PTY')
+                                                          : '🔒 Docker required (safe)'}`,
+    `║  Replit VM       ${isReplitVM                      ? '✅ yes'                          : '—  no (bare metal / cloud VM)'}`,
+    `║  APP_URL         ${process.env.APP_URL             || (process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}` : 'http://localhost:5000')}`,
+    '╚════════════════════════════════════════════════════════════╝',
     '',
   ].join('\n');
   console.log(banner);

@@ -35,20 +35,38 @@ export class ObjectStorageService {
   private bucketName: string;
 
   constructor() {
-    this.bucketName = process.env.PRIVATE_OBJECT_DIR?.split('/')[1] || 
+    // Bucket name: prefer Replit's auto-provisioned dir, fall back to explicit env var
+    this.bucketName = process.env.PRIVATE_OBJECT_DIR?.split('/')[1] ||
                       process.env.REPLIT_OBJECT_STORAGE_BUCKET || '';
-    this.useReplitStorage = !!this.bucketName && 
-                            !!process.env.REPL_ID && 
-                            process.env.NODE_ENV === 'production';
+
+    const isReplitEnv = !!(process.env.REPL_ID || process.env.REPLIT_DEPLOYMENT);
+    const hasExplicitBucket = !!process.env.REPLIT_OBJECT_STORAGE_BUCKET;
+
+    // Activate Replit GCS when:
+    //   a) A bucket is configured AND we're on Replit AND in production, OR
+    //   b) REPLIT_OBJECT_STORAGE_BUCKET is explicitly set (user opted in, any env)
+    this.useReplitStorage = !!this.bucketName && isReplitEnv &&
+                            (process.env.NODE_ENV === 'production' || hasExplicitBucket);
+
     this.storagePath = process.env.STORAGE_PATH || path.join(process.cwd(), 'storage');
     this.initialize();
   }
 
+  /** Returns true when Replit GCS is the active backend (used for health/banner reporting) */
+  get isUsingReplitStorage(): boolean {
+    return this.useReplitStorage;
+  }
+
+  /** Returns the storage backend label for diagnostics */
+  get storageBackend(): string {
+    return this.useReplitStorage ? 'Replit GCS' : 'local filesystem';
+  }
+
   private async initialize() {
     if (this.useReplitStorage) {
-      logger.info('Using Replit built-in Object Storage');
+      logger.info(`Using Replit built-in Object Storage (bucket: ${this.bucketName})`);
     } else {
-      logger.info('Using local filesystem storage (development mode)');
+      logger.info(`Using local filesystem storage at: ${this.storagePath}`);
       try {
         await fs.mkdir(this.storagePath, { recursive: true });
       } catch (error) {
