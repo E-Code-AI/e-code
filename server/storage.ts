@@ -5801,62 +5801,79 @@ function getSessionDatabaseUrl(): string | null {
   return null;
 }
 
-// Initialize session store with error handling
-// Use memorystore in development to avoid Neon cold-start timeouts
-// Use PostgreSQL in production for persistence across deployments
 const MemoryStore = createMemoryStore(session);
 
 let sessionStore: any;
 const isProduction = process.env.NODE_ENV === 'production';
 
-try {
-  if (!isProduction) {
-    // Development: Use in-memory store to avoid Neon cold-start issues
-    console.log('[Session Store] Using MemoryStore for development (faster, no network latency)');
-    sessionStore = new MemoryStore({
-      checkPeriod: 86400000, // Prune expired entries every 24h
-    });
-  } else {
-    // Production: Use PostgreSQL for persistence
-    const sessionDbUrl = getSessionDatabaseUrl();
-    
-    if (!sessionDbUrl) {
-      const errorMessage = '[CRITICAL] DATABASE_URL is not set in production. ' +
-        'Session persistence requires a database. MemoryStore fallback is disabled ' +
-        'in production to prevent session loss and security vulnerabilities. ' +
-        'Please ensure DATABASE_URL or /tmp/replitdb is available.';
-      console.error(errorMessage);
-      throw new Error(errorMessage);
-    } else {
-      // Create a native pg pool for session store
-      // ✅ PRODUCTION FIX: Increased timeouts and pool size to prevent connection storms
-      const pgPool = new Pool({
-        connectionString: sessionDbUrl,
-        max: 20, // Aligned with main pool (db.ts) for consistency
-        min: 2, // Keep some connections warm
-        idleTimeoutMillis: 60000, // 60s - allow longer idle time
-        connectionTimeoutMillis: 60000, // 60s - critical fix for table creation timeouts
-        maxUses: 7500, // Recycle connections after 7500 uses (Neon best practice)
-        allowExitOnIdle: false // Prevent pool shutdown on idle
-      });
+async function initSessionStore() {
+  const redisUrl = process.env.REDIS_URL;
 
-      const pgStore = connectPg(session);
-      
-      sessionStore = new pgStore({
-        pool: pgPool,
-        createTableIfMissing: true,
-        ttl: 7 * 24 * 60 * 60, // 7 days
+  if (redisUrl) {
+    try {
+      const connectRedisModule = await import('connect-redis');
+      const RedisStoreClass = connectRedisModule.default || connectRedisModule.RedisStore;
+      const ioredis = await import('ioredis');
+      const connectionUrl = redisUrl.replace('rediss://', 'redis://');
+      const redisClient = new ioredis.default(connectionUrl, {
+        maxRetriesPerRequest: 3,
+        enableReadyCheck: true,
+        lazyConnect: true,
       });
-      console.log('[Session Store] Using PostgreSQL store for production');
+      await redisClient.connect();
+      sessionStore = new RedisStoreClass({
+        client: redisClient,
+        prefix: 'session:',
+        ttl: 7 * 24 * 60 * 60,
+      });
+      console.log('[Session Store] Using Redis store (shared across instances)');
+      return;
+    } catch (err) {
+      console.warn('[Session Store] Redis store init failed, falling back:', err);
     }
   }
+
+  if (!isProduction) {
+    console.log('[Session Store] Using MemoryStore for development');
+    sessionStore = new MemoryStore({
+      checkPeriod: 86400000,
+    });
+    return;
+  }
+
+  const sessionDbUrl = getSessionDatabaseUrl();
+  if (!sessionDbUrl) {
+    console.error('[CRITICAL] No Redis or DATABASE_URL available in production');
+    process.exit(1);
+  }
+
+  const pgPool = new Pool({
+    connectionString: sessionDbUrl,
+    max: 20,
+    min: 2,
+    idleTimeoutMillis: 60000,
+    connectionTimeoutMillis: 60000,
+    maxUses: 7500,
+    allowExitOnIdle: false,
+  });
+
+  const pgStore = connectPg(session);
+  sessionStore = new pgStore({
+    pool: pgPool,
+    createTableIfMissing: true,
+    ttl: 7 * 24 * 60 * 60,
+  });
+  console.log('[Session Store] Using PostgreSQL store for production (Redis unavailable)');
+}
+
+try {
+  await initSessionStore();
 } catch (error) {
   if (isProduction) {
     console.error('[CRITICAL] Failed to initialize session store in production:', error);
     process.exit(1);
   }
   console.error('[Storage Module] Failed to initialize session store:', error);
-  // Create a fallback in-memory session store
   sessionStore = new MemoryStore({
     checkPeriod: 86400000,
   });

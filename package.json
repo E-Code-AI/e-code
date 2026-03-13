@@ -60,6 +60,7 @@
     "commander": "^14.0.0",
     "compression": "^1.8.1",
     "connect-pg-simple": "^10.0.0",
+    "connect-redis": "^9.0.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "cross-spawn": "^7.0.6",

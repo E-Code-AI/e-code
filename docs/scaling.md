@@ -17,16 +17,19 @@ Every instance must connect to the **same** Postgres and Redis clusters.
 
 ### HTTP Session Store
 
-HTTP sessions are stored in Postgres via `connect-pg-simple`. Any instance can
-authenticate any request because the session table is shared. The session cookie
-(`ecode.sid`) is verified against Postgres on every request.
+When `REDIS_URL` is set, HTTP sessions are stored in Redis via `connect-redis`.
+Any instance can authenticate any request because the session store is shared.
+The session cookie (`ecode.sid`) is verified against Redis on every request.
+
+If Redis is unavailable, sessions fall back to Postgres via `connect-pg-simple`
+(production) or MemoryStore (development only).
 
 ### WebSocket Authentication
 
 WebSocket upgrade requests (terminal, collaboration) authenticate using the
 same session cookie. The PTY terminal service reads the `ecode.sid` cookie,
-looks up the session in the Postgres-backed store, and verifies the user. JWT
-tokens are supported as a fallback for programmatic clients.
+looks up the session in the shared Redis-backed session store, and verifies the
+user. JWT tokens are supported as a fallback for programmatic clients.
 
 ### Terminal Sessions
 
