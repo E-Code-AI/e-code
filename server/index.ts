@@ -326,12 +326,20 @@ export function getServiceStatus(): Record<string, boolean> {
   return services;
 }
 
-// Track server readiness state (using dynamic counts)
 const serverState = {
-  phase: 'starting' as 'starting' | 'listening' | 'loading' | 'ready',
+  phase: 'starting' as 'starting' | 'listening' | 'loading' | 'ready' | 'draining',
   startTime: Date.now(),
   errors: [] as string[]
 };
+
+process.on('SIGTERM', () => {
+  logger.info('[Server] SIGTERM received — entering draining mode');
+  serverState.phase = 'draining';
+  setTimeout(() => {
+    logger.info('[Server] Drain timeout reached — shutting down');
+    process.exit(0);
+  }, 30_000);
+});
 
 app.use((req, res, next) => {
   if (serverState.phase !== 'ready' && process.env.NODE_ENV === 'production') {
@@ -350,8 +358,16 @@ app.use((req, res, next) => {
   next();
 });
 
-// Main health check - responds with structured subsystem status
 app.get('/health', async (_req, res) => {
+  if (serverState.phase === 'draining') {
+    return res.status(503).json({
+      status: 'draining',
+      phase: 'draining',
+      uptime: `${Math.round((Date.now() - serverState.startTime) / 1000)}s`,
+      message: 'Instance is shutting down — route new connections elsewhere'
+    });
+  }
+
   const uptime = Date.now() - serverState.startTime;
   const { total, ready } = getServiceCounts();
 
@@ -422,8 +438,10 @@ app.get('/health/liveness', (_req, res) => {
   res.status(200).json({ status: 'alive' });
 });
 
-// Kubernetes-style readiness probe - returns 503 until server is ready (dynamic counts)
 app.get('/health/readiness', (_req, res) => {
+  if (serverState.phase === 'draining') {
+    return res.status(503).json({ ready: false, phase: 'draining' });
+  }
   const services = getServiceStatus();
   const allReady = Object.values(services).every(ready => ready);
   const readyCount = Object.values(services).filter(ready => ready).length;

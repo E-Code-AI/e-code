@@ -346,18 +346,22 @@ export function setupTerminalWebsocket(server: Server) {
         if (session) {
           session.clients.delete(ws);
           
-          // FORTUNE 500 SCALABILITY + PERSISTENCE: Clean up session if no clients left
           if (session.clients.size === 0) {
-            logger.info(`No clients left for project ${projectId}, cleaning up session`);
+            logger.info(`No clients left for project ${projectId}, checkpointing session to Redis`);
             
-            // Unregister from scalability manager
             terminalScalabilityManager.unregisterSession(session.sessionId);
-            
-            // Unregister from heartbeat manager
             websocketHeartbeatManager.unregisterClient(ws);
             
-            // Delete from Redis (session ended)
-            await redisSessionManager.deleteSession(session.sessionId);
+            await redisSessionManager.saveSession({
+              sessionId: session.sessionId,
+              projectId,
+              commandHistory: session.commandHistory,
+              currentDirectory: session.currentDirectory,
+              columns: session.columns,
+              rows: session.rows,
+              createdAt: Date.now(),
+              lastActivity: Date.now()
+            });
             
             terminalSessions.delete(projectId);
           }
