@@ -230,17 +230,27 @@ export class PTYTerminalService {
       let authenticated = false;
       let authenticatedUserId: number | null = null;
 
+      interface SessionData {
+        passport?: { user?: number | string };
+      }
+
+      interface JwtPayload {
+        userId?: number;
+        id?: number;
+        sub?: number;
+      }
+
       if (request.headers.cookie) {
         const cookies = parseCookie(request.headers.cookie);
         const sidCookie = cookies['ecode.sid'] || cookies['connect.sid'];
         if (sidCookie) {
           const sid = sidCookie.startsWith('s:') ? sidCookie.slice(2).split('.')[0] : sidCookie;
-          const sess = await new Promise<any>((resolve) => {
-            sessionStore.get(sid, (_err: any, s: any) => resolve(s || null));
+          const sess = await new Promise<SessionData | null>((resolve) => {
+            sessionStore.get(sid, (_err: Error | null, s: SessionData | undefined) => resolve(s || null));
           });
           if (sess?.passport?.user) {
             authenticated = true;
-            authenticatedUserId = typeof sess.passport.user === 'number' ? sess.passport.user : parseInt(sess.passport.user, 10);
+            authenticatedUserId = typeof sess.passport.user === 'number' ? sess.passport.user : parseInt(String(sess.passport.user), 10);
           }
         }
       }
@@ -249,7 +259,7 @@ export class PTYTerminalService {
         try {
           const jwtSecret = process.env.JWT_SECRET || process.env.SESSION_SECRET;
           if (jwtSecret) {
-            const decoded = jwt.verify(token, jwtSecret) as any;
+            const decoded = jwt.verify(token, jwtSecret) as JwtPayload;
             authenticated = true;
             authenticatedUserId = decoded.userId || decoded.id || decoded.sub || null;
           }
@@ -309,7 +319,11 @@ export class PTYTerminalService {
         logger.info(`Session created successfully for project ${projectId}`);
 
         if (redisSession) {
-          ws.send(JSON.stringify({ type: 'output', data: '\r\n[New terminal session created from checkpoint (previous session ended)]\r\n' }));
+          if (redisSession.sessionEnded) {
+            ws.send(JSON.stringify({ type: 'output', data: '\r\n[New terminal session created from checkpoint (previous session ended)]\r\n' }));
+          } else {
+            ws.send(JSON.stringify({ type: 'output', data: '\r\n[New terminal session created from checkpoint (previous session was interrupted)]\r\n' }));
+          }
           if (redisSession.outputSnapshot) {
             ws.send(JSON.stringify({ type: 'output', data: redisSession.outputSnapshot }));
           }

@@ -420,7 +420,8 @@ app.get('/health', async (_req, res) => {
     if (overallStatus !== 'down') overallStatus = 'degraded';
   }
 
-  const statusCode = overallStatus === 'down' ? 503 : 200;
+  const notReady = serverState.phase !== 'ready';
+  const statusCode = overallStatus === 'down' || notReady ? 503 : 200;
   res.status(statusCode).json({
     status: overallStatus,
     phase: serverState.phase,
