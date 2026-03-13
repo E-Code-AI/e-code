@@ -408,7 +408,7 @@ export function ReplitAgentPanelV3({
   
   // ✅ FIX (Jan 2026): Use Zustand store for bootstrap failure state - survives component remounts
   // This prevents mobile users from being stuck on "Initializing Agent" forever
-  const { bootstrapTimedOut, startBootstrapTimer, setBootstrapTimedOut } = useAutonomousBuildStore();
+  const { bootstrapTimedOut, bootstrapWarning, startBootstrapTimer, setBootstrapTimedOut, setBootstrapWarning, clearBootstrapTimers } = useAutonomousBuildStore();
   const bootstrapFailed = bootstrapTimedOut;
   
   // DEBUG: Log component render with all initialization state (dev only)
@@ -694,8 +694,9 @@ export function ReplitAgentPanelV3({
         setAgentMode(response.agentMode);
         bootstrapCompleted = true;
         
-        // ✅ FIX (Jan 2026): Reset bootstrapTimedOut on success for next project
+        clearBootstrapTimers();
         setBootstrapTimedOut(false);
+        setBootstrapWarning(false);
         
         // ✅ FIX (Dec 25, 2025): Enable active build session for WebSocket streaming
         // This keeps the WebSocket connected for real-time progress updates
@@ -706,7 +707,7 @@ export function ReplitAgentPanelV3({
         console.error('[ReplitAgentPanelV3] Bootstrap conversation failed:', error);
         bootstrapCompleted = true;
         
-        // ✅ FIX (Jan 2026): Set bootstrapTimedOut in global store to exit loading state
+        clearBootstrapTimers();
         setBootstrapTimedOut(true);
         // ✅ FIX (Dec 25, 2025): Notify parent to clear bootstrap token
         onBootstrapFailure?.();
@@ -2497,6 +2498,17 @@ export function ReplitAgentPanelV3({
         </div>
         
       </div>
+
+      {/* Bootstrap Warning Banner */}
+      {bootstrapWarning && !bootstrapTimedOut && isBootstrapping && !conversationId && (
+        <div 
+          className="mx-3 sm:mx-4 mt-2 px-4 py-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20 flex items-center gap-2 text-[13px] text-yellow-700 dark:text-yellow-400"
+          data-testid="bootstrap-warning-banner"
+        >
+          <Loader2 className="h-4 w-4 flex-shrink-0 animate-spin" />
+          <span>Still connecting to the agent — this is taking longer than usual...</span>
+        </div>
+      )}
 
       {/* Main Chat Content */}
       <>

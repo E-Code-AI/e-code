@@ -1,5 +1,9 @@
 import { createPortal } from 'react-dom';
+import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
+import { RefreshCw, AlertCircle } from 'lucide-react';
+
+const LOADING_TIMEOUT_MS = 15000;
 
 interface ECodeLoadingProps {
   className?: string;
@@ -8,6 +12,7 @@ interface ECodeLoadingProps {
   fullScreen?: boolean;
   centered?: boolean;
   containerClassName?: string;
+  timeoutMs?: number;
 }
 
 export function ECodeLoading({ 
@@ -16,8 +21,16 @@ export function ECodeLoading({
   text = 'Loading...', 
   fullScreen = false,
   centered = false,
-  containerClassName
+  containerClassName,
+  timeoutMs = LOADING_TIMEOUT_MS
 }: ECodeLoadingProps) {
+  const [timedOut, setTimedOut] = useState(false);
+
+  useEffect(() => {
+    if (!fullScreen && !centered) return;
+    const timer = setTimeout(() => setTimedOut(true), timeoutMs);
+    return () => clearTimeout(timer);
+  }, [fullScreen, centered, timeoutMs]);
   const sizes = {
     sm: 'h-8 w-8',
     md: 'h-12 w-12',
@@ -110,13 +123,32 @@ export function ECodeLoading({
     </div>
   );
 
+  const timedOutContent = (
+    <div className="flex flex-col items-center justify-center gap-4 max-w-md px-6 text-center">
+      <div className="p-3 rounded-full bg-destructive/10">
+        <AlertCircle className="h-8 w-8 text-destructive" />
+      </div>
+      <h3 className="text-lg font-semibold text-foreground">Taking longer than expected</h3>
+      <p className="text-sm text-muted-foreground">
+        The page is taking longer than usual to load. This might be a temporary issue.
+      </p>
+      <button
+        onClick={() => window.location.reload()}
+        className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+        data-testid="loading-timeout-refresh"
+      >
+        <RefreshCw className="h-4 w-4" />
+        Refresh Page
+      </button>
+    </div>
+  );
+
   if (fullScreen) {
     const content = (
       <div className="fixed inset-0 bg-background z-50 flex items-center justify-center" data-testid="ecode-loading-fullscreen">
-        {loadingContent}
+        {timedOut ? timedOutContent : loadingContent}
       </div>
     );
-    // Use portal to escape parent transform contexts that break fixed positioning
     if (typeof document !== 'undefined') {
       return createPortal(content, document.body);
     }
@@ -126,10 +158,9 @@ export function ECodeLoading({
   if (centered) {
     const content = (
       <div className={cn('fixed inset-0 flex items-center justify-center w-full h-full bg-background/80 backdrop-blur-sm z-40', containerClassName)}>
-        {loadingContent}
+        {timedOut ? timedOutContent : loadingContent}
       </div>
     );
-    // Use portal to escape parent transform contexts that break fixed positioning
     if (typeof document !== 'undefined') {
       return createPortal(content, document.body);
     }

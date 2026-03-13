@@ -35,9 +35,8 @@ interface AutonomousBuildState {
   sessionId: string | null;
   conversationId: number | null;
   inlineMode: boolean;
-  // ✅ FIX (Jan 2026): Persist bootstrap timeout state across component remounts
-  // This prevents the "Initializing Agent" screen from persisting forever on mobile
   bootstrapTimedOut: boolean;
+  bootstrapWarning: boolean;
   bootstrapStartTime: number | null;
 }
 
@@ -54,6 +53,8 @@ interface AutonomousBuildActions {
   setComplete: (projectUrl?: string) => void;
   setInlineMode: (enabled: boolean) => void;
   setBootstrapTimedOut: (timedOut: boolean) => void;
+  setBootstrapWarning: (warning: boolean) => void;
+  clearBootstrapTimers: () => void;
   startBootstrapTimer: () => void;
   reset: () => void;
 }
@@ -75,17 +76,27 @@ const initialState: AutonomousBuildState = {
   conversationId: null,
   inlineMode: true,
   bootstrapTimedOut: false,
+  bootstrapWarning: false,
   bootstrapStartTime: null,
 };
 
-// ✅ FIX (Mar 2026): Increased to 180s — complex SaaS builds (npm install + AI file gen) take 90-150s
-const BOOTSTRAP_TIMEOUT_MS = 180000;
+const BOOTSTRAP_WARNING_MS = 10000;
+const BOOTSTRAP_TIMEOUT_MS = 20000;
 let globalBootstrapTimeoutId: ReturnType<typeof setTimeout> | null = null;
+let globalBootstrapWarningId: ReturnType<typeof setTimeout> | null = null;
 
 export const useAutonomousBuildStore = create<AutonomousBuildState & AutonomousBuildActions>((set) => ({
   ...initialState,
 
   startBuild: ({ projectId, sessionId, conversationId }) => {
+    if (globalBootstrapTimeoutId) {
+      clearTimeout(globalBootstrapTimeoutId);
+      globalBootstrapTimeoutId = null;
+    }
+    if (globalBootstrapWarningId) {
+      clearTimeout(globalBootstrapWarningId);
+      globalBootstrapWarningId = null;
+    }
     set({
       isActive: true,
       phase: 'planning',
@@ -101,6 +112,9 @@ export const useAutonomousBuildStore = create<AutonomousBuildState & AutonomousB
       projectId,
       sessionId: sessionId || null,
       conversationId: conversationId || null,
+      bootstrapTimedOut: false,
+      bootstrapWarning: false,
+      bootstrapStartTime: null,
     });
   },
 
@@ -149,25 +163,41 @@ export const useAutonomousBuildStore = create<AutonomousBuildState & AutonomousB
 
   setBootstrapTimedOut: (timedOut) => set({ bootstrapTimedOut: timedOut }),
 
-  // ✅ FIX (Jan 2026): Global bootstrap timer that survives component remounts
-  // This ensures mobile users don't get stuck on "Initializing Agent" forever
+  setBootstrapWarning: (warning) => set({ bootstrapWarning: warning }),
+
+  clearBootstrapTimers: () => {
+    if (globalBootstrapTimeoutId) {
+      clearTimeout(globalBootstrapTimeoutId);
+      globalBootstrapTimeoutId = null;
+    }
+    if (globalBootstrapWarningId) {
+      clearTimeout(globalBootstrapWarningId);
+      globalBootstrapWarningId = null;
+    }
+    set({ bootstrapStartTime: null });
+  },
+
   startBootstrapTimer: () => {
     set((state) => {
-      // Only start if not already timed out and timer not already running
       if (state.bootstrapTimedOut || state.bootstrapStartTime !== null) {
         return state;
       }
       
-      // Clear any existing global timeout (shouldn't happen, but safety)
       if (globalBootstrapTimeoutId) {
         clearTimeout(globalBootstrapTimeoutId);
+      }
+      if (globalBootstrapWarningId) {
+        clearTimeout(globalBootstrapWarningId);
       }
       
       const startTime = Date.now();
       
-      // Set global timeout that survives component remounts
+      globalBootstrapWarningId = setTimeout(() => {
+        set({ bootstrapWarning: true });
+        globalBootstrapWarningId = null;
+      }, BOOTSTRAP_WARNING_MS);
+      
       globalBootstrapTimeoutId = setTimeout(() => {
-        console.warn('[AutonomousBuildStore] Bootstrap timeout reached (60s) - setting bootstrapTimedOut=true');
         set({ bootstrapTimedOut: true, bootstrapStartTime: null });
         globalBootstrapTimeoutId = null;
       }, BOOTSTRAP_TIMEOUT_MS);
@@ -177,10 +207,13 @@ export const useAutonomousBuildStore = create<AutonomousBuildState & AutonomousB
   },
 
   reset: () => {
-    // Clear global timeout on reset
     if (globalBootstrapTimeoutId) {
       clearTimeout(globalBootstrapTimeoutId);
       globalBootstrapTimeoutId = null;
+    }
+    if (globalBootstrapWarningId) {
+      clearTimeout(globalBootstrapWarningId);
+      globalBootstrapWarningId = null;
     }
     set(initialState);
   },

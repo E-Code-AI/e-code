@@ -86,9 +86,16 @@ self.addEventListener('activate', (event) => {
         })
       );
 
-      await cleanupExpiredEntries();
       await self.clients.claim();
       console.log('[ServiceWorker] Activation complete');
+
+      if (typeof setTimeout !== 'undefined') {
+        setTimeout(() => {
+          cleanupExpiredEntries().catch((err) => {
+            console.warn('[ServiceWorker] Deferred cleanup failed:', err);
+          });
+        }, 5000);
+      }
     })()
   );
 });

@@ -25,8 +25,32 @@ const OfflineFallback = instrumentedLazy(() => import("@/components/OfflineFallb
 const EmailVerificationBanner = instrumentedLazy(() => import("@/components/EmailVerificationBanner").then(m => ({ default: m.EmailVerificationBanner })), 'EmailVerificationBanner');
 const PaymentFailureBanner = instrumentedLazy(() => import("@/components/PaymentFailureBanner").then(m => ({ default: m.PaymentFailureBanner })), 'PaymentFailureBanner');
 
-function PageLoader() {
-  return <ECodeLoading fullScreen size="lg" text="Loading..." />;
+function PageSkeleton() {
+  return (
+    <div className="min-h-screen bg-background animate-pulse" data-testid="page-skeleton">
+      <div className="h-14 bg-muted/40 border-b border-border/30" />
+      <div className="max-w-5xl mx-auto p-6 space-y-4 mt-4">
+        <div className="h-8 w-64 bg-muted/50 rounded" />
+        <div className="h-4 w-96 bg-muted/30 rounded" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
+          <div className="h-40 bg-muted/30 rounded-lg" />
+          <div className="h-40 bg-muted/30 rounded-lg" />
+          <div className="h-40 bg-muted/30 rounded-lg" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AppShellSkeleton() {
+  return (
+    <div className="min-h-screen bg-background" data-testid="app-shell-skeleton">
+      <div className="h-14 bg-muted/40 border-b border-border/30 animate-pulse" />
+      <div className="flex items-center justify-center h-[calc(100vh-3.5rem)]">
+        <ECodeLoading size="md" text="Loading..." />
+      </div>
+    </div>
+  );
 }
 
 function AtSymbolRedirectHandler({ children }: { children: React.ReactNode }) {
@@ -135,7 +159,7 @@ function AppContent() {
             <Toaster />
             <LazyShellWidgets />
             <LazyAnimatedRoutes>
-              <Suspense fallback={<PageLoader />}>
+              <Suspense fallback={<PageSkeleton />}>
                 <Switch>
                   <Route path="/auth" component={() => <Redirect to="/login" />} />
                   <Route path="/showcase" component={() => <Redirect to="/templates" />} />
@@ -202,7 +226,7 @@ function App() {
           }
         }}
       >
-        <Suspense fallback={<ECodeLoading fullScreen size="lg" text="Loading..." />}>
+        <Suspense fallback={<AppShellSkeleton />}>
           <OptimizedMotionProvider>
             <AnimationMonitor>
               <ThemeProvider>

@@ -455,8 +455,7 @@ export function useAutonomousChatIntegration({
       // Attempt reconnection with backoff (same logic as main effect)
       if (event.code !== 1000 && isMountedRef.current && reconnectAttemptRef.current < maxReconnectAttempts) {
         reconnectAttemptRef.current++;
-        const delay = Math.min(baseReconnectDelayMs * Math.pow(2, reconnectAttemptRef.current - 1), 30000);
-        // Clear error state when attempting reconnect so banner shows progress
+        const delay = Math.min(baseReconnectDelayMs * Math.pow(2, reconnectAttemptRef.current - 1), 8000);
         setConnectionState(prev => ({ 
           ...prev, 
           isConnected: false, 
@@ -1614,8 +1613,7 @@ export function useAutonomousChatIntegration({
           // Attempt reconnection if not intentionally closed (code 1000) and under max attempts
           if (event.code !== 1000 && reconnectAttemptRef.current < maxReconnectAttempts) {
             reconnectAttemptRef.current++;
-            const delay = Math.min(baseReconnectDelayMs * Math.pow(2, reconnectAttemptRef.current - 1), 30000);
-            // Clear error state when attempting reconnect so banner shows progress
+            const delay = Math.min(baseReconnectDelayMs * Math.pow(2, reconnectAttemptRef.current - 1), 8000);
             setConnectionState(prev => ({ 
               ...prev, 
               isConnected: false, 
@@ -1623,7 +1621,6 @@ export function useAutonomousChatIntegration({
               reconnectAttempt: reconnectAttemptRef.current 
             }));
             
-            // Clear any existing timeout
             if (reconnectTimeoutRef.current) {
               clearTimeout(reconnectTimeoutRef.current);
             }
