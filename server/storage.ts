@@ -5814,13 +5814,34 @@ async function initSessionStore() {
       const connectRedisModule = await import('connect-redis');
       const RedisStoreClass = connectRedisModule.default || connectRedisModule.RedisStore;
       const ioredis = await import('ioredis');
-      const connectionUrl = redisUrl.replace('rediss://', 'redis://');
-      const redisClient = new ioredis.default(connectionUrl, {
+
+      const isTls = redisUrl.startsWith('rediss://');
+      const redisOpts: any = {
         maxRetriesPerRequest: 3,
         enableReadyCheck: true,
         lazyConnect: true,
-      });
-      await redisClient.connect();
+      };
+
+      if (isTls) {
+        redisOpts.tls = { rejectUnauthorized: false };
+      }
+
+      let redisClient: InstanceType<typeof ioredis.default>;
+      try {
+        redisClient = new ioredis.default(redisUrl, redisOpts);
+        await redisClient.connect();
+      } catch (tlsErr) {
+        if (isTls) {
+          console.warn('[Session Store] TLS connection failed, retrying without TLS');
+          const plainUrl = redisUrl.replace('rediss://', 'redis://');
+          const { tls, ...plainOpts } = redisOpts;
+          redisClient = new ioredis.default(plainUrl, plainOpts);
+          await redisClient.connect();
+        } else {
+          throw tlsErr;
+        }
+      }
+
       sessionStore = new RedisStoreClass({
         client: redisClient,
         prefix: 'session:',

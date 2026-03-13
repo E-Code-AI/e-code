@@ -290,17 +290,8 @@ export class PTYTerminalService {
         }
 
         const redisSession = await redisSessionManager.getSession(`terminal-${projectId}`);
-        let previousProcessAlive = false;
         if (redisSession) {
-          if (redisSession.shellPid && !redisSession.sessionEnded) {
-            try {
-              process.kill(redisSession.shellPid, 0);
-              previousProcessAlive = true;
-            } catch {
-              previousProcessAlive = false;
-            }
-          }
-          logger.info(`Restoring PTY session for project ${projectId} from Redis checkpoint (ended=${redisSession.sessionEnded}, pidAlive=${previousProcessAlive})`);
+          logger.info(`Found Redis checkpoint for project ${projectId} (ended=${redisSession.sessionEnded})`);
         }
 
         logger.info(`Creating new session for project ${projectId}`);
@@ -318,11 +309,7 @@ export class PTYTerminalService {
         logger.info(`Session created successfully for project ${projectId}`);
 
         if (redisSession) {
-          if (redisSession.sessionEnded || !previousProcessAlive) {
-            ws.send(JSON.stringify({ type: 'output', data: '\r\n[Session restored from checkpoint - previous session ended]\r\n' }));
-          } else {
-            ws.send(JSON.stringify({ type: 'output', data: '\r\n[Reconnected to existing session]\r\n' }));
-          }
+          ws.send(JSON.stringify({ type: 'output', data: '\r\n[New terminal session created from checkpoint (previous session ended)]\r\n' }));
           if (redisSession.outputSnapshot) {
             ws.send(JSON.stringify({ type: 'output', data: redisSession.outputSnapshot }));
           }
