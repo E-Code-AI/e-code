@@ -1,3 +1,7 @@
+// OpenAI SDK requires this shim to be imported FIRST before any other openai import.
+// Must be at the very top before any route/service imports that pull in the openai package.
+import 'openai/shims/node';
+
 // Load environment variables in development only (production uses platform env vars)
 // Note: In production builds, this entire block is eliminated via dead code elimination
 // because process.env.NODE_ENV is defined as 'production' at build time
@@ -539,6 +543,24 @@ httpServer.listen(port, "0.0.0.0", () => {
 
   app.use(errorTracking.userContextMiddleware());
 
+  // ✅ CRITICAL FIX: Register ALL API routes immediately after passport+CSRF setup.
+  // Sentry v8 OTel's setupExpressErrorHandler (called later) walks and wraps the
+  // existing middleware stack. Any route added AFTER that call is bypassed by
+  // Sentry's OTel layer and the notFoundHandler fires instead (404 for every /api/*).
+  // Solution: move mainRouter.registerRoutes() here — before any service setups
+  // and well before errorTracking.setupExpressErrorHandler(app).
+  try {
+    const { MainRouter: EarlyMainRouter } = await import("./routes");
+    const { getStorage: earlyGetStorage } = await import("./storage");
+    const earlyStorage = earlyGetStorage();
+    const earlyMainRouter = new EarlyMainRouter(earlyStorage);
+    earlyMainRouter.registerRoutes(app);
+    logger.info('[Routes] ✅ All API routes registered');
+  } catch (error) {
+    logger.error(`[Routes] FATAL: Failed to register API routes: ${error}`);
+    throw error; // Crash fast — no API routes means the app is broken
+  }
+
   // SECURITY: Validate origin configuration BEFORE initializing ANY WebSocket servers
   // This ensures all WebSocket servers have proper origin validation configured
   try {
@@ -635,8 +657,8 @@ httpServer.listen(port, "0.0.0.0", () => {
   }
 
   try {
-    // Import modular routes - MUST be registered AFTER passport
-    const { MainRouter } = await import("./routes");
+    // Import storage - used for service initialization throughout this block
+    // NOTE: MainRouter is imported and routes are registered earlier (after passport+CSRF setup)
     const { getStorage, sessionStore } = await import("./storage");
     const storage = getStorage();
     
@@ -852,9 +874,6 @@ httpServer.listen(port, "0.0.0.0", () => {
       logger.error(`[WORKING SERVER] Failed to register Swagger docs: ${error}`);
     }
 
-    const mainRouter = new MainRouter(storage);
-    mainRouter.registerRoutes(app);
-    
     // Register production monitoring routes (mount at /api so routes are at /api/monitoring/*)
     try {
       const monitoringRouter = (await import('./routes/monitoring.router')).default;
