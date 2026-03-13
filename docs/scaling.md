@@ -15,10 +15,18 @@ Every instance must connect to the **same** Postgres and Redis clusters.
 | Postgres | `DATABASE_URL`    | User data, projects, files, sessions (`connect-pg-simple`) |
 | Redis    | `REDIS_URL`       | Cache, terminal session checkpoints, pub/sub      |
 
-### Session Store
+### HTTP Session Store
 
 HTTP sessions are stored in Postgres via `connect-pg-simple`. Any instance can
-authenticate any request because the session table is shared.
+authenticate any request because the session table is shared. The session cookie
+(`ecode.sid`) is verified against Postgres on every request.
+
+### WebSocket Authentication
+
+WebSocket upgrade requests (terminal, collaboration) authenticate using the
+same session cookie. The PTY terminal service reads the `ecode.sid` cookie,
+looks up the session in the Postgres-backed store, and verifies the user. JWT
+tokens are supported as a fallback for programmatic clients.
 
 ### Terminal Sessions
 

@@ -29,10 +29,12 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { spawn, ChildProcess } from 'child_process';
 import { createLogger } from '../utils/logger';
-import { storage } from '../storage';
+import { storage, sessionStore } from '../storage';
 import { markSocketAsHandled } from '../websocket/upgrade-guard';
 import { centralUpgradeDispatcher } from '../websocket/central-upgrade-dispatcher';
+import { redisSessionManager } from './redis-session-manager';
 import jwt from 'jsonwebtoken';
+import { parse as parseCookie } from 'cookie';
 
 // CRITICAL SECURITY: Terminal isolation configuration
 // 
@@ -220,28 +222,41 @@ export class PTYTerminalService {
       }));
       logger.info(`Sent immediate connected message to client`);
 
-      // Extract token from query params or Authorization header
       const queryToken = url.searchParams.get('token');
       const authHeader = request.headers['authorization'];
       const headerToken = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
       const token = queryToken || headerToken;
 
-      // Validate authentication (skip in development for easier testing)
-      if (process.env.NODE_ENV === 'production') {
-        if (!token) {
-          logger.warn('Terminal connection rejected: missing authentication token');
-          ws.close(1008, 'Authentication required');
-          return;
-        }
+      let authenticated = false;
 
-        try {
-          const jwtSecret = process.env.JWT_SECRET || process.env.SESSION_SECRET || 'development-secret';
-          jwt.verify(token, jwtSecret);
-        } catch (error) {
-          logger.warn('Terminal connection rejected: invalid token');
-          ws.close(1008, 'Invalid authentication token');
-          return;
+      if (request.headers.cookie) {
+        const cookies = parseCookie(request.headers.cookie);
+        const sidCookie = cookies['ecode.sid'] || cookies['connect.sid'];
+        if (sidCookie) {
+          const sid = sidCookie.startsWith('s:') ? sidCookie.slice(2).split('.')[0] : sidCookie;
+          const sess = await new Promise<any>((resolve) => {
+            sessionStore.get(sid, (_err: any, s: any) => resolve(s || null));
+          });
+          if (sess?.passport?.user) {
+            authenticated = true;
+          }
         }
+      }
+
+      if (!authenticated && token) {
+        try {
+          const jwtSecret = process.env.JWT_SECRET || process.env.SESSION_SECRET;
+          if (jwtSecret) {
+            jwt.verify(token, jwtSecret);
+            authenticated = true;
+          }
+        } catch {}
+      }
+
+      if (!authenticated && process.env.NODE_ENV !== 'development') {
+        logger.warn('Terminal connection rejected: no valid session or token');
+        ws.close(1008, 'Authentication required');
+        return;
       }
 
       logger.info(`Terminal connection for project ${projectId}`);
@@ -254,8 +269,13 @@ export class PTYTerminalService {
           return;
         }
 
+        const redisSession = await redisSessionManager.getSession(`terminal-${projectId}`);
+        if (redisSession) {
+          logger.info(`Restoring PTY session for project ${projectId} from Redis checkpoint`);
+        }
+
         logger.info(`Creating new session for project ${projectId}`);
-        const newSession = await this.createSession(projectId);
+        const newSession = await this.createSession(projectId, redisSession || undefined);
         if (!newSession) {
           ws.send(JSON.stringify({
             type: 'error',
@@ -316,34 +336,39 @@ export class PTYTerminalService {
     }
   }
 
-  private async createSession(projectId: string): Promise<PTYSession | null> {
+  private async createSession(projectId: string, checkpoint?: import('./redis-session-manager').TerminalSession): Promise<PTYSession | null> {
     try {
-      // Read security settings dynamically
       const requireDocker = getRequireDockerTerminal();
       const allowInsecure = getAllowInsecureLocalPty();
       
       logger.info(`Creating session for project ${projectId}`);
       logger.info(`requireDocker=${requireDocker}, allowInsecure=${allowInsecure}, dockerAvailable=${dockerAvailable}`);
       
-      // CRITICAL SECURITY: If Docker is required (default), only allow Docker sessions
+      let session: PTYSession | null = null;
+      
       if (requireDocker) {
         if (!dockerAvailable) {
           logger.error(`BLOCKED: Terminal session rejected - Docker required but unavailable`);
           logger.error(`Set ALLOW_INSECURE_LOCAL_PTY=true ONLY in development to allow local PTY`);
           return null;
         }
-        return await this.createDockerSession(projectId);
+        session = await this.createDockerSession(projectId);
+      } else if (dockerAvailable) {
+        session = await this.createDockerSession(projectId);
+      } else {
+        logger.warn('DEV ONLY: Creating local PTY session - INSECURE MODE ACTIVE');
+        session = await this.createLocalSession(projectId);
       }
-      
-      // ALLOW_INSECURE_LOCAL_PTY=true AND not in production: allow local PTY
-      // This is the ONLY path to local PTY and requires explicit opt-in
-      if (dockerAvailable) {
-        // Even with insecure mode allowed, prefer Docker if available
-        return await this.createDockerSession(projectId);
+
+      if (session && checkpoint) {
+        session.commandHistory = checkpoint.commandHistory || [];
+        session.currentDirectory = checkpoint.currentDirectory || session.currentDirectory;
+        if (checkpoint.columns) session.cols = checkpoint.columns;
+        if (checkpoint.rows) session.rows = checkpoint.rows;
+        logger.info(`Applied Redis checkpoint to PTY session for project ${projectId}`);
       }
-      
-      logger.warn('DEV ONLY: Creating local PTY session - INSECURE MODE ACTIVE');
-      return await this.createLocalSession(projectId);
+
+      return session;
 
     } catch (error) {
       logger.error(`Failed to create session for project ${projectId}:`, error);
@@ -761,6 +786,17 @@ export class PTYTerminalService {
     if (!session) return;
 
     logger.info(`Cleaning up terminal session for project ${projectId}`);
+
+    await redisSessionManager.saveSession({
+      sessionId: `terminal-${projectId}`,
+      projectId,
+      commandHistory: session.commandHistory,
+      currentDirectory: session.currentDirectory,
+      columns: session.cols,
+      rows: session.rows,
+      createdAt: session.createdAt,
+      lastActivity: session.lastActivity,
+    }).catch(err => logger.error(`Failed to checkpoint PTY session to Redis: ${err}`));
 
     // Sync files back to database before cleanup (for persistent changes)
     try {
