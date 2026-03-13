@@ -1391,4 +1391,19 @@ httpServer.listen(port, "0.0.0.0", () => {
 
   process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
   process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+
+  process.on('unhandledRejection', (reason: unknown, promise: Promise<unknown>) => {
+    logger.error('[Process] Unhandled promise rejection — this would have crashed the process', {
+      reason: reason instanceof Error ? reason.message : String(reason),
+      stack: reason instanceof Error ? reason.stack : undefined,
+    });
+  });
+
+  process.on('uncaughtException', (err: Error) => {
+    logger.error('[Process] Uncaught exception — initiating graceful shutdown', {
+      error: err.message,
+      stack: err.stack,
+    });
+    gracefulShutdown('uncaughtException');
+  });
 })();
