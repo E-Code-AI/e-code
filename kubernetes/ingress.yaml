@@ -52,13 +52,6 @@ spec:
             name: typescript-service
             port:
               number: 5000
-      - path: /api/go
-        pathType: Prefix
-        backend:
-          service:
-            name: go-runtime-service
-            port:
-              number: 8080
       - path: /api/ml
         pathType: Prefix
         backend:

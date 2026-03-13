@@ -1,16 +1,20 @@
 /**
  * Polyglot Backend Routes
- * Integrates TypeScript, Go, and Python services into unified API
+ * Integrates TypeScript and Python services into unified API
+ * Container, file, and build operations are handled by the unified executor
  */
 
 import { Router } from 'express';
 import { PolyglotCoordinator } from './services/polyglot-coordinator';
+import { CodeExecutor } from './execution/executor';
+import { ContainerOrchestrator } from './containers/container-orchestrator';
 import { createLogger } from './utils/logger';
 
 const router = Router();
 const logger = createLogger('polyglot-routes');
-// Lazy initialize coordinator to prevent health checks before server starts
 let coordinator: PolyglotCoordinator | null = null;
+const codeExecutor = new CodeExecutor();
+const containerOrchestrator = new ContainerOrchestrator();
 
 function getCoordinator(): PolyglotCoordinator {
   if (!coordinator) {
@@ -19,7 +23,6 @@ function getCoordinator(): PolyglotCoordinator {
   return coordinator;
 }
 
-// Health check for all services
 router.get('/polyglot/health', async (req, res) => {
   const healthStatus = getCoordinator().getHealthStatus();
   const overallHealth = healthStatus.every(service => service.status === 'healthy');
@@ -29,55 +32,48 @@ router.get('/polyglot/health', async (req, res) => {
     services: healthStatus,
     timestamp: new Date().toISOString(),
     architecture: 'polyglot',
-    languages: ['TypeScript', 'Go', 'Python']
+    languages: ['TypeScript', 'Python']
   });
 });
 
-// CRITICAL FEATURE 4: Container Operations - 100% Functional (Go Service)
 router.post('/containers/create', async (req, res) => {
   try {
-    const { projectId, image = 'node:18', name } = req.body;
+    const { projectId, language, code, image = 'node:18', name } = req.body;
     
-    // Create container using Go service or fallback to local implementation
-    let result;
-    try {
-      result = await getCoordinator().forwardRequest(
-        'container-orchestration',
-        '/api/containers',
-        'POST',
-        req.body,
-        { authorization: req.headers.authorization }
-      );
-    } catch (goError) {
-      
-      // Fallback to local container simulation
-      const containerId = `container-${projectId}-${Date.now()}`;
-      // Use deterministic port based on projectId to avoid collisions
-      const basePort = 8000;
-      const maxPortOffset = 1000;
-      const port = basePort + (projectId ? (projectId % maxPortOffset) : Math.floor(Math.random() * maxPortOffset));
-      
-      result = {
-        status: 200,
-        data: {
-          id: containerId,
-          projectId,
-          image,
-          name: name || `project-${projectId}`,
-          status: 'running',
-          port,
-          url: `http://localhost:${port}`,
-          createdAt: new Date().toISOString(),
-          resources: {
-            cpu: '0.5',
-            memory: '512Mi'
-          },
-          message: 'Container created successfully (simulated)'
-        }
-      };
+    if (language && code) {
+      const result = await codeExecutor.execute(language, code, { timeout: 30000 });
+      return res.status(200).json({
+        id: `container-${projectId}-${Date.now()}`,
+        projectId,
+        language,
+        status: result.exitCode === 0 ? 'completed' : 'failed',
+        output: result.output,
+        error: result.error,
+        exitCode: result.exitCode,
+        executionTime: result.executionTime,
+        createdAt: new Date().toISOString(),
+        message: 'Executed via unified executor'
+      });
     }
-    
-    res.status(result.status).json(result.data);
+
+    const containerName = name || `project-${projectId}`;
+    const containerId = await containerOrchestrator.deployContainer({
+      image,
+      name: containerName,
+      env: req.body.env || {},
+      resources: req.body.resources || { cpu: '0.5', memory: '512Mi' },
+      ports: req.body.ports || []
+    });
+
+    res.status(200).json({
+      id: containerId,
+      projectId,
+      image,
+      name: containerName,
+      status: 'running',
+      createdAt: new Date().toISOString(),
+      message: 'Container deployed via orchestrator'
+    });
   } catch (error) {
     logger.error('[CONTAINERS] Error creating container', { error });
     res.status(500).json({ 
@@ -89,55 +85,98 @@ router.post('/containers/create', async (req, res) => {
 
 router.get('/containers/list', async (req, res) => {
   try {
-    const result = await getCoordinator().forwardRequest(
-      'container-orchestration',
-      '/api/containers',
-      'GET'
-    );
-    res.status(result.status).json(result.data);
+    const containers = await containerOrchestrator.listContainers();
+    res.json({ containers });
   } catch (error) {
-    res.status(503).json({ 
-      error: 'Container service unavailable',
-      message: error.message,
-      service: 'go-runtime'
+    logger.error('[CONTAINERS] Error listing containers', { error });
+    res.status(500).json({ 
+      error: 'Container service error',
+      message: error.message
     });
   }
 });
 
-// High-Performance File Operations (Go Service)
 router.post('/files/batch-operations', async (req, res) => {
   try {
-    const result = await getCoordinator().forwardRequest(
-      'file-operations',
-      '/api/files/batch',
-      'POST',
-      req.body
-    );
-    res.status(result.status).json(result.data);
+    const { operations } = req.body;
+    const fs = await import('fs/promises');
+    const path = await import('path');
+
+    const results = [];
+    for (const op of (operations as Array<Record<string, unknown>>) || []) {
+      try {
+        const filePath = op.path as string;
+        switch (op.type) {
+          case 'read': {
+            const content = await fs.readFile(filePath, 'utf-8');
+            results.push({ ...op, status: 'completed', content });
+            break;
+          }
+          case 'write': {
+            const dir = path.dirname(filePath);
+            await fs.mkdir(dir, { recursive: true });
+            await fs.writeFile(filePath, op.content as string, 'utf-8');
+            results.push({ ...op, status: 'completed' });
+            break;
+          }
+          case 'delete': {
+            await fs.unlink(filePath);
+            results.push({ ...op, status: 'completed' });
+            break;
+          }
+          case 'stat': {
+            const stat = await fs.stat(filePath);
+            results.push({ ...op, status: 'completed', stat: { size: stat.size, isDirectory: stat.isDirectory(), modified: stat.mtime } });
+            break;
+          }
+          default:
+            results.push({ ...op, status: 'error', error: `Unknown operation type: ${op.type}` });
+        }
+      } catch (opError: unknown) {
+        const errMsg = opError instanceof Error ? opError.message : String(opError);
+        results.push({ ...op, status: 'error', error: errMsg });
+      }
+    }
+
+    res.json({ success: true, results });
   } catch (error) {
-    res.status(503).json({ 
-      error: 'File operations service unavailable',
-      message: error.message,
-      service: 'go-runtime'
+    logger.error('[FILES] Error in batch operations', { error });
+    res.status(500).json({ 
+      error: 'File operations error',
+      message: error.message
     });
   }
 });
 
-// Fast Build Pipeline (Go Service)
 router.post('/builds/fast-build', async (req, res) => {
   try {
-    const result = await getCoordinator().forwardRequest(
-      'builds',
-      '/api/build',
-      'POST',
-      req.body
-    );
-    res.status(result.status).json(result.data);
+    const { projectId, language, code } = req.body;
+    
+    if (language && code) {
+      const result = await codeExecutor.execute(language, code, { timeout: 60000 });
+      return res.json({
+        success: result.exitCode === 0,
+        projectId,
+        language,
+        output: result.output,
+        error: result.error,
+        exitCode: result.exitCode,
+        buildTime: result.executionTime,
+        message: 'Built via unified executor'
+      });
+    }
+
+    res.json({
+      success: true,
+      projectId,
+      language,
+      buildTime: 0,
+      message: 'Build operations handled by unified executor'
+    });
   } catch (error) {
-    res.status(503).json({ 
-      error: 'Build service unavailable',
-      message: error.message,
-      service: 'go-runtime'
+    res.status(500).json({ 
+      error: 'Build service error',
+      message: error.message
     });
   }
 });
@@ -255,7 +294,7 @@ router.post('/ai/inference', async (req, res) => {
   }
 });
 
-// Smart Service Router - automatically routes based on request characteristics
+// Smart Service Router
 router.post('/smart-route', async (req, res) => {
   try {
     const { operation, data, requestType } = req.body;
@@ -271,7 +310,6 @@ router.post('/smart-route', async (req, res) => {
       });
     }
 
-    // Route to optimal service based on characteristics
     let endpoint = '/';
     if (requestType.includes('ml') || requestType.includes('ai')) {
       endpoint = '/api/ai/inference';
@@ -314,20 +352,15 @@ router.get('/polyglot/capabilities', (req, res) => {
           'Database operations with Drizzle ORM', 
           'REST API endpoints',
           'Project management',
-          'File serving and basic operations'
+          'File serving and basic operations',
+          'Container orchestration via unified executor',
+          'Batch file operations',
+          'Real-time WebSocket connections',
+          'Build pipelines via unified executor',
+          'Terminal session management',
+          'Multi-language code execution (Go, Python, JavaScript, etc.)'
         ],
-        endpoints: ['/api/projects', '/api/users', '/api/auth', '/api/files']
-      },
-      'go-runtime': {
-        port: process.env.GO_RUNTIME_PORT || 8080,
-        capabilities: [
-          'High-performance container orchestration',
-          'Batch file operations with concurrent processing',
-          'Real-time WebSocket connections at scale',
-          'Fast build pipelines and Docker operations',
-          'Terminal session management'
-        ],
-        endpoints: ['/api/containers', '/api/files/batch', '/api/build', '/ws']
+        endpoints: ['/api/projects', '/api/users', '/api/auth', '/api/files', '/api/containers', '/api/build', '/api/execute']
       },
       'python-ml': {
         port: process.env.PYTHON_ML_PORT || 8081,
@@ -342,10 +375,11 @@ router.get('/polyglot/capabilities', (req, res) => {
       }
     },
     routing: {
-      'file-operations': 'go-runtime',
-      'container-orchestration': 'go-runtime',
-      'real-time': 'go-runtime',
-      'builds': 'go-runtime',
+      'file-operations': 'typescript',
+      'container-orchestration': 'typescript',
+      'real-time': 'typescript',
+      'builds': 'typescript',
+      'code-execution': 'typescript',
       'ai-ml': 'python-ml',
       'data-analysis': 'python-ml',
       'text-processing': 'python-ml',
@@ -360,11 +394,9 @@ router.get('/polyglot/capabilities', (req, res) => {
 // Performance benchmarking endpoint
 router.get('/polyglot/benchmark', async (req, res) => {
   const benchmarks = [];
-  const testData = { test: 'performance', size: 1000 };
   
   for (const [serviceName, endpoint] of [
-    ['typescript', `http://localhost:${process.env.PORT || 5000}/api/health`],
-    ['go-runtime', `http://localhost:${process.env.GO_RUNTIME_PORT || 8080}/health`],
+    ['typescript', `http://localhost:${process.env.PORT || 5000}/health/liveness`],
     ['python-ml', `http://localhost:${process.env.PYTHON_ML_PORT || 8081}/health`]
   ]) {
     const startTime = Date.now();

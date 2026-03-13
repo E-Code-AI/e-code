@@ -1,6 +1,6 @@
 /**
  * Polyglot Backend Coordinator
- * Routes requests to appropriate backend services (TypeScript, Go, Python)
+ * Routes requests to appropriate backend services (TypeScript, Python)
  * Based on request type and performance requirements
  */
 
@@ -31,33 +31,23 @@ export class PolyglotCoordinator {
 
   constructor() {
     this.initializeServices();
-    // Don't start health checks immediately - let the server start first
-    // Health checks will start after a delay
     setTimeout(() => {
       this.startHealthChecks();
-    }, 5000); // Start health checks after 5 seconds
+    }, 5000);
   }
 
   private initializeServices() {
-    // TypeScript service (main Express server)
     this.services.set('typescript', {
       host: 'localhost',
       port: parseInt(process.env.PORT || '5000'),
       protocol: 'http',
       healthPath: '/api/health',
-      capabilities: ['web-api', 'user-management', 'database', 'authentication']
+      capabilities: [
+        'web-api', 'user-management', 'database', 'authentication',
+        'container-orchestration', 'file-operations', 'real-time', 'builds'
+      ]
     });
 
-    // Go runtime service (high-performance operations)
-    this.services.set('go-runtime', {
-      host: 'localhost',
-      port: parseInt(process.env.GO_RUNTIME_PORT || '8080'),
-      protocol: 'http',
-      healthPath: '/health',
-      capabilities: ['container-orchestration', 'file-operations', 'real-time', 'builds']
-    });
-
-    // Python ML service (AI/ML processing)
     this.services.set('python-ml', {
       host: 'localhost',
       port: parseInt(process.env.PYTHON_ML_PORT || '8081'),
@@ -70,12 +60,11 @@ export class PolyglotCoordinator {
   private startHealthChecks() {
     this.healthCheckInterval = setInterval(async () => {
       await this.performHealthChecks();
-    }, 30000); // Check every 30 seconds
+    }, 30000);
 
-    // Delay initial health check to allow services to start
     setTimeout(() => {
       this.performHealthChecks();
-    }, 2000); // Wait 2 seconds before first health check
+    }, 2000);
   }
 
   private async performHealthChecks() {
@@ -110,11 +99,7 @@ export class PolyglotCoordinator {
     }
   }
 
-  /**
-   * Route request to appropriate backend service based on capabilities
-   */
   routeRequest(capability: string): string | null {
-    // Find healthy service with required capability
     for (const [serviceName, endpoint] of this.services.entries()) {
       const health = this.healthStatus.get(serviceName);
       if (health?.status === 'healthy' && endpoint.capabilities.includes(capability)) {
@@ -122,7 +107,6 @@ export class PolyglotCoordinator {
       }
     }
     
-    // Fallback to any service with capability (even if health unknown)
     for (const [serviceName, endpoint] of this.services.entries()) {
       if (endpoint.capabilities.includes(capability)) {
         return `${endpoint.protocol}://${endpoint.host}:${endpoint.port}`;
@@ -132,16 +116,10 @@ export class PolyglotCoordinator {
     return null;
   }
 
-  /**
-   * Get service health status for monitoring
-   */
   getHealthStatus(): ServiceHealth[] {
     return Array.from(this.healthStatus.values());
   }
 
-  /**
-   * Create proxy middleware for a specific service capability
-   */
   createProxy(capability: string, pathPrefix: string) {
     return createProxyMiddleware({
       target: this.routeRequest(capability),
@@ -160,9 +138,6 @@ export class PolyglotCoordinator {
     });
   }
 
-  /**
-   * Forward request to specific service
-   */
   async forwardRequest(
     capability: string, 
     path: string, 
@@ -198,37 +173,26 @@ export class PolyglotCoordinator {
     }
   }
 
-  /**
-   * Intelligent service selection based on request characteristics
-   */
   selectOptimalService(requestType: string, dataSize: number = 0): string {
-    // High-performance file operations -> Go
     if (requestType.includes('file') || requestType.includes('container')) {
       return this.routeRequest('file-operations') || this.routeRequest('web-api');
     }
 
-    // AI/ML processing -> Python
     if (requestType.includes('ai') || requestType.includes('ml') || requestType.includes('analyze')) {
       return this.routeRequest('ai-ml') || this.routeRequest('web-api');
     }
 
-    // Real-time operations -> Go
     if (requestType.includes('realtime') || requestType.includes('websocket')) {
       return this.routeRequest('real-time') || this.routeRequest('web-api');
     }
 
-    // Large data processing -> Python
     if (dataSize > 10000) {
       return this.routeRequest('data-analysis') || this.routeRequest('web-api');
     }
 
-    // Default to TypeScript service
     return this.routeRequest('web-api');
   }
 
-  /**
-   * Cleanup resources
-   */
   destroy() {
     if (this.healthCheckInterval) {
       clearInterval(this.healthCheckInterval);
@@ -236,47 +200,39 @@ export class PolyglotCoordinator {
   }
 }
 
-// Advanced routing logic for different request types
 export const routingRules = {
-  // Performance-critical operations -> Go
   'file-operations': {
-    service: 'go-runtime',
+    service: 'typescript',
     endpoints: ['/api/files/batch', '/api/containers', '/api/build']
   },
   
-  // AI/ML operations -> Python
   'ai-ml-processing': {
     service: 'python-ml',
     endpoints: ['/api/code/analyze', '/api/ml/train', '/api/text/analyze', '/api/data/process']
   },
   
-  // Real-time operations -> Go
   'real-time': {
-    service: 'go-runtime',
+    service: 'typescript',
     endpoints: ['/ws/terminal', '/ws/collaboration']
   },
   
-  // Web API and database operations -> TypeScript
   'web-database': {
     service: 'typescript',
     endpoints: ['/api/projects', '/api/users', '/api/auth']
   }
 };
 
-// Service capability matrix
 export const serviceCapabilities = {
   'typescript': [
     'User authentication and session management',
     'Database operations with Drizzle ORM',
     'REST API endpoints',
     'Project management',
-    'File serving and basic operations'
-  ],
-  'go-runtime': [
-    'High-performance container orchestration',
-    'Batch file operations with concurrent processing',
-    'Real-time WebSocket connections at scale',
-    'Fast build pipelines and Docker operations',
+    'File serving and basic operations',
+    'Container orchestration',
+    'Batch file operations',
+    'Real-time WebSocket connections',
+    'Build pipelines',
     'Terminal session management'
   ],
   'python-ml': [

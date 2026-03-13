@@ -207,7 +207,6 @@ async function checkServices(): Promise<HealthCheck> {
   // Check critical external services
   const servicesToCheck = [
     { name: 'TypeScript Service', url: 'http://localhost:8081/health' },
-    { name: 'Go Runtime', url: 'http://localhost:8082/health' },
     { name: 'Python ML Service', url: 'http://localhost:8083/health' },
   ];
   

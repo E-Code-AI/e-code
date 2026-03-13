@@ -3,38 +3,27 @@
  * Displays and manages the multi-language backend services
  */
 
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { 
   Activity, 
   Code, 
-  Database, 
-  Cpu, 
   Brain,
-  FileCode,
-  Container,
-  Zap,
   CheckCircle,
   XCircle,
   AlertTriangle,
   Gauge,
   Server,
-  Layers,
   BarChart3,
-  Cog,
-  PlayCircle,
-  StopCircle
 } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
 
 interface ServiceHealth {
   service: string;
@@ -46,7 +35,6 @@ interface ServiceHealth {
 interface ServiceCapabilities {
   services: {
     typescript: ServiceInfo;
-    'go-runtime': ServiceInfo;
     'python-ml': ServiceInfo;
   };
   routing: Record<string, string>;
@@ -70,7 +58,6 @@ export function PolyglotBackend() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch service health status
   const { data: healthData, isLoading: healthLoading } = useQuery({
     queryKey: ['polyglot-health'],
     queryFn: async () => {
@@ -78,10 +65,9 @@ export function PolyglotBackend() {
       if (!res.ok) throw new Error('Failed to fetch health status');
       return res.json();
     },
-    refetchInterval: 30000 // Refresh every 30 seconds
+    refetchInterval: 30000
   });
 
-  // Fetch service capabilities
   const { data: capabilitiesData } = useQuery({
     queryKey: ['polyglot-capabilities'],
     queryFn: async () => {
@@ -91,7 +77,6 @@ export function PolyglotBackend() {
     }
   });
 
-  // Benchmark services
   const benchmarkMutation = useMutation({
     mutationFn: async () => {
       const res = await apiRequest('GET', '/api/polyglot/benchmark');
@@ -109,18 +94,8 @@ export function PolyglotBackend() {
   const getServiceIcon = (serviceName: string) => {
     switch (serviceName) {
       case 'typescript': return <Code className="h-5 w-5" />;
-      case 'go-runtime': return <Cpu className="h-5 w-5" />;
       case 'python-ml': return <Brain className="h-5 w-5" />;
       default: return <Server className="h-5 w-5" />;
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'healthy': return 'text-green-600';
-      case 'unhealthy': return 'text-red-600';
-      case 'degraded': return 'text-yellow-600';
-      default: return 'text-gray-600';
     }
   };
 
@@ -135,11 +110,10 @@ export function PolyglotBackend() {
 
   return (
     <div className="space-y-6" data-testid="page-polyglot">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold" data-testid="text-polyglot-title">Polyglot Backend Architecture</h1>
-          <p className="text-muted-foreground" data-testid="text-polyglot-subtitle">Multi-language backend services (TypeScript, Go, Python)</p>
+          <p className="text-muted-foreground" data-testid="text-polyglot-subtitle">Multi-language backend services (TypeScript, Python)</p>
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -155,7 +129,6 @@ export function PolyglotBackend() {
         </div>
       </div>
 
-      {/* Overall Health Status */}
       {healthData && (
         <Alert>
           <div className="flex items-center gap-2">
@@ -177,9 +150,8 @@ export function PolyglotBackend() {
           <TabsTrigger value="performance" data-testid="tab-polyglot-performance">Performance</TabsTrigger>
         </TabsList>
 
-        {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {healthData?.services.map((service: ServiceHealth, index: number) => (
               <Card key={service.service} data-testid={`card-service-${service.service}`}>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -210,22 +182,13 @@ export function PolyglotBackend() {
               <CardDescription>Why we use a polyglot backend approach</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex items-start gap-3">
                   <Code className="h-5 w-5 text-blue-600 mt-1" />
                   <div>
                     <h4 className="font-semibold">TypeScript</h4>
                     <p className="text-[13px] text-muted-foreground">
-                      Web APIs, user management, database operations
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <Cpu className="h-5 w-5 text-green-600 mt-1" />
-                  <div>
-                    <h4 className="font-semibold">Go</h4>
-                    <p className="text-[13px] text-muted-foreground">
-                      High-performance containers, file ops, real-time
+                      Web APIs, user management, database operations, container orchestration, file operations, builds
                     </p>
                   </div>
                 </div>
@@ -243,7 +206,6 @@ export function PolyglotBackend() {
           </Card>
         </TabsContent>
 
-        {/* Services Tab */}
         <TabsContent value="services" className="space-y-4">
           {capabilitiesData && Object.entries(capabilitiesData.services).map(([serviceName, serviceInfo]) => (
             <Card key={serviceName}>
@@ -288,7 +250,6 @@ export function PolyglotBackend() {
           ))}
         </TabsContent>
 
-        {/* Capabilities Tab */}
         <TabsContent value="capabilities" className="space-y-4">
           <Card>
             <CardHeader>
@@ -315,7 +276,6 @@ export function PolyglotBackend() {
           </Card>
         </TabsContent>
 
-        {/* Performance Tab */}
         <TabsContent value="performance" className="space-y-4">
           <Card>
             <CardHeader>

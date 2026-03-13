@@ -1,7 +1,7 @@
 # E-Code Platform
 
 ## Overview
-E-Code is an AI-assisted web-based Integrated Development Environment (IDE) designed to boost developer productivity. It offers automated workspace setup, real-time code execution, integrated AI capabilities, collaboration tools, enterprise-grade testing, and robust security. The platform aims to provide a comprehensive, secure, and high-performance development experience, positioning itself as a leader in AI-powered software development with a focus on AI-powered software development.
+E-Code is an AI-assisted web-based Integrated Development Environment (IDE) designed to boost developer productivity. It offers automated workspace setup, real-time code execution, integrated AI capabilities, collaboration tools, enterprise-grade testing, and robust security. The platform aims to provide a comprehensive, secure, and high-performance development experience, positioning itself as a leader in AI-powered software development.
 
 ## User Preferences
 - Communication: Simple, everyday language
@@ -95,12 +95,12 @@ E-Code employs a two-service architecture: a React, TypeScript, and Vite fronten
 - **Real-time Communication**: Utilizes SSE and WebSockets for streaming server logs, runtime logs, and providing a live HTML preview with CSS hot-swapping.
 - **Security Framework**: Includes AES-256-GCM encryption, XSS prevention, CSRF protection, input sanitization, tier-based rate limiting, API versioning, session-based authentication, encrypted GitHub tokens, isolated preview subprocess environments, and Zod-based validation with path traversal protection. All protected routes enforce valid Passport sessions.
 - **System Reliability**: Incorporates Checkpoints & Rollback for version control, Playwright-based Background Auto-Testing, and mechanisms for cleaning up stuck autonomous build sessions.
-- **Code Execution Environment**: Employs Nix-managed runtimes and `DockerExecutor` for sandboxed code execution, supporting `single-vm` and `kubernetes` deployments with optimized Docker builds. Runner service supports real Docker container isolation per workspace via `dockerode` — each workspace gets its own container with CPU/memory/PID limits, filesystem isolation via Docker volumes, and PTY terminals routed through `docker exec`. Controlled by `DOCKER_ENABLED` env var (default: true), with automatic fallback to directory-based isolation if Docker is unavailable. In Replit dev environment, runner uses port 8081 (`RUNNER_PORT=8081`) with Docker disabled (`DOCKER_ENABLED=false`) to avoid port 8080 conflict and missing Docker daemon.
+- **Code Execution Environment**: Employs Nix-managed runtimes and `DockerExecutor` for sandboxed code execution, supporting `single-vm` and `kubernetes` deployments with optimized Docker builds. Runner service supports real Docker container isolation per workspace via `dockerode` — each workspace gets its own container with CPU/memory/PID limits, filesystem isolation via Docker volumes, and PTY terminals routed through `docker exec`. Controlled by `DOCKER_ENABLED` env var (default: true), with automatic fallback to directory-based isolation if Docker is unavailable.
 - **Data Persistence**: Built on PostgreSQL with Drizzle ORM, ensuring strict tenant isolation. Includes asynchronous database auto-provisioning with multi-provider fallback and retry mechanisms. Notification preferences are stored as JSONB, and user IDs in specific tables are stored as text.
 - **Performance Optimization**: Implements fast bootstrap techniques, `instrumentedLazy()` for retry logic in lazy loading, optimized Docker builds, and Semgrep scan optimization.
 - **Voice Input System**: Integrates Voice Vibe Coding using the MediaRecorder API for transcription, with OpenAI Whisper as primary and Google Gemini 2.0 Flash as automatic fallback.
-- **Monitoring and Observability**: Provides Kubernetes probes for health checks (`/health`, `/health/liveness`, `/health/readiness`, `/health/deep`, `/health/startup`), structured `/health` endpoint returning database/Redis/runner subsystem status with response times, Provider Health API with Prometheus metrics at `/metrics`, Sentry error tracking (server + client), and structured request logging (method, path, status, duration) via centralized logging middleware.
-- **Production Deployment**: `docker-compose.production.yml` brings up full stack (app, runner, postgres, redis, nginx, docker-in-docker) with health checks and dependency ordering. `docker-entrypoint.sh` validates critical env vars and runs migrations before accepting traffic. Runner microservice URL configurable via `RUNNER_BASE_URL` or `RUNNER_URL` alias. Startup validation: `validateRequiredSecrets()` + `validateProductionEnvironment()` + Zod env schema ensure descriptive errors for missing variables.
+- **Monitoring and Observability**: Provides Kubernetes probes for health checks, structured `/health` endpoint returning database/Redis/runner subsystem status with response times, Provider Health API with Prometheus metrics at `/metrics`, Sentry error tracking (server + client), and structured request logging (method, path, status, duration) via centralized logging middleware.
+- **Production Deployment**: `docker-compose.production.yml` brings up full stack with health checks and dependency ordering. `docker-entrypoint.sh` validates critical env vars and runs migrations before accepting traffic. Runner microservice URL configurable. Startup validation ensures descriptive errors for missing variables.
 - **Security Headers**: Helmet.js (CSP with nonces, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy), CORS with dynamic origin detection, CSRF double-submit cookie pattern on all `/api` routes, tier-based rate limiting, and nginx security headers (CSP, HSTS preload, XSS protection).
 - **Routing**: API routes support dual-mounting, and internal router paths do not include the `/api/` prefix. A `notFoundHandler` manages `/api/*` routes, passing non-API paths to Vite. Dedicated endpoints exist for global search and workspace bootstrap.
 - **Environment Configuration**: Environment variables are validated using Zod schemas.
@@ -127,5 +127,9 @@ E-Code employs a two-service architecture: a React, TypeScript, and Vite fronten
 - xterm.js
 - Tavily
 - Passport.js
+<<<<<<< HEAD
 - Firebase Admin SDK (FCM push notifications)
 - @aws-sdk/client-s3 + @aws-sdk/s3-request-presigner (S3-compatible object storage)
+=======
+- @aws-sdk/client-s3 + @aws-sdk/s3-request-presigner
+>>>>>>> ef4ffbd5f (Task #24: Replace Go runtime mock with real execution)

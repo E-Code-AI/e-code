@@ -1,12 +1,12 @@
 #!/bin/bash
 
 # Start Polyglot Backend Services
-# TypeScript (main), Go runtime, and Python ML services
+# TypeScript (main) and Python ML services
+# Container, file, and build operations are handled by the unified TypeScript executor
 
 echo "🚀 Starting E-Code Polyglot Backend Services..."
 
 # Set environment variables
-export GO_RUNTIME_PORT=${GO_RUNTIME_PORT:-8080}
 export PYTHON_ML_PORT=${PYTHON_ML_PORT:-8081}
 
 # Function to check if port is available
@@ -21,23 +21,8 @@ check_port() {
 
 # Kill existing processes on our ports
 echo "🧹 Cleaning up existing processes..."
-pkill -f "go-runtime"
 pkill -f "python-ml"
 sleep 2
-
-# Start Go runtime service
-echo "🟢 Starting Go Runtime Service on port $GO_RUNTIME_PORT..."
-if check_port $GO_RUNTIME_PORT; then
-    cd services/go-runtime
-    go mod tidy
-    go build -o go-runtime main.go
-    ./go-runtime &
-    GO_PID=$!
-    cd ../..
-    echo "✅ Go Runtime Service started with PID $GO_PID"
-else
-    echo "❌ Cannot start Go service - port $GO_RUNTIME_PORT in use"
-fi
 
 # Start Python ML service
 echo "🐍 Starting Python ML Service on port $PYTHON_ML_PORT..."
@@ -64,7 +49,7 @@ sleep 3
 # Health check all services
 echo "🔍 Checking service health..."
 
-services=("localhost:$GO_RUNTIME_PORT/health" "localhost:$PYTHON_ML_PORT/health")
+services=("localhost:$PYTHON_ML_PORT/health")
 for service in "${services[@]}"; do
     if curl -s "http://$service" > /dev/null; then
         echo "✅ $service - Healthy"
@@ -76,7 +61,6 @@ done
 echo ""
 echo "🎉 Polyglot Backend Services Status:"
 echo "   🔷 TypeScript (main): http://localhost:${PORT:-5000}"
-echo "   🟢 Go Runtime:       http://localhost:$GO_RUNTIME_PORT"
 echo "   🐍 Python ML:        http://localhost:$PYTHON_ML_PORT"
 echo ""
 echo "📖 Available APIs:"
@@ -93,7 +77,7 @@ echo "   Capabilities:        GET /api/polyglot/capabilities"
 echo ""
 
 # Keep script running and monitor services
-trap 'echo "🛑 Shutting down services..."; kill $GO_PID $PYTHON_PID 2>/dev/null; exit 0' SIGINT SIGTERM
+trap 'echo "🛑 Shutting down services..."; kill $PYTHON_PID 2>/dev/null; exit 0' SIGINT SIGTERM
 
 echo "🎯 Services running. Press Ctrl+C to stop all services."
 echo "📊 Monitor at: http://localhost:${PORT:-5000}/polyglot"
@@ -101,11 +85,6 @@ echo "📊 Monitor at: http://localhost:${PORT:-5000}/polyglot"
 # Keep alive and monitor
 while true; do
     sleep 30
-    
-    # Check if services are still running
-    if ! kill -0 $GO_PID 2>/dev/null; then
-        echo "⚠️  Go Runtime Service stopped unexpectedly"
-    fi
     
     if ! kill -0 $PYTHON_PID 2>/dev/null; then
         echo "⚠️  Python ML Service stopped unexpectedly"
