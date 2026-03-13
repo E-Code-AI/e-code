@@ -270,8 +270,17 @@ export class PTYTerminalService {
         }
 
         const redisSession = await redisSessionManager.getSession(`terminal-${projectId}`);
+        let previousProcessAlive = false;
         if (redisSession) {
-          logger.info(`Restoring PTY session for project ${projectId} from Redis checkpoint (ended=${redisSession.sessionEnded})`);
+          if (redisSession.shellPid && !redisSession.sessionEnded) {
+            try {
+              process.kill(redisSession.shellPid, 0);
+              previousProcessAlive = true;
+            } catch {
+              previousProcessAlive = false;
+            }
+          }
+          logger.info(`Restoring PTY session for project ${projectId} from Redis checkpoint (ended=${redisSession.sessionEnded}, pidAlive=${previousProcessAlive})`);
         }
 
         logger.info(`Creating new session for project ${projectId}`);
@@ -289,8 +298,10 @@ export class PTYTerminalService {
         logger.info(`Session created successfully for project ${projectId}`);
 
         if (redisSession) {
-          if (redisSession.sessionEnded) {
+          if (redisSession.sessionEnded || !previousProcessAlive) {
             ws.send(JSON.stringify({ type: 'output', data: '\r\n[Session restored from checkpoint - previous session ended]\r\n' }));
+          } else {
+            ws.send(JSON.stringify({ type: 'output', data: '\r\n[Reconnected to existing session]\r\n' }));
           }
           if (redisSession.outputSnapshot) {
             ws.send(JSON.stringify({ type: 'output', data: redisSession.outputSnapshot }));
@@ -375,6 +386,23 @@ export class PTYTerminalService {
         if (checkpoint.columns) session.cols = checkpoint.columns;
         if (checkpoint.rows) session.rows = checkpoint.rows;
         logger.info(`Applied Redis checkpoint to PTY session for project ${projectId}`);
+      }
+
+      if (session) {
+        const shellPid = session.ptyProcess?.pid || undefined;
+        await redisSessionManager.saveSession({
+          sessionId: `terminal-${projectId}`,
+          projectId,
+          commandHistory: session.commandHistory,
+          currentDirectory: session.currentDirectory,
+          columns: session.cols,
+          rows: session.rows,
+          createdAt: session.createdAt,
+          lastActivity: session.lastActivity,
+          containerId: session.containerId || undefined,
+          shellPid,
+          sessionEnded: false,
+        }).catch(err => logger.error(`Failed to checkpoint new PTY session to Redis: ${err}`));
       }
 
       return session;
@@ -796,7 +824,8 @@ export class PTYTerminalService {
 
     logger.info(`Cleaning up terminal session for project ${projectId}`);
 
-    const outputSnapshot = session.outputBuffer.getAll().join('').slice(-8192);
+    const outputSnapshot = session.outputBuffer.getHistory().join('').slice(-8192);
+    const shellPid = session.ptyProcess?.pid || undefined;
     await redisSessionManager.saveSession({
       sessionId: `terminal-${projectId}`,
       projectId,
@@ -807,6 +836,7 @@ export class PTYTerminalService {
       createdAt: session.createdAt,
       lastActivity: session.lastActivity,
       containerId: session.containerId || undefined,
+      shellPid,
       outputSnapshot,
       sessionEnded: true,
     }).catch(err => logger.error(`Failed to checkpoint PTY session to Redis: ${err}`));

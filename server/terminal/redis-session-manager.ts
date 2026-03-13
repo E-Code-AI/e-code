@@ -20,6 +20,7 @@ export interface TerminalSession {
   createdAt: number;
   lastActivity: number;
   containerId?: string;
+  shellPid?: number;
   outputSnapshot?: string;
   sessionEnded?: boolean;
 }
