@@ -334,6 +334,45 @@ export class StripePaymentService {
     return subscription;
   }
 
+  async createCheckoutSession(
+    userId: number,
+    planId: string,
+    successUrl: string,
+    cancelUrl: string
+  ): Promise<{ url: string; sessionId: string }> {
+    const user = await storage.getUser(String(userId));
+    if (!user) throw new Error('User not found');
+
+    let customerId = user.stripeCustomerId;
+    if (!customerId) {
+      customerId = await this.createCustomer(userId, user.email ?? '', user.username ?? undefined);
+    }
+
+    const plan = this.plans.get(planId);
+    if (!plan || plan.tier === 'free') throw new Error('Invalid paid plan');
+
+    const session = await stripe.checkout.sessions.create({
+      customer: customerId,
+      mode: 'subscription',
+      line_items: [{ price: plan.id, quantity: 1 }],
+      success_url: successUrl,
+      cancel_url: cancelUrl,
+      allow_promotion_codes: true,
+      billing_address_collection: 'auto',
+      automatic_tax: { enabled: true },
+      metadata: { userId: String(userId), planId },
+      subscription_data: {
+        metadata: { userId: String(userId), planId },
+      },
+    }, {
+      idempotencyKey: generateIdempotencyKey('checkout', userId, planId),
+    });
+
+    if (!session.url) throw new Error('Failed to create Stripe Checkout Session');
+    logger.info(`[Stripe] ✅ Checkout session created for user ${userId}, plan ${planId}`);
+    return { url: session.url, sessionId: session.id };
+  }
+
   async cancelSubscription(userId: number): Promise<void> {
     const user = await storage.getUser(String(userId));
     if (!user || !user.stripeSubscriptionId) {

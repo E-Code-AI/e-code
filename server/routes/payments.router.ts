@@ -130,6 +130,40 @@ router.post('/update-subscription', ensureAuthenticated, async (req: Request, re
   }
 });
 
+// Create a Stripe hosted Checkout Session (simplest path for new subscribers)
+// Returns a redirect URL to Stripe's hosted checkout page — no card UI needed on our side.
+router.post('/create-checkout-session', ensureAuthenticated, async (req: Request, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const { tier, interval } = req.body;
+
+    if (!tier || tier.toLowerCase() === 'free') {
+      return res.status(400).json({ error: 'A paid tier is required' });
+    }
+    const validTiers = ['core', 'teams', 'enterprise'];
+    if (!validTiers.includes(tier.toLowerCase())) {
+      return res.status(400).json({ error: 'Invalid tier. Must be one of: ' + validTiers.join(', ') });
+    }
+
+    const planId = interval === 'year' ? `${tier.toLowerCase()}_yearly` : tier.toLowerCase();
+
+    const appUrl = process.env.APP_URL ||
+      (process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}` : 'http://localhost:5000');
+
+    const { url, sessionId } = await paymentService.createCheckoutSession(
+      userId,
+      planId,
+      `${appUrl}/dashboard?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
+      `${appUrl}/billing?checkout=cancelled`
+    );
+
+    res.json({ url, sessionId });
+  } catch (error: any) {
+    logger.error('Failed to create checkout session:', error);
+    res.status(500).json({ error: error.message || 'Failed to create checkout session' });
+  }
+});
+
 // Create payment intent for one-time payments
 router.post('/create-payment-intent', ensureAuthenticated, async (req: Request, res: Response) => {
   try {

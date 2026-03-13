@@ -602,7 +602,7 @@ export default function Billing() {
                           if (subscriptionStatus?.hasSubscription) {
                             upgradeMutation.mutate(plan.id);
                           } else {
-                            navigate(`/subscribe?plan=${plan.tier}`);
+                            navigate(`/subscribe?tier=${plan.tier}`);
                           }
                         }}
                         disabled={upgradeMutation.isPending}

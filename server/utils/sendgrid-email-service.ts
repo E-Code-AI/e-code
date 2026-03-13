@@ -30,6 +30,17 @@ const APP_URL = process.env.APP_URL
 const FROM_EMAIL = process.env.FROM_EMAIL || 'noreply@e-code.ai';
 const FROM_NAME = process.env.FROM_NAME || 'E-Code Platform';
 
+// Critical: SendGrid rejects emails if FROM_EMAIL is not a verified Sender Identity.
+// To fix: go to https://app.sendgrid.com/settings/sender_auth and verify
+// the domain OR the exact email address set in FROM_EMAIL.
+if (isProduction && SENDGRID_API_KEY && !process.env.FROM_EMAIL) {
+  console.warn(
+    '[SendGrid] FROM_EMAIL env var is not set. Defaulting to noreply@e-code.ai — ' +
+    'make sure this address is verified in your SendGrid Sender Authentication settings, ' +
+    'or set FROM_EMAIL to a verified sender.'
+  );
+}
+
 // Email templates
 const emailTemplates = {
   verification: (displayName: string, token: string) => ({

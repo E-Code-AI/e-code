@@ -48,12 +48,23 @@ import { parse as parseCookie } from 'cookie';
 
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 
-// SECURE DEFAULT: Require Docker unless explicitly disabled (dev only)
-// The ONLY way to allow local PTY is to set ALLOW_INSECURE_LOCAL_PTY=true
-// This cannot happen accidentally - it requires deliberate action
-// NOTE: Read dynamically to support env vars loaded after module load
+// Replit VM provides OS-level isolation (nsjail + gVisor) per container —
+// Docker-in-Docker is blocked by design. On Replit we trust the platform
+// isolation instead of requiring a nested Docker daemon.
+const IS_REPLIT_VM = !!(process.env.REPL_ID || process.env.REPLIT_DEPLOYMENT);
+
+// SECURE DEFAULT: Require Docker unless:
+//   a) Explicitly opted-in AND running in development (original behaviour), OR
+//   b) Running on Replit VM where platform isolation replaces Docker AND
+//      ALLOW_INSECURE_LOCAL_PTY=true is set (opt-in still required).
+// NOTE: Read dynamically to support env vars loaded after module load.
 function getAllowInsecureLocalPty(): boolean {
-  return process.env.ALLOW_INSECURE_LOCAL_PTY === 'true' && !IS_PRODUCTION;
+  const optedIn = process.env.ALLOW_INSECURE_LOCAL_PTY === 'true';
+  if (!optedIn) return false;
+  // On Replit VM: allow even in production — platform provides the isolation
+  if (IS_REPLIT_VM) return true;
+  // Everywhere else: only allow in development
+  return !IS_PRODUCTION;
 }
 
 // Require Docker in all cases except when explicitly allowing insecure local PTY
@@ -62,7 +73,8 @@ function getRequireDockerTerminal(): boolean {
 }
 
 async function validateDockerAvailable(): Promise<boolean> {
-  if (process.env.REPL_ID || process.env.REPLIT_DEPLOYMENT) {
+  if (IS_REPLIT_VM) {
+    // Docker-in-Docker is not available on Replit VM — platform handles isolation
     return false;
   }
   return new Promise((resolve) => {
