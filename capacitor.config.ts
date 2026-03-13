@@ -5,17 +5,50 @@ const config: CapacitorConfig = {
   appName: 'E-Code',
   webDir: 'dist/public',
   server: {
-    androidScheme: 'https'
+    androidScheme: 'https',
+    iosScheme: 'https',
+    hostname: 'app.ecode.ai'
   },
   plugins: {
-    Keyboard: {
-      resize: 'body',
-      resizeOnFullScreen: true
+    SplashScreen: {
+      launchShowDuration: 2000,
+      launchAutoHide: true,
+      launchFadeOutDuration: 500,
+      backgroundColor: '#0D0D0D',
+      androidSplashResourceName: 'splash',
+      androidScaleType: 'CENTER_CROP',
+      showSpinner: false,
+      splashFullScreen: true,
+      splashImmersive: true
     },
     StatusBar: {
-      style: 'dark',
-      backgroundColor: '#0a0a0a'
+      style: 'DARK',
+      backgroundColor: '#0a0a0a',
+      overlaysWebView: false
+    },
+    Keyboard: {
+      resize: 'body',
+      resizeOnFullScreen: true,
+      style: 'DARK'
+    },
+    PushNotifications: {
+      presentationOptions: ['badge', 'sound', 'alert']
+    },
+    Haptics: {},
+    App: {
+      urlScheme: 'ecode'
     }
+  },
+  android: {
+    allowMixedContent: false,
+    captureInput: true,
+    webContentsDebuggingEnabled: false
+  },
+  ios: {
+    contentInset: 'automatic',
+    allowsLinkPreview: false,
+    scrollEnabled: true,
+    scheme: 'ecode'
   }
 };
 

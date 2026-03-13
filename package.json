@@ -22,7 +22,11 @@
     "test:e2e": "npx playwright test test/e2e || echo 'E2E tests: Install dependencies with npm install'",
     "test:coverage": "npx jest --config=jest.config.enterprise.js --coverage --passWithNoTests || echo 'Coverage: Install dependencies with npm install'",
     "test:watch": "npx jest --config=jest.config.enterprise.js --watch --passWithNoTests",
-    "test:full": "npm run test:ci && npm run test:unit && npm run test:integration && npm run test:e2e"
+    "test:full": "npm run test:ci && npm run test:unit && npm run test:integration && npm run test:e2e",
+    "mobile:build": "vite build && npx cap sync",
+    "mobile:android": "npx cap open android",
+    "mobile:ios": "npx cap open ios",
+    "mobile:setup": "bash scripts/mobile-setup.sh"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.37.0",
@@ -31,6 +35,18 @@
     "@babel/parser": "^7.28.0",
     "@babel/traverse": "^7.28.0",
     "@babel/types": "^7.28.5",
+    "@capacitor/android": "^8.2.0",
+    "@capacitor/app": "^8.0.1",
+    "@capacitor/device": "^8.0.1",
+    "@capacitor/filesystem": "^8.1.2",
+    "@capacitor/haptics": "^8.0.1",
+    "@capacitor/ios": "^8.2.0",
+    "@capacitor/keyboard": "^8.0.1",
+    "@capacitor/network": "^8.0.1",
+    "@capacitor/preferences": "^8.0.1",
+    "@capacitor/push-notifications": "^8.0.2",
+    "@capacitor/splash-screen": "^8.0.1",
+    "@capacitor/status-bar": "^8.0.1",
     "@esbuild/linux-x64": "^0.27.3",
     "@google-cloud/storage": "^7.18.0",
     "@google/generative-ai": "^0.24.1",
@@ -131,8 +147,8 @@
     "zod-validation-error": "^3.4.0"
   },
   "devDependencies": {
-    "@capacitor/cli": "^8.0.2",
-    "@capacitor/core": "^8.0.0",
+    "@capacitor/cli": "^8.2.0",
+    "@capacitor/core": "^8.2.0",
     "@codemirror/autocomplete": "^6.20.0",
     "@codemirror/commands": "^6.10.0",
     "@codemirror/lang-cpp": "^6.0.3",

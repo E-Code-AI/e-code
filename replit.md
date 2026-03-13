@@ -127,9 +127,15 @@ E-Code employs a two-service architecture: a React, TypeScript, and Vite fronten
 - xterm.js
 - Tavily
 - Passport.js
-<<<<<<< HEAD
 - Firebase Admin SDK (FCM push notifications)
 - @aws-sdk/client-s3 + @aws-sdk/s3-request-presigner (S3-compatible object storage)
-=======
-- @aws-sdk/client-s3 + @aws-sdk/s3-request-presigner
->>>>>>> ef4ffbd5f (Task #24: Replace Go runtime mock with real execution)
+- Capacitor (native iOS/Android app packaging)
+
+### Mobile Build Pipeline (Capacitor)
+- **Config**: `capacitor.config.ts` — app ID `com.ecode.app`, webDir `dist/public`, deep-link scheme `ecode://`
+- **Plugins**: SplashScreen, StatusBar, Keyboard, PushNotifications, Haptics, App, Network, Device, Filesystem, Preferences
+- **Icons**: `resources/ios/AppIcon.appiconset/` (20pt–1024pt) and `resources/android/mipmap-*` (mdpi–xxxhdpi)
+- **FCM placeholders**: `resources/android/google-services.json`, `resources/ios/GoogleService-Info.plist`
+- **Build scripts**: `scripts/mobile-setup.sh` (initial platform setup), `scripts/mobile-build.sh` (build + sync)
+- **Build guide**: `MOBILE_BUILD.md`
+- **Note**: Capacitor CLI v8 requires Node.js >= 22. Native project scaffolding (`npx cap add android/ios`) must be run on a compatible environment.
