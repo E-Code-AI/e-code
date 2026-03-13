@@ -128,5 +128,10 @@ E-Code utilizes a two-service architecture: a React, TypeScript, and Vite-based 
 - xterm.js
 - Tavily
 - Passport.js
+<<<<<<< HEAD
 - Firebase Admin SDK (for FCM push notifications)
 - Capacitor (for native iOS/Android app packaging)
+=======
+- Firebase Admin SDK (FCM push notifications)
+- Capacitor (native iOS/Android app packaging)
+>>>>>>> d70874f7f (Task #32: Multi-screen preview splash sequence)

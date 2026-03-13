@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
-import { PreviewSplashScreen } from './PreviewSplashScreen';
+import { SplashScreenSequence } from './SplashScreenSequence';
 
 export type AutonomousBuildPhase = 'planning' | 'scaffolding' | 'building' | 'styling' | 'finalizing' | 'complete' | null;
 
@@ -42,6 +42,15 @@ export function PreviewPanel({
 }: PreviewPanelProps) {
   const { toast } = useToast();
   const hasAttemptedAutoStart = useRef(false);
+  const [splashDismissed, setSplashDismissed] = useState(false);
+  const prevBuildPhaseRef = useRef(autonomousBuildPhase);
+
+  useEffect(() => {
+    if (autonomousBuildPhase && autonomousBuildPhase !== 'complete' && prevBuildPhaseRef.current !== autonomousBuildPhase) {
+      setSplashDismissed(false);
+    }
+    prevBuildPhaseRef.current = autonomousBuildPhase;
+  }, [autonomousBuildPhase]);
 
   // Query preview status
   const { data: previewStatus, isLoading: isStatusLoading, refetch: refetchStatus } = useQuery<PreviewStatus>({
@@ -148,6 +157,12 @@ export function PreviewPanel({
 
   const isPreviewRunning = previewStatus?.status === 'running' || previewStatus?.status === 'static';
   const isPreviewStarting = previewStatus?.status === 'starting' || startPreviewMutation.isPending;
+
+  useEffect(() => {
+    if (isPreviewStarting) {
+      setSplashDismissed(false);
+    }
+  }, [isPreviewStarting]);
   const canShowPreview = isPreviewRunning && previewStatus?.previewUrl;
   // ✅ FIX (Dec 1, 2025): Use mutation.isPending for loading state instead of local timeout
   const isRefreshing = startPreviewMutation.isPending || stopPreviewMutation.isPending;
@@ -245,9 +260,10 @@ export function PreviewPanel({
       {/* Preview Content */}
       <div className="flex-1 relative bg-background dark:bg-background">
         {/* Autonomous build splash screen - shows during AI-driven builds */}
-        {autonomousBuildPhase && autonomousBuildPhase !== 'complete' ? (
-          <PreviewSplashScreen
-            phase={autonomousBuildPhase}
+        {(autonomousBuildPhase && !splashDismissed) ? (
+          <SplashScreenSequence
+            isComplete={autonomousBuildPhase === 'complete'}
+            onComplete={() => setSplashDismissed(true)}
             currentTask={autonomousBuildTask}
             progress={autonomousBuildProgress}
             appName={appName}
@@ -256,16 +272,11 @@ export function PreviewPanel({
           <div className="h-full flex items-center justify-center">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
-        ) : isPreviewStarting ? (
-          <div className="h-full flex items-center justify-center text-center p-8">
-            <div>
-              <Loader2 className="h-16 w-16 mx-auto mb-4 animate-spin text-primary" />
-              <h3 className="text-[15px] font-semibold mb-2">Starting preview...</h3>
-              <p className="text-[13px] text-muted-foreground">
-                Building and starting your application. This may take a moment.
-              </p>
-            </div>
-          </div>
+        ) : (isPreviewStarting && !splashDismissed) ? (
+          <SplashScreenSequence
+            appName={appName}
+            onComplete={() => setSplashDismissed(true)}
+          />
         ) : previewStatus?.status === 'no_runnable_files' ? (
           <div className="h-full flex items-center justify-center text-center p-8">
             <div>

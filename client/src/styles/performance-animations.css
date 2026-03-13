@@ -339,6 +339,36 @@
   animation: fadeInFast 0.1s ease-out forwards;
 }
 
+@keyframes splashSlideInRight {
+  from {
+    transform: translateX(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes splashSlideInLeft {
+  from {
+    transform: translateX(-30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.splash-slide-in-right {
+  animation: splashSlideInRight 0.4s ease-out;
+}
+
+.splash-slide-in-left {
+  animation: splashSlideInLeft 0.4s ease-out;
+}
+
 /* Scale in animation */
 @keyframes scaleInPop {
   from {
