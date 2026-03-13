@@ -302,7 +302,7 @@ export default function Landing() {
 
             {/* Main Headline */}
             <LazyMotionDiv 
-              className="text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-bold tracking-tight"
+              className="text-[clamp(2.25rem,8vw,3rem)] sm:text-6xl lg:text-7xl xl:text-8xl font-bold tracking-tight"
               variants={fadeInUp}
               data-testid="heading-hero"
             >

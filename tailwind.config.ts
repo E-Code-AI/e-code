@@ -29,6 +29,10 @@ export default {
       'tablet-portrait': { 'raw': '(min-width: 768px) and (min-height: 600px) and (orientation: portrait)' },
       // True tablet: not a phone in landscape
       'tablet': { 'raw': '(min-width: 768px) and (min-height: 500px)' },
+      // Tablet landscape: persistent sidebar instead of drawer overlay
+      'landscape-tablet': { 'raw': '(min-width: 768px) and (max-width: 1024px) and (orientation: landscape)' },
+      // Tablet portrait: overlay drawer behavior
+      'portrait-tablet': { 'raw': '(min-width: 768px) and (max-width: 1024px) and (orientation: portrait)' },
       // Touch device detection for hover states
       'touch': { 'raw': '(hover: none) and (pointer: coarse)' },
       // Desktop with hover support

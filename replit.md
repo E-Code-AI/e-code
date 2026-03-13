@@ -76,7 +76,7 @@ E-Code is an AI-assisted web-based Integrated Development Environment (IDE) desi
 - Bootstrap Response Format: `POST /api/workspace/bootstrap` returns `{ success, projectId, projectSlug, sessionId, bootstrapToken, workspaceUrl, ... }` — NOTE: the project ID is at top-level `response.projectId` (NOT `response.project.id`). Frontend must check `response.projectId`, use `/ide/${response.projectId}?bootstrap=${response.bootstrapToken}` for redirect. NEVER use `response.project` or `/editor/`.
 - Bootstrap Timeout: `BOOTSTRAP_TIMEOUT_MS = 60000` (60s) in `autonomousBuildStore.ts`.
 - Global Search Route: `globalSearchRouter` is mounted at `/api/search` → internal route MUST be `router.post('/global', ...)`.
-- Bootstrap Router Mount: `workspaceBootstrapRouter` is mounted at `/api/workspace` → internal route MUST be `router.post('/bootstrap', indicative of an enterprise-grade platform.`)
+- Bootstrap Router Mount: `workspaceBootstrapRouter` is mounted at `/api/workspace` → internal route MUST be `router.post('/bootstrap', ...)`
 - AI Model Names (CRITICAL): The platform uses REAL API model names — NEVER fake/invented names. ALL models below verified via live API test. OpenAI (all return 429 quota = real): `gpt-4.1`, `gpt-4.1-mini`, `gpt-4.1-nano`, `gpt-4o`, `gpt-4o-mini`, `o4-mini`, `o3`, `o3-mini`, `o1`, `gpt-4-turbo`. Anthropic (all return 400 credit = real): `claude-opus-4-20250514`, `claude-sonnet-4-20250514`, `claude-3-7-sonnet-20250219`, `claude-3-5-sonnet-20241022`, `claude-3-5-haiku-20241022`, `claude-3-opus-20240229`, `claude-3-haiku-20240307`. Google: `gemini-2.5-pro`, `gemini-2.5-flash`, `gemini-2.0-flash`, `gemini-2.0-flash-lite`, `gemini-1.5-pro`, `gemini-1.5-flash`. xAI (return 403 billing = real): `grok-3`, `grok-3-mini`, `grok-3-fast`. Moonshot: `moonshot-v1-8k`, `moonshot-v1-32k`, `moonshot-v1-128k`. DEAD IDs (do NOT use): `grok-2-1212` (400 not found), `o1-mini` (404 on this key). The `model-normalizer.ts` maps all deprecated/fake names → real names. FORBIDDEN fake names: gpt-5-mini (use gpt-4.1-mini), gpt-5-nano (use gpt-4.1-nano), gemini-3-*, llama-3.x (no Groq API key). GPT-5.4 and GPT-5.4 Pro are REAL — `gpt-5`, `gpt-5.1`, `gpt-5.2`, `gpt-5.3` normalize to `gpt-5.4`. OpenAI default is now `gpt-5.4`.
 - Stuck Session Cleanup (Autonomous Build): On server startup, `AgentOrchestratorService` constructor resets sessions stuck in `planning`/`executing` → `failed`. Idempotency check in `startAutonomousWorkspace` allows restart from `idle` OR `failed` status.
 
@@ -119,7 +119,7 @@ E-Code employs a two-service architecture: a React, TypeScript, and Vite fronten
 - SendGrid
 - Sentry
 - Slack
-- Object Storage (GCS-backed)
+- Object Storage (GCS-backed, S3-compatible)
 - E-Code Runner
 - GitHub
 - Playwright
@@ -127,6 +127,7 @@ E-Code employs a two-service architecture: a React, TypeScript, and Vite fronten
 - xterm.js
 - Tavily
 - Passport.js
+<<<<<<< HEAD
 - Firebase Admin SDK (FCM push notifications)
 - @aws-sdk/client-s3 + @aws-sdk/s3-request-presigner (S3-compatible object storage)
 - Capacitor (native iOS/Android app packaging)
@@ -139,3 +140,6 @@ E-Code employs a two-service architecture: a React, TypeScript, and Vite fronten
 - **Build scripts**: `scripts/mobile-setup.sh` (initial platform setup), `scripts/mobile-build.sh` (build + sync)
 - **Build guide**: `MOBILE_BUILD.md`
 - **Note**: Capacitor CLI v8 requires Node.js >= 22. Native project scaffolding (`npx cap add android/ios`) must be run on a compatible environment.
+=======
+- Firebase Admin SDK (FCM push notifications)
+>>>>>>> ef72119f9 (Task #28: Responsive UI/UX fixes (web, tablet, mobile))

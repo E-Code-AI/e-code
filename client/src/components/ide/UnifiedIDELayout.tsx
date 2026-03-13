@@ -259,6 +259,18 @@ function UnifiedIDELayout({
   const [mobileActiveTab, setMobileActiveTab] = useState<MobileTab>('agent');
   const [tabletPanel, setTabletPanel] = useState<TabletPanel>('editor');
   const [tabletDrawerOpen, setTabletDrawerOpen] = useState(true);
+
+  useEffect(() => {
+    const landscapeQuery = window.matchMedia('(min-width: 768px) and (max-width: 1024px) and (orientation: landscape)');
+    const handleChange = (e: MediaQueryListEvent | MediaQueryList) => {
+      if (e.matches) {
+        setTabletDrawerOpen(true);
+      }
+    };
+    handleChange(landscapeQuery);
+    landscapeQuery.addEventListener('change', handleChange);
+    return () => landscapeQuery.removeEventListener('change', handleChange);
+  }, []);
   
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [enableShortcutHint, setEnableShortcutHint] = useState(false);
@@ -1250,7 +1262,7 @@ function UnifiedIDELayout({
         data-ide-layout="unified"
         data-layout-type="mobile"
       >
-        {/* Replit-style Mobile Header */}
+        {/* Replit-style Mobile Header - compact */}
         <ReplitMobileHeader
           activeTab={mobileActiveTab}
           onBack={() => window.history.back()}
@@ -1259,12 +1271,12 @@ function UnifiedIDELayout({
           onMore={() => setShowMobileMoreMenu(true)}
         />
 
-        {/* Main Content Area - With bottom padding for fixed navigation */}
+        {/* Main Content Area - maximized vertical space */}
         <div 
-          className="flex-1 overflow-hidden pb-16"
+          className="flex-1 overflow-hidden"
           {...((mobileActiveTab === 'preview' || mobileActiveTab === 'agent') ? mobileSwipeHandlers : {})}
           data-testid="mobile-swipe-area"
-          style={{ paddingBottom: mobileActiveTab === 'agent' ? '8rem' : '3.5rem' }}
+          style={{ paddingBottom: mobileActiveTab === 'agent' ? '7.5rem' : '3rem' }}
         >
           <div
             key={mobileActiveTab}
@@ -1410,8 +1422,8 @@ function UnifiedIDELayout({
       >
         <div
           className={cn(
-            "fixed left-0 top-0 z-40 h-full bg-background border-r border-border shadow-xl w-[280px]",
-            "transition-transform duration-300 ease-out",
+            "tablet-sidebar bg-background border-r border-border w-[280px] flex-shrink-0",
+            "transition-all duration-300 ease-out",
             tabletDrawerOpen ? "translate-x-0" : "-translate-x-full"
           )}
           data-testid="tablet-drawer"
@@ -1422,7 +1434,7 @@ function UnifiedIDELayout({
               variant="ghost"
               size="icon"
               onClick={() => setTabletDrawerOpen(false)}
-              className="h-10 w-10 touch-manipulation"
+              className="h-10 w-10 touch-manipulation tablet-sidebar-close-btn"
             >
               <ChevronLeft className="h-5 w-5" />
             </Button>
@@ -1442,7 +1454,7 @@ function UnifiedIDELayout({
 
         <div
           className={cn(
-            "fixed inset-0 z-30 bg-black/20 backdrop-blur-sm",
+            "tablet-sidebar-overlay fixed inset-0 z-30 bg-black/20 backdrop-blur-sm",
             "transition-opacity duration-300",
             tabletDrawerOpen ? "opacity-100" : "opacity-0 pointer-events-none"
           )}

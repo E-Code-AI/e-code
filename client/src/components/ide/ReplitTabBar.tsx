@@ -324,16 +324,30 @@ export function ReplitTabBar({
         </Button>
       )}
       
-      <div
-        ref={scrollRef}
-        className="flex items-center flex-1 overflow-x-auto scrollbar-none gap-0"
-        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-      >
-        {pinnedTabs.map(renderTab)}
-        {pinnedTabs.length > 0 && unpinnedTabs.length > 0 && (
-          <div className="w-px h-[18px] bg-[var(--ecode-border)] mx-0.5" />
+      <div className="relative flex-1 min-w-0">
+        {canScrollLeft && (
+          <div
+            className="absolute left-0 top-0 bottom-0 w-8 z-10 pointer-events-none"
+            style={{ background: 'linear-gradient(to right, var(--ecode-surface), transparent)' }}
+          />
         )}
-        {unpinnedTabs.map(renderTab)}
+        <div
+          ref={scrollRef}
+          className="flex items-center w-full overflow-x-auto scrollbar-none gap-0"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
+          {pinnedTabs.map(renderTab)}
+          {pinnedTabs.length > 0 && unpinnedTabs.length > 0 && (
+            <div className="w-px h-[18px] bg-[var(--ecode-border)] mx-0.5" />
+          )}
+          {unpinnedTabs.map(renderTab)}
+        </div>
+        {canScrollRight && (
+          <div
+            className="absolute right-0 top-0 bottom-0 w-8 z-10 pointer-events-none"
+            style={{ background: 'linear-gradient(to left, var(--ecode-surface), transparent)' }}
+          />
+        )}
       </div>
       
       {canScrollRight && (

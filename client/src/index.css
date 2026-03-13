@@ -1466,6 +1466,37 @@ body.landscape-mode .mobile-navigation {
 }
 
 /* =====================================================
+ * TABLET LANDSCAPE PERSISTENT SIDEBAR
+ * In landscape orientation on tablets (768-1024px),
+ * the file explorer is pinned instead of an overlay.
+ * ===================================================== */
+@media (min-width: 768px) and (max-width: 1024px) and (orientation: landscape) {
+  .tablet-sidebar {
+    position: relative !important;
+    z-index: auto !important;
+    box-shadow: none !important;
+    transform: none !important;
+  }
+  .tablet-sidebar-overlay {
+    display: none !important;
+  }
+  .tablet-sidebar-close-btn {
+    display: none !important;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
+  .tablet-sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 40;
+    height: 100%;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  }
+}
+
+/* =====================================================
  * CENTERING OVERRIDE — outside any @layer so it has
  * maximum cascade priority over all layered styles.
  * This ensures container-responsive is ALWAYS centered.

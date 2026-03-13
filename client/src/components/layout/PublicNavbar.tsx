@@ -300,12 +300,13 @@ export function PublicNavbar() {
                   </div>
 
                   <ScrollArea className="h-[calc(100vh-180px)]">
-                    <div className="p-4 space-y-6">
-                      <div>
-                        <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+                    <div className="p-4 space-y-1">
+                      <div className="pb-3">
+                        <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2 px-3 flex items-center gap-2">
+                          <Sparkles className="h-3 w-3 text-ecode-accent" />
                           Product
                         </h3>
-                        <div className="space-y-1">
+                        <div className="space-y-0.5">
                           {productItems.map((item) => (
                             <button
                               key={item.title}
@@ -313,24 +314,28 @@ export function PublicNavbar() {
                                 setMobileMenuOpen(false);
                                 navigate(item.href);
                               }}
-                              className="w-full text-left px-3 py-2 rounded-lg hover:bg-muted transition-colors"
+                              className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-muted transition-colors flex items-center justify-between group"
                             >
-                              <div className="text-[13px] font-medium text-foreground">
-                                {item.title}
+                              <div>
+                                <div className="text-[13px] font-medium text-foreground">
+                                  {item.title}
+                                </div>
+                                <div className="text-[11px] text-muted-foreground mt-0.5 line-clamp-1">
+                                  {item.description}
+                                </div>
                               </div>
-                              <div className="text-[11px] text-muted-foreground mt-0.5">
-                                {item.description}
-                              </div>
+                              <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50 flex-shrink-0 ml-2" />
                             </button>
                           ))}
                         </div>
                       </div>
 
-                      <div>
-                        <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+                      <div className="border-t border-border pt-3 pb-3">
+                        <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2 px-3 flex items-center gap-2">
+                          <ArrowUpRight className="h-3 w-3 text-indigo-400" />
                           Solutions
                         </h3>
-                        <div className="space-y-1">
+                        <div className="space-y-0.5">
                           {solutionsItems.map((item) => (
                             <button
                               key={item.title}
@@ -338,24 +343,28 @@ export function PublicNavbar() {
                                 setMobileMenuOpen(false);
                                 navigate(item.href);
                               }}
-                              className="w-full text-left px-3 py-2 rounded-lg hover:bg-muted transition-colors"
+                              className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-muted transition-colors flex items-center justify-between group"
                             >
-                              <div className="text-[13px] font-medium text-foreground">
-                                {item.title}
+                              <div>
+                                <div className="text-[13px] font-medium text-foreground">
+                                  {item.title}
+                                </div>
+                                <div className="text-[11px] text-muted-foreground mt-0.5 line-clamp-1">
+                                  {item.description}
+                                </div>
                               </div>
-                              <div className="text-[11px] text-muted-foreground mt-0.5">
-                                {item.description}
-                              </div>
+                              <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50 flex-shrink-0 ml-2" />
                             </button>
                           ))}
                         </div>
                       </div>
 
-                      <div>
-                        <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+                      <div className="border-t border-border pt-3 pb-3">
+                        <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2 px-3 flex items-center gap-2">
+                          <Search className="h-3 w-3 text-sky-400" />
                           Resources
                         </h3>
-                        <div className="space-y-1">
+                        <div className="space-y-0.5">
                           {resourcesItems.map((item) => (
                             <button
                               key={item.title}
@@ -363,24 +372,28 @@ export function PublicNavbar() {
                                 setMobileMenuOpen(false);
                                 navigate(item.href);
                               }}
-                              className="w-full text-left px-3 py-2 rounded-lg hover:bg-muted transition-colors"
+                              className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-muted transition-colors flex items-center justify-between group"
                             >
-                              <div className="text-[13px] font-medium text-foreground">
-                                {item.title}
+                              <div>
+                                <div className="text-[13px] font-medium text-foreground">
+                                  {item.title}
+                                </div>
+                                <div className="text-[11px] text-muted-foreground mt-0.5 line-clamp-1">
+                                  {item.description}
+                                </div>
                               </div>
-                              <div className="text-[11px] text-muted-foreground mt-0.5">
-                                {item.description}
-                              </div>
+                              <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50 flex-shrink-0 ml-2" />
                             </button>
                           ))}
                         </div>
                       </div>
 
-                      <div>
-                        <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+                      <div className="border-t border-border pt-3 pb-3">
+                        <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2 px-3 flex items-center gap-2">
+                          <ChevronRight className="h-3 w-3 text-indigo-400" />
                           Company
                         </h3>
-                        <div className="space-y-1">
+                        <div className="space-y-0.5">
                           {companyItems.map((item) => (
                             <button
                               key={item.title}
@@ -388,27 +401,30 @@ export function PublicNavbar() {
                                 setMobileMenuOpen(false);
                                 navigate(item.href);
                               }}
-                              className="w-full text-left px-3 py-2 rounded-lg hover:bg-muted transition-colors"
+                              className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-muted transition-colors flex items-center justify-between group"
                             >
-                              <div className="text-[13px] font-medium text-foreground">
-                                {item.title}
+                              <div>
+                                <div className="text-[13px] font-medium text-foreground">
+                                  {item.title}
+                                </div>
+                                <div className="text-[11px] text-muted-foreground mt-0.5 line-clamp-1">
+                                  {item.description}
+                                </div>
                               </div>
-                              <div className="text-[11px] text-muted-foreground mt-0.5">
-                                {item.description}
-                              </div>
+                              <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50 flex-shrink-0 ml-2" />
                             </button>
                           ))}
                         </div>
                       </div>
 
-                      <div className="pt-4 border-t border-border">
+                      <div className="border-t border-border pt-3">
                         <div className="grid grid-cols-2 gap-2">
                           <button
                             onClick={() => {
                               setMobileMenuOpen(false);
                               navigate('/pricing');
                             }}
-                            className="px-3 py-2 rounded-lg border border-border hover:bg-muted text-[13px] font-medium text-foreground transition-colors"
+                            className="px-3 py-2.5 rounded-lg border border-border hover:bg-muted text-[13px] font-medium text-foreground transition-colors min-h-[44px]"
                           >
                             Pricing
                           </button>
@@ -417,7 +433,7 @@ export function PublicNavbar() {
                               setMobileMenuOpen(false);
                               navigate('/team');
                             }}
-                            className="px-3 py-2 rounded-lg border border-border hover:bg-muted text-[13px] font-medium text-foreground transition-colors"
+                            className="px-3 py-2.5 rounded-lg border border-border hover:bg-muted text-[13px] font-medium text-foreground transition-colors min-h-[44px]"
                           >
                             Teams
                           </button>
