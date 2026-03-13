@@ -1319,13 +1319,22 @@ httpServer.listen(port, "0.0.0.0", () => {
   // ✅ PRODUCTION OPTIMIZATION: Graceful shutdown handler
   const gracefulShutdown = async (signal: string) => {
     logger.info(`\n[Shutdown] Received ${signal}, starting graceful shutdown...`);
+    serverState.phase = 'draining';
     
-    // Stop accepting new connections
     httpServer.close(() => {
       logger.info('[Shutdown] HTTP server closed');
     });
 
-    // Clear all registered intervals (prevents memory leaks)
+    try {
+      const { getPTYTerminalService } = await import('./terminal/pty-terminal-service');
+      const ptyService = getPTYTerminalService();
+      if (ptyService) {
+        await ptyService.drainAllSessions();
+      }
+    } catch (e) {
+      logger.warn(`[Shutdown] PTY session drain failed: ${e}`);
+    }
+
     try {
       const { intervalRegistry } = await import('./utils/interval-registry');
       intervalRegistry.clearAll();

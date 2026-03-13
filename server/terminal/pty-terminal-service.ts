@@ -228,6 +228,7 @@ export class PTYTerminalService {
       const token = queryToken || headerToken;
 
       let authenticated = false;
+      let authenticatedUserId: number | null = null;
 
       if (request.headers.cookie) {
         const cookies = parseCookie(request.headers.cookie);
@@ -239,6 +240,7 @@ export class PTYTerminalService {
           });
           if (sess?.passport?.user) {
             authenticated = true;
+            authenticatedUserId = typeof sess.passport.user === 'number' ? sess.passport.user : parseInt(sess.passport.user, 10);
           }
         }
       }
@@ -247,8 +249,9 @@ export class PTYTerminalService {
         try {
           const jwtSecret = process.env.JWT_SECRET || process.env.SESSION_SECRET;
           if (jwtSecret) {
-            jwt.verify(token, jwtSecret);
+            const decoded = jwt.verify(token, jwtSecret) as any;
             authenticated = true;
+            authenticatedUserId = decoded.userId || decoded.id || decoded.sub || null;
           }
         } catch {}
       }
@@ -259,7 +262,24 @@ export class PTYTerminalService {
         return;
       }
 
-      logger.info(`Terminal connection for project ${projectId}`);
+      const numericProjectId = parseInt(projectId, 10);
+      if (!isNaN(numericProjectId) && authenticatedUserId) {
+        try {
+          const project = await storage.getProject(numericProjectId);
+          if (project && project.ownerId !== authenticatedUserId) {
+            const user = await storage.getUser(authenticatedUserId);
+            if (!user || user.role !== 'admin') {
+              logger.warn(`Terminal connection rejected: user ${authenticatedUserId} does not own project ${projectId}`);
+              ws.close(1008, 'Access denied');
+              return;
+            }
+          }
+        } catch (err) {
+          logger.error(`Error checking project ownership for terminal: ${err}`);
+        }
+      }
+
+      logger.info(`Terminal connection for project ${projectId} (user=${authenticatedUserId})`);
 
       let session = this.sessions.get(projectId);
 
@@ -907,6 +927,33 @@ export class PTYTerminalService {
     }
 
     this.writeToSession(session, command + '\r');
+  }
+
+  async drainAllSessions(): Promise<void> {
+    const projectIds = Array.from(this.sessions.keys());
+    logger.info(`[Drain] Checkpointing ${projectIds.length} active PTY sessions to Redis`);
+    const promises = projectIds.map(async (projectId) => {
+      const session = this.sessions.get(projectId);
+      if (!session) return;
+      const outputSnapshot = session.outputBuffer.getHistory().join('').slice(-8192);
+      const shellPid = session.ptyProcess?.pid || undefined;
+      await redisSessionManager.saveSession({
+        sessionId: `terminal-${projectId}`,
+        projectId,
+        commandHistory: session.commandHistory,
+        currentDirectory: session.currentDirectory,
+        columns: session.cols,
+        rows: session.rows,
+        createdAt: session.createdAt,
+        lastActivity: session.lastActivity,
+        containerId: session.containerId || undefined,
+        shellPid,
+        outputSnapshot,
+        sessionEnded: true,
+      }).catch(err => logger.error(`[Drain] Failed to checkpoint session ${projectId}: ${err}`));
+    });
+    await Promise.allSettled(promises);
+    logger.info(`[Drain] All PTY sessions checkpointed`);
   }
 }
 

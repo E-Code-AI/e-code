@@ -77,8 +77,10 @@ On `SIGTERM` the instance enters **draining mode**:
 
 1. `/health` and `/health/readiness` return `503` immediately, signalling the LB
    to stop routing new requests.
-2. Existing connections continue to be served for up to 30 seconds.
-3. After 30 seconds the process exits.
+2. All active PTY terminal sessions are checkpointed to Redis (command history,
+   working directory, dimensions, output snapshot, shell PID, container ID).
+3. Existing connections continue to be served for up to 30 seconds.
+4. After 30 seconds the process exits.
 
 This gives in-flight requests time to complete while new traffic is routed
 elsewhere.
