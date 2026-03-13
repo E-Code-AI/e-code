@@ -221,8 +221,9 @@ export class ServerLogsService {
     
     const cookies = cookieHeader.split(';').map(c => c.trim());
     for (const cookie of cookies) {
-      if (cookie.startsWith('connect.sid=')) {
-        const value = cookie.substring('connect.sid='.length);
+      if (cookie.startsWith('ecode.sid=') || cookie.startsWith('connect.sid=')) {
+        const prefix = cookie.startsWith('ecode.sid=') ? 'ecode.sid=' : 'connect.sid=';
+        const value = cookie.substring(prefix.length);
         return decodeURIComponent(value);
       }
     }

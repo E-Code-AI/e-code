@@ -19,6 +19,9 @@ export interface TerminalSession {
   rows?: number;
   createdAt: number;
   lastActivity: number;
+  containerId?: string;
+  outputSnapshot?: string;
+  sessionEnded?: boolean;
 }
 
 // Session TTL: 24 hours

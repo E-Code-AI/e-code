@@ -109,7 +109,7 @@ class CentralUpgradeDispatcher {
       const cookies = request.headers.cookie;
       if (cookies) {
         const parsedCookies = parseCookie(cookies);
-        const sessionId = parsedCookies['connect.sid'];
+        const sessionId = parsedCookies['ecode.sid'] || parsedCookies['connect.sid'];
         if (sessionId) {
           // Extract session ID from signed cookie (remove 's:' prefix and signature)
           const sid = sessionId.startsWith('s:') 

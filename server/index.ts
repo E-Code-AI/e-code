@@ -446,9 +446,11 @@ app.get('/health/readiness', (_req, res) => {
   const allReady = Object.values(services).every(ready => ready);
   const readyCount = Object.values(services).filter(ready => ready).length;
   const totalCount = serviceRegistry.size;
+  const statusCode = allReady ? 200 : 503;
   
-  res.json({
+  res.status(statusCode).json({
     ready: allReady,
+    phase: serverState.phase,
     services: readyCount,
     total: totalCount,
     details: services

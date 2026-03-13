@@ -64,7 +64,7 @@ const swaggerDefinition = {
       cookieAuth: {
         type: 'apiKey',
         in: 'cookie',
-        name: 'connect.sid',
+        name: 'ecode.sid',
         description: 'Session cookie for browser-based authentication'
       }
     },

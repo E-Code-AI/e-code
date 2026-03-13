@@ -137,7 +137,7 @@ export class SocketIOTerminalService {
     if (cookieHeader) {
       // Parse session from cookies
       const cookies = cookieParser.parse(cookieHeader);
-      const sessionCookie = cookies['connect.sid'];
+      const sessionCookie = cookies['ecode.sid'] || cookies['connect.sid'];
       
       if (sessionCookie) {
         // Extract session ID from signed cookie

@@ -41,7 +41,7 @@ async function validateTerminalConnection(req: IncomingMessage): Promise<{ isVal
   const cookies = req.headers.cookie;
   if (cookies) {
     const parsedCookies = parseCookie(cookies);
-    const sessionId = parsedCookies['connect.sid'];
+    const sessionId = parsedCookies['ecode.sid'] || parsedCookies['connect.sid'];
     if (sessionId) {
       const sid = sessionId.startsWith('s:') ? sessionId.slice(2).split('.')[0] : sessionId;
       const session = await new Promise<any>((resolve) => {
