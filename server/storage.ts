@@ -5827,15 +5827,24 @@ async function initSessionStore() {
       }
 
       let redisClient: InstanceType<typeof ioredis.default>;
+      let sessionStoreErrorLogged = false;
       try {
         redisClient = new ioredis.default(redisUrl, redisOpts);
+        redisClient.on('error', () => {});
         await redisClient.connect();
       } catch (tlsErr) {
         if (isTls) {
           console.warn('[Session Store] TLS connection failed, retrying without TLS');
+          try { redisClient.removeAllListeners(); redisClient.disconnect(); } catch (_) {}
           const plainUrl = redisUrl.replace('rediss://', 'redis://');
           const { tls, ...plainOpts } = redisOpts;
           redisClient = new ioredis.default(plainUrl, plainOpts);
+          redisClient.on('error', (err) => {
+            if (!sessionStoreErrorLogged) {
+              sessionStoreErrorLogged = true;
+              console.warn('[Session Store] Redis error:', err.message);
+            }
+          });
           await redisClient.connect();
         } else {
           throw tlsErr;

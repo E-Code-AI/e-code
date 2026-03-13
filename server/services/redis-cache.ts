@@ -325,6 +325,11 @@ export class RedisCache {
         enableReadyCheck: true,
         lazyConnect: false
       });
+
+      this.client.on('error', (err) => {
+        logger.error('Redis Client Error:', err);
+        this.isConnected = false;
+      });
       
       await this.initializing;
     } finally {

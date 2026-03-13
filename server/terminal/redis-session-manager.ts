@@ -85,20 +85,19 @@ export class RedisSessionManager {
         lazyConnect: true
       });
 
-      this.redis.on('connect', () => {
-        logger.info('✓ Redis connected successfully');
-        this.isConnected = true;
-        this.retryCount = 0; // Reset retry counter on successful connection
-        this.clearReconnectTimer(); // Clear periodic reconnect timer
-      });
-
       this.redis.on('error', (err) => {
         this.retryCount++;
         if (this.retryCount === 1) {
-          // Only log first error to avoid spam
           logger.error('Redis error:', { error: err.message, willRetry: this.retryCount <= this.MAX_RETRIES });
         }
         this.isConnected = false;
+      });
+
+      this.redis.on('connect', () => {
+        logger.info('✓ Redis connected successfully');
+        this.isConnected = true;
+        this.retryCount = 0;
+        this.clearReconnectTimer();
       });
 
       this.redis.on('close', () => {

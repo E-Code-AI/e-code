@@ -55,17 +55,23 @@ export class RedisCacheService {
         enableReadyCheck: true,
         lazyConnect: true,
         retryStrategy: (times) => {
-          // True exponential backoff: max 5 retries
           if (times > this.MAX_RETRIES) {
             logger.warn(`Redis max retries reached - will retry reconnection every ${this.RECONNECT_INTERVAL_MS / 1000}s`);
             this.scheduleReconnect();
-            return null; // Stop retrying, use periodic reconnect instead
+            return null;
           }
-          // True exponential: 2s, 4s, 8s, 16s, 32s
           const delay = Math.min(Math.pow(2, times) * 1000, 32000);
           logger.info(`Redis retry attempt ${times}/${this.MAX_RETRIES} in ${delay}ms`);
           return delay;
         }
+      });
+
+      this.client.on('error', (err) => {
+        this.retryCount++;
+        if (this.retryCount === 1) {
+          logger.error('Redis error:', { error: err.message, willRetry: this.retryCount <= this.MAX_RETRIES });
+        }
+        this.isEnabled = false;
       });
 
       this.client.on('connect', () => {
@@ -73,15 +79,6 @@ export class RedisCacheService {
         this.isEnabled = true;
         this.retryCount = 0; // Reset retry counter on successful connection
         this.clearReconnectTimer(); // Clear periodic reconnect timer
-      });
-
-      this.client.on('error', (err) => {
-        this.retryCount++;
-        if (this.retryCount === 1) {
-          // Only log first error to avoid spam
-          logger.error('Redis error:', { error: err.message, willRetry: this.retryCount <= this.MAX_RETRIES });
-        }
-        this.isEnabled = false;
       });
 
       this.client.on('close', () => {
@@ -147,6 +144,10 @@ export class RedisCacheService {
         lazyConnect: false,
       });
 
+      this.subClient.on('error', (err) => {
+        logger.error('Redis sub client error:', { error: err.message });
+      });
+
       this.subClient.on('message', (channel: string, message: string) => {
         const handlers = this.subscriptions.get(channel);
         if (handlers) {
@@ -158,10 +159,6 @@ export class RedisCacheService {
             }
           });
         }
-      });
-
-      this.subClient.on('error', (err) => {
-        logger.error('Redis sub client error:', { error: err.message });
       });
 
       return this.subClient;

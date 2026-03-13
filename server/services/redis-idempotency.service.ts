@@ -60,14 +60,14 @@ export class RedisIdempotencyService {
         }
       });
 
-      this.client.on('connect', () => {
-        logger.info('Redis idempotency service connected');
-        this.isEnabled = true;
-      });
-
       this.client.on('error', (err) => {
         logger.error('Redis idempotency error:', { error: err.message });
         this.isEnabled = false;
+      });
+
+      this.client.on('connect', () => {
+        logger.info('Redis idempotency service connected');
+        this.isEnabled = true;
       });
 
       this.client.connect().catch((err) => {
