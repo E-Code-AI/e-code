@@ -1,13 +1,14 @@
 /**
  * Custom CSRF Protection Middleware
  * Provides protection against Cross-Site Request Forgery attacks
- * 
- * Uses a singleton pattern with shared token map for proper lifecycle management
+ *
+ * Token is stored IN the session so the session gets persisted (Set-Cookie sent).
+ * Without session persistence, every request gets a fresh session ID and token
+ * verification always fails.
  */
 
 import { Request, Response, NextFunction } from 'express';
 import * as crypto from 'crypto';
-
 
 // Methods that require CSRF protection
 const PROTECTED_METHODS = ['POST', 'PUT', 'PATCH', 'DELETE'];
@@ -16,7 +17,7 @@ const PROTECTED_METHODS = ['POST', 'PUT', 'PATCH', 'DELETE'];
 const EXCLUDED_PATHS = [
   '/api/webhooks/stripe',
   '/api/webhooks/github',
-  '/api/logs/ingest',  // Anonymous telemetry - no auth required
+  '/api/logs/ingest',
 ];
 
 // Base allowed origins for login/register endpoints
@@ -27,73 +28,45 @@ const BASE_ORIGINS = [
   'http://localhost:3000',
 ];
 
-/**
- * Build complete allowed origins list at runtime
- * Includes all Replit development domains dynamically
- */
 function getAllowedOrigins(): string[] {
   const origins = [...BASE_ORIGINS];
-  
-  // Primary: REPLIT_DEV_DOMAIN is the actual domain used by Replit preview
+
   if (process.env.REPLIT_DEV_DOMAIN) {
     origins.push(`https://${process.env.REPLIT_DEV_DOMAIN}`);
   }
-  
-  // Secondary: Full development URL
   if (process.env.REPLIT_DEV_URL) {
     origins.push(process.env.REPLIT_DEV_URL);
-    // Also add without port for WebView requests
     const urlWithoutPort = process.env.REPLIT_DEV_URL.replace(/:5000$/, '');
     if (urlWithoutPort !== process.env.REPLIT_DEV_URL) {
       origins.push(urlWithoutPort);
     }
   }
-  
-  // REPLIT_DOMAINS contains comma-separated domain list
   if (process.env.REPLIT_DOMAINS) {
     process.env.REPLIT_DOMAINS.split(',').forEach(domain => {
       const trimmed = domain.trim();
-      if (trimmed) {
-        origins.push(`https://${trimmed}`);
-      }
+      if (trimmed) origins.push(`https://${trimmed}`);
     });
   }
-  
-  // Fallback: REPL_ID based patterns (legacy support)
   if (process.env.REPL_ID) {
     origins.push(`https://${process.env.REPL_ID}.replit.dev`);
   }
-  
-  // Allow any .replit.dev and .repl.co subdomain in development
-  if (process.env.NODE_ENV === 'development') {
-    // Add wildcards for development flexibility
-  }
-  
-  return [...new Set(origins)]; // Deduplicate
+
+  return [...new Set(origins)];
 }
 
-// Build origins at module load
 const ALLOWED_ORIGINS = getAllowedOrigins();
 
-/**
- * Check if the provided origin is in the allowed list
- * Also allows any Replit development domain in development mode
- */
 function isAllowedOrigin(origin: string | undefined): boolean {
   if (!origin) return false;
-  
-  // SECURITY FIX: Use exact URL matching to prevent subdomain bypass attacks
-  // e.g., https://e-code.ai.attacker.com would bypass startsWith check
+
   try {
     const originUrl = new URL(origin);
     const originHostPort = `${originUrl.protocol}//${originUrl.host}`;
-    
-    // Exact host match only (no prefix matching)
+
     if (ALLOWED_ORIGINS.some(allowed => {
       try {
         const allowedUrl = new URL(allowed);
-        const allowedHostPort = `${allowedUrl.protocol}//${allowedUrl.host}`;
-        return originHostPort === allowedHostPort;
+        return originHostPort === `${allowedUrl.protocol}//${allowedUrl.host}`;
       } catch {
         return origin === allowed;
       }
@@ -101,268 +74,143 @@ function isAllowedOrigin(origin: string | undefined): boolean {
       return true;
     }
   } catch {
-    // If origin is not a valid URL, reject it
     return false;
   }
-  
-  // In development, allow any Replit domain pattern
+
   if (process.env.NODE_ENV === 'development') {
     const replitPatterns = [
-      // Fixed: Use [a-z0-9-]+ to match all alphanumeric characters, not just hex
       /^https:\/\/[a-z0-9-]+\.replit\.dev$/,
       /^https:\/\/[a-z0-9-]+-\d+-[a-z0-9]+\.riker\.replit\.dev$/,
       /^https:\/\/[a-z0-9-]+\.repl\.co$/,
-      // Also allow http for local development
       /^http:\/\/127\.0\.0\.1(:\d+)?$/,
       /^http:\/\/localhost(:\d+)?$/,
     ];
-    if (replitPatterns.some(pattern => pattern.test(origin))) {
-      return true;
-    }
+    if (replitPatterns.some(p => p.test(origin))) return true;
   }
-  
+
   return false;
 }
 
-/**
- * CSRF Protection Service (Singleton)
- * Manages token generation, verification, and lifecycle with a shared token map
- */
-class CSRFProtectionService {
-  private static instance: CSRFProtectionService;
-  private tokenMap: Map<string, { token: string; createdAt: number }>;
-  private readonly TOKEN_EXPIRY = 60 * 60 * 1000; // 1 hour
-  private cleanupInterval: NodeJS.Timeout | null = null;
-
-  private constructor() {
-    this.tokenMap = new Map();
-    this.startCleanup();
-  }
-
-  /**
-   * Get singleton instance
-   */
-  static getInstance(): CSRFProtectionService {
-    if (!CSRFProtectionService.instance) {
-      CSRFProtectionService.instance = new CSRFProtectionService();
-    }
-    return CSRFProtectionService.instance;
-  }
-
-  /**
-   * Start cleanup interval to remove expired tokens
-   */
-  private startCleanup(): void {
-    if (this.cleanupInterval) {
-      clearInterval(this.cleanupInterval);
-    }
-    
-    this.cleanupInterval = setInterval(() => {
-      const now = Date.now();
-      for (const [sessionId, data] of this.tokenMap.entries()) {
-        if (now - data.createdAt > this.TOKEN_EXPIRY) {
-          this.tokenMap.delete(sessionId);
-        }
-      }
-    }, 5 * 60 * 1000); // Clean up every 5 minutes
-  }
-
-  /**
-   * Generate a cryptographically secure CSRF token
-   */
-  generate(sessionId: string): string {
-    const token = crypto.randomBytes(32).toString('hex');
-    this.tokenMap.set(sessionId, {
-      token,
-      createdAt: Date.now()
-    });
-    return token;
-  }
-
-  /**
-   * Verify CSRF token for a session
-   */
-  verify(sessionId: string, providedToken: string): boolean {
-    const data = this.tokenMap.get(sessionId);
-    
-    if (!data) {
-      return false;
-    }
-
-    // Check if token has expired
-    if (Date.now() - data.createdAt > this.TOKEN_EXPIRY) {
-      this.tokenMap.delete(sessionId);
-      return false;
-    }
-
-    // Use timing-safe comparison to prevent timing attacks
-    const providedBuffer = Buffer.from(providedToken);
-    const storedBuffer = Buffer.from(data.token);
-    
-    if (providedBuffer.length !== storedBuffer.length) {
-      return false;
-    }
-
-    return crypto.timingSafeEqual(providedBuffer, storedBuffer);
-  }
-
-  /**
-   * Get token for a session (used for session-based storage)
-   */
-  getToken(sessionId: string): string | null {
-    const data = this.tokenMap.get(sessionId);
-    if (!data) {
-      return null;
-    }
-    
-    // Check if expired
-    if (Date.now() - data.createdAt > this.TOKEN_EXPIRY) {
-      this.tokenMap.delete(sessionId);
-      return null;
-    }
-    
-    return data.token;
-  }
-
-  /**
-   * Delete token for a session
-   */
-  deleteToken(sessionId: string): void {
-    this.tokenMap.delete(sessionId);
-  }
-
-  /**
-   * Get statistics (for monitoring)
-   */
-  getStats(): { activeTokens: number; oldestToken: number | null } {
-    let oldestToken: number | null = null;
-    const now = Date.now();
-    
-    for (const data of this.tokenMap.values()) {
-      const age = now - data.createdAt;
-      if (oldestToken === null || age > oldestToken) {
-        oldestToken = age;
-      }
-    }
-    
-    return {
-      activeTokens: this.tokenMap.size,
-      oldestToken
-    };
-  }
-}
-
-// Export singleton instance
-export const csrfService = CSRFProtectionService.getInstance();
-
-/**
- * Generate a cryptographically secure CSRF token
- */
+/** Generate a cryptographically secure CSRF token */
 export function generateCSRFToken(): string {
   return crypto.randomBytes(32).toString('hex');
 }
 
 /**
+ * Get the CSRF token for the current session.
+ * Stores the token IN req.session so the session is saved (and Set-Cookie is sent).
+ * Falls back to generating a new token if none exists.
+ */
+function getOrCreateSessionToken(req: Request): string {
+  const sess = req.session as any;
+  if (!sess.csrfToken) {
+    sess.csrfToken = generateCSRFToken();
+  }
+  return sess.csrfToken;
+}
+
+/**
  * CSRF Protection Middleware
- * 
- * This middleware:
- * 1. Generates and stores CSRF tokens using singleton service
- * 2. Validates CSRF tokens on state-changing requests
- * 3. Provides the token to the client via a response header
- * 
- * IMPORTANT: Uses shared token map via singleton to prevent per-request state loss
+ *
+ * For GET/HEAD/OPTIONS — provides the token in a response header (no validation).
+ * For POST/PUT/PATCH/DELETE — validates the submitted X-CSRF-Token header.
+ *
+ * Token is session-stored so the session cookie is always established.
  */
 export function csrfProtection(req: Request, res: Response, next: NextFunction) {
-  // SECURITY: Only allow CSRF bypass in explicit development mode with flag
   if (process.env.NODE_ENV === 'development' && process.env.DISABLE_CSRF === 'true') {
     console.warn('⚠️  SECURITY WARNING: CSRF protection bypassed in development mode');
     return next();
   }
 
-  // Skip for excluded paths
-  // Use req.originalUrl (full path) because this middleware is mounted at /api
-  // so req.path would be stripped of the /api prefix
   const fullPath = req.originalUrl.split('?')[0];
-  if (EXCLUDED_PATHS.some(excluded => fullPath === excluded || fullPath.startsWith(excluded + '/'))) {
+  if (EXCLUDED_PATHS.some(ex => fullPath === ex || fullPath.startsWith(ex + '/'))) {
     return next();
   }
 
-  // Origin validation for login/register endpoints
-  if (req.path === '/api/login' || req.path === '/api/register') {
-    const origin = req.get('Origin');
-    if (!isAllowedOrigin(origin)) {
-      return res.status(403).json({ error: 'Invalid origin' });
-    }
-  }
-
-  // Initialize session if not present
   if (!req.session) {
     return res.status(500).json({ error: 'Session not initialized' });
   }
 
-  // Get session ID (use session.id or create one)
-  const sessionId = req.session.id || req.sessionID;
-  if (!sessionId) {
-    return res.status(500).json({ error: 'No session ID available' });
-  }
+  // Generate/retrieve token (stored in session → forces session save → cookie sent)
+  const token = getOrCreateSessionToken(req);
 
-  // Generate token if not present for this session
-  let token = csrfService.getToken(sessionId);
-  if (!token) {
-    token = csrfService.generate(sessionId);
-  }
-
-  // Always send the current token in response header for client to use
+  // Always advertise the current token so the client can grab it from any response
   res.setHeader('X-CSRF-Token', token);
 
-  // For GET requests and other safe methods, just provide the token
+  // Safe methods: just provide the token
   if (!PROTECTED_METHODS.includes(req.method)) {
     return next();
   }
 
-  // For protected methods, validate the token
-  const providedToken = req.headers['x-csrf-token'] as string 
-    || req.body?._csrf 
-    || req.query?._csrf as string;
+  // Validate submitted token for state-changing requests
+  const provided = (req.headers['x-csrf-token'] as string)
+    || req.body?._csrf
+    || (req.query?._csrf as string);
 
-  if (!providedToken) {
-    return res.status(403).json({ 
+  if (!provided) {
+    return res.status(403).json({
       error: 'CSRF token missing',
-      message: 'This request requires a valid CSRF token' 
+      message: 'This request requires a valid CSRF token',
     });
   }
 
-  // Validate token using singleton service
-  if (!csrfService.verify(sessionId, providedToken)) {
-    return res.status(403).json({ 
+  // Timing-safe comparison
+  const storedToken = (req.session as any).csrfToken as string | undefined;
+  if (!storedToken) {
+    return res.status(403).json({
       error: 'CSRF validation failed',
-      message: 'Invalid or expired CSRF token' 
+      message: 'No CSRF token found in session',
     });
   }
 
-  // Token is valid, proceed to next middleware
+  try {
+    const providedBuf = Buffer.from(provided);
+    const storedBuf = Buffer.from(storedToken);
+    if (providedBuf.length !== storedBuf.length || !crypto.timingSafeEqual(providedBuf, storedBuf)) {
+      return res.status(403).json({
+        error: 'CSRF validation failed',
+        message: 'Invalid or expired CSRF token',
+      });
+    }
+  } catch {
+    return res.status(403).json({
+      error: 'CSRF validation failed',
+      message: 'Invalid CSRF token format',
+    });
+  }
+
   next();
 }
 
 /**
- * Endpoint to get a fresh CSRF token
- * Clients can call this to get a token before making state-changing requests
+ * Endpoint to get a CSRF token.
+ * Stores the token in the session (which forces the session cookie to be set).
  */
 export function csrfTokenEndpoint(req: Request, res: Response) {
   if (!req.session) {
     return res.status(500).json({ error: 'Session not initialized' });
   }
 
-  // Get session ID
-  const sessionId = req.session.id || req.sessionID;
-  if (!sessionId) {
-    return res.status(500).json({ error: 'No session ID available' });
-  }
+  const token = getOrCreateSessionToken(req);
 
-  // Generate new token using singleton service
-  const token = csrfService.generate(sessionId);
-
-  // Send token in both header and body
-  res.setHeader('X-CSRF-Token', token);
-  res.json({ csrfToken: token });
+  // Explicitly save the session so the Set-Cookie header is sent before we respond.
+  req.session.save((err) => {
+    if (err) {
+      console.error('[CSRF] Session save error:', err);
+    }
+    res.setHeader('X-CSRF-Token', token);
+    res.json({ csrfToken: token });
+  });
 }
+
+// ---------------------------------------------------------------------------
+// Legacy export kept for any callers that imported csrfService directly
+// ---------------------------------------------------------------------------
+export const csrfService = {
+  generate: (sessionId: string) => generateCSRFToken(),
+  verify: (_sessionId: string, _token: string) => false, // Always use session-based now
+  getToken: (_sessionId: string) => null,
+  deleteToken: (_sessionId: string) => {},
+  getStats: () => ({ activeTokens: 0, oldestToken: null }),
+};
