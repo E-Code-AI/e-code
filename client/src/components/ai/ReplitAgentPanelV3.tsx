@@ -98,7 +98,8 @@ import { LazyMotionDiv, LazyMotionSpan, LazyAnimatePresence } from '@/lib/motion
 import { 
   EnhancedChatMessage, 
   StreamingSkeleton, 
-  ConversationSyncIndicator 
+  ConversationSyncIndicator,
+  EmptyConversation
 } from './EnhancedChatMessage';
 import { VirtualizedMessageList, useOptimisticMessages, useDebouncedStreamingContent, StreamingText } from './VirtualizedMessageList';
 import { Progress } from '@/components/ui/progress';
@@ -2326,6 +2327,12 @@ export function ReplitAgentPanelV3({
   }, [toast]);
 
   const isCompactMode = mode === 'mobile' || mode === 'tablet';
+  
+  const hasUserMessages = messages.some(m => m.role === 'user');
+  const showEmptyState = !hasUserMessages 
+    && messages.length <= 1 
+    && !isPendingResponse 
+    && !isWorking;
 
   // ✅ FIX (Jan 2026): NEVER block the UI - Replit-style always-ready pattern
   // Users can ALWAYS send messages immediately using temp conversationId (-projectId)
@@ -2600,8 +2607,18 @@ export function ReplitAgentPanelV3({
             </div>
           )}
           
+          {/* Empty state when no real user/assistant messages exist (only default welcome) */}
+          {showEmptyState && (
+            <EmptyConversation
+              onQuickAction={(prompt) => {
+                setInput(prompt);
+                textareaRef.current?.focus();
+              }}
+            />
+          )}
+
           {/* Conditionally use virtualized list for long conversations (>20 messages) */}
-          {useVirtualization ? (
+          {!showEmptyState && (useVirtualization ? (
             <VirtualizedMessageList
               messages={messages}
               isCompactMode={isCompactMode}
@@ -2610,6 +2627,8 @@ export function ReplitAgentPanelV3({
               onCopy={handleCopyMessage}
               onApproveAction={handleApproveAction}
               onRejectAction={handleRejectAction}
+              onSelectBuildMode={sendBuildModeSelection}
+              onChangePlan={requestPlanChange}
               onRestoreCheckpoint={handleRestoreCheckpoint}
               isRestoringCheckpoint={isRestoringCheckpoint}
               className="min-h-[200px]"
@@ -2625,6 +2644,8 @@ export function ReplitAgentPanelV3({
                     onCopy={handleCopyMessage}
                     onApproveAction={handleApproveAction}
                     onRejectAction={handleRejectAction}
+                    onSelectBuildMode={sendBuildModeSelection}
+                    onChangePlan={requestPlanChange}
                     onRestoreCheckpoint={handleRestoreCheckpoint}
                     isRestoringCheckpoint={isRestoringCheckpoint}
                   />
@@ -2638,7 +2659,7 @@ export function ReplitAgentPanelV3({
                 </div>
               ))}
             </LazyAnimatePresence>
-          )}
+          ))}
 
           {/* Active Thinking Steps (while streaming) */}
           {isWorking && activeThinking.length > 0 && (

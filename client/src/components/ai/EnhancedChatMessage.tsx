@@ -11,7 +11,9 @@ import {
   ChevronDown, 
   ChevronUp,
   AlertCircle,
-  Loader2
+  Loader2,
+  Bot,
+  User
 } from 'lucide-react';
 import { ThinkingDisplay, ThinkingDisplayCompact, ThinkingStep } from './ThinkingDisplay';
 import { ToolExecutionList } from './ToolExecutionDisplay';
@@ -187,7 +189,19 @@ export const EnhancedChatMessage = memo(forwardRef<EnhancedChatMessageRef, Enhan
       data-testid={`enhanced-message-${message.id}`}
       data-message-role={message.role}
     >
-      
+      {isUser ? (
+        <Avatar className="h-7 w-7 sm:h-8 sm:w-8 flex-shrink-0 ring-1 ring-offset-1 ring-offset-background ring-muted-foreground/20 shadow-sm">
+          <AvatarFallback className="bg-muted text-muted-foreground">
+            <User className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+          </AvatarFallback>
+        </Avatar>
+      ) : (
+        <Avatar className="h-7 w-7 sm:h-8 sm:w-8 flex-shrink-0 ring-1 sm:ring-2 ring-offset-1 sm:ring-offset-2 ring-offset-background ring-primary/30 shadow-md">
+          <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary">
+            <Bot className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+          </AvatarFallback>
+        </Avatar>
+      )}
 
       <div className={cn(
         "flex-1 space-y-2 max-w-[95%] sm:max-w-[85%] md:max-w-[80%]",
@@ -321,7 +335,7 @@ export const EnhancedChatMessage = memo(forwardRef<EnhancedChatMessageRef, Enhan
           </LazyMotionDiv>
         )}
 
-        {hasActions && onApproveAction && onRejectAction && (
+        {hasActions && (
           <LazyMotionDiv 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
