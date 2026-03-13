@@ -71,18 +71,8 @@ securityMiddleware().forEach(middleware => app.use(middleware));
 app.use(performanceHeaders());
 app.use(earlyHints());
 
-import shrinkRay from 'shrink-ray-current';
-app.use(shrinkRay({
-  threshold: 1024,
-  brotli: { quality: 4 },
-  zlib: { level: 6 },
-  filter: (req: express.Request, res: express.Response) => {
-    if (req.headers['x-no-compression']) return false;
-    const ct = res.getHeader('content-type');
-    if (typeof ct === 'string' && /text|json|javascript|xml|css|svg|font/.test(ct)) return true;
-    return shrinkRay.filter(req, res);
-  },
-}));
+import { compressionMiddleware } from './middleware/compression';
+app.use(compressionMiddleware);
 
 // Basic middleware
 app.use(express.json({ limit: '10mb' }));
