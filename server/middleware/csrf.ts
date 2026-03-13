@@ -8,12 +8,6 @@
 import { Request, Response, NextFunction } from 'express';
 import * as crypto from 'crypto';
 
-// Store CSRF tokens in session
-declare module 'express-session' {
-  interface SessionData {
-    csrfToken?: string;
-  }
-}
 
 // Methods that require CSRF protection
 const PROTECTED_METHODS = ['POST', 'PUT', 'PATCH', 'DELETE'];
@@ -316,8 +310,6 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction) 
   let token = csrfService.getToken(sessionId);
   if (!token) {
     token = csrfService.generate(sessionId);
-    // Also store in session for compatibility
-    req.session.csrfToken = token;
   }
 
   // Always send the current token in response header for client to use
@@ -369,9 +361,6 @@ export function csrfTokenEndpoint(req: Request, res: Response) {
 
   // Generate new token using singleton service
   const token = csrfService.generate(sessionId);
-  
-  // Also store in session for compatibility
-  req.session.csrfToken = token;
 
   // Send token in both header and body
   res.setHeader('X-CSRF-Token', token);

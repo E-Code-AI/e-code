@@ -5842,8 +5842,32 @@ async function initSessionStore() {
         }
       }
 
+      const adaptedClient = {
+        get: (key: string) => redisClient.get(key),
+        set: (key: string, val: string, opts?: any) => {
+          if (opts?.expiration?.type === 'EX' && opts.expiration.value) {
+            return redisClient.set(key, val, 'EX', opts.expiration.value);
+          }
+          if (opts?.EX) {
+            return redisClient.set(key, val, 'EX', opts.EX);
+          }
+          return redisClient.set(key, val);
+        },
+        del: (keys: string | string[]) => redisClient.del(...(Array.isArray(keys) ? keys : [keys])),
+        expire: (key: string, ttl: number) => redisClient.expire(key, ttl),
+        scanIterator: (opts: { MATCH: string; COUNT: number }) => {
+          const stream = redisClient.scanStream({ match: opts.MATCH, count: opts.COUNT });
+          return (async function* () {
+            for await (const keys of stream) {
+              yield keys;
+            }
+          })();
+        },
+        mGet: (keys: string[]) => redisClient.mget(...keys),
+      };
+
       sessionStore = new RedisStoreClass({
-        client: redisClient,
+        client: adaptedClient,
         prefix: 'session:',
         ttl: 7 * 24 * 60 * 60,
       });

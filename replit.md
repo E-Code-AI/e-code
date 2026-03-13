@@ -101,7 +101,7 @@ E-Code utilizes a two-service architecture: a React, TypeScript, and Vite-based 
 - **Performance Optimization**: Achieved through fast bootstrap techniques, `instrumentedLazy()` for retry logic in lazy loading, optimized Docker builds, and Semgrep scan optimization.
 - **Voice Input System**: Integrates Voice Vibe Coding utilizing the MediaRecorder API for transcription, with OpenAI Whisper as the primary provider and Google Gemini 2.0 Flash as an automatic fallback.
 - **Monitoring and Observability**: Provides Kubernetes probes for health checks, a structured `/health` endpoint with subsystem statuses and response times, a Provider Health API with Prometheus metrics, Sentry error tracking for both server and client, and structured request logging.
-- **Production Deployment**: Uses `docker-compose.production.yml` for full-stack deployment with health checks. `docker-entrypoint.sh` handles environment validation and migrations.
+- **Production Deployment**: Uses `docker-compose.production.yml` for full-stack deployment with health checks. `docker-entry-point.sh` handles environment validation and migrations.
 - **Security Headers**: Utilizes Helmet.js for security headers (CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy), CORS with dynamic origin detection, CSRF double-submit cookie pattern, tier-based rate limiting, and Nginx security headers.
 - **Routing**: API routes support dual-mounting for flexibility. Internal router paths do not include the `/api/` prefix. A `notFoundHandler` specifically manages `/api/*` routes, redirecting non-API paths to Vite for SPA handling. Global search and workspace bootstrap have dedicated endpoints.
 - **Environment Configuration**: All environment variables are strictly validated using Zod schemas.
@@ -128,10 +128,5 @@ E-Code utilizes a two-service architecture: a React, TypeScript, and Vite-based 
 - xterm.js
 - Tavily
 - Passport.js
-<<<<<<< HEAD
 - Firebase Admin SDK (for FCM push notifications)
 - Capacitor (for native iOS/Android app packaging)
-=======
-- Firebase Admin SDK (FCM push notifications)
-- Capacitor (native iOS/Android app packaging)
->>>>>>> d70874f7f (Task #32: Multi-screen preview splash sequence)

@@ -99,21 +99,26 @@ export async function getCSRFToken(): Promise<string> {
   return csrfToken;
 }
 
-// Function to fetch CSRF token from server
 async function fetchCSRFToken(): Promise<string> {
   const response = await fetch('/api/csrf-token', {
     credentials: 'include',
     method: 'GET'
   });
-  if (!response.ok) {
-    throw new Error('Failed to fetch CSRF token');
+
+  const headerToken = response.headers.get('X-CSRF-Token');
+
+  if (response.ok) {
+    try {
+      const data = await response.json();
+      const token = data.csrfToken || data.token;
+      if (token) return token;
+    } catch {
+    }
   }
-  const data = await response.json();
-  const token = data.csrfToken || data.token;
-  if (!token) {
-    throw new Error('CSRF token not available');
-  }
-  return token;
+
+  if (headerToken) return headerToken;
+
+  throw new Error('Failed to fetch CSRF token');
 }
 
 /**
