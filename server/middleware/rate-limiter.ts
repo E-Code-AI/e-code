@@ -234,6 +234,15 @@ export function createRateLimitMiddleware(type: keyof typeof rateLimiters) {
       
       next();
     } catch (rejRes: any) {
+      if (!(rejRes instanceof RateLimiterRes) && (typeof rejRes?.msBeforeNext !== 'number')) {
+        logger.warn('Rate limiter Redis error (fail-open)', {
+          type,
+          path: req.path,
+          error: rejRes?.message || String(rejRes),
+        });
+        return next();
+      }
+
       const retryAfter = Math.round(rejRes.msBeforeNext / 1000) || 60;
       
       logger.warn('Rate limit exceeded', {
@@ -372,6 +381,15 @@ export function createTierBasedRateLimiter(limitType: LimitType) {
       
       next();
     } catch (rejRes: any) {
+      if (!(rejRes instanceof RateLimiterRes) && (typeof rejRes?.msBeforeNext !== 'number')) {
+        logger.warn('Tier rate limiter Redis error (fail-open)', {
+          limitType,
+          path: req.path,
+          error: rejRes?.message || String(rejRes),
+        });
+        return next();
+      }
+
       // Rate limit exceeded
       const user = req.user as User | undefined;
       const tier = user?.id ? await getUserTier(user.id) : 'free';

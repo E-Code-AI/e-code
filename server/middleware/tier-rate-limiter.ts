@@ -253,6 +253,12 @@ export function createTierRateLimitMiddleware(limitType: LimitType | 'streaming'
           await limiter.consume(userId, 1);
           return next();
         } catch (error: any) {
+          if (typeof error?.msBeforeNext !== 'number') {
+            logger.warn('Streaming rate limiter Redis error (fail-open)', {
+              tier, limitType, error: error?.message || String(error),
+            });
+            return next();
+          }
           logger.warn('Streaming rate limit exceeded', { userId, tier, limitType });
           await logViolation(req, tier, 'streaming', error.consumedPoints || 1, limits.points);
           return res.status(429).json({
@@ -293,6 +299,15 @@ export function createTierRateLimitMiddleware(limitType: LimitType | 'streaming'
       
       next();
     } catch (rejRes: any) {
+      if (typeof rejRes?.msBeforeNext !== 'number') {
+        logger.warn('Tier rate limiter Redis error (fail-open)', {
+          limitType,
+          path: req.path,
+          error: rejRes?.message || String(rejRes),
+        });
+        return next();
+      }
+
       const user = req.user as any;
       const rawTier = user?.subscriptionTier || 'free';
       // ✅ SAFETY: Validate tier exists in TIER_LIMITS, fallback to 'free'

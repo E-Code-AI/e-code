@@ -171,6 +171,10 @@ app.use((req, res, next) => {
   next();
 });
 
+// CSP violation report endpoint - registered BEFORE rate limiting to avoid Redis errors
+import { cspReportHandler } from './middleware/helmet-config';
+app.post('/api/security/csp-report', express.json({ type: ['application/json', 'application/csp-report'] }), cspReportHandler);
+
 // Apply global rate limiting for DDoS protection
 // Log all rate limit violations for security monitoring
 app.use(logRateLimitViolations);
