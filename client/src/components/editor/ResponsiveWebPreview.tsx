@@ -17,6 +17,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import { useQuery } from '@tanstack/react-query';
+import { useAutonomousBuildStore } from '@/stores/autonomousBuildStore';
 
 interface ResponsiveWebPreviewProps {
   projectId: string | number; // Support both UUID strings and numeric IDs
@@ -36,7 +37,7 @@ const DEVICE_SIZES = {
   responsive: { width: '100%', height: '100%', name: 'Responsive' }
 };
 
-type PreviewState = 'loading' | 'starting' | 'running' | 'error' | 'iframe-error' | 'no-content' | 'offline';
+type PreviewState = 'loading' | 'starting' | 'building' | 'running' | 'error' | 'iframe-error' | 'no-content' | 'offline';
 
 export function ResponsiveWebPreview({ 
   projectId, 
@@ -54,6 +55,8 @@ export function ResponsiveWebPreview({
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const prevUrlRef = useRef<string>('');
   const isMobile = useMediaQuery('(max-width: 768px)');
+  
+  const { phase: buildPhase, isActive: isBuildActive, progress: buildProgress } = useAutonomousBuildStore();
 
   // Track online/offline state
   useEffect(() => {
@@ -110,16 +113,19 @@ export function ResponsiveWebPreview({
   // Build iframe URL with cache buster
   const iframeSrc = previewUrl ? `${previewUrl}${previewUrl.includes('?') ? '&' : '?'}_cb=${cacheBuster}` : '';
   
-  // Derive current preview state - now includes iframe errors and offline
+  // Derive current preview state - now includes iframe errors, offline, and building
   const getPreviewState = useCallback((): PreviewState => {
     if (!isOnline) return 'offline';
+    // Show "building" state during active agent builds before checking query errors,
+    // since the preview URL won't be available yet and transient query errors are expected
+    if (isBuildActive && buildPhase && buildPhase !== 'complete' && buildPhase !== 'error' && !previewUrl) return 'building';
     if (isQueryLoading) return 'loading';
     if (isQueryError) return 'error';
     if (previewStatus === 'starting') return 'starting';
     if (!previewUrl) return 'no-content';
     if (iframeError && !iframeLoading) return 'iframe-error';
     return 'running';
-  }, [isOnline, isQueryLoading, isQueryError, previewStatus, previewUrl, iframeError, iframeLoading]);
+  }, [isOnline, isQueryLoading, isQueryError, previewStatus, previewUrl, iframeError, iframeLoading, isBuildActive, buildPhase]);
   
   const currentState = getPreviewState();
 
@@ -288,6 +294,34 @@ export function ResponsiveWebPreview({
             <p className="text-[13px] text-[var(--ecode-text-muted)]">
               This may take a few seconds
             </p>
+          </div>
+        )}
+
+        {/* Building State - shown during agent code generation */}
+        {currentState === 'building' && (
+          <div className="text-center" data-testid="preview-building">
+            <div className="w-16 h-16 rounded-full bg-[var(--ecode-accent)]/10 flex items-center justify-center mx-auto mb-4">
+              <RefreshCw className="h-8 w-8 animate-spin text-[var(--ecode-accent)]" />
+            </div>
+            <p className="text-[var(--ecode-text-muted)] mb-2 font-medium">
+              Building your app…
+            </p>
+            <p className="text-[13px] text-[var(--ecode-text-muted)] mb-4">
+              {buildPhase === 'planning' && 'Planning project structure…'}
+              {buildPhase === 'scaffolding' && 'Scaffolding project files…'}
+              {buildPhase === 'building' && 'Generating code…'}
+              {buildPhase === 'styling' && 'Applying styles…'}
+              {buildPhase === 'finalizing' && 'Finalizing build…'}
+              {(!buildPhase || !['planning', 'scaffolding', 'building', 'styling', 'finalizing'].includes(buildPhase)) && 'AI agent is generating your project…'}
+            </p>
+            {typeof buildProgress === 'number' && buildProgress > 0 && (
+              <div className="w-48 mx-auto bg-[var(--ecode-border)] rounded-full h-1.5">
+                <div 
+                  className="bg-[var(--ecode-accent)] h-1.5 rounded-full transition-all duration-500"
+                  style={{ width: `${Math.min(buildProgress, 100)}%` }}
+                />
+              </div>
+            )}
           </div>
         )}
 

@@ -98,6 +98,7 @@ const LogsViewerPanel = instrumentedLazy(() => import('@/components/ide/LogsView
 
 import { ShortcutHint, ShortcutTester } from '@/components/utilities';
 import { useAutonomousBuildStore } from '@/stores/autonomousBuildStore';
+import { AgentEventBus } from '@/lib/agentEvents';
 import { useElectronMenuEvents } from '@/hooks/useElectron';
 import { useSchemaWarmingStore } from '@/stores/schemaWarmingStore';
 import { AppNotReadyPlaceholder } from '@/components/mobile/AppNotReadyPlaceholder';
@@ -352,6 +353,19 @@ function UnifiedIDELayout({
       setIsSidebarCollapsed(false);
     }
   }, [bootstrapToken, setLeftPanelTab, setIsSidebarCollapsed]);
+
+  // Auto-switch to preview panel when agent build completes
+  useEffect(() => {
+    const unsub = AgentEventBus.on('agent:preview-ready', () => {
+      if (deviceType === 'mobile') {
+        setMobileActiveTab('preview');
+        handleAddOpenTab('preview');
+      } else {
+        handleAddTool('preview');
+      }
+    });
+    return unsub;
+  }, [deviceType, handleAddTool, handleAddOpenTab]);
 
   const closePanel = useCallback((setter: (v: boolean) => void) => {
     setter(false);

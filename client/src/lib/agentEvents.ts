@@ -6,7 +6,8 @@ type AgentEventType =
   | 'agent:database-created'
   | 'agent:file-created'
   | 'agent:connected'
-  | 'agent:disconnected';
+  | 'agent:disconnected'
+  | 'agent:preview-ready';
 
 interface AgentEvent {
   type: AgentEventType;

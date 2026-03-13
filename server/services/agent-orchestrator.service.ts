@@ -1874,6 +1874,19 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
           agentWebSocketService.broadcastPlanCompleted(projectId, sessionId, isSuccess);
           if (isSuccess) {
             agentWebSocketService.sendComplete(parseInt(projectId), sessionId);
+            
+            // Auto-start preview after successful build (fire-and-forget)
+            import('../preview/preview-service').then(({ previewService }) => {
+              previewService.startPreviewFromProject(String(projectId)).then(() => {
+                logger.info(`[Execute Plan] Auto-started preview for project ${projectId}`);
+              }).catch((err: unknown) => {
+                const msg = err instanceof Error ? err.message : String(err);
+                logger.warn(`[Execute Plan] Auto-start preview failed for project ${projectId} (non-blocking): ${msg}`);
+              });
+            }).catch((err: unknown) => {
+              const msg = err instanceof Error ? err.message : String(err);
+              logger.warn(`[Execute Plan] Could not import preview service (non-blocking): ${msg}`);
+            });
           }
         } else {
           logger.error(`[Execute Plan] Could not persist final status '${finalStatus}' after retries`, { sessionId });

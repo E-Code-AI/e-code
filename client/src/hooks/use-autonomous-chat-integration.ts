@@ -12,7 +12,7 @@ import { useAgentConversationStore } from '@/stores/agentConversationStore';
 import { useAutonomousBuildStore } from '@/stores/autonomousBuildStore';
 import { useSchemaWarmingStore } from '@/stores/schemaWarmingStore';
 import { AgentEventBus } from '@/lib/agentEvents';
-import { apiRequest } from '@/lib/queryClient';
+import { queryClient } from '@/lib/queryClient';
 import type { Message, AutonomousWorkspacePayload, AutonomousBuildTask } from '@/stores/agentConversationStore';
 import type { AutonomousBuildPhase } from '@/stores/autonomousBuildStore';
 
@@ -230,6 +230,8 @@ export function useAutonomousChatIntegration({
   // Reconnection logic with exponential backoff
   const reconnectAttemptRef = useRef(0);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const previewPollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const previewPollDelayRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const maxReconnectAttempts = 10;
   const baseReconnectDelayMs = 1000; // 1 second initial delay, doubles each attempt
   
@@ -286,6 +288,16 @@ export function useAutonomousChatIntegration({
       if (fallbackTimeoutRef.current) {
         clearTimeout(fallbackTimeoutRef.current);
         fallbackTimeoutRef.current = null;
+      }
+      
+      // Cleanup preview polling timers
+      if (previewPollTimerRef.current) {
+        clearInterval(previewPollTimerRef.current);
+        previewPollTimerRef.current = null;
+      }
+      if (previewPollDelayRef.current) {
+        clearTimeout(previewPollDelayRef.current);
+        previewPollDelayRef.current = null;
       }
     };
   }, []);
@@ -879,11 +891,61 @@ export function useAutonomousChatIntegration({
         // Unlock preview/deploy tabs — schema warming gate not needed after build completes
         useSchemaWarmingStore.getState().markReady();
         
-        // ✅ FIX (Mar 2026): Auto-start the preview so user sees running app immediately (Replit-style)
+        // Auto-show preview panel immediately so user sees starting/building state
+        AgentEventBus.emit('agent:preview-ready', { projectId });
+        
+        // Preview auto-start is handled by backend (agent-orchestrator fires startPreviewFromProject).
+        // Frontend polls for preview readiness and invalidates cache so URL appears when available.
         if (projectId) {
-          apiRequest('POST', `/api/preview/projects/${projectId}/preview/start`, {}).catch(() => {
-            // Preview start is best-effort — non-fatal if app needs manual run
-          });
+          // Clear any existing poll timers before starting new ones
+          if (previewPollTimerRef.current) {
+            clearInterval(previewPollTimerRef.current);
+            previewPollTimerRef.current = null;
+          }
+          if (previewPollDelayRef.current) {
+            clearTimeout(previewPollDelayRef.current);
+            previewPollDelayRef.current = null;
+          }
+          
+          // Immediate first invalidation to reduce no-content flicker
+          queryClient.invalidateQueries({ queryKey: ['/api/preview/url', projectId] });
+          queryClient.invalidateQueries({ queryKey: ['/api/preview/url', String(projectId)] });
+          
+          const pollPreviewReady = () => {
+            let attempts = 0;
+            const maxAttempts = 15;
+            const intervalMs = 2000;
+            const timer = setInterval(async () => {
+              attempts++;
+              queryClient.invalidateQueries({ queryKey: ['/api/preview/url', projectId] });
+              queryClient.invalidateQueries({ queryKey: ['/api/preview/url', String(projectId)] });
+              
+              try {
+                const res = await fetch(`/api/preview/url?projectId=${projectId}`, { credentials: 'include' });
+                if (res.ok) {
+                  const data = await res.json();
+                  if (data.previewUrl && (data.status === 'running' || data.status === 'static')) {
+                    clearInterval(timer);
+                    previewPollTimerRef.current = null;
+                    return;
+                  }
+                }
+              } catch {
+                // Transient fetch error — continue polling
+              }
+              
+              if (attempts >= maxAttempts) {
+                clearInterval(timer);
+                previewPollTimerRef.current = null;
+                queryClient.invalidateQueries({ queryKey: ['/api/preview/url', projectId] });
+                queryClient.invalidateQueries({ queryKey: ['/api/preview/url', String(projectId)] });
+              }
+            }, intervalMs);
+            
+            previewPollTimerRef.current = timer;
+          };
+          const delayTimer = setTimeout(pollPreviewReady, 1000);
+          previewPollDelayRef.current = delayTimer;
         }
         
         // Emit complete event for favicon/audio/notifications
