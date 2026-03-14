@@ -9,7 +9,7 @@ packages = ["glibcLocales", "jq", "libxcrypt", "imagemagick"]
 [deployment]
 deploymentTarget = "vm"
 run = ["sh", "-c", "RUNNER_PORT=8081 node dist/runner.js & RUNNER_BASE_URL=http://localhost:8081 node --max-old-space-size=4096 dist/index.js"]
-build = ["sh", "-c", "npm install && node scripts/build-server.mjs"]
+build = ["sh", "-c", "npm install && npx vite build && node scripts/build-server.mjs"]
 
 [workflows]
 runButton = "Project"
