@@ -32,6 +32,14 @@ const NATIVE_EXTERNAL = [
   'playwright',
   'playwright-core',
   '@playwright/test',
+  // Sentry CPU profiler ships pre-built .node binaries — keep external
+  '@sentry-internal/node-cpu-profiler',
+  '@sentry/node',
+  '@sentry/core',
+  // Optional runtime deps referenced conditionally but not always installed
+  'cron-parser',
+  '@google-cloud/firestore',
+  'firebase-admin',
 ];
 
 const KEEP_IN_NODE_MODULES = new Set([
