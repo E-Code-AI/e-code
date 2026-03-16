@@ -8,7 +8,7 @@ packages = ["glibcLocales", "jq", "libxcrypt", "imagemagick"]
 
 [deployment]
 deploymentTarget = "vm"
-run = ["sh", "-c", "RUNNER_PORT=8081 node dist/runner.js & RUNNER_BASE_URL=http://localhost:8081 node --max-old-space-size=4096 dist/index.js"]
+run = ["sh", "-c", ". /etc/profile 2>/dev/null; . ~/.nix-profile/etc/profile.d/nix.sh 2>/dev/null; RUNNER_PORT=8081 node dist/runner.js & RUNNER_BASE_URL=http://localhost:8081 node --max-old-space-size=4096 dist/index.js"]
 build = ["sh", "-c", "npm install && npx vite build && node scripts/build-server.mjs"]
 
 [workflows]
@@ -90,7 +90,6 @@ ALLOW_INSECURE_LOCAL_PTY = "true"
 
 [userenv.production]
 NODE_ENV = "production"
-PATH = "/nix/store/1lagpgadaybvs1n2312gysg2phjk89y8-nodejs-20.20.0-wrapped/bin:/home/runner/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 ALLOW_INSECURE_LOCAL_PTY = "false"
 NODE_OPTIONS = "--max-old-space-size=4096"
 LOG_LEVEL = "warn"
