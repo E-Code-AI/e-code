@@ -300,8 +300,8 @@ export class ContainerOrchestrator {
     logger.info(`Created scheduled job ${config.name} with schedule ${config.schedule}`);
     
     // Parse and validate cron expression
-    const cronParser = require('cron-parser');
     try {
+      const cronParser = require('cron-parser');
       const interval = cronParser.parseExpression(config.schedule);
       const nextRun = interval.next().toDate();
       logger.info(`Next run for ${config.name}: ${nextRun}`);

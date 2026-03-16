@@ -22,24 +22,29 @@ import { execSync } from 'child_process';
 const IS_DEPLOY = process.env.BUILD_DEPLOY === '1';
 
 const NATIVE_EXTERNAL = [
-  // Native addon packages (.node binaries — cannot be bundled)
-  // bcrypt replaced with bcryptjs (pure JS) so server needs no native addons
-  'node-pty',
-  'sharp',
-  'pg-native',
-  'pg-cloudflare',
-  'ssh2',
+  // Native addon packages (.node binaries — cannot be bundled by esbuild).
+  // Deploy build command: npm install node-pty  (only truly required package)
+  // Everything else here is OPTIONAL at runtime — server starts without it.
+  'node-pty',           // PTY terminal emulation — native .node binary (installed by build cmd)
+  'pg-native',          // optional pg backend — not installed, pg uses pure-JS driver
+  'pg-cloudflare',      // optional pg backend — not installed
+  // firebase-admin: lazy require() inside FCMService — gracefully no-ops if absent
+  'firebase-admin',
+  // playwright / ssh2: transitively required by bundler even though only type imports exist.
+  // These are NOT installed at deploy time; server gracefully handles their absence.
   'playwright',
   'playwright-core',
   '@playwright/test',
-  // Sentry CPU profiler ships pre-built .node binaries — keep external
-  '@sentry-internal/node-cpu-profiler',
-  '@sentry/node',
-  '@sentry/core',
-  // Optional runtime deps referenced conditionally but not always installed
+  'chromium-bidi',
+  'ssh2',
+  // Large packages that cause bundling issues — keep external, optional at runtime
   'cron-parser',
   '@google-cloud/firestore',
-  'firebase-admin',
+  '@sentry/node',
+  '@sentry/core',
+  '@sentry-internal/node-cpu-profiler',
+  '@sentry/profiling-node',
+  'sharp',
 ];
 
 const KEEP_IN_NODE_MODULES = new Set([
