@@ -167,6 +167,7 @@ function mapPhaseToSplashPhase(phase: string | undefined): AutonomousBuildPhase 
     case 'finalizing':
       return 'finalizing';
     case 'complete':
+    case 'completed':
       return 'complete';
     case 'error':
       return 'error';
@@ -635,6 +636,13 @@ export function useAutonomousChatIntegration({
             progress: eventProgress || store.progress
           }
         );
+        
+        if (splashPhase === 'complete') {
+          buildCompletedRef.current = true;
+          bootstrapActiveRef.current = false;
+          useSchemaWarmingStore.getState().markReady();
+          AgentEventBus.emit('agent:preview-ready', { projectId });
+        }
         
         // Update existing message or add new one based on phase changes
         if (lastMessageIdRef.current && splashPhase === store.phase) {

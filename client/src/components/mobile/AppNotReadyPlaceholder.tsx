@@ -14,7 +14,7 @@
  * @since December 2025
  */
 
-import { memo } from 'react';
+import { memo, useCallback } from 'react';
 import { 
   Monitor, 
   Rocket, 
@@ -22,16 +22,22 @@ import {
   Loader2, 
   Sparkles,
   Database,
-  Clock
+  Clock,
+  Play
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSchemaWarmingStore, getAppNotReadyMessage } from '@/stores/schemaWarmingStore';
+import { useAutonomousBuildStore } from '@/stores/autonomousBuildStore';
 import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button';
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 
 interface AppNotReadyPlaceholderProps {
   tabName: 'preview' | 'deploy' | 'files' | string;
   className?: string;
   compact?: boolean;
+  projectId?: string;
 }
 
 const tabIcons: Record<string, React.ElementType> = {
@@ -44,9 +50,32 @@ export const AppNotReadyPlaceholder = memo(function AppNotReadyPlaceholder({
   tabName,
   className,
   compact = false,
+  projectId,
 }: AppNotReadyPlaceholderProps) {
   const { progress, isWarming, isReady } = useSchemaWarmingStore();
   const Icon = tabIcons[tabName.toLowerCase()] || Sparkles;
+
+  const { toast } = useToast();
+  const buildPhase = useAutonomousBuildStore((s) => s.phase);
+  const isBuildComplete = buildPhase === 'complete';
+  const isPreviewTab = tabName.toLowerCase() === 'preview';
+  const showRunButton = isPreviewTab && isBuildComplete && !isWarming && projectId;
+
+  const handleRunPreview = useCallback(async () => {
+    if (!projectId) return;
+    try {
+      await apiRequest('POST', `/api/preview/projects/${projectId}/preview/start`, {});
+      useSchemaWarmingStore.getState().markReady();
+    } catch (err) {
+      console.error('[AppNotReady] Failed to start preview:', err);
+      toast({
+        title: 'Preview failed to start',
+        description: 'There was an issue starting the preview. Unlocking the panel so you can retry.',
+        variant: 'destructive',
+      });
+      useSchemaWarmingStore.getState().markReady();
+    }
+  }, [projectId, toast]);
 
   // If ready, don't show placeholder
   if (isReady) {
@@ -105,13 +134,27 @@ export const AppNotReadyPlaceholder = memo(function AppNotReadyPlaceholder({
 
       {/* Title */}
       <h3 className="text-[13px] font-semibold text-gray-700 dark:text-gray-300 mb-1.5 text-center">
-        {isWarming ? 'Preparing Your App' : 'App Not Ready Yet'}
+        {isWarming ? 'Preparing Your App' : showRunButton ? 'Ready to Preview' : 'App Not Ready Yet'}
       </h3>
 
       {/* Message - reduced font for mobile */}
       <p className="text-[11px] sm:text-[11px] text-gray-500 dark:text-gray-400 text-center max-w-[240px] leading-relaxed">
-        {message.split('\n\n')[0]}
+        {showRunButton
+          ? 'Your workspace is ready. Click Run to see a preview.'
+          : message.split('\n\n')[0]}
       </p>
+
+      {/* Run Preview button when workspace is ready but preview hasn't started */}
+      {showRunButton && (
+        <Button
+          size="sm"
+          onClick={handleRunPreview}
+          className="mt-4 gap-2"
+        >
+          <Play className="h-3.5 w-3.5" />
+          Run Preview
+        </Button>
+      )}
 
       {/* Progress bar when warming */}
       {showProgress && (

@@ -642,7 +642,7 @@ function UnifiedIDELayout({
       case 'preview':
         // Gate preview with AppNotReadyPlaceholder until schema is ready (bootstrap only)
         if (!isSchemaReady && !!bootstrapToken) {
-          return <AppNotReadyPlaceholder tabName="Preview" />;
+          return <AppNotReadyPlaceholder tabName="Preview" projectId={projectId} />;
         }
         return (
           <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Preview..." /></div>}>
@@ -668,7 +668,7 @@ function UnifiedIDELayout({
       case 'deploy':
         // Gate deploy with AppNotReadyPlaceholder until schema is ready (bootstrap only)
         if (!isSchemaReady && !!bootstrapToken) {
-          return <AppNotReadyPlaceholder tabName="Deploy" />;
+          return <AppNotReadyPlaceholder tabName="Deploy" projectId={projectId} />;
         }
         return (
           <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Deploy..." /></div>}>
@@ -884,7 +884,7 @@ function UnifiedIDELayout({
       case 'preview':
         // Gate preview with AppNotReadyPlaceholder until schema is ready (bootstrap only)
         if (!isSchemaReady && !!bootstrapToken) {
-          return <AppNotReadyPlaceholder tabName="Preview" />;
+          return <AppNotReadyPlaceholder tabName="Preview" projectId={projectId} />;
         }
         return (
           <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" /></div>}>
@@ -954,7 +954,7 @@ function UnifiedIDELayout({
     // Preview panel - gate with AppNotReadyPlaceholder until schema is ready (bootstrap only)
     if (currentTab.id === 'preview' || currentTab.id === 'webpreview') {
       if (!isSchemaReady && !!bootstrapToken) {
-        return <AppNotReadyPlaceholder tabName="Preview" />;
+        return <AppNotReadyPlaceholder tabName="Preview" projectId={projectId} />;
       }
       return (
         <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" /></div>}>
