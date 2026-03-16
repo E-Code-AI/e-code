@@ -36,11 +36,8 @@ backups/
 desktop/dist/
 dokploy/
 
-# Build output strategy:
-# dist/index.js and dist/runner.js are committed (pre-built server bundles, 2 files only)
-# dist/public/ is NOT committed — vite build regenerates it during deployment
-# Deployment build cmd: npm install node-pty && npx vite build
-dist/public/
+# dist/ is intentionally committed (pre-built) so deployment build cmd can be a no-op
+# Build cmd: echo "ready" (no npm install needed - server fully bundled in dist/index.js)
 client/dist/
 
 # SECURITY: Credential files - NEVER commit

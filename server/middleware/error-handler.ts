@@ -12,7 +12,14 @@
 
 import { Request, Response, NextFunction } from 'express';
 import { createLogger } from '../utils/logger';
-import * as Sentry from '@sentry/node';
+
+let _sentry: any = null;
+function getSentry() {
+  if (_sentry === null) {
+    try { _sentry = require('@sentry/node'); } catch { _sentry = undefined; }
+  }
+  return _sentry;
+}
 
 const logger = createLogger('error-handler');
 
@@ -248,7 +255,7 @@ function logError(err: Error | AppError, req: Request): void {
 
     // Send to error tracking service (Sentry)
     if (process.env.SENTRY_DSN) {
-      Sentry.captureException(err, {
+      getSentry()?.captureException(err, {
         tags: {
           requestId: errorContext.requestId,
           path: errorContext.path,
@@ -338,7 +345,7 @@ export function setupUnhandledRejectionHandler(): void {
 
     // Send to error tracking
     if (process.env.SENTRY_DSN) {
-      Sentry.captureException(reason);
+      getSentry()?.captureException(reason);
     }
 
     // In production, exit gracefully to let process manager restart
@@ -362,7 +369,7 @@ export function setupUncaughtExceptionHandler(): void {
 
     // Send to error tracking
     if (process.env.SENTRY_DSN) {
-      Sentry.captureException(error);
+      getSentry()?.captureException(error);
     }
 
     // Always exit on uncaught exceptions
