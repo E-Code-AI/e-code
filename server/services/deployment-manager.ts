@@ -121,7 +121,30 @@ export class DeploymentManager {
   }
 
   async getDeployment(deploymentId: string): Promise<DeploymentStatus | null> {
-    return this.deployments.get(deploymentId) || null;
+    // Check in-memory cache first (for active build/deploy processes)
+    const cached = this.deployments.get(deploymentId);
+    if (cached) return cached;
+
+    // Fall back to database for persisted deployments
+    try {
+      const dbDeployment = await storage.getDeploymentByExternalId(deploymentId);
+      if (!dbDeployment) return null;
+
+      return {
+        id: dbDeployment.deploymentId || String(dbDeployment.id),
+        projectId: dbDeployment.projectId,
+        status: (dbDeployment.status as DeploymentStatus['status']) || 'stopped',
+        url: dbDeployment.url || undefined,
+        customUrl: dbDeployment.customDomain ? `https://${dbDeployment.customDomain}` : undefined,
+        buildLog: [],
+        deploymentLog: [],
+        createdAt: dbDeployment.createdAt ? new Date(dbDeployment.createdAt) : new Date(),
+        lastDeployedAt: dbDeployment.lastDeployedAt ? new Date(dbDeployment.lastDeployedAt) : undefined,
+      };
+    } catch (error) {
+      console.error(`[DeploymentManager] Failed to fetch deployment ${deploymentId} from DB:`, error);
+      return null;
+    }
   }
 
   async createDeployment(config: DeploymentConfig): Promise<string> {
@@ -668,24 +691,66 @@ export class DeploymentManager {
   }
 
   async listDeployments(projectId: string | number): Promise<DeploymentStatus[]> {
-    // CRITICAL FIX: Filter by deployment.projectId, not by checking if UUID includes projectId
     const projectIdStr = typeof projectId === 'number' ? projectId.toString() : projectId;
-    return Array.from(this.deployments.values()).filter(d => {
-      const deploymentProjectId = typeof d.projectId === 'number' ? d.projectId.toString() : d.projectId;
-      return deploymentProjectId === projectIdStr;
-    });
+
+    // Query persistent database for all deployments
+    try {
+      const dbDeployments = await storage.getDeployments(projectIdStr);
+      const results: DeploymentStatus[] = dbDeployments.map(d => {
+        const externalId = d.deploymentId || String(d.id);
+        // Merge with in-memory state if deployment is currently building/deploying
+        const cached = this.deployments.get(externalId);
+        if (cached) return cached;
+
+        return {
+          id: externalId,
+          projectId: d.projectId,
+          status: (d.status as DeploymentStatus['status']) || 'stopped',
+          url: d.url || undefined,
+          customUrl: d.customDomain ? `https://${d.customDomain}` : undefined,
+          buildLog: [],
+          deploymentLog: [],
+          createdAt: d.createdAt ? new Date(d.createdAt) : new Date(),
+          lastDeployedAt: d.lastDeployedAt ? new Date(d.lastDeployedAt) : undefined,
+        };
+      });
+      return results;
+    } catch (error) {
+      console.error(`[DeploymentManager] Failed to list deployments from DB for project ${projectIdStr}:`, error);
+      // Fall back to in-memory cache
+      return Array.from(this.deployments.values()).filter(d => {
+        const deploymentProjectId = typeof d.projectId === 'number' ? d.projectId.toString() : d.projectId;
+        return deploymentProjectId === projectIdStr;
+      });
+    }
   }
 
   async updateDeployment(deploymentId: string, config: Partial<DeploymentConfig>): Promise<void> {
-    const deployment = this.deployments.get(deploymentId);
-    if (!deployment) throw new Error('Deployment not found');
+    let deployment = this.deployments.get(deploymentId);
+    if (!deployment) {
+      // Try loading from DB
+      deployment = await this.getDeployment(deploymentId) as DeploymentStatus;
+      if (!deployment) throw new Error('Deployment not found');
+    }
 
     deployment.deploymentLog.push('🔄 Updating deployment configuration...');
-    
+
+    // Persist to database
+    try {
+      const dbDeployment = await storage.getDeploymentByExternalId(deploymentId);
+      if (dbDeployment) {
+        await storage.updateDeploymentStatus(dbDeployment.id, {
+          status: deployment.status,
+          ...(config.customDomain && { customDomain: config.customDomain }),
+        });
+      }
+    } catch (error) {
+      console.error(`[DeploymentManager] Failed to persist update for ${deploymentId}:`, error);
+    }
+
     // Trigger redeployment if necessary
     if (config.buildCommand || config.startCommand || config.environmentVars) {
       deployment.status = 'building';
-      // Re-trigger build process
     }
 
     deployment.deploymentLog.push('✅ Deployment updated successfully');
@@ -693,10 +758,20 @@ export class DeploymentManager {
 
   async deleteDeployment(deploymentId: string): Promise<void> {
     const deployment = this.deployments.get(deploymentId);
-    if (!deployment) throw new Error('Deployment not found');
+    if (deployment) {
+      deployment.status = 'stopped';
+      deployment.deploymentLog.push('🛑 Stopping deployment...');
+    }
 
-    deployment.status = 'stopped';
-    deployment.deploymentLog.push('🛑 Stopping deployment...');
+    // Update database status
+    try {
+      const dbDeployment = await storage.getDeploymentByExternalId(deploymentId);
+      if (dbDeployment) {
+        await storage.updateDeploymentStatus(dbDeployment.id, { status: 'stopped' });
+      }
+    } catch (error) {
+      console.error(`[DeploymentManager] Failed to update DB status for ${deploymentId}:`, error);
+    }
 
     // Cleanup resources
     try {
