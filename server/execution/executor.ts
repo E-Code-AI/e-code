@@ -30,9 +30,22 @@ export interface ExecutionResult {
 // - auto: Try Docker -> Remote -> Local fallback chain
 const EXECUTION_MODE = process.env.EXECUTION_MODE || (process.env.NODE_ENV === 'production' ? 'remote' : 'local');
 
+// SECURITY FIX E-01: Block 'local' execution mode in production
+// Local mode executes user code directly on the server with no isolation.
+// This is a critical security vulnerability that allows arbitrary code execution.
+if (process.env.NODE_ENV === 'production' && EXECUTION_MODE === 'local') {
+  logger.error('[SECURITY] EXECUTION_MODE=local is FORBIDDEN in production!');
+  logger.error('[SECURITY] Set EXECUTION_MODE=docker or EXECUTION_MODE=remote in your environment.');
+  logger.error('[SECURITY] Falling back to EXECUTION_MODE=remote for safety.');
+}
+
+const EFFECTIVE_EXECUTION_MODE = (process.env.NODE_ENV === 'production' && EXECUTION_MODE === 'local')
+  ? 'remote' // Force remote in production even if local was configured
+  : EXECUTION_MODE;
+
 // Check if Docker execution mode is enabled (production)
-const USE_DOCKER_EXECUTION = EXECUTION_MODE === 'docker' || EXECUTION_MODE === 'auto';
-const USE_REMOTE_EXECUTION = EXECUTION_MODE === 'remote' || EXECUTION_MODE === 'auto';
+const USE_DOCKER_EXECUTION = EFFECTIVE_EXECUTION_MODE === 'docker' || EFFECTIVE_EXECUTION_MODE === 'auto';
+const USE_REMOTE_EXECUTION = EFFECTIVE_EXECUTION_MODE === 'remote' || EFFECTIVE_EXECUTION_MODE === 'auto';
 
 // Normalize language aliases to canonical names
 // Full 29-language support for Fortune 500 production parity with Replit
@@ -237,7 +250,19 @@ export class CodeExecutor {
       logger.info(`${normalizedLang} requires local execution (not available in Piston)`);
     }
 
-    // Process execution (development or production fallback when Docker unavailable)
+    // SECURITY FIX E-01: In production, REFUSE to execute locally as final fallback
+    if (process.env.NODE_ENV === 'production') {
+      logger.error(`[SECURITY] Refusing local execution in production for language: ${language}`);
+      return {
+        output: '',
+        error: 'Code execution temporarily unavailable. Docker or remote executor required in production.',
+        executionTime: Date.now() - startTime,
+        memoryUsed: 0,
+        exitCode: 1
+      };
+    }
+
+    // Local process execution (development ONLY - never in production)
     let execDir: string | null = null;
 
     try {

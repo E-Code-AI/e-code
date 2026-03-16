@@ -33,7 +33,7 @@ const featureCopy: Record<string, {
     summary: 'Provision, manage, and observe your databases with AI-assisted migrations, schema visualizations, and performance insights.',
     highlights: ['AI-assisted migration planning', 'Automated backups and failover', 'Integrated query insights and alerts'],
     status: 'beta',
-    estimatedDate: 'Q1 2025',
+    estimatedDate: 'Q2 2026',
   },
   console: {
     title: 'Command Console',
@@ -57,7 +57,7 @@ const featureCopy: Record<string, {
     summary: 'Spin up secure preview environments with generated fixtures, QA checklists, and collaboration tools.',
     highlights: ['Automatic URL for every pull request', 'AI generated test plans and review summaries', 'Usage analytics and tear-down scheduling'],
     status: 'coming_soon',
-    estimatedDate: 'Q2 2025',
+    estimatedDate: 'Q3 2026',
   },
   agent: {
     title: 'Agent Control Center',
@@ -73,7 +73,7 @@ const featureCopy: Record<string, {
     summary: 'Discover patterns, anti-patterns, and reusable components with AI-powered insights across your codebase.',
     highlights: ['Natural language queries with vector search', 'Compliance and license filters', 'Cross-language understanding'],
     status: 'beta',
-    estimatedDate: 'Q1 2025',
+    estimatedDate: 'Q2 2026',
   },
   packages: {
     title: 'Package Intelligence',
@@ -81,7 +81,7 @@ const featureCopy: Record<string, {
     summary: 'Audit vulnerabilities, licenses, and supply-chain risks with automated remediation workflows.',
     highlights: ['Continuous CVE monitoring and auto-patches', 'Policy-driven approvals', 'SBOM exports and compliance reports'],
     status: 'coming_soon',
-    estimatedDate: 'Q2 2025',
+    estimatedDate: 'Q3 2026',
   },
   extensions: {
     title: 'Extensions Marketplace',
@@ -89,7 +89,7 @@ const featureCopy: Record<string, {
     summary: 'Bring your toolchain directly into the workspace with vetted, secure extensions tailored to your teams.',
     highlights: ['Private marketplace support', 'Role and permission aware extensions', 'Lifecycle management and analytics'],
     status: 'coming_soon',
-    estimatedDate: 'Q3 2025',
+    estimatedDate: 'Q4 2026',
   },
   integrations: {
     title: 'Integration Hub',
@@ -97,7 +97,7 @@ const featureCopy: Record<string, {
     summary: 'Prebuilt connectors for CI/CD, observability, support, and data services with centralized governance.',
     highlights: ['200+ enterprise integrations', 'Granular secrets management', 'Event streaming and webhooks'],
     status: 'beta',
-    estimatedDate: 'Q1 2025',
+    estimatedDate: 'Q2 2026',
   },
   networking: {
     title: 'Networking Control Plane',
@@ -112,7 +112,7 @@ const featureCopy: Record<string, {
     summary: 'Detect, prioritize, and resolve incidents using AI-driven root-cause analysis and recommended playbooks.',
     highlights: ['Noise reduction with ML-based correlation', 'Automated postmortem generation', 'Workflow integrations with PagerDuty and Jira'],
     status: 'coming_soon',
-    estimatedDate: 'Q2 2025',
+    estimatedDate: 'Q3 2026',
   },
   'kv-store': {
     title: 'Distributed KV Store',
@@ -120,7 +120,7 @@ const featureCopy: Record<string, {
     summary: 'Provision globally available KV storage with built-in replication, caching, and analytics.',
     highlights: ['Low-latency global reads and writes', 'Auto-scaling with zero maintenance', 'Audit logging and TTL policies'],
     status: 'coming_soon',
-    estimatedDate: 'Q2 2025',
+    estimatedDate: 'Q3 2026',
   },
   shell: {
     title: 'Secure Shell',
@@ -136,7 +136,7 @@ const featureCopy: Record<string, {
     summary: 'Embed discussions, reviews, and decisions directly in the workspace for transparent knowledge sharing.',
     highlights: ['Attach to files, lines, or deployments', 'AI summaries and next steps', 'Integrations with Slack and Teams'],
     status: 'coming_soon',
-    estimatedDate: 'Q3 2025',
+    estimatedDate: 'Q4 2026',
   },
   vnc: {
     title: 'Visual Workspace',
@@ -151,7 +151,7 @@ const featureCopy: Record<string, {
     summary: 'Launch global referral campaigns with transparent tracking, insights, and flexible incentives.',
     highlights: ['Customizable incentive structures', 'Real-time performance dashboards', 'Automated payouts and compliance'],
     status: 'coming_soon',
-    estimatedDate: 'Q2 2025',
+    estimatedDate: 'Q3 2026',
   },
   'teams/new': {
     title: 'Team Launchpad',
@@ -160,7 +160,7 @@ const featureCopy: Record<string, {
     highlights: ['Automated workspace provisioning', 'Policy-based permission templates', 'Analytics on activation and usage'],
     status: 'beta',
     alternativeRoute: '/teams',
-    estimatedDate: 'Q1 2025',
+    estimatedDate: 'Q2 2026',
   },
 };
 

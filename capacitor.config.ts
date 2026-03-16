@@ -7,7 +7,7 @@ const config: CapacitorConfig = {
   server: {
     androidScheme: 'https',
     iosScheme: 'https',
-    hostname: 'app.ecode.ai'
+    hostname: 'e-code.ai'
   },
   plugins: {
     SplashScreen: {

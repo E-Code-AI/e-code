@@ -1,15 +1,16 @@
 import { Router, Request, Response } from 'express';
 import { db } from '../db';
-import { 
-  communityPosts, 
-  communityCategories, 
-  communityPostLikes, 
+import { ensureAuthenticated } from '../middleware/auth';
+import {
+  communityPosts,
+  communityCategories,
+  communityPostLikes,
   communityPostBookmarks,
   communityComments,
   challenges,
   challengeLeaderboard,
   challengeSubmissions,
-  users 
+  users
 } from '@shared/schema';
 import { eq, desc, sql, and, ilike, or } from 'drizzle-orm';
 
@@ -288,7 +289,7 @@ router.get('/leaderboard', async (_req: Request, res: Response) => {
   }
 });
 
-router.post('/posts/:postId/like', async (req: Request, res: Response) => {
+router.post('/posts/:postId/like', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const { postId } = req.params;
     const userId = (req as any).user?.id;
@@ -326,7 +327,7 @@ router.post('/posts/:postId/like', async (req: Request, res: Response) => {
   }
 });
 
-router.post('/posts/:postId/bookmark', async (req: Request, res: Response) => {
+router.post('/posts/:postId/bookmark', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const { postId } = req.params;
     const userId = (req as any).user?.id;
@@ -467,7 +468,7 @@ router.get('/posts/:postId', async (req: Request, res: Response) => {
   }
 });
 
-router.post('/posts/:postId/comments', async (req: Request, res: Response) => {
+router.post('/posts/:postId/comments', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const { postId } = req.params;
     const userId = (req as any).user?.id;

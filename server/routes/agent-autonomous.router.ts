@@ -129,7 +129,8 @@ router.post('/disable', ensureSessionOwnership, async (req, res) => {
  * POST /api/agent/autonomous/assess-risk
  * Assess risk of a specific action without executing it
  */
-router.post('/assess-risk', async (req, res) => {
+// SECURITY FIX: assess-risk now requires authentication (was open to unauthenticated requests)
+router.post('/assess-risk', ensureAuthenticated, async (req, res) => {
   try {
     // Support both legacy format (actionType, actionData) and new format (action object)
     let actionType: string;
@@ -240,7 +241,7 @@ router.get('/health', (req, res) => {
  * Build application from prompt using AI
  * Supports multi-provider model selection
  */
-router.post('/build', async (req, res) => {
+router.post('/build', ensureAuthenticated, async (req, res) => {
   try {
     const { projectId, prompt, modelId } = req.body;
     const userId = req.user!.id;

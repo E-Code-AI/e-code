@@ -164,7 +164,7 @@ const deploymentConfigSchema = z.object({
 });
 
 // Create deployment - REAL IMPLEMENTATION using deploymentManager
-router.post('/projects/:projectId/deploy', async (req, res) => {
+router.post('/projects/:projectId/deploy', ensureAuthenticated, async (req, res) => {
   try {
     const projectId = req.params.projectId;
     const userId = req.user!.id;
@@ -367,7 +367,7 @@ router.get('/projects/:projectId/deployments/stats', async (req, res) => {
 });
 
 // Update deployment
-router.put('/deployments/:deploymentId', async (req, res) => {
+router.put('/deployments/:deploymentId', ensureAuthenticated, async (req, res) => {
   try {
     const { deploymentId } = req.params;
     const updateConfig = deploymentConfigSchema.partial().parse(req.body);
@@ -388,7 +388,7 @@ router.put('/deployments/:deploymentId', async (req, res) => {
 });
 
 // Delete deployment
-router.delete('/deployments/:deploymentId', async (req, res) => {
+router.delete('/deployments/:deploymentId', ensureAuthenticated, async (req, res) => {
   try {
     const { deploymentId } = req.params;
     await deploymentManager.deleteDeployment(deploymentId);
@@ -407,7 +407,7 @@ router.delete('/deployments/:deploymentId', async (req, res) => {
 });
 
 // Scale deployment with autoscaling guards
-router.post('/deployments/:deploymentId/scale', async (req, res) => {
+router.post('/deployments/:deploymentId/scale', ensureAuthenticated, async (req, res) => {
   try {
     const { deploymentId } = req.params;
     const { desiredCount } = req.body;
@@ -476,7 +476,7 @@ router.get('/deployments/:deploymentId/metrics', async (req, res) => {
 });
 
 // Domain management endpoints
-router.post('/deployments/:deploymentId/domain', async (req, res) => {
+router.post('/deployments/:deploymentId/domain', ensureAuthenticated, async (req, res) => {
   try {
     const { deploymentId } = req.params;
     const { domain } = z.object({ domain: z.string() }).parse(req.body);
@@ -496,7 +496,7 @@ router.post('/deployments/:deploymentId/domain', async (req, res) => {
   }
 });
 
-router.delete('/deployments/:deploymentId/domain', async (req, res) => {
+router.delete('/deployments/:deploymentId/domain', ensureAuthenticated, async (req, res) => {
   try {
     const { deploymentId } = req.params;
     await deploymentManager.removeCustomDomain(deploymentId);
@@ -515,7 +515,7 @@ router.delete('/deployments/:deploymentId/domain', async (req, res) => {
 });
 
 // SSL certificate management
-router.post('/deployments/:deploymentId/ssl/renew', async (req, res) => {
+router.post('/deployments/:deploymentId/ssl/renew', ensureAuthenticated, async (req, res) => {
   try {
     const { deploymentId } = req.params;
     await deploymentManager.renewSSLCertificate(deploymentId);

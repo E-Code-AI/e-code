@@ -6,9 +6,23 @@
 import { Router, Request, Response } from 'express';
 import { ensureAuthenticated } from '../middleware/auth';
 import { dataProvisioningService } from '../data/data-provisioning-service';
+import { storage } from '../storage';
 import type { DataSchema, DataProvisioningConfig } from '../data/data-provisioning-service';
 
 const router = Router();
+
+// SECURITY FIX: Maximum records to prevent resource exhaustion
+const MAX_GENERATE_COUNT = 10_000;
+
+/**
+ * SECURITY FIX: Verify project ownership before data operations
+ */
+async function verifyProjectOwnership(projectId: string | number, userId: number): Promise<{ valid: boolean; error?: string }> {
+  const project = await storage.getProject(projectId);
+  if (!project) return { valid: false, error: 'Project not found' };
+  if (project.ownerId !== userId) return { valid: false, error: 'Access denied: You do not own this project' };
+  return { valid: true };
+}
 
 /**
  * Generate test data based on schema
@@ -24,7 +38,15 @@ router.post('/generate', ensureAuthenticated, async (req: Request, res: Response
       });
     }
 
-    const recordCount = count || 50;
+    // SECURITY FIX: Validate and cap the count parameter
+    const rawCount = typeof count === 'number' ? count : 50;
+    if (rawCount < 1 || rawCount > MAX_GENERATE_COUNT) {
+      return res.status(400).json({
+        error: `Count must be between 1 and ${MAX_GENERATE_COUNT}`
+      });
+    }
+    const recordCount = Math.min(Math.max(rawCount, 1), MAX_GENERATE_COUNT);
+
     const generatedData = await dataProvisioningService.generateData(
       schema as DataSchema,
       recordCount
@@ -57,6 +79,12 @@ router.post('/seed', ensureAuthenticated, async (req: Request, res: Response) =>
       return res.status(400).json({
         error: 'projectId and seedType are required'
       });
+    }
+
+    // SECURITY FIX: Verify user owns the project before seeding
+    const ownership = await verifyProjectOwnership(projectId, userId);
+    if (!ownership.valid) {
+      return res.status(403).json({ error: ownership.error });
     }
 
     const validSeedTypes = ['ecommerce', 'blog', 'saas'];

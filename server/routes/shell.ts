@@ -15,12 +15,18 @@ import { storage } from '../storage';
 const logger = createLogger('shell-router');
 const router = Router();
 
+// SECURITY FIX C-03: Shell session limits and idle timeout
+const MAX_SESSIONS_PER_USER = 5;
+const SESSION_IDLE_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes idle timeout (was 24 hours)
+const SESSION_CLEANUP_INTERVAL_MS = 5 * 60 * 1000; // Check every 5 minutes (was 1 hour)
+
 interface ShellSession {
   id: string;
   userId: number;
   process: ChildProcess;
   cwd: string;
   created: Date;
+  lastActivity: Date; // SECURITY FIX T-02: Track last activity for idle timeout
 }
 
 const shellSessions = new Map<string, ShellSession>();
@@ -30,17 +36,19 @@ const SHELL_SYNC_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 // WebSocket server for shell connections (noServer mode)
 let shellWss: WebSocketServer | null = null;
 
-// Clean up old sessions periodically
+// SECURITY FIX T-02: Clean up idle sessions more aggressively (30 min idle, check every 5 min)
 setInterval(() => {
   const now = Date.now();
   const entries = Array.from(shellSessions.entries());
   for (const [sessionId, session] of entries) {
-    if (now - session.created.getTime() > 24 * 60 * 60 * 1000) { // 24 hours
+    const idleTime = now - session.lastActivity.getTime();
+    if (idleTime > SESSION_IDLE_TIMEOUT_MS) {
+      logger.info(`[Shell] Closing idle session ${sessionId} (idle ${Math.round(idleTime / 1000)}s)`);
       session.process.kill();
       shellSessions.delete(sessionId);
     }
   }
-}, 60 * 60 * 1000); // Check every hour
+}, SESSION_CLEANUP_INTERVAL_MS);
 
 /**
  * Initialize shell WebSocket with central dispatcher
@@ -72,7 +80,14 @@ function initializeShellWebSocket() {
       ws.close(1008, 'Authentication required');
       return;
     }
-    
+
+    // SECURITY FIX T-01: Enforce per-user session limit
+    const userSessionCount = Array.from(shellSessions.values()).filter(s => s.userId === userId).length;
+    if (userSessionCount >= MAX_SESSIONS_PER_USER) {
+      ws.close(1008, `Too many shell sessions (max ${MAX_SESSIONS_PER_USER}). Close an existing session first.`);
+      return;
+    }
+
     // SECURITY FIX #20: Validate project ownership if projectId provided
     if (projectId) {
       try {
@@ -166,28 +181,45 @@ echo ""
       }
     }
 
-    // Spawn bash process
+    // SECURITY FIX C-03/S-07: Spawn bash with MINIMAL safe environment
+    // CRITICAL: Do NOT spread process.env — it exposes DATABASE_URL, JWT_SECRET,
+    // STRIPE_SECRET_KEY, and all server secrets to the user shell.
+    // Only include safe, non-sensitive variables needed for shell operation.
+    const safeEnv: Record<string, string> = {
+      HOME: shellCwd,
+      USER: `user${userId}`,
+      SHELL: '/bin/bash',
+      TERM: 'xterm-256color',
+      COLORTERM: 'truecolor',
+      LANG: 'en_US.UTF-8',
+      LC_ALL: 'en_US.UTF-8',
+      // Provide a safe PATH with only standard system directories
+      PATH: '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
+      // Node.js and common runtimes (if installed)
+      NODE_PATH: '/usr/local/lib/node_modules',
+      // Prevent npm/node from leaking host info
+      npm_config_prefix: path.join(shellCwd, '.npm-global'),
+      TMPDIR: path.join(shellCwd, 'tmp'),
+      // Identify this as an E-Code sandbox shell
+      ECODE_SHELL: '1',
+      ECODE_USER_ID: String(userId),
+      ECODE_PROJECT_ID: projectId || '',
+    };
+
     const shell = spawn('bash', ['--login'], {
       cwd: shellCwd,
-      env: {
-        ...process.env,
-        HOME: shellCwd,
-        USER: `user${userId}`,
-        SHELL: '/bin/bash',
-        TERM: 'xterm-256color',
-        COLORTERM: 'truecolor',
-        LANG: 'en_US.UTF-8',
-        LC_ALL: 'en_US.UTF-8',
-      },
+      env: safeEnv,
       shell: false,
     });
 
+    const now = new Date();
     const session: ShellSession = {
       id: sessionId,
       userId,
       process: shell,
-      cwd: userHome,
-      created: new Date(),
+      cwd: shellCwd,
+      created: now,
+      lastActivity: now, // SECURITY FIX T-02: Initialize last activity
     };
 
     shellSessions.set(sessionId, session);
@@ -217,6 +249,8 @@ echo ""
     // Handle WebSocket messages (user input)
     ws.on('message', (data) => {
       const input = data.toString();
+      // SECURITY FIX T-02: Update last activity timestamp on every input
+      session.lastActivity = new Date();
       shell.stdin.write(input);
     });
 

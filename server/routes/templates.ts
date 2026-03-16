@@ -258,7 +258,7 @@ router.get('/:id', async (req, res) => {
  * POST /api/templates
  * Create new template (authenticated users only)
  */
-router.post('/', async (req, res) => {
+router.post('/', requireAuth, async (req, res) => {
   try {
     // ✅ SECURITY: Check if user is authenticated
     if (!req.user) {
@@ -305,7 +305,7 @@ router.post('/', async (req, res) => {
  * PATCH /api/templates/:id
  * Update existing template (owner or admin only)
  */
-router.patch('/:id', async (req, res) => {
+router.patch('/:id', requireAuth, async (req, res) => {
   try {
     if (!req.user) {
       return res.status(401).json({ error: 'Authentication required' });
@@ -356,7 +356,7 @@ router.patch('/:id', async (req, res) => {
  * DELETE /api/templates/:id
  * Delete template (owner or admin only)
  */
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', requireAuth, async (req, res) => {
   try {
     if (!req.user) {
       return res.status(401).json({ error: 'Authentication required' });
@@ -410,7 +410,7 @@ router.get('/categories', async (req, res) => {
  * POST /api/templates/:id/rate
  * Rate a template
  */
-router.post('/:id/rate', async (req, res) => {
+router.post('/:id/rate', requireAuth, async (req, res) => {
   try {
     // ✅ SECURITY: Check if user is authenticated
     if (!req.user) {
@@ -567,7 +567,7 @@ router.get('/:id/preview', async (req, res) => {
  * POST /api/templates/:id/fork
  * Fork a template to create a new project
  */
-router.post('/:id/fork', async (req, res) => {
+router.post('/:id/fork', requireAuth, async (req, res) => {
   try {
     if (!req.user) {
       return res.status(401).json({ error: 'Authentication required' });

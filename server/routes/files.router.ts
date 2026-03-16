@@ -9,7 +9,9 @@ import { previewEvents } from '../preview/preview-websocket';
 import { withScopedTransaction, TenantScopedQueries } from '../services/persistence-engine';
 import { z } from 'zod';
 import { syncFileToDisc, removeFileFromDisk } from '../utils/project-fs-sync';
+import { createLogger } from '../utils/logger';
 
+const logger = createLogger('files-router');
 const projectIdSchema = z.coerce.number().int().positive();
 const fileIdSchema = z.coerce.number().int().positive();
 const filePathSchema = z.string().min(1).max(500).refine(
@@ -262,7 +264,7 @@ export class FilesRouter {
         res.json({ file: result.data!.file });
         
         this.emitFileChange(String(projectId), validatedData.path, result.data!.isUpdate ? 'update' : 'create');
-        syncFileToDisc(projectId, validatedData.path, validatedData.content || '', !!validatedData.isDirectory).catch(() => {});
+        syncFileToDisc(projectId, validatedData.path, validatedData.content || '', !!validatedData.isDirectory).catch((err: any) => logger.error(`Disk sync failed for ${validatedData.path}:`, err));
       } catch (error: any) {
         console.error('Error saving file:', error);
         if (error.name === 'ZodError') {
@@ -345,7 +347,7 @@ export class FilesRouter {
         
         this.emitFileChange(String(projectId), filePath, 'update');
         if (content !== undefined) {
-          syncFileToDisc(projectId, filePath, content || '').catch(() => {});
+          syncFileToDisc(projectId, filePath, content || '').catch((err: any) => logger.error(`Disk sync failed for ${filePath}:`, err));
         }
       } catch (error) {
         console.error('Error updating file:', error);
@@ -418,7 +420,7 @@ export class FilesRouter {
         res.json({ message: "File deleted successfully" });
         
         this.emitFileChange(String(projectId), filePath, 'delete');
-        removeFileFromDisk(projectId, filePath).catch(() => {});
+        removeFileFromDisk(projectId, filePath).catch((err: any) => logger.error(`Disk remove failed for ${filePath}:`, err));
       } catch (error) {
         console.error('Error deleting file:', error);
         res.status(500).json({ 
@@ -474,7 +476,7 @@ export class FilesRouter {
         
         this.emitFileChange(String(result.data!.projectId), result.data!.originalPath, 'update');
         if (content !== undefined) {
-          syncFileToDisc(result.data!.projectId, result.data!.originalPath, content || '').catch(() => {});
+          syncFileToDisc(result.data!.projectId, result.data!.originalPath, content || '').catch((err: any) => logger.error(`Disk sync failed for ${result.data!.originalPath}:`, err));
         }
       } catch (error) {
         console.error('Error updating file:', error);
@@ -532,7 +534,7 @@ export class FilesRouter {
         
         this.emitFileChange(String(result.data!.projectId), result.data!.originalPath, 'update');
         if (content !== undefined) {
-          syncFileToDisc(result.data!.projectId, result.data!.originalPath, content || '').catch(() => {});
+          syncFileToDisc(result.data!.projectId, result.data!.originalPath, content || '').catch((err: any) => logger.error(`Disk sync failed for ${result.data!.originalPath}:`, err));
         }
       } catch (error) {
         console.error('Error updating file:', error);
@@ -587,7 +589,7 @@ export class FilesRouter {
         res.json({ message: "File deleted successfully" });
         
         this.emitFileChange(String(result.data!.projectId), result.data!.path, 'delete');
-        removeFileFromDisk(result.data!.projectId, result.data!.path).catch(() => {});
+        removeFileFromDisk(result.data!.projectId, result.data!.path).catch((err: any) => logger.error(`Disk remove failed for ${result.data!.path}:`, err));
       } catch (error) {
         console.error('Error deleting file:', error);
         res.status(500).json({ 
@@ -695,7 +697,7 @@ export class FilesRouter {
         );
 
         res.json(result.data!.file);
-        syncFileToDisc(projectId, validatedData.path, validatedData.content || '', !!validatedData.isDirectory).catch(() => {});
+        syncFileToDisc(projectId, validatedData.path, validatedData.content || '', !!validatedData.isDirectory).catch((err: any) => logger.error(`Disk sync failed for ${validatedData.path}:`, err));
       } catch (error: any) {
         console.error('Error saving file:', error);
         if (error.name === 'ZodError') {
@@ -766,7 +768,7 @@ export class FilesRouter {
         });
         
         this.emitFileChange(String(projectId), folderPath, 'create');
-        syncFileToDisc(projectId, folderPath, '', true).catch(() => {});
+        syncFileToDisc(projectId, folderPath, '', true).catch((err: any) => logger.error(`Disk sync failed for folder ${folderPath}:`, err));
       } catch (error) {
         console.error('Error creating folder:', error);
         res.status(500).json({ 
@@ -1070,7 +1072,7 @@ export class FilesRouter {
         const file = allFiles.find(f => f.id === fileId);
         if (file) {
           this.emitFileChange(String(projectId), file.path, 'update');
-          syncFileToDisc(projectId, file.path, file.content || '').catch(() => {});
+          syncFileToDisc(projectId, file.path, file.content || '').catch((err: any) => logger.error(`Disk sync failed for ${file.path}:`, err));
         }
       } catch (error) {
         console.error('Error restoring file version:', error);
