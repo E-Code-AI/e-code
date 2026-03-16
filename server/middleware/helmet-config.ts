@@ -5,8 +5,18 @@
 
 import helmet from 'helmet';
 
+const isDev = process.env.NODE_ENV === 'development';
+
+// Replit sets NODE_ENV=production even in the dev workspace preview.
+// Detect Replit dev environment by checking for the riker/replit domain.
+const isReplitDev = !!(
+  process.env.REPL_ID ||
+  process.env.REPL_SLUG ||
+  process.env.REPLIT_DEV_DOMAIN
+);
+
 export const helmetConfig = helmet({
-  contentSecurityPolicy: process.env.NODE_ENV === 'development' ? false : {
+  contentSecurityPolicy: isDev ? false : {
     directives: {
       defaultSrc: ["'self'"],
       scriptSrc: [
@@ -17,6 +27,7 @@ export const helmetConfig = helmet({
         "https://cdnjs.cloudflare.com",
         "https://unpkg.com",
         "https://code.jquery.com",
+        "https://js.stripe.com",
         "blob:"
       ],
       styleSrc: [
@@ -50,31 +61,44 @@ export const helmetConfig = helmet({
         "https://api.openai.com",
         "https://*.googleapis.com",
         "https://*.replit.dev",
-        "https://*.repl.co"
+        "https://*.repl.co",
+        "wss://*.replit.dev",
+        "wss://*.repl.co"
       ],
       frameSrc: [
         "'self'",
         "https://js.stripe.com",
-        "https://hooks.stripe.com"
+        "https://hooks.stripe.com",
+        "https://*.replit.dev",
+        "https://*.repl.co",
+        "https://*.replit.app"
       ],
       objectSrc: ["'none'"],
       workerSrc: ["'self'", "blob:"],
       childSrc: ["'self'", "blob:"],
       formAction: ["'self'"],
-      frameAncestors: ["'none'"],
+      frameAncestors: [
+        "'self'",
+        "https://*.replit.dev",
+        "https://*.repl.co",
+        "https://*.replit.app",
+        "https://replit.com"
+      ],
       baseUri: ["'self'"],
       manifestSrc: ["'self'"],
-      blockAllMixedContent: [],
-      upgradeInsecureRequests: [],
       reportUri: '/api/security/csp-report'
     },
     reportOnly: false
   },
-  crossOriginEmbedderPolicy: process.env.NODE_ENV === 'production' ? { policy: "require-corp" } : false,
+  // COEP: use 'credentialless' instead of 'require-corp' to allow cross-origin
+  // resources (Google Fonts, CDN scripts etc.) without requiring CORP headers.
+  // 'require-corp' broke Safari iOS by blocking fonts, images and scripts from CDNs.
+  crossOriginEmbedderPolicy: false,
   crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
   crossOriginResourcePolicy: { policy: "cross-origin" },
   dnsPrefetchControl: { allow: false },
-  frameguard: { action: 'deny' },
+  // Allow iframe embedding from Replit preview (frameguard: deny breaks the preview pane)
+  frameguard: isReplitDev ? false : { action: 'sameorigin' },
   hidePoweredBy: true,
   hsts: {
     maxAge: 31536000,
@@ -106,29 +130,22 @@ export const additionalSecurityHeaders = (req: any, res: any, next: any) => {
   res.setHeader('X-Download-Options', 'noopen');
   res.setHeader('X-DNS-Prefetch-Control', 'off');
   
-  // Expect-CT for certificate transparency
-  if (process.env.NODE_ENV === 'production') {
+  // Expect-CT for certificate transparency (production only, not Replit preview)
+  if (process.env.NODE_ENV === 'production' && !isReplitDev) {
     res.setHeader('Expect-CT', 'max-age=86400, enforce');
   }
   
   // Clear site data on logout
   if (req.path === '/api/logout' || req.path === '/api/auth/logout') {
-    res.setHeader('Clear-Site-Data', '"cache", "cookies", "storage", "executionContexts"');
+    res.setHeader('Clear-Site-Data', '"cache", "cookies", "storage"');
   }
   
-  // API-specific headers
+  // API-specific cache headers
   if (req.path.startsWith('/api')) {
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, private');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
     res.setHeader('Surrogate-Control', 'no-store');
-  }
-  
-  // CORP headers for cross-origin isolation
-  if (process.env.NODE_ENV === 'production') {
-    res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
-    res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
-    res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
   }
   
   next();
@@ -138,14 +155,15 @@ export const additionalSecurityHeaders = (req: any, res: any, next: any) => {
  * CSP Report handler
  */
 export const cspReportHandler = (req: any, res: any) => {
-  // Log CSP violations
+  // Support both standard and Safari's CSP report format
+  const body = req.body?.['csp-report'] || req.body || {};
   console.warn('[CSP Violation]', {
-    documentUri: req.body?.['document-uri'],
-    violatedDirective: req.body?.['violated-directive'],
-    blockedUri: req.body?.['blocked-uri'],
-    lineNumber: req.body?.['line-number'],
-    columnNumber: req.body?.['column-number'],
-    sourceFile: req.body?.['source-file'],
+    documentUri: body['document-uri'],
+    violatedDirective: body['violated-directive'] || body['effective-directive'],
+    blockedUri: body['blocked-uri'],
+    lineNumber: body['line-number'],
+    columnNumber: body['column-number'],
+    sourceFile: body['source-file'],
     ip: req.ip,
     userAgent: req.headers['user-agent']
   });
@@ -157,7 +175,7 @@ export const cspReportHandler = (req: any, res: any) => {
  * Security headers for development
  */
 export const developmentSecurityHeaders = (req: any, res: any, next: any) => {
-  // More relaxed CSP for development
+  // More relaxed CSP for development - report-only mode
   res.setHeader('Content-Security-Policy-Report-Only',
     "default-src 'self'; " +
     "script-src 'self' 'unsafe-inline' 'unsafe-eval' *; " +
@@ -180,15 +198,14 @@ export const developmentSecurityHeaders = (req: any, res: any, next: any) => {
 export const applySecurityHeaders = () => {
   const middleware: any[] = [];
   
-  if (process.env.NODE_ENV === 'production') {
-    middleware.push(helmetConfig);
-  } else {
-    // Use more relaxed settings for development
+  if (isDev) {
     middleware.push(helmet({
       contentSecurityPolicy: false,
       crossOriginEmbedderPolicy: false
     }));
     middleware.push(developmentSecurityHeaders);
+  } else {
+    middleware.push(helmetConfig);
   }
   
   middleware.push(additionalSecurityHeaders);
