@@ -36,8 +36,8 @@ backups/
 desktop/dist/
 dokploy/
 
-# Build output - rebuilt during deployment
-dist/
+# Build output - committed to repo for faster deployment (pre-built)
+# dist/ is intentionally tracked so deployment only needs: npm install --omit=dev
 client/dist/
 
 # SECURITY: Credential files - NEVER commit
