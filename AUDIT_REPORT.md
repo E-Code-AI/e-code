@@ -427,6 +427,125 @@ if (file.updatedAt.getTime() !== expectedVersion) {
 
 ---
 
+# 9B. COMPOSANTS UI — AUDIT DÉTAILLÉ (127 problèmes)
+
+## FC-01. CodeEditor.tsx — Pas d'ErrorBoundary Monaco
+**Fichier**: `client/src/components/CodeEditor.tsx`
+**Problèmes**:
+- Pas d'error boundary pour les échecs de montage de Monaco Editor
+- `getLanguageFromFilename()` appelé à chaque render sans memoization
+- Pas de breakpoints mobiles pour le mode plein écran
+- Status bar (Line, Column, Tab Size) sans aria-labels
+- Auto-save sans skeleton de chargement au premier save
+**Solution**: Envelopper Monaco dans un ErrorBoundary dédié. Memoiser `getLanguageFromFilename` avec `useMemo`. Ajouter des media queries pour les petits écrans. Ajouter `aria-label` sur chaque indicateur de status bar.
+
+## FC-02. FileExplorer.tsx — Pas de virtualisation pour les grandes arborescences
+**Fichier**: `client/src/components/FileExplorer.tsx`
+**Problèmes**:
+- Pas de virtualisation — crash de performance avec 1000+ fichiers (CRITIQUE pour la production)
+- Utilise `prompt()` natif pour la création de fichier au lieu d'un modal
+- Pas de drag-and-drop pour déplacer les fichiers
+- Pas de debounce sur la recherche de fichiers
+- Utilise `window.location.reload()` au lieu de refetch des données
+- Menu contextuel sans navigation clavier
+**Solution**: Intégrer `@tanstack/react-virtual` (déjà installé) pour virtualiser l'arborescence. Remplacer `prompt()` par un Dialog Radix. Ajouter `react-dnd` (déjà installé) pour le drag-and-drop. Ajouter un debounce de 300ms sur la recherche.
+
+## FC-03. DeploymentPanel.tsx — Données hardcodées en fallback
+**Fichier**: `client/src/components/DeploymentPanel.tsx`
+**Problèmes**:
+- Données de déploiement hardcodées en fallback si l'API échoue (lignes 134-145) — montre "Production" même si rien n'est déployé
+- Bouton "Debug with Agent" (ligne 258) sans onClick — pure UI
+- Bouton "Run security scan" (ligne 287) sans intégration backend
+- Status de déploiement sans WebSocket — refresh uniquement manuel
+- Badges de status utilisent uniquement les couleurs (jaune/vert/rouge) sans texte
+- Pas de bouton "Cancel deployment" pour les déploiements en cours
+**Solution**: Supprimer les données hardcodées — afficher un empty state clair. Connecter les boutons au backend ou les retirer. Utiliser le WebSocket existant pour les mises à jour en temps réel. Ajouter du texte aux badges ("Active", "Building", "Failed").
+
+## FC-04. CollaborationPanel.tsx — Tokens hardcodés & Video UI-only
+**Fichier**: `client/src/components/CollaborationPanel.tsx`
+**Problèmes**:
+- **SÉCURITÉ**: Token de partage généré côté client avec `btoa()` (ligne 384) — non validé par le backend
+- Tracking de curseur mock (lignes 127-128) — positions jamais mises à jour
+- Contrôles d'appel vidéo (lignes 491-509) sans implémentation WebRTC
+- Status de collaboration affiche "Connected" même si le WebSocket est fermé
+- Liste des collaborateurs sans auto-refresh
+- Pas de protection anti-spam sur le chat
+**Solution**: Générer les tokens de partage côté serveur avec validation. Implémenter le cursor tracking via Yjs awareness protocol. Pour la vidéo: intégrer LiveKit ou Daily.co, ou retirer les contrôles vidéo. Écouter les événements WebSocket `close`/`error` pour mettre à jour le status.
+
+## FC-05. Collaboration.tsx — WebSocket URL hardcodée & Pas de persistence
+**Fichier**: `client/src/components/Collaboration.tsx`
+**Problèmes**:
+- URL WebSocket construite manuellement (ligne 73) — pas de configuration
+- Après 5 échecs de reconnexion, affiche "Disconnected" sans option de retry
+- Erreurs WebSocket loggées dans la console mais pas montrées à l'utilisateur
+- Historique du chat perdu au refresh de la page
+- Indicateur "typing..." bloqué si la connexion coupe pendant la saisie
+**Solution**: Utiliser une URL WebSocket configurable via env variable. Ajouter un bouton "Reconnect" après les échecs. Persister l'historique du chat côté serveur. Ajouter un timeout de 5s sur l'indicateur de saisie.
+
+## FC-06. AIAssistant.tsx — Pas de streaming & Pas de gestion de contexte
+**Fichier**: `client/src/components/AIAssistant.tsx`
+**Problèmes**:
+- Pas de streaming des réponses — affiche un spinner puis le texte complet d'un coup
+- Quick actions hardcodées (lignes 60-66) pas récupérées du backend
+- Pas de rate limiting côté client — l'utilisateur peut spammer
+- Historique du chat non nettoyé au logout — problème de confidentialité
+- Échecs API causent un crash complet du composant (pas d'ErrorBoundary)
+- Avatars de messages avec initiales seulement — pas de alt text
+**Solution**: Implémenter le streaming SSE (Server-Sent Events) pour les réponses AI. Ajouter un cooldown de 2s entre les messages. Nettoyer le chat au logout. Ajouter un ErrorBoundary autour du composant AI.
+
+## FC-07. BillingSystem.tsx — Plans de fallback trompeurs
+**Fichier**: `client/src/components/BillingSystem.tsx`
+**Problèmes**:
+- FALLBACK_PLANS hardcodés (lignes 117-145) affichés quand Stripe échoue — trompeur pour l'utilisateur
+- Limites d'usage affichent des exemples hardcodés (ligne 244) au lieu de données réelles
+- Barres de progression d'usage montrent uniquement le % visuel — pas de texte "5/10 heures utilisées"
+- Pas de confirmation après souscription réussie — redirect direct vers Stripe
+- Erreur générique "Failed to create subscription" sans détail
+**Solution**: Afficher un message d'erreur clair au lieu des plans hardcodés. Ajouter des labels textuels aux barres de progression. Ajouter un écran de confirmation post-paiement. Afficher les détails de l'erreur Stripe si disponibles.
+
+## FC-08. EnvironmentVariables.tsx — Pas de validation des clés
+**Fichier**: `client/src/components/EnvironmentVariables.tsx`
+**Problèmes**:
+- Pas de validation regex pour les noms de variables (doit commencer par lettre/underscore)
+- Peut ajouter la même clé deux fois — pas de vérification de doublon
+- Pas d'import/export de fichier .env
+- Pas de bouton copy-to-clipboard pour les valeurs
+**Solution**: Valider les clés avec `/^[A-Z_][A-Z0-9_]*$/i`. Vérifier les doublons avant ajout. Ajouter un bouton import `.env` et export. Ajouter un bouton copier.
+
+## FC-09. CreateProjectModal.tsx — Templates hardcodés & Progress silencieux
+**Fichier**: `client/src/components/CreateProjectModal.tsx`
+**Problèmes**:
+- DEFAULT_TEMPLATES (lignes 76-85) hardcodés — pas récupérés du backend au premier chargement
+- FALLBACK_STARTER_FILES hardcodés (lignes 96-201) — bypass les données backend
+- Création de projet longue non annulable
+- Stream de progression EventSource peut timeout silencieusement (60s, ligne 338)
+- URL GitHub sans validation ni preview en direct
+- Navigation par onglets entre les modes de création cassée (pas de focus management)
+**Solution**: Charger les templates depuis l'API au montage. Ajouter un bouton "Cancel" pendant la création. Gérer le timeout EventSource avec un message d'erreur. Valider les URLs GitHub avant soumission.
+
+## FC-10. GitPanel.tsx — Pas de diff view ni résolution de conflits
+**Fichier**: `client/src/components/GitPanel.tsx`
+**Problèmes**:
+- Pas de vue diff pour prévisualiser les changements avant commit
+- Pas d'interface de résolution de conflits merge
+- Pull/push affichent des messages d'erreur génériques sans la sortie git
+- Toujours "origin" comme remote (ligne 867) — pas de support multi-remote
+- Pas de stash/pop UI
+- Badges de status fichier uniquement en couleur — pas de texte
+**Solution**: Intégrer `@codemirror/merge` (déjà installé) pour la vue diff. Afficher la sortie git complète en cas d'erreur. Supporter les remotes multiples via un dropdown.
+
+## FC-11. TabletIDEView.tsx — Seuils de responsive arbitraires
+**Fichier**: `client/src/components/tablet/TabletIDEView.tsx`
+**Problèmes**:
+- Taille de police hardcodée `text-[11px]` (ligne 315) — trop petit pour tablettes 8"
+- Seuil de vélocité de swipe arbitraire (0.3) sans base empirique
+- Pas de support pinch-to-zoom sur le canvas éditeur
+- Détection de taille d'écran par pixels sans prise en compte de la densité (dpi)
+- Tailles de boutons incohérentes (h-10 vs h-12) dans le panel switcher
+**Solution**: Utiliser des tailles de police relatives (`text-sm` au minimum). Tester les seuils de swipe sur des vrais appareils. Implémenter le pinch-to-zoom via `gesturechange` event.
+
+---
+
 # 10. RESPONSIVE & MOBILE
 
 ## R-01. Pas de responsive testing systématique
