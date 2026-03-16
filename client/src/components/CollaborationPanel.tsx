@@ -381,8 +381,11 @@ export function CollaborationPanel({
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const token = btoa(`${projectId}-${Date.now()}`).replace(/[^a-zA-Z0-9]/g, '').substr(0, 9);
-    setShareLink(`${window.location.origin}/ide/${projectId}?token=${token}`);
+    // Generate share link using crypto-safe random token instead of predictable btoa
+    const array = new Uint8Array(16);
+    crypto.getRandomValues(array);
+    const token = Array.from(array, b => b.toString(16).padStart(2, '0')).join('');
+    setShareLink(`${window.location.origin}/ide/${projectId}?invite=${token}`);
   }, [projectId]);
 
   useEffect(() => {

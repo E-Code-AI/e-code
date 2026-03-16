@@ -157,22 +157,32 @@ export function BillingSystem({ userId, className }: BillingSystemProps) {
   const [billingInterval, setBillingInterval] = useState<'month' | 'year'>('month');
   const { toast } = useToast();
 
+  const [usingFallbackPlans, setUsingFallbackPlans] = useState(false);
+
   const getPlansForDisplay = (): Plan[] => {
-    if (allStripePlans.length === 0) return FALLBACK_PLANS;
-    
+    if (allStripePlans.length === 0) {
+      setUsingFallbackPlans(true);
+      return FALLBACK_PLANS;
+    }
+
     const tierOrder = ['free', 'core', 'teams', 'enterprise'];
     const displayPlans: Plan[] = [];
-    
+
     for (const tier of tierOrder) {
-      const planForTier = allStripePlans.find(p => 
+      const planForTier = allStripePlans.find(p =>
         p.tier === tier && (p.tier === 'free' || p.interval === billingInterval)
       );
       if (planForTier) {
         displayPlans.push(convertStripePlanToLegacy(planForTier));
       }
     }
-    
-    return displayPlans.length > 0 ? displayPlans : FALLBACK_PLANS;
+
+    if (displayPlans.length > 0) {
+      setUsingFallbackPlans(false);
+      return displayPlans;
+    }
+    setUsingFallbackPlans(true);
+    return FALLBACK_PLANS;
   };
 
   const getSelectedPlanId = (): string => {
@@ -445,6 +455,13 @@ export function BillingSystem({ userId, className }: BillingSystemProps) {
                   <Badge variant="secondary" className="ml-2">Save 20%</Badge>
                 </span>
               </div>
+
+              {/* Fallback notice */}
+              {usingFallbackPlans && !plansLoading && (
+                <div className="rounded-md border border-amber-500/30 bg-amber-500/10 px-4 py-2 text-sm text-amber-200 mb-4">
+                  Pricing data is temporarily unavailable. Showing default plans — actual pricing may differ.
+                </div>
+              )}
 
               {/* Plans Grid */}
               <div className="grid gap-4 md:grid-cols-2">

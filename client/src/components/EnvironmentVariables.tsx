@@ -115,11 +115,21 @@ export function EnvironmentVariables({ projectId }: EnvironmentVariablesProps) {
     },
   });
 
+  const ENV_KEY_REGEX = /^[A-Za-z_][A-Za-z0-9_]*$/;
+
   const handleCreate = () => {
     if (!newKey.trim()) {
       toast({
         title: 'Invalid key',
         description: 'Environment variable key cannot be empty.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    if (!ENV_KEY_REGEX.test(newKey)) {
+      toast({
+        title: 'Invalid key format',
+        description: 'Key must start with a letter or underscore and contain only letters, digits, and underscores.',
         variant: 'destructive',
       });
       return;

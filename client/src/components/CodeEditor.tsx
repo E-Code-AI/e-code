@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, Component, type ReactNode, type ErrorInfo } from "react";
 import { EditorView } from '@codemirror/view';
 import { CM6Editor } from "@/components/editor/CM6Editor";
 import { File } from "@shared/schema";
@@ -579,4 +579,45 @@ function getLanguageFromFilename(filename: string): string {
   return languageMap[extension] || 'plaintext';
 }
 
-export default CodeEditor;
+class EditorErrorBoundary extends Component<
+  { children: ReactNode; fileName?: string },
+  { hasError: boolean; error?: Error }
+> {
+  state = { hasError: false, error: undefined as Error | undefined };
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error('CodeEditor crash:', error, info.componentStack);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex flex-col items-center justify-center h-full bg-background text-muted-foreground p-8 gap-4">
+          <p className="text-sm font-medium">Editor failed to load{this.props.fileName ? ` for ${this.props.fileName}` : ''}</p>
+          <p className="text-xs">{this.state.error?.message}</p>
+          <button
+            className="px-3 py-1.5 text-xs rounded bg-primary text-primary-foreground hover:bg-primary/90"
+            onClick={() => this.setState({ hasError: false, error: undefined })}
+          >
+            Retry
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+function CodeEditorWithBoundary(props: CodeEditorProps) {
+  return (
+    <EditorErrorBoundary fileName={props.file?.name}>
+      <CodeEditor {...props} />
+    </EditorErrorBoundary>
+  );
+}
+
+export default CodeEditorWithBoundary;
