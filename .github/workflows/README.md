@@ -1,12 +1,68 @@
-# GitHub Actions Build Workflows
+# GitHub Actions Workflows
 
 ## Overview
 
-This repository includes automated build workflows for:
+This repository includes automated CI/CD and build workflows:
+
+- **Production Deploy**: Automated build → deploy → health-check on every push to `main`
 - **Desktop Apps**: Windows (.exe), macOS (.dmg), Linux (.AppImage)
 - **Mobile Apps**: Android (APK), iOS (IPA)
 
 ## Workflows
+
+### Production Deployment (`deploy-main.yml`) ← **Main CI/CD**
+
+Triggered on every push to `main`. Installs dependencies, compiles for
+production, deploys to the configured VM (Replit Reserved VM or any cloud VM
+via SSH), and validates the deployment with health checks.
+
+**Triggers:**
+- Push to `main` branch (automatic)
+- Manual dispatch (workflow_dispatch)
+
+**Jobs:**
+1. **Build** — install, type-check, CI tests, `npm run build`, verify artifacts
+2. **Deploy** — SSH into the VM, `git pull`, `docker-compose up --build`
+3. **Health Check** — polls `/health/liveness`, `/health/readiness`, `/api/health`
+
+**Required secrets** (Settings → Secrets and variables → Actions):
+
+| Secret | Description |
+|--------|-------------|
+| `SSH_HOST` | VM hostname or IP address |
+| `SSH_USER` | SSH username (e.g. `runner` or `ubuntu`) |
+| `SSH_PRIVATE_KEY` | Private SSH key (RSA or Ed25519) |
+| `SSH_PORT` | SSH port (default: `22`) |
+| `DATABASE_URL` | PostgreSQL connection string |
+| `REDIS_PASSWORD` | Redis password |
+| `SESSION_SECRET` | Express session secret (≥ 32 chars) |
+| `ANTHROPIC_API_KEY` | Anthropic Claude API key |
+| `OPENAI_API_KEY` | OpenAI API key |
+| `GEMINI_API_KEY` | Google Gemini API key *(optional)* |
+| `XAI_API_KEY` | xAI API key *(optional)* |
+| `MOONSHOT_API_KEY` | Moonshot API key *(optional)* |
+| `SENDGRID_API_KEY` | SendGrid API key *(optional)* |
+| `STRIPE_SECRET_KEY` | Stripe secret key *(optional)* |
+| `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret *(optional)* |
+| `SLACK_WEBHOOK` | Slack incoming webhook URL for failure alerts *(optional)* |
+
+**Required variables** (Settings → Secrets and variables → Variables):
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `APP_URL` | Production URL | `https://e-code.ai` |
+| `DEPLOY_DIR` | Working directory on the VM | `/home/runner/e-code` |
+
+**Setup steps:**
+
+1. Add the SSH public key to `~/.ssh/authorized_keys` on your VM.
+2. Add the corresponding private key as the `SSH_PRIVATE_KEY` secret.
+3. Ensure the repository is cloned at `DEPLOY_DIR` on the VM and Docker /
+   docker-compose are installed.
+4. Set all required secrets and variables in the repository settings.
+5. Push to `main` — the pipeline runs automatically.
+
+---
 
 ### 1. Desktop Builds (`build-desktop.yml`)
 
