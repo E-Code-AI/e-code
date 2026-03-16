@@ -340,6 +340,16 @@ router.get('/url', ensureAuthenticated, async (req, res) => {
         message: 'Preview server is starting...'
       });
     }
+
+    // If preview errored, tell the client so it can show a retry button (not loop)
+    if (preview && preview.status === 'error') {
+      const errorMessage = (preview as any).errorMessage || 'Preview server failed to start';
+      return res.json({
+        previewUrl: null,
+        status: 'error',
+        message: errorMessage
+      });
+    }
     
     if (!preview || preview.status !== 'running') {
       // For HTML-only projects, return static preview URL

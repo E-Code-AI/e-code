@@ -39,7 +39,7 @@ const DEVICE_SIZES = {
   responsive: { width: '100%', height: '100%', name: 'Responsive' }
 };
 
-type PreviewState = 'loading' | 'starting' | 'building' | 'running' | 'error' | 'iframe-error' | 'no-content' | 'no-files' | 'stopped' | 'offline';
+type PreviewState = 'loading' | 'starting' | 'building' | 'running' | 'error' | 'preview-error' | 'iframe-error' | 'no-content' | 'no-files' | 'stopped' | 'offline';
 
 export function ResponsiveWebPreview({ 
   projectId, 
@@ -85,7 +85,7 @@ export function ResponsiveWebPreview({
     isError: isQueryError,
     error: queryError,
     refetch: refetchPreview 
-  } = useQuery<{ previewUrl: string; status?: string }>({
+  } = useQuery<{ previewUrl: string | null; status?: string; message?: string }>({
     queryKey: ['/api/preview/url', projectId],
     queryFn: async () => {
       const response = await fetch(`/api/preview/url?projectId=${projectId}`, {
@@ -106,6 +106,7 @@ export function ResponsiveWebPreview({
       const data = query.state.data;
       if (data?.status === 'starting') return 2000;
       if (data?.status === 'stopped') return 3000;
+      if (data?.status === 'error') return 30000;
       if (data?.status === 'running' || data?.status === 'static') return 10000;
       if (!data?.previewUrl) return 5000;
       return false;
@@ -128,6 +129,7 @@ export function ResponsiveWebPreview({
     if (isQueryError) return 'error';
     if (previewStatus === 'starting' || isStartingPreview) return 'starting';
     if (previewStatus === 'no_runnable_files') return 'no-files';
+    if (previewStatus === 'error') return 'preview-error';
     if (previewStatus === 'stopped') return 'stopped';
     if (!previewUrl) return 'no-content';
     if (iframeError && !iframeLoading) return 'iframe-error';
@@ -139,6 +141,7 @@ export function ResponsiveWebPreview({
   // Auto-start preview when status is 'stopped' and project has runnable files
   const startPreview = useCallback(async () => {
     if (!projectId || isStartingPreview) return;
+    autoStartAttemptedRef.current = true;
     setIsStartingPreview(true);
     try {
       await apiRequest('POST', `/api/preview/projects/${projectId}/preview/start`, {});
@@ -146,6 +149,7 @@ export function ResponsiveWebPreview({
       refetchPreview();
     } catch (err) {
       console.error('[Preview] Failed to auto-start preview:', err);
+      autoStartAttemptedRef.current = false;
     } finally {
       setIsStartingPreview(false);
     }
@@ -183,11 +187,14 @@ export function ResponsiveWebPreview({
     
     if (currentState === 'error' || currentState === 'offline') {
       refetchPreview();
+    } else if (currentState === 'preview-error' || currentState === 'stopped') {
+      autoStartAttemptedRef.current = false;
+      startPreview();
     } else if (currentState === 'iframe-error' || iframeRef.current) {
       setCacheBuster(prev => prev + 1);
       refetchPreview();
     }
-  }, [currentState, refetchPreview]);
+  }, [currentState, refetchPreview, startPreview]);
 
   const handleExternalOpen = useCallback(() => {
     if (previewUrl) {
@@ -382,6 +389,25 @@ export function ResponsiveWebPreview({
             </p>
             <Button variant="outline" size="sm" onClick={handleRefresh} data-testid="button-retry-preview">
               <RefreshCw className="h-4 w-4 mr-2" />
+              Retry
+            </Button>
+          </div>
+        )}
+
+        {/* Preview Error State — server tried to start but failed */}
+        {currentState === 'preview-error' && (
+          <div className="text-center" data-testid="preview-error-state">
+            <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-4">
+              <AlertCircle className="h-8 w-8 text-red-500" />
+            </div>
+            <p className="text-[var(--ecode-text-muted)] mb-2 font-medium">
+              Preview server failed to start
+            </p>
+            <p className="text-[13px] text-[var(--ecode-text-muted)] mb-4 max-w-xs">
+              {previewData?.message || 'Check that your project has a valid start script.'}
+            </p>
+            <Button variant="outline" size="sm" onClick={() => { autoStartAttemptedRef.current = false; startPreview(); }} className="gap-2">
+              <RefreshCw className="h-3.5 w-3.5" />
               Retry
             </Button>
           </div>
