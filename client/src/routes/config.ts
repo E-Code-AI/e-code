@@ -61,7 +61,7 @@ export const publicRoutes: RouteConfig[] = [
   { path: "/contact", component: Pages.Contact },
   { path: "/accessibility", component: Pages.Accessibility },
   { path: "/mobile", component: Pages.MobileMarketingPage },
-  { path: "/mobile-workspace/:projectId", component: Pages.MobileWorkspace },
+  // SECURITY FIX: mobile-workspace moved to protectedRoutes (requires authentication)
   { path: "/ai", component: Pages.AI },
   { path: "/ai-documentation", component: Pages.AIDocumentation },
   { path: "/mcp", component: Pages.MCPInterface },
@@ -97,6 +97,7 @@ export const publicRoutes: RouteConfig[] = [
 ];
 
 export const protectedRoutes: RouteConfig[] = [
+  { path: "/mobile-workspace/:projectId", component: Pages.MobileWorkspace },
   { path: "/ai-agent/studio", component: Pages.AIAgentStudio, layout: "replit" },
   { path: "/github-import", component: Pages.GitHubImport, layout: "replit" },
   { path: "/projects/:id/import/figma", component: Pages.FigmaImport, layout: "replit" },
