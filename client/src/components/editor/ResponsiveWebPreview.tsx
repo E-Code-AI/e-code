@@ -12,12 +12,14 @@ import {
   Maximize2,
   Minimize2,
   AlertCircle,
-  WifiOff
+  WifiOff,
+  Play
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import { useQuery } from '@tanstack/react-query';
 import { useAutonomousBuildStore } from '@/stores/autonomousBuildStore';
+import { apiRequest } from '@/lib/queryClient';
 
 interface ResponsiveWebPreviewProps {
   projectId: string | number; // Support both UUID strings and numeric IDs
@@ -37,7 +39,7 @@ const DEVICE_SIZES = {
   responsive: { width: '100%', height: '100%', name: 'Responsive' }
 };
 
-type PreviewState = 'loading' | 'starting' | 'building' | 'running' | 'error' | 'iframe-error' | 'no-content' | 'offline';
+type PreviewState = 'loading' | 'starting' | 'building' | 'running' | 'error' | 'iframe-error' | 'no-content' | 'no-files' | 'stopped' | 'offline';
 
 export function ResponsiveWebPreview({ 
   projectId, 
@@ -52,6 +54,8 @@ export function ResponsiveWebPreview({
   const [iframeError, setIframeError] = useState(false);
   const [isOnline, setIsOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
   const [cacheBuster, setCacheBuster] = useState(0);
+  const [isStartingPreview, setIsStartingPreview] = useState(false);
+  const autoStartAttemptedRef = useRef(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const prevUrlRef = useRef<string>('');
   const isMobile = useMediaQuery('(max-width: 768px)');
@@ -100,7 +104,8 @@ export function ResponsiveWebPreview({
     refetchInterval: (query) => {
       if (!isOnline) return false;
       const data = query.state.data;
-      if (data?.status === 'starting') return 3000;
+      if (data?.status === 'starting') return 2000;
+      if (data?.status === 'stopped') return 3000;
       if (data?.status === 'running' || data?.status === 'static') return 10000;
       if (!data?.previewUrl) return 5000;
       return false;
@@ -121,13 +126,47 @@ export function ResponsiveWebPreview({
     if (isBuildActive && buildPhase && buildPhase !== 'complete' && buildPhase !== 'error' && !previewUrl) return 'building';
     if (isQueryLoading) return 'loading';
     if (isQueryError) return 'error';
-    if (previewStatus === 'starting') return 'starting';
+    if (previewStatus === 'starting' || isStartingPreview) return 'starting';
+    if (previewStatus === 'no_runnable_files') return 'no-files';
+    if (previewStatus === 'stopped') return 'stopped';
     if (!previewUrl) return 'no-content';
     if (iframeError && !iframeLoading) return 'iframe-error';
     return 'running';
-  }, [isOnline, isQueryLoading, isQueryError, previewStatus, previewUrl, iframeError, iframeLoading, isBuildActive, buildPhase]);
+  }, [isOnline, isQueryLoading, isQueryError, previewStatus, previewUrl, iframeError, iframeLoading, isBuildActive, buildPhase, isStartingPreview]);
   
   const currentState = getPreviewState();
+
+  // Auto-start preview when status is 'stopped' and project has runnable files
+  const startPreview = useCallback(async () => {
+    if (!projectId || isStartingPreview) return;
+    setIsStartingPreview(true);
+    try {
+      await apiRequest('POST', `/api/preview/projects/${projectId}/preview/start`, {});
+      // Poll faster now that it's starting
+      refetchPreview();
+    } catch (err) {
+      console.error('[Preview] Failed to auto-start preview:', err);
+    } finally {
+      setIsStartingPreview(false);
+    }
+  }, [projectId, isStartingPreview, refetchPreview]);
+
+  useEffect(() => {
+    if (
+      previewStatus === 'stopped' &&
+      !autoStartAttemptedRef.current &&
+      !isBuildActive &&
+      isOnline
+    ) {
+      autoStartAttemptedRef.current = true;
+      startPreview();
+    }
+  }, [previewStatus, isBuildActive, isOnline, startPreview]);
+
+  // Reset auto-start flag when projectId changes
+  useEffect(() => {
+    autoStartAttemptedRef.current = false;
+  }, [projectId]);
 
   // Reset iframe loading state when URL changes (prevents race conditions)
   useEffect(() => {
@@ -348,7 +387,38 @@ export function ResponsiveWebPreview({
           </div>
         )}
 
-        {/* No Content State */}
+        {/* Stopped State — has runnable files but server isn't running */}
+        {currentState === 'stopped' && (
+          <div className="text-center" data-testid="preview-stopped">
+            <div className="w-16 h-16 rounded-full bg-[var(--ecode-accent)]/10 flex items-center justify-center mx-auto mb-4">
+              <Play className="h-8 w-8 text-[var(--ecode-accent)]" />
+            </div>
+            <p className="text-[var(--ecode-text-muted)] mb-2 font-medium">
+              Preview server not running
+            </p>
+            <p className="text-[13px] text-[var(--ecode-text-muted)] mb-4">
+              Click Run to start your app
+            </p>
+            <Button size="sm" onClick={startPreview} className="gap-2">
+              <Play className="h-3.5 w-3.5" />
+              Run
+            </Button>
+          </div>
+        )}
+
+        {/* No runnable files */}
+        {currentState === 'no-files' && (
+          <div className="text-center" data-testid="preview-no-files">
+            <p className="text-[var(--ecode-text-muted)] mb-2">
+              Add an HTML or index file to preview your project
+            </p>
+            <p className="text-[13px] text-[var(--ecode-text-muted)]">
+              The preview will appear automatically once files are added
+            </p>
+          </div>
+        )}
+
+        {/* No Content State (fallback) */}
         {currentState === 'no-content' && (
           <div className="text-center" data-testid="preview-no-content">
             <p className="text-[var(--ecode-text-muted)] mb-2">
