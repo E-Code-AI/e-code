@@ -167,6 +167,29 @@ async function getYDoc(docName: string): Promise<DocData> {
 async function setupWSConnection(ws: WebSocket, req: any) {
   const url = new URL(req.url, 'http://localhost');
   const docName = url.searchParams.get('room') || 'default';
+
+  // SECURITY FIX: Verify project access for Yjs document sync
+  // docName format is typically "project-{projectId}" or "{projectId}-{fileId}"
+  const projectIdMatch = docName.match(/^(?:project-)?(\d+)/);
+  if (projectIdMatch) {
+    const projectId = parseInt(projectIdMatch[1], 10);
+    const userId = parseInt(url.searchParams.get('userId') || '0', 10);
+    if (projectId && userId) {
+      try {
+        const project = await storage.getProject(projectId);
+        if (!project || project.ownerId !== userId) {
+          logger.warn(`Yjs access denied: userId=${userId}, docName=${docName}`);
+          ws.close(1008, 'Access denied');
+          return;
+        }
+      } catch (error) {
+        logger.error(`Failed to verify Yjs doc access: ${error}`);
+        ws.close(1008, 'Access verification failed');
+        return;
+      }
+    }
+  }
+
   const docData = await getYDoc(docName);
   const { doc, awareness, conns } = docData;
   
@@ -349,6 +372,23 @@ export class RealCollaborationService {
 
     if (!projectId || !fileId || !userId) {
       ws.close(1008, 'Missing required parameters');
+      return;
+    }
+
+    // SECURITY FIX: Verify project access before allowing collaboration
+    try {
+      const project = await storage.getProject(projectId);
+      if (!project) {
+        ws.close(1008, 'Project not found');
+        return;
+      }
+      if (project.ownerId !== userId) {
+        ws.close(1008, 'Access denied - not your project');
+        return;
+      }
+    } catch (error) {
+      logger.error(`Failed to verify project access for collaboration: ${error}`);
+      ws.close(1008, 'Failed to verify access');
       return;
     }
 

@@ -327,20 +327,32 @@ export class DockerExecutor extends EventEmitter {
       
       // Write all project files to workspace
       for (const file of files) {
-        const filePath = path.join(workDir, file.path || file.name);
-        
+        const relativePath = file.path || file.name;
+
+        // SECURITY FIX: Prevent path traversal attacks
+        if (relativePath.includes('..') || path.isAbsolute(relativePath)) {
+          logger.warn(`Skipping file with unsafe path: ${relativePath}`);
+          continue;
+        }
+
+        const filePath = path.join(workDir, relativePath);
+        const resolvedPath = path.resolve(filePath);
+        if (!resolvedPath.startsWith(path.resolve(workDir))) {
+          logger.warn(`Skipping file that escapes workspace: ${relativePath}`);
+          continue;
+        }
+
         if (file.isDirectory) {
           await fs.mkdir(filePath, { recursive: true });
         } else if (file.content !== null && file.content !== undefined) {
           // Ensure parent directory exists
           const parentDir = path.dirname(filePath);
           await fs.mkdir(parentDir, { recursive: true });
-          
+
           // Write file content
           await fs.writeFile(filePath, file.content, 'utf8');
-          
+
           // Store original content for later comparison
-          const relativePath = file.path || file.name;
           originalFiles.set(relativePath, file.content);
         }
       }
@@ -586,11 +598,14 @@ export class DockerExecutor extends EventEmitter {
     
     // Build ReplDB file creation prefix (Replit compatibility)
     // The Replit Python/Node.js clients check /tmp/replitdb for published apps
-    const baseUrl = process.env.REPLIT_DEV_DOMAIN 
+    const baseUrl = process.env.REPLIT_DEV_DOMAIN
       ? `https://${process.env.REPLIT_DEV_DOMAIN}`
       : `http://host.docker.internal:${process.env.PORT || 5000}`;
-    const dbUrl = config.projectId ? `${baseUrl}/api/db/${config.projectId}` : '';
-    const repldbPrefix = `echo '${dbUrl}' > /tmp/replitdb 2>/dev/null || true`;
+    // SECURITY FIX: Sanitize projectId to prevent shell injection
+    const safeProjectId = config.projectId ? String(config.projectId).replace(/[^a-zA-Z0-9_-]/g, '') : '';
+    const dbUrl = safeProjectId ? `${baseUrl}/api/db/${safeProjectId}` : '';
+    // Use printf instead of echo with single quotes to prevent injection
+    const repldbPrefix = dbUrl ? `printf '%s' ${JSON.stringify(dbUrl)} > /tmp/replitdb 2>/dev/null || true` : 'true';
     
     // Check if command is already a shell wrapper ['sh', '-c', '...']
     if (baseCommand.length === 3 && 
