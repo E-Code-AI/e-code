@@ -1,4 +1,4 @@
-modules = ["web", "nodejs-22", "postgresql-16"]
+modules = ["web", "postgresql-16", "nodejs-22"]
 run = "npm run dev"
 hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 
@@ -9,7 +9,7 @@ packages = ["glibcLocales", "jq", "libxcrypt", "imagemagick"]
 [deployment]
 deploymentTarget = "vm"
 run = ["sh", "-c", ". /etc/profile 2>/dev/null; . ~/.nix-profile/etc/profile.d/nix.sh 2>/dev/null; RUNNER_PORT=8081 node dist/runner.js & RUNNER_BASE_URL=http://localhost:8081 node --max-old-space-size=4096 dist/index.js"]
-build = ["sh", "-c", "npm install --omit=dev"]
+build = ["sh", "-c", "npm install node-pty --no-save --no-package-lock 2>&1 || echo '[warn] node-pty install failed'"]
 
 [workflows]
 runButton = "Project"
