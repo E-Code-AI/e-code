@@ -36,8 +36,11 @@ backups/
 desktop/dist/
 dokploy/
 
-# Build output - committed to repo for faster deployment (pre-built)
-# dist/ is intentionally tracked so deployment only needs: npm install --omit=dev
+# Build output strategy:
+# dist/index.js and dist/runner.js are committed (pre-built server bundles, 2 files only)
+# dist/public/ is NOT committed — vite build regenerates it during deployment
+# Deployment build cmd: npm install node-pty && npx vite build
+dist/public/
 client/dist/
 
 # SECURITY: Credential files - NEVER commit
