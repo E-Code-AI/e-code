@@ -354,24 +354,6 @@ function UnifiedIDELayout({
     }
   }, [bootstrapToken, setLeftPanelTab, setIsSidebarCollapsed]);
 
-  // Auto-switch to preview panel when agent build completes
-  useEffect(() => {
-    const unsub = AgentEventBus.on('agent:preview-ready', () => {
-      if (deviceType === 'mobile') {
-        setMobileActiveTab('preview');
-        handleAddOpenTab('preview');
-      } else {
-        handleAddTool('preview');
-      }
-    });
-    return unsub;
-  }, [deviceType, handleAddTool, handleAddOpenTab]);
-
-  const closePanel = useCallback((setter: (v: boolean) => void) => {
-    setter(false);
-    setActiveActivityItem('files');
-  }, [setActiveActivityItem]);
-
   // Tool name mapping for display
   const toolNameMap: Record<string, string> = {
     agent: 'Agent',
@@ -422,6 +404,24 @@ function UnifiedIDELayout({
     // Map all tools to mobileActiveTab for panel rendering
     setMobileActiveTab(toolId as MobileTab);
   }, [openTabs]);
+
+  // Auto-switch to preview panel when agent build completes
+  useEffect(() => {
+    const unsub = AgentEventBus.on('agent:preview-ready', () => {
+      if (deviceType === 'mobile') {
+        setMobileActiveTab('preview');
+        handleAddOpenTab('preview');
+      } else {
+        handleAddTool('preview');
+      }
+    });
+    return unsub;
+  }, [deviceType, handleAddTool, handleAddOpenTab]);
+
+  const closePanel = useCallback((setter: (v: boolean) => void) => {
+    setter(false);
+    setActiveActivityItem('files');
+  }, [setActiveActivityItem]);
 
   // Close an open tab
   const handleCloseOpenTab = useCallback((tabId: string) => {

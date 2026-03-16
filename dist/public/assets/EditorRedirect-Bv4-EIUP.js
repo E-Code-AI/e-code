@@ -1,1 +1,0 @@
-import{cY as c,u as r,r as n,j as i,bG as u}from"./index-Ca1zcAi3.js";function f(){const{id:t}=c(),[,e]=r();return n.useEffect(()=>{if(t){const o=window.location.search,s=window.location.hash,a=`/ide/${t}${o}${s}`;e(a,{replace:!0})}},[t,e]),i.jsx(u,{fullScreen:!0,size:"lg",text:"Redirecting to workspace..."})}export{f as default};
