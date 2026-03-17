@@ -45,7 +45,7 @@ class WebSocketTransport extends Transport {
   log(info: any, callback: () => void) {
     setImmediate(() => {
       const logEntry: ServerLogEntry = {
-        level: info.level?.replace(/\u001b\[\d+m/g, '') || 'info',
+        level: info.level?.replace(new RegExp(String.raw`\u001b\[\d+m`, 'g'), '') || 'info',
         message: info.message || '',
         timestamp: info.timestamp || new Date().toISOString(),
         service: info.service || 'server',
