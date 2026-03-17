@@ -15,9 +15,9 @@ export default {
 
   // Test directories
   roots: [
-    '<rootDir>/tests/backend',
-    '<rootDir>/tests/integration',
-    '<rootDir>/tests/e2e'
+    '<rootDir>/test/unit',
+    '<rootDir>/test/integration',
+    '<rootDir>/test/e2e'
   ],
 
   // Test patterns
