@@ -15,6 +15,12 @@ const router = Router();
 
 const PROJECT_ROOT = process.cwd();
 
+const hasControlChars = (value: string): boolean =>
+  [...value].some(char => {
+    const code = char.charCodeAt(0);
+    return code <= 0x1f;
+  });
+
 // SECURITY: Centralized file path validation to prevent command injection and path traversal
 function validateFilePath(filePath: string): { valid: boolean; error?: string } {
   if (typeof filePath !== 'string' || filePath.length === 0) {
@@ -32,8 +38,8 @@ function validateFilePath(filePath: string): { valid: boolean; error?: string } 
   }
   
   // Block dangerous shell characters (except spaces which are valid)
-  const dangerousChars = /[;&|`$(){}[\]<>\\'"!#*?\x00-\x1f]/;
-  if (dangerousChars.test(filePath)) {
+  const dangerousChars = /[;&|`$(){}[\]<>\\'"!#*?]/;
+  if (dangerousChars.test(filePath) || hasControlChars(filePath)) {
     return { valid: false, error: 'Invalid characters in file path' };
   }
   
