@@ -43,6 +43,8 @@ import { useMutation } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { cn } from '@/lib/utils';
 
+const ANSI_STRIP_REGEX = new RegExp(String.raw`\u001b\[[0-9;]*m`, "g");
+
 interface ShellTab {
   id: string;
   name: string;
@@ -195,14 +197,14 @@ export function ReplitDesktopShell({
 
   const copyTerminalContent = () => {
     if (!activeTab) return;
-    const content = activeTab.output.join('').replace(/\x1b\[[0-9;]*m/g, '');
+    const content = activeTab.output.join('').replace(ANSI_STRIP_REGEX, '');
     navigator.clipboard.writeText(content);
     toast({ title: 'Copied to clipboard' });
   };
 
   const downloadLog = () => {
     if (!activeTab) return;
-    const content = activeTab.output.join('').replace(/\x1b\[[0-9;]*m/g, '');
+    const content = activeTab.output.join('').replace(ANSI_STRIP_REGEX, '');
     const blob = new Blob([content], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -219,7 +221,7 @@ export function ReplitDesktopShell({
       return;
     }
     
-    const output = activeTab.output.join('').replace(/\x1b\[[0-9;]*m/g, '');
+    const output = activeTab.output.join('').replace(ANSI_STRIP_REGEX, '');
     const matches: number[] = [];
     let index = 0;
     while ((index = output.toLowerCase().indexOf(query.toLowerCase(), index)) !== -1) {
@@ -267,15 +269,15 @@ export function ReplitDesktopShell({
 
   const parseAnsiToHtml = (text: string, highlightQuery?: string): string => {
     let parsed = text
-      .replace(/\x1b\[32m/g, '<span class="text-green-500">')
-      .replace(/\x1b\[31m/g, '<span class="text-red-500">')
-      .replace(/\x1b\[33m/g, '<span class="text-yellow-500">')
-      .replace(/\x1b\[34m/g, '<span class="text-blue-500">')
-      .replace(/\x1b\[35m/g, '<span class="text-purple-500">')
-      .replace(/\x1b\[36m/g, '<span class="text-cyan-500">')
-      .replace(/\x1b\[90m/g, '<span class="text-muted-foreground">')
-      .replace(/\x1b\[0m/g, '</span>')
-      .replace(/\x1b\[\d+m/g, '')
+      .replaceAll(`\u001b[32m`, '<span class="text-green-500">')
+      .replaceAll(`\u001b[31m`, '<span class="text-red-500">')
+      .replaceAll(`\u001b[33m`, '<span class="text-yellow-500">')
+      .replaceAll(`\u001b[34m`, '<span class="text-blue-500">')
+      .replaceAll(`\u001b[35m`, '<span class="text-purple-500">')
+      .replaceAll(`\u001b[36m`, '<span class="text-cyan-500">')
+      .replaceAll(`\u001b[90m`, '<span class="text-muted-foreground">')
+      .replaceAll(`\u001b[0m`, '</span>')
+      .replace(ANSI_STRIP_REGEX, '')
       .replace(/\r\n/g, '<br/>')
       .replace(/\n/g, '<br/>');
     
