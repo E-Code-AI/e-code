@@ -245,7 +245,7 @@ jobs:
       - name: Build application
         run: npm run build
         env:
-          NODE_ENV=production
+          NODE_ENV: production
 
       - name: Start application
         run: npm start &
