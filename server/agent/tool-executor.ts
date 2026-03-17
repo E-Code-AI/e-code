@@ -83,7 +83,10 @@ function sanitizeArgument(arg: string): string {
   }
   
   // Remove null bytes and other control characters
-  return arg.replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g, '');
+  return arg.split('').filter(char => {
+    const code = char.charCodeAt(0);
+    return !(code <= 0x1f && code !== 0x09 && code !== 0x0a && code !== 0x0d);
+  }).join('');
 }
 
 // Create logger

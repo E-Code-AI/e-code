@@ -14,7 +14,7 @@ import type Docker from 'dockerode';
 import { createLogger } from '../utils/logger';
 import { storage } from '../storage';
 import { Project, File } from '@shared/schema';
-// @ts-ignore - tar-stream doesn't have type definitions
+// @ts-expect-error - tar-stream doesn't have type definitions
 import * as tarStream from 'tar-stream';
 import { Readable } from 'stream';
 
