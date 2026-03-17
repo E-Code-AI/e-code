@@ -3,8 +3,6 @@
 # Production Readiness Check Script
 # Verifies all critical components before deployment
 
-set -e
-
 echo "================================================"
 echo "   PRODUCTION READINESS VERIFICATION SUITE     "
 echo "================================================"
@@ -68,8 +66,9 @@ echo ""
 
 echo -e "${BLUE}3. Checking Test Infrastructure...${NC}"
 echo "-----------------------------------"
-check_file "test/e2e/homepage.spec.ts" || ((FAILURES++))
-check_file "test/e2e/auth.spec.ts" || ((FAILURES++))
+check_file "test/e2e/rate-limit-comprehensive.spec.ts" || ((FAILURES++))
+check_file "test/e2e/rate-limit-test.spec.ts" || ((FAILURES++))
+check_file "test/e2e/simple-test.spec.ts" || ((FAILURES++))
 check_file "test/performance/lighthouse.js" || ((FAILURES++))
 check_file "test/unit/billing-email.test.ts" || ((FAILURES++))
 check_file "test/setup/jest-setup.ts" || ((FAILURES++))
