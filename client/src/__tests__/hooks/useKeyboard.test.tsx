@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { useKeyboardHeight, useKeyboardVisible } from '@/hooks/use-keyboard';
 
