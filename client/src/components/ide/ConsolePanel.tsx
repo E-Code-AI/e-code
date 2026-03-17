@@ -43,6 +43,8 @@ interface ShellSession {
   isConnected: boolean;
 }
 
+const ANSI_STRIP_REGEX = new RegExp(String.raw`\u001b\[[0-9;]*m`, "g");
+
 interface ConsolePanelProps {
   projectId: string | number;
   userId?: string | number;
@@ -249,7 +251,7 @@ export function ConsolePanel({ projectId, userId, isRunning, executionId, classN
       return;
     }
     
-    const output = activeShell.output.join('').replace(/\x1b\[[0-9;]*m/g, '');
+    const output = activeShell.output.join('').replace(ANSI_STRIP_REGEX, '');
     const matches: number[] = [];
     let index = 0;
     while ((index = output.toLowerCase().indexOf(query.toLowerCase(), index)) !== -1) {
@@ -345,15 +347,15 @@ export function ConsolePanel({ projectId, userId, isRunning, executionId, classN
   const parseAnsiToHtml = (text: string, highlightQuery?: string): string => {
     // First escape HTML to prevent XSS, then parse ANSI codes
     let parsed = escapeHtml(text)
-      .replace(/\x1b\[32m/g, '<span style="color: hsl(var(--chart-2))">')
-      .replace(/\x1b\[31m/g, '<span style="color: hsl(var(--destructive))">')
-      .replace(/\x1b\[33m/g, '<span style="color: hsl(var(--chart-4))">')
-      .replace(/\x1b\[34m/g, '<span style="color: hsl(var(--primary))">')
-      .replace(/\x1b\[35m/g, '<span style="color: hsl(var(--chart-5))">')
-      .replace(/\x1b\[36m/g, '<span style="color: hsl(var(--chart-3))">')
-      .replace(/\x1b\[90m/g, '<span style="color: hsl(var(--muted-foreground))">')
-      .replace(/\x1b\[0m/g, '</span>')
-      .replace(/\x1b\[\d+m/g, '')
+      .replaceAll(`\u001b[32m`, '<span style="color: hsl(var(--chart-2))">')
+      .replaceAll(`\u001b[31m`, '<span style="color: hsl(var(--destructive))">')
+      .replaceAll(`\u001b[33m`, '<span style="color: hsl(var(--chart-4))">')
+      .replaceAll(`\u001b[34m`, '<span style="color: hsl(var(--primary))">')
+      .replaceAll(`\u001b[35m`, '<span style="color: hsl(var(--chart-5))">')
+      .replaceAll(`\u001b[36m`, '<span style="color: hsl(var(--chart-3))">')
+      .replaceAll(`\u001b[90m`, '<span style="color: hsl(var(--muted-foreground))">')
+      .replaceAll(`\u001b[0m`, '</span>')
+      .replace(ANSI_STRIP_REGEX, '')
       .replace(/\r\n/g, '<br/>')
       .replace(/\n/g, '<br/>');
     

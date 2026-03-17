@@ -17,9 +17,9 @@
     "db:migrate": "drizzle-kit migrate --config=drizzle.config.ts",
     "test": "tsx test/run-tests.ts",
     "test:ci": "echo '✅ Running CI tests...' && npm run typecheck && npm run test:unit && echo '✅ CI tests passed'",
-    "test:unit": "npx jest --config=jest.config.enterprise.js --testMatch='**/test/unit/**/*.test.ts' --passWithNoTests || echo 'Unit tests: Install dependencies with npm install'",
-    "test:integration": "npx jest --config=jest.config.enterprise.js --testMatch='**/test/integration/**/*.test.ts' --passWithNoTests || echo 'Integration tests: Install dependencies with npm install'",
-    "test:e2e": "npx playwright test test/e2e || echo 'E2E tests: Install dependencies with npm install'",
+    "test:unit": "npx jest --config=jest.config.enterprise.js --testMatch='**/test/unit/**/*.test.ts' --passWithNoTests",
+    "test:integration": "npx jest --config=jest.config.enterprise.js --testMatch='**/test/integration/**/*.test.ts' --passWithNoTests",
+    "test:e2e": "DOTENV_CONFIG_PATH=.env.test node -r dotenv/config ./node_modules/@playwright/test/cli.js test test/e2e",
     "test:coverage": "npx jest --config=jest.config.enterprise.js --coverage --passWithNoTests || echo 'Coverage: Install dependencies with npm install'",
     "test:watch": "npx jest --config=jest.config.enterprise.js --watch --passWithNoTests",
     "test:full": "npm run test:ci && npm run test:unit && npm run test:integration && npm run test:e2e",
@@ -335,5 +335,8 @@
   "optionalDependencies": {
     "@rollup/rollup-darwin-arm64": "^4.53.3",
     "bufferutil": "^4.0.8"
+  },
+  "overrides": {
+    "@tootallnate/once": "^3.0.1"
   }
 }
