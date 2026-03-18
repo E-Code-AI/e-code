@@ -1,18 +1,18 @@
 name: CI + Replit Health Check
 
 # Runs on every push to main:
-#   1. Build & type-check the project
+#   1. Build & type-check the project (on GitHub's servers)
 #   2. Verify the production deployment is alive (health check)
 #
 # Required GitHub Secrets (Settings → Secrets → Actions):
 #   OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY, XAI_API_KEY
 #   MOONSHOT_API_KEY, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET
 #   SENDGRID_API_KEY, REDIS_PASSWORD, SESSION_SECRET, SENTRY_DSN
-#   DATABASE_URL  ← Neon public URL (not the Replit-internal one)
+#   DATABASE_URL  ← Neon public URL
 #
 # Required GitHub Variables (Settings → Variables → Actions):
-#   APP_URL      = https://replit-clone-henri45.replit.app
-#   REPL_ID      = f4d2485e-81a7-4595-9868-17903ab251f3
+#   APP_URL  = https://replit-clone-henri45.replit.app
+#   REPL_ID  = f4d2485e-81a7-4595-9868-17903ab251f3
 
 on:
   push:
@@ -48,19 +48,15 @@ jobs:
         run: npm ci --legacy-peer-deps
 
       - name: TypeScript type check
-        run: npx tsc --noEmit
+        run: npm run typecheck
         continue-on-error: true
 
-      - name: Build frontend (Vite)
-        run: NODE_OPTIONS='--max-old-space-size=4096' npx vite build
+      - name: Build (frontend + server)
+        run: npm run build
         env:
           NODE_ENV: production
+          NODE_OPTIONS: '--max-old-space-size=4096'
           VITE_APP_URL: ${{ env.APP_URL }}
-
-      - name: Build server bundle
-        run: node scripts/build-server.mjs
-        env:
-          NODE_ENV: production
 
       - name: Verify build artifacts
         run: |
@@ -84,16 +80,16 @@ jobs:
     steps:
       - name: Wait for Replit to pick up the new commit
         run: |
-          echo "⏳ Waiting 90 s for Replit auto-deploy..."
+          echo "⏳ Waiting 90 s for Replit to restart..."
           sleep 90
 
-      - name: Liveness check
+      - name: Liveness check (/api/liveness)
         run: |
           APP="${{ env.APP_URL }}"
           MAX=12; N=0
-          echo "🏥 Polling $APP/health/liveness ..."
+          echo "🏥 Polling $APP/api/liveness ..."
           while [ $N -lt $MAX ]; do
-            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$APP/health/liveness" || echo "000")
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$APP/api/liveness" || echo "000")
             if [ "$STATUS" = "200" ]; then
               echo "✅ Liveness OK (HTTP $STATUS)"
               break
@@ -102,17 +98,17 @@ jobs:
             echo "⚠️  Attempt $N/$MAX — HTTP $STATUS — retry in 15 s"
             sleep 15
           done
-          [ $N -lt $MAX ] || (echo "❌ Liveness check failed" && exit 1)
+          [ $N -lt $MAX ] || (echo "❌ Liveness check failed after $MAX attempts" && exit 1)
 
-      - name: Readiness check
+      - name: Readiness check (/api/readiness)
         run: |
-          curl -f "${{ env.APP_URL }}/health/readiness" \
+          curl -sf "${{ env.APP_URL }}/api/readiness" \
             && echo "✅ Readiness OK" \
             || (echo "❌ Readiness check failed" && exit 1)
 
-      - name: API smoke test
+      - name: API smoke test (/api/monitoring/health)
         run: |
-          curl -f "${{ env.APP_URL }}/api/monitoring/health" \
+          curl -sf "${{ env.APP_URL }}/api/monitoring/health" \
             && echo "✅ API OK" \
             || (echo "❌ API health check failed" && exit 1)
 
