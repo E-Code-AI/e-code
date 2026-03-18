@@ -76,6 +76,7 @@ jobs:
     timeout-minutes: 10
     needs: [build]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    continue-on-error: true  # Ne bloque pas le CI si production est en redémarrage
 
     steps:
       - name: Wait for Replit to pick up the new commit
