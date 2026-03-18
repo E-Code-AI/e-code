@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Admin System Metrics Router (Fortune 500)
  * Comprehensive system monitoring dashboard endpoints

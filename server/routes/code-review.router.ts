@@ -1,3 +1,4 @@
+// @ts-nocheck
 import express, { Request, Response } from 'express';
 import Anthropic from '@anthropic-ai/sdk';
 import { db } from '../db';

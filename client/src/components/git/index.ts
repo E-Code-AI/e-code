@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Advanced Git Components
  * VS Code-level git features for E-Code

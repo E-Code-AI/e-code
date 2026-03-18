@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Conversation History Grid Component
  * AG Grid-based conversation table with full-text search

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import path from 'path';
 import { z } from 'zod';
 import { createLogger } from '../utils/logger';

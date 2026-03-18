@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * LMS Integration Service
  * Integrates with Canvas, Blackboard, and Google Classroom

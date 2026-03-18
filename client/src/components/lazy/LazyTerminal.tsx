@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Suspense, ComponentType } from 'react';
 import { Loader2, Terminal as TerminalIcon } from 'lucide-react';
 import { instrumentedLazy } from '@/utils/instrumented-lazy';

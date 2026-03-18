@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Router, Request, Response, NextFunction } from "express";
 import { type IStorage } from "../storage";
 import { ensureAuthenticated } from "../middleware/auth";

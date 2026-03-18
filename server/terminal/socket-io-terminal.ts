@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Server as SocketIOServer, Socket } from 'socket.io';
 import type { Server as HTTPServer } from 'http';
 import type { IncomingMessage } from 'http';

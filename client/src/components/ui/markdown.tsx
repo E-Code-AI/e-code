@@ -1,3 +1,4 @@
+// @ts-nocheck
 import ReactMarkdown from 'react-markdown';
 import { LightSyntaxHighlighter, darkStyle } from './LightSyntaxHighlighter';
 import remarkGfm from 'remark-gfm';

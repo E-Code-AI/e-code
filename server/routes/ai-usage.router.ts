@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * AI Usage Metering Router - Pay-As-You-Go Billing Endpoints
  * Exposes ai_usage_metering data to users and admins

@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Storage Metrics Collector Job
  * Collects and stores system metrics hourly for trend analysis

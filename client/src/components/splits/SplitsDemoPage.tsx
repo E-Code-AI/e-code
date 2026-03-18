@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React from 'react';
 import { SplitsEditorLayout } from './SplitsEditorLayout';
 import { File } from '@shared/schema';

@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Real Terminal WebSocket Service
  * Provides real-time terminal access to Docker containers

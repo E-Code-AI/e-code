@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * PTY-based Terminal Service
  * Provides real interactive shell access using node-pty

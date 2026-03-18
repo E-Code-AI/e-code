@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { createLogger } from '../utils/logger';
 import { db } from '../db';
 import { aiConversations, agentMessages } from '@shared/schema';

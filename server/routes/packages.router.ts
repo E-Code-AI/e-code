@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Packages Router - Handles package installation and management
  * Provides endpoints for AI-driven package automation

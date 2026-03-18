@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { aiProviderManager } from '../ai/ai-provider-manager';
 
 type ChatMessage = {

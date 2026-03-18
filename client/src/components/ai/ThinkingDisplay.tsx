@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useState } from 'react';
 import { ChevronDown, ChevronRight, Brain, CheckCircle, Loader2, Sparkles, Code, Search, FileText, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';

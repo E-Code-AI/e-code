@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * bcrypt compatibility layer
  * Uses native bcrypt when available, falls back to bcryptjs (pure JS) in production

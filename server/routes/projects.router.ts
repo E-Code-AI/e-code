@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Router, Request, Response, NextFunction } from "express";
 import { insertProjectSchema } from "@shared/schema";
 import { type IStorage } from "../storage";

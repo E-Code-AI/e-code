@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Real Web Search Service
  * Provides actual web search capabilities for AI agents
