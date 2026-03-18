@@ -32,9 +32,9 @@ import {
   SiAmazon, SiGoogle
 } from 'react-icons/si';
 
-import cloudComputingImg from '@assets/stock_images/cloud_computing_tech_ffd053c9.jpg';
-import modernSoftwareImg from '@assets/stock_images/modern_software_deve_ff7f5fd4.jpg';
-import codingWorkspaceImg from '@assets/stock_images/coding_programming_l_3c65a90d.jpg';
+const cloudComputingImg = 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2072&auto=format&fit=crop';
+const modernSoftwareImg = 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=2070&auto=format&fit=crop';
+const codingWorkspaceImg = 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=2070&auto=format&fit=crop';
 
 // Animation variants
 const fadeInUp = {

@@ -19,7 +19,7 @@ import { Link } from 'wouter';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ECodeLogo } from '@/components/ECodeLogo';
 
-import codingWorkspaceImg from '@assets/stock_images/coding_programming_l_3c65a90d.jpg';
+const codingWorkspaceImg = 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=2070&auto=format&fit=crop';
 
 const calculatePasswordStrength = (password: string): { score: number; label: string; color: string } => {
   let score = 0;
