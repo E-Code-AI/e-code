@@ -67,8 +67,8 @@ import {
   Play, Share2, Folder, MoreVertical, FileText, Copy, Star, Rocket,
   Globe, Calendar, Archive, Lock, X
 } from 'lucide-react';
-import codingImagePath from '@assets/stock_images/coding_programming_l_3c65a90d.jpg';
-import modernDevImagePath from '@assets/stock_images/modern_software_deve_ff7f5fd4.jpg';
+const codingImagePath = 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=2070&auto=format&fit=crop';
+const modernDevImagePath = 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=2070&auto=format&fit=crop';
 
 const projectFormSchema = z.object({
   name: z.string().min(1, "Project name is required").max(64, "Project name must be less than 64 characters"),

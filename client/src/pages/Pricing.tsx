@@ -20,7 +20,7 @@ import {
 import { useState, useEffect, useMemo, type ReactNode, Fragment } from 'react';
 import { PublicNavbar } from '@/components/layout/PublicNavbar';
 import { PublicFooter } from '@/components/layout/PublicFooter';
-import cloudComputingImg from '@assets/stock_images/cloud_computing_tech_ffd053c9.jpg';
+const cloudComputingImg = 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2072&auto=format&fit=crop';
 
 interface PricingTier {
   name: string;
