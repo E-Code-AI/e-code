@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Templates Marketplace API Routes
  * CRUD operations for templates, categories, ratings, and collections

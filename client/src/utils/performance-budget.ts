@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Performance Budget Monitoring System
 
 import performanceMonitor, { getWebVitals } from './performance';

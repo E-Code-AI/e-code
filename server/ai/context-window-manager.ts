@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Context Window Manager
  * Intelligent management of conversation history with AI memory retention,

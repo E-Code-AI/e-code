@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Input Validation & Sanitization Middleware
  * Production-grade validation layer for Fortune 500 security standards

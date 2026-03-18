@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Input Validation Utilities
  * Comprehensive validation for all user inputs

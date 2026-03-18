@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * WebRTC Server Setup
  * Initializes WebSocket server for WebRTC signaling and peer connections

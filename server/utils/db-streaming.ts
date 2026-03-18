@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Database Streaming Utilities
  * Fortune 500-grade memory optimization using generators

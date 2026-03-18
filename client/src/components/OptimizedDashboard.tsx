@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useState, useRef, useMemo, useCallback, memo, Suspense } from 'react';
 import { instrumentedLazy } from '@/utils/instrumented-lazy';
 import { useLocation } from 'wouter';

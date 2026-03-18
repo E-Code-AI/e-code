@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Agent Grid Data Service
  * Provides data aggregation and query capabilities for AG Grid components

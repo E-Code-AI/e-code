@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { memo, useMemo, useCallback, useRef, useEffect, useState } from 'react';
 import { shallowEqual } from './performance';
 

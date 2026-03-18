@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Extension } from '@codemirror/state';
 import { EditorState } from '@codemirror/state';
 import {

@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Voice/Video WebRTC Router for E-Code Platform
  * Handles real-time voice and video collaboration

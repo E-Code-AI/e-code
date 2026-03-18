@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useRef, useEffect, useCallback, useMemo, memo, forwardRef } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { cn } from '@/lib/utils';

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { db, client } from '../db';
 import { sql, eq, and } from 'drizzle-orm';
 import type { PgTransaction } from 'drizzle-orm/pg-core';

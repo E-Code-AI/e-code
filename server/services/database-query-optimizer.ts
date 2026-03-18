@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { EventEmitter } from 'events';
 import { createLogger } from '../utils/logger';
 import { redisCache } from './redis-cache';

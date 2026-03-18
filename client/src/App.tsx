@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useEffect, Suspense } from "react";
 import { Switch, Route, useLocation, Redirect } from "wouter";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";

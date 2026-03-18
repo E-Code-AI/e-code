@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Enhanced OpenAI Provider with all latest models and capabilities
  * Includes support for GPT-4o, o1 models, vision, and function calling

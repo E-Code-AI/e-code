@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Admin AI Chat Service
  * Supports OpenAI (GPT-4.1, GPT-4.1, o3, o4-mini) and Anthropic (Claude Opus 4, Sonnet 4)

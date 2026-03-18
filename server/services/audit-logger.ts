@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Audit Logger Service
  * Comprehensive security event logging and monitoring

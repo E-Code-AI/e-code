@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Suspense } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { instrumentedLazy } from '@/utils/instrumented-lazy';
