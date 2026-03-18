@@ -92,7 +92,7 @@ echo "--------------------------"
 
 # TypeScript check
 echo -n "TypeScript compilation... "
-if npx tsc --noEmit --pretty false --skipLibCheck &> /dev/null; then
+if NODE_OPTIONS="--max-old-space-size=4096" npx tsc --noEmit --pretty false --skipLibCheck &> /dev/null; then
     echo -e "${GREEN}✓ Passed${NC}"
 else
     echo -e "${RED}✗ Failed${NC}"
