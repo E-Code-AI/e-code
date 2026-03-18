@@ -452,6 +452,27 @@ export const payAsYouGoQueue = pgTable("pay_as_you_go_queue", {
   uniqueIdempotency: unique("unique_payg_idempotency").on(table.userId, table.metric, table.idempotencyKey),
 }));
 
+// Console Runs - Tracks IDE code execution runs (Run button)
+export const consoleRuns = pgTable("console_runs", {
+  id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+  projectId: integer("project_id").notNull().references(() => projects.id, { onDelete: 'cascade' }),
+  userId: integer("user_id").references(() => users.id, { onDelete: 'set null' }),
+  executionId: varchar("execution_id", { length: 128 }).notNull(),
+  language: varchar("language", { length: 64 }),
+  status: varchar("status", { length: 32 }).notNull().default('running'), // 'running', 'completed', 'failed', 'stopped'
+  exitCode: integer("exit_code"),
+  logs: text("logs"), // Execution output (stdout + stderr combined)
+  error: text("error"),
+  executionTime: integer("execution_time"), // milliseconds
+  startedAt: timestamp("started_at").notNull().defaultNow(),
+  completedAt: timestamp("completed_at"),
+}, (table) => [
+  index("console_runs_project_idx").on(table.projectId),
+  index("console_runs_user_idx").on(table.userId),
+  index("console_runs_execution_id_idx").on(table.executionId),
+  index("console_runs_started_at_idx").on(table.startedAt),
+]);
+
 // Terminal logs table for persistent console output storage
 export const terminalLogs = pgTable("terminal_logs", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
@@ -3702,6 +3723,14 @@ export type InsertLspDiagnostic = z.infer<typeof insertLspDiagnosticSchema>;
 
 export type BuildLog = typeof buildLogs.$inferSelect;
 export type InsertBuildLog = z.infer<typeof insertBuildLogSchema>;
+
+export const insertConsoleRunSchema = createInsertSchema(consoleRuns).omit({
+  id: true,
+  startedAt: true,
+});
+
+export type ConsoleRun = typeof consoleRuns.$inferSelect;
+export type InsertConsoleRun = z.infer<typeof insertConsoleRunSchema>;
 
 export const insertTerminalLogSchema = createInsertSchema(terminalLogs).omit({
   id: true,

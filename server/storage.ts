@@ -63,7 +63,7 @@ import {
   assignments, submissions, aiUsageRecords, templates,
   promptTemplates, customPrompts, projectAiRules, promptUsageHistory, promptTemplateRatings,
   newsletterSubscribers, newsletterCampaigns, newsletterDeliveries,
-  lspDiagnostics, buildLogs, terminalLogs, testRuns, testCases, securityScans, vulnerabilities, securityScanSettings,
+  lspDiagnostics, buildLogs, consoleRuns, terminalLogs, testRuns, testCases, securityScans, vulnerabilities, securityScanSettings,
   resourceMetrics, paneConfigurations,
   aiApprovalQueue, aiAuditLogs,
   bounties, bountySubmissions, bountyReviews,
@@ -125,6 +125,19 @@ type InsertCustomDomain = z.infer<typeof insertCustomDomainSchema>;
 type CustomerRequest = typeof customerRequests.$inferSelect;
 type InsertCustomerRequest = z.infer<typeof insertCustomerRequestSchema>;
 type ProjectImport = typeof projectImports.$inferSelect; // Added type for ProjectImport
+type ConsoleRun = typeof consoleRuns.$inferSelect;
+type InsertConsoleRun = {
+  projectId: number;
+  userId?: number | null;
+  executionId: string;
+  language?: string | null;
+  status?: string;
+  exitCode?: number | null;
+  logs?: string | null;
+  error?: string | null;
+  executionTime?: number | null;
+  completedAt?: Date | null;
+};
 
 type NotificationRecord = typeof pushNotifications.$inferSelect;
 type InsertNotificationRecord = z.infer<typeof insertNotificationSchema>;
@@ -686,6 +699,11 @@ export interface IStorage {
   createBuildLog(log: InsertBuildLog): Promise<BuildLog>;
   getBuildLogs(projectId: string, buildId?: string, limit?: number): Promise<BuildLog[]>;
   clearBuildLogs(projectId: string, buildId?: string): Promise<void>;
+
+  // Console Runs operations - IDE code execution tracking
+  createConsoleRun(run: InsertConsoleRun): Promise<ConsoleRun>;
+  getConsoleRuns(projectId: string, limit?: number): Promise<ConsoleRun[]>;
+  updateConsoleRun(id: number, updates: Partial<ConsoleRun>): Promise<ConsoleRun>;
 
   // Terminal Logs operations - Persistent Console Logs
   createTerminalLog(log: InsertTerminalLog): Promise<TerminalLog>;
@@ -4883,6 +4901,29 @@ Constraints: {{constraints}}`,
     }
     await this.db.delete(buildLogs)
       .where(conditions.length === 1 ? conditions[0] : and(...conditions));
+  }
+
+  // Console Runs Methods - IDE code execution tracking
+  async createConsoleRun(run: InsertConsoleRun): Promise<ConsoleRun> {
+    const [created] = await this.db.insert(consoleRuns).values(run).returning();
+    return created;
+  }
+
+  async getConsoleRuns(projectId: string, limit: number = 50): Promise<ConsoleRun[]> {
+    return await this.db
+      .select()
+      .from(consoleRuns)
+      .where(eq(consoleRuns.projectId, parseInt(projectId, 10)))
+      .orderBy(desc(consoleRuns.startedAt))
+      .limit(limit);
+  }
+
+  async updateConsoleRun(id: number, updates: Partial<ConsoleRun>): Promise<ConsoleRun> {
+    const [updated] = await this.db.update(consoleRuns)
+      .set(updates)
+      .where(eq(consoleRuns.id, id))
+      .returning();
+    return updated;
   }
 
   // Terminal Logs Methods - Persistent Console Logs

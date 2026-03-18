@@ -219,28 +219,42 @@ export async function startProjectRuntime(req: Request, res: Response) {
     // Start the project with real-time streaming enabled
     const result = await runtimeManager.startProject(project, files, options);
     
-    // Save execution logs to terminal logs database for display in console
+    // Save execution run record and logs for display in console
     const userId = (req as any).user?.id;
-    if (result.logs && result.logs.length > 0 && userId) {
+    const projectIdNum = parseInt(projectId, 10);
+    if (!isNaN(projectIdNum) && userId) {
       try {
-        // Clear previous logs for this execution
-        await storage.clearTerminalLogs(projectId);
-        
-        // Save each log entry
-        for (const logMessage of result.logs) {
-          const logType = logMessage.includes('[ERROR]') ? 'error' 
-            : logMessage.includes('---') ? 'info'
-            : 'log';
-          
-          await storage.createTerminalLog({
-            projectId: parseInt(projectId, 10),
-            userId,
-            type: logType,
-            message: logMessage.replace(/^\[ERROR\]\s*/, ''),
-            source: 'runtime'
-          });
+        // Save console run record
+        await storage.createConsoleRun({
+          projectId: projectIdNum,
+          userId,
+          executionId,
+          language: project.language || 'javascript',
+          status: result.success ? 'completed' : 'failed',
+          exitCode: result.success ? 0 : 1,
+          logs: result.logs?.join('\n') || null,
+          error: result.error || null,
+          completedAt: new Date(),
+        });
+
+        // Also save individual terminal log entries for the console panel
+        if (result.logs && result.logs.length > 0) {
+          await storage.clearTerminalLogs(projectId);
+          for (const logMessage of result.logs) {
+            const logType = logMessage.includes('[ERROR]') ? 'error'
+              : logMessage.includes('---') ? 'info'
+              : 'log';
+
+            await storage.createTerminalLog({
+              projectId: projectIdNum,
+              userId,
+              type: logType,
+              message: logMessage.replace(/^\[ERROR\]\s*/, ''),
+              source: 'runtime'
+            });
+          }
         }
-        logger.info(`Saved ${result.logs.length} runtime logs for project ${projectId}`);
+        logger.info(`Saved console run ${executionId} for project ${projectId}`);
       } catch (logError) {
         logger.warn(`Failed to save runtime logs: ${logError}`);
         // Don't fail the request if log saving fails
