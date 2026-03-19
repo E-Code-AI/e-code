@@ -1,0 +1,8 @@
+npm warn config production Use `--omit=dev` instead.
+npm warn Unknown project config "playwright_skip_browser_download". This will stop working in the next major version of npm.
+client/src/components/AutomationsPanel.tsx(374,165): error TS2554: Expected 1-2 arguments, but got 0.
+client/src/components/BackupRecoverySection.tsx(143,49): error TS2554: Expected 1-2 arguments, but got 0.
+client/src/components/DesignCanvas.tsx(362,7): error TS2322: Type 'number | undefined' is not assignable to type 'number'.
+  Type 'undefined' is not assignable to type 'number'.
+client/src/components/DesignCanvas.tsx(363,7): error TS2322: Type 'number | undefined' is not assignable to type 'number'.
+  Type 'undefined' is not assignable to type 'number'.

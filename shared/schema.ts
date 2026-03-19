@@ -4720,3 +4720,129 @@ export const projectAuthUsers = pgTable("project_auth_users", {
 export const insertProjectAuthUserSchema = createInsertSchema(projectAuthUsers).omit({ id: true, createdAt: true });
 export type InsertProjectAuthUser = z.infer<typeof insertProjectAuthUserSchema>;
 export type ProjectAuthUser = typeof projectAuthUsers.$inferSelect;
+
+// Automatically added interfaces for UI components
+export interface SlideTheme {
+  name: string;
+  primaryColor: string;
+  secondaryColor: string;
+  backgroundColor: string;
+  textColor: string;
+  fontFamily: string;
+  accentColor: string;
+}
+
+export interface SlideContentBlock {
+  id: string;
+  type: "text" | "image" | "code" | "chart" | "title" | "body" | "list";
+  content: any;
+  position?: { x: number; y: number; width: number; height: number };
+}
+
+export interface SlideData {
+  id: string;
+  blocks: SlideContentBlock[];
+  background?: string;
+  backgroundColor?: string;
+  transition?: string;
+  order: number;
+  layout?: string;
+  notes?: string;
+}
+
+export interface VideoElement {
+  id: string;
+  type: string;
+  content: any;
+  start?: number;
+  startTime: number;
+  duration?: number;
+  position?: { x: number; y: number; width: number; height: number };
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  endTime: number;
+  animation?: any;
+  style?: any;
+}
+
+export interface VideoScene {
+  id: string;
+  order: number;
+  duration: number;
+  elements: VideoElement[];
+  transition: string;
+  backgroundColor: string;
+}
+
+export interface VideoAudioTrack {
+  id: string;
+  url: string;
+  volume: number;
+  start: number;
+  duration: number;
+  name?: string;
+}
+
+export interface MergeConflictFile {
+  path: string;
+  filename: string;
+  content: string;
+  status: string;
+  hasConflict: boolean;
+  mergedContent: string;
+  oursContent: string;
+  theirsContent: string;
+  blocks?: {
+    id: string;
+    type: "original" | "incoming" | "both" | "custom";
+    content: string;
+    resolvedContent?: string;
+  }[];
+}
+
+export interface McpTool {
+  id: string;
+  name: string;
+  description: string;
+  parameters: any;
+}
+
+export interface McpServer {
+  id: string;
+  name: string;
+  status: string;
+  serverType?: string;
+  baseUrl?: string;
+  tools?: McpTool[];
+}
+
+export interface MergeResolution {
+  filename: string;
+  resolvedContent: string;
+}
+
+export interface CanvasFrame {
+  id: string;
+  name: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  htmlContent?: string;
+  zIndex?: number;
+}
+
+export interface CanvasAnnotation {
+  id: string;
+  text: string;
+  x: number;
+  y: number;
+  width?: number;
+  height?: number;
+  content?: string;
+  type?: string;
+  color?: string;
+  zIndex?: number;
+}
