@@ -140,7 +140,7 @@ export default function BackupRecoverySection({ projectId }: { projectId: string
           <Button
             variant="ghost"
             className="flex-1 h-7 text-[10px] text-[var(--ide-text-secondary)] hover:text-[var(--ide-text)] border border-[var(--ide-border)] rounded gap-1"
-            onClick={() => createBackupMutation.mutate()}
+            onClick={() => createBackupMutation.mutate(undefined)}
             disabled={createBackupMutation.isPending}
             data-testid="button-create-backup"
           >

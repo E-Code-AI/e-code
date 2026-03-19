@@ -371,7 +371,7 @@ export default function AutomationsPanel({ projectId, onClose }: AutomationsPane
           </div>
           <textarea value={newScript} onChange={(e) => setNewScript(e.target.value)} rows={4} className="w-full text-[10px] font-mono bg-[var(--ide-bg)] border border-[var(--ide-border)] text-[var(--ide-text)] rounded-md p-2 resize-none" placeholder="Script to run..." data-testid="textarea-automation-script" />
           <div className="flex gap-1.5">
-            <Button size="sm" className="h-7 px-3 text-[10px] bg-[#F5A623] hover:bg-[#F5A623]/80 text-black rounded-md font-semibold" onClick={() => createMutation.mutate()} disabled={isCreateDisabled()} data-testid="button-create-automation">
+            <Button size="sm" className="h-7 px-3 text-[10px] bg-[#F5A623] hover:bg-[#F5A623]/80 text-black rounded-md font-semibold" onClick={() => createMutation.mutate(undefined)} disabled={isCreateDisabled()} data-testid="button-create-automation">
               {createMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : "Create"}
             </Button>
             <Button variant="ghost" size="sm" className="h-7 px-3 text-[10px]" onClick={() => setCreating(false)} data-testid="button-cancel-automation">Cancel</Button>
