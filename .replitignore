@@ -16,10 +16,14 @@ node_modules/
 *.map
 *.d.ts
 
-# Server bundles only — rebuilt during deployment build step
-# dist/public/ is KEPT (pre-built frontend, static assets, not JS code)
-dist/index.js
-dist/runner.js
+# Keep all pre-built dist assets for VM deployment
+# We do not ignore dist/index.js or dist/runner.js because the VM runs them directly
+
+# Source code (not needed in prod since we use pre-built dist)
+client/
+server/
+shared/
+runner/
 
 # Development test/spec files
 test/
