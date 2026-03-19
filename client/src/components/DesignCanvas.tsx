@@ -359,8 +359,8 @@ export default function DesignCanvas({ projectId, messages = [] }: DesignCanvasP
       startY: e.clientY,
       originalX: item.x,
       originalY: item.y,
-      originalW: item.width,
-      originalH: item.height,
+      originalW: item.width || 0,
+      originalH: item.height || 0,
       resizeDir,
     });
     setSelectedItem({ type: itemType, id: itemId });

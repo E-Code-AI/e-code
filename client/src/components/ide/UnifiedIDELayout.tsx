@@ -67,6 +67,7 @@ const ReplitTerminalPanel = instrumentedLazy(() => import('@/components/editor/R
 const ReplitDeploymentPanel = instrumentedLazy(() => import('@/components/ide/ReplitDeploymentPanel').then(mod => ({ default: mod.ReplitDeploymentPanel })), 'ReplitDeploymentPanel');
 import { ReplitAgentPanelV3 } from '@/components/ai/ReplitAgentPanelV3';
 import { AgentPanelErrorBoundary } from '@/components/ai/AgentPanelErrorBoundary';
+import { OptimizedErrorBoundary } from '@/components/OptimizedErrorBoundary';
 import type { ExternalInputHandlers } from '@/components/ai/ReplitAgentPanelV3';
 const ResponsiveWebPreview = instrumentedLazy(() => import('@/components/editor/ResponsiveWebPreview').then(mod => ({ default: mod.ResponsiveWebPreview })), 'ResponsiveWebPreview');
 const AgentActionsPanel = instrumentedLazy(() => import('@/components/ide/AgentActionsPanel').then(mod => ({ default: mod.AgentActionsPanel })), 'AgentActionsPanel');
@@ -1448,7 +1449,9 @@ function UnifiedIDELayout({
             key={mobileActiveTab}
             className="h-full overflow-auto animate-fade-in"
           >
-            {renderMobileContent()}
+            <OptimizedErrorBoundary level="component">
+              {renderMobileContent()}
+            </OptimizedErrorBoundary>
           </div>
         </div>
 
@@ -1670,12 +1673,13 @@ function UnifiedIDELayout({
             </div>
           </header>
 
-          {/* Main Content Area - With bottom padding for fixed navigation */}
           <div 
             className="flex-1 overflow-auto"
             style={{ paddingBottom: mobileActiveTab === 'agent' ? '8rem' : '3.5rem' }}
           >
-            {renderMobileContent()}
+            <OptimizedErrorBoundary level="component">
+              {renderMobileContent()}
+            </OptimizedErrorBoundary>
           </div>
 
           {/* Replit-style Floating Input Bar for Agent Tab */}
@@ -1927,7 +1931,9 @@ function UnifiedIDELayout({
                 )}
                 data-testid="tab-content-wrapper"
               >
-                {renderDesktopContent()}
+                <OptimizedErrorBoundary level="component">
+                  {renderDesktopContent()}
+                </OptimizedErrorBoundary>
               </div>
             </div>
           </ResizablePanel>
