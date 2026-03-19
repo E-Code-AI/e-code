@@ -67,7 +67,7 @@ export default function MergeConflictPanel({
     setResolutions(prev => ({ ...prev, [filename]: content }));
     try {
       const headers = await getHeaders();
-      const res = await fetch(`/api/projects/${projectId}/git/resolve-conflict`, {
+      const res = await fetch(`/api/git/projects/${projectId}/resolve-conflict`, {
         method: "POST",
         headers,
         credentials: "include",
@@ -96,7 +96,7 @@ export default function MergeConflictPanel({
     setCompleting(true);
     try {
       const headers = await getHeaders();
-      const res = await fetch(`/api/projects/${projectId}/git/complete-merge`, {
+      const res = await fetch(`/api/git/projects/${projectId}/complete-merge`, {
         method: "POST",
         headers,
         credentials: "include",
@@ -119,7 +119,7 @@ export default function MergeConflictPanel({
     setAborting(true);
     try {
       const headers = await getHeaders();
-      const res = await fetch(`/api/projects/${projectId}/git/abort-merge`, {
+      const res = await fetch(`/api/git/projects/${projectId}/abort-merge`, {
         method: "POST",
         headers,
         credentials: "include",

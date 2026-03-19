@@ -882,6 +882,15 @@ httpServer.listen(port, "0.0.0.0", () => {
       logger.error(`[WORKING SERVER] Failed to register monitoring routes: ${error}`);
     }
 
+    // Register phantom UI panels routes
+    try {
+      const phantomPanelsRouter = (await import('./routes/phantom-panels.router')).default;
+      app.use('/api', phantomPanelsRouter);
+      logger.info('[Phantom Panels] Routes registered at /api');
+    } catch (error) {
+      logger.error(`[WORKING SERVER] Failed to register phantom panels routes: ${error}`);
+    }
+
     // ✅ PROMETHEUS METRICS: Standard /metrics endpoint for Prometheus scraping
     try {
       const prometheusRouter = (await import('./routes/prometheus.router')).default;
