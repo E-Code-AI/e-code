@@ -4893,3 +4893,23 @@ export type ProjectSlidesCollection = typeof projectSlidesCollection.$inferSelec
 export type InsertProjectSlidesCollection = typeof projectSlidesCollection.$inferInsert;
 export const insertProjectSlidesCollectionSchema = createInsertSchema(projectSlidesCollection);
 
+// Database schema for MCP Servers
+export const mcpServers = pgTable("mcp_servers", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").references(() => projects.id).notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  type: varchar("type", { length: 50 }).notNull(), // 'stdio', 'sse', etc.
+  command: text("command"),
+  args: jsonb("args").$type<string[]>(),
+  env: jsonb("env").$type<Record<string, string>>(),
+  url: text("url"),
+  status: varchar("status", { length: 50 }).default('disconnected').notNull(),
+  errorMessage: text("error_message"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export type DbMcpServer = typeof mcpServers.$inferSelect;
+export type InsertDbMcpServer = typeof mcpServers.$inferInsert;
+export const insertMcpServerSchema = createInsertSchema(mcpServers);
+
