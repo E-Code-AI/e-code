@@ -279,7 +279,7 @@ export class PTYTerminalService {
         } catch {}
       }
 
-      if (!authenticated && process.env.NODE_ENV !== 'development') {
+      if (!authenticated && process.env.NODE_ENV === 'production') {
         logger.warn('Terminal connection rejected: no valid session or token');
         ws.close(1008, 'Authentication required');
         return;

@@ -236,6 +236,70 @@ router.post('/:projectId/pull', ensureAuthenticated, async (req: Request, res: R
   }
 });
 
+// POST /:projectId/fetch
+router.post('/:projectId/fetch', ensureAuthenticated, async (req: Request, res: Response) => {
+  const { projectId } = req.params;
+  try {
+    const projectDir = await getProjectDir(projectId);
+    await ensureGitInitialized(projectDir);
+    const { stdout } = await execa('git', ['fetch', '--all'], { cwd: projectDir });
+    res.json({ success: true, output: stdout });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message || 'Fetch failed. Make sure you have a remote configured.' });
+  }
+});
+
+// GET /:projectId/remotes
+router.get('/:projectId/remotes', ensureAuthenticated, async (req: Request, res: Response) => {
+  const { projectId } = req.params;
+  try {
+    const projectDir = await getProjectDir(projectId);
+    await ensureGitInitialized(projectDir);
+    const { stdout } = await execa('git', ['remote', '-v'], { cwd: projectDir }).catch(() => ({ stdout: '' }));
+    
+    // Parse 'origin  https://github.com/... (fetch)'
+    const remotes = stdout.split('\n').filter(Boolean).map((line: string) => {
+      const parts = line.split(/\s+/);
+      return {
+        name: parts[0],
+        url: parts[1],
+        type: parts[2] ? parts[2].replace(/[()]/g, '') : 'fetch'
+      };
+    });
+    
+    // Return unique remotes by name/type
+    const uniqueRemotes = remotes.filter((v, i, a) => a.findIndex(t => (t.name === v.name && t.type === v.type)) === i);
+    res.json({ remotes: uniqueRemotes });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /:projectId/remotes
+router.post('/:projectId/remotes', ensureAuthenticated, async (req: Request, res: Response) => {
+  const { projectId } = req.params;
+  const { name = 'origin', url } = req.body;
+  if (!url) {
+    return res.status(400).json({ error: 'Remote URL is required' });
+  }
+  try {
+    const projectDir = await getProjectDir(projectId);
+    await ensureGitInitialized(projectDir);
+    
+    // Check if remote exists
+    try {
+      await execa('git', ['remote', 'remove', name], { cwd: projectDir });
+    } catch (e) {
+      // Ignore if it doesn't exist
+    }
+    
+    await execa('git', ['remote', 'add', name, url], { cwd: projectDir });
+    res.json({ success: true, message: `Remote '${name}' added` });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // POST /:projectId/clone
 router.post('/:projectId/clone', ensureAuthenticated, async (req: Request, res: Response) => {
   const { projectId } = req.params;
