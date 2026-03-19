@@ -36,6 +36,7 @@ import terminalMetricsRouter from "./terminal-metrics.router";
 import runtimeRouter from "./runtime.router";
 import packagesRouter, { projectPackagesRouter } from "./packages.router";
 import { createWorkspaceRoutes } from "./workspace";
+import workspacesRouter from "./workspaces.router";
 import { mobileRouter } from "../api/mobile";
 // SECURITY FIX: Auth bypass removed - all authentication goes through Passport sessions
 import { csrfTokenEndpoint } from "../middleware/csrf";
