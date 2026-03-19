@@ -18,7 +18,8 @@ client/
 server/
 shared/
 runner/
-dist/
+# Compile outputs (WE NEED THESE IN DEPLOYMENT)
+# dist/ is intentionally NOT ignored here so it deploys.
 scripts/
 attached_assets/
 backups/
