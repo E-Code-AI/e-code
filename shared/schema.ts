@@ -4846,3 +4846,70 @@ export interface CanvasAnnotation {
   color?: string;
   zIndex?: number;
 }
+
+// AI Agent Skills Table
+export const agentSkills = pgTable("agent_skills", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").references(() => projects.id).notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  description: text("description").notNull().default(''),
+  content: text("content").notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type AgentSkill = typeof agentSkills.$inferSelect;
+export type InsertAgentSkill = typeof agentSkills.$inferInsert;
+export const insertAgentSkillSchema = createInsertSchema(agentSkills);
+
+// Visitor Feedback Table
+export const visitorFeedback = pgTable("visitor_feedback", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").references(() => projects.id).notNull(),
+  deploymentId: integer("deployment_id").references(() => deployments.id),
+  visitorName: varchar("visitor_name", { length: 255 }),
+  visitorEmail: varchar("visitor_email", { length: 255 }),
+  content: text("content").notNull(),
+  attachments: jsonb("attachments").$type<string[]>().default([]),
+  pageUrl: text("page_url"),
+  status: varchar("status", { length: 50 }).default('open').notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  resolvedAt: timestamp("resolved_at"),
+});
+
+export type VisitorFeedback = typeof visitorFeedback.$inferSelect;
+export type InsertVisitorFeedback = typeof visitorFeedback.$inferInsert;
+export const insertVisitorFeedbackSchema = createInsertSchema(visitorFeedback);
+
+// Slide Editor Storage Table
+export const projectSlidesCollection = pgTable("project_slides_collection", {
+  projectId: integer("project_id").primaryKey().references(() => projects.id),
+  slides: jsonb("slides").$type<any>().notNull().default([]),
+  theme: jsonb("theme").$type<any>(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export type ProjectSlidesCollection = typeof projectSlidesCollection.$inferSelect;
+export type InsertProjectSlidesCollection = typeof projectSlidesCollection.$inferInsert;
+export const insertProjectSlidesCollectionSchema = createInsertSchema(projectSlidesCollection);
+
+// Database schema for MCP Servers
+export const mcpServers = pgTable("mcp_servers", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").references(() => projects.id).notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  type: varchar("type", { length: 50 }).notNull(), // 'stdio', 'sse', etc.
+  command: text("command"),
+  args: jsonb("args").$type<string[]>(),
+  env: jsonb("env").$type<Record<string, string>>(),
+  url: text("url"),
+  status: varchar("status", { length: 50 }).default('disconnected').notNull(),
+  errorMessage: text("error_message"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export type DbMcpServer = typeof mcpServers.$inferSelect;
+export type InsertDbMcpServer = typeof mcpServers.$inferInsert;
+export const insertMcpServerSchema = createInsertSchema(mcpServers);
+
