@@ -106,10 +106,10 @@ import twoFactorRouter from './2fa.router';
 import resourcesRouter from './resources.router';
 import seoRouter from './seo.router';
 import runnerWorkspacesRouter from './runner-workspaces.router';
-import workspacesRouter from './workspaces.router';
 import publicFormsRouter from './public-forms.router';
 import projectAuthRouter from './project-auth.router';
 import statusRouter from './status.router';
+import mcpServersRouter from './mcp-servers.router';
 import { setupPreviewRoutes } from '../preview/preview-service';
 
 export class MainRouter {
@@ -461,6 +461,9 @@ export class MainRouter {
 
     // Per-project Shell routes (Create/manage shell sessions per project)
     app.use('/api/projects', tierRateLimiters.api, projectShellRouter);
+
+    // MCP Servers routes
+    app.use('/api/projects', tierRateLimiters.api, mcpServersRouter);
 
     // Multi-Device Sync routes (Workspace state, preferences, devices)
     app.use('/api/sync', tierRateLimiters.api, syncRouter);

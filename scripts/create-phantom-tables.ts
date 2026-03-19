@@ -34,6 +34,21 @@ async function run() {
       theme JSONB,
       updated_at TIMESTAMP NOT NULL DEFAULT NOW()
     );
+
+    CREATE TABLE IF NOT EXISTS mcp_servers (
+      id SERIAL PRIMARY KEY,
+      project_id INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+      name VARCHAR(255) NOT NULL,
+      type VARCHAR(50) NOT NULL,
+      command TEXT,
+      args JSONB,
+      env JSONB,
+      url TEXT,
+      status VARCHAR(50) NOT NULL DEFAULT 'disconnected',
+      error_message TEXT,
+      created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+    );
   `);
   console.log("Tables created successfully");
   process.exit(0);
