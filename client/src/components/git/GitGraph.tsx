@@ -76,15 +76,16 @@ export function GitGraph({
   const { toast } = useToast();
 
   const { data: logData, isLoading, error, refetch } = useQuery<CommitLogResponse>({
-    queryKey: ['/api/git/log', maxCommits],
+    queryKey: ['/api/git/projects', projectId, 'commits', maxCommits],
     queryFn: async () => {
-      const response = await fetch(`/api/git/log?limit=${maxCommits}`, {
+      const response = await fetch(`/api/git/projects/${projectId}/commits?limit=${maxCommits}`, {
         credentials: 'include'
       });
       if (!response.ok) {
         throw new Error('Failed to fetch commit log');
       }
-      return response.json();
+      const data = await response.json();
+      return { commits: Array.isArray(data) ? data : (data.commits || []) };
     }
   });
 
