@@ -46,7 +46,7 @@ export function ShareSnippetDialog({
     
     try {
       // Calculate expiration date
-      let expiresAt = null;
+      let expiresAt: Date | null = null;
       if (expiresIn !== "never") {
         const now = new Date();
         switch (expiresIn) {

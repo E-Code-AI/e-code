@@ -176,7 +176,7 @@ export function ResponsiveTerminal({
 
   const downloadLog = () => {
     if (xtermRef.current) {
-      const buffer = [];
+      const buffer: string[] = [];
       const term = xtermRef.current;
       
       for (let i = 0; i < term.buffer.active.length; i++) {
