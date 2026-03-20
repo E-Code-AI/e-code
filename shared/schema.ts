@@ -4913,3 +4913,43 @@ export type DbMcpServer = typeof mcpServers.$inferSelect;
 export type InsertDbMcpServer = typeof mcpServers.$inferInsert;
 export const insertMcpServerSchema = createInsertSchema(mcpServers);
 
+// Database schema for Networking (Ports and Domains)
+export const networkingPorts = pgTable("networking_ports", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").references(() => projects.id).notNull(),
+  port: integer("port").notNull(),
+  internalPort: integer("internal_port").notNull(),
+  externalPort: integer("external_port").notNull(),
+  label: varchar("label", { length: 255 }).default(''),
+  protocol: varchar("protocol", { length: 50 }).default('http').notNull(),
+  isPublic: boolean("is_public").default(false).notNull(),
+  exposeLocalhost: boolean("expose_localhost").default(false).notNull(),
+  listening: boolean("listening").default(false).notNull(),
+  localhostOnly: boolean("localhost_only").default(false).notNull(),
+  proxyUrl: text("proxy_url"),
+  externalUrl: text("external_url"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const networkingDomains = pgTable("networking_domains", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").references(() => projects.id).notNull(),
+  domain: varchar("domain", { length: 255 }).notNull(),
+  verified: boolean("verified").default(false).notNull(),
+  verificationToken: varchar("verification_token", { length: 255 }).notNull(),
+  sslStatus: varchar("ssl_status", { length: 50 }).default('pending').notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  verifiedAt: timestamp("verified_at"),
+});
+
+// Database schema for Video Editor Projects
+export const videoProjects = pgTable("video_projects", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").references(() => projects.id).notNull().unique(),
+  scenes: jsonb("scenes").default('[]').notNull(),
+  audioTracks: jsonb("audio_tracks").default('[]').notNull(),
+  resolution: jsonb("resolution").default('{"width":1920,"height":1080}').notNull(),
+  fps: integer("fps").default(30).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
