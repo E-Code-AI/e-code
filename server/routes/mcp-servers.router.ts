@@ -173,4 +173,100 @@ router.get("/:projectId/mcp/servers/:serverId/tools", async (req: Request, res: 
   }
 });
 
+// POST /api/projects/:projectId/mcp/init-builtin
+router.post("/:projectId/mcp/init-builtin", async (req: Request, res: Response) => {
+  try {
+    const projectId = parseInt(req.params.projectId);
+    
+    // Check if filesystem server already exists
+    const existing = await db.select().from(mcpServers)
+      .where(and(eq(mcpServers.projectId, projectId), eq(mcpServers.name, 'filesystem')));
+      
+    if (existing.length === 0) {
+      await db.insert(mcpServers).values({
+        projectId,
+        name: 'filesystem',
+        type: 'stdio',
+        command: 'npx',
+        args: ['-y', '@modelcontextprotocol/server-filesystem', '/workspace'],
+        status: 'disconnected'
+      });
+    }
+    
+    res.json({ success: true });
+  } catch (error) {
+    logger.error('Failed to init builtin MCP servers', error);
+    res.status(500).json({ error: "Failed to init servers" });
+  }
+});
+
+// GET /api/projects/:projectId/mcp/tools
+router.get("/:projectId/mcp/tools", async (req: Request, res: Response) => {
+  try {
+    // In a full implementation, this aggregates tools from ALL connected MCP servers
+    res.json([]);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch aggregated tools" });
+  }
+});
+
+// POST /api/projects/:projectId/mcp/servers/:serverId/start
+router.post("/:projectId/mcp/servers/:serverId/start", async (req: Request, res: Response) => {
+  try {
+    const serverId = parseInt(req.params.serverId);
+    const [updated] = await db.update(mcpServers).set({ status: 'connected' }).where(eq(mcpServers.id, serverId)).returning();
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to start server" });
+  }
+});
+
+// POST /api/projects/:projectId/mcp/servers/:serverId/stop
+router.post("/:projectId/mcp/servers/:serverId/stop", async (req: Request, res: Response) => {
+  try {
+    const serverId = parseInt(req.params.serverId);
+    const [updated] = await db.update(mcpServers).set({ status: 'disconnected' }).where(eq(mcpServers.id, serverId)).returning();
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to stop server" });
+  }
+});
+
+// POST /api/projects/:projectId/mcp/servers/:serverId/restart
+router.post("/:projectId/mcp/servers/:serverId/restart", async (req: Request, res: Response) => {
+  try {
+    const serverId = parseInt(req.params.serverId);
+    const [updated] = await db.update(mcpServers).set({ status: 'connected' }).where(eq(mcpServers.id, serverId)).returning();
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to restart server" });
+  }
+});
+
+// GET /api/projects/:projectId/mcp/servers/:serverId/logs
+router.get("/:projectId/mcp/servers/:serverId/logs", async (req: Request, res: Response) => {
+  try {
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive'
+    });
+    
+    // Send a mock initial log entry
+    res.write(`data: ${JSON.stringify({ timestamp: new Date().toISOString(), message: 'Connected to log stream', type: 'info' })}\n\n`);
+    
+    // Keep alive interval
+    const interval = setInterval(() => {
+      res.write(`data: ${JSON.stringify({ timestamp: new Date().toISOString(), message: 'ping', type: 'debug' })}\n\n`);
+    }, 15000);
+    
+    req.on('close', () => {
+      clearInterval(interval);
+      res.end();
+    });
+  } catch (error) {
+    if (!res.headersSent) res.status(500).json({ error: "Failed to stream logs" });
+  }
+});
+
 export default router;

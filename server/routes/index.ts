@@ -111,6 +111,8 @@ import publicFormsRouter from './public-forms.router';
 import projectAuthRouter from './project-auth.router';
 import statusRouter from './status.router';
 import mcpServersRouter from './mcp-servers.router';
+import networkingRouter from './networking.router';
+import videoRouter from './video.router';
 import { setupPreviewRoutes } from '../preview/preview-service';
 
 export class MainRouter {
@@ -465,6 +467,8 @@ export class MainRouter {
 
     // MCP Servers routes
     app.use('/api/projects', tierRateLimiters.api, mcpServersRouter);
+    app.use('/api/projects', tierRateLimiters.api, networkingRouter);
+    app.use('/api/projects', tierRateLimiters.api, videoRouter);
 
     // Multi-Device Sync routes (Workspace state, preferences, devices)
     app.use('/api/sync', tierRateLimiters.api, syncRouter);
