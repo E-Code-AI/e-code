@@ -60,6 +60,32 @@ app.use(
   })
 );
 
+// Transparent proxy — must be registered BEFORE express.json() so the request
+// body stream is still intact when forwarded to the main app on port 5000.
+// Only local runner paths (/health, /admin, /workspaces) bypass the proxy.
+const mainAppPort = process.env.MAIN_APP_PORT ?? '5000';
+const mainAppProxy = createProxyMiddleware({
+  target: `http://localhost:${mainAppPort}`,
+  changeOrigin: false,
+  on: {
+    error: (_err: Error, _req: Request, res: Response) => {
+      if (!res.headersSent) {
+        (res as any).status(502).json({ error: 'Main app unavailable', code: 'PROXY_ERROR' });
+      }
+    },
+  },
+});
+
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const isRunnerPath =
+    req.path === '/health' ||
+    req.path.startsWith('/admin') ||
+    req.path.startsWith('/workspaces');
+  if (isRunnerPath) return next();
+  return mainAppProxy(req, res, next);
+});
+
+// Body parser only for local runner routes (workspace management)
 app.use(express.json({ limit: '2mb' }));
 
 app.get('/health', (_req, res) => {
@@ -258,23 +284,6 @@ app.use('/workspaces/:workspaceId', createFileRouter());
 app.use('/workspaces/:workspaceId', createPreviewRouter());
 
 app.use(globalErrorHandler);
-
-// Transparent proxy: forward all non-runner requests to the main app on port 5000
-// This ensures Replit's external URL routing works even when it hits port 8081 first
-const mainAppPort = process.env.MAIN_APP_PORT ?? '5000';
-app.use(
-  createProxyMiddleware({
-    target: `http://localhost:${mainAppPort}`,
-    changeOrigin: false,
-    on: {
-      error: (_err: Error, _req: Request, res: Response) => {
-        if (!res.headersSent) {
-          (res as any).status(502).json({ error: 'Main app unavailable', code: 'PROXY_ERROR' });
-        }
-      },
-    },
-  })
-);
 
 registerTerminalHandler(httpServer, wss);
 
