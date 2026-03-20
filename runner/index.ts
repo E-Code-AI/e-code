@@ -2,6 +2,7 @@ import express, { Request, Response, NextFunction } from 'express';
 import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
 import cors from 'cors';
+import { createProxyMiddleware } from 'http-proxy-middleware';
 import { requireRunnerAuth } from './auth';
 import {
   createWorkspace,
@@ -78,7 +79,13 @@ app.get('/admin/runs', requireAdminKey, (_req, res) => {
   res.json({ total: runs.length, runs });
 });
 
-app.use(requireRunnerAuth);
+// Only require runner auth for workspace API routes
+app.use((req: Request, res: Response, next: NextFunction) => {
+  if (req.path.startsWith('/workspaces')) {
+    return requireRunnerAuth(req, res, next);
+  }
+  next();
+});
 
 app.post('/workspaces', rateLimit(10), async (req: Request, res: Response) => {
   const { projectId, projectName } = req.body;
@@ -250,11 +257,24 @@ app.post(
 app.use('/workspaces/:workspaceId', createFileRouter());
 app.use('/workspaces/:workspaceId', createPreviewRouter());
 
-app.use((_req, res) => {
-  res.status(404).json({ error: 'Route not found', code: 'NOT_FOUND' });
-});
-
 app.use(globalErrorHandler);
+
+// Transparent proxy: forward all non-runner requests to the main app on port 5000
+// This ensures Replit's external URL routing works even when it hits port 8081 first
+const mainAppPort = process.env.MAIN_APP_PORT ?? '5000';
+app.use(
+  createProxyMiddleware({
+    target: `http://localhost:${mainAppPort}`,
+    changeOrigin: false,
+    on: {
+      error: (_err: Error, _req: Request, res: Response) => {
+        if (!res.headersSent) {
+          (res as any).status(502).json({ error: 'Main app unavailable', code: 'PROXY_ERROR' });
+        }
+      },
+    },
+  })
+);
 
 registerTerminalHandler(httpServer, wss);
 
