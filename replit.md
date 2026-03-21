@@ -1,7 +1,7 @@
 # E-Code Platform
 
 ## Overview
-E-Code is an AI-assisted web-based Integrated Development Environment (IDE) designed to significantly enhance developer productivity. It offers automated workspace setup, real-time code execution, integrated AI capabilities, collaboration tools, enterprise-grade testing, and robust security. The platform aims to provide a comprehensive, secure, and high-performance development experience, aspiring to be a leader in AI-powered software development with a focus on business vision and market potential.
+E-Code is an AI-assisted web-based Integrated Development Environment (IDE) aimed at significantly boosting developer productivity. It offers automated workspace setup, real-time code execution, integrated AI capabilities, collaboration tools, enterprise-grade testing, and robust security. The platform's core purpose is to deliver a comprehensive, secure, and high-performance development experience, with the ambition of becoming a leader in AI-powered software development.
 
 ## User Preferences
 - Communication: Simple, everyday language
@@ -82,31 +82,31 @@ E-Code is an AI-assisted web-based Integrated Development Environment (IDE) desi
 - Documentation Sync: `scripts/sync-docs.ts` syncs `replit.md` rules into the `documentation` table. Use `tsx scripts/sync-docs.ts` to update the database after changing this file. Required for the `/admin/docs` and `/docs` pages to stay in sync with platform rules.
 
 ## System Architecture
-E-Code utilizes a two-service architecture: a React, TypeScript, and Vite-based frontend employing the Replit RUI Design System, and a Node.js/Express.js, TypeScript, Drizzle ORM, and Passport.js backend.
+E-Code employs a two-service architecture consisting of a React, TypeScript, and Vite-based frontend utilizing the Replit RUI Design System, and a Node.js/Express.js, TypeScript, Drizzle ORM, and Passport.js backend.
 
 ### UI/UX Decisions
-- Leverages the Replit RUI Design System for a consistent and contemporary user interface.
-- Features a responsive design, ensuring optimal display and functionality across various devices.
-- Incorporates vertical y-shift animations for public-facing elements to enhance user engagement.
-- Public routes are designed for unauthenticated access.
-- The IDE provides intelligent defaults for tab visibility: Chat/Agent for desktop users and Deploy for mobile/tablet users, with a persistent preview panel.
+- Utilizes the Replit RUI Design System for a consistent and modern UI.
+- Features responsive design for optimal display across devices.
+- Employs vertical y-shift animations for public-facing elements.
+- Public routes are accessible without authentication.
+- The IDE provides intelligent defaults for tab visibility: Chat/Agent for desktop and Deploy for mobile/tablet, with a persistent preview panel.
 
 ### Technical Implementations
-- **AI Integration**: Features a comprehensive AI system supporting XML prompts, task classification, circuit breakers, caching, SSE streaming, multi-provider model selection with real API model names and normalization, database-backed conversation history, retry logic, Agent Step Cache, Memory Bank, schema warming, and autonomous build session management.
-- **Real-time Communication**: Employs Server-Sent Events (SSE) and WebSockets for real-time streaming of server logs, runtime logs, and providing a hot-reloading HTML live preview with CSS hot-swapping.
-- **Security Framework**: Implements AES-256-GCM encryption, XSS prevention, CSRF protection, input sanitization, tier-based rate limiting, API versioning, session-based authentication, encrypted GitHub tokens, isolated preview subprocess environments, Zod-based validation with path traversal protection, and strict adherence to Passport sessions for all protected routes.
-- **System Reliability**: Includes Checkpoints & Rollback for version control, Playwright-based Background Auto-Testing, and mechanisms for robust cleanup of stuck autonomous build sessions.
-- **Code Execution Environment**: Uses Nix-managed runtimes and `DockerExecutor` for sandboxed code execution, supporting `single-vm` and `kubernetes` deployments. The runner service provides real Docker container isolation per workspace via `dockerode`, with CPU/memory/PID limits, filesystem isolation, and PTY terminals. It features automatic fallback to directory-based isolation if Docker is unavailable.
+- **AI Integration**: Comprehensive AI system with XML prompts, task classification, circuit breakers, caching, SSE streaming, multi-provider model selection, real API model names, normalization, database-backed conversation history, retry logic, Agent Step Cache, Memory Bank, schema warming, and autonomous build session management.
+- **Real-time Communication**: Uses SSE and WebSockets for real-time server/runtime log streaming and hot-reloading HTML live preview with CSS hot-swapping.
+- **Security Framework**: Implements AES-256-GCM encryption, XSS prevention, CSRF protection, input sanitization, tier-based rate limiting, API versioning, session-based authentication, encrypted GitHub tokens, isolated preview subprocess environments, Zod-based validation with path traversal protection, and strict adherence to Passport sessions for protected routes.
+- **System Reliability**: Includes Checkpoints & Rollback, Playwright-based Background Auto-Testing, and robust cleanup for stuck autonomous build sessions.
+- **Code Execution Environment**: Utilizes Nix-managed runtimes and `DockerExecutor` for sandboxed code execution, supporting `single-vm` and `kubernetes` deployments. The runner service provides real Docker container isolation per workspace with resource limits, filesystem isolation, and PTY terminals, with automatic fallback to directory-based isolation if Docker is unavailable.
 - **Data Persistence**: Built on PostgreSQL with Drizzle ORM, enforcing strict tenant isolation. Includes asynchronous database auto-provisioning with multi-provider fallback and retry mechanisms. Notification preferences use JSONB, and specific user IDs are stored as text.
-- **Performance Optimization**: Achieved through fast bootstrap techniques, `instrumentedLazy()` for retry logic in lazy loading, optimized Docker builds, and Semgrep scan optimization.
-- **Voice Input System**: Integrates Voice Vibe Coding utilizing the MediaRecorder API for transcription, with OpenAI Whisper as the primary provider and Google Gemini 2.0 Flash as an automatic fallback.
-- **Monitoring and Observability**: Provides Kubernetes probes for health checks, a structured `/health` endpoint with subsystem statuses and response times, a Provider Health API with Prometheus metrics, Sentry error tracking for both server and client, and structured request logging.
+- **Performance Optimization**: Achieved through fast bootstrap, `instrumentedLazy()` for retry logic in lazy loading, optimized Docker builds, and Semgrep scan optimization.
+- **Voice Input System**: Integrates Voice Vibe Coding using the MediaRecorder API for transcription, with OpenAI Whisper and Google Gemini 2.0 Flash as providers.
+- **Monitoring and Observability**: Provides Kubernetes probes for health checks, a structured `/health` endpoint, a Provider Health API with Prometheus metrics, Sentry error tracking (server and client), and structured request logging.
 - **Production Deployment**: Uses `docker-compose.production.yml` for full-stack deployment with health checks. `docker-entry-point.sh` handles environment validation and migrations.
-- **Security Headers**: Utilizes Helmet.js for security headers (CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy), CORS with dynamic origin detection, CSRF double-submit cookie pattern, tier-based rate limiting, and Nginx security headers.
-- **Routing**: API routes support dual-mounting for flexibility. Internal router paths do not include the `/api/` prefix. A `notFoundHandler` specifically manages `/api/*` routes, redirecting non-API paths to Vite for SPA handling. Global search and workspace bootstrap have dedicated endpoints.
+- **Security Headers**: Utilizes Helmet.js for security headers, CORS with dynamic origin detection, CSRF double-submit cookie pattern, tier-based rate limiting, and Nginx security headers.
+- **Routing**: API routes support dual-mounting. Internal router paths do not include the `/api/` prefix. A `notFoundHandler` manages `/api/*` routes, redirecting non-API paths to Vite for SPA handling. Global search and workspace bootstrap have dedicated endpoints.
 - **Environment Configuration**: All environment variables are strictly validated using Zod schemas.
 - **Project Management**: New projects automatically generate language-appropriate starter files and enforce tenant isolation. Template forking includes language normalization and validation. The Projects API supports pagination, and project authentication is managed via a dedicated panel with multiple provider options.
-- **IDE Tooling**: IDE tools require registration in both `availableTools` and `TOOL_REGISTRY` for full functionality and proper rendering within the IDE.
+- **IDE Tooling**: IDE tools require registration in both `availableTools` and `TOOL_REGISTRY` for full functionality.
 
 ## External Dependencies
 - OpenAI
@@ -128,5 +128,5 @@ E-Code utilizes a two-service architecture: a React, TypeScript, and Vite-based 
 - xterm.js
 - Tavily
 - Passport.js
-- Firebase Admin SDK (for FCM push notifications)
-- Capacitor (for native iOS/Android app packaging)
+- Firebase Admin SDK
+- Capacitor
