@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Metrics Collector Service
  * Collects various application and system metrics

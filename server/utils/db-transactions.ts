@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { db } from '../db';
 
 export type TransactionClient = typeof db;

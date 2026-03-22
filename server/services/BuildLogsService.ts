@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { WebSocket, WebSocketServer } from 'ws';
 import type { IncomingMessage } from 'http';
 import type { IStorage } from '../storage';

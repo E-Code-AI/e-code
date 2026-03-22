@@ -261,6 +261,7 @@ export const languageConfigs: Record<Language, LanguageConfig> = {
   }
 };
 import { Loader2 } from 'lucide-react';
+import { FaJava } from 'react-icons/fa';
 
 // Importing language icons - using simpler set of icons that are guaranteed to exist
 import {
@@ -268,7 +269,6 @@ import {
   SiNodedotjs,
   SiJavascript,
   SiTypescript,
-  SiOracle, // Using as Java icon
   SiGo,
   SiRuby,
   SiRust,
@@ -301,7 +301,7 @@ const languageIcons: Record<string, React.ReactNode> = {
   nodejs: <SiNodedotjs className="h-6 w-6 text-green-600" />,
   typescript: <SiTypescript className="h-6 w-6 text-blue-600" />,
   python: <SiPython className="h-6 w-6 text-blue-500" />,
-  java: <SiOracle className="h-6 w-6 text-red-600" />,  // Using Oracle icon for Java
+  java: <FaJava className="h-6 w-6 text-red-600" />,
   go: <SiGo className="h-6 w-6 text-blue-400" />,
   ruby: <SiRuby className="h-6 w-6 text-red-500" />,
   rust: <SiRust className="h-6 w-6 text-orange-700" />,

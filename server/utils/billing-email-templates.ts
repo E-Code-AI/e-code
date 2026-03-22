@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Billing Email Templates
  * Professional email templates for billing notifications

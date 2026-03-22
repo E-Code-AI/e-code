@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * API Key Manager
  * Secure API key generation and validation

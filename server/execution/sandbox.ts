@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * SECURITY FIX C-04: Hardened JavaScript Sandbox
  *

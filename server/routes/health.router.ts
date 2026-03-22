@@ -394,6 +394,10 @@ export class HealthRouter {
     this.router.get("/health/liveness", (_req: Request, res: Response) => {
       res.json({ status: "alive" });
     });
+    // Replit deployment health check alias
+    this.router.get("/monitoring/health", (_req: Request, res: Response) => {
+      res.json({ status: "ok" });
+    });
 
     // Readiness probe (for Kubernetes/Docker)
     this.router.get("/readiness", async (req: Request, res: Response) => {

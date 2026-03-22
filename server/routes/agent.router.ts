@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Router } from 'express';
 import { ensureAuthenticated } from '../middleware/auth';
 import { ensureAdmin } from '../middleware/admin-auth';

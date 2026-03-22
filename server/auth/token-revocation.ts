@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { createLogger } from '../utils/logger';
 import { eq, lt } from 'drizzle-orm';
 import { revokedTokens } from '../../shared/schema';

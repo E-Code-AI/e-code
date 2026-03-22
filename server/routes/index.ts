@@ -36,6 +36,7 @@ import terminalMetricsRouter from "./terminal-metrics.router";
 import runtimeRouter from "./runtime.router";
 import packagesRouter, { projectPackagesRouter } from "./packages.router";
 import { createWorkspaceRoutes } from "./workspace";
+import workspacesRouter from "./workspaces.router";
 import { mobileRouter } from "../api/mobile";
 // SECURITY FIX: Auth bypass removed - all authentication goes through Passport sessions
 import { csrfTokenEndpoint } from "../middleware/csrf";
@@ -106,10 +107,12 @@ import twoFactorRouter from './2fa.router';
 import resourcesRouter from './resources.router';
 import seoRouter from './seo.router';
 import runnerWorkspacesRouter from './runner-workspaces.router';
-import workspacesRouter from './workspaces.router';
 import publicFormsRouter from './public-forms.router';
 import projectAuthRouter from './project-auth.router';
 import statusRouter from './status.router';
+import mcpServersRouter from './mcp-servers.router';
+import networkingRouter from './networking.router';
+import videoRouter from './video.router';
 import { setupPreviewRoutes } from '../preview/preview-service';
 
 export class MainRouter {
@@ -461,6 +464,11 @@ export class MainRouter {
 
     // Per-project Shell routes (Create/manage shell sessions per project)
     app.use('/api/projects', tierRateLimiters.api, projectShellRouter);
+
+    // MCP Servers routes
+    app.use('/api/projects', tierRateLimiters.api, mcpServersRouter);
+    app.use('/api/projects', tierRateLimiters.api, networkingRouter);
+    app.use('/api/projects', tierRateLimiters.api, videoRouter);
 
     // Multi-Device Sync routes (Workspace state, preferences, devices)
     app.use('/api/sync', tierRateLimiters.api, syncRouter);

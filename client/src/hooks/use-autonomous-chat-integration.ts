@@ -1677,7 +1677,6 @@ export function useAutonomousChatIntegration({
       connectFnRef.current = null;
     };
   // Only depend on stable values - not on callbacks or store objects
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled, conversationId, projectId, sessionId, bootstrapToken]);
 
   const sendBuildModeSelection = useCallback((mode: 'design-first' | 'full-app') => {

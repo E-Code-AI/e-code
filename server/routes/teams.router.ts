@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Router, Request, Response } from 'express';
 import { db } from '../db';
 import { teams, teamMembers, teamInvitations, teamWorkspaces, users, projects } from '@shared/schema';

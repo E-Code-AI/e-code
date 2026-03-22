@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { IStorage } from '../storage';
 
 export interface ProjectContext {

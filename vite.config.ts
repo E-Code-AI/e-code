@@ -34,5 +34,24 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes("node_modules")) return;
+
+          const [, afterNodeModules] = id.split("node_modules/");
+          if (!afterNodeModules) return;
+
+          const segments = afterNodeModules.split("/");
+          const packageName = segments[0].startsWith("@")
+            ? `${segments[0]}-${segments[1]}`
+            : segments[0];
+
+          if (packageName.includes("xterm")) return "vendor-xterm";
+
+          return `vendor-${packageName.replace(/[^a-zA-Z0-9_-]/g, "_")}`;
+        },
+      },
+    },
   },
 });

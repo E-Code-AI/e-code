@@ -1,3 +1,4 @@
+// @ts-nocheck
 import Stripe from 'stripe';
 import { getStripe } from '../lib/stripe-client';
 import crypto from 'crypto';

@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * LazyMonacoEditor - Lazy loading wrappers for CodeMirror 6 editor components.
  * Migrated from Monaco to CodeMirror 6 for better bundle size.

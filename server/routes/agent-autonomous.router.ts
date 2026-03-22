@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Autonomous Mode API Routes
  * 

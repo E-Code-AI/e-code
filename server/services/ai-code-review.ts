@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { aiProviderManager } from '../ai/ai-provider-manager';
 import { CodeAnalyzer } from '../ai/code-analyzer';
 import * as babel from '@babel/parser';

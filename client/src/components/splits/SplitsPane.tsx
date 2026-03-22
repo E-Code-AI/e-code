@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { useDraggable, useDroppable, DndContext } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';

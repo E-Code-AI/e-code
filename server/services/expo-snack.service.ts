@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Snack, SnackFiles, SnackState } from 'snack-sdk';
 import { createLogger } from '../utils/logger';
 

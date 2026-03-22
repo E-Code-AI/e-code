@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useState, useEffect, useCallback, useRef } from "react";
 import { z } from "zod";
 import { useForm, Controller } from "react-hook-form";

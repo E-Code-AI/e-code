@@ -105,7 +105,10 @@ export function validateProductionEnvironment(): void {
   }
 
   // Security guards
-  if (isProduction && process.env.ALLOW_INSECURE_LOCAL_PTY === 'true') {
+  // ALLOW_INSECURE_LOCAL_PTY is permitted in Replit production because Replit
+  // manages its own VM-level sandboxing. Block it only outside Replit (Docker, VPS, K8s).
+  const isReplitEnv = !!(process.env.REPL_ID || process.env.REPL_SLUG);
+  if (isProduction && process.env.ALLOW_INSECURE_LOCAL_PTY === 'true' && !isReplitEnv) {
     errors.push(
       'FATAL SECURITY: ALLOW_INSECURE_LOCAL_PTY=true is forbidden in production. ' +
       'This flag allows un-sandboxed host terminal access.'

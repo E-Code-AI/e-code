@@ -30,7 +30,7 @@ export default function NewsletterConfirm() {
           },
         });
 
-        let data = null;
+        let data: any = null;
         try {
           data = await response.json();
         } catch (_) {

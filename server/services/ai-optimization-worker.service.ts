@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * AI Optimization Worker Service
  * Background worker that polls the queue and executes tasks

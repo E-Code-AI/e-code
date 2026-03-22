@@ -21,7 +21,7 @@ import { apiRequest, queryClient, resetCSRFToken } from '@/lib/queryClient';
 import { TwoFactorVerify } from '@/components/security/TwoFactorVerify';
 
 // Import stock images
-import modernSoftwareImg from '@assets/stock_images/modern_software_deve_ff7f5fd4.jpg';
+const modernSoftwareImg = 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=2070&auto=format&fit=crop';
 
 const fadeInUp = {
   initial: { opacity: 0, y: 20 },

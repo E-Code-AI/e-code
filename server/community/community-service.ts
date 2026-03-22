@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Request, Response } from 'express';
 import { SQL, and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
 import {

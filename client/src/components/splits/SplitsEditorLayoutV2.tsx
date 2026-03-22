@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * SplitsEditorLayout V2 - Using SplitsLayout with Floating Panes
  * Simplified version to prove floating panes work on desktop

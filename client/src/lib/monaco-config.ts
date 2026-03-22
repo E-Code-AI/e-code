@@ -4,7 +4,7 @@ const MONACO_VERSION = '0.52.2';
 const CDN_BASE = `https://cdn.jsdelivr.net/npm/monaco-editor@${MONACO_VERSION}/min/vs`;
 
 // Configure Monaco environment to use CDN workers
-self.MonacoEnvironment = {
+(self as any).MonacoEnvironment = {
   getWorkerUrl: function(moduleId: string, label: string) {
     if (label === 'json') {
       return `${CDN_BASE}/language/json/json.worker.js`;
