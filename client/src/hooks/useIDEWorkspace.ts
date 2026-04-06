@@ -83,22 +83,19 @@ const savePersistedState = (projectId: string, state: Record<string, unknown>) =
 };
 
 const decodeBootstrapToken = (token: string) => {
+  if (!token || typeof token !== 'string') return null;
+  const parts = token.split('.');
+  if (parts.length !== 3) {
+    // Not a JWT — silently ignore (happens when URL has stale/invalid ?bootstrap= param)
+    return null;
+  }
   try {
-    const parts = token.split('.');
-    if (parts.length !== 3) {
-      console.error('[useIDEWorkspace] Invalid JWT format');
-      return null;
-    }
-
     let base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
     const pad = base64.length % 4;
     if (pad) {
-      if (pad === 1) {
-        throw new Error('Invalid base64url string');
-      }
+      if (pad === 1) return null;
       base64 += new Array(5 - pad).join('=');
     }
-
     const payload = JSON.parse(atob(base64));
     return {
       projectId: payload.projectId,
@@ -106,8 +103,7 @@ const decodeBootstrapToken = (token: string) => {
       conversationId: payload.conversationId,
       userId: payload.userId
     };
-  } catch (e) {
-    console.error('[useIDEWorkspace] Failed to decode bootstrap token:', e);
+  } catch {
     return null;
   }
 };

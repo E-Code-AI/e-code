@@ -128,19 +128,25 @@ export function ReplitMonacoEditor({
 
   const { toast } = useToast();
 
+  const validFileId = !!fileId && typeof fileId === 'number' && fileId > 0;
+
   const { data: file, isLoading: fileLoading, error: fileError } = useQuery<EditorFile>({
     queryKey: [`/api/projects/${projectId}/files/${fileId}`],
-    enabled: !!fileId && !!projectId,
-    retry: 2,
+    enabled: validFileId && !!projectId,
+    retry: (failureCount, error: any) => {
+      if (error?.status === 404) return false;
+      return failureCount < 1;
+    },
     retryDelay: 500,
   });
 
+  const fileErrorShownRef = useRef(false);
   useEffect(() => {
-    if (!file && fileError && !currentFile) {
-      console.error('[CM6Editor] File load failed:', fileError);
+    if (!file && fileError && !currentFile && !fileErrorShownRef.current) {
+      fileErrorShownRef.current = true;
       toast({
         title: "File not found",
-        description: "The requested file could not be loaded. Showing empty editor.",
+        description: "The requested file could not be loaded.",
         variant: "destructive",
       });
       setCurrentFile({
@@ -152,6 +158,7 @@ export function ReplitMonacoEditor({
         lastModified: new Date(),
       } as EditorFile);
     }
+    if (file) fileErrorShownRef.current = false;
   }, [file, fileError, currentFile, fileId, toast]);
 
   useEffect(() => {
