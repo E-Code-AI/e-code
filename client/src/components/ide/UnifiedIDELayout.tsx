@@ -1112,6 +1112,15 @@ function UnifiedIDELayout({
       );
     }
 
+    // Terminal - xterm-based terminal panel
+    if (currentTab.id === 'terminal') {
+      return (
+        <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Terminal..." /></div>}>
+          <ReplitTerminalPanel projectId={projectId} />
+        </Suspense>
+      );
+    }
+
     // File editor
     if (currentTab.id.startsWith('file:')) {
       return (
