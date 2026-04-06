@@ -106,7 +106,7 @@ export function WorkflowsPanel({ projectId, onRunWorkflow, className }: Workflow
 
   const updateMutation = useMutation({
     mutationFn: async (workflow: Workflow) => {
-      return apiRequest('PUT', `/api/workflows/${workflow.id}`, {
+      return apiRequest('PATCH', `/api/workflows/${workflow.id}`, {
         ...workflow,
         projectId
       });

@@ -1,7 +1,7 @@
 # E-Code Platform
 
 ## Overview
-E-Code is an AI-assisted web-based Integrated Development Environment (IDE) designed to enhance developer productivity. It provides automated workspace setup, real-time code execution, integrated AI capabilities, collaboration tools, enterprise-grade testing, and robust security. The platform aims to deliver a comprehensive, secure, and high-performance development experience, aspiring to be a leader in AI-powered software development.
+E-Code is an AI-assisted web-based Integrated Development Environment (IDE) designed to enhance developer productivity. It offers automated workspace setup, real-time code execution, integrated AI capabilities, collaboration tools, enterprise-grade testing, and robust security. The platform aims to deliver a comprehensive, secure, and high-performance development experience, aspiring to be a leader in AI-powered software development.
 
 ## User Preferences
 - Communication: Simple, everyday language
