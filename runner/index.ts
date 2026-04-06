@@ -288,6 +288,16 @@ app.use(globalErrorHandler);
 registerTerminalHandler(httpServer, wss);
 
 async function startServer() {
+  // Wait for the main app (port 5000) to bind first so Replit's proxy detects
+  // port 5000 before port 8081. This ensures `waitForPort = 5000` in .replit
+  // routes external traffic correctly to the main app rather than the runner.
+  const startupDelay = parseInt(process.env.RUNNER_STARTUP_DELAY_MS ?? '20000', 10);
+  if (startupDelay > 0) {
+    logger.info(`Startup delay: waiting ${startupDelay}ms for main app to bind port 5000 first...`);
+    await new Promise<void>(resolve => setTimeout(resolve, startupDelay));
+    logger.info('Startup delay complete, binding runner port now.');
+  }
+
   if (isDockerEnabled()) {
     try {
       const dockerMgr = getDockerManager();
