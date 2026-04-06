@@ -204,12 +204,12 @@ export const EnhancedChatMessage = memo(forwardRef<EnhancedChatMessageRef, Enhan
       )}
 
       <div className={cn(
-        "flex-1 space-y-2 max-w-[95%] sm:max-w-[85%] md:max-w-[80%]",
+        "flex-1 min-w-0 space-y-2 max-w-[95%] sm:max-w-[85%] md:max-w-[80%] overflow-hidden",
         isUser && "flex flex-col items-end"
       )}>
         {hasThinking && (
-          <div className="collapsible-content expanded w-full">
-            <div>
+          <div className="collapsible-content expanded w-full min-w-0 overflow-hidden">
+            <div className="w-full min-w-0 overflow-hidden">
               {isCompactMode ? (
                 <ThinkingDisplayCompact
                   steps={message.thinking!}

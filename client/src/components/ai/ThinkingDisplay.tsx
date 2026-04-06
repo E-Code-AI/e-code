@@ -79,7 +79,7 @@ export function ThinkingDisplay({
   return (
     <Card 
       className={cn(
-        "border-2 transition-all duration-300",
+        "border-2 transition-all duration-300 w-full overflow-hidden",
         isActive ? "border-primary shadow-lg" : "border-muted",
         className
       )}
@@ -157,16 +157,16 @@ export function ThinkingDisplay({
                 </div>
 
                 {/* Step Content */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h4 className="font-medium text-[13px] truncate">{step.title}</h4>
-                    <Badge variant="outline" className="text-[11px] capitalize">
+                <div className="flex-1 min-w-0 overflow-hidden">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h4 className="font-medium text-[13px] break-words min-w-0">{step.title}</h4>
+                    <Badge variant="outline" className="text-[11px] capitalize flex-shrink-0">
                       {step.type}
                     </Badge>
                   </div>
                   
                   {!isExpanded && mode === 'detailed' && (
-                    <p className="text-[11px] text-muted-foreground truncate mt-0.5">
+                    <p className="text-[11px] text-muted-foreground break-words mt-0.5 line-clamp-2">
                       {step.content}
                     </p>
                   )}
