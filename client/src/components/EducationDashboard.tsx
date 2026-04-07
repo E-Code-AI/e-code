@@ -104,20 +104,20 @@ export function EducationDashboard({ userId, isTeacher = false }: EducationDashb
   // Fetch courses
   const { data: courses = [] } = useQuery<Course[]>({
     queryKey: ['/api/education/courses'],
-    queryFn: () => apiRequest('/api/education/courses')
+    queryFn: () => apiRequest('GET', '/api/education/courses')
   });
 
   // Fetch user progress
   const { data: progress = [] } = useQuery<Progress[]>({
     queryKey: ['/api/education/progress', userId],
-    queryFn: () => apiRequest(`/api/education/progress${userId ? `?userId=${userId}` : ''}`),
+    queryFn: () => apiRequest('GET', `/api/education/progress${userId ? `?userId=${userId}` : ''}`),
     enabled: !isTeacher
   });
 
   // Fetch classrooms
   const { data: classrooms = [] } = useQuery<Classroom[]>({
     queryKey: ['/api/education/classrooms'],
-    queryFn: () => apiRequest('/api/education/classrooms'),
+    queryFn: () => apiRequest('GET', '/api/education/classrooms'),
     enabled: isTeacher
   });
 

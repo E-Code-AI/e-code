@@ -102,7 +102,7 @@ export function BranchManager({
 
   const { data: branchesData, isLoading, error, refetch } = useQuery<BranchesResponse>({
     queryKey: [`/api/git/projects/${projectId}/branches`],
-    queryFn: () => apiRequest(`/api/git/projects/${projectId}/branches`, 'GET'),
+    queryFn: () => apiRequest('GET', `/api/git/${projectId}/branches`),
   });
 
   const branches: GitBranchInfo[] = (branchesData?.branches || []).map(branch => ({

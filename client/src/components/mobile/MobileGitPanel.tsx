@@ -141,41 +141,41 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
 
   const { data: status, refetch: refetchStatus, isLoading, isError, error } = useQuery<GitStatus>({
     queryKey: [`/api/git/projects/${projectId}/status`],
-    queryFn: () => apiRequest(`/api/git/projects/${projectId}/status`, 'GET'),
+    queryFn: () => apiRequest('GET', `/api/git/${projectId}/status`),
     retry: 1, // Only retry once to avoid long loading states
     staleTime: 30000, // 30 seconds
   });
 
   const { data: remotesData } = useQuery<{ remotes: { name: string; url: string; type: 'fetch' | 'push' }[] }>({
     queryKey: [`/api/git/projects/${projectId}/remotes`],
-    queryFn: () => apiRequest(`/api/git/projects/${projectId}/remotes`, 'GET'),
+    queryFn: () => apiRequest('GET', `/api/git/${projectId}/remotes`),
     enabled: !!status,
   });
 
   const { data: commitsData, isLoading: isLoadingCommits } = useQuery<{ commits: GitCommitInfo[] }>({
     queryKey: [`/api/git/projects/${projectId}/log`],
-    queryFn: () => apiRequest(`/api/git/projects/${projectId}/log`, 'GET'),
+    queryFn: () => apiRequest('GET', `/api/git/${projectId}/commits`),
     enabled: !!status,
   });
   const commits = commitsData?.commits;
 
   const { data: branchesData } = useQuery<{ branches: GitBranchInfo[] }>({
     queryKey: [`/api/git/projects/${projectId}/branches`],
-    queryFn: () => apiRequest(`/api/git/projects/${projectId}/branches`, 'GET'),
+    queryFn: () => apiRequest('GET', `/api/git/${projectId}/branches`),
     enabled: !!status,
   });
   const branches = branchesData?.branches || [];
 
   const { data: githubStatus, isLoading: isLoadingGitHub, refetch: refetchGitHubStatus } = useQuery<GitHubStatus>({
     queryKey: [`/api/git/github/status`],
-    queryFn: () => apiRequest(`/api/git/github/status`, 'GET'),
+    queryFn: () => apiRequest('GET', `/api/git/github/status`),
   });
 
   const originRemote = remotesData?.remotes?.find(r => r.name === 'origin' && r.type === 'fetch');
   const repoName = originRemote?.url?.split('/').slice(-2).join('/').replace('.git', '') || '';
 
   const pullMutation = useMutation({
-    mutationFn: async () => apiRequest(`/api/git/projects/${projectId}/pull`, 'POST', {}),
+    mutationFn: async () => apiRequest('POST', `/api/git/${projectId}/pull`, {}),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/git/projects/${projectId}/status`] });
       queryClient.invalidateQueries({ queryKey: [`/api/git/projects/${projectId}/log`] });
@@ -187,7 +187,7 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
   });
 
   const pushMutation = useMutation({
-    mutationFn: async () => apiRequest(`/api/git/projects/${projectId}/push`, 'POST', {}),
+    mutationFn: async () => apiRequest('POST', `/api/git/${projectId}/push`, {}),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/git/projects/${projectId}/status`] });
       queryClient.invalidateQueries({ queryKey: [`/api/git/projects/${projectId}/log`] });
@@ -199,7 +199,7 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
   });
 
   const fetchMutation = useMutation({
-    mutationFn: async () => apiRequest(`/api/git/projects/${projectId}/fetch`, 'POST', {}),
+    mutationFn: async () => apiRequest('POST', `/api/git/${projectId}/fetch`, {}),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/git/projects/${projectId}/status`] });
       toast({ description: 'Fetched latest from remote' });
@@ -210,7 +210,7 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
   });
 
   const commitMutation = useMutation({
-    mutationFn: async (message: string) => apiRequest(`/api/git/projects/${projectId}/commit`, 'POST', { message }),
+    mutationFn: async (message: string) => apiRequest('POST', `/api/git/${projectId}/commit`, { message }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/git/projects/${projectId}/status`] });
       queryClient.invalidateQueries({ queryKey: [`/api/git/projects/${projectId}/log`] });
@@ -223,7 +223,7 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
   });
 
   const checkoutMutation = useMutation({
-    mutationFn: async (branch: string) => apiRequest(`/api/git/projects/${projectId}/checkout`, 'POST', { branch }),
+    mutationFn: async (branch: string) => apiRequest('POST', `/api/git/${projectId}/checkout`, { branch }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/git/projects/${projectId}/status`] });
       queryClient.invalidateQueries({ queryKey: [`/api/git/projects/${projectId}/branches`] });
@@ -236,7 +236,7 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
   });
 
   const connectRemoteMutation = useMutation({
-    mutationFn: async (url: string) => apiRequest(`/api/git/projects/${projectId}/remotes`, 'POST', { url, name: 'origin' }),
+    mutationFn: async (url: string) => apiRequest('POST', `/api/git/${projectId}/remotes`, { url, name: 'origin' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/git/projects/${projectId}/remotes`] });
       setRemoteUrl('');
@@ -248,7 +248,7 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
   });
 
   const disconnectGitHubMutation = useMutation({
-    mutationFn: async () => apiRequest(`/api/git/github/disconnect`, 'POST', {}),
+    mutationFn: async () => apiRequest('POST', `/api/git/github/disconnect`, {}),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/git/github/status`] });
       toast({ description: 'GitHub disconnected successfully' });
@@ -260,7 +260,7 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
 
   const handleConnectGitHub = async () => {
     try {
-      const response = await apiRequest(`/api/git/github/connect`, 'GET');
+      const response = await apiRequest('GET', `/api/git/github/connect`);
       if (response.authUrl) {
         window.open(response.authUrl, '_blank', 'width=600,height=700');
       }
@@ -270,7 +270,7 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
   };
 
   const stageMutation = useMutation({
-    mutationFn: async (files: string[]) => apiRequest(`/api/git/projects/${projectId}/stage`, 'POST', { files }),
+    mutationFn: async (files: string[]) => apiRequest('POST', `/api/git/${projectId}/stage`, { files }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/git/projects/${projectId}/status`] });
       toast({ description: 'Files staged successfully' });
@@ -281,7 +281,7 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
   });
 
   const unstageMutation = useMutation({
-    mutationFn: async (files: string[]) => apiRequest(`/api/git/projects/${projectId}/unstage`, 'POST', { files }),
+    mutationFn: async (files: string[]) => apiRequest('POST', `/api/git/${projectId}/unstage`, { files }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/git/projects/${projectId}/status`] });
       toast({ description: 'Files unstaged successfully' });
