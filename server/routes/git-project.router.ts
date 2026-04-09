@@ -281,10 +281,27 @@ router.post('/:projectId/push', ensureAuthenticated, async (req: Request, res: R
     const pushUrl = userId ? await getAuthenticatedRemoteUrl(remoteUrl, userId) : remoteUrl;
     const branch = await execa('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: projectDir })
       .then(r => r.stdout.trim()).catch(() => 'main');
-    const { stdout, stderr } = await execa('git', ['push', pushUrl, `${branch}:${branch}`], { cwd: projectDir });
-    res.json({ success: true, output: stdout || stderr });
+
+    try {
+      const { stdout, stderr } = await execa('git', ['push', pushUrl, `${branch}:${branch}`], { cwd: projectDir });
+      res.json({ success: true, output: stdout || stderr });
+    } catch (pushErr: any) {
+      const msg = pushErr.stderr || pushErr.message || '';
+      const isRejected = msg.includes('rejected') || msg.includes('non-fast-forward') || msg.includes('fetch first');
+      if (isRejected) {
+        // Remote has new commits — rebase local on top then retry push
+        logger.info(`[git-project] push rejected for ${projectId}, attempting pull --rebase then retry`);
+        await execa('git', ['pull', '--rebase', pushUrl, branch], { cwd: projectDir });
+        const { stdout: stdout2, stderr: stderr2 } = await execa('git', ['push', pushUrl, `${branch}:${branch}`], { cwd: projectDir });
+        await syncDiskToDb(projectId, projectDir);
+        res.json({ success: true, output: stdout2 || stderr2, info: 'Remote had new commits — rebased and pushed.' });
+      } else {
+        throw pushErr;
+      }
+    }
   } catch (error: any) {
-    res.status(500).json({ error: error.message || 'Push failed. Make sure GitHub is connected.' });
+    const msg = (error.stderr || error.message || '').replace(/https?:\/\/[^@]+@/g, 'https://');
+    res.status(500).json({ error: msg || 'Push failed. Make sure GitHub is connected.' });
   }
 });
 
@@ -302,11 +319,43 @@ router.post('/:projectId/pull', ensureAuthenticated, async (req: Request, res: R
     const pullUrl = userId ? await getAuthenticatedRemoteUrl(remoteUrl, userId) : remoteUrl;
     const branch = await execa('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: projectDir })
       .then(r => r.stdout.trim()).catch(() => 'main');
+
+    // Check for uncommitted changes
+    const { stdout: statusOut } = await execa('git', ['status', '--porcelain'], { cwd: projectDir }).catch(() => ({ stdout: '' }));
+    const hasLocalChanges = statusOut.trim().length > 0;
+
+    let stashApplied = false;
+    if (hasLocalChanges) {
+      // Stash local changes so pull can proceed cleanly
+      const { stdout: stashOut } = await execa('git', ['stash', 'push', '--include-untracked', '-m', 'e-code-auto-stash'], { cwd: projectDir }).catch(() => ({ stdout: '' }));
+      stashApplied = stashOut.includes('Saved') || stashOut.includes('No local changes');
+      if (!stashOut.includes('No local changes')) stashApplied = true;
+    }
+
     const { stdout } = await execa('git', ['pull', pullUrl, branch], { cwd: projectDir });
+
+    let stashConflict = false;
+    if (hasLocalChanges) {
+      try {
+        await execa('git', ['stash', 'pop'], { cwd: projectDir });
+      } catch (popErr: any) {
+        stashConflict = true;
+        logger.warn(`[git-project] stash pop had conflicts for ${projectId}:`, popErr.message);
+      }
+    }
+
     await syncDiskToDb(projectId, projectDir);
-    res.json({ success: true, output: stdout });
+
+    const info = hasLocalChanges
+      ? stashConflict
+        ? 'Your local changes were stashed but may have conflicts with pulled changes. Check the file editor.'
+        : 'Your local changes were stashed and re-applied after pulling.'
+      : undefined;
+
+    res.json({ success: true, output: stdout, ...(info ? { info } : {}) });
   } catch (error: any) {
-    res.status(500).json({ error: error.message || 'Pull failed. Make sure GitHub is connected.' });
+    const msg = (error.stderr || error.message || '').replace(/https?:\/\/[^@]+@/g, 'https://');
+    res.status(500).json({ error: msg || 'Pull failed. Make sure GitHub is connected.' });
   }
 });
 

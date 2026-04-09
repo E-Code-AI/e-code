@@ -278,10 +278,10 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
 
   const pullMutation = useMutation({
     mutationFn: async () => apiRequest('POST', `/api/git/${projectId}/pull`, {}),
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: [`/api/git/${projectId}/status`] });
       queryClient.invalidateQueries({ queryKey: [`/api/git/${projectId}/commits`] });
-      toast({ description: 'Changes pulled successfully' });
+      toast({ description: data?.info || 'Changes pulled successfully' });
     },
     onError: (error: any) => {
       toast({ description: error.message || 'Failed to pull changes', variant: 'destructive' });
@@ -290,10 +290,10 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
 
   const pushMutation = useMutation({
     mutationFn: async () => apiRequest('POST', `/api/git/${projectId}/push`, {}),
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: [`/api/git/${projectId}/status`] });
       queryClient.invalidateQueries({ queryKey: [`/api/git/${projectId}/commits`] });
-      toast({ description: 'Changes pushed successfully' });
+      toast({ description: data?.info || 'Changes pushed successfully' });
     },
     onError: (error: any) => {
       toast({ description: error.message || 'Failed to push changes', variant: 'destructive' });
