@@ -378,7 +378,15 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
     try {
       const response = await apiRequest('GET', `/api/git/github/connect`);
       if (response.authUrl) {
-        window.open(response.authUrl, '_blank', 'width=600,height=700');
+        const popup = window.open(response.authUrl, 'github-oauth', 'width=600,height=700,scrollbars=yes');
+        if (popup) {
+          const timer = setInterval(() => {
+            if (popup.closed) {
+              clearInterval(timer);
+              refetchGitHubStatus();
+            }
+          }, 500);
+        }
       }
     } catch (error: any) {
       toast({ description: error.message || 'Failed to connect to GitHub', variant: 'destructive' });

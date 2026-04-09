@@ -5,9 +5,66 @@ import fs from 'fs/promises';
 import { ensureAuthenticated } from '../middleware/auth';
 import { createLogger } from '../utils/logger';
 import { storage } from '../storage';
+import { githubOAuth } from '../services/github-oauth';
 
 const logger = createLogger('git-project-router');
 const router = Router();
+
+async function getAuthenticatedRemoteUrl(remoteUrl: string, userId: number): Promise<string> {
+  try {
+    const credentials = await githubOAuth.getGitCredentials(userId);
+    if (!credentials) return remoteUrl;
+    const url = new URL(remoteUrl);
+    url.username = credentials.username;
+    url.password = credentials.password;
+    return url.toString();
+  } catch {
+    return remoteUrl;
+  }
+}
+
+async function getProjectRemoteUrl(projectDir: string): Promise<string | null> {
+  try {
+    const { stdout } = await execa('git', ['remote', 'get-url', 'origin'], { cwd: projectDir });
+    return stdout.trim() || null;
+  } catch {
+    return null;
+  }
+}
+
+async function syncDiskToDb(projectId: string, projectDir: string): Promise<void> {
+  try {
+    async function walk(dir: string): Promise<string[]> {
+      const entries = await fs.readdir(dir, { withFileTypes: true });
+      const files: string[] = [];
+      for (const entry of entries) {
+        if (entry.name === '.git' || entry.name === 'node_modules') continue;
+        const fullPath = path.join(dir, entry.name);
+        if (entry.isDirectory()) {
+          files.push(...await walk(fullPath));
+        } else {
+          files.push(fullPath);
+        }
+      }
+      return files;
+    }
+    const allFiles = await walk(projectDir);
+    for (const absPath of allFiles) {
+      const relPath = path.relative(projectDir, absPath);
+      const content = await fs.readFile(absPath, 'utf8').catch(() => null);
+      if (content === null) continue;
+      const existing = await storage.getFileByPath(projectId, relPath).catch(() => null);
+      if (existing) {
+        await storage.updateFile(existing.id, { content }).catch(() => null);
+      } else {
+        await storage.createFile({ projectId, path: relPath, content }).catch(() => null);
+      }
+    }
+    logger.info(`[git-project] synced ${allFiles.length} files from disk to DB for project ${projectId}`);
+  } catch (err) {
+    logger.error('[git-project] syncDiskToDb error:', err);
+  }
+}
 
 const PROJECTS_BASE = path.join(process.cwd(), 'projects');
 
@@ -109,7 +166,7 @@ router.get('/:projectId/branches', ensureAuthenticated, async (req: Request, res
     if (branches.length === 0) {
       branches.push({ name: current || 'main', current: true, remote: null });
     }
-    res.json(branches);
+    res.json({ branches });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
@@ -129,7 +186,7 @@ router.get('/:projectId/commits', ensureAuthenticated, async (req: Request, res:
       const [hash, author, email, date, ...msgParts] = line.split('|');
       return { hash, shortHash: hash.substring(0, 7), author, email, date, message: msgParts.join('|') };
     });
-    res.json(commits);
+    res.json({ commits });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
@@ -213,36 +270,56 @@ router.post('/:projectId/commit', ensureAuthenticated, async (req: Request, res:
 // POST /:projectId/push
 router.post('/:projectId/push', ensureAuthenticated, async (req: Request, res: Response) => {
   const { projectId } = req.params;
+  const userId = (req as any).user?.id;
   try {
     const projectDir = await getProjectDir(projectId);
     await ensureGitInitialized(projectDir);
-    const { stdout, stderr } = await execa('git', ['push', 'origin', 'HEAD'], { cwd: projectDir });
+    const remoteUrl = await getProjectRemoteUrl(projectDir);
+    if (!remoteUrl) {
+      return res.status(400).json({ error: 'No remote configured. Add a GitHub remote URL first.' });
+    }
+    const pushUrl = userId ? await getAuthenticatedRemoteUrl(remoteUrl, userId) : remoteUrl;
+    const branch = await execa('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: projectDir })
+      .then(r => r.stdout.trim()).catch(() => 'main');
+    const { stdout, stderr } = await execa('git', ['push', pushUrl, `${branch}:${branch}`], { cwd: projectDir });
     res.json({ success: true, output: stdout || stderr });
   } catch (error: any) {
-    res.status(500).json({ error: error.message || 'Push failed. Make sure you have a remote configured.' });
+    res.status(500).json({ error: error.message || 'Push failed. Make sure GitHub is connected.' });
   }
 });
 
 // POST /:projectId/pull
 router.post('/:projectId/pull', ensureAuthenticated, async (req: Request, res: Response) => {
   const { projectId } = req.params;
+  const userId = (req as any).user?.id;
   try {
     const projectDir = await getProjectDir(projectId);
     await ensureGitInitialized(projectDir);
-    const { stdout } = await execa('git', ['pull', 'origin', 'HEAD'], { cwd: projectDir });
+    const remoteUrl = await getProjectRemoteUrl(projectDir);
+    if (!remoteUrl) {
+      return res.status(400).json({ error: 'No remote configured. Add a GitHub remote URL first.' });
+    }
+    const pullUrl = userId ? await getAuthenticatedRemoteUrl(remoteUrl, userId) : remoteUrl;
+    const branch = await execa('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: projectDir })
+      .then(r => r.stdout.trim()).catch(() => 'main');
+    const { stdout } = await execa('git', ['pull', pullUrl, branch], { cwd: projectDir });
+    await syncDiskToDb(projectId, projectDir);
     res.json({ success: true, output: stdout });
   } catch (error: any) {
-    res.status(500).json({ error: error.message || 'Pull failed. Make sure you have a remote configured.' });
+    res.status(500).json({ error: error.message || 'Pull failed. Make sure GitHub is connected.' });
   }
 });
 
 // POST /:projectId/fetch
 router.post('/:projectId/fetch', ensureAuthenticated, async (req: Request, res: Response) => {
   const { projectId } = req.params;
+  const userId = (req as any).user?.id;
   try {
     const projectDir = await getProjectDir(projectId);
     await ensureGitInitialized(projectDir);
-    const { stdout } = await execa('git', ['fetch', '--all'], { cwd: projectDir });
+    const remoteUrl = await getProjectRemoteUrl(projectDir);
+    const fetchUrl = remoteUrl && userId ? await getAuthenticatedRemoteUrl(remoteUrl, userId) : (remoteUrl || 'origin');
+    const { stdout } = await execa('git', ['fetch', fetchUrl], { cwd: projectDir });
     res.json({ success: true, output: stdout });
   } catch (error: any) {
     res.status(500).json({ error: error.message || 'Fetch failed. Make sure you have a remote configured.' });
