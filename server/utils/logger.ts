@@ -78,7 +78,22 @@ function sanitizeValue(value: any, depth = 0): any {
 }
 
 const sanitizeFormat = winston.format((info) => {
-  return sanitizeValue(info);
+  // Winston 3 stocke [LEVEL] / [MESSAGE] / [SPLAT] sur info via des Symbols ;
+  // on doit muter l'objet en place, pas créer un nouveau (sinon les Symbols disparaissent
+  // et tous les logs du service sont silencieusement droppés par le transport Console).
+  for (const [key, val] of Object.entries(info)) {
+    if (key === 'level' || key === 'message') continue;
+    const keyLower = key.toLowerCase();
+    if (SENSITIVE_FIELDS.some(f => keyLower.includes(f.toLowerCase()))) {
+      info[key] = '[REDACTED]';
+    } else {
+      info[key] = sanitizeValue(val, 1);
+    }
+  }
+  if (typeof info.message === 'string') {
+    info.message = sanitizeValue(info.message, 1);
+  }
+  return info;
 });
 
 // Create Winston logger instance

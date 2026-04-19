@@ -2303,7 +2303,7 @@ export const templateRatings = pgTable("template_ratings", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 }, (table) => [
-  unique('unique_template_user_rating').on(table.templateId, table.userId),
+  unique('unique_template_ratings_user').on(table.templateId, table.userId),
 ]);
 
 // Template forks - Track when users fork templates to their projects
