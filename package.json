@@ -345,7 +345,6 @@
     "@tootallnate/once": "^3.0.1",
     "protobufjs": "^7.5.5",
     "semver": "^7.6.3",
-    "cross-spawn": "^7.0.5",
     "lodash": "^4.17.24",
     "@xmldom/xmldom": "^0.8.12",
     "fast-xml-parser": "^5.5.7",
