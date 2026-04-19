@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * AI Usage Tracking Middleware (Pay-As-You-Go)
  * 

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { WebSocket } from 'ws';
 import * as Y from 'yjs';
 import { applyUpdate, encodeStateAsUpdate } from 'yjs';

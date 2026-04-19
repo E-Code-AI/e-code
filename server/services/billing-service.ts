@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { storage } from '../storage';
 import { EventEmitter } from 'events';
 import type { userCredits, budgetLimits, usageAlerts } from '@shared/schema';

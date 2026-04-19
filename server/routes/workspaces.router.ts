@@ -24,6 +24,39 @@ const router = Router();
 
 router.use(ensureAuthenticated);
 
+// ─── GET /api/workspaces/:projectId ──────────────────────────────────────
+// Returns existing workspace info with a fresh token, or online: false
+router.get('/:projectId', async (req: Request, res: Response) => {
+  const projectId = parseInt(req.params.projectId, 10);
+  if (isNaN(projectId)) return res.status(400).json({ error: 'Invalid projectId' });
+
+  if (!runner.isRunnerConfigured()) {
+    return res.json({ online: false, reason: 'Runner service not configured' });
+  }
+
+  const [existing] = await db
+    .select()
+    .from(runnerWorkspaces)
+    .where(eq(runnerWorkspaces.projectId, projectId))
+    .limit(1);
+
+  if (!existing) {
+    return res.json({ online: false, reason: 'No workspace found' });
+  }
+
+  const userId = (req.user as any)?.id ?? 0;
+  const token = runner.generateAccessToken(existing.workspaceId, userId);
+
+  return res.json({
+    online: true,
+    workspaceId: existing.workspaceId,
+    runnerUrl: existing.runnerUrl ?? (await runner.pingRunner()).baseUrl,
+    token,
+    terminalWsUrl: runner.buildTerminalWsUrl(existing.workspaceId),
+    previewUrl: `/api/runner/preview/${existing.workspaceId}`,
+  });
+});
+
 // ─── POST /api/workspaces/:projectId ─────────────────────────────────────
 // Returns: { online, workspaceId, runnerUrl, token, terminalWsUrl, previewUrl }
 router.post('/:projectId', async (req: Request, res: Response) => {
@@ -72,7 +105,7 @@ router.post('/:projectId', async (req: Request, res: Response) => {
       runnerUrl: existing.runnerUrl ?? health.baseUrl,
       token,
       terminalWsUrl: runner.buildTerminalWsUrl(existing.workspaceId),
-      previewUrl: runner.buildPreviewUrl(existing.workspaceId),
+      previewUrl: `/api/runner/preview/${existing.workspaceId}`,
     });
   }
 
@@ -107,7 +140,7 @@ router.post('/:projectId', async (req: Request, res: Response) => {
     runnerUrl: saved.runnerUrl ?? health.baseUrl,
     token,
     terminalWsUrl: runner.buildTerminalWsUrl(saved.workspaceId),
-    previewUrl: saved.previewUrl ?? runner.buildPreviewUrl(saved.workspaceId),
+    previewUrl: saved.previewUrl ?? `/api/runner/preview/${saved.workspaceId}`,
   });
 });
 

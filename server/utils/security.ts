@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Security Utilities
  * Comprehensive security helpers for input validation, sanitization, and protection

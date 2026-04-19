@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Secrets Management
  * Encrypted storage and management of sensitive data

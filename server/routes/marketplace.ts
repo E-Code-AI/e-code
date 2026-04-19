@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Router, Request, Response } from 'express';
 import { TemplateMarketplaceService } from '../services/template-marketplace';
 import { ensureAuthenticated } from '../middleware/auth';

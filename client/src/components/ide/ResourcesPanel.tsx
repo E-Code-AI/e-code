@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -195,27 +196,27 @@ export function ResourcesPanel({ projectId, className }: ResourcesPanelProps) {
               <ResourceCard
                 icon={Cpu}
                 title="CPU"
-                value={`${metrics.cpu.cores} cores`}
-                percentage={metrics.cpu.usage}
-                trend={previousMetrics?.cpu.usage}
+                value={`${metrics?.cpu?.cores || 0} cores`}
+                percentage={metrics?.cpu?.usage || 0}
+                trend={previousMetrics?.cpu?.usage}
               />
               <ResourceCard
                 icon={MemoryStick}
                 title="Memory"
-                value={formatBytes(metrics.memory.used)}
-                percentage={metrics.memory.percentage}
-                detail={`/ ${formatBytes(metrics.memory.total)}`}
-                trend={previousMetrics?.memory.percentage}
+                value={formatBytes(metrics?.memory?.used || 0)}
+                percentage={metrics?.memory?.percentage || 0}
+                detail={`/ ${formatBytes(metrics?.memory?.total || 0)}`}
+                trend={previousMetrics?.memory?.percentage}
               />
             </div>
 
             <ResourceCard
               icon={HardDrive}
               title="Storage"
-              value={formatBytes(metrics.storage.used)}
-              percentage={metrics.storage.percentage}
-              detail={`/ ${formatBytes(metrics.storage.total)}`}
-              trend={previousMetrics?.storage.percentage}
+              value={formatBytes(metrics?.storage?.used || 0)}
+              percentage={metrics?.storage?.percentage || 0}
+              detail={`/ ${formatBytes(metrics?.storage?.total || 0)}`}
+              trend={previousMetrics?.storage?.percentage}
             />
 
             <Separator />
@@ -293,7 +294,7 @@ export function ResourcesPanel({ projectId, className }: ResourcesPanelProps) {
               </div>
             </div>
 
-            {(metrics.cpu.usage > 80 || metrics.memory.percentage > 80) && (
+            {((metrics?.cpu?.usage || 0) > 80 || (metrics?.memory?.percentage || 0) > 80) && (
               <>
                 <Separator />
                 <div className="p-2 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg">

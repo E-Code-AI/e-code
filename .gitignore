@@ -61,3 +61,5 @@ sed*
 backups/*.sql
 
 .env.test
+
+.git.backup.*

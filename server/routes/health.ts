@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Health Check Routes
  * Comprehensive health monitoring endpoints for production

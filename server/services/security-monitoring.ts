@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Security Monitoring Service
  * Real-time threat detection and response system

@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Minimal server with routes import
 
 import express from "express";

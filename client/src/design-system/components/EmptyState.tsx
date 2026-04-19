@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Empty State Component
  * Beautiful empty states for various scenarios

@@ -26,15 +26,15 @@ import { apiRequest } from '@/lib/queryClient';
 import { AIModelSelector } from '@/components/ai/AIModelSelector';
 import { BuildModeSelector, BuildMode } from "@/components/ai/BuildModeSelector";
 import { 
-  SiPython, SiJavascript, SiHtml5, SiCss3,
+  SiPython, SiJavascript, SiHtml5, SiCss,
   SiTypescript, SiGo, SiReact, SiNodedotjs, SiSpring,
   SiRust, SiPhp, SiOpenjdk, SiDocker, SiKubernetes,
-  SiAmazon, SiGoogle
+  SiGoogle
 } from 'react-icons/si';
 
-import cloudComputingImg from '@assets/stock_images/cloud_computing_tech_ffd053c9.jpg';
-import modernSoftwareImg from '@assets/stock_images/modern_software_deve_ff7f5fd4.jpg';
-import codingWorkspaceImg from '@assets/stock_images/coding_programming_l_3c65a90d.jpg';
+const cloudComputingImg = 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2072&auto=format&fit=crop';
+const modernSoftwareImg = 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=2070&auto=format&fit=crop';
+const codingWorkspaceImg = 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=2070&auto=format&fit=crop';
 
 // Animation variants
 const fadeInUp = {
@@ -1134,7 +1134,7 @@ export default function Landing() {
             <div className="flex flex-wrap justify-center items-center gap-12 opacity-60 grayscale hover:grayscale-0 transition-all duration-300 hover:opacity-100 text-[var(--ecode-text)]">
               <SiGoogle className="h-8 w-auto" />
               <span className="text-2xl font-bold">Microsoft</span>
-              <SiAmazon className="h-8 w-auto" />
+              {/* Amazon icon removed */}
               <span className="text-2xl font-bold">IBM</span>
               <span className="text-2xl font-bold">Oracle</span>
               <span className="text-2xl font-bold">Meta</span>

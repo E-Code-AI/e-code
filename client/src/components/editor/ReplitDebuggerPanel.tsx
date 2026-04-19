@@ -152,7 +152,7 @@ export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string })
 
   const startDebugMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest(`/api/debug/start/${projectId}`, 'POST', {});
+      return apiRequest('POST', `/api/debug/start/${projectId}`, {});
     },
     onSuccess: () => {
       refetch();
@@ -165,7 +165,7 @@ export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string })
 
   const stopDebugMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest(`/api/debug/stop/${projectId}`, 'POST', {});
+      return apiRequest('POST', `/api/debug/stop/${projectId}`, {});
     },
     onSuccess: () => {
       refetch();
@@ -175,7 +175,7 @@ export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string })
 
   const pauseDebugMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest(`/api/debug/pause/${projectId}`, 'POST', {});
+      return apiRequest('POST', `/api/debug/pause/${projectId}`, {});
     },
     onSuccess: () => {
       refetch();
@@ -185,7 +185,7 @@ export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string })
 
   const continueDebugMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest(`/api/debug/continue/${projectId}`, 'POST', {});
+      return apiRequest('POST', `/api/debug/continue/${projectId}`, {});
     },
     onSuccess: () => {
       refetch();
@@ -195,42 +195,42 @@ export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string })
 
   const stepOverMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest(`/api/debug/step-over/${projectId}`, 'POST', {});
+      return apiRequest('POST', `/api/debug/step-over/${projectId}`, {});
     },
     onSuccess: () => refetch(),
   });
 
   const stepIntoMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest(`/api/debug/step-into/${projectId}`, 'POST', {});
+      return apiRequest('POST', `/api/debug/step-into/${projectId}`, {});
     },
     onSuccess: () => refetch(),
   });
 
   const stepOutMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest(`/api/debug/step-out/${projectId}`, 'POST', {});
+      return apiRequest('POST', `/api/debug/step-out/${projectId}`, {});
     },
     onSuccess: () => refetch(),
   });
 
   const toggleBreakpointMutation = useMutation({
     mutationFn: async ({ breakpointId }: { breakpointId: string }) => {
-      return apiRequest(`/api/debug/breakpoint/enable/${projectId}/${breakpointId}`, 'POST', {});
+      return apiRequest('POST', `/api/debug/breakpoint/enable/${projectId}/${breakpointId}`, {});
     },
     onSuccess: () => refetch(),
   });
 
   const deleteBreakpointMutation = useMutation({
     mutationFn: async ({ breakpointId }: { breakpointId: string }) => {
-      return apiRequest(`/api/debug/breakpoint/${projectId}/${breakpointId}`, 'DELETE', {});
+      return apiRequest('DELETE', `/api/debug/breakpoint/${projectId}/${breakpointId}`, {});
     },
     onSuccess: () => refetch(),
   });
 
   const addWatchMutation = useMutation({
     mutationFn: async ({ expression }: { expression: string }) => {
-      return apiRequest(`/api/debug/watch/add/${projectId}`, 'POST', { expression });
+      return apiRequest('POST', `/api/debug/watch/add/${projectId}`, { expression });
     },
     onSuccess: () => {
       refetch();
@@ -240,7 +240,7 @@ export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string })
 
   const deleteWatchMutation = useMutation({
     mutationFn: async ({ index }: { index: number }) => {
-      return apiRequest(`/api/debug/watch/${projectId}/${index}`, 'DELETE', {});
+      return apiRequest('DELETE', `/api/debug/watch/${projectId}/${index}`, {});
     },
     onSuccess: () => refetch(),
   });

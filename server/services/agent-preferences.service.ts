@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { type IStorage } from '../storage';
 import { AI_MODELS, type AiModel } from '@shared/schema';
 

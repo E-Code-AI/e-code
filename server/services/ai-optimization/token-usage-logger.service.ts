@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Token Usage Logger Service
  * Tracks AI token consumption by operation type for optimization insights

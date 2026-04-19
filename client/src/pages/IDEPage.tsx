@@ -15,14 +15,9 @@ import { ECodeLoading } from '@/components/ECodeLoading';
 import { Button } from '@/components/ui/button';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { Toaster } from '@/components/ui/toaster';
-import { instrumentedLazy } from '@/utils/instrumented-lazy';
+import UnifiedIDELayout from '@/components/ide/UnifiedIDELayout';
 
 import('@/lib/monaco-config');
-
-const UnifiedIDELayout = instrumentedLazy(
-  () => import('@/components/ide/UnifiedIDELayout'),
-  'UnifiedIDELayout'
-);
 
 export default function IDEPage() {
   const params = useParams();

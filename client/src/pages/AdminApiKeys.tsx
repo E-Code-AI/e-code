@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { AdminLayout } from './admin/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

@@ -2,6 +2,7 @@
   "name": "rest-express",
   "version": "1.0.0",
   "type": "module",
+  "main": "electron/main.js",
   "license": "MIT",
   "scripts": {
     "dev": "NODE_ENV=development tsx server/index.ts",
@@ -26,7 +27,9 @@
     "mobile:build": "vite build && npx cap sync",
     "mobile:android": "npx cap open android",
     "mobile:ios": "npx cap open ios",
-    "mobile:setup": "bash scripts/mobile-setup.sh"
+    "mobile:setup": "bash scripts/mobile-setup.sh",
+    "desktop:start": "electron .",
+    "desktop:build": "electron-builder -mwl"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.37.0",
@@ -47,7 +50,6 @@
     "@capacitor/push-notifications": "^8.0.2",
     "@capacitor/splash-screen": "^8.0.1",
     "@capacitor/status-bar": "^8.0.1",
-    "@esbuild/linux-x64": "^0.27.3",
     "@google-cloud/storage": "^7.18.0",
     "@google/generative-ai": "^0.24.1",
     "@jridgewell/trace-mapping": "^0.3.25",
@@ -140,7 +142,9 @@
     "winston": "^3.18.3",
     "winston-daily-rotate-file": "^5.0.0",
     "ws": "^8.18.1",
+    "y-codemirror.next": "^0.3.5",
     "y-protocols": "^1.0.6",
+    "y-webrtc": "^10.3.0",
     "y-websocket": "^3.0.0",
     "yjs": "^13.6.27",
     "zod": "^3.24.2",
@@ -213,7 +217,6 @@
     "@replit/vite-plugin-runtime-error-modal": "^0.0.3",
     "@replit/vite-plugin-shadcn-theme-json": "^0.0.4",
     "@rollup/plugin-terser": "^0.4.4",
-    "@rollup/rollup-linux-x64-gnu": "^4.59.0",
     "@rollup/wasm-node": "^4.53.2",
     "@sentry/react": "^10.31.0",
     "@stripe/react-stripe-js": "^3.9.0",
@@ -272,6 +275,8 @@
     "dompurify": "^3.3.1",
     "drizzle-kit": "^0.31.8",
     "eas-cli": "^0.0.0",
+    "electron": "^41.0.3",
+    "electron-builder": "^26.8.1",
     "embla-carousel-react": "^8.6.0",
     "esbuild": "^0.27.3",
     "eslint": "^9.38.0",
@@ -335,5 +340,28 @@
   "optionalDependencies": {
     "@rollup/rollup-darwin-arm64": "^4.53.3",
     "bufferutil": "^4.0.8"
+  },
+  "overrides": {
+    "@tootallnate/once": "^3.0.1"
+  },
+  "build": {
+    "appId": "com.ecode.app",
+    "productName": "E-Code",
+    "directories": {
+      "output": "dist/desktop"
+    },
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "icon": "client/public/icons/icon-512x512.png"
+    },
+    "win": {
+      "icon": "client/public/icons/icon-512x512.png"
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "icon": "client/public/icons"
+    }
   }
 }

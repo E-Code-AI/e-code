@@ -19,6 +19,7 @@ import { runnerWorkspaces, projects } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 import { createLogger } from '../utils/logger';
 import * as runner from '../runnerClient';
+import { createProxyMiddleware } from 'http-proxy-middleware';
 
 const logger = createLogger('runner-workspaces');
 const router = Router();
@@ -151,5 +152,41 @@ router.get('/workspaces/:projectId/token', async (req, res) => {
     terminalWsUrl: runner.buildTerminalWsUrl(row.workspaceId),
   });
 });
+
+// ─── HTTP PROXY FOR PREVIEW ───────────────────────────────────────────────
+// Fixes "MISSING_TOKEN" and hides the runner URL by proxying preview traffic.
+router.use('/preview/:workspaceId', createProxyMiddleware({
+  target: process.env.RUNNER_BASE_URL || 'http://localhost:8081',
+  router: async (req: any) => {
+    try {
+      const workspaceId = req.params.workspaceId;
+      const [row] = await db
+        .select()
+        .from(runnerWorkspaces)
+        .where(eq(runnerWorkspaces.workspaceId, workspaceId))
+        .limit(1);
+      if (row && row.runnerUrl) {
+        return row.runnerUrl;
+      }
+    } catch (err) {
+      logger.error('Error in proxy router function', err);
+    }
+    return process.env.RUNNER_BASE_URL || 'http://localhost:8081';
+  },
+  changeOrigin: true,
+  ws: true,
+  pathRewrite: (path, req) => {
+    const workspaceId = req.params.workspaceId;
+    return path.replace(`/api/runner/preview/${workspaceId}`, `/workspaces/${workspaceId}/preview`);
+  },
+  on: {
+    proxyReq: (proxyReq: any, req: any) => {
+      const workspaceId = req.params.workspaceId;
+      const userId = (req.user as any)?.id ?? 0;
+      const token = runner.generateAccessToken(workspaceId, userId);
+      proxyReq.setHeader('Authorization', `Bearer ${token}`);
+    }
+  }
+}));
 
 export default router;

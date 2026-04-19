@@ -4720,3 +4720,236 @@ export const projectAuthUsers = pgTable("project_auth_users", {
 export const insertProjectAuthUserSchema = createInsertSchema(projectAuthUsers).omit({ id: true, createdAt: true });
 export type InsertProjectAuthUser = z.infer<typeof insertProjectAuthUserSchema>;
 export type ProjectAuthUser = typeof projectAuthUsers.$inferSelect;
+
+// Automatically added interfaces for UI components
+export interface SlideTheme {
+  name: string;
+  primaryColor: string;
+  secondaryColor: string;
+  backgroundColor: string;
+  textColor: string;
+  fontFamily: string;
+  accentColor: string;
+}
+
+export interface SlideContentBlock {
+  id: string;
+  type: "text" | "image" | "code" | "chart" | "title" | "body" | "list";
+  content: any;
+  position?: { x: number; y: number; width: number; height: number };
+}
+
+export interface SlideData {
+  id: string;
+  blocks: SlideContentBlock[];
+  background?: string;
+  backgroundColor?: string;
+  transition?: string;
+  order: number;
+  layout?: string;
+  notes?: string;
+}
+
+export interface VideoElement {
+  id: string;
+  type: string;
+  content: any;
+  start?: number;
+  startTime: number;
+  duration?: number;
+  position?: { x: number; y: number; width: number; height: number };
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  endTime: number;
+  animation?: any;
+  style?: any;
+}
+
+export interface VideoScene {
+  id: string;
+  order: number;
+  duration: number;
+  elements: VideoElement[];
+  transition: string;
+  backgroundColor: string;
+}
+
+export interface VideoAudioTrack {
+  id: string;
+  url: string;
+  volume: number;
+  start: number;
+  duration: number;
+  name?: string;
+}
+
+export interface MergeConflictFile {
+  path: string;
+  filename: string;
+  content: string;
+  status: string;
+  hasConflict: boolean;
+  mergedContent: string;
+  oursContent: string;
+  theirsContent: string;
+  blocks?: {
+    id: string;
+    type: "original" | "incoming" | "both" | "custom";
+    content: string;
+    resolvedContent?: string;
+  }[];
+}
+
+export interface McpTool {
+  id: string;
+  name: string;
+  description: string;
+  parameters: any;
+}
+
+export interface McpServer {
+  id: string;
+  name: string;
+  status: string;
+  serverType?: string;
+  baseUrl?: string;
+  tools?: McpTool[];
+}
+
+export interface MergeResolution {
+  filename: string;
+  resolvedContent: string;
+}
+
+export interface CanvasFrame {
+  id: string;
+  name: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  htmlContent?: string;
+  zIndex?: number;
+}
+
+export interface CanvasAnnotation {
+  id: string;
+  text: string;
+  x: number;
+  y: number;
+  width?: number;
+  height?: number;
+  content?: string;
+  type?: string;
+  color?: string;
+  zIndex?: number;
+}
+
+// AI Agent Skills Table
+export const agentSkills = pgTable("agent_skills", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").references(() => projects.id).notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  description: text("description").notNull().default(''),
+  content: text("content").notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type AgentSkill = typeof agentSkills.$inferSelect;
+export type InsertAgentSkill = typeof agentSkills.$inferInsert;
+export const insertAgentSkillSchema = createInsertSchema(agentSkills);
+
+// Visitor Feedback Table
+export const visitorFeedback = pgTable("visitor_feedback", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").references(() => projects.id).notNull(),
+  deploymentId: integer("deployment_id").references(() => deployments.id),
+  visitorName: varchar("visitor_name", { length: 255 }),
+  visitorEmail: varchar("visitor_email", { length: 255 }),
+  content: text("content").notNull(),
+  attachments: jsonb("attachments").$type<string[]>().default([]),
+  pageUrl: text("page_url"),
+  status: varchar("status", { length: 50 }).default('open').notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  resolvedAt: timestamp("resolved_at"),
+});
+
+export type VisitorFeedback = typeof visitorFeedback.$inferSelect;
+export type InsertVisitorFeedback = typeof visitorFeedback.$inferInsert;
+export const insertVisitorFeedbackSchema = createInsertSchema(visitorFeedback);
+
+// Slide Editor Storage Table
+export const projectSlidesCollection = pgTable("project_slides_collection", {
+  projectId: integer("project_id").primaryKey().references(() => projects.id),
+  slides: jsonb("slides").$type<any>().notNull().default([]),
+  theme: jsonb("theme").$type<any>(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export type ProjectSlidesCollection = typeof projectSlidesCollection.$inferSelect;
+export type InsertProjectSlidesCollection = typeof projectSlidesCollection.$inferInsert;
+export const insertProjectSlidesCollectionSchema = createInsertSchema(projectSlidesCollection);
+
+// Database schema for MCP Servers
+export const mcpServers = pgTable("mcp_servers", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").references(() => projects.id).notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  type: varchar("type", { length: 50 }).notNull(), // 'stdio', 'sse', etc.
+  command: text("command"),
+  args: jsonb("args").$type<string[]>(),
+  env: jsonb("env").$type<Record<string, string>>(),
+  url: text("url"),
+  status: varchar("status", { length: 50 }).default('disconnected').notNull(),
+  errorMessage: text("error_message"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export type DbMcpServer = typeof mcpServers.$inferSelect;
+export type InsertDbMcpServer = typeof mcpServers.$inferInsert;
+export const insertMcpServerSchema = createInsertSchema(mcpServers);
+
+// Database schema for Networking (Ports and Domains)
+export const networkingPorts = pgTable("networking_ports", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").references(() => projects.id).notNull(),
+  port: integer("port").notNull(),
+  internalPort: integer("internal_port").notNull(),
+  externalPort: integer("external_port").notNull(),
+  label: varchar("label", { length: 255 }).default(''),
+  protocol: varchar("protocol", { length: 50 }).default('http').notNull(),
+  isPublic: boolean("is_public").default(false).notNull(),
+  exposeLocalhost: boolean("expose_localhost").default(false).notNull(),
+  listening: boolean("listening").default(false).notNull(),
+  localhostOnly: boolean("localhost_only").default(false).notNull(),
+  proxyUrl: text("proxy_url"),
+  externalUrl: text("external_url"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const networkingDomains = pgTable("networking_domains", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").references(() => projects.id).notNull(),
+  domain: varchar("domain", { length: 255 }).notNull(),
+  verified: boolean("verified").default(false).notNull(),
+  verificationToken: varchar("verification_token", { length: 255 }).notNull(),
+  sslStatus: varchar("ssl_status", { length: 50 }).default('pending').notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  verifiedAt: timestamp("verified_at"),
+});
+
+// Database schema for Video Editor Projects
+export const videoProjects = pgTable("video_projects", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").references(() => projects.id).notNull().unique(),
+  scenes: jsonb("scenes").default('[]').notNull(),
+  audioTracks: jsonb("audio_tracks").default('[]').notNull(),
+  resolution: jsonb("resolution").default('{"width":1920,"height":1080}').notNull(),
+  fps: integer("fps").default(30).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});

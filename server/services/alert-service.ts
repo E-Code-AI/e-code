@@ -99,9 +99,9 @@ async function sendSentryAlert(alert: AlertPayload): Promise<void> {
 
   try {
     // If Sentry SDK is configured, use it
-    // @ts-ignore - Sentry might not be available
+    // @ts-expect-error - Sentry might not be available
     if (typeof Sentry !== 'undefined') {
-      // @ts-ignore
+      // @ts-expect-error - global Sentry can be injected at runtime
       Sentry.captureMessage(alert.message, {
         level: alert.severity === AlertSeverity.CRITICAL ? 'fatal' : 'error',
         tags: {

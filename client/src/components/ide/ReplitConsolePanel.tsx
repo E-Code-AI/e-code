@@ -177,8 +177,8 @@ export function ReplitConsolePanel({
       timestamp: new Date(log.timestamp),
     };
 
-    if (log.content.match(/^(GET|POST|PUT|DELETE|PATCH|OPTIONS|HEAD)\s+/)) {
-      const httpMatch = log.content.match(/^(GET|POST|PUT|DELETE|PATCH|OPTIONS|HEAD)\s+(\S+)\s+(\d{3})?\s*(\d+ms)?/);
+    if (log.content?.match(/^(GET|POST|PUT|DELETE|PATCH|OPTIONS|HEAD)\s+/)) {
+      const httpMatch = log.content?.match(/^(GET|POST|PUT|DELETE|PATCH|OPTIONS|HEAD)\s+(\S+)\s+(\d{3})?\s*(\d+ms)?/);
       if (httpMatch) {
         consoleLog.type = 'http';
         consoleLog.method = httpMatch[1];

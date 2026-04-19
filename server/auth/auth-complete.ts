@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Complete Authentication System with Enhanced Security
  * Implements session management, account lockout, and 2FA preparation

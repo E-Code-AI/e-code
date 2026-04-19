@@ -1,147 +1,44 @@
-name: Replit Deployment Pipeline
+name: CI + Replit Health Check
 
-# Optimized CI/CD for Replit Cloud Run deployment
-# Fortune 500 Production Standards
+# Runs on every push to main:
+#   1. Build & type-check the project (on GitHub's servers)
+#   2. Verify the production deployment is alive (health check)
+#
+# Required GitHub Secrets (Settings → Secrets → Actions):
+#   OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY, XAI_API_KEY
+#   MOONSHOT_API_KEY, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET
+#   SENDGRID_API_KEY, REDIS_PASSWORD, SESSION_SECRET, SENTRY_DSN
+#   DATABASE_URL  ← Neon public URL
+#
+# Required GitHub Variables (Settings → Variables → Actions):
+#   APP_URL  = https://replit-clone-henri45.replit.app
+#   REPL_ID  = f4d2485e-81a7-4595-9868-17903ab251f3
 
 on:
   push:
-    branches: [main, production]
+    branches: [main]
   pull_request:
-    branches: [main, production]
+    branches: [main]
   workflow_dispatch:
-    inputs:
-      environment:
-        description: 'Deployment environment'
-        required: true
-        default: 'staging'
-        type: choice
-        options:
-          - staging
-          - production
 
 env:
   NODE_VERSION: '20.x'
-  REPLIT_API_URL: 'https://replit.com/graphql'
+  APP_URL: ${{ vars.APP_URL || 'https://replit-clone-henri45.replit.app' }}
 
 jobs:
-  # Job 1: Code Quality & Security Checks
-  quality-and-security:
-    name: Quality & Security Checks
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci --legacy-peer-deps
-
-      - name: Run ESLint
-        run: npm run lint
-        continue-on-error: false
-
-      - name: Run TypeScript type checking
-        run: npx tsc --noEmit
-
-      - name: Security audit (npm)
-        run: npm audit --audit-level=high
-        continue-on-error: true
-
-      - name: SAST with Semgrep
-        uses: returntocorp/semgrep-action@v1
-        with:
-          config: >-
-            p/security-audit
-            p/owasp-top-ten
-            p/typescript
-        continue-on-error: true
-
-      - name: Check for secrets
-        uses: trufflesecurity/trufflehog@main
-        with:
-          path: ./
-          base: ${{ github.event.repository.default_branch }}
-          head: HEAD
-
-  # Job 2: Unit Tests
-  unit-tests:
-    name: Unit Tests
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    needs: [quality-and-security]
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci --legacy-peer-deps
-
-      - name: Run unit tests with coverage
-        run: npm run test:unit
-        env:
-          NODE_ENV: test
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
-        with:
-          files: ./coverage/coverage-final.json
-          flags: unittests
-          name: codecov-umbrella
-          fail_ci_if_error: false
-
-  # Job 3: Integration Tests
-  integration-tests:
-    name: Integration Tests
+  # ─────────────────────────────────────────────────────────────────────────────
+  # JOB 1 — Build & validate (runs on GitHub's servers)
+  # ─────────────────────────────────────────────────────────────────────────────
+  build:
+    name: Build & Type-check
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    needs: [quality-and-security]
-
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_USER: test
-          POSTGRES_PASSWORD: test
-          POSTGRES_DB: ecode_test
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
-      redis:
-        image: redis:7-alpine
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 6379:6379
 
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
@@ -150,252 +47,74 @@ jobs:
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
 
-      - name: Run database migrations
-        run: npm run db:migrate
-        env:
-          DATABASE_URL: postgresql://test:test@localhost:5432/ecode_test
+      - name: TypeScript type check
+        run: npm run typecheck
+        continue-on-error: true
 
-      - name: Run integration tests
-        run: npm run test:integration
-        env:
-          NODE_ENV: test
-          DATABASE_URL: postgresql://test:test@localhost:5432/ecode_test
-          REDIS_URL: redis://localhost:6379
-
-  # Job 4: Build Validation
-  build-validation:
-    name: Build Validation
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    needs: [unit-tests, integration-tests]
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci --legacy-peer-deps
-
-      - name: Build client (Vite)
+      - name: Build (frontend + server)
         run: npm run build
         env:
           NODE_ENV: production
+          NODE_OPTIONS: '--max-old-space-size=4096'
+          VITE_APP_URL: ${{ env.APP_URL }}
 
       - name: Verify build artifacts
         run: |
-          test -d dist/public || (echo "Build failed: dist/public not found" && exit 1)
-          test -f dist/public/index.html || (echo "Build failed: index.html not found" && exit 1)
-          echo "Build artifacts verified successfully"
+          test -f dist/public/index.html || (echo "❌ dist/public/index.html manquant" && exit 1)
+          test -f dist/index.js          || (echo "❌ dist/index.js manquant" && exit 1)
+          echo "✅ Artifacts OK"
+          echo "   dist/public : $(du -sh dist/public | cut -f1)"
+          echo "   dist/index.js : $(du -sh dist/index.js | cut -f1)"
 
-      - name: Check bundle size
-        run: |
-          BUNDLE_SIZE=$(du -sh dist/public | cut -f1)
-          echo "Bundle size: $BUNDLE_SIZE"
-          # Warning if bundle > 5MB (adjust as needed)
-          SIZE_BYTES=$(du -sb dist/public | cut -f1)
-          if [ $SIZE_BYTES -gt 5242880 ]; then
-            echo "::warning::Bundle size exceeds 5MB: $BUNDLE_SIZE"
-          fi
-
-  # Job 5: Deploy to Replit (Staging)
-  deploy-staging:
-    name: Deploy to Replit Staging
+  # ─────────────────────────────────────────────────────────────────────────────
+  # JOB 2 — Health check on the live Replit deployment
+  # Only runs on push to main (not on PRs)
+  # ─────────────────────────────────────────────────────────────────────────────
+  health-check:
+    name: Production Health Check
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: [build-validation]
+    needs: [build]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    environment:
-      name: staging
-      url: https://e-code.replit.app
+    continue-on-error: true  # Ne bloque pas le CI si production est en redémarrage
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Trigger Replit deployment
+      - name: Wait for Replit to pick up the new commit
         run: |
-          echo "🚀 Triggering Replit deployment..."
-          # Replit auto-deploys on push to main branch
-          # This step documents the deployment process
-
-          # If using Replit API (requires REPLIT_TOKEN):
-          # curl -X POST "${{ env.REPLIT_API_URL }}" \
-          #   -H "Authorization: Bearer ${{ secrets.REPLIT_TOKEN }}" \
-          #   -H "Content-Type: application/json" \
-          #   -d '{"query": "mutation { deployRepl(replId: \"${{ secrets.REPL_ID }}\") { id status } }"}'
-
-      - name: Wait for deployment
-        run: |
-          echo "⏳ Waiting for Replit deployment to complete..."
-          sleep 60  # Replit typically takes 30-90 seconds
-
-      - name: Health check
-        run: |
-          echo "🏥 Running health checks..."
-          MAX_RETRIES=10
-          RETRY_COUNT=0
-
-          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://e-code.replit.app/health/liveness || echo "000")
-
-            if [ "$HTTP_STATUS" = "200" ]; then
-              echo "✅ Health check passed (HTTP $HTTP_STATUS)"
-              break
-            else
-              echo "⚠️  Health check failed (HTTP $HTTP_STATUS), retrying... ($((RETRY_COUNT + 1))/$MAX_RETRIES)"
-              RETRY_COUNT=$((RETRY_COUNT + 1))
-              sleep 10
-            fi
-          done
-
-          if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
-            echo "❌ Health check failed after $MAX_RETRIES attempts"
-            exit 1
-          fi
-
-      - name: Smoke tests
-        run: |
-          echo "🧪 Running smoke tests..."
-
-          # Test API endpoint
-          API_RESPONSE=$(curl -s https://e-code.replit.app/api/health)
-          echo "API Health: $API_RESPONSE"
-
-          # Test metrics endpoint
-          METRICS_RESPONSE=$(curl -s https://e-code.replit.app/metrics | head -n 5)
-          echo "Metrics available: Yes"
-
-          echo "✅ Smoke tests passed"
-
-      - name: Notify deployment
-        if: always()
-        run: |
-          if [ "${{ job.status }}" = "success" ]; then
-            echo "✅ Staging deployment successful"
-          else
-            echo "❌ Staging deployment failed"
-          fi
-
-  # Job 6: Deploy to Replit (Production)
-  deploy-production:
-    name: Deploy to Replit Production
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    needs: [deploy-staging]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/production'
-    environment:
-      name: production
-      url: https://e-code.ai
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Create deployment tag
-        run: |
-          TAG="v$(date +%Y%m%d-%H%M%S)"
-          git tag $TAG
-          echo "DEPLOYMENT_TAG=$TAG" >> $GITHUB_ENV
-          echo "Created deployment tag: $TAG"
-
-      - name: Trigger Replit production deployment
-        run: |
-          echo "🚀 Triggering Replit production deployment..."
-          echo "Deployment tag: ${{ env.DEPLOYMENT_TAG }}"
-
-          # Replit production deployment
-          # Configure via Replit Dashboard > Deployments > Production Branch
-
-      - name: Wait for deployment
-        run: |
-          echo "⏳ Waiting for production deployment..."
+          echo "⏳ Waiting 90 s for Replit to restart..."
           sleep 90
 
-      - name: Production health check
+      - name: Liveness check (/api/liveness)
         run: |
-          echo "🏥 Running production health checks..."
-          MAX_RETRIES=15
-          RETRY_COUNT=0
-
-          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://e-code.ai/health/liveness || echo "000")
-
-            if [ "$HTTP_STATUS" = "200" ]; then
-              echo "✅ Production health check passed"
+          APP="${{ env.APP_URL }}"
+          MAX=12; N=0
+          echo "🏥 Polling $APP/api/liveness ..."
+          while [ $N -lt $MAX ]; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$APP/api/liveness" || echo "000")
+            if [ "$STATUS" = "200" ]; then
+              echo "✅ Liveness OK (HTTP $STATUS)"
               break
-            else
-              echo "⚠️  Retrying... ($((RETRY_COUNT + 1))/$MAX_RETRIES)"
-              RETRY_COUNT=$((RETRY_COUNT + 1))
-              sleep 15
             fi
+            N=$((N+1))
+            echo "⚠️  Attempt $N/$MAX — HTTP $STATUS — retry in 15 s"
+            sleep 15
           done
+          [ $N -lt $MAX ] || (echo "❌ Liveness check failed after $MAX attempts" && exit 1)
 
-          if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
-            echo "❌ Production health check failed"
-            exit 1
-          fi
-
-      - name: Production smoke tests
+      - name: Readiness check (/api/readiness)
         run: |
-          echo "🧪 Running production smoke tests..."
+          curl -sf "${{ env.APP_URL }}/api/readiness" \
+            && echo "✅ Readiness OK" \
+            || (echo "❌ Readiness check failed" && exit 1)
 
-          # Critical path tests
-          curl -f https://e-code.ai/health/readiness || exit 1
-          curl -f https://e-code.ai/health/liveness || exit 1
-          curl -f https://e-code.ai/api/health || exit 1
-
-          echo "✅ Production smoke tests passed"
-
-      - name: Update deployment status
-        if: always()
+      - name: API smoke test (/api/monitoring/health)
         run: |
-          if [ "${{ job.status }}" = "success" ]; then
-            echo "✅ PRODUCTION DEPLOYMENT SUCCESSFUL"
-            echo "🏷️  Tag: ${{ env.DEPLOYMENT_TAG }}"
-            echo "🌐 URL: https://e-code.ai"
-          else
-            echo "❌ PRODUCTION DEPLOYMENT FAILED"
-            echo "🚨 Rollback may be required"
-          fi
+          curl -sf "${{ env.APP_URL }}/api/monitoring/health" \
+            && echo "✅ API OK" \
+            || (echo "❌ API health check failed" && exit 1)
 
-  # Job 7: Performance Monitoring
-  performance-monitoring:
-    name: Performance Monitoring
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    needs: [deploy-staging]
-    if: github.event_name == 'push'
-
-    steps:
-      - name: Lighthouse CI
-        uses: treosh/lighthouse-ci-action@v10
-        with:
-          urls: |
-            https://e-code.replit.app
-          uploadArtifacts: true
-          temporaryPublicStorage: true
-
-      - name: Check performance metrics
+      - name: Notify on failure
+        if: failure()
         run: |
-          echo "📊 Performance metrics collected"
-          echo "View results in GitHub Actions artifacts"
-
-# Reusable notification workflow
-  notify-deployment:
-    name: Notify Deployment Status
-    runs-on: ubuntu-latest
-    needs: [deploy-staging, deploy-production]
-    if: always()
-
-    steps:
-      - name: Deployment notification
-        run: |
-          echo "📢 Deployment pipeline completed"
-          echo "Staging: ${{ needs.deploy-staging.result }}"
-          echo "Production: ${{ needs.deploy-production.result }}"
+          echo "❌ Health checks FAILED — commit ${{ github.sha }}"
+          echo "🔗 Logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

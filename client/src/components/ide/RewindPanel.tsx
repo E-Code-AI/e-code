@@ -44,23 +44,22 @@ export function RewindPanel({ projectId, onRestore, className }: RewindPanelProp
   const { data: checkpoints, isLoading } = useQuery<Checkpoint[]>({
     queryKey: ['/api/checkpoints', projectId],
     queryFn: async () => {
-      const response = await fetch(`/api/checkpoints?projectId=${projectId}`, {
+      const response = await fetch(`/api/projects/${projectId}/checkpoints`, {
         credentials: 'include'
       });
       if (!response.ok) {
         return [] as Checkpoint[];
       }
-      return response.json();
+      const data = await response.json();
+      return data?.checkpoints ?? data ?? [];
     },
     enabled: !!projectId
   });
 
   const restoreMutation = useMutation({
     mutationFn: async (checkpointId: string) => {
-      const response = await apiRequest('POST', `/api/checkpoints/${checkpointId}/restore`, {
-        projectId
-      });
-      return response.json();
+      const response = await apiRequest('POST', `/api/projects/${projectId}/checkpoints/${checkpointId}/restore`, {});
+      return response;
     },
     onSuccess: () => {
       toast({ title: 'Checkpoint restored', description: 'Your project has been restored to the selected checkpoint' });
@@ -75,12 +74,11 @@ export function RewindPanel({ projectId, onRestore, className }: RewindPanelProp
 
   const createCheckpointMutation = useMutation({
     mutationFn: async (description: string) => {
-      const response = await apiRequest('POST', '/api/checkpoints', {
-        projectId,
+      const response = await apiRequest('POST', `/api/projects/${projectId}/checkpoints`, {
         description,
         type: 'manual'
       });
-      return response.json();
+      return response;
     },
     onSuccess: () => {
       toast({ title: 'Checkpoint created' });

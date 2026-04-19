@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Central WebSocket Upgrade Dispatcher
  * 

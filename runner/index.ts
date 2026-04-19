@@ -2,6 +2,7 @@ import express, { Request, Response, NextFunction } from 'express';
 import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
 import cors from 'cors';
+import { createProxyMiddleware } from 'http-proxy-middleware';
 import { requireRunnerAuth } from './auth';
 import {
   createWorkspace,
@@ -59,6 +60,32 @@ app.use(
   })
 );
 
+// Transparent proxy — must be registered BEFORE express.json() so the request
+// body stream is still intact when forwarded to the main app on port 5000.
+// Only local runner paths (/health, /admin, /workspaces) bypass the proxy.
+const mainAppPort = process.env.MAIN_APP_PORT ?? '5000';
+const mainAppProxy = createProxyMiddleware({
+  target: `http://localhost:${mainAppPort}`,
+  changeOrigin: false,
+  on: {
+    error: (_err: Error, _req: Request, res: Response) => {
+      if (!res.headersSent) {
+        (res as any).status(502).json({ error: 'Main app unavailable', code: 'PROXY_ERROR' });
+      }
+    },
+  },
+});
+
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const isRunnerPath =
+    req.path === '/health' ||
+    req.path.startsWith('/admin') ||
+    req.path.startsWith('/workspaces');
+  if (isRunnerPath) return next();
+  return mainAppProxy(req, res, next);
+});
+
+// Body parser only for local runner routes (workspace management)
 app.use(express.json({ limit: '2mb' }));
 
 app.get('/health', (_req, res) => {
@@ -78,7 +105,13 @@ app.get('/admin/runs', requireAdminKey, (_req, res) => {
   res.json({ total: runs.length, runs });
 });
 
-app.use(requireRunnerAuth);
+// Only require runner auth for workspace API routes
+app.use((req: Request, res: Response, next: NextFunction) => {
+  if (req.path.startsWith('/workspaces')) {
+    return requireRunnerAuth(req, res, next);
+  }
+  next();
+});
 
 app.post('/workspaces', rateLimit(10), async (req: Request, res: Response) => {
   const { projectId, projectName } = req.body;
@@ -250,15 +283,21 @@ app.post(
 app.use('/workspaces/:workspaceId', createFileRouter());
 app.use('/workspaces/:workspaceId', createPreviewRouter());
 
-app.use((_req, res) => {
-  res.status(404).json({ error: 'Route not found', code: 'NOT_FOUND' });
-});
-
 app.use(globalErrorHandler);
 
 registerTerminalHandler(httpServer, wss);
 
 async function startServer() {
+  // Wait for the main app (port 5000) to bind first so Replit's proxy detects
+  // port 5000 before port 8081. This ensures `waitForPort = 5000` in .replit
+  // routes external traffic correctly to the main app rather than the runner.
+  const startupDelay = parseInt(process.env.RUNNER_STARTUP_DELAY_MS ?? '20000', 10);
+  if (startupDelay > 0) {
+    logger.info(`Startup delay: waiting ${startupDelay}ms for main app to bind port 5000 first...`);
+    await new Promise<void>(resolve => setTimeout(resolve, startupDelay));
+    logger.info('Startup delay complete, binding runner port now.');
+  }
+
   if (isDockerEnabled()) {
     try {
       const dockerMgr = getDockerManager();

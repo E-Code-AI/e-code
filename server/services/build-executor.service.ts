@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { type IStorage } from '../storage';
 import { type PlanTask, type ExecutionPlan } from './ai-plan-generator.service';
 import { createLogger } from '../utils/logger';

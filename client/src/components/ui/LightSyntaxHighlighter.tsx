@@ -19,39 +19,50 @@ import php from 'highlight.js/lib/languages/php';
 import ruby from 'highlight.js/lib/languages/ruby';
 import yaml from 'highlight.js/lib/languages/yaml';
 
-SyntaxHighlighter.registerLanguage('javascript', javascript);
-SyntaxHighlighter.registerLanguage('js', javascript);
-SyntaxHighlighter.registerLanguage('jsx', javascript);
-SyntaxHighlighter.registerLanguage('typescript', typescript);
-SyntaxHighlighter.registerLanguage('ts', typescript);
-SyntaxHighlighter.registerLanguage('tsx', typescript);
-SyntaxHighlighter.registerLanguage('python', python);
-SyntaxHighlighter.registerLanguage('py', python);
-SyntaxHighlighter.registerLanguage('css', css);
-SyntaxHighlighter.registerLanguage('json', json);
-SyntaxHighlighter.registerLanguage('bash', bash);
-SyntaxHighlighter.registerLanguage('sh', bash);
-SyntaxHighlighter.registerLanguage('shell', bash);
-SyntaxHighlighter.registerLanguage('sql', sql);
-SyntaxHighlighter.registerLanguage('html', xml);
-SyntaxHighlighter.registerLanguage('xml', xml);
-SyntaxHighlighter.registerLanguage('markdown', markdown);
-SyntaxHighlighter.registerLanguage('md', markdown);
-SyntaxHighlighter.registerLanguage('java', java);
-SyntaxHighlighter.registerLanguage('go', go);
-SyntaxHighlighter.registerLanguage('golang', go);
-SyntaxHighlighter.registerLanguage('rust', rust);
-SyntaxHighlighter.registerLanguage('rs', rust);
-SyntaxHighlighter.registerLanguage('cpp', cpp);
-SyntaxHighlighter.registerLanguage('c++', cpp);
-SyntaxHighlighter.registerLanguage('c', cpp);
-SyntaxHighlighter.registerLanguage('csharp', csharp);
-SyntaxHighlighter.registerLanguage('cs', csharp);
-SyntaxHighlighter.registerLanguage('php', php);
-SyntaxHighlighter.registerLanguage('ruby', ruby);
-SyntaxHighlighter.registerLanguage('rb', ruby);
-SyntaxHighlighter.registerLanguage('yaml', yaml);
-SyntaxHighlighter.registerLanguage('yml', yaml);
+const _registeredLangs = new Set<string>();
+function safeRegister(name: string, lang: any) {
+  if (_registeredLangs.has(name)) return;
+  try {
+    SyntaxHighlighter.registerLanguage(name, lang);
+    _registeredLangs.add(name);
+  } catch {
+    _registeredLangs.add(name);
+  }
+}
+
+safeRegister('javascript', javascript);
+safeRegister('js', javascript);
+safeRegister('jsx', javascript);
+safeRegister('typescript', typescript);
+safeRegister('ts', typescript);
+safeRegister('tsx', typescript);
+safeRegister('python', python);
+safeRegister('py', python);
+safeRegister('css', css);
+safeRegister('json', json);
+safeRegister('bash', bash);
+safeRegister('sh', bash);
+safeRegister('shell', bash);
+safeRegister('sql', sql);
+safeRegister('html', xml);
+safeRegister('xml', xml);
+safeRegister('markdown', markdown);
+safeRegister('md', markdown);
+safeRegister('java', java);
+safeRegister('go', go);
+safeRegister('golang', go);
+safeRegister('rust', rust);
+safeRegister('rs', rust);
+safeRegister('cpp', cpp);
+safeRegister('c++', cpp);
+safeRegister('c', cpp);
+safeRegister('csharp', csharp);
+safeRegister('cs', csharp);
+safeRegister('php', php);
+safeRegister('ruby', ruby);
+safeRegister('rb', ruby);
+safeRegister('yaml', yaml);
+safeRegister('yml', yaml);
 
 interface LightSyntaxHighlighterProps {
   language: string;

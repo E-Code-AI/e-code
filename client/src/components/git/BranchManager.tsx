@@ -101,7 +101,8 @@ export function BranchManager({
   const queryClient = useQueryClient();
 
   const { data: branchesData, isLoading, error, refetch } = useQuery<BranchesResponse>({
-    queryKey: ['/api/git/branches'],
+    queryKey: [`/api/git/projects/${projectId}/branches`],
+    queryFn: () => apiRequest('GET', `/api/git/${projectId}/branches`),
   });
 
   const branches: GitBranchInfo[] = (branchesData?.branches || []).map(branch => ({
@@ -139,7 +140,7 @@ export function BranchManager({
       });
       setShowCreateDialog(false);
       setNewBranchName('');
-      queryClient.invalidateQueries({ queryKey: ['/api/git/branches'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/git/projects/${projectId}/branches`] });
     },
     onError: (error: Error) => {
       toast({
@@ -162,7 +163,7 @@ export function BranchManager({
       if (onBranchChange) {
         onBranchChange(data.branch);
       }
-      queryClient.invalidateQueries({ queryKey: ['/api/git/branches'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/git/projects/${projectId}/branches`] });
       if ('vibrate' in navigator) {
         navigator.vibrate(10);
       }
@@ -185,7 +186,7 @@ export function BranchManager({
         title: "Branch deleted",
         description: `Deleted branch "${data.deleted}"`,
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/git/branches'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/git/projects/${projectId}/branches`] });
     },
     onError: (error: Error) => {
       toast({
@@ -206,8 +207,8 @@ export function BranchManager({
         title: "Branch merged",
         description: `Merge completed successfully into "${currentBranch?.name || 'current branch'}"`,
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/git/branches'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/git/log'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/git/projects/${projectId}/branches`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/git/projects/${projectId}/log`] });
     },
     onError: (error: Error) => {
       toast({

@@ -21,19 +21,33 @@ const execAsync = promisify(exec);
 const logger = createLogger('runtime');
 const codeExecutor = new CodeExecutor();
 
-// Check if Docker is available
+// Check if Docker daemon is available.
+// On Replit Cloud Run, the Docker CLI is installed but the daemon socket is not
+// exposed, so we probe with `docker ps` (exit 1 when daemon is absent).
+// We cache the result after the first probe.
 let dockerAvailable: boolean | null = null;
+const _dockerProbe: Promise<boolean> = (async () => {
+  try {
+    const result = await Promise.race([
+      execAsync('docker ps --quiet'),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('docker probe timeout')), 3000)
+      )
+    ]);
+    return true;
+  } catch {
+    return false;
+  }
+})().then((ok) => {
+  dockerAvailable = ok;
+  if (ok) logger.info('Docker daemon is available');
+  else logger.warn('Docker daemon not available - using direct execution mode');
+  return ok;
+});
+
 async function isDockerAvailable(): Promise<boolean> {
   if (dockerAvailable !== null) return dockerAvailable;
-  try {
-    await execAsync('docker --version');
-    dockerAvailable = true;
-    logger.info('Docker is available');
-  } catch {
-    dockerAvailable = false;
-    logger.warn('Docker not available - using direct execution mode');
-  }
-  return dockerAvailable;
+  return _dockerProbe;
 }
 
 // Runtime timeout configuration per language (in milliseconds)
@@ -522,96 +536,146 @@ export async function startProject(
         
         // Execute the main file with real-time streaming
         const startTime = Date.now();
+        let stdout = '';
+        let stderr = '';
+        let processEnded = false;
         
         streamLog(projectId, executionId, 'system', `Starting execution...`);
         
-        const execResult = await new Promise<{ stdout: string; stderr: string; exitCode: number }>((resolve) => {
-          let stdout = '';
-          let stderr = '';
-          
-          const proc = spawn(actualCmd, args, {
-            cwd: projectDir || undefined,
-            env: { ...process.env, SANDBOX_EXECUTION: 'true' },
-            shell: needsShell  // Use shell for tsx/ts-node/npm commands for PATH resolution
-          });
-          
-          // Store process in activeRuntimes for proper cleanup
-          const runtime = activeRuntimes.get(projectId);
-          if (runtime) {
-            runtime.process = proc;
-            runtime.pid = proc.pid;
-            runtime.startTime = startTime;
-          }
-          
-          proc.stdout.on('data', (data) => {
-            const line = data.toString();
-            stdout += line;
-            logs.push(line.trim());
-            streamLog(projectId, executionId, 'stdout', line);
-          });
-          
-          proc.stderr.on('data', (data) => {
-            const line = data.toString();
-            stderr += line;
-            logs.push(`[ERROR] ${line.trim()}`);
-            streamLog(projectId, executionId, 'stderr', line);
-          });
-          
-          // Use language-specific timeout
-          const timeout = setTimeout(() => {
+        const proc = spawn(actualCmd, args, {
+          cwd: projectDir || undefined,
+          env: { ...process.env, SANDBOX_EXECUTION: 'true' },
+          shell: needsShell
+        });
+        
+        // Store process in activeRuntimes for proper cleanup
+        const runtime = activeRuntimes.get(projectId);
+        if (runtime) {
+          runtime.process = proc;
+          runtime.pid = proc.pid;
+          runtime.startTime = startTime;
+        }
+        
+        // Stream output in background (continues after HTTP response returns)
+        proc.stdout.on('data', (data) => {
+          const line = data.toString();
+          stdout += line;
+          logs.push(line.trim());
+          streamLog(projectId, executionId, 'stdout', line);
+        });
+        
+        proc.stderr.on('data', (data) => {
+          const line = data.toString();
+          stderr += line;
+          logs.push(`[ERROR] ${line.trim()}`);
+          streamLog(projectId, executionId, 'stderr', line);
+        });
+        
+        // Background cleanup when process eventually closes (not awaited by HTTP handler)
+        const globalTimeout = setTimeout(() => {
+          if (!processEnded) {
             if (proc.pid) killProcessTree(proc.pid);
             else proc.kill('SIGTERM');
             const timeoutMsg = `Execution timed out (${languageTimeout/1000}s limit)`;
             streamLog(projectId, executionId, 'stderr', timeoutMsg);
-            resolve({ stdout, stderr: stderr + '\n' + timeoutMsg, exitCode: 124 });
-          }, languageTimeout);
-          
-          proc.on('close', (code) => {
-            clearTimeout(timeout);
-            const executionTime = Date.now() - startTime;
-            const runtimeLogsService = getRuntimeLogsService();
-            if (runtimeLogsService && executionId) {
-              runtimeLogsService.streamExit(projectId, executionId, code || 0, executionTime);
+          }
+        }, languageTimeout);
+        
+        proc.on('close', (code) => {
+          if (processEnded) return;
+          processEnded = true;
+          clearTimeout(globalTimeout);
+          const exitCode = code || 0;
+          const executionTime = Date.now() - startTime;
+          const runtimeLogsService = getRuntimeLogsService();
+          if (runtimeLogsService && executionId) {
+            runtimeLogsService.streamExit(projectId, executionId, exitCode, executionTime);
+          }
+          if (exitCode === 0) {
+            streamLog(projectId, executionId, 'system', '--- Execution completed successfully ---');
+          } else {
+            const friendlyError = getUserFriendlyError(stderr, language);
+            streamLog(projectId, executionId, 'system', `--- Execution failed (exit code: ${exitCode}) ---`);
+            if (friendlyError) streamLog(projectId, executionId, 'stderr', friendlyError);
+          }
+          activeRuntimes.delete(projectId);
+          try {
+            if (projectDir && fs.existsSync(projectDir)) {
+              fs.rmSync(projectDir, { recursive: true, force: true });
             }
-            resolve({ stdout, stderr, exitCode: code || 0 });
-          });
-          
-          proc.on('error', (err) => {
-            clearTimeout(timeout);
-            const friendlyError = getUserFriendlyError(err.message, language);
-            streamLog(projectId, executionId, 'stderr', friendlyError);
-            resolve({ stdout, stderr: friendlyError, exitCode: 1 });
-          });
+          } catch (_) {}
         });
         
+        proc.on('error', (err) => {
+          if (processEnded) return;
+          processEnded = true;
+          clearTimeout(globalTimeout);
+          const friendlyError = getUserFriendlyError(err.message, language);
+          streamLog(projectId, executionId, 'stderr', friendlyError);
+          activeRuntimes.delete(projectId);
+          try {
+            if (projectDir && fs.existsSync(projectDir)) {
+              fs.rmSync(projectDir, { recursive: true, force: true });
+            }
+          } catch (_) {}
+        });
+        
+        // Wait a short settling window (2.5s) to detect immediate startup failures.
+        // If process is still running after settling, return early — logs stream via WebSocket.
+        // This prevents the HTTP endpoint hanging indefinitely for long-running servers.
+        const SETTLE_MS = 2500;
+        const execResult = await new Promise<{ stdout: string; stderr: string; exitCode: number; earlyExit: boolean }>((resolve) => {
+          let settled = false;
+          
+          const earlyCloseHandler = (code: number | null) => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(settleTimer);
+            resolve({ stdout, stderr, exitCode: code || 0, earlyExit: true });
+          };
+          
+          const earlyErrorHandler = (_err: Error) => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(settleTimer);
+            resolve({ stdout, stderr, exitCode: 1, earlyExit: true });
+          };
+          
+          const settleTimer = setTimeout(() => {
+            if (settled) return;
+            settled = true;
+            proc.removeListener('close', earlyCloseHandler);
+            proc.removeListener('error', earlyErrorHandler);
+            // Process still running — return early, it continues in background
+            resolve({ stdout, stderr, exitCode: 0, earlyExit: false });
+          }, SETTLE_MS);
+          
+          proc.once('close', earlyCloseHandler);
+          proc.once('error', earlyErrorHandler);
+        });
+        
+        if (!execResult.earlyExit) {
+          // Server/long-running process: still alive after settle window, return success now
+          streamLog(projectId, executionId, 'system', 'Process running — streaming logs via console...');
+          return {
+            success: true,
+            status: 'running',
+            logs
+          };
+        }
+        
+        // Script exited within settle window
         if (execResult.exitCode === 0) {
           logs.push(`\n--- Execution completed successfully ---`);
         } else {
           const friendlyError = getUserFriendlyError(execResult.stderr, language);
           logs.push(`\n--- Execution failed (exit code: ${execResult.exitCode}) ---`);
-          if (friendlyError) {
-            logs.push(friendlyError);
-          }
-        }
-        
-        // CRITICAL FIX: Clear runtime after execution completes to allow re-runs
-        // For direct execution mode (single-shot scripts), we don't keep "running" state
-        // because the process has already finished. This allows subsequent Run clicks to work.
-        activeRuntimes.delete(projectId);
-        
-        // Clean up project directory after execution
-        try {
-          if (fs.existsSync(projectDir)) {
-            fs.rmSync(projectDir, { recursive: true, force: true });
-            logger.info(`Cleaned up project directory: ${projectDir}`);
-          }
-        } catch (cleanupErr) {
-          logger.warn(`Failed to cleanup project directory: ${projectDir}`);
+          if (friendlyError) logs.push(friendlyError);
         }
         
         return {
           success: execResult.exitCode === 0,
-          status: 'running', // Return running to indicate it just ran successfully
+          status: 'running',
           logs
         };
         

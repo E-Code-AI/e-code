@@ -1,8 +1,0 @@
-# Docker Compose configuration for PostgreSQL and Redis services
-
-version: '1.0'
-
-settings:
-  enabled: true
-  
-# Add configuration here

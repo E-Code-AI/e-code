@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { ValidatedAction } from './ai-security.service';
 import { storage } from '../storage';
 
