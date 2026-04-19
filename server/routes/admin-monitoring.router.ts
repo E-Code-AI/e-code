@@ -256,6 +256,7 @@ router.delete('/rate-limit-violations/:id', async (req, res) => {
  * Clean up old violation records
  */
 router.post('/rate-limit-violations/cleanup', async (req, res) => {
+  const adminId = (req as any).user?.id ?? 'unknown';
   try {
     const { olderThan = 30 } = req.body; // days
     const cutoffDate = new Date();
@@ -265,13 +266,27 @@ router.post('/rate-limit-violations/cleanup', async (req, res) => {
       .delete(rateLimitViolations)
       .where(sql`${rateLimitViolations.blockedAt} < ${cutoffDate}`);
 
+    const deleted = result.rowCount || 0;
+
+    // Audit log: who deleted what, when. Critical for production incident forensics
+    // (an attacker with admin access could otherwise wipe rate-limit evidence silently).
+    console.log('[AUDIT] admin bulk cleanup of rate_limit_violations', {
+      adminId,
+      deletedCount: deleted,
+      olderThanDays: olderThan,
+      cutoffDate: cutoffDate.toISOString(),
+      timestamp: new Date().toISOString(),
+      ip: req.ip,
+      userAgent: req.headers['user-agent'],
+    });
+
     res.json({
       success: true,
-      deletedCount: result.rowCount || 0,
+      deletedCount: deleted,
       cutoffDate,
     });
   } catch (error) {
-    console.error('Failed to cleanup violations:', error);
+    console.error('[AUDIT] admin bulk cleanup FAILED', { adminId, error: (error as Error).message });
     res.status(500).json({ error: 'Failed to cleanup violations' });
   }
 });

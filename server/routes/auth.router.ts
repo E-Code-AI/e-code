@@ -130,13 +130,18 @@ export class AuthRouter {
           });
         }
 
-        // Check if email is already used
+        // Email uniqueness check — but DO NOT leak account existence to attackers.
+        // Industry pattern: pretend success, send a "someone tried to register" email
+        // out-of-band. Until that infra exists, return a generic registration error so
+        // attackers can't enumerate which emails are registered (account enumeration).
         const existingEmail = await this.storage.getUserByEmail(validatedData.email);
         if (existingEmail) {
+          // TODO(security): send "someone attempted registration with your email" notice
+          // to the existing account, then return 200 to avoid revealing existence at all.
           return res.status(400).json({
-            error: "Email already registered",
-            message: "Email already registered",
-            code: "EMAIL_EXISTS"
+            error: "Registration failed",
+            message: "We couldn't complete your registration. Please try a different username and email, or use the password reset flow if you already have an account.",
+            code: "REGISTRATION_FAILED"
           });
         }
 
@@ -147,7 +152,9 @@ export class AuthRouter {
         const verificationToken = generateEmailVerificationToken();
         const hashedToken = hashToken(verificationToken);
         const expiresAt = new Date();
-        expiresAt.setHours(expiresAt.getHours() + 24); // Expires in 24 hours
+        // 6h is enough for a user to check email and click the link. 24h gave attackers
+        // a wide brute-force window on the verification token.
+        expiresAt.setHours(expiresAt.getHours() + 6);
         
         // Create user with emailVerified set to false (exclude plain password from storage)
         const { password, ...userDataWithoutPassword } = validatedData;
@@ -493,7 +500,9 @@ export class AuthRouter {
         const verificationToken = generateEmailVerificationToken();
         const hashedToken = hashToken(verificationToken);
         const expiresAt = new Date();
-        expiresAt.setHours(expiresAt.getHours() + 24); // Expires in 24 hours
+        // 6h is enough for a user to check email and click the link. 24h gave attackers
+        // a wide brute-force window on the verification token.
+        expiresAt.setHours(expiresAt.getHours() + 6);
         
         // Create user with emailVerified set to false (exclude plain password from storage)
         const { password, ...userDataWithoutPassword } = validatedData;
@@ -908,7 +917,9 @@ export class AuthRouter {
         const verificationToken = generateEmailVerificationToken();
         const hashedToken = hashToken(verificationToken);
         const expiresAt = new Date();
-        expiresAt.setHours(expiresAt.getHours() + 24); // Expires in 24 hours
+        // 6h is enough for a user to check email and click the link. 24h gave attackers
+        // a wide brute-force window on the verification token.
+        expiresAt.setHours(expiresAt.getHours() + 6);
 
         // Delete any existing tokens for this user
         const existingTokens = await db.select()
@@ -1023,7 +1034,9 @@ export class AuthRouter {
         const resetToken = generatePasswordResetToken();
         const hashedToken = hashToken(resetToken);
         const expiresAt = new Date();
-        expiresAt.setHours(expiresAt.getHours() + 2); // Expires in 2 hours
+        // 30 minutes — short enough to limit attack window, long enough for users
+        // to copy the link from their email client. Industry standard (OWASP) is 15-30 min.
+        expiresAt.setMinutes(expiresAt.getMinutes() + 30);
 
         // Delete any existing reset tokens for this user
         const existingTokens = await db.select()

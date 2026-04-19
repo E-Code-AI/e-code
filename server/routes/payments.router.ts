@@ -9,10 +9,15 @@ import { retryFailedQueueItems, getQueueHealthMetrics } from '../workflows/payg-
 const router = Router();
 const startupLogger = createLogger('payments-router-startup');
 
-// Warn if Stripe webhook secret missing in production - webhooks will be disabled but server continues
+// Stripe webhooks must be auth'd by their shared secret. Missing secret in prod =
+// webhooks fail at request time with a hard-to-debug 500. Fail fast at startup instead.
 if (process.env.NODE_ENV === 'production' && !process.env.STRIPE_WEBHOOK_SECRET) {
-  startupLogger.warn('⚠️  STRIPE_WEBHOOK_SECRET is not configured — Stripe webhook processing will be disabled.');
-  startupLogger.warn('⚠️  Add STRIPE_WEBHOOK_SECRET to Replit Secrets to enable payment webhooks.');
+  startupLogger.error('FATAL: STRIPE_WEBHOOK_SECRET is required in production but missing.');
+  startupLogger.error('Set it in your hosting provider secrets (Replit Secrets, env vars, etc.) before deploying.');
+  throw new Error('STRIPE_WEBHOOK_SECRET is required in production');
+}
+if (process.env.NODE_ENV !== 'production' && !process.env.STRIPE_WEBHOOK_SECRET) {
+  startupLogger.warn('STRIPE_WEBHOOK_SECRET not set — Stripe webhook processing will reject requests in dev.');
 }
 
 const adminPaymentRateLimiter = rateLimit({
@@ -110,13 +115,26 @@ router.post('/cancel-subscription', ensureAuthenticated, async (req: Request, re
 });
 
 // Update subscription
+const VALID_PLAN_IDS = new Set([
+  'core', 'core_yearly',
+  'teams', 'teams_yearly',
+  'enterprise', 'enterprise_yearly',
+]);
 router.post('/update-subscription', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const userId = req.user!.id;
     const { newPlanId } = req.body;
 
-    if (!newPlanId) {
+    if (!newPlanId || typeof newPlanId !== 'string') {
       return res.status(400).json({ error: 'New plan ID is required' });
+    }
+
+    // Defense-in-depth: even though paymentService.updateSubscription validates against
+    // its internal plans Map, refuse anything not on this hardcoded whitelist before
+    // hitting the service. Prevents privilege escalation if a test plan ever leaks
+    // into the Map (e.g., 'free_unlimited').
+    if (!VALID_PLAN_IDS.has(newPlanId)) {
+      return res.status(400).json({ error: 'Invalid plan ID' });
     }
 
     const subscription = await paymentService.updateSubscription(userId, newPlanId);
