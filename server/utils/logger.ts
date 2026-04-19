@@ -78,7 +78,22 @@ function sanitizeValue(value: any, depth = 0): any {
 }
 
 const sanitizeFormat = winston.format((info) => {
-  return sanitizeValue(info);
+  // IMPORTANT: must mutate info in place — returning a fresh object loses
+  // Winston's internal Symbol-keyed metadata ([LEVEL], [MESSAGE], [SPLAT])
+  // and silently drops every log from this service.
+  for (const [key, val] of Object.entries(info)) {
+    if (key === 'level' || key === 'message') continue;
+    const keyLower = key.toLowerCase();
+    if (SENSITIVE_FIELDS.some(ff => keyLower.includes(ff.toLowerCase()))) {
+      info[key] = '[REDACTED]';
+    } else {
+      info[key] = sanitizeValue(val, 1);
+    }
+  }
+  if (typeof info.message === 'string') {
+    info.message = sanitizeValue(info.message, 1);
+  }
+  return info;
 });
 
 // Create Winston logger instance

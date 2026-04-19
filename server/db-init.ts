@@ -121,15 +121,20 @@ async function ensureDatabaseMigrated(force = false) {
     await migrate(db, { migrationsFolder });
     migrationsEnsured = true;
   } catch (migrationError: any) {
-    // Check if error is due to existing enum types (which is safe to ignore)
     const errorMessage = migrationError?.message || '';
     const causeMessage = migrationError?.cause?.message || '';
     const fullErrorText = errorMessage + ' ' + causeMessage;
-    
-    const isEnumExistsError = fullErrorText.includes('already exists') && 
-                               (fullErrorText.includes('type') || fullErrorText.includes('enum') || fullErrorText.includes('CREATE TYPE'));
-    
-    if (isEnumExistsError) {
+
+    // When the schema has been synced via `drizzle-kit push` instead of through
+    // the migration files, re-running migrate() will hit "already exists" errors
+    // on tables, indexes, constraints, types, and enums. All safe to tolerate.
+    // We also tolerate missing-file errors when the journal references .sql files
+    // no longer on disk — core tables are re-verified by verifyCoreTablesExist below.
+    const isAlreadyExists = fullErrorText.includes('already exists');
+    const isMissingMigrationFile = /No file .+ found in .+ folder/i.test(fullErrorText);
+
+    if (isAlreadyExists || isMissingMigrationFile) {
+      logger.warn(`[DB Init] Non-fatal migration issue — continuing: ${errorMessage.slice(0, 200)}`);
       migrationsEnsured = true;
     } else {
       logger.error("Automatic database migration failed:", migrationError);

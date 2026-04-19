@@ -13,28 +13,63 @@
       "idx": 1,
       "version": "7",
       "when": 1754571038706,
-      "tag": "0001_newsletter_system",
+      "tag": "20250101000001_add_ai_models",
       "breakpoints": true
     },
     {
       "idx": 2,
       "version": "7",
       "when": 1754571039706,
-      "tag": "0002_notifications_system",
+      "tag": "20250101000002_newsletter_system",
       "breakpoints": true
     },
     {
       "idx": 3,
       "version": "7",
       "when": 1754571040706,
-      "tag": "0003_notification_preferences_fk_fix",
+      "tag": "20250102000001_community_system",
       "breakpoints": true
     },
     {
       "idx": 4,
       "version": "7",
       "when": 1754571041706,
+      "tag": "20250102000002_notifications_system",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1754571042706,
+      "tag": "20250103000001_align_notification_preferences_user_id",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1754571043706,
+      "tag": "20250103000002_notification_preferences_fk_fix",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1754571044706,
       "tag": "0004_community_post_metadata",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1754571045706,
+      "tag": "0005_add_missing_community_columns",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1754571046706,
+      "tag": "20260312000001_stripe_webhook_events",
       "breakpoints": true
     }
   ]
