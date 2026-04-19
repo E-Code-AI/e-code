@@ -61,3 +61,13 @@ sed*
 backups/*.sql
 
 .env.test
+
+# Secrets — ne jamais committer
+.env
+.env.local
+.env.production
+.env.staging
+.env.replit
+.env.deploy
+.env.*.local
+.pgdata/
