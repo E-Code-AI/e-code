@@ -21,8 +21,14 @@ export async function collectStorageMetrics(): Promise<void> {
 
     let databaseSizeBytes = '0';
     try {
-      const sizeResult = await db.execute(sql`SELECT pg_database_size(current_database()) as size`);
-      databaseSizeBytes = String(sizeResult.rows[0]?.size || 0);
+      // db.execute() with drizzle-orm/postgres-js returns the raw array directly
+      // (not { rows: [...] } like with node-postgres). Handle both shapes
+      // defensively so this job works regardless of the underlying driver.
+      const sizeResult: any = await db.execute(sql`SELECT pg_database_size(current_database()) as size`);
+      const firstRow = Array.isArray(sizeResult)
+        ? sizeResult[0]
+        : sizeResult?.rows?.[0];
+      databaseSizeBytes = String(firstRow?.size ?? 0);
     } catch (e) {
       logger.error('Failed to get database size:', e);
     }
