@@ -105,3 +105,15 @@ DB_POOL_SIZE = "25"
 path = "scripts/post-merge.sh"
 timeoutMs = 20000
 
+[[ports]]
+localPort = 5000
+externalPort = 5000
+
+[[ports]]
+localPort = 8081
+externalPort = 80
+
+[[ports]]
+localPort = 24678
+externalPort = 3000
+
