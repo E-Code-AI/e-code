@@ -342,7 +342,10 @@
     "bufferutil": "^4.0.8"
   },
   "overrides": {
-    "@tootallnate/once": "^3.0.1"
+    "@tootallnate/once": "^3.0.1",
+    "protobufjs": "^7.5.5",
+    "semver": "^7.6.3",
+    "cross-spawn": "^7.0.5"
   },
   "build": {
     "appId": "com.ecode.app",
