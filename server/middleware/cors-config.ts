@@ -45,13 +45,17 @@ function getAllowedOrigins(): string[] {
     if (process.env.REPLIT_DEV_DOMAIN) {
       allowedOrigins.push(`https://${process.env.REPLIT_DEV_DOMAIN}`);
     }
+    // Dev: accept any localhost port so auto-assigned ports (when 5000 is taken
+    // by AirPlay Receiver on macOS, etc.) do not break CORS. Still loopback-only.
     allowedOrigins.push(
       'http://localhost:3000',
       'http://localhost:5000',
       'http://localhost:5173',
       'http://127.0.0.1:3000',
       'http://127.0.0.1:5000',
-      'http://127.0.0.1:5173'
+      'http://127.0.0.1:5173',
+      /^http:\/\/localhost(:[0-9]+)?$/ as any,
+      /^http:\/\/127\.0\.0\.1(:[0-9]+)?$/ as any
     );
   }
 
