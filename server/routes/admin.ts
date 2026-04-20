@@ -873,7 +873,18 @@ router.post('/docs', async (req, res) => {
 
 router.patch('/docs/:id', async (req, res) => {
   try {
-    const doc = await adminService.updateDocumentation(parseInt(req.params.id), req.body, getAuthUser(req).id.toString());
+    // Inline validation since the withValidation() wrapper is defined but unused
+    // across this router. Apply the registry schema to params + body before touching
+    // the service, otherwise raw user input flows straight into the DB.
+    const idParse = numericIdParamSchema.safeParse(req.params);
+    if (!idParse.success) {
+      return res.status(400).json({ message: 'Invalid id', issues: idParse.error.issues });
+    }
+    const bodyParse = updateDocSchema.safeParse(req.body);
+    if (!bodyParse.success) {
+      return res.status(400).json({ message: 'Invalid body', issues: bodyParse.error.issues });
+    }
+    const doc = await adminService.updateDocumentation(idParse.data.id, bodyParse.data, getAuthUser(req).id.toString());
     if (!doc) {
       return res.status(404).json({ message: 'Documentation not found' });
     }
