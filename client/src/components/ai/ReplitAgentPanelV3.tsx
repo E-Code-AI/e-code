@@ -412,16 +412,8 @@ export function ReplitAgentPanelV3({
   const { bootstrapTimedOut, bootstrapWarning, startBootstrapTimer, setBootstrapTimedOut, setBootstrapWarning, clearBootstrapTimers } = useAutonomousBuildStore();
   const bootstrapFailed = bootstrapTimedOut;
   
-  // DEBUG: Log component render with all initialization state (dev only)
-  devLog('[ReplitAgentPanelV3] Component render:', {
-    projectId,
-    mode,
-    isBootstrapping,
-    hasBootstrapToken: !!bootstrapToken,
-    bootstrapTimedOut,
-    conversationId,
-    isInitializing: isBootstrapping && !conversationId && !bootstrapFailed
-  });
+  // DEBUG: Render state log — DISABLED. Was firing every render and drowning console
+  // (10000+ log lines/sec obscured real errors). Re-enable behind a URL flag if needed.
   
   // Zustand store for message persistence across tab switches
   const { 
@@ -486,14 +478,7 @@ export function ReplitAgentPanelV3({
     timestamp: new Date()
   }];
   
-  // DEBUG: Log message count for debugging (dev only)
-  devLog('[ReplitAgentPanelV3] 📊 Messages:', {
-    effectiveConversationId,
-    conversationId,
-    isUsingTempConversation,
-    messageCount: messages.length,
-    firstMessageId: messages[0]?.id
-  });
+  // DEBUG: Messages log — DISABLED. Same reason as the Component render log above.
   
   // ✅ FIX (Jan 2026): Wrapper to update messages in zustand store
   // Uses effectiveConversationId to support Replit-style always-ready chat
