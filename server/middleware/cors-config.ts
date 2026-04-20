@@ -53,9 +53,7 @@ function getAllowedOrigins(): string[] {
       'http://localhost:5173',
       'http://127.0.0.1:3000',
       'http://127.0.0.1:5000',
-      'http://127.0.0.1:5173',
-      /^http:\/\/localhost(:[0-9]+)?$/ as any,
-      /^http:\/\/127\.0\.0\.1(:[0-9]+)?$/ as any
+      'http://127.0.0.1:5173'
     );
   }
 
@@ -116,6 +114,12 @@ export function createCorsMiddleware(): cors.CorsOptions {
       }
 
       if (!isProduction) {
+        // Dev: always allow any http://localhost:* and http://127.0.0.1:*
+        // (server picks auto-assigned ports when 5000 is taken by AirPlay etc.)
+        if (/^http:\/\/localhost(:\d+)?$/.test(origin) || /^http:\/\/127\.0\.0\.1(:\d+)?$/.test(origin)) {
+          return callback(null, true);
+        }
+
         const originWithoutPort = origin.replace(/:\d+$/, '');
         if (originWithoutPort !== origin && allowedOrigins.includes(originWithoutPort)) {
           return callback(null, true);
