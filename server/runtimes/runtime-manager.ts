@@ -315,8 +315,9 @@ export async function startProject(
           const allDeps = { ...(pkg.dependencies || {}), ...(pkg.devDependencies || {}) };
           if (allDeps.vite) {
             vitePort = 5174;
-            runCommand = `npm install && npx vite --host 0.0.0.0 --port ${vitePort}`;
-            logger.info(`[Runtime] Vite detected — launching dev server on port ${vitePort}`);
+            const base = `/preview/${projectId}/${vitePort}/`;
+            runCommand = `npm install && npx vite --host 0.0.0.0 --port ${vitePort} --base ${base}`;
+            logger.info(`[Runtime] Vite detected — launching dev server on port ${vitePort} base ${base}`);
           }
         } catch (_) {}
       }

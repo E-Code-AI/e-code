@@ -208,7 +208,9 @@ class PreviewWebSocketService {
     createListener('preview:ready', (data) => this.broadcastToProject(data.projectId, {
       type: 'preview:ready',
       projectId: data.projectId,
-      port: data.primaryPort,
+      ports: data.ports,
+      primaryPort: data.primaryPort,
+      services: data.services,
       url: `/preview/${data.projectId}/`,
       status: 'running'
     }));
@@ -279,14 +281,16 @@ class PreviewWebSocketService {
           projectId: projectId
         }));
         
-        // Send current preview status
-        const preview = previewService.getPreview(projectId);
+        // Send current preview status — getPreview expects a string key
+        const preview = previewService.getPreview(String(projectId));
         if (preview) {
           client.ws.send(JSON.stringify({
             type: 'preview:status',
             projectId: projectId,
             status: preview.status,
-            port: preview.primaryPort,
+            ports: preview.ports,
+            primaryPort: preview.primaryPort,
+            services: preview.exposedServices,
             url: preview.status === 'running' ? `/preview/${projectId}/` : null,
             logs: preview.logs || []
           }));
