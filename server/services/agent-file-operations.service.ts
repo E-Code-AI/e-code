@@ -105,8 +105,22 @@ export class AgentFileOperationsService extends EventEmitter {
       
       // Security checks
       this.validateFilePath(filePath);
+
+      // FIX (Apr 21 2026): bare scaffold dirs -> mkdir, skip file write
+      const __fn = path.basename(filePath).toLowerCase();
+      const __ext = path.extname(__fn);
+      const __scaffoldDirs = new Set(['backend','frontend','src','app','server','client','public','api','components','pages','routes','controllers','models','views','services','utils','helpers','hooks','lib','libs','config','configs','middleware','middlewares','tests','test','docs','scripts','assets','static','styles','data','types','interfaces','modules','features','store','schemas','migrations','bin','dist','build']);
+      if (!__ext && (__scaffoldDirs.has(__fn) || filePath.endsWith('/'))) {
+        const __abs = this.getAbsolutePath(filePath, session.context?.workingDirectory || '.');
+        await fs.mkdir(__abs, { recursive: true });
+        const [__op] = await db.insert(fileOperations).values({ sessionId, operationType: 'file_create', filePath, content: '', checksum: this.calculateChecksum(''), status: 'completed', executedAt: new Date(), completedAt: new Date(), metadata: { fileSize: 0, mimeType: 'inode/directory', encoding: 'utf-8', isDirectory: true } }).returning();
+        await this.createAuditEntry(sessionId, userId, 'file_create', filePath);
+        this.emitProgress(sessionId, 'complete', 'file_create', filePath, { isDirectory: true });
+        return __op;
+      }
+
       this.validateFileSize(content);
-      
+
       // Get absolute path
       const absolutePath = this.getAbsolutePath(filePath, session.context?.workingDirectory || '.');
       
@@ -634,7 +648,7 @@ export class AgentFileOperationsService extends EventEmitter {
     // Handle files with no extension (like Dockerfile, Makefile, etc.)
     if (!ext && !this.ALLOWED_SPECIAL_FILES.includes(fileName)) {
       // Allow common extensionless config files
-      const allowedNoExt = ['dockerfile', 'makefile', 'procfile', 'gemfile', 'rakefile', 'readme', 'license', 'changelog'];
+      const allowedNoExt = ['dockerfile','makefile','procfile','gemfile','rakefile','readme','license','changelog','backend','frontend','src','app','server','client','public','api','components','pages','routes','controllers','models','views','services','utils','helpers','hooks','lib','libs','config','configs','middleware','middlewares','tests','test','docs','scripts','assets','static','styles','data','types','interfaces','modules','features','store','schemas','migrations','bin','dist','build'];
       if (!allowedNoExt.includes(fileName)) {
         throw new Error(`File without allowed extension: ${fileName}`);
       }
