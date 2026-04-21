@@ -708,12 +708,13 @@ export class PreviewService {
     }
     
     let startCommand: string[] = [];
-    if (frameworkInfo.packageJson.scripts?.dev) {
+    if (frameworkInfo.hasVite) {
+      // Always use explicit port and host so the proxy can reach vite
+      startCommand = ['npx', 'vite', '--port', port.toString(), '--host', '0.0.0.0'];
+    } else if (frameworkInfo.packageJson.scripts?.dev) {
       startCommand = ['npm', 'run', 'dev'];
     } else if (frameworkInfo.packageJson.scripts?.start) {
       startCommand = ['npm', 'start'];
-    } else if (frameworkInfo.hasVite) {
-      startCommand = ['npx', 'vite', '--port', port.toString(), '--host'];
     } else {
       await this.startStaticServer(preview, previewPath);
       return;
