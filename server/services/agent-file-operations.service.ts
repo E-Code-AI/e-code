@@ -106,6 +106,59 @@ export class AgentFileOperationsService extends EventEmitter {
       // Security checks
       this.validateFilePath(filePath);
 
+      // ✅ FIX (Apr 21 2026): For root-level index.ts/index.js of a Vite/React SPA
+      // project, replace content with a launcher that runs `npm install && vite dev`.
+      // This works in the existing `tsx index.ts` direct-execution path.
+      if ((filePath === 'index.ts' || filePath === 'index.js') && content && !content.includes('[launcher]')) {
+        try {
+          const contextWithProject2 = session.context as { projectId?: number } | undefined;
+          const pid = contextWithProject2?.projectId;
+          if (pid) {
+            const pkgRows = await db.select().from(files).where(and(
+              eq(files.projectId, pid),
+              eq(files.path, 'package.json')
+            )).limit(1);
+            const pkgRow = pkgRows[0];
+            if (pkgRow && pkgRow.content) {
+              const pkg = JSON.parse(pkgRow.content);
+              const deps = Object.assign({}, pkg.dependencies || {}, pkg.devDependencies || {});
+              const hasVite = !!deps.vite;
+              const hasDev = pkg.scripts && pkg.scripts.dev;
+              if (hasVite && hasDev) {
+                logger.info(`[FileOps] Overriding ${filePath} with Vite launcher for project ${pid}`);
+                content = [
+                  "// Auto-generated launcher \u2014 installs deps then spawns vite dev",
+                  "import { spawnSync, spawn } from 'child_process';",
+                  "import { existsSync } from 'fs';",
+                  "import { join, dirname } from 'path';",
+                  "import { fileURLToPath } from 'url';",
+                  "",
+                  "const __file = fileURLToPath(import.meta.url);",
+                  "const root = dirname(__file);",
+                  "",
+                  "if (!existsSync(join(root, 'node_modules'))) {",
+                  "  console.log('[launcher] Installing dependencies (runs once)...');",
+                  "  const r = spawnSync('npm', ['install','--prefer-offline','--no-audit','--progress=false','--loglevel=error'], { stdio: 'inherit', cwd: root });",
+                  "  if (r.status !== 0) { console.error('[launcher] npm install failed'); process.exit(1); }",
+                  "}",
+                  "",
+                  "const port = process.env.VITE_PREVIEW_PORT || '5174';",
+                  "console.log('[launcher] Starting vite dev on port ' + port);",
+                  "const vite = spawn('npx', ['vite','--host','0.0.0.0','--port', port], { stdio: 'inherit', cwd: root });",
+                  "vite.on('exit', (code) => process.exit(code || 0));",
+                  "process.on('SIGTERM', () => vite.kill('SIGTERM'));",
+                  "process.on('SIGINT',  () => vite.kill('SIGINT'));",
+                  ""
+                ].join('\n');
+              }
+            }
+          }
+        } catch (launcherErr: any) {
+          logger.warn(`[FileOps] Vite launcher override failed: ${launcherErr.message}`);
+        }
+      }
+
+
       // FIX (Apr 21 2026): bare scaffold dirs -> mkdir, skip file write
       const __fn = path.basename(filePath).toLowerCase();
       const __ext = path.extname(__fn);
