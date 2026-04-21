@@ -41,6 +41,11 @@ export function CollaborationPresence({
   // Fetch active collaborators - REAL BACKEND
   const { data: activeCollaborators } = useQuery<Collaborator[]>({
     queryKey: [`/api/collaboration/active`, projectId],
+    queryFn: async () => {
+      const res = await fetch(`/api/collaboration/active?projectId=${projectId}`, { credentials: 'include' });
+      if (!res.ok) return [];
+      return res.json();
+    },
     refetchInterval: 30000, // RATE LIMIT FIX: Increased from 5s to 30s
     refetchIntervalInBackground: false,
   });
