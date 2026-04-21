@@ -2292,7 +2292,7 @@ export function ReplitAgentPanelV3({
   const handleRestoreCheckpoint = useCallback(async (checkpointId: number) => {
     setIsRestoringCheckpoint(true);
     try {
-      await apiRequest('POST', `/api/auto-checkpoints/${checkpointId}/restore`, {
+      await apiRequest('POST', `/api/projects/${projectId}/checkpoints/${checkpointId}/restore`, {
         createBackup: true,
         includeDatabase: false
       });
