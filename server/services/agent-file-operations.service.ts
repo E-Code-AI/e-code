@@ -52,7 +52,7 @@ export class AgentFileOperationsService extends EventEmitter {
     '.babelrc', '.nvmrc', '.npmrc', '.yarnrc',
     // Backend languages
     '.py', '.java', '.cpp', '.c', '.h', '.hpp', '.go', '.rs', '.rb', '.php', '.sh', '.bash', '.zsh',
-    '.sql', '.graphql', '.gql', '.prisma',
+    '.sql', '.sqlite', '.sqlite3', '.db', '.graphql', '.gql', '.prisma',
     // Other
     '.map', '.lock', '.log', '.csv', '.tsv', '.ejs', '.hbs', '.pug', '.njk',
     '.dockerfile', '.dockerignore', '.makefile', '.cmake'
