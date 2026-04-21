@@ -231,11 +231,59 @@ Generate the complete ${fileName} file:`;
   /**
    * Batch expand multiple outlines
    */
+  
+  // ✅ FIX (Apr 21 2026): For Vite/React SPA projects, override root index.ts with a
+  // launcher that runs `npm install && vite dev`. This bypasses the runtime-manager's
+  // single-shot tsx execution and makes the preview actually work.
+  private viteSpaLauncher(port: string = '5174'): string {
+    return [
+      "// Auto-generated launcher — installs deps then spawns vite dev",
+      "import { spawnSync, spawn } from 'child_process';",
+      "import { existsSync } from 'fs';",
+      "import { join, dirname } from 'path';",
+      "import { fileURLToPath } from 'url';",
+      "",
+      "const __file = fileURLToPath(import.meta.url);",
+      "const root = dirname(__file);",
+      "",
+      "if (!existsSync(join(root, 'node_modules'))) {",
+      "  console.log('[launcher] Installing dependencies (this runs once)...');",
+      "  const r = spawnSync('npm', ['install','--prefer-offline','--no-audit','--progress=false','--loglevel=error'], { stdio: 'inherit', cwd: root });",
+      "  if (r.status !== 0) { console.error('[launcher] npm install failed'); process.exit(1); }",
+      "}",
+      "",
+      "const port = process.env.VITE_PREVIEW_PORT || '" + port + "';",
+      "console.log('[launcher] Starting vite dev on port ' + port + '...');",
+      "const vite = spawn('npx', ['vite','--host','0.0.0.0','--port', port, '--strictPort=false'], { stdio: 'inherit', cwd: root });",
+      "vite.on('exit', (code) => process.exit(code || 0));",
+      "process.on('SIGTERM', () => vite.kill('SIGTERM'));",
+      "process.on('SIGINT',  () => vite.kill('SIGINT'));",
+      ""
+    ].join('\n');
+  }
+
+  private overrideLauncherForVite(files: GeneratedFile[]): GeneratedFile[] {
+    const pkg = files.find(f => f.path === 'package.json');
+    if (!pkg) return files;
+    let parsed: any;
+    try { parsed = JSON.parse(pkg.content); } catch { return files; }
+    const deps = Object.assign({}, parsed.dependencies || {}, parsed.devDependencies || {});
+    const hasVite = !!deps.vite;
+    const hasDev = parsed.scripts && parsed.scripts.dev;
+    if (!hasVite || !hasDev) return files;
+    const idxPath = files.some(f => f.path === 'index.ts') ? 'index.ts'
+                  : files.some(f => f.path === 'index.js') ? 'index.js'
+                  : null;
+    const launcher = this.viteSpaLauncher();
+    if (idxPath) {
+      return files.map(f => f.path === idxPath ? { ...f, content: launcher } : f);
+    }
+    return [...files, { path: 'index.ts', content: launcher, language: 'typescript' }];
+  }
+
   async expandOutlines(outlines: FileOutline[]): Promise<GeneratedFile[]> {
-    const results = await Promise.all(
-      outlines.map(outline => this.expandOutline(outline))
-    );
-    return results;
+    const results = await Promise.all(outlines.map(outline => this.expandOutline(outline)));
+    return this.overrideLauncherForVite(results);
   }
 
   /**
