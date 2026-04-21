@@ -36,7 +36,7 @@ export function PreviewPanel({ projectId, projectUrl, className }: PreviewPanelP
 
   // Fetch deployment status
   const { data: deployment } = useQuery<Deployment>({
-    queryKey: [`/api/deployment/${projectId}`],
+    queryKey: [`/api/projects/${projectId}/deployment/latest`],
   });
 
   const handleRefresh = () => {
