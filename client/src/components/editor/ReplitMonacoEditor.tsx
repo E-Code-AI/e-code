@@ -170,7 +170,7 @@ export function ReplitMonacoEditor({
 
   const saveFileMutation = useMutation({
     mutationFn: async (content: string) => {
-      return apiRequest('PUT', `/api/files/${fileId}`, { content });
+      return apiRequest('PUT', `/api/projects/${fileId}`, { content });
     },
     onSuccess: () => {
       setHasUnsavedChanges(false);

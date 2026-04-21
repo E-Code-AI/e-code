@@ -142,12 +142,8 @@ export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string })
   const [newWatchExpression, setNewWatchExpression] = useState('');
 
   const { data: session, refetch, isLoading } = useQuery<DebugSession>({
-    queryKey: ['/api/debug/session', projectId],
-    queryFn: async () => {
-      const res = await fetch(`/api/debug/session/${projectId}`);
-      if (!res.ok) throw new Error('Failed to fetch debug session');
-      return res.json();
-    },
+    queryKey: [`/api/debug/session/${projectId}`],
+    enabled: !!projectId,
   });
 
   const startDebugMutation = useMutation({
@@ -599,7 +595,7 @@ export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string })
                       </span>
                       <span className="text-[15px] leading-[20px] text-muted-foreground font-mono">
                         {isRunning && isPaused ? (
-                          <span className="text-primary">"value"</span>
+                          <span className="text-yellow-500">…</span>
                         ) : (
                           <span className="text-muted-foreground">-</span>
                         )}

@@ -379,7 +379,7 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
       : ['/api/projects', projectId, 'data', selectedTable, 'page', currentPage],
     queryFn: async () => {
       const endpoint = isAdmin
-        ? `/api/admin/database/${selectedTable}/data?page=${currentPage}&limit=50`
+        ? `/api/admin/database/table/${selectedTable}/data?page=${currentPage}&limit=50`
         : `/api/projects/${projectId}/data/${selectedTable}/data?page=${currentPage}&limit=50`;
       const res = await apiRequest('GET', endpoint);
       return res;
@@ -394,7 +394,7 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
       : ['/api/projects', projectId, 'data', selectedTable, 'schema'],
     queryFn: async () => {
       const endpoint = isAdmin
-        ? `/api/admin/database/${selectedTable}/schema`
+        ? `/api/admin/database/table/${selectedTable}/schema`
         : `/api/projects/${projectId}/data/${selectedTable}/schema`;
       const response = await apiRequest('GET', endpoint);
       return response;

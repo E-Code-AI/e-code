@@ -407,6 +407,30 @@ router.delete('/deployments/:deploymentId', async (req, res) => {
   }
 });
 
+// Stop deployment
+router.post('/deployments/:deploymentId/stop', async (req, res) => {
+  try {
+    const { deploymentId } = req.params;
+    await deploymentManager.updateDeployment(deploymentId, { status: 'stopped' } as any);
+    res.json({ success: true, message: 'Deployment stopped' });
+  } catch (error) {
+    console.error('Stop deployment error:', error);
+    res.status(500).json({ success: false, message: error instanceof Error ? error.message : 'Failed to stop deployment' });
+  }
+});
+
+// Restart deployment
+router.post('/deployments/:deploymentId/restart', async (req, res) => {
+  try {
+    const { deploymentId } = req.params;
+    await deploymentManager.updateDeployment(deploymentId, { status: 'deploying' } as any);
+    res.json({ success: true, message: 'Deployment restarting' });
+  } catch (error) {
+    console.error('Restart deployment error:', error);
+    res.status(500).json({ success: false, message: error instanceof Error ? error.message : 'Failed to restart deployment' });
+  }
+});
+
 // Scale deployment with autoscaling guards
 router.post('/deployments/:deploymentId/scale', async (req, res) => {
   try {

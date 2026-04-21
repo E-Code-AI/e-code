@@ -112,16 +112,23 @@ export function ReplitTerminalPanel({ projectId, className }: ReplitTerminalPane
     }
   }, [theme]);
 
-  const connectWebSocket = useCallback(() => {
+  const connectWebSocket = useCallback(async () => {
     if (!projectId) return;
-    
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    // Use project ID explicitly in the URL
-    const wsUrl = `${protocol}//${window.location.host}/api/terminal/ws?projectId=${projectId}`;
-    
+
     setIsConnecting(true);
-    
+
     try {
+      // Get a shell session ID first
+      const sessionRes = await fetch('/api/shell/sessions', {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (!sessionRes.ok) throw new Error('Failed to create shell session');
+      const { sessionId } = await sessionRes.json();
+
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsUrl = `${protocol}//${window.location.host}/shell?sessionId=${sessionId}&projectId=${projectId}`;
+
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
       

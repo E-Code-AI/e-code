@@ -15,6 +15,7 @@ import { useDebounce } from '@/hooks/use-debounce';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { 
   Select, 
   SelectContent, 
@@ -131,6 +132,8 @@ const ProjectsPage = () => {
   const { toast } = useToast();
   const { user, isLoading: authLoading } = useAuth();
   const [newProjectOpen, setNewProjectOpen] = useState(false);
+  const [appBrief, setAppBrief] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
   
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -240,16 +243,32 @@ const ProjectsPage = () => {
     mutationFn: async (values: ProjectFormValues) => {
       return await apiRequest('POST', '/api/projects', values);
     },
-    onSuccess: (data: any) => {
+    onSuccess: async (data: any) => {
       queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
       setNewProjectOpen(false);
       form.reset();
       const projectId = data?.id || data?.project?.id;
-      if (projectId) {
-        setLocation(`/ide/${projectId}`);
-      } else {
+      if (!projectId) {
         toast({ title: "Success", description: "Project created successfully", variant: "success" });
+        return;
       }
+      if (appBrief.trim()) {
+        setIsGenerating(true);
+        toast({ title: "Generating your app…", description: "The AI is building your project files." });
+        try {
+          await apiRequest('POST', '/api/agent/autonomous/build', {
+            projectId,
+            prompt: appBrief.trim(),
+          });
+          toast({ title: "App generated!", description: "Your project is ready in the IDE.", variant: "success" });
+        } catch (err: any) {
+          toast({ title: "Generation failed", description: err.message || "Could not generate app files.", variant: "destructive" });
+        } finally {
+          setIsGenerating(false);
+          setAppBrief('');
+        }
+      }
+      setLocation(`/ide/${projectId}`);
     },
     onError: (error: any) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -393,7 +412,7 @@ const ProjectsPage = () => {
                     <DialogHeader>
                       <DialogTitle className="text-[var(--ecode-text)]">Create New Project</DialogTitle>
                       <DialogDescription className="text-[var(--ecode-text-muted)]">
-                        Set up a new project with your preferred configuration
+                        Describe your app and E-Code will generate it for you automatically.
                       </DialogDescription>
                     </DialogHeader>
                     <Form {...form}>
@@ -501,18 +520,34 @@ const ProjectsPage = () => {
                             </FormItem>
                           )}
                         />
+                        {/* App brief field */}
+                        <div className="space-y-1.5">
+                          <Label className="text-[var(--ecode-text)] text-sm font-medium">
+                            What should your app do? <span className="text-[var(--ecode-text-muted)] font-normal">(optional — AI will generate it)</span>
+                          </Label>
+                          <Textarea
+                            placeholder="e.g. A todo app with drag-and-drop, local storage persistence, and dark mode. Use React and Tailwind CSS."
+                            value={appBrief}
+                            onChange={e => setAppBrief(e.target.value)}
+                            rows={3}
+                            className="border-[var(--ecode-border)] bg-[var(--ecode-surface)] text-[var(--ecode-text)] focus:ring-[var(--ecode-accent)]/20 focus:border-[var(--ecode-accent)]/40 resize-none text-sm"
+                            data-testid="input-app-brief"
+                          />
+                        </div>
                         <DialogFooter>
-                          <Button 
-                            type="submit" 
-                            disabled={createProjectMutation.isPending}
+                          <Button
+                            type="submit"
+                            disabled={createProjectMutation.isPending || isGenerating}
                             className="bg-[var(--ecode-accent)] hover:bg-[var(--ecode-accent-hover)] text-white"
                             data-testid="button-create-project"
                           >
-                            {createProjectMutation.isPending ? (
+                            {(createProjectMutation.isPending || isGenerating) ? (
                               <>
                                 <ECodeSpinner className="mr-2" />
-                                Creating...
+                                {isGenerating ? 'Generating app…' : 'Creating…'}
                               </>
+                            ) : appBrief.trim() ? (
+                              'Create & Generate App'
                             ) : (
                               'Create Project'
                             )}
