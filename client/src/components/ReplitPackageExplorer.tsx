@@ -76,29 +76,34 @@ export function ReplitPackageExplorer({ projectId, className }: PackageExplorerP
 
   // Fetch installed packages
   const { data: installedPackages = {} } = useQuery<Record<string, PackageInfo>>({
-    queryKey: [`/api/packages/${projectId}`]
+    queryKey: [`/api/packages/${projectId}/list`]
   });
 
-  // Fetch package tree
+  // Fetch package tree (no dedicated endpoint — reuse list)
   const { data: packageTree } = useQuery<PackageNode>({
-    queryKey: [`/api/packages/${projectId}/tree`]
+    queryKey: [`/api/packages/${projectId}/list`, 'tree']
   });
 
   // Search packages
   const { data: searchResults = [], isLoading: searchLoading } = useQuery<PackageInfo[]>({
     queryKey: [`/api/packages/search`, searchQuery],
+    queryFn: async () => {
+      const res = await fetch(`/api/packages/search?q=${encodeURIComponent(searchQuery)}`, { credentials: 'include' });
+      if (!res.ok) return [];
+      return res.json();
+    },
     enabled: searchQuery.length > 2
   });
 
   // Install package mutation
   const installMutation = useMutation({
     mutationFn: async (packageName: string) => {
-      return apiRequest('POST', `/api/packages/${projectId}`, {
+      return apiRequest('POST', `/api/packages/${projectId}/install`, {
         package: packageName
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/packages/${projectId}`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/packages/${projectId}/list`] });
       toast({
         title: 'Package installed',
         description: 'Package has been installed successfully'
@@ -112,7 +117,7 @@ export function ReplitPackageExplorer({ projectId, className }: PackageExplorerP
       return apiRequest('DELETE', `/api/packages/${projectId}/${packageName}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/packages/${projectId}`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/packages/${projectId}/list`] });
       toast({
         title: 'Package uninstalled',
         description: 'Package has been uninstalled successfully'
