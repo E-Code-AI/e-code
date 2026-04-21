@@ -304,8 +304,24 @@ export async function startProject(
         return baseRunCmd;
       };
 
-      const runCommand = resolveRunCommand(config.runCommand, projectDir || '');
-      
+      let runCommand = resolveRunCommand(config.runCommand, projectDir || '');
+      let vitePort: number | undefined;
+
+      // Detect vite in package.json — override to long-running dev server
+      const pkgJsonPath = path.join(projectDir, 'package.json');
+      if (fs.existsSync(pkgJsonPath)) {
+        try {
+          const pkg = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf-8'));
+          const allDeps = { ...(pkg.dependencies || {}), ...(pkg.devDependencies || {}) };
+          if (allDeps.vite) {
+            vitePort = 5174;
+            const base = `/preview/${projectId}/${vitePort}/`;
+            runCommand = `npm install && npx vite --host 0.0.0.0 --port ${vitePort} --base ${base}`;
+            logger.info(`[Runtime] Vite detected — launching dev server on port ${vitePort} base ${base}`);
+          }
+        } catch (_) {}
+      }
+
       // Stream initial setup messages
       streamLog(projectId, executionIdForSetup, 'system', `Starting ${languageConfigs[language].displayName} project...`);
       streamLog(projectId, executionIdForSetup, 'system', 'Using direct execution mode');
@@ -446,8 +462,8 @@ export async function startProject(
         // Handle compilation for compiled languages with real-time streaming
         const executionId = options.executionId;
         
-        // Get language-specific timeout (or default)
-        const languageTimeout = RUNTIME_TIMEOUTS[language] || RUNTIME_TIMEOUTS['default'];
+        // Get language-specific timeout (or default); vite dev servers run for the session
+        const languageTimeout = vitePort ? 300000 : (RUNTIME_TIMEOUTS[language] || RUNTIME_TIMEOUTS['default']);
         const compileTimeout = Math.min(languageTimeout, 120000); // Cap compile at 2 minutes
         
         if (config.compilerCommand) {
@@ -659,6 +675,7 @@ export async function startProject(
           streamLog(projectId, executionId, 'system', 'Process running — streaming logs via console...');
           return {
             success: true,
+            port: vitePort,
             status: 'running',
             logs
           };

@@ -206,15 +206,25 @@ export function ReplitDeploymentPanel({
     deployment: Deployment 
   }>({
     queryKey: ['/api/projects', projectId, 'deployment', 'latest'],
+    queryFn: async () => {
+      const res = await fetch(`/api/projects/${projectId}/deployment/latest`, { credentials: 'include' });
+      if (!res.ok) return { success: false, deployment: null };
+      return res.json();
+    },
     refetchInterval: isDeploying ? 3000 : false,
     enabled: !!projectId,
   });
 
-  const { data: deploymentHistory, isLoading: isLoadingHistory } = useQuery<{ 
-    success: boolean; 
-    deployments: Deployment[] 
+  const { data: deploymentHistory, isLoading: isLoadingHistory } = useQuery<{
+    success: boolean;
+    deployments: Deployment[]
   }>({
     queryKey: ['/api/projects', projectId, 'deployments'],
+    queryFn: async () => {
+      const res = await fetch(`/api/projects/${projectId}/deployments`, { credentials: 'include' });
+      if (!res.ok) return { success: false, deployments: [] };
+      return res.json();
+    },
     enabled: !!projectId,
   });
 

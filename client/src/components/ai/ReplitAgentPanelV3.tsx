@@ -774,19 +774,29 @@ export function ReplitAgentPanelV3({
   // Fetch decomposed tasks for autonomy session
   const { data: orchestratorTasks, isLoading: isLoadingTasks } = useQuery<{ tasks: DecomposedTask[] }>({
     queryKey: ['/api/autonomy/sessions', autonomySessionId, 'tasks'],
+    queryFn: async () => {
+      const res = await fetch(`/api/autonomy/sessions/${autonomySessionId}/tasks`, { credentials: 'include' });
+      if (!res.ok) return { tasks: [] };
+      return res.json();
+    },
     enabled: Boolean(autonomySessionId),
     refetchInterval: 5000,
   });
 
   // Fetch progress/ETA for autonomy session
-  const { data: orchestratorProgress, isLoading: isLoadingProgress } = useQuery<{ 
-    progress: SessionProgressData & { 
-      metadata?: { 
-        delegation?: DelegationInfo 
-      } 
-    } 
+  const { data: orchestratorProgress, isLoading: isLoadingProgress } = useQuery<{
+    progress: SessionProgressData & {
+      metadata?: {
+        delegation?: DelegationInfo
+      }
+    }
   }>({
     queryKey: ['/api/autonomy/sessions', autonomySessionId, 'progress'],
+    queryFn: async () => {
+      const res = await fetch(`/api/autonomy/sessions/${autonomySessionId}/progress`, { credentials: 'include' });
+      if (!res.ok) return { progress: null };
+      return res.json();
+    },
     enabled: Boolean(autonomySessionId),
     refetchInterval: 3000,
   });
@@ -794,6 +804,11 @@ export function ReplitAgentPanelV3({
   // Fetch queued messages for autonomy session
   const { data: queuedMessagesData, isLoading: isLoadingQueuedMessages } = useQuery<{ messages: QueuedMessage[] }>({
     queryKey: ['/api/autonomy/sessions', autonomySessionId, 'messages'],
+    queryFn: async () => {
+      const res = await fetch(`/api/autonomy/sessions/${autonomySessionId}/messages`, { credentials: 'include' });
+      if (!res.ok) return { messages: [] };
+      return res.json();
+    },
     enabled: Boolean(autonomySessionId),
     refetchInterval: 3000,
   });
@@ -2292,7 +2307,7 @@ export function ReplitAgentPanelV3({
   const handleRestoreCheckpoint = useCallback(async (checkpointId: number) => {
     setIsRestoringCheckpoint(true);
     try {
-      await apiRequest('POST', `/api/auto-checkpoints/${checkpointId}/restore`, {
+      await apiRequest('POST', `/api/projects/${projectId}/checkpoints/${checkpointId}/restore`, {
         createBackup: true,
         includeDatabase: false
       });

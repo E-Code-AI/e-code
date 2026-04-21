@@ -76,9 +76,9 @@ export function GitGraph({
   const { toast } = useToast();
 
   const { data: logData, isLoading, error, refetch } = useQuery<CommitLogResponse>({
-    queryKey: ['/api/git/projects', projectId, 'commits', maxCommits],
+    queryKey: ['/api/git', projectId, 'commits', maxCommits],
     queryFn: async () => {
-      const response = await fetch(`/api/git/projects/${projectId}/commits?limit=${maxCommits}`, {
+      const response = await fetch(`/api/git/${projectId}/commits?limit=${maxCommits}`, {
         credentials: 'include'
       });
       if (!response.ok) {

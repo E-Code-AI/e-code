@@ -27,7 +27,7 @@ export function FileUpload({ projectId, parentId, onClose, className }: FileUplo
         formData.append('parentId', parentId.toString());
       }
 
-      const res = await apiRequest('POST', `/api/files/upload`, formData);
+      const res = await apiRequest('POST', `/api/upload/projects/${projectId}/upload-multiple`, formData);
 
       if (!res.ok) {
         throw new Error('Failed to upload files');

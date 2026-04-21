@@ -40,7 +40,7 @@ export function FileUpload({ projectId, parentId, onUploadComplete, className = 
         formData.append('parentId', parentId.toString());
       }
 
-      const response = await apiRequest('POST', `/api/files/${projectId}/upload-multiple`, formData);
+      const response = await apiRequest('POST', `/api/upload/projects/${projectId}/upload-multiple`, formData);
 
       if (!response.ok) {
         throw new Error('Upload failed');

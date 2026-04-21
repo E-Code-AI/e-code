@@ -147,8 +147,12 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
           : preview.primaryPort;
         
         setSelectedPort(targetPort);
-        // Use the API preview route for serving project content
-        setPreviewUrl(`/api/preview/projects/${projectId}/preview/`);
+        // For server-side frameworks (react/vue/node), use the proxy route
+        if (preview.frameworkType && preview.frameworkType !== 'static') {
+          setPreviewUrl(`/preview/${projectId}/`);
+        } else {
+          setPreviewUrl(`/api/preview/projects/${projectId}/preview/`);
+        }
         
         toast({
           title: "Preview Started",
@@ -227,7 +231,7 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
     onSuccess: (data, port) => {
       if (data.success) {
         setSelectedPort(port);
-        setPreviewUrl(`/api/preview/projects/${projectId}/preview/`);
+        setPreviewUrl(data.url || `/preview/${projectId}/`);
         savePreference('port', port.toString());
         
         setPreviewStatus(prev => ({
@@ -380,13 +384,15 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
             primaryPort: data.primaryPort,
             services: data.services
           }));
-          
-          // Set URL for current or primary port
-          const targetPort = selectedPort && data.ports.includes(selectedPort) 
-            ? selectedPort 
+
+          // Set URL for current or primary port — use the server proxy, not direct localhost
+          const targetPort = selectedPort && data.ports.includes(selectedPort)
+            ? selectedPort
             : data.primaryPort;
-          setPreviewUrl(`http://localhost:${targetPort}`);
+          setPreviewUrl(`/preview/${projectId}/`);
           setSelectedPort(targetPort);
+          // Force iframe reload in case the URL string didn't change
+          if (iframeRef.current) iframeRef.current.src = `/preview/${projectId}/`;
           break;
           
         case 'preview:stop':
@@ -437,10 +443,10 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
           });
           
           if (data.ports && data.primaryPort) {
-            const targetPort = selectedPort && data.ports.includes(selectedPort) 
-              ? selectedPort 
+            const targetPort = selectedPort && data.ports.includes(selectedPort)
+              ? selectedPort
               : data.primaryPort;
-            setPreviewUrl(`http://localhost:${targetPort}`);
+            setPreviewUrl(`/preview/${projectId}/`);
             setSelectedPort(targetPort);
           }
           break;
@@ -549,11 +555,10 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
         });
         
         if (data.status === 'running' && data.ports && data.primaryPort) {
-          const targetPort = selectedPort && data.ports.includes(selectedPort) 
-            ? selectedPort 
+          const targetPort = selectedPort && data.ports.includes(selectedPort)
+            ? selectedPort
             : data.primaryPort;
-          // Use the API preview route for serving project content
-          setPreviewUrl(`/api/preview/projects/${projectId}/preview/`);
+          setPreviewUrl(`/preview/${projectId}/`);
           setSelectedPort(targetPort);
         }
       }

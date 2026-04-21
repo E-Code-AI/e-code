@@ -131,7 +131,7 @@ export function BranchManager({
 
   const createBranchMutation = useMutation({
     mutationFn: async (name: string) => {
-      return apiRequest<{ success: boolean; branch: string }>('POST', '/api/git/branches', { name });
+      return apiRequest<{ success: boolean; branch: string }>('POST', `/api/git/${projectId}/branch`, { name });
     },
     onSuccess: (data) => {
       toast({
@@ -153,7 +153,7 @@ export function BranchManager({
 
   const checkoutMutation = useMutation({
     mutationFn: async (branch: string) => {
-      return apiRequest<{ success: boolean; branch: string }>('POST', '/api/git/checkout', { branch });
+      return apiRequest<{ success: boolean; branch: string }>('POST', `/api/git/${projectId}/checkout`, { branch });
     },
     onSuccess: (data) => {
       toast({
@@ -179,7 +179,7 @@ export function BranchManager({
 
   const deleteBranchMutation = useMutation({
     mutationFn: async (branchName: string) => {
-      return apiRequest<{ success: boolean; deleted: string }>('DELETE', `/api/git/branches/${encodeURIComponent(branchName)}?force=true`);
+      return apiRequest<{ success: boolean; deleted: string }>('DELETE', `/api/git/${projectId}/branch/${encodeURIComponent(branchName)}?force=true`);
     },
     onSuccess: (data) => {
       toast({
@@ -199,7 +199,7 @@ export function BranchManager({
 
   const mergeBranchMutation = useMutation({
     mutationFn: async (branch: string) => {
-      return apiRequest<{ success: boolean; output: string }>('POST', '/api/git/merge', { branch });
+      return apiRequest<{ success: boolean; output: string }>('POST', `/api/git/${projectId}/merge`, { branch });
     },
     onSuccess: () => {
       const currentBranch = branches.find(b => b.current);

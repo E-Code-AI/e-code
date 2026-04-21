@@ -74,7 +74,7 @@ const GitPanel: React.FC<GitPanelProps> = ({ projectId }) => {
     queryKey: ['/api/git/repositories', projectId],
     queryFn: async () => {
       try {
-        const data = await apiRequest('GET', `/api/git/repositories/${projectId}`);
+        const data = await apiRequest('GET', `/api/git/${projectId}/status`);
         return data;
       } catch (error) {
         throw new Error(error instanceof Error ? error.message : 'Failed to get Git status');
@@ -91,7 +91,7 @@ const GitPanel: React.FC<GitPanelProps> = ({ projectId }) => {
     queryKey: ['/api/git/history', projectId],
     queryFn: async () => {
       try {
-        const data = await apiRequest('GET', `/api/git/projects/${projectId}/history`);
+        const data = await apiRequest('GET', `/api/git/${projectId}/commits`);
         return data;
       } catch (error) {
         throw new Error(error instanceof Error ? error.message : 'Failed to get commit history');
@@ -104,7 +104,7 @@ const GitPanel: React.FC<GitPanelProps> = ({ projectId }) => {
   const initRepoMutation = useMutation({
     mutationFn: async () => {
       setIsLoading('initializing');
-      const data = await apiRequest('POST', `/api/git/projects/${projectId}/init`);
+      const data = await apiRequest('POST', `/api/git/${projectId}/init`);
       return data;
     },
     onSuccess: () => {
@@ -130,7 +130,7 @@ const GitPanel: React.FC<GitPanelProps> = ({ projectId }) => {
   const addRemoteMutation = useMutation({
     mutationFn: async () => {
       setIsLoading('adding-remote');
-      const data = await apiRequest('POST', `/api/git/projects/${projectId}/remote`, { url: remoteUrl });
+      const data = await apiRequest('POST', `/api/git/${projectId}/remotes`, { url: remoteUrl });
       return data;
     },
     onSuccess: () => {
@@ -157,7 +157,7 @@ const GitPanel: React.FC<GitPanelProps> = ({ projectId }) => {
   const stageFilesMutation = useMutation({
     mutationFn: async (files: string[]) => {
       setIsLoading('staging');
-      const data = await apiRequest('POST', `/api/git/projects/${projectId}/stage`, { files });
+      const data = await apiRequest('POST', `/api/git/${projectId}/stage`, { files });
       return data;
     },
     onSuccess: () => {
@@ -184,7 +184,7 @@ const GitPanel: React.FC<GitPanelProps> = ({ projectId }) => {
   const commitChangesMutation = useMutation({
     mutationFn: async () => {
       setIsLoading('committing');
-      const data = await apiRequest('POST', `/api/git/projects/${projectId}/commit`, { message: commitMessage });
+      const data = await apiRequest('POST', `/api/git/${projectId}/commit`, { message: commitMessage });
       return data;
     },
     onSuccess: () => {
@@ -212,7 +212,7 @@ const GitPanel: React.FC<GitPanelProps> = ({ projectId }) => {
   const pushChangesMutation = useMutation({
     mutationFn: async () => {
       setIsLoading('pushing');
-      const data = await apiRequest('POST', `/api/git/projects/${projectId}/push`);
+      const data = await apiRequest('POST', `/api/git/${projectId}/push`);
       return data;
     },
     onSuccess: () => {
@@ -238,7 +238,7 @@ const GitPanel: React.FC<GitPanelProps> = ({ projectId }) => {
   const pullChangesMutation = useMutation({
     mutationFn: async () => {
       setIsLoading('pulling');
-      const data = await apiRequest('POST', `/api/git/projects/${projectId}/pull`);
+      const data = await apiRequest('POST', `/api/git/${projectId}/pull`);
       return data;
     },
     onSuccess: () => {
@@ -267,7 +267,7 @@ const GitPanel: React.FC<GitPanelProps> = ({ projectId }) => {
   const cloneRepoMutation = useMutation({
     mutationFn: async (url: string) => {
       setIsLoading('cloning');
-      const data = await apiRequest('POST', `/api/git/projects/${projectId}/clone`, { url });
+      const data = await apiRequest('POST', `/api/git/${projectId}/clone`, { url });
       return data;
     },
     onSuccess: () => {

@@ -158,6 +158,14 @@ router.post('/runtime/stop', ensureAuthenticated, async (req, res) => {
 });
 
 /**
+ * GET /api/runtime/dependencies
+ * Get runtime dependencies (Docker, Nix, languages)
+ * SECURITY: Requires authentication to prevent enumeration attacks
+ * NOTE: Must be registered before /runtime/:projectId to avoid being swallowed by the param route
+ */
+router.get('/runtime/dependencies', ensureAuthenticated, getRuntimeDependencies);
+
+/**
  * GET /api/runtime/:projectId
  * Get runtime status (projectId in path)
  */
@@ -216,17 +224,6 @@ router.get('/runtime/:projectId/logs', ensureAuthenticated, async (req, res) => 
   
   return ensureProjectAccess(req, res, () => getProjectRuntimeLogs(req, res));
 });
-
-// ===============================
-// System Runtime Routes
-// ===============================
-
-/**
- * GET /api/runtime/dependencies
- * Get runtime dependencies (Docker, Nix, languages)
- * SECURITY: Requires authentication to prevent enumeration attacks
- */
-router.get('/runtime/dependencies', ensureAuthenticated, getRuntimeDependencies);
 
 // ===============================
 // Direct Code Execution Routes (No Docker Required)

@@ -135,6 +135,7 @@ interface PreviewInstance {
   processes: Map<number, any>;  // Map port to process
   url: string;
   status: 'starting' | 'running' | 'stopped' | 'error';
+  errorMessage?: string;
   logs: string[];
   healthChecks: Map<number, boolean>;  // Port health status
   lastHealthCheck: Date;
@@ -569,7 +570,7 @@ export class PreviewService {
   private makeErrorInstance(projectId: string, runId: string, error: string): PreviewInstance {
     const inst: PreviewInstance = {
       projectId, runId, ports: [], primaryPort: 0,
-      processes: new Map(), url: '', status: 'error',
+      processes: new Map(), url: '', status: 'error', errorMessage: error,
       logs: [error], healthChecks: new Map(), lastHealthCheck: new Date(), exposedServices: []
     };
     previewEvents.emit('preview:error', { projectId, runId, error });
@@ -708,12 +709,14 @@ export class PreviewService {
     }
     
     let startCommand: string[] = [];
-    if (frameworkInfo.packageJson.scripts?.dev) {
+    if (frameworkInfo.hasVite) {
+      // Explicit port, host, and base so the proxy path-rewrite works for all assets
+      const base = `/preview/${preview.projectId}/${port}/`;
+      startCommand = ['npx', 'vite', '--port', port.toString(), '--host', '0.0.0.0', '--base', base];
+    } else if (frameworkInfo.packageJson.scripts?.dev) {
       startCommand = ['npm', 'run', 'dev'];
     } else if (frameworkInfo.packageJson.scripts?.start) {
       startCommand = ['npm', 'start'];
-    } else if (frameworkInfo.hasVite) {
-      startCommand = ['npx', 'vite', '--port', port.toString(), '--host'];
     } else {
       await this.startStaticServer(preview, previewPath);
       return;

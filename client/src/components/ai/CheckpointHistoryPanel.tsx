@@ -50,7 +50,12 @@ interface CheckpointListResponse {
 
 export function useAutoCheckpoints(projectId: number | string, limit: number = 50) {
   return useQuery<CheckpointListResponse>({
-    queryKey: ['/api/projects', projectId, 'auto-checkpoints'],
+    queryKey: ['/api/projects', projectId, 'checkpoints'],
+    queryFn: async () => {
+      const res = await fetch(`/api/projects/${projectId}/checkpoints?limit=${limit}`, { credentials: 'include' });
+      if (!res.ok) return { checkpoints: [], total: 0, page: 1, limit };
+      return res.json();
+    },
     enabled: !!projectId,
     staleTime: 30000,
     refetchOnWindowFocus: false,
@@ -60,10 +65,10 @@ export function useAutoCheckpoints(projectId: number | string, limit: number = 5
 export function useRestoreCheckpoint(projectId: number | string) {
   return useMutation({
     mutationFn: async (checkpointId: number) => {
-      return apiRequest('POST', `/api/auto-checkpoints/${checkpointId}/restore`, { createBackup: true });
+      return apiRequest('POST', `/api/projects/${projectId}/checkpoints/${checkpointId}/restore`, { createBackup: true });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'auto-checkpoints'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'checkpoints'] });
     },
   });
 }

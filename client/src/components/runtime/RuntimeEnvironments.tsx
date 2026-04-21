@@ -386,7 +386,7 @@ export function RuntimeEnvironments({
 
   // Fetch runtime status - REAL BACKEND
   const { data: runtimeStatus, refetch: refetchStatus } = useQuery<RuntimeStatus>({
-    queryKey: [`/api/runtime/status`, projectId],
+    queryKey: [`/api/runtime/${projectId}`],
     refetchInterval: 30000, // RATE LIMIT FIX: Increased from 2s to 30s
     refetchIntervalInBackground: false,
     enabled: !!projectId,

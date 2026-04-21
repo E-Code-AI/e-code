@@ -77,6 +77,11 @@ interface CreateCheckpointData {
 export function useCheckpoints(projectId: number | string) {
   return useQuery<CheckpointListResponse>({
     queryKey: ['/api/projects', projectId, 'checkpoints'],
+    queryFn: async () => {
+      const res = await fetch(`/api/projects/${projectId}/checkpoints`, { credentials: 'include' });
+      if (!res.ok) return { checkpoints: [], total: 0, page: 1, limit: 50 };
+      return res.json();
+    },
     enabled: !!projectId,
     staleTime: 30000,
     refetchOnWindowFocus: false,

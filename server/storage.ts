@@ -367,7 +367,7 @@ export interface IStorage {
 
   // Project operations
   getProject(id: string | number): Promise<Project | undefined>;
-  getProjectBySlug(slug: string, ownerId: string | number): Promise<Project | null>;
+  getProjectBySlug(slug: string, ownerId?: string | number): Promise<Project | null>;
   getProjectsByUserId(ownerId: string | number): Promise<Project[]>;
   getProjectsByUserIdPaginated(ownerId: string | number, limit: number, offset: number): Promise<{ projects: Project[]; total: number }>;
   getAllProjects(): Promise<Project[]>;
@@ -1326,7 +1326,7 @@ export class DatabaseStorage implements IStorage {
     return await this.db.select().from(projects).orderBy(desc(projects.createdAt));
   }
 
-  async getProjectBySlug(slug: string, ownerId: string | number): Promise<Project | null> {
+  async getProjectBySlug(slug: string, ownerId?: string | number): Promise<Project | null> {
     try {
       const condition =
         ownerId !== undefined
