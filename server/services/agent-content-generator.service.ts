@@ -67,8 +67,27 @@ class AgentContentGeneratorService {
                          templateContent.includes('TODO: Add') ||
                          templateContent.includes('TODO: Configure');
     
-    if (isPlaceholder) {
-      logger.info(`[ContentGenerator] Template returned placeholder for ${outline.path}, trying AI generation`);
+
+    // ✅ FIX (Apr 21 2026): Also call AI for context-dependent files (backend/, frontend/,
+    // package.json, index.ts, etc.) where the hardcoded template is path-agnostic and wrong.
+    const _pathLower = outline.path.toLowerCase();
+    const _base = _pathLower.split('/').pop() || '';
+    const _inSubdir = _pathLower.includes('backend/') || _pathLower.includes('frontend/') ||
+                      _pathLower.includes('server/') || _pathLower.includes('client/') ||
+                      _pathLower.includes('api/') || _pathLower.includes('/src/');
+    const _contextDependentName = ['package.json','index.ts','index.js','index.tsx','index.jsx',
+                                    'server.ts','server.js','app.ts','app.tsx','main.ts','main.tsx',
+                                    'readme.md','dockerfile'].includes(_base) ||
+                                   _base.endsWith('.config.ts') || _base.endsWith('.config.js') ||
+                                   _base.endsWith('.config.mjs') || _base.endsWith('.config.cjs');
+    const _hasMeaningfulDesc = typeof (outline as any).outline === 'string' &&
+                               (outline as any).outline.trim().length > 20;
+    const _shouldCallAI = isPlaceholder ||
+                          (_inSubdir && _hasMeaningfulDesc) ||
+                          (_contextDependentName && _hasMeaningfulDesc);
+
+    if (_shouldCallAI) {
+      logger.info(`[ContentGenerator] Calling AI for ${outline.path} (placeholder=${isPlaceholder}, subdir=${_inSubdir}, ctxDep=${_contextDependentName})`);
       
       // Try AI-based code generation
       const aiContent = await this.generateWithAI(outline);
