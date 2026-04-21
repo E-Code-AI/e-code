@@ -323,6 +323,14 @@ router.post('/build', async (req, res) => {
           content: action.content,
           isDirectory: false,
         });
+
+        // Sync file to disk so preview server can serve it
+        try {
+          const { syncFileToDisc } = await import('../utils/project-fs-sync');
+          await syncFileToDisc(Number(projectId), action.path, action.content || '');
+        } catch (syncErr: any) {
+          logger.warn(`[Autonomous] Failed to sync file to disk: ${action.path}`, syncErr.message);
+        }
         
         // Log successful action for audit trail
         await aiSecurityService.logAction(
@@ -366,9 +374,22 @@ router.post('/build', async (req, res) => {
     const approved = results.filter(r => r.success);
     const failedRisk = results.filter(r => !r.success && r.requiresManualApproval);
     const failedTechnical = results.filter(r => !r.success && !r.requiresManualApproval);
-    
+
     logger.info(`Build complete: ${approved.length} created, ${failedRisk.length} blocked by risk, ${failedTechnical.length} technical failures, ${rejected.length} rejected by security`);
-    
+
+    // Auto-start preview if package.json or index.html was generated
+    const hasPackageJson = approved.some(r => r.path === 'package.json' || r.path?.endsWith('/package.json'));
+    const hasIndexHtml = approved.some(r => r.path === 'index.html' || r.path?.endsWith('/index.html'));
+    if (hasPackageJson || hasIndexHtml) {
+      try {
+        const { previewService } = await import('../preview/preview-service');
+        await previewService.startPreview(String(projectId));
+        logger.info(`[Autonomous] Auto-started preview for project ${projectId}`);
+      } catch (previewErr: any) {
+        logger.warn(`[Autonomous] Could not auto-start preview: ${previewErr.message}`);
+      }
+    }
+
     res.json({
       success: true,
       projectId,
@@ -377,6 +398,7 @@ router.post('/build', async (req, res) => {
       filesFailed: failedTechnical.length,
       actionsRejected: rejected.length,
       securityCompliant: true,
+      previewAutoStarted: (hasPackageJson || hasIndexHtml),
       results
     });
     
