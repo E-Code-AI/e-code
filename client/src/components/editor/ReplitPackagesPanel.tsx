@@ -291,11 +291,10 @@ export function ReplitPackagesPanel({ projectId }: { projectId?: string | number
   const installMutation = useMutation({
     mutationFn: async ({ packageName, version }: { packageName: string; version?: string }) => {
       if (!projectId) throw new Error('Project ID required');
-      const response = await apiRequest('POST', `/api/packages/${projectId}/install`, {
+      return apiRequest('POST', `/api/packages/${projectId}/install`, {
         package: packageName,
         version
       });
-      return response.json();
     },
     onSuccess: (data, variables) => {
       toast({ title: 'Package installed', description: `Successfully installed ${variables.packageName}` });
@@ -311,10 +310,9 @@ export function ReplitPackagesPanel({ projectId }: { projectId?: string | number
   const uninstallMutation = useMutation({
     mutationFn: async (packageName: string) => {
       if (!projectId) throw new Error('Project ID required');
-      const response = await apiRequest('POST', `/api/packages/${projectId}/uninstall`, {
+      return apiRequest('POST', `/api/packages/${projectId}/uninstall`, {
         package: packageName
       });
-      return response.json();
     },
     onSuccess: (data, packageName) => {
       toast({ title: 'Package removed', description: `Successfully removed ${packageName}` });

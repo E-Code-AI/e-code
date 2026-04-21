@@ -3,6 +3,8 @@ import { ReplitMonacoEditor } from '@/components/editor/ReplitMonacoEditor';
 import { useState, useEffect } from 'react';
 
 interface ProfessionalCodeEditorProps {
+  projectId: string | number;
+  fileId?: number;
   fileName: string;
   initialContent: string;
   language: string;
@@ -12,6 +14,8 @@ interface ProfessionalCodeEditorProps {
 }
 
 export function ProfessionalCodeEditor({
+  projectId,
+  fileId,
   fileName,
   initialContent,
   language,
@@ -32,7 +36,8 @@ export function ProfessionalCodeEditor({
       {/* Monaco Editor */}
       <div className="flex-1">
         <ReplitMonacoEditor
-          projectId="1"
+          projectId={projectId}
+          fileId={fileId}
           onRunCode={() => {}}
           onStopCode={() => {}}
           isRunning={false}

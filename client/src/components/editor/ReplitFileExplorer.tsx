@@ -116,7 +116,7 @@ export function ReplitFileExplorer({
   // File operations mutations - REAL BACKEND
   const createFileMutation = useMutation({
     mutationFn: async (data: { name: string; isFolder: boolean; parentId: number | null; content?: string }) => {
-      const result = await apiRequest("POST", `/api/files/${projectId}`, data);
+      const result = await apiRequest("POST", `/api/projects/${projectId}/files`, data);
       return result;
     },
     onSuccess: () => {
@@ -133,7 +133,7 @@ export function ReplitFileExplorer({
 
   const updateFileMutation = useMutation({
     mutationFn: async ({ id, ...data }: { id: number; name?: string; content?: string }) =>
-      apiRequest("PATCH", `/api/files/${id}`, data),
+      apiRequest("PATCH", `/api/projects/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
       toast({ title: "Success", description: "File updated successfully" });
@@ -146,7 +146,7 @@ export function ReplitFileExplorer({
 
   const deleteFileMutation = useMutation({
     mutationFn: async (id: number) =>
-      apiRequest("DELETE", `/api/files/${id}`),
+      apiRequest("DELETE", `/api/projects/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
       toast({ title: "Success", description: "File deleted successfully" });

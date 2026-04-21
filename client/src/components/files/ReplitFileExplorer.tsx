@@ -120,7 +120,7 @@ export function ReplitFileExplorer({
   // Mutations pour les opérations sur les fichiers
   const createFileMutation = useMutation({
     mutationFn: async ({ path, type, name }: { path: string; type: "file" | "folder"; name: string }) => {
-      return apiRequest('POST', `/api/files/${projectId}`, { path: `${path}/${name}`, type });
+      return apiRequest('POST', `/api/projects/${projectId}/files`, { path: `${path}/${name}`, type });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
@@ -142,7 +142,7 @@ export function ReplitFileExplorer({
 
   const deleteFileMutation = useMutation({
     mutationFn: async (file: FileNode) => {
-      return apiRequest('DELETE', `/api/files/${projectId}/${file.id}`);
+      return apiRequest('DELETE', `/api/projects/${file.id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
@@ -162,7 +162,7 @@ export function ReplitFileExplorer({
 
   const renameFileMutation = useMutation({
     mutationFn: async ({ file, newName }: { file: FileNode; newName: string }) => {
-      return apiRequest('PATCH', `/api/files/${projectId}/${file.id}`, { name: newName });
+      return apiRequest('PATCH', `/api/projects/${file.id}`, { name: newName });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
