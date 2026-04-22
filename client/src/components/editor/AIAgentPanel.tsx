@@ -92,18 +92,22 @@ export function AIAgentPanel({ projectId, onClose, selectedCode, currentFilePath
     setCurrentStreamMessage('');
 
     try {
-      // Create EventSource for Server-Sent Events
-      const response = await apiRequest('POST', '/api/agent/chat/stream', {
-        message: userMessage.content,
-        projectId,
-        conversationId,
-        provider: selectedModel,
-        context: messages.slice(-20), // Send last 20 messages as context for better memory
-        systemPrompt: extendedThinking ? 
-          'Think step by step through the problem. Show your reasoning process.' : 
-          undefined,
-        temperature: highPower ? 0.9 : 0.7,
-        maxTokens: highPower ? 8192 : 4096
+      const response = await fetch('/api/agent/chat/stream', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: userMessage.content,
+          projectId,
+          conversationId,
+          provider: selectedModel,
+          context: messages.slice(-20),
+          systemPrompt: extendedThinking
+            ? 'Think step by step through the problem. Show your reasoning process.'
+            : undefined,
+          temperature: highPower ? 0.9 : 0.7,
+          maxTokens: highPower ? 8192 : 4096
+        })
       });
 
       if (!response.ok) {
