@@ -59,9 +59,23 @@ import { ReplitTabBar } from '@/components/ide/ReplitTabBar';
 import { ReplitToolsSheet } from '@/components/ide/ReplitToolsSheet';
 import { QuickFileSearch } from '@/components/ide/QuickFileSearch';
 import { KeyboardShortcutsOverlay } from '@/components/ide/KeyboardShortcutsOverlay';
-import { ReplitFileExplorer } from '@/components/editor/ReplitFileExplorer';
-import { ReplitMonacoEditor } from '@/components/editor/ReplitMonacoEditor';
 import { ReplitMobileNavigation, ReplitMobileInputBar, ReplitMobileHeader, type MobileTab } from '@/components/mobile';
+const LazyReplitFileExplorer = instrumentedLazy(() => import('@/components/editor/ReplitFileExplorer').then(mod => ({ default: mod.ReplitFileExplorer })), 'ReplitFileExplorer');
+function ReplitFileExplorer(props: any) {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="sm" text="Loading Files..." /></div>}>
+      <LazyReplitFileExplorer {...props} />
+    </Suspense>
+  );
+}
+const LazyReplitMonacoEditor = instrumentedLazy(() => import('@/components/editor/ReplitMonacoEditor').then(mod => ({ default: mod.ReplitMonacoEditor })), 'ReplitMonacoEditor');
+function ReplitMonacoEditor(props: any) {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" /></div>}>
+      <LazyReplitMonacoEditor {...props} />
+    </Suspense>
+  );
+}
 const ReplitTerminalPanel = instrumentedLazy(() => import('@/components/editor/ReplitTerminalPanel').then(mod => ({ default: mod.ReplitTerminalPanel })), 'ReplitTerminalPanel');
 const ReplitDeploymentPanel = instrumentedLazy(() => import('@/components/ide/ReplitDeploymentPanel').then(mod => ({ default: mod.ReplitDeploymentPanel })), 'ReplitDeploymentPanel');
 import { AgentPanelErrorBoundary } from '@/components/ai/AgentPanelErrorBoundary';
