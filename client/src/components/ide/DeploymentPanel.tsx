@@ -62,11 +62,11 @@ export function DeploymentPanel({ projectId, className }: DeploymentPanelProps) 
   const [isDeploying, setIsDeploying] = useState(false);
 
   const { data: deployments, isLoading } = useQuery<Deployment[]>({
-    queryKey: ['/api/projects', projectId, 'deployments'],
+    queryKey: [`/api/projects/${projectId}/deployments`],
   });
 
   const { data: latestDeployment } = useQuery<Deployment>({
-    queryKey: ['/api/projects', projectId, 'deployment', 'latest'],
+    queryKey: [`/api/projects/${projectId}/deployment/latest`],
     refetchInterval: isDeploying ? 2000 : false,
   });
 
@@ -82,7 +82,7 @@ export function DeploymentPanel({ projectId, className }: DeploymentPanelProps) 
     },
     onSuccess: () => {
       setIsDeploying(true);
-      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId] });
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/deployments`] });
       toast({ title: 'Deployment started', description: 'Your app is being deployed...' });
     },
     onError: (error: Error) => {
@@ -95,7 +95,7 @@ export function DeploymentPanel({ projectId, className }: DeploymentPanelProps) 
       return apiRequest('POST', `/api/deployments/${deploymentId}/stop`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId] });
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/deployments`] });
       toast({ title: 'Deployment stopped' });
     },
   });
@@ -190,7 +190,7 @@ export function DeploymentPanel({ projectId, className }: DeploymentPanelProps) 
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId] })}
+                      onClick={() => queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/deployments`] })}
                       data-testid="button-refresh-deployment"
                     >
                       <RefreshCw className="h-4 w-4 mr-1" />

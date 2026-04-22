@@ -120,6 +120,30 @@ router.post('/recommend-model', async (req, res) => {
   }
 });
 
+// POST /api/agent/chat — simple chat endpoint used by AIAgentPanel
+router.post('/chat', async (req, res) => {
+  try {
+    const { projectId, message, conversationHistory } = req.body;
+    if (!message) return res.status(400).json({ error: 'message is required' });
+
+    const { aiProviderManager } = await import('../ai-providers/ai-provider-manager');
+    const provider = aiProviderManager.getDefaultProvider();
+    if (!provider) return res.status(503).json({ error: 'No AI provider available' });
+
+    const systemPrompt = `You are an expert AI coding assistant embedded in E-Code, an AI-powered IDE. You are helping with project ${projectId || 'unknown'}. Provide clear, concise, and actionable answers.`;
+    const history = (Array.isArray(conversationHistory) ? conversationHistory : [])
+      .slice(-10)
+      .filter((m: any) => m.role && m.content)
+      .map((m: any) => ({ role: m.role as 'user' | 'assistant', content: String(m.content) }));
+
+    const content = await provider.generateCompletion(message, systemPrompt, 2048, 0.7);
+    res.json({ response: content, metadata: {} });
+  } catch (error: any) {
+    logger.error('[AgentRouter] /chat error:', error);
+    res.status(500).json({ error: error.message || 'Failed to generate response' });
+  }
+});
+
 // GET /api/agent/conversation - Get conversation by projectId query param
 router.get('/conversation', async (req, res) => {
   try {

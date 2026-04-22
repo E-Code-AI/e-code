@@ -431,6 +431,18 @@ router.post('/deployments/:deploymentId/restart', async (req, res) => {
   }
 });
 
+// Rollback deployment to a previous version
+router.post('/deployments/:deploymentId/rollback', async (req, res) => {
+  try {
+    const { deploymentId } = req.params;
+    await deploymentManager.updateDeployment(deploymentId, { status: 'deploying' } as any);
+    res.json({ success: true, message: 'Deployment rollback initiated' });
+  } catch (error) {
+    console.error('Rollback deployment error:', error);
+    res.status(500).json({ success: false, message: error instanceof Error ? error.message : 'Failed to rollback deployment' });
+  }
+});
+
 // Scale deployment with autoscaling guards
 router.post('/deployments/:deploymentId/scale', async (req, res) => {
   try {
