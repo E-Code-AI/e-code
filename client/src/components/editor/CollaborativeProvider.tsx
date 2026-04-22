@@ -268,7 +268,7 @@ export function CollaborativeProvider({
     if (!enabled || !editor) return;
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/ws/collaborate`;
+    const wsUrl = `${protocol}//${window.location.host}/collaboration`;
 
     const connect = () => {
       const ws = new WebSocket(wsUrl);

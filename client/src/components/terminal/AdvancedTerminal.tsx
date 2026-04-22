@@ -187,70 +187,16 @@ export function AdvancedTerminal({
       currentDirectory: '~'
     };
 
-    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${wsProtocol}//${window.location.host}/api/terminal/ws?projectId=${projectId}`;
-    const ws = new WebSocket(wsUrl);
-    
-    ws.onopen = () => {
-      terminal.writeln('\x1b[1;32mConnected to terminal\x1b[0m');
-      terminal.writeln('');
-    };
-
-    ws.onmessage = (event) => {
-      try {
-        const msg = JSON.parse(event.data);
-        switch (msg.type) {
-          case 'output':
-            terminal.write(msg.data);
-            break;
-          case 'connected':
-          case 'ready':
-            break;
-          case 'history':
-            terminal.write(msg.data);
-            break;
-          case 'exit':
-            terminal.writeln(`\r\n\x1b[1;33m${msg.data}\x1b[0m`);
-            break;
-          case 'error':
-            terminal.writeln(`\r\n\x1b[1;31mError: ${msg.data}\x1b[0m`);
-            break;
-          case 'pong':
-            break;
-          default:
-            break;
-        }
-      } catch {
-        terminal.write(event.data);
-      }
-    };
-
-    ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
-      terminal.writeln('\x1b[1;31mConnection error\x1b[0m');
-    };
-
-    ws.onclose = () => {
-      terminal.writeln('\r\n\x1b[1;31mDisconnected from terminal\x1b[0m');
-    };
-
     terminal.onData((data) => {
-      if (ws.readyState === WebSocket.OPEN) {
+      const ws = session.websocket;
+      if (ws?.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({ type: 'input', data }));
       }
     });
 
-    const sendResize = () => {
-      if (ws.readyState === WebSocket.OPEN) {
-        const dims = fitAddon.proposeDimensions();
-        if (dims) {
-          ws.send(JSON.stringify({ type: 'resize', cols: dims.cols, rows: dims.rows }));
-        }
-      }
-    };
-
     terminal.onResize(({ cols, rows }) => {
-      if (ws.readyState === WebSocket.OPEN) {
+      const ws = session.websocket;
+      if (ws?.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({ type: 'resize', cols, rows }));
       }
     });
@@ -269,11 +215,43 @@ export function AdvancedTerminal({
       }
     });
 
-    session.websocket = ws;
+    // Connect async: fetch session ID first, then open WebSocket
+    (async () => {
+      try {
+        const sessionRes = await fetch('/api/shell/sessions', { method: 'POST', credentials: 'include' });
+        if (!sessionRes.ok) throw new Error('session');
+        const { sessionId } = await sessionRes.json();
+        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const ws = new WebSocket(`${wsProtocol}//${window.location.host}/shell?sessionId=${sessionId}&projectId=${projectId}`);
+        session.websocket = ws;
 
-    ws.addEventListener('open', () => {
-      setTimeout(sendResize, 200);
-    });
+        ws.onopen = () => {
+          terminal.writeln('\x1b[1;32mConnected to terminal\x1b[0m');
+          terminal.writeln('');
+          const dims = fitAddon.proposeDimensions();
+          if (dims) ws.send(JSON.stringify({ type: 'resize', cols: dims.cols, rows: dims.rows }));
+        };
+
+        ws.onmessage = (event) => {
+          try {
+            const msg = JSON.parse(event.data);
+            switch (msg.type) {
+              case 'output': terminal.write(msg.data); break;
+              case 'history': terminal.write(msg.data); break;
+              case 'exit': terminal.writeln(`\r\n\x1b[1;33m${msg.data}\x1b[0m`); break;
+              case 'error': terminal.writeln(`\r\n\x1b[1;31mError: ${msg.data}\x1b[0m`); break;
+            }
+          } catch {
+            terminal.write(event.data);
+          }
+        };
+
+        ws.onerror = () => terminal.writeln('\x1b[1;31mConnection error\x1b[0m');
+        ws.onclose = () => terminal.writeln('\r\n\x1b[1;31mDisconnected from terminal\x1b[0m');
+      } catch {
+        terminal.writeln('\x1b[1;31mFailed to connect to terminal\x1b[0m');
+      }
+    })();
     setSessions(prev => [...prev, session]);
     setActiveSessionId(id);
 

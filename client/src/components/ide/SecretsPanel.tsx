@@ -27,16 +27,7 @@ interface Secret {
 }
 
 interface SecretsDataResponse {
-  tableName: string;
-  data: Secret[];
-  pagination: {
-    page: number;
-    limit: number;
-    totalRows: number;
-    totalPages: number;
-    hasNextPage: boolean;
-    hasPrevPage: boolean;
-  };
+  secrets: Secret[];
 }
 
 export function SecretsPanel({ projectId }: SecretsPanelProps) {
@@ -44,9 +35,8 @@ export function SecretsPanel({ projectId }: SecretsPanelProps) {
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const { toast } = useToast();
 
-  // Fetch secrets from Project Data API using default fetcher
   const { data, isLoading, error, refetch } = useQuery<SecretsDataResponse>({
-    queryKey: [`/api/projects/${projectId}/data/secrets/data`],
+    queryKey: [`/api/projects/${projectId}/secrets`],
     staleTime: 30000
   });
 
@@ -73,7 +63,7 @@ export function SecretsPanel({ projectId }: SecretsPanelProps) {
     return '••••••••••••••••';
   };
 
-  const secrets = data?.data || [];
+  const secrets = data?.secrets || [];
   const filteredSecrets = secrets.filter(secret =>
     secret.key.toLowerCase().includes(searchQuery.toLowerCase())
   );

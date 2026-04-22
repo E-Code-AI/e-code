@@ -37,7 +37,7 @@ export function useCollaboration(projectId: number, fileId: number) {
     }
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/ws/collaboration`;
+    const wsUrl = `${protocol}//${window.location.host}/collaboration`;
     
     try {
       const ws = new WebSocket(wsUrl);

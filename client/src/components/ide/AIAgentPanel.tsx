@@ -59,7 +59,7 @@ export function AIAgentPanel({ projectId, onFileCreate }: AIAgentPanelProps) {
   
   // Load conversation history if exists
   const { data: conversation } = useQuery({
-    queryKey: [`/api/agent/conversation/${projectId}`],
+    queryKey: [`/api/agent/conversation?projectId=${projectId}`],
     enabled: !!projectId,
     retry: false
   });

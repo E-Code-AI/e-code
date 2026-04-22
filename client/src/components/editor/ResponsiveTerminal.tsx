@@ -78,59 +78,60 @@ export function ResponsiveTerminal({
     term.open(terminalRef.current);
     fitAddon.fit();
 
-    // Connect to WebSocket
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const ws = new WebSocket(`${protocol}//${window.location.host}/terminal?projectId=${projectId}`);
-    wsRef.current = ws;
+    // Connect to WebSocket via shell session
+    let cancelled = false;
 
-    ws.onopen = () => {
-      setIsConnected(true);
-      term.writeln('\r\n\x1b[32mConnected to terminal\x1b[0m\r\n');
-      
-      // Send initial resize
-      ws.send(JSON.stringify({
-        type: 'resize',
-        cols: term.cols,
-        rows: term.rows
-      }));
-    };
+    const connect = async () => {
+      try {
+        const sessionRes = await fetch('/api/shell/sessions', { method: 'POST', credentials: 'include' });
+        if (!sessionRes.ok || cancelled) return;
+        const { sessionId } = await sessionRes.json();
+        if (cancelled) return;
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const ws = new WebSocket(`${protocol}//${window.location.host}/shell?sessionId=${sessionId}&projectId=${projectId}`);
+        wsRef.current = ws;
 
-    ws.onmessage = (event) => {
-      if (typeof event.data === 'string') {
-        term.write(event.data);
+        ws.onopen = () => {
+          setIsConnected(true);
+          term.writeln('\r\n\x1b[32mConnected to terminal\x1b[0m\r\n');
+          ws.send(JSON.stringify({ type: 'resize', cols: term.cols, rows: term.rows }));
+        };
+
+        ws.onmessage = (event) => {
+          if (typeof event.data === 'string') {
+            term.write(event.data);
+          }
+        };
+
+        ws.onerror = () => {
+          term.writeln('\r\n\x1b[31mConnection error\x1b[0m\r\n');
+        };
+
+        ws.onclose = () => {
+          setIsConnected(false);
+          term.writeln('\r\n\x1b[31mDisconnected from terminal\x1b[0m\r\n');
+        };
+
+        term.onData((data) => {
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: 'input', data }));
+          }
+        });
+      } catch (error) {
+        console.error('Terminal connection error:', error);
+        term.writeln('\r\n\x1b[31mFailed to connect to terminal\x1b[0m\r\n');
       }
     };
 
-    ws.onerror = (error) => {
-      console.error('Terminal WebSocket error:', error);
-      term.writeln('\r\n\x1b[31mConnection error\x1b[0m\r\n');
-    };
-
-    ws.onclose = () => {
-      setIsConnected(false);
-      term.writeln('\r\n\x1b[31mDisconnected from terminal\x1b[0m\r\n');
-    };
-
-    // Send input to WebSocket
-    term.onData((data) => {
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({
-          type: 'input',
-          data: data
-        }));
-      }
-    });
+    connect();
 
     // Handle resize
     const handleResize = () => {
       if (fitAddon) {
         fitAddon.fit();
-        if (ws.readyState === WebSocket.OPEN) {
-          ws.send(JSON.stringify({
-            type: 'resize',
-            cols: term.cols,
-            rows: term.rows
-          }));
+        const ws = wsRef.current;
+        if (ws?.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: 'resize', cols: term.cols, rows: term.rows }));
         }
       }
     };
@@ -140,27 +141,28 @@ export function ResponsiveTerminal({
     // Touch support for mobile
     if (isMobile) {
       let touchStartY = 0;
-      
+
       terminalRef.current.addEventListener('touchstart', (e) => {
         touchStartY = e.touches[0].clientY;
       });
-      
+
       terminalRef.current.addEventListener('touchmove', (e) => {
         const touchY = e.touches[0].clientY;
         const deltaY = touchStartY - touchY;
-        
+
         if (Math.abs(deltaY) > 10) {
           term.scrollLines(deltaY > 0 ? 3 : -3);
           touchStartY = touchY;
         }
-        
+
         e.preventDefault();
       });
     }
 
     return () => {
+      cancelled = true;
       window.removeEventListener('resize', handleResize);
-      ws.close();
+      wsRef.current?.close();
       term.dispose();
     };
   }, [projectId, isMobile]);

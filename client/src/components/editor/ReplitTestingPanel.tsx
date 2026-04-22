@@ -106,9 +106,15 @@ export function ReplitTestingPanel({ projectId = 'default-project', className }:
   const wsRef = useRef<WebSocket | null>(null);
 
   const { data: testRuns = [], isLoading, refetch } = useQuery<TestRun[]>({
-    queryKey: ['/api/workspace/projects', projectId, 'test-runs'],
+    queryKey: [`/api/background-tests/status/${projectId}`],
+    queryFn: async () => {
+      const res = await fetch(`/api/background-tests/status/${projectId}`, { credentials: 'include' });
+      if (!res.ok) return [];
+      const data = await res.json();
+      return Array.isArray(data) ? data : (data ? [data] : []);
+    },
     enabled: !!projectId,
-    refetchInterval: 30000, // RATE LIMIT FIX: Increased from 5s to 30s
+    refetchInterval: 30000,
     refetchIntervalInBackground: false,
   });
 
@@ -116,7 +122,7 @@ export function ReplitTestingPanel({ projectId = 'default-project', className }:
     if (!projectId) return;
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/api/test-runs/ws?projectId=${projectId}`;
+    const wsUrl = `${protocol}//${window.location.host}/ws/background-tests?projectId=${projectId}`;
     
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
