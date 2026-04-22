@@ -53,8 +53,7 @@ export default function SSHPanel({ projectId, onClose }: SSHPanelProps) {
 
   const addKeyMutation = useMutation({
     mutationFn: async ({ label, publicKey }: { label: string; publicKey: string }) => {
-      const res = await apiRequest("POST", "/api/ssh-keys", { label, publicKey });
-      return res.json();
+      return apiRequest("POST", "/api/ssh-keys", { label, publicKey });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/ssh-keys"] });
