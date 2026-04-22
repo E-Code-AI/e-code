@@ -74,7 +74,7 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
   const { data: activeVulnerabilities, isLoading: isLoadingActive } = useQuery<Vulnerability[]>({
     queryKey: ['/api/workspace/projects', projectId, 'vulnerabilities', 'by-hidden', 'active'],
     queryFn: async () => {
-      const res = await fetch(`/api/workspace/projects/${projectId}/vulnerabilities/by-hidden?hidden=false`);
+      const res = await fetch(`/api/workspace/projects/${projectId}/vulnerabilities/by-hidden?hidden=false`, { credentials: 'include' });
       if (!res.ok) throw new Error('Failed to fetch vulnerabilities');
       return res.json();
     },
@@ -84,7 +84,7 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
   const { data: hiddenVulnerabilities, isLoading: isLoadingHidden } = useQuery<Vulnerability[]>({
     queryKey: ['/api/workspace/projects', projectId, 'vulnerabilities', 'by-hidden', 'hidden'],
     queryFn: async () => {
-      const res = await fetch(`/api/workspace/projects/${projectId}/vulnerabilities/by-hidden?hidden=true`);
+      const res = await fetch(`/api/workspace/projects/${projectId}/vulnerabilities/by-hidden?hidden=true`, { credentials: 'include' });
       if (!res.ok) throw new Error('Failed to fetch vulnerabilities');
       return res.json();
     },

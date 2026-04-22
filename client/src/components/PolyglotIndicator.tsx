@@ -40,7 +40,7 @@ export const PolyglotIndicator: React.FC<{ className?: string }> = ({ className 
   useEffect(() => {
     const checkServices = async () => {
       try {
-        const response = await fetch('/api/health');
+        const response = await fetch('/api/health', { credentials: 'include' });
         const data = await response.json();
         
         setServices(prev => ({

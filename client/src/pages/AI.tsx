@@ -57,7 +57,7 @@ interface AIData {
 
 const fetchAIFeatures = async (): Promise<AIData> => {
   try {
-    const response = await fetch('/api/ai/features');
+    const response = await fetch('/api/ai/features', { credentials: 'include' });
 
     if (!response.ok) {
       throw new Error('Failed to load AI feature data');

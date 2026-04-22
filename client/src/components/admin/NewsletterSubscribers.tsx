@@ -89,7 +89,7 @@ export default function NewsletterSubscribers() {
 
   const fetchSubscribers = async () => {
     try {
-      const response = await fetch('/api/newsletter/subscribers');
+      const response = await fetch('/api/newsletter/subscribers', { credentials: 'include' });
       if (response.ok) {
         const data = await response.json();
         setSubscribers(data.subscribers || []);

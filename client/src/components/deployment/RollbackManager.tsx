@@ -119,7 +119,7 @@ export function RollbackManager({ deploymentId, className }: RollbackManagerProp
   const { data: snapshots = [], isLoading } = useQuery({
     queryKey: ['/api/deployments', deploymentId, 'versions'],
     queryFn: async () => {
-      const response = await fetch(`/api/deployments/${deploymentId}/versions`);
+      const response = await fetch(`/api/deployments/${deploymentId}/versions`, { credentials: 'include' });
       return response.json();
     },
   });
@@ -141,7 +141,7 @@ export function RollbackManager({ deploymentId, className }: RollbackManagerProp
   const { data: rollbackHistory = [], isLoading: isLoadingHistory } = useQuery<RollbackStatus[]>({
     queryKey: ['/api/deployments', deploymentId, 'rollback', 'history'],
     queryFn: async () => {
-      const response = await fetch(`/api/deployments/${deploymentId}/rollback/history`);
+      const response = await fetch(`/api/deployments/${deploymentId}/rollback/history`, { credentials: 'include' });
       const data = await response.json();
       return data.history || [];
     },
@@ -196,7 +196,7 @@ export function RollbackManager({ deploymentId, className }: RollbackManagerProp
 
   const pollRollbackStatus = async (rollbackId: string) => {
     const checkStatus = async () => {
-      const response = await fetch(`/api/deployments/${deploymentId}/rollback/${rollbackId}/status`);
+      const response = await fetch(`/api/deployments/${deploymentId}/rollback/${rollbackId}/status`, { credentials: 'include' });
       const status = await response.json();
       setActiveRollback(status);
       

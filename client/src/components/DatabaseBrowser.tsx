@@ -61,7 +61,7 @@ export function DatabaseBrowser({ projectId }: { projectId: string }) {
     queryKey: [`/api/database/info`, projectId],
     enabled: !!projectId,
     queryFn: async () => {
-      const response = await fetch(`/api/database/${projectId}/info`);
+      const response = await fetch(`/api/database/${projectId}/info`, { credentials: 'include' });
       if (!response.ok) throw new Error('Failed to fetch database info');
       return response.json();
     }
@@ -72,7 +72,7 @@ export function DatabaseBrowser({ projectId }: { projectId: string }) {
     queryKey: [`/api/database/tables`, projectId, selectedTable, currentPage, pageSize],
     enabled: !!selectedTable,
     queryFn: async () => {
-      const response = await fetch(`/api/database/${projectId}/tables/${selectedTable}?page=${currentPage}&pageSize=${pageSize}`);
+      const response = await fetch(`/api/database/${projectId}/tables/${selectedTable}?page=${currentPage}&pageSize=${pageSize}`, { credentials: 'include' });
       if (!response.ok) throw new Error('Failed to fetch table data');
       return response.json();
     }
@@ -109,7 +109,7 @@ export function DatabaseBrowser({ projectId }: { projectId: string }) {
 
   const exportTable = async () => {
     try {
-      const response = await fetch(`/api/database/${projectId}/export/${selectedTable}`);
+      const response = await fetch(`/api/database/${projectId}/export/${selectedTable}`, { credentials: 'include' });
       if (!response.ok) throw new Error('Failed to export table');
       const data = await response.json();
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });

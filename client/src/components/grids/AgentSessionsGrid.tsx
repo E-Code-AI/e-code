@@ -158,7 +158,7 @@ export function AgentSessionsGrid({
 
   const handleExport = useCallback(async (format: 'csv' | 'json') => {
     try {
-      const response = await fetch(`/api/agent-grid/export/sessions?format=${format}`);
+      const response = await fetch(`/api/agent-grid/export/sessions?format=${format}`, { credentials: 'include' });
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');

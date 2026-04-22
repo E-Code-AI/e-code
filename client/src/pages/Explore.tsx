@@ -80,7 +80,7 @@ export default function Explore() {
       if (params.sort) searchParams.append('sort', params.sort);
       if (params.search) searchParams.append('search', params.search);
       
-      const response = await fetch(`/api/explore/projects?${searchParams}`);
+      const response = await fetch(`/api/explore/projects?${searchParams}`, { credentials: 'include' });
       if (!response.ok) throw new Error('Failed to fetch projects');
       return response.json();
     },

@@ -40,7 +40,7 @@ export function EnvVarsManager({ projectId }: EnvVarsManagerProps) {
   const { data, isLoading } = useQuery({
     queryKey: ['/api/env-vars', projectId],
     queryFn: async () => {
-      const response = await fetch(`/api/env-vars/${projectId}`);
+      const response = await fetch(`/api/env-vars/${projectId}`, { credentials: 'include' });
       if (!response.ok) throw new Error('Failed to fetch environment variables');
       return response.json() as Promise<{ variables: EnvVar[] }>;
     }
@@ -135,7 +135,7 @@ export function EnvVarsManager({ projectId }: EnvVarsManagerProps) {
 
   const handleExport = async () => {
     try {
-      const response = await fetch(`/api/env-vars/${projectId}/export`);
+      const response = await fetch(`/api/env-vars/${projectId}/export`, { credentials: 'include' });
       if (!response.ok) throw new Error('Export failed');
 
       const blob = await response.blob();

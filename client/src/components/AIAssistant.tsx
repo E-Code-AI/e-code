@@ -164,7 +164,7 @@ export function AIAssistant({ projectId, selectedFile, selectedCode, className }
 
   const loadChatHistory = async () => {
     try {
-      const response = await fetch(`/api/ai/${projectId}/history`);
+      const response = await fetch(`/api/ai/${projectId}/history`, { credentials: 'include' });
       if (response.ok) {
         const data = await response.json();
         setMessages(data.map((msg: any) => ({

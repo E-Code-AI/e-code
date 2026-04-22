@@ -344,7 +344,7 @@ class MonitoringService {
   // Health check
   public async checkHealth(): Promise<boolean> {
     try {
-      const response = await fetch('/api/monitoring/health');
+      const response = await fetch('/api/monitoring/health', { credentials: 'include' });
       return response.ok;
     } catch {
       return false;

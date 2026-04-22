@@ -170,7 +170,7 @@ export function ReplitCoreServices() {
 
       // Poll for progress
       const pollInterval = setInterval(async () => {
-        const statusResponse = await fetch(`/api/exports/${result.exportId}`);
+        const statusResponse = await fetch(`/api/exports/${result.exportId}`, { credentials: 'include' });
         const status = await statusResponse.json();
         
         setExportStatus(prev => ({
@@ -202,7 +202,7 @@ export function ReplitCoreServices() {
   // SSH Manager Functions
   const fetchSSHKeys = async () => {
     try {
-      const response = await fetch('/api/ssh/keys');
+      const response = await fetch('/api/ssh/keys', { credentials: 'include' });
       const keys = await response.json();
       setSSHKeys(keys);
     } catch (error) {
@@ -240,7 +240,7 @@ export function ReplitCoreServices() {
   // Database Hosting Functions
   const fetchDatabases = async () => {
     try {
-      const response = await fetch('/api/database/instances');
+      const response = await fetch('/api/database/instances', { credentials: 'include' });
       const instances = await response.json();
       setDatabases(instances);
     } catch (error) {
@@ -280,7 +280,7 @@ export function ReplitCoreServices() {
   // Status Page Functions  
   const fetchSystemStatus = async () => {
     try {
-      const response = await fetch('/api/status');
+      const response = await fetch('/api/status', { credentials: 'include' });
       const status = await response.json();
       setSystemStatus(status);
     } catch (error) {
