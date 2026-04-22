@@ -53,7 +53,7 @@ export function CollaborationPresence({
   // WebSocket connection for real-time presence
   useEffect(() => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const ws = new WebSocket(`${protocol}//${window.location.host}/api/collaboration/ws?projectId=${projectId}`);
+    const ws = new WebSocket(`${protocol}//${window.location.host}/collaboration?projectId=${projectId}`);
     
     ws.onopen = () => {
       // Send initial presence

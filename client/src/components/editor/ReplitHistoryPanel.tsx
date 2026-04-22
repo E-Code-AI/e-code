@@ -360,8 +360,7 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
 
   const createCheckpointMutation = useMutation({
     mutationFn: async (checkpointData: { name: string; description?: string }) => {
-      return apiRequest<{ success: boolean; checkpoint: APICheckpoint }>('POST', '/api/checkpoints', {
-        projectId: numericProjectId,
+      return apiRequest<{ success: boolean; checkpoint: APICheckpoint }>('POST', `/api/projects/${numericProjectId}/checkpoints`, {
         name: checkpointData.name,
         description: checkpointData.description,
         type: 'manual',
@@ -385,7 +384,7 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
 
   const restoreCheckpointMutation = useMutation({
     mutationFn: async (checkpointId: number) => {
-      return apiRequest<{ success: boolean; message: string }>('POST', `/api/checkpoints/${checkpointId}/restore`, {
+      return apiRequest<{ success: boolean; message: string }>('POST', `/api/projects/${numericProjectId}/checkpoints/${checkpointId}/restore`, {
         restoreFiles: true,
         restoreDatabase: true,
         restoreEnvironment: true,
