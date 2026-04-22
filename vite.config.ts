@@ -34,9 +34,6 @@ export default defineConfig({
       'Cache-Control': 'no-store, no-cache, must-revalidate',
     },
   },
-  optimizeDeps: {
-    force: true,
-  },
   base: process.env.CDN_BASE_URL || process.env.ASSET_BASE_URL || '/',
   root: path.resolve(import.meta.dirname, "client"),
   build: {
