@@ -36,7 +36,7 @@ export const usePolyglotStatus = () => {
   useEffect(() => {
     const checkHealth = async () => {
       try {
-        const response = await fetch('/api/health');
+        const response = await fetch('/api/health', { credentials: 'include' });
         const data = await response.json();
         
         if (data.services) {

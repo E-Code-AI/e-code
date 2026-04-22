@@ -54,7 +54,7 @@ export function TemplateSearch({ value, onChange, onSearch, className }: Templat
 
   const fetchSuggestions = async (query: string) => {
     try {
-      const response = await fetch(`/api/templates/suggestions?q=${encodeURIComponent(query)}&limit=5`);
+      const response = await fetch(`/api/templates/suggestions?q=${encodeURIComponent(query)}&limit=5`, { credentials: 'include' });
       if (response.ok) {
         const data = await response.json();
         setSuggestions(Array.isArray(data?.suggestions) ? data.suggestions : []);

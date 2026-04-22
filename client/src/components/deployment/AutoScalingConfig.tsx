@@ -99,7 +99,7 @@ export function AutoScalingConfig({ deploymentId, className }: AutoScalingConfig
   const { data: policies = [], isLoading } = useQuery({
     queryKey: ['/api/deployments', deploymentId, 'scaling-policies'],
     queryFn: async () => {
-      const response = await fetch(`/api/deployments/${deploymentId}/autoscale`);
+      const response = await fetch(`/api/deployments/${deploymentId}/autoscale`, { credentials: 'include' });
       return response.json();
     },
   });
@@ -108,7 +108,7 @@ export function AutoScalingConfig({ deploymentId, className }: AutoScalingConfig
   const { data: history = [] } = useQuery({
     queryKey: ['/api/deployments', deploymentId, 'scaling-history'],
     queryFn: async () => {
-      const response = await fetch(`/api/deployments/${deploymentId}/autoscale/history`);
+      const response = await fetch(`/api/deployments/${deploymentId}/autoscale/history`, { credentials: 'include' });
       return response.json();
     },
   });
@@ -117,7 +117,7 @@ export function AutoScalingConfig({ deploymentId, className }: AutoScalingConfig
   const { data: status } = useQuery({
     queryKey: ['/api/deployments', deploymentId, 'scaling-status'],
     queryFn: async () => {
-      const response = await fetch(`/api/deployments/${deploymentId}/autoscale/status`);
+      const response = await fetch(`/api/deployments/${deploymentId}/autoscale/status`, { credentials: 'include' });
       return response.json();
     },
     refetchInterval: 30000, // RATE LIMIT FIX: Increased from 5s to 30s

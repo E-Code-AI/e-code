@@ -73,7 +73,7 @@ export function DeploymentMetrics({ deploymentId, className }: DeploymentMetrics
   const { data: metrics, isLoading, refetch } = useQuery({
     queryKey: ['/api/deployments', deploymentId, 'metrics', timeRange],
     queryFn: async () => {
-      const response = await fetch(`/api/deployments/${deploymentId}/metrics?range=${timeRange}`);
+      const response = await fetch(`/api/deployments/${deploymentId}/metrics?range=${timeRange}`, { credentials: 'include' });
       return response.json();
     },
     refetchInterval: autoRefresh ? 30000 : false, // RATE LIMIT FIX: Increased from 5s to 30s
@@ -84,7 +84,7 @@ export function DeploymentMetrics({ deploymentId, className }: DeploymentMetrics
   const { data: health } = useQuery({
     queryKey: ['/api/deployments', deploymentId, 'health'],
     queryFn: async () => {
-      const response = await fetch(`/api/deployments/${deploymentId}/health`);
+      const response = await fetch(`/api/deployments/${deploymentId}/health`, { credentials: 'include' });
       return response.json();
     },
     refetchInterval: autoRefresh ? 30000 : false, // RATE LIMIT FIX: Increased from 5s to 30s

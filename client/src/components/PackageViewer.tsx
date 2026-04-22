@@ -78,7 +78,7 @@ export function PackageViewer({ projectId }: { projectId: string }) {
     queryKey: [`/api/packages/search`, projectId, searchTerm],
     enabled: searchTerm.length > 2 && activeTab === 'search',
     queryFn: async () => {
-      const response = await fetch(`/api/packages/search?projectId=${projectId}&q=${searchTerm}`);
+      const response = await fetch(`/api/packages/search?projectId=${projectId}&q=${searchTerm}`, { credentials: 'include' });
       if (!response.ok) throw new Error('Failed to search packages');
       return response.json();
     }

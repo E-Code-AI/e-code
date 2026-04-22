@@ -190,7 +190,7 @@ export function BillingSystem({ userId, className }: BillingSystemProps) {
   const loadAllPlans = async () => {
     setPlansLoading(true);
     try {
-      const response = await fetch('/api/payments/plans');
+      const response = await fetch('/api/payments/plans', { credentials: 'include' });
       if (response.ok) {
         const stripePlans: StripePlan[] = await response.json();
         setAllStripePlans(stripePlans);

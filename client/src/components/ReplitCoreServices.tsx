@@ -280,7 +280,7 @@ export function ReplitCoreServices() {
   // Status Page Functions  
   const fetchSystemStatus = async () => {
     try {
-      const response = await fetch('/api/status');
+      const response = await fetch('/api/status', { credentials: 'include' });
       const status = await response.json();
       setSystemStatus(status);
     } catch (error) {

@@ -50,7 +50,7 @@ export default function SharedSnippet() {
 
   const fetchSnippet = async () => {
     try {
-      const response = await fetch(`/api/snippets/${shareId}`);
+      const response = await fetch(`/api/snippets/${shareId}`, { credentials: 'include' });
       
       if (!response.ok) {
         if (response.status === 404) {

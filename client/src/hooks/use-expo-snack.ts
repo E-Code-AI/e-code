@@ -29,7 +29,7 @@ export function useExpoSnack(projectId: string | number) {
     queryKey: ['/api/expo-snack/session', projectIdStr],
     queryFn: async () => {
       try {
-        const response = await fetch(`/api/expo-snack/session/${projectIdStr}`);
+        const response = await fetch(`/api/expo-snack/session/${projectIdStr}`, { credentials: 'include' });
         if (response.status === 404) {
           return null;
         }

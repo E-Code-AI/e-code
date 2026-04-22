@@ -70,7 +70,7 @@ export default function CommunityPost() {
   const { data: post, isLoading } = useQuery<Post>({
     queryKey: [`/api/community/posts/${id}`],
     queryFn: async () => {
-      const response = await fetch(`/api/community/posts/${id}`);
+      const response = await fetch(`/api/community/posts/${id}`, { credentials: 'include' });
       if (!response.ok) {
         if (response.status === 404) {
           throw new Error('Post not found');
