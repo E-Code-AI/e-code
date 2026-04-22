@@ -72,11 +72,11 @@ export function ReplitMobileShell({ projectId, onClose, onBack }: ReplitMobileSh
 
   const activeTab = tabs.find(t => t.id === activeTabId);
 
-  const createWebSocket = useCallback((sessionId: string, userId: number = 1): WebSocket => {
+  const createWebSocket = useCallback((sessionId: string): WebSocket => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/shell?sessionId=${sessionId}&userId=${userId}`;
+    const wsUrl = `${protocol}//${window.location.host}/shell?sessionId=${sessionId}&projectId=${projectId}`;
     return new WebSocket(wsUrl);
-  }, []);
+  }, [projectId]);
 
   const createNewTab = useCallback(() => {
     const sessionId = `shell-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
