@@ -1082,7 +1082,7 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
               <span className="text-[11px] sm:text-[13px] font-mono text-muted-foreground shrink-0">PGDATABASE</span>
               <div className="flex items-center gap-1 min-w-0">
                 <code className="text-[11px] sm:text-[13px] bg-muted px-2 py-1 rounded truncate">
-                  {credentials?.databaseName || 'neondb'}
+                  {credentials?.databaseName || '—'}
                 </code>
                 <Button
                   variant="ghost"
@@ -1099,7 +1099,7 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
               <span className="text-[11px] sm:text-[13px] font-mono text-muted-foreground shrink-0">PGHOST</span>
               <div className="flex items-center gap-1 min-w-0">
                 <code className="text-[11px] sm:text-[13px] bg-muted px-2 py-1 rounded max-w-[120px] sm:max-w-[200px] truncate">
-                  {credentials?.host || 'ep-lively-resonance-a6vcsxeu.u'}
+                  {credentials?.host || '—'}
                 </code>
                 <Button
                   variant="ghost"
@@ -1116,13 +1116,13 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
               <span className="text-[11px] sm:text-[13px] font-mono text-muted-foreground shrink-0">PGPORT</span>
               <div className="flex items-center gap-1 min-w-0">
                 <code className="text-[11px] sm:text-[13px] bg-muted px-2 py-1 rounded">
-                  {credentials?.port || '5432'}
+                  {credentials?.port || '—'}
                 </code>
                 <Button
                   variant="ghost"
                   size="icon"
                   className="h-7 w-7"
-                  onClick={() => handleCopyToClipboard(String(credentials?.port || '5432'), 'PGPORT')}
+                  onClick={() => handleCopyToClipboard(String(credentials?.port || ''), 'PGPORT')}
                 >
                   <Copy className="h-3 w-3" />
                 </Button>
@@ -1133,7 +1133,7 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
               <span className="text-[11px] sm:text-[13px] font-mono text-muted-foreground shrink-0">PGUSER</span>
               <div className="flex items-center gap-1 min-w-0">
                 <code className="text-[11px] sm:text-[13px] bg-muted px-2 py-1 rounded truncate">
-                  {credentials?.username || 'neondb_owner'}
+                  {credentials?.username || '—'}
                 </code>
                 <Button
                   variant="ghost"

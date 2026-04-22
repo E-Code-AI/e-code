@@ -251,6 +251,7 @@ const InviteDialog = memo(({
     try {
       const response = await fetch('/api/collaboration/invite', {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ projectId, email: email.trim(), role })
       });
