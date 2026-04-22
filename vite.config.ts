@@ -29,6 +29,9 @@ export default defineConfig({
     },
     dedupe: ["react", "react-dom"],
   },
+  optimizeDeps: {
+    force: true,
+  },
   base: process.env.CDN_BASE_URL || process.env.ASSET_BASE_URL || '/',
   root: path.resolve(import.meta.dirname, "client"),
   build: {
