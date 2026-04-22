@@ -120,6 +120,33 @@ router.post('/recommend-model', async (req, res) => {
   }
 });
 
+// In-memory pending actions store per project (used by AgentActionsPanel)
+const pendingActionsStore = new Map<string, any[]>();
+
+// GET /api/agent/actions/:projectId — list pending AI actions for AgentActionsPanel
+router.get('/actions/:projectId', async (req, res) => {
+  const { projectId } = req.params;
+  res.json(pendingActionsStore.get(projectId) || []);
+});
+
+// POST /api/agent/actions/:actionId/approve
+router.post('/actions/:actionId/approve', async (req, res) => {
+  for (const [, actions] of pendingActionsStore) {
+    const idx = actions.findIndex((a: any) => a.id === req.params.actionId);
+    if (idx !== -1) { actions.splice(idx, 1); break; }
+  }
+  res.json({ success: true });
+});
+
+// POST /api/agent/actions/:actionId/reject
+router.post('/actions/:actionId/reject', async (req, res) => {
+  for (const [, actions] of pendingActionsStore) {
+    const idx = actions.findIndex((a: any) => a.id === req.params.actionId);
+    if (idx !== -1) { actions.splice(idx, 1); break; }
+  }
+  res.json({ success: true });
+});
+
 // POST /api/agent/chat — simple chat endpoint used by AIAgentPanel
 router.post('/chat', async (req, res) => {
   try {
