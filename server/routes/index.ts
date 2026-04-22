@@ -72,6 +72,8 @@ import maxAutonomyRouter from "./max-autonomy.router";
 import { bountiesRouter } from "./bounties.router";
 import agentGridRouter from "./agent-grid.router";
 import createAgentToolsRouter from "./agent-tools.router";
+import sshKeysRouter from "./ssh-keys.router";
+import projectMonitoringRouter from "./project-monitoring.router";
 import { authCompleteRouter } from "./auth-complete";
 import placeholderRouter from "./placeholder.router";
 import analyticsRouter from "./analytics.router";
@@ -440,6 +442,12 @@ export class MainRouter {
 
     // Environment Variables routes (Priorité 1 - Core IDE)
     app.use('/api/env-vars', tierRateLimiters.api, envVarsRouter);
+
+    // SSH keys routes (user-level SSH key management)
+    app.use('/api/ssh-keys', tierRateLimiters.api, sshKeysRouter);
+
+    // Project monitoring routes
+    app.use('/api/projects', tierRateLimiters.api, projectMonitoringRouter);
 
     // Secrets routes (Per-project secrets management - Replit-style)
     app.use('/api/projects/:projectId/secrets', tierRateLimiters.api, secretsRouter);
