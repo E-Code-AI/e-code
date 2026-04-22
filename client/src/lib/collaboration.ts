@@ -61,7 +61,7 @@ export function useCollaboration(projectId: number | undefined, fileId: number |
     
     // Connect to WebSocket server
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/ws`;
+    const wsUrl = `${protocol}//${window.location.host}/collaboration`;
     const ws = new WebSocket(wsUrl);
     
     const userColor = generateCursorColor(user.id);

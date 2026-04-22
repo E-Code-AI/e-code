@@ -10,6 +10,7 @@ import { alertSystem } from '../services/alert-system';
 import { metricsCollector } from '../services/metrics-collector';
 import jwt from 'jsonwebtoken';
 import { storage } from '../storage';
+import { centralUpgradeDispatcher } from './central-upgrade-dispatcher';
 
 const logger = createLogger('monitoring-ws');
 
@@ -55,24 +56,26 @@ export class MonitoringWebSocketService {
     this.setupEventListeners();
   }
 
-  public initialize(server: any, path: string = '/ws/monitoring') {
-    this.wss = new WebSocketServer({ 
-      server,
-      path,
-      maxPayload: 10 * 1024 * 1024 // 10MB max message size
-    });
+  public initialize(_server?: any, path: string = '/ws/monitoring') {
+    this.wss = new WebSocketServer({ noServer: true, maxPayload: 10 * 1024 * 1024 });
 
     this.wss.on('connection', (ws, req) => {
       this.handleConnection(ws, req);
     });
 
+    centralUpgradeDispatcher.register(path, (request, socket, head) => {
+      this.wss!.handleUpgrade(request, socket as any, head, (ws) => {
+        this.wss!.emit('connection', ws, request);
+      });
+    });
+
     // Start broadcasting metrics
     this.startBroadcasting();
-    
+
     // Start ping/pong to detect disconnected clients
     this.startPingInterval();
 
-    logger.info('Monitoring WebSocket service initialized');
+    logger.info('Monitoring WebSocket service initialized on', path);
   }
 
   private handleConnection(ws: WebSocket, req: any) {
