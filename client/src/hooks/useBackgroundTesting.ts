@@ -148,7 +148,7 @@ export function useBackgroundTesting({
     try {
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const host = window.location.host;
-      const wsUrl = `${protocol}//${host}/ws/testing`;
+      const wsUrl = `${protocol}//${host}/ws/background-tests`;
       
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;

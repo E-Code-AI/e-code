@@ -116,7 +116,7 @@ export function ReplitTestingPanel({ projectId = 'default-project', className }:
     if (!projectId) return;
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/api/test-runs/ws?projectId=${projectId}`;
+    const wsUrl = `${protocol}//${window.location.host}/ws/background-tests?projectId=${projectId}`;
     
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;

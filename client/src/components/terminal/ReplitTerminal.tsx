@@ -173,71 +173,52 @@ export function ReplitTerminal({
     terminal.writeln("\x1b[1;32m╰─────────────────────────────────────────╯\x1b[0m");
     terminal.writeln("");
 
-    // Configuration WebSocket - Use /api/terminal/ws endpoint
-    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const wsUrl = `${protocol}//${window.location.host}/api/terminal/ws?projectId=${projectId}`;
-    
-    const connectWebSocket = () => {
-      const ws = new WebSocket(wsUrl);
-      wsRef.current = ws;
+    const connectWebSocket = async () => {
+      try {
+        const sessionRes = await fetch('/api/shell/sessions', { method: 'POST', credentials: 'include' });
+        if (!sessionRes.ok) throw new Error('session');
+        const { sessionId } = await sessionRes.json();
+        const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+        const ws = new WebSocket(`${protocol}//${window.location.host}/shell?sessionId=${sessionId}&projectId=${projectId}`);
+        wsRef.current = ws;
 
-      ws.onopen = () => {
-        setIsConnected(true);
-        terminal.writeln("\x1b[1;32m✓ Connected to terminal server\x1b[0m");
-        
-        const dims = fitAddon.proposeDimensions();
-        if (dims) {
-          ws.send(JSON.stringify({ type: 'resize', cols: dims.cols, rows: dims.rows }));
-        }
-        
-        if (defaultCommand) {
-          terminal.writeln(defaultCommand);
-          ws.send(JSON.stringify({
-            type: "input",
-            sessionId: activeSessionId,
-            data: defaultCommand + "\r"
-          }));
-        }
-      };
-
-      ws.onmessage = (event) => {
-        try {
-          const message = JSON.parse(event.data);
-          
-          switch (message.type) {
-            case "output":
-              terminal.write(message.data);
-              break;
-            case "error":
-              terminal.write(`\x1b[1;31m${message.data}\x1b[0m`);
-              break;
-            case "session_status":
-              updateSessionStatus(message.sessionId, message.status);
-              break;
-            case "working_directory":
-              updateSessionWorkingDirectory(message.sessionId, message.path);
-              break;
+        ws.onopen = () => {
+          setIsConnected(true);
+          terminal.writeln("\x1b[1;32m✓ Connected to terminal server\x1b[0m");
+          const dims = fitAddon.proposeDimensions();
+          if (dims) ws.send(JSON.stringify({ type: 'resize', cols: dims.cols, rows: dims.rows }));
+          if (defaultCommand) {
+            terminal.writeln(defaultCommand);
+            ws.send(JSON.stringify({ type: "input", sessionId: activeSessionId, data: defaultCommand + "\r" }));
           }
-        } catch (error) {
-          terminal.write(event.data);
-        }
-      };
+        };
 
-      ws.onclose = () => {
-        setIsConnected(false);
-        terminal.writeln("\r\n\x1b[1;31m✗ Connection lost. Attempting to reconnect...\x1b[0m");
-        
-        // Tentative de reconnexion
-        setTimeout(() => {
-          if (wsRef.current?.readyState === WebSocket.CLOSED) {
-            connectWebSocket();
+        ws.onmessage = (event) => {
+          try {
+            const message = JSON.parse(event.data);
+            switch (message.type) {
+              case "output": terminal.write(message.data); break;
+              case "error": terminal.write(`\x1b[1;31m${message.data}\x1b[0m`); break;
+              case "session_status": updateSessionStatus(message.sessionId, message.status); break;
+              case "working_directory": updateSessionWorkingDirectory(message.sessionId, message.path); break;
+            }
+          } catch {
+            terminal.write(event.data);
           }
-        }, 3000);
-      };
+        };
 
-      ws.onerror = () => {
-        terminal.writeln("\r\n\x1b[1;31m✗ Connection error\x1b[0m");
-      };
+        ws.onclose = () => {
+          setIsConnected(false);
+          terminal.writeln("\r\n\x1b[1;31m✗ Connection lost. Attempting to reconnect...\x1b[0m");
+          setTimeout(() => {
+            if (wsRef.current?.readyState === WebSocket.CLOSED) connectWebSocket();
+          }, 3000);
+        };
+
+        ws.onerror = () => terminal.writeln("\r\n\x1b[1;31m✗ Connection error\x1b[0m");
+      } catch {
+        terminal.writeln("\r\n\x1b[1;31m✗ Failed to connect to terminal\x1b[0m");
+      }
     };
 
     // Gestion des entrées du terminal

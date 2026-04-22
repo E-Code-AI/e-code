@@ -153,7 +153,7 @@ export function ReplitMultiplayers({
     if (!projectId || wsRef.current?.readyState === WebSocket.OPEN) return;
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/ws/collaboration`;
+    const wsUrl = `${protocol}//${window.location.host}/collaboration`;
 
     try {
       const ws = new WebSocket(wsUrl);

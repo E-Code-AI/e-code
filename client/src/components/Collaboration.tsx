@@ -71,7 +71,7 @@ export default function Collaboration({
       
       // Determine the WebSocket URL
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.host}/ws`;
+      const wsUrl = `${protocol}//${window.location.host}/collaboration`;
       
       // Create WebSocket connection
       const ws = new WebSocket(wsUrl);
