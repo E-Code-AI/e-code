@@ -8,19 +8,23 @@
 import { lazy, ComponentType } from 'react';
 
 const MAX_RETRIES = 3;
-// Fortune 500 optimization: Fast initial retry, exponential backoff only on repeated failures
+// Replit Vite dev: force:true means optimization takes 30-60s; give it time
+const MAX_RETRIES_REPLIT = 20;
 const RETRY_DELAY = 200; // Fast first retry (was 1000ms)
+const RETRY_DELAY_REPLIT = 3000; // Fixed 3s per attempt on Replit = up to 60s
 const RELOAD_KEY = 'lazy-load-reload-attempted';
 
 async function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// Detect if we're on a mobile device or in the Replit app
+// Detect if we're on a mobile device or in the Replit app/dev environment
 function isMobileOrReplitApp(): boolean {
   if (typeof navigator === 'undefined') return false;
   const ua = navigator.userAgent.toLowerCase();
-  return /iphone|ipad|android|mobile/i.test(ua) || /replit/i.test(ua);
+  const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+  return /iphone|ipad|android|mobile/i.test(ua) || /replit/i.test(ua) ||
+    hostname.includes('replit.dev') || hostname.includes('repl.co');
 }
 
 export function instrumentedLazy<T extends ComponentType<any>>(
@@ -30,8 +34,12 @@ export function instrumentedLazy<T extends ComponentType<any>>(
   return lazy(async () => {
     const path = modulePath || 'Unknown module';
     let lastError: unknown;
-    
-    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    // On Replit dev (force:true re-optimizes on every start), give Vite up to 60s to finish
+    const isReplit = isMobileOrReplitApp();
+    const maxRetries = isReplit ? MAX_RETRIES_REPLIT : MAX_RETRIES;
+    const retryDelay = isReplit ? RETRY_DELAY_REPLIT : RETRY_DELAY;
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         const module = await factory();
         if (attempt > 1) {
@@ -42,15 +50,15 @@ export function instrumentedLazy<T extends ComponentType<any>>(
         return module;
       } catch (error) {
         lastError = error;
-        
+
         // Log the attempt failure
-        if (attempt < MAX_RETRIES) {
-          console.warn(`[LAZY] Attempt ${attempt}/${MAX_RETRIES} failed for module: ${path}`, {
+        if (attempt < maxRetries) {
+          console.warn(`[LAZY] Attempt ${attempt}/${maxRetries} failed for module: ${path}`, {
             errorMessage: error instanceof Error ? error.message : String(error),
             isEmptyObject: typeof error === 'object' && Object.keys(error || {}).length === 0
           });
-          // Exponential backoff: 200ms, 400ms, 600ms (faster than old 1s, 2s, 3s)
-          await sleep(RETRY_DELAY * attempt);
+          // On Replit: fixed 3s delay. Otherwise: exponential 200ms, 400ms, 600ms
+          await sleep(isReplit ? retryDelay : retryDelay * attempt);
         }
       }
     }
@@ -71,7 +79,7 @@ export function instrumentedLazy<T extends ComponentType<any>>(
     sessionStorage.removeItem(RELOAD_KEY);
     
     // All retries exhausted - log and throw
-    console.error(`[LAZY] Failed to load module after ${MAX_RETRIES} attempts: ${path}`, {
+    console.error(`[LAZY] Failed to load module after ${maxRetries} attempts: ${path}`, {
       error: lastError,
       errorType: typeof lastError,
       errorConstructor: (lastError as any)?.constructor?.name,
