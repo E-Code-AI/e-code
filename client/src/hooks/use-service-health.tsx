@@ -62,6 +62,7 @@ export function useServiceHealth(options: UseServiceHealthOptions = {}) {
       
       const response = await fetch(url, {
         method: 'GET',
+        credentials: 'include',
         signal: controller.signal,
         headers: { 'Accept': 'application/json' },
       });

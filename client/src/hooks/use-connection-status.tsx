@@ -47,6 +47,7 @@ export function ConnectionStatusProvider({ children }: { children: ReactNode }) 
       
       const response = await fetch('/api/health/liveness', {
         method: 'GET',
+        credentials: 'include',
         signal: controller.signal,
       });
       

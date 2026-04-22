@@ -58,6 +58,7 @@ export async function checkAICompletionAvailability(): Promise<boolean> {
     const response = await fetch('/api/ai/completion', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({
         context: {
           currentFile: '// test',

@@ -93,6 +93,7 @@ export default function PerformanceDashboard() {
         startDate: startDate.toISOString(),
         endDate: endDate.toISOString()
       }), {
+        credentials: 'include',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
