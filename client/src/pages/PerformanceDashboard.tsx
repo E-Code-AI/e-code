@@ -60,8 +60,12 @@ export default function PerformanceDashboard() {
 
   // Fetch metrics data
   const { data: metrics, isLoading: metricsLoading } = useQuery({
-    queryKey: ['/api/monitoring/metrics', timeRange],
-    queryParams: { timeRange },
+    queryKey: [`/api/monitoring/metrics?timeRange=${timeRange}`],
+    queryFn: async () => {
+      const res = await fetch(`/api/monitoring/metrics?timeRange=${encodeURIComponent(timeRange)}`, { credentials: 'include' });
+      if (!res.ok) return null;
+      return res.json();
+    },
     refetchInterval: autoRefresh ? 5000 : false
   });
 

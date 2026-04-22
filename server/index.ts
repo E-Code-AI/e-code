@@ -882,6 +882,15 @@ httpServer.listen(port, "0.0.0.0", () => {
       logger.error(`[WORKING SERVER] Failed to register monitoring routes: ${error}`);
     }
 
+    // Register monitoring WebSocket at /ws/monitoring via central dispatcher
+    try {
+      const { monitoringWebSocketService } = await import('./websocket/monitoring-ws');
+      monitoringWebSocketService.initialize();
+      logger.info('[MonitoringWS] WebSocket registered at /ws/monitoring');
+    } catch (error) {
+      logger.error(`[WORKING SERVER] Failed to initialize monitoring WebSocket: ${error}`);
+    }
+
     // Register phantom UI panels routes
     try {
       const phantomPanelsRouter = (await import('./routes/phantom-panels.router')).default;

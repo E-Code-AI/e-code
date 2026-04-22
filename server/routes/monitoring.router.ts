@@ -141,4 +141,36 @@ router.post('/monitoring/cache/flush', ensureAuthenticated, cacheFlushRateLimite
   }
 });
 
+// GET /monitoring/alerts — active system alerts for PerformanceDashboard
+router.get('/monitoring/alerts', ensureAuthenticated, ensureAdmin, async (req: Request, res: Response) => {
+  try {
+    const metrics = monitoringService.getAllMetrics();
+    const alerts: Array<{ id: string; level: string; message: string; timestamp: string }> = [];
+    const errorRate = (metrics as any).errorRate ?? (metrics as any).error_rate;
+    const responseTime = (metrics as any).responseTime ?? (metrics as any).response_time;
+    if (errorRate !== undefined && errorRate > 5) {
+      alerts.push({ id: 'high-error-rate', level: 'warning', message: `Error rate is ${errorRate.toFixed(1)}%`, timestamp: new Date().toISOString() });
+    }
+    if (responseTime !== undefined && responseTime > 2000) {
+      alerts.push({ id: 'slow-response', level: 'warning', message: `Avg response time ${responseTime}ms`, timestamp: new Date().toISOString() });
+    }
+    res.json(alerts);
+  } catch (error) {
+    logger.error('Error fetching monitoring alerts:', error);
+    res.status(500).json({ message: 'Failed to fetch alerts' });
+  }
+});
+
+// GET /monitoring/slow-endpoints — top slow endpoints for PerformanceDashboard
+router.get('/monitoring/slow-endpoints', ensureAuthenticated, ensureAdmin, async (req: Request, res: Response) => {
+  try {
+    const metrics = monitoringService.getAllMetrics();
+    const endpoints = (metrics as any).slowEndpoints ?? (metrics as any).slow_endpoints ?? [];
+    res.json(Array.isArray(endpoints) ? endpoints : []);
+  } catch (error) {
+    logger.error('Error fetching slow endpoints:', error);
+    res.status(500).json({ message: 'Failed to fetch slow endpoints' });
+  }
+});
+
 export default router;

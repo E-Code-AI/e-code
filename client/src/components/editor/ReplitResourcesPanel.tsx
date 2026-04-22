@@ -26,17 +26,17 @@ export function ReplitResourcesPanel({ projectId, className }: ReplitResourcesPa
 
   // Fetch initial metrics from REST API
   const { data: initialMetrics } = useQuery<ResourceMetric[]>({
-    queryKey: ['/api/workspace/projects', projectId, 'resource-metrics'],
+    queryKey: [`/api/workspace/projects/${projectId}/resource-metrics`],
     enabled: !!projectId,
-    refetchInterval: 30000, // RATE LIMIT FIX: Increased from 10s to 30s
+    refetchInterval: 30000,
     refetchIntervalInBackground: false
   });
 
   // Fetch latest metrics
   const { data: initialLatest } = useQuery<ResourceMetric>({
-    queryKey: ['/api/workspace/projects', projectId, 'resource-metrics', 'latest'],
+    queryKey: [`/api/workspace/projects/${projectId}/resource-metrics/latest`],
     enabled: !!projectId,
-    refetchInterval: 30000, // RATE LIMIT FIX: Increased from 5s to 30s
+    refetchInterval: 30000,
     refetchIntervalInBackground: false,
   });
 

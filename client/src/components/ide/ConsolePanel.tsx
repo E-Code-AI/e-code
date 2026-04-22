@@ -117,9 +117,9 @@ export function ConsolePanel({ projectId, userId, isRunning, executionId, classN
 
   const createWebSocket = useCallback((sessionId: string): WebSocket => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/shell?sessionId=${sessionId}&userId=${userId || 1}`;
+    const wsUrl = `${protocol}//${window.location.host}/shell?sessionId=${sessionId}&projectId=${projectId}`;
     return new WebSocket(wsUrl);
-  }, [userId]);
+  }, [projectId]);
 
   const createNewShell = useCallback(async () => {
     const sessionId = `shell-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;

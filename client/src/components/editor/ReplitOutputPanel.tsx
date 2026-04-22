@@ -82,7 +82,7 @@ export function ReplitOutputPanel({ projectId }: ReplitOutputPanelProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const { data: initialLogs, isLoading } = useQuery<BuildLog[]>({
-    queryKey: ['/api/workspace/projects', projectId, 'build-logs'],
+    queryKey: [`/api/workspace/projects/${projectId}/build-logs`],
     enabled: !!projectId,
   });
 
