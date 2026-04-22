@@ -145,8 +145,8 @@ export default function IDEPage() {
     <>
       <Toaster />
       <ErrorBoundary>
-        <Suspense fallback={<div data-testid="ide-loading-layout"><ECodeLoading fullScreen size="lg" text="Loading IDE..." /></div>}>
-          <UnifiedIDELayout 
+        <Suspense fallback={<div data-testid="ide-loading-layout"><ECodeLoading fullScreen size="lg" text="Loading IDE..." timeoutMs={160000} /></div>}>
+          <UnifiedIDELayout
             projectId={normalizedProjectId}
             bootstrapToken={bootstrapToken}
             onWorkspaceComplete={handleWorkspaceComplete}
