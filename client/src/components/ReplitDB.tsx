@@ -76,7 +76,7 @@ export function ReplitDB({ projectId, className }: ReplitDBProps) {
   const loadEntries = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/database/${projectId}/replitdb`);
+      const response = await fetch(`/api/database/${projectId}/replitdb`, { credentials: 'include' });
       if (response.ok) {
         const data = await response.json();
           // Get all keys and their values
@@ -84,7 +84,7 @@ export function ReplitDB({ projectId, className }: ReplitDBProps) {
         const entries: DBEntry[] = [];
         
         for (const key of keys) {
-          const valueResponse = await fetch(`/api/database/${projectId}/replitdb/${key}`);
+          const valueResponse = await fetch(`/api/database/${projectId}/replitdb/${key}`, { credentials: 'include' });
           if (valueResponse.ok) {
             const { value } = await valueResponse.json();
             entries.push({
@@ -113,7 +113,7 @@ export function ReplitDB({ projectId, className }: ReplitDBProps) {
 
   const loadStats = async () => {
     try {
-      const response = await fetch(`/api/database/${projectId}/replitdb/stats`);
+      const response = await fetch(`/api/database/${projectId}/replitdb/stats`, { credentials: 'include' });
       if (response.ok) {
         const data = await response.json();
         setStats(data);

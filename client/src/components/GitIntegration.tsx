@@ -86,7 +86,7 @@ export function GitIntegration({ projectId, className }: GitIntegrationProps) {
 
   const checkGitStatus = async () => {
     try {
-      const response = await fetch(`/api/git/${projectId}/status`);
+      const response = await fetch(`/api/git/${projectId}/status`, { credentials: 'include' });
       if (response.ok) {
         const data = await response.json();
         // Transform data to match GitStatus interface
@@ -111,7 +111,7 @@ export function GitIntegration({ projectId, className }: GitIntegrationProps) {
 
   const loadBranches = async () => {
     try {
-      const response = await fetch(`/api/git/${projectId}/branches`);
+      const response = await fetch(`/api/git/${projectId}/branches`, { credentials: 'include' });
       if (response.ok) {
         const data = await response.json();
         const currentBranch = gitStatus?.branch || 'main';
@@ -128,7 +128,7 @@ export function GitIntegration({ projectId, className }: GitIntegrationProps) {
 
   const loadCommits = async () => {
     try {
-      const response = await fetch(`/api/git/${projectId}/commits`);
+      const response = await fetch(`/api/git/${projectId}/commits`, { credentials: 'include' });
       if (response.ok) {
         const data = await response.json();
         setCommits(data.map((commit: any) => ({

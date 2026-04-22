@@ -41,7 +41,7 @@ export function LogsViewerPanel({ deploymentId, buildId, projectId }: LogsViewer
       if (level !== 'all') params.append('level', level);
       if (search) params.append('search', search);
       
-      const response = await fetch(`/api/logs?${params}`);
+      const response = await fetch(`/api/logs?${params}`, { credentials: 'include' });
       if (!response.ok) throw new Error('Failed to fetch logs');
       return response.json();
     },
@@ -52,6 +52,7 @@ export function LogsViewerPanel({ deploymentId, buildId, projectId }: LogsViewer
     try {
       const response = await fetch('/api/logs/export', {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           deploymentId,
