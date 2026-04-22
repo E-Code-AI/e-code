@@ -50,9 +50,7 @@ export function SSOConfiguration() {
   // Test SSO connection
   const testMutation = useMutation({
     mutationFn: async (providerId: number) => {
-      return apiRequest(`/api/sso/test/${providerId}`, {
-        method: 'GET'
-      });
+      return apiRequest('GET', `/api/sso/test/${providerId}`);
     },
     onSuccess: (data) => {
       toast({

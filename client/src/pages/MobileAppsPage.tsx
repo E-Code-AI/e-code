@@ -44,29 +44,22 @@ export default function MobileAppsPage() {
   // Fetch mobile apps
   const { data: apps, isLoading: appsLoading } = useQuery({
     queryKey: ["/api/mobile/apps"],
-    queryFn: () => apiRequest("/api/mobile/apps")
   });
 
   // Fetch mobile settings
   const { data: settings, isLoading: settingsLoading } = useQuery({
     queryKey: ["/api/mobile/settings"],
-    queryFn: () => apiRequest("/api/mobile/settings")
   });
 
   // Fetch mobile statistics
   const { data: stats } = useQuery({
     queryKey: ["/api/mobile/stats"],
-    queryFn: () => apiRequest("/api/mobile/stats")
   });
 
   // Update settings mutation
   const updateSettingsMutation = useMutation({
     mutationFn: (data: { setting: string; value: any }) =>
-      apiRequest("/api/mobile/settings", { 
-        method: "PATCH", 
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data) 
-      }),
+      apiRequest("PATCH", "/api/mobile/settings", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/mobile/settings"] });
       toast({
@@ -79,11 +72,7 @@ export default function MobileAppsPage() {
   // Send push notification mutation
   const sendNotificationMutation = useMutation({
     mutationFn: (data: { title: string; message: string; recipients?: string[] }) =>
-      apiRequest("/api/mobile/notifications/send", { 
-        method: "POST", 
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data) 
-      }),
+      apiRequest("POST", "/api/mobile/notifications/send", data),
     onSuccess: () => {
       toast({
         title: "Notification Sent",

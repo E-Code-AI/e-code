@@ -885,46 +885,53 @@ export class AgentWorkflowEngineService extends EventEmitter {
       }
     }
     
-    const { operation, path, content } = this.resolveVariables(effectiveConfig, state);
-    
+    const resolved = this.resolveVariables(effectiveConfig, state);
+    const operation = resolved.operation;
+    const filePath = resolved.path;
+    const content = resolved.content;
+
+    if (!filePath || typeof filePath !== 'string') {
+      throw new Error(`File operation '${operation}' requires a valid 'path' parameter, got: ${JSON.stringify(filePath)}`);
+    }
+
     let result: any;
-    
+
     switch (operation) {
       case 'read':
         result = await agentFileOperations.readFile(
           context.sessionId,
-          path,
+          filePath,
           context.userId
         );
         break;
-      
+
       case 'write':
         result = await agentFileOperations.createOrUpdateFile(
           context.sessionId,
-          path,
+          filePath,
           content,
           context.userId
         );
-        if (path && !state.modifiedFiles.includes(path)) {
-          state.modifiedFiles.push(path);
+        if (!state.modifiedFiles.includes(filePath)) {
+          state.modifiedFiles.push(filePath);
         }
         break;
-      
+
       case 'delete':
         result = await agentFileOperations.deleteFile(
           context.sessionId,
-          path,
+          filePath,
           context.userId
         );
-        if (path && !state.modifiedFiles.includes(path)) {
-          state.modifiedFiles.push(path);
+        if (!state.modifiedFiles.includes(filePath)) {
+          state.modifiedFiles.push(filePath);
         }
         break;
-      
+
       case 'list':
         result = await agentFileOperations.listDirectory(
           context.sessionId,
-          path,
+          filePath,
           config.recursive
         );
         break;

@@ -42,29 +42,22 @@ export default function APISDKPage() {
   // Fetch API keys
   const { data: apiKeys, isLoading: keysLoading } = useQuery({
     queryKey: ["/api/sdk/keys"],
-    queryFn: () => apiRequest("/api/sdk/keys")
   });
 
   // Fetch SDK examples
   const { data: examples, isLoading: examplesLoading } = useQuery({
     queryKey: ["/api/sdk/examples"],
-    queryFn: () => apiRequest("/api/sdk/examples")
   });
 
   // Fetch analytics
   const { data: analytics } = useQuery({
     queryKey: ["/api/sdk/analytics"],
-    queryFn: () => apiRequest("/api/sdk/analytics")
   });
 
   // Create API key mutation
   const createKeyMutation = useMutation({
     mutationFn: (data: { name: string; permissions: string[] }) =>
-      apiRequest("/api/sdk/keys", { 
-        method: "POST", 
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data) 
-      }),
+      apiRequest("POST", "/api/sdk/keys", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/sdk/keys"] });
       setNewKeyName("");
@@ -79,7 +72,7 @@ export default function APISDKPage() {
   // Delete API key mutation
   const deleteKeyMutation = useMutation({
     mutationFn: (keyId: number) =>
-      apiRequest(`/api/sdk/keys/${keyId}`, { method: "DELETE" }),
+      apiRequest("DELETE", `/api/sdk/keys/${keyId}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/sdk/keys"] });
       toast({

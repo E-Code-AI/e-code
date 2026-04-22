@@ -127,6 +127,9 @@ export class ToolExecutor {
    * @throws Error if path traversal is detected
    */
   private validatePath(filePath: string): string {
+    if (!filePath || typeof filePath !== 'string') {
+      throw new Error(`'path' parameter is required and must be a non-empty string, received: ${JSON.stringify(filePath)}`);
+    }
     const resolvedPath = path.resolve(this.projectRoot, filePath);
     const normalizedRoot = path.resolve(this.projectRoot);
     

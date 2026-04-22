@@ -30,7 +30,7 @@ export default function AdminApiKeys() {
   });
 
   const revokeMutation = useMutation({
-    mutationFn: (id: number) => apiRequest(`/api/admin/api-keys/${id}/revoke`, { method: 'POST' }),
+    mutationFn: (id: number) => apiRequest('POST', `/api/admin/api-keys/${id}/revoke`),
     onSuccess: () => {
       toast({ title: 'API key revoked' });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/api-keys'] });

@@ -133,7 +133,7 @@ export function ReplitFileExplorer({
 
   const updateFileMutation = useMutation({
     mutationFn: async ({ id, ...data }: { id: number; name?: string; content?: string }) =>
-      apiRequest("PATCH", `/api/projects/${id}`, data),
+      apiRequest("PUT", `/api/projects/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
       toast({ title: "Success", description: "File updated successfully" });
