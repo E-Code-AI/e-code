@@ -137,7 +137,7 @@ export const AI_MODELS: AIModel[] = [
   // All confirmed real via live API test (400 credit balance = model exists)
   // Claude Sonnet 4 (May 2025 — best overall, March 2026)
   {
-    id: 'claude-sonnet-4-20250514',
+    id: 'claude-sonnet-4-6',
     name: 'Claude Sonnet 4',
     provider: 'anthropic',
     description: 'Best overall Claude — top intelligence for coding, reasoning & agentic tasks',
@@ -147,7 +147,7 @@ export const AI_MODELS: AIModel[] = [
   },
   // Claude Opus 4 (May 2025 — best quality/complex tasks)
   {
-    id: 'claude-opus-4-20250514',
+    id: 'claude-opus-4-7',
     name: 'Claude Opus 4',
     provider: 'anthropic',
     description: 'Most powerful Claude — best for complex reasoning and analysis',
@@ -331,7 +331,7 @@ export const AI_MODELS: AIModel[] = [
  */
 const PROVIDER_FALLBACK_CHAIN = [
   'gpt-4.1',                   // Free via Replit ModelFarm
-  'claude-sonnet-4-20250514',  // Anthropic Claude 4 Sonnet
+  'claude-sonnet-4-6',  // Anthropic Claude 4 Sonnet
   'gemini-2.5-flash',          // Google Gemini 2.5 Flash
   'grok-3',                    // xAI Grok 3
   'moonshot-v1-32k'            // Moonshot Kimi 32K
@@ -573,7 +573,7 @@ export class AIProviderManager {
    * Stream chat completion with the selected model
    * Routes to appropriate provider based on model ID
    * 
-   * @param modelId The model ID to use (e.g., "gpt-4.1", "claude-sonnet-4-20250514")
+   * @param modelId The model ID to use (e.g., "gpt-4.1", "claude-sonnet-4-6")
    * @param messages Array of chat messages with role and content
    * @param options Additional options like system prompt, max_tokens, temperature
    */
@@ -1249,8 +1249,8 @@ export class AIProviderManager {
   getAvailableProviders(): Array<{ name: string; isAvailable: boolean }> {
     const providerMap: Record<string, string[]> = {
       'OpenAI': ['gpt-4.1', 'gpt-4.1-mini', 'gpt-4.1-nano', 'gpt-4o', 'gpt-4o-mini', 'o4-mini', 'o3', 'o3-mini'],
-      'Claude': ['claude-sonnet-4-20250514', 'claude-opus-4-20250514', 'claude-3-7-sonnet-20250219', 'claude-3-5-sonnet-20241022', 'claude-3-5-haiku-20241022'],
-      'Anthropic': ['claude-sonnet-4-20250514', 'claude-opus-4-20250514', 'claude-3-7-sonnet-20250219', 'claude-3-5-sonnet-20241022', 'claude-3-5-haiku-20241022'],
+      'Claude': ['claude-sonnet-4-6', 'claude-opus-4-7', 'claude-3-7-sonnet-20250219', 'claude-3-5-sonnet-20241022', 'claude-3-5-haiku-20241022'],
+      'Anthropic': ['claude-sonnet-4-6', 'claude-opus-4-7', 'claude-3-7-sonnet-20250219', 'claude-3-5-sonnet-20241022', 'claude-3-5-haiku-20241022'],
       'Gemini': ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro', 'gemini-1.5-flash'],
       'Moonshot': ['moonshot-v1-8k', 'moonshot-v1-32k', 'moonshot-v1-128k'],
       'xAI': ['grok-3', 'grok-3-mini', 'grok-3-fast']
@@ -1271,10 +1271,10 @@ export class AIProviderManager {
   getProvider(providerName: string): LegacyProviderAdapter | null {
     const providerToModelMap: Record<string, string> = {
       'OpenAI': 'gpt-4.1',
-      'Claude': 'claude-sonnet-4-20250514',
-      'Claude Sonnet 4': 'claude-sonnet-4-20250514',
+      'Claude': 'claude-sonnet-4-6',
+      'Claude Sonnet 4': 'claude-sonnet-4-6',
       'Claude 3.5 Sonnet': 'claude-3-5-sonnet-20241022',
-      'Anthropic': 'claude-sonnet-4-20250514',
+      'Anthropic': 'claude-sonnet-4-6',
       'Gemini': 'gemini-2.5-flash',
       'Moonshot': 'moonshot-v1-32k',
       'xAI': 'grok-3'
@@ -1296,7 +1296,7 @@ export class AIProviderManager {
     // Try providers in order of preference - UPDATED January 2026
     const preferredModels = [
       'gpt-4.1',
-      'claude-sonnet-4-20250514',
+      'claude-sonnet-4-6',
       'gemini-2.5-flash',
       'grok-3',
       'moonshot-v1-32k'

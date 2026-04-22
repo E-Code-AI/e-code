@@ -60,7 +60,7 @@ export class AIService {
         available: !!anthropic,
         configured: !!anthropicKey,
         keyPresent: !!process.env.ANTHROPIC_API_KEY,
-        models: anthropic ? ['claude-sonnet-4-20250514', 'claude-opus-4-20250514', 'claude-3-7-sonnet-20250219', 'claude-3-5-haiku-20241022'] : []
+        models: anthropic ? ['claude-sonnet-4-6', 'claude-opus-4-7', 'claude-3-7-sonnet-20250219', 'claude-3-5-haiku-20241022'] : []
       },
       anyAvailable: !!openai || !!anthropic,
       missingKeys: [
@@ -89,7 +89,7 @@ export class AIService {
     }
     
     if (!isOpenAIModel && !isAnthropicModel) {
-      throw new Error(`Unsupported model: ${model}. Available models: gpt-4.1, gpt-4.1-nano, claude-sonnet-4-20250514, claude-3-5-haiku-20241022`);
+      throw new Error(`Unsupported model: ${model}. Available models: gpt-4.1, gpt-4.1-nano, claude-sonnet-4-6, claude-3-5-haiku-20241022`);
     }
   }
 
@@ -225,11 +225,11 @@ export class AIService {
     // CONFIRMED REAL MODEL IDs (March 2026) — all verified via live API tests
     const ANTHROPIC_MODEL_MAP: Record<string, string> = {
       // Sonnet 4 family (best overall, March 2026)
-      'claude-4':                    'claude-sonnet-4-20250514',
-      'claude-sonnet':               'claude-sonnet-4-20250514',
-      'claude-sonnet-4':             'claude-sonnet-4-20250514',
-      'claude-sonnet-4-5':           'claude-sonnet-4-20250514',
-      'claude-sonnet-4-20250514':    'claude-sonnet-4-20250514',
+      'claude-4':                    'claude-sonnet-4-6',
+      'claude-sonnet':               'claude-sonnet-4-6',
+      'claude-sonnet-4':             'claude-sonnet-4-6',
+      'claude-sonnet-4-5':           'claude-sonnet-4-6',
+      'claude-sonnet-4-6':    'claude-sonnet-4-6',
       // Claude 3.7 Sonnet (Feb 2025 — extended thinking)
       'claude-3-7-sonnet':           'claude-3-7-sonnet-20250219',
       'claude-3-7-sonnet-20250219':  'claude-3-7-sonnet-20250219',
@@ -241,14 +241,14 @@ export class AIService {
       'claude-haiku-4-5':            'claude-3-5-haiku-20241022',
       'claude-3-5-haiku-20241022':   'claude-3-5-haiku-20241022',
       // Opus 4 family (best quality)
-      'claude-opus':                 'claude-opus-4-20250514',
-      'claude-opus-4':               'claude-opus-4-20250514',
-      'claude-opus-4-5':             'claude-opus-4-20250514',
-      'claude-opus-4-20250514':      'claude-opus-4-20250514',
+      'claude-opus':                 'claude-opus-4-7',
+      'claude-opus-4':               'claude-opus-4-7',
+      'claude-opus-4-5':             'claude-opus-4-7',
+      'claude-opus-4-7':      'claude-opus-4-7',
       'claude-3-opus-20240229':      'claude-3-opus-20240229',
     };
     
-    const resolvedModel = ANTHROPIC_MODEL_MAP[model] || 'claude-sonnet-4-20250514';
+    const resolvedModel = ANTHROPIC_MODEL_MAP[model] || 'claude-sonnet-4-6';
     
     const response = await anthropic.messages.create({
       model: resolvedModel,

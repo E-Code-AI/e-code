@@ -296,7 +296,7 @@ ${context}`;
       // Try Claude first for better code understanding
       if (process.env.ANTHROPIC_API_KEY) {
         const response = await this.anthropic.messages.create({
-          model: 'claude-sonnet-4-20250514',
+          model: 'claude-sonnet-4-6',
           system: systemPrompt,
           messages: [{ role: 'user', content: userPrompt }],
           max_tokens: 4096,

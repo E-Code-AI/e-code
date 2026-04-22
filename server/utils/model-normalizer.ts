@@ -48,32 +48,37 @@ const MODEL_NORMALIZATION_MAP: Record<string, string> = {
   'gpt-5.4-pro-2026-03-05': 'gpt-4.1',
 
   // ── Anthropic ────────────────────────────────────────────────────────────────
-  // Confirmed real (400 "credit balance too low" = model exists)
+  // Current models (April 2026)
+  'claude-sonnet-4-6':            'claude-sonnet-4-6',
+  'claude-opus-4-7':              'claude-opus-4-7',
+  'claude-haiku-4-5-20251001':    'claude-haiku-4-5-20251001',
+  // Legacy — still accessible
   'claude-3-5-sonnet-20241022':   'claude-3-5-sonnet-20241022',
   'claude-3-5-haiku-20241022':    'claude-3-5-haiku-20241022',
   'claude-3-opus-20240229':       'claude-3-opus-20240229',
   'claude-3-haiku-20240307':      'claude-3-haiku-20240307',
   'claude-3-7-sonnet-20250219':   'claude-3-7-sonnet-20250219',
-  'claude-sonnet-4-20250514':     'claude-sonnet-4-20250514',
-  'claude-opus-4-20250514':       'claude-opus-4-20250514',
+  // Old IDs → current
+  'claude-sonnet-4-20250514':     'claude-sonnet-4-6',
+  'claude-opus-4-20250514':       'claude-opus-4-7',
   // Aliases → latest real
-  'claude-sonnet':                'claude-sonnet-4-20250514',
-  'claude-opus':                  'claude-opus-4-20250514',
-  'claude-haiku':                 'claude-3-5-haiku-20241022',
+  'claude-sonnet':                'claude-sonnet-4-6',
+  'claude-opus':                  'claude-opus-4-7',
+  'claude-haiku':                 'claude-haiku-4-5-20251001',
   'claude-3-5-sonnet':            'claude-3-5-sonnet-20241022',
   'claude-3-7-sonnet':            'claude-3-7-sonnet-20250219',
   'claude-3-opus':                'claude-3-opus-20240229',
   'claude-3-haiku':               'claude-3-haiku-20240307',
-  'claude-opus-4-5':              'claude-opus-4-20250514',
-  'claude-opus-4.5':              'claude-opus-4-20250514',
-  'claude-sonnet-4':              'claude-sonnet-4-20250514',
-  'claude-sonnet-4-5':            'claude-sonnet-4-20250514',
-  // Deprecated → real
-  'claude-haiku-4-5-20251015':    'claude-3-5-haiku-20241022',
-  'claude-sonnet-4-5-20250929':   'claude-sonnet-4-20250514',
-  'claude-opus-4-5-20251101':     'claude-opus-4-20250514',
-  'claude-opus-4-5-20251124':     'claude-opus-4-20250514',
-  'claude-opus-4-1-20250805':     'claude-opus-4-20250514',
+  'claude-opus-4-5':              'claude-opus-4-7',
+  'claude-opus-4.5':              'claude-opus-4-7',
+  'claude-sonnet-4':              'claude-sonnet-4-6',
+  'claude-sonnet-4-5':            'claude-sonnet-4-6',
+  // Deprecated → current
+  'claude-haiku-4-5-20251015':    'claude-haiku-4-5-20251001',
+  'claude-sonnet-4-5-20250929':   'claude-sonnet-4-6',
+  'claude-opus-4-5-20251101':     'claude-opus-4-7',
+  'claude-opus-4-5-20251124':     'claude-opus-4-7',
+  'claude-opus-4-1-20250805':     'claude-opus-4-7',
 
   // ── Google Gemini ─────────────────────────────────────────────────────────────
   // Confirmed real
@@ -128,7 +133,7 @@ const MODEL_NORMALIZATION_MAP: Record<string, string> = {
 
 const PROVIDER_DEFAULTS: Record<string, string> = {
   'openai':     'gpt-4.1',
-  'anthropic':  'claude-sonnet-4-20250514',
+  'anthropic':  'claude-sonnet-4-6',
   'gemini':     'gemini-2.5-flash',
   'google':     'gemini-2.5-flash',
   'xai':        'grok-3',
