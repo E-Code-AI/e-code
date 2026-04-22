@@ -29,6 +29,14 @@ export default defineConfig({
     },
     dedupe: ["react", "react-dom"],
   },
+  server: {
+    headers: {
+      // Prevent browser from caching Vite dev chunks between restarts.
+      // force:true regenerates dep hashes each restart; stale browser cache
+      // causes mixed React instances → invalid hook call errors.
+      'Cache-Control': 'no-store, no-cache, must-revalidate',
+    },
+  },
   optimizeDeps: {
     force: true,
   },
