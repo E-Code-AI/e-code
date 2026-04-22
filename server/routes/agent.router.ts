@@ -171,6 +171,58 @@ router.post('/chat', async (req, res) => {
   }
 });
 
+// POST /api/agent/chat/stream — SSE streaming chat used by editor AIAgentPanel
+router.post('/chat/stream', async (req, res) => {
+  try {
+    const { projectId, message, context, provider: providerName, systemPrompt: extraSystemPrompt, maxTokens, temperature } = req.body;
+    if (!message) return res.status(400).json({ error: 'message is required' });
+
+    if (!validateAndSetSSEHeaders(res, req)) return;
+
+    const { aiProviderManager } = await import('../ai-providers/ai-provider-manager');
+    const provider = aiProviderManager.getDefaultProvider();
+    if (!provider) {
+      res.write(`data: ${JSON.stringify({ error: 'No AI provider available' })}\n\n`);
+      res.end();
+      return;
+    }
+
+    const systemPrompt = [
+      `You are an expert AI coding assistant embedded in E-Code IDE, helping with project ${projectId || 'unknown'}.`,
+      extraSystemPrompt || 'Provide clear, concise, and actionable answers.'
+    ].join(' ');
+
+    const history = (Array.isArray(context) ? context : [])
+      .slice(-20)
+      .filter((m: any) => m.role && m.content)
+      .map((m: any) => ({ role: m.role as 'user' | 'assistant', content: String(m.content) }));
+
+    const fullPrompt = history.length > 0
+      ? history.map((m: any) => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`).join('\n') + `\nUser: ${message}`
+      : message;
+
+    const responseText = await provider.generateCompletion(fullPrompt, systemPrompt, maxTokens || 4096, temperature || 0.7);
+
+    // Stream in chunks to simulate streaming (provider doesn't support native streaming)
+    const chunkSize = 20;
+    for (let i = 0; i < responseText.length; i += chunkSize) {
+      const chunk = responseText.slice(i, i + chunkSize);
+      res.write(`data: ${JSON.stringify({ content: chunk })}\n\n`);
+    }
+    res.write(`data: ${JSON.stringify({ totalTokens: Math.ceil(responseText.length / 4) })}\n\n`);
+    res.write('data: [DONE]\n\n');
+    res.end();
+  } catch (error: any) {
+    logger.error('[AgentRouter] /chat/stream error:', error);
+    if (!res.headersSent) {
+      res.status(500).json({ error: error.message || 'Streaming failed' });
+    } else {
+      res.write(`data: ${JSON.stringify({ error: error.message })}\n\n`);
+      res.end();
+    }
+  }
+});
+
 // GET /api/agent/conversation - Get conversation by projectId query param
 router.get('/conversation', async (req, res) => {
   try {
