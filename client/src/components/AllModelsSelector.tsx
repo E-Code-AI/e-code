@@ -44,53 +44,12 @@ export function AllModelsSelector() {
     retry: false
   });
 
-  // Combine all models - LATEST NOVEMBER 2025
+  // Combine all models
   const allModels = [
     ...(openaiModels?.models || []),
     ...(opensourceData?.models || []),
-    
-    // ── OpenAI GPT-4.1.x (ALL confirmed working via Replit ModelFarm — no API key needed) ──
-    {
-      id: 'gpt-4.1',
-      name: 'GPT-4.1',
-      description: 'High-capability model — great for complex reasoning and coding. Free via Replit ModelFarm.',
-      provider: 'OpenAI',
-      contextWindow: 1000000,
-      capabilities: ['Chat', 'Code', 'Tools', 'Long Context', 'ModelFarm'],
-      pricing: { input: 2, output: 8, currency: 'USD', unit: '1M tokens' },
-      available: true
-    },
-    {
-      id: 'gpt-4.1',
-      name: 'GPT-4.1',
-      description: 'Flagship GPT-4.1 — powerful and versatile. Free via Replit ModelFarm.',
-      provider: 'OpenAI',
-      contextWindow: 1000000,
-      capabilities: ['Chat', 'Code', 'Tools', 'ModelFarm'],
-      pricing: { input: 2, output: 8, currency: 'USD', unit: '1M tokens' },
-      available: true
-    },
-    {
-      id: 'gpt-4.1-mini',
-      name: 'GPT-4.1 Mini',
-      description: 'Cost-effective GPT-4.1 — ideal for high-volume tasks. Free via Replit ModelFarm.',
-      provider: 'OpenAI',
-      contextWindow: 1000000,
-      capabilities: ['Chat', 'Code', 'ModelFarm'],
-      pricing: { input: 0.4, output: 1.6, currency: 'USD', unit: '1M tokens' },
-      available: true
-    },
-    {
-      id: 'gpt-4.1-nano',
-      name: 'GPT-4.1 Nano',
-      description: 'Fastest and most cost-effective — use when speed is critical. Free via Replit ModelFarm.',
-      provider: 'OpenAI',
-      contextWindow: 1000000,
-      capabilities: ['Chat', 'Fast Response', 'ModelFarm'],
-      pricing: { input: 0.1, output: 0.4, currency: 'USD', unit: '1M tokens' },
-      available: true
-    },
-    // ── OpenAI (all confirmed real — live API test March 2026) ──────────────────
+
+    // ── OpenAI (April 2026) ─────────────────────────────────────────────────────
     {
       id: 'gpt-4.1',
       name: 'GPT-4.1',
@@ -119,26 +78,6 @@ export function AllModelsSelector() {
       contextWindow: 1047576,
       capabilities: ['Chat', 'Code', 'Fast Response'],
       pricing: { input: 0.1, output: 0.4, currency: 'USD', unit: '1M tokens' },
-      available: true
-    },
-    {
-      id: 'gpt-4o',
-      name: 'GPT-4o',
-      description: 'Multimodal flagship — vision, audio, and text with 128K context',
-      provider: 'OpenAI',
-      contextWindow: 128000,
-      capabilities: ['Chat', 'Code', 'Vision', 'Audio', 'Tools'],
-      pricing: { input: 2.5, output: 10, currency: 'USD', unit: '1M tokens' },
-      available: true
-    },
-    {
-      id: 'gpt-4o-mini',
-      name: 'GPT-4o Mini',
-      description: 'Affordable multimodal — vision + text at low cost',
-      provider: 'OpenAI',
-      contextWindow: 128000,
-      capabilities: ['Chat', 'Code', 'Vision'],
-      pricing: { input: 0.15, output: 0.6, currency: 'USD', unit: '1M tokens' },
       available: true
     },
     {
@@ -171,96 +110,36 @@ export function AllModelsSelector() {
       pricing: { input: 1.1, output: 4.4, currency: 'USD', unit: '1M tokens' },
       available: true
     },
-    {
-      id: 'o1',
-      name: 'o1',
-      description: 'Advanced reasoning model — complex STEM and coding problems',
-      provider: 'OpenAI',
-      contextWindow: 128000,
-      capabilities: ['Reasoning', 'Code', 'Math', 'Science'],
-      pricing: { input: 15, output: 60, currency: 'USD', unit: '1M tokens' },
-      available: true
-    },
-    {
-      id: 'gpt-4-turbo',
-      name: 'GPT-4 Turbo',
-      description: 'Previous-generation flagship with broad knowledge',
-      provider: 'OpenAI',
-      contextWindow: 128000,
-      capabilities: ['Chat', 'Code', 'Vision'],
-      pricing: { input: 10, output: 30, currency: 'USD', unit: '1M tokens' },
-      available: true
-    },
 
-    // ── Anthropic (all confirmed real — live API test March 2026) ───────────────
+    // ── Anthropic — Claude 4.x (April 2026) ────────────────────────────────────
     {
       id: 'claude-opus-4-7',
       name: 'Claude Opus 4.7',
       description: 'Most powerful Claude — frontier intelligence, complex tasks, 200K context',
       provider: 'Anthropic',
       contextWindow: 200000,
-      capabilities: ['Chat', 'Code', 'Vision', 'Agents', 'Analysis'],
+      capabilities: ['Chat', 'Code', 'Vision', 'Agents', 'Analysis', 'Computer Use'],
       pricing: { input: 15, output: 75, currency: 'USD', unit: '1M tokens' },
       available: true
     },
     {
       id: 'claude-sonnet-4-6',
       name: 'Claude Sonnet 4.6',
-      description: 'High performance — excellent coding, analysis, and agentic workflows',
+      description: 'Best overall Claude — top intelligence for coding, reasoning & agentic tasks',
       provider: 'Anthropic',
       contextWindow: 200000,
-      capabilities: ['Chat', 'Code', 'Vision', 'Agents'],
-      pricing: { input: 3, output: 15, currency: 'USD', unit: '1M tokens' },
-      available: true
-    },
-    {
-      id: 'claude-3-7-sonnet-20250219',
-      name: 'Claude 3.7 Sonnet',
-      description: 'Extended thinking — deep reasoning with visible thought process',
-      provider: 'Anthropic',
-      contextWindow: 200000,
-      capabilities: ['Chat', 'Code', 'Reasoning', 'Thinking'],
-      pricing: { input: 3, output: 15, currency: 'USD', unit: '1M tokens' },
-      available: true
-    },
-    {
-      id: 'claude-sonnet-4-6',
-      name: 'Claude 3.5 Sonnet',
-      description: 'Best balance of speed and intelligence — top coding and reasoning',
-      provider: 'Anthropic',
-      contextWindow: 200000,
-      capabilities: ['Chat', 'Code', 'Vision', 'Agents'],
+      capabilities: ['Chat', 'Code', 'Vision', 'Agents', 'Computer Use'],
       pricing: { input: 3, output: 15, currency: 'USD', unit: '1M tokens' },
       available: true
     },
     {
       id: 'claude-haiku-4-5-20251001',
       name: 'Claude Haiku 4.5',
-      description: 'Fast and affordable — quick tasks, customer service, lightweight agents',
+      description: 'Fastest Claude — near-instant responses for everyday tasks at lowest cost',
       provider: 'Anthropic',
       contextWindow: 200000,
       capabilities: ['Chat', 'Code', 'Fast Response'],
-      pricing: { input: 0.8, output: 4, currency: 'USD', unit: '1M tokens' },
-      available: true
-    },
-    {
-      id: 'claude-3-opus-20240229',
-      name: 'Claude 3 Opus',
-      description: 'Previous-generation flagship for complex reasoning and analysis',
-      provider: 'Anthropic',
-      contextWindow: 200000,
-      capabilities: ['Chat', 'Code', 'Vision', 'Analysis'],
-      pricing: { input: 15, output: 75, currency: 'USD', unit: '1M tokens' },
-      available: true
-    },
-    {
-      id: 'claude-3-haiku-20240307',
-      name: 'Claude 3 Haiku',
-      description: 'Fastest compact model — high throughput, low latency',
-      provider: 'Anthropic',
-      contextWindow: 200000,
-      capabilities: ['Chat', 'Code', 'Fast Response'],
-      pricing: { input: 0.25, output: 1.25, currency: 'USD', unit: '1M tokens' },
+      pricing: { input: 1, output: 5, currency: 'USD', unit: '1M tokens' },
       available: true
     },
 
@@ -305,27 +184,7 @@ export function AllModelsSelector() {
       pricing: { input: 0.019, output: 0.075, currency: 'USD', unit: '1M tokens' },
       available: true
     },
-    {
-      id: 'gemini-1.5-pro',
-      name: 'Gemini 1.5 Pro',
-      description: 'Long context champion — 2M context window for large codebases',
-      provider: 'Google',
-      contextWindow: 2000000,
-      capabilities: ['Chat', 'Code', 'Vision', 'Long Context'],
-      pricing: { input: 1.25, output: 5, currency: 'USD', unit: '1M tokens' },
-      available: true
-    },
-    {
-      id: 'gemini-1.5-flash',
-      name: 'Gemini 1.5 Flash',
-      description: 'Fast and versatile — high volume tasks with 1M context',
-      provider: 'Google',
-      contextWindow: 1000000,
-      capabilities: ['Chat', 'Code', 'Fast Response'],
-      pricing: { input: 0.075, output: 0.3, currency: 'USD', unit: '1M tokens' },
-      available: true
-    },
-    
+
     // ── xAI / Grok (grok-3 family confirmed real — live API test March 2026) ────
     {
       id: 'grok-3',
