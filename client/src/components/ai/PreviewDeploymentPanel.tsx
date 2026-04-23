@@ -130,7 +130,7 @@ export function PreviewDeploymentPanel({
     }
   }, [isRunning, previewUrl, onPreviewReady]);
 
-  const startPreviewMutation = useMutation({
+  const startPreviewMutation = useMutation<unknown, Error, void>({
     mutationFn: async () => {
       return apiRequest('POST', `/api/preview/projects/${projectId}/preview/start`);
     },
@@ -145,7 +145,7 @@ export function PreviewDeploymentPanel({
     },
   });
 
-  const stopPreviewMutation = useMutation({
+  const stopPreviewMutation = useMutation<unknown, Error, void>({
     mutationFn: async () => {
       return apiRequest('POST', `/api/preview/projects/${projectId}/preview/stop`);
     },
@@ -158,7 +158,7 @@ export function PreviewDeploymentPanel({
     },
   });
 
-  const restartPreviewMutation = useMutation({
+  const restartPreviewMutation = useMutation<unknown, Error, void>({
     mutationFn: async () => {
       await apiRequest('POST', `/api/preview/projects/${projectId}/preview/stop`);
       return apiRequest('POST', `/api/preview/projects/${projectId}/preview/start`);

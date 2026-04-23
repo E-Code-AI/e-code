@@ -211,7 +211,7 @@ export function AutonomyControlPanel({ projectId, onBack }: AutonomyControlPanel
 
   const handleStopSession = useCallback(() => {
     if (!activeSessionId) return;
-    stopSession({ sessionId: activeSessionId, projectId }, {
+    stopSession(undefined, {
       onSuccess: () => {
         setActiveSessionId(null);
       },
@@ -538,7 +538,7 @@ export function AutonomyControlPanel({ projectId, onBack }: AutonomyControlPanel
                   <Button 
                     variant="outline" 
                     className="flex-1"
-                    onClick={() => activeSessionId && pauseSession({ sessionId: activeSessionId, projectId })}
+                    onClick={() => activeSessionId && pauseSession()}
                     disabled={!activeSessionId || isBusy}
                     data-testid="button-pause"
                   >
@@ -553,7 +553,7 @@ export function AutonomyControlPanel({ projectId, onBack }: AutonomyControlPanel
                   <Button 
                     variant="outline" 
                     className="flex-1"
-                    onClick={() => activeSessionId && resumeSession({ sessionId: activeSessionId, projectId })}
+                    onClick={() => activeSessionId && resumeSession()}
                     disabled={!activeSessionId || isBusy}
                     data-testid="button-resume"
                   >

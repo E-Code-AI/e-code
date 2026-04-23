@@ -66,7 +66,7 @@ export function useRuntime(projectId: number) {
   /**
    * Start runtime
    */
-  const startRuntime = useMutation<RuntimeStartResult, Error>({
+  const startRuntime = useMutation<RuntimeStartResult, Error, void>({
     mutationFn: async () => {
       // apiRequest already returns parsed JSON
       return await apiRequest('POST', `/api/runtime/${projectId}/start`);
@@ -79,7 +79,7 @@ export function useRuntime(projectId: number) {
   /**
    * Stop runtime
    */
-  const stopRuntime = useMutation<RuntimeStopResult, Error>({
+  const stopRuntime = useMutation<RuntimeStopResult, Error, void>({
     mutationFn: async () => {
       // apiRequest already returns parsed JSON
       return await apiRequest('POST', `/api/runtime/${projectId}/stop`);
