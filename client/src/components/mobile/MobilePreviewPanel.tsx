@@ -34,6 +34,38 @@ interface PreviewStatus {
   message?: string;
 }
 
+function ErrorState({ message, onRetry, isRetrying }: { message?: string; onRetry: () => void; isRetrying: boolean }) {
+  return (
+    <div
+      className="flex flex-col items-center justify-center h-full bg-background"
+      data-testid="mobile-preview-error"
+    >
+      <div className="flex flex-col items-center gap-4 px-8 py-12 max-w-md">
+        <div className="w-16 h-16 rounded-2xl bg-destructive/10 flex items-center justify-center">
+          <X className="w-8 h-8 text-destructive" />
+        </div>
+        <div className="text-center space-y-1">
+          <h3 className="text-[17px] font-semibold text-foreground leading-tight">
+            Preview failed to start
+          </h3>
+          <p className="text-[13px] text-muted-foreground leading-snug max-h-32 overflow-auto">
+            {message || 'Something went wrong while starting your app.'}
+          </p>
+        </div>
+        <Button
+          onClick={onRetry}
+          disabled={isRetrying}
+          className="h-12 px-8 text-[15px] font-semibold rounded-xl gap-2"
+          data-testid="mobile-preview-retry"
+        >
+          {isRetrying ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />}
+          {isRetrying ? 'Retrying...' : 'Retry'}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function NotRunningState({ onRun, isStarting, noRunnableFiles }: { onRun: () => void; isStarting: boolean; noRunnableFiles?: boolean }) {
   return (
     <div 
@@ -111,6 +143,7 @@ export function MobilePreviewPanel({
       if (data?.status === 'running') return 10000;
       if (data?.status === 'no_runnable_files') return 5000;
       if (data?.status === 'stopped') return 3000;
+      if (data?.status === 'error') return 15000;
       return false;
     }
   });
@@ -159,7 +192,13 @@ export function MobilePreviewPanel({
 
   const isPreviewRunning = previewStatus?.status === 'running' || previewStatus?.status === 'static';
   const isPreviewStarting = previewStatus?.status === 'starting' || startPreviewMutation.isPending;
+  const isPreviewError = previewStatus?.status === 'error';
   const noRunnableFiles = previewStatus?.status === 'no_runnable_files';
+
+  const handleRetry = () => {
+    hasAttemptedAutoStart.current = false;
+    startPreviewMutation.mutate(undefined);
+  };
   const baseUrl = externalPreviewUrl || previewStatus?.previewUrl || `/api/preview/projects/${projectId}/preview`;
   const computedPreviewUrl = baseUrl + (currentPath === '/' ? '' : currentPath);
 
@@ -423,12 +462,17 @@ export function MobilePreviewPanel({
           <div className="flex items-center justify-center h-full bg-background">
             <Loader2 className="w-8 h-8 text-muted-foreground animate-spin" />
           </div>
+        ) : isPreviewError ? (
+          <ErrorState message={previewStatus?.message} onRetry={handleRetry} isRetrying={startPreviewMutation.isPending} />
         ) : !isPreviewRunning && !isPreviewStarting ? (
           <NotRunningState onRun={handleRun} isStarting={startPreviewMutation.isPending} noRunnableFiles={noRunnableFiles} />
         ) : isPreviewStarting ? (
           <div className="flex flex-col items-center justify-center h-full bg-background gap-4">
             <Loader2 className="w-8 h-8 text-primary animate-spin" />
             <p className="text-[14px] text-muted-foreground font-medium">Starting your app...</p>
+            <p className="text-[12px] text-muted-foreground/70 max-w-xs text-center px-4">
+              Installing dependencies and starting the dev server. This can take 1–2 minutes on first run.
+            </p>
           </div>
         ) : (
           <>

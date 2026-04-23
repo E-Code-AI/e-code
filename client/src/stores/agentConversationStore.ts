@@ -350,20 +350,31 @@ export const useAgentConversationStore = create<AgentConversationStore>()(
           if (!sourceMessages || sourceMessages.length === 0) {
             return state;
           }
-          
-          // Filter out the default message and merge with existing target messages
+
           const existingTargetMessages = state.messages[toId] || [];
           const filteredSourceMessages = sourceMessages.filter(msg => msg.id !== '1');
-          
-          // Create new messages object without the source key
+
+          const seenIds = new Set<string>();
+          const merged: Message[] = [];
+          const pushUnique = (msg: Message) => {
+            if (msg.id && seenIds.has(msg.id)) return;
+            if (msg.id) seenIds.add(msg.id);
+            merged.push(msg);
+          };
+
+          if (existingTargetMessages.length === 0) {
+            pushUnique(DEFAULT_ASSISTANT_MESSAGE);
+          } else {
+            existingTargetMessages.forEach(pushUnique);
+          }
+          filteredSourceMessages.forEach(pushUnique);
+
           const { [fromId]: _, ...restMessages } = state.messages;
-          
+
           return {
             messages: {
               ...restMessages,
-              [toId]: existingTargetMessages.length > 1 
-                ? [...existingTargetMessages, ...filteredSourceMessages]
-                : [existingTargetMessages[0] || DEFAULT_ASSISTANT_MESSAGE, ...filteredSourceMessages]
+              [toId]: merged
             }
           };
         });

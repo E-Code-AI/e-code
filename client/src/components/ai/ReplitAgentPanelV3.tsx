@@ -814,22 +814,29 @@ export function ReplitAgentPanelV3({
   });
 
   // Sync backend messages to zustand store on fetch
-  // ✅ FIX (Dec 10, 2025): Always hydrate store with backend messages on initial load
-  // Previously checked `!hasConversation(conversationId)` which prevented updates
-  // when the store was empty or had stale localStorage data
+  // ✅ FIX (Bug 2): Preserve local store on remount when it has richer state than backend.
+  // Mobile/tablet remount the agent panel on tab switch. The previous code unconditionally
+  // replaced local messages on every (re)mount, which wiped autonomous WebSocket events
+  // (only persisted in-memory) and caused visible duplication when the bootstrap effect
+  // re-migrated temp-conversation messages back in.
   useEffect(() => {
     if (backendMessages?.messages && conversationId) {
-      // Only sync once per conversationId to avoid overwriting user's new messages
       if (initialSyncDoneRef.current === conversationId) {
         return;
       }
-      
+
       const fetchedMessages = backendMessages.messages as Message[];
-      // Always call setStoreMessages - it handles empty arrays by using default message
-      setStoreMessages(conversationId, fetchedMessages);
-      setLastSyncedAt(conversationId, Date.now());
+      const existingMessages = getMessages(conversationId);
+      const meaningfulLocalCount = existingMessages.filter(m => m.id !== '1').length;
+
+      // Only overwrite when local store has fewer real messages than backend.
+      // Otherwise the local store is the source of truth (in-flight + autonomous events).
+      if (meaningfulLocalCount < fetchedMessages.length) {
+        setStoreMessages(conversationId, fetchedMessages);
+        setLastSyncedAt(conversationId, Date.now());
+      }
       initialSyncDoneRef.current = conversationId;
-      
+
       // Track "Show Previous Messages" state from backend response
       if (backendMessages.hasMore !== undefined) {
         setHasMoreMessages(backendMessages.hasMore);
@@ -838,7 +845,7 @@ export function ReplitAgentPanelV3({
         setTotalMessageCount(backendMessages.totalCount);
       }
     }
-  }, [backendMessages, conversationId, setStoreMessages, setLastSyncedAt]);
+  }, [backendMessages, conversationId, setStoreMessages, setLastSyncedAt, getMessages]);
   
   // Handler for "Show Previous Messages" button (Replit-style incremental loading)
   const handleLoadPreviousMessages = useCallback(async () => {

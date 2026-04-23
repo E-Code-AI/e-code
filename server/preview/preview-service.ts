@@ -399,12 +399,15 @@ export class PreviewService {
     }
 
     preview.status = 'error';
+    const tail = preview.logs.slice(-8).join(' ').replace(/\s+/g, ' ').slice(0, 400);
+    const errorSummary = `Port ${port} did not become ready within ${maxAttempts}s. ${tail ? `Last logs: ${tail}` : ''}`.trim();
+    preview.errorMessage = errorSummary;
     preview.logs.push(`Port ${port} did not become ready within ${maxAttempts}s`);
     logger.error(`Port ${port} readiness timeout for project ${projectId}`);
     previewEvents.emit('preview:error', {
       projectId,
       runId: preview.runId,
-      error: `Port ${port} did not become ready`
+      error: errorSummary
     });
   }
 
@@ -561,6 +564,7 @@ export class PreviewService {
     this.bootPreviewServer(preview, files, previewPath, port).catch((err: any) => {
       logger.error(`Preview boot failed for project ${projectId}: ${err.message}`);
       preview.status = 'error';
+      preview.errorMessage = err.message;
       preview.logs.push(`ERROR: ${err.message}`);
       previewEvents.emit('preview:error', { projectId, runId, error: err.message });
     });
@@ -929,14 +933,27 @@ http.createServer((req, res) => {
       const message = `${serviceName} on port ${port} exited with code ${code}`;
       preview.logs.push(message);
       preview.healthChecks.set(port, false);
-      
+
       if (code !== 0) {
-        previewEvents.emit('preview:service-error', { 
-          projectId: preview.projectId, 
+        // If the primary process dies before the port is ready, fail fast so the
+        // user gets feedback immediately instead of waiting out the 3-minute poll.
+        if (port === preview.primaryPort && preview.status === 'starting') {
+          preview.status = 'error';
+          const tail = preview.logs.slice(-8).join(' ').replace(/\s+/g, ' ').slice(0, 400);
+          preview.errorMessage = `${serviceName} crashed before becoming ready (exit ${code}). ${tail ? `Last logs: ${tail}` : ''}`.trim();
+          previewEvents.emit('preview:error', {
+            projectId: preview.projectId,
+            runId: preview.runId,
+            error: preview.errorMessage
+          });
+        }
+
+        previewEvents.emit('preview:service-error', {
+          projectId: preview.projectId,
           runId: preview.runId,
           port,
           service: serviceName,
-          error: message 
+          error: message
         });
       }
     });

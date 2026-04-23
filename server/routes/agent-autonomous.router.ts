@@ -377,13 +377,20 @@ router.post('/build', async (req, res) => {
 
     logger.info(`Build complete: ${approved.length} created, ${failedRisk.length} blocked by risk, ${failedTechnical.length} technical failures, ${rejected.length} rejected by security`);
 
-    // Auto-start preview if package.json or index.html was generated
+    // Auto-start preview if package.json or index.html was generated.
+    // Use startPreviewFromProject so the preview-service detects the framework and spawns
+    // the dev server (npm install + vite/node/etc). startPreview without a port immediately
+    // errors with "No runtime port available", which silently breaks the post-build preview.
     const hasPackageJson = approved.some(r => r.path === 'package.json' || r.path?.endsWith('/package.json'));
     const hasIndexHtml = approved.some(r => r.path === 'index.html' || r.path?.endsWith('/index.html'));
     if (hasPackageJson || hasIndexHtml) {
       try {
         const { previewService } = await import('../preview/preview-service');
-        await previewService.startPreview(String(projectId));
+        // Fire and forget — the dev server spawn is async (npm install can take minutes).
+        // Frontend polls /api/preview/url to track readiness.
+        previewService.startPreviewFromProject(String(projectId)).catch((previewErr: any) => {
+          logger.warn(`[Autonomous] Preview boot failed for project ${projectId}: ${previewErr.message}`);
+        });
         logger.info(`[Autonomous] Auto-started preview for project ${projectId}`);
       } catch (previewErr: any) {
         logger.warn(`[Autonomous] Could not auto-start preview: ${previewErr.message}`);

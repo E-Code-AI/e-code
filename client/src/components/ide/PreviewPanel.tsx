@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Globe, RefreshCw, ExternalLink, Play, Square, Loader2 } from 'lucide-react';
+import { Globe, RefreshCw, ExternalLink, Play, Square, Loader2, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
@@ -71,6 +71,7 @@ export function PreviewPanel({
       if (data?.status === 'running') return 10000;
       if (data?.status === 'no_runnable_files') return 5000;
       if (data?.status === 'stopped') return 3000;
+      if (data?.status === 'error') return 15000;
       return false;
     }
   });
@@ -157,6 +158,13 @@ export function PreviewPanel({
 
   const isPreviewRunning = previewStatus?.status === 'running' || previewStatus?.status === 'static';
   const isPreviewStarting = previewStatus?.status === 'starting' || startPreviewMutation.isPending;
+  const isPreviewError = previewStatus?.status === 'error';
+
+  const handleRetryPreview = useCallback(() => {
+    hasAttemptedAutoStart.current = false;
+    setSplashDismissed(false);
+    startPreviewMutation.mutate(undefined);
+  }, [startPreviewMutation]);
 
   useEffect(() => {
     if (isPreviewStarting) {
@@ -259,8 +267,24 @@ export function PreviewPanel({
       
       {/* Preview Content */}
       <div className="flex-1 relative bg-background dark:bg-background">
-        {/* Autonomous build splash screen - shows during AI-driven builds */}
-        {(autonomousBuildPhase && !splashDismissed) ? (
+        {/* Preview server error — show before splash so user can recover from a failed start */}
+        {isPreviewError ? (
+          <div className="h-full flex items-center justify-center text-center p-8" data-testid="preview-error-state">
+            <div className="max-w-md">
+              <div className="w-14 h-14 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
+                <AlertCircle className="h-7 w-7 text-destructive" />
+              </div>
+              <h3 className="text-[15px] font-semibold mb-2">Preview server failed to start</h3>
+              <p className="text-[13px] text-muted-foreground mb-4 max-h-32 overflow-auto whitespace-pre-wrap">
+                {previewStatus?.message || 'Check that your project has a valid start script.'}
+              </p>
+              <Button onClick={handleRetryPreview} disabled={startPreviewMutation.isPending} className="gap-2">
+                {startPreviewMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                {startPreviewMutation.isPending ? 'Retrying...' : 'Retry'}
+              </Button>
+            </div>
+          </div>
+        ) : (autonomousBuildPhase && !splashDismissed) ? (
           <SplashScreenSequence
             isComplete={autonomousBuildPhase === 'complete'}
             onComplete={() => setSplashDismissed(true)}
