@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Router } from 'express';
 import { ensureAuthenticated } from '../../middleware/auth';
 import { DatabaseManagementService } from '../../services/database-management-service';
@@ -7,19 +6,17 @@ const router = Router();
 const databaseService = new DatabaseManagementService();
 
 const formatBytes = (bytes: number): string => {
-  if (!bytes || Number.isNaN(bytes)) {
-    return '0 B';
-  }
-
+  if (!bytes || Number.isNaN(bytes)) return '0 B';
   const units = ['B', 'KB', 'MB', 'GB', 'TB'];
   const exponent = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
   const value = bytes / Math.pow(1024, exponent);
-
   return `${value.toFixed(value >= 10 ? 0 : 1)} ${units[exponent]}`;
 };
 
+router.use(ensureAuthenticated);
+
 // Get database tables
-router.get('/tables', ensureAuthenticated, async (req, res) => {
+router.get('/tables', async (req, res) => {
   try {
     const schemaFilter = (req.query.schema as string) || undefined;
     const tables = await databaseService.getTables();
@@ -36,10 +33,9 @@ router.get('/tables', ensureAuthenticated, async (req, res) => {
         sizeBytes: table.sizeInBytes,
         size: formatBytes(table.sizeInBytes),
         columnCount: table.columns.length,
-        indexCount: table.indexes.length,
         indexCount: (table.indexes ?? []).length,
         lastModified: table.lastModified ?? null,
-      }))
+      })),
     );
   } catch (error: any) {
     console.error('PostgreSQL MCP tables error:', error);
@@ -51,28 +47,22 @@ router.get('/tables', ensureAuthenticated, async (req, res) => {
 });
 
 // Get table schema
-router.get('/schema/:table', ensureAuthenticated, async (req, res) => {
+router.get('/schema/:table', async (req, res) => {
   try {
     const { table } = req.params;
     const schemaName = (req.query.schema as string) || 'public';
 
-    const [columns, indexes, constraints] = await Promise.all([
-      databaseService.getTableSchema(table, schemaName),
-      postgresMCP.getTableIndexes(table, schemaName),
-      postgresMCP.getTableConstraints(table, schemaName),
-    ]);
+    const columns = await databaseService.getTableSchema(table, schemaName);
 
-    res.json({
-      columns: columns.map((column) => ({
+    res.json(
+      columns.map((column) => ({
         column: column.name,
         type: column.type,
         nullable: column.nullable,
         default: column.defaultValue,
         isPrimary: column.isPrimaryKey,
       })),
-      indexes,
-      constraints,
-    });
+    );
   } catch (error: any) {
     console.error('PostgreSQL MCP schema error:', error);
     res.status(500).json({
@@ -83,10 +73,9 @@ router.get('/schema/:table', ensureAuthenticated, async (req, res) => {
 });
 
 // Execute query
-router.post('/query', ensureAuthenticated, async (req, res) => {
+router.post('/query', async (req, res) => {
   try {
-    const { query } = req.body;
-
+    const { query } = req.body ?? {};
     if (!query || typeof query !== 'string') {
       return res.status(400).json({
         error: 'Query must be provided as a string',
@@ -98,7 +87,6 @@ router.post('/query', ensureAuthenticated, async (req, res) => {
     }
 
     const result = await databaseService.executeQuery(query);
-
     if (result.error) {
       return res.status(400).json({
         error: result.error,
@@ -112,7 +100,7 @@ router.post('/query', ensureAuthenticated, async (req, res) => {
     const columns = result.rows.length ? Object.keys(result.rows[0]) : [];
     const rows = result.rows.map((row: any) => columns.map((column) => row[column]));
 
-    return res.json({
+    res.json({
       columns,
       rows,
       rowCount: result.rowCount,
@@ -120,7 +108,7 @@ router.post('/query', ensureAuthenticated, async (req, res) => {
     });
   } catch (error: any) {
     console.error('PostgreSQL MCP query error:', error);
-    return res.status(500).json({
+    res.status(500).json({
       error: 'Query execution failed',
       message: error.message,
       columns: [],
@@ -132,7 +120,7 @@ router.post('/query', ensureAuthenticated, async (req, res) => {
 });
 
 // Backup database
-router.post('/backup', ensureAuthenticated, async (req, res) => {
+router.post('/backup', async (req, res) => {
   try {
     const { description } = req.body || {};
     const backup = await databaseService.createBackup(description);
