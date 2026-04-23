@@ -49,74 +49,48 @@ export function MemoryMCPPanel({ projectId }: { projectId?: number }) {
   const [selectedNode, setSelectedNode] = useState<MemoryNode | null>(null);
   const { toast } = useToast();
 
-  // Search memory mutation
   const searchMemoryMutation = useMutation<MemoryNode[], Error, string>({
-    mutationFn: async (query: string) => {
-      const response = await apiRequest('POST', '/api/mcp/memory/search', { query });
-      if (!response.ok) throw new Error('Search failed');
-      return response.json();
-    },
+    mutationFn: (query: string) =>
+      apiRequest<MemoryNode[]>('POST', '/api/mcp/memory/search', { query }),
     onError: (error) => {
-      toast({
-        title: 'Search Failed',
-        description: error.message,
-        variant: 'destructive'
-      });
-    }
+      toast({ title: 'Search Failed', description: error.message, variant: 'destructive' });
+    },
   });
 
-  // Get conversation history
   const { data: conversations, isLoading: conversationsLoading } = useQuery<Conversation[]>({
     queryKey: ['/api/mcp/memory/conversations'],
-    queryFn: async () => {
-      const response = await apiRequest('GET', '/api/mcp/memory/conversations');
-      if (!response.ok) throw new Error('Failed to fetch conversations');
-      return response.json();
-    }
+    queryFn: () => apiRequest<Conversation[]>('GET', '/api/mcp/memory/conversations'),
   });
 
-  // Create memory node mutation
-  const createNodeMutation = useMutation({
-    mutationFn: async (data: { type: string; content: string; metadata: Record<string, any> }) => {
-      const response = await apiRequest('POST', '/api/mcp/memory/nodes', data);
-      if (!response.ok) throw new Error('Failed to create memory node');
-      return response.json();
-    },
-    onSuccess: (data) => {
-      toast({
-        title: 'Memory Created',
-        description: 'New memory node has been added to the knowledge graph'
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: 'Error',
-        description: error.message,
-        variant: 'destructive'
-      });
-    }
-  });
-
-  // Create edge between nodes
-  const createEdgeMutation = useMutation({
-    mutationFn: async (data: { fromId: string; toId: string; relationship: string }) => {
-      const response = await apiRequest('POST', '/api/mcp/memory/edges', data);
-      if (!response.ok) throw new Error('Failed to create connection');
-      return response.json();
-    },
+  const createNodeMutation = useMutation<
+    MemoryNode,
+    Error,
+    { type: string; content: string; metadata: Record<string, any> }
+  >({
+    mutationFn: (data) => apiRequest<MemoryNode>('POST', '/api/mcp/memory/nodes', data),
     onSuccess: () => {
       toast({
-        title: 'Connection Created',
-        description: 'Memory nodes have been linked'
+        title: 'Memory Created',
+        description: 'New memory node has been added to the knowledge graph',
       });
     },
     onError: (error) => {
-      toast({
-        title: 'Error',
-        description: error.message,
-        variant: 'destructive'
-      });
-    }
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    },
+  });
+
+  const createEdgeMutation = useMutation<
+    { id: string },
+    Error,
+    { fromId: string; toId: string; relationship: string }
+  >({
+    mutationFn: (data) => apiRequest<{ id: string }>('POST', '/api/mcp/memory/edges', data),
+    onSuccess: () => {
+      toast({ title: 'Connection Created', description: 'Memory nodes have been linked' });
+    },
+    onError: (error) => {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    },
   });
 
   const [newNode, setNewNode] = useState({

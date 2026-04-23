@@ -1,5 +1,4 @@
-// @ts-nocheck
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,158 +10,136 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { 
-  Github, 
-  GitBranch, 
-  GitPullRequest, 
-  GitCommit,
+import {
+  Github,
+  GitPullRequest,
   Plus,
   Loader2,
   ExternalLink,
   Star,
-  Eye,
   GitFork,
   AlertCircle,
-  CheckCircle
+  CheckCircle,
 } from 'lucide-react';
 
 interface Repository {
-  id: string;
+  id: number;
   name: string;
-  description: string;
+  fullName?: string;
+  description: string | null;
   url: string;
   private: boolean;
   stars: number;
   forks: number;
-  language: string;
-  updatedAt: string;
+  language: string | null;
+  updatedAt: string | null;
 }
 
-export function GitHubMCPPanel({ projectId }: { projectId?: number }) {
+export function GitHubMCPPanel({ projectId: _projectId }: { projectId?: number }) {
   const [activeTab, setActiveTab] = useState('repositories');
   const [searchQuery, setSearchQuery] = useState('');
   const { toast } = useToast();
 
-  // Query for repositories
-  const { data: repos, isLoading: reposLoading, refetch: refetchRepos } = useQuery<Repository[]>({
+  const {
+    data: repos,
+    isLoading: reposLoading,
+    isError: reposError,
+    refetch: refetchRepos,
+  } = useQuery<Repository[]>({
     queryKey: ['/api/mcp/github/repositories'],
-    queryFn: async () => {
-      const response = await apiRequest('GET', '/api/mcp/github/repositories');
-      if (!response.ok) throw new Error('Failed to fetch repositories');
-      return response.json();
-    },
+    queryFn: () => apiRequest<Repository[]>('GET', '/api/mcp/github/repositories'),
     retry: false,
-    onSuccess: (data) => {
-      if (data && data.length > 0 && !newPR.repo) {
-        setNewPR(prev => ({
-          ...prev,
-          repo: data[0].name
-        }));
-      }
-    }
   });
 
-  // Create repository mutation
-  const createRepoMutation = useMutation({
-    mutationFn: async (data: { name: string; description: string; isPrivate: boolean }) => {
-      const response = await apiRequest('POST', '/api/mcp/github/repositories', data);
-      if (!response.ok) throw new Error('Failed to create repository');
-      return response.json();
-    },
+  const createRepoMutation = useMutation<
+    Repository,
+    Error,
+    { name: string; description: string; isPrivate: boolean }
+  >({
+    mutationFn: (data) => apiRequest<Repository>('POST', '/api/mcp/github/repositories', data),
     onSuccess: (data) => {
       toast({
         title: 'Repository Created',
-        description: `Successfully created ${data.name}`
+        description: `Successfully created ${data.name}`,
       });
       refetchRepos();
     },
     onError: (error) => {
-      toast({
-        title: 'Error',
-        description: error.message,
-        variant: 'destructive'
-      });
-    }
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    },
   });
 
-  // Create issue mutation
-  const createIssueMutation = useMutation({
-    mutationFn: async (data: { repo: string; title: string; body: string; labels: string[] }) => {
-      const response = await apiRequest('POST', '/api/mcp/github/issues', data);
-      if (!response.ok) throw new Error('Failed to create issue');
-      return response.json();
-    },
+  const createIssueMutation = useMutation<
+    { number: number },
+    Error,
+    { repo: string; title: string; body: string; labels: string[] }
+  >({
+    mutationFn: (data) => apiRequest<{ number: number }>('POST', '/api/mcp/github/issues', data),
     onSuccess: (data) => {
       toast({
         title: 'Issue Created',
-        description: `Issue #${data.number} created successfully`
+        description: `Issue #${data.number} created successfully`,
       });
     },
     onError: (error) => {
-      toast({
-        title: 'Error',
-        description: error.message,
-        variant: 'destructive'
-      });
-    }
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    },
   });
 
-  // Create pull request mutation
-  const createPRMutation = useMutation({
-    mutationFn: async (data: { repo: string; title: string; body: string; head: string; base: string }) => {
-      const response = await apiRequest('POST', '/api/mcp/github/pull-requests', data);
-      if (!response.ok) throw new Error('Failed to create pull request');
-      return response.json();
-    },
+  const createPRMutation = useMutation<
+    { number: number },
+    Error,
+    { repo: string; title: string; body: string; head: string; base: string }
+  >({
+    mutationFn: (data) => apiRequest<{ number: number }>('POST', '/api/mcp/github/pull-requests', data),
     onSuccess: (data) => {
       toast({
         title: 'Pull Request Created',
-        description: `PR #${data.number} created successfully`
+        description: `PR #${data.number} created successfully`,
       });
     },
     onError: (error) => {
-      toast({
-        title: 'Error',
-        description: error.message,
-        variant: 'destructive'
-      });
-    }
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    },
   });
 
-  const [newRepo, setNewRepo] = useState({
-    name: '',
-    description: '',
-    isPrivate: false
-  });
-
-  const [newIssue, setNewIssue] = useState({
-    repo: '',
-    title: '',
-    body: '',
-    labels: ''
-  });
-
+  const [newRepo, setNewRepo] = useState({ name: '', description: '', isPrivate: false });
+  const [newIssue, setNewIssue] = useState({ repo: '', title: '', body: '', labels: '' });
   const [newPR, setNewPR] = useState({
     repo: '',
     title: 'Merge changes to main',
     body: 'This PR merges the latest changes into the main branch.',
     head: 'develop',
-    base: 'main'
+    base: 'main',
   });
 
-  // Auto-fill repo when repos load
   useEffect(() => {
     if (repos && repos.length > 0 && !newPR.repo) {
-      setNewPR(prev => ({
-        ...prev,
-        repo: repos[0].name
-      }));
+      setNewPR((prev) => ({ ...prev, repo: repos[0].fullName || repos[0].name }));
     }
   }, [repos, newPR.repo]);
 
-  const filteredRepos = repos?.filter(repo => 
-    repo.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    repo.description?.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredRepos = repos?.filter(
+    (repo) =>
+      repo.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (repo.description?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false),
+  );
+
+  const statusBadge = reposError ? (
+    <Badge variant="outline" className="bg-red-500/10 text-red-500 border-red-500/30">
+      <AlertCircle className="w-3 h-3 mr-1" />
+      Not connected
+    </Badge>
+  ) : reposLoading ? (
+    <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/30">
+      <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+      Connecting
+    </Badge>
+  ) : (
+    <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/30">
+      <CheckCircle className="w-3 h-3 mr-1" />
+      Connected
+    </Badge>
   );
 
   return (
@@ -173,10 +150,7 @@ export function GitHubMCPPanel({ projectId }: { projectId?: number }) {
             <Github className="w-5 h-5 text-[var(--ecode-accent)]" />
             <CardTitle className="text-[var(--ecode-text)]">GitHub Integration</CardTitle>
           </div>
-          <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/30">
-            <CheckCircle className="w-3 h-3 mr-1" />
-            Connected
-          </Badge>
+          {statusBadge}
         </div>
         <CardDescription className="text-[var(--ecode-muted)]">
           Manage repositories, issues, and pull requests directly from E-Code
@@ -205,27 +179,42 @@ export function GitHubMCPPanel({ projectId }: { projectId?: number }) {
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="w-6 h-6 animate-spin text-[var(--ecode-muted)]" />
                 </div>
-              ) : filteredRepos?.length === 0 ? (
+              ) : reposError ? (
+                <div className="text-center py-8 text-[var(--ecode-muted)]">
+                  <AlertCircle className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                  <p>GitHub not connected</p>
+                  <p className="text-[13px] mt-1">
+                    Connect GitHub via Settings to see your repositories.
+                  </p>
+                </div>
+              ) : !filteredRepos || filteredRepos.length === 0 ? (
                 <div className="text-center py-8 text-[var(--ecode-muted)]">
                   <Github className="w-12 h-12 mx-auto mb-2 opacity-50" />
                   <p>No repositories found</p>
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {filteredRepos?.map((repo) => (
+                  {filteredRepos.map((repo) => (
                     <div
                       key={repo.id}
                       className="p-3 rounded-lg bg-[var(--ecode-sidebar)] hover:bg-[var(--ecode-sidebar-hover)] transition-colors"
+                      data-testid={`mcp-github-repo-${repo.name}`}
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
                             <h4 className="font-medium text-[var(--ecode-text)]">{repo.name}</h4>
                             {repo.private && (
-                              <Badge variant="outline" className="text-[11px]">Private</Badge>
+                              <Badge variant="outline" className="text-[11px]">
+                                Private
+                              </Badge>
                             )}
                           </div>
-                          <p className="text-[13px] text-[var(--ecode-muted)] mb-2">{repo.description}</p>
+                          {repo.description && (
+                            <p className="text-[13px] text-[var(--ecode-muted)] mb-2">
+                              {repo.description}
+                            </p>
+                          )}
                           <div className="flex items-center gap-4 text-[11px] text-[var(--ecode-muted)]">
                             {repo.language && (
                               <span className="flex items-center gap-1">
@@ -246,7 +235,7 @@ export function GitHubMCPPanel({ projectId }: { projectId?: number }) {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => window.open(repo.url, '_blank')}
+                          onClick={() => window.open(repo.url, '_blank', 'noopener,noreferrer')}
                         >
                           <ExternalLink className="w-4 h-4" />
                         </Button>
@@ -293,6 +282,7 @@ export function GitHubMCPPanel({ projectId }: { projectId?: number }) {
                 onClick={() => createRepoMutation.mutate(newRepo)}
                 disabled={!newRepo.name || createRepoMutation.isPending}
                 className="w-full"
+                data-testid="mcp-github-create-repo"
               >
                 {createRepoMutation.isPending ? (
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -347,10 +337,15 @@ export function GitHubMCPPanel({ projectId }: { projectId?: number }) {
                 />
               </div>
               <Button
-                onClick={() => createIssueMutation.mutate({
-                  ...newIssue,
-                  labels: newIssue.labels.split(',').map(l => l.trim()).filter(Boolean)
-                })}
+                onClick={() =>
+                  createIssueMutation.mutate({
+                    ...newIssue,
+                    labels: newIssue.labels
+                      .split(',')
+                      .map((l) => l.trim())
+                      .filter(Boolean),
+                  })
+                }
                 disabled={!newIssue.repo || !newIssue.title || createIssueMutation.isPending}
                 className="w-full"
               >
@@ -420,7 +415,9 @@ export function GitHubMCPPanel({ projectId }: { projectId?: number }) {
               </div>
               <Button
                 onClick={() => createPRMutation.mutate(newPR)}
-                disabled={!newPR.repo || !newPR.title || !newPR.head || createPRMutation.isPending}
+                disabled={
+                  !newPR.repo || !newPR.title || !newPR.head || createPRMutation.isPending
+                }
                 className="w-full"
               >
                 {createPRMutation.isPending ? (
