@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Globe, RefreshCw, ExternalLink, Play, Square, Loader2, AlertCircle } from 'lucide-react';
+import { Globe, RefreshCw, ExternalLink, Play, Square, Loader2, AlertCircle, Camera } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
@@ -92,6 +92,23 @@ export function PreviewPanel({
         variant: 'destructive'
       });
     }
+  });
+
+  // Capture screenshot mutation
+  const captureScreenshotMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest('POST', `/api/screenshots/${projectId}/capture`, { deviceType: 'desktop' });
+    },
+    onSuccess: () => {
+      toast({ title: 'Screenshot captured', description: 'Saved to the Screenshots panel.' });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Screenshot failed',
+        description: error?.message || 'Could not capture screenshot',
+        variant: 'destructive',
+      });
+    },
   });
 
   // Stop preview mutation
@@ -250,6 +267,21 @@ export function PreviewPanel({
                 className="h-7 w-7 p-0 rounded-md text-[var(--ecode-text-muted)] hover:text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
               >
                 <RefreshCw className={cn("h-3.5 w-3.5", isRefreshing && "animate-spin")} />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => captureScreenshotMutation.mutate(undefined)}
+                disabled={captureScreenshotMutation.isPending}
+                data-testid="button-capture-screenshot"
+                title="Capture screenshot"
+                className="h-7 w-7 p-0 rounded-md text-[var(--ecode-text-muted)] hover:text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
+              >
+                {captureScreenshotMutation.isPending ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Camera className="h-3.5 w-3.5" />
+                )}
               </Button>
               <Button
                 variant="ghost"

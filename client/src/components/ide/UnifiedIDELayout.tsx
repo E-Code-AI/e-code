@@ -126,6 +126,7 @@ const AppStoragePanel = instrumentedLazy(() => import('@/components/editor/AppSt
 const ReplitConsolePanel = instrumentedLazy(() => import('@/components/ide/ReplitConsolePanel').then(mod => ({ default: mod.ReplitConsolePanel })), 'ReplitConsolePanel');
 const ResourcesPanel = instrumentedLazy(() => import('@/components/ide/ResourcesPanel').then(mod => ({ default: mod.ResourcesPanel })), 'ResourcesPanel');
 const LogsViewerPanel = instrumentedLazy(() => import('@/components/ide/LogsViewerPanel').then(mod => ({ default: mod.LogsViewerPanel })), 'LogsViewerPanel');
+const ScreenshotsPanel = instrumentedLazy(() => import('@/components/ScreenshotsPanel').then(mod => ({ default: mod.ScreenshotsPanel })), 'ScreenshotsPanel');
 
 import { ShortcutHint, ShortcutTester } from '@/components/utilities';
 import { useAutonomousBuildStore } from '@/stores/autonomousBuildStore';
@@ -534,7 +535,8 @@ function UnifiedIDELayout({
     networking: 'Networking', publishing: 'Publishing', skills: 'Skills',
     ssh: 'SSH', threads: 'Threads', 'test-runner': 'Test Runner',
     'security-scanner': 'Scanner', backup: 'Backup',
-    actions: 'Actions', tools: 'Tools', 'app-storage': 'App Storage'
+    actions: 'Actions', tools: 'Tools', 'app-storage': 'App Storage',
+    screenshots: 'Screenshots'
   };
 
   // Add a new tab when tool is selected from tools sheet
@@ -1345,6 +1347,15 @@ function UnifiedIDELayout({
       return (
         <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Logs..." /></div>}>
           <LogsViewerPanel projectId={projectId} />
+        </Suspense>
+      );
+    }
+
+    // Screenshots - inline
+    if (currentTab.id === 'screenshots') {
+      return (
+        <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Screenshots..." /></div>}>
+          <ScreenshotsPanel projectId={Number(projectId)} />
         </Suspense>
       );
     }
