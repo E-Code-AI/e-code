@@ -93,6 +93,7 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
   const [selectedPort, setSelectedPort] = useState<number | null>(null);
   const [devToolsEnabled, setDevToolsEnabled] = useState(false);
   const [wsConnected, setWsConnected] = useState(false);
+  const [previewLogs, setPreviewLogs] = useState<string[]>([]);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const { toast } = useToast();
@@ -132,37 +133,23 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
     onSuccess: (data) => {
       if (data.success && data.preview) {
         const preview = data.preview;
+        // Keep status as 'starting' — the WS preview:ready event will set it to
+        // 'running' and load the iframe once the server is actually accepting connections.
+        // Setting the URL here would cause the iframe to load before the server is ready,
+        // serving raw JSX/TSX files that the browser can't execute.
         setPreviewStatus({
-          status: 'running',
+          status: 'starting',
           runId: preview.runId,
           ports: preview.ports,
           primaryPort: preview.primaryPort,
           services: preview.services,
           frameworkType: preview.frameworkType
         });
-        
-        // Set initial port selection
-        const targetPort = selectedPort && preview.ports.includes(selectedPort) 
-          ? selectedPort 
-          : preview.primaryPort;
-        
-        setSelectedPort(targetPort);
-        // For server-side frameworks (react/vue/node), use the proxy route
-        if (preview.frameworkType && preview.frameworkType !== 'static') {
-          setPreviewUrl(`/preview/${projectId}/`);
-        } else {
-          setPreviewUrl(`/api/preview/projects/${projectId}/preview/`);
-        }
-        
+
         toast({
-          title: "Preview Started",
-          description: `${preview.frameworkType || 'Application'} server is running on ${preview.ports.length} port(s)`,
+          title: "Preview Starting",
+          description: "Installing dependencies and starting dev server...",
         });
-        
-        // Auto-inject dev tools if enabled
-        if (devToolsEnabled) {
-          setTimeout(injectDevTools, 1000);
-        }
       } else {
         throw new Error(data.error || 'Failed to start preview');
       }
@@ -374,9 +361,10 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
       switch (data.type) {
         case 'preview:start':
           setPreviewStatus({ status: 'starting' });
+          setPreviewLogs([]);
           break;
           
-        case 'preview:ready':
+        case 'preview:ready': {
           setPreviewStatus(prev => ({
             ...prev,
             status: 'running',
@@ -385,15 +373,19 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
             services: data.services
           }));
 
-          // Set URL for current or primary port — use the server proxy, not direct localhost
-          const targetPort = selectedPort && data.ports.includes(selectedPort)
+          const targetPort = selectedPort && data.ports?.includes(selectedPort)
             ? selectedPort
             : data.primaryPort;
-          setPreviewUrl(`/preview/${projectId}/`);
           setSelectedPort(targetPort);
-          // Force iframe reload in case the URL string didn't change
-          if (iframeRef.current) iframeRef.current.src = `/preview/${projectId}/`;
+
+          // Use port-specific URL so Vite's --base path resolves correctly through the proxy
+          const readyUrl = targetPort
+            ? `/preview/${projectId}/${targetPort}/`
+            : `/preview/${projectId}/`;
+          setPreviewUrl(readyUrl);
+          if (iframeRef.current) iframeRef.current.src = readyUrl;
           break;
+        }
           
         case 'preview:stop':
           setPreviewStatus({ status: 'idle' });
@@ -411,7 +403,7 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
           break;
           
         case 'preview:log':
-          // Handle logs from specific services
+          setPreviewLogs(prev => [...prev.slice(-49), data.log]);
           break;
           
         case 'preview:port-switch':
@@ -441,13 +433,16 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
             lastHealthCheck: data.lastHealthCheck,
             frameworkType: data.frameworkType
           });
-          
-          if (data.ports && data.primaryPort) {
-            const targetPort = selectedPort && data.ports.includes(selectedPort)
+
+          if (data.status === 'running' && data.ports && data.primaryPort) {
+            const statusPort = selectedPort && data.ports.includes(selectedPort)
               ? selectedPort
               : data.primaryPort;
-            setPreviewUrl(`/preview/${projectId}/`);
-            setSelectedPort(targetPort);
+            const statusUrl = statusPort
+              ? `/preview/${projectId}/${statusPort}/`
+              : `/preview/${projectId}/`;
+            setPreviewUrl(statusUrl);
+            setSelectedPort(statusPort);
           }
           break;
       }
@@ -558,7 +553,10 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
           const targetPort = selectedPort && data.ports.includes(selectedPort)
             ? selectedPort
             : data.primaryPort;
-          setPreviewUrl(`/preview/${projectId}/`);
+          const statusUrl = targetPort
+            ? `/preview/${projectId}/${targetPort}/`
+            : `/preview/${projectId}/`;
+          setPreviewUrl(statusUrl);
           setSelectedPort(targetPort);
         }
       }
@@ -844,22 +842,24 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
       
       {/* Preview iframe or status message - Responsive container */}
       <div className={`flex-1 bg-muted/50 overflow-hidden ${deviceMode !== 'desktop' ? 'p-2 sm:p-4 md:p-6 flex items-center justify-center' : ''}`}>
-        {/* Loading skeleton when starting - Responsive layout */}
+        {/* Loading state when starting */}
         {previewStatus.status === 'starting' && !previewUrl && (
           <div className="flex flex-col items-center justify-center h-full p-4 sm:p-6 md:p-8">
             <div className="w-full max-w-xs sm:max-w-sm md:max-w-md space-y-3 sm:space-y-4">
-              <div className="flex items-center justify-center gap-3 mb-6">
+              <div className="flex items-center justify-center gap-3 mb-4">
                 <Loader2 className="h-6 w-6 animate-spin text-primary" />
                 <span className="text-[13px] font-medium">Starting preview server...</span>
               </div>
+              {previewLogs.length > 0 && (
+                <div className="bg-muted rounded-md p-3 text-[11px] font-mono text-muted-foreground max-h-32 overflow-y-auto">
+                  {previewLogs.map((log, i) => (
+                    <div key={i} className="truncate">{log}</div>
+                  ))}
+                </div>
+              )}
               <Skeleton className="h-4 w-3/4" />
               <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-5/6" />
-              <Skeleton className="h-32 w-full mt-4" />
-              <div className="flex gap-2 mt-4">
-                <Skeleton className="h-8 w-20" />
-                <Skeleton className="h-8 w-24" />
-              </div>
+              <Skeleton className="h-32 w-full mt-2" />
             </div>
           </div>
         )}
