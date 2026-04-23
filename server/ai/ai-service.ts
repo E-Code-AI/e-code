@@ -60,7 +60,7 @@ export class AIService {
         available: !!anthropic,
         configured: !!anthropicKey,
         keyPresent: !!process.env.ANTHROPIC_API_KEY,
-        models: anthropic ? ['claude-sonnet-4-6', 'claude-opus-4-7', 'claude-3-7-sonnet-20250219', 'claude-3-5-haiku-20241022'] : []
+        models: anthropic ? ['claude-sonnet-4-6', 'claude-opus-4-7', 'claude-haiku-4-5-20251001', 'claude-3-7-sonnet-20250219'] : []
       },
       anyAvailable: !!openai || !!anthropic,
       missingKeys: [
@@ -89,7 +89,7 @@ export class AIService {
     }
     
     if (!isOpenAIModel && !isAnthropicModel) {
-      throw new Error(`Unsupported model: ${model}. Available models: gpt-4.1, gpt-4.1-nano, claude-sonnet-4-6, claude-3-5-haiku-20241022`);
+      throw new Error(`Unsupported model: ${model}. Available models: gpt-4.1, gpt-4.1-nano, claude-sonnet-4-6, claude-haiku-4-5-20251001`);
     }
   }
 
@@ -236,10 +236,10 @@ export class AIService {
       // Claude 3.5 Sonnet (Oct 2024 — still valid)
       'claude-3-5-sonnet-20241022':  'claude-3-5-sonnet-20241022',
       // Haiku — fastest Claude
-      'claude-haiku':                'claude-3-5-haiku-20241022',
-      'claude-haiku-4':              'claude-3-5-haiku-20241022',
-      'claude-haiku-4-5':            'claude-3-5-haiku-20241022',
-      'claude-3-5-haiku-20241022':   'claude-3-5-haiku-20241022',
+      'claude-haiku':                'claude-haiku-4-5-20251001',
+      'claude-haiku-4':              'claude-haiku-4-5-20251001',
+      'claude-haiku-4-5':            'claude-haiku-4-5-20251001',
+      'claude-haiku-4-5-20251001':   'claude-haiku-4-5-20251001',
       // Opus 4 family (best quality)
       'claude-opus':                 'claude-opus-4-7',
       'claude-opus-4':               'claude-opus-4-7',

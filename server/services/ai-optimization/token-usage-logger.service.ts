@@ -38,8 +38,8 @@ export class TokenUsageLoggerService {
     'claude-sonnet-4-6': { prompt: 0.003, completion: 0.015 },
     'claude-haiku-4-5-20251001': { prompt: 0.0008, completion: 0.004 },
     'claude-3-7-sonnet-20250219': { prompt: 0.003, completion: 0.015 },
-    'claude-3-5-sonnet-20241022': { prompt: 0.003, completion: 0.015 },
-    'claude-3-5-haiku-20241022': { prompt: 0.0008, completion: 0.004 },
+    'claude-sonnet-4-6': { prompt: 0.003, completion: 0.015 },
+    'claude-haiku-4-5-20251001': { prompt: 0.0008, completion: 0.004 },
     'claude-3-opus-20240229': { prompt: 0.015, completion: 0.075 },
     'claude-3-haiku-20240307': { prompt: 0.00025, completion: 0.00125 },
     // Google Gemini

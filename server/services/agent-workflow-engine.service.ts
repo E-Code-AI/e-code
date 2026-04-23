@@ -1385,7 +1385,7 @@ Failed Tests: ${testResult.failedTests.join(', ')}
 Provide specific code changes to fix these issues.`;
       
       const message = await this.anthropic.messages.create({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-6',
         max_tokens: 2000,
         messages: [{ role: 'user', content: fixPrompt }]
       });
@@ -1780,7 +1780,7 @@ Provide specific code changes to fix these issues.`;
         : 'No files modified';
 
       const message = await this.anthropic.messages.create({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-6',
         max_tokens: 150,
         messages: [{
           role: 'user',

@@ -224,7 +224,7 @@ export function AllModelsSelector() {
       available: true
     },
     {
-      id: 'claude-3-5-sonnet-20241022',
+      id: 'claude-sonnet-4-6',
       name: 'Claude 3.5 Sonnet',
       description: 'Best balance of speed and intelligence — top coding and reasoning',
       provider: 'Anthropic',

@@ -181,7 +181,7 @@ export class AgentPreferencesService {
         capabilities: { extendedThinking: true, codeGeneration: true, maxTokens: 200000, speed: 'medium', cost: 'medium' },
       },
       {
-        id: 'claude-3-5-haiku-20241022',
+        id: 'claude-haiku-4-5-20251001',
         name: 'Claude 3.5 Haiku',
         description: 'Previous-generation fast model (legacy)',
         category: 'anthropic',
@@ -365,7 +365,7 @@ export class AgentPreferencesService {
     // High power mode always uses premium models
     if (highPowerMode) {
       if (requiresExtendedThinking || complexity === 'complex') {
-        return 'claude-opus-4-20250514';
+        return 'claude-opus-4-7';
       }
       return 'gpt-4o';
     }
@@ -373,25 +373,25 @@ export class AgentPreferencesService {
     // Extended thinking required
     if (requiresExtendedThinking) {
       if (speedPriority === 'fast') return 'o4-mini';
-      if (speedPriority === 'quality') return 'claude-opus-4-20250514';
-      return 'claude-sonnet-4-20250514';
+      if (speedPriority === 'quality') return 'claude-opus-4-7';
+      return 'claude-sonnet-4-6';
     }
 
     // Complex tasks
     if (complexity === 'complex') {
-      if (speedPriority === 'quality') return 'claude-opus-4-20250514';
-      return 'claude-sonnet-4-20250514';
+      if (speedPriority === 'quality') return 'claude-opus-4-7';
+      return 'claude-sonnet-4-6';
     }
 
     // Simple tasks prioritizing speed
     if (complexity === 'simple') {
-      if (speedPriority === 'fast') return 'claude-3-5-haiku-20241022';
+      if (speedPriority === 'fast') return 'claude-haiku-4-5-20251001';
       return 'gpt-4.1-mini';
     }
 
     // Medium complexity
     if (speedPriority === 'fast') return 'gpt-4.1-mini';
-    if (speedPriority === 'quality') return 'claude-sonnet-4-20250514';
+    if (speedPriority === 'quality') return 'claude-sonnet-4-6';
     return 'gpt-4.1-mini';
   }
 
@@ -402,7 +402,7 @@ export class AgentPreferencesService {
   getFastModel(): AiModel {
     // Priority order for fast models (by speed and availability)
     const fastModels: AiModel[] = [
-      'claude-3-5-haiku-20241022',  // Fastest Claude model
+      'claude-haiku-4-5-20251001',  // Fastest Claude model
       'gpt-4.1-mini',               // Fast GPT model
       'gemini-2.5-flash',           // Fast Gemini model
       'grok-3-mini',                // Fast xAI model
@@ -456,7 +456,7 @@ export class AgentPreferencesService {
         return preferredModel;
       }
       // Default high power model
-      return 'claude-opus-4-20250514';
+      return 'claude-opus-4-7';
     }
 
     // If extended thinking is on, ensure model supports it
@@ -466,7 +466,7 @@ export class AgentPreferencesService {
         return preferredModel;
       }
       // Default extended thinking model
-      return 'claude-sonnet-4-20250514';
+      return 'claude-sonnet-4-6';
     }
 
     // Use preferred model or default
