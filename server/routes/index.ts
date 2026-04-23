@@ -407,11 +407,12 @@ export class MainRouter {
     // Expo Snack integration for real mobile simulation
     app.use('/api/expo-snack', tierRateLimiters.api, expoSnackRouter);
 
+    // Git integration routes (platform-level git) — must come BEFORE gitProjectRouter
+    // to prevent /:projectId/status from swallowing /github/status etc.
+    app.use('/api/git', tierRateLimiters.api, GitRouter);
+
     // Per-project git routes (/:projectId/status, /branches, /commits, etc.)
     app.use('/api/git', tierRateLimiters.api, gitProjectRouter);
-
-    // Git integration routes (platform-level git)
-    app.use('/api/git', tierRateLimiters.api, GitRouter);
 
     // Debug routes
     app.use('/api/debug', tierRateLimiters.api, debugRouter);

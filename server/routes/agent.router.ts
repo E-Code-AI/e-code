@@ -153,7 +153,7 @@ router.post('/chat', async (req, res) => {
     const { projectId, message, conversationHistory } = req.body;
     if (!message) return res.status(400).json({ error: 'message is required' });
 
-    const { aiProviderManager } = await import('../ai-providers/ai-provider-manager');
+    const { aiProviderManager } = await import('../ai/ai-provider-manager');
     const provider = aiProviderManager.getDefaultProvider();
     if (!provider) return res.status(503).json({ error: 'No AI provider available' });
 
@@ -179,7 +179,7 @@ router.post('/chat/stream', async (req, res) => {
 
     if (!validateAndSetSSEHeaders(res, req)) return;
 
-    const { aiProviderManager } = await import('../ai-providers/ai-provider-manager');
+    const { aiProviderManager } = await import('../ai/ai-provider-manager');
     const provider = aiProviderManager.getDefaultProvider();
     if (!provider) {
       res.write(`data: ${JSON.stringify({ error: 'No AI provider available' })}\n\n`);

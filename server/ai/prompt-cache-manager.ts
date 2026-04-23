@@ -123,12 +123,6 @@ export class PromptCacheManager {
     'claude-sonnet-4-6': { input: 0.000003, output: 0.000015 },
     'claude-haiku-4-5-20251001': { input: 0.0000008, output: 0.000004 },
     'claude-3-7-sonnet-20250219': { input: 0.000003, output: 0.000015 },
-    'claude-sonnet-4-6': { input: 0.000003, output: 0.000015 },
-    'claude-haiku-4-5-20251001': { input: 0.0000008, output: 0.000004 },
-    'claude-opus-4-7': { input: 0.000015, output: 0.000075 },
-    // Legacy aliases kept for backward compat
-    'claude-sonnet-4-6': { input: 0.000003, output: 0.000015 },
-    'claude-opus-4-7': { input: 0.000015, output: 0.000075 },
     'gemini-1.5-pro': { input: 0.00000125, output: 0.000005 },
     'gemini-2.0-flash': { input: 0.0000001, output: 0.0000004 },
     'gemini-2.5-flash': { input: 0.000000075, output: 0.0000003 },
