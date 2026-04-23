@@ -8,10 +8,10 @@
 import { lazy, ComponentType } from 'react';
 
 const MAX_RETRIES = 3;
-// Replit Vite dev: force:true means optimization takes 30-60s; give it time
-const MAX_RETRIES_REPLIT = 20;
+// Replit Vite dev: force:true means optimization takes 60-120s; give it time
+const MAX_RETRIES_REPLIT = 50;
 const RETRY_DELAY = 200; // Fast first retry (was 1000ms)
-const RETRY_DELAY_REPLIT = 3000; // Fixed 3s per attempt on Replit = up to 60s
+const RETRY_DELAY_REPLIT = 3000; // Fixed 3s per attempt on Replit = up to 150s
 const RELOAD_KEY = 'lazy-load-reload-attempted';
 
 async function sleep(ms: number): Promise<void> {
