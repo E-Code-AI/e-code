@@ -1,5 +1,4 @@
-// @ts-nocheck
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -20,7 +19,6 @@ import {
   CheckCircle,
   AlertCircle,
   Rocket,
-  QrCode,
   Share2,
   Eye,
   EyeOff,
@@ -84,7 +82,7 @@ export function PreviewDeploymentPanel({
 }: PreviewDeploymentPanelProps) {
   const [isStarting, setIsStarting] = useState(false);
   const [selectedViewport, setSelectedViewport] = useState<ViewportSize>('desktop');
-  const [showQRCode, setShowQRCode] = useState(false);
+  const lastReportedUrlRef = useRef<string | null>(null);
   const { toast } = useToast();
 
   const { data: previewData, isLoading, refetch } = useQuery<{ 
@@ -120,8 +118,12 @@ export function PreviewDeploymentPanel({
     : null;
 
   useEffect(() => {
-    if (isRunning && previewUrl && onPreviewReady) {
+    if (isRunning && previewUrl && onPreviewReady && lastReportedUrlRef.current !== previewUrl) {
+      lastReportedUrlRef.current = previewUrl;
       onPreviewReady(previewUrl);
+    }
+    if (!isRunning) {
+      lastReportedUrlRef.current = null;
     }
     if (isRunning) {
       setIsStarting(false);
@@ -172,10 +174,17 @@ export function PreviewDeploymentPanel({
     },
   });
 
-  const copyUrl = () => {
-    if (previewUrl) {
-      navigator.clipboard.writeText(previewUrl);
+  const copyUrl = async () => {
+    if (!previewUrl) return;
+    try {
+      await navigator.clipboard.writeText(previewUrl);
       toast({ title: 'URL copied to clipboard' });
+    } catch (err) {
+      toast({
+        title: 'Copy failed',
+        description: err instanceof Error ? err.message : 'Clipboard unavailable',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -271,10 +280,6 @@ export function PreviewDeploymentPanel({
                 <DropdownMenuItem onClick={sharePreview} data-testid="menu-share">
                   <Share2 className="h-4 w-4 mr-2" />
                   Share
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setShowQRCode(!showQRCode)} data-testid="menu-qr">
-                  <QrCode className="h-4 w-4 mr-2" />
-                  QR Code
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem 
