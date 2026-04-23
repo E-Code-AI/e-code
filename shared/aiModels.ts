@@ -143,13 +143,13 @@ export const AI_MODELS_REGISTRY: Record<string, AIModel> = {
   },
 
   // ========================================
-  // Anthropic Models (Sept-Oct 2025)
+  // Anthropic Models — current (April 2026)
   // ========================================
-  'claude-sonnet-4-5-20250929': {
-    id: 'claude-sonnet-4-5-20250929',
-    name: 'Claude Sonnet 4.5',
+  'claude-sonnet-4-6': {
+    id: 'claude-sonnet-4-6',
+    name: 'Claude Sonnet 4.6',
     provider: 'anthropic',
-    description: 'Best coding model in the world - strongest at agents & computer use',
+    description: 'High performance Claude — excellent coding, analysis, and agentic workflows',
     capabilities: {
       extendedThinking: true,
       toolUse: true,
@@ -159,14 +159,14 @@ export const AI_MODELS_REGISTRY: Record<string, AIModel> = {
       computerUse: true
     },
     pricing: { input: 3, output: 15 },
-    releaseDate: '2025-09-29',
+    releaseDate: '2025-12-01',
     available: true
   },
-  'claude-opus-4-5-20251124': {
-    id: 'claude-opus-4-5-20251124',
-    name: 'Claude Opus 4.5',
+  'claude-opus-4-7': {
+    id: 'claude-opus-4-7',
+    name: 'Claude Opus 4.7',
     provider: 'anthropic',
-    description: 'Most capable frontier model - >80% SWE-bench, vision, computer use & agents',
+    description: 'Most powerful Claude — frontier intelligence, complex analysis, 200K context',
     capabilities: {
       extendedThinking: true,
       toolUse: true,
@@ -176,14 +176,14 @@ export const AI_MODELS_REGISTRY: Record<string, AIModel> = {
       computerUse: true
     },
     pricing: { input: 15, output: 75 },
-    releaseDate: '2025-11-24',
+    releaseDate: '2026-01-01',
     available: true
   },
-  'claude-haiku-4-5-20251015': {
-    id: 'claude-haiku-4-5-20251015',
+  'claude-haiku-4-5-20251001': {
+    id: 'claude-haiku-4-5-20251001',
     name: 'Claude Haiku 4.5',
     provider: 'anthropic',
-    description: 'Fastest - matches Sonnet 4 on coding at 1/3 cost',
+    description: 'Fastest Claude — matches Sonnet 4 on coding at a fraction of the cost',
     capabilities: {
       extendedThinking: false,
       toolUse: true,
@@ -191,8 +191,8 @@ export const AI_MODELS_REGISTRY: Record<string, AIModel> = {
       codeGeneration: true,
       multimodal: false
     },
-    pricing: { input: 1, output: 5 },
-    releaseDate: '2025-10-15',
+    pricing: { input: 0.8, output: 4 },
+    releaseDate: '2025-10-01',
     available: true
   },
 

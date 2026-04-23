@@ -34,8 +34,9 @@ export class TokenUsageLoggerService {
     'o4-mini': { prompt: 0.0011, completion: 0.0044 },
     'o1': { prompt: 0.015, completion: 0.06 },
     // Anthropic
-    'claude-opus-4-20250514': { prompt: 0.015, completion: 0.075 },
-    'claude-sonnet-4-20250514': { prompt: 0.003, completion: 0.015 },
+    'claude-opus-4-7': { prompt: 0.015, completion: 0.075 },
+    'claude-sonnet-4-6': { prompt: 0.003, completion: 0.015 },
+    'claude-haiku-4-5-20251001': { prompt: 0.0008, completion: 0.004 },
     'claude-3-7-sonnet-20250219': { prompt: 0.003, completion: 0.015 },
     'claude-3-5-sonnet-20241022': { prompt: 0.003, completion: 0.015 },
     'claude-3-5-haiku-20241022': { prompt: 0.0008, completion: 0.004 },

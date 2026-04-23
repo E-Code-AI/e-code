@@ -61,9 +61,9 @@ const AI_MODELS: AIModel[] = [
   { id: 'o1-mini', name: 'o1 Mini', provider: 'OpenAI', description: 'Faster reasoning — coding, math, and science tasks', speed: 'fast', capability: 'advanced' },
   { id: 'o3', name: 'o3', provider: 'OpenAI', description: 'Most powerful reasoning — frontier performance on hard benchmarks', speed: 'medium', capability: 'expert' },
   // Anthropic
-  { id: 'claude-sonnet-4-20250514', name: 'Claude Sonnet 4', provider: 'Anthropic', description: 'High performance — excellent coding, analysis, and agentic workflows', speed: 'fast', capability: 'advanced' },
-  { id: 'claude-opus-4-20250514', name: 'Claude Opus 4', provider: 'Anthropic', description: 'Most powerful Claude — frontier intelligence, complex analysis', speed: 'medium', capability: 'expert' },
-  { id: 'claude-3-5-haiku-20241022', name: 'Claude 3.5 Haiku', provider: 'Anthropic', description: 'Fast and affordable — quick tasks and lightweight agents', speed: 'fast', capability: 'standard' },
+  { id: 'claude-sonnet-4-6', name: 'Claude Sonnet 4.6', provider: 'Anthropic', description: 'High performance — excellent coding, analysis, and agentic workflows', speed: 'fast', capability: 'advanced' },
+  { id: 'claude-opus-4-7', name: 'Claude Opus 4.7', provider: 'Anthropic', description: 'Most powerful Claude — frontier intelligence, complex analysis', speed: 'medium', capability: 'expert' },
+  { id: 'claude-haiku-4-5-20251001', name: 'Claude Haiku 4.5', provider: 'Anthropic', description: 'Fast and affordable — quick tasks and lightweight agents', speed: 'fast', capability: 'standard' },
   // Google Gemini
   { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', provider: 'Google', description: 'Adaptive thinking — fast reasoning with 1M context window', speed: 'fast', capability: 'advanced' },
   { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash', provider: 'Google', description: 'Next-gen performance — native tool use and superior speed', speed: 'fast', capability: 'advanced' },

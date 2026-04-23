@@ -194,8 +194,8 @@ export function AllModelsSelector() {
 
     // ── Anthropic (all confirmed real — live API test March 2026) ───────────────
     {
-      id: 'claude-opus-4-20250514',
-      name: 'Claude Opus 4',
+      id: 'claude-opus-4-7',
+      name: 'Claude Opus 4.7',
       description: 'Most powerful Claude — frontier intelligence, complex tasks, 200K context',
       provider: 'Anthropic',
       contextWindow: 200000,
@@ -204,8 +204,8 @@ export function AllModelsSelector() {
       available: true
     },
     {
-      id: 'claude-sonnet-4-20250514',
-      name: 'Claude Sonnet 4',
+      id: 'claude-sonnet-4-6',
+      name: 'Claude Sonnet 4.6',
       description: 'High performance — excellent coding, analysis, and agentic workflows',
       provider: 'Anthropic',
       contextWindow: 200000,
@@ -234,8 +234,8 @@ export function AllModelsSelector() {
       available: true
     },
     {
-      id: 'claude-3-5-haiku-20241022',
-      name: 'Claude 3.5 Haiku',
+      id: 'claude-haiku-4-5-20251001',
+      name: 'Claude Haiku 4.5',
       description: 'Fast and affordable — quick tasks, customer service, lightweight agents',
       provider: 'Anthropic',
       contextWindow: 200000,

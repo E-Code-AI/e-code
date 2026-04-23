@@ -155,6 +155,16 @@ export const AI_MODELS: AIModel[] = [
     supportsStreaming: true,
     costPer1kTokens: 0.015
   },
+  // Claude Haiku 4.5 (Oct 2025 — fastest current Claude)
+  {
+    id: 'claude-haiku-4-5-20251001',
+    name: 'Claude Haiku 4.5',
+    provider: 'anthropic',
+    description: 'Fastest Claude — near-instant responses for everyday tasks',
+    maxTokens: 200000,
+    supportsStreaming: true,
+    costPer1kTokens: 0.0008
+  },
   // Claude 3.7 Sonnet (Feb 2025 — extended thinking)
   {
     id: 'claude-3-7-sonnet-20250219',
@@ -165,21 +175,12 @@ export const AI_MODELS: AIModel[] = [
     supportsStreaming: true,
     costPer1kTokens: 0.003
   },
-  // Claude 3.5 Sonnet (Oct 2024 — still valid)
-  {
-    id: 'claude-3-5-sonnet-20241022',
-    name: 'Claude 3.5 Sonnet',
-    provider: 'anthropic',
-    description: 'Proven coding and analysis model (Oct 2024)',
-    maxTokens: 200000,
-    supportsStreaming: true,
-    costPer1kTokens: 0.003
-  },
+  // Legacy models — still valid for backward compat
   {
     id: 'claude-3-5-haiku-20241022',
     name: 'Claude 3.5 Haiku',
     provider: 'anthropic',
-    description: 'Fastest Claude — near-instant responses for everyday tasks',
+    description: 'Previous-generation fast Claude (legacy)',
     maxTokens: 200000,
     supportsStreaming: true,
     costPer1kTokens: 0.0008
@@ -1249,8 +1250,8 @@ export class AIProviderManager {
   getAvailableProviders(): Array<{ name: string; isAvailable: boolean }> {
     const providerMap: Record<string, string[]> = {
       'OpenAI': ['gpt-4.1', 'gpt-4.1-mini', 'gpt-4.1-nano', 'gpt-4o', 'gpt-4o-mini', 'o4-mini', 'o3', 'o3-mini'],
-      'Claude': ['claude-sonnet-4-6', 'claude-opus-4-7', 'claude-3-7-sonnet-20250219', 'claude-3-5-sonnet-20241022', 'claude-3-5-haiku-20241022'],
-      'Anthropic': ['claude-sonnet-4-6', 'claude-opus-4-7', 'claude-3-7-sonnet-20250219', 'claude-3-5-sonnet-20241022', 'claude-3-5-haiku-20241022'],
+      'Claude': ['claude-sonnet-4-6', 'claude-opus-4-7', 'claude-haiku-4-5-20251001', 'claude-3-7-sonnet-20250219', 'claude-3-5-haiku-20241022'],
+      'Anthropic': ['claude-sonnet-4-6', 'claude-opus-4-7', 'claude-haiku-4-5-20251001', 'claude-3-7-sonnet-20250219', 'claude-3-5-haiku-20241022'],
       'Gemini': ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro', 'gemini-1.5-flash'],
       'Moonshot': ['moonshot-v1-8k', 'moonshot-v1-32k', 'moonshot-v1-128k'],
       'xAI': ['grok-3', 'grok-3-mini', 'grok-3-fast']

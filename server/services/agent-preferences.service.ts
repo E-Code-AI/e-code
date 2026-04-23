@@ -149,20 +149,28 @@ export class AgentPreferencesService {
 
       // ── Anthropic ────────────────────────────────────────────────────────────
       {
-        id: 'claude-opus-4-20250514',
-        name: 'Claude Opus 4',
+        id: 'claude-opus-4-7',
+        name: 'Claude Opus 4.7',
         description: 'Most powerful Claude — frontier intelligence for complex tasks',
         category: 'anthropic',
         tier: 'high-power',
         capabilities: { extendedThinking: true, codeGeneration: true, maxTokens: 200000, speed: 'slow', cost: 'high' },
       },
       {
-        id: 'claude-sonnet-4-20250514',
-        name: 'Claude Sonnet 4',
+        id: 'claude-sonnet-4-6',
+        name: 'Claude Sonnet 4.6',
         description: 'High performance with excellent coding and analysis capabilities',
         category: 'anthropic',
         tier: 'high-power',
         capabilities: { extendedThinking: true, codeGeneration: true, maxTokens: 200000, speed: 'medium', cost: 'medium' },
+      },
+      {
+        id: 'claude-haiku-4-5-20251001',
+        name: 'Claude Haiku 4.5',
+        description: 'Fast and efficient — near-instant responses for everyday tasks',
+        category: 'anthropic',
+        tier: 'standard',
+        capabilities: { extendedThinking: false, codeGeneration: true, maxTokens: 200000, speed: 'fast', cost: 'low' },
       },
       {
         id: 'claude-3-7-sonnet-20250219',
@@ -173,28 +181,12 @@ export class AgentPreferencesService {
         capabilities: { extendedThinking: true, codeGeneration: true, maxTokens: 200000, speed: 'medium', cost: 'medium' },
       },
       {
-        id: 'claude-3-5-sonnet-20241022',
-        name: 'Claude 3.5 Sonnet',
-        description: 'Best balance of speed and intelligence for coding and analysis',
-        category: 'anthropic',
-        tier: 'standard',
-        capabilities: { extendedThinking: false, codeGeneration: true, maxTokens: 200000, speed: 'fast', cost: 'medium' },
-      },
-      {
         id: 'claude-3-5-haiku-20241022',
         name: 'Claude 3.5 Haiku',
-        description: 'Fast and efficient — near-instant responses for everyday tasks',
+        description: 'Previous-generation fast model (legacy)',
         category: 'anthropic',
         tier: 'standard',
         capabilities: { extendedThinking: false, codeGeneration: true, maxTokens: 200000, speed: 'fast', cost: 'low' },
-      },
-      {
-        id: 'claude-3-opus-20240229',
-        name: 'Claude 3 Opus',
-        description: 'Previous-generation flagship for complex reasoning',
-        category: 'anthropic',
-        tier: 'high-power',
-        capabilities: { extendedThinking: false, codeGeneration: true, maxTokens: 200000, speed: 'slow', cost: 'high' },
       },
       {
         id: 'claude-3-haiku-20240307',
