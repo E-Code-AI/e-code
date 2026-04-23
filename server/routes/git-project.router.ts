@@ -564,20 +564,33 @@ router.get('/:projectId/backup-status', ensureAuthenticated, async (req: Request
     let lastBackupAt = null;
     
     try {
-      const { stdout } = await execa('git', ['tag', '-l', 'backup-*'], { cwd: projectDir });
-      const tags = stdout.split('\\n').filter(Boolean);
+      const { stdout: tagStdout } = await execa('git', ['tag', '-l', 'backup-*'], { cwd: projectDir });
+      const tags = tagStdout.split('\n').filter(Boolean);
       backupCount = tags.length;
       if (backupCount > 0) {
-        lastBackupAt = new Date().toISOString(); // Mock for visual representation
+        // Get the date of the most recent backup tag
+        const { stdout: dateStdout } = await execa('git', [
+          'for-each-ref', '--sort=-creatordate', '--format=%(creatordate:iso-strict)',
+          '--count=1', 'refs/tags/backup-*'
+        ], { cwd: projectDir });
+        lastBackupAt = dateStdout.trim() || new Date().toISOString();
       }
     } catch {
       // Ignored
     }
 
+    // Get actual git object size
+    let totalSizeBytes = 1024 * 50; // fallback
+    try {
+      const { stdout: sizeStdout } = await execa('git', ['count-objects', '-v'], { cwd: projectDir });
+      const sizePackMatch = sizeStdout.match(/size-pack:\s+(\d+)/);
+      if (sizePackMatch) totalSizeBytes = parseInt(sizePackMatch[1]) * 1024;
+    } catch { /* ignored */ }
+
     res.json({
       lastBackupAt,
       backupCount,
-      totalSizeBytes: 1024 * 50, // Mock 50KB standard
+      totalSizeBytes,
       health: backupCount > 0 ? "green" : "red"
     });
   } catch (error: any) {
