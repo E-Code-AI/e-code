@@ -31,8 +31,14 @@ export default defineConfig({
   },
   server: {
     headers: {
+      // Prevent browser from caching Vite dev chunks between restarts.
+      // force:true regenerates dep hashes each restart; stale browser cache
+      // causes mixed React instances → invalid hook call errors.
       'Cache-Control': 'no-store, no-cache, must-revalidate',
     },
+  },
+  optimizeDeps: {
+    force: true,
   },
   base: process.env.CDN_BASE_URL || process.env.ASSET_BASE_URL || '/',
   root: path.resolve(import.meta.dirname, "client"),
