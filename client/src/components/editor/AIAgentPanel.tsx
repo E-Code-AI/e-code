@@ -115,6 +115,7 @@ export function AIAgentPanel({ projectId, onClose, selectedCode, currentFilePath
       }
 
       const reader = response.body?.getReader();
+      if (!reader) throw new Error('No response body stream available');
       const decoder = new TextDecoder();
       
       let assistantMessage: Message = {
@@ -131,7 +132,7 @@ export function AIAgentPanel({ projectId, onClose, selectedCode, currentFilePath
       const warningMessages: Message[] = []; // Accumulate warnings during streaming
       
       while (true) {
-        const { done, value } = await reader!.read();
+        const { done, value } = await reader.read();
         
         if (done) break;
         

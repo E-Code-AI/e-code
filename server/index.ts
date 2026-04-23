@@ -1001,7 +1001,7 @@ httpServer.listen(port, "0.0.0.0", () => {
     // ✅ CENTRALIZED LOGS: Fortune 500 logging API with frontend ingestion
     try {
       const logsRouter = (await import('./routes/logs.router')).default;
-      app.use(logsRouter);
+      app.use('/api', logsRouter);
       logger.info('[Centralized Logs] Routes registered at /api/logs - Request tracing enabled');
     } catch (error) {
       logger.error(`[WORKING SERVER] Failed to register logs routes: ${error}`);
