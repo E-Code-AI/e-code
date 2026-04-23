@@ -11,6 +11,9 @@ import type { Duplex } from 'stream';
 import { createLogger } from '../utils/logger';
 import { safePath } from '../utils/safe-path';
 import { storage } from '../storage';
+import { parse as parseCookie } from 'cookie';
+import * as signature from 'cookie-signature';
+import { sessionStore } from '../storage';
 
 const logger = createLogger('shell-router');
 const router = Router();
@@ -26,6 +29,56 @@ interface ShellSession {
 const shellSessions = new Map<string, ShellSession>();
 const projectSyncCache = new Map<string, number>(); // projectId -> last sync timestamp
 const SHELL_SYNC_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+async function getAuthenticatedUserIdFromUpgrade(req: IncomingMessage): Promise<number | null> {
+  const requestUser = (req as any).user;
+  if (Number.isInteger(requestUser?.id)) {
+    return requestUser.id;
+  }
+
+  const cookieHeader = req.headers.cookie;
+  if (!cookieHeader) {
+    return null;
+  }
+
+  try {
+    const cookies = parseCookie(cookieHeader);
+    const rawSessionCookie = cookies['ecode.sid'] || cookies['connect.sid'];
+    if (!rawSessionCookie) {
+      return null;
+    }
+
+    const sessionSecret = process.env.SESSION_SECRET || 'development-secret';
+    let sessionId: string | null = null;
+
+    if (rawSessionCookie.startsWith('s:')) {
+      const unsigned = signature.unsign(rawSessionCookie.slice(2), sessionSecret);
+      if (unsigned !== false) {
+        sessionId = unsigned;
+      }
+    } else {
+      sessionId = rawSessionCookie;
+    }
+
+    if (!sessionId) {
+      return null;
+    }
+
+    return await new Promise<number | null>((resolve) => {
+      sessionStore.get(sessionId!, (err, session: any) => {
+        if (err || !session?.passport?.user) {
+          resolve(null);
+          return;
+        }
+        const userId = Number(session.passport.user);
+        resolve(Number.isInteger(userId) ? userId : null);
+      });
+    });
+  } catch (error) {
+    logger.error('Failed to authenticate shell upgrade request:', error);
+    return null;
+  }
+}
 
 // WebSocket server for shell connections (noServer mode)
 let shellWss: WebSocketServer | null = null;
@@ -59,8 +112,7 @@ function initializeShellWebSocket() {
     
     // SECURITY FIX #20: Get authenticated userId from request, not query params
     // The userId must come from authenticated session, not client-supplied params
-    const authenticatedUser = (req as any).user;
-    const userId = authenticatedUser?.id;
+    const userId = await getAuthenticatedUserIdFromUpgrade(req);
     
     if (!sessionId) {
       ws.close(1008, 'Session ID required');

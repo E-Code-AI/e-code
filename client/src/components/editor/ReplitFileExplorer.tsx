@@ -132,8 +132,8 @@ export function ReplitFileExplorer({
   });
 
   const updateFileMutation = useMutation({
-    mutationFn: async ({ id, ...data }: { id: number; name?: string; content?: string }) =>
-      apiRequest("PUT", `/api/projects/${id}`, data),
+    mutationFn: async ({ id, ...data }: { id: number; name?: string; content?: string; parentId?: number | null; path?: string }) =>
+      apiRequest("PATCH", `/api/projects/${projectId}/files/by-id/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
       toast({ title: "Success", description: "File updated successfully" });
@@ -145,8 +145,13 @@ export function ReplitFileExplorer({
   });
 
   const deleteFileMutation = useMutation({
-    mutationFn: async (id: number) =>
-      apiRequest("DELETE", `/api/projects/${id}`),
+    mutationFn: async (id: number) => {
+      const file = files.find((entry) => entry.id === id);
+      if (!file) {
+        throw new Error("File not found");
+      }
+      return apiRequest("DELETE", `/api/projects/${projectId}/files/${file.path}`);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
       toast({ title: "Success", description: "File deleted successfully" });
@@ -301,6 +306,8 @@ export function ReplitFileExplorer({
       try {
         await updateFileMutation.mutateAsync({
           id: draggedFile.id,
+          parentId: targetFile.id,
+          path: `${targetFile.path}/${draggedFile.name}`,
         });
       } catch (error) {
         console.error("Failed to move file:", error);
@@ -346,6 +353,8 @@ export function ReplitFileExplorer({
 
   const handlePaste = async (targetId: number | null) => {
     if (!clipboard) return;
+    const targetFolder = targetId == null ? null : files.find((file) => file.id === targetId);
+    const targetPath = targetFolder?.path ? `${targetFolder.path}/${clipboard.file.name}` : clipboard.file.name;
 
     if (clipboard.operation === "copy") {
       await createFileMutation.mutateAsync({
@@ -357,6 +366,8 @@ export function ReplitFileExplorer({
     } else {
       await updateFileMutation.mutateAsync({
         id: clipboard.file.id,
+        parentId: targetId,
+        path: targetPath,
       });
     }
 

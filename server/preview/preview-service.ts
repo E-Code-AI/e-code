@@ -710,7 +710,11 @@ export class PreviewService {
     try {
       preview.logs.push('Installing dependencies...');
       previewEvents.emit('preview:log', { projectId: preview.projectId, runId: preview.runId, log: 'Installing dependencies...' });
-      await this.runCommand('npm', ['install', '--ignore-scripts', '--no-audit', '--no-fund'], previewPath);
+      await this.runCommand('npm', ['install', '--include=dev', '--ignore-scripts', '--no-audit', '--no-fund'], previewPath, {
+        NODE_ENV: 'development',
+        npm_config_production: 'false',
+        NPM_CONFIG_PRODUCTION: 'false',
+      });
       preview.logs.push('Dependencies installed.');
       previewEvents.emit('preview:log', { projectId: preview.projectId, runId: preview.runId, log: 'Dependencies installed. Starting dev server...' });
     } catch (installErr: any) {
@@ -724,14 +728,31 @@ export class PreviewService {
       // --clearScreen false prevents Vite from clearing stdout (keeps logs visible).
       // --strictPort prevents port auto-increment which would break the proxy.
       const base = `/preview/${preview.projectId}/${port}/`;
-      startCommand = [
-        'npx', 'vite',
+      const localViteBin = path.join(previewPath, 'node_modules', '.bin', process.platform === 'win32' ? 'vite.cmd' : 'vite');
+      const packagedViteBin = path.join(previewPath, 'node_modules', 'vite', 'bin', 'vite.js');
+      const viteArgs = [
         '--port', port.toString(),
         '--host', '0.0.0.0',
         '--base', base,
         '--clearScreen', 'false',
         '--strictPort',
       ];
+
+      try {
+        await fs.access(localViteBin);
+        startCommand = [localViteBin, ...viteArgs];
+      } catch {
+        try {
+          await fs.access(packagedViteBin);
+          startCommand = ['node', packagedViteBin, ...viteArgs];
+        } catch {
+          if (frameworkInfo.packageJson.scripts?.dev) {
+          startCommand = ['npm', 'run', 'dev', '--', ...viteArgs];
+          } else {
+            throw new Error('Vite binary not found after dependency installation');
+          }
+        }
+      }
     } else if (frameworkInfo.packageJson.scripts?.dev) {
       startCommand = ['npm', 'run', 'dev'];
     } else if (frameworkInfo.packageJson.scripts?.start) {
@@ -789,7 +810,11 @@ export class PreviewService {
     try {
       preview.logs.push('Installing dependencies...');
       previewEvents.emit('preview:log', { projectId: preview.projectId, runId: preview.runId, log: 'Installing dependencies...' });
-      await this.runCommand('npm', ['install', '--ignore-scripts', '--no-audit', '--no-fund'], previewPath);
+      await this.runCommand('npm', ['install', '--include=dev', '--ignore-scripts', '--no-audit', '--no-fund'], previewPath, {
+        NODE_ENV: 'development',
+        npm_config_production: 'false',
+        NPM_CONFIG_PRODUCTION: 'false',
+      });
       preview.logs.push('Dependencies installed.');
       previewEvents.emit('preview:log', { projectId: preview.projectId, runId: preview.runId, log: 'Dependencies installed. Starting server...' });
     } catch (installErr: any) {
@@ -957,6 +982,24 @@ http.createServer((req, res) => {
         });
       }
     });
+
+    process.on('error', (error: any) => {
+      const message = `${serviceName} on port ${port} failed to start: ${error?.message || error}`;
+      preview.logs.push(message);
+      preview.healthChecks.set(port, false);
+
+      if (port === preview.primaryPort && preview.status === 'starting') {
+        preview.status = 'error';
+        preview.errorMessage = message;
+        previewEvents.emit('preview:error', {
+          projectId: preview.projectId,
+          runId: preview.runId,
+          error: message
+        });
+      }
+
+      logger.error(`Preview ${preview.projectId} ${serviceName}:${port} spawn error:`, error);
+    });
   }
 
   private startHealthChecks() {
@@ -1009,9 +1052,21 @@ http.createServer((req, res) => {
     }
   }
 
-  private async runCommand(command: string, args: string[], cwd: string, timeoutMs = 5 * 60 * 1000): Promise<void> {
+  private async runCommand(
+    command: string,
+    args: string[],
+    cwd: string,
+    envOverrides: Record<string, string> = {},
+    timeoutMs = 5 * 60 * 1000
+  ): Promise<void> {
     return new Promise((resolve, reject) => {
-      const proc = spawn(command, args, { cwd, env: globalThis.process.env });
+      const proc = spawn(command, args, {
+        cwd,
+        env: {
+          ...globalThis.process.env,
+          ...envOverrides,
+        },
+      });
       let settled = false;
 
       const timer = setTimeout(() => {

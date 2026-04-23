@@ -23,6 +23,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import { createLogger } from '../utils/logger';
 import { EventEmitter } from 'events';
+import { storage } from '../storage';
 
 const logger = createLogger('speculative-scaffold');
 
@@ -121,6 +122,10 @@ const FRAMEWORK_TEMPLATES: Record<string, {
       'vite.config.ts': `import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export default defineConfig({
   plugins: [react()],
@@ -368,6 +373,10 @@ NODE_ENV=development`
       'vite.config.ts': `import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export default defineConfig({
   plugins: [react()],
@@ -700,6 +709,25 @@ export class SpeculativeScaffoldService {
           await fs.writeFile(fullPath, content, 'utf-8');
           filesCreated.push(filePath);
           logger.debug(`[Scaffold] Created file: ${filePath}`);
+        }
+
+        // Keep IDE storage in sync with the workspace filesystem.
+        // Without this, prompt bootstrap can create runnable files on disk
+        // while the file explorer/editor still show an empty project.
+        try {
+          const existingFile = await storage.getFileByPath(projectId, filePath);
+          if (!existingFile) {
+            await storage.createFile({
+              projectId,
+              path: filePath,
+              content,
+            });
+          }
+        } catch (storageError: any) {
+          logger.warn(`[Scaffold] Failed to persist ${filePath} to storage`, {
+            projectId,
+            error: storageError?.message || String(storageError),
+          });
         }
       }
 

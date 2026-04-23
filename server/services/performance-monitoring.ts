@@ -70,8 +70,9 @@ export class PerformanceMonitoringService extends EventEmitter {
   private metrics: Map<string, MetricSnapshot[]> = new Map();
   private intervalId?: NodeJS.Timeout;
   private metricsRetentionDays = 90;
-  private collectionInterval = 1000; // 1 second
+  private collectionInterval = process.env.NODE_ENV === 'production' ? 15000 : 1000;
   private maxMetricsInMemory = 3600; // 1 hour of second-by-second data
+  private alertCooldownMs = process.env.NODE_ENV === 'production' ? 5 * 60 * 1000 : 30000;
   
   // Performance counters
   private requestCount = 0;
@@ -83,6 +84,7 @@ export class PerformanceMonitoringService extends EventEmitter {
   private customMetrics: Map<string, number> = new Map();
   private metricsPersistenceDisabled = false;
   private alertsPersistenceDisabled = false;
+  private recentAlerts: Map<string, number> = new Map();
   
   // Network stats baseline
   private lastNetworkStats = {
@@ -406,6 +408,14 @@ export class PerformanceMonitoringService extends EventEmitter {
   }
 
   private async triggerAlert(type: string, severity: 'warning' | 'critical', message: string) {
+    const alertKey = `${type}:${severity}`;
+    const now = Date.now();
+    const lastTriggeredAt = this.recentAlerts.get(alertKey) ?? 0;
+    if (now - lastTriggeredAt < this.alertCooldownMs) {
+      return;
+    }
+    this.recentAlerts.set(alertKey, now);
+
     logger.warn(`Alert triggered: ${type} - ${severity} - ${message}`);
     this.emit('alert', { type, severity, message, timestamp: Date.now() });
     

@@ -76,20 +76,23 @@ async function resolveProjectDirectory(projectId: string): Promise<string | null
   }
   
   const projectsDir = path.join(process.cwd(), 'projects');
-  
-  // SECURITY: Use safePath to prevent path traversal
-  const projectDir = safePath(projectsDir, projectId);
-  if (!projectDir) {
-    return null; // Path traversal attempt detected
+  const candidateNames = [projectId, `project-${projectId}`];
+
+  for (const candidate of candidateNames) {
+    const projectDir = safePath(projectsDir, candidate);
+    if (!projectDir) {
+      continue;
+    }
+
+    try {
+      await fs.access(projectDir);
+      return projectDir;
+    } catch {
+      continue;
+    }
   }
-  
-  try {
-    await fs.access(projectDir);
-    return projectDir;
-  } catch {
-    // SECURITY: Do NOT fallback to process.cwd() - that would allow installing in server root
-    return null;
-  }
+
+  return null;
 }
 
 /**

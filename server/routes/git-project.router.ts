@@ -69,9 +69,20 @@ async function syncDiskToDb(projectId: string, projectDir: string): Promise<void
 const PROJECTS_BASE = path.join(process.cwd(), 'projects');
 
 async function getProjectDir(projectId: string): Promise<string> {
-  const dir = path.join(PROJECTS_BASE, `project-${projectId}`);
-  await fs.mkdir(dir, { recursive: true });
-  return dir;
+  const canonicalDir = path.join(PROJECTS_BASE, projectId);
+  try {
+    await fs.access(canonicalDir);
+    return canonicalDir;
+  } catch {
+    const legacyDir = path.join(PROJECTS_BASE, `project-${projectId}`);
+    try {
+      await fs.access(legacyDir);
+      return legacyDir;
+    } catch {
+      await fs.mkdir(canonicalDir, { recursive: true });
+      return canonicalDir;
+    }
+  }
 }
 
 async function syncProjectFiles(projectId: string, projectDir: string): Promise<void> {

@@ -10,6 +10,8 @@ import { previewEvents } from '../preview/preview-websocket';
 import { withScopedTransaction, TenantScopedQueries } from '../services/persistence-engine';
 import { z } from 'zod';
 import { syncFileToDisc, removeFileFromDisk } from '../utils/project-fs-sync';
+import jwt from 'jsonwebtoken';
+import { getJwtSecret } from '../utils/secrets-manager';
 
 const projectIdSchema = z.coerce.number().int().positive();
 const fileIdSchema = z.coerce.number().int().positive();
@@ -40,8 +42,85 @@ export class FilesRouter {
   // Use the shared ensureAuthenticated middleware for consistent authentication
   private ensureAuthenticated = ensureAuthenticated;
 
+  private hasValidSession(req: Request): boolean {
+    return typeof req.isAuthenticated === 'function' && req.isAuthenticated() && !!req.user;
+  }
+
+  private ensureReadAccess = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const projectIdResult = projectIdSchema.safeParse(req.params.projectId);
+      if (!projectIdResult.success) {
+        return res.status(400).json({
+          message: "Invalid project ID",
+          code: "INVALID_PROJECT_ID",
+          errors: projectIdResult.error.errors
+        });
+      }
+
+      const projectId = projectIdResult.data;
+      const hasSession = this.hasValidSession(req);
+      const bootstrapToken = req.query.bootstrap || req.headers['x-bootstrap-token'];
+
+      if (!hasSession && !bootstrapToken) {
+        return res.status(401).json({
+          message: "Unauthorized - authentication or bootstrap token required",
+          code: "AUTH_REQUIRED"
+        });
+      }
+
+      const project = await this.storage.getProject(projectId);
+      if (!project) {
+        return res.status(404).json({
+          message: "Project not found",
+          code: "PROJECT_NOT_FOUND"
+        });
+      }
+
+      if (bootstrapToken) {
+        try {
+          const decoded = jwt.verify(String(bootstrapToken), getJwtSecret()) as { projectId: string | number };
+          if (String(decoded.projectId) !== String(project.id)) {
+            return res.status(403).json({
+              message: "Bootstrap token invalid for this project",
+              code: "BOOTSTRAP_TOKEN_MISMATCH"
+            });
+          }
+          return next();
+        } catch (error: any) {
+          return res.status(401).json({
+            message: "Invalid or expired bootstrap token",
+            code: "BOOTSTRAP_TOKEN_INVALID",
+            error: error?.message || "Unknown error"
+          });
+        }
+      }
+
+      const userId = req.user!.id;
+      if (project.ownerId === userId) {
+        return next();
+      }
+
+      const collaborators = await this.storage.getProjectCollaborators(String(project.id));
+      const isCollaborator = collaborators.some((c: any) => c.userId === userId);
+      if (isCollaborator || project.visibility === 'public') {
+        return next();
+      }
+
+      return res.status(403).json({
+        message: "Access denied",
+        code: "ACCESS_DENIED"
+      });
+    } catch (error) {
+      console.error('Error validating file read access:', error);
+      return res.status(500).json({
+        message: "Failed to validate access",
+        code: "ACCESS_VALIDATION_ERROR"
+      });
+    }
+  };
+
   private initializeRoutes() {
-    this.router.get("/:projectId/files", this.ensureAuthenticated, async (req: Request, res: Response) => {
+    this.router.get("/:projectId/files", this.ensureReadAccess, async (req: Request, res: Response) => {
       try {
         const projectIdResult = projectIdSchema.safeParse(req.params.projectId);
         if (!projectIdResult.success) {
@@ -52,12 +131,15 @@ export class FilesRouter {
           });
         }
         const projectId = projectIdResult.data;
-        const userId = req.user!.id;
+        const hasSession = this.hasValidSession(req);
+        const userId = hasSession ? req.user!.id : null;
 
-        const result = await withScopedTransaction(userId, userId, async (scopedQueries) => {
-          const files = await scopedQueries.getFilesByProject(projectId);
-          return files;
-        });
+        const result = hasSession
+          ? await withScopedTransaction(userId!, userId!, async (scopedQueries) => {
+              const files = await scopedQueries.getFilesByProject(projectId);
+              return files;
+            })
+          : { success: true as const, data: await this.storage.getFilesByProjectId(projectId) };
 
         if (!result.success) {
           if (result.error?.message?.includes('not found or access denied')) {
@@ -87,7 +169,7 @@ export class FilesRouter {
       }
     });
 
-    this.router.get("/:projectId/files/*", this.ensureAuthenticated, async (req: Request, res: Response) => {
+    this.router.get("/:projectId/files/*", this.ensureReadAccess, async (req: Request, res: Response) => {
       try {
         const projectIdResult = projectIdSchema.safeParse(req.params.projectId);
         if (!projectIdResult.success) {
@@ -98,7 +180,8 @@ export class FilesRouter {
           });
         }
         const projectId = projectIdResult.data;
-        const userId = req.user!.id;
+        const hasSession = this.hasValidSession(req);
+        const userId = hasSession ? req.user!.id : null;
         let fileIdentifier = req.params[0];
         
         if (!fileIdentifier) {
@@ -121,24 +204,29 @@ export class FilesRouter {
           validatedFileId = fileIdResult.data;
         }
 
-        const result = await withScopedTransaction(userId, userId, async (scopedQueries) => {
-          let file;
-          
-          if (validatedFileId !== null) {
-            file = await scopedQueries.getFileById(projectId, validatedFileId);
-          } else {
-            const { aiSecurityService } = await import('../services/ai-security.service');
-            const pathValidation = aiSecurityService.validatePath(fileIdentifier);
-            if (pathValidation.valid && pathValidation.sanitized) {
-              fileIdentifier = pathValidation.sanitized;
-            }
-            
-            const allFiles = await scopedQueries.getFilesByProject(projectId);
-            file = allFiles.find(f => f.path === fileIdentifier);
-          }
-          
-          return file;
-        });
+        const result = hasSession
+          ? await withScopedTransaction(userId!, userId!, async (scopedQueries) => {
+              let file;
+              
+              if (validatedFileId !== null) {
+                file = await scopedQueries.getFileById(projectId, validatedFileId);
+              } else {
+                const { aiSecurityService } = await import('../services/ai-security.service');
+                const pathValidation = aiSecurityService.validatePath(fileIdentifier);
+                if (pathValidation.valid && pathValidation.sanitized) {
+                  fileIdentifier = pathValidation.sanitized;
+                }
+                
+                const allFiles = await scopedQueries.getFilesByProject(projectId);
+                file = allFiles.find(f => f.path === fileIdentifier);
+              }
+              
+              return file;
+            })
+          : { success: true as const, data: validatedFileId !== null
+              ? await this.storage.getFile(validatedFileId)
+              : (await this.storage.getFilesByProjectId(projectId)).find(f => f.path === fileIdentifier)
+            };
 
         if (!result.success) {
           if (result.error?.message?.includes('not found or access denied')) {
@@ -423,6 +511,136 @@ export class FilesRouter {
       } catch (error) {
         console.error('Error deleting file:', error);
         res.status(500).json({ 
+          message: "Failed to delete file",
+          code: "DELETE_ERROR"
+        });
+      }
+    });
+
+    this.router.patch("/:projectId/files/by-id/:fileId", this.ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
+      try {
+        const projectIdResult = projectIdSchema.safeParse(req.params.projectId);
+        const fileIdResult = fileIdSchema.safeParse(req.params.fileId);
+        if (!projectIdResult.success || !fileIdResult.success) {
+          return res.status(400).json({
+            message: "Invalid project or file ID",
+            code: "INVALID_INPUT",
+          });
+        }
+
+        const projectId = projectIdResult.data;
+        const fileId = fileIdResult.data;
+        const userId = req.user!.id;
+        const { content, name, parentId, path } = req.body;
+
+        const result = await withScopedTransaction(userId, userId, async (scopedQueries) => {
+          const file = await scopedQueries.getFileById(projectId, fileId);
+          if (!file) {
+            throw new Error('FILE_NOT_FOUND');
+          }
+
+          const nextName = name ?? file.name;
+          const nextParentId = parentId !== undefined ? parentId : file.parentId;
+          let nextPath = path;
+
+          if (!nextPath && (name !== undefined || parentId !== undefined)) {
+            if (nextParentId == null) {
+              nextPath = nextName;
+            } else {
+              const parent = await scopedQueries.getFileById(projectId, nextParentId);
+              if (!parent) {
+                throw new Error('PARENT_NOT_FOUND');
+              }
+              const parentPath = parent.path || parent.name;
+              nextPath = `${parentPath}/${nextName}`;
+            }
+          }
+
+          const updated = await scopedQueries.updateFile(projectId, fileId, {
+            content,
+            name,
+            parentId: nextParentId,
+            path: nextPath,
+          });
+          return { file: updated, originalPath: file.path || file.name };
+        });
+
+        if (!result.success || !result.data?.file) {
+          if (result.error?.message === 'FILE_NOT_FOUND') {
+            return res.status(404).json({
+              message: "File not found",
+              code: "FILE_NOT_FOUND"
+            });
+          }
+          if (result.error?.message === 'PARENT_NOT_FOUND') {
+            return res.status(400).json({
+              message: "Parent folder not found",
+              code: "PARENT_NOT_FOUND"
+            });
+          }
+          return res.status(500).json({
+            message: "Failed to update file",
+            code: "UPDATE_ERROR"
+          });
+        }
+
+        res.json(result.data.file);
+        this.emitFileChange(String(projectId), result.data.originalPath, 'update');
+        if (content !== undefined) {
+          syncFileToDisc(projectId, result.data.file.path || result.data.file.name, content || '').catch(() => {});
+        }
+      } catch (error) {
+        console.error('Error updating file by project + id:', error);
+        res.status(500).json({
+          message: "Failed to update file",
+          code: "UPDATE_ERROR"
+        });
+      }
+    });
+
+    this.router.delete("/:projectId/files/by-id/:fileId", this.ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
+      try {
+        const projectIdResult = projectIdSchema.safeParse(req.params.projectId);
+        const fileIdResult = fileIdSchema.safeParse(req.params.fileId);
+        if (!projectIdResult.success || !fileIdResult.success) {
+          return res.status(400).json({
+            message: "Invalid project or file ID",
+            code: "INVALID_INPUT",
+          });
+        }
+
+        const projectId = projectIdResult.data;
+        const fileId = fileIdResult.data;
+        const userId = req.user!.id;
+
+        const result = await withScopedTransaction(userId, userId, async (scopedQueries) => {
+          const file = await scopedQueries.getFileById(projectId, fileId);
+          if (!file) {
+            throw new Error('FILE_NOT_FOUND');
+          }
+
+          await scopedQueries.deleteFile(projectId, fileId);
+          return { path: file.path || file.name };
+        });
+
+        if (!result.success) {
+          if (result.error?.message === 'FILE_NOT_FOUND') {
+            return res.status(404).json({
+              message: "File not found",
+              code: "FILE_NOT_FOUND"
+            });
+          }
+          return res.status(500).json({
+            message: "Failed to delete file",
+            code: "DELETE_ERROR"
+          });
+        }
+
+        res.json({ success: true });
+        this.emitFileChange(String(projectId), result.data!.path, 'delete');
+      } catch (error) {
+        console.error('Error deleting file by project + id:', error);
+        res.status(500).json({
           message: "Failed to delete file",
           code: "DELETE_ERROR"
         });
