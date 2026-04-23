@@ -229,7 +229,13 @@ router.get('/diff/:filePath(*)', ensureAuthenticated, async (req: Request, res: 
           res.end();
           resolve();
         });
-        gitProcess.on('error', reject);
+        gitProcess.on('error', (err) => {
+          if (!res.writableEnded) {
+            res.write(JSON.stringify({ type: 'error', content: err.message }) + '\n');
+            res.end();
+          }
+          resolve();
+        });
       });
     } else {
       const gitProcess = spawn('git', args, { cwd: PROJECT_ROOT });
@@ -264,7 +270,14 @@ router.get('/diff/:filePath(*)', ensureAuthenticated, async (req: Request, res: 
     }
   } catch (error: any) {
     logger.error('[Git] Diff error:', error);
-    res.status(500).json({ error: error.message });
+    if (res.headersSent) {
+      if (!res.writableEnded) {
+        res.write(JSON.stringify({ type: 'error', content: error.message }) + '\n');
+        res.end();
+      }
+    } else {
+      res.status(500).json({ error: error.message });
+    }
   }
 });
 

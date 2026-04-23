@@ -151,9 +151,7 @@ export function AIAgentPanel({ projectId, onFileCreate }: AIAgentPanelProps) {
         description: error.message || 'Failed to send message',
         variant: 'destructive'
       });
-      
-      // Remove last user message on error
-      setMessages(prev => prev.slice(0, -1));
+      // Keep user message visible so they can see what failed and retry
     }
   });
   

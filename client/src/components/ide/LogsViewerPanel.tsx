@@ -176,7 +176,7 @@ export function LogsViewerPanel({ deploymentId, buildId, projectId }: LogsViewer
         </div>
 
         {/* Stats */}
-        {data && (
+        {data?.pagination && (
           <div className="flex gap-4 text-[11px] text-muted-foreground">
             <span>Total: {data.pagination.total}</span>
             <span>Showing: {logs.length}</span>
