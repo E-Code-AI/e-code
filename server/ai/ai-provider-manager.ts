@@ -177,7 +177,7 @@ export const AI_MODELS: AIModel[] = [
   },
   // Legacy models — still valid for backward compat
   {
-    id: 'claude-3-5-haiku-20241022',
+    id: 'claude-haiku-4-5-20251001',
     name: 'Claude 3.5 Haiku',
     provider: 'anthropic',
     description: 'Previous-generation fast Claude (legacy)',
@@ -1250,8 +1250,8 @@ export class AIProviderManager {
   getAvailableProviders(): Array<{ name: string; isAvailable: boolean }> {
     const providerMap: Record<string, string[]> = {
       'OpenAI': ['gpt-4.1', 'gpt-4.1-mini', 'gpt-4.1-nano', 'gpt-4o', 'gpt-4o-mini', 'o4-mini', 'o3', 'o3-mini'],
-      'Claude': ['claude-sonnet-4-6', 'claude-opus-4-7', 'claude-haiku-4-5-20251001', 'claude-3-7-sonnet-20250219', 'claude-3-5-haiku-20241022'],
-      'Anthropic': ['claude-sonnet-4-6', 'claude-opus-4-7', 'claude-haiku-4-5-20251001', 'claude-3-7-sonnet-20250219', 'claude-3-5-haiku-20241022'],
+      'Claude': ['claude-sonnet-4-6', 'claude-opus-4-7', 'claude-haiku-4-5-20251001', 'claude-3-7-sonnet-20250219', 'claude-haiku-4-5-20251001'],
+      'Anthropic': ['claude-sonnet-4-6', 'claude-opus-4-7', 'claude-haiku-4-5-20251001', 'claude-3-7-sonnet-20250219', 'claude-haiku-4-5-20251001'],
       'Gemini': ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro', 'gemini-1.5-flash'],
       'Moonshot': ['moonshot-v1-8k', 'moonshot-v1-32k', 'moonshot-v1-128k'],
       'xAI': ['grok-3', 'grok-3-mini', 'grok-3-fast']

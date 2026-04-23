@@ -127,12 +127,11 @@ router.get('/pricing', (_req, res) => {
       'o3-mini':                    { input: 0.0000011,  output: 0.0000044,  creditsPerThousand: 1.1 },
       'o1':                         { input: 0.000015,   output: 0.00006,    creditsPerThousand: 15 },
       'gpt-4-turbo':                { input: 0.00001,    output: 0.00003,    creditsPerThousand: 10 },
-      // Anthropic — confirmed real models (March 2026)
-      'claude-opus-4-20250514':     { input: 0.000015,   output: 0.000075,   creditsPerThousand: 15 },
-      'claude-sonnet-4-20250514':   { input: 0.000003,   output: 0.000015,   creditsPerThousand: 3 },
+      // Anthropic — canonical model IDs (April 2026)
+      'claude-opus-4-7':            { input: 0.000015,   output: 0.000075,   creditsPerThousand: 15 },
+      'claude-sonnet-4-6':          { input: 0.000003,   output: 0.000015,   creditsPerThousand: 3 },
+      'claude-haiku-4-5-20251001':  { input: 0.00000080, output: 0.000004,   creditsPerThousand: 0.8 },
       'claude-3-7-sonnet-20250219': { input: 0.000003,   output: 0.000015,   creditsPerThousand: 3 },
-      'claude-3-5-sonnet-20241022': { input: 0.000003,   output: 0.000015,   creditsPerThousand: 3 },
-      'claude-3-5-haiku-20241022':  { input: 0.00000025, output: 0.00000125, creditsPerThousand: 0.25 },
       'claude-3-opus-20240229':     { input: 0.000015,   output: 0.000075,   creditsPerThousand: 15 },
       'claude-3-haiku-20240307':    { input: 0.00000025, output: 0.00000125, creditsPerThousand: 0.25 },
       // Gemini

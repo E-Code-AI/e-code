@@ -71,7 +71,7 @@ export function UnifiedAIInterface({
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [mode, setMode] = useState<"agent" | "assistant" | "advanced">("agent");
-  const [model, setModel] = useState("claude-sonnet-4-20250514");
+  const [model, setModel] = useState("claude-sonnet-4-6");
   const [autoRun, setAutoRun] = useState(true);
   const [showEffortPricing, setShowEffortPricing] = useState(false);
   const [totalEffort, setTotalEffort] = useState(0);
@@ -296,7 +296,7 @@ export function UnifiedAIInterface({
                 <SelectContent>
                   <SelectItem value="gpt-4.1">GPT-4.1</SelectItem>
                   <SelectItem value="gpt-4.1-nano">GPT-4.1 Nano</SelectItem>
-                  <SelectItem value="claude-sonnet-4-20250514">
+                  <SelectItem value="claude-sonnet-4-6">
                     Claude Sonnet 4
                   </SelectItem>
                   <SelectItem value="gpt-4o">GPT-4o</SelectItem>
