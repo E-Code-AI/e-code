@@ -61,9 +61,9 @@ const AI_MODELS: AIModel[] = [
   { id: 'o1-mini', name: 'o1 Mini', provider: 'OpenAI', description: 'Faster reasoning — coding, math, and science tasks', speed: 'fast', capability: 'advanced' },
   { id: 'o3', name: 'o3', provider: 'OpenAI', description: 'Most powerful reasoning — frontier performance on hard benchmarks', speed: 'medium', capability: 'expert' },
   // Anthropic
-  { id: 'claude-3-5-sonnet-20241022', name: 'Claude 3.5 Sonnet', provider: 'Anthropic', description: 'Best balance of speed and intelligence — top coding and reasoning', speed: 'fast', capability: 'advanced' },
+  { id: 'claude-sonnet-4-20250514', name: 'Claude Sonnet 4', provider: 'Anthropic', description: 'High performance — excellent coding, analysis, and agentic workflows', speed: 'fast', capability: 'advanced' },
+  { id: 'claude-opus-4-20250514', name: 'Claude Opus 4', provider: 'Anthropic', description: 'Most powerful Claude — frontier intelligence, complex analysis', speed: 'medium', capability: 'expert' },
   { id: 'claude-3-5-haiku-20241022', name: 'Claude 3.5 Haiku', provider: 'Anthropic', description: 'Fast and affordable — quick tasks and lightweight agents', speed: 'fast', capability: 'standard' },
-  { id: 'claude-3-opus-20240229', name: 'Claude 3 Opus', provider: 'Anthropic', description: 'Most capable Claude — complex analysis and long-form writing', speed: 'medium', capability: 'expert' },
   // Google Gemini
   { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', provider: 'Google', description: 'Adaptive thinking — fast reasoning with 1M context window', speed: 'fast', capability: 'advanced' },
   { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash', provider: 'Google', description: 'Next-gen performance — native tool use and superior speed', speed: 'fast', capability: 'advanced' },

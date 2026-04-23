@@ -31,6 +31,9 @@ export const MODEL_PRICING: Record<string, ModelPricingEntry> = {
   'gpt-4':           { input: 30.0,  output: 60.0,  provider: 'openai', name: 'GPT-4' },
 
   // ── Anthropic ────────────────────────────────────────────────────────────────
+  'claude-sonnet-4-20250514':   { input: 3.0,   output: 15.0,  provider: 'anthropic', name: 'Claude Sonnet 4' },
+  'claude-opus-4-20250514':     { input: 15.0,  output: 75.0,  provider: 'anthropic', name: 'Claude Opus 4' },
+  'claude-3-7-sonnet-20250219': { input: 3.0,   output: 15.0,  provider: 'anthropic', name: 'Claude 3.7 Sonnet' },
   'claude-3-5-sonnet-20241022': { input: 3.0,   output: 15.0,  provider: 'anthropic', name: 'Claude 3.5 Sonnet' },
   'claude-3-5-haiku-20241022':  { input: 0.8,   output: 4.0,   provider: 'anthropic', name: 'Claude 3.5 Haiku' },
   'claude-3-opus-20240229':     { input: 15.0,  output: 75.0,  provider: 'anthropic', name: 'Claude 3 Opus' },

@@ -24,6 +24,9 @@ export const AI_MODEL_PRICING = {
   'gpt-4': { input: 0.03, output: 0.06, creditsPerThousand: 0.09 },
 
   // Anthropic Models
+  'claude-sonnet-4-20250514': { input: 0.003, output: 0.015, creditsPerThousand: 0.018 },
+  'claude-opus-4-20250514': { input: 0.015, output: 0.075, creditsPerThousand: 0.09 },
+  'claude-3-7-sonnet-20250219': { input: 0.003, output: 0.015, creditsPerThousand: 0.018 },
   'claude-3-5-sonnet-20241022': { input: 0.003, output: 0.015, creditsPerThousand: 0.018 },
   'claude-3-5-haiku-20241022': { input: 0.0008, output: 0.004, creditsPerThousand: 0.005 },
   'claude-3-opus-20240229': { input: 0.015, output: 0.075, creditsPerThousand: 0.09 },
