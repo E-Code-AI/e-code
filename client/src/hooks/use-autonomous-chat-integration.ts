@@ -184,7 +184,7 @@ export function useAutonomousChatIntegration({
   bootstrapToken,
   initialPrompt
 }: UseAutonomousChatIntegrationOptions) {
-  const { addMessage, updateMessage, setMessages } = useAgentConversationStore();
+  const { addMessage, updateMessage } = useAgentConversationStore();
   const wsRef = useRef<WebSocket | null>(null);
   const lastMessageIdRef = useRef<string | null>(null);
   const planTextRef = useRef<string>('');
@@ -538,25 +538,24 @@ export function useAutonomousChatIntegration({
     };
   }, [enabled, conversationId, projectId, sessionId, bootstrapToken, decodeTokenFn, maxReconnectAttempts, baseReconnectDelayMs]);
 
-  // ✅ CRITICAL FIX (Dec 13, 2025): Add user's prompt IMMEDIATELY on hook init
-  // This ensures the prompt is visible BEFORE WebSocket connects, not after
-  // Solves: "Je dois voir mon prompt pas le message de bienvenu"
-  // Uses setMessages to REPLACE any existing messages (like welcome message) with the user prompt
+  // ✅ Add user's prompt IMMEDIATELY on hook init so it shows before the WebSocket connects.
+  // Bug 2 fix: use a STABLE id derived from projectId so remount/re-render can't add a
+  // duplicate user prompt, and use addMessage (which dedupes by id) instead of setMessages
+  // (which would wipe out autonomous events already in the store).
   useEffect(() => {
     if (!conversationId || !resolvedPrompt || hasAddedUserPromptRef.current) return;
-    
+
     hasAddedUserPromptRef.current = true;
+    const stableId = `user-prompt-${projectId ?? 'anon'}-${conversationId}`;
     const userPromptMsg: Message = {
-      id: `user-prompt-${Date.now()}`,
+      id: stableId,
       role: 'user',
       content: resolvedPrompt,
       timestamp: new Date(),
       type: 'text'
     };
-    // Use setMessages to REPLACE messages, ensuring user prompt is FIRST
-    // This clears any welcome message that may have been rehydrated from localStorage
-    setMessages(conversationId, [userPromptMsg]);
-  }, [conversationId, resolvedPrompt, setMessages]);
+    addMessage(conversationId, userPromptMsg);
+  }, [conversationId, resolvedPrompt, projectId, addMessage]);
 
   const createAutonomousMessage = useCallback((
     type: Message['type'],
