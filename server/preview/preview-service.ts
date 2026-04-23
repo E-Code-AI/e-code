@@ -370,7 +370,8 @@ export class PreviewService {
   }
 
   private async pollPortReady(projectId: string, port: number, preview: PreviewInstance) {
-    const maxAttempts = 30;
+    // npm install + framework startup can take 2-3 minutes on Replit
+    const maxAttempts = 180;
     const intervalMs = 1000;
 
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
@@ -703,16 +704,30 @@ export class PreviewService {
     preview.logs.push(`Starting ${frameworkInfo.type} application...`);
     
     try {
-      await this.runCommand('npm', ['install', '--ignore-scripts'], previewPath);
+      preview.logs.push('Installing dependencies...');
+      previewEvents.emit('preview:log', { projectId: preview.projectId, runId: preview.runId, log: 'Installing dependencies...' });
+      await this.runCommand('npm', ['install', '--ignore-scripts', '--no-audit', '--no-fund'], previewPath);
+      preview.logs.push('Dependencies installed.');
+      previewEvents.emit('preview:log', { projectId: preview.projectId, runId: preview.runId, log: 'Dependencies installed. Starting dev server...' });
     } catch (installErr: any) {
       preview.logs.push(`[WARN] npm install had warnings: ${installErr.message} — continuing anyway`);
+      previewEvents.emit('preview:log', { projectId: preview.projectId, runId: preview.runId, log: `npm install warning: ${installErr.message}` });
     }
-    
+
     let startCommand: string[] = [];
     if (frameworkInfo.hasVite) {
-      // Explicit port, host, and base so the proxy path-rewrite works for all assets
+      // Use port-specific base so assets load through the correct proxy route.
+      // --clearScreen false prevents Vite from clearing stdout (keeps logs visible).
+      // --strictPort prevents port auto-increment which would break the proxy.
       const base = `/preview/${preview.projectId}/${port}/`;
-      startCommand = ['npx', 'vite', '--port', port.toString(), '--host', '0.0.0.0', '--base', base];
+      startCommand = [
+        'npx', 'vite',
+        '--port', port.toString(),
+        '--host', '0.0.0.0',
+        '--base', base,
+        '--clearScreen', 'false',
+        '--strictPort',
+      ];
     } else if (frameworkInfo.packageJson.scripts?.dev) {
       startCommand = ['npm', 'run', 'dev'];
     } else if (frameworkInfo.packageJson.scripts?.start) {
@@ -768,11 +783,15 @@ export class PreviewService {
     preview.logs.push('Starting Node.js application...');
     
     try {
-      await this.runCommand('npm', ['install', '--ignore-scripts'], previewPath);
+      preview.logs.push('Installing dependencies...');
+      previewEvents.emit('preview:log', { projectId: preview.projectId, runId: preview.runId, log: 'Installing dependencies...' });
+      await this.runCommand('npm', ['install', '--ignore-scripts', '--no-audit', '--no-fund'], previewPath);
+      preview.logs.push('Dependencies installed.');
+      previewEvents.emit('preview:log', { projectId: preview.projectId, runId: preview.runId, log: 'Dependencies installed. Starting server...' });
     } catch (installErr: any) {
       preview.logs.push(`[WARN] npm install had warnings: ${installErr.message} — continuing anyway`);
     }
-    
+
     let startCommand: string[] = [];
     if (frameworkInfo.packageJson.scripts?.start) {
       startCommand = ['npm', 'start'];
@@ -973,12 +992,32 @@ http.createServer((req, res) => {
     }
   }
 
-  private async runCommand(command: string, args: string[], cwd: string): Promise<void> {
+  private async runCommand(command: string, args: string[], cwd: string, timeoutMs = 5 * 60 * 1000): Promise<void> {
     return new Promise((resolve, reject) => {
-      const proc = spawn(command, args, { cwd });
+      const proc = spawn(command, args, { cwd, env: globalThis.process.env });
+      let settled = false;
+
+      const timer = setTimeout(() => {
+        if (!settled) {
+          settled = true;
+          try { proc.kill('SIGKILL'); } catch {}
+          reject(new Error(`Command '${command} ${args.join(' ')}' timed out after ${timeoutMs / 1000}s`));
+        }
+      }, timeoutMs);
+
       proc.on('exit', (code) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
         if (code === 0) resolve();
         else reject(new Error(`Command failed with code ${code}`));
+      });
+
+      proc.on('error', (err) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        reject(err);
       });
     });
   }

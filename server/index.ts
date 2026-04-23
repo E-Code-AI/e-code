@@ -1123,7 +1123,8 @@ httpServer.listen(port, "0.0.0.0", () => {
               req.originalUrl.startsWith('/ws/') ||
               req.originalUrl.startsWith('/collaboration') ||
               req.originalUrl.startsWith('/assets/') ||
-              req.originalUrl.startsWith('/attached_assets/')) {
+              req.originalUrl.startsWith('/attached_assets/') ||
+              req.originalUrl.startsWith('/preview/')) {
             return next();
           }
           const nonce: string | undefined = res.locals.cspNonce;
