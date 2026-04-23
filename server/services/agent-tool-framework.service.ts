@@ -1375,6 +1375,53 @@ export class AgentToolFrameworkService extends EventEmitter {
         };
       }
     });
+
+    // 11. Screenshot capture — lets the agent capture the project preview
+    this.registerTool({
+      name: 'screenshot_capture',
+      displayName: 'Capture Screenshot',
+      description: 'Capture a screenshot of the project preview and persist it in the Screenshots panel',
+      capability: 'testing',
+      inputSchema: z.object({
+        projectId: z.number().optional().describe('Project id (defaults to the current session project)'),
+        url: z.string().url().optional().describe('Optional explicit URL to capture'),
+        deviceType: z.enum(['desktop', 'tablet', 'mobile']).optional().default('desktop'),
+        fullPage: z.boolean().optional().default(false),
+        title: z.string().optional().describe('Optional human-readable title for the screenshot')
+      }),
+      requiresAuth: true,
+      rateLimit: 6,
+      execute: async (input, context) => {
+        const { projectScreenshots } = await import('@shared/schema');
+        const { screenshotService } = await import('./screenshot-service');
+
+        const projectId = input.projectId ?? context.projectId;
+        if (!projectId) throw new Error('projectId is required');
+        const userId = typeof context.userId === 'string' ? parseInt(context.userId, 10) || 0 : context.userId;
+        const deviceType: 'desktop' | 'tablet' | 'mobile' = input.deviceType ?? 'desktop';
+
+        const captured = await screenshotService.captureProjectPreview(projectId, userId, {
+          storeAsBase64: true,
+          storeInObjectStorage: true,
+          metadata: { deviceType, fullPage: String(input.fullPage ?? false), capturedBy: String(userId) }
+        });
+
+        const imageUrl = (captured as any)?.storageObject?.url || captured.base64Data || captured.thumbnail;
+
+        const [row] = await db.insert(projectScreenshots).values({
+          projectId,
+          title: input.title ?? `Agent capture ${new Date().toISOString()}`,
+          imageUrl,
+          createdBy: userId
+        }).returning();
+
+        return {
+          id: row.id,
+          imageUrl: row.imageUrl,
+          createdAt: row.createdAt
+        };
+      }
+    });
   }
 
   // Register a custom tool
